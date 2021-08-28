@@ -40,8 +40,6 @@ Submitting a pull request is fairly simple, just make sure it focuses on a singl
 
 - Use present tense (e.g. "Add feature" not "Added feature")
 - Limit all lines to 72 characters or less.
-- Reference issues or pull requests outside of the first line.
-    - Please use the shorthand `#123` and not the full URL.
-- Commits regarding the commands extension must be prefixed with `[commands]`
+- When linking issues/prs please use the shorthand `#123` and not the full URL.
 
 If you do not meet any of these guidelines, don't fret. Chances are they will be fixed upon rebasing but please do try to meet them to remove some of the workload.
