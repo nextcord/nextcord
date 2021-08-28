@@ -1,6 +1,6 @@
-from discord.ext import commands
 import discord
 
+from discord.ext import commands
 
 # Define a simple View that persists between bot restarts
 # In order a view to persist between restarts it needs to meet the following conditions:

@@ -1,6 +1,6 @@
-from discord.ext import commands
-
 import discord
+
+from discord.ext import commands
 from urllib.parse import quote_plus
 
 class GoogleBot(commands.Bot):

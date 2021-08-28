@@ -1,8 +1,9 @@
 # This example requires the 'members' privileged intents
 
 import discord
-from discord.ext import commands
 import random
+
+from discord.ext import commands
 
 description = '''An example bot to showcase the discord.ext.commands extension
 module.

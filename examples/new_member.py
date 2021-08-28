@@ -2,7 +2,9 @@
 
 import discord
 
-class MyClient(discord.Client):
+from discord.ext import commands
+
+class MyClient(commands.Bot):
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')

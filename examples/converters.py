@@ -1,8 +1,8 @@
 # This example requires the 'members' privileged intent to use the Member converter.
 
 import typing
-
 import discord
+
 from discord.ext import commands
 
 intents = discord.Intents.default()

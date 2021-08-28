@@ -1,8 +1,4 @@
-
-import discord
-
 from discord.ext import tasks, commands
-
 
 class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
