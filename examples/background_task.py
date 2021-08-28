@@ -1,8 +1,10 @@
-from discord.ext import tasks
 
 import discord
 
-class MyClient(discord.Client):
+from discord.ext import tasks, commands
+
+
+class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -26,5 +28,5 @@ class MyClient(discord.Client):
     async def before_my_task(self):
         await self.wait_until_ready() # wait until the bot logs in
 
-bot = MyClient()
+bot = MyBot(command_prefix=commands.when_mentioned_or('$'))
 bot.run('token')

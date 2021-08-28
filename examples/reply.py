@@ -1,17 +1,13 @@
-import discord
+from discord.ext import commands
 
-class MyClient(discord.Client):
+class MyBot(commands.Bot):
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
 
-    async def on_message(self, message):
-        # we do not want the bot to reply to itself
-        if message.author.id == self.user.id:
-            return
-
-        if message.content.startswith('!hello'):
-            await message.reply('Hello!', mention_author=True)
-
-bot = MyClient()
+bot = MyBot(command_prefix=commands.when_mentioned_or('$'))
 bot.run('token')
+
+@bot.command()
+async def hello(ctx: commands.Context):
+    await ctx.reply('Hello!')

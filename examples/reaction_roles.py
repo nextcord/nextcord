@@ -2,7 +2,9 @@
 
 import discord
 
-class MyClient(discord.Client):
+from discord.ext import commands
+
+class MyClient(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -81,5 +83,5 @@ class MyClient(discord.Client):
 intents = discord.Intents.default()
 intents.members = True
 
-bot = MyClient(intents=intents)
+bot = MyClient(command_prefix=commands.when_mentioned_or('$'), intents=intents)
 bot.run('token')

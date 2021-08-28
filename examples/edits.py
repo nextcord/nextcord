@@ -1,7 +1,9 @@
 import discord
 import asyncio
 
-class MyClient(discord.Client):
+from discord.ext import commands
+
+class MyBot(commands.Bot):
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
@@ -16,5 +18,5 @@ class MyClient(discord.Client):
         msg = f'**{before.author}** edited their message:\n{before.content} -> {after.content}'
         await before.channel.send(msg)
 
-bot = MyClient()
+bot = MyBot(command_prefix=commands.when_mentioned_or('$'))
 bot.run('token')

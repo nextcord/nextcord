@@ -1,7 +1,9 @@
 import discord
 import asyncio
 
-class MyClient(discord.Client):
+from discord.ext import commands
+
+class MyClient(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -22,5 +24,5 @@ class MyClient(discord.Client):
             await asyncio.sleep(60) # task runs every 60 seconds
 
 
-bot = MyClient()
+bot = MyClient(command_prefix=commands.when_mentioned_or('$'))
 bot.run('token')
