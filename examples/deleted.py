@@ -14,7 +14,7 @@ class Bot(commands.Bot):
 bot = Bot(command_prefix='$')
 
 @bot.command()
-async def deleteme(ctx: commands.Context):
+async def deleteme(ctx):
     msg = await ctx.send('I will delete myself now...')
     await msg.delete()
 

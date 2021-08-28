@@ -21,7 +21,7 @@ class Bot(commands.Bot):
 bot = Bot(command_prefix='$')
 
 @bot.command()
-async def editme(ctx: commands.Context):
+async def editme(ctx):
     msg = await ctx.send('10')
     await asyncio.sleep(3.0)
     await msg.edit(content='40')

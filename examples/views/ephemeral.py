@@ -41,7 +41,7 @@ class EphemeralCounter(nextcord.ui.View):
 bot = Bot(command_prefix='$')
 
 @bot.command()
-async def counter(ctx: commands.Context):
+async def counter(ctx):
     """Starts a counter for pressing."""
     await ctx.send('Press!', view=EphemeralCounter())
 

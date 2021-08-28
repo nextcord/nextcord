@@ -128,7 +128,7 @@ bot = Bot(command_prefix='$')
 
 
 @bot.command()
-async def tic(ctx: commands.Context):
+async def tic(ctx):
     """Starts a tic-tac-toe game with yourself."""
     await ctx.send('Tic Tac Toe: X goes first', view=TicTacToe())
 

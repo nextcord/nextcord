@@ -52,7 +52,7 @@ bot = Bot(command_prefix='$')
 
 @bot.command()
 @commands.is_owner()
-async def prepare(ctx: commands.Context):
+async def prepare(ctx):
     """Starts a persistent view."""
     # In order for a persistent view to be listened to, it needs to be sent to an actual message.
     # Call this method once just to store it somewhere.

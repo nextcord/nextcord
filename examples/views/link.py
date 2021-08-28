@@ -27,7 +27,7 @@ bot = Bot(command_prefix='$')
 
 
 @bot.command()
-async def google(ctx: commands.Context, *, query: str):
+async def google(ctx, *, query: str):
     """Returns a google link for a query"""
     await ctx.send(f'Google Result for: `{query}`', view=Google(query))
 

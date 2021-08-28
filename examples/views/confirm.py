@@ -35,7 +35,7 @@ bot = Bot(command_prefix='$')
 
 
 @bot.command()
-async def ask(ctx: commands.Context):
+async def ask(ctx):
     """Asks the user a question to confirm something."""
     # We create the view and assign it to a variable so we can wait for it later.
     view = Confirm()

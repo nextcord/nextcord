@@ -8,7 +8,7 @@ class Bot(commands.Bot):
 bot = Bot(command_prefix='$')
 
 @bot.command()
-async def hello(ctx: commands.Context):
+async def hello(ctx):
     await ctx.reply('Hello!')
 
 bot.run('token')

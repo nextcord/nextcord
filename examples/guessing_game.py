@@ -12,7 +12,7 @@ class Bot(commands.Bot):
 bot = Bot(command_prefix='$')
 
 @bot.command()
-async def guess(ctx: commands.Context):
+async def guess(ctx):
     await ctx.send('Guess a number between 1 and 10.')
 
     def is_correct(m):
