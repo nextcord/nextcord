@@ -28,7 +28,7 @@ class PersistentView(nextcord.ui.View):
         await interaction.response.send_message('This is grey.', ephemeral=True)
 
 
-class PersistentViewBot(commands.Bot):
+class Bot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=commands.when_mentioned_or('$'))
         self.persistent_views_added = False
@@ -47,7 +47,7 @@ class PersistentViewBot(commands.Bot):
         print('------')
 
 
-bot = PersistentViewBot()
+bot = Bot()
 
 
 @bot.command()
