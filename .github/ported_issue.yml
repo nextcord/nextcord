@@ -1,0 +1,16 @@
+name: Issue Port
+description: Ported Issue from old discord.py repo
+labels: ported
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thanks for taking the time to port.
+        Please note that this form is for ported issues only!
+  - type: input
+    attributes:
+      label: Link
+      description: The Link to the original issue
+    validations:
+      required: true
+      
