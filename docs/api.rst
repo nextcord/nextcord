@@ -177,7 +177,7 @@ There are two ways to register an event, the first way is through the use of
 :meth:`Client.event`. The second way is through subclassing :class:`Client` and
 overriding the specific events. For example: ::
 
-    from discord.ext import commands
+    from nextcord.ext import commands
 
     bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'))
     bot.run('token')

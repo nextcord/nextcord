@@ -75,7 +75,7 @@ Quick Example
 
 .. code:: py
 
-    from discord.ext import commands
+    from nextcord.ext import commands
 
     class MyBot(commands.Bot):
         async def on_ready(self):
@@ -94,7 +94,7 @@ Bot Example
 
 .. code:: py
 
-    from discord.ext import commands
+    from nextcord.ext import commands
 
     bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'))
 

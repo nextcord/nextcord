@@ -70,7 +70,7 @@ Linuxで音声サポートを導入するには、前述のコマンドを実行
 
 .. code:: py
 
-    from discord.ext import commands
+    from nextcord.ext import commands
 
     class MyBot(commands.Bot):
         async def on_ready(self):
@@ -89,7 +89,7 @@ Botの例
 
 .. code:: py
 
-    from discord.ext import commands
+    from nextcord.ext import commands
 
     bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'))
 
