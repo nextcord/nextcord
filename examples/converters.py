@@ -2,29 +2,29 @@
 
 import typing
 
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 
-intents = discord.Intents.default()
+intents = nextcord.Intents.default()
 intents.members = True
 
 bot = commands.Bot('!', intents=intents)
 
 
 @bot.command()
-async def userinfo(ctx: commands.Context, user: discord.User):
+async def userinfo(ctx: commands.Context, user: nextcord.User):
     # In the command signature above, you can see that the `user`
-    # parameter is typehinted to `discord.User`. This means that
+    # parameter is typehinted to `nextcord.User`. This means that
     # during command invocation we will attempt to convert
-    # the value passed as `user` to a `discord.User` instance.
-    # The documentation notes what can be converted, in the case of `discord.User`
+    # the value passed as `user` to a `nextcord.User` instance.
+    # The documentation notes what can be converted, in the case of `nextcord.User`
     # you pass an ID, mention or username (discrim optional)
     # E.g. 80088516616269824, @Danny or Danny#0007
 
     # NOTE: typehinting acts as a converter within the `commands` framework only.
     # In standard Python, it is use for documentation and IDE assistance purposes.
 
-    # If the conversion is successful, we will have a `discord.User` instance
+    # If the conversion is successful, we will have a `nextcord.User` instance
     # and can do the following:
     user_id = user.id
     username = user.name
@@ -43,7 +43,7 @@ class ChannelOrMemberConverter(commands.Converter):
     async def convert(self, ctx: commands.Context, argument: str):
         # In this example we have made a custom converter.
         # This checks if an input is convertible to a
-        # `discord.Member` or `discord.TextChannel` instance from the
+        # `nextcord.Member` or `nextcord.TextChannel` instance from the
         # input the user has given us using the pre-existing converters
         # that the library provides.
 
@@ -84,7 +84,7 @@ async def notify(ctx: commands.Context, target: ChannelOrMemberConverter):
     await target.send(f'Hello, {target.name}!')
 
 @bot.command()
-async def ignore(ctx: commands.Context, target: typing.Union[discord.Member, discord.TextChannel]):
+async def ignore(ctx: commands.Context, target: typing.Union[nextcord.Member, nextcord.TextChannel]):
     # This command signature utilises the `typing.Union` typehint.
     # The `commands` framework attempts a conversion of each type in this Union *in order*.
     # So, it will attempt to convert whatever is passed to `target` to a `discord.Member` instance.
@@ -94,9 +94,9 @@ async def ignore(ctx: commands.Context, target: typing.Union[discord.Member, dis
     # instead of `commands.BadArgument`.
 
     # To check the resulting type, `isinstance` is used
-    if isinstance(target, discord.Member):
+    if isinstance(target, nextcord.Member):
         await ctx.send(f'Member found: {target.mention}, adding them to the ignore list.')
-    elif isinstance(target, discord.TextChannel): # this could be an `else` but for completeness' sake.
+    elif isinstance(target, nextcord.TextChannel): # this could be an `else` but for completeness' sake.
         await ctx.send(f'Channel found: {target.mention}, adding it to the ignore list.')
 
 # Built-in type converters.
@@ -105,7 +105,6 @@ async def multiply(ctx: commands.Context, number: int, maybe: bool):
     # We want an `int` and a `bool` parameter here.
     # `bool` is a slightly special case, as shown here:
     # See: https://nextcord.readthedocs.io/en/latest/ext/commands/commands.html#bool
-
     if maybe is True:
         return await ctx.send(number * 2)
     await ctx.send(number * 5)
