@@ -1,4 +1,4 @@
-.. currentmodule:: discord
+.. currentmodule:: nextcord
 
 .. _migrating_1_0:
 

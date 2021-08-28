@@ -1,6 +1,6 @@
 :orphan:
 
-.. currentmodule:: discord
+.. currentmodule:: nextcord
 
 .. _migrating-to-async:
 
