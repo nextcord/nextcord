@@ -7,7 +7,7 @@ class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def on_member_join(self, member: nextcord.Member):
+    async def on_member_join(self, member):
         guild = member.guild
         if guild.system_channel is not None:
             to_send = f'Welcome {member.mention} to {guild.name}!'
