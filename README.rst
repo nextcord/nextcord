@@ -71,27 +71,19 @@ Please note that on Linux installing voice you must install the following packag
 * python-dev (e.g. ``python3.6-dev`` for Python 3.6)
 
 
-Bot Example
+Quick Example
 ~~~~~~~~~~~~~
 
 .. code:: py
 
     from nextcord.ext import commands
 
-    class Bot(commands.Bot):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
 
-        async def on_ready(self):
-            print(f'Logged in as {self.user} (ID: {self.user.id})')
-            print('------')
-
-
-    bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+    bot = commands.Bot(command_prefix='$')
 
     @bot.command()
-    async def hello(ctx: commands.Context):
-        await ctx.reply('Hello!')
+    async def ping(ctx):
+        await ctx.reply('Pong!')
 
     bot.run('token')
 
