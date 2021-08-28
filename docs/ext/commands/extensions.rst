@@ -1,4 +1,4 @@
-.. currentmodule:: discord
+.. currentmodule:: nextcord
 
 .. _ext_commands_extensions:
 
