@@ -36,12 +36,7 @@ class DropdownView(nextcord.ui.View):
         self.add_item(Dropdown())
 
 
-class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-bot = Bot(command_prefix='$')
+bot = commands.Bot(command_prefix='$')
 
 
 @bot.command()

@@ -8,12 +8,6 @@ class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def on_message(self, message: nextcord.Message):
-        if message.content.startswith('!editme'):
-            msg = await message.channel.send('10')
-            await asyncio.sleep(3.0)
-            await msg.edit(content='40')
-
     async def on_message_edit(self, before, after):
         msg = f'**{before.author}** edited their message:\n{before.content} -> {after.content}'
         await before.channel.send(msg)

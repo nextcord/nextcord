@@ -3,11 +3,6 @@ import nextcord
 from nextcord.ext import commands
 
 
-class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
 # Define a simple View that gives us a counter button
 class Counter(nextcord.ui.View):
 
@@ -27,7 +22,7 @@ class Counter(nextcord.ui.View):
         await interaction.response.edit_message(view=self)
 
 
-bot = Bot(command_prefix='$')
+bot = commands.Bot(command_prefix='$')
 
 
 @bot.command()

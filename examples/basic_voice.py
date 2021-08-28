@@ -124,10 +124,6 @@ class Music(commands.Cog):
 
 bot = commands.Bot(command_prefix="$", description='Relatively simple music bot example')
 
-@bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('------')
 
 bot.add_cog(Music(bot))
 bot.run('token')

@@ -3,11 +3,6 @@ import nextcord
 from nextcord.ext import commands
 
 
-class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
 # Define a simple View that gives us a confirmation menu
 class Confirm(nextcord.ui.View):
     def __init__(self):
@@ -31,7 +26,7 @@ class Confirm(nextcord.ui.View):
         self.stop()
 
 
-bot = Bot(command_prefix='$')
+bot = commands.Bot(command_prefix='$')
 
 
 @bot.command()

@@ -3,11 +3,6 @@ import nextcord
 from nextcord.ext import commands
 from urllib.parse import quote_plus
 
-class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
 # Define a simple View that gives us a google link button.
 # We take in `query` as the query that the command author requests for
 class Google(nextcord.ui.View):
@@ -23,7 +18,7 @@ class Google(nextcord.ui.View):
         self.add_item(nextcord.ui.Button(label='Click Here', url=url))
 
 
-bot = Bot(command_prefix='$')
+bot = commands.Bot(command_prefix='$')
 
 
 @bot.command()

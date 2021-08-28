@@ -72,7 +72,6 @@ class ChannelOrMemberConverter(commands.Converter):
         raise commands.BadArgument(f'No Member or TextChannel could be converted from "{argument}"')
 
 
-
 @bot.command()
 async def notify(ctx, target: ChannelOrMemberConverter):
     # This command signature utilises the custom converter written above
