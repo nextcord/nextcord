@@ -3,7 +3,7 @@ import nextcord
 
 from nextcord.ext import commands
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'), description="Nothing to see here!")
+bot = commands.Bot(command_prefix='$', description="Nothing to see here!")
 
 # the `hidden` keyword argument hides it from the help command. 
 @bot.group(hidden=True)

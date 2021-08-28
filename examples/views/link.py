@@ -23,7 +23,7 @@ class Google(nextcord.ui.View):
         self.add_item(nextcord.ui.Button(label='Click Here', url=url))
 
 
-bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+bot = Bot(command_prefix='$')
 
 
 @bot.command()

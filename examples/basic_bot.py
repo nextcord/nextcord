@@ -12,7 +12,7 @@ There are a number of utility commands being showcased here.'''
 intents = nextcord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'), description=description, intents=intents)
+bot = commands.Bot(command_prefix='$', description=description, intents=intents)
 
 @bot.event
 async def on_ready():
@@ -20,7 +20,7 @@ async def on_ready():
     print('------')
 
 @bot.command()
-async def add(ctx: commands.Context, left: int, right: int):
+async def add(ctx, left: int, right: int):
     """Adds two numbers together."""
     await ctx.send(left + right)
 

@@ -11,7 +11,7 @@ class Bot(commands.Bot):
         msg = f'{message.author} has deleted the message: {message.content}'
         await message.channel.send(msg)
 
-bot = Bot()
+bot = Bot(command_prefix='$')
 
 @bot.command()
 async def deleteme(ctx: commands.Context):

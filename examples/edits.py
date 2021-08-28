@@ -18,7 +18,7 @@ class Bot(commands.Bot):
         msg = f'**{before.author}** edited their message:\n{before.content} -> {after.content}'
         await before.channel.send(msg)
 
-bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+bot = Bot(command_prefix='$')
 
 @bot.command()
 async def editme(ctx: commands.Context):

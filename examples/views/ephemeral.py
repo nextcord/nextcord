@@ -38,7 +38,7 @@ class EphemeralCounter(nextcord.ui.View):
         # ephemeral=True makes the message hidden from everyone except the button presser
         await interaction.response.send_message('Enjoy!', view=Counter(), ephemeral=True)
 
-bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+bot = Bot(command_prefix='$')
 
 @bot.command()
 async def counter(ctx: commands.Context):

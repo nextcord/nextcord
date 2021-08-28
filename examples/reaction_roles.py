@@ -83,5 +83,5 @@ class Bot(commands.Bot):
 intents = nextcord.Intents.default()
 intents.members = True
 
-bot = Bot(command_prefix=commands.when_mentioned_or('$'), intents=intents)
+bot = Bot(command_prefix='$', intents=intents)
 bot.run('token')

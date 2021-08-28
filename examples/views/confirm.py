@@ -31,7 +31,7 @@ class Confirm(nextcord.ui.View):
         self.stop()
 
 
-bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+bot = Bot(command_prefix='$')
 
 
 @bot.command()

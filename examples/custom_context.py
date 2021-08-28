@@ -32,7 +32,7 @@ class Bot(commands.Bot):
         return await super().get_context(message, cls=cls)
         
 
-bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+bot = Bot(command_prefix='$')
 
 
 @bot.command()

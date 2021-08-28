@@ -5,7 +5,7 @@ class Bot(commands.Bot):
         super().__init__(*args, **kwargs)
 
 
-bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+bot = Bot(command_prefix='$')
 
 @bot.command()
 async def hello(ctx: commands.Context):

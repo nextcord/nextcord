@@ -47,7 +47,7 @@ class Bot(commands.Bot):
         print('------')
 
 
-bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+bot = Bot(command_prefix='$')
 
 
 @bot.command()

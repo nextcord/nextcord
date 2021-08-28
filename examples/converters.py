@@ -7,7 +7,7 @@ from nextcord.ext import commands
 intents = nextcord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'), intents=intents)
+bot = commands.Bot(command_prefix='$', intents=intents)
 
 
 @bot.command()
