@@ -70,24 +70,6 @@ Please note that on Linux installing voice you must install the following packag
 * libffi-dev (or ``libffi-devel`` on some systems)
 * python-dev (e.g. ``python3.6-dev`` for Python 3.6)
 
-Quick Example
---------------
-
-.. code:: py
-
-    from nextcord.ext import commands
-
-    class MyBot(commands.Bot):
-        async def on_ready(self):
-            print('Logged on as', self.user)
-
-
-    bot = MyBot()
-    bot.run('token')
-
-    @bot.command()
-    async def ping(ctx: commands.Context):
-        await ctx.send('pong')
 
 Bot Example
 ~~~~~~~~~~~~~
