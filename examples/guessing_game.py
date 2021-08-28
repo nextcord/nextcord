@@ -9,7 +9,6 @@ class MyBot(commands.Bot):
         print('------')
 
 bot = MyBot(command_prefix=commands.when_mentioned_or('$'))
-bot.run('token')
 
 @bot.command()
 async def guess(ctx: commands.Context):
@@ -29,3 +28,5 @@ async def guess(ctx: commands.Context):
         await ctx.send('You are right!')
     else:
         await ctx.send(f'Oops. It is actually {answer}.')
+
+bot.run('token')

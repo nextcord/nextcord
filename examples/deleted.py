@@ -12,7 +12,6 @@ class MyBot(commands.Bot):
         await message.channel.send(msg)
 
 bot = MyBot(command_prefix=commands.when_mentioned_or('$'))
-bot.run('token')
 
 @bot.command()
 async def deleteme(ctx: commands.Context):
@@ -22,3 +21,4 @@ async def deleteme(ctx: commands.Context):
     # this also works
     await ctx.send('Goodbye in 3 seconds...', delete_after=3.0)
 
+bot.run('token')

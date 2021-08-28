@@ -6,8 +6,9 @@ class MyBot(commands.Bot):
         print('------')
 
 bot = MyBot(command_prefix=commands.when_mentioned_or('$'))
-bot.run('token')
 
 @bot.command()
 async def hello(ctx: commands.Context):
     await ctx.reply('Hello!')
+
+bot.run('token')
