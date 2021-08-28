@@ -109,6 +109,7 @@ Bot Example
     bot.run('token')
 
 You can find more examples in the examples directory.
+**NOTE: It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should store it externally.**
 
 Links
 ------
