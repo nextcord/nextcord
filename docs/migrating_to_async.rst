@@ -270,7 +270,7 @@ in the function signature.
 Running the Client
 --------------------
 
-In earlier versions of discord.py, ``client.run()`` was a blocking call to the main thread
+In earlier versions of nextcord, ``client.run()`` was a blocking call to the main thread
 that called it. In v0.10.0 it is still a blocking call but it handles the event loop for you.
 However, in order to do that you must pass in your credentials to :meth:`Client.run`.
 

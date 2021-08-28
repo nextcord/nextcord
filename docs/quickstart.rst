@@ -37,7 +37,7 @@ It looks something like this:
 
     client.run('your token here')
 
-Let's name this file ``example_bot.py``. Make sure not to name it ``discord.py`` as that'll conflict
+Let's name this file ``example_bot.py``. Make sure not to name it ``nextcord`` as that'll conflict
 with the library.
 
 There's a lot going on here, so let's walk you through it step by step.

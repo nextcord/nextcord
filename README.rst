@@ -1,8 +1,8 @@
-discord.py
-==========
+nextcord
+========
 
 .. image:: https://discord.com/api/guilds/881118111967883295/embed.png
-   :target: https://discord.gg/zbBrMfbYjB
+   :target: https://discord.gg/ZebatWssCB
    :alt: Discord server invite
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
    :target: https://pypi.python.org/pypi/nextcord
@@ -16,7 +16,7 @@ A modern, easy to use, feature-rich, and async ready API wrapper for Discord wri
 Fork notice
 --------------------------
 
-This is a fork of discord.py with continued support and features.
+This is a fork of nextcord with continued support and features.
 
 Key Features
 -------------
@@ -35,28 +35,28 @@ To install the library without full voice support, you can just run the followin
 .. code:: sh
 
     # Linux/macOS
-    python3 -m pip install -U discord.py
+    python3 -m pip install -U nextcord
 
     # Windows
-    py -3 -m pip install -U discord.py
+    py -3 -m pip install -U nextcord
 
 Otherwise to get voice support you should run the following command:
 
 .. code:: sh
 
     # Linux/macOS
-    python3 -m pip install -U "discord.py[voice]"
+    python3 -m pip install -U "nextcord[voice]"
 
     # Windows
-    py -3 -m pip install -U discord.py[voice]
+    py -3 -m pip install -U nextcord[voice]
 
 
 To install the development version, do the following:
 
 .. code:: sh
 
-    $ git clone https://github.com/Rapptz/discord.py
-    $ cd discord.py
+    $ git clone https://github.com/nextcord/nextcord/
+    $ cd nextcord
     $ python3 -m pip install -U .[voice]
 
 
@@ -113,6 +113,6 @@ You can find more examples in the examples directory.
 Links
 ------
 
-- `Documentation <https://discordpy.readthedocs.io/en/latest/index.html>`_
-- `Official Discord Server <https://discord.gg/r3sSKJJ>`_
+- `Documentation <https://nextcord.readthedocs.io/en/latest/>`_
+- `Official Discord Server <https://discord.gg/ZebatWssCB>`_
 - `Discord API <https://discord.gg/discord-api>`_

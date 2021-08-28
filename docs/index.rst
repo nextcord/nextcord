@@ -1,15 +1,15 @@
-.. discord.py documentation master file, created by
+.. nextcord documentation master file, created by
    sphinx-quickstart on Fri Aug 21 05:43:30 2015.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to discord.py
+Welcome to nextcord
 ===========================
 
 .. image:: /images/snake.svg
 .. image:: /images/snake_dark.svg
 
-discord.py is a modern, easy to use, feature-rich, and async ready API wrapper
+nextcord is a modern, easy to use, feature-rich, and async ready API wrapper
 for Discord.
 
 **Features:**
