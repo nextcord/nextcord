@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Type, TypeVar, TYPE_CHECKING
 
-import discord.abc
+from . import abc
 from .asset import Asset
 from .colour import Colour
 from .enums import DefaultAvatar
@@ -394,7 +394,7 @@ class ClientUser(BaseUser):
         return ClientUser(state=self._state, data=data)
 
 
-class User(BaseUser, discord.abc.Messageable):
+class User(BaseUser, abc.Messageable):
     """Represents a Discord user.
 
     .. container:: operations
