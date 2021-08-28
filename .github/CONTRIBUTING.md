@@ -13,6 +13,7 @@ Generally speaking questions are better suited in our resources below.
 - [The FAQ in the documentation](https://nextcord.readthedocs.io/en/latest/faq.html)
 - [StackOverflow's `nextcord` tag](https://stackoverflow.com/questions/tagged/nextcord)
 - [StackOverflow's `discord.py` tag](https://stackoverflow.com/questions/tagged/discord.py)
+- [The discussions page](https://github.com/nextcord/nextcord/discussions)
 
 Please try your best not to ask questions in our issue tracker. Most of them don't belong there unless they provide value to a larger audience.
 
