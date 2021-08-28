@@ -4,7 +4,7 @@ import nextcord
 from nextcord.ext import commands
 
 
-class MyClient(nextcord.Client):
+class MyClient(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -83,5 +83,5 @@ class MyClient(nextcord.Client):
 intents = nextcord.Intents.default()
 intents.members = True
 
-client = MyClient(intents=intents)
+client = MyClient(command_prefix=commands.when_mentioned_or('$'), intents=intents)
 client.run('token')

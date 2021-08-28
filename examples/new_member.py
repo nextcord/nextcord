@@ -1,12 +1,14 @@
 # This example requires the 'members' privileged intents
 import nextcord
 
-class MyClient(nextcord.Client):
+from nextcord.ext import commands
+
+class Bot(commands.Bot):
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
 
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: nextcord.Member):
         guild = member.guild
         if guild.system_channel is not None:
             to_send = f'Welcome {member.mention} to {guild.name}!'
@@ -16,5 +18,5 @@ class MyClient(nextcord.Client):
 intents = nextcord.Intents.default()
 intents.members = True
 
-client = MyClient(intents=intents)
-client.run('token')
+bot = Bot(command_prefix=commands.when_mentioned_or('$'), intents=intents)
+bot.run('token')

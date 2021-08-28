@@ -119,7 +119,7 @@ class TicTacToe(nextcord.ui.View):
         return None
 
 
-class TicTacToeBot(commands.Bot):
+class Bot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=commands.when_mentioned_or('$'))
 
@@ -128,7 +128,7 @@ class TicTacToeBot(commands.Bot):
         print('------')
 
 
-bot = TicTacToeBot()
+bot = Bot()
 
 
 @bot.command()

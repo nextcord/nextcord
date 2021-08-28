@@ -3,7 +3,7 @@ import nextcord
 from nextcord.ext import commands
 from urllib.parse import quote_plus
 
-class GoogleBot(commands.Bot):
+class Bot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=commands.when_mentioned_or('$'))
 
@@ -27,7 +27,7 @@ class Google(nextcord.ui.View):
         self.add_item(nextcord.ui.Button(label='Click Here', url=url))
 
 
-bot = GoogleBot()
+bot = Bot()
 
 
 @bot.command()

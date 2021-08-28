@@ -3,7 +3,7 @@ import nextcord
 from nextcord.ext import commands
 
 
-class EphemeralCounterBot(commands.Bot):
+class Bot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=commands.when_mentioned_or('$'))
 
@@ -38,7 +38,7 @@ class EphemeralCounter(nextcord.ui.View):
         # ephemeral=True makes the message hidden from everyone except the button presser
         await interaction.response.send_message('Enjoy!', view=Counter(), ephemeral=True)
 
-bot = EphemeralCounterBot()
+bot = Bot()
 
 @bot.command()
 async def counter(ctx: commands.Context):

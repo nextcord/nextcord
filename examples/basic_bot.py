@@ -12,7 +12,7 @@ There are a number of utility commands being showcased here.'''
 intents = nextcord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix='?', description=description, intents=intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'), description=description, intents=intents)
 
 @bot.event
 async def on_ready():
@@ -20,12 +20,12 @@ async def on_ready():
     print('------')
 
 @bot.command()
-async def add(ctx, left: int, right: int):
+async def add(ctx: commands.Context, left: int, right: int):
     """Adds two numbers together."""
     await ctx.send(left + right)
 
 @bot.command()
-async def roll(ctx, dice: str):
+async def roll(ctx: commands.Context, dice: str):
     """Rolls a dice in NdN format."""
     try:
         rolls, limit = map(int, dice.split('d'))
@@ -37,23 +37,23 @@ async def roll(ctx, dice: str):
     await ctx.send(result)
 
 @bot.command(description='For when you wanna settle the score some other way')
-async def choose(ctx, *choices: str):
+async def choose(ctx: commands.Context, *choices: str):
     """Chooses between multiple choices."""
     await ctx.send(random.choice(choices))
 
 @bot.command()
-async def repeat(ctx, times: int, content='repeating...'):
+async def repeat(ctx: commands.Context, times: int, content='repeating...'):
     """Repeats a message multiple times."""
     for i in range(times):
         await ctx.send(content)
 
 @bot.command()
-async def joined(ctx, member: nextcord.Member):
+async def joined(ctx: commands.Context, member: nextcord.Member):
     """Says when a member joined."""
     await ctx.send(f'{member.name} joined in {member.joined_at}')
 
 @bot.group()
-async def cool(ctx):
+async def cool(ctx: commands.Context):
     """Says if a user is cool.
 
     In reality this just checks if a subcommand is being invoked.
@@ -62,7 +62,7 @@ async def cool(ctx):
         await ctx.send(f'No, {ctx.subcommand_passed} is not cool')
 
 @cool.command(name='bot')
-async def _bot(ctx):
+async def _bot(ctx: commands.Context):
     """Is the bot cool?"""
     await ctx.send('Yes, the bot is cool.')
 

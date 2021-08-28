@@ -1,9 +1,7 @@
-import nextcord
-
 from nextcord.ext import commands, tasks
 
 
-class MyClient(nextcord.Client):
+class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -27,5 +25,6 @@ class MyClient(nextcord.Client):
     async def before_my_task(self):
         await self.wait_until_ready() # wait until the bot logs in
 
-client = MyClient()
-client.run('token')
+bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+
+bot.run('token')

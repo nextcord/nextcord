@@ -4,7 +4,7 @@ import asyncio
 from nextcord.ext import commands
 
 
-class MyClient(nextcord.Client):
+class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -25,5 +25,5 @@ class MyClient(nextcord.Client):
             await asyncio.sleep(60) # task runs every 60 seconds
 
 
-client = MyClient()
-client.run('token')
+bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+bot.run('token')

@@ -3,7 +3,7 @@ import nextcord
 from nextcord.ext import commands
 
 
-class CounterBot(commands.Bot):
+class Bot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=commands.when_mentioned_or('$'))
 
@@ -31,7 +31,7 @@ class Counter(nextcord.ui.View):
         await interaction.response.edit_message(view=self)
 
 
-bot = CounterBot()
+bot = Bot()
 
 
 @bot.command()
