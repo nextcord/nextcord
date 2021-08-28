@@ -60,8 +60,8 @@ These pages go into great detail about everything the API can do.
   :maxdepth: 1
 
   api
-  discord.ext.commands API Reference <ext/commands/api.rst>
-  discord.ext.tasks API Reference <ext/tasks/index.rst>
+  nextcord.ext.commands API Reference <ext/commands/api.rst>
+  nextcord.ext.tasks API Reference <ext/tasks/index.rst>
 
 Meta
 ------

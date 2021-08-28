@@ -24,15 +24,15 @@ out and can be any of ``CRITICAL``, ``ERROR``, ``WARNING``, ``INFO``, and
 ``DEBUG`` and if not specified defaults to ``WARNING``.
 
 More advanced setups are possible with the :mod:`logging` module. For
-example to write the logs to a file called ``discord.log`` instead of
+example to write the logs to a file called ``nextcord.log`` instead of
 outputting them to the console the following snippet can be used::
 
-    import discord
+    import nextcord
     import logging
 
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+    handler = logging.FileHandler(filename='nextcord.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
 

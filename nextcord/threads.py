@@ -320,17 +320,17 @@ class Thread(Messageable, Hashable):
         return parent is not None and parent.is_nsfw()
 
     def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
-        """Handles permission resolution for the :class:`~discord.Member`
-        or :class:`~discord.Role`.
+        """Handles permission resolution for the :class:`~nextcord.Member`
+        or :class:`~nextcord.Role`.
 
         Since threads do not have their own permissions, they inherit them
         from the parent channel. This is a convenience method for
-        calling :meth:`~discord.TextChannel.permissions_for` on the
+        calling :meth:`~nextcord.TextChannel.permissions_for` on the
         parent channel.
 
         Parameters
         ----------
-        obj: Union[:class:`~discord.Member`, :class:`~discord.Role`]
+        obj: Union[:class:`~nextcord.Member`, :class:`~nextcord.Role`]
             The object to resolve permissions for. This could be either
             a member or a role. If it's a role then member overwrites
             are not computed.
@@ -342,7 +342,7 @@ class Thread(Messageable, Hashable):
 
         Returns
         -------
-        :class:`~discord.Permissions`
+        :class:`~nextcord.Permissions`
             The resolved permissions for the member or role.
         """
 

@@ -1,6 +1,6 @@
 .. _discord_ext_tasks:
 
-``discord.ext.tasks`` -- asyncio.Task helpers
+``nextcord.ext.tasks`` -- asyncio.Task helpers
 ====================================================
 
 .. versionadded:: 1.1.0
@@ -16,11 +16,11 @@ The goal of this nextcord extension is to abstract all these worries away from y
 Recipes
 ---------
 
-A simple background task in a :class:`~discord.ext.commands.Cog`:
+A simple background task in a :class:`~nextcord.ext.commands.Cog`:
 
 .. code-block:: python3
 
-    from discord.ext import tasks, commands
+    from nextcord.ext import tasks, commands
 
     class MyCog(commands.Cog):
         def __init__(self):
@@ -40,7 +40,7 @@ Adding an exception to handle during reconnect:
 .. code-block:: python3
 
     import asyncpg
-    from discord.ext import tasks, commands
+    from nextcord.ext import tasks, commands
 
     class MyCog(commands.Cog):
         def __init__(self, bot):
@@ -62,7 +62,7 @@ Looping a certain amount of times before exiting:
 
 .. code-block:: python3
 
-    from discord.ext import tasks
+    from nextcord.ext import tasks
 
     @tasks.loop(seconds=5.0, count=5)
     async def slow_count():
@@ -78,7 +78,7 @@ Waiting until the bot is ready before the loop starts:
 
 .. code-block:: python3
 
-    from discord.ext import tasks, commands
+    from nextcord.ext import tasks, commands
 
     class MyCog(commands.Cog):
         def __init__(self, bot):
@@ -103,7 +103,7 @@ Doing something during cancellation:
 
 .. code-block:: python3
 
-    from discord.ext import tasks, commands
+    from nextcord.ext import tasks, commands
     import asyncio
 
     class MyCog(commands.Cog):
@@ -135,9 +135,9 @@ Doing something during cancellation:
 API Reference
 ---------------
 
-.. attributetable:: discord.ext.tasks.Loop
+.. attributetable:: nextcord.ext.tasks.Loop
 
-.. autoclass:: discord.ext.tasks.Loop()
+.. autoclass:: nextcord.ext.tasks.Loop()
     :members:
     :special-members: __call__
     :exclude-members: after_loop, before_loop, error
@@ -151,4 +151,4 @@ API Reference
     .. automethod:: Loop.error()
         :decorator:
 
-.. autofunction:: discord.ext.tasks.loop
+.. autofunction:: nextcord.ext.tasks.loop

@@ -367,7 +367,7 @@ class SyncWebhookMessage(Message):
     This allows you to edit or delete a message sent by your
     webhook.
 
-    This inherits from :class:`discord.Message` with changes to
+    This inherits from :class:`nextcord.Message` with changes to
     :meth:`edit` and :meth:`delete` to work.
 
     .. versionadded:: 2.0
@@ -856,7 +856,7 @@ class SyncWebhook(BaseWebhook):
             Controls the mentions being processed in this message.
 
             .. versionadded:: 1.4
-        thread: :class:`~discord.abc.Snowflake`
+        thread: :class:`~nextcord.abc.Snowflake`
             The thread to send this message to.
 
             .. versionadded:: 2.0
@@ -920,7 +920,7 @@ class SyncWebhook(BaseWebhook):
             return self._create_message(data)
 
     def fetch_message(self, id: int, /) -> SyncWebhookMessage:
-        """Retrieves a single :class:`~discord.SyncWebhookMessage` owned by this webhook.
+        """Retrieves a single :class:`~nextcord.SyncWebhookMessage` owned by this webhook.
 
         .. versionadded:: 2.0
 
@@ -931,18 +931,18 @@ class SyncWebhook(BaseWebhook):
 
         Raises
         --------
-        ~discord.NotFound
+        ~nextcord.NotFound
             The specified message was not found.
-        ~discord.Forbidden
+        ~nextcord.Forbidden
             You do not have the permissions required to get a message.
-        ~discord.HTTPException
+        ~nextcord.HTTPException
             Retrieving the message failed.
         InvalidArgument
             There was no token associated with this webhook.
 
         Returns
         --------
-        :class:`~discord.SyncWebhookMessage`
+        :class:`~nextcord.SyncWebhookMessage`
             The message asked for.
         """
 

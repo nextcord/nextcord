@@ -99,9 +99,9 @@ A quick example to showcase how events work:
 
 .. code-block:: python3
 
-    import discord
+    import nextcord
 
-    class MyClient(discord.Client):
+    class MyClient(nextcord.Client):
         async def on_ready(self):
             print(f'Logged on as {self.user}!')
 

@@ -87,8 +87,8 @@ async def notify(ctx: commands.Context, target: ChannelOrMemberConverter):
 async def ignore(ctx: commands.Context, target: typing.Union[nextcord.Member, nextcord.TextChannel]):
     # This command signature utilises the `typing.Union` typehint.
     # The `commands` framework attempts a conversion of each type in this Union *in order*.
-    # So, it will attempt to convert whatever is passed to `target` to a `discord.Member` instance.
-    # If that fails, it will attempt to convert it to a `discord.TextChannel` instance.
+    # So, it will attempt to convert whatever is passed to `target` to a `nextcord.Member` instance.
+    # If that fails, it will attempt to convert it to a `nextcord.TextChannel` instance.
     # See: https://nextcord.readthedocs.io/en/latest/ext/commands/commands.html#typing-union
     # NOTE: If a Union typehint converter fails it will raise `commands.BadUnionArgument`
     # instead of `commands.BadArgument`.

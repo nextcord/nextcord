@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import inspect
-import discord.utils
+import nextcord.utils
 
 from typing import Any, Callable, ClassVar, Dict, Generator, List, Optional, TYPE_CHECKING, Tuple, TypeVar, Type
 
@@ -43,7 +43,7 @@ __all__ = (
 CogT = TypeVar('CogT', bound='Cog')
 FuncT = TypeVar('FuncT', bound=Callable[..., Any])
 
-MISSING: Any = discord.utils.MISSING
+MISSING: Any = nextcord.utils.MISSING
 
 class CogMeta(type):
     """A metaclass for defining a cog.
@@ -357,7 +357,7 @@ class Cog(metaclass=CogMeta):
 
     @_cog_special_method
     def cog_check(self, ctx: Context) -> bool:
-        """A special method that registers as a :func:`~discord.ext.commands.check`
+        """A special method that registers as a :func:`~nextcord.ext.commands.check`
         for every command and subcommand in this cog.
 
         This function **can** be a coroutine and must take a sole parameter,

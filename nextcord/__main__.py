@@ -26,7 +26,7 @@ import argparse
 import sys
 from pathlib import Path
 
-import discord
+import nextcord
 import pkg_resources
 import aiohttp
 import platform
@@ -35,7 +35,7 @@ def show_version():
     entries = []
 
     entries.append('- Python v{0.major}.{0.minor}.{0.micro}-{0.releaselevel}'.format(sys.version_info))
-    version_info = discord.version_info
+    version_info = nextcord.version_info
     entries.append('- nextcord v{0.major}.{0.minor}.{0.micro}-{0.releaselevel}'.format(version_info))
     if version_info.releaselevel != 'final':
         pkg = pkg_resources.get_distribution('nextcord')
@@ -53,8 +53,8 @@ def core(parser, args):
 
 _bot_template = """#!/usr/bin/env python3
 
-from discord.ext import commands
-import discord
+from nextcord.ext import commands
+import nextcord
 import config
 
 class Bot(commands.{base}):
@@ -107,8 +107,8 @@ var/
 config.py
 """
 
-_cog_template = '''from discord.ext import commands
-import discord
+_cog_template = '''from nextcord.ext import commands
+import nextcord
 
 class {name}(commands.Cog{attrs}):
     """The description for {name} goes here."""

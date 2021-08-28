@@ -18,7 +18,7 @@ An example extension looks like this:
     :caption: hello.py
     :emphasize-lines: 7,8
 
-    from discord.ext import commands
+    from nextcord.ext import commands
 
     @commands.command()
     async def hello(ctx):

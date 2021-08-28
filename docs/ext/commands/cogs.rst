@@ -36,7 +36,7 @@ This example cog defines a ``Greetings`` category for your commands, with a sing
                 await channel.send(f'Welcome {member.mention}.')
 
         @commands.command()
-        async def hello(self, ctx, *, member: discord.Member = None):
+        async def hello(self, ctx, *, member: nextcord.Member = None):
             """Says hello"""
             member = member or ctx.author
             if self._last_member is None or self._last_member.id != member.id:

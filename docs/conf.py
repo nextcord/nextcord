@@ -89,7 +89,7 @@ copyright = '2015-present, Rapptz'
 # The short X.Y version.
 
 version = ''
-with open('../discord/__init__.py') as f:
+with open('../nextcord/__init__.py') as f:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
 
 # The full version, including alpha/beta/rc tags.
@@ -161,8 +161,8 @@ html_theme = 'basic'
 html_context = {
   'discord_invite': 'https://discord.gg/ZebatWssCB',
   'discord_extensions': [
-    ('discord.ext.commands', 'ext/commands'),
-    ('discord.ext.tasks', 'ext/tasks'),
+    ('nextcord.ext.commands', 'ext/commands'),
+    ('nextcord.ext.tasks', 'ext/tasks'),
   ],
 }
 

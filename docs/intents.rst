@@ -23,15 +23,15 @@ For example, if you want a bot that functions without spammy events like presenc
 .. code-block:: python3
    :emphasize-lines: 7,9,10
 
-    import discord
-    intents = discord.Intents.default()
+    import nextcord
+    intents = nextcord.Intents.default()
     intents.typing = False
     intents.presences = False
 
     # Somewhere else:
-    # client = discord.Client(intents=intents)
+    # client = nextcord.Client(intents=intents)
     # or
-    # from discord.ext import commands
+    # from nextcord.ext import commands
     # bot = commands.Bot(command_prefix='!', intents=intents)
 
 Note that this doesn't enable :attr:`Intents.members` since it's a privileged intent.
@@ -41,15 +41,15 @@ Another example showing a bot that only deals with messages and guild informatio
 .. code-block:: python3
    :emphasize-lines: 7,9,10
 
-    import discord
-    intents = discord.Intents(messages=True, guilds=True)
+    import nextcord
+    intents = nextcord.Intents(messages=True, guilds=True)
     # If you also want reaction events enable the following:
     # intents.reactions = True
 
     # Somewhere else:
-    # client = discord.Client(intents=intents)
+    # client = nextcord.Client(intents=intents)
     # or
-    # from discord.ext import commands
+    # from nextcord.ext import commands
     # bot = commands.Bot(command_prefix='!', intents=intents)
 
 .. _privileged_intents:
@@ -162,14 +162,14 @@ For example:
 .. code-block:: python3
    :emphasize-lines: 3,6,8,9
 
-    import discord
-    intents = discord.Intents.default()
+    import nextcord
+    intents = nextcord.Intents.default()
     intents.members = True
 
     # Somewhere else:
-    # client = discord.Client(intents=intents)
+    # client = nextcord.Client(intents=intents)
     # or
-    # from discord.ext import commands
+    # from nextcord.ext import commands
     # bot = commands.Bot(command_prefix='!', intents=intents)
 
 Why does ``on_ready`` take so long to fire?

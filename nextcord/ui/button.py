@@ -54,7 +54,7 @@ class Button(Item[V]):
 
     Parameters
     ------------
-    style: :class:`discord.ButtonStyle`
+    style: :class:`nextcord.ButtonStyle`
         The style of the button.
     custom_id: Optional[:class:`str`]
         The ID of the button that gets received during an interaction.
@@ -127,7 +127,7 @@ class Button(Item[V]):
 
     @property
     def style(self) -> ButtonStyle:
-        """:class:`discord.ButtonStyle`: The style of the button."""
+        """:class:`nextcord.ButtonStyle`: The style of the button."""
         return self._underlying.style
 
     @style.setter
@@ -238,8 +238,8 @@ def button(
     """A decorator that attaches a button to a component.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`discord.ui.View`, the :class:`discord.ui.Button` being pressed and
-    the :class:`discord.Interaction` you receive.
+    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.Button` being pressed and
+    the :class:`nextcord.Interaction` you receive.
 
     .. note::
 

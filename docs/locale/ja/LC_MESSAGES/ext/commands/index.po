@@ -18,8 +18,8 @@ msgstr ""
 "Language: ja_JP\n"
 
 #: ../../ext/commands/index.rst:4
-msgid "``discord.ext.commands`` -- Bot commands framework"
-msgstr "``discord.ext.commands`` -- ボットコマンドのフレームワーク"
+msgid "``nextcord.ext.commands`` -- Bot commands framework"
+msgstr "``nextcord.ext.commands`` -- ボットコマンドのフレームワーク"
 
 #: ../../ext/commands/index.rst:6
 msgid "``nextcord`` offers a lower level aspect on interacting with Discord. Often times, the library is used for the creation of bots. However this task can be daunting and confusing to get correctly the first time. Many times there comes a repetition in creating a bot command framework that is extensible, flexible, and powerful. For this reason, ``nextcord`` comes with an extension library that handles this for you."

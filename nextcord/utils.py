@@ -245,8 +245,8 @@ def copy_doc(original: Callable) -> Callable[[T], T]:
     return decorator
 
 
-def deprecated(instead: Optional[str] = None) -> Callable[[Callable[P, T]], Callable[P, T]]:
-    def actual_decorator(func: Callable[P, T]) -> Callable[P, T]:
+def deprecated(instead: Optional[str] = None) -> Callable[[Callable[[P], T]], Callable[[P], T]]:
+    def actual_decorator(func: Callable[[P], T]) -> Callable[[P], T]:
         @functools.wraps(func)
         def decorated(*args: P.args, **kwargs: P.kwargs) -> T:
             warnings.simplefilter('always', DeprecationWarning)  # turn off filter
@@ -280,10 +280,10 @@ def oauth_url(
     -----------
     client_id: Union[:class:`int`, :class:`str`]
         The client ID for your bot.
-    permissions: :class:`~discord.Permissions`
+    permissions: :class:`~nextcord.Permissions`
         The permissions you're requesting. If not given then you won't be requesting any
         permissions.
-    guild: :class:`~discord.abc.Snowflake`
+    guild: :class:`~nextcord.abc.Snowflake`
         The guild to pre-select in the authorization screen, if available.
     redirect_uri: :class:`str`
         An optional valid redirect URI.
@@ -362,9 +362,9 @@ def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
     """A helper to return the first element found in the sequence
     that meets the predicate. For example: ::
 
-        member = discord.utils.find(lambda m: m.name == 'Mighty', channel.guild.members)
+        member = nextcord.utils.find(lambda m: m.name == 'Mighty', channel.guild.members)
 
-    would find the first :class:`~discord.Member` whose name is 'Mighty' and return it.
+    would find the first :class:`~nextcord.Member` whose name is 'Mighty' and return it.
     If an entry is not found, then ``None`` is returned.
 
     This is different from :func:`py:filter` due to the fact it stops the moment it finds
@@ -387,7 +387,7 @@ def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
 def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     r"""A helper that returns the first element in the iterable that meets
     all the traits passed in ``attrs``. This is an alternative for
-    :func:`~discord.utils.find`.
+    :func:`~nextcord.utils.find`.
 
     When multiple attributes are specified, they are checked using
     logical AND, not logical OR. Meaning they have to meet every
@@ -406,19 +406,19 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
 
     .. code-block:: python3
 
-        member = discord.utils.get(message.guild.members, name='Foo')
+        member = nextcord.utils.get(message.guild.members, name='Foo')
 
     Multiple attribute matching:
 
     .. code-block:: python3
 
-        channel = discord.utils.get(guild.voice_channels, name='Foo', bitrate=64000)
+        channel = nextcord.utils.get(guild.voice_channels, name='Foo', bitrate=64000)
 
     Nested attribute matching:
 
     .. code-block:: python3
 
-        channel = discord.utils.get(client.get_all_channels(), guild__name='Cool', name='general')
+        channel = nextcord.utils.get(client.get_all_channels(), guild__name='Cool', name='general')
 
     Parameters
     -----------
@@ -643,11 +643,11 @@ def _string_width(string: str, *, _IS_ASCII=_IS_ASCII) -> int:
 
 def resolve_invite(invite: Union[Invite, str]) -> str:
     """
-    Resolves an invite from a :class:`~discord.Invite`, URL or code.
+    Resolves an invite from a :class:`~nextcord.Invite`, URL or code.
 
     Parameters
     -----------
-    invite: Union[:class:`~discord.Invite`, :class:`str`]
+    invite: Union[:class:`~nextcord.Invite`, :class:`str`]
         The invite.
 
     Returns
@@ -669,13 +669,13 @@ def resolve_invite(invite: Union[Invite, str]) -> str:
 
 def resolve_template(code: Union[Template, str]) -> str:
     """
-    Resolves a template code from a :class:`~discord.Template`, URL or code.
+    Resolves a template code from a :class:`~nextcord.Template`, URL or code.
 
     .. versionadded:: 1.4
 
     Parameters
     -----------
-    code: Union[:class:`~discord.Template`, :class:`str`]
+    code: Union[:class:`~nextcord.Template`, :class:`str`]
         The code.
 
     Returns
@@ -793,7 +793,7 @@ def escape_mentions(text: str) -> str:
     .. note::
 
         For more granular control over what mentions should be escaped
-        within messages, refer to the :class:`~discord.AllowedMentions`
+        within messages, refer to the :class:`~nextcord.AllowedMentions`
         class.
 
     Parameters
