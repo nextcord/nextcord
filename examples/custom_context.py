@@ -22,6 +22,9 @@ class MyContext(commands.Context):
 
 
 class Bot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     async def get_context(self, message: nextcord.Message, *, cls=MyContext):
         # when you override this method, you pass your new Context
         # subclass to the super() method, which tells the bot to
@@ -30,6 +33,7 @@ class Bot(commands.Bot):
         
 
 bot = Bot(command_prefix=commands.when_mentioned_or('$'))
+
 
 @bot.command()
 async def guess(ctx: MyContext, number: int):

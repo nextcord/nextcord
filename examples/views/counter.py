@@ -4,8 +4,8 @@ from nextcord.ext import commands
 
 
 class Bot(commands.Bot):
-    def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or('$'))
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
@@ -31,7 +31,7 @@ class Counter(nextcord.ui.View):
         await interaction.response.edit_message(view=self)
 
 
-bot = Bot()
+bot = Bot(command_prefix=commands.when_mentioned_or('$'))
 
 
 @bot.command()

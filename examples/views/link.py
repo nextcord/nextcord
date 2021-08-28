@@ -4,8 +4,8 @@ from nextcord.ext import commands
 from urllib.parse import quote_plus
 
 class Bot(commands.Bot):
-    def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or('$'))
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
@@ -27,7 +27,7 @@ class Google(nextcord.ui.View):
         self.add_item(nextcord.ui.Button(label='Click Here', url=url))
 
 
-bot = Bot()
+bot = Bot(command_prefix=commands.when_mentioned_or('$'))
 
 
 @bot.command()

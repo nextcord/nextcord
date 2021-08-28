@@ -29,8 +29,8 @@ class PersistentView(nextcord.ui.View):
 
 
 class Bot(commands.Bot):
-    def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or('$'))
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.persistent_views_added = False
 
     async def on_ready(self):
@@ -47,7 +47,7 @@ class Bot(commands.Bot):
         print('------')
 
 
-bot = Bot()
+bot = Bot(command_prefix=commands.when_mentioned_or('$'))
 
 
 @bot.command()

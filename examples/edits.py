@@ -4,7 +4,10 @@ import asyncio
 from nextcord.ext import commands
 
 
-class MyClient(commands.Bot):
+class Bot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
@@ -19,7 +22,7 @@ class MyClient(commands.Bot):
         msg = f'**{before.author}** edited their message:\n{before.content} -> {after.content}'
         await before.channel.send(msg)
 
-bot = MyClient(command_prefix=commands.when_mentioned_or('$'))
+bot = Bot(command_prefix=commands.when_mentioned_or('$'))
 
 @bot.command()
 async def editme(ctx: commands.Context):

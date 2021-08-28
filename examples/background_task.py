@@ -26,5 +26,4 @@ class Bot(commands.Bot):
         await self.wait_until_ready() # wait until the bot logs in
 
 bot = Bot(command_prefix=commands.when_mentioned_or('$'))
-
 bot.run('token')
