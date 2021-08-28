@@ -1,6 +1,6 @@
 import nextcord
 
-from nextcord.ext import commands
+from nextcord.ext import commands, tasks
 
 
 class MyClient(nextcord.Client):
