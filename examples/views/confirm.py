@@ -7,10 +7,6 @@ class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
-
 
 # Define a simple View that gives us a confirmation menu
 class Confirm(nextcord.ui.View):

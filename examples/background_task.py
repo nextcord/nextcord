@@ -11,10 +11,6 @@ class Bot(commands.Bot):
         # start the task to run in the background
         self.my_background_task.start()
 
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
-
     @tasks.loop(seconds=60) # task runs every 60 seconds
     async def my_background_task(self):
         channel = self.get_channel(1234567) # channel ID goes here

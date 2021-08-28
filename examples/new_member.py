@@ -7,10 +7,6 @@ class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
-
     async def on_member_join(self, member: nextcord.Member):
         guild = member.guild
         if guild.system_channel is not None:

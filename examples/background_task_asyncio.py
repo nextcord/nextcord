@@ -11,9 +11,6 @@ class Bot(commands.Bot):
         # create the background task and run it in the background
         self.bg_task = self.loop.create_task(self.my_background_task())
 
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
 
     async def my_background_task(self):
         await self.wait_until_ready()
