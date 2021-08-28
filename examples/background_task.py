@@ -1,8 +1,8 @@
-from discord.ext import tasks
+from nextcord.ext import tasks
 
-import discord
+import nextcord
 
-class MyClient(discord.Client):
+class MyClient(nextcord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

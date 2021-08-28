@@ -35,7 +35,7 @@ import traceback
 import types
 from typing import Any, Callable, Mapping, List, Dict, TYPE_CHECKING, Optional, TypeVar, Type, Union
 
-import discord
+import nextcord
 
 from .core import GroupMixin
 from .view import StringView
@@ -47,7 +47,7 @@ from .cog import Cog
 if TYPE_CHECKING:
     import importlib.machinery
 
-    from discord.message import Message
+    from nextcord.message import Message
     from ._types import (
         Check,
         CoroFunc,
@@ -60,7 +60,7 @@ __all__ = (
     'AutoShardedBot',
 )
 
-MISSING: Any = discord.utils.MISSING
+MISSING: Any = nextcord.utils.MISSING
 
 T = TypeVar('T')
 CFT = TypeVar('CFT', bound='CoroFunc')
@@ -156,7 +156,7 @@ class BotBase(GroupMixin):
         for event in self.extra_events.get(ev, []):
             self._schedule_event(event, ev, *args, **kwargs)  # type: ignore
 
-    @discord.utils.copy_doc(discord.Client.close)
+    @nextcord.utils.copy_doc(nextcord.Client.close)
     async def close(self) -> None:
         for extension in tuple(self.__extensions):
             try:
@@ -313,12 +313,12 @@ class BotBase(GroupMixin):
             return True
 
         # type-checker doesn't distinguish between functions and methods
-        return await discord.utils.async_all(f(ctx) for f in data)  # type: ignore
+        return await nextcord.utils.async_all(f(ctx) for f in data)  # type: ignore
 
-    async def is_owner(self, user: discord.User) -> bool:
+    async def is_owner(self, user: nextcord.User) -> bool:
         """|coro|
 
-        Checks if a :class:`~discord.User` or :class:`~discord.Member` is the owner of
+        Checks if a :class:`~nextcord.User` or :class:`~nextcord.Member` is the owner of
         this bot.
 
         If an :attr:`owner_id` is not set, it is fetched automatically
@@ -548,7 +548,7 @@ class BotBase(GroupMixin):
 
         if existing is not None:
             if not override:
-                raise discord.ClientException(f'Cog named {cog_name!r} already loaded')
+                raise nextcord.ClientException(f'Cog named {cog_name!r} already loaded')
             self.remove_cog(cog_name)
 
         cog = cog._inject(self)
@@ -871,7 +871,7 @@ class BotBase(GroupMixin):
 
         Parameters
         -----------
-        message: :class:`discord.Message`
+        message: :class:`nextcord.Message`
             The message context to get the prefix of.
 
         Returns
@@ -882,7 +882,7 @@ class BotBase(GroupMixin):
         """
         prefix = ret = self.command_prefix
         if callable(prefix):
-            ret = await discord.utils.maybe_coroutine(prefix, self, message)
+            ret = await nextcord.utils.maybe_coroutine(prefix, self, message)
 
         if not isinstance(ret, str):
             try:
@@ -916,7 +916,7 @@ class BotBase(GroupMixin):
 
         Parameters
         -----------
-        message: :class:`discord.Message`
+        message: :class:`nextcord.Message`
             The message to get the invocation context from.
         cls
             The factory class that will be used to create the context.
@@ -948,7 +948,7 @@ class BotBase(GroupMixin):
                 # if the context class' __init__ consumes something from the view this
                 # will be wrong.  That seems unreasonable though.
                 if message.content.startswith(tuple(prefix)):
-                    invoked_prefix = discord.utils.find(view.skip_string, prefix)
+                    invoked_prefix = nextcord.utils.find(view.skip_string, prefix)
                 else:
                     return ctx
 
@@ -1021,7 +1021,7 @@ class BotBase(GroupMixin):
 
         Parameters
         -----------
-        message: :class:`discord.Message`
+        message: :class:`nextcord.Message`
             The message to process commands for.
         """
         if message.author.bot:
@@ -1033,11 +1033,11 @@ class BotBase(GroupMixin):
     async def on_message(self, message):
         await self.process_commands(message)
 
-class Bot(BotBase, discord.Client):
+class Bot(BotBase, nextcord.Client):
     """Represents a discord bot.
 
-    This class is a subclass of :class:`discord.Client` and as a result
-    anything that you can do with a :class:`discord.Client` you can do with
+    This class is a subclass of :class:`nextcord.Client` and as a result
+    anything that you can do with a :class:`nextcord.Client` you can do with
     this bot.
 
     This class also subclasses :class:`.GroupMixin` to provide the functionality
@@ -1049,7 +1049,7 @@ class Bot(BotBase, discord.Client):
         The command prefix is what the message content must contain initially
         to have a command invoked. This prefix could either be a string to
         indicate what the prefix should be, or a callable that takes in the bot
-        as its first parameter and :class:`discord.Message` as its second
+        as its first parameter and :class:`nextcord.Message` as its second
         parameter and returns the prefix. This is to facilitate "dynamic"
         command prefixes. This callable can be either a regular function or
         a coroutine.
@@ -1105,8 +1105,8 @@ class Bot(BotBase, discord.Client):
     """
     pass
 
-class AutoShardedBot(BotBase, discord.AutoShardedClient):
+class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
     """This is similar to :class:`.Bot` except that it is inherited from
-    :class:`discord.AutoShardedClient` instead.
+    :class:`nextcord.AutoShardedClient` instead.
     """
     pass

@@ -13,9 +13,9 @@ Bots
 Bot
 ~~~~
 
-.. attributetable:: discord.ext.commands.Bot
+.. attributetable:: nextcord.ext.commands.Bot
 
-.. autoclass:: discord.ext.commands.Bot
+.. autoclass:: nextcord.ext.commands.Bot
     :members:
     :inherited-members:
     :exclude-members: after_invoke, before_invoke, check, check_once, command, event, group, listen
@@ -47,17 +47,17 @@ Bot
 AutoShardedBot
 ~~~~~~~~~~~~~~~~
 
-.. attributetable:: discord.ext.commands.AutoShardedBot
+.. attributetable:: nextcord.ext.commands.AutoShardedBot
 
-.. autoclass:: discord.ext.commands.AutoShardedBot
+.. autoclass:: nextcord.ext.commands.AutoShardedBot
     :members:
 
 Prefix Helpers
 ----------------
 
-.. autofunction:: discord.ext.commands.when_mentioned
+.. autofunction:: nextcord.ext.commands.when_mentioned
 
-.. autofunction:: discord.ext.commands.when_mentioned_or
+.. autofunction:: nextcord.ext.commands.when_mentioned_or
 
 .. _ext_commands_api_events:
 
@@ -67,7 +67,7 @@ Event Reference
 These events function similar to :ref:`the regular events <discord-api-events>`, except they
 are custom to the command extension module.
 
-.. function:: discord.ext.commands.on_command_error(ctx, error)
+.. function:: nextcord.ext.commands.on_command_error(ctx, error)
 
     An error handler that is called when an error is raised
     inside a command either through user input error, check
@@ -80,7 +80,7 @@ are custom to the command extension module.
     :param error: The error that was raised.
     :type error: :class:`.CommandError` derived
 
-.. function:: discord.ext.commands.on_command(ctx)
+.. function:: nextcord.ext.commands.on_command(ctx)
 
     An event that is called when a command is found and is about to be invoked.
 
@@ -90,7 +90,7 @@ are custom to the command extension module.
     :param ctx: The invocation context.
     :type ctx: :class:`.Context`
 
-.. function:: discord.ext.commands.on_command_completion(ctx)
+.. function:: nextcord.ext.commands.on_command_completion(ctx)
 
     An event that is called when a command has completed its invocation.
 
@@ -108,18 +108,18 @@ Commands
 Decorators
 ~~~~~~~~~~~~
 
-.. autofunction:: discord.ext.commands.command
+.. autofunction:: nextcord.ext.commands.command
     :decorator:
 
-.. autofunction:: discord.ext.commands.group
+.. autofunction:: nextcord.ext.commands.group
     :decorator:
 
 Command
 ~~~~~~~~~
 
-.. attributetable:: discord.ext.commands.Command
+.. attributetable:: nextcord.ext.commands.Command
 
-.. autoclass:: discord.ext.commands.Command
+.. autoclass:: nextcord.ext.commands.Command
     :members:
     :special-members: __call__
     :exclude-members: after_invoke, before_invoke, error
@@ -136,9 +136,9 @@ Command
 Group
 ~~~~~~
 
-.. attributetable:: discord.ext.commands.Group
+.. attributetable:: nextcord.ext.commands.Group
 
-.. autoclass:: discord.ext.commands.Group
+.. autoclass:: nextcord.ext.commands.Group
     :members:
     :inherited-members:
     :exclude-members: after_invoke, before_invoke, command, error, group
@@ -161,9 +161,9 @@ Group
 GroupMixin
 ~~~~~~~~~~~
 
-.. attributetable:: discord.ext.commands.GroupMixin
+.. attributetable:: nextcord.ext.commands.GroupMixin
 
-.. autoclass:: discord.ext.commands.GroupMixin
+.. autoclass:: nextcord.ext.commands.GroupMixin
     :members:
     :exclude-members: command, group
 
@@ -181,17 +181,17 @@ Cogs
 Cog
 ~~~~
 
-.. attributetable:: discord.ext.commands.Cog
+.. attributetable:: nextcord.ext.commands.Cog
 
-.. autoclass:: discord.ext.commands.Cog
+.. autoclass:: nextcord.ext.commands.Cog
     :members:
 
 CogMeta
 ~~~~~~~~
 
-.. attributetable:: discord.ext.commands.CogMeta
+.. attributetable:: nextcord.ext.commands.CogMeta
 
-.. autoclass:: discord.ext.commands.CogMeta
+.. autoclass:: nextcord.ext.commands.CogMeta
     :members:
 
 .. _ext_commands_help_command:
@@ -202,42 +202,42 @@ Help Commands
 HelpCommand
 ~~~~~~~~~~~~
 
-.. attributetable:: discord.ext.commands.HelpCommand
+.. attributetable:: nextcord.ext.commands.HelpCommand
 
-.. autoclass:: discord.ext.commands.HelpCommand
+.. autoclass:: nextcord.ext.commands.HelpCommand
     :members:
 
 DefaultHelpCommand
 ~~~~~~~~~~~~~~~~~~~
 
-.. attributetable:: discord.ext.commands.DefaultHelpCommand
+.. attributetable:: nextcord.ext.commands.DefaultHelpCommand
 
-.. autoclass:: discord.ext.commands.DefaultHelpCommand
+.. autoclass:: nextcord.ext.commands.DefaultHelpCommand
     :members:
     :exclude-members: send_bot_help, send_cog_help, send_group_help, send_command_help, prepare_help_command
 
 MinimalHelpCommand
 ~~~~~~~~~~~~~~~~~~~
 
-.. attributetable:: discord.ext.commands.MinimalHelpCommand
+.. attributetable:: nextcord.ext.commands.MinimalHelpCommand
 
-.. autoclass:: discord.ext.commands.MinimalHelpCommand
+.. autoclass:: nextcord.ext.commands.MinimalHelpCommand
     :members:
     :exclude-members: send_bot_help, send_cog_help, send_group_help, send_command_help, prepare_help_command
 
 Paginator
 ~~~~~~~~~~
 
-.. attributetable:: discord.ext.commands.Paginator
+.. attributetable:: nextcord.ext.commands.Paginator
 
-.. autoclass:: discord.ext.commands.Paginator
+.. autoclass:: nextcord.ext.commands.Paginator
     :members:
 
 Enums
 ------
 
 .. class:: BucketType
-    :module: discord.ext.commands
+    :module: nextcord.ext.commands
 
     Specifies a type of bucket for, e.g. a cooldown.
 
@@ -271,61 +271,61 @@ Enums
 Checks
 -------
 
-.. autofunction:: discord.ext.commands.check(predicate)
+.. autofunction:: nextcord.ext.commands.check(predicate)
     :decorator:
 
-.. autofunction:: discord.ext.commands.check_any(*checks)
+.. autofunction:: nextcord.ext.commands.check_any(*checks)
     :decorator:
 
-.. autofunction:: discord.ext.commands.has_role(item)
+.. autofunction:: nextcord.ext.commands.has_role(item)
     :decorator:
 
-.. autofunction:: discord.ext.commands.has_permissions(**perms)
+.. autofunction:: nextcord.ext.commands.has_permissions(**perms)
     :decorator:
 
-.. autofunction:: discord.ext.commands.has_guild_permissions(**perms)
+.. autofunction:: nextcord.ext.commands.has_guild_permissions(**perms)
     :decorator:
 
-.. autofunction:: discord.ext.commands.has_any_role(*items)
+.. autofunction:: nextcord.ext.commands.has_any_role(*items)
     :decorator:
 
-.. autofunction:: discord.ext.commands.bot_has_role(item)
+.. autofunction:: nextcord.ext.commands.bot_has_role(item)
     :decorator:
 
-.. autofunction:: discord.ext.commands.bot_has_permissions(**perms)
+.. autofunction:: nextcord.ext.commands.bot_has_permissions(**perms)
     :decorator:
 
-.. autofunction:: discord.ext.commands.bot_has_guild_permissions(**perms)
+.. autofunction:: nextcord.ext.commands.bot_has_guild_permissions(**perms)
     :decorator:
 
-.. autofunction:: discord.ext.commands.bot_has_any_role(*items)
+.. autofunction:: nextcord.ext.commands.bot_has_any_role(*items)
     :decorator:
 
-.. autofunction:: discord.ext.commands.cooldown(rate, per, type=discord.ext.commands.BucketType.default)
+.. autofunction:: nextcord.ext.commands.cooldown(rate, per, type=nextcord.ext.commands.BucketType.default)
     :decorator:
 
-.. autofunction:: discord.ext.commands.dynamic_cooldown(cooldown, type=BucketType.default)
+.. autofunction:: nextcord.ext.commands.dynamic_cooldown(cooldown, type=BucketType.default)
     :decorator:
 
-.. autofunction:: discord.ext.commands.max_concurrency(number, per=discord.ext.commands.BucketType.default, *, wait=False)
+.. autofunction:: nextcord.ext.commands.max_concurrency(number, per=nextcord.ext.commands.BucketType.default, *, wait=False)
     :decorator:
 
-.. autofunction:: discord.ext.commands.before_invoke(coro)
+.. autofunction:: nextcord.ext.commands.before_invoke(coro)
     :decorator:
 
-.. autofunction:: discord.ext.commands.after_invoke(coro)
+.. autofunction:: nextcord.ext.commands.after_invoke(coro)
     :decorator:
 
-.. autofunction:: discord.ext.commands.guild_only(,)
+.. autofunction:: nextcord.ext.commands.guild_only(,)
     :decorator:
 
-.. autofunction:: discord.ext.commands.dm_only(,)
+.. autofunction:: nextcord.ext.commands.dm_only(,)
     :decorator:
 
-.. autofunction:: discord.ext.commands.is_owner(,)
+.. autofunction:: nextcord.ext.commands.is_owner(,)
     :decorator:
 
-.. autofunction:: discord.ext.commands.is_nsfw(,)
+.. autofunction:: nextcord.ext.commands.is_nsfw(,)
     :decorator:
 
 .. _ext_commands_api_context:
@@ -333,25 +333,25 @@ Checks
 Cooldown
 ---------
 
-.. attributetable:: discord.ext.commands.Cooldown
+.. attributetable:: nextcord.ext.commands.Cooldown
 
-.. autoclass:: discord.ext.commands.Cooldown
+.. autoclass:: nextcord.ext.commands.Cooldown
     :members:
 
 Context
 --------
 
-.. attributetable:: discord.ext.commands.Context
+.. attributetable:: nextcord.ext.commands.Context
 
-.. autoclass:: discord.ext.commands.Context
+.. autoclass:: nextcord.ext.commands.Context
     :members:
     :inherited-members:
     :exclude-members: history, typing
 
-    .. automethod:: discord.ext.commands.Context.history
+    .. automethod:: nextcord.ext.commands.Context.history
         :async-for:
 
-    .. automethod:: discord.ext.commands.Context.typing
+    .. automethod:: nextcord.ext.commands.Context.typing
         :async-with:
 
 .. _ext_commands_api_converters:
@@ -359,255 +359,255 @@ Context
 Converters
 ------------
 
-.. autoclass:: discord.ext.commands.Converter
+.. autoclass:: nextcord.ext.commands.Converter
     :members:
 
-.. autoclass:: discord.ext.commands.ObjectConverter
+.. autoclass:: nextcord.ext.commands.ObjectConverter
     :members:
 
-.. autoclass:: discord.ext.commands.MemberConverter
+.. autoclass:: nextcord.ext.commands.MemberConverter
     :members:
 
-.. autoclass:: discord.ext.commands.UserConverter
+.. autoclass:: nextcord.ext.commands.UserConverter
     :members:
 
-.. autoclass:: discord.ext.commands.MessageConverter
+.. autoclass:: nextcord.ext.commands.MessageConverter
     :members:
 
-.. autoclass:: discord.ext.commands.PartialMessageConverter
+.. autoclass:: nextcord.ext.commands.PartialMessageConverter
     :members:
 
-.. autoclass:: discord.ext.commands.GuildChannelConverter
+.. autoclass:: nextcord.ext.commands.GuildChannelConverter
     :members:
 
-.. autoclass:: discord.ext.commands.TextChannelConverter
+.. autoclass:: nextcord.ext.commands.TextChannelConverter
     :members:
 
-.. autoclass:: discord.ext.commands.VoiceChannelConverter
+.. autoclass:: nextcord.ext.commands.VoiceChannelConverter
     :members:
 
-.. autoclass:: discord.ext.commands.StoreChannelConverter
+.. autoclass:: nextcord.ext.commands.StoreChannelConverter
     :members:
 
-.. autoclass:: discord.ext.commands.StageChannelConverter
+.. autoclass:: nextcord.ext.commands.StageChannelConverter
     :members:
 
-.. autoclass:: discord.ext.commands.CategoryChannelConverter
+.. autoclass:: nextcord.ext.commands.CategoryChannelConverter
     :members:
 
-.. autoclass:: discord.ext.commands.InviteConverter
+.. autoclass:: nextcord.ext.commands.InviteConverter
     :members:
 
-.. autoclass:: discord.ext.commands.GuildConverter
+.. autoclass:: nextcord.ext.commands.GuildConverter
     :members:
 
-.. autoclass:: discord.ext.commands.RoleConverter
+.. autoclass:: nextcord.ext.commands.RoleConverter
     :members:
 
-.. autoclass:: discord.ext.commands.GameConverter
+.. autoclass:: nextcord.ext.commands.GameConverter
     :members:
 
-.. autoclass:: discord.ext.commands.ColourConverter
+.. autoclass:: nextcord.ext.commands.ColourConverter
     :members:
 
-.. autoclass:: discord.ext.commands.EmojiConverter
+.. autoclass:: nextcord.ext.commands.EmojiConverter
     :members:
 
-.. autoclass:: discord.ext.commands.PartialEmojiConverter
+.. autoclass:: nextcord.ext.commands.PartialEmojiConverter
     :members:
 
-.. autoclass:: discord.ext.commands.ThreadConverter
+.. autoclass:: nextcord.ext.commands.ThreadConverter
     :members:
 
-.. autoclass:: discord.ext.commands.GuildStickerConverter
+.. autoclass:: nextcord.ext.commands.GuildStickerConverter
     :members:
 
-.. autoclass:: discord.ext.commands.clean_content
+.. autoclass:: nextcord.ext.commands.clean_content
     :members:
 
-.. autoclass:: discord.ext.commands.Greedy()
+.. autoclass:: nextcord.ext.commands.Greedy()
 
-.. autofunction:: discord.ext.commands.run_converters
+.. autofunction:: nextcord.ext.commands.run_converters
 
 Flag Converter
 ~~~~~~~~~~~~~~~
 
-.. autoclass:: discord.ext.commands.FlagConverter
+.. autoclass:: nextcord.ext.commands.FlagConverter
     :members:
 
-.. autoclass:: discord.ext.commands.Flag()
+.. autoclass:: nextcord.ext.commands.Flag()
     :members:
 
-.. autofunction:: discord.ext.commands.flag
+.. autofunction:: nextcord.ext.commands.flag
 
 .. _ext_commands_api_errors:
 
 Exceptions
 -----------
 
-.. autoexception:: discord.ext.commands.CommandError
+.. autoexception:: nextcord.ext.commands.CommandError
     :members:
 
-.. autoexception:: discord.ext.commands.ConversionError
+.. autoexception:: nextcord.ext.commands.ConversionError
     :members:
 
-.. autoexception:: discord.ext.commands.MissingRequiredArgument
+.. autoexception:: nextcord.ext.commands.MissingRequiredArgument
     :members:
 
-.. autoexception:: discord.ext.commands.ArgumentParsingError
+.. autoexception:: nextcord.ext.commands.ArgumentParsingError
     :members:
 
-.. autoexception:: discord.ext.commands.UnexpectedQuoteError
+.. autoexception:: nextcord.ext.commands.UnexpectedQuoteError
     :members:
 
-.. autoexception:: discord.ext.commands.InvalidEndOfQuotedStringError
+.. autoexception:: nextcord.ext.commands.InvalidEndOfQuotedStringError
     :members:
 
-.. autoexception:: discord.ext.commands.ExpectedClosingQuoteError
+.. autoexception:: nextcord.ext.commands.ExpectedClosingQuoteError
     :members:
 
-.. autoexception:: discord.ext.commands.BadArgument
+.. autoexception:: nextcord.ext.commands.BadArgument
     :members:
 
-.. autoexception:: discord.ext.commands.BadUnionArgument
+.. autoexception:: nextcord.ext.commands.BadUnionArgument
     :members:
 
-.. autoexception:: discord.ext.commands.BadLiteralArgument
+.. autoexception:: nextcord.ext.commands.BadLiteralArgument
     :members:
 
-.. autoexception:: discord.ext.commands.PrivateMessageOnly
+.. autoexception:: nextcord.ext.commands.PrivateMessageOnly
     :members:
 
-.. autoexception:: discord.ext.commands.NoPrivateMessage
+.. autoexception:: nextcord.ext.commands.NoPrivateMessage
     :members:
 
-.. autoexception:: discord.ext.commands.CheckFailure
+.. autoexception:: nextcord.ext.commands.CheckFailure
     :members:
 
-.. autoexception:: discord.ext.commands.CheckAnyFailure
+.. autoexception:: nextcord.ext.commands.CheckAnyFailure
     :members:
 
-.. autoexception:: discord.ext.commands.CommandNotFound
+.. autoexception:: nextcord.ext.commands.CommandNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.DisabledCommand
+.. autoexception:: nextcord.ext.commands.DisabledCommand
     :members:
 
-.. autoexception:: discord.ext.commands.CommandInvokeError
+.. autoexception:: nextcord.ext.commands.CommandInvokeError
     :members:
 
-.. autoexception:: discord.ext.commands.TooManyArguments
+.. autoexception:: nextcord.ext.commands.TooManyArguments
     :members:
 
-.. autoexception:: discord.ext.commands.UserInputError
+.. autoexception:: nextcord.ext.commands.UserInputError
     :members:
 
-.. autoexception:: discord.ext.commands.CommandOnCooldown
+.. autoexception:: nextcord.ext.commands.CommandOnCooldown
     :members:
 
-.. autoexception:: discord.ext.commands.MaxConcurrencyReached
+.. autoexception:: nextcord.ext.commands.MaxConcurrencyReached
     :members:
 
-.. autoexception:: discord.ext.commands.NotOwner
+.. autoexception:: nextcord.ext.commands.NotOwner
     :members:
 
-.. autoexception:: discord.ext.commands.MessageNotFound
+.. autoexception:: nextcord.ext.commands.MessageNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.MemberNotFound
+.. autoexception:: nextcord.ext.commands.MemberNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.GuildNotFound
+.. autoexception:: nextcord.ext.commands.GuildNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.UserNotFound
+.. autoexception:: nextcord.ext.commands.UserNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.ChannelNotFound
+.. autoexception:: nextcord.ext.commands.ChannelNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.ChannelNotReadable
+.. autoexception:: nextcord.ext.commands.ChannelNotReadable
     :members:
 
-.. autoexception:: discord.ext.commands.ThreadNotFound
+.. autoexception:: nextcord.ext.commands.ThreadNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.BadColourArgument
+.. autoexception:: nextcord.ext.commands.BadColourArgument
     :members:
 
-.. autoexception:: discord.ext.commands.RoleNotFound
+.. autoexception:: nextcord.ext.commands.RoleNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.BadInviteArgument
+.. autoexception:: nextcord.ext.commands.BadInviteArgument
     :members:
 
-.. autoexception:: discord.ext.commands.EmojiNotFound
+.. autoexception:: nextcord.ext.commands.EmojiNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.PartialEmojiConversionFailure
+.. autoexception:: nextcord.ext.commands.PartialEmojiConversionFailure
     :members:
 
-.. autoexception:: discord.ext.commands.GuildStickerNotFound
+.. autoexception:: nextcord.ext.commands.GuildStickerNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.BadBoolArgument
+.. autoexception:: nextcord.ext.commands.BadBoolArgument
     :members:
 
-.. autoexception:: discord.ext.commands.MissingPermissions
+.. autoexception:: nextcord.ext.commands.MissingPermissions
     :members:
 
-.. autoexception:: discord.ext.commands.BotMissingPermissions
+.. autoexception:: nextcord.ext.commands.BotMissingPermissions
     :members:
 
-.. autoexception:: discord.ext.commands.MissingRole
+.. autoexception:: nextcord.ext.commands.MissingRole
     :members:
 
-.. autoexception:: discord.ext.commands.BotMissingRole
+.. autoexception:: nextcord.ext.commands.BotMissingRole
     :members:
 
-.. autoexception:: discord.ext.commands.MissingAnyRole
+.. autoexception:: nextcord.ext.commands.MissingAnyRole
     :members:
 
-.. autoexception:: discord.ext.commands.BotMissingAnyRole
+.. autoexception:: nextcord.ext.commands.BotMissingAnyRole
     :members:
 
-.. autoexception:: discord.ext.commands.NSFWChannelRequired
+.. autoexception:: nextcord.ext.commands.NSFWChannelRequired
     :members:
 
-.. autoexception:: discord.ext.commands.FlagError
+.. autoexception:: nextcord.ext.commands.FlagError
     :members:
 
-.. autoexception:: discord.ext.commands.BadFlagArgument
+.. autoexception:: nextcord.ext.commands.BadFlagArgument
     :members:
 
-.. autoexception:: discord.ext.commands.MissingFlagArgument
+.. autoexception:: nextcord.ext.commands.MissingFlagArgument
     :members:
 
-.. autoexception:: discord.ext.commands.TooManyFlags
+.. autoexception:: nextcord.ext.commands.TooManyFlags
     :members:
 
-.. autoexception:: discord.ext.commands.MissingRequiredFlag
+.. autoexception:: nextcord.ext.commands.MissingRequiredFlag
     :members:
 
-.. autoexception:: discord.ext.commands.ExtensionError
+.. autoexception:: nextcord.ext.commands.ExtensionError
     :members:
 
-.. autoexception:: discord.ext.commands.ExtensionAlreadyLoaded
+.. autoexception:: nextcord.ext.commands.ExtensionAlreadyLoaded
     :members:
 
-.. autoexception:: discord.ext.commands.ExtensionNotLoaded
+.. autoexception:: nextcord.ext.commands.ExtensionNotLoaded
     :members:
 
-.. autoexception:: discord.ext.commands.NoEntryPointError
+.. autoexception:: nextcord.ext.commands.NoEntryPointError
     :members:
 
-.. autoexception:: discord.ext.commands.ExtensionFailed
+.. autoexception:: nextcord.ext.commands.ExtensionFailed
     :members:
 
-.. autoexception:: discord.ext.commands.ExtensionNotFound
+.. autoexception:: nextcord.ext.commands.ExtensionNotFound
     :members:
 
-.. autoexception:: discord.ext.commands.CommandRegistrationError
+.. autoexception:: nextcord.ext.commands.CommandRegistrationError
     :members:
 
 

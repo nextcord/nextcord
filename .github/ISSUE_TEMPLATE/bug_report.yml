@@ -47,7 +47,7 @@ body:
       label: Intents
       description: >
         What intents are you using for your bot?
-        This is the `discord.Intents` class you pass to the client.
+        This is the `nextcord.Intents` class you pass to the client.
     validations:
       required: true
   - type: textarea

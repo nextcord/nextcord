@@ -105,7 +105,7 @@ msgid ""
 msgstr ""
 
 #: ../../whats_new.rst:36
-msgid "This is the same as having ``discord.Member`` as the type-hint."
+msgid "This is the same as having ``nextcord.Member`` as the type-hint."
 msgstr ""
 
 #: ../../whats_new.rst:37
@@ -1889,7 +1889,7 @@ msgid ""
 msgstr ""
 
 #: ../../whats_new.rst:580 ../../whats_new.rst:601 ../../whats_new.rst:620
-msgid "``discord.ext.commands``"
+msgid "``nextcord.ext.commands``"
 msgstr ""
 
 #: ../../whats_new.rst:582
@@ -2750,7 +2750,7 @@ msgstr ""
 
 #: ../../whats_new.rst:957
 msgid ""
-"New utility function, :func:`discord.utils.get` to simplify retrieval of "
+"New utility function, :func:`nextcord.utils.get` to simplify retrieval of "
 "items based on attributes."
 msgstr ""
 
@@ -2808,7 +2808,7 @@ msgstr ""
 
 #: ../../whats_new.rst:967
 msgid ""
-"Add :class:`discord.Game` to represent any game with custom text to send "
+"Add :class:`nextcord.Game` to represent any game with custom text to send "
 "to :meth:`Client.change_status`."
 msgstr ""
 

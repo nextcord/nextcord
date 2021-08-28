@@ -500,8 +500,8 @@ msgid "Commands Extension"
 msgstr "コマンド拡張"
 
 #: ../../faq.rst:333
-msgid "Questions regarding ``discord.ext.commands`` belong here."
-msgstr "``discord.ext.commands`` に関する質問。"
+msgid "Questions regarding ``nextcord.ext.commands`` belong here."
+msgstr "``nextcord.ext.commands`` に関する質問。"
 
 #: ../../faq.rst:336
 msgid "Why does ``on_message`` make my commands stop working?"

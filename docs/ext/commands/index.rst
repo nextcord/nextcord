@@ -1,6 +1,6 @@
 .. _discord_ext_commands:
 
-``discord.ext.commands`` -- Bot commands framework
+``nextcord.ext.commands`` -- Bot commands framework
 ====================================================
 
 ``nextcord`` offers a lower level aspect on interacting with Discord. Often times, the library is used for the creation of

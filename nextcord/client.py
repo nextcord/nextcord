@@ -328,7 +328,7 @@ class Client:
 
         If this is not passed via ``__init__`` then this is retrieved
         through the gateway when an event contains the data. Usually
-        after :func:`~discord.on_connect` is called.
+        after :func:`~nextcord.on_connect` is called.
         
         .. versionadded:: 2.0
         """
@@ -336,7 +336,7 @@ class Client:
 
     @property
     def application_flags(self) -> ApplicationFlags:
-        """:class:`~discord.ApplicationFlags`: The client's application flags.
+        """:class:`~nextcord.ApplicationFlags`: The client's application flags.
 
         .. versionadded:: 2.0
         """
@@ -409,7 +409,7 @@ class Client:
 
         By default this prints to :data:`sys.stderr` however it could be
         overridden to have a different implementation.
-        Check :func:`~discord.on_error` for more details.
+        Check :func:`~nextcord.on_error` for more details.
         """
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
@@ -710,7 +710,7 @@ class Client:
 
     @property
     def allowed_mentions(self) -> Optional[AllowedMentions]:
-        """Optional[:class:`~discord.AllowedMentions`]: The allowed mention configuration.
+        """Optional[:class:`~nextcord.AllowedMentions`]: The allowed mention configuration.
 
         .. versionadded:: 1.4
         """
@@ -725,7 +725,7 @@ class Client:
 
     @property
     def intents(self) -> Intents:
-        """:class:`~discord.Intents`: The intents configured for this connection.
+        """:class:`~nextcord.Intents`: The intents configured for this connection.
 
         .. versionadded:: 1.5
         """
@@ -735,7 +735,7 @@ class Client:
 
     @property
     def users(self) -> List[User]:
-        """List[:class:`~discord.User`]: Returns a list of all the users the bot can see."""
+        """List[:class:`~nextcord.User`]: Returns a list of all the users the bot can see."""
         return list(self._connection._users.values())
 
     def get_channel(self, id: int, /) -> Optional[Union[GuildChannel, Thread, PrivateChannel]]:
@@ -822,7 +822,7 @@ class Client:
 
         Returns
         --------
-        Optional[:class:`~discord.User`]
+        Optional[:class:`~nextcord.User`]
             The user or ``None`` if not found.
         """
         return self._connection.get_user(id)
@@ -1059,8 +1059,8 @@ class Client:
 
         .. code-block:: python3
 
-            game = discord.Game("with the API")
-            await client.change_presence(status=discord.Status.idle, activity=game)
+            game = nextcord.Game("with the API")
+            await client.change_presence(status=nextcord.Status.idle, activity=game)
 
         .. versionchanged:: 2.0
             Removed the ``afk`` keyword-only parameter.
@@ -1168,12 +1168,12 @@ class Client:
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|
 
-        Gets a :class:`.Template` from a discord.new URL or code.
+        Gets a :class:`.Template` from a nextcord.new URL or code.
 
         Parameters
         -----------
         code: Union[:class:`.Template`, :class:`str`]
-            The Discord Template Code or URL (must be a discord.new URL).
+            The Discord Template Code or URL (must be a nextcord.new URL).
 
         Raises
         -------
@@ -1433,13 +1433,13 @@ class Client:
     async def fetch_user(self, user_id: int, /) -> User:
         """|coro|
 
-        Retrieves a :class:`~discord.User` based on their ID.
+        Retrieves a :class:`~nextcord.User` based on their ID.
         You do not have to share any guilds with the user to get this information,
         however many operations do require that you do.
 
         .. note::
 
-            This method is an API call. If you have :attr:`discord.Intents.members` and member cache enabled, consider :meth:`get_user` instead.
+            This method is an API call. If you have :attr:`nextcord.Intents.members` and member cache enabled, consider :meth:`get_user` instead.
 
         Parameters
         -----------
@@ -1455,7 +1455,7 @@ class Client:
 
         Returns
         --------
-        :class:`~discord.User`
+        :class:`~nextcord.User`
             The user you requested.
         """
         data = await self.http.get_user(user_id)
@@ -1583,7 +1583,7 @@ class Client:
 
         Parameters
         -----------
-        user: :class:`~discord.abc.Snowflake`
+        user: :class:`~nextcord.abc.Snowflake`
             The user to create a DM with.
 
         Returns
@@ -1600,7 +1600,7 @@ class Client:
         return state.add_dm_channel(data)
 
     def add_view(self, view: View, *, message_id: Optional[int] = None) -> None:
-        """Registers a :class:`~discord.ui.View` for persistent listening.
+        """Registers a :class:`~nextcord.ui.View` for persistent listening.
 
         This method should be used for when a view is comprised of components
         that last longer than the lifecycle of the program.
@@ -1609,7 +1609,7 @@ class Client:
 
         Parameters
         ------------
-        view: :class:`discord.ui.View`
+        view: :class:`nextcord.ui.View`
             The view to register for dispatching.
         message_id: Optional[:class:`int`]
             The message ID that the view is attached to. This is currently used to

@@ -19,9 +19,9 @@ It looks something like this:
 
 .. code-block:: python3
 
-    import discord
+    import nextcord
 
-    client = discord.Client()
+    client = nextcord.Client()
 
     @client.event
     async def on_ready():

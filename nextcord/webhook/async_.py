@@ -630,7 +630,7 @@ class WebhookMessage(Message):
     This allows you to edit or delete a message sent by your
     webhook.
 
-    This inherits from :class:`discord.Message` with changes to
+    This inherits from :class:`nextcord.Message` with changes to
     :meth:`edit` and :meth:`delete` to work.
 
     .. versionadded:: 1.6
@@ -678,7 +678,7 @@ class WebhookMessage(Message):
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
-        view: Optional[:class:`~discord.ui.View`]
+        view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
 
@@ -862,7 +862,7 @@ class Webhook(BaseWebhook):
 
     .. code-block:: python3
 
-        from discord import Webhook
+        from nextcord import Webhook
         import aiohttp
 
         async def foo():
@@ -1310,14 +1310,14 @@ class Webhook(BaseWebhook):
             Controls the mentions being processed in this message.
 
             .. versionadded:: 1.4
-        view: :class:`discord.ui.View`
+        view: :class:`nextcord.ui.View`
             The view to send with the message. You can only send a view
             if this webhook is not partial and has state attached. A
             webhook has state attached if the webhook is managed by the
             library.
 
             .. versionadded:: 2.0
-        thread: :class:`~discord.abc.Snowflake`
+        thread: :class:`~nextcord.abc.Snowflake`
             The thread to send this webhook to.
 
             .. versionadded:: 2.0
@@ -1408,7 +1408,7 @@ class Webhook(BaseWebhook):
     async def fetch_message(self, id: int) -> WebhookMessage:
         """|coro|
 
-        Retrieves a single :class:`~discord.WebhookMessage` owned by this webhook.
+        Retrieves a single :class:`~nextcord.WebhookMessage` owned by this webhook.
 
         .. versionadded:: 2.0
 
@@ -1419,18 +1419,18 @@ class Webhook(BaseWebhook):
 
         Raises
         --------
-        ~discord.NotFound
+        ~nextcord.NotFound
             The specified message was not found.
-        ~discord.Forbidden
+        ~nextcord.Forbidden
             You do not have the permissions required to get a message.
-        ~discord.HTTPException
+        ~nextcord.HTTPException
             Retrieving the message failed.
         InvalidArgument
             There was no token associated with this webhook.
 
         Returns
         --------
-        :class:`~discord.WebhookMessage`
+        :class:`~nextcord.WebhookMessage`
             The message asked for.
         """
 
@@ -1493,7 +1493,7 @@ class Webhook(BaseWebhook):
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
-        view: Optional[:class:`~discord.ui.View`]
+        view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed. The webhook must have state attached, similar to
             :meth:`send`.

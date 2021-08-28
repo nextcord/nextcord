@@ -1032,8 +1032,8 @@ class Guild(Hashable):
         .. code-block:: python3
 
             overwrites = {
-                guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                guild.me: discord.PermissionOverwrite(read_messages=True)
+                guild.default_role: nextcord.PermissionOverwrite(read_messages=False),
+                guild.me: nextcord.PermissionOverwrite(read_messages=True)
             }
 
             channel = await guild.create_text_channel('secret', overwrites=overwrites)
@@ -2709,7 +2709,7 @@ class Guild(Hashable):
 
         Getting entries for a specific action: ::
 
-            async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
+            async for entry in guild.audit_logs(action=nextcord.AuditLogAction.ban):
                 print(f'{entry.user} banned {entry.target}')
 
         Getting entries made by a specific user: ::
@@ -2800,7 +2800,7 @@ class Guild(Hashable):
         -----------
         enabled: :class:`bool`
             Whether to enable the widget for the guild.
-        channel: Optional[:class:`~discord.abc.Snowflake`]
+        channel: Optional[:class:`~nextcord.abc.Snowflake`]
             The new widget channel. ``None`` removes the widget channel.
 
         Raises

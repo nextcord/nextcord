@@ -70,9 +70,9 @@ Linuxで音声サポートを導入するには、前述のコマンドを実行
 
 .. code:: py
 
-    import discord
+    import nextcord
 
-    class MyClient(discord.Client):
+    class MyClient(nextcord.Client):
         async def on_ready(self):
             print('Logged on as', self.user)
 
@@ -92,8 +92,8 @@ Botの例
 
 .. code:: py
 
-    import discord
-    from discord.ext import commands
+    import nextcord
+    from nextcord.ext import commands
 
     bot = commands.Bot(command_prefix='>')
 

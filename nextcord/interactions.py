@@ -289,7 +289,7 @@ class Interaction:
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
-        view: Optional[:class:`~discord.ui.View`]
+        view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
 
@@ -476,7 +476,7 @@ class InteractionResponse:
             ``embeds`` parameter.
         tts: :class:`bool`
             Indicates if the message should be sent using text-to-speech.
-        view: :class:`discord.ui.View`
+        view: :class:`nextcord.ui.View`
             The view to send with the message.
         ephemeral: :class:`bool`
             Indicates if the message should only be visible to the user who started the interaction.
@@ -565,7 +565,7 @@ class InteractionResponse:
         attachments: List[:class:`Attachment`]
             A list of attachments to keep in the message. If ``[]`` is passed
             then all attachments are removed.
-        view: Optional[:class:`~discord.ui.View`]
+        view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
 
@@ -662,7 +662,7 @@ class InteractionMessage(Message):
     This allows you to edit or delete the message associated with
     the interaction response. To retrieve this object see :meth:`Interaction.original_message`.
 
-    This inherits from :class:`discord.Message` with changes to
+    This inherits from :class:`nextcord.Message` with changes to
     :meth:`edit` and :meth:`delete` to work.
 
     .. versionadded:: 2.0
@@ -702,7 +702,7 @@ class InteractionMessage(Message):
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
-        view: Optional[:class:`~discord.ui.View`]
+        view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
 

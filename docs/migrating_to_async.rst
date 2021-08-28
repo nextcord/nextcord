@@ -175,9 +175,9 @@ After:
 
 .. code-block:: python3
 
-    server.region == discord.ServerRegion.us_west
-    member.status = discord.Status.online
-    channel.type == discord.ChannelType.text
+    server.region == nextcord.ServerRegion.us_west
+    member.status = nextcord.Status.online
+    channel.type == nextcord.ChannelType.text
 
 The main reason for this change was to reduce the use of finicky strings in the API as this
 could give users a false sense of power. More information can be found in the :ref:`discord-api-enums` page.
@@ -300,10 +300,10 @@ event loop then doing so is quite straightforward:
 
 .. code-block:: python3
 
-    import discord
+    import nextcord
     import asyncio
 
-    client = discord.Client()
+    client = nextcord.Client()
 
     @asyncio.coroutine
     def main_task():

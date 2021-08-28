@@ -162,9 +162,9 @@ PCMVolumeTransformer
 Opus Library
 ~~~~~~~~~~~~~
 
-.. autofunction:: discord.opus.load_opus
+.. autofunction:: nextcord.opus.load_opus
 
-.. autofunction:: discord.opus.is_loaded
+.. autofunction:: nextcord.opus.is_loaded
 
 .. _discord-api-events:
 
@@ -177,9 +177,9 @@ There are two ways to register an event, the first way is through the use of
 :meth:`Client.event`. The second way is through subclassing :class:`Client` and
 overriding the specific events. For example: ::
 
-    import discord
+    import nextcord
 
-    class MyClient(discord.Client):
+    class MyClient(nextcord.Client):
         async def on_message(self, message):
             if message.author == self.user:
                 return
@@ -621,7 +621,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
         This is a low level function that is not generally meant to be used.
         If you are working with components, consider using the callbacks associated
-        with the :class:`~discord.ui.View` instead as it provides a nicer user experience.
+        with the :class:`~nextcord.ui.View` instead as it provides a nicer user experience.
 
     .. versionadded:: 2.0
 
@@ -1099,31 +1099,31 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 Utility Functions
 -----------------
 
-.. autofunction:: discord.utils.find
+.. autofunction:: nextcord.utils.find
 
-.. autofunction:: discord.utils.get
+.. autofunction:: nextcord.utils.get
 
-.. autofunction:: discord.utils.snowflake_time
+.. autofunction:: nextcord.utils.snowflake_time
 
-.. autofunction:: discord.utils.oauth_url
+.. autofunction:: nextcord.utils.oauth_url
 
-.. autofunction:: discord.utils.remove_markdown
+.. autofunction:: nextcord.utils.remove_markdown
 
-.. autofunction:: discord.utils.escape_markdown
+.. autofunction:: nextcord.utils.escape_markdown
 
-.. autofunction:: discord.utils.escape_mentions
+.. autofunction:: nextcord.utils.escape_mentions
 
-.. autofunction:: discord.utils.resolve_invite
+.. autofunction:: nextcord.utils.resolve_invite
 
-.. autofunction:: discord.utils.resolve_template
+.. autofunction:: nextcord.utils.resolve_template
 
-.. autofunction:: discord.utils.sleep_until
+.. autofunction:: nextcord.utils.sleep_until
 
-.. autofunction:: discord.utils.utcnow
+.. autofunction:: nextcord.utils.utcnow
 
-.. autofunction:: discord.utils.format_dt
+.. autofunction:: nextcord.utils.format_dt
 
-.. autofunction:: discord.utils.as_chunks
+.. autofunction:: nextcord.utils.as_chunks
 
 .. _discord-api-enums:
 
@@ -3300,56 +3300,56 @@ This library has a module related to abstract base classes, in which all the ABC
 Snowflake
 ~~~~~~~~~~
 
-.. attributetable:: discord.abc.Snowflake
+.. attributetable:: nextcord.abc.Snowflake
 
-.. autoclass:: discord.abc.Snowflake()
+.. autoclass:: nextcord.abc.Snowflake()
     :members:
 
 User
 ~~~~~
 
-.. attributetable:: discord.abc.User
+.. attributetable:: nextcord.abc.User
 
-.. autoclass:: discord.abc.User()
+.. autoclass:: nextcord.abc.User()
     :members:
 
 PrivateChannel
 ~~~~~~~~~~~~~~~
 
-.. attributetable:: discord.abc.PrivateChannel
+.. attributetable:: nextcord.abc.PrivateChannel
 
-.. autoclass:: discord.abc.PrivateChannel()
+.. autoclass:: nextcord.abc.PrivateChannel()
     :members:
 
 GuildChannel
 ~~~~~~~~~~~~~
 
-.. attributetable:: discord.abc.GuildChannel
+.. attributetable:: nextcord.abc.GuildChannel
 
-.. autoclass:: discord.abc.GuildChannel()
+.. autoclass:: nextcord.abc.GuildChannel()
     :members:
 
 Messageable
 ~~~~~~~~~~~~
 
-.. attributetable:: discord.abc.Messageable
+.. attributetable:: nextcord.abc.Messageable
 
-.. autoclass:: discord.abc.Messageable()
+.. autoclass:: nextcord.abc.Messageable()
     :members:
     :exclude-members: history, typing
 
-    .. automethod:: discord.abc.Messageable.history
+    .. automethod:: nextcord.abc.Messageable.history
         :async-for:
 
-    .. automethod:: discord.abc.Messageable.typing
+    .. automethod:: nextcord.abc.Messageable.typing
         :async-with:
 
 Connectable
 ~~~~~~~~~~~~
 
-.. attributetable:: discord.abc.Connectable
+.. attributetable:: nextcord.abc.Connectable
 
-.. autoclass:: discord.abc.Connectable()
+.. autoclass:: nextcord.abc.Connectable()
 
 .. _discord_api_models:
 
@@ -4121,40 +4121,40 @@ The library has helpers to help create component-based UIs.
 View
 ~~~~~~~
 
-.. attributetable:: discord.ui.View
+.. attributetable:: nextcord.ui.View
 
-.. autoclass:: discord.ui.View
+.. autoclass:: nextcord.ui.View
     :members:
 
 Item
 ~~~~~~~
 
-.. attributetable:: discord.ui.Item
+.. attributetable:: nextcord.ui.Item
 
-.. autoclass:: discord.ui.Item
+.. autoclass:: nextcord.ui.Item
     :members:
 
 Button
 ~~~~~~~
 
-.. attributetable:: discord.ui.Button
+.. attributetable:: nextcord.ui.Button
 
-.. autoclass:: discord.ui.Button
+.. autoclass:: nextcord.ui.Button
     :members:
     :inherited-members:
 
-.. autofunction:: discord.ui.button
+.. autofunction:: nextcord.ui.button
 
 Select
 ~~~~~~~
 
-.. attributetable:: discord.ui.Select
+.. attributetable:: nextcord.ui.Select
 
-.. autoclass:: discord.ui.Select
+.. autoclass:: nextcord.ui.Select
     :members:
     :inherited-members:
 
-.. autofunction:: discord.ui.select
+.. autofunction:: nextcord.ui.select
 
 
 Exceptions
@@ -4191,9 +4191,9 @@ The following exceptions are thrown by the library.
 
 .. autoexception:: InteractionResponded
 
-.. autoexception:: discord.opus.OpusError
+.. autoexception:: nextcord.opus.OpusError
 
-.. autoexception:: discord.opus.OpusNotLoaded
+.. autoexception:: nextcord.opus.OpusNotLoaded
 
 Exception Hierarchy
 ~~~~~~~~~~~~~~~~~~~~~

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import Optional, Any, TYPE_CHECKING, List, Callable, Type, Tuple, Union
 
-from discord.errors import ClientException, DiscordException
+from nextcord.errors import ClientException, DiscordException
 
 if TYPE_CHECKING:
     from inspect import Parameter
@@ -35,9 +35,9 @@ if TYPE_CHECKING:
     from .context import Context
     from .cooldowns import Cooldown, BucketType
     from .flags import Flag
-    from discord.abc import GuildChannel
-    from discord.threads import Thread
-    from discord.types.snowflake import Snowflake, SnowflakeList
+    from nextcord.abc import GuildChannel
+    from nextcord.threads import Thread
+    from nextcord.types.snowflake import Snowflake, SnowflakeList
 
 
 __all__ = (
@@ -103,7 +103,7 @@ __all__ = (
 class CommandError(DiscordException):
     r"""The base exception type for all command related errors.
 
-    This inherits from :exc:`discord.DiscordException`.
+    This inherits from :exc:`nextcord.DiscordException`.
 
     This exception and exceptions inherited from it are handled
     in a special way as they are caught and passed into a special event
@@ -124,7 +124,7 @@ class ConversionError(CommandError):
 
     Attributes
     ----------
-    converter: :class:`discord.ext.commands.Converter`
+    converter: :class:`nextcord.ext.commands.Converter`
         The converter that failed.
     original: :exc:`Exception`
         The original exception that was raised. You can also get this via
@@ -821,7 +821,7 @@ class ExpectedClosingQuoteError(ArgumentParsingError):
 class ExtensionError(DiscordException):
     """Base exception for extension related errors.
 
-    This inherits from :exc:`~discord.DiscordException`.
+    This inherits from :exc:`~nextcord.DiscordException`.
 
     Attributes
     ------------
@@ -898,7 +898,7 @@ class CommandRegistrationError(ClientException):
     """An exception raised when the command can't be added
     because the name is already taken by a different command.
 
-    This inherits from :exc:`discord.ClientException`
+    This inherits from :exc:`nextcord.ClientException`
 
     .. versionadded:: 1.4
 
@@ -933,7 +933,7 @@ class TooManyFlags(FlagError):
 
     Attributes
     ------------
-    flag: :class:`~discord.ext.commands.Flag`
+    flag: :class:`~nextcord.ext.commands.Flag`
         The flag that received too many values.
     values: List[:class:`str`]
         The values that were passed.
@@ -952,7 +952,7 @@ class BadFlagArgument(FlagError):
 
     Attributes
     -----------
-    flag: :class:`~discord.ext.commands.Flag`
+    flag: :class:`~nextcord.ext.commands.Flag`
         The flag that failed to convert.
     """
     def __init__(self, flag: Flag) -> None:
@@ -973,7 +973,7 @@ class MissingRequiredFlag(FlagError):
 
     Attributes
     -----------
-    flag: :class:`~discord.ext.commands.Flag`
+    flag: :class:`~nextcord.ext.commands.Flag`
         The required flag that was not found.
     """
     def __init__(self, flag: Flag) -> None:
@@ -989,7 +989,7 @@ class MissingFlagArgument(FlagError):
 
     Attributes
     -----------
-    flag: :class:`~discord.ext.commands.Flag`
+    flag: :class:`~nextcord.ext.commands.Flag`
         The flag that did not get a value.
     """
     def __init__(self, flag: Flag) -> None:

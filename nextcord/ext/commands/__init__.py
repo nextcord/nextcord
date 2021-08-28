@@ -1,5 +1,5 @@
 """
-discord.ext.commands
+nextcord.ext.commands
 ~~~~~~~~~~~~~~~~~~~~~
 
 An extension module to facilitate creation of bot commands.

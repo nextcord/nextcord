@@ -15,8 +15,8 @@ body:
       label: What is the feature request for?
       options:
         - The core library
-        - discord.ext.commands
-        - discord.ext.tasks
+        - nextcord.ext.commands
+        - nextcord.ext.tasks
         - The documentation
     validations:
       required: true

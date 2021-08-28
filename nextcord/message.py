@@ -357,7 +357,7 @@ class DeletedReferencedMessage:
 
 
 class MessageReference:
-    """Represents a reference to a :class:`~discord.Message`.
+    """Represents a reference to a :class:`~nextcord.Message`.
 
     .. versionadded:: 1.5
 
@@ -413,13 +413,13 @@ class MessageReference:
 
     @classmethod
     def from_message(cls: Type[MR], message: Message, *, fail_if_not_exists: bool = True) -> MR:
-        """Creates a :class:`MessageReference` from an existing :class:`~discord.Message`.
+        """Creates a :class:`MessageReference` from an existing :class:`~nextcord.Message`.
 
         .. versionadded:: 1.6
 
         Parameters
         ----------
-        message: :class:`~discord.Message`
+        message: :class:`~nextcord.Message`
             The message to be converted into a reference.
         fail_if_not_exists: :class:`bool`
             Whether replying to the referenced message should raise :class:`HTTPException`
@@ -443,7 +443,7 @@ class MessageReference:
 
     @property
     def cached_message(self) -> Optional[Message]:
-        """Optional[:class:`~discord.Message`]: The cached message, if found in the internal message cache."""
+        """Optional[:class:`~nextcord.Message`]: The cached message, if found in the internal message cache."""
         return self._state and self._state._get_message(self.message_id)
 
     @property
@@ -525,7 +525,7 @@ class Message(Hashable):
     channel: Union[:class:`TextChannel`, :class:`Thread`, :class:`DMChannel`, :class:`GroupChannel`, :class:`PartialMessageable`]
         The :class:`TextChannel` or :class:`Thread` that the message was sent from.
         Could be a :class:`DMChannel` or :class:`GroupChannel` if it's a private message.
-    reference: Optional[:class:`~discord.MessageReference`]
+    reference: Optional[:class:`~nextcord.MessageReference`]
         The message that this message references. This is only applicable to messages of
         type :attr:`MessageType.pins_add`, crossposted messages created by a
         followed channel integration, or message replies.
@@ -1219,16 +1219,16 @@ class Message(Hashable):
             If provided, the number of seconds to wait in the background
             before deleting the message we just edited. If the deletion fails,
             then it is silently ignored.
-        allowed_mentions: Optional[:class:`~discord.AllowedMentions`]
+        allowed_mentions: Optional[:class:`~nextcord.AllowedMentions`]
             Controls the mentions being processed in this message. If this is
-            passed, then the object is merged with :attr:`~discord.Client.allowed_mentions`.
+            passed, then the object is merged with :attr:`~nextcord.Client.allowed_mentions`.
             The merging behaviour only overrides attributes that have been explicitly passed
-            to the object, otherwise it uses the attributes set in :attr:`~discord.Client.allowed_mentions`.
-            If no object is passed at all then the defaults given by :attr:`~discord.Client.allowed_mentions`
+            to the object, otherwise it uses the attributes set in :attr:`~nextcord.Client.allowed_mentions`.
+            If no object is passed at all then the defaults given by :attr:`~nextcord.Client.allowed_mentions`
             are used instead.
 
             .. versionadded:: 1.4
-        view: Optional[:class:`~discord.ui.View`]
+        view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
 
@@ -1239,7 +1239,7 @@ class Message(Hashable):
         Forbidden
             Tried to suppress a message without permissions or
             edited a message's content or embed that isn't yours.
-        ~discord.InvalidArgument
+        ~nextcord.InvalidArgument
             You specified both ``embed`` and ``embeds``
         """
 
@@ -1496,7 +1496,7 @@ class Message(Hashable):
 
         Creates a public thread from this message.
 
-        You must have :attr:`~discord.Permissions.create_public_threads` in order to
+        You must have :attr:`~nextcord.Permissions.create_public_threads` in order to
         create a public thread from a message.
 
         The channel this message belongs in must be a :class:`TextChannel`.
@@ -1547,11 +1547,11 @@ class Message(Hashable):
 
         Raises
         --------
-        ~discord.HTTPException
+        ~nextcord.HTTPException
             Sending the message failed.
-        ~discord.Forbidden
+        ~nextcord.Forbidden
             You do not have the proper permissions to send the message.
-        ~discord.InvalidArgument
+        ~nextcord.InvalidArgument
             The ``files`` list is not of the appropriate size or
             you specified both ``file`` and ``files``.
 
@@ -1564,7 +1564,7 @@ class Message(Hashable):
         return await self.channel.send(content, reference=self, **kwargs)
 
     def to_reference(self, *, fail_if_not_exists: bool = True) -> MessageReference:
-        """Creates a :class:`~discord.MessageReference` from the current message.
+        """Creates a :class:`~nextcord.MessageReference` from the current message.
 
         .. versionadded:: 1.6
 
@@ -1578,7 +1578,7 @@ class Message(Hashable):
 
         Returns
         ---------
-        :class:`~discord.MessageReference`
+        :class:`~nextcord.MessageReference`
             The reference to this message.
         """
 
@@ -1716,7 +1716,7 @@ class PartialMessage(Hashable):
         The content must be able to be transformed into a string via ``str(content)``.
 
         .. versionchanged:: 1.7
-            :class:`discord.Message` is returned instead of ``None`` if an edit took place.
+            :class:`nextcord.Message` is returned instead of ``None`` if an edit took place.
 
         Parameters
         -----------
@@ -1735,14 +1735,14 @@ class PartialMessage(Hashable):
             If provided, the number of seconds to wait in the background
             before deleting the message we just edited. If the deletion fails,
             then it is silently ignored.
-        allowed_mentions: Optional[:class:`~discord.AllowedMentions`]
+        allowed_mentions: Optional[:class:`~nextcord.AllowedMentions`]
             Controls the mentions being processed in this message. If this is
-            passed, then the object is merged with :attr:`~discord.Client.allowed_mentions`.
+            passed, then the object is merged with :attr:`~nextcord.Client.allowed_mentions`.
             The merging behaviour only overrides attributes that have been explicitly passed
-            to the object, otherwise it uses the attributes set in :attr:`~discord.Client.allowed_mentions`.
-            If no object is passed at all then the defaults given by :attr:`~discord.Client.allowed_mentions`
+            to the object, otherwise it uses the attributes set in :attr:`~nextcord.Client.allowed_mentions`.
+            If no object is passed at all then the defaults given by :attr:`~nextcord.Client.allowed_mentions`
             are used instead.
-        view: Optional[:class:`~discord.ui.View`]
+        view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
 

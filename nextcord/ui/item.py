@@ -47,8 +47,8 @@ class Item(Generic[V]):
 
     The current UI items supported are:
 
-    - :class:`discord.ui.Button`
-    - :class:`discord.ui.Select`
+    - :class:`nextcord.ui.Button`
+    - :class:`nextcord.ui.Select`
 
     .. versionadded:: 2.0
     """

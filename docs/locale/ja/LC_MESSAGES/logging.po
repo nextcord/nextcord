@@ -53,11 +53,11 @@ msgstr ""
 #, fuzzy
 msgid ""
 "More advanced setups are possible with the :mod:`logging` module. For "
-"example to write the logs to a file called ``discord.log`` instead of "
+"example to write the logs to a file called ``nextcord.log`` instead of "
 "outputting them to the console the following snippet can be used::"
 msgstr ""
 "また、 :mod:`logging` モジュールでは更に高度な設定が可能です。たとえば、コンソールへ出力するのではなく、 "
-"``discord.log`` というファイルにログを出力するには、以下のスニペットが利用できます。"
+"``nextcord.log`` というファイルにログを出力するには、以下のスニペットが利用できます。"
 
 #: ../../logging.rst:37
 #, fuzzy
