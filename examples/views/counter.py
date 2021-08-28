@@ -1,6 +1,6 @@
-import discord
+import nextcord
 
-from discord.ext import commands
+from nextcord.ext import commands
 
 class CounterBot(commands.Bot):
     def __init__(self):
@@ -12,17 +12,17 @@ class CounterBot(commands.Bot):
 
 
 # Define a simple View that gives us a counter button
-class Counter(discord.ui.View):
+class Counter(nextcord.ui.View):
 
     # Define the actual button
     # When pressed, this increments the number displayed until it hits 5.
     # When it hits 5, the counter button is disabled and it turns green.
     # note: The name of the function does not matter to the library
-    @discord.ui.button(label='0', style=discord.ButtonStyle.red)
-    async def count(self, button: discord.ui.Button, interaction: discord.Interaction):
+    @nextcord.ui.button(label='0', style=nextcord.ButtonStyle.red)
+    async def count(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         number = int(button.label) if button.label else 0
         if number + 1 >= 5:
-            button.style = discord.ButtonStyle.green
+            button.style = nextcord.ButtonStyle.green
             button.disabled = True
         button.label = str(number + 1)
 

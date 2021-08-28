@@ -1,9 +1,9 @@
 import asyncio
 
-import discord
+import nextcord
 import youtube_dl
 
-from discord.ext import commands
+from nextcord.ext import commands
 
 # Suppress noise about console usage from errors
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -30,7 +30,7 @@ ffmpeg_options = {
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
 
-class YTDLSource(discord.PCMVolumeTransformer):
+class YTDLSource(nextcord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=0.5):
         super().__init__(source, volume)
 
@@ -49,7 +49,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
             data = data['entries'][0]
 
         filename = data['url'] if stream else ytdl.prepare_filename(data)
-        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
+        return cls(nextcord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
 
 
 class Music(commands.Cog):
@@ -57,7 +57,7 @@ class Music(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def join(self, ctx: commands.Context, *, channel: discord.VoiceChannel):
+    async def join(self, ctx: commands.Context, *, channel: nextcord.VoiceChannel):
         """Joins a voice channel"""
 
         if ctx.voice_client is not None:
@@ -69,7 +69,7 @@ class Music(commands.Cog):
     async def play(self, ctx: commands.Context, *, query):
         """Plays a file from the local filesystem"""
 
-        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(query))
+        source = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio(query))
         ctx.voice_client.play(source, after=lambda e: print(f'Player error: {e}') if e else None)
 
         await ctx.send(f'Now playing: {query}')

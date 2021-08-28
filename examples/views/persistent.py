@@ -1,6 +1,6 @@
-import discord
+import nextcord
 
-from discord.ext import commands
+from nextcord.ext import commands
 
 # Define a simple View that persists between bot restarts
 # In order a view to persist between restarts it needs to meet the following conditions:
@@ -10,20 +10,20 @@ from discord.ext import commands
 # prevent conflicts with other buttons the bot sends.
 # For this example the custom_id is prefixed with the name of the bot.
 # Note that custom_ids can only be up to 100 characters long.
-class PersistentView(discord.ui.View):
+class PersistentView(nextcord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label='Green', style=discord.ButtonStyle.green, custom_id='persistent_view:green')
-    async def green(self, button: discord.ui.Button, interaction: discord.Interaction):
+    @nextcord.ui.button(label='Green', style=nextcord.ButtonStyle.green, custom_id='persistent_view:green')
+    async def green(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         await interaction.response.send_message('This is green.', ephemeral=True)
 
-    @discord.ui.button(label='Red', style=discord.ButtonStyle.red, custom_id='persistent_view:red')
-    async def red(self, button: discord.ui.Button, interaction: discord.Interaction):
+    @nextcord.ui.button(label='Red', style=nextcord.ButtonStyle.red, custom_id='persistent_view:red')
+    async def red(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         await interaction.response.send_message('This is red.', ephemeral=True)
 
-    @discord.ui.button(label='Grey', style=discord.ButtonStyle.grey, custom_id='persistent_view:grey')
-    async def grey(self, button: discord.ui.Button, interaction: discord.Interaction):
+    @nextcord.ui.button(label='Grey', style=nextcord.ButtonStyle.grey, custom_id='persistent_view:grey')
+    async def grey(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         await interaction.response.send_message('This is grey.', ephemeral=True)
 
 

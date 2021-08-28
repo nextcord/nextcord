@@ -1,4 +1,4 @@
-from discord.ext import commands
+from nextcord.ext import commands
 
 class MyBot(commands.Bot):
     async def on_ready(self):

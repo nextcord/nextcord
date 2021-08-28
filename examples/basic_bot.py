@@ -1,16 +1,16 @@
 # This example requires the 'members' privileged intents
 
-import discord
+import nextcord
 import random
 
-from discord.ext import commands
+from nextcord.ext import commands
 
-description = '''An example bot to showcase the discord.ext.commands extension
+description = '''An example bot to showcase the nextcord.ext.commands extension
 module.
 
 There are a number of utility commands being showcased here.'''
 
-intents = discord.Intents.default()
+intents = nextcord.Intents.default()
 intents.members = True
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'), description=description, intents=intents)
@@ -49,7 +49,7 @@ async def repeat(ctx: commands.Context, times: int, content='repeating...'):
         await ctx.send(content)
 
 @bot.command()
-async def joined(ctx: commands.Context, member: discord.Member):
+async def joined(ctx: commands.Context, member: nextcord.Member):
     """Says when a member joined."""
     await ctx.send(f'{member.name} joined in {member.joined_at}')
 

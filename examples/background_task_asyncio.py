@@ -1,6 +1,6 @@
 import asyncio
 
-from discord.ext import commands
+from nextcord.ext import commands
 
 class MyClient(commands.Bot):
     def __init__(self, *args, **kwargs):
