@@ -870,8 +870,8 @@ class Guild(Hashable):
         return Asset._from_guild_image(self._state, self.id, self._discovery_splash, path='discovery-splashes')
 
     @property
-    def member_count(self) -> int:
-        """:class:`int`: Returns the true member count regardless of it being loaded fully or not.
+    def member_count(self) -> Optional[int]:
+        """Optional[:class:`int`]: Returns the true member count, if availible.
 
         .. warning::
 
@@ -879,7 +879,7 @@ class Guild(Hashable):
             accurate, it requires :attr:`Intents.members` to be specified.
 
         """
-        return self._member_count
+        return getattr(self, "_member_count", None)
 
     @property
     def chunked(self) -> bool:
