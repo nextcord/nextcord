@@ -1,18 +1,17 @@
 # This example requires the 'members' privileged intent to use the Member converter.
-
 import typing
-
 import nextcord
+
 from nextcord.ext import commands
 
 intents = nextcord.Intents.default()
 intents.members = True
 
-bot = commands.Bot('!', intents=intents)
+bot = commands.Bot(command_prefix='$', intents=intents)
 
 
 @bot.command()
-async def userinfo(ctx: commands.Context, user: nextcord.User):
+async def userinfo(ctx, user: nextcord.User):
     # In the command signature above, you can see that the `user`
     # parameter is typehinted to `nextcord.User`. This means that
     # during command invocation we will attempt to convert
@@ -32,7 +31,7 @@ async def userinfo(ctx: commands.Context, user: nextcord.User):
     await ctx.send(f'User found: {user_id} -- {username}\n{avatar}')
 
 @userinfo.error
-async def userinfo_error(ctx: commands.Context, error: commands.CommandError):
+async def userinfo_error(ctx, error: commands.CommandError):
     # if the conversion above fails for any reason, it will raise `commands.BadArgument`
     # so we handle this in this error handler:
     if isinstance(error, commands.BadArgument):
@@ -40,7 +39,7 @@ async def userinfo_error(ctx: commands.Context, error: commands.CommandError):
 
 # Custom Converter here
 class ChannelOrMemberConverter(commands.Converter):
-    async def convert(self, ctx: commands.Context, argument: str):
+    async def convert(self, ctx, argument: str):
         # In this example we have made a custom converter.
         # This checks if an input is convertible to a
         # `nextcord.Member` or `nextcord.TextChannel` instance from the
@@ -73,9 +72,8 @@ class ChannelOrMemberConverter(commands.Converter):
         raise commands.BadArgument(f'No Member or TextChannel could be converted from "{argument}"')
 
 
-
 @bot.command()
-async def notify(ctx: commands.Context, target: ChannelOrMemberConverter):
+async def notify(ctx, target: ChannelOrMemberConverter):
     # This command signature utilises the custom converter written above
     # What will happen during command invocation is that the `target` above will be passed to
     # the `argument` parameter of the `ChannelOrMemberConverter.convert` method and 
@@ -84,7 +82,7 @@ async def notify(ctx: commands.Context, target: ChannelOrMemberConverter):
     await target.send(f'Hello, {target.name}!')
 
 @bot.command()
-async def ignore(ctx: commands.Context, target: typing.Union[nextcord.Member, nextcord.TextChannel]):
+async def ignore(ctx, target: typing.Union[nextcord.Member, nextcord.TextChannel]):
     # This command signature utilises the `typing.Union` typehint.
     # The `commands` framework attempts a conversion of each type in this Union *in order*.
     # So, it will attempt to convert whatever is passed to `target` to a `nextcord.Member` instance.
@@ -101,7 +99,7 @@ async def ignore(ctx: commands.Context, target: typing.Union[nextcord.Member, ne
 
 # Built-in type converters.
 @bot.command()
-async def multiply(ctx: commands.Context, number: int, maybe: bool):
+async def multiply(ctx, number: int, maybe: bool):
     # We want an `int` and a `bool` parameter here.
     # `bool` is a slightly special case, as shown here:
     # See: https://nextcord.readthedocs.io/en/latest/ext/commands/commands.html#bool

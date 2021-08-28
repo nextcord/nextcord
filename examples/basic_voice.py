@@ -1,5 +1,4 @@
 import asyncio
-
 import nextcord
 import youtube_dl
 
@@ -123,13 +122,8 @@ class Music(commands.Cog):
         elif ctx.voice_client.is_playing():
             ctx.voice_client.stop()
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or("!"),
-                   description='Relatively simple music bot example')
+bot = commands.Bot(command_prefix="$", description='Relatively simple music bot example')
 
-@bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('------')
 
 bot.add_cog(Music(bot))
 bot.run('token')

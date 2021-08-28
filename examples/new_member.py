@@ -1,11 +1,11 @@
 # This example requires the 'members' privileged intents
-
 import nextcord
 
-class MyClient(nextcord.Client):
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
+from nextcord.ext import commands
+
+class Bot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     async def on_member_join(self, member):
         guild = member.guild
@@ -17,5 +17,5 @@ class MyClient(nextcord.Client):
 intents = nextcord.Intents.default()
 intents.members = True
 
-client = MyClient(intents=intents)
-client.run('token')
+bot = Bot(command_prefix='$', intents=intents)
+bot.run('token')

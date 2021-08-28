@@ -1,8 +1,7 @@
-from nextcord.ext import tasks
+from nextcord.ext import commands, tasks
 
-import nextcord
 
-class MyClient(nextcord.Client):
+class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -11,10 +10,6 @@ class MyClient(nextcord.Client):
 
         # start the task to run in the background
         self.my_background_task.start()
-
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
 
     @tasks.loop(seconds=60) # task runs every 60 seconds
     async def my_background_task(self):
@@ -26,5 +21,5 @@ class MyClient(nextcord.Client):
     async def before_my_task(self):
         await self.wait_until_ready() # wait until the bot logs in
 
-client = MyClient()
-client.run('token')
+bot = Bot(command_prefix='$')
+bot.run('token')

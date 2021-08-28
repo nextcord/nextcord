@@ -1,6 +1,5 @@
-import typing
-
 import nextcord
+
 from nextcord.ext import commands
 
 # Defines a custom Select containing colour options
@@ -37,16 +36,7 @@ class DropdownView(nextcord.ui.View):
         self.add_item(Dropdown())
 
 
-class Bot(commands.Bot):
-    def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or('$'))
-
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
-    
-    
-bot = Bot()
+bot = commands.Bot(command_prefix='$')
 
 
 @bot.command()

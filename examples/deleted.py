@@ -1,21 +1,25 @@
 import nextcord
 
-class MyClient(nextcord.Client):
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
+from nextcord.ext import commands
 
-    async def on_message(self, message):
-        if message.content.startswith('!deleteme'):
-            msg = await message.channel.send('I will delete myself now...')
-            await msg.delete()
 
-            # this also works
-            await message.channel.send('Goodbye in 3 seconds...', delete_after=3.0)
+class Bot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    async def on_message_delete(self, message):
+    async def on_message_delete(self, message: nextcord.Message):
         msg = f'{message.author} has deleted the message: {message.content}'
         await message.channel.send(msg)
 
-client = MyClient()
-client.run('token')
+bot = Bot(command_prefix='$')
+
+@bot.command()
+async def deleteme(ctx):
+    msg = await ctx.send('I will delete myself now...')
+    await msg.delete()
+
+    # this also works
+    await ctx.send('Goodbye in 3 seconds...', delete_after=3.0)
+
+
+bot.run('token')

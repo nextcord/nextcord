@@ -99,15 +99,15 @@ A quick example to showcase how events work:
 
 .. code-block:: python3
 
-    import nextcord
+    from nextcord.ext import commands
 
-    class MyClient(nextcord.Client):
-        async def on_ready(self):
-            print(f'Logged on as {self.user}!')
+    # the prefix is not used in this example
+    bot = commands.Bot(command_prefix='$')
 
-        async def on_message(self, message):
-            print(f'Message from {messsage.author}: {message.content}')
+   @bot.event
+    async def on_message(message):
+        print(f'Message from {messsage.author}: {message.content}')
 
-    client = MyClient()
-    client.run('my token goes here')
+bot.run('token')
+
 
