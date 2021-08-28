@@ -102,7 +102,7 @@ A quick example to showcase how events work:
     from nextcord.ext import commands
 
     # the prefix is not used in this example
-    bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'))
+    bot = commands.Bot(command_prefix='$')
 
    @bot.event
     async def on_message(message):
