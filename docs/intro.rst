@@ -99,15 +99,15 @@ A quick example to showcase how events work:
 
 .. code-block:: python3
 
-    import discord
+    from discord.ext import commands
 
-    class MyClient(discord.Client):
+    class MyBot(commands.Bot):
         async def on_ready(self):
             print(f'Logged on as {self.user}!')
 
         async def on_message(self, message):
             print(f'Message from {messsage.author}: {message.content}')
 
-    client = MyClient()
-    client.run('my token goes here')
+    bot = MyBot()
+    bot.run('my token goes here')
 

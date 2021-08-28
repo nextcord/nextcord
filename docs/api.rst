@@ -177,15 +177,15 @@ There are two ways to register an event, the first way is through the use of
 :meth:`Client.event`. The second way is through subclassing :class:`Client` and
 overriding the specific events. For example: ::
 
-    import discord
+    from discord.ext import commands
 
-    class MyClient(discord.Client):
-        async def on_message(self, message):
-            if message.author == self.user:
-                return
+    bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'))
+    bot.run('token')
 
-            if message.content.startswith('$hello'):
-                await message.channel.send('Hello World!')
+    @bot.command()
+    async def hello(ctx: commands.Context):
+        await ctx.send('Hello World!')
+
 
 
 If an event handler raises an exception, :func:`on_error` will be called

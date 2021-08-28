@@ -75,32 +75,28 @@ Quick Example
 
 .. code:: py
 
-    import discord
+    from discord.ext import commands
 
-    class MyClient(discord.Client):
+    class MyBot(commands.Bot):
         async def on_ready(self):
             print('Logged on as', self.user)
 
-        async def on_message(self, message):
-            # don't respond to ourselves
-            if message.author == self.user:
-                return
 
-            if message.content == 'ping':
-                await message.channel.send('pong')
+    bot = MyBot()
+    bot.run('token')
 
-    client = MyClient()
-    client.run('token')
+    @bot.command()
+    async def ping(ctx: commands.Context):
+        await ctx.send('pong')
 
 Bot Example
 ~~~~~~~~~~~~~
 
 .. code:: py
 
-    import discord
     from discord.ext import commands
 
-    bot = commands.Bot(command_prefix='>')
+    bot = commands.Bot(command_prefix=commands.when_mentioned_or('$'))
 
     @bot.command()
     async def ping(ctx):
