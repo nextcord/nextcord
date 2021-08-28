@@ -36,7 +36,7 @@ bot = Bot(command_prefix='$')
 
 
 @bot.command()
-async def guess(ctx: MyContext, number: int):
+async def guess(ctx, number: int):
     """ Guess a random number from 1 to 6. """
     # explained in a previous example, this gives you
     # a random number from 1-6
@@ -46,5 +46,4 @@ async def guess(ctx: MyContext, number: int):
     # or a red cross mark if it wasn't
     await ctx.tick(number == value)
 
-token = "your token here"
-bot.run(token)
+bot.run("token")
