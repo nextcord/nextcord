@@ -1,6 +1,6 @@
-from nextcord.ext import commands
-
 import nextcord
+
+from nextcord.ext import commands
 from urllib.parse import quote_plus
 
 class GoogleBot(commands.Bot):

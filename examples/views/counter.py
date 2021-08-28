@@ -1,6 +1,6 @@
-from nextcord.ext import commands
-
 import nextcord
+
+from nextcord.ext import commands
 
 
 class CounterBot(commands.Bot):

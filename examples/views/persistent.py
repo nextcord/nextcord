@@ -1,5 +1,6 @@
-from nextcord.ext import commands
 import nextcord
+
+from nextcord.ext import commands
 
 
 # Define a simple View that persists between bot restarts

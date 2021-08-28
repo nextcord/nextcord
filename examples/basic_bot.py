@@ -1,8 +1,8 @@
 # This example requires the 'members' privileged intents
-
 import nextcord
-from nextcord.ext import commands
 import random
+
+from nextcord.ext import commands
 
 description = '''An example bot to showcase the nextcord.ext.commands extension
 module.

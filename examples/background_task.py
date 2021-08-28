@@ -1,6 +1,7 @@
-from nextcord.ext import tasks
-
 import nextcord
+
+from nextcord.ext import commands
+
 
 class MyClient(nextcord.Client):
     def __init__(self, *args, **kwargs):

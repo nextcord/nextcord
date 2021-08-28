@@ -1,6 +1,9 @@
 import nextcord
 import asyncio
 
+from nextcord.ext import commands
+
+
 class MyClient(nextcord.Client):
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')

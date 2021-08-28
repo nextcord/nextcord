@@ -1,6 +1,5 @@
-import typing
-
 import nextcord
+
 from nextcord.ext import commands
 
 # Defines a custom Select containing colour options

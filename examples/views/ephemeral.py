@@ -1,6 +1,7 @@
+import nextcord
+
 from nextcord.ext import commands
 
-import nextcord
 
 class EphemeralCounterBot(commands.Bot):
     def __init__(self):

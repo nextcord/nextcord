@@ -1,5 +1,4 @@
 # This example requires the 'members' privileged intents
-
 import nextcord
 
 class MyClient(nextcord.Client):

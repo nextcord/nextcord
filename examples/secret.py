@@ -1,6 +1,6 @@
 import typing
-
 import nextcord
+
 from nextcord.ext import commands
 
 bot = commands.Bot(command_prefix=commands.when_mentioned, description="Nothing to see here!")
