@@ -81,5 +81,5 @@ class MyClient(discord.Client):
 intents = discord.Intents.default()
 intents.members = True
 
-client = MyClient(intents=intents)
-client.run('token')
+bot = MyClient(intents=intents)
+bot.run('token')

@@ -16,5 +16,5 @@ class MyClient(discord.Client):
         msg = f'**{before.author}** edited their message:\n{before.content} -> {after.content}'
         await before.channel.send(msg)
 
-client = MyClient()
-client.run('token')
+bot = MyClient()
+bot.run('token')
