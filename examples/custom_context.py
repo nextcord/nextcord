@@ -32,7 +32,7 @@ class MyBot(commands.Bot):
 bot = MyBot(command_prefix=commands.when_mentioned_or('$'))
 
 @bot.command()
-async def guess(ctx, number: int):
+async def guess(ctx: MyContext, number: int):
     """ Guess a random number from 1 to 6. """
     # explained in a previous example, this gives you
     # a random number from 1-6

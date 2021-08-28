@@ -57,7 +57,7 @@ class Music(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def join(self, ctx, *, channel: discord.VoiceChannel):
+    async def join(self, ctx: commands.Context, *, channel: discord.VoiceChannel):
         """Joins a voice channel"""
 
         if ctx.voice_client is not None:
@@ -66,7 +66,7 @@ class Music(commands.Cog):
         await channel.connect()
 
     @commands.command()
-    async def play(self, ctx, *, query):
+    async def play(self, ctx: commands.Context, *, query):
         """Plays a file from the local filesystem"""
 
         source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(query))
@@ -75,7 +75,7 @@ class Music(commands.Cog):
         await ctx.send(f'Now playing: {query}')
 
     @commands.command()
-    async def yt(self, ctx, *, url):
+    async def yt(self, ctx: commands.Context, *, url):
         """Plays from a url (almost anything youtube_dl supports)"""
 
         async with ctx.typing():
@@ -85,7 +85,7 @@ class Music(commands.Cog):
         await ctx.send(f'Now playing: {player.title}')
 
     @commands.command()
-    async def stream(self, ctx, *, url):
+    async def stream(self, ctx: commands.Context, *, url):
         """Streams from a url (same as yt, but doesn't predownload)"""
 
         async with ctx.typing():
@@ -95,7 +95,7 @@ class Music(commands.Cog):
         await ctx.send(f'Now playing: {player.title}')
 
     @commands.command()
-    async def volume(self, ctx, volume: int):
+    async def volume(self, ctx: commands.Context, volume: int):
         """Changes the player's volume"""
 
         if ctx.voice_client is None:
@@ -105,7 +105,7 @@ class Music(commands.Cog):
         await ctx.send(f"Changed volume to {volume}%")
 
     @commands.command()
-    async def stop(self, ctx):
+    async def stop(self, ctx: commands.Context):
         """Stops and disconnects the bot from voice"""
 
         await ctx.voice_client.disconnect()
@@ -113,7 +113,7 @@ class Music(commands.Cog):
     @play.before_invoke
     @yt.before_invoke
     @stream.before_invoke
-    async def ensure_voice(self, ctx):
+    async def ensure_voice(self, ctx: commands.Context):
         if ctx.voice_client is None:
             if ctx.author.voice:
                 await ctx.author.voice.channel.connect()
