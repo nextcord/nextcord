@@ -1,8 +1,8 @@
 # This example requires the 'members' privileged intents
 
-import discord
+import nextcord
 
-class MyClient(discord.Client):
+class MyClient(nextcord.Client):
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
@@ -14,7 +14,7 @@ class MyClient(discord.Client):
             await guild.system_channel.send(to_send)
 
 
-intents = discord.Intents.default()
+intents = nextcord.Intents.default()
 intents.members = True
 
 client = MyClient(intents=intents)
