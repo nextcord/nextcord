@@ -7,10 +7,6 @@ class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
-
     async def on_message_delete(self, message: nextcord.Message):
         msg = f'{message.author} has deleted the message: {message.content}'
         await message.channel.send(msg)
