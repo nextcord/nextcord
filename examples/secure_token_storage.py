@@ -6,8 +6,9 @@ import os
 # There are other ways to load environment variables but this is one
 from dotenv import load_dotenv # https://pypi.org/project/python-dotenv/
 
+# load_dotenv reads from a file called .env in the same directory as the python files which should containing TOKEN="1234567890"
 load_dotenv()
 token = os.getenv('BOT_TOKEN')
-bot.run(token)
 
-# load_dotenv reads from a file called .env in the same directory as the python files which should containing TOKEN="1234567890"
+# run the bot using the token in .env
+bot.run(token)
