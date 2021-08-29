@@ -31,6 +31,7 @@ import pkg_resources
 import aiohttp
 import platform
 
+
 def show_version():
     entries = []
 
@@ -47,9 +48,11 @@ def show_version():
     entries.append('- system info: {0.system} {0.release} {0.version}'.format(uname))
     print('\n'.join(entries))
 
+
 def core(parser, args):
     if args.version:
         show_version()
+
 
 _bot_template = """#!/usr/bin/env python3
 
@@ -172,6 +175,7 @@ _base_table.update((chr(i), None) for i in range(32))
 
 _translation_table = str.maketrans(_base_table)
 
+
 def to_path(parser, name, *, replace_spaces=False):
     if isinstance(name, Path):
         return name
@@ -186,6 +190,7 @@ def to_path(parser, name, *, replace_spaces=False):
     if replace_spaces:
         name = name.replace(' ', '-')
     return Path(name)
+
 
 def newbot(parser, args):
     new_directory = to_path(parser, args.directory) / to_path(parser, args.name)
@@ -228,6 +233,7 @@ def newbot(parser, args):
 
     print('successfully made bot at', new_directory)
 
+
 def newcog(parser, args):
     cog_dir = to_path(parser, args.directory)
     try:
@@ -261,6 +267,7 @@ def newcog(parser, args):
     else:
         print('successfully made cog at', directory)
 
+
 def add_newbot_args(subparser):
     parser = subparser.add_parser('newbot', help='creates a command bot project quickly')
     parser.set_defaults(func=newbot)
@@ -270,6 +277,7 @@ def add_newbot_args(subparser):
     parser.add_argument('--prefix', help='the bot prefix (default: $)', default='$', metavar='<prefix>')
     parser.add_argument('--sharded', help='whether to use AutoShardedBot', action='store_true')
     parser.add_argument('--no-git', help='do not create a .gitignore file', action='store_true', dest='no_git')
+
 
 def add_newcog_args(subparser):
     parser = subparser.add_parser('newcog', help='creates a new cog template quickly')
@@ -282,6 +290,7 @@ def add_newcog_args(subparser):
     parser.add_argument('--hide-commands', help='whether to hide all commands in the cog', action='store_true')
     parser.add_argument('--full', help='add all special methods as well', action='store_true')
 
+
 def parse_args():
     parser = argparse.ArgumentParser(prog='discord', description='Tools for helping with nextcord')
     parser.add_argument('-v', '--version', action='store_true', help='shows the library version')
@@ -292,9 +301,11 @@ def parse_args():
     add_newcog_args(subparser)
     return parser, parser.parse_args()
 
+
 def main():
     parser, args = parse_args()
     args.func(parser, args)
+
 
 if __name__ == '__main__':
     main()

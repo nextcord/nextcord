@@ -1,7 +1,8 @@
-import nextcord
-
-from nextcord.ext import commands
 from urllib.parse import quote_plus
+
+import nextcord
+from nextcord.ext import commands
+
 
 # Define a simple View that gives us a google link button.
 # We take in `query` as the query that the command author requests for

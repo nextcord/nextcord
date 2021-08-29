@@ -85,6 +85,7 @@ def _transform_member_id(entry: AuditLogEntry, data: Optional[Snowflake]) -> Uni
         return None
     return entry._get_member(int(data))
 
+
 def _transform_guild_id(entry: AuditLogEntry, data: Optional[Snowflake]) -> Optional[Guild]:
     if data is None:
         return None
@@ -146,11 +147,13 @@ def _enum_transformer(enum: Type[T]) -> Callable[[AuditLogEntry, int], T]:
 
     return _transform
 
+
 def _transform_type(entry: AuditLogEntry, data: Union[int]) -> Union[enums.ChannelType, enums.StickerType]:
     if entry.action.name.startswith('sticker_'):
         return enums.try_enum(enums.StickerType, data)
     else:
         return enums.try_enum(enums.ChannelType, data)
+
 
 class AuditLogDiff:
     def __len__(self) -> int:

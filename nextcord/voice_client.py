@@ -82,9 +82,8 @@ __all__ = (
 )
 
 
-
-
 _log = logging.getLogger(__name__)
+
 
 class VoiceProtocol:
     """A class that represents the Discord voice protocol.
@@ -195,6 +194,7 @@ class VoiceProtocol:
         key_id, _ = self.channel._get_voice_client_key()
         self.client._connection._remove_voice_client(key_id)
 
+
 class VoiceClient(VoiceProtocol):
     """Represents a Discord voice connection.
 
@@ -225,7 +225,6 @@ class VoiceClient(VoiceProtocol):
     voice_port: int
     secret_key: List[int]
     ssrc: int
-
 
     def __init__(self, client: Client, channel: abc.Connectable):
         if not has_nacl:

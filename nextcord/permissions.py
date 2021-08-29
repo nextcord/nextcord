@@ -32,6 +32,7 @@ __all__ = (
     'PermissionOverwrite',
 )
 
+
 # A permission alias works like a regular flag but is marked
 # So the PermissionOverwrite knows to work with it
 class permission_alias(alias_flag_value):
@@ -46,7 +47,9 @@ def make_permission_alias(alias: str) -> Callable[[Callable[[Any], int]], permis
 
     return decorator
 
+
 P = TypeVar('P', bound='Permissions')
+
 
 @fill_with_flags()
 class Permissions(BaseFlags):
@@ -551,7 +554,9 @@ class Permissions(BaseFlags):
         """
         return 1 << 38
 
+
 PO = TypeVar('PO', bound='PermissionOverwrite')
+
 
 def _augment_from_permissions(cls):
     cls.VALID_NAMES = set(Permissions.VALID_FLAGS)

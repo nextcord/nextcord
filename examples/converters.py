@@ -1,7 +1,7 @@
 # This example requires the 'members' privileged intent to use the Member converter.
 import typing
-import nextcord
 
+import nextcord
 from nextcord.ext import commands
 
 intents = nextcord.Intents.default()
@@ -30,12 +30,14 @@ async def userinfo(ctx, user: nextcord.User):
     avatar = user.avatar.url
     await ctx.send(f'User found: {user_id} -- {username}\n{avatar}')
 
+
 @userinfo.error
 async def userinfo_error(ctx, error: commands.CommandError):
     # if the conversion above fails for any reason, it will raise `commands.BadArgument`
     # so we handle this in this error handler:
     if isinstance(error, commands.BadArgument):
         return await ctx.send('Couldn\'t find that user.')
+
 
 # Custom Converter here
 class ChannelOrMemberConverter(commands.Converter):
@@ -76,10 +78,11 @@ class ChannelOrMemberConverter(commands.Converter):
 async def notify(ctx, target: ChannelOrMemberConverter):
     # This command signature utilises the custom converter written above
     # What will happen during command invocation is that the `target` above will be passed to
-    # the `argument` parameter of the `ChannelOrMemberConverter.convert` method and 
+    # the `argument` parameter of the `ChannelOrMemberConverter.convert` method and
     # the conversion will go through the process defined there.
 
     await target.send(f'Hello, {target.name}!')
+
 
 @bot.command()
 async def ignore(ctx, target: typing.Union[nextcord.Member, nextcord.TextChannel]):
@@ -94,8 +97,9 @@ async def ignore(ctx, target: typing.Union[nextcord.Member, nextcord.TextChannel
     # To check the resulting type, `isinstance` is used
     if isinstance(target, nextcord.Member):
         await ctx.send(f'Member found: {target.mention}, adding them to the ignore list.')
-    elif isinstance(target, nextcord.TextChannel): # this could be an `else` but for completeness' sake.
+    elif isinstance(target, nextcord.TextChannel):  # this could be an `else` but for completeness' sake.
         await ctx.send(f'Channel found: {target.mention}, adding it to the ignore list.')
+
 
 # Built-in type converters.
 @bot.command()

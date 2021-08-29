@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from datetime import datetime
     from .types.message import PartialEmoji as PartialEmojiPayload
 
+
 class _EmojiTag:
     __slots__ = ()
 

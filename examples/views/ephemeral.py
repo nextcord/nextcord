@@ -21,6 +21,7 @@ class Counter(nextcord.ui.View):
         # Make sure to update the message with our updated selves
         await interaction.response.edit_message(view=self)
 
+
 # Define a View that will give us our own personal counter button
 class EphemeralCounter(nextcord.ui.View):
     # When this button is pressed, it will respond with a Counter view that will
@@ -30,7 +31,9 @@ class EphemeralCounter(nextcord.ui.View):
         # ephemeral=True makes the message hidden from everyone except the button presser
         await interaction.response.send_message('Enjoy!', view=Counter(), ephemeral=True)
 
+
 bot = commands.Bot(command_prefix='$')
+
 
 @bot.command()
 async def counter(ctx):

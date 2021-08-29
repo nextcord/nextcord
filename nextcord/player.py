@@ -68,6 +68,7 @@ if sys.platform != 'win32':
 else:
     CREATE_NO_WINDOW = 0x08000000
 
+
 class AudioSource:
     """Represents an audio stream.
 
@@ -114,6 +115,7 @@ class AudioSource:
     def __del__(self) -> None:
         self.cleanup()
 
+
 class PCMAudio(AudioSource):
     """Represents raw 16-bit 48KHz stereo PCM audio source.
 
@@ -130,6 +132,7 @@ class PCMAudio(AudioSource):
         if len(ret) != OpusEncoder.FRAME_SIZE:
             return b''
         return ret
+
 
 class FFmpegAudio(AudioSource):
     """Represents an FFmpeg (or AVConv) based AudioSource.
@@ -151,7 +154,7 @@ class FFmpegAudio(AudioSource):
 
         self._process: subprocess.Popen = self._spawn_process(args, **kwargs)
         self._stdout: IO[bytes] = self._process.stdout  # type: ignore
-        self._stdin: Optional[IO[Bytes]] = None
+        self._stdin: Optional[IO[bytes]] = None
         self._pipe_thread: Optional[threading.Thread] = None
 
         if piping:
@@ -191,7 +194,6 @@ class FFmpegAudio(AudioSource):
         else:
             _log.info('ffmpeg process %s successfully terminated with return code of %s.', proc.pid, proc.returncode)
 
-
     def _pipe_writer(self, source: io.BufferedIOBase) -> None:
         while self._process:
             # arbitrarily large read size
@@ -210,6 +212,7 @@ class FFmpegAudio(AudioSource):
     def cleanup(self) -> None:
         self._kill_process()
         self._process = self._stdout = self._stdin = MISSING
+
 
 class FFmpegPCMAudio(FFmpegAudio):
     """An audio source from FFmpeg (or AVConv).
@@ -281,6 +284,7 @@ class FFmpegPCMAudio(FFmpegAudio):
 
     def is_opus(self) -> bool:
         return False
+
 
 class FFmpegOpusAudio(FFmpegAudio):
     """An audio source from FFmpeg (or AVConv).

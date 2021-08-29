@@ -78,6 +78,7 @@ Coro = TypeVar('Coro', bound=Callable[..., Coroutine[Any, Any, Any]])
 
 _log = logging.getLogger(__name__)
 
+
 def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
     tasks = {t for t in asyncio.all_tasks(loop=loop) if not t.done()}
 
@@ -101,6 +102,7 @@ def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
                 'task': task
             })
 
+
 def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
     try:
         _cancel_tasks(loop)
@@ -108,6 +110,7 @@ def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
     finally:
         _log.info('Closing the event loop.')
         loop.close()
+
 
 class Client:
     r"""Represents a client connection that connects to Discord.

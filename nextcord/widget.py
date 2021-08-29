@@ -46,6 +46,7 @@ __all__ = (
     'Widget',
 )
 
+
 class WidgetChannel:
     """Represents a "partial" widget channel.
 
@@ -98,6 +99,7 @@ class WidgetChannel:
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
         return snowflake_time(self.id)
+
 
 class WidgetMember(BaseUser):
     """Represents a "partial" member of the widget's guild.
@@ -189,6 +191,7 @@ class WidgetMember(BaseUser):
     def display_name(self) -> str:
         """:class:`str`: Returns the member's display name."""
         return self.nick or self.name
+
 
 class Widget:
     """Represents a :class:`Guild` widget.

@@ -2,6 +2,7 @@ import nextcord
 
 from nextcord.ext import commands
 
+
 # Defines a custom Select containing colour options
 # that the user can choose. The callback function
 # of this class is called when the user changes their choice
@@ -23,7 +24,7 @@ class Dropdown(nextcord.ui.Select):
     async def callback(self, interaction: nextcord.Interaction):
         # Use the interaction object to send a response message containing
         # the user's favourite colour or choice. The self object refers to the
-        # Select object, and the values attribute gets a list of the user's 
+        # Select object, and the values attribute gets a list of the user's
         # selected options. We only want the first one.
         await interaction.response.send_message(f'Your favourite colour is {self.values[0]}')
 

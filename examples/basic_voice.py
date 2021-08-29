@@ -1,7 +1,8 @@
 import asyncio
-import nextcord
+
 import youtube_dl
 
+import nextcord
 from nextcord.ext import commands
 
 # Suppress noise about console usage from errors
@@ -19,7 +20,7 @@ ytdl_format_options = {
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
-    'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
+    'source_address': '0.0.0.0'  # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
 
 ffmpeg_options = {
@@ -121,6 +122,7 @@ class Music(commands.Cog):
                 raise commands.CommandError("Author not connected to a voice channel.")
         elif ctx.voice_client.is_playing():
             ctx.voice_client.stop()
+
 
 bot = commands.Bot(command_prefix="$", description='Relatively simple music bot example')
 

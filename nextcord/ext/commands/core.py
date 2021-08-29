@@ -203,6 +203,7 @@ class _CaseInsensitiveDict(dict):
     def __setitem__(self, k, v):
         super().__setitem__(k.casefold(), v)
 
+
 class Command(_BaseCommand, Generic[CogT, P, T]):
     r"""A class that implements the protocol for a bot text command.
 
@@ -1383,6 +1384,7 @@ class GroupMixin(Generic[CogT]):
 
         return decorator
 
+
 class Group(GroupMixin[CogT], Command[CogT, P, T]):
     """A class that implements a grouping protocol for commands to be
     executed as subcommands.
@@ -1495,6 +1497,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
 
 # Decorators
 
+
 @overload
 def command(
     name: str = ...,
@@ -1510,6 +1513,7 @@ def command(
 , Command[CogT, P, T]]:
     ...
 
+
 @overload
 def command(
     name: str = ...,
@@ -1524,6 +1528,7 @@ def command(
     ]
 , CommandT]:
     ...
+
 
 def command(
     name: str = MISSING,
@@ -1579,6 +1584,7 @@ def command(
 
     return decorator
 
+
 @overload
 def group(
     name: str = ...,
@@ -1593,6 +1599,7 @@ def group(
     ]
 , Group[CogT, P, T]]:
     ...
+
 
 @overload
 def group(
@@ -1632,6 +1639,7 @@ def group(
     if cls is MISSING:
         cls = Group  # type: ignore
     return command(name=name, cls=cls, **attrs)  # type: ignore
+
 
 def check(predicate: Check) -> Callable[[T], T]:
     r"""A decorator that adds a check to the :class:`.Command` or its
@@ -1725,6 +1733,7 @@ def check(predicate: Check) -> Callable[[T], T]:
 
     return decorator  # type: ignore
 
+
 def check_any(*checks: Check) -> Callable[[T], T]:
     r"""A :func:`check` that is added that checks if any of the checks passed
     will pass, i.e. using logical OR.
@@ -1793,6 +1802,7 @@ def check_any(*checks: Check) -> Callable[[T], T]:
 
     return check(predicate)
 
+
 def has_role(item: Union[int, str]) -> Callable[[T], T]:
     """A :func:`.check` that is added that checks if the member invoking the
     command has the role specified via the name or ID specified.
@@ -1834,6 +1844,7 @@ def has_role(item: Union[int, str]) -> Callable[[T], T]:
         return True
 
     return check(predicate)
+
 
 def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
     r"""A :func:`.check` that is added that checks if the member invoking the
@@ -1878,6 +1889,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
 
     return check(predicate)
 
+
 def bot_has_role(item: int) -> Callable[[T], T]:
     """Similar to :func:`.has_role` except checks if the bot itself has the
     role.
@@ -1906,6 +1918,7 @@ def bot_has_role(item: int) -> Callable[[T], T]:
         return True
     return check(predicate)
 
+
 def bot_has_any_role(*items: int) -> Callable[[T], T]:
     """Similar to :func:`.has_any_role` except checks if the bot itself has
     any of the roles listed.
@@ -1929,6 +1942,7 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
             return True
         raise BotMissingAnyRole(list(items))
     return check(predicate)
+
 
 def has_permissions(**perms: bool) -> Callable[[T], T]:
     """A :func:`.check` that is added that checks if the member has all of
@@ -1977,6 +1991,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
 
     return check(predicate)
 
+
 def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
     """Similar to :func:`.has_permissions` except checks if the bot itself has
     the permissions listed.
@@ -2002,6 +2017,7 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
         raise BotMissingPermissions(missing)
 
     return check(predicate)
+
 
 def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
     """Similar to :func:`.has_permissions`, but operates on guild wide
@@ -2031,6 +2047,7 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
 
     return check(predicate)
 
+
 def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
     """Similar to :func:`.has_guild_permissions`, but checks the bot
     members guild permissions.
@@ -2056,6 +2073,7 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
 
     return check(predicate)
 
+
 def dm_only() -> Callable[[T], T]:
     """A :func:`.check` that indicates this command must only be used in a
     DM context. Only private messages are allowed when
@@ -2074,6 +2092,7 @@ def dm_only() -> Callable[[T], T]:
 
     return check(predicate)
 
+
 def guild_only() -> Callable[[T], T]:
     """A :func:`.check` that indicates this command must only be used in a
     guild context only. Basically, no private messages are allowed when
@@ -2089,6 +2108,7 @@ def guild_only() -> Callable[[T], T]:
         return True
 
     return check(predicate)
+
 
 def is_owner() -> Callable[[T], T]:
     """A :func:`.check` that checks if the person invoking this command is the
@@ -2107,6 +2127,7 @@ def is_owner() -> Callable[[T], T]:
 
     return check(predicate)
 
+
 def is_nsfw() -> Callable[[T], T]:
     """A :func:`.check` that checks if the channel is a NSFW channel.
 
@@ -2124,6 +2145,7 @@ def is_nsfw() -> Callable[[T], T]:
             return True
         raise NSFWChannelRequired(ch)  # type: ignore
     return check(pred)
+
 
 def cooldown(rate: int, per: float, type: Union[BucketType, Callable[[Message], Any]] = BucketType.default) -> Callable[[T], T]:
     """A decorator that adds a cooldown to a :class:`.Command`
@@ -2159,6 +2181,7 @@ def cooldown(rate: int, per: float, type: Union[BucketType, Callable[[Message], 
             func.__commands_cooldown__ = CooldownMapping(Cooldown(rate, per), type)
         return func
     return decorator  # type: ignore
+
 
 def dynamic_cooldown(cooldown: Union[BucketType, Callable[[Message], Any]], type: BucketType = BucketType.default) -> Callable[[T], T]:
     """A decorator that adds a dynamic cooldown to a :class:`.Command`
@@ -2200,6 +2223,7 @@ def dynamic_cooldown(cooldown: Union[BucketType, Callable[[Message], Any]], type
         return func
     return decorator  # type: ignore
 
+
 def max_concurrency(number: int, per: BucketType = BucketType.default, *, wait: bool = False) -> Callable[[T], T]:
     """A decorator that adds a maximum concurrency to a :class:`.Command` or its subclasses.
 
@@ -2232,6 +2256,7 @@ def max_concurrency(number: int, per: BucketType = BucketType.default, *, wait: 
             func.__commands_max_concurrency__ = value
         return func
     return decorator  # type: ignore
+
 
 def before_invoke(coro) -> Callable[[T], T]:
     """A decorator that registers a coroutine as a pre-invoke hook.
@@ -2278,6 +2303,7 @@ def before_invoke(coro) -> Callable[[T], T]:
             func.__before_invoke__ = coro
         return func
     return decorator  # type: ignore
+
 
 def after_invoke(coro) -> Callable[[T], T]:
     """A decorator that registers a coroutine as a post-invoke hook.

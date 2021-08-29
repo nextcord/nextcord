@@ -47,6 +47,7 @@ VALID_ASSET_FORMATS = VALID_STATIC_FORMATS | {"gif"}
 
 MISSING = utils.MISSING
 
+
 class AssetMixin:
     url: str
     _state: Optional[Any]

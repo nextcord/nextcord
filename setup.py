@@ -3,7 +3,7 @@ import re
 
 requirements = []
 with open('requirements.txt') as f:
-  requirements = f.read().splitlines()
+    requirements = f.read().splitlines()
 
 version = ''
 with open('nextcord/__init__.py') as f:
@@ -52,7 +52,7 @@ packages = [
     'nextcord.webhook',
     'nextcord.ext.commands',
     'nextcord.ext.tasks',
-    
+
     # Compat
     "discord",
     "discord.types",
@@ -62,24 +62,25 @@ packages = [
     "discord.ext.tasks"
 ]
 
-setup(name='nextcord',
-      author='tag-epic & Rapptz',
-      url='https://github.com/nextcord/nextcord',
-      project_urls={
+setup(
+    name='nextcord',
+    author='tag-epic & Rapptz',
+    url='https://github.com/nextcord/nextcord',
+    project_urls={
         "Documentation": "https://nextcord.readthedocs.io/en/latest/",
         "Issue tracker": "https://github.com/nextcord/nextcord/issues",
-      },
-      version=version,
-      packages=packages,
-      license='MIT',
-      description='A Python wrapper for the Discord API forked from discord.py',
-      long_description=readme,
-      long_description_content_type="text/x-rst",
-      include_package_data=True,
-      install_requires=requirements,
-      extras_require=extras_require,
-      python_requires='>=3.8.0',
-      classifiers=[
+    },
+    version=version,
+    packages=packages,
+    license='MIT',
+    description='A Python wrapper for the Discord API forked from discord.py',
+    long_description=readme,
+    long_description_content_type="text/x-rst",
+    include_package_data=True,
+    install_requires=requirements,
+    extras_require=extras_require,
+    python_requires='>=3.8.0',
+    classifiers=[
         'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
@@ -92,5 +93,5 @@ setup(name='nextcord',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Utilities',
         'Typing :: Typed',
-      ]
+    ]
 )

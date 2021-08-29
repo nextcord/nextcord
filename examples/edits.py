@@ -1,4 +1,3 @@
-import nextcord
 import asyncio
 
 from nextcord.ext import commands
@@ -12,7 +11,9 @@ class Bot(commands.Bot):
         msg = f'**{before.author}** edited their message:\n{before.content} -> {after.content}'
         await before.channel.send(msg)
 
+
 bot = Bot(command_prefix='$')
+
 
 @bot.command()
 async def editme(ctx):

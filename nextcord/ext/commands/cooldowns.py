@@ -192,6 +192,7 @@ class Cooldown:
     def __repr__(self) -> str:
         return f'<Cooldown rate: {self.rate} per: {self.per} window: {self._window} tokens: {self._tokens}>'
 
+
 class CooldownMapping:
     def __init__(
         self,
@@ -256,6 +257,7 @@ class CooldownMapping:
         bucket = self.get_bucket(message, current)
         return bucket.update_rate_limit(current)
 
+
 class DynamicCooldownMapping(CooldownMapping):
 
     def __init__(
@@ -277,6 +279,7 @@ class DynamicCooldownMapping(CooldownMapping):
 
     def create_bucket(self, message: Message) -> Cooldown:
         return self._factory(message)
+
 
 class _Semaphore:
     """This class is a version of a semaphore.
@@ -336,6 +339,7 @@ class _Semaphore:
     def release(self) -> None:
         self.value += 1
         self.wake_up()
+
 
 class MaxConcurrency:
     __slots__ = ('number', 'per', 'wait', '_mapping')

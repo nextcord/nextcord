@@ -46,6 +46,7 @@ _quotes = {
 }
 _all_quotes = set(_quotes.keys()) | set(_quotes.values())
 
+
 class StringView:
     def __init__(self, buffer):
         self.index = 0
@@ -186,7 +187,6 @@ class StringView:
                 return ''.join(result)
 
             result.append(current)
-
 
     def __repr__(self):
         return f'<StringView pos: {self.index} prev: {self.previous} end: {self.end} eof: {self.eof}>'

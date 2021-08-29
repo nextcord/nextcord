@@ -195,6 +195,7 @@ class AppInfo:
         """
         return self._state._get_guild(self.guild_id)
 
+
 class PartialAppInfo:
     """Represents a partial AppInfo given by :func:`~nextcord.abc.GuildChannel.create_invite`
 

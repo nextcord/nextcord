@@ -45,6 +45,7 @@ FuncT = TypeVar('FuncT', bound=Callable[..., Any])
 
 MISSING: Any = nextcord.utils.MISSING
 
+
 class CogMeta(type):
     """A metaclass for defining a cog.
 
@@ -169,9 +170,11 @@ class CogMeta(type):
     def qualified_name(cls) -> str:
         return cls.__cog_name__
 
+
 def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
     return func
+
 
 class Cog(metaclass=CogMeta):
     """The base class that all cogs must inherit from.

@@ -36,12 +36,14 @@ __all__ = (
     'OggStream',
 )
 
+
 class OggError(DiscordException):
     """An exception that is thrown for Ogg stream parsing errors."""
     pass
 
 # https://tools.ietf.org/html/rfc3533
 # https://tools.ietf.org/html/rfc7845
+
 
 class OggPage:
     _header: ClassVar[struct.Struct] = struct.Struct('<xBQIIIB')
@@ -83,6 +85,7 @@ class OggPage:
 
         if partial:
             yield self.data[offset:], False
+
 
 class OggStream:
     def __init__(self, stream: IO[bytes]) -> None:

@@ -67,6 +67,7 @@ T = TypeVar('T')
 CFT = TypeVar('CFT', bound='CoroFunc')
 CXT = TypeVar('CXT', bound='Context')
 
+
 def when_mentioned(bot: Union[Bot, AutoShardedBot], msg: Message) -> List[str]:
     """A callable that implements a command prefix equivalent to being mentioned.
 
@@ -74,6 +75,7 @@ def when_mentioned(bot: Union[Bot, AutoShardedBot], msg: Message) -> List[str]:
     """
     # bot.user will never be None when this is called
     return [f'<@{bot.user.id}> ', f'<@!{bot.user.id}> ']  # type: ignore
+
 
 def when_mentioned_or(*prefixes: str) -> Callable[[Union[Bot, AutoShardedBot], Message], List[str]]:
     """A callable that implements when mentioned or other prefixes provided.
@@ -111,14 +113,18 @@ def when_mentioned_or(*prefixes: str) -> Callable[[Union[Bot, AutoShardedBot], M
 
     return inner
 
+
 def _is_submodule(parent: str, child: str) -> bool:
     return parent == child or child.startswith(parent + ".")
+
 
 class _DefaultRepr:
     def __repr__(self):
         return '<default-help-command>'
 
+
 _default = _DefaultRepr()
+
 
 class BotBase(GroupMixin):
     def __init__(self, command_prefix, help_command=_default, description=None, **options):
@@ -1034,6 +1040,7 @@ class BotBase(GroupMixin):
     async def on_message(self, message):
         await self.process_commands(message)
 
+
 class Bot(BotBase, nextcord.Client):
     """Represents a discord bot.
 
@@ -1105,6 +1112,7 @@ class Bot(BotBase, nextcord.Client):
         .. versionadded:: 1.7
     """
     pass
+
 
 class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
     """This is similar to :class:`.Bot` except that it is inherited from
