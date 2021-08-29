@@ -55,6 +55,9 @@ packages = [
     
     # Compat
     "discord",
+    "discord.types",
+    "discord.ui",
+    "discord.webhook",
     "discord.ext.commands",
     "discord.ext.tasks"
 ]
