@@ -34,7 +34,7 @@ import nextcord.utils
 
 from .core import Group, Command
 from .errors import CommandError
-from discord.ext.commands.errors import CommandError as LegacyCommandError
+from nextcord.ext.commands.errors import CommandError as LegacyCommandError
 
 if TYPE_CHECKING:
     from .context import Context
