@@ -2,7 +2,7 @@ import random
 
 from nextcord.ext import commands
 
-bot = commands.Bot(command_prefix="h!")
+bot = commands.Bot(command_prefix="$")
 
 @bot.command()
 async def headortails(ctx, answer=None:
