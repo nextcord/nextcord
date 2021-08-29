@@ -258,8 +258,6 @@ class Guild(Hashable):
         'preferred_locale',
         'nsfw_level',
         '_members',
-        '_humans',
-        '_bots',
         '_channels',
         '_icon',
         '_banner',
