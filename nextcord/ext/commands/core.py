@@ -54,7 +54,7 @@ from ._types import _BaseCommand
 from .cog import Cog
 from .context import Context
 
-from discord.ext import commands as compat_commands
+from nextcord.ext import commands as compat_commands
 
 
 if TYPE_CHECKING:

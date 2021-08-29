@@ -44,7 +44,7 @@ from . import errors
 from .help import HelpCommand, DefaultHelpCommand
 from .cog import Cog
 
-from discord.ext import commands as compat_commands
+from nextcord.ext import commands as compat_commands
 
 if TYPE_CHECKING:
     import importlib.machinery

@@ -59,6 +59,8 @@ class _GuildOptional(TypedDict, total=False):
     member_count: int
     voice_states: List[GuildVoiceState]
     members: List[Member]
+    bots: List[Member]
+    humans: List[Member]
     channels: List[GuildChannel]
     presences: List[PartialPresenceUpdate]
     threads: List[Thread]
