@@ -5,27 +5,12 @@ from nextcord.ext import commands
 bot = commands.Bot(command_prefix="h!")
 
 @bot.command()
-async def headortails(ctx, answer=None):
-    number = random.randint(0,1)
+async def headortails(ctx, answer=None:
+    machine_choice = random.choice(["heads", "tails"])
 
-    tails = 0
-    heads = 1
-
-    if answer is None:
-        await ctx.send("You have not set an argumeny, please do: h!headsortails `heads` or h!headsortails `tails`")
+    if machine_choice == answer:
+        await ctx.send("Congratulations")
     else:
-        if answer == "heads" or answer == "tails":
-            if number == tails:
-                if answer == "tails":
-                    await ctx.send("You won, congratulations!!")
-                else:
-                    await ctx.send("Awhhh, you lost! :(")
-            elif number == heads:
-                if answer == "heads":
-                    await ctx.send("You won, congratulations!!")
-                else:
-                    await ctx.send("Awhhh, you lost! :(")
-        else: 
-            await ctx.send("Invalid agrument, the arguments are: `heads` or `tails`! ")
-
+        await ctx.send("Sorry you lost")
+ 
 bot.run("token")
