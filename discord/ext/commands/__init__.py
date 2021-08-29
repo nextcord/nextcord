@@ -20,4 +20,12 @@ DEALINGS IN THE SOFTWARE.
 Module to allow for backwards compatibility for existing code and extensions
 """
 
-from nextcord.ext.commands import *
+from nextcord.ext.commands.bot import *
+from nextcord.ext.commands.context import *
+from nextcord.ext.commands.core import *
+from nextcord.ext.commands.errors import *
+from nextcord.ext.commands.help import *
+from nextcord.ext.commands.converter import *
+from nextcord.ext.commands.cooldowns import *
+from nextcord.ext.commands.cog import *
+from nextcord.ext.commands.flags import *

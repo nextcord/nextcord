@@ -54,7 +54,7 @@ from ._types import _BaseCommand
 from .cog import Cog
 from .context import Context
 
-from discord.ext import commands as compat_commands
+
 
 
 if TYPE_CHECKING:
@@ -1178,7 +1178,7 @@ class GroupMixin(Generic[CogT]):
             If the command passed is not a subclass of :class:`.Command`.
         """
 
-        if not (isinstance(command, Command) or isinstance(command, compat_commands.Command)):
+        if not (isinstance(command, Command)):
             raise TypeError('The command passed must be a subclass of Command')
 
         if isinstance(self, Command):
