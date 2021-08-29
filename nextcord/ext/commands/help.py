@@ -573,7 +573,7 @@ class HelpCommand:
         async def predicate(cmd):
             try:
                 return await cmd.can_run(self.context)
-            except (CommandError):
+            except CommandError:
                 return False
 
         ret = []

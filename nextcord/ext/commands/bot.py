@@ -541,7 +541,7 @@ class BotBase(GroupMixin):
             A cog with the same name is already loaded.
         """
 
-        if not (isinstance(cog, Cog)):
+        if not isinstance(cog, Cog):
             raise TypeError('cogs must derive from Cog')
 
         cog_name = cog.__cog_name__
