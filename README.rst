@@ -16,7 +16,8 @@ A modern, easy to use, feature-rich, and async ready API wrapper for Discord wri
 Fork notice
 --------------------------
 
-This is a fork of the Discord.py library, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ at 28th August 2021. Nextcord will replace Discord.py, with **continued support and features**, to still offer former Discord.py-users a stable API wrapper for their bots.
+This is a fork of discord.py, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ at 28th August 2021.
+Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py-users a stable API wrapper for their bots.   
 
 Key Features
 -------------
