@@ -8,8 +8,8 @@ bot = commands.Bot(command_prefix="$")
 async def headortails(ctx, answer=None):
 
     if random.choice(["heads", "tails"]) == answer:
-        await ctx.send("Congratulations")
+        await ctx.reply("Congratulations")
     else:
-        await ctx.send("Sorry you lost")
+        await ctx.reply("Sorry you lost")
  
 bot.run("token")
