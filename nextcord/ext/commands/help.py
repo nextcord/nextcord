@@ -34,7 +34,6 @@ import nextcord.utils
 
 from .core import Group, Command
 from .errors import CommandError
-from discord.ext.commands.errors import CommandError as LegacyCommandError
 
 if TYPE_CHECKING:
     from .context import Context
@@ -574,7 +573,7 @@ class HelpCommand:
         async def predicate(cmd):
             try:
                 return await cmd.can_run(self.context)
-            except (CommandError, LegacyCommandError):
+            except CommandError:
                 return False
 
         ret = []
