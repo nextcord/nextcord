@@ -84,7 +84,7 @@
         {%- if pagename is prefixedwith 'ext/' %}
         <option value="{{ pathto(master_doc)|e }}">discord</option>
         {%- else %}
-        <option value="{{ pathto(pagename) }}" selected>discord</option>
+        <option value="{{ pathto(pagename) }}" selected>nextcord</option>
         {%- endif %}
         {%- for ext, p in discord_extensions %}
         <option value="{{ pathto(p + '/index')|e }}" {% if pagename is prefixedwith p %}selected{% endif %}>{{ ext }}</option>
