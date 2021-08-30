@@ -28,11 +28,9 @@ import nextcord.utils
 
 from typing import Any, Callable, ClassVar, Dict, Generator, List, Optional, TYPE_CHECKING, Tuple, TypeVar, Type
 
-from .base_command import BaseCommand
-
 if TYPE_CHECKING:
-    from .bot import BotBase
-    from .context import Context
+    from .bot import Bot
+    from .context_base import ContextBase
     from .command_base import CommandBase
 
 __all__ = (
@@ -107,11 +105,10 @@ class CogMeta(type):
     """
     __cog_name__: str
     __cog_settings__: Dict[str, Any]
-    __cog_commands__: List[Command]
+    __cog_commands__: List[CommandBase]
     __cog_listeners__: List[Tuple[str, str]]
 
-    def __new__(cls: Type[CogMeta], *args: Any, **kwargs: Any) -> CogMeta:
-        name, bases, attrs = args
+    def __new__(cls: Type[CogMeta], name: str, bases: Tuple[type, ...], attrs: dict[str, Any], **kwargs: Any) -> CogMeta:
         attrs['__cog_name__'] = kwargs.pop('name', name)
         attrs['__cog_settings__'] = kwargs.pop('command_attrs', {})
 
@@ -120,8 +117,8 @@ class CogMeta(type):
             description = inspect.cleandoc(attrs.get('__doc__', ''))
         attrs['__cog_description__'] = description
 
-        commands = {}
-        listeners = {}
+        commands: Dict[str, CommandBase] = {}
+        listeners: Dict[str, Any] = {}
         no_bot_cog = 'Commands or listeners must not start with cog_ or bot_ (in method {0.__name__}.{1})'
 
         new_cls = super().__new__(cls, name, bases, attrs, **kwargs)
@@ -135,7 +132,7 @@ class CogMeta(type):
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
                     value = value.__func__
-                if isinstance(value, BaseCommand):
+                if isinstance(value, CommandBase):
                     if is_static_method:
                         raise TypeError(
                             f'Command in method {base}.{elem!r} must not be staticmethod.')
@@ -174,7 +171,7 @@ class CogMeta(type):
 
 
 def _cog_special_method(func: FuncT) -> FuncT:
-    func.__cog_special_method__ = None
+    func.__cog_special_method__ = None # type: ignore
     return func
 
 
@@ -190,7 +187,7 @@ class Cog(metaclass=CogMeta):
     """
     __cog_name__: ClassVar[str]
     __cog_settings__: ClassVar[Dict[str, Any]]
-    __cog_commands__: ClassVar[List[Command]]
+    __cog_commands__: ClassVar[List[CommandBase]]
     __cog_listeners__: ClassVar[List[Tuple[str, str]]]
 
     def __new__(cls: Type[CogT], *args: Any, **kwargs: Any) -> CogT:
@@ -202,8 +199,7 @@ class Cog(metaclass=CogMeta):
 
         # Either update the command with the cog provided defaults or copy it.
         # r.e type ignore, type-checker complains about overriding a ClassVar
-        self.__cog_commands__ = tuple(c._update_copy(
-            cmd_attrs) for c in cls.__cog_commands__)  # type: ignore
+        self.__cog_commands__ = tuple(c._update_copy(cmd_attrs) for c in cls.__cog_commands__)  # type: ignore
 
         lookup = {
             cmd.qualified_name: cmd
@@ -224,7 +220,7 @@ class Cog(metaclass=CogMeta):
 
         return self
 
-    def get_commands(self) -> List[Command]:
+    def get_commands(self) -> List[CommandBase]:
         r"""
         Returns
         --------
@@ -252,7 +248,7 @@ class Cog(metaclass=CogMeta):
     def description(self, description: str) -> None:
         self.__cog_description__ = description
 
-    def walk_commands(self) -> Generator[Command, None, None]:
+    def walk_commands(self) -> Generator[CommandBase, None, None]:
         """An iterator that recursively walks through this cog's commands and subcommands.
 
         Yields
@@ -260,7 +256,7 @@ class Cog(metaclass=CogMeta):
         Union[:class:`.Command`, :class:`.Group`]
             A command or group from the cog.
         """
-        from .core import GroupMixin
+        from nextcord.ext.commands.core import GroupMixin
         for command in self.__cog_commands__:
             if command.parent is None:
                 yield command
@@ -280,7 +276,7 @@ class Cog(metaclass=CogMeta):
     @classmethod
     def _get_overridden_method(cls, method: FuncT) -> Optional[FuncT]:
         """Return None if the method is not overridden. Otherwise returns the overridden method."""
-        return getattr(method.__func__, '__cog_special_method__', method)
+        return getattr(method.__func__, '__cog_special_method__', method) # type: ignore
 
     @classmethod
     def listener(cls, name: str = MISSING) -> Callable[[FuncT], FuncT]:
@@ -312,12 +308,12 @@ class Cog(metaclass=CogMeta):
             if not inspect.iscoroutinefunction(actual):
                 raise TypeError(
                     'Listener function must be a coroutine function.')
-            actual.__cog_listener__ = True
+            actual.__cog_listener__ = True # type: ignore
             to_assign = name or actual.__name__
             try:
-                actual.__cog_listener_names__.append(to_assign)
+                actual.__cog_listener_names__.append(to_assign) # type: ignore
             except AttributeError:
-                actual.__cog_listener_names__ = [to_assign]
+                actual.__cog_listener_names__ = [to_assign] # type: ignore
             # we have to return `func` instead of `actual` because
             # we need the type to be `staticmethod` for the metaclass
             # to pick it up but the metaclass unfurls the function and
@@ -330,7 +326,7 @@ class Cog(metaclass=CogMeta):
 
         .. versionadded:: 1.7
         """
-        return not hasattr(self.cog_command_error.__func__, '__cog_special_method__')
+        return not hasattr(self.cog_command_error.__func__, '__cog_special_method__') # type: ignore
 
     @_cog_special_method
     def cog_unload(self) -> None:
@@ -344,37 +340,37 @@ class Cog(metaclass=CogMeta):
         pass
 
     @_cog_special_method
-    def bot_check_once(self, ctx: Context) -> bool:
+    def bot_check_once(self, ctx: ContextBase) -> bool:
         """A special method that registers as a :meth:`.Bot.check_once`
         check.
 
         This function **can** be a coroutine and must take a sole parameter,
-        ``ctx``, to represent the :class:`.Context`.
+        ``ctx``, to represent the :class:`.ContextBase`.
         """
         return True
 
     @_cog_special_method
-    def bot_check(self, ctx: Context) -> bool:
+    def bot_check(self, ctx: ContextBase) -> bool:
         """A special method that registers as a :meth:`.Bot.check`
         check.
 
         This function **can** be a coroutine and must take a sole parameter,
-        ``ctx``, to represent the :class:`.Context`.
+        ``ctx``, to represent the :class:`.ContextBase`.
         """
         return True
 
     @_cog_special_method
-    def cog_check(self, ctx: Context) -> bool:
+    def cog_check(self, ctx: ContextBase) -> bool:
         """A special method that registers as a :func:`~nextcord.ext.commands.check`
         for every command and subcommand in this cog.
 
         This function **can** be a coroutine and must take a sole parameter,
-        ``ctx``, to represent the :class:`.Context`.
+        ``ctx``, to represent the :class:`.ContextBase`.
         """
         return True
 
     @_cog_special_method
-    async def cog_command_error(self, ctx: Context, error: Exception) -> None:
+    async def cog_command_error(self, ctx: ContextBase, error: Exception) -> None:
         """A special method that is called whenever an error
         is dispatched inside this cog.
 
@@ -385,15 +381,15 @@ class Cog(metaclass=CogMeta):
 
         Parameters
         -----------
-        ctx: :class:`.Context`
-            The invocation context where the error happened.
+        ctx: :class:`.ContextBase`
+            The invocation ContextBase where the error happened.
         error: :class:`CommandError`
             The error that happened.
         """
         pass
 
     @_cog_special_method
-    async def cog_before_invoke(self, ctx: Context) -> None:
+    async def cog_before_invoke(self, ctx: ContextBase) -> None:
         """A special method that acts as a cog local pre-invoke hook.
 
         This is similar to :meth:`.Command.before_invoke`.
@@ -402,13 +398,13 @@ class Cog(metaclass=CogMeta):
 
         Parameters
         -----------
-        ctx: :class:`.Context`
-            The invocation context.
+        ctx: :class:`.ContextBase`
+            The invocation ContextBase.
         """
         pass
 
     @_cog_special_method
-    async def cog_after_invoke(self, ctx: Context) -> None:
+    async def cog_after_invoke(self, ctx: ContextBase) -> None:
         """A special method that acts as a cog local post-invoke hook.
 
         This is similar to :meth:`.Command.after_invoke`.
@@ -417,12 +413,12 @@ class Cog(metaclass=CogMeta):
 
         Parameters
         -----------
-        ctx: :class:`.Context`
-            The invocation context.
+        ctx: :class:`.ContextBase`
+            The invocation ContextBase.
         """
         pass
 
-    def _inject(self: CogT, bot: BotBase) -> CogT:
+    def _inject(self: CogT, bot: Bot) -> CogT:
         cls = self.__class__
 
         # realistically, the only thing that can cause loading errors
@@ -457,7 +453,7 @@ class Cog(metaclass=CogMeta):
 
         return self
 
-    def _eject(self, bot: BotBase) -> None:
+    def _eject(self, bot: Bot) -> None:
         cls = self.__class__
 
         try:
