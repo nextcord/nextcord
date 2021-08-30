@@ -28,12 +28,12 @@ import nextcord.utils
 
 from typing import Any, Callable, ClassVar, Dict, Generator, List, Optional, TYPE_CHECKING, Tuple, TypeVar, Type
 
-from ._types import _BaseCommand
+from .base_command import BaseCommand
 
 if TYPE_CHECKING:
     from .bot import BotBase
     from .context import Context
-    from .core import Command
+    from .command_base import CommandBase
 
 __all__ = (
     'CogMeta',
@@ -44,6 +44,7 @@ CogT = TypeVar('CogT', bound='Cog')
 FuncT = TypeVar('FuncT', bound=Callable[..., Any])
 
 MISSING: Any = nextcord.utils.MISSING
+
 
 class CogMeta(type):
     """A metaclass for defining a cog.
@@ -134,9 +135,10 @@ class CogMeta(type):
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
                     value = value.__func__
-                if isinstance(value, _BaseCommand):
+                if isinstance(value, BaseCommand):
                     if is_static_method:
-                        raise TypeError(f'Command in method {base}.{elem!r} must not be staticmethod.')
+                        raise TypeError(
+                            f'Command in method {base}.{elem!r} must not be staticmethod.')
                     if elem.startswith(('cog_', 'bot_')):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
@@ -150,7 +152,8 @@ class CogMeta(type):
                             raise TypeError(no_bot_cog.format(base, elem))
                         listeners[elem] = value
 
-        new_cls.__cog_commands__ = list(commands.values()) # this will be copied in Cog.__new__
+        # this will be copied in Cog.__new__
+        new_cls.__cog_commands__ = list(commands.values())
 
         listeners_as_list = []
         for listener in listeners.values():
@@ -169,9 +172,11 @@ class CogMeta(type):
     def qualified_name(cls) -> str:
         return cls.__cog_name__
 
+
 def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
     return func
+
 
 class Cog(metaclass=CogMeta):
     """The base class that all cogs must inherit from.
@@ -197,7 +202,8 @@ class Cog(metaclass=CogMeta):
 
         # Either update the command with the cog provided defaults or copy it.
         # r.e type ignore, type-checker complains about overriding a ClassVar
-        self.__cog_commands__ = tuple(c._update_copy(cmd_attrs) for c in cls.__cog_commands__)  # type: ignore
+        self.__cog_commands__ = tuple(c._update_copy(
+            cmd_attrs) for c in cls.__cog_commands__)  # type: ignore
 
         lookup = {
             cmd.qualified_name: cmd
@@ -296,14 +302,16 @@ class Cog(metaclass=CogMeta):
         """
 
         if name is not MISSING and not isinstance(name, str):
-            raise TypeError(f'Cog.listener expected str but received {name.__class__.__name__!r} instead.')
+            raise TypeError(
+                f'Cog.listener expected str but received {name.__class__.__name__!r} instead.')
 
         def decorator(func: FuncT) -> FuncT:
             actual = func
             if isinstance(actual, staticmethod):
                 actual = actual.__func__
             if not inspect.iscoroutinefunction(actual):
-                raise TypeError('Listener function must be a coroutine function.')
+                raise TypeError(
+                    'Listener function must be a coroutine function.')
             actual.__cog_listener__ = True
             to_assign = name or actual.__name__
             try:

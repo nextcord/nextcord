@@ -54,6 +54,8 @@ __all__ = (
     'StagePrivacyLevel',
     'InteractionType',
     'InteractionResponseType',
+    'ApplicationCommandType',
+    'ApplicationCommandOptionType',
     'NSFWLevel',
 )
 
@@ -63,11 +65,16 @@ def _create_value_cls(name, comparable):
     cls.__repr__ = lambda self: f'<{name}.{self.name}: {self.value!r}>'
     cls.__str__ = lambda self: f'{name}.{self.name}'
     if comparable:
-        cls.__le__ = lambda self, other: isinstance(other, self.__class__) and self.value <= other.value
-        cls.__ge__ = lambda self, other: isinstance(other, self.__class__) and self.value >= other.value
-        cls.__lt__ = lambda self, other: isinstance(other, self.__class__) and self.value < other.value
-        cls.__gt__ = lambda self, other: isinstance(other, self.__class__) and self.value > other.value
+        cls.__le__ = lambda self, other: isinstance(
+            other, self.__class__) and self.value <= other.value
+        cls.__ge__ = lambda self, other: isinstance(
+            other, self.__class__) and self.value >= other.value
+        cls.__lt__ = lambda self, other: isinstance(
+            other, self.__class__) and self.value < other.value
+        cls.__gt__ = lambda self, other: isinstance(
+            other, self.__class__) and self.value > other.value
     return cls
+
 
 def _is_descriptor(obj):
     return hasattr(obj, '__get__') or hasattr(obj, '__set__') or hasattr(obj, '__delete__')
@@ -313,50 +320,50 @@ class AuditLogActionCategory(Enum):
 
 class AuditLogAction(Enum):
     # fmt: off
-    guild_update             = 1
-    channel_create           = 10
-    channel_update           = 11
-    channel_delete           = 12
-    overwrite_create         = 13
-    overwrite_update         = 14
-    overwrite_delete         = 15
-    kick                     = 20
-    member_prune             = 21
-    ban                      = 22
-    unban                    = 23
-    member_update            = 24
-    member_role_update       = 25
-    member_move              = 26
-    member_disconnect        = 27
-    bot_add                  = 28
-    role_create              = 30
-    role_update              = 31
-    role_delete              = 32
-    invite_create            = 40
-    invite_update            = 41
-    invite_delete            = 42
-    webhook_create           = 50
-    webhook_update           = 51
-    webhook_delete           = 52
-    emoji_create             = 60
-    emoji_update             = 61
-    emoji_delete             = 62
-    message_delete           = 72
-    message_bulk_delete      = 73
-    message_pin              = 74
-    message_unpin            = 75
-    integration_create       = 80
-    integration_update       = 81
-    integration_delete       = 82
-    stage_instance_create    = 83
-    stage_instance_update    = 84
-    stage_instance_delete    = 85
-    sticker_create           = 90
-    sticker_update           = 91
-    sticker_delete           = 92
-    thread_create            = 110
-    thread_update            = 111
-    thread_delete            = 112
+    guild_update = 1
+    channel_create = 10
+    channel_update = 11
+    channel_delete = 12
+    overwrite_create = 13
+    overwrite_update = 14
+    overwrite_delete = 15
+    kick = 20
+    member_prune = 21
+    ban = 22
+    unban = 23
+    member_update = 24
+    member_role_update = 25
+    member_move = 26
+    member_disconnect = 27
+    bot_add = 28
+    role_create = 30
+    role_update = 31
+    role_delete = 32
+    invite_create = 40
+    invite_update = 41
+    invite_delete = 42
+    webhook_create = 50
+    webhook_update = 51
+    webhook_delete = 52
+    emoji_create = 60
+    emoji_update = 61
+    emoji_delete = 62
+    message_delete = 72
+    message_bulk_delete = 73
+    message_pin = 74
+    message_unpin = 75
+    integration_create = 80
+    integration_update = 81
+    integration_delete = 82
+    stage_instance_create = 83
+    stage_instance_update = 84
+    stage_instance_delete = 85
+    sticker_create = 90
+    sticker_update = 91
+    sticker_delete = 92
+    thread_create = 110
+    thread_update = 111
+    thread_delete = 112
     # fmt: on
 
     @property
@@ -532,12 +539,29 @@ class InteractionType(Enum):
 
 class InteractionResponseType(Enum):
     pong = 1
-    # ack = 2 (deprecated)
-    # channel_message = 3 (deprecated)
     channel_message = 4  # (with source)
     deferred_channel_message = 5  # (with source)
     deferred_message_update = 6  # for components
     message_update = 7  # for components
+
+
+class ApplicationCommandType(Enum):
+    chat_input = 1
+    user = 2
+    message = 3
+
+
+class ApplicationCommandOptionType(Enum):
+    sub_command = 1
+    sub_command_group = 2
+    string = 3
+    integer = 4
+    boolean = 5
+    user = 6
+    channel = 7
+    role = 8
+    mentionable = 9
+    number = 10
 
 
 class VideoQualityMode(Enum):
