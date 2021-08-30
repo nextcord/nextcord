@@ -16,3 +16,5 @@ docs/crowdin.py
 *.mo
 pyproject.toml
 dist/
+
+!assets/*
