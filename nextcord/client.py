@@ -637,9 +637,9 @@ class Client:
             called after this function call will not execute until it returns.
         """
         
-        for libraryName in ["discord", "discord_slash", "pyfork", "enhanced-dpy"]: #more imcompatable libraries to be added
+        for library_name in ["discord", "discord_slash", "pyfork", "enhanced-dpy", "discord.py"]: 
             try:
-                dist = pkg_resources.get_distrubtion("discord")
+                dist = pkg_resources.get_distrubtion(library_name)
                 warn(libraryName+ " is installed. This may cause unexpected behavior.",category=Warning) #custom warning, don't like the name though?
             except pkg_resources.DistributionNotFound: 
                 continue
