@@ -362,11 +362,11 @@ class Client:
         # Schedules the task
         return asyncio.create_task(wrapped, name=f'nextcord: {event_name}')
 
-    def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
-        _log.debug('Dispatching event %s', event)
-        method = 'on_' + event
+    def dispatch(self, event_name: str, *args: Any, **kwargs: Any) -> None:
+        _log.debug('Dispatching event %s', event_name)
+        method = 'on_' + event_name
 
-        listeners = self._listeners.get(event)
+        listeners = self._listeners.get(event_name)
         if listeners:
             removed = []
             for i, (future, condition) in enumerate(listeners):
@@ -390,7 +390,7 @@ class Client:
                         removed.append(i)
 
             if len(removed) == len(listeners):
-                self._listeners.pop(event)
+                self._listeners.pop(event_name)
             else:
                 for idx in reversed(removed):
                     del listeners[idx]

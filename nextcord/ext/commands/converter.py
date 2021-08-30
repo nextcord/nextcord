@@ -44,7 +44,31 @@ from typing import (
 )
 
 import nextcord
-from .errors import *
+from .errors import (
+    CommandError,
+    BadArgument,
+    NoPrivateMessage,
+    MessageNotFound,
+    ObjectNotFound,
+    MemberNotFound,
+    GuildNotFound,
+    UserNotFound,
+    ChannelNotFound,
+    ThreadNotFound,
+    ChannelNotReadable,
+    BadColourArgument,
+    RoleNotFound,
+    BadInviteArgument,
+    EmojiNotFound,
+    GuildStickerNotFound,
+    PartialEmojiConversionFailure,
+    BadBoolArgument,
+    ConversionError,
+    BadUnionArgument,
+    BadLiteralArgument,
+)
+
+from nextcord.utils import get as _utils_get
 
 if TYPE_CHECKING:
     from .context import Context
@@ -90,11 +114,10 @@ def _get_from_guilds(bot, getter, argument):
     return result
 
 
-_utils_get = nextcord.utils.get
 T = TypeVar('T')
 T_co = TypeVar('T_co', covariant=True)
-CT = TypeVar('CT', bound=nextcord.abc.GuildChannel)
-TT = TypeVar('TT', bound=nextcord.Thread)
+ChannelT = TypeVar('ChannelT', bound=nextcord.abc.GuildChannel)
+ThreadT = TypeVar('ThreadT', bound=nextcord.Thread)
 
 
 @runtime_checkable
@@ -420,7 +443,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         return self._resolve_channel(ctx, argument, 'channels', nextcord.abc.GuildChannel)
 
     @staticmethod
-    def _resolve_channel(ctx: Context, argument: str, attribute: str, type: Type[CT]) -> CT:
+    def _resolve_channel(ctx: Context, argument: str, attribute: str, type: Type[ChannelT]) -> ChannelT:
         bot = ctx.bot
 
         match = IDConverter._get_id_match(argument) or re.match(r'<#([0-9]{15,20})>$', argument)
@@ -430,8 +453,8 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         if match is None:
             # not a mention
             if guild:
-                iterable: Iterable[CT] = getattr(guild, attribute)
-                result: Optional[CT] = nextcord.utils.get(iterable, name=argument)
+                iterable: Iterable[ChannelT] = getattr(guild, attribute)
+                result: Optional[ChannelT] = nextcord.utils.get(iterable, name=argument)
             else:
 
                 def check(c):
@@ -451,7 +474,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         return result
 
     @staticmethod
-    def _resolve_thread(ctx: Context, argument: str, attribute: str, type: Type[TT]) -> TT:
+    def _resolve_thread(ctx: Context, argument: str, attribute: str, type: Type[ThreadT]) -> ThreadT:
         bot = ctx.bot
 
         match = IDConverter._get_id_match(argument) or re.match(r'<#([0-9]{15,20})>$', argument)
@@ -461,8 +484,8 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         if match is None:
             # not a mention
             if guild:
-                iterable: Iterable[TT] = getattr(guild, attribute)
-                result: Optional[TT] = nextcord.utils.get(iterable, name=argument)
+                iterable: Iterable[ThreadT] = getattr(guild, attribute)
+                result: Optional[ThreadT] = nextcord.utils.get(iterable, name=argument)
         else:
             thread_id = int(match.group(1))
             if guild:
@@ -1028,8 +1051,8 @@ def get_converter(param: inspect.Parameter) -> Any:
 _GenericAlias = type(List[T])
 
 
-def is_generic_type(tp: Any, *, _GenericAlias: Type = _GenericAlias) -> bool:
-    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)  # type: ignore
+def is_generic_type(tp: Any, *, _generic_alias: Type = _GenericAlias) -> bool:
+    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _generic_alias)  # type: ignore
 
 
 CONVERTER_MAPPING: Dict[Type[Any], Any] = {
