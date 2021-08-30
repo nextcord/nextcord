@@ -62,6 +62,10 @@ from .stage_instance import StageInstance
 from .threads import Thread
 from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factory
 
+
+import pkg_resources
+from warnings import warn
+
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
     from .channel import DMChannel
@@ -632,6 +636,13 @@ class Client:
             is blocking. That means that registration of events or anything being
             called after this function call will not execute until it returns.
         """
+        
+        for libraryName in ["discord", "discord_slash", "pyfork", "enhanced-dpy"]: #more imcompatable libraries to be added
+            try:
+                dist = pkg_resources.get_distrubtion("discord")
+                warn(libraryName+ " is installed. This may cause unexpected behavior.",category=Warning) #custom warning, don't like the name though?
+            except pkg_resources.DistributionNotFound: 
+                continue
         loop = self.loop
 
         try:
