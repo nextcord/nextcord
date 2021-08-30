@@ -9,8 +9,8 @@ Welcome to nextcord
 .. image:: /images/snake.svg
 .. image:: /images/snake_dark.svg
 
-nextcord is a modern, easy to use, feature-rich, and async ready API wrapper
-for Discord.
+Nextcord is a modern, easy to use, feature-rich, and async ready API wrapper
+for Discord, forked from discord.py.
 
 **Features:**
 
@@ -27,6 +27,7 @@ Is this your first time using the library? This is the place to get started!
 
 - **First steps:** :doc:`intro` | :doc:`quickstart` | :doc:`logging`
 - **Working with Discord:** :doc:`discord` | :doc:`intents`
+- **Migrating from discord.py**: :ref:`Migrating to nextcord <migrating_nextcord>`
 - **Examples:** Many examples are available in the :resource:`repository <examples>`.
 
 Getting help
@@ -74,3 +75,5 @@ If you're looking for something related to the project itself, it's here.
   whats_new
   version_guarantees
   migrating
+  migrating_2
+  migrating_to_nextcord
