@@ -1,5 +1,5 @@
-nextcord
-========
+.. image:: assets/nextcord-banner.png
+   :alt: Nextcord
 
 .. image:: https://discord.com/api/guilds/881118111967883295/embed.png
    :target: https://discord.gg/ZebatWssCB
@@ -11,7 +11,7 @@ nextcord
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI supported Python versions
 
-A modern, easy to use, feature-rich, and async ready API wrapper for Discord written in Python.
+Nextcord is a modern, easy to use, feature-rich, and async ready API wrapper for Discord written in Python.
 
 Fork notice
 --------------------------

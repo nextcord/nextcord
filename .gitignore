@@ -17,3 +17,6 @@ docs/crowdin.py
 pyproject.toml
 dist/
 .history/
+
+# Exception for images in assets folder
+!assets/*
