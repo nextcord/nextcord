@@ -329,7 +329,7 @@ class Client:
         If this is not passed via ``__init__`` then this is retrieved
         through the gateway when an event contains the data. Usually
         after :func:`~nextcord.on_connect` is called.
-        
+
         .. versionadded:: 2.0
         """
         return self._connection.application_id
@@ -362,11 +362,11 @@ class Client:
         # Schedules the task
         return asyncio.create_task(wrapped, name=f'nextcord: {event_name}')
 
-    def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
-        _log.debug('Dispatching event %s', event)
-        method = 'on_' + event
+    def dispatch(self, event_name: str, *args: Any, **kwargs: Any) -> None:
+        _log.debug('Dispatching event %s', event_name)
+        method = 'on_' + event_name
 
-        listeners = self._listeners.get(event)
+        listeners = self._listeners.get(event_name)
         if listeners:
             removed = []
             for i, (future, condition) in enumerate(listeners):
@@ -390,7 +390,7 @@ class Client:
                         removed.append(i)
 
             if len(removed) == len(listeners):
-                self._listeners.pop(event)
+                self._listeners.pop(event_name)
             else:
                 for idx in reversed(removed):
                     del listeners[idx]
@@ -469,7 +469,7 @@ class Client:
         """
 
         _log.info('logging in using static token')
-        
+
         if not isinstance(token, str):
             raise TypeError(f"The token provided was of type {type(token)} but was expected to be str")
 
@@ -690,7 +690,7 @@ class Client:
             self._connection._activity = value.to_dict() # type: ignore
         else:
             raise TypeError('activity must derive from BaseActivity.')
-    
+
     @property
     def status(self):
         """:class:`.Status`:
@@ -761,7 +761,7 @@ class Client:
 
         This is useful if you have a channel_id but don't want to do an API call
         to send messages to it.
-        
+
         .. versionadded:: 2.0
 
         Parameters
@@ -1607,7 +1607,7 @@ class Client:
 
         This method should be used for when a view is comprised of components
         that last longer than the lifecycle of the program.
-        
+
         .. versionadded:: 2.0
 
         Parameters
@@ -1639,7 +1639,7 @@ class Client:
     @property
     def persistent_views(self) -> Sequence[View]:
         """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
-        
+
         .. versionadded:: 2.0
         """
         return self._connection.persistent_views

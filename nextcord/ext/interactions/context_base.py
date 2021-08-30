@@ -45,12 +45,11 @@ if TYPE_CHECKING:
 
     from .bot import Bot, AutoShardedBot
     from .cog import Cog
-    from .core import Command
-    from .help import HelpCommand
+    from .command_base import CommandBase
     from .view import StringView
 
 __all__ = (
-    'Context',
+    'ContextBase',
 )
 
 MISSING: Any = nextcord.utils.MISSING
@@ -66,7 +65,7 @@ else:
     P = TypeVar('P')
 
 
-class Context(nextcord.abc.Messageable, Generic[BotT]):
+class ContextBase(nextcord.abc.Messageable, Generic[BotT]):
     r"""Represents the context in which a command is being invoked under.
 
     This class contains a lot of meta data to help you understand more about
@@ -133,7 +132,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         command: Optional[Command] = None,
         invoked_with: Optional[str] = None,
         invoked_parents: List[str] = MISSING,
-        invoked_subcommand: Optional[Command] = None,
+        invoked_subcommand: Optional[CommandBase] = None,
         subcommand_passed: Optional[str] = None,
         command_failed: bool = False,
         current_parameter: Optional[inspect.Parameter] = None,
@@ -143,23 +142,23 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         self.args: List[Any] = args or []
         self.kwargs: Dict[str, Any] = kwargs or {}
         self.prefix: Optional[str] = prefix
-        self.command: Optional[Command] = command
+        self.command: Optional[CommandBase] = command
         self.view: StringView = view
         self.invoked_with: Optional[str] = invoked_with
         self.invoked_parents: List[str] = invoked_parents or []
-        self.invoked_subcommand: Optional[Command] = invoked_subcommand
+        self.invoked_subcommand: Optional[CommandBase] = invoked_subcommand
         self.subcommand_passed: Optional[str] = subcommand_passed
         self.command_failed: bool = command_failed
         self.current_parameter: Optional[inspect.Parameter] = current_parameter
         self._state: ConnectionState = self.message._state
 
-    async def invoke(self, command: Command[CogT, P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
+    async def invoke(self, command: CommandBase[CogT, P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
         r"""|coro|
 
         Calls a command with the arguments given.
 
         This is useful if you want to just call the callback that a
-        :class:`.Command` holds internally.
+        :class:`.CommandBase` holds internally.
 
         .. note::
 
@@ -172,7 +171,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
 
         Parameters
         -----------
-        command: :class:`.Command`
+        command: :class:`.CommandBase`
             The command that is going to be called.
         \*args
             The arguments to use.
@@ -313,87 +312,6 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         r"""Optional[:class:`.VoiceProtocol`]: A shortcut to :attr:`.Guild.voice_client`\, if applicable."""
         g = self.guild
         return g.voice_client if g else None
-
-    async def send_help(self, *args: Any) -> Any:
-        """send_help(entity=<bot>)
-
-        |coro|
-
-        Shows the help command for the specified entity if given.
-        The entity can be a command or a cog.
-
-        If no entity is given, then it'll show help for the
-        entire bot.
-
-        If the entity is a string, then it looks up whether it's a
-        :class:`Cog` or a :class:`Command`.
-
-        .. note::
-
-            Due to the way this function works, instead of returning
-            something similar to :meth:`~.commands.HelpCommand.command_not_found`
-            this returns :class:`None` on bad input or no help command.
-
-        Parameters
-        ------------
-        entity: Optional[Union[:class:`Command`, :class:`Cog`, :class:`str`]]
-            The entity to show help for.
-
-        Returns
-        --------
-        Any
-            The result of the help command, if any.
-        """
-        from .core import Group, Command, wrap_callback
-        from .errors import CommandError
-
-        bot = self.bot
-        cmd = bot.help_command
-
-        if cmd is None:
-            return None
-
-        cmd = cmd.copy()
-        cmd.context = self
-        if len(args) == 0:
-            await cmd.prepare_help_command(self, None)
-            mapping = cmd.get_bot_mapping()
-            injected = wrap_callback(cmd.send_bot_help)
-            try:
-                return await injected(mapping)
-            except CommandError as e:
-                await cmd.on_help_command_error(self, e)
-                return None
-
-        entity = args[0]
-        if isinstance(entity, str):
-            entity = bot.get_cog(entity) or bot.get_command(entity)
-
-        if entity is None:
-            return None
-
-        try:
-            entity.qualified_name
-        except AttributeError:
-            # if we're here then it's not a cog, group, or command.
-            return None
-
-        await cmd.prepare_help_command(self, entity.qualified_name)
-
-        try:
-            if hasattr(entity, '__cog_commands__'):
-                injected = wrap_callback(cmd.send_cog_help)
-                return await injected(entity)
-            elif isinstance(entity, Group):
-                injected = wrap_callback(cmd.send_group_help)
-                return await injected(entity)
-            elif isinstance(entity, Command):
-                injected = wrap_callback(cmd.send_command_help)
-                return await injected(entity)
-            else:
-                return None
-        except CommandError as e:
-            await cmd.on_help_command_error(self, e)
 
     @nextcord.utils.copy_doc(Message.reply)
     async def reply(self, content: Optional[str] = None, **kwargs: Any) -> Message:

@@ -178,12 +178,12 @@ class Interaction:
         Note that due to a Discord limitation, DM channels are not resolved since there is
         no data to complete them. These are :class:`PartialMessageable` instead.
         """
-        guild = self.guild
-        channel = guild and guild._resolve_channel(self.channel_id)
+        if self.guild:
+            channel = self.guild._resolve_channel(self.channel_id)
         if channel is None:
             if self.channel_id is not None:
-                type = ChannelType.text if self.guild_id is not None else ChannelType.private
-                return PartialMessageable(state=self._state, id=self.channel_id, type=type)
+                channel_type = ChannelType.text if self.guild_id is not None else ChannelType.private
+                return PartialMessageable(state=self._state, id=self.channel_id, type=channel_type)
             return None
         return channel
 

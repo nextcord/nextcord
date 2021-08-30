@@ -1,14 +1,22 @@
 import collections
+from nextcord.utils import MISSING
 import nextcord
 import types
 import inspect
-from typing import Any, Dict, List
+import sys
+import traceback
+import asyncio
+import importlib.util
+from typing import Any, Callable, Dict, List, Mapping, Optional, TypeVar
 from nextcord.client import Client
-from .cog import Cog
-from ._types import CoroFunc, Check
+from nextcord.ext.cog import Cog
+from .context_base import ContextBase
+from ._types import CoroFunc, Check, CoroFuncT
+from . import errors
 
+CheckType = TypeVar("CheckType", bound="Check")
 
-class BotBase(Client):
+class Bot(Client):
     def __init__(self, description=None, **options):
         super().__init__(**options)
         self.extra_events: Dict[str, List[CoroFunc]] = {}
@@ -51,9 +59,9 @@ class BotBase(Client):
             except Exception:
                 pass
 
-        await super().close()  # type: ignore
+        await super().close()
 
-    async def on_command_error(self, context: Context, exception: errors.CommandError) -> None:
+    async def on_command_error(self, context: ContextBase, exception: errors.CommandError) -> None:
         """|coro|
 
         The default command error handler provided by the bot.
@@ -74,14 +82,12 @@ class BotBase(Client):
         if cog and cog.has_error_handler():
             return
 
-        print(
-            f'Ignoring exception in command {context.command}:', file=sys.stderr)
-        traceback.print_exception(
-            type(exception), exception, exception.__traceback__, file=sys.stderr)
+        print(f'Ignoring exception in command {context.command}:', file=sys.stderr)
+        traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
 
     # global check registration
 
-    def check(self, func: T) -> T:
+    def check(self, func: CheckType) -> CheckType:
         r"""A decorator that adds a global check to the bot.
 
         A global check is similar to a :func:`.check` that is applied
@@ -106,8 +112,7 @@ class BotBase(Client):
                 return ctx.command.qualified_name in allowed_commands
 
         """
-        # T was used instead of Check to ensure the type matches on return
-        self.add_check(func)  # type: ignore
+        self.add_check(func)
         return func
 
     def add_check(self, func: Check, *, call_once: bool = False) -> None:
@@ -144,14 +149,14 @@ class BotBase(Client):
             If the function was added with ``call_once=True`` in
             the :meth:`.Bot.add_check` call or using :meth:`.check_once`.
         """
-        l = self._check_once if call_once else self._checks
+        checks = self._check_once if call_once else self._checks
 
         try:
-            l.remove(func)
+            checks.remove(func)
         except ValueError:
             pass
 
-    def check_once(self, func: CFT) -> CFT:
+    def check_once(self, func: CoroFuncT) -> CoroFuncT:
         r"""A decorator that adds a "call once" global check to the bot.
 
         Unlike regular global checks, this one is called only once
@@ -189,15 +194,15 @@ class BotBase(Client):
         self.add_check(func, call_once=True)
         return func
 
-    async def can_run(self, ctx: Context, *, call_once: bool = False) -> bool:
-        data = self._check_once if call_once else self._checks
+    async def can_run(self, ctx: ContextBase, *, call_once: bool = False) -> bool:
+        checks = self._check_once if call_once else self._checks
 
-        if len(data) == 0:
+        if not checks:
             return True
 
         # type-checker doesn't distinguish between functions and methods
         # type: ignore
-        return await nextcord.utils.async_all(f(ctx) for f in data)
+        return await nextcord.utils.async_all(f(ctx) for f in checks)
 
     async def is_owner(self, user: nextcord.User) -> bool:
         """|coro|
@@ -229,7 +234,7 @@ class BotBase(Client):
             return user.id in self.owner_ids
         else:
 
-            app = await self.application_info()  # type: ignore
+            app = await self.application_info()
             if app.team:
                 self.owner_ids = ids = {m.id for m in app.team.members}
                 return user.id in ids
@@ -237,7 +242,7 @@ class BotBase(Client):
                 self.owner_id = owner_id = app.owner.id
                 return user.id == owner_id
 
-    def before_invoke(self, coro: CFT) -> CFT:
+    def before_invoke(self, coro: CoroFuncT) -> CoroFuncT:
         """A decorator that registers a coroutine as a pre-invoke hook.
 
         A pre-invoke hook is called directly before the command is
@@ -269,7 +274,7 @@ class BotBase(Client):
         self._before_invoke = coro
         return coro
 
-    def after_invoke(self, coro: CFT) -> CFT:
+    def after_invoke(self, coro: CoroFuncT) -> CoroFuncT:
         r"""A decorator that registers a coroutine as a post-invoke hook.
 
         A post-invoke hook is called directly after the command is
@@ -331,10 +336,9 @@ class BotBase(Client):
         if not asyncio.iscoroutinefunction(func):
             raise TypeError('Listeners must be coroutines')
 
-        if name in self.extra_events:
-            self.extra_events[name].append(func)
-        else:
-            self.extra_events[name] = [func]
+        if name not in self.extra_events:
+            self.extra_events[name] = []
+        self.extra_events[name].append(func)
 
     def remove_listener(self, func: CoroFunc, name: str = MISSING) -> None:
         """Removes a listener from the pool of listeners.
@@ -356,7 +360,7 @@ class BotBase(Client):
             except ValueError:
                 pass
 
-    def listen(self, name: str = MISSING) -> Callable[[CFT], CFT]:
+    def listen(self, name: str = MISSING) -> Callable[[CoroFuncT], CoroFuncT]:
         """A decorator that registers another function as an external
         event listener. Basically this allows you to listen to multiple
         events from different places e.g. such as :func:`.on_ready`
@@ -386,7 +390,7 @@ class BotBase(Client):
             The function being listened to is not a coroutine.
         """
 
-        def decorator(func: CFT) -> CFT:
+        def decorator(func: CoroFuncT) -> CoroFuncT:
             self.add_listener(func, name)
             return func
 
@@ -424,7 +428,7 @@ class BotBase(Client):
             A cog with the same name is already loaded.
         """
 
-        if not (isinstance(cog, Cog) or isinstance(cog, compat_commands.Cog)):
+        if not (isinstance(cog, Cog)):
             raise TypeError('cogs must derive from Cog')
 
         cog_name = cog.__cog_name__
@@ -432,8 +436,7 @@ class BotBase(Client):
 
         if existing is not None:
             if not override:
-                raise nextcord.ClientException(
-                    f'Cog named {cog_name!r} already loaded')
+                raise nextcord.ClientException(f'Cog named {cog_name!r} already loaded')
             self.remove_cog(cog_name)
 
         cog = cog._inject(self)
@@ -479,11 +482,8 @@ class BotBase(Client):
 
         cog = self.__cogs.pop(name, None)
         if cog is None:
-            return
+            return None
 
-        help_command = self._help_command
-        if help_command and help_command.cog is cog:
-            help_command.cog = None
         cog._eject(self)
 
         return cog
@@ -495,29 +495,31 @@ class BotBase(Client):
 
     # extensions
 
-    def _remove_module_references(self, name: str) -> None:
-        # find all references to the module
+    def _is_submodule(self, parent: str, child: str) -> bool:
+        return parent == child or child.startswith(parent + ".")
+
+    def _remove_registered_cogs(self, name: str) -> None:
         # remove the cogs registered from the module
         for cogname, cog in self.__cogs.copy().items():
-            if _is_submodule(name, cog.__module__):
+            if self._is_submodule(name, cog.__module__):
                 self.remove_cog(cogname)
 
-        # remove all the commands from the module
-        for cmd in self.all_commands.copy().values():
-            if cmd.module is not None and _is_submodule(name, cmd.module):
-                if isinstance(cmd, GroupMixin):
-                    cmd.recursively_remove_all_commands()
-                self.remove_command(cmd.name)
-
+    def _remove_listeners(self, name: str) -> None:
         # remove all the listeners from the module
         for event_list in self.extra_events.copy().values():
             remove = []
             for index, event in enumerate(event_list):
-                if event.__module__ is not None and _is_submodule(name, event.__module__):
+                if event.__module__ is not None and self._is_submodule(name, event.__module__):
                     remove.append(index)
 
             for index in reversed(remove):
                 del event_list[index]
+
+    def _remove_module_references(self, name: str) -> None:
+        # find all references to the module
+        self._remove_registered_cogs(name)
+        self._remove_listeners(name)
+
 
     def _call_module_finalizers(self, lib: types.ModuleType, key: str) -> None:
         try:
@@ -534,7 +536,7 @@ class BotBase(Client):
             sys.modules.pop(key, None)
             name = lib.__name__
             for module in list(sys.modules.keys()):
-                if _is_submodule(name, module):
+                if self._is_submodule(name, module):
                     del sys.modules[module]
 
     def _load_from_module_spec(self, spec: importlib.machinery.ModuleSpec, key: str) -> None:
@@ -565,7 +567,8 @@ class BotBase(Client):
 
     def _resolve_name(self, name: str, package: Optional[str]) -> str:
         try:
-            return importlib.util.resolve_name(name, package)
+            # type checker thinks resolve_name can't take optional for package
+            return importlib.util.resolve_name(name, package) # type: ignore
         except ImportError:
             raise errors.ExtensionNotFound(name)
 
@@ -701,7 +704,7 @@ class BotBase(Client):
         modules = {
             name: module
             for name, module in sys.modules.items()
-            if _is_submodule(lib.__name__, name)
+            if self._is_submodule(lib.__name__, name)
         }
 
         try:
@@ -724,201 +727,3 @@ class BotBase(Client):
     def extensions(self) -> Mapping[str, types.ModuleType]:
         """Mapping[:class:`str`, :class:`py:types.ModuleType`]: A read-only mapping of extension name to extension."""
         return types.MappingProxyType(self.__extensions)
-
-    # help command stuff
-
-    @property
-    def help_command(self) -> Optional[HelpCommand]:
-        return self._help_command
-
-    @help_command.setter
-    def help_command(self, value: Optional[HelpCommand]) -> None:
-        if value is not None:
-            if not isinstance(value, HelpCommand):
-                raise TypeError(
-                    'help_command must be a subclass of HelpCommand')
-            if self._help_command is not None:
-                self._help_command._remove_from_bot(self)
-            self._help_command = value
-            value._add_to_bot(self)
-        elif self._help_command is not None:
-            self._help_command._remove_from_bot(self)
-            self._help_command = None
-        else:
-            self._help_command = None
-
-    # command processing
-
-    async def get_prefix(self, message: Message) -> Union[List[str], str]:
-        """|coro|
-
-        Retrieves the prefix the bot is listening to
-        with the message as a context.
-
-        Parameters
-        -----------
-        message: :class:`nextcord.Message`
-            The message context to get the prefix of.
-
-        Returns
-        --------
-        Union[List[:class:`str`], :class:`str`]
-            A list of prefixes or a single prefix that the bot is
-            listening for.
-        """
-        prefix = ret = self.command_prefix
-        if callable(prefix):
-            ret = await nextcord.utils.maybe_coroutine(prefix, self, message)
-
-        if not isinstance(ret, str):
-            try:
-                ret = list(ret)
-            except TypeError:
-                # It's possible that a generator raised this exception.  Don't
-                # replace it with our own error if that's the case.
-                if isinstance(ret, collections.abc.Iterable):
-                    raise
-
-                raise TypeError("command_prefix must be plain string, iterable of strings, or callable "
-                                f"returning either of these, not {ret.__class__.__name__}")
-
-            if not ret:
-                raise ValueError(
-                    "Iterable command_prefix must contain at least one prefix")
-
-        return ret
-
-    async def get_context(self, message: Message, *, cls: Type[CXT] = Context) -> CXT:
-        r"""|coro|
-
-        Returns the invocation context from the message.
-
-        This is a more low-level counter-part for :meth:`.process_commands`
-        to allow users more fine grained control over the processing.
-
-        The returned context is not guaranteed to be a valid invocation
-        context, :attr:`.Context.valid` must be checked to make sure it is.
-        If the context is not valid then it is not a valid candidate to be
-        invoked under :meth:`~.Bot.invoke`.
-
-        Parameters
-        -----------
-        message: :class:`nextcord.Message`
-            The message to get the invocation context from.
-        cls
-            The factory class that will be used to create the context.
-            By default, this is :class:`.Context`. Should a custom
-            class be provided, it must be similar enough to :class:`.Context`\'s
-            interface.
-
-        Returns
-        --------
-        :class:`.Context`
-            The invocation context. The type of this can change via the
-            ``cls`` parameter.
-        """
-
-        view = StringView(message.content)
-        ctx = cls(prefix=None, view=view, bot=self, message=message)
-
-        if message.author.id == self.user.id:  # type: ignore
-            return ctx
-
-        prefix = await self.get_prefix(message)
-        invoked_prefix = prefix
-
-        if isinstance(prefix, str):
-            if not view.skip_string(prefix):
-                return ctx
-        else:
-            try:
-                # if the context class' __init__ consumes something from the view this
-                # will be wrong.  That seems unreasonable though.
-                if message.content.startswith(tuple(prefix)):
-                    invoked_prefix = nextcord.utils.find(
-                        view.skip_string, prefix)
-                else:
-                    return ctx
-
-            except TypeError:
-                if not isinstance(prefix, list):
-                    raise TypeError("get_prefix must return either a string or a list of string, "
-                                    f"not {prefix.__class__.__name__}")
-
-                # It's possible a bad command_prefix got us here.
-                for value in prefix:
-                    if not isinstance(value, str):
-                        raise TypeError("Iterable command_prefix or list returned from get_prefix must "
-                                        f"contain only strings, not {value.__class__.__name__}")
-
-                # Getting here shouldn't happen
-                raise
-
-        if self.strip_after_prefix:
-            view.skip_ws()
-
-        invoker = view.get_word()
-        ctx.invoked_with = invoker
-        # type-checker fails to narrow invoked_prefix type.
-        ctx.prefix = invoked_prefix  # type: ignore
-        ctx.command = self.all_commands.get(invoker)
-        return ctx
-
-    async def invoke(self, ctx: Context) -> None:
-        """|coro|
-
-        Invokes the command given under the invocation context and
-        handles all the internal event dispatch mechanisms.
-
-        Parameters
-        -----------
-        ctx: :class:`.Context`
-            The invocation context to invoke.
-        """
-        if ctx.command is not None:
-            self.dispatch('command', ctx)
-            try:
-                if await self.can_run(ctx, call_once=True):
-                    await ctx.command.invoke(ctx)
-                else:
-                    raise errors.CheckFailure(
-                        'The global check once functions failed.')
-            except errors.CommandError as exc:
-                await ctx.command.dispatch_error(ctx, exc)
-            else:
-                self.dispatch('command_completion', ctx)
-        elif ctx.invoked_with:
-            exc = errors.CommandNotFound(
-                f'Command "{ctx.invoked_with}" is not found')
-            self.dispatch('command_error', ctx, exc)
-
-    async def process_commands(self, message: Message) -> None:
-        """|coro|
-
-        This function processes the commands that have been registered
-        to the bot and other groups. Without this coroutine, none of the
-        commands will be triggered.
-
-        By default, this coroutine is called inside the :func:`.on_message`
-        event. If you choose to override the :func:`.on_message` event, then
-        you should invoke this coroutine as well.
-
-        This is built using other low level tools, and is equivalent to a
-        call to :meth:`~.Bot.get_context` followed by a call to :meth:`~.Bot.invoke`.
-
-        This also checks if the message's author is a bot and doesn't
-        call :meth:`~.Bot.get_context` or :meth:`~.Bot.invoke` if so.
-
-        Parameters
-        -----------
-        message: :class:`nextcord.Message`
-            The message to process commands for.
-        """
-        if message.author.bot:
-            return
-
-        ctx = await self.get_context(message)
-        await self.invoke(ctx)
-
-    async def on_message(self, message):
-        await self.process_commands(message)

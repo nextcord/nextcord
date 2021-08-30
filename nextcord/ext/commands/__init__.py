@@ -9,11 +9,9 @@ An extension module to facilitate creation of bot commands.
 """
 
 from .bot import *
-from .context import *
 from .core import *
 from .errors import *
 from .help import *
 from .converter import *
 from .cooldowns import *
-from .cog import *
 from .flags import *
