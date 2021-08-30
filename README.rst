@@ -11,7 +11,7 @@
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI supported Python versions
 
-A modern, easy to use, feature-rich, and async ready API wrapper for Discord written in Python.
+Nextcord is a modern, easy to use, feature-rich, and async ready API wrapper for Discord written in Python.
 
 Fork notice
 --------------------------
