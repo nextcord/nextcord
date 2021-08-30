@@ -40,11 +40,11 @@ from .colour import *
 from .integrations import *
 from .invite import *
 from .template import *
+from .welcome_screen import *
 from .widget import *
 from .object import *
 from .reaction import *
 from . import utils, opus, abc, ui
-from .welcome_screen import WelcomeScreen, WelcomeChannel
 from .enums import *
 from .embeds import *
 from .mentions import *
