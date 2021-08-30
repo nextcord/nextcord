@@ -44,6 +44,7 @@ from . import errors
 from .help import HelpCommand, DefaultHelpCommand
 from .cog import Cog
 
+
 if TYPE_CHECKING:
     import importlib.machinery
 
@@ -659,7 +660,7 @@ class BotBase(GroupMixin):
                 if _is_submodule(name, module):
                     del sys.modules[module]
 
-    def _load_from_module_spec(self, spec: importlib.machinery.ModuleSpec, key: str, config: dict[str, Any]) -> None:
+    def _load_from_module_spec(self, spec: importlib.machinery.ModuleSpec, key: str) -> None:
         # precondition: key not in self.__extensions
         lib = importlib.util.module_from_spec(spec)
         sys.modules[key] = lib
@@ -676,7 +677,7 @@ class BotBase(GroupMixin):
             raise errors.NoEntryPointError(key)
 
         try:
-            setup(self, **config)
+            setup(self)
         except Exception as e:
             del sys.modules[key]
             self._remove_module_references(lib.__name__)
@@ -691,7 +692,7 @@ class BotBase(GroupMixin):
         except ImportError:
             raise errors.ExtensionNotFound(name)
 
-    def load_extension(self, name: str, *, package: Optional[str] = None, config: Optional[dict[str, Any]] = None) -> None:
+    def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
         """Loads an extension.
 
         An extension is a python module that contains commands, cogs, or
@@ -726,9 +727,8 @@ class BotBase(GroupMixin):
             The extension does not have a setup function.
         ExtensionFailed
             The extension or its setup function had an execution error.
-        TypeError
-            Config was not a dict with strings as keys
         """
+<<<<<<< HEAD
 
         if config is None:
             config = {}
@@ -736,6 +736,8 @@ class BotBase(GroupMixin):
             raise TypeError("Config must be a dict!")
         if any([not isinstance(key, str) for key in config.keys()]):
             raise TypeError("Config keys must be strings")
+=======
+>>>>>>> 705db7fcfb3a58a213294ddfc2f6d63eec4f9a6f
 
         name = self._resolve_name(name, package)
         if name in self.__extensions:
@@ -745,7 +747,7 @@ class BotBase(GroupMixin):
         if spec is None:
             raise errors.ExtensionNotFound(name)
 
-        self._load_from_module_spec(spec, name, config)
+        self._load_from_module_spec(spec, name)
 
     def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
         """Unloads an extension.
@@ -770,8 +772,6 @@ class BotBase(GroupMixin):
             Defaults to ``None``.
 
             .. versionadded:: 1.7
-        config: Optional[:class:dict]
-            variables to be passed to the cogs setup function.
 
         Raises
         -------
@@ -780,8 +780,6 @@ class BotBase(GroupMixin):
             be resolved using the provided ``package`` parameter.
         ExtensionNotLoaded
             The extension was not loaded.
-        TypeError
-            Config was not a dict with strings as keys
         """
 
         name = self._resolve_name(name, package)
@@ -792,7 +790,7 @@ class BotBase(GroupMixin):
         self._remove_module_references(lib.__name__)
         self._call_module_finalizers(lib, name)
 
-    def reload_extension(self, name: str, *, package: Optional[str] = None, config: Optional[dict[str, Any]] = None) -> None:
+    def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
         """Atomically reloads an extension.
 
         This replaces the extension with the same extension, only refreshed. This is
@@ -831,12 +829,6 @@ class BotBase(GroupMixin):
         lib = self.__extensions.get(name)
         if lib is None:
             raise errors.ExtensionNotLoaded(name)
-        if config is None:
-            config = {}
-        if not isinstance(config, dict):
-            raise TypeError("Config must be a dict!")
-        if any([not isinstance(key, str) for key in config.keys()]):
-            raise TypeError("Config keys must be strings")
 
         # get the previous module states from sys modules
         modules = {
@@ -849,12 +841,12 @@ class BotBase(GroupMixin):
             # Unload and then load the module...
             self._remove_module_references(lib.__name__)
             self._call_module_finalizers(lib, name)
-            self.load_extension(name, config=config)
+            self.load_extension(name)
         except Exception:
             # if the load failed, the remnants should have been
             # cleaned from the load_extension function call
             # so let's load it from our old compiled library.
-            lib.setup(self, **config)  # type: ignore
+            lib.setup(self)  # type: ignore
             self.__extensions[name] = lib
 
             # revert sys.modules back to normal and raise back to caller

@@ -17,4 +17,4 @@ docs/crowdin.py
 *.mo
 pyproject.toml
 build
-dist
+dist/
