@@ -17,7 +17,49 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
-Fake module to allow for compatibility with old discord.py cogs
+Module to allow for backwards compatibility for existing code and extensions
 """
 
-from nextcord import *
+from nextcord import __title__, __author__, __license__, __copyright__, __version__, __path__
+import logging
+from typing import NamedTuple
+from nextcord import VersionInfo, version_info
+from nextcord.client import *
+from nextcord.appinfo import *
+from nextcord.user import *
+from nextcord.emoji import *
+from nextcord.partial_emoji import *
+from nextcord.activity import *
+from nextcord.channel import *
+from nextcord.guild import *
+from nextcord.flags import *
+from nextcord.member import *
+from nextcord.message import *
+from nextcord.asset import *
+from nextcord.errors import *
+from nextcord.permissions import *
+from nextcord.role import *
+from nextcord.file import *
+from nextcord.colour import *
+from nextcord.integrations import *
+from nextcord.invite import *
+from nextcord.template import *
+from nextcord.widget import *
+from nextcord.object import *
+from nextcord.reaction import *
+from nextcord import utils, opus, abc, ui
+from nextcord.enums import *
+from nextcord.embeds import *
+from nextcord.mentions import *
+from nextcord.shard import *
+from nextcord.player import *
+from nextcord.webhook import *
+from nextcord.voice_client import *
+from nextcord.audit_logs import *
+from nextcord.raw_models import *
+from nextcord.team import *
+from nextcord.sticker import *
+from nextcord.stage_instance import *
+from nextcord.interactions import *
+from nextcord.components import *
+from nextcord.threads import *
