@@ -42,10 +42,10 @@ from .emoji import Emoji
 from .channel import _threaded_channel_factory, PartialMessageable
 from .enums import ChannelType
 from .mentions import AllowedMentions
-from .errors import *
+from .errors import HTTPException, GatewayNotFound, PrivilegedIntentsRequired, InvalidData
 from .enums import Status, VoiceRegion
 from .flags import ApplicationFlags, Intents
-from .gateway import *
+from .gateway import DiscordWebSocket, ReconnectWebSocket, ConnectionClosed
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .voice_client import VoiceClient
 from .http import HTTPClient
