@@ -71,7 +71,8 @@ Please note that on Linux installing voice you must install the following packag
 * libffi-dev (or ``libffi-devel`` on some systems)
 * python-dev (e.g. ``python3.6-dev`` for Python 3.6)
 
-
+Examples
+----------
 Quick Example
 ~~~~~~~~~~~~~
 
