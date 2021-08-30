@@ -640,7 +640,7 @@ class Client:
         
         for library_name in ["discord", "pyfork", "enhanced-dpy", "discord.py"]: 
             try:
-                dist = pkg_resources.get_distrubtion(library_name)
+                dist = pkg_resources.get_distribution(library_name)
                 warn(libraryName+ " is installed. This may cause unexpected behavior.",category=Warning) 
             except pkg_resources.DistributionNotFound: 
                 continue
