@@ -52,6 +52,14 @@ packages = [
     'nextcord.webhook',
     'nextcord.ext.commands',
     'nextcord.ext.tasks',
+    
+    # Compat
+    "discord",
+    "discord.types",
+    "discord.ui",
+    "discord.webhook",
+    "discord.ext.commands",
+    "discord.ext.tasks"
 ]
 
 setup(name='nextcord',

@@ -1,15 +1,6 @@
-from nextcord.ext import commands
-
 import nextcord
 
-
-class Bot(commands.Bot):
-    def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or('$'))
-
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
+from nextcord.ext import commands
 
 
 # Define a simple View that gives us a confirmation menu
@@ -35,11 +26,11 @@ class Confirm(nextcord.ui.View):
         self.stop()
 
 
-bot = Bot()
+bot = commands.Bot(command_prefix='$')
 
 
 @bot.command()
-async def ask(ctx: commands.Context):
+async def ask(ctx):
     """Asks the user a question to confirm something."""
     # We create the view and assign it to a variable so we can wait for it later.
     view = Confirm()

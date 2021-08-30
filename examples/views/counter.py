@@ -1,15 +1,6 @@
-from nextcord.ext import commands
-
 import nextcord
 
-
-class CounterBot(commands.Bot):
-    def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or('$'))
-
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
+from nextcord.ext import commands
 
 
 # Define a simple View that gives us a counter button
@@ -31,11 +22,11 @@ class Counter(nextcord.ui.View):
         await interaction.response.edit_message(view=self)
 
 
-bot = CounterBot()
+bot = commands.Bot(command_prefix='$')
 
 
 @bot.command()
-async def counter(ctx: commands.Context):
+async def counter(ctx):
     """Starts a counter for pressing."""
     await ctx.send('Press!', view=Counter())
 

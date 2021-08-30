@@ -44,6 +44,7 @@ from . import errors
 from .help import HelpCommand, DefaultHelpCommand
 from .cog import Cog
 
+
 if TYPE_CHECKING:
     import importlib.machinery
 

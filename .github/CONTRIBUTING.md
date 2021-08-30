@@ -13,6 +13,7 @@ Generally speaking questions are better suited in our resources below.
 - [The FAQ in the documentation](https://nextcord.readthedocs.io/en/latest/faq.html)
 - [StackOverflow's `nextcord` tag](https://stackoverflow.com/questions/tagged/nextcord)
 - [StackOverflow's `discord.py` tag](https://stackoverflow.com/questions/tagged/discord.py)
+- [The discussions page](https://github.com/nextcord/nextcord/discussions)
 
 Please try your best not to ask questions in our issue tracker. Most of them don't belong there unless they provide value to a larger audience.
 
@@ -39,8 +40,6 @@ Submitting a pull request is fairly simple, just make sure it focuses on a singl
 
 - Use present tense (e.g. "Add feature" not "Added feature")
 - Limit all lines to 72 characters or less.
-- Reference issues or pull requests outside of the first line.
-    - Please use the shorthand `#123` and not the full URL.
-- Commits regarding the commands extension must be prefixed with `[commands]`
+- When linking issues/prs please use the shorthand `#123` and not the full URL.
 
 If you do not meet any of these guidelines, don't fret. Chances are they will be fixed upon rebasing but please do try to meet them to remove some of the workload.

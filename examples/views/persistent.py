@@ -1,5 +1,6 @@
-from nextcord.ext import commands
 import nextcord
+
+from nextcord.ext import commands
 
 
 # Define a simple View that persists between bot restarts
@@ -27,9 +28,9 @@ class PersistentView(nextcord.ui.View):
         await interaction.response.send_message('This is grey.', ephemeral=True)
 
 
-class PersistentViewBot(commands.Bot):
-    def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or('$'))
+class Bot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.persistent_views_added = False
 
     async def on_ready(self):
@@ -46,12 +47,12 @@ class PersistentViewBot(commands.Bot):
         print('------')
 
 
-bot = PersistentViewBot()
+bot = Bot(command_prefix='$')
 
 
 @bot.command()
 @commands.is_owner()
-async def prepare(ctx: commands.Context):
+async def prepare(ctx):
     """Starts a persistent view."""
     # In order for a persistent view to be listened to, it needs to be sent to an actual message.
     # Call this method once just to store it somewhere.

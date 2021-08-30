@@ -1,5 +1,5 @@
-nextcord
-========
+.. image:: assets/nextcord-banner.png
+   :alt: Nextcord
 
 .. image:: https://discord.com/api/guilds/881118111967883295/embed.png
    :target: https://discord.gg/ZebatWssCB
@@ -11,12 +11,13 @@ nextcord
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI supported Python versions
 
-A modern, easy to use, feature-rich, and async ready API wrapper for Discord written in Python.
+Nextcord is a modern, easy to use, feature-rich, and async ready API wrapper for Discord written in Python.
 
 Fork notice
 --------------------------
 
-This is a fork of the Discord.py library, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ at 28th August 2021. Nextcord will replace Discord.py, with **continued support and features**, to still offer former Discord.py-users a stable API wrapper for their bots.
+This is a fork of discord.py, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ at 28th August 2021.
+Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py-users a stable API wrapper for their bots.   
 
 Key Features
 -------------
@@ -70,43 +71,23 @@ Please note that on Linux installing voice you must install the following packag
 * libffi-dev (or ``libffi-devel`` on some systems)
 * python-dev (e.g. ``python3.6-dev`` for Python 3.6)
 
+
 Quick Example
---------------
-
-.. code:: py
-
-    import nextcord
-
-    class MyClient(nextcord.Client):
-        async def on_ready(self):
-            print('Logged on as', self.user)
-
-        async def on_message(self, message):
-            # don't respond to ourselves
-            if message.author == self.user:
-                return
-
-            if message.content == 'ping':
-                await message.channel.send('pong')
-
-    client = MyClient()
-    client.run('token')
-
-Bot Example
 ~~~~~~~~~~~~~
 
 .. code:: py
 
-    import nextcord
     from nextcord.ext import commands
 
-    bot = commands.Bot(command_prefix='>')
+
+    bot = commands.Bot(command_prefix='$')
 
     @bot.command()
     async def ping(ctx):
-        await ctx.send('pong')
+        await ctx.reply('Pong!')
 
     bot.run('token')
+
 
 You can find more examples in the examples directory.
 **NOTE: It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should store it externally.**

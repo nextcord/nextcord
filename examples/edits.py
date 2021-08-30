@@ -1,20 +1,24 @@
 import nextcord
 import asyncio
 
-class MyClient(nextcord.Client):
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
+from nextcord.ext import commands
 
-    async def on_message(self, message):
-        if message.content.startswith('!editme'):
-            msg = await message.channel.send('10')
-            await asyncio.sleep(3.0)
-            await msg.edit(content='40')
+
+class Bot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     async def on_message_edit(self, before, after):
         msg = f'**{before.author}** edited their message:\n{before.content} -> {after.content}'
         await before.channel.send(msg)
 
-client = MyClient()
-client.run('token')
+bot = Bot(command_prefix='$')
+
+@bot.command()
+async def editme(ctx):
+    msg = await ctx.send('10')
+    await asyncio.sleep(3.0)
+    await msg.edit(content='40')
+
+
+bot.run('token')

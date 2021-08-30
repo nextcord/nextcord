@@ -1,17 +1,10 @@
-import nextcord
+from nextcord.ext import commands
 
-class MyClient(nextcord.Client):
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
 
-    async def on_message(self, message):
-        # we do not want the bot to reply to itself
-        if message.author.id == self.user.id:
-            return
+bot = commands.Bot(command_prefix='$')
 
-        if message.content.startswith('!hello'):
-            await message.reply('Hello!', mention_author=True)
+@bot.command()
+async def hello(ctx):
+    await ctx.reply('Hello!')
 
-client = MyClient()
-client.run('token')
+bot.run('token')

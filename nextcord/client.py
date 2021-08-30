@@ -469,6 +469,9 @@ class Client:
         """
 
         _log.info('logging in using static token')
+        
+        if not isinstance(token, str):
+            raise TypeError(f"The token provided was of type {type(token)} but was expected to be str")
 
         data = await self.http.static_login(token.strip())
         self._connection.user = ClientUser(state=self._connection, data=data)

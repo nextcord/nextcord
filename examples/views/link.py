@@ -1,16 +1,7 @@
-from nextcord.ext import commands
-
 import nextcord
+
+from nextcord.ext import commands
 from urllib.parse import quote_plus
-
-class GoogleBot(commands.Bot):
-    def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or('$'))
-
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
-
 
 # Define a simple View that gives us a google link button.
 # We take in `query` as the query that the command author requests for
@@ -27,11 +18,11 @@ class Google(nextcord.ui.View):
         self.add_item(nextcord.ui.Button(label='Click Here', url=url))
 
 
-bot = GoogleBot()
+bot = commands.Bot(command_prefix='$')
 
 
 @bot.command()
-async def google(ctx: commands.Context, *, query: str):
+async def google(ctx, *, query: str):
     """Returns a google link for a query"""
     await ctx.send(f'Google Result for: `{query}`', view=Google(query))
 

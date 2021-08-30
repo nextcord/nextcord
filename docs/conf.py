@@ -145,6 +145,8 @@ pygments_style = 'friendly'
 
 # Nitpicky mode options
 nitpick_ignore_files = [
+  "migrating_to_nextcord",
+  "migrating_2",
   "migrating_to_async",
   "migrating",
   "whats_new",
@@ -196,7 +198,7 @@ resource_links = {
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = './images/discord_py_logo.ico'
+html_favicon = './images/nextcord_logo.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

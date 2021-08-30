@@ -1,8 +1,10 @@
 # This example requires the 'members' privileged intents
-
 import nextcord
 
-class MyClient(nextcord.Client):
+from nextcord.ext import commands
+
+
+class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -81,5 +83,5 @@ class MyClient(nextcord.Client):
 intents = nextcord.Intents.default()
 intents.members = True
 
-client = MyClient(intents=intents)
-client.run('token')
+bot = Bot(command_prefix='$', intents=intents)
+bot.run('token')

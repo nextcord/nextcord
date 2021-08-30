@@ -1,6 +1,7 @@
+import nextcord
+
 from typing import List
 from nextcord.ext import commands
-import nextcord
 
 # Defines a custom button that contains the logic of the game.
 # The ['TicTacToe'] bit is for type hinting purposes to tell your IDE or linter
@@ -118,20 +119,11 @@ class TicTacToe(nextcord.ui.View):
         return None
 
 
-class TicTacToeBot(commands.Bot):
-    def __init__(self):
-        super().__init__(command_prefix=commands.when_mentioned_or('$'))
-
-    async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
-
-
-bot = TicTacToeBot()
+bot = commands.Bot(command_prefix='$')
 
 
 @bot.command()
-async def tic(ctx: commands.Context):
+async def tic(ctx):
     """Starts a tic-tac-toe game with yourself."""
     await ctx.send('Tic Tac Toe: X goes first', view=TicTacToe())
 

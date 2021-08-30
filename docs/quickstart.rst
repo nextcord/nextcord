@@ -2,7 +2,7 @@
 
 .. _quickstart:
 
-.. currentmodule:: discord
+.. currentmodule:: nextcord
 
 Quickstart
 ============
