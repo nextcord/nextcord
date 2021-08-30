@@ -4,6 +4,7 @@
 *.egg-info
 venv
 .venv
+.env
 docs/_build
 docs/crowdin.py
 *.buildinfo
@@ -15,3 +16,5 @@ docs/crowdin.py
 *.flac
 *.mo
 pyproject.toml
+build
+dist

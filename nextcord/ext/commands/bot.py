@@ -610,13 +610,13 @@ class BotBase(GroupMixin):
 
     # extensions
 
-    def _remove_module_references(self, name: str) -> None:
-        # find all references to the module
+    def _remove_registered_cogs(self, name: str) -> None:
         # remove the cogs registered from the module
         for cogname, cog in self.__cogs.copy().items():
             if _is_submodule(name, cog.__module__):
                 self.remove_cog(cogname)
 
+    def _remove_commands(self, name: str) -> None:
         # remove all the commands from the module
         for cmd in self.all_commands.copy().values():
             if cmd.module is not None and _is_submodule(name, cmd.module):
@@ -624,6 +624,7 @@ class BotBase(GroupMixin):
                     cmd.recursively_remove_all_commands()
                 self.remove_command(cmd.name)
 
+    def _remove_listeners(self, name: str) -> None:
         # remove all the listeners from the module
         for event_list in self.extra_events.copy().values():
             remove = []
@@ -633,6 +634,12 @@ class BotBase(GroupMixin):
 
             for index in reversed(remove):
                 del event_list[index]
+
+    def _remove_module_references(self, name: str) -> None:
+        # find all references to the module
+        self._remove_registered_cogs(name)
+        self._remove_commands(name)
+        self._remove_listeners(name)
 
     def _call_module_finalizers(self, lib: types.ModuleType, key: str) -> None:
         try:
@@ -722,7 +729,7 @@ class BotBase(GroupMixin):
         TypeError
             Config was not a dict with strings as keys
         """
-        
+
         if config is None:
             config = {}
         if not isinstance(config, dict):
