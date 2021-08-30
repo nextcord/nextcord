@@ -635,12 +635,13 @@ class Client:
             This function must be the last function to call due to the fact that it
             is blocking. That means that registration of events or anything being
             called after this function call will not execute until it returns.
+        Also, this function checks for incompatable libraries (discord.py, and some forks of it) and warns with Warning. 
         """
         
-        for library_name in ["discord", "discord_slash", "pyfork", "enhanced-dpy", "discord.py"]: 
+        for library_name in ["discord", "pyfork", "enhanced-dpy", "discord.py"]: 
             try:
                 dist = pkg_resources.get_distrubtion(library_name)
-                warn(libraryName+ " is installed. This may cause unexpected behavior.",category=Warning) #custom warning, don't like the name though?
+                warn(libraryName+ " is installed. This may cause unexpected behavior.",category=Warning) 
             except pkg_resources.DistributionNotFound: 
                 continue
         loop = self.loop
