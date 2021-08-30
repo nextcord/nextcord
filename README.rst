@@ -1,5 +1,4 @@
-nextcord
-========
+.. image:: https://user-images.githubusercontent.com/20955511/131354341-3f13b5fe-a5eb-4590-9c79-6f8e0aa1a199.png
 
 .. image:: https://discord.com/api/guilds/881118111967883295/embed.png
    :target: https://discord.gg/ZebatWssCB
