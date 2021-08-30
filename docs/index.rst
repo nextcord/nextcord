@@ -27,7 +27,7 @@ Is this your first time using the library? This is the place to get started!
 
 - **First steps:** :doc:`intro` | :doc:`quickstart` | :doc:`logging`
 - **Working with Discord:** :doc:`discord` | :doc:`intents`
-- **Migrating from discord.py:** :doc:`_migrating_nextcord`
+- **Migrating from discord.py**: :ref:`Migrating to nextcord <migrating_nextcord>`
 - **Examples:** Many examples are available in the :resource:`repository <examples>`.
 
 Getting help
