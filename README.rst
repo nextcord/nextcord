@@ -10,13 +10,14 @@
 .. image:: https://img.shields.io/pypi/pyversions/nextcord.svg
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI supported Python versions
+.. image:: https://img.shields.io/readthedocs/nextcord
+   :target: https://nextcord.readthedocs.io/en/latest
+   :alt: Nextcord documentation
    
 Nextcord
 --------
    
 A modern, easy to use, feature-rich, and async ready API wrapper for Discord written in Python.
-
-`Documentation <https://nextcord.readthedocs.io/en/latest/>`_
 
 Fork notice
 --------------------------
