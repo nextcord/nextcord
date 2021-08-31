@@ -35,6 +35,6 @@ Meta Change
 | 106k guilds (without chunking)| 3300s                            | 3090s                            |
 +-------------------------------+----------------------------------+----------------------------------+
 
-- The public API should be completly typehinted
-- Almost all ``edit`` methods now return their updated counterpart rather than doing an in-place edit.
+- The public API should be completely type-hinted
+- Almost all ``edit`` methods now return their updated counterpart rather than doing an in-place edit
 

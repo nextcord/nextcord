@@ -35,8 +35,8 @@ You can only use ``await`` inside ``async def`` functions and nowhere else.
 What does "blocking" mean?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In asynchronous programming a blocking call is essentially all the parts of the function that are not ``await``. Do not
-despair however, because not all forms of blocking are bad! Using blocking calls is inevitable, but you must work to make
+In asynchronous programming, a blocking call is essentially all the parts of the function that are not ``await``. Do not
+despair, however, because not all forms of blocking are bad! Using blocking calls is inevitable, but you must work to make
 sure that you don't excessively block functions. Remember, if you block for too long then your bot will freeze since it has
 not stopped the function's execution at that point to do other things.
 
@@ -236,7 +236,7 @@ technically in another thread, we must take caution in calling thread-safe opera
 us, :mod:`asyncio` comes with a :func:`asyncio.run_coroutine_threadsafe` function that allows us to call
 a coroutine from another thread.
 
-However, this function returns a :class:`~concurrent.futures.Future` and to actually call it we have to fetch its result. Putting all of
+However, this function returns a :class:`~concurrent.futures.Future` and to call it we have to fetch its result. Putting all of
 this together we can do the following: ::
 
     def my_after(error):

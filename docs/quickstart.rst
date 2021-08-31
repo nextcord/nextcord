@@ -40,7 +40,7 @@ It looks something like this:
 Let's name this file ``example_bot.py``. Make sure not to name it ``nextcord`` as that'll conflict
 with the library.
 
-There's a lot going on here, so let's walk you through it step by step.
+A lot is going on here, so let's walk you through it step by step.
 
 1. The first line just imports the library, if this raises a `ModuleNotFoundError` or `ImportError`
    then head on over to :ref:`installing` section to properly install.

@@ -8,10 +8,10 @@ Migrating to v1.0
 v1.0 is one of the biggest breaking changes in the library due to a complete
 redesign.
 
-The amount of changes are so massive and long that for all intents and purposes, it is a completely
+The number of changes is so massive and long that for all intents and purposes, it is a completely
 new library.
 
-Part of the redesign involves making things more easy to use and natural. Things are done on the
+Part of the redesign involves making things easier to use and natural. Things are done on the
 :ref:`models <discord_api_models>` instead of requiring a :class:`Client` instance to do any work.
 
 Python Version Change
@@ -384,7 +384,7 @@ They will be enumerated here.
 - :attr:`Member.avatar_url` and :attr:`User.avatar_url` now return the default avatar if a custom one is not set.
 - :attr:`Message.embeds` is now a list of :class:`Embed` instead of :class:`dict` objects.
 - :attr:`Message.attachments` is now a list of :class:`Attachment` instead of :class:`dict` object.
-- :attr:`Guild.roles` is now sorted through hierarchy. The first element is always the ``@everyone`` role.
+- :attr:`Guild.roles` is now sorted through a hierarchy. The first element is always the ``@everyone`` role.
 
 **Added**
 
@@ -407,7 +407,7 @@ They will be enumerated here.
 - :meth:`Guild.vanity_invite` to fetch the guild's vanity invite.
 - :meth:`Guild.audit_logs` to fetch the guild's audit logs.
 - :attr:`Message.webhook_id` to fetch the message's webhook ID.
-- :attr:`Message.activity` and :attr:`Message.application` for Rich Presence related information.
+- :attr:`Message.activity` and :attr:`Message.application` for Rich Presence-related information.
 - :meth:`TextChannel.is_nsfw` to check if a text channel is NSFW.
 - :meth:`Colour.from_rgb` to construct a :class:`Colour` from RGB tuple.
 - :meth:`Guild.get_role` to get a role by its ID.
@@ -433,7 +433,7 @@ This supports everything that the old ``send_message`` supported such as embeds:
     e = nextcord.Embed(title='foo')
     await channel.send('Hello', embed=e)
 
-There is a caveat with sending files however, as this functionality was expanded to support multiple
+There is a caveat with sending files, however, as this functionality was expanded to support multiple
 file attachments, you must now use a :class:`File` pseudo-namedtuple to upload a single file. ::
 
     # before
@@ -703,7 +703,7 @@ Upgraded Dependencies
 
 Following v1.0 of the library, we've updated our requirements to :doc:`aiohttp <aio:index>` v2.0 or higher.
 
-Since this is a backwards incompatible change, it is recommended that you see the
+Since this is a backward-incompatible change, it is recommended that you see the
 `changes <http://aiohttp.readthedocs.io/en/stable/changes.html#rc1-2017-03-15>`_
 and the :doc:`aio:migration_to_2xx` pages for details on the breaking changes in
 :doc:`aiohttp <aio:index>`.
@@ -767,7 +767,7 @@ In v1.0, the auto reconnection logic has been powered up significantly.
 the reconnect logic. When enabled, the client will automatically reconnect in all instances of your internet going
 offline or Discord going offline with exponential back-off.
 
-:meth:`Client.run` and :meth:`Client.start` gains this keyword argument as well, but for most cases you will not
+:meth:`Client.run` and :meth:`Client.start` gains this keyword argument as well, but for most cases, you will not
 need to specify it unless turning it off.
 
 .. _migrating_1_0_commands:
@@ -848,7 +848,7 @@ Then you can use :meth:`~ext.commands.Bot.get_context` inside :func:`on_message`
             ctx = await self.get_context(message, cls=MyContext)
             await self.invoke(ctx)
 
-Now inside your commands you will have access to your custom context:
+Now inside your commands, you will have access to your custom context:
 
 .. code-block:: python3
 
@@ -861,7 +861,7 @@ Now inside your commands you will have access to your custom context:
 Removed Helpers
 +++++++++++++++++
 
-With the new :class:`.Context` changes, a lot of message sending helpers have been removed.
+With the new :class:`.Context` changes, a lot of message-sending helpers have been removed.
 
 For a full list of changes, see below:
 
@@ -908,7 +908,7 @@ Check Changes
 
 Prior to v1.0, :func:`~ext.commands.check`\s could only be synchronous. As of v1.0 checks can now be coroutines.
 
-Along with this change, a couple new checks were added.
+Along with this change, a couple of new checks were added.
 
 - :func:`~ext.commands.guild_only` replaces the old ``no_pm=True`` functionality.
 - :func:`~ext.commands.is_owner` uses the :meth:`Client.application_info` endpoint by default to fetch owner ID.
@@ -916,7 +916,7 @@ Along with this change, a couple new checks were added.
     - This is actually powered by a different function, :meth:`~ext.commands.Bot.is_owner`.
     - You can set the owner ID yourself by setting :attr:`.Bot.owner_id`.
 
-- :func:`~ext.commands.is_nsfw` checks if the channel the command is in is a NSFW channel.
+- :func:`~ext.commands.is_nsfw` checks if the channel the command is in is an NSFW channel.
 
     - This is powered by the new :meth:`TextChannel.is_nsfw` method.
 
@@ -938,7 +938,7 @@ After: ::
     on_command_error(ctx, error)
 
 The extraneous ``command`` parameter in :func:`.on_command` and :func:`.on_command_completion`
-have been removed. The :class:`~ext.commands.Command` instance was not kept up-to date so it was incorrect. In order to get
+have been removed. The :class:`~ext.commands.Command` instance was not kept up-to-date so it was incorrect. In order to get
 the up to date :class:`~ext.commands.Command` instance, use the :attr:`.Context.command`
 attribute.
 
@@ -1009,7 +1009,7 @@ Cog Changes
 
 Cogs have completely been revamped. They are documented in :ref:`ext_commands_cogs` as well.
 
-Cogs are now required to have a base class, :class:`~.commands.Cog` for future proofing purposes. This comes with special methods to customise some behaviour.
+Cogs are now required to have a base class, :class:`~.commands.Cog` for future-proofing purposes. This comes with special methods to customise some behaviour.
 
 * :meth:`.Cog.cog_unload`
     - This is called when a cog needs to do some cleanup, such as cancelling a task.
@@ -1026,7 +1026,7 @@ Cogs are now required to have a base class, :class:`~.commands.Cog` for future p
 
 Those that were using listeners, such as ``on_message`` inside a cog will now have to explicitly mark them as such using the :meth:`.commands.Cog.listener` decorator.
 
-Along with that, cogs have gained the ability to have custom names through specifying it in the class definition line. More options can be found in the metaclass that facilitates all this, :class:`.commands.CogMeta`.
+Along with that, cogs have gained the ability to have custom names by specifying them in the class definition line. More options can be found in the metaclass that facilitates all this, :class:`.commands.CogMeta`.
 
 An example cog with every special method registered and a custom name is as follows:
 
@@ -1090,7 +1090,7 @@ Basically: ::
         pass
 
 The after invocation is hook always called, **regardless of an error in the command**. This makes it ideal for some error
-handling or clean up of certain resources such a database connection.
+handling or clean up of certain resources such as a database connection.
 
 The per-command registration is as follows: ::
 
@@ -1162,7 +1162,7 @@ After: ::
         async def convert(self, ctx, argument):
             return ctx.me
 
-The command framework also got a couple new converters:
+The command framework also got a couple of new converters:
 
 - :class:`~ext.commands.clean_content` this is akin to :attr:`Message.clean_content` which scrubs mentions.
 - :class:`~ext.commands.UserConverter` will now appropriately convert :class:`User` only.
