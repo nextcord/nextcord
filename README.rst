@@ -62,7 +62,7 @@ To install additional packages for speedup, run the following command:
 .. code:: sh
 
     # Linux/macOS
-    python3 -m pip install -U "nextcord[seped]"
+    python3 -m pip install -U "nextcord[speed]"
 
     # Windows
     py -3 -m pip install -U nextcord[speed]
