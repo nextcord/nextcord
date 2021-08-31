@@ -2524,7 +2524,9 @@ class Guild(Hashable):
         The guild must have ``COMMUNITY`` in :attr:`~Guild.features`.
         You must have the :attr:`~Permissions.manage_guild` permission to use
         this as well.
+
         .. versionadded:: 2.0
+
         Raises
         -------
         Forbidden
@@ -2560,7 +2562,9 @@ class Guild(Hashable):
         The guild must have ``COMMUNITY`` in :attr:`~Guild.features`.
         You must have the :attr:`~Permissions.manage_guild` permission to use
         this as well.
+
         .. versionadded:: 2.0
+
         Returns
         --------
         :class:`WelcomeScreen`
