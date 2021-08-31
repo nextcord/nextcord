@@ -76,6 +76,7 @@ from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
 from .file import File
+from .welcome_screen import WelcomeScreen, WelcomeChannel
 
 
 __all__ = (
@@ -2516,6 +2517,70 @@ class Guild(Hashable):
 
         # TODO: add to cache
         return role
+
+    async def welcome_screen(self) -> WelcomeScreen:
+        """|coro|
+        Returns the guild's welcome screen.
+        The guild must have ``COMMUNITY`` in :attr:`~Guild.features`.
+        You must have the :attr:`~Permissions.manage_guild` permission to use
+        this as well.
+        .. versionadded:: 2.0
+        Raises
+        -------
+        Forbidden
+            You do not have the proper permissions to get this.
+        HTTPException
+            Retrieving the welcome screen failed.
+        Returns
+        --------
+        :class:`WelcomeScreen`
+            The welcome screen.
+        """
+        data = await self._state.http.get_welcome_screen(self.id)
+        return WelcomeScreen(data=data, guild=self)
+
+    @overload
+    async def edit_welcome_screen(
+        self,
+        *,
+        description: Optional[str] = ...,
+        welcome_channels: Optional[List[WelcomeChannel]] = ...,
+        enabled: Optional[bool] = ...,
+    ) -> WelcomeScreen:
+        ...
+
+    @overload
+    async def edit_welcome_screen(self) -> None:
+        ...
+
+    async def edit_welcome_screen(self, **kwargs):
+        """|coro|
+        A shorthand method of :attr:`WelcomeScreen.edit` without needing
+        to fetch the welcome screen beforehand.
+        The guild must have ``COMMUNITY`` in :attr:`~Guild.features`.
+        You must have the :attr:`~Permissions.manage_guild` permission to use
+        this as well.
+        .. versionadded:: 2.0
+        Returns
+        --------
+        :class:`WelcomeScreen`
+            The edited welcome screen.
+        """
+        try:
+            welcome_channels = kwargs['welcome_channels']
+        except KeyError:
+            pass
+        else:
+            welcome_channels_serialised = []
+            for wc in welcome_channels:
+                if not isinstance(wc, WelcomeChannel):
+                    raise InvalidArgument('welcome_channels parameter must be a list of WelcomeChannel')
+                welcome_channels_serialised.append(wc.to_dict())
+            kwargs['welcome_channels'] = welcome_channels_serialised
+
+        if kwargs:
+            data = await self._state.http.edit_welcome_screen(self.id, kwargs)
+            return WelcomeScreen(data=data, guild=self)
 
     async def edit_role_positions(self, positions: Dict[Snowflake, int], *, reason: Optional[str] = None) -> List[Role]:
         """|coro|
