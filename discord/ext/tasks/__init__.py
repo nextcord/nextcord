@@ -20,4 +20,4 @@ DEALINGS IN THE SOFTWARE.
 Module to allow for backwards compatibility for existing code and extensions
 """
 
-from nextcord.tasks import *
+from nextcord.ext.tasks import *
