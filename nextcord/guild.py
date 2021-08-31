@@ -738,6 +738,21 @@ class Guild(Hashable):
         return list(self._members.values())
 
     @property
+    def online_members(self) -> List[Member]:
+        """List[:class:`Member`]: A list of online members that belong to this guild."""
+        return [m for m in self._members.values() if m.raw_status != "offline"]
+
+    @property
+    def managers(self) -> List[Member]:
+        """List[:class:`Member`]: A list of members with the Manage Server permission in this guild."""
+        return [m for m in self._members.values() if m.guild_permissions.manage_guild]
+
+    @property
+    def administrators(self) -> List[Member]:
+        """List[:class:`Member`]: A list of members with the Administrator permission in this guild."""
+        return [m for m in self._members.values() if m.guild_permissions.administrator]
+
+    @property
     def bots(self) -> List[Member]:
         """List[:class:`Member`]: A list of bots that belong to this guild.
 
