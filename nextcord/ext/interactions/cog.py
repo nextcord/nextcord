@@ -30,8 +30,7 @@ from typing import Any, Callable, ClassVar, Dict, Generator, List, Optional, TYP
 
 if TYPE_CHECKING:
     from .bot import Bot
-    from .context_base import ContextBase
-    from .command_base import CommandBase
+    from nextcord.ext.abc import ContextBase, CommandBase
 
 __all__ = (
     'CogMeta',

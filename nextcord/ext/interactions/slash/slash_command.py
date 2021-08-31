@@ -1,6 +1,4 @@
-from abc import ABC, abstractmethod
-from nextcord.enums import ApplicationCommandType
-from .application_command import ApplicationCommand
+from nextcord.ext.interactions.application_command import ApplicationCommand
 
 class SlashCommand(ApplicationCommand):
     """

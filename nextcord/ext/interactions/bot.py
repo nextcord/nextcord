@@ -9,9 +9,9 @@ import asyncio
 import importlib.util
 from typing import Any, Callable, Dict, List, Mapping, Optional, TypeVar
 from nextcord.client import Client
-from nextcord.ext.cog import Cog
-from .context_base import ContextBase
-from ._types import CoroFunc, Check, CoroFuncT
+from .cog import Cog
+from nextcord.ext.abc import ContextBase
+from nextcord.ext.abc._types import CoroFunc, Check, CoroFuncT
 from . import errors
 
 CheckType = TypeVar("CheckType", bound="Check")

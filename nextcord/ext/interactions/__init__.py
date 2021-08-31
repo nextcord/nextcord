@@ -23,3 +23,4 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from .bot import Bot
+from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMapping, MaxConcurrency

@@ -89,8 +89,7 @@ if TYPE_CHECKING:
         OverwriteType,
     )
 
-    PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
-    MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
+    MessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
 
 MISSING = utils.MISSING
@@ -227,6 +226,7 @@ class GuildChannel:
     - :class:`~nextcord.VoiceChannel`
     - :class:`~nextcord.CategoryChannel`
     - :class:`~nextcord.StageChannel`
+    - :class:`~nextcord.StoreChannel`
 
     This ABC must also implement :class:`~nextcord.abc.Snowflake`.
 

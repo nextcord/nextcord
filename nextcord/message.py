@@ -67,7 +67,7 @@ if TYPE_CHECKING:
     from .types.user import User as UserPayload
     from .types.embed import Embed as EmbedPayload
     from .abc import Snowflake
-    from .abc import GuildChannel, PartialMessageableChannel, MessageableChannel
+    from .abc import GuildChannel, MessageableChannel
     from .components import Component
     from .state import ConnectionState
     from .channel import TextChannel, GroupChannel, DMChannel, PartialMessageable
@@ -1648,7 +1648,7 @@ class PartialMessage(Hashable):
     to_reference = Message.to_reference
     to_message_reference_dict = Message.to_message_reference_dict
 
-    def __init__(self, *, channel: PartialMessageableChannel, id: int):
+    def __init__(self, *, channel: MessageableChannel, id: int):
         if channel.type not in (
             ChannelType.text,
             ChannelType.news,
@@ -1659,7 +1659,7 @@ class PartialMessage(Hashable):
         ):
             raise TypeError(f'Expected TextChannel, DMChannel or Thread not {type(channel)!r}')
 
-        self.channel: PartialMessageableChannel = channel
+        self.channel: MessageableChannel = channel
         self._state: ConnectionState = channel._state
         self.id: int = id
 

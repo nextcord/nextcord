@@ -1,6 +1,6 @@
 import os
 
-from nextcord.ext.commands import Bot
+from nextcord.ext.interactions import Bot
 from dotenv import load_dotenv
 
 load_dotenv()

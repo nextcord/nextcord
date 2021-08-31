@@ -27,9 +27,9 @@ from typing import Any, Callable, Coroutine, TYPE_CHECKING, TypeVar, Union
 
 
 if TYPE_CHECKING:
-    from nextcord.ext.cog import Cog
+    from nextcord.ext.interactions.cog import Cog
+    from nextcord.ext.errors import CommandError
     from .context_base import ContextBase
-    from .errors import CommandError
     from .command_base import CommandBase
 
 T = TypeVar('T')

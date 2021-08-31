@@ -32,7 +32,7 @@ import asyncio
 from collections import deque
 
 from ...abc import PrivateChannel
-from .errors import MaxConcurrencyReached
+from nextcord.ext.errors import MaxConcurrencyReached
 
 if TYPE_CHECKING:
     from ...message import Message
@@ -173,6 +173,7 @@ class Cooldown:
 
         # we're not so decrement our tokens
         self._tokens -= 1
+        return None
 
     def reset(self) -> None:
         """Reset the cooldown to its initial state."""
