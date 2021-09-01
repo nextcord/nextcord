@@ -69,11 +69,10 @@ from .errors import (
     ArgumentParsingError,
     CommandRegistrationError,
 )
-from .cooldowns import Cooldown, BucketType, CooldownMapping, MaxConcurrency, DynamicCooldownMapping
 from .converter import run_converters, get_converter, Greedy
-from nextcord.ext._types import _BaseCommand
-from nextcord.ext.cog import Cog
-from nextcord.ext.context import Context
+from nextcord.ext.abc import CommandBase
+from nextcord.ext.interactions import Cog, Cooldown, BucketType, CooldownMapping, MaxConcurrency, DynamicCooldownMapping
+from .context import Context
 
 
 
@@ -227,7 +226,7 @@ class _CaseInsensitiveDict(dict):
         super().__setitem__(k.casefold(), v)
 
 
-class Command(_BaseCommand, Generic[CogT, P, T]):
+class Command(CommandBase, Generic[CogT, P, T]):
     r"""A class that implements the protocol for a bot text command.
 
     These are not created manually, instead they are created via the
@@ -397,7 +396,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         # bandaid for the fact that sometimes parent can be the bot instance
         parent = kwargs.get('parent')
         self.parent: Optional[GroupMixin] = parent if isinstance(
-            parent, _BaseCommand) else None  # type: ignore
+            parent, CommandBase) else None  # type: ignore
 
         self._before_invoke: Optional[Hook] = None
         try:

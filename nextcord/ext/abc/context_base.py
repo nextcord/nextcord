@@ -43,10 +43,8 @@ if TYPE_CHECKING:
     from nextcord.user import ClientUser, User
     from nextcord.voice_client import VoiceProtocol
 
-    from .bot import Bot, AutoShardedBot
-    from .cog import Cog
+    from nextcord.ext.interactions import Bot, Cog
     from .command_base import CommandBase
-    from .view import StringView
 
 __all__ = (
     'ContextBase',
@@ -56,8 +54,9 @@ MISSING: Any = nextcord.utils.MISSING
 
 
 T = TypeVar('T')
-BotT = TypeVar('BotT', bound="Union[Bot, AutoShardedBot]")
+BotT = TypeVar('BotT', bound="Bot")
 CogT = TypeVar('CogT', bound="Cog")
+CommandT = TypeVar('CommandT', bound="CommandBase")
 
 if TYPE_CHECKING:
     P = ParamSpec('P')
@@ -76,8 +75,6 @@ class ContextBase(nextcord.abc.Messageable, Generic[BotT]):
 
     Attributes
     -----------
-    message: :class:`.Message`
-        The message that triggered the command being executed.
     bot: :class:`.Bot`
         The bot that contains the command being executed.
     args: :class:`list`
@@ -88,9 +85,6 @@ class ContextBase(nextcord.abc.Messageable, Generic[BotT]):
         A dictionary of transformed arguments that were passed into the command.
         Similar to :attr:`args`\, if this is accessed in the
         :func:`.on_command_error` event then this dict could be incomplete.
-    current_parameter: Optional[:class:`inspect.Parameter`]
-        The parameter that is currently being inspected and converted.
-        This is only of use for within converters.
 
         .. versionadded:: 2.0
     prefix: Optional[:class:`str`]
@@ -123,42 +117,36 @@ class ContextBase(nextcord.abc.Messageable, Generic[BotT]):
 
     def __init__(self,
         *,
-        message: Message,
         bot: BotT,
-        view: StringView,
         args: List[Any] = MISSING,
         kwargs: Dict[str, Any] = MISSING,
         prefix: Optional[str] = None,
-        command: Optional[Command] = None,
+        command: Optional[CommandT] = None,
         invoked_with: Optional[str] = None,
         invoked_parents: List[str] = MISSING,
-        invoked_subcommand: Optional[CommandBase] = None,
+        invoked_subcommand: Optional[CommandT] = None,
         subcommand_passed: Optional[str] = None,
         command_failed: bool = False,
-        current_parameter: Optional[inspect.Parameter] = None,
     ):
-        self.message: Message = message
         self.bot: BotT = bot
         self.args: List[Any] = args or []
         self.kwargs: Dict[str, Any] = kwargs or {}
         self.prefix: Optional[str] = prefix
-        self.command: Optional[CommandBase] = command
-        self.view: StringView = view
+        self.command: Optional[CommandT] = command
         self.invoked_with: Optional[str] = invoked_with
         self.invoked_parents: List[str] = invoked_parents or []
-        self.invoked_subcommand: Optional[CommandBase] = invoked_subcommand
+        self.invoked_subcommand: Optional[CommandT] = invoked_subcommand
         self.subcommand_passed: Optional[str] = subcommand_passed
         self.command_failed: bool = command_failed
-        self.current_parameter: Optional[inspect.Parameter] = current_parameter
         self._state: ConnectionState = self.message._state
 
-    async def invoke(self, command: CommandBase[CogT, P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
+    async def invoke(self, command: CommandT[CogT, P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
         r"""|coro|
 
         Calls a command with the arguments given.
 
         This is useful if you want to just call the callback that a
-        :class:`.CommandBase` holds internally.
+        :class:`.CommandT` holds internally.
 
         .. note::
 
@@ -171,7 +159,7 @@ class ContextBase(nextcord.abc.Messageable, Generic[BotT]):
 
         Parameters
         -----------
-        command: :class:`.CommandBase`
+        command: :class:`.CommandT`
             The command that is going to be called.
         \*args
             The arguments to use.

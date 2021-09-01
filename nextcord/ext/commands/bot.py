@@ -409,7 +409,7 @@ class Bot(interactions.Bot, GroupMixin):
     async def on_message(self, message):
         await self.process_commands(message)
 
-class AutoShardedBot(nextcord.AutoShardedClient, interactions.Bot):
+class AutoShardedBot(nextcord.AutoShardedClient, Bot):
     """This is similar to :class:`.Bot` except that it is inherited from
     :class:`nextcord.AutoShardedClient` instead.
     """

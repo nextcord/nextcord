@@ -727,3 +727,10 @@ class Bot(Client):
     def extensions(self) -> Mapping[str, types.ModuleType]:
         """Mapping[:class:`str`, :class:`py:types.ModuleType`]: A read-only mapping of extension name to extension."""
         return types.MappingProxyType(self.__extensions)
+
+
+class AutoShardedBot(nextcord.AutoShardedClient, Bot):
+    """This is similar to :class:`.Bot` except that it is inherited from
+    :class:`nextcord.AutoShardedClient` instead.
+    """
+    pass
