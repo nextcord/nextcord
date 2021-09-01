@@ -32,16 +32,16 @@ Key Features
 - Proper rate limit handling
 - Optimised in both speed and memory
 
-Reasons to use Nextcord over alternatives
--------------
+Why choose Nextcord?
+--------------------
 
-* No breaking changes unless necessery
-* A lot of bug fixes
-* Interactions (which are currently under development)
-* Compatibility with libraries such as:
+- No breaking changes unless necessary
+- Lots of bug fixes
+- Interactions (currently under development)
+- Compatibility with libraries such as:
 
-  * `jishaku <https://github.com/Gorialis/jishaku>`_
-  * `dislash <https://github.com/EQUENOS/dislash.py>`_
+  - `jishaku <https://github.com/Gorialis/jishaku>`_
+  - `dislash <https://github.com/EQUENOS/dislash.py>`_
 
 Installing
 ----------
