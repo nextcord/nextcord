@@ -138,7 +138,6 @@ class ContextBase(nextcord.abc.Messageable, Generic[BotT]):
         self.invoked_subcommand: Optional[CommandT] = invoked_subcommand
         self.subcommand_passed: Optional[str] = subcommand_passed
         self.command_failed: bool = command_failed
-        self._state: ConnectionState = self.message._state
 
     async def invoke(self, command: CommandT[CogT, P, T], /, *args: P.args, **kwargs: P.kwargs) -> T:
         r"""|coro|

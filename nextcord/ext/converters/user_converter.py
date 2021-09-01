@@ -1,6 +1,8 @@
+from nextcord.state import ConnectionState
 from .id_converter import IDConverter
 from .errors import UserNotFound
 from nextcord.ext.abc import ContextBase
+from nextcord.ext import commands
 import nextcord
 import re
 
@@ -27,18 +29,16 @@ class UserConverter(IDConverter[nextcord.User]):
 
     async def convert(self, ctx: ContextBase, argument: str) -> nextcord.User:
         match = self._get_id_match(argument) or re.match(r'<@!?([0-9]{15,20})>$', argument)
-        result = None
-        state = ctx._state
-
         if match is not None:
             user_id = int(match.group(1))
             return await self.convert_from_id(ctx, user_id)
+        if isinstance(ctx, commands.Context):
+            return self._convert_from_str(ctx._state, argument)
+        raise UserNotFound(argument)
 
-        arg = argument
-
+    def _convert_from_str(self, state: ConnectionState, arg: str) -> nextcord.User:
         # Remove the '@' character if this is the first character from the argument
         if arg[0] == '@':
-            # Remove first character
             arg = arg[1:]
 
         # check for discriminator if it exists,
@@ -52,14 +52,17 @@ class UserConverter(IDConverter[nextcord.User]):
 
         predicate = lambda u: u.name == arg
         result = nextcord.utils.find(predicate, state._users.values())
+        if result is not None:
+            return result
 
-        if result is None:
-            raise UserNotFound(argument)
+        raise UserNotFound(arg)
 
-        return result
 
     async def convert_from_id(self, ctx: ContextBase, id: int) -> nextcord.User:
-        result = ctx.bot.get_user(id) or nextcord.utils.get(ctx.message.mentions, id=id)
+        result = ctx.bot.get_user(id) or (
+            nextcord.utils.get(ctx.message.mentions, id=id)
+            if isinstance (ctx, commands.Context) else None
+        )
         if result is None:
             try:
                 result = await ctx.bot.fetch_user(id)

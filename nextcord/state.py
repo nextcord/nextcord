@@ -228,10 +228,10 @@ class ConnectionState:
             self.store_user = self.create_user  # type: ignore
             self.deref_user = self.deref_user_no_intents  # type: ignore
 
-        self.parsers = parsers = {}
+        self.parsers: Dict[str, Callable] = {}
         for attr, func in inspect.getmembers(self):
             if attr.startswith('parse_'):
-                parsers[attr[6:].upper()] = func
+                self.parsers[attr[6:].upper()] = func
 
         self.clear()
 
