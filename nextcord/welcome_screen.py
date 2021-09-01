@@ -43,7 +43,9 @@ if TYPE_CHECKING:
 
 class WelcomeChannel:
     """Represents a :class:`WelcomeScreen` welcome channel.
+
     .. versionadded:: 2.0
+
     Attributes
     -----------
     channel: :class:`abc.Snowflake`
@@ -98,7 +100,9 @@ class WelcomeChannel:
 
 class WelcomeScreen:
     """Represents a :class:`Guild` welcome screen.
+    
     .. versionadded:: 2.0
+    
     Attributes
     -----------
     description: :class:`str`

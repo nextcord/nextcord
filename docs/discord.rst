@@ -5,7 +5,7 @@
 Creating a Bot Account
 ========================
 
-In order to work with the library and the Discord API in general, we must first create a Discord Bot account.
+To work with the library and the Discord API in general, we must first create a Discord Bot account.
 
 Creating a Bot account is a pretty straightforward process.
 
@@ -50,9 +50,9 @@ Creating a Bot account is a pretty straightforward process.
 
         If you accidentally leaked your token, click the "Regenerate" button as soon
         as possible. This revokes your old token and re-generates a new one.
-        Now you need to use the new token to login.
+        Now you need to use the new token to log in.
 
-And that's it. You now have a bot account and you can login with that token.
+And that's it. You now have a bot account and you can log in with that token.
 
 .. _discord_invite_bot:
 

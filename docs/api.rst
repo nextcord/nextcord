@@ -8,7 +8,7 @@ The following section outlines the API of nextcord.
 .. note::
 
     This module uses the Python logging module to log diagnostic and errors
-    in an output independent way.  If the logging module is not configured,
+    in an output-independent way.  If the logging module is not configured,
     these logs will not be output anywhere.  See :ref:`logging_setup` for
     more information on how to set up and use the logging module with
     nextcord.
@@ -194,7 +194,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 .. warning::
 
     All the events must be a |coroutine_link|_. If they aren't, then you might get unexpected
-    errors. In order to turn a function into a coroutine they must be ``async def``
+    errors. To turn a function into a coroutine, they must be ``async def``
     functions.
 
 .. function:: on_connect()
@@ -892,7 +892,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     - The client left the guild.
     - The client or the guild owner deleted the guild.
 
-    In order for this event to be invoked then the :class:`Client` must have
+    For this event to be invoked, the :class:`Client` must have
     been part of the guild to begin with. (i.e. it is part of :attr:`Client.guilds`)
 
     This requires :attr:`Intents.guilds` to be enabled.
@@ -2730,7 +2730,7 @@ Audit Log Data
 ----------------
 
 Working with :meth:`Guild.audit_logs` is a complicated process with a lot of machinery
-involved. The library attempts to make it easy to use and friendly. In order to accomplish
+involved. The library attempts to make it easy to use and friendly. To accomplish
 this goal, it must make use of a couple of data classes that aid in this goal.
 
 AuditLogEntry
