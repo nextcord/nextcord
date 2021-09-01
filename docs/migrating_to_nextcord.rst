@@ -15,6 +15,7 @@ Porting from discord.py
 In order to port a bot using discord.py to nextcord.py, follow these steps:
 
 1. Install nextcord: 
+
 .. code:: sh
 
     # Linux/macOS
