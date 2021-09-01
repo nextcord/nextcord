@@ -10,7 +10,7 @@ that it would be necessary to fork it and keep on developing further. We also wa
 nextcord in order to properly register it at pypi.
 
 Porting from discord.py
------------------------
+-------------------------
 
 In order to port a bot using discord.py to nextcord.py, follow these steps:
 
@@ -30,9 +30,10 @@ In order to port a bot using discord.py to nextcord.py, follow these steps:
 * ``from discord.ext`` -> ``from nextcord.ext``
 
 Code Example
-------------
+--------------
 
 .. code:: py
+
     #Previously: import discord
     from nextcord import discord
 
