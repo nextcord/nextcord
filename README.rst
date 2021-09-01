@@ -36,6 +36,7 @@ Why choose Nextcord?
 --------------------
 
 - No breaking changes unless necessary
+- Welcome Screen support
 - Lots of bug fixes
 - Interactions (currently under development)
 - Compatibility with libraries such as:
