@@ -2,8 +2,8 @@
 *.py[cod]
 *.log
 *.egg-info
-venv
-.venv
+venv/
+.venv/
 docs/_build
 docs/crowdin.py
 *.buildinfo
@@ -17,6 +17,10 @@ docs/crowdin.py
 pyproject.toml
 dist/
 .history/
+.idea/
+.DS_Store
+.python-version
+__pycache__
 
 # Exception for images in assets folder
 !assets/*

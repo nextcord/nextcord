@@ -58,7 +58,7 @@ for easier registration. For example:
         pass
 
 
-Be aware however, that this is still a coroutine and your other functions that are coroutines must
+Be aware, however, that this is still a coroutine and your other functions that are coroutines must
 be decorated with ``@asyncio.coroutine`` or be ``async def``.
 
 Event Changes
@@ -143,7 +143,7 @@ Some examples of previously valid behaviour that is now invalid
         # do something
 
 Since they are no longer :obj:`list`\s, they no longer support indexing or any operation other than iterating.
-In order to get the old behaviour you should explicitly cast it to a list.
+In order to get the old behaviour, you should explicitly cast it to a list.
 
 .. code-block:: python3
 
@@ -161,7 +161,7 @@ Enumerations
 Due to dropping support for versions lower than Python 3.4.2, the library can now use
 :doc:`py:library/enum` in places where it makes sense.
 
-The common places where this was changed was in the server region, member status, and channel type.
+The common places where this was changed were in the server region, member status, and channel type.
 
 Before:
 
@@ -180,7 +180,7 @@ After:
     channel.type == nextcord.ChannelType.text
 
 The main reason for this change was to reduce the use of finicky strings in the API as this
-could give users a false sense of power. More information can be found in the :ref:`discord-api-enums` page.
+could give users a false sense of power. More information can be found on the :ref:`discord-api-enums` page.
 
 Properties
 -----------
@@ -247,7 +247,7 @@ Forced Keyword Arguments
 -------------------------
 
 Since 3.0+ of Python, we can now force questions to take in forced keyword arguments. A keyword argument is when you
-explicitly specify the name of the variable and assign to it, for example: ``foo(name='test')``. Due to this support,
+explicitly specify the name of the variable and assign it, for example: ``foo(name='test')``. Due to this support,
 some functions in the library were changed to force things to take said keyword arguments. This is to reduce errors of
 knowing the argument order and the issues that could arise from them.
 
@@ -262,7 +262,7 @@ The following parameters are now exclusively keyword arguments:
     - ``allow``
     - ``deny``
 
-In the documentation you can tell if a function parameter is a forced keyword argument if it is after ``\*,``
+In the documentation, you can tell if a function parameter is a forced keyword argument if it is after ``\*,``
 in the function signature.
 
 .. _migrating-running:
@@ -289,7 +289,7 @@ After:
 
 .. warning::
 
-    Like in the older ``Client.run`` function, the newer one must be the one of
+    Like in the older ``Client.run`` function, the newer one must be one of
     the last functions to call. This is because the function is **blocking**. Registering
     events or doing anything after :meth:`Client.run` will not execute until the function
     returns.

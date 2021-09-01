@@ -17,20 +17,20 @@
 Nextcord
 --------
    
-A modern, easy to use, feature-rich, and async ready API wrapper for Discord written in Python.
+A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord written in Python.
 
 Fork notice
 --------------------------
 
-This is a fork of discord.py, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ at 28th August 2021.
-Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py-users a stable API wrapper for their bots.   
+This is a fork of discord.py, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ on 28th August 2021.
+Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py users a stable API wrapper for their bots.   
 
 Key Features
 -------------
 
-- Modern Pythonic API using ``async`` and ``await``.
-- Proper rate limit handling.
-- Optimised in both speed and memory.
+- Modern Pythonic API using ``async`` and ``await``
+- Proper rate limit handling
+- Optimised in both speed and memory
 
 Installing
 ----------
@@ -56,6 +56,16 @@ Otherwise to get voice support you should run the following command:
 
     # Windows
     py -3 -m pip install -U nextcord[voice]
+
+To install additional packages for speedup, run the following command:
+
+.. code:: sh
+
+    # Linux/macOS
+    python3 -m pip install -U "nextcord[speed]"
+
+    # Windows
+    py -3 -m pip install -U nextcord[speed]
 
 
 To install the development version, do the following:
