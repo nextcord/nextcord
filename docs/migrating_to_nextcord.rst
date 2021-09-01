@@ -12,7 +12,7 @@ nextcord in order to properly register it at pypi.
 Porting from discord.py
 -------------------------
 
-In order to port a bot using discord.py to nextcord.py, follow these steps:
+In order to port a bot using discord.py to nextcord, follow these steps:
 
 1. Install nextcord: 
 
@@ -24,30 +24,27 @@ In order to port a bot using discord.py to nextcord.py, follow these steps:
     # Windows
     py -3 -m pip install -U nextcord
 
-2. Update the following import statements:
+2. Uninstall discord.py:
+
+..code:: sh
+
+    # Linux/macOS
+    python3 -m pip uninstall discord
+
+    # Windows
+    py -3 -m pip uninstall discord
+
+3. Update the following import statements:
 
 * ``import discord`` -> ``import nextcord as discord``
 * ``from discord.ext`` -> ``from nextcord.ext``
 
-Code Example
---------------
+Note: Step 3 is not entirely necessary and your code should still work, but is highly recommended.
 
-.. code:: py
+For more information on migrations, view the rest of the migration documentation:
 
-    #Previously: import discord
-    from nextcord import discord
+.. toctree::
+  :maxdepth: 1
 
-    #Previously: from discord.ext import commands
-    from nextcord.ext import commands
-
-    bot = commands.Bot(command_prefix='$')
-
-    @bot.command()
-    async def ping(ctx):
-        embed=discord.Embed(
-            title="Pong!",
-            colour=discord.Color.green()
-        )
-        await ctx.send(embed=embed)
-    
-    bot.run('[Bot Token]')
+  migrating
+  migrating_2
