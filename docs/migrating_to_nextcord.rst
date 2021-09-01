@@ -29,10 +29,10 @@ In order to port a bot using discord.py to nextcord, follow these steps:
 ..code:: sh
 
     # Linux/macOS
-    python3 -m pip uninstall discord
+    python3 -m pip uninstall discord.py
 
     # Windows
-    py -3 -m pip uninstall discord
+    py -3 -m pip uninstall discord.py
 
 3. Update the following import statements:
 
