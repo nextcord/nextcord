@@ -4127,6 +4127,14 @@ PublicUserFlags
 .. autoclass:: PublicUserFlags()
     :members:
 
+TimeStamp
+~~~~~~~~~
+
+.. attributetable:: Timestamp
+
+.. autoclass:: Timestamp()
+    :members:
+
 .. _discord_ui_kit:
 
 Bot UI Kit
