@@ -4,6 +4,8 @@ from datetime import datetime as dt
 
 @dataclass
 class Timestamp:
+    """A class to represent Discord's native timestamp format."""
+
     time: int
 
     @property
