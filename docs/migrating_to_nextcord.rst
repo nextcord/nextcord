@@ -36,10 +36,12 @@ In order to port a bot using discord.py to nextcord, follow these steps:
 
 3. Update the following import statements:
 
-* ``import discord`` -> ``import nextcord as discord``
+* ``import discord`` -> ``import nextcord``
 * ``from discord.ext`` -> ``from nextcord.ext``
 
-Note: Step 3 is not entirely necessary and your code should still work, but is highly recommended.
+4. For all places in your code that used ``discord`` (embeds, colors, etc), change them to use ``nextcord``.
+
+Note: Steps 3 and 4 are not entirely necessary and your code should still work, but is highly recommended.
 
 For more information on migrations, view the rest of the migration documentation:
 
