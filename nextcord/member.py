@@ -726,6 +726,8 @@ class Member(abc.Messageable, _UserTag):
             payload['mute'] = mute
 
         if suppress is not MISSING:
+            if self.voice is None:
+                raise TypeError("You can only suppress members which are connected to a voice channel")
             voice_state_payload = {
                 'channel_id': self.voice.channel.id,
                 'suppress': suppress,
