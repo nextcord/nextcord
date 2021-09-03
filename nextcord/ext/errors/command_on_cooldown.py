@@ -1,5 +1,7 @@
+from typing import Callable, Any
 from .command_error import CommandError
-from nextcord.ext.interactions import Cooldown, BucketType
+from nextcord.ext.interactions import Cooldown
+from nextcord.ext.abc import ContextBase
 
 class CommandOnCooldown(CommandError):
     """Exception raised when the command being invoked is on cooldown.
@@ -17,9 +19,8 @@ class CommandOnCooldown(CommandError):
         The amount of seconds to wait before you can retry again.
     """
 
-    def __init__(self, cooldown: Cooldown, retry_after: float, type: BucketType) -> None:
+    def __init__(self, cooldown: Cooldown, retry_after: float, type: Callable[[ContextBase], Any]) -> None:
         self.cooldown: Cooldown = cooldown
         self.retry_after: float = retry_after
-        self.type: BucketType = type
-        super().__init__(
-            f'You are on cooldown. Try again in {retry_after:.2f}s')
+        self.type: Callable[[ContextBase], Any] = type
+        super().__init__(f'You are on cooldown. Try again in {retry_after:.2f}s')

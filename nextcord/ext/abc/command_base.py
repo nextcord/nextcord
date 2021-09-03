@@ -1,9 +1,11 @@
+import datetime
 from typing_extensions import Concatenate, ParamSpec
-from typing import TYPE_CHECKING, Any, Callable, Dict, Generic, List, Optional, Type, TypeVar, Union
-from ._types import CogT, CommandT, ContextT, Coro, Check, Hook, HookT
+from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar, Union
+from ._types import CogT, CommandT, ContextT, Coro, Check, Hook, HookT, Error, ErrorT
 from .context_base import ContextBase
 from nextcord.ext.interactions import CooldownMapping, BucketType, MaxConcurrency, Cog
 from nextcord.ext.converters import Greedy
+from nextcord.ext.errors import CommandError, CommandInvokeError, CommandOnCooldown, CheckFailure, DisabledCommand
 import functools
 import nextcord
 import asyncio
@@ -99,8 +101,6 @@ class CommandBase(Generic[CogT, P, T]):
 
         self._max_concurrency: Optional[MaxConcurrency] = max_concurrency
 
-        self.cooldown_after_parsing: bool = kwargs.get(
-            'cooldown_after_parsing', False)
         self.cog: Optional[CogT] = None
 
         self._before_invoke: Optional[Hook] = None
@@ -240,7 +240,7 @@ class CommandBase(Generic[CogT, P, T]):
         else:
             return self.copy()
 
-    async def dispatch_error(self, ctx: Context, error: Exception) -> None:
+    async def dispatch_error(self, ctx: ContextBase, error: Exception) -> None:
         ctx.command_failed = True
         cog = self.cog
         try:
@@ -317,57 +317,291 @@ class CommandBase(Generic[CogT, P, T]):
         self._after_invoke = coro
         return coro
 
-    async def transform(self, ctx: ContextBase, param: inspect.Parameter) -> Any:
-        """TODO: Check what is necessary for base and what should only be done in logacy command"""
-        required = param.default is param.empty
-        converter = get_converter(param)
-        consume_rest_is_special = param.kind == param.KEYWORD_ONLY and not self.rest_is_raw
-        view = ctx.view
-        view.skip_ws()
+    @property
+    def clean_params(self) -> Dict[str, inspect.Parameter]:
+        """Dict[:class:`str`, :class:`inspect.Parameter`]:
+        Retrieves the parameter dictionary without the context or self parameters.
 
-        # The greedy converter is simple -- it keeps going until it fails in which case,
-        # it undos the view ready for the next parameter to use instead
-        if isinstance(converter, Greedy):
-            if param.kind in (param.POSITIONAL_OR_KEYWORD, param.POSITIONAL_ONLY):
-                return await self._transform_greedy_pos(ctx, param, required, converter.converter)
-            elif param.kind == param.VAR_POSITIONAL:
-                return await self._transform_greedy_var_pos(ctx, param, converter.converter)
-            else:
-                # if we're here, then it's a KEYWORD_ONLY param type
-                # since this is mostly useless, we'll helpfully transform Greedy[X]
-                # into just X and do the parsing that way.
-                converter = converter.converter
-
-        if view.eof:
-            if param.kind == param.VAR_POSITIONAL:
-                raise RuntimeError()  # break the loop
-            if required:
-                if self._is_typing_optional(param.annotation):
-                    return None
-                if hasattr(converter, '__commands_is_flag__') and converter._can_be_constructible():
-                    return await converter._construct_default(ctx)
-                raise MissingRequiredArgument(param)
-            return param.default
-
-        previous = view.index
-        if consume_rest_is_special:
-            argument = view.read_rest().strip()
-        else:
+        Useful for inspecting signature.
+        """
+        result = self.params.copy()
+        if self.cog is not None:
+            # first parameter is self
             try:
-                argument = view.get_quoted_word()
-            except ArgumentParsingError as exc:
-                if self._is_typing_optional(param.annotation):
-                    view.index = previous
-                    return None
-                else:
-                    raise exc
-        view.previous = previous
+                del result[next(iter(result))]
+            except StopIteration:
+                raise ValueError("missing 'self' parameter") from None
 
-        # type-checker fails to narrow argument
-        # type: ignore
-        return await run_converters(ctx, converter, argument, param)
+        try:
+            # first/second parameter is context
+            del result[next(iter(result))]
+        except StopIteration:
+            raise ValueError("missing 'context' parameter") from None
 
+        return result
 
+    async def call_before_hooks(self, ctx: ContextBase) -> None:
+        # now that we're done preparing we can call the pre-command hooks
+        # first, call the command local hook:
+        cog = self.cog
+        if self._before_invoke is not None:
+            # should be cog if @commands.before_invoke is used
+            instance = getattr(self._before_invoke, '__self__', cog)
+            # __self__ only exists for methods, not functions
+            # however, if @command.before_invoke is used, it will be a function
+            if instance:
+                await self._before_invoke(instance, ctx)  # type: ignore
+            else:
+                await self._before_invoke(ctx)  # type: ignore
+
+        # call the cog local hook if applicable:
+        if cog is not None:
+            hook = Cog._get_overridden_method(cog.cog_before_invoke)
+            if hook is not None:
+                await hook(ctx)
+
+        # call the bot global hook if necessary
+        hook = ctx.bot._before_invoke
+        if hook is not None:
+            await hook(ctx)
+
+    async def call_after_hooks(self, ctx: ContextBase) -> None:
+        cog = self.cog
+        if self._after_invoke is not None:
+            instance = getattr(self._after_invoke, '__self__', cog)
+            if instance:
+                await self._after_invoke(instance, ctx)  # type: ignore
+            else:
+                await self._after_invoke(ctx)  # type: ignore
+
+        # call the cog local hook if applicable:
+        if cog is not None:
+            hook = Cog._get_overridden_method(cog.cog_after_invoke)
+            if hook is not None:
+                await hook(ctx)
+
+        hook = ctx.bot._after_invoke
+        if hook is not None:
+            await hook(ctx)
+
+    def __str__(self) -> str:
+        return self.name
+
+    async def _prepare_cooldowns(self, ctx: ContextBase) -> None:
+        if self._buckets.valid:
+            dt = ctx.invoked_at
+            current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+            bucket = self._buckets.get_bucket(ctx, current)
+            if bucket is not None:
+                retry_after = bucket.update_rate_limit(current)
+                if retry_after:
+                    raise CommandOnCooldown(bucket, retry_after, self._buckets.type)
+
+    async def prepare(self, ctx: ContextBase) -> None:
+        ctx.command = self
+
+        if not await self.can_run(ctx):
+            raise CheckFailure(f'The check functions for command {str(self)} failed.')
+
+        if self._max_concurrency is not None:
+            await self._max_concurrency.acquire(ctx)
+
+        try:
+            await self._prepare_cooldowns(ctx)
+            await self.call_before_hooks(ctx)
+        except:
+            if self._max_concurrency is not None:
+                await self._max_concurrency.release(ctx)
+            raise
+
+    def is_on_cooldown(self, ctx: ContextBase) -> bool:
+        """Checks whether the command is currently on cooldown.
+
+        Parameters
+        -----------
+        ctx: :class:`.Context`
+            The invocation context to use when checking the commands cooldown status.
+
+        Returns
+        --------
+        :class:`bool`
+            A boolean indicating if the command is on cooldown.
+        """
+        if not self._buckets.valid:
+            return False
+
+        bucket = self._buckets.get_bucket(ctx)
+        dt = ctx.invoked_at
+        current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+        return bucket.get_tokens(current) == 0
+
+    def reset_cooldown(self, ctx: ContextBase) -> None:
+        """Resets the cooldown on this command.
+
+        Parameters
+        -----------
+        ctx: :class:`.Context`
+            The invocation context to reset the cooldown under.
+        """
+        if self._buckets.valid:
+            bucket = self._buckets.get_bucket(ctx)
+            bucket.reset()
+
+    def get_cooldown_retry_after(self, ctx: ContextBase) -> float:
+        """Retrieves the amount of seconds before this command can be tried again.
+
+        .. versionadded:: 1.4
+
+        Parameters
+        -----------
+        ctx: :class:`.Context`
+            The invocation context to retrieve the cooldown from.
+
+        Returns
+        --------
+        :class:`float`
+            The amount of time left on this command's cooldown in seconds.
+            If this is ``0.0`` then the command isn't on cooldown.
+        """
+        if self._buckets.valid:
+            bucket = self._buckets.get_bucket(ctx)
+            dt = ctx.invoked_at
+            current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+            return bucket.get_retry_after(current)
+
+        return 0.0
+
+    async def invoke(self, ctx: ContextBase) -> None:
+        await self.prepare(ctx)
+
+        # terminate the invoked_subcommand chain.
+        # since we're in a regular command (and not a group) then
+        # the invoked subcommand is None.
+        ctx.invoked_subcommand = None
+        ctx.subcommand_passed = None
+        injected = hooked_wrapped_callback(self, ctx, self.callback)
+        await injected(*ctx.args, **ctx.kwargs)
+
+    async def reinvoke(self, ctx: ContextBase, *, call_hooks: bool = False) -> None:
+        ctx.command = self
+
+        if call_hooks:
+            await self.call_before_hooks(ctx)
+
+        ctx.invoked_subcommand = None
+        try:
+            await self.callback(*ctx.args, **ctx.kwargs)  # type: ignore
+        except:
+            ctx.command_failed = True
+            raise
+        finally:
+            if call_hooks:
+                await self.call_after_hooks(ctx)
+
+    def error(self, coro: ErrorT) -> ErrorT:
+        """A decorator that registers a coroutine as a local error handler.
+
+        A local error handler is an :func:`.on_command_error` event limited to
+        a single command. However, the :func:`.on_command_error` is still
+        invoked afterwards as the catch-all.
+
+        Parameters
+        -----------
+        coro: :ref:`coroutine <coroutine>`
+            The coroutine to register as the local error handler.
+
+        Raises
+        -------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError('The error handler must be a coroutine.')
+
+        self.on_error: Error = coro
+        return coro
+
+    def has_error_handler(self) -> bool:
+        """:class:`bool`: Checks whether the command has an error handler registered.
+
+        .. versionadded:: 1.7
+        """
+        return hasattr(self, 'on_error')
+
+    @property
+    def cog_name(self) -> Optional[str]:
+        """Optional[:class:`str`]: The name of the cog this command belongs to, if any."""
+        return type(self.cog).__cog_name__ if self.cog is not None else None
+
+    @property
+    def short_doc(self) -> str:
+        """:class:`str`: Gets the "short" documentation of a command.
+
+        By default, this is the :attr:`.brief` attribute.
+        If that lookup leads to an empty string then the first line of the
+        :attr:`.help` attribute is used instead.
+        """
+        if self.brief is not None:
+            return self.brief
+        if self.help is not None:
+            return self.help.split('\n', 1)[0]
+        return ''
+
+    async def can_run(self, ctx: ContextBase) -> bool:
+        """|coro|
+
+        Checks if the command can be executed by checking all the predicates
+        inside the :attr:`~Command.checks` attribute. This also checks whether the
+        command is disabled.
+
+        .. versionchanged:: 1.3
+            Checks whether the command is disabled or not
+
+        Parameters
+        -----------
+        ctx: :class:`.Context`
+            The ctx of the command currently being invoked.
+
+        Raises
+        -------
+        :class:`CommandError`
+            Any command error that was raised during a check call will be propagated
+            by this function.
+
+        Returns
+        --------
+        :class:`bool`
+            A boolean indicating if the command can be invoked.
+        """
+
+        if not self.enabled:
+            raise DisabledCommand(f'{self.name} command is disabled')
+
+        original = ctx.command
+        ctx.command = self
+
+        try:
+            if not await ctx.bot.can_run(ctx):
+                raise CheckFailure(
+                    f'The global check functions for command {self.qualified_name} failed.')
+
+            cog = self.cog
+            if cog is not None:
+                local_check = Cog._get_overridden_method(cog.cog_check)
+                if local_check is not None:
+                    ret = await nextcord.utils.maybe_coroutine(local_check, ctx)
+                    if not ret:
+                        return False
+
+            predicates = self.checks
+            if not predicates:
+                # since we have no checks, then we just return True.
+                return True
+
+            return await nextcord.utils.async_all(predicate(ctx) for predicate in predicates) # type: ignore
+        finally:
+            ctx.command = original
 
 
 def unwrap_function(function: Callable[..., Any]) -> Callable[..., Any]:
@@ -416,5 +650,28 @@ def wrap_callback(coro):
             return
         except Exception as exc:
             raise CommandInvokeError(exc) from exc
+        return ret
+    return wrapped
+
+
+def hooked_wrapped_callback(command, ctx, coro):
+    @functools.wraps(coro)
+    async def wrapped(*args, **kwargs):
+        try:
+            ret = await coro(*args, **kwargs)
+        except CommandError:
+            ctx.command_failed = True
+            raise
+        except asyncio.CancelledError:
+            ctx.command_failed = True
+            return
+        except Exception as exc:
+            ctx.command_failed = True
+            raise CommandInvokeError(exc) from exc
+        finally:
+            if command._max_concurrency is not None:
+                await command._max_concurrency.release(ctx)
+
+            await command.call_after_hooks(ctx)
         return ret
     return wrapped

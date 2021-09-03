@@ -33,6 +33,7 @@ from collections import deque
 
 from ...abc import PrivateChannel
 from nextcord.ext.errors import MaxConcurrencyReached
+from nextcord.ext.abc import ContextBase
 
 if TYPE_CHECKING:
     from ...message import Message
@@ -49,34 +50,23 @@ C = TypeVar('C', bound='CooldownMapping')
 MC = TypeVar('MC', bound='MaxConcurrency')
 
 class BucketType(Enum):
-    default  = 0
-    user     = 1
-    guild    = 2
-    channel  = 3
-    member   = 4
-    category = 5
-    role     = 6
+    default = (lambda _: None,)
+    user = (lambda ctx: ctx.author.id,)
+    guild = (lambda ctx: (ctx.guild or ctx.author).id,)
+    channel = (lambda ctx: ctx.channel.id,)
+    member = (lambda ctx: ((ctx.guild and ctx.guild.id), ctx.author.id),)
+    category = (lambda ctx: (ctx.channel.category or ctx.channel).id,)
+    # we return the channel id of a private-channel as there are only roles in guilds
+    # and that yields the same result as for a guild with only the @everyone role
+    # NOTE: PrivateChannel doesn't actually have an id attribute but we assume we are
+    # recieving a DMChannel or GroupChannel which inherit from PrivateChannel and do
+    role = (lambda ctx: (ctx.channel if isinstance(ctx.channel, PrivateChannel) else ctx.author.top_role).id,)
 
-    def get_key(self, msg: Message) -> Any:
-        if self is BucketType.user:
-            return msg.author.id
-        elif self is BucketType.guild:
-            return (msg.guild or msg.author).id
-        elif self is BucketType.channel:
-            return msg.channel.id
-        elif self is BucketType.member:
-            return ((msg.guild and msg.guild.id), msg.author.id)
-        elif self is BucketType.category:
-            return (msg.channel.category or msg.channel).id  # type: ignore
-        elif self is BucketType.role:
-            # we return the channel id of a private-channel as there are only roles in guilds
-            # and that yields the same result as for a guild with only the @everyone role
-            # NOTE: PrivateChannel doesn't actually have an id attribute but we assume we are
-            # recieving a DMChannel or GroupChannel which inherit from PrivateChannel and do
-            return (msg.channel if isinstance(msg.channel, PrivateChannel) else msg.author.top_role).id  # type: ignore
+    def get_key(self, ctx: ContextBase) -> Any:
+        return self.value[0](ctx)
 
-    def __call__(self, msg: Message) -> Any:
-        return self.get_key(msg)
+    def __call__(self, ctx: ContextBase) -> Any:
+        return self.get_key(ctx)
 
 
 class Cooldown:
@@ -197,14 +187,14 @@ class CooldownMapping:
     def __init__(
         self,
         original: Optional[Cooldown],
-        type: Callable[[Message], Any],
+        type: Callable[[ContextBase], Any],
     ) -> None:
         if not callable(type):
             raise TypeError('Cooldown type must be a BucketType or callable')
 
         self._cache: Dict[Any, Cooldown] = {}
         self._cooldown: Optional[Cooldown] = original
-        self._type: Callable[[Message], Any] = type
+        self._type: Callable[[ContextBase], Any] = type
 
     def copy(self) -> CooldownMapping:
         ret = CooldownMapping(self._cooldown, self._type)
@@ -216,15 +206,15 @@ class CooldownMapping:
         return self._cooldown is not None
 
     @property
-    def type(self) -> Callable[[Message], Any]:
+    def type(self) -> Callable[[ContextBase], Any]:
         return self._type
 
     @classmethod
     def from_cooldown(cls: Type[C], rate, per, type) -> C:
         return cls(Cooldown(rate, per), type)
 
-    def _bucket_key(self, msg: Message) -> Any:
-        return self._type(msg)
+    def _bucket_key(self, ctx: ContextBase) -> Any:
+        return self._type(ctx)
 
     def _verify_cache_integrity(self, current: Optional[float] = None) -> None:
         # we want to delete all cache objects that haven't been used
@@ -235,17 +225,18 @@ class CooldownMapping:
         for k in dead_keys:
             del self._cache[k]
 
-    def create_bucket(self, message: Message) -> Cooldown:
-        return self._cooldown.copy()  # type: ignore
+    def create_bucket(self, ctx: ContextBase) -> Cooldown:
+        assert self._cooldown is not None
+        return self._cooldown.copy()
 
-    def get_bucket(self, message: Message, current: Optional[float] = None) -> Cooldown:
+    def get_bucket(self, ctx: ContextBase, current: Optional[float] = None) -> Cooldown:
         if self._type is BucketType.default:
             return self._cooldown  # type: ignore
 
         self._verify_cache_integrity(current)
-        key = self._bucket_key(message)
+        key = self._bucket_key(ctx)
         if key not in self._cache:
-            bucket = self.create_bucket(message)
+            bucket = self.create_bucket(ctx)
             if bucket is not None:
                 self._cache[key] = bucket
         else:
@@ -253,19 +244,19 @@ class CooldownMapping:
 
         return bucket
 
-    def update_rate_limit(self, message: Message, current: Optional[float] = None) -> Optional[float]:
-        bucket = self.get_bucket(message, current)
+    def update_rate_limit(self, ctx: ContextBase, current: Optional[float] = None) -> Optional[float]:
+        bucket = self.get_bucket(ctx, current)
         return bucket.update_rate_limit(current)
 
 class DynamicCooldownMapping(CooldownMapping):
 
     def __init__(
         self,
-        factory: Callable[[Message], Cooldown],
-        type: Callable[[Message], Any]
+        factory: Callable[[ContextBase], Cooldown],
+        type: Callable[[ContextBase], Any]
     ) -> None:
         super().__init__(None, type)
-        self._factory: Callable[[Message], Cooldown] = factory
+        self._factory: Callable[[ContextBase], Cooldown] = factory
 
     def copy(self) -> DynamicCooldownMapping:
         ret = DynamicCooldownMapping(self._factory, self._type)
@@ -276,8 +267,8 @@ class DynamicCooldownMapping(CooldownMapping):
     def valid(self) -> bool:
         return True
 
-    def create_bucket(self, message: Message) -> Cooldown:
-        return self._factory(message)
+    def create_bucket(self, ctx: ContextBase) -> Cooldown:
+        return self._factory(ctx)
 
 class _Semaphore:
     """This class is a version of a semaphore.
@@ -348,10 +339,10 @@ class MaxConcurrency:
         self.wait: bool = wait
 
         if number <= 0:
-            raise ValueError('max_concurrency \'number\' cannot be less than 1')
+            raise ValueError("max_concurrency 'number' cannot be less than 1")
 
         if not isinstance(per, BucketType):
-            raise TypeError(f'max_concurrency \'per\' must be of type BucketType not {type(per)!r}')
+            raise TypeError(f"max_concurrency 'per' must be of type BucketType not {type(per)!r}")
 
     def copy(self: MC) -> MC:
         return self.__class__(self.number, per=self.per, wait=self.wait)
@@ -359,11 +350,11 @@ class MaxConcurrency:
     def __repr__(self) -> str:
         return f'<MaxConcurrency per={self.per!r} number={self.number} wait={self.wait}>'
 
-    def get_key(self, message: Message) -> Any:
-        return self.per.get_key(message)
+    def get_key(self, ctx: ContextBase) -> Any:
+        return self.per.get_key(ctx)
 
-    async def acquire(self, message: Message) -> None:
-        key = self.get_key(message)
+    async def acquire(self, ctx: ContextBase) -> None:
+        key = self.get_key(ctx)
 
         try:
             sem = self._mapping[key]
@@ -374,10 +365,10 @@ class MaxConcurrency:
         if not acquired:
             raise MaxConcurrencyReached(self.number, self.per)
 
-    async def release(self, message: Message) -> None:
+    async def release(self, ctx: ContextBase) -> None:
         # Technically there's no reason for this function to be async
         # But it might be more useful in the future
-        key = self.get_key(message)
+        key = self.get_key(ctx)
 
         try:
             sem = self._mapping[key]

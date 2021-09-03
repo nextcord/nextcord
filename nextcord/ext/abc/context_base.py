@@ -22,6 +22,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
+from datetime import datetime
 
 import inspect
 import re
@@ -64,7 +65,7 @@ else:
     P = TypeVar('P')
 
 
-class ContextBase(nextcord.abc.Messageable, Generic[BotT]):
+class ContextBase(nextcord.abc.Messageable, Generic[BotT, CogT, CommandT]):
     r"""Represents the context in which a command is being invoked under.
 
     This class contains a lot of meta data to help you understand more about
@@ -299,6 +300,11 @@ class ContextBase(nextcord.abc.Messageable, Generic[BotT]):
         r"""Optional[:class:`.VoiceProtocol`]: A shortcut to :attr:`.Guild.voice_client`\, if applicable."""
         g = self.guild
         return g.voice_client if g else None
+
+    @property
+    def invoked_at(self) -> datetime:
+        """:class:`datetime`: The time when the command was invoked."""
+        pass
 
     @nextcord.utils.copy_doc(Message.reply)
     async def reply(self, content: Optional[str] = None, **kwargs: Any) -> Message:
