@@ -455,7 +455,7 @@ class FormattedDatetimeConversionFailure(BadArgument):
     Attributes
     -----------
     argument: :class:`str`
-        The emoji supplied by the caller that did not match the regex
+        The timestamp supplied by the caller that did not match the regex
     """
     def __init__(self, argument):
         self.argument = argument
