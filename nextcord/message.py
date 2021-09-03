@@ -1405,6 +1405,23 @@ class Message(Hashable):
         emoji = convert_emoji_reaction(emoji)
         await self._state.http.add_reaction(self.channel.id, self.id, emoji)
 
+        # Update the local message so it doesnt need to be refetched
+        partial_emoji = PartialEmoji.from_str(emoji)
+        for reaction in self.reactions:
+            if reaction.emoji == partial_emoji:
+                if reaction.me is True:
+                    # Already reacted...?
+                    break
+                # Update exisiting emoji
+                reaction.count += 1
+                reaction.me = True
+                break
+        else:
+            # No reaction yet, create a new one
+            reaction = Reaction(message=self, data={"me": True}, emoji=partial_emoji)
+            self.reactions.append(reaction)
+
+
     async def remove_reaction(self, emoji: Union[EmojiInputType, Reaction], member: Snowflake) -> None:
         """|coro|
 
