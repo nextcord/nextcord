@@ -86,10 +86,14 @@ Assets have been changed.
 
     emoji_bytes = await emoji.read() # previously emoji.url.read
     # Same applies to Sticker and PartialEmoji.
-        
-Minimum Python version bumped
+
+Python Version Change
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Python 3.8 is now required.
+
+In order to make development easier,
+the library had to remove support for Python versions lower than 3.8,
+which essentially means that **support for Python 3.7, 3.6 and 3.5
+is dropped**. We recommend updating to Python version 3.9.
 
 Use of timezone-aware time
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -337,14 +341,6 @@ Sticker.tags
 ^^^^^^^^^^^^^^^^^^^^^^^
 Due to the introduction of :class:`GuildSticker`, ``Sticker.tags`` is removed from the parent class :class:`Sticker` and moved to :attr:`StandardSticker.tags`.
 
-
-Python Version Change
------------------------
-
-In order to make development easier,
-the library had to remove support for Python versions lower than 3.8,
-which essentially means that **support for Python 3.7, 3.6 and 3.5
-is dropped**. We recommend updating to Python version 3.9.
 
 Meta Change
 -----------------------
