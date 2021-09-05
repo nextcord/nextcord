@@ -1352,7 +1352,7 @@ class ConnectionState:
 
     def _get_typing_user(self, channel: Optional[MessageableChannel], user_id: int) -> Optional[Union[User, Member]]:
         if isinstance(channel, DMChannel):
-            return channel.recipient
+            return channel.recipient or self.get_user(user_id)
 
         elif isinstance(channel, (Thread, TextChannel)) and channel.guild is not None:
             return channel.guild.get_member(user_id)  # type: ignore
