@@ -1336,8 +1336,6 @@ class ConnectionState:
             user_id = utils._get_as_snowflake(data, 'user_id')
             if isinstance(channel, DMChannel):
                 member = channel.recipient
-                if member is None:
-                    member = self.get_user(user_id)
 
             elif isinstance(channel, (Thread, TextChannel)) and guild is not None:
                 # user_id won't be None
