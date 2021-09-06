@@ -54,7 +54,7 @@ def scan_dir(folder):
             import_name = "discord" + import_name[len("nextcord"):]
             try:
                 import_module(import_name)
-            except ModuleNotFoundError:
+            except Exception:
                 print("Test import failed! File: {import_name}")
                 raise
         else:
