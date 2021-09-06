@@ -4,7 +4,7 @@ from time import sleep
 
 with open(".aliasignorerc") as f:
     ignores = [line.strip() for line in f.readlines()]
-with open("alias_license.txt") as f:
+with open("alias_license.py") as f:
     license_text = f.read()
 
 print(f"Ignoring: {ignores}")
