@@ -12,22 +12,23 @@ print(f"Ignoring: {ignores}")
 target_folder = Path("nextcord")
 alias_folder = Path("discord")
 
+
 def scan_dir(folder):
     for file in folder.glob("*"):
-        unprefixed = str(file)[len("nextcord")+1:]
+        unprefixed = str(file)[len("nextcord") + 1:]
         if unprefixed in ignores:
             continue
         if file.is_file():
             if not unprefixed.endswith(".py"):
                 continue
             # Should create a alias
-            import_name = str(file)[:-3].replace("/", ".")
+            import_name = str(file)[:-3].replace("/", ".").replace("\\", ".")
             module = import_module(import_name)
             alias_file = ""
 
             # License text
             alias_file += license_text
-            
+
             # Imports
             module_attrs = dir(module)
             attrs = []
@@ -46,7 +47,6 @@ def scan_dir(folder):
 
                 alias_file += module_all_out
 
-
             with (alias_folder / unprefixed).open("w+") as f:
                 f.write(alias_file)
             sleep(0.01)
@@ -54,10 +54,11 @@ def scan_dir(folder):
             import_name = "discord" + import_name[len("nextcord"):]
             try:
                 import_module(import_name)
-            except:
+            except Exception:
                 print("Test import failed! File: {import_name}")
                 raise
         else:
             scan_dir(folder / unprefixed)
-scan_dir(target_folder)
 
+
+scan_dir(target_folder)
