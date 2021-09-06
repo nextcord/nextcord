@@ -383,6 +383,14 @@ to handle it, which defaults to print a traceback and ignoring the exception.
         checking the user IDs. Note that :class:`~ext.commands.Bot` does not
         have this problem.
 
+    .. note::
+
+        Ephemeral messages will get dispatched with a channel attribute
+        of :class:`DMChannel` due to discord limitations. If you need to work with those
+        check if the message has the :attr:`MessageFlags.ephemeral` and get the channel
+        with the channel id then.
+
+
     :param message: The current message.
     :type message: :class:`Message`
 

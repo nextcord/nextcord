@@ -154,17 +154,6 @@ class WelcomeScreen:
 
         You must have the :attr:`~Permissions.manage_guild` permission in the
         guild to do this.
-        Usage: ::
-            rules_channel = guild.get_channel(12345678)
-            announcements_channel = guild.get_channel(87654321)
-            custom_emoji = utils.get(guild.emojis, name='loudspeaker')
-            await welcome_screen.edit(
-                description='This is a very cool community server!',
-                welcome_channels=[
-                    WelcomeChannel(channel=rules_channel, description='Read the rules!', emoji='👨‍🏫'),
-                    WelcomeChannel(channel=announcements_channel, description='Watch out for announcements!', emoji=custom_emoji),
-                ]
-            )
 
         .. note::
             Welcome channels can only accept custom emojis if :attr:`~Guild.premium_tier` is level 2 or above.
