@@ -213,7 +213,7 @@ class DiscordClientWebSocketResponse(aiohttp.ClientWebSocketResponse):
         return await super().close(code=code, message=message)
 
 class DiscordWebSocket:
-    """Implements a WebSocket for Discord's gateway v6.
+    """Implements a WebSocket for Discord's gateway v9.
 
     Attributes
     -----------
