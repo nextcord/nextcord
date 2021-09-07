@@ -49,14 +49,6 @@ def scan_dir(folder):
 
             with (alias_folder / unprefixed).open("w+") as f:
                 f.write(alias_file)
-            sleep(0.01)
-            # Test that it works
-            import_name = "discord" + import_name[len("nextcord"):]
-            try:
-                import_module(import_name)
-            except Exception:
-                print("Test import failed! File: {import_name}")
-                raise
         else:
             scan_dir(folder / unprefixed)
 
