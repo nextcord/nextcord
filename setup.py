@@ -1,9 +1,18 @@
-from setuptools import setup
 import re
+import sys
+
+from setuptools import setup
+
+aliasing: bool = True
+
+if __name__ == "__main__":
+    if "--unaliased" in sys.argv:
+        aliasing = False
+        sys.argv.remove("--unaliased")
 
 requirements = []
 with open('requirements.txt') as f:
-  requirements = f.read().splitlines()
+    requirements = f.read().splitlines()
 
 version = ''
 with open('nextcord/__init__.py') as f:
@@ -16,6 +25,7 @@ if version.endswith(('a', 'b', 'rc')):
     # append version identifier based on commit count
     try:
         import subprocess
+
         p = subprocess.Popen(['git', 'rev-list', '--count', 'HEAD'],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
@@ -48,29 +58,31 @@ extras_require = {
     ]
 }
 
-packages = [
+unaliasedpackages = [
     'nextcord',
     'nextcord.types',
     'nextcord.ui',
     'nextcord.webhook',
     'nextcord.ext.commands',
-    'nextcord.ext.tasks',
-    
-    # Compat
-    "discord",
-    "discord.types",
-    "discord.ui",
-    "discord.webhook",
-    "discord.ext.commands",
-    "discord.ext.tasks"
+    'nextcord.ext.tasks'
 ]
+packages = unaliasedpackages.copy()
+if aliasing:
+    print("aliasing")
+    import aliasgen
+
+    aliasgen.createalias()
+
+    for i in unaliasedpackages:
+        # registering the aliased packages
+        packages.append(i.replace("nextcord", "discord"))
 
 setup(name='nextcord',
       author='tag-epic & Rapptz',
       url='https://github.com/nextcord/nextcord',
       project_urls={
-        "Documentation": "https://nextcord.readthedocs.io/en/latest/",
-        "Issue tracker": "https://github.com/nextcord/nextcord/issues",
+          "Documentation": "https://nextcord.readthedocs.io/en/latest/",
+          "Issue tracker": "https://github.com/nextcord/nextcord/issues",
       },
       version=version,
       packages=packages,
@@ -83,17 +95,17 @@ setup(name='nextcord',
       extras_require=extras_require,
       python_requires='>=3.8.0',
       classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'License :: OSI Approved :: MIT License',
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Topic :: Internet',
-        'Topic :: Software Development :: Libraries',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Utilities',
-        'Typing :: Typed',
+          'Development Status :: 5 - Production/Stable',
+          'License :: OSI Approved :: MIT License',
+          'Intended Audience :: Developers',
+          'Natural Language :: English',
+          'Operating System :: OS Independent',
+          'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
+          'Topic :: Internet',
+          'Topic :: Software Development :: Libraries',
+          'Topic :: Software Development :: Libraries :: Python Modules',
+          'Topic :: Utilities',
+          'Typing :: Typed',
       ]
-)
+      )
