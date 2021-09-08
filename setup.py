@@ -107,5 +107,6 @@ setup(name='nextcord',
           'Topic :: Software Development :: Libraries :: Python Modules',
           'Topic :: Utilities',
           'Typing :: Typed',
-      ]
+      ],
+      obsoletes=["discord","discord.py"]
       )
