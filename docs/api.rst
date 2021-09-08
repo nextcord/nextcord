@@ -3781,22 +3781,6 @@ Template
 .. autoclass:: Template()
     :members:
 
-WelcomeScreen
-~~~~~~~~~~~~~~~
-
-.. attributetable:: WelcomeScreen
-
-.. autoclass:: WelcomeScreen()
-    :members:
-
-WelcomeChannel
-~~~~~~~~~~~~~~~
-
-.. attributetable:: WelcomeChannel
-
-.. autoclass:: WelcomeChannel()
-    :members:
-
 WidgetChannel
 ~~~~~~~~~~~~~~~
 
