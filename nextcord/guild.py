@@ -76,7 +76,6 @@ from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
 from .file import File
-from .welcome_screen import WelcomeScreen, WelcomeChannel
 
 
 __all__ = (
