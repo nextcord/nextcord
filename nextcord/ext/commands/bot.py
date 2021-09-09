@@ -122,7 +122,7 @@ class _DefaultRepr:
 _default = _DefaultRepr()
 
 class BotBase(GroupMixin):
-    def __init__(self, command_prefix=when_mentioned, help_command=_default, description=None, **options):
+    def __init__(self, command_prefix=MISSING, help_command=_default, description=None, **options):
         super().__init__(**options)
         self.command_prefix = command_prefix
         self.extra_events: Dict[str, List[CoroFunc]] = {}
@@ -944,6 +944,9 @@ class BotBase(GroupMixin):
         prefix = ret = self.command_prefix
         if callable(prefix):
             ret = await nextcord.utils.maybe_coroutine(prefix, self, message)
+
+        if prefix is MISSING:
+            return []
 
         if not isinstance(ret, str):
             try:
