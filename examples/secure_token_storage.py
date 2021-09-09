@@ -2,7 +2,7 @@
 # You should load the token as an environment variable, then access it like this:
 
 import os
-from nextcord.ext.commands import Bot
+from nextcord.ext import commands
 
 # There are other ways to load environment variables but this is one
 from dotenv import load_dotenv # https://pypi.org/project/python-dotenv/
