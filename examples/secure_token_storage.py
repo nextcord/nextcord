@@ -10,7 +10,7 @@ from dotenv import load_dotenv # https://pypi.org/project/python-dotenv/
 # load_dotenv reads from a file called .env in the same directory as the python files which should roughly look like TOKEN="1234567890"
 load_dotenv()
 token = os.getenv('BOT_TOKEN')
-bot = Bot()
+bot = commands.Bot()
 
 # run the bot using the token in .env
 bot.run(token)
