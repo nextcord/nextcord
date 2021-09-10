@@ -12,7 +12,7 @@ load_dotenv()
 
 token = os.getenv('BOT_TOKEN') #getting the token
 
-bot = commands.Bot()
+bot = commands.Bot(command_prefix="$")
 
 # run the bot using the token in .env
 bot.run(token)
