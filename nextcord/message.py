@@ -30,7 +30,7 @@ import re
 import io
 from os import PathLike
 from typing import Dict, TYPE_CHECKING, Union, List, Optional, Any, Callable, Tuple, ClassVar, Optional, overload, TypeVar, Type
-
+from .channel import DMChannel
 from . import utils
 from .reaction import Reaction
 from .emoji import Emoji
@@ -611,9 +611,10 @@ class Message(Hashable):
         '_cs_raw_channel_mentions',
         '_cs_raw_role_mentions',
         '_cs_system_content',
+        '_cs_channel',
+        '_channel',
         'tts',
         'content',
-        'channel',
         'webhook_id',
         'mention_everyone',
         'embeds',
@@ -659,7 +660,7 @@ class Message(Hashable):
         self.embeds: List[Embed] = [Embed.from_dict(a) for a in data['embeds']]
         self.application: Optional[MessageApplicationPayload] = data.get('application')
         self.activity: Optional[MessageActivityPayload] = data.get('activity')
-        self.channel: MessageableChannel = channel
+        self._channel: MessageableChannel = channel
         self._edited_timestamp: Optional[datetime.datetime] = utils.parse_time(data['edited_timestamp'])
         self.type: MessageType = try_enum(MessageType, data['type'])
         self.pinned: bool = data['pinned']
@@ -961,6 +962,13 @@ class Message(Hashable):
         pattern = re.compile('|'.join(transformations.keys()))
         result = pattern.sub(repl, self.content)
         return escape_mentions(result)
+
+    @utils.cached_slot_property('_cs_channel')
+    def channel(self) -> MessageableChannel:
+        if self.flags.ephemeral and isinstance(self._channel, DMChannel):
+            self._channel = self._state.get_channel(self._channel.id)
+            self.guild = self._channel.guild
+        return self._channel
 
     @property
     def created_at(self) -> datetime.datetime:
