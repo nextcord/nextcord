@@ -1,5 +1,25 @@
+import os
 from importlib import import_module
 from pathlib import Path
+
+
+def removealiased():
+    with open(".aliasignorerc") as f:
+        ignores = [line.strip() for line in f.readlines()]
+    alias_folder = Path("discord")
+
+    def scan_dir(folder: Path):
+        for file in folder.glob("*"):
+            unprefixed = str(file)[len("discord") + 1:]
+            if unprefixed in ignores:
+                continue
+            elif file.is_file():
+                if unprefixed.endswith(".py"):
+                    os.remove(file)
+            else:
+                scan_dir(folder / unprefixed)
+
+    scan_dir(alias_folder)
 
 
 def createalias() -> [str]:

@@ -1,3 +1,6 @@
 rm -rf build
-python3 setup.py sdist
-twine upload build/*
+mkdir build
+mkdir -p dist
+
+python setup.py sdist --formats=gztar
+twine upload dist/*

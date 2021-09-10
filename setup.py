@@ -1,14 +1,8 @@
+import os
 import re
-import sys
-
+import aliasgen
+import shutil
 from setuptools import setup
-
-aliasing: bool = True
-
-if __name__ == "__main__":
-    if "--unaliased" in sys.argv:
-        aliasing = False
-        sys.argv.remove("--unaliased")
 
 requirements = []
 with open('requirements.txt') as f:
@@ -66,47 +60,72 @@ unaliasedpackages = [
     'nextcord.ext.commands',
     'nextcord.ext.tasks'
 ]
-packages = unaliasedpackages.copy()
-if aliasing:
-    print("aliasing")
-    import aliasgen
+aliasedpackages = unaliasedpackages.copy()
 
-    aliasgen.createalias()
 
-    for i in unaliasedpackages:
-        # registering the aliased packages
-        packages.append(i.replace("nextcord", "discord"))
+for i in unaliasedpackages:
+    # registering the aliased packages
+    aliasedpackages.append(i.replace("nextcord", "discord"))
 
-setup(name='nextcord',
-      author='tag-epic & Rapptz',
-      url='https://github.com/nextcord/nextcord',
-      project_urls={
-          "Documentation": "https://nextcord.readthedocs.io/en/latest/",
-          "Issue tracker": "https://github.com/nextcord/nextcord/issues",
-      },
-      version=version,
-      packages=packages,
-      license='MIT',
-      description='A Python wrapper for the Discord API forked from discord.py',
-      long_description=readme,
-      long_description_content_type="text/x-rst",
-      include_package_data=True,
-      install_requires=requirements,
-      extras_require=extras_require,
-      python_requires='>=3.8.0',
-      classifiers=[
-          'Development Status :: 5 - Production/Stable',
-          'License :: OSI Approved :: MIT License',
-          'Intended Audience :: Developers',
-          'Natural Language :: English',
-          'Operating System :: OS Independent',
-          'Programming Language :: Python :: 3.8',
-          'Programming Language :: Python :: 3.9',
-          'Topic :: Internet',
-          'Topic :: Software Development :: Libraries',
-          'Topic :: Software Development :: Libraries :: Python Modules',
-          'Topic :: Utilities',
-          'Typing :: Typed',
-      ],
-      obsoletes=["discord","discord.py"]
-      )
+unaliasednames = ["nextcordunaliased", "nextcordunaliased.py"]
+aliasednames = ["nextcord", "nextcord.py"]
+names = unaliasednames.copy()
+for i in aliasednames:
+    names.append(i)
+print(version)
+
+def run_setup(name: str, aliased: bool):
+    obsoletes = names.copy()
+    obsoletes.remove(name)
+    obsoletes.append("discord")
+    obsoletes.append("discord.py")
+    if aliased:
+        packages = aliasedpackages
+    else:
+        packages = unaliasedpackages
+    setup(name=name,
+          author='tag-epic & Rapptz',
+          url='https://github.com/nextcord/nextcord',
+          project_urls={
+              "Documentation": "https://nextcord.readthedocs.io/en/latest/",
+              "Issue tracker": "https://github.com/nextcord/nextcord/issues",
+          },
+          version=version,
+          packages=packages,
+          license='MIT',
+          description='A Python wrapper for the Discord API forked from discord.py',
+          long_description=readme,
+          long_description_content_type="text/x-rst",
+          include_package_data=True,
+          install_requires=requirements,
+          extras_require=extras_require,
+          python_requires='>=3.8.0',
+          classifiers=[
+              'Development Status :: 5 - Production/Stable',
+              'License :: OSI Approved :: MIT License',
+              'Intended Audience :: Developers',
+              'Natural Language :: English',
+              'Operating System :: OS Independent',
+              'Programming Language :: Python :: 3.8',
+              'Programming Language :: Python :: 3.9',
+              'Topic :: Internet',
+              'Topic :: Software Development :: Libraries',
+              'Topic :: Software Development :: Libraries :: Python Modules',
+              'Topic :: Utilities',
+              'Typing :: Typed',
+          ],
+          obsoletes=obsoletes
+          )
+
+
+
+print("aliasing")
+aliasgen.createalias()
+shutil.rmtree("build", ignore_errors=True)
+for i in aliasednames:
+    run_setup(i, True)
+print("removing aliases")
+aliasgen.removealiased()
+shutil.rmtree("build", ignore_errors=True)
+for i in unaliasednames:
+    run_setup(i, False)

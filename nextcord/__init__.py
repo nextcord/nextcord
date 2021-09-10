@@ -2,9 +2,9 @@
 Discord API Wrapper
 ~~~~~~~~~~~~~~~~~~~
 
-A basic wrapper for the Discord API.
+A basic wrapper for the Discord API forked from discord.py.
 
-:copyright: (c) 2015-present Rapptz
+:copyright: (c) 2015-present Rapptz, (c) 2021-present tag-epic
 :license: MIT, see LICENSE for more details.
 
 """
