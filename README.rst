@@ -41,7 +41,6 @@ If you are coming from discord.py, you will be required to take this extra step 
     # Windows
     py -3 -m pip uninstall discord.py
 
-
 Key Features
 -------------
 
