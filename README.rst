@@ -28,6 +28,20 @@ Fork notice
 This is a fork of discord.py, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ on 28th August 2021.
 Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py users a stable API wrapper for their bots.   
 
+Migration from discord.py
+--------------------------
+
+If you are coming from discord.py, you will be required to take this extra step before being able to fully use nextcord. Simply run the following command:
+
+.. code:: sh
+
+    # Linux/macOS
+    python3 -m pip uninstall discord.py
+
+    # Windows
+    py -3 -m pip uninstall discord.py
+
+
 Key Features
 -------------
 
