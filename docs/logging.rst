@@ -30,7 +30,7 @@ outputting them to the console the following snippet can be used::
     import nextcord
     import logging
 
-    logger = logging.getLogger('discord')
+    logger = logging.getLogger('nextcord')
     logger.setLevel(logging.DEBUG)
     handler = logging.FileHandler(filename='nextcord.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
