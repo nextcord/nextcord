@@ -2,7 +2,7 @@
    :alt: Nextcord
 
 .. image:: https://discord.com/api/guilds/881118111967883295/embed.png
-   :target: https://discord.gg/ZebatWssCB
+   :target: https://discord.gg/nextcord
    :alt: Discord server invite
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
    :target: https://pypi.python.org/pypi/nextcord
