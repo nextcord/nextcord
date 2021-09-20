@@ -46,3 +46,7 @@ Error = Union[Callable[["Cog", "Context[Any]", "CommandError"], Coro[Any]], Call
 # Yes, this is a terrible solution but ultimately it is the only solution.
 class _BaseCommand:
     __slots__ = ()
+
+
+class _CogApplicationCommandRequest:
+    __slots__ = ()

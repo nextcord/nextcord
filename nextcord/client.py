@@ -1682,6 +1682,14 @@ class Client:
             else:
                 await self.register_global_app_cmd(cmd_request)
 
+    def add_cog_application_command_requests(self, parent, cog_requests):
+        # TODO: This is bad, and should be completely rewritten. Not this actual function, but what it does and it
+        #  being here.
+        for cog_request in cog_requests:
+            print(f"From add_cog_app in client: {cog_request.__dict__}")
+            self.add_app_cmd(ApplicationCommandRequest(cog_request.callback, cog_request.type, parent=parent,
+                                                       *cog_request.args, **cog_request.kwargs))
+
     async def register_guild_app_cmd(self, cmd_request: ApplicationCommandRequest):
         responses = list()
         for guild_id in cmd_request.guild_ids:
@@ -1696,7 +1704,6 @@ class Client:
 
     def process_guild_app_cmd_response(self, cmd_request: ApplicationCommandRequest,
                                        responses: List[ApplicationCommandResponse]):
-        # print(f"Guild {cmd_request} Bulk Response: {responses}")
         print("Processing a guild app cmd response!")
         for response in responses:
             command = ApplicationCommand(cmd_request, response)

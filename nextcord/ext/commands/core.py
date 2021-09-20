@@ -50,7 +50,7 @@ import nextcord
 from .errors import *
 from .cooldowns import Cooldown, BucketType, CooldownMapping, MaxConcurrency, DynamicCooldownMapping
 from .converter import run_converters, get_converter, Greedy
-from ._types import _BaseCommand
+from ._types import _BaseCommand, _CogApplicationCommandRequest
 from .cog import Cog
 from .context import Context
 
@@ -75,6 +75,7 @@ __all__ = (
     'Group',
     'GroupMixin',
     'command',
+    'slash_command',
     'group',
     'has_role',
     'has_permissions',
@@ -112,6 +113,21 @@ if TYPE_CHECKING:
     P = ParamSpec('P')
 else:
     P = TypeVar('P')
+
+
+class CogApplicationCommandRequest(_CogApplicationCommandRequest):
+    # TODO: Actually make this decent, this is not acceptable. The whole point of this is to be passed into a
+    #  real ApplicationCommandRequest later on.
+    def __init__(self, callback, app_type, *args, **kwargs):
+        self._callback = callback
+        self.type = app_type
+        self.args = args
+        self.kwargs = kwargs
+
+    @property
+    def callback(self):
+        return self._callback
+
 
 def unwrap_function(function: Callable[..., Any]) -> Callable[..., Any]:
     partial = functools.partial
@@ -1578,6 +1594,16 @@ def command(
         return cls(func, name=name, **attrs)
 
     return decorator
+
+
+def slash_command(*args, **kwargs):
+    def decorator(func):
+        if isinstance(func, _CogApplicationCommandRequest):
+            raise TypeError('Callback is already a CogApplicationCommandRequest.')
+        # TODO: This is magic-numbered to app_type of 1, this should be more standardized.
+        return CogApplicationCommandRequest(func, 1, *args, **kwargs)
+    return decorator
+
 
 @overload
 def group(

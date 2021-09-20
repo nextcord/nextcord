@@ -67,6 +67,21 @@ T = TypeVar('T')
 CFT = TypeVar('CFT', bound='CoroFunc')
 CXT = TypeVar('CXT', bound='Context')
 
+
+class CogApplicationCommandRequest:
+    # TODO: Actually make this decent, this is not acceptable. The whole point of this is to be passed into a
+    #  real ApplicationCommandRequest later on.
+    def __init__(self, callback, app_type, *args, **kwargs):
+        self._callback = callback
+        self.type = app_type
+        self.args = args
+        self.kwargs = kwargs
+
+    @property
+    def callback(self):
+        return self._callback
+
+
 def when_mentioned(bot: Union[Bot, AutoShardedBot], msg: Message) -> List[str]:
     """A callable that implements a command prefix equivalent to being mentioned.
 
@@ -147,6 +162,18 @@ class BotBase(GroupMixin):
             self.help_command = DefaultHelpCommand()
         else:
             self.help_command = help_command
+
+    async def register_cog_app_cmd_requests(self):
+        print("Registering cog app cmd requests!")
+        for cog_name in self.__cogs:
+            print(f"Found cog {cog_name} with request list {self.__cogs[cog_name].__cog_app_cmd_requests__}")
+            if cog_request_list := self.__cogs[cog_name].__cog_app_cmd_requests__:
+                # TODO: This upsets me. We should NOT be having to call something blind like this. This is dumb, and
+                #  should be changed ASAP. Screw me.
+                print(f"From bot.py, Register_all_app_cmd_requests: {cog_request_list}")
+
+                super().add_cog_application_command_requests(self.__cogs[cog_name], cog_request_list)
+        await super().register_application_commands()
 
     # internal helpers
 

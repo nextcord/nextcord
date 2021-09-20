@@ -28,7 +28,7 @@ import nextcord.utils
 
 from typing import Any, Callable, ClassVar, Dict, Generator, List, Optional, TYPE_CHECKING, Tuple, TypeVar, Type
 
-from ._types import _BaseCommand
+from ._types import _BaseCommand, _CogApplicationCommandRequest
 
 if TYPE_CHECKING:
     from .bot import BotBase
@@ -44,6 +44,21 @@ CogT = TypeVar('CogT', bound='Cog')
 FuncT = TypeVar('FuncT', bound=Callable[..., Any])
 
 MISSING: Any = nextcord.utils.MISSING
+
+
+class CogApplicationCommandRequest(_CogApplicationCommandRequest):
+    # TODO: Actually make this decent, this is not acceptable. The whole point of this is to be passed into a
+    #  real ApplicationCommandRequest later on.
+    def __init__(self, callback, app_type, *args, **kwargs):
+        self._callback = callback
+        self.type = app_type
+        self.args = args
+        self.kwargs = kwargs
+
+    @property
+    def callback(self):
+        return self._callback
+
 
 class CogMeta(type):
     """A metaclass for defining a cog.
@@ -107,6 +122,7 @@ class CogMeta(type):
     __cog_name__: str
     __cog_settings__: Dict[str, Any]
     __cog_commands__: List[Command]
+    __cog_app_cmd_requests__: List[CogApplicationCommandRequest]
     __cog_listeners__: List[Tuple[str, str]]
 
     def __new__(cls: Type[CogMeta], *args: Any, **kwargs: Any) -> CogMeta:
@@ -120,12 +136,14 @@ class CogMeta(type):
         attrs['__cog_description__'] = description
 
         commands = {}
+        app_cmd_requests = list()
         listeners = {}
         no_bot_cog = 'Commands or listeners must not start with cog_ or bot_ (in method {0.__name__}.{1})'
 
         new_cls = super().__new__(cls, name, bases, attrs, **kwargs)
         for base in reversed(new_cls.__mro__):
             for elem, value in base.__dict__.items():
+                print(f"From in Cog Meta Dict Items: {elem}, {value}")
                 if elem in commands:
                     del commands[elem]
                 if elem in listeners:
@@ -139,7 +157,10 @@ class CogMeta(type):
                         raise TypeError(f'Command in method {base}.{elem!r} must not be staticmethod.')
                     if elem.startswith(('cog_', 'bot_')):
                         raise TypeError(no_bot_cog.format(base, elem))
+                    print(f"From Cog Meta: Value {value} isinstance _BaseCommand")
                     commands[elem] = value
+                elif isinstance(value, _CogApplicationCommandRequest):
+                    app_cmd_requests.append(value)
                 elif inspect.iscoroutinefunction(value):
                     try:
                         getattr(value, '__cog_listener__')
@@ -151,6 +172,8 @@ class CogMeta(type):
                         listeners[elem] = value
 
         new_cls.__cog_commands__ = list(commands.values()) # this will be copied in Cog.__new__
+        new_cls.__cog_app_cmd_requests__ = app_cmd_requests
+        print(f"From inside cog meta {app_cmd_requests}")
 
         listeners_as_list = []
         for listener in listeners.values():
@@ -186,6 +209,7 @@ class Cog(metaclass=CogMeta):
     __cog_name__: ClassVar[str]
     __cog_settings__: ClassVar[Dict[str, Any]]
     __cog_commands__: ClassVar[List[Command]]
+    __cog_app_cmd_requests__: List[CogApplicationCommandRequest]
     __cog_listeners__: ClassVar[List[Tuple[str, str]]]
 
     def __new__(cls: Type[CogT], *args: Any, **kwargs: Any) -> CogT:

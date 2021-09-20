@@ -90,18 +90,20 @@ class ApplicationCommandRequest:
     def __init__(self, callback: Coroutine, app_type: AppCmdType,
                  name: str = MISSING,
                  description: str = MISSING,
-                 guild_ids: Union[int, Iterable] = MISSING):
+                 guild_ids: Union[int, Iterable] = MISSING, parent=MISSING):
+        self._parent = parent  # TODO: Rewrite this all, this sucks.
         self._callback: Coroutine = callback
-        if app_type not in AppCmdType:
+        # if app_type not in AppCmdType:
+        if app_type not in (t for t in AppCmdType):
             raise TypeError('Unhandled Application Command Type given!')
         self.type = app_type
         name = name or callback.__name__
         if not isinstance(name, str):
             raise TypeError('Name of a command must be a string.')
         self.name = name
-        self.description = description if description else ""
+        self.description = description if description else " "
         if not guild_ids:
-            self._guild_ids: Optional[List[int]] = MISSING
+            self._guild_ids: Optional[List[int]] = list()
         elif isinstance(guild_ids, int):
             self._guild_ids = [guild_ids, ]
         else:
@@ -116,7 +118,10 @@ class ApplicationCommandRequest:
 
     @property
     def payload(self) -> dict:
-        return {"name": self.name, "type": self.type, "description": self.description}
+        ret = {"name": self.name, "type": self.type}
+        if self.description:
+            ret["description"] = self.description
+        return ret
 
     @property
     def guild_ids(self) -> Optional[Tuple]:
@@ -145,11 +150,17 @@ class ApplicationCommand:
         self.default_permission: bool = response.default_permission
         self.type: int = response.type
         self.guild_id = response.guild_id
+        self._parent = request._parent
+        self.__original_kwargs__ = request.__original_kwargs__
         self._callback: Coroutine = request.callback
 
     async def invoke(self, interaction: Interaction):
         injected = hooked_wrapped_callback(self.callback)
-        await injected(interaction)
+        # await injected(interaction)
+        if self._parent:
+            await injected(self._parent, interaction)
+        else:
+            await injected(interaction)
 
     @property
     def callback(self) -> Coroutine:
@@ -157,6 +168,7 @@ class ApplicationCommand:
 
 
 class SlashCommand(ApplicationCommand):
+    # TODO: IDK what I'm doing with this.
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)
         self.__original_kwargs__ = kwargs.copy()
