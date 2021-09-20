@@ -65,7 +65,7 @@ class Select(Item[V]):
 
     Parameters
     ------------
-    custom_id: :class:`str`
+    custom_id: Optional[:class:`str`]
         The ID of the select menu that gets received during an interaction.
         If not given then one is generated for you.
     placeholder: Optional[:class:`str`]
@@ -99,7 +99,7 @@ class Select(Item[V]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: Optional[str] = None,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
@@ -109,8 +109,8 @@ class Select(Item[V]):
     ) -> None:
         super().__init__()
         self._selected_values: List[str] = []
-        self._provided_custom_id = custom_id is not MISSING
-        custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
+        self._provided_custom_id = custom_id is not None
+        custom_id = os.urandom(16).hex() if custom_id is None else custom_id
         options = [] if options is MISSING else options
         self._underlying = SelectMenu._raw_construct(
             custom_id=custom_id,
@@ -297,7 +297,7 @@ class Select(Item[V]):
 def select(
     *,
     placeholder: Optional[str] = None,
-    custom_id: str = MISSING,
+    custom_id: Optional[str] = None,
     min_values: int = 1,
     max_values: int = 1,
     options: List[SelectOption] = MISSING,
@@ -317,7 +317,7 @@ def select(
     ------------
     placeholder: Optional[:class:`str`]
         The placeholder text that is shown if nothing is selected, if any.
-    custom_id: :class:`str`
+    custom_id: Optional[:class:`str`]
         The ID of the select menu that gets received during an interaction.
         It is recommended not to set this parameter to prevent conflicts.
     row: Optional[:class:`int`]
