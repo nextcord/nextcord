@@ -618,6 +618,7 @@ class Client:
             An unexpected keyword argument was received.
         """
         await self.login(token)
+
         await self.connect(reconnect=reconnect)
 
     def run(self, *args: Any, **kwargs: Any) -> None:
@@ -1656,11 +1657,14 @@ class Client:
         """
         return self._connection.persistent_views
 
+    async def on_connect(self):
+        await self.register_application_commands()
+
     async def on_interaction(self, interaction: Interaction):
         # TODO: Change to dispatch on_slash_command, on_user_command, on_message_command.
         print("Hi from inside client!")
         print(self.guild_application_commands)
-        print(f"This: {interaction.guild_id}/{interaction.data['id']}")
+        print(f"Interaction guild ID/Application Command ID: {interaction.guild_id}/{interaction.data['id']}")
         if command := self.global_application_commands.get(int(interaction.data['id']), None):
             print("Trying to await global command!")
             await command.invoke(interaction)
@@ -1692,7 +1696,8 @@ class Client:
 
     def process_guild_app_cmd_response(self, cmd_request: ApplicationCommandRequest,
                                        responses: List[ApplicationCommandResponse]):
-        print(f"Guild {cmd_request} Bulk Response: {responses}")
+        # print(f"Guild {cmd_request} Bulk Response: {responses}")
+        print("Processing a guild app cmd response!")
         for response in responses:
             command = ApplicationCommand(cmd_request, response)
             if command.guild_id not in self.guild_application_commands:
