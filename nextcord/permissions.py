@@ -557,6 +557,7 @@ class Permissions(BaseFlags):
 
         .. versionadded:: 2.0
         """
+        return 1 << 39
 
 PO = TypeVar('PO', bound='PermissionOverwrite')
 
