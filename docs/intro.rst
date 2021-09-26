@@ -104,10 +104,8 @@ A quick example to showcase how events work:
     # the prefix is not used in this example
     bot = commands.Bot(command_prefix='$')
 
-   @bot.event
+    @bot.event
     async def on_message(message):
         print(f'Message from {messsage.author}: {message.content}')
 
-bot.run('token')
-
-
+    bot.run('token')
