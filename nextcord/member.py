@@ -139,7 +139,8 @@ class VoiceState:
         self.mute: bool = data.get('mute', False)
         self.deaf: bool = data.get('deaf', False)
         self.suppress: bool = data.get('suppress', False)
-        self.requested_to_speak_at: Optional[datetime.datetime] = utils.parse_time(data.get('request_to_speak_timestamp'))
+        self.requested_to_speak_at: Optional[datetime.datetime] = utils.parse_time(
+            data.get('request_to_speak_timestamp'))
         self.channel: Optional[VocalGuildChannel] = channel
 
     def __repr__(self) -> str:
@@ -169,7 +170,8 @@ def flatten_user(cls):
         # slotted members are implemented as member_descriptors in Type.__dict__
         if not hasattr(value, '__annotations__'):
             getter = attrgetter('_user.' + attr)
-            setattr(cls, attr, property(getter, doc=f'Equivalent to :attr:`User.{attr}`'))
+            setattr(cls, attr, property(
+                getter, doc=f'Equivalent to :attr:`User.{attr}`'))
         else:
             # Technically, this can also use attrgetter
             # However I'm not sure how I feel about "functions" returning properties
@@ -288,9 +290,12 @@ class Member(abc.Messageable, _UserTag):
         self._state: ConnectionState = state
         self._user: User = state.store_user(data['user'])
         self.guild: Guild = guild
-        self.joined_at: Optional[datetime.datetime] = utils.parse_time(data.get('joined_at'))
-        self.premium_since: Optional[datetime.datetime] = utils.parse_time(data.get('premium_since'))
-        self._roles: utils.SnowflakeList = utils.SnowflakeList(map(int, data['roles']))
+        self.joined_at: Optional[datetime.datetime] = utils.parse_time(
+            data.get('joined_at'))
+        self.premium_since: Optional[datetime.datetime] = utils.parse_time(
+            data.get('premium_since'))
+        self._roles: utils.SnowflakeList = utils.SnowflakeList(
+            map(int, data['roles']))
         self._client_status: Dict[Optional[str], str] = {None: 'offline'}
         self.activities: Tuple[ActivityTypes, ...] = tuple()
         self.nick: Optional[str] = data.get('nick', None)
@@ -319,7 +324,8 @@ class Member(abc.Messageable, _UserTag):
     def _from_message(cls: Type[M], *, message: Message, data: MemberPayload) -> M:
         author = message.author
         data['user'] = author._to_minimal_user_json()  # type: ignore
-        return cls(data=data, guild=message.guild, state=message._state)  # type: ignore
+        # type: ignore
+        return cls(data=data, guild=message.guild, state=message._state)
 
     def _update_from_message(self, data: MemberPayload) -> None:
         self.joined_at = utils.parse_time(data.get('joined_at'))
@@ -337,7 +343,8 @@ class Member(abc.Messageable, _UserTag):
             return state.create_user(data)
         else:
             member_data['user'] = data  # type: ignore
-            return cls(data=member_data, guild=guild, state=state)  # type: ignore
+            # type: ignore
+            return cls(data=member_data, guild=guild, state=state)
 
     @classmethod
     def _copy(cls: Type[M], member: M) -> M:
@@ -383,7 +390,8 @@ class Member(abc.Messageable, _UserTag):
     def _presence_update(self, data: PartialPresenceUpdate, user: UserPayload) -> Optional[Tuple[User, User]]:
         self.activities = tuple(map(create_activity, data['activities']))
         self._client_status = {
-            sys.intern(key): sys.intern(value) for key, value in data.get('client_status', {}).items()  # type: ignore
+            # type: ignore
+            sys.intern(key): sys.intern(value) for key, value in data.get('client_status', {}).items()
         }
         self._client_status[None] = sys.intern(data['status'])
 
@@ -395,7 +403,8 @@ class Member(abc.Messageable, _UserTag):
         u = self._user
         original = (u.name, u._avatar, u.discriminator, u._public_flags)
         # These keys seem to always be available
-        modified = (user['username'], user['avatar'], user['discriminator'], user.get('public_flags', 0))
+        modified = (user['username'], user['avatar'],
+                    user['discriminator'], user.get('public_flags', 0))
         if original != modified:
             to_return = User._copy(self._user)
             u.name, u._avatar, u.discriminator, u._public_flags = modified
@@ -727,7 +736,8 @@ class Member(abc.Messageable, _UserTag):
 
         if suppress is not MISSING:
             if self.voice is None:
-                raise TypeError("You can only suppress members which are connected to a voice channel")
+                raise TypeError(
+                    "You can only suppress members which are connected to a voice channel")
             voice_state_payload = {
                 'channel_id': self.voice.channel.id,
                 'suppress': suppress,
@@ -740,7 +750,8 @@ class Member(abc.Messageable, _UserTag):
                 await http.edit_my_voice_state(guild_id, voice_state_payload)
             else:
                 if not suppress:
-                    voice_state_payload['request_to_speak_timestamp'] = datetime.datetime.utcnow().isoformat()
+                    voice_state_payload['request_to_speak_timestamp'] = datetime.datetime.utcnow(
+                    ).isoformat()
                 await http.edit_voice_state(guild_id, self.id, voice_state_payload)
 
         if voice_channel is not MISSING:
@@ -785,7 +796,7 @@ class Member(abc.Messageable, _UserTag):
         else:
             await self._state.http.edit_my_voice_state(self.guild.id, payload)
 
-    async def move_to(self, channel: VocalGuildChannel, *, reason: Optional[str] = None) -> None:
+    async def move_to(self, channel: Optional[VocalGuildChannel], *, reason: Optional[str] = None) -> None:
         """|coro|
 
         Moves a member to a new voice channel (they must be connected first).
@@ -838,7 +849,8 @@ class Member(abc.Messageable, _UserTag):
         """
 
         if not atomic:
-            new_roles = utils._unique(Object(id=r.id) for s in (self.roles[1:], roles) for r in s)
+            new_roles = utils._unique(Object(id=r.id)
+                                      for s in (self.roles[1:], roles) for r in s)
             await self.edit(roles=new_roles, reason=reason)
         else:
             req = self._state.http.add_role
@@ -877,7 +889,8 @@ class Member(abc.Messageable, _UserTag):
         """
 
         if not atomic:
-            new_roles = [Object(id=r.id) for r in self.roles[1:]]  # remove @everyone
+            new_roles = [Object(id=r.id)
+                         for r in self.roles[1:]]  # remove @everyone
             for role in roles:
                 try:
                     new_roles.remove(Object(id=role.id))
