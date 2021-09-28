@@ -49,11 +49,16 @@ class CommandArgument(CmdArg):
         if isinstance(parameter.default, CmdArg):
             cmd_arg = parameter.default
         print(f"CMD arg name: {cmd_arg.name}, Parameter name: {parameter.name}")
+        # TODO: Cleanup logic for this.
         self.name = cmd_arg.name if cmd_arg.name is not None else parameter.name
         self.functional_name = parameter.name
         self.description = cmd_arg.description if cmd_arg.description is not None else " "
         self.required = cmd_arg.required if cmd_arg.required is not None else None
         self.choices = cmd_arg.choices if cmd_arg.choices is not None else dict()
+        if cmd_arg.default is None and parameter.default is not parameter.empty:
+            self.default = parameter.default
+        else:
+            self.default = cmd_arg.default
         if (parameter.default is parameter.empty or self.default is None) and self.required is None:
             print(f"Setting {self.functional_name} to required true!\n{parameter.default}, "
                   f"{self.default}, {self.required}")
