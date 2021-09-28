@@ -133,12 +133,18 @@ class ApplicationSubcommand:
         if isinstance(self._parent, ApplicationSubcommand) and self.children:
             raise NotImplementedError("A subcommand can't have both subcommand parents and children! Discord does not"
                                       "support this.")
-        if isinstance(self._parent, ApplicationCommand) and self.children:
-            self.type = CommandOptionType.SUB_COMMAND_GROUP
+        if isinstance(self._parent, ApplicationCommand):
+            if self.children:
+                self.type = CommandOptionType.SUB_COMMAND_GROUP
+            else:
+                self.type = CommandOptionType.SUB_COMMAND
+        if self.type is CommandType.USER or self.type is CommandType.MESSAGE:
+            self.description = ""
+            print(f"ANALYZE CONTENT: {self.description}")
         else:
-            self.type = CommandOptionType.SUB_COMMAND
-        if self.type not in (CommandType.USER, CommandType.MESSAGE) and not self.description:
-            self.description = " "
+            print(f"ANALYZE CONTENT: {self.type} {type(self.type)} {CommandType.USER}")
+            if not self.description:
+                self.description = " "
 
     def _analyze_callback(self):
         if not self.name:
@@ -230,6 +236,7 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def parse_response(self, response: ApplicationCommandResponse):
         print(self.id)
+        # TODO: Grab state and have access to get_guild stuff for get_member and get_message for user/message commands.
         self.id = response.id
 
     @property
@@ -278,6 +285,7 @@ class CommandClient(Client):
                     not_registered_cmd.parse_response(ApplicationCommandResponse(self._connection, response_json))
                     self._registered_application_commands[not_registered_cmd.id] = not_registered_cmd
                     print(f"REGISTERED COMMAND {not_registered_cmd.name} FOR GUILD {payload['guild_id']}")
+                    print(payload)
             else:
                 response_json = await self.http.upsert_global_command(self.application_id, not_registered_cmd.payload)
                 not_registered_cmd.parse_response(ApplicationCommandResponse(self._connection, response_json))
@@ -303,6 +311,20 @@ class CommandClient(Client):
     def add_application_command_request(self, application_command: ApplicationCommand):
         self._to_be_registered_commands.append(application_command)
 
+    def user_command(self, *args, **kwargs):
+        def decorator(func: Callable):
+            result = user_command(*args, **kwargs)(func)
+            self.add_application_command_request(result)
+            return result
+        return decorator
+
+    def message_command(self, *args, **kwargs):
+        def decorator(func: Callable):
+            result = message_command(*args, **kwargs)(func)
+            self.add_application_command_request(result)
+            return result
+        return decorator
+
     def slash_command(self, *args, **kwargs):
         def decorator(func: Callable):
             result = slash_command(*args, **kwargs)(func)
@@ -324,6 +346,22 @@ def slash_command(*args, **kwargs):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
         return ApplicationCommand(func, cmd_type=CommandType.CHAT_INPUT, *args, **kwargs)
+    return decorator
+
+
+def message_command(*args, **kwargs):
+    def decorator(func: Callable):
+        if isinstance(func, ApplicationCommand):
+            raise TypeError("Callback is already an ApplicationCommandRequest.")
+        return ApplicationCommand(func, cmd_type=CommandType.MESSAGE, *args, **kwargs)
+    return decorator
+
+
+def user_command(*args, **kwargs):
+    def decorator(func: Callable):
+        if isinstance(func, ApplicationCommand):
+            raise TypeError("Callback is already an ApplicationCommandRequest.")
+        return ApplicationCommand(func, cmd_type=CommandType.USER, *args, **kwargs)
     return decorator
 
 
