@@ -121,7 +121,7 @@ class Item(Generic[V]):
 
         The callback associated with this UI item.
 
-        This can be overwritten by subclasses.
+        This can be overridden by subclasses.
 
         Parameters
         -----------
