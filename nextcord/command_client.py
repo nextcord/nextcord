@@ -45,9 +45,11 @@ class CommandArgument(CmdArg):
     def __init__(self, parameter: Parameter):
         super().__init__()
         self.parameter = parameter
+        cmd_arg_given = False
         cmd_arg = CmdArg()
         if isinstance(parameter.default, CmdArg):
             cmd_arg = parameter.default
+            cmd_arg_given = True
         print(f"CMD arg name: {cmd_arg.name}, Parameter name: {parameter.name}")
         # TODO: Cleanup logic for this.
         self.name = cmd_arg.name if cmd_arg.name is not None else parameter.name
@@ -55,13 +57,11 @@ class CommandArgument(CmdArg):
         self.description = cmd_arg.description if cmd_arg.description is not None else " "
         self.required = cmd_arg.required if cmd_arg.required is not None else None
         self.choices = cmd_arg.choices if cmd_arg.choices is not None else dict()
-        if cmd_arg.default is None and parameter.default is not parameter.empty:
+        if not cmd_arg_given and parameter.default is not parameter.empty:
             self.default = parameter.default
         else:
             self.default = cmd_arg.default
-        if (parameter.default is parameter.empty or self.default is None) and self.required is None:
-            print(f"Setting {self.functional_name} to required true!\n{parameter.default}, "
-                  f"{self.default}, {self.required}")
+        if self.default is None and cmd_arg.required in (None, True):
             self.required = True
         self.type: CommandOptionType = self.get_type(parameter.annotation)
 
@@ -96,7 +96,7 @@ class CommandArgument(CmdArg):
         if self.required is not None:
             ret["required"] = self.required
         if self.choices:
-            ret["choices"] = [{key, value} for key, value in self.choices.values()]
+            ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
         # We don't ask for the payload if we have options, so no point in checking for options.
         return ret
 
