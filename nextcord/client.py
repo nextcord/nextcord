@@ -62,8 +62,7 @@ from .stage_instance import StageInstance
 from .interactions import Interaction
 from .threads import Thread
 from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factory
-from .application_command import ApplicationCommandRequest, ApplicationCommandResponse, ApplicationCommand, \
-    ApplicationCommandType
+from .application_command import ApplicationCommand
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
@@ -215,15 +214,6 @@ class Client:
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
         self.shard_id: Optional[int] = options.get('shard_id')
         self.shard_count: Optional[int] = options.get('shard_count')
-        # self._to_be_registered_app_commands: List[PreApplicationCommand] = []
-        # self._guild_app_cmd_requests: Dict[int, List[ApplicationCommandRequest]] = dict()
-        # self._guild_app_cmds: Dict[int, List[ApplicationCommand]] = dict()
-        # self._global_app_cmd_requests: List[ApplicationCommandRequest] = list()
-        # self._global_app_cmds: List[ApplicationCommand] = list()
-        self._app_cmd_requests: List[ApplicationCommandRequest] = list()
-        self.global_application_commands: Dict[int, ApplicationCommand] = dict()
-        self.guild_application_commands: Dict[int, Dict[int, ApplicationCommand]] = dict()
-        # self.registered_application_commands: Dict[int, Type[ApplicationCommand]] = dict()
 
         connector: Optional[aiohttp.BaseConnector] = options.pop('connector', None)
         proxy: Optional[str] = options.pop('proxy', None)
@@ -1661,25 +1651,13 @@ class Client:
         await self.get_application_commands()
 
     async def on_interaction(self, interaction: Interaction):
-        # print("Hi from inside client!")
-        # print(self.guild_application_commands)
-        # print(f"Interaction guild ID/Application Command ID: {interaction.guild_id}/{interaction.data['id']}")
-        # if command := self.global_application_commands.get(int(interaction.data['id']), None):
-        #     print("Trying to await global command!")
-        #     await command.invoke(interaction)
-        # elif command := self.guild_application_commands.get(interaction.guild_id, dict()).get(int(interaction.data['id']), None):
-        #     print("Trying to await guild command!")
-        #     await command.invoke(interaction)
-        # TODO: TF is this, placeholder crap for sure!
+        # TODO: This doesn't seem optimal, I need reassurance?
         if interaction.type is InteractionType.ping:
             self.dispatch("ping", interaction)
         elif interaction.type is InteractionType.application_command:
             self.dispatch("application_command", interaction)
         elif interaction.type is InteractionType.component:
             self.dispatch("component", interaction)
-
-    def add_app_cmd(self, cmd_request: ApplicationCommandRequest):
-        self._app_cmd_requests.append(cmd_request)
 
     async def get_application_commands(self):
         pass
@@ -1697,70 +1675,3 @@ class Client:
             except Forbidden:
                 print(f"From get_application_commands, we don't have command permissions for "
                       f"guild {guild.name}|{guild.id} ")
-
-        # for cmd_request in self._app_cmd_requests:
-        #     if cmd_request.guild_ids:
-        #         await self.register_guild_app_cmd(cmd_request)
-        #     else:
-        #         await self.register_global_app_cmd(cmd_request)
-
-    def add_cog_application_command_requests(self, parent, cog_requests):
-        # TODO: This is bad, and should be completely rewritten. Not this actual function, but what it does and it
-        #  being here.
-        for cog_request in cog_requests:
-            print(f"From add_cog_app in client: {cog_request.__dict__}")
-            self.add_app_cmd(ApplicationCommandRequest(cog_request.callback, cog_request.type, parent=parent,
-                                                       *cog_request.args, **cog_request.kwargs))
-
-    async def register_guild_app_cmd(self, cmd_request: ApplicationCommandRequest):
-        responses = list()
-        for guild_id in cmd_request.guild_ids:
-            # TODO: Handle 403 Forbidden responses from guilds we don't have permissions for.
-            raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, cmd_request.payload)
-            responses.append(ApplicationCommandResponse(raw_response))
-        self.process_guild_app_cmd_response(cmd_request, responses)
-
-    async def register_global_app_cmd(self, cmd_request: ApplicationCommandRequest):
-        raw_response = await self.http.upsert_global_command(self.application_id, cmd_request.payload)
-        self.process_global_app_cmd_response(cmd_request, ApplicationCommandResponse(raw_response))
-
-    def process_guild_app_cmd_response(self, cmd_request: ApplicationCommandRequest,
-                                       responses: List[ApplicationCommandResponse]):
-        print("Processing a guild app cmd response!")
-        for response in responses:
-            command = ApplicationCommand(cmd_request, response)
-            if command.guild_id not in self.guild_application_commands:
-                self.guild_application_commands[command.guild_id] = dict()
-            self.guild_application_commands[command.guild_id][command.id] = command
-
-    def process_global_app_cmd_response(self, cmd_request: ApplicationCommandRequest,
-                                        response: ApplicationCommandResponse):
-        print(f"Global Bulk Response: {response}")
-        command = ApplicationCommand(cmd_request, response)
-        self.global_application_commands[command.id] = command
-
-    def add_slash_command(self, cmd_request: ApplicationCommandRequest) -> None:
-        if not isinstance(cmd_request, ApplicationCommandRequest):
-            raise TypeError('The command passed must be a subclass of ApplicationCommandRequest.')
-        if cmd_request.type is not ApplicationCommandType.CHAT_INPUT:
-            raise TypeError('The ApplicationCommandRequest passed must be fit for slash commands.')
-        self.add_app_cmd(cmd_request)
-
-    def slash_command(self, name: str = MISSING, cls=MISSING, *args: Any, **kwargs: Any):
-        def decorator(func):
-            # kwargs.setdefault('parent', self)
-            result = slash_command(name=name, cls=cls, *args, **kwargs)(func)
-            self.add_slash_command(result)
-            return result
-        return decorator
-
-
-def slash_command(name: str = MISSING, cls=MISSING, *args, **attrs):
-    if cls is MISSING:
-        cls = ApplicationCommandRequest
-
-    def decorator(func):
-        if isinstance(func, ApplicationCommandRequest):
-            raise TypeError("Callback is already a PreApplicationCommand.")
-        return cls(func, name=name, app_type=ApplicationCommandType.CHAT_INPUT, *args, **attrs)
-    return decorator
