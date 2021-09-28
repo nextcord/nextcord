@@ -40,7 +40,7 @@ from .widget import Widget
 from .guild import Guild
 from .emoji import Emoji
 from .channel import _threaded_channel_factory, PartialMessageable
-from .enums import ChannelType
+from .enums import ChannelType, InteractionType
 from .mentions import AllowedMentions
 from .errors import *
 from .enums import Status, VoiceRegion
@@ -62,8 +62,8 @@ from .stage_instance import StageInstance
 from .interactions import Interaction
 from .threads import Thread
 from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factory
-from .application_command import ApplicationCommandRequest, ApplicationCommandResponse, ApplicationCommand,\
-    SlashCommand, UserCommand, MessageCommand, ApplicationCommandType
+from .application_command import ApplicationCommandRequest, ApplicationCommandResponse, ApplicationCommand, \
+    ApplicationCommandType
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
@@ -1658,29 +1658,51 @@ class Client:
         return self._connection.persistent_views
 
     async def on_connect(self):
-        await self.register_application_commands()
+        await self.get_application_commands()
 
     async def on_interaction(self, interaction: Interaction):
-        # TODO: Change to dispatch on_slash_command, on_user_command, on_message_command.
-        print("Hi from inside client!")
-        print(self.guild_application_commands)
-        print(f"Interaction guild ID/Application Command ID: {interaction.guild_id}/{interaction.data['id']}")
-        if command := self.global_application_commands.get(int(interaction.data['id']), None):
-            print("Trying to await global command!")
-            await command.invoke(interaction)
-        elif command := self.guild_application_commands.get(interaction.guild_id, dict()).get(int(interaction.data['id']), None):
-            print("Trying to await guild command!")
-            await command.invoke(interaction)
+        # print("Hi from inside client!")
+        # print(self.guild_application_commands)
+        # print(f"Interaction guild ID/Application Command ID: {interaction.guild_id}/{interaction.data['id']}")
+        # if command := self.global_application_commands.get(int(interaction.data['id']), None):
+        #     print("Trying to await global command!")
+        #     await command.invoke(interaction)
+        # elif command := self.guild_application_commands.get(interaction.guild_id, dict()).get(int(interaction.data['id']), None):
+        #     print("Trying to await guild command!")
+        #     await command.invoke(interaction)
+        # TODO: TF is this, placeholder crap for sure!
+        if interaction.type is InteractionType.ping:
+            self.dispatch("ping", interaction)
+        elif interaction.type is InteractionType.application_command:
+            self.dispatch("application_command", interaction)
+        elif interaction.type is InteractionType.component:
+            self.dispatch("component", interaction)
 
     def add_app_cmd(self, cmd_request: ApplicationCommandRequest):
         self._app_cmd_requests.append(cmd_request)
 
-    async def register_application_commands(self):
-        for cmd_request in self._app_cmd_requests:
-            if cmd_request.guild_ids:
-                await self.register_guild_app_cmd(cmd_request)
-            else:
-                await self.register_global_app_cmd(cmd_request)
+    async def get_application_commands(self):
+        pass
+        raw_response = await self.http.get_global_commands(self.application_id)
+        for raw_command in raw_response:
+            app_cmd_response = ApplicationCommand(self._connection, raw_command)
+            self._connection._add_application_command(app_cmd_response)
+        for guild in self.guilds:
+            print(f"GET APP CMDS: grabbing commands from guild {guild.name}")
+            try:
+                raw_response = await self.http.get_guild_commands(self.application_id, guild.id)
+                for raw_command in raw_response:
+                    app_cmd_response = ApplicationCommand(self._connection, raw_command)
+                    self._connection._add_application_command(app_cmd_response)
+            except Forbidden:
+                print(f"From get_application_commands, we don't have command permissions for "
+                      f"guild {guild.name}|{guild.id} ")
+
+        # for cmd_request in self._app_cmd_requests:
+        #     if cmd_request.guild_ids:
+        #         await self.register_guild_app_cmd(cmd_request)
+        #     else:
+        #         await self.register_global_app_cmd(cmd_request)
 
     def add_cog_application_command_requests(self, parent, cog_requests):
         # TODO: This is bad, and should be completely rewritten. Not this actual function, but what it does and it

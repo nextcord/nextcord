@@ -143,7 +143,6 @@ class CogMeta(type):
         new_cls = super().__new__(cls, name, bases, attrs, **kwargs)
         for base in reversed(new_cls.__mro__):
             for elem, value in base.__dict__.items():
-                print(f"From in Cog Meta Dict Items: {elem}, {value}")
                 if elem in commands:
                     del commands[elem]
                 if elem in listeners:
@@ -157,7 +156,6 @@ class CogMeta(type):
                         raise TypeError(f'Command in method {base}.{elem!r} must not be staticmethod.')
                     if elem.startswith(('cog_', 'bot_')):
                         raise TypeError(no_bot_cog.format(base, elem))
-                    print(f"From Cog Meta: Value {value} isinstance _BaseCommand")
                     commands[elem] = value
                 elif isinstance(value, _CogApplicationCommandRequest):
                     app_cmd_requests.append(value)
@@ -173,7 +171,6 @@ class CogMeta(type):
 
         new_cls.__cog_commands__ = list(commands.values()) # this will be copied in Cog.__new__
         new_cls.__cog_app_cmd_requests__ = app_cmd_requests
-        print(f"From inside cog meta {app_cmd_requests}")
 
         listeners_as_list = []
         for listener in listeners.values():
