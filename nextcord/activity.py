@@ -706,6 +706,13 @@ class Spotify:
         """:class:`str`: The party ID of the listening party."""
         return self._party.get('id', '')
 
+    @property
+    def elapsed(self) -> datetime.timedelta:
+        """:class:`datetime.timedelta`: Time elapsed since this song.
+        .. versionadded:: 2.0
+        """
+        return datetime.datetime.now(datetime.timezone.utc) - self.start
+
 
 class CustomActivity(BaseActivity):
     """Represents a Custom activity from Discord.
