@@ -223,8 +223,7 @@ class Activity(BaseActivity):
         self.timestamps: ActivityTimestamps = kwargs.pop('timestamps', {})
         self.assets: ActivityAssets = kwargs.pop('assets', {})
         self.party: ActivityParty = kwargs.pop('party', {})
-        self.application_id: Optional[int] = _get_as_snowflake(
-            kwargs, 'application_id')
+        self.application_id: Optional[int] = _get_as_snowflake(kwargs, 'application_id')
         self.name: Optional[str] = kwargs.pop('name', None)
         self.url: Optional[str] = kwargs.pop('url', None)
         self.flags: int = kwargs.pop('flags', 0)
@@ -234,13 +233,11 @@ class Activity(BaseActivity):
 
         activity_type = kwargs.pop('type', -1)
         self.type: ActivityType = (
-            activity_type if isinstance(activity_type, ActivityType) else try_enum(
-                ActivityType, activity_type)
+            activity_type if isinstance(activity_type, ActivityType) else try_enum(ActivityType, activity_type)
         )
 
         emoji = kwargs.pop('emoji', None)
-        self.emoji: Optional[PartialEmoji] = PartialEmoji.from_dict(
-            emoji) if emoji is not None else None
+        self.emoji: Optional[PartialEmoji] = PartialEmoji.from_dict(emoji) if emoji is not None else None
 
     def __repr__(self) -> str:
         attrs = (
@@ -484,8 +481,7 @@ class Streaming(BaseActivity):
         self.name: Optional[str] = extra.pop('details', name)
         self.game: Optional[str] = extra.pop('state', None)
         self.url: str = url
-        self.details: Optional[str] = extra.pop(
-            'details', self.name)  # compatibility
+        self.details: Optional[str] = extra.pop('details', self.name)  # compatibility
         self.assets: ActivityAssets = extra.pop('assets', {})
 
     @property
@@ -563,8 +559,7 @@ class Spotify:
             Returns the string 'Spotify'.
     """
 
-    __slots__ = ('_state', '_details', '_timestamps', '_assets',
-                 '_party', '_sync_id', '_session_id', '_created_at')
+    __slots__ = ('_state', '_details', '_timestamps', '_assets', '_party', '_sync_id', '_session_id', '_created_at')
 
     def __init__(self, **data):
         self._state: str = data.pop('state', '')
@@ -711,14 +706,6 @@ class Spotify:
         """:class:`str`: The party ID of the listening party."""
         return self._party.get('id', '')
 
-    @property
-    def elapsed(self) -> datetime.timedelta:
-        """:class:`datetime.timedelta`: Time elapsed since this song.
-
-        .. versionadded:: 2.0
-        """
-        return datetime.datetime.now(datetime.timezone.utc) - self.start
-
 
 class CustomActivity(BaseActivity):
     """Represents a Custom activity from Discord.
@@ -770,8 +757,7 @@ class CustomActivity(BaseActivity):
         elif isinstance(emoji, PartialEmoji):
             self.emoji = emoji
         else:
-            raise TypeError(
-                f'Expected str, PartialEmoji, or None, received {type(emoji)!r} instead.')
+            raise TypeError(f'Expected str, PartialEmoji, or None, received {type(emoji)!r} instead.')
 
     @property
     def type(self) -> ActivityType:
@@ -821,16 +807,13 @@ class CustomActivity(BaseActivity):
 
 ActivityTypes = Union[Activity, Game, CustomActivity, Streaming, Spotify]
 
-
 @overload
 def create_activity(data: ActivityPayload) -> ActivityTypes:
     ...
 
-
 @overload
 def create_activity(data: None) -> None:
     ...
-
 
 def create_activity(data: Optional[ActivityPayload]) -> Optional[ActivityTypes]:
     if not data:
@@ -848,11 +831,11 @@ def create_activity(data: Optional[ActivityPayload]) -> Optional[ActivityTypes]:
             return Activity(**data)
         else:
             # we removed the name key from data already
-            return CustomActivity(name=name, **data)  # type: ignore
+            return CustomActivity(name=name, **data) # type: ignore
     elif game_type is ActivityType.streaming:
         if 'url' in data:
             # the url won't be None here
-            return Streaming(**data)  # type: ignore
+            return Streaming(**data) # type: ignore
         return Activity(**data)
     elif game_type is ActivityType.listening and 'sync_id' in data and 'session_id' in data:
         return Spotify(**data)
