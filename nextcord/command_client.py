@@ -1,22 +1,21 @@
 from __future__ import annotations
 import asyncio
 from .interactions import Interaction
-from typing import Dict, List, Optional, Union, Type, Any, Callable
 from .client import Client
 from .application_command import ApplicationCommand as ApplicationCommandResponse
 from .application_command import ApplicationCommandOptionType as CommandOptionType
 from .application_command import ApplicationCommandType as CommandType
-from .state import ConnectionState
-from .enums import ChannelType
 from inspect import signature, Parameter
 import logging
 from warnings import warn
 
+from typing import Dict, List, Optional, Union, Type, Any, Callable
 from .user import User
 from .member import Member
 from .abc import GuildChannel
 from .role import Role
-
+from .state import ConnectionState
+from .enums import ChannelType
 
 _log = logging.getLogger(__name__)
 
@@ -70,6 +69,7 @@ class CommandArgument(CmdArg):
             self.required = True
         self.channel_types = cmd_arg.channel_types if cmd_arg.channel_types is not None else list()
         self.type: CommandOptionType = self.get_type(parameter.annotation)
+        self.verify()
 
     def get_type(self, typing: Type) -> CommandOptionType:
         if typing is self.parameter.empty:
@@ -96,7 +96,7 @@ class CommandArgument(CmdArg):
     def verify(self):
         """This should run through CmdArg variables and raise errors when conflicting data is given."""
         if self.channel_types and self.type is not CommandOptionType.CHANNEL:
-            raise ValueError("channel_types can only be given when type is set to ApplicationCommandOptionType.CHANNEL")
+            raise ValueError("channel_types can only be given when the var is typed as nextcord.abc.GuildChannel")
 
     def handle_argument(self, state: ConnectionState, argument: Any) -> Any:
         if self.type is CommandOptionType.CHANNEL:
@@ -105,7 +105,7 @@ class CommandArgument(CmdArg):
 
     @property
     def payload(self) -> dict:
-        self.verify()
+        # self.verify()
         ret = dict()
         ret["type"] = self.type.value
         ret["name"] = self.name
