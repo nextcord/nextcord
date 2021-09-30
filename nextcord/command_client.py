@@ -6,6 +6,8 @@ from .client import Client
 from .application_command import ApplicationCommand as ApplicationCommandResponse
 from .application_command import ApplicationCommandOptionType as CommandOptionType
 from .application_command import ApplicationCommandType as CommandType
+from .state import ConnectionState
+from .enums import ChannelType
 from inspect import signature, Parameter
 import logging
 from warnings import warn
@@ -31,7 +33,7 @@ __all__ = (
 
 class CmdArg:
     def __init__(self, name: str = None, description: str = None, required: bool = None, choices: dict = None,
-                 default: Any = None):
+                 default: Any = None, channel_types: List[ChannelType, ...] = None):
         if not choices:
             choices = list()
         self.name: Optional[str] = name
@@ -39,9 +41,11 @@ class CmdArg:
         self.required: Optional[bool] = required
         self.choices: Optional[dict] = choices
         self.default: Optional[Any] = default
+        self.channel_types: Optional[List[ChannelType, ...]] = channel_types
 
 
 class CommandArgument(CmdArg):
+    """This must set all variables from CmdArg, hence the subclass."""
     def __init__(self, parameter: Parameter):
         super().__init__()
         self.parameter = parameter
@@ -51,9 +55,10 @@ class CommandArgument(CmdArg):
             cmd_arg = parameter.default
             cmd_arg_given = True
         print(f"CMD arg name: {cmd_arg.name}, Parameter name: {parameter.name}")
+        self.functional_name = parameter.name
+
         # TODO: Cleanup logic for this.
         self.name = cmd_arg.name if cmd_arg.name is not None else parameter.name
-        self.functional_name = parameter.name
         self.description = cmd_arg.description if cmd_arg.description is not None else " "
         self.required = cmd_arg.required if cmd_arg.required is not None else None
         self.choices = cmd_arg.choices if cmd_arg.choices is not None else dict()
@@ -63,6 +68,7 @@ class CommandArgument(CmdArg):
             self.default = cmd_arg.default
         if self.default is None and cmd_arg.required in (None, True):
             self.required = True
+        self.channel_types = cmd_arg.channel_types if cmd_arg.channel_types is not None else list()
         self.type: CommandOptionType = self.get_type(parameter.annotation)
 
     def get_type(self, typing: Type) -> CommandOptionType:
@@ -87,8 +93,19 @@ class CommandArgument(CmdArg):
         else:
             raise NotImplementedError(f"Type \"{typing}\" isn't supported.")
 
+    def verify(self):
+        """This should run through CmdArg variables and raise errors when conflicting data is given."""
+        if self.channel_types and self.type is not CommandOptionType.CHANNEL:
+            raise ValueError("channel_types can only be given when type is set to ApplicationCommandOptionType.CHANNEL")
+
+    def handle_argument(self, state: ConnectionState, argument: Any) -> Any:
+        if self.type is CommandOptionType.CHANNEL:
+            return state.get_channel(int(argument))
+        return argument
+
     @property
     def payload(self) -> dict:
+        self.verify()
         ret = dict()
         ret["type"] = self.type.value
         ret["name"] = self.name
@@ -97,6 +114,10 @@ class CommandArgument(CmdArg):
             ret["required"] = self.required
         if self.choices:
             ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
+        if self.channel_types:
+            # TODO: Figure out why pycharm is being a dingus about channel_type.value being an unsolved attribute.
+            # noinspection PyUnresolvedReferences
+            ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
         # We don't ask for the payload if we have options, so no point in checking for options.
         return ret
 
@@ -164,11 +185,11 @@ class ApplicationSubcommand:
     def callback(self) -> Callable:
         return self._callback
 
-    async def call(self, interaction: Interaction, option_data: List[Dict[str, Any]]):
+    async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
         # Invokes the callback or subcommands with kwargs provided by the callback and interaction.
         if self.children:
             print(f"Found children, running that in {self.name} with options {option_data[0].get('options', dict())}")
-            await self.children[option_data[0]["name"]].call(interaction, option_data[0].get("options", dict()))
+            await self.children[option_data[0]["name"]].call(state, interaction, option_data[0].get("options", dict()))
         else:
             print(f"Running call + invoke in command {self.name}")
             kwargs = dict()
@@ -176,7 +197,8 @@ class ApplicationSubcommand:
             for arg_data in option_data:
                 if arg_data["name"] in uncalled_args:
                     uncalled_args.pop(arg_data["name"])
-                    kwargs[self.arguments[arg_data["name"]].functional_name] = arg_data["value"]
+                    kwargs[self.arguments[arg_data["name"]].functional_name] = \
+                        self.arguments[arg_data["name"]].handle_argument(state, arg_data["value"])
                 else:
                     # TODO: Handle this better.
                     raise NotImplementedError(f"An argument was provided that wasn't already in the function, did you"
@@ -224,6 +246,7 @@ class ApplicationCommand(ApplicationSubcommand):
                  default_permission: Optional[bool] = None):
         super().__init__(callback=callback, parent=None, cmd_type=cmd_type, name=name, description=description,
                          guild_ids=None)
+        self._state: Optional[ConnectionState] = None
         if guild_ids is None:
             guild_ids = list()
         if not asyncio.iscoroutinefunction(callback):
@@ -238,6 +261,7 @@ class ApplicationCommand(ApplicationSubcommand):
         print(self.id)
         # TODO: Grab state and have access to get_guild stuff for get_member and get_message for user/message commands.
         self.id = response.id
+        self._state = response._state
 
     @property
     def payload(self) -> Union[List[Dict[str, ...]], Dict[str, ...]]:
@@ -338,7 +362,7 @@ class CommandClient(Client):
         if interaction.data['type'] in (1, 2, 3) and \
                 (app_cmd := self._registered_application_commands.get(int(interaction.data["id"]))):
             print("Found viable command, calling it!")
-            await app_cmd.call(interaction, interaction.data.get("options", dict()))
+            await app_cmd.call(self._connection, interaction, interaction.data.get("options", dict()))
 
 
 def slash_command(*args, **kwargs):
