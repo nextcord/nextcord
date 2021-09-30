@@ -550,6 +550,14 @@ class Permissions(BaseFlags):
         .. versionadded:: 2.0
         """
         return 1 << 38
+    
+    @flag_value
+    def start_embedded_activities(self) -> int:
+        """:`bool`: Returns ``True`` if a user can launch activities in a voice channel.
+
+        .. versionadded:: 2.0
+        """
+        return 1 << 39
 
 PO = TypeVar('PO', bound='PermissionOverwrite')
 

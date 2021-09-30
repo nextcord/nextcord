@@ -7,6 +7,9 @@
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI version info
+.. image:: 	https://img.shields.io/pypi/dm/nextcord?color=informational&label=Pypi%20downloads
+   :target: https://pypi.python.org/pypi/nextcord
+   :alt: PyPI version info
 .. image:: https://img.shields.io/pypi/pyversions/nextcord.svg
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI supported Python versions
@@ -81,6 +84,8 @@ Optional Packages
 ~~~~~~~~~~~~~~~~~~
 
 * `PyNaCl <https://pypi.org/project/PyNaCl/>`__ (for voice support)
+* `aiodns <https://pypi.org/project/aiodns/>`__, `Brotli <https://pypi.org/project/Brotli/>`__, `cchardet <https://pypi.org/project/cchardet/>`__ (for aiohttp speedup)
+* `orjson <https://pypi.org/project/orjson/>`__ (for json speedup)
 
 Please note that on Linux installing voice you must install the following packages via your favourite package manager (e.g. ``apt``, ``dnf``, etc) before running the above commands:
 

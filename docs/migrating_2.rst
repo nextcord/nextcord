@@ -9,19 +9,8 @@ Changing to v2.0 represents different breaking changes we needed to make. We did
 original discord.py repository but adapt changes in the Discord API in order of supporting its latest features,
 to work with threads, buttons and commands.
 
-Breaking Changes
------------------------
-
-A breaking change includes: 
-
-- [R]emoval: a feature is removed.
-- [N]ame changes: a feature is renamed.
-- [B]ehavior: something does not behave the way they did in 1.x.
-- [T]yping: types of arguments, attributes or return values changes in an incompatible way. (e.g. None disallowed for argument)
-- [S]yntax: a syntax previously allowed for an operation is no longer allowed. (e.g. positional only arguments, new required arguments)
-
 Overview
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 - Methods and attributes that returned :class:`TextChannel`, etc can now return :class:`Thread`.
 - Python 3.8 or newer is required.
@@ -41,102 +30,11 @@ Overview
 - Many method arguments now reject ``None``.
 - Many arguments are now specified as positional-only or keyword-only; e.g. :func:`oauth_url` now takes keyword-only arguments, and methods starting with ``get_`` or ``fetch_`` take positional-only arguments.
 
-Changes are ordered by the date it was introduced.
+Changes
+-----------------------
 
-[B] Minimum Python version bumped
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Python 3.8 is now required.
-
-[R] User account support
+Webhook changes
 ^^^^^^^^^^^^^^^^^^^^^^^^
-User account ("userbot") is no longer supported. Thus, these features that were only applicable to them are removed:
-
-- bot argument of ``Client.start/run``
-- afk argument of :func:`Client.change_presence`
-- Classes: ``Profile``, ``Relationship``, ``CallMessage``, ``GroupCall``
-- ``RelationshipType``, ``HypeSquadHouse``, ``PremiumType``, ``UserContentFilter``, ``FriendFlags``, ``Theme``
-- ``GroupChannel.add_recipients``, ``remove_recipients``, edit (NOTE: :class:`GroupChannel` itself still remains)
-- ``Guild.ack``
-- ``Client.fetch_user_profile``
-- ``Message.call`` and ``ack``
-- ``ClientUser.email``, ``premium``, ``premium_type``, ``get_relationship``, ``relationships``, ``friends``, ``blocked``, ``create_group``, ``edit_settings``
-- :func:`ClientUser.edit`'s ``password``, ``new_password``, ``email``, ``house arguments``
-- ``User.relationship``, ``mutual_friends``, ``is_friend``, ``is_blocked``, ``block``, ``unblock``, ``remove_friend``, ``send_friend_request``, ``profile``
-- Events: ``on_relationship_add`` and ``on_relationship_update``
-
-This means that detection of Nitro is no longer possible.
-
-[B] Use of timezone-aware time
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-TL;DR: :func:`utils.utcnow` becomes now(:attr:`datetime.timezone.utc`). If you are constructing datetime yourself, pass ``tzinfo=datetime.timezone.utc``.
-
-.. code-block:: python3
-
-    embed = discord.Embed(
-        title = "Pi Day 2021 in UTC",
-        timestamp = datetime(2021, 3, 14, 15, 9, 2, tzinfo=timezone.utc)
-    )
-
-Note that newly-added :func:`nextcord.utils.utcnow()` can be used as an alias of ``datetime.datetime.now(datetime.timezone.utc)``.
-
-[R] Client.request_offline_members
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Deprecated since 1.5.
-
-[R] Client.logout
-^^^^^^^^^^^^^^^^^
-This method was an alias of :func:`Client.close`, which remains.
-
-[B] Embed.__bool__ change
-^^^^^^^^^^^^^^^^^^^^^^^^^
-:class:`Embed` that has a value is always considered truthy. Previously it only considered text fields.
-
-[B] Duplicate registration of cogs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:meth:`commands.Bot.add_cog <ext.commands.Bot.add_cog>` now raises when a cog with the same name is already registered. override argument can be used to bring back the 1.x behavior.
-
-[R] ExtensionNotFound.original
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This always returned ``None`` for compatibility.
-
-[R] MemberCacheFlags.online
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Due to Discord changes, this cache flag is no longer available. :class:`MemberCacheFlags`'s online argument is removed for similar reasons.
-
-[B] Message.type for replies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:attr:`Message.type` now returns :attr:`MessageType.reply` for replies, instead of default.
-
-[R] on_private_channel_create/delete
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-These events will no longer be dispatched due to Discord changes.
-
-[T] Command.clean_params
-^^^^^^^^^^^^^^^^^^^^^^^^
-:attr:`commands.Command.clean_params <ext.commands.Command.clean_params>` is now a :class:`dict`, not :class:`collections.OrderedDict`.
-
-[T] DMChannel.recipient
-^^^^^^^^^^^^^^^^^^^^^^^
-:attr:`DMChannel.recipient` is now optional, and will return ``None`` in many cases.
-
-[R] User.permissions_in, Member.permissions_in
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Use :func:`abc.GuildChannel.permissions_for` instead.
-
-[S] permissions_for positional only argument
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:func:`abc.GuildChannel.permissions_for` method's first argument is now positional only.
-
-[R] guild_subscriptions argument
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-``guild_subscriptions`` argument of :class:`Client` is replaced with intents system.
-
-[R] fetch_offline_members argument
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This argument of :class:`Client` was an alias of chunk_guilds_at_startup since 1.5.
-
-[RNB] Webhook changes
-^^^^^^^^^^^^^^^^^^^^^^^
 :class:`Webhook` was overhauled.
 
 :class:`Webhook` and :class:`WebhookMessage` are now always asynchronous. For synchronous use (requests), use :class:`SyncWebhook` and :class:`SyncWebhookMessage`.
@@ -156,16 +54,9 @@ adapter arguments of :meth:`Webhook.partial` and :meth:`Webhook.from_url` are re
         session=session
         )
         await webhook.send("Hello from discord.py 2.0")
+        
 
-[R] HelpCommand.clean_prefix
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This was moved to :attr:`commandsContext.clean_prefix`.
-
-[R] Sticker.preview_image
-^^^^^^^^^^^^^^^^^^^^^^^^^
-This was removed as Discord no longer provides the data.
-
-[RT] Asset changes
+Asset changes
 ^^^^^^^^^^^^^^^^^^^^^^^
 Assets have been changed.
 
@@ -196,160 +87,260 @@ Assets have been changed.
     emoji_bytes = await emoji.read() # previously emoji.url.read
     # Same applies to Sticker and PartialEmoji.
 
-[N] Colour.blurple
+Python Version Change
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In order to make development easier,
+the library had to remove support for Python versions lower than 3.8,
+which essentially means that **support for Python 3.7, 3.6 and 3.5
+is dropped**. We recommend updating to Python version 3.9.
+
+Use of timezone-aware time
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TL;DR: :func:`utils.utcnow` becomes now(:attr:`datetime.timezone.utc`). If you are constructing datetime yourself, pass ``tzinfo=datetime.timezone.utc``.
+
+.. code-block:: python3
+
+    embed = discord.Embed(
+        title = "Pi Day 2021 in UTC",
+        timestamp = datetime(2021, 3, 14, 15, 9, 2, tzinfo=timezone.utc)
+    )
+
+Note that newly-added :func:`nextcord.utils.utcnow()` can be used as an alias of ``datetime.datetime.now(datetime.timezone.utc)``.
+
+Embed.__bool__ change
+^^^^^^^^^^^^^^^^^^^^^^^^^
+:class:`Embed` that has a value is always considered truthy. Previously it only considered text fields.
+
+Duplicate registration of cogs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:meth:`commands.Bot.add_cog <ext.commands.Bot.add_cog>` now raises when a cog with the same name is already registered. override argument can be used to bring back the 1.x behavior.
+
+Message.type for replies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:attr:`Message.type` now returns :attr:`MessageType.reply` for replies, instead of default.
+
+Command.clean_params
+^^^^^^^^^^^^^^^^^^^^^^^^
+:attr:`commands.Command.clean_params <ext.commands.Command.clean_params>` is now a :class:`dict`, not :class:`collections.OrderedDict`.
+
+DMChannel.recipient
+^^^^^^^^^^^^^^^^^^^^^^^
+:attr:`DMChannel.recipient` is now optional, and will return ``None`` in many cases.
+
+permissions_for positional only argument
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:func:`abc.GuildChannel.permissions_for` method's first argument is now positional only.
+
+Colour.blurple
 ^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Colour.blurple` is renamed to :meth:`Colour.og_blurple`, and :meth:`Colour.blurple` now returns the different color.
 
-[R] self_bot argument
-^^^^^^^^^^^^^^^^^^^^^^^
-:class:`Bot`'s ``self_bot`` argument was removed, since userbots are no longer supported.
-
-[R] VerificationLevel attributes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-``VerificationLevel.table_flip`` (alias of high) was removed. ``extreme``, ``very_high``, and ``double_table_flip`` attributes were removed and replaced with ``highest``.
-
-[S] oauth_url taking keyword only arguments
+oauth_url taking keyword only arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`utils.oauth_url`'s ``permissions``, ``guild``, ``redirect_uri``, and ``scopes`` arguments are now keyword only.
 
-[B] StageChannel changes
+StageChannel changes
 ^^^^^^^^^^^^^^^^^^^^^^^^
 Due to the introduction of :class:`StageInstance` representing the current session of a :class:`StageChannel`,
 
 :meth:`StageChannel.edit` can no longer edit topic. Use :meth:`StageInstance.edit` instead.
 :meth:`StageChannel.clone` no longer clones its topic.
 
-[T] Message.channel
+Message.channel
 ^^^^^^^^^^^^^^^^^^^^^^^
 :attr:`Message.channel` can now return :class:`Thread`.
 
-[S] Guild methods taking positional only arguments
+Guild methods taking positional only arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Guild.get_channel`, :meth:`Guild.get_role`, :meth:`Guild.get_member_named`, :meth:`Guild.fetch_member`, and :meth:`Guild.fetch_emoji` methods' first arguments are now positional only.
 
-[T] Guild.create_text_channel topic argument
+Guild.create_text_channel topic argument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Guild.create_text_channel`'s ``topic`` argument no longer accepts ``None``.
 
-[RT] Reaction.custom_emoji
+Reaction.custom_emoji
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 ``Reaction.custom_emoji`` is now a method called :attr:`Reaction.is_custom_emoji` for consistency.
 
-[S] Reaction.users arguments keyword only
+Reaction.users arguments keyword only
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Arguments of :attr:`Reaction.users` are now keyword only.
 
-[T] IntegrationAccount.id
+IntegrationAccount.id
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 :attr:`IntegrationAccount.id` is now :class:`str`, instead of :class:`int`, due to Discord changes.
 
-[S] BadInviteArgument new required argument
+BadInviteArgument new required argument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :exc:`commands.BadInviteArgument <ext.commands.BadInviteArgument>` now requires one argument, ``argument``.
 
-[N] missing_perms
+missing_perms
 ^^^^^^^^^^^^^^^^^^^^^^^
 ``missing_perms`` arguments and attributes of :exc:`commands.MissingPermissions <ext.commands.MissingPermissions>` and :exc:`commands.BotMissingPermissions <ext.commands.BotMissingPermissions>` are renamed to ``missing_permissions``.
 
-[T] Guild.vanity_invite
+Guild.vanity_invite
 ^^^^^^^^^^^^^^^^^^^^^^^
 :attr:`Guild.vanity_invite` can now return None.
 
-[S] abc.Messageable.fetch_message positional only
+abc.Messageable.fetch_message positional only
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Its first argument is now positional only.
 
-[S] get_partial_message positional only
+get_partial_message positional only
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Its first argument is now positional only.
 
-[T] Template.edit name argument
+Template.edit name argument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Template.edit`'s name argument no longer accepts ``None``.
 
-[T] Member.edit roles argument
+Member.edit roles argument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Member.edit`'s roles argument no longer accepts ``None``.
 
-[S] CommandOnCooldown new required argument
+CommandOnCooldown new required argument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :exc:`commands.CommandOnCooldown <ext.commands.CommandOnCooldown>` now requires an additional argument, type.
 
-[T] fetch_channel
+fetch_channel
 ^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Client.fetch_channel` and :meth:`Guild.fetch_channel` can now return :class:`Thread`.
 
-[B] on_member_update and on_presence_update separation
+on_member_update and on_presence_update separation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :func:`on_member_update` event is no longer dispatched for status/activity changes. Use :func:`on_presence_update` instead.
 
-[R] StickerType
-^^^^^^^^^^^^^^^^^^^^^^^
-:class:`StickerType`, an enum of sticker formats, is renamed to :class:`StickerFormatType`. Old name is used for a new enum with different purpose (checking if the sticker is guild sticker or Nitro sticker).
-fr
-[T] Message.stickers
+Message.stickers
 ^^^^^^^^^^^^^^^^^^^^^^^
 :attr:`Message.stickers` is now ``List[StickerItem]`` instead of ``List[Sticker].`` While :class:`StickerItem` supports some operations of previous :class:`Sticker`, ``description`` and ``pack_id`` attributes do not exist. :class:`Sticker` can be fetched via :meth:`StickerItem.fetch` method.
 
-[R] Sticker.image
-^^^^^^^^^^^^^^^^^^^^^^^
-``Sticker.image`` is removed. Its URL can be accessed via :attr:`Sticker.url`, just like new :class:`Emoji`.
-
-[R] Sticker.tags
-^^^^^^^^^^^^^^^^^^^^^^^
-Due to the introduction of :class:`GuildSticker`, ``Sticker.tags`` is removed from the parent class :class:`Sticker` and moved to :attr:`StandardSticker.tags`.
-
-[T] AuditLogDiff.type
+AuditLogDiff.type
 ^^^^^^^^^^^^^^^^^^^^^^^
 :attr:`AuditLogDiff.type` is now ``Union[ChannelType, StickerType]``, instead of :class:`ChannelType`.
 
-[T] ChannelNotReadable.argument
+ChannelNotReadable.argument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :attr:`commands.ChannelNotReadable.argument <ext.commands.ChannelNotReadable.argument>` can now return :class:`Thread`.
 
-[T] NSFWChannelRequired.channel
+NSFWChannelRequired.channel
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :attr:`commands.NSFWChannelRequired.channel <ext.commands.NSFWChannelRequired.channel>` can now return :class:`Thread`.
 
-[T] Bot.add_listener and Bot.remove_listener
+Bot.add_listener and Bot.remove_listener
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`commands.Bot.add_listener <ext.commands.Bot.add_listener>` and :meth:`commands.Bot.remove_listener <ext.commands.Bot.remove_listener>`'s ``name`` arguments no longer accept ``None``.
 
-[T] Context attributes
+Context attributes
 ^^^^^^^^^^^^^^^^^^^^^^^
 The following :class:`Context` attributes can now be ``None``: ``prefix``, ``command``, ``invoked_with``, ``invoked_subcommand``. Note that while the documentation change suggests potentially breaking change, the code indicates that this was always the case.
 
-[T] Command.help
+Command.help
 ^^^^^^^^^^^^^^^^^^^^^^^
 :attr:`commands.Command.help <ext.commands.Command.help>` can now be ``None``.
 
-[T] Client.get_channel
+Client.get_channel
 ^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Client.get_channel` can now return :class:`Thread`.
 
-[S] Client methods taking positional only arguments
+Client methods taking positional only arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Client.get_guild`, :meth:`Client.get_user`, and :meth:`Client.get_emoji` methods' first arguments are now positional only.
 
-[B] edit method behavior
+edit method behavior
 ^^^^^^^^^^^^^^^^^^^^^^^^
 edit methods of most classes no longer update the cache in-place, and instead returns the modified object.
 
-[B] on_socket_raw_receive behavior
+on_socket_raw_receive behavior
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :func:`on_socket_raw_receive` is no longer dispatched for incomplete data, and the value passed is always decompressed and decoded to :class:`str`. Previously, when received a multi-part zlib-compressed binary message, :func:`on_socket_raw_receive` was dispatched on all messages with the compressed, encoded bytes.
 
-[S] Guild.get_member taking positional only argument
+Guild.get_member taking positional only argument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Guild.get_member` method's first argument is now positional only.
 
-Python Version Change
+Removals
 -----------------------
 
-In order to make development easier,
-the library had to remove support for Python versions lower than 3.8,
-which essentially means that **support for Python 3.7, 3.6 and 3.5
-is dropped**. We recommend updating to Python version 3.9.
+User account support
+^^^^^^^^^^^^^^^^^^^^^^^^
+User account ("userbot") is no longer supported. Thus, these features that were only applicable to them are removed:
+
+- bot argument of ``Client.start/run``
+- afk argument of :func:`Client.change_presence`
+- Classes: ``Profile``, ``Relationship``, ``CallMessage``, ``GroupCall``
+- ``RelationshipType``, ``HypeSquadHouse``, ``PremiumType``, ``UserContentFilter``, ``FriendFlags``, ``Theme``
+- ``GroupChannel.add_recipients``, ``remove_recipients``, edit (NOTE: :class:`GroupChannel` itself still remains)
+- ``Guild.ack``
+- ``Client.fetch_user_profile``
+- ``Message.call`` and ``ack``
+- ``ClientUser.email``, ``premium``, ``premium_type``, ``get_relationship``, ``relationships``, ``friends``, ``blocked``, ``create_group``, ``edit_settings``
+- :func:`ClientUser.edit`'s ``password``, ``new_password``, ``email``, ``house arguments``
+- ``User.relationship``, ``mutual_friends``, ``is_friend``, ``is_blocked``, ``block``, ``unblock``, ``remove_friend``, ``send_friend_request``, ``profile``
+- Events: ``on_relationship_add`` and ``on_relationship_update``
+
+This means that detection of Nitro is no longer possible.
+
+Client.logout
+^^^^^^^^^^^^^^^^^
+This method was an alias of :func:`Client.close`, which remains.
+
+ExtensionNotFound.original
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This always returned ``None`` for compatibility.
+
+MemberCacheFlags.online
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Due to Discord changes, this cache flag is no longer available. :class:`MemberCacheFlags`'s online argument is removed for similar reasons.
+
+Client.request_offline_members
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Deprecated since 1.5.
+
+on_private_channel_create/delete
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+These events will no longer be dispatched due to Discord changes.
+
+User.permissions_in, Member.permissions_in
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Use :func:`abc.GuildChannel.permissions_for` instead.
+
+guild_subscriptions argument
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``guild_subscriptions`` argument of :class:`Client` is replaced with intents system.
+
+fetch_offline_members argument
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This argument of :class:`Client` was an alias of chunk_guilds_at_startup since 1.5.
+
+HelpCommand.clean_prefix
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This was moved to :attr:`commandsContext.clean_prefix`.
+
+Sticker.preview_image
+^^^^^^^^^^^^^^^^^^^^^^^^^
+This was removed as Discord no longer provides the data.
+
+self_bot argument
+^^^^^^^^^^^^^^^^^^^^^^^
+:class:`Bot`'s ``self_bot`` argument was removed, since userbots are no longer supported.
+
+VerificationLevel attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``VerificationLevel.table_flip`` (alias of high) was removed. ``extreme``, ``very_high``, and ``double_table_flip`` attributes were removed and replaced with ``highest``.
+
+StickerType
+^^^^^^^^^^^^^^^^^^^^^^^
+:class:`StickerType`, an enum of sticker formats, is renamed to :class:`StickerFormatType`. Old name is used for a new enum with different purpose (checking if the sticker is guild sticker or Nitro sticker).
+
+Sticker.image
+^^^^^^^^^^^^^^^^^^^^^^^
+``Sticker.image`` is removed. Its URL can be accessed via :attr:`Sticker.url`, just like new :class:`Emoji`.
+
+Sticker.tags
+^^^^^^^^^^^^^^^^^^^^^^^
+Due to the introduction of :class:`GuildSticker`, ``Sticker.tags`` is removed from the parent class :class:`Sticker` and moved to :attr:`StandardSticker.tags`.
+
 
 Meta Change
 -----------------------
