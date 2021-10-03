@@ -638,7 +638,7 @@ class Spotify:
         return 'Spotify'
 
     def __repr__(self) -> str:
-        return f'<Spotify title={self.title!r} artist={self.artist!r} track_id={self.track_id!r}>'
+        return f'<Spotify title={self.title!r} artist={self.artist!r} track_id={self.track_id!r} elapsed={self.elapsed!r}>'
 
     @property
     def title(self) -> str:
