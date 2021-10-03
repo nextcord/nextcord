@@ -2211,12 +2211,12 @@ class Guild(Hashable):
         :class:`GuildSticker`
             The created sticker.
         """
+        if description is None:
+            description = ''
         payload = {
             'name': name,
+            'description': description,
         }
-
-        if description:
-            payload['description'] = description
 
         try:
             emoji = unicodedata.name(emoji)
