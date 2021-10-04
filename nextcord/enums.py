@@ -183,6 +183,7 @@ class ChannelType(Enum):
     public_thread = 11
     private_thread = 12
     stage_voice = 13
+    guild_directory = 14
 
     def __str__(self):
         return self.name
