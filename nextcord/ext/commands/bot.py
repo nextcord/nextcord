@@ -316,7 +316,7 @@ class BotBase(GroupMixin):
         # type-checker doesn't distinguish between functions and methods
         return await nextcord.utils.async_all(f(ctx) for f in data)  # type: ignore
 
-    async def is_owner(self, user: nextcord.User) -> bool:
+    async def is_owner(self, user: Union[nextcord.User, nextcord.Member]) -> bool:
         """|coro|
 
         Checks if a :class:`~nextcord.User` or :class:`~nextcord.Member` is the owner of
