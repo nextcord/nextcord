@@ -1,5 +1,8 @@
 from __future__ import annotations
 import asyncio
+import inspect
+from functools import wraps
+
 from .interactions import Interaction
 from .client import Client
 from .application_command import ApplicationCommand as ApplicationCommandResponse
@@ -9,13 +12,14 @@ from inspect import signature, Parameter
 import logging
 from warnings import warn
 
-from typing import Dict, List, Optional, Union, Type, Any, Callable
+from typing import Dict, List, Optional, Union, Type, Any, Callable, Tuple
 from .user import User
 from .member import Member
 from .abc import GuildChannel
 from .role import Role
 from .state import ConnectionState
 from .enums import ChannelType
+from .http import HTTPClient
 
 _log = logging.getLogger(__name__)
 
@@ -171,12 +175,20 @@ class ApplicationSubcommand:
         if not self.name:
             self.name = self._callback.__name__
         first_arg = True
+
+        # print(f"ANALYZE CALLBACK: Self Skip: {self_skip} {self.callback}")
         for value in signature(self.callback).parameters.values():
+            self_skip = value.name == "self"  # TODO: What kind of hardcoding is this, figure out a better way for self!
             if first_arg:
                 # TODO: Is this even worth having?
+                # print(f"ANALYZE CALLBACK: First arg name is {value.name} {value.kind}")
                 if value.annotation is not value.empty and value.annotation is not Interaction:
+                    # print(f"ANALYZE CALLBACK: {value.name} - {value.annotation}")
                     raise TypeError("First argument in an Application Command should be an Interaction.")
-                first_arg = False
+                if self_skip:
+                    self_skip = False
+                else:
+                    first_arg = False
             else:
                 arg = CommandArgument(value)
                 self.arguments[arg.name] = arg
@@ -247,6 +259,8 @@ class ApplicationCommand(ApplicationSubcommand):
         super().__init__(callback=callback, parent=None, cmd_type=cmd_type, name=name, description=description,
                          guild_ids=None)
         self._state: Optional[ConnectionState] = None
+        # TODO: I thought there was a way around doing this, but *sigh*.
+        self.cog_parent: Optional[CommandCog] = None
         if guild_ids is None:
             guild_ids = list()
         if not asyncio.iscoroutinefunction(callback):
@@ -255,6 +269,7 @@ class ApplicationCommand(ApplicationSubcommand):
         self.default_permission: Optional[bool] = default_permission
         self.guild_ids: List[int] = guild_ids
         self.type = cmd_type
+        # TODO: If it's a guild command, we can have multiple IDs. Address that.
         self.id: Optional[int] = None
 
     def parse_response(self, response: ApplicationCommandResponse):
@@ -262,6 +277,12 @@ class ApplicationCommand(ApplicationSubcommand):
         # TODO: Grab state and have access to get_guild stuff for get_member and get_message for user/message commands.
         self.id = response.id
         self._state = response._state
+
+    async def invoke(self, interaction: Interaction, **kwargs):
+        if self.cog_parent:  # TODO: *SIGH*.
+            await self.callback(self.cog_parent, interaction, **kwargs)
+        else:
+            await super().invoke(interaction, **kwargs)
 
     @property
     def payload(self) -> Union[List[Dict[str, ...]], Dict[str, ...]]:
@@ -280,6 +301,100 @@ class ApplicationCommand(ApplicationSubcommand):
             return ret
 
 
+# class CommandCogMeta(type):
+#     def __new__(mcs, name, bases, namespace, **kwargs):
+#         new_cls = super(CommandCogMeta, mcs).__new__(mcs, name, bases, namespace, **kwargs)
+
+
+class CommandCog:
+    # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
+    # __cog_name__: str
+    # __cog_settings__: Dict[str, Any]
+    # __cog_application_commands__: List[ApplicationCommand]
+    # __cog_listeners__: List[Tuple[str, str]]
+    # __cog_to_register__: List[ApplicationCommand]
+    # __cog_commands__: Dict[int, ApplicationCommand]
+
+    # def __new__(cls, *args, **kwargs):
+    #     # name, bases, attrs = args
+    #     listeners = {}
+    #     commands = []
+    #
+    #     # for elem, value in cls.__dict__.items():
+    #     #     print(f"COG: {elem}.{value}")
+    #     #     if isinstance(value, ApplicationCommand):
+    #     #         print(f"COG: ADDING COMMAND!")
+    #     #         if isinstance(value, staticmethod):
+    #     #             raise TypeError(f"Command {cls.__name__}.{elem} can not be a staticmethod.")
+    #     #         commands.append(value)
+    #     #     elif inspect.iscoroutinefunction(value):
+    #     #         listeners[elem] = value
+    #     # new_cls = super(cls, CommandCog).__new__(cls, *args, **kwargs)
+    #     new_cls = super(CommandCog, cls).__new__(cls)
+    #     for base in reversed(new_cls.__class__.__mro__):
+    #         print(f"COG: {base}")
+    #         for elem, value in base.__dict__.items():
+    #             print(f"COG:   {elem}.{value}")
+    #             is_static_method = isinstance(value, staticmethod)
+    #             if is_static_method:
+    #                 value = value.__func__
+    #             if isinstance(value, ApplicationCommand):
+    #                 print(f"COG:     ADDING COMMAND {value.name}")
+    #                 if isinstance(value, staticmethod):
+    #                     raise TypeError(f"Command {cls.__name__}.{elem} can not be a staticmethod.")
+    #                 commands.append(value)
+    #
+    #     # new_cls.__cog_to_register__ = commands
+    #     print(f"TO REG: {commands}")
+    #     new_cls._to_register = commands
+    #     print(f"TO REG: {new_cls._to_register}")
+    #     return new_cls
+
+    def __init__(self, *args):
+        self._listeners: List[Tuple[str, str]] = list()  # TODO: Make this function.
+        self._to_register: List[ApplicationCommand] = list()
+        self._commands: Dict[int, ApplicationCommand] = dict()
+        self._read_methods()
+        # print(f"TO REGISTER: {self.to_register}")
+
+    def _read_methods(self):
+        # for elem, value in self.__dict__.items():
+        #     is_static_method = isinstance(value, staticmethod)
+        #     if is_static_method:
+        #         value = value.__func__
+        #     print(f"READ METHODS: {self.__dict__}")
+        #     print(f"READ METHODS: {type(value)}")
+        #     if isinstance(value, ApplicationCommand):
+        #         if is_static_method:
+        #             raise TypeError(f"Command {self.__name__}.{elem} can not be a staticmethod.")
+        #         self._to_register.append(value)
+            # elif inspect.iscoroutinefunction(value):
+            #     self._listeners[elem] = value
+        # new_cls = super(CommandCog, cls).__new__(cls)
+        for base in reversed(self.__class__.__mro__):
+            print(f"COG: {base}")
+            for elem, value in base.__dict__.items():
+                # print(f"COG:   {elem}.{value}")
+                is_static_method = isinstance(value, staticmethod)
+                if is_static_method:
+                    value = value.__func__
+                if isinstance(value, ApplicationCommand):
+                    print(f"COG:     ADDING COMMAND {value.name}")
+                    if isinstance(value, staticmethod):
+                        raise TypeError(f"Command {self.__name__}.{elem} can not be a staticmethod.")
+                    value.cog_parent = self
+                    self._to_register.append(value)
+
+    # @property
+    # def to_register(self) -> Dict[str, ApplicationCommand]:
+    #     return {cmd.name: cmd for cmd in self._to_register}
+
+    @property
+    def to_register(self) -> List[ApplicationCommand]:
+        print(f"TO REGISTER: {self._to_register}")
+        return self._to_register
+
+
 class CommandClient(Client):
     def __init__(self, register_commands_on_startup: bool = True,
                  delete_unknown_commands: bool = True,
@@ -287,40 +402,54 @@ class CommandClient(Client):
         super().__init__(*args, **kwargs)
         self._register_commands_on_startup: bool = register_commands_on_startup
         self._delete_unknown_commands: bool = delete_unknown_commands
-        self._registered_application_commands: Dict[int, ApplicationCommand] = dict()
-        self._to_be_registered_commands: List[ApplicationCommand] = list()
+
+        self._registered_commands: Dict[int, ApplicationCommand] = dict()
+        self._commands_to_register: List[ApplicationCommand] = list()
+        self._cogs: List[CommandCog] = list()  # TODO: Turn this into dict with names.
 
     async def on_connect(self):
         if self._register_commands_on_startup:
             await self.register_application_commands()
+            await self.register_cog_commands()
         await super().on_connect()
         if self._delete_unknown_commands:
             await self.delete_unknown_commands()
-        print(f"ON CONNECT: {self._connection.application_commands}")
+        print(f"ON CONNECT: Registered commmand count: {len(self._connection.application_commands)}")
 
     async def register_application_commands(self):
-        print(f"TO BE REGISTERED: {self._to_be_registered_commands}")
-        for not_registered_cmd in self._to_be_registered_commands:
-            if not_registered_cmd.guild_ids:
-                guild_payloads = not_registered_cmd.payload
-                for payload in guild_payloads:
-                    response_json = await self.http.upsert_guild_command(self.application_id, payload["guild_id"],
-                                                                         payload)
-                    not_registered_cmd.parse_response(ApplicationCommandResponse(self._connection, response_json))
-                    self._registered_application_commands[not_registered_cmd.id] = not_registered_cmd
-                    print(f"REGISTERED COMMAND {not_registered_cmd.name} FOR GUILD {payload['guild_id']}")
-                    print(payload)
-            else:
-                response_json = await self.http.upsert_global_command(self.application_id, not_registered_cmd.payload)
-                not_registered_cmd.parse_response(ApplicationCommandResponse(self._connection, response_json))
-                self._registered_application_commands[not_registered_cmd.id] = not_registered_cmd
-        self._to_be_registered_commands.clear()
+        print(f"TO BE REGISTERED: {self._commands_to_register}")
+        for cmd in self._commands_to_register:
+            await self.register_command(cmd)
+        self._commands_to_register.clear()
+
+    async def register_cog_commands(self):
+        print("REG COG CMD: Called.")
+        for cog in self._cogs:
+            print("REG COG CMD:   Cog.")
+            if to_register := cog.to_register:
+                for cmd in to_register:
+                    print(f"REG COG CMD:     {cmd.name}")
+                    await self.register_command(cmd)
+
+    async def register_command(self, command: ApplicationCommand):
+        # TODO: Worth having a guild override? Seems unnecessary, but some people want to do seemingly
+        #  unnecessary things.
+        if command.guild_ids:
+            for payload in command.payload:
+                # TODO: Just realized that the same command object is getting linked to each app_cmd ID. Look into
+                #  downsides of doing so.
+                response_json = await self.http.upsert_guild_command(self.application_id, payload["guild_id"], payload)
+                command.parse_response(ApplicationCommandResponse(self._connection, response_json))
+                self._registered_commands[command.id] = command
+        else:
+            response_json = await self.http.upsert_global_command(self.application_id, command.payload)
+            command.parse_response(ApplicationCommandResponse(self._connection, response_json))
+            self._registered_commands[command.id] = command
 
     async def delete_unknown_commands(self):
         to_remove = list()
         for app_response in self._connection.application_commands:
-            if app_response.id not in self._registered_application_commands:
-
+            if app_response.id not in self._registered_commands:
                 if app_response.guild_id:
                     print(f"Removing command NAME {app_response.name} ID {app_response.id} from "
                           f"GUILD {app_response.guild.name} ID {app_response.guild_id}")
@@ -333,7 +462,10 @@ class CommandClient(Client):
             self._connection._remove_application_command(app_id)
 
     def add_application_command_request(self, application_command: ApplicationCommand):
-        self._to_be_registered_commands.append(application_command)
+        self._commands_to_register.append(application_command)
+
+    def add_cog(self, cog: CommandCog):
+        self._cogs.append(cog)
 
     def user_command(self, *args, **kwargs):
         def decorator(func: Callable):
@@ -358,9 +490,9 @@ class CommandClient(Client):
 
     async def on_application_command(self, interaction: Interaction):
         print(f"ON APPLICATION COMMAND: {interaction.data}")
-        print(f"ON APPLICATION COMMAND: \n{interaction.data}\n{self._registered_application_commands}")
+        print(f"ON APPLICATION COMMAND: \n{interaction.data}\n{self._registered_commands}")
         if interaction.data['type'] in (1, 2, 3) and \
-                (app_cmd := self._registered_application_commands.get(int(interaction.data["id"]))):
+                (app_cmd := self._registered_commands.get(int(interaction.data["id"]))):
             print("Found viable command, calling it!")
             await app_cmd.call(self._connection, interaction, interaction.data.get("options", dict()))
 
@@ -371,6 +503,16 @@ def slash_command(*args, **kwargs):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
         return ApplicationCommand(func, cmd_type=CommandType.CHAT_INPUT, *args, **kwargs)
     return decorator
+
+
+# def slash_command(*args, **kwargs):
+#     def decorator(func: Callable):
+#         @wraps(func)
+#         async def wrapper(self, *other_args, **other_kwargs):
+#             return func(self, *other_args, **other_kwargs)
+#         return ApplicationCommand(wrapper, cmd_type=CommandType.CHAT_INPUT, *args, **kwargs)
+#
+#     return decorator
 
 
 def message_command(*args, **kwargs):
