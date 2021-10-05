@@ -310,9 +310,9 @@ class CommandCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
     # __cog_name__: str
     # __cog_settings__: Dict[str, Any]
-    # __cog_application_commands__: List[ApplicationCommand]
+    __cog_application_commands__: Dict[int, ApplicationCommand]
     # __cog_listeners__: List[Tuple[str, str]]
-    # __cog_to_register__: List[ApplicationCommand]
+    __cog_to_register__: List[ApplicationCommand]
     # __cog_commands__: Dict[int, ApplicationCommand]
 
     # def __new__(cls, *args, **kwargs):
@@ -350,12 +350,26 @@ class CommandCog:
     #     print(f"TO REG: {new_cls._to_register}")
     #     return new_cls
 
-    def __init__(self, *args):
-        self._listeners: List[Tuple[str, str]] = list()  # TODO: Make this function.
-        self._to_register: List[ApplicationCommand] = list()
-        self._commands: Dict[int, ApplicationCommand] = dict()
-        self._read_methods()
-        # print(f"TO REGISTER: {self.to_register}")
+    def __new__(cls, *args, **kwargs):
+        # new_cls = super().__new__(cls)
+        # new_cls._listeners: List[Tuple[str, str]] = list()  # TODO: Make this function.
+        # new_cls._to_register: List[ApplicationCommand] = list()
+        # new_cls._commands: Dict[int, ApplicationCommand] = dict()
+        # new_cls._read_methods()
+        # return new_cls
+        new_cls = super(CommandCog, cls).__new__(cls)
+        new_cls._read_methods()
+        return new_cls
+
+
+
+
+    # def __init__(self, *args):
+    #     self._listeners: List[Tuple[str, str]] = list()  # TODO: Make this function.
+    #     self._to_register: List[ApplicationCommand] = list()
+    #     self._commands: Dict[int, ApplicationCommand] = dict()
+    #     self._read_methods()
+    #     # print(f"TO REGISTER: {self.to_register}")
 
     def _read_methods(self):
         # for elem, value in self.__dict__.items():
@@ -371,6 +385,7 @@ class CommandCog:
             # elif inspect.iscoroutinefunction(value):
             #     self._listeners[elem] = value
         # new_cls = super(CommandCog, cls).__new__(cls)
+        self.__cog_to_register__ = list()
         for base in reversed(self.__class__.__mro__):
             print(f"COG: {base}")
             for elem, value in base.__dict__.items():
@@ -383,7 +398,7 @@ class CommandCog:
                     if isinstance(value, staticmethod):
                         raise TypeError(f"Command {self.__name__}.{elem} can not be a staticmethod.")
                     value.cog_parent = self
-                    self._to_register.append(value)
+                    self.__cog_to_register__.append(value)
 
     # @property
     # def to_register(self) -> Dict[str, ApplicationCommand]:
@@ -391,8 +406,8 @@ class CommandCog:
 
     @property
     def to_register(self) -> List[ApplicationCommand]:
-        print(f"TO REGISTER: {self._to_register}")
-        return self._to_register
+        print(f"TO REGISTER: {self.__cog_to_register__}")
+        return self.__cog_to_register__
 
 
 class CommandClient(Client):

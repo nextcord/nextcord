@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import inspect
 import nextcord.utils
+import nextcord.command_client
 
 from typing import Any, Callable, ClassVar, Dict, Generator, List, Optional, TYPE_CHECKING, Tuple, TypeVar, Type
 
@@ -174,7 +175,7 @@ def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
     return func
 
-class Cog(metaclass=CogMeta):
+class Cog(nextcord.command_client.CommandCog, metaclass=CogMeta):
     """The base class that all cogs must inherit from.
 
     A cog is a collection of commands, listeners, and optional state to

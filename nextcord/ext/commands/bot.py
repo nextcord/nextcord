@@ -36,6 +36,7 @@ import types
 from typing import Any, Callable, Mapping, List, Dict, TYPE_CHECKING, Optional, TypeVar, Type, Union
 
 import nextcord
+import nextcord.command_client
 
 from .core import GroupMixin
 from .view import StringView
@@ -555,6 +556,8 @@ class BotBase(GroupMixin):
 
         cog = cog._inject(self)
         self.__cogs[cog_name] = cog
+        # TODO: Mirror this in CommandClient so it actually lines up. Also put it somewhere that actually makes sense.
+        super().add_cog(cog)
 
     def get_cog(self, name: str) -> Optional[Cog]:
         """Gets the cog instance requested.
@@ -1035,7 +1038,8 @@ class BotBase(GroupMixin):
     async def on_message(self, message):
         await self.process_commands(message)
 
-class Bot(BotBase, nextcord.Client):
+# class Bot(BotBase, nextcord.Client):
+class Bot(BotBase, nextcord.command_client.CommandClient):
     """Represents a discord bot.
 
     This class is a subclass of :class:`nextcord.Client` and as a result
