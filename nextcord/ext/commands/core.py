@@ -1188,7 +1188,7 @@ class GroupMixin(Generic[CogT]):
 
         self.all_commands[command.name] = command
         for alias in command.aliases:
-            if alias in self.all_commands:
+            if alias in self.all_commands and alias != command.name:
                 self.remove_command(command.name)
                 raise CommandRegistrationError(alias, alias_conflict=True)
             self.all_commands[alias] = command
