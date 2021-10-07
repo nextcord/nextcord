@@ -2420,6 +2420,7 @@ class Guild(Hashable):
         colour: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
+        icon: Optional[Union[str, bytes, File]] = ...,
     ) -> Role:
         ...
 
@@ -2433,6 +2434,7 @@ class Guild(Hashable):
         color: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
+        icon: Optional[Union[str, bytes, File]] = ...,
     ) -> Role:
         ...
 

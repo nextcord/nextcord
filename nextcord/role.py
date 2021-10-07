@@ -448,6 +448,7 @@ class Role(Hashable):
                 payload['icon'] = icon
             elif isinstance(icon, str):
                 payload['unicode_emoji'] = icon
+                payload['icon'] = None
             elif isinstance(icon, File):
                 payload['icon'] = _bytes_to_base64_data(icon.fp.read())
             else:
