@@ -78,6 +78,7 @@ from .sticker import GuildSticker
 from .file import File
 
 
+
 __all__ = (
     'Guild',
 )
@@ -2445,7 +2446,7 @@ class Guild(Hashable):
         hoist: bool = MISSING,
         mentionable: bool = MISSING,
         reason: Optional[str] = None,
-        icon: Optional[Union[str, bytes]] = MISSING,
+        icon: Optional[Union[str, bytes, File]] = MISSING,
     ) -> Role:
         """|coro|
 
@@ -2519,6 +2520,8 @@ class Guild(Hashable):
                 fields['icon'] = icon
             elif isinstance(icon, str):
                 fields['unicode_emoji'] = icon
+            elif isinstance(icon, File):
+                fields['icon'] = utils._bytes_to_base64_data(icon.fp.read())
             else:
                 fields['icon'] = utils._bytes_to_base64_data(icon)
 

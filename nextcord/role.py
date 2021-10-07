@@ -32,6 +32,7 @@ from .errors import InvalidArgument
 from .colour import Colour
 from .mixins import Hashable
 from .utils import snowflake_time, _get_as_snowflake, MISSING
+from .file import File
 
 __all__ = (
     'RoleTags',
@@ -367,7 +368,7 @@ class Role(Hashable):
         mentionable: bool = MISSING,
         position: int = MISSING,
         reason: Optional[str] = MISSING,
-        icon: Optional[Union[str, bytes]] = MISSING,
+        icon: Optional[Union[str, bytes, File]] = MISSING,
     ) -> Optional[Role]:
         """|coro|
 
@@ -447,6 +448,8 @@ class Role(Hashable):
                 payload['icon'] = icon
             elif isinstance(icon, str):
                 payload['unicode_emoji'] = icon
+            elif isinstance(icon, File):
+                payload['icon'] = _bytes_to_base64_data(icon.fp.read())
             else:
                 payload['icon'] = _bytes_to_base64_data(icon)
 
