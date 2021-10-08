@@ -109,6 +109,10 @@ There is a lot going on here, so let's take it step by step.
 2. Now we need to create an instance of :class:`Bot`. This is what we will use to add
    commands onto our bot. This is also has all of the features from :class:`Client` through 
    a process called inheritence.
+   
+   We also pass an argument called ``command_prefix``, this lets us tell our bot
+   what the prefix all commands should be called with are. In our case, all commands
+   will need to be prefixed with ``!``
 3. We then use the same :func:`on_ready` from our minimal bot to tell us when 
    our bot has finished logging into discord and is setup.
 4. By putting `@bot.command()` before a function, we are telling our but that this is a command.
