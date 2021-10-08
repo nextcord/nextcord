@@ -129,6 +129,13 @@ There is a lot going on here, so let's take it step by step.
 :class:`Bot` also features a built-in help command. You can view this with your prefix
 following by ``help``, in our case it's ``!help``. Try it out yourself.
 
+For more information on commands within Nextcord, refer to the following documentation.
+
+.. toctree::
+  :maxdepth: 1
+
+  ext/commands/index.rst
+
 
 Next Steps
 ----------
