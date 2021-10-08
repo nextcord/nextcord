@@ -112,15 +112,18 @@ There is a lot going on here, so let's take it step by step.
 3. We then use the same :func:`on_ready` from our minimal bot to tell us when 
    our bot has finished logging into discord and is setup.
 4. By putting `@bot.command()` before a function, we are telling our but that this is a command.
-   The bot will then create a command using the name of the function, in this case `ping`.
+   The bot will then create a command using the name of the function, in this case ``ping``.
    
    When the bot is run, this command can be called by combining the command name and the 
-   command prefix we defined in :class:`Bot`. `!ping`, by running this the bot should respond
-   with `Pong!`
+   command prefix we defined in :class:`Bot`. ``!ping``, by running this the bot should respond
+   with ``Pong!``
    
    If you wish to name a function differently, you can provide a name in the decorator like so.
    `@bot.command(name="name")`
+5. Finally, we run the bot with our login token. This is the same as the minimal bot.
 
+:class:`Bot` also features a built-in help command. You can view this with your prefix
+following by ``help``, in our case it's ``!help``. Try it out yourself.
 
 
 Next Steps
