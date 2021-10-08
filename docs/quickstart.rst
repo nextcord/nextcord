@@ -32,8 +32,8 @@ It looks something like this:
         if message.author == client.user:
             return
 
-        if message.content.startswith('$hello'):
-            await message.channel.send('Hello!')
+        if message.content.startswith('!ping'):
+            await message.channel.send('Pong!')
 
     client.run('your token here')
 
@@ -54,9 +54,9 @@ A lot is going on here, so let's walk you through it step by step.
 4. Since the :func:`on_message` event triggers for *every* message received, we have to make
    sure that we ignore messages from ourselves. We do this by checking if the :attr:`Message.author`
    is the same as the :attr:`Client.user`.
-5. Afterwards, we check if the :class:`Message.content` starts with ``'$hello'``. If it does,
-   then we send a message in the channel it was used in with ``'Hello!'``. This is a basic way of 
-   handling commands, which can be later automated with the :doc:`./ext/commands/index` framework.
+5. Afterwards, we check if the :class:`Message.content` starts with ``'!ping'``. If it does,
+   then we send a message in the channel it was used in with ``'Pong!'``. This is a basic way of 
+   handling commands, which can be later automated with the :doc:`./ext/commands/index` framework as shown below.
 6. Finally, we run the bot with our login token. If you need help getting your token or creating a bot,
    look in the :ref:`discord-intro` section.
 
@@ -77,3 +77,48 @@ On other systems:
     $ python3 example_bot.py
 
 Now you can try playing around with your basic bot.
+
+A Minimal Bot With Commands
+---------------------------
+
+Now we have a basic bot, lets use the commands framework to add a simple command.
+
+It looks something like this:
+
+.. code-block:: python3
+
+    import nextcord
+    from nextcord import commands
+
+    bot = commands.Bot(command_prefix="!")
+    
+    @bot.event
+    async def on_ready():
+        print(f'We have logged in as {bot.user}')
+        
+    @bot.command()
+    async def ping(ctx):
+        await ctx.send("Pong!")
+        
+    bot.run("Your token here")
+
+There is a lot going on here, so let's take it step by step.
+
+1. Previously we saw how to import the base
+
+
+Next Steps
+----------
+
+For further examples of bots created using Nextcord, click :resource:`here <examples>`.
+
+Otherwise, try to play around with your bot and add some new features. 
+
+Heres some fun examples:
+- Make the hello command also mention the person who ran the command
+    - Hint: Look in the docs for `.mention`
+- Make your bot print/send a message when someone joins your guild.
+    - Hint: You will need to setup member intents, you can find more information on that here. :doc:`intro` 
+- Make your bot case insensitive 
+- Make a command called `echo`, which repeats the command input.
+    - Hint: `(ctx, *, message):` will mean everything said will be stored in the variable `message`
