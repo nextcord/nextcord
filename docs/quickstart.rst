@@ -134,7 +134,7 @@ For more information on commands within Nextcord, refer to the following documen
 .. toctree::
   :maxdepth: 1
 
-  ext/commands/index.rst
+  ext/commands/commands.rst
 
 
 Next Steps
