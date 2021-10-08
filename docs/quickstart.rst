@@ -32,8 +32,8 @@ It looks something like this:
         if message.author == client.user:
             return
 
-        if message.content.startswith('!ping'):
-            await message.channel.send('Pong!')
+        if message.content.startswith('$hello'):
+            await message.channel.send('Hello!')
 
     client.run('your token here')
 
@@ -54,8 +54,8 @@ A lot is going on here, so let's walk you through it step by step.
 4. Since the :func:`on_message` event triggers for *every* message received, we have to make
    sure that we ignore messages from ourselves. We do this by checking if the :attr:`Message.author`
    is the same as the :attr:`Client.user`.
-5. Afterwards, we check if the :class:`Message.content` starts with ``'!ping'``. If it does,
-   then we send a message in the channel it was used in with ``'Pong!'``. This is a basic way of 
+5. Afterwards, we check if the :class:`Message.content` starts with ``'$hello'``. If it does,
+   then we send a message in the channel it was used in with ``'Hello!'``. This is a basic way of 
    handling commands, which can be later automated with the :doc:`./ext/commands/index` framework as shown below.
 6. Finally, we run the bot with our login token. If you need help getting your token or creating a bot,
    look in the :ref:`discord-intro` section.
@@ -90,15 +90,15 @@ It looks something like this:
     import nextcord
     from nextcord import commands
 
-    bot = commands.Bot(command_prefix="!")
+    bot = commands.Bot(command_prefix="$")
     
     @bot.event
     async def on_ready():
         print(f'We have logged in as {bot.user}')
         
     @bot.command()
-    async def ping(ctx):
-        await ctx.send("Pong!")
+    async def hello(ctx):
+        await ctx.send("Hello!")
         
     bot.run("Your token here")
 
@@ -112,22 +112,22 @@ There is a lot going on here, so let's take it step by step.
    
    We also pass an argument called ``command_prefix``, this lets us tell our bot
    what the prefix all commands should be called with are. In our case, all commands
-   will need to be prefixed with ``!``
+   will need to be prefixed with ``$``
 3. We then use the same :func:`on_ready` from our minimal bot to tell us when 
    our bot has finished logging into discord and is setup.
 4. By putting `@bot.command()` before a function, we are telling our but that this is a command.
-   The bot will then create a command using the name of the function, in this case ``ping``.
+   The bot will then create a command using the name of the function, in this case ``hello``.
    
    When the bot is run, this command can be called by combining the command name and the 
-   command prefix we defined in :class:`Bot`. ``!ping``, by running this the bot should respond
-   with ``Pong!``
+   command prefix we defined in :class:`Bot`. ``$hello``, by running this the bot should respond
+   with ``Hello!``
    
    If you wish to name a function differently, you can provide a name in the decorator like so.
    `@bot.command(name="name")`
 5. Finally, we run the bot with our login token. This is the same as the minimal bot.
 
 :class:`Bot` also features a built-in help command. You can view this with your prefix
-following by ``help``, in our case it's ``!help``. Try it out yourself.
+following by ``help``, in our case it's ``$help``. Try it out yourself.
 
 For more information on commands within Nextcord, refer to the following documentation.
 
