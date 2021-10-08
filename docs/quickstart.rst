@@ -104,7 +104,23 @@ It looks something like this:
 
 There is a lot going on here, so let's take it step by step.
 
-1. Previously we saw how to import the base
+1. Previously we saw how to import the base, now we also need to import the commands extension
+   from nextcord as this is how we will define our commands on our bot.
+2. Now we need to create an instance of :class:`Bot`. This is what we will use to add
+   commands onto our bot. This is also has all of the features from :class:`Client` through 
+   a process called inheritence.
+3. We then use the same :func:`on_ready` from our minimal bot to tell us when 
+   our bot has finished logging into discord and is setup.
+4. By putting `@bot.command()` before a function, we are telling our but that this is a command.
+   The bot will then create a command using the name of the function, in this case `ping`.
+   
+   When the bot is run, this command can be called by combining the command name and the 
+   command prefix we defined in :class:`Bot`. `!ping`, by running this the bot should respond
+   with `Pong!`
+   
+   If you wish to name a function differently, you can provide a name in the decorator like so.
+   `@bot.command(name="name")`
+
 
 
 Next Steps
