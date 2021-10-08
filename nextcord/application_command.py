@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional, List
-from enum import IntEnum
+# from enum import IntEnum
+from .enums import ApplicationCommandType, ApplicationCommandOptionType
 from .mixins import Hashable
 from . import utils
 
@@ -9,23 +10,30 @@ if TYPE_CHECKING:
     from .guild import Guild
 
 
-class ApplicationCommandType(IntEnum):
-    CHAT_INPUT = 1
-    USER = 2
-    MESSAGE = 3
+# class ApplicationCommandType(IntEnum):
+#     CHAT_INPUT = 1
+#     USER = 2
+#     MESSAGE = 3
 
 
-class ApplicationCommandOptionType(IntEnum):
-    SUB_COMMAND = 1
-    SUB_COMMAND_GROUP = 2
-    STRING = 3
-    INTEGER = 4
-    BOOLEAN = 5
-    USER = 6
-    CHANNEL = 7
-    ROLE = 8
-    MENTIONABLE = 9
-    NUMBER = 10  # A double, AKA floating point, AKA decimal.
+# class ApplicationCommandOptionType(IntEnum):
+#     SUB_COMMAND = 1
+#     SUB_COMMAND_GROUP = 2
+#     STRING = 3
+#     INTEGER = 4
+#     BOOLEAN = 5
+#     USER = 6
+#     CHANNEL = 7
+#     ROLE = 8
+#     MENTIONABLE = 9
+#     NUMBER = 10  # A double, AKA floating point, AKA decimal.
+
+
+__all__ = (
+    'ApplicationCommandOptionChoice',
+    'ApplicationCommandOption',
+    'ApplicationCommandResponse'
+)
 
 
 class ApplicationCommandOptionChoice:
@@ -61,7 +69,7 @@ class ApplicationCommandOption:
         return [ApplicationCommandOption(raw_option) for raw_option in data]
 
 
-class ApplicationCommand(Hashable):
+class ApplicationCommandResponse(Hashable):
 
     def __init__(self, state: ConnectionState, payload: dict):
         self._state: ConnectionState = state

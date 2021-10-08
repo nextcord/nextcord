@@ -62,7 +62,7 @@ from .stage_instance import StageInstance
 from .interactions import Interaction
 from .threads import Thread
 from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factory
-from .application_command import ApplicationCommand
+from .application_command import ApplicationCommandResponse
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
@@ -1663,14 +1663,14 @@ class Client:
         pass
         raw_response = await self.http.get_global_commands(self.application_id)
         for raw_command in raw_response:
-            app_cmd_response = ApplicationCommand(self._connection, raw_command)
+            app_cmd_response = ApplicationCommandResponse(self._connection, raw_command)
             self._connection._add_application_command(app_cmd_response)
         for guild in self.guilds:
             print(f"GET APP CMDS: grabbing commands from guild {guild.name}")
             try:
                 raw_response = await self.http.get_guild_commands(self.application_id, guild.id)
                 for raw_command in raw_response:
-                    app_cmd_response = ApplicationCommand(self._connection, raw_command)
+                    app_cmd_response = ApplicationCommandResponse(self._connection, raw_command)
                     self._connection._add_application_command(app_cmd_response)
             except Forbidden:
                 print(f"From get_application_commands, we don't have command permissions for "

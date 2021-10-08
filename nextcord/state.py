@@ -58,7 +58,6 @@ from .ui.view import ViewStore, View
 from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
-from .application_command import ApplicationCommand
 
 if TYPE_CHECKING:
     from .abc import PrivateChannel
@@ -76,7 +75,7 @@ if TYPE_CHECKING:
     from .types.sticker import GuildSticker as GuildStickerPayload
     from .types.guild import Guild as GuildPayload
     from .types.message import Message as MessagePayload
-    from .application_command import ApplicationCommand
+    from .application_command import ApplicationCommandResponse
 
     T = TypeVar('T')
     CS = TypeVar('CS', bound='ConnectionState')
@@ -255,9 +254,9 @@ class ConnectionState:
         self._emojis: Dict[int, Emoji] = {}
         self._stickers: Dict[int, GuildSticker] = {}
         self._guilds: Dict[int, Guild] = {}
-        self._application_commands: Dict[int, ApplicationCommand] = {}
-        self._guild_application_command_names: Dict[int, Dict[str, ApplicationCommand]] = {}
-        self._global_applicaiton_command_names: Dict[str, ApplicationCommand] = {}
+        self._application_commands: Dict[int, ApplicationCommandResponse] = {}
+        self._guild_application_command_names: Dict[int, Dict[str, ApplicationCommandResponse]] = {}
+        self._global_applicaiton_command_names: Dict[str, ApplicationCommandResponse] = {}
         if views:
             self._view_store: ViewStore = ViewStore(self)
 
@@ -312,10 +311,10 @@ class ConnectionState:
         return ret
 
     @property
-    def application_commands(self) -> List[ApplicationCommand]:
+    def application_commands(self) -> List[ApplicationCommandResponse]:
         return list(self._application_commands.values())
 
-    def _add_application_command(self, app_cmd: ApplicationCommand):
+    def _add_application_command(self, app_cmd: ApplicationCommandResponse):
         self._application_commands[app_cmd.id] = app_cmd
         if app_cmd.guild_id:
             if app_cmd.guild_id not in self._guild_application_command_names:
@@ -324,13 +323,13 @@ class ConnectionState:
         else:
             self._global_applicaiton_command_names[app_cmd.name] = app_cmd
 
-    def get_application_command(self, cmd_id: int) -> Optional[ApplicationCommand]:
+    def get_application_command(self, cmd_id: int) -> Optional[ApplicationCommandResponse]:
         return self._application_commands.get(cmd_id, None)
 
-    def get_guild_application_command(self, guild_id: int, name: str) -> Optional[ApplicationCommand]:
+    def get_guild_application_command(self, guild_id: int, name: str) -> Optional[ApplicationCommandResponse]:
         return self._guild_application_command_names.get(guild_id, dict()).get(name, None)
 
-    def get_global_application_command(self, name: str) -> Optional[ApplicationCommand]:
+    def get_global_application_command(self, name: str) -> Optional[ApplicationCommandResponse]:
         return self._global_applicaiton_command_names.get(name, None)
 
     def _remove_application_command(self, cmd_id: int):

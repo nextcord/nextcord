@@ -3,12 +3,11 @@ import asyncio
 
 from .interactions import Interaction
 from .client import Client
-from .application_command import ApplicationCommand as ApplicationCommandResponse
-from .application_command import ApplicationCommandOptionType as CommandOptionType
-from .application_command import ApplicationCommandType as CommandType
+from .enums import ApplicationCommandOptionType as CommandOptionType
+from .enums import ApplicationCommandType as CommandType
+from .application_command import ApplicationCommandResponse
 from inspect import signature, Parameter
 import logging
-from warnings import warn
 
 from typing import Dict, List, Optional, Union, Type, Any, Callable
 from .user import User
@@ -37,22 +36,6 @@ __all__ = (
 
 class InvalidCommandType(Exception):
     pass
-
-
-class FakeContext:
-    def __init__(self, interaction: Interaction):
-        self.interaction = interaction
-        self.message: Optional[Message] = interaction.message
-        self.guild = interaction.guild
-        self.channel = interaction.channel
-        self.author = interaction.user
-        self.me = self.guild.me
-
-    async def reply(self, content: Optional[str] = None, **kwargs: Any):
-        return await self.message.reply(content, **kwargs)
-
-    async def send(self, content=None, **kwargs):
-        return await self.interaction.response.send_message(content=content, **kwargs)
 
 
 class CmdArg:
@@ -98,41 +81,41 @@ class CommandArgument(CmdArg):
 
     def get_type(self, typing: Type) -> CommandOptionType:
         if typing is self.parameter.empty:
-            return CommandOptionType.STRING
+            return CommandOptionType.string
         elif typing is str:
-            return CommandOptionType.STRING
+            return CommandOptionType.string
         elif typing is int:
-            return CommandOptionType.INTEGER
+            return CommandOptionType.integer
         elif typing is bool:
-            return CommandOptionType.BOOLEAN
+            return CommandOptionType.boolean
         elif typing is User or typing is Member:
-            return CommandOptionType.USER
+            return CommandOptionType.user
         elif typing is GuildChannel:  # TODO: Make this more inclusive.
-            return CommandOptionType.CHANNEL
+            return CommandOptionType.channel
         elif typing is Role:
-            return CommandOptionType.ROLE
+            return CommandOptionType.role
         # elif isinstance(typing, Mentionable):  # TODO: Is this in the library at all?? Includes Users AND Roles?
         #     return CommandOptionType.MENTIONABLE
         elif typing is float:
-            return CommandOptionType.NUMBER
+            return CommandOptionType.number
         else:
             raise NotImplementedError(f"Type \"{typing}\" isn't supported.")
 
     def verify(self):
         """This should run through CmdArg variables and raise errors when conflicting data is given."""
-        if self.channel_types and self.type is not CommandOptionType.CHANNEL:
+        if self.channel_types and self.type is not CommandOptionType.channel:
             raise ValueError("channel_types can only be given when the var is typed as nextcord.abc.GuildChannel")
 
     def handle_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
-        if self.type is CommandOptionType.CHANNEL:
+        if self.type is CommandOptionType.channel:
             return state.get_channel(int(argument))
-        elif self.type is CommandOptionType.USER:
+        elif self.type is CommandOptionType.user:
             return interaction.guild.get_member(int(argument))
-        elif self.type is CommandOptionType.ROLE:
+        elif self.type is CommandOptionType.role:
             return interaction.guild.get_role(int(argument))
-        elif self.type is CommandOptionType.INTEGER:
+        elif self.type is CommandOptionType.integer:
             return int(argument)
-        elif self.type is CommandOptionType.NUMBER:
+        elif self.type is CommandOptionType.number:
             return float(argument)
         return argument
 
@@ -179,7 +162,6 @@ class ApplicationSubcommand:
         self.choices: Dict[str, Any] = choices
 
         self.cog_parent: Optional[CommandCog] = cog_parent
-        self._use_fake_context: bool = False
         self.arguments: Dict[str, CommandArgument] = dict()
         self.children: Dict[str, ApplicationSubcommand] = dict()
         self._analyze_content()
@@ -191,14 +173,14 @@ class ApplicationSubcommand:
                                       "support this.")
         if isinstance(self._parent, ApplicationCommand):
             if self.children:
-                self.type = CommandOptionType.SUB_COMMAND_GROUP
+                self.type = CommandOptionType.sub_command_group
             else:
-                self.type = CommandOptionType.SUB_COMMAND
-        if self.type is CommandType.USER or self.type is CommandType.MESSAGE:
+                self.type = CommandOptionType.sub_command
+        if self.type is CommandType.user or self.type is CommandType.message:
             self.description = ""
             print(f"ANALYZE CONTENT: {self.description}")
         else:
-            print(f"ANALYZE CONTENT: {self.type} {type(self.type)} {CommandType.USER}")
+            print(f"ANALYZE CONTENT: {self.type} {type(self.type)} {CommandType.user}")
             if not self.description:
                 self.description = " "
 
@@ -213,10 +195,7 @@ class ApplicationSubcommand:
             if first_arg:
                 # TODO: Is this even worth having?
                 # print(f"ANALYZE CALLBACK: First arg name is {value.name} {value.kind}")
-                if value.annotation is not value.empty and value.annotation.__name__ == "Context":
-                    warn("Please migrate Context to Interaction.", DeprecationWarning, stacklevel=3)
-                    self._use_fake_context = True
-                elif value.annotation is not value.empty and value.annotation is not Interaction:
+                if value.annotation is not value.empty and value.annotation is not Interaction:
                     # print(f"ANALYZE CALLBACK: {value.name} - {value.annotation}")
                     raise TypeError("First argument in an Application Command should be an Interaction.")
                 if self_skip:
@@ -236,27 +215,13 @@ class ApplicationSubcommand:
         if self.children:
             print(f"Found children, running that in {self.name} with options {option_data[0].get('options', dict())}")
             await self.children[option_data[0]["name"]].call(state, interaction, option_data[0].get("options", dict()))
-        elif self.type in (CommandType.CHAT_INPUT, CommandOptionType.SUB_COMMAND):
+        elif self.type in (CommandType.chat_input, CommandOptionType.sub_command):
             await self.call_invoke_slash(state, interaction, option_data)
         else:
-            raise InvalidCommandType
-            # kwargs = dict()
-            # uncalled_args = self.arguments.copy()
-            # for arg_data in option_data:
-            #     if arg_data["name"] in uncalled_args:
-            #         uncalled_args.pop(arg_data["name"])
-            #         kwargs[self.arguments[arg_data["name"]].functional_name] = \
-            #             self.arguments[arg_data["name"]].handle_argument(state, arg_data["value"], interaction)
-            #     else:
-            #         # TODO: Handle this better.
-            #         raise NotImplementedError(f"An argument was provided that wasn't already in the function, did you"
-            #                                   f"recently change it?\nRegistered Args: {self.arguments}, Discord-sent"
-            #                                   f"args: {interaction.data['options']}, broke on {arg_data}")
-            # for uncalled_arg in uncalled_args.values():
-            #     kwargs[uncalled_arg.functional_name] = uncalled_arg.default
-            # await self.invoke(interaction, **kwargs)
+            raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
-    async def call_invoke_slash(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
+    async def call_invoke_slash(self, state: ConnectionState, interaction: Interaction,
+                                option_data: List[Dict[str, Any]]):
         print(f"Running call + invoke in command {self.name}")
         kwargs = dict()
         uncalled_args = self.arguments.copy()
@@ -274,26 +239,16 @@ class ApplicationSubcommand:
             kwargs[uncalled_arg.functional_name] = uncalled_arg.default
         await self.invoke_slash(interaction, **kwargs)
 
-    # async def invoke_slash(self, interaction: Interaction, **kwargs):
-    #     # Invokes the callback with the kwargs given.
-    #     if self._use_fake_context:
-    #         await self.callback(FakeContext(interaction), **kwargs)
-    #     else:
-    #         await self.callback(interaction, **kwargs)
-
     async def invoke_slash(self, interaction: Interaction, **kwargs):
         # Invokes the callback with the kwargs given.
-        if self._use_fake_context:
-            interaction = FakeContext(interaction)
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, **kwargs)
         else:
             await self.callback(interaction, **kwargs)
 
     def error(self, coro):
-        print("APPLICATION SUBCOMMAND ERROR: This isn't actually implemented yet.")
-        # TODO: ^
-        return coro
+        # TODO: Parity with legacy commands.
+        raise NotImplementedError
 
     @property
     def payload(self) -> dict:
@@ -313,18 +268,10 @@ class ApplicationSubcommand:
 
     def subcommand(self, **kwargs):
         def decorator(func: Callable):
-            result = ApplicationSubcommand(func, self, CommandOptionType.SUB_COMMAND, **migrate_kwargs(kwargs))
+            result = ApplicationSubcommand(func, self, CommandOptionType.sub_command, **kwargs)
             self.children[result.name] = result
             return result
         return decorator
-
-    def group(self, **kwargs):
-        warn("This function will be removed for application commands.", DeprecationWarning, stacklevel=2)
-        return self.subcommand(**kwargs)
-
-    def command(self, **kwargs):
-        warn("This function will be removed for application commands.", DeprecationWarning, stacklevel=2)
-        return self.subcommand(**kwargs)
 
 
 class ApplicationCommand(ApplicationSubcommand):
@@ -353,25 +300,26 @@ class ApplicationCommand(ApplicationSubcommand):
         self.id = response.id
         self._state = response._state
 
-    # async def invoke(self, interaction: Interaction, **kwargs):
-    #     if self.cog_parent:  # TODO: *SIGH*.
-    #         await self.callback(self.cog_parent, interaction, **kwargs)
-    #     else:
-    #         await super().invoke(interaction, **kwargs)
-
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
         try:
             await super().call(state, interaction, option_data)
         except InvalidCommandType:
-            await self.invoke_slash(interaction)
-            # if self.type is CommandType.MESSAGE:
-            #     message = state._get_message(int(interaction.data["target_id"]))
-            #     await self.invoke_message(interaction, message)
-            # elif self.type is CommandType.USER:
-            #     member = interaction.guild.get_member(int(interaction.data["target_id"]))
-            #     await self.invoke_user(interaction, member)
-            # else:
-            #     raise InvalidCommandType
+            if self.type is CommandType.message:
+                await self.call_invoke_message(state, interaction)
+            elif self.type is CommandType.user:
+                await self.call_invoke_user(state, interaction)
+            else:
+                raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
+
+    async def call_invoke_message(self, state: ConnectionState, interaction: Interaction):
+        # TODO: Look into function arguments being autoconverted and given? Arg typed "Channel" gets filled with the
+        #  channel?
+        message = state._get_message(int(interaction.data["target_id"]))
+        await self.invoke_message(interaction, message)
+
+    async def call_invoke_user(self, state: ConnectionState, interaction: Interaction):
+        member = interaction.guild.get_member(int(interaction.data["target_id"]))
+        await self.invoke_user(interaction, member)
 
     # async def invoke_slash(self, interaction: Interaction, **kwargs):
     #     # Invokes the callback with the kwargs given.
@@ -397,6 +345,8 @@ class ApplicationCommand(ApplicationSubcommand):
     @property
     def payload(self) -> Union[List[Dict[str, ...]], Dict[str, ...]]:
         ret = super().payload
+        if self.type is not CommandType.chat_input and "options" in ret:
+            ret.pop("options")
         if self.default_permission is not None:
             ret["default_permission"] = self.default_permission
 
@@ -471,9 +421,6 @@ class CommandCog:
         new_cls._read_methods()
         return new_cls
 
-
-
-
     # def __init__(self, *args):
     #     self._listeners: List[Tuple[str, str]] = list()  # TODO: Make this function.
     #     self._to_register: List[ApplicationCommand] = list()
@@ -492,8 +439,8 @@ class CommandCog:
         #         if is_static_method:
         #             raise TypeError(f"Command {self.__name__}.{elem} can not be a staticmethod.")
         #         self._to_register.append(value)
-            # elif inspect.iscoroutinefunction(value):
-            #     self._listeners[elem] = value
+        #     # elif inspect.iscoroutinefunction(value):
+        #     #     self._listeners[elem] = value
         # new_cls = super(CommandCog, cls).__new__(cls)
         self.__cog_to_register__ = list()
         for base in reversed(self.__class__.__mro__):
@@ -625,22 +572,11 @@ class CommandClient(Client):
             await app_cmd.call(self._connection, interaction, interaction.data.get("options", dict()))
 
 
-def migrate_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
-    if "brief" in kwargs:
-        kwargs["description"] = kwargs["brief"]
-        kwargs.pop("brief")
-    if "invoke_without_command" in kwargs:
-        kwargs.pop("invoke_without_command")
-    if "aliases" in kwargs:
-        kwargs.pop("aliases")  # TODO: Make this reality?
-    return kwargs
-
-
 def slash_command(*args, **kwargs):
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
-        return ApplicationCommand(func, cmd_type=CommandType.CHAT_INPUT, *args, **migrate_kwargs(kwargs))
+        return ApplicationCommand(func, cmd_type=CommandType.chat_input, *args, **kwargs)
     return decorator
 
 
@@ -658,7 +594,7 @@ def message_command(*args, **kwargs):
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
-        return ApplicationCommand(func, cmd_type=CommandType.MESSAGE, *args, **migrate_kwargs(kwargs))
+        return ApplicationCommand(func, cmd_type=CommandType.message, *args, **kwargs)
     return decorator
 
 
@@ -666,7 +602,7 @@ def user_command(*args, **kwargs):
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
-        return ApplicationCommand(func, cmd_type=CommandType.USER, *args, **migrate_kwargs(kwargs))
+        return ApplicationCommand(func, cmd_type=CommandType.user, *args, **kwargs)
     return decorator
 
 
