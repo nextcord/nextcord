@@ -131,13 +131,11 @@ For further examples of bots created using Nextcord, click :resource:`here <exam
 Otherwise, try to play around with your bot and add some new features. 
 
 Heres some fun examples:
+
 - Make the hello command also mention the person who ran the command
     - Hint: Look in the docs for `.mention`
-    
 - Make your bot print/send a message when someone joins your guild.
     - Hint: You will need to setup member intents, you can find more information on that here. :doc:`intro` 
-    
 - Make your bot case insensitive 
-
 - Make a command called `echo`, which repeats the command input.
     - Hint: `(ctx, *, message):` will mean everything said will be stored in the variable `message`
