@@ -39,7 +39,7 @@ __all__ = (
 class ApplicationCommandOptionChoice:
     def __init__(self, payload: Optional[dict] = None):
         if not payload:
-            payload = dict()
+            payload = {}
         self.name: str = payload.get('name')
         self.value: Union[str, int, float] = payload.get('value')
 
@@ -57,8 +57,8 @@ class ApplicationCommandOption:
         self.name: str = data['name']
         self.description: str = data['description']
         self.required: Optional[bool] = data.get('required')
-        self.choices: List[ApplicationCommandOptionChoice] = self.create_all_choices(data.get('choices', list()))
-        self.options: List[ApplicationCommandOption] = self.create_all_options(data.get('options', list()))
+        self.choices: List[ApplicationCommandOptionChoice] = self.create_all_choices(data.get('choices', []))
+        self.options: List[ApplicationCommandOption] = self.create_all_options(data.get('options', []))
 
     @staticmethod
     def create_all_choices(data: List[dict]) -> List[ApplicationCommandOptionChoice]:
@@ -82,7 +82,7 @@ class ApplicationCommandResponse(Hashable):
         self.guild_id: Optional[int] = utils._get_as_snowflake(data, 'guild_id')
         self.name: str = data['name']
         self.description: str = data['description']
-        self.options = ApplicationCommandOption.create_all_options(data.get('options', list()))
+        self.options = ApplicationCommandOption.create_all_options(data.get('options', []))
         self.default_permission: Optional[bool] = data.get('default_permission', True)
 
     @property

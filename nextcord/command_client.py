@@ -23,7 +23,7 @@ _log = logging.getLogger(__name__)
 
 
 __all__ = (
-    'CmdArg',
+    'SlashOption',
     'ApplicationCommand',
     'ApplicationSubcommand',
     'CommandArgument',
@@ -38,11 +38,11 @@ class InvalidCommandType(Exception):
     pass
 
 
-class CmdArg:
+class SlashOption:
     def __init__(self, name: str = None, description: str = None, required: bool = None, choices: dict = None,
                  default: Any = None, channel_types: List[ChannelType, ...] = None):
         if not choices:
-            choices = list()
+            choices = []
         self.name: Optional[str] = name
         self.description: Optional[str] = description
         self.required: Optional[bool] = required
@@ -51,14 +51,14 @@ class CmdArg:
         self.channel_types: Optional[List[ChannelType, ...]] = channel_types
 
 
-class CommandArgument(CmdArg):
+class CommandArgument(SlashOption):
     """This must set all variables from CmdArg, hence the subclass."""
     def __init__(self, parameter: Parameter):
         super().__init__()
         self.parameter = parameter
         cmd_arg_given = False
-        cmd_arg = CmdArg()
-        if isinstance(parameter.default, CmdArg):
+        cmd_arg = SlashOption()
+        if isinstance(parameter.default, SlashOption):
             cmd_arg = parameter.default
             cmd_arg_given = True
         print(f"CMD arg name: {cmd_arg.name}, Parameter name: {parameter.name}")
@@ -68,14 +68,14 @@ class CommandArgument(CmdArg):
         self.name = cmd_arg.name if cmd_arg.name is not None else parameter.name
         self.description = cmd_arg.description if cmd_arg.description is not None else " "
         self.required = cmd_arg.required if cmd_arg.required is not None else None
-        self.choices = cmd_arg.choices if cmd_arg.choices is not None else dict()
+        self.choices = cmd_arg.choices if cmd_arg.choices is not None else {}
         if not cmd_arg_given and parameter.default is not parameter.empty:
             self.default = parameter.default
         else:
             self.default = cmd_arg.default
         if self.default is None and cmd_arg.required in (None, True):
             self.required = True
-        self.channel_types = cmd_arg.channel_types if cmd_arg.channel_types is not None else list()
+        self.channel_types = cmd_arg.channel_types if cmd_arg.channel_types is not None else []
         self.type: CommandOptionType = self.get_type(parameter.annotation)
         self.verify()
 
@@ -122,10 +122,12 @@ class CommandArgument(CmdArg):
     @property
     def payload(self) -> dict:
         # self.verify()
-        ret = dict()
-        ret["type"] = self.type.value
-        ret["name"] = self.name
-        ret["description"] = self.description
+        # TODO: Figure out why pycharm is being a dingus about self.type.value being an unsolved attribute.
+        # noinspection PyUnresolvedReferences
+        ret = {"type": self.type.value, "name": self.name, "description": self.description}
+        # ret["type"] = self.type.value
+        # ret["name"] = self.name
+        # ret["description"] = self.description
         if self.required is not None:
             ret["required"] = self.required
         if self.choices:
@@ -144,7 +146,7 @@ class ApplicationSubcommand:
                  name: str = "", description: str = "", required: Optional[bool] = None, guild_ids: List[int] = None,
                  choices: Dict[str, Any] = None):
         if guild_ids is None:
-            guild_ids = list()
+            guild_ids = []
         else:
             # TODO: Per-guild subcommands.
             raise NotImplementedError("Per-guild subcommands are not yet handled properly. Ask Alento about them!")
@@ -162,8 +164,8 @@ class ApplicationSubcommand:
         self.choices: Dict[str, Any] = choices
 
         self.cog_parent: Optional[CommandCog] = cog_parent
-        self.arguments: Dict[str, CommandArgument] = dict()
-        self.children: Dict[str, ApplicationSubcommand] = dict()
+        self.arguments: Dict[str, CommandArgument] = {}
+        self.children: Dict[str, ApplicationSubcommand] = {}
         self._analyze_content()
         self._analyze_callback()
 
@@ -213,8 +215,8 @@ class ApplicationSubcommand:
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
         # Invokes the callback or subcommands with kwargs provided by the callback and interaction.
         if self.children:
-            print(f"Found children, running that in {self.name} with options {option_data[0].get('options', dict())}")
-            await self.children[option_data[0]["name"]].call(state, interaction, option_data[0].get("options", dict()))
+            print(f"Found children, running that in {self.name} with options {option_data[0].get('options', {})}")
+            await self.children[option_data[0]["name"]].call(state, interaction, option_data[0].get("options", {}))
         elif self.type in (CommandType.chat_input, CommandOptionType.sub_command):
             await self.call_invoke_slash(state, interaction, option_data)
         else:
@@ -223,7 +225,7 @@ class ApplicationSubcommand:
     async def call_invoke_slash(self, state: ConnectionState, interaction: Interaction,
                                 option_data: List[Dict[str, Any]]):
         print(f"Running call + invoke in command {self.name}")
-        kwargs = dict()
+        kwargs = {}
         uncalled_args = self.arguments.copy()
         for arg_data in option_data:
             if arg_data["name"] in uncalled_args:
@@ -252,10 +254,8 @@ class ApplicationSubcommand:
 
     @property
     def payload(self) -> dict:
-        ret = dict()
-        ret["type"] = self.type.value
-        ret["name"] = self.name
-        ret["description"] = self.description
+        # noinspection PyUnresolvedReferences
+        ret = {"type": self.type.value, "name": self.name, "description": self.description}
         if self.required is not None:
             ret["required"] = self.required
         if self.choices:
@@ -284,7 +284,7 @@ class ApplicationCommand(ApplicationSubcommand):
         # TODO: I thought there was a way around doing this, but *sigh*.
 
         if guild_ids is None:
-            guild_ids = list()
+            guild_ids = []
         if not asyncio.iscoroutinefunction(callback):
             raise TypeError("Callback must be a coroutine.")
 
@@ -351,7 +351,7 @@ class ApplicationCommand(ApplicationSubcommand):
             ret["default_permission"] = self.default_permission
 
         if self.guild_ids:
-            guild_ret = list()
+            guild_ret = []
             for guild_id in self.guild_ids:
                 temp = ret.copy()
                 temp["guild_id"] = guild_id
@@ -442,7 +442,7 @@ class CommandCog:
         #     # elif inspect.iscoroutinefunction(value):
         #     #     self._listeners[elem] = value
         # new_cls = super(CommandCog, cls).__new__(cls)
-        self.__cog_to_register__ = list()
+        self.__cog_to_register__ = []
         for base in reversed(self.__class__.__mro__):
             print(f"COG: {base}")
             for elem, value in base.__dict__.items():
@@ -477,9 +477,9 @@ class CommandClient(Client):
         self._register_commands_on_startup: bool = register_commands_on_startup
         self._delete_unknown_commands: bool = delete_unknown_commands
 
-        self._registered_commands: Dict[int, ApplicationCommand] = dict()
-        self._commands_to_register: List[ApplicationCommand] = list()
-        self._cogs: List[CommandCog] = list()  # TODO: Turn this into dict with names.
+        self._registered_commands: Dict[int, ApplicationCommand] = {}
+        self._commands_to_register: List[ApplicationCommand] = []
+        self._cogs: List[CommandCog] = []  # TODO: Turn this into dict with names.
 
     async def on_connect(self):
         if self._register_commands_on_startup:
@@ -521,7 +521,7 @@ class CommandClient(Client):
             self._registered_commands[command.id] = command
 
     async def delete_unknown_commands(self):
-        to_remove = list()
+        to_remove = []
         for app_response in self._connection.application_commands:
             if app_response.id not in self._registered_commands:
                 if app_response.guild_id:
@@ -569,7 +569,7 @@ class CommandClient(Client):
         if interaction.data['type'] in (1, 2, 3) and \
                 (app_cmd := self._registered_commands.get(int(interaction.data["id"]))):
             print("Found viable command, calling it!")
-            await app_cmd.call(self._connection, interaction, interaction.data.get("options", dict()))
+            await app_cmd.call(self._connection, interaction, interaction.data.get("options", {}))
 
 
 def slash_command(*args, **kwargs):
@@ -607,7 +607,8 @@ def user_command(*args, **kwargs):
 
 
 def options_to_args(options: List[Dict[str, Any]]) -> Dict[str, Any]:
-    ret = dict()
-    for option in options:
-        ret[option["name"]] = option["value"]
-    return ret
+    return {option["name"]: option["value"] for option in options}
+    # ret = {}
+    # for option in options:
+    #     ret[option["name"]] = option["value"]
+    # return ret

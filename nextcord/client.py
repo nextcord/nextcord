@@ -1668,6 +1668,7 @@ class Client:
         for guild in self.guilds:
             print(f"GET APP CMDS: grabbing commands from guild {guild.name}")
             try:
+                # TODO: When a large bot is in 1k+ guilds, this is going to take forever AND get rate limited. Fix this.
                 raw_response = await self.http.get_guild_commands(self.application_id, guild.id)
                 for raw_command in raw_response:
                     app_cmd_response = ApplicationCommandResponse(self._connection, raw_command)
