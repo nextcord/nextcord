@@ -111,8 +111,11 @@ class CommandArgument(SlashOption):
     def handle_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
         if self.type is CommandOptionType.channel:
             return state.get_channel(int(argument))
-        elif self.type is CommandOptionType.user:  # TODO: This doesn't work nicely in DM's. Fetch user when guild is None.
-            return interaction.guild.get_member(int(argument))
+        elif self.type is CommandOptionType.user:  # TODO: Brutally test please.
+            if interaction.guild:
+                return interaction.guild.get_member(int(argument))
+            else:
+                return state.get_user(int(argument))
         elif self.type is CommandOptionType.role:
             return interaction.guild.get_role(int(argument))
         elif self.type is CommandOptionType.integer:

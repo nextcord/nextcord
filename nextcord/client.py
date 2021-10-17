@@ -1677,31 +1677,9 @@ class Client:
                 await app_cmd.call_from_interaction(interaction)
             else:
                 print(f"CLIENT.PY: Received an interaction for an application command that isn't registered, hmm. ID: {interaction.data['id']}")
-    #
-    # async def on_guild_available(self, guild: Guild):
-    #     print(f"CLIENT.PY: grabbing commands from guild {guild.name}")
-    #     try:
-    #         # TODO: When a large bot is in 1k+ guilds, this is going to take forever AND get rate limited. Fix this.
-    #         raw_response = await self.http.get_guild_commands(self.application_id, guild.id)
-    #         for raw_command in raw_response:
-    #             app_cmd_response = ApplicationCommandResponse(self._connection, raw_command)
-    #             self._connection._add_application_command(app_cmd_response)
-    #     except Forbidden:
-    #         print(f"CLIENT.PY, we don't have OAuth command permissions for guild {guild.name}|{guild.id} ")
-    # async def on_guild_available(self, guild: Guild):
-    #     # TODO: Make toggleable.
-    #     print(f"CLIENT.PY: Grabbing commands from guild {guild.name}|{guild.id}")
-    #     # await self.delete_unknown_guild_commands(guild.id)
-
-
-    # async def add_application_command(self, payload: Dict[str, Any], callback: Coroutine, register: bool = True):
-    #     # TODO: register=True shouldn't add to application commands to add, that's a bulk thing.
-    #     if callback not in self._application_commands_to_add:
-    #         self._application_commands_to_add[callback] = []
-    #     self._application_commands_to_add[callback].append(payload)
-    # async def register_application_command(self):
 
     async def register_bulk_application_commands(self):
+        # TODO: Using Bulk upsert seems to delete all commands
         guild_payloads_to_bulk: Dict[int, List[dict]] = {}
         global_payloads_to_bulk: List[dict] = []
         for unique_id, payload_app_cmd in self._application_commands_to_bulk_add.items():
