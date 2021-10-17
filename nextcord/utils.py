@@ -84,7 +84,6 @@ __all__ = (
     'escape_mentions',
     'as_chunks',
     'format_dt',
-    'MISSING'
 )
 
 DISCORD_EPOCH = 1420070400000
