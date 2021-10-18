@@ -28,6 +28,7 @@ __all__ = (
     'ApplicationSubcommand',
     'CommandArgument',
     'CommandClient',
+    'CommandCog',
     'slash_command',
     'user_command',
     'message_command'
