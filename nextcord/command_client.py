@@ -100,7 +100,7 @@ class CommandArgument(SlashOption):
         elif typing is float:
             return CommandOptionType.number
         elif typing is Message:  # TODO: Brutally test please.
-            return CommandOptionType.string
+            return CommandOptionType.integer
         else:
             raise NotImplementedError(f"Type \"{typing}\" isn't supported.")
 
@@ -124,7 +124,7 @@ class CommandArgument(SlashOption):
         elif self.type is CommandOptionType.number:
             return float(argument)
         elif self.type is Message:  # TODO: Brutally test please.
-            return state._get_message(argument)
+            return state._get_message(int(argument))
         return argument
 
     @property
@@ -345,6 +345,8 @@ class ApplicationCommand(ApplicationSubcommand):
         await self.invoke_message(interaction, message)
 
     async def call_invoke_user(self, state: ConnectionState, interaction: Interaction):
+        # TODO: Look into function arguments being autoconverted and given? Arg typed "Channel" gets filled with the
+        #  channel?
         if interaction.guild:
             member = interaction.guild.get_member(int(interaction.data["target_id"]))
         else:
@@ -353,12 +355,14 @@ class ApplicationCommand(ApplicationSubcommand):
         await self.invoke_user(interaction, member)
 
     async def invoke_message(self, interaction: Interaction, message: Message, **kwargs):
+        """The parameters of this function should have the bare minimum needed to do a user command."""
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, message, **kwargs)
         else:
             await self.callback(interaction, message, **kwargs)
 
     async def invoke_user(self, interaction: Interaction, member: Member, **kwargs):
+        """The parameters of this function should have the bare minimum needed to do a user command."""
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, member, **kwargs)
         else:
