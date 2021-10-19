@@ -50,6 +50,7 @@ from nextcord.utils import MISSING
 
 __all__ = (
     'loop',
+    'Loop',
 )
 
 T = TypeVar('T')
