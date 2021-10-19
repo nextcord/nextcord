@@ -345,7 +345,11 @@ class ApplicationCommand(ApplicationSubcommand):
         await self.invoke_message(interaction, message)
 
     async def call_invoke_user(self, state: ConnectionState, interaction: Interaction):
-        member = interaction.guild.get_member(int(interaction.data["target_id"]))
+        if interaction.guild:
+            member = interaction.guild.get_member(int(interaction.data["target_id"]))
+        else:
+            member = state.get_user(int(interaction.data["target_id"]))
+        # member = interaction.guild.get_member(int(interaction.data["target_id"]))
         await self.invoke_user(interaction, member)
 
     async def invoke_message(self, interaction: Interaction, message: Message, **kwargs):
