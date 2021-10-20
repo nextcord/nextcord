@@ -511,28 +511,13 @@ class CommandCog:
 
 
 class CommandClient(Client):
-    def __init__(self, register_commands_on_startup: bool = True,
-                 delete_unknown_commands: bool = True,
-                 *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._register_commands_on_startup: bool = register_commands_on_startup
-        self._delete_unknown_commands: bool = delete_unknown_commands
-
-        # self._registered_commands: Dict[int, ApplicationCommand] = {}
-        self._commands_to_register_bad: List[ApplicationCommand] = []
         self._cogs: List[CommandCog] = []  # TODO: Turn this into dict with names.
 
     async def on_connect(self):
-        # TODO: Re-evaluate based on reworking.
-        if self._register_commands_on_startup:
-            pass
         self.register_cog_commands()
-            # await self.register_application_commands()
-            # await self.register_cog_commands()
         await super().on_connect()
-        if self._delete_unknown_commands:
-            # await self.delete_unknown_commands()
-            pass  # TODO: This.
         print(f"ON CONNECT: Registered command count: {len(self._application_commands)}")
 
     # async def register_application_commands(self):
