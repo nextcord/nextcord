@@ -221,17 +221,57 @@ class ApplicationSubcommand:
         return self._callback
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
-        # Invokes the callback or subcommands with kwargs provided by the callback and interaction.
+        """
+        Calls the callback, gathering and inserting kwargs into the callback as needed.
+        This must be able to call itself as subcommands may be subcommand groups, and thus have subcommands of their
+        own.
+
+        Parameters
+        ----------
+        state: :class:`ConnectionState`
+            State object used to fetch Guild, Channel, etc from cache.
+        interaction: :class:`Interaction`
+            Interaction object to pass to callback.
+        option_data: :class:`list`
+            List of option data dictionaries from interaction data payload.
+
+        Returns
+        -------
+
+        """
+
         if self.children:
+            # Discord currently does not allow commands that have subcommands to be ran. Therefore, if a command has
+            # children, a subcommand must be being called.
             print(f"Found children, running that in {self.name} with options {option_data[0].get('options', {})}")
             await self.children[option_data[0]["name"]].call(state, interaction, option_data[0].get("options", {}))
         elif self.type in (CommandType.chat_input, CommandOptionType.sub_command):
+            # Slash commands are able to have subcommands, therefore that is handled here.
             await self.call_invoke_slash(state, interaction, option_data)
         else:
+            # Anything that can't be handled in here should be raised for ApplicationCommand to handle.
+            # TODO: Figure out how to hide this in exception trace log.
             raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
     async def call_invoke_slash(self, state: ConnectionState, interaction: Interaction,
                                 option_data: List[Dict[str, Any]]):
+        """
+        This invokes the slash command implementation with the given raw option data to turn into proper kwargs for the
+        callback.
+
+        Parameters
+        ----------
+        state: :class:`ConnectionState`
+            State object used to fetch Guild, Channel, etc from cache.
+        interaction: :class:`Interaction`
+            Interaction object to pass to the callback.
+        option_data: :class:`list`
+            List of option data dictionaries from interaction data payload.
+
+        Returns
+        -------
+
+        """
         print(f"Running call + invoke in command {self.name}")
         kwargs = {}
         uncalled_args = self.arguments.copy()
@@ -312,11 +352,19 @@ class ApplicationCommand(ApplicationSubcommand):
             self._global_id = response.id
 
     async def call_from_interaction(self, interaction: Interaction):
+        """Runs call using the held ConnectionState object and given interaction."""
         if not self._state:
             raise NotImplementedError("State hasn't been set yet, this isn't handled yet!")
         await self.call(self._state, interaction, interaction.data.get("options", {}))
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
+        """
+        Calls the callback, gathering and inserting kwargs into the callback as needed.
+        This handles CommandTypes that subcommands cannot handle, such as Message or User commands.
+        :param state: ConnectionState to fetch objects from cache.
+        :param interaction: Current Interaction object.
+        :param option_data: List of options, typically 'options' in the interaction data payload.
+        """
         try:
             await super().call(state, interaction, option_data)
         except InvalidCommandType:
@@ -328,7 +376,17 @@ class ApplicationCommand(ApplicationSubcommand):
                 raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
     def _handle_resolved_message(self, message_data: dict):
-        # TODO: This is garbage, find a better way to add a Message to the cache.
+        """
+        TODO: This is garbage, find a better way to add a Message to the cache.
+        Parameters
+        ----------
+        message_data: dict
+            The resolved message payload to add to the internal cache.
+
+        Returns
+        -------
+
+        """
         # The interaction gives us message data, might as well use it and add it to the cache?
         channel, guild = self._state._get_guild_channel(message_data)
         message = Message(channel=channel, data=message_data, state=self._state)
@@ -371,6 +429,12 @@ class ApplicationCommand(ApplicationSubcommand):
     @property
     # def payload(self) -> Union[List[Dict[str, ...]], Dict[str, ...]]:
     def payload(self) -> List[dict]:
+        """
+
+        Returns
+        -------
+
+        """
         # TODO: This always returns a list, should it be "payloads"? Won't override subcommand payload though.
         partial_payload = super().payload
         if self.type is not CommandType.chat_input and "options" in partial_payload:
