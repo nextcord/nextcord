@@ -62,7 +62,7 @@ from .stage_instance import StageInstance
 from .interactions import Interaction
 from .threads import Thread
 from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factory
-from .application_command import ApplicationCommandResponse
+from .application_command import ApplicationCommandResponse, ApplicationCommandType
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
@@ -244,7 +244,7 @@ class Client:
         # self._application_commands: Dict[int, Callable] = {}
         self._application_commands: List[ApplicationCommand] = []
         self._registered_application_commands: Dict[int, ApplicationCommand] = {}
-        self._application_commands_to_bulk_add: Dict[Tuple[str, Optional[int]], Tuple[dict, ApplicationCommand]] = {}
+        self._application_commands_to_bulk_add: Dict[Tuple[ApplicationCommandType, str, Optional[int]], Tuple[dict, ApplicationCommand]] = {}
         self._register_commands_on_startup: bool = options.pop('register_commands_on_startup', True)
 
         if VoiceClient.warn_nacl:
@@ -1707,7 +1707,7 @@ class Client:
     def _handle_bulk_application_commands(self, raw_response_list: List[dict]):
         for raw_response in raw_response_list:
             response = ApplicationCommandResponse(self._connection, raw_response)
-            payload_unique_id = (response.name, response.guild_id)
+            payload_unique_id = (response.type, response.name, response.guild_id)
             if payload_app_cmd := self._application_commands_to_bulk_add.get(payload_unique_id):
                 command = payload_app_cmd[1]
                 print(f"    CLIENT.PY: Parsing response of command {command.name} for guild {response.guild_id}. ID: {response.id}")
@@ -1727,7 +1727,7 @@ class Client:
 
     def _add_application_payload_to_bulk(self, command: ApplicationCommand, name: str, guild_id: Optional[int],
                                          payload: dict):
-        payload_unique_id = (name, guild_id)  # Note: None means global.
+        payload_unique_id = (command.type, name, guild_id)  # Note: None means global.
         if payload_unique_id in self._application_commands_to_bulk_add:
             raise ValueError(f"Cannot add duplicate command {name}|{guild_id} payload to bulk add.")
         else:
