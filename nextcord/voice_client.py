@@ -722,7 +722,6 @@ class VoiceClient(VoiceProtocol):
 
         self.checked_add('timestamp', opus.Encoder.SAMPLES_PER_FRAME, 4294967295)
 
-
     def unpack_audio(self, data):
         """Takes an audio packet received from Discord and decodes it into pcm audio data.
         If there are no users talking in the channel, `None` will be returned.
@@ -744,7 +743,7 @@ class VoiceClient(VoiceProtocol):
         data = RawData(data, self)
 
         if data.decrypted_data == b'\xf8\xff\xfe':  # Frame of silence
-            return
+            data.decrypted_data = None
 
         self.decoder.decode(data)
 
@@ -753,6 +752,13 @@ class VoiceClient(VoiceProtocol):
         This function uses a thread so the current code line will not be stopped.
         Must be in a voice channel to use.
         Must not be already recording.
+
+        Please note befor using: Recording voice is not offically supported by the discord API. This code might
+        break at any time without warning. It has been developed by Sheepposu and veni-vidi-code in good faith,
+        but since discord does not talk about rules for this it is your task to clearify if you are allowed to actually
+        record the channel the bot is in. Never do so without the permissions of the people in it!
+
+
         Parameters
         ----------
         sink: :class:`Sink`
@@ -763,19 +769,19 @@ class VoiceClient(VoiceProtocol):
             Args which will be passed to the callback function.
         Raises
         ------
-        RecordingException
+        RecordException
             Not connected to a voice channel.
-        RecordingException
+        RecordException
             Already recording.
-        RecordingException
+        RecordException
             Must provide a Sink object.
         """
         if not self.is_connected():
-            raise RecordingException('Not connected to voice channel.')
+            raise RecordException('Not connected to voice channel.')
         if self.recording:
-            raise RecordingException("Already recording.")
+            raise RecordException("Already recording.")
         if not isinstance(sink, Sink):
-            raise RecordingException("Must provide a Sink object.")
+            raise RecordException("Must provide a Sink object.")
 
         self.empty_socket()
 
@@ -793,11 +799,11 @@ class VoiceClient(VoiceProtocol):
         Must be already recording.
         Raises
         ------
-        RecordingException
+        RecordException
             Not currently recording.
         """
         if not self.recording:
-            raise RecordingException("Not currently recording audio.")
+            raise RecordException("Not currently recording audio.")
         self.decoder.stop()
         self.recording = False
         self.paused = False
@@ -807,11 +813,11 @@ class VoiceClient(VoiceProtocol):
         Must be already recording.
         Raises
         ------
-        RecordingException
+        RecordException
             Not currently recording.
          """
         if not self.recording:
-            raise RecordingException("Not currently recording audio.")
+            raise RecordException("Not currently recording audio.")
         self.paused = not self.paused
 
     def empty_socket(self):

@@ -55,6 +55,7 @@ __all__ = (
     'InteractionType',
     'InteractionResponseType',
     'NSFWLevel',
+    'Encodings',
 )
 
 
@@ -587,6 +588,12 @@ class NSFWLevel(Enum, comparable=True):
     explicit = 1
     safe = 2
     age_restricted = 3
+
+
+class Encodings(Enum):
+    wav = 'wav'
+    mp3 = 'mp3'
+    pcm = 'pcm'
 
 
 T = TypeVar('T')

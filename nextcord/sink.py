@@ -17,6 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+from io import BytesIO
 
 from .errors import ClientException
 import wave
@@ -26,11 +27,12 @@ import time
 import subprocess
 import sys
 import struct
-
+from .enums import Encodings
 
 __all__ = (
-    'Filters',
+    'FiltersMixin',
     'Sink',
+    'FileSink',
     'AudioData',
     'RawData',
 )
@@ -48,7 +50,7 @@ default_filters = {
 }
 
 
-class Filters:
+class FiltersMixin:
     # TODO: Filter for max size per file; audio can be split into multiple files
     def __init__(self, **kwargs):
         self.filtered_users = kwargs.get('users', default_filters['users'])
@@ -112,21 +114,20 @@ class AudioData:
         self.file = os.path.join(self.dir_path, self.file.name)
         self.finished = True
 
-    def on_format(self, encoding):
+    def on_format(self, encoding: Encodings):
         if not self.finished:
             raise ClientException("This AudioData is still writing.")
         name = os.path.split(self.file)[1]
-        name = name.split('.')[0] + f'.{encoding}'
+        name = name.split('.')[0] + f'.{encoding.value}'
         self.file = os.path.join(self.dir_path, name)
 
-
-class Sink(Filters):
+class Sink(FiltersMixin):
     """A Sink "stores" all the audio data.
         Parameters
         ----------
         encoding: :class:`string`
             The encoding to use. Valid types include wav, mp3, and pcm (even though it's not an actual encoding).
-        output_path: :class:`string`
+        output_io: :class:`BytesIO`
             A path to where the audio files should be output.
         Raises
         ------
@@ -134,23 +135,17 @@ class Sink(Filters):
             An invalid encoding type was specified.
     """
 
-    valid_encodings = ['wav', 'mp3', 'pcm']
-
-    def __init__(self, *, encoding='wav', output_path='', filters=None):
+    def __init__(self, *, encoding: Encodings = Encodings('wav'), output_io=BytesIO, filters=None):
         if filters is None:
             filters = default_filters
         self.filters = filters
-        Filters.__init__(self, **self.filters)
-
-        encoding = encoding.lower()
+        FiltersMixin.__init__(self, **self.filters)
 
         # Would also like to add opus but don't
         # know how I would go about it.
-        if encoding not in self.valid_encodings:
-            raise ClientException("An invalid encoding type was specified.")
 
-        self.encoding = encoding
-        self.file_path = output_path
+        self.encoding: Encodings = encoding
+        self.file = output_io
         self.vc = None
         self.audio_data = {}
 
@@ -158,7 +153,7 @@ class Sink(Filters):
         self.vc = vc
         super().init()
 
-    @Filters.filter_decorator
+    @FiltersMixin.filter_decorator
     def write(self, data, user):
         if user not in self.audio_data:
             ssrc = self.vc.get_ssrc(user)
@@ -177,9 +172,9 @@ class Sink(Filters):
     def format_audio(self, audio):
         if self.vc.recording:
             raise ClientException("Audio may only be formatted after recording is finished.")
-        if self.encoding == 'pcm':
+        if self.encoding is Encodings.pcm:
             return
-        if self.encoding == 'mp3':
+        if self.encoding is Encodings.mp3:
             mp3_file = audio.file.split('.')[0] + '.mp3'
             args = ['ffmpeg', '-f', 's16le', '-ar', '48000', '-ac', '2', '-i', audio.file, mp3_file]
             process = None
@@ -192,7 +187,86 @@ class Sink(Filters):
             except subprocess.SubprocessError as exc:
                 raise ClientException('Popen failed: {0.__class__.__name__}: {0}'.format(exc)) from exc
             process.wait()
-        elif self.encoding == 'wav':
+        elif self.encoding is Encodings.wav:
+            with open(audio.file, 'rb') as pcm:
+                data = pcm.read()
+                pcm.close()
+
+            wav_file = audio.file.split('.')[0] + '.wav'
+            with wave.open(wav_file, 'wb') as f:
+                f.setnchannels(self.vc.decoder.CHANNELS)
+                f.setsampwidth(self.vc.decoder.SAMPLE_SIZE // self.vc.decoder.CHANNELS)
+                f.setframerate(self.vc.decoder.SAMPLING_RATE)
+                f.writeframes(data)
+                f.close()
+
+        os.remove(audio.file)
+        audio.on_format(self.encoding)
+
+
+class FileSink(Sink):
+    """A Sink "stores" all the audio data.
+        Parameters
+        ----------
+        encoding: :class:`string`
+            The encoding to use. Valid types include wav, mp3, and pcm (even though it's not an actual encoding).
+        output_path: :class:`string`
+            A path to where the audio files should be output.
+        Raises
+        ------
+        ClientException
+            An invalid encoding type was specified.
+    """
+
+    def __init__(self, *, encoding: Encodings = Encodings('wav'), output_path='', filters=None):
+        if filters is None:
+            filters = default_filters
+        self.filters = filters
+        FiltersMixin.__init__(self, **self.filters)
+
+        # Would also like to add opus but don't
+        # know how I would go about it.
+
+        self.encoding: Encodings = encoding
+        self.file_path = output_path
+        self.vc = None
+        self.audio_data = {}
+
+    @FiltersMixin.filter_decorator
+    def write(self, data, user):
+        if user not in self.audio_data:
+            ssrc = self.vc.get_ssrc(user)
+            file = os.path.join(self.file_path, f'{ssrc}.pcm')
+            self.audio_data.update({user: AudioData(file)})
+
+        file = self.audio_data[user]
+        file.write(data)
+
+    def cleanup(self):
+        self.finished = True
+        for file in self.audio_data.values():
+            file.cleanup()
+            self.format_audio(file)
+
+    def format_audio(self, audio):
+        if self.vc.recording:
+            raise ClientException("Audio may only be formatted after recording is finished.")
+        if self.encoding is Encodings.pcm:
+            return
+        if self.encoding is Encodings.mp3:
+            mp3_file = audio.file.split('.')[0] + '.mp3'
+            args = ['ffmpeg', '-f', 's16le', '-ar', '48000', '-ac', '2', '-i', audio.file, mp3_file]
+            process = None
+            if os.path.exists(mp3_file):
+                os.remove(mp3_file)  # process will get stuck asking whether or not to overwrite, if file already exists.
+            try:
+                process = subprocess.Popen(args, creationflags=CREATE_NO_WINDOW)
+            except FileNotFoundError:
+                raise ClientException('ffmpeg was not found.') from None
+            except subprocess.SubprocessError as exc:
+                raise ClientException('Popen failed: {0.__class__.__name__}: {0}'.format(exc)) from exc
+            process.wait()
+        elif self.encoding is Encodings.wav:
             with open(audio.file, 'rb') as pcm:
                 data = pcm.read()
                 pcm.close()

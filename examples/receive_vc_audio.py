@@ -1,9 +1,9 @@
-import discord
+import nextcord as discord
 import os
 
 
 def vc_required(func):
-    async def get_vc(self, msg):
+    async def get_vc(self, msg: discord.Message):
         vc = await self.get_vc(msg)
         if not vc:
             return
@@ -44,13 +44,7 @@ def args_to_filters(args):
 def get_encoding(args):
     if '--output' in args:
         index = args.index('--output')
-        try:
-            encoding = args[index+1].lower()
-            if encoding not in discord.Sink.valid_encodings:
-                return
-            return encoding
-        except IndexError:
-            return
+        return args[index+1].lower()
     else:
         return 'wav'
 
@@ -67,7 +61,7 @@ class Client(discord.Client):
             '!pause': self.toggle_pause,
         }
 
-    async def get_vc(self, message):
+    async def get_vc(self, message: discord.Message):
         vc = message.author.voice
         if not vc:
             await message.channel.send("You're not in a vc right now")
@@ -101,7 +95,7 @@ class Client(discord.Client):
         if encoding is None:
             return await msg.channel.send("You must provide a valid output encoding.")
 
-        vc.start_recording(discord.Sink(encoding=encoding, filters=filters), self.finished_callback, msg.channel)
+        vc.start_recording(discord.FileSink(encoding=discord.Encodings(encoding), filters=filters), self.finished_callback, msg.channel)
 
         await msg.channel.send("The recording has started!")
 
@@ -128,7 +122,6 @@ class Client(discord.Client):
 
         print("Disconnected")
         del self.connections[member.guild.id]
-
 
 
 intents = discord.Intents.default()
