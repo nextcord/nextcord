@@ -845,6 +845,8 @@ class VoiceClient(VoiceProtocol):
 
             try:
                 data = self.socket.recv(4096)
+                if data == -1:
+                    continue
             except OSError:
                 self.stop_recording()
                 continue
