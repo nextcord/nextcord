@@ -77,7 +77,10 @@ To install the development version, do the following:
 
     $ git clone https://github.com/nextcord/nextcord/
     $ cd nextcord
+    # Linux/macOS
     $ python3 -m pip install -U .[voice]
+    # Windows
+    $ py3 -m pip install -U .[voice]
 
 
 Optional Packages
