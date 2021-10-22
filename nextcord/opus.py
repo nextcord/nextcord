@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+import gc
 from typing import List, Tuple, TypedDict, Any, TYPE_CHECKING, Callable, TypeVar, Literal, Optional, overload
 
 import array
@@ -448,11 +449,11 @@ class Decoder(_OpusStruct):
             channel_count = self.CHANNELS
         else:
             frames = self.packet_get_nb_frames(data)
-            channel_count = self.CHANNELS # TODO analyze that
+            channel_count = self.CHANNELS
             samples_per_frame = self.packet_get_samples_per_frame(data)
             frame_size = frames * samples_per_frame
 
-        pcm = (ctypes.c_int16 * (frame_size * channel_count ))() # TODO check this line #* ctypes.sizeof(ctypes.c_int16)
+        pcm = (ctypes.c_int16 * (frame_size * channel_count))()
         pcm_ptr = ctypes.cast(pcm, c_int16_ptr)
 
         ret = _lib.opus_decode(self._state, data, len(data) if data else 0, pcm_ptr, frame_size, fec)
@@ -467,7 +468,7 @@ class DecodeManager(threading.Thread, _OpusStruct):
         self.client = client
         self.decode_queue = []
 
-        self.decoder = Decoder()
+        self.decoder = {}
 
         self._end_thread = threading.Event()
 
@@ -484,7 +485,10 @@ class DecodeManager(threading.Thread, _OpusStruct):
                 continue
 
             try:
-                data.decoded_data = self.decoder.decode(data.decrypted_data)
+                if data.decrypted_data is None:
+                    continue
+                else:
+                    data.decoded_data = self.get_decoder(data.ssrc).decode(data.decrypted_data)
             except OpusError:
                 print("Error occurred decoding opus frame.")
                 continue
@@ -496,8 +500,20 @@ class DecodeManager(threading.Thread, _OpusStruct):
         self._end_thread.set()
         while self.decoding:
             time.sleep(0.1)
+        self.decoder = {}
+        gc.collect()
+        print("destroyed")
 
+    def get_decoder(self, ssrc):
+        d = self.decoder.get(ssrc)
+        if d is None:
+            self.decoder[ssrc] = Decoder()
+            return self.decoder[ssrc]
+        else:
+            return d
 
     @property
     def decoding(self):
         return bool(self.decode_queue)
+
+
