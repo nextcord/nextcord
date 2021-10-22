@@ -80,7 +80,7 @@ To install the development version, do the following:
     # Linux/macOS
     $ python3 -m pip install -U .[voice]
     # Windows
-    $ py3 -m pip install -U .[voice]
+    $ py -3 -m pip install -U .[voice]
 
 
 Optional Packages
