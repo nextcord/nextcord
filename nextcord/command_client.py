@@ -326,6 +326,10 @@ class ApplicationCommand(ApplicationSubcommand):
     def __init__(self, callback: Callable, cmd_type: CommandType,
                  name: str = "", description: str = "", guild_ids: List[int] = None, force_global: bool = False,
                  default_permission: Optional[bool] = None):
+        # TODO: Have global and guilds be off. Allow a command to be in the system, but not registered to guilds or
+        #  global. Global should be True, False, None where None makes it default to True if no guild_ids and false
+        #  if there are guild_ids. For super dynamic guild_id setting, it will be done at runtime. Thus, being able to
+        #  have a command not be global and not be a guild command must be possible. Index by type + name.
         super().__init__(callback=callback, parent=None, cmd_type=cmd_type, name=name, description=description,
                          guild_ids=None)
         # Basic input checking.
@@ -453,15 +457,6 @@ class ApplicationCommand(ApplicationSubcommand):
             ret.append(partial_payload)
         return ret
 
-    #         guild_ret = []
-    #         for guild_id in self.guild_ids:
-    #             temp = ret.copy()
-    #             temp["guild_id"] = guild_id
-    #             guild_ret.append(temp)
-    #         return guild_ret
-    #     else:
-    #         return ret
-
     @property
     def is_guild(self) -> bool:
         return self._is_guild
@@ -514,9 +509,13 @@ class CommandClient(Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._cogs: List[CommandCog] = []  # TODO: Turn this into dict with names.
+        self._commands_to_reg_not_great = []
 
     async def on_connect(self):
         self.register_cog_commands()
+        for command in self._commands_to_reg_not_great:
+            await self.register_command(command)
+
         await super().on_connect()
         print(f"ON CONNECT: Registered command count: {len(self._application_commands)}")
 
@@ -534,7 +533,7 @@ class CommandClient(Client):
                 for cmd in to_register:
                     print(f"REG COG CMD:     {cmd.name}")
                     # await self.register_command(cmd)
-                    self.add_application_command_to_bulk(cmd)
+                    self.add_application_command_request(cmd)
 
     async def register_command(self, command: ApplicationCommand):
         # TODO: Make into bulk registration. Also look into having commands be both guild and global.
@@ -565,7 +564,8 @@ class CommandClient(Client):
 
     def add_application_command_request(self, application_command: ApplicationCommand):
         # self._commands_to_register_bad.append(application_command)
-        self.add_application_command_to_bulk(application_command)  # TODO: Unneeded, refactor.
+        # self.add_application_command_to_bulk(application_command)  # TODO: Unneeded, refactor.
+        self._commands_to_reg_not_great.append(application_command)
 
     def add_cog(self, cog: CommandCog):
         self._cogs.append(cog)
