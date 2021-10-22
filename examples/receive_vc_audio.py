@@ -1,9 +1,9 @@
-import nextcord as discord
+import nextcord
 import os
 
 
 def vc_required(func):
-    async def get_vc(self, msg: discord.Message):
+    async def get_vc(self, msg: nextcord.Message):
         vc = await self.get_vc(msg)
         if not vc:
             return
@@ -49,7 +49,7 @@ def get_encoding(args):
         return 'wav'
 
 
-class Client(discord.Client):
+class Client(nextcord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.connections = {voice.guild.id: voice for voice in self.voice_clients}
@@ -61,7 +61,7 @@ class Client(discord.Client):
             '!pause': self.toggle_pause,
         }
 
-    async def get_vc(self, message: discord.Message):
+    async def get_vc(self, message: nextcord.Message):
         vc = message.author.voice
         if not vc:
             await message.channel.send("You're not in a vc right now")
@@ -95,7 +95,7 @@ class Client(discord.Client):
         if encoding is None:
             return await msg.channel.send("You must provide a valid output encoding.")
 
-        vc.start_recording(discord.FileSink(encoding=discord.Encodings(encoding), filters=filters), self.finished_callback, msg.channel)
+        vc.start_recording(nextcord.Sink(encoding=nextcord  .Encodings(encoding), filters=filters), self.finished_callback, msg.channel)
 
         await msg.channel.send("The recording has started!")
 
@@ -124,6 +124,6 @@ class Client(discord.Client):
         del self.connections[member.guild.id]
 
 
-intents = discord.Intents.default()
+intents = nextcord.Intents.default()
 client = Client(intents=intents)
 client.run('token')

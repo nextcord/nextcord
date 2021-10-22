@@ -256,7 +256,7 @@ class VoiceClient(VoiceProtocol):
         self._runner: asyncio.Task = MISSING
         self._player: Optional[AudioPlayer] = None
         self.encoder: Encoder = MISSING
-        self.decoder = None # TODO Typehinting
+        self.decoder = None
         self._lite_nonce: int = 0
         self.ws: DiscordVoiceWebSocket = MISSING
 
@@ -821,6 +821,7 @@ class VoiceClient(VoiceProtocol):
         self.paused = not self.paused
 
     def empty_socket(self):
+        print(self.socket)
         while True:
             ready, _, _ = select.select([self.socket], [], [], 0.0)
             if not ready:
@@ -845,6 +846,7 @@ class VoiceClient(VoiceProtocol):
 
             try:
                 data = self.socket.recv(4096)
+
             except OSError:
                 self.stop_recording()
                 continue
