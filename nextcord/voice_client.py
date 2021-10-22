@@ -821,7 +821,6 @@ class VoiceClient(VoiceProtocol):
         self.paused = not self.paused
 
     def empty_socket(self):
-        print(self.socket)
         while True:
             ready, _, _ = select.select([self.socket], [], [], 0.0)
             if not ready:
