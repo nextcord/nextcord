@@ -46,6 +46,7 @@ import struct
 import threading
 import select
 import time
+from pprint import pprint
 from typing import Any, Callable, List, Optional, TYPE_CHECKING, Tuple
 
 from . import opus, utils
@@ -821,6 +822,7 @@ class VoiceClient(VoiceProtocol):
         self.paused = not self.paused
 
     def empty_socket(self):
+        print(self.socket)
         while True:
             ready, _, _ = select.select([self.socket], [], [], 0.0)
             if not ready:
@@ -845,8 +847,7 @@ class VoiceClient(VoiceProtocol):
 
             try:
                 data = self.socket.recv(4096)
-                if data == -1:
-                    continue
+
             except OSError:
                 self.stop_recording()
                 continue
