@@ -95,7 +95,7 @@ class Client(nextcord.Client):
         if encoding is None:
             return await msg.channel.send("You must provide a valid output encoding.")
 
-        vc.start_recording(nextcord.FileSink(encoding=nextcord  .Encodings(encoding), filters=filters), self.finished_callback, msg.channel)
+        vc.start_recording(nextcord.Sink(encoding=nextcord  .Encodings(encoding), filters=filters), self.finished_callback, msg.channel)
 
         await msg.channel.send("The recording has started!")
 

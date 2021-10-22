@@ -46,7 +46,6 @@ import struct
 import threading
 import select
 import time
-from pprint import pprint
 from typing import Any, Callable, List, Optional, TYPE_CHECKING, Tuple
 
 from . import opus, utils
@@ -257,7 +256,7 @@ class VoiceClient(VoiceProtocol):
         self._runner: asyncio.Task = MISSING
         self._player: Optional[AudioPlayer] = None
         self.encoder: Encoder = MISSING
-        self.decoder = None # TODO Typehinting
+        self.decoder = None
         self._lite_nonce: int = 0
         self.ws: DiscordVoiceWebSocket = MISSING
 
