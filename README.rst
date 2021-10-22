@@ -79,6 +79,7 @@ To install the development version, do the following:
     $ cd nextcord
     # Linux/macOS
     $ python3 -m pip install -U .[voice]
+    
     # Windows
     $ py -3 -m pip install -U .[voice]
 
