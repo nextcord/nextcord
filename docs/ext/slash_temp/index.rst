@@ -3,10 +3,7 @@
 ``nextcord.ext.slash_temp`` -- Slash commands framework
 ====================================================
 
-``nextcord`` offers a lower level aspect on interacting with Discord. Often times, the library is used for the creation of
-bots. However this task can be daunting and confusing to get correctly the first time. Many times there comes a repetition in
-creating a slash command framework that is extensible, flexible, and powerful. For this reason, ``nextcord`` comes with an
-extension library that handles this for you.
+``nextcord.ext.slash_temp`` Is made to show you how to make Slash Command's in nextcord
 
 
 .. toctree::
