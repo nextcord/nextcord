@@ -94,3 +94,7 @@ If you want to invite your bot you must create an invite URL for it.
 
 If you want to generate this URL dynamically at run-time inside your bot and using the
 :class:`nextcord.Permissions` interface, you can use :func:`nextcord.utils.oauth_url`.
+
+Slash Commands
+---------------
+If you want to use slash commands remember to turn on the applications.commands Scope
