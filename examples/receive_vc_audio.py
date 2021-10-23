@@ -101,8 +101,8 @@ class Client(nextcord.Client):
 
     @vc_required
     async def toggle_pause(self, msg, vc):
-        vc.toggle_pause()
-        await msg.channel.send(f"The recording has been {'paused' if vc.paused else 'unpaused'}")
+        vc.pause_recording()
+        await msg.channel.send(f"The recording has been {'paused' if vc.recording_paused else 'unpaused'}")
 
     @vc_required
     async def stop_recording(self, msg, vc):

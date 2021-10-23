@@ -21,6 +21,7 @@ Overview
 - Webhooks are changed significantly: ``WebhookAdapter`` is removed, and synchronous requests using requests is now inside :class:`SyncWebhook`.
 - edit method no longer updates cache and instead returns modified instance.
 - User accounts (userbots) are no longer supported.
+- Voice Receiving is now possible. This also means :class:`VoiceClient` got some breaking changes
 - Client.logout is removed; use :meth:`Client.close` instead.
 - ``on_private_channel_create/delete`` events are removed.
 - User.permissions_in is removed; use :meth:`abc.GuildChannel.permissions_in` instead.
@@ -107,6 +108,33 @@ TL;DR: :func:`utils.utcnow` becomes now(:attr:`datetime.timezone.utc`). If you a
     )
 
 Note that newly-added :func:`nextcord.utils.utcnow()` can be used as an alias of ``datetime.datetime.now(datetime.timezone.utc)``.
+
+Voice Changes
+^^^^^^^^^^^^^^^^^
+:class:`VoiceClient` got different breaking changes and Voice Recording support. For Voice Recording see whats new
+In Order of making clear what is about recording and what about playing the following names changed
+
+Before: ::
+
+    vc.is_playing()
+    vc.is_paused()
+    vc.is_connected()
+    vc.stop()
+    vc.pause()
+    vc.resume()
+    # ...
+
+After: ::
+
+    vc.playing
+    vc.playing_paused
+    vc.connected
+    vc.stop_playing()
+    vc.pause_playing()
+    vc.resume_playing()
+    # ...
+
+
 
 Embed.__bool__ change
 ^^^^^^^^^^^^^^^^^^^^^^^^^

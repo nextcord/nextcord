@@ -122,6 +122,11 @@ Audio Data
     :inherited-members:
     :undoc-members:
 
+Cleanup
+~~~~~~~~~~~~
+
+.. autofunction:: nextcord.sink.cleanuptempdir
+
 VoiceProtocol
 ~~~~~~~~~~~~~~~
 

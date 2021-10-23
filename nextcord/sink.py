@@ -1,5 +1,7 @@
 """
 The MIT License (MIT)
+
+Copyright (c) 2021-present Tag-Epic
 Copyright (c) 2015-present Rapptz
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -20,7 +22,6 @@ DEALINGS IN THE SOFTWARE.
 import random
 import shutil
 import tempfile
-from io import BytesIO
 from typing import Optional, List, AnyStr
 
 from .errors import ClientException
@@ -83,7 +84,9 @@ class FiltersMixin:
 
 
 class RawData:
-    """Handles raw data from Discord so that it can be decrypted and decoded to be used."""
+    """Handles raw data from Discord so that it can be decrypted and decoded to be used.
+
+    .. versionadded:: 2.0"""
     def __init__(self, data, client):
         self.data = bytearray(data)
         self.client = client
@@ -96,7 +99,10 @@ class RawData:
 
 
 class AudioData:
-    """Handles data that's been completely decrypted and decoded and is ready to be saved to file."""
+    """Handles data that's been completely decrypted and decoded and is ready to be saved to file.
+
+    .. versionadded:: 2.0
+    """
     def __init__(self, file):
         self.file = open(file, 'ab')
         self.dir_path = os.path.split(file)[0]
@@ -127,6 +133,8 @@ class AudioData:
 
 class Sink(FiltersMixin):
     """A Sink "stores" all the audio data.
+
+    .. versionadded:: 2.0
 
     Parameters
     ----------
@@ -234,6 +242,8 @@ class Sink(FiltersMixin):
 def cleanuptempdir(tempfolder: Optional[os.PathLike] = MISSING):
     """
     Attemps to remove all files out of the voicerecs tempfolder
+
+    .. versionadded:: 2.0
     """
     if tempfolder is MISSING:
         tempfolder = tempfile.gettempdir() + "/nextcord/voicerecs/pcmtemps"

@@ -224,6 +224,10 @@ class VoiceClient(VoiceProtocol):
         The voice channel connected to.
     loop: :class:`asyncio.AbstractEventLoop`
         The event loop that the voice client is running on.
+    recording_paused: bool
+        If recording is paused
+
+        .. versionadded:: 2.0
     """
     endpoint_ip: str
     voice_port: int
@@ -261,7 +265,7 @@ class VoiceClient(VoiceProtocol):
         self._lite_nonce: int = 0
         self.ws: DiscordVoiceWebSocket = MISSING
 
-        self.paused = False
+        self.recording_paused = False
         self.recording = False
         self.user_timestamps = {}
         self.sink = None
@@ -499,7 +503,7 @@ class VoiceClient(VoiceProtocol):
 
         Disconnects this voice client from voice.
         """
-        if not force and not self.is_connected():
+        if not force and not self.connected:
             return
 
         self.stop()
@@ -527,7 +531,8 @@ class VoiceClient(VoiceProtocol):
         """
         await self.channel.guild.change_voice_state(channel=channel)
 
-    def is_connected(self) -> bool:
+    @property
+    def connected(self) -> bool:
         """Indicates if the voice client is connected to voice."""
         return self._connected.is_set()
 
@@ -633,10 +638,10 @@ class VoiceClient(VoiceProtocol):
             Source is not opus encoded and opus is not loaded.
         """
 
-        if not self.is_connected():
+        if not self.connected:
             raise ClientException('Not connected to voice.')
 
-        if self.is_playing():
+        if self.playing:
             raise ClientException('Already playing audio.')
 
         if not isinstance(source, AudioSource):
@@ -648,33 +653,36 @@ class VoiceClient(VoiceProtocol):
         self._player = AudioPlayer(source, self, after=after)
         self._player.start()
 
-    def is_playing(self) -> bool:
+    @property
+    def playing(self) -> bool:
         """Indicates if we're currently playing audio."""
         return self._player is not None and self._player.is_playing()
 
-    def is_paused(self) -> bool:
+    @property
+    def playing_paused(self) -> bool:
         """Indicates if we're playing audio, but if we're paused."""
         return self._player is not None and self._player.is_paused()
 
-    def stop(self) -> None:
+    def stop_playing(self) -> None:
         """Stops playing audio."""
         if self._player:
             self._player.stop()
             self._player = None
 
-    def pause(self) -> None:
+    def pause_playing(self) -> None:
         """Pauses the audio playing."""
         if self._player:
             self._player.pause()
 
-    def resume(self) -> None:
+    def resume_playing(self) -> None:
         """Resumes the audio playing."""
         if self._player:
             self._player.resume()
 
     @property
     def source(self) -> Optional[AudioSource]:
-        """Optional[:class:`AudioSource`]: The audio source being played, if playing.
+        """
+        Optional[:class:`AudioSource`]: The audio source being played, if playing.
 
         This property can also be used to change the audio source currently being played.
         """
@@ -728,6 +736,8 @@ class VoiceClient(VoiceProtocol):
         If there are no users talking in the channel, `None` will be returned.
         You must be connected to receive audio.
 
+        .. versionadded:: 2.0
+
         Parameters
         ---------
         data: :class:`bytes`
@@ -739,7 +749,7 @@ class VoiceClient(VoiceProtocol):
             # as opposed to actual audio data, so it's not
             # important at the moment.
             return
-        if self.paused:
+        if self.recording_paused:
             return
 
         data = RawData(data, self)
@@ -760,6 +770,8 @@ class VoiceClient(VoiceProtocol):
         but since discord does not talk about rules for this it is your task to clearify if you are allowed to actually
         record the channel the bot is in. Never do so without the permissions of the people in it!
 
+        .. versionadded:: 2.0
+
 
         Parameters
         ----------
@@ -778,7 +790,7 @@ class VoiceClient(VoiceProtocol):
         RecordException
             Must provide a Sink object.
         """
-        if not self.is_connected():
+        if not self.connected:
             raise RecordException('Not connected to voice channel.')
         if self.recording:
             raise RecordException("Already recording.")
@@ -799,6 +811,9 @@ class VoiceClient(VoiceProtocol):
     def stop_recording(self):
         """Stops the recording.
         Must be already recording.
+
+        .. versionadded:: 2.0
+
         Raises
         ------
         RecordException
@@ -808,11 +823,14 @@ class VoiceClient(VoiceProtocol):
             raise RecordException("Not currently recording audio.")
         self.decoder.stop()
         self.recording = False
-        self.paused = False
+        self.recording_paused = False
 
-    def toggle_pause(self):
+    def pause_recording(self):
         """Pauses or unpauses the recording.
         Must be already recording.
+
+        .. versionadded:: 2.0
+
         Raises
         ------
         RecordException
@@ -820,7 +838,7 @@ class VoiceClient(VoiceProtocol):
          """
         if not self.recording:
             raise RecordException("Not currently recording audio.")
-        self.paused = not self.paused
+        self.recording_paused = not self.recording_paused
 
     def empty_socket(self):
         while True:
