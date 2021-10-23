@@ -56,9 +56,9 @@ class Client(nextcord.Client):
         self.playlists = {}
 
         self.commands = {
-            '!start': self.start_recording,
-            '!stop': self.stop_recording,
-            '!pause': self.toggle_pause,
+            '$start': self.start_recording,
+            '$stop': self.stop_recording,
+            '$pause': self.toggle_pause,
         }
 
     async def get_vc(self, message: nextcord.Message):
@@ -106,24 +106,31 @@ class Client(nextcord.Client):
 
     @vc_required
     async def stop_recording(self, msg, vc):
+        print("stopping")
         vc.stop_recording()
 
-    async def finished_callback(self, sink, channel, *args):
+    async def finished_callback(self, sink: nextcord.Sink, channel, *args):
         # Note: sink.audio_data = {user_id: AudioData}
         recorded_users = [f" <@{str(user_id)}> ({os.path.split(audio.file)[1]}) " for user_id, audio in sink.audio_data.items()]
         await channel.send(f"Finished! Recorded audio for {', '.join(recorded_users)}.")
+        for f in sink.get_files():
+            print(f)
+            await channel.send(file=nextcord.File(f, f, spoiler=True))
+        sink.destroy()
 
     async def on_voice_state_update(self, member, before, after):
         if member.id != self.user.id:
             return
         # Filter out updates other than when we leave a channel we're connected to
-        if member.guild.id not in self.connections and (not before.channel and after.channel):
+        if member.guild.id not in self.connections or (not before.channel and after.channel):
             return
 
-        print("Disconnected")
         del self.connections[member.guild.id]
+        print("Disconnected")
 
 
-intents = nextcord.Intents.default()
-client = Client(intents=intents)
-client.run('token')
+if __name__ == "__main__":
+    nextcord.cleanuptempdir()
+    intents = nextcord.Intents.default()
+    client = Client(intents=intents)
+    client.run('token')
