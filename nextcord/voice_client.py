@@ -506,7 +506,7 @@ class VoiceClient(VoiceProtocol):
         if not force and not self.connected:
             return
 
-        self.stop()
+        self.stop_playing()
         self._connected.clear()
 
         try:

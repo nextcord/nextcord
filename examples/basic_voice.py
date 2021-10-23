@@ -112,7 +112,7 @@ class Music(commands.Cog):
     @play.before_invoke
     @yt.before_invoke
     @stream.before_invoke
-    async def ensure_voice(self, ctx):
+    async def ensure_voice(self, ctx: commands.Context):
         if ctx.voice_client is None:
             if ctx.author.voice:
                 await ctx.author.voice.channel.connect()
@@ -120,7 +120,7 @@ class Music(commands.Cog):
                 await ctx.send("You are not connected to a voice channel.")
                 raise commands.CommandError("Author not connected to a voice channel.")
         elif ctx.voice_client.playing:
-            ctx.voice_client.stop()
+            ctx.voice_client.stop_playing()
 
 bot = commands.Bot(command_prefix="$", description='Relatively simple music bot example')
 
