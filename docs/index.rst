@@ -65,7 +65,7 @@ These pages go into great detail about everything the API can do.
   api
   nextcord.ext.commands API Reference <ext/commands/api.rst>
   nextcord.ext.tasks API Reference <ext/tasks/index.rst>
-  nextcord.ext.slash_temp API Reference <client/index.rst>
+  nextcord.Client API Reference <client/index.rst>
 
 Meta
 ------
