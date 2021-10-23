@@ -1,9 +1,9 @@
-.. _nextcord_ext_slash_temp:
+.. _nextcord_Client_index
 
-``nextcord.ext.slash`` -- Slash commands docs
-====================================================
+``nextcord.Client`` -- Slash commands docs
+=============================================
 
-``nextcord.ext.slash`` Is made to show you how to make Slash Command's in nextcord, It is **Not** an extension module or anything you use when coding.
+``nextcord.Client`` Is the module that stores most if not all of the slash command data, There is a seperate Documentation for anything non-slash related in /adding when tomorrow
 
 
 .. toctree::
