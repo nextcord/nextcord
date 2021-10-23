@@ -9,7 +9,7 @@
 .. toctree::
     :maxdepth: 2
 
-    introduction
+    interactions
     cogs
     UserPerms
     advancedpt2
