@@ -133,7 +133,6 @@ After: ::
     vc.resume_playing()
 
 
-
 Embed.__bool__ change
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 :class:`Embed` that has a value is always considered truthy. Previously it only considered text fields.
