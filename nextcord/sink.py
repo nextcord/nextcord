@@ -19,6 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+import asyncio
 import random
 import shutil
 import tempfile
@@ -80,7 +81,8 @@ class FiltersMixin:
         time.sleep(self.seconds)
         if self.finished:
             return
-        self.vc.stop_recording()
+        asyncio.run(self.vc.stop_recording())
+
 
 
 class RawData:

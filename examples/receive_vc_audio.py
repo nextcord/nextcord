@@ -95,19 +95,19 @@ class Client(nextcord.Client):
         if encoding is None:
             return await msg.channel.send("You must provide a valid output encoding.")
 
-        vc.start_recording(nextcord.Sink(encoding=nextcord  .Encodings(encoding), filters=filters), self.finished_callback, msg.channel)
+        await vc.start_recording(nextcord.Sink(encoding=nextcord  .Encodings(encoding), filters=filters), self.finished_callback, msg.channel)
 
         await msg.channel.send("The recording has started!")
 
     @vc_required
     async def toggle_pause(self, msg, vc):
-        vc.pause_recording()
+        await vc.pause_recording()
         await msg.channel.send(f"The recording has been {'paused' if vc.recording_paused else 'unpaused'}")
 
     @vc_required
     async def stop_recording(self, msg, vc):
         print("stopping")
-        vc.stop_recording()
+        await vc.stop_recording()
 
     async def finished_callback(self, sink: nextcord.Sink, channel, *args):
         # Note: sink.audio_data = {user_id: AudioData}
@@ -122,7 +122,7 @@ class Client(nextcord.Client):
         if member.id != self.user.id:
             return
         # Filter out updates other than when we leave a channel we're connected to
-        if member.guild.id not in self.connections or (not before.channel and after.channel):
+        if member.guild.id not in self.connections or (not before.channel and after.channel) or (before.channel == after.channel):
             return
 
         del self.connections[member.guild.id]

@@ -348,7 +348,7 @@ class VoiceClient(VoiceProtocol):
         self._voice_server_complete.set()
 
     async def voice_connect(self) -> None:
-        await self.channel.guild.change_voice_state(channel=self.channel)
+        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
 
     async def voice_disconnect(self) -> None:
         _log.info('The voice handshake is being terminated for Channel ID %s (Guild ID %s)', self.channel.id, self.guild.id)
@@ -759,7 +759,7 @@ class VoiceClient(VoiceProtocol):
 
         self.decoder.decode(data)
 
-    def start_recording(self, sink, callback, *args):
+    async def start_recording(self, sink, callback, *args):
         """The bot will begin recording audio from the current voice channel it is in.
         This function uses a thread so the current code line will not be stopped.
         Must be in a voice channel to use.
@@ -796,6 +796,7 @@ class VoiceClient(VoiceProtocol):
             raise RecordException("Already recording.")
         if not isinstance(sink, Sink):
             raise RecordException("Must provide a Sink object.")
+        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=False)
 
         self.empty_socket()
 
@@ -808,7 +809,7 @@ class VoiceClient(VoiceProtocol):
         t = threading.Thread(target=self.recv_audio, args=(sink, callback, *args,))
         t.start()
 
-    def stop_recording(self):
+    async def stop_recording(self):
         """Stops the recording.
         Must be already recording.
 
@@ -821,11 +822,14 @@ class VoiceClient(VoiceProtocol):
         """
         if not self.recording:
             raise RecordException("Not currently recording audio.")
+        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
+        await asyncio.sleep(1)
         self.decoder.stop()
         self.recording = False
         self.recording_paused = False
 
-    def pause_recording(self):
+
+    async def pause_recording(self):
         """Pauses or unpauses the recording.
         Must be already recording.
 
@@ -839,6 +843,8 @@ class VoiceClient(VoiceProtocol):
         if not self.recording:
             raise RecordException("Not currently recording audio.")
         self.recording_paused = not self.recording_paused
+        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=self.recording_paused)
+
 
     def empty_socket(self):
         while True:
@@ -867,7 +873,7 @@ class VoiceClient(VoiceProtocol):
                 data = self.socket.recv(4096)
 
             except OSError:
-                self.stop_recording()
+                asyncio.run(self.stop_recording())
                 continue
 
             self.unpack_audio(data)
