@@ -11,5 +11,5 @@
 
     introduction
     cogs
-    advancedpt1
+    UserPerms
     advancedpt2
