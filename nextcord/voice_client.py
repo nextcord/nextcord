@@ -1,6 +1,7 @@
 """
 The MIT License (MIT)
 
+Copyright (c) 2021-present Tag-Epic
 Copyright (c) 2015-present Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -726,6 +727,7 @@ class VoiceClient(VoiceProtocol):
         """Takes an audio packet received from Discord and decodes it into pcm audio data.
         If there are no users talking in the channel, `None` will be returned.
         You must be connected to receive audio.
+
         Parameters
         ---------
         data: :class:`bytes`

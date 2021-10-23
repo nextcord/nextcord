@@ -127,14 +127,15 @@ class AudioData:
 
 class Sink(FiltersMixin):
     """A Sink "stores" all the audio data.
-        Parameters
-        ----------
-        encoding: :class:`string`
-            The encoding to use. Valid types include wav, mp3, and pcm (even though it's not an actual encoding).
-        Raises
-        ------
-        ClientException
-            An invalid encoding type was specified.
+
+    Parameters
+    ----------
+    encoding: :class:`string`
+        The encoding to use. Valid types include wav, mp3, and pcm (even though it's not an actual encoding).
+    Raises
+    ------
+    ClientException
+        An invalid encoding type was specified.
     """
 
     def __init__(self, *, encoding: Encodings = Encodings('wav'), filters=None, tempfolder: Optional[os.PathLike] = MISSING):
@@ -170,12 +171,18 @@ class Sink(FiltersMixin):
         file.write(data)
 
     def cleanup(self):
+        """
+        Formats audio and ends recording
+        """
         self.finished = True
         for file in self.audio_data.values():
             file.cleanup()
             self.format_audio(file)
 
     def format_audio(self, audio):
+        """
+        Formats one Audio File
+        """
         if self.vc.recording:
             raise ClientException("Audio may only be formatted after recording is finished.")
         if self.encoding is Encodings.pcm:

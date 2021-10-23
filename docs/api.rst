@@ -103,6 +103,25 @@ VoiceClient
     :members:
     :exclude-members: connect, on_voice_state_update, on_voice_server_update
 
+Sinks
+~~~~~~~~~~~~
+
+.. attributetable:: Sink
+
+.. autoclass:: Sink()
+    :members:
+    :inherited-members:
+
+Audio Data
+~~~~~~~~~~~~
+
+.. attributetable:: AudioData
+
+.. autoclass:: AudioData()
+    :members:
+    :inherited-members:
+    :undoc-members:
+
 VoiceProtocol
 ~~~~~~~~~~~~~~~
 
