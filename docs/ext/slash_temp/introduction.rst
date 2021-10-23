@@ -2,10 +2,13 @@
 
 .. _ext_slash_temp_introduction:
 
-A Introduction To Interaction Commands
-=======================================
+Interaction Commands
+=====================
 
 As discord have limited the access of message content, Nextcord have decided to add Slash Commands to there fleet of features, This page will teach you the basics of slash commands how they work how you can use them and more!
+
+How To Make A Simple Interaction Command
+-----------------------------------------
 
 This right here is a simple ping Pong! Command made with Nextcords slash feature.
 
