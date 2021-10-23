@@ -10,7 +10,7 @@ As discord have limited the access of message content, Nextcord have decided to 
 How To Make A Simple Interaction Command
 -----------------------------------------
 
-This right here is a simple ping Pong! Command made with Nextcords slash feature.
+This right here is a simple ping pong Command made with Nextcords slash feature.
 
 .. code-block:: python3
 
@@ -20,14 +20,10 @@ This right here is a simple ping Pong! Command made with Nextcords slash feature
         
 The way it works is that you use the slash_command fuction to interact with the DiscordAPI "name" is the name of your slash command, And guild_ids is used to limit the guilds that the slash command is available also useful for testing as slash commands can take up to an hour to register
 
-Why Should You Use Sub-Commands?
----------------------------------
-Why should you use sub-commands? They make it easier to make multiple commands into one like a config command or help command
-
 How To Use Sub-Commands
 ------------------------
 
-The way sub-commands work is that you will make a normal slash command that will never be called then make the sub-commands and have them only do the work of real slash commands, There is no difference to slash commands and sub-cmmands, The Only thing you will need to change is functions. 
+The way sub-commands work is that you will make a normal slash command that will never be called then make the sub-commands and have them do the work of real slash commands, There is no difference to slash commands and sub-cmmands, The Only thing you will need to change is functions. 
 
 As shown in the demistration below you make a main slash command or a Dummy slash command and build sub-commands off it
 
