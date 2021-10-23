@@ -2632,6 +2632,24 @@ of :class:`enum.Enum`.
 
         The guild may contain NSFW content.
 
+.. class:: Encodings
+
+    Represents all curently available Encodings for files received by recording
+
+    .. versionadded:: 2.0
+
+    .. attribute:: wav
+
+        Encodes in .wav format
+
+    .. attribute:: mp3
+
+        Encodes in .mp3 format. Requires ffmpeg to be present
+
+    .. attribute:: pcm
+
+        No Encoding. PCM is also what will be used when receiving until formatted
+
 Async Iterator
 ----------------
 
