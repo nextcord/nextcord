@@ -52,7 +52,6 @@ These extensions help you during development when it comes to common tasks.
 
   ext/commands/index.rst
   ext/tasks/index.rst
-  ext/slash_temp/index.rst
 
 Manuals
 ---------
