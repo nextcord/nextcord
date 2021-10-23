@@ -122,7 +122,6 @@ Before: ::
     vc.stop()
     vc.pause()
     vc.resume()
-    # ...
 
 After: ::
 
@@ -132,7 +131,6 @@ After: ::
     vc.stop_playing()
     vc.pause_playing()
     vc.resume_playing()
-    # ...
 
 
 
