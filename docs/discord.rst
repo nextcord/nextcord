@@ -98,3 +98,5 @@ If you want to generate this URL dynamically at run-time inside your bot and usi
 Slash Commands
 ---------------
 If you want to use slash commands remember to turn on the applications.commands Scope
+
+.. image:: /images/slash_scope.jpg
