@@ -18,7 +18,7 @@ This right here is a simple ping Pong! Command made with Nextcords slash feature
 The way it works is that you use the slash_command fuction to interact with the DiscordAPI "name" is the name of your slash command, And guild_ids is used to limit the guilds that the slash command is available also useful for testing as slash commands can take up to an hour to register
 
 Sub-Commands
-=============
+-------------
 
 The way sub-commands work is that you will make a normal slash command that will never be called then make the sub-commands and have them only do the work of real slash commands, There is no difference to slash commands and sub-cmmands, The Only thing you will need to change is functions. 
 
