@@ -29,6 +29,7 @@ Is this your first time using the library? This is the place to get started!
 - **Working with Nextcord:** :doc:`discord` | :doc:`intents`
 - **Migrating from discord.py**: :ref:`Migrating to nextcord <migrating_nextcord>`
 - **Examples:** Many examples are available in the :resource:`repository <examples>`.
+- **Interaction Commands:** :doc:`ext/slash_temp/introduction`
 
 Getting help
 --------------
