@@ -27,4 +27,4 @@ The example shown above responds to a user when they do a slash command, It is v
 
 How To Use Advanced Cog Features
 ---------------------------------
-Classes Etc
+Classes Etc **Coming Soon**
