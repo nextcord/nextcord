@@ -80,7 +80,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'nextcord'
-copyright = '2015-present, Rapptz'
+copyright = '2015-2021, Rapptz And 2021-present tag-epic'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -165,7 +165,7 @@ html_context = {
   'discord_extensions': [
     ('nextcord.ext.commands', 'ext/commands'),
     ('nextcord.ext.tasks', 'ext/tasks'),
-    ('nextcord.client', 'client'),
+    ('nextcord.client', 'Client'),
   ],
 }
 
