@@ -8,7 +8,7 @@ Coming Soon As Slash Cogs Are Being Remade/Reworked
 
 How To Make Slash Commands In Cogs
 -----------------------------------
-Show below is an example of a simple command running in a cog, It is very basic doesn't have alot of features, Some features planned is autocomplete and proper error handling to slash commands, So that mean's that slash cogs are gonna need to get a massive upgrade and will change alot, Since this is a very simple slash command cog it won't probably change just the more advanced features.
+Show below is an example of a simple command running in a cog, It is very basic doesn't have alot of features, Some features planned is autocomplete and proper error handling to slash commands, So that mean's that slash cogs are gonna need to get a massive upgrade and will change alot, Since this is a very simple slash command cog it won't change just the more advanced features.
 
 .. code-block:: python3
       
