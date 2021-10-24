@@ -887,11 +887,7 @@ class VoiceClient(VoiceProtocol):
     def recv_decoded_audio(self, data):
         if data.ssrc not in self.user_timestamps:
             self.user_timestamps.update({data.ssrc: data.timestamp})
-            # Add silence of when they were not being recorded.
-            # TODO: Using a measurement of time for this is definitely not the most efficient.
-            data.decoded_data = struct.pack('<h', 0) * round(
-                self.decoder.CHANNELS * self.decoder.SAMPLING_RATE * (time.perf_counter() - self.starting_time)
-            ) + data.decoded_data
+            # TODO: Mark the time into the recording at which they spoke and return that data in the callback (put the code shortly after the audio is decoded)
             silence = 0
         else:
             silence = data.timestamp - self.user_timestamps[data.ssrc] - 960
