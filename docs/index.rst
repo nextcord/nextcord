@@ -30,7 +30,7 @@ Is this your first time using the library? This is the place to get started!
 - **Working with Nextcord:** :doc:`discord` | :doc:`intents`
 - **Migrating from discord.py**: :ref:`Migrating to nextcord <migrating_nextcord>`
 - **Examples:** Many examples are available in the :resource:`repository <examples>`.
-- **Interaction Commands:** :doc:`/client/index`
+- **Interaction Commands:** :doc:`/interactions`
 
 Getting help
 --------------
@@ -65,7 +65,7 @@ These pages go into great detail about everything the API can do.
   api
   nextcord.ext.commands API Reference <ext/commands/api.rst>
   nextcord.ext.tasks API Reference <ext/tasks/index.rst>
-  nextcord.Client API Reference <client/index.rst>
+  Interacton Command's API Reference <interactions.rst>
 
 Meta
 ------
@@ -80,4 +80,4 @@ If you're looking for something related to the project itself, it's here.
   migrating
   migrating_2
   migrating_to_nextcord
-  client/index
+  interactions
