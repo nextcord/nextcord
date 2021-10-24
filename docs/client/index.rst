@@ -102,12 +102,13 @@ The example shown above responds to a user when they do a slash command, It is v
 
 How To Use Advanced Cog Features
 ---------------------------------
-Classes Etc **Coming Soon**
+Feature Is **Coming Soon**
 
 
 Role And User Permissions
 --------------------------
+Feature Is **Coming Soon**
 
 Autocomplete
 -------------
-
+Feature Is **Coming Soon**
