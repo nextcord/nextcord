@@ -44,3 +44,12 @@ As shown in the demistration below you make a main slash command or a Dummy slas
                             arg1: str = SlashOption(name="argument1", description="The first argument."),
                             arg2: str = SlashOption(description="The second argument!", default=None)):
         await interaction.response.send_message(f"This is subcommand 2 with arg1 {arg1} and arg2 {arg2}")
+        
+Fields And Requirements
+------------------------
+
+Role And User Permissions
+--------------------------
+
+Autocomplete
+-------------
