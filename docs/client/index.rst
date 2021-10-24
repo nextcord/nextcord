@@ -12,4 +12,4 @@
     interactions
     cogs
     UserPerms
-    advancedpt2
+    decorators
