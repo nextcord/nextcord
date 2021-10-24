@@ -51,6 +51,18 @@ As shown in the demistration below you make a main slash command or a Dummy slas
         
 Fields And Requirements
 ------------------------
+Fields are mean't to facilitate an easier way to fill info, Letting people doing a slash commands know what to fill in
+
+Nextcord's implementation of slash commands has fields and is very simple, In the example below is a field
+
+.. code-block:: python3
+     
+     @bot.slash_command(name="help", guild_ids="GUILD_ID")
+     async def help(interaction: Interaction,
+                    settings: str = SlashOption(name=settings, description="Your Current Help Settings")
+                    music: str = SlashOption(name=music, description="Your Music Settings")):
+         await interaction.response.send_message(f"") 
+
 
 Role And User Permissions
 --------------------------
