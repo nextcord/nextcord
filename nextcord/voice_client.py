@@ -888,7 +888,7 @@ class VoiceClient(VoiceProtocol):
         if data.ssrc not in self.user_timestamps:
             self.user_timestamps.update({data.ssrc: data.timestamp})
             # Add silence of when they were not being recorded.
-            # TODO: This will not work well.
+            # TODO: Using a measurement of time for this is definitely not the most efficient.
             data.decoded_data = struct.pack('<h', 0) * round(
                 self.decoder.CHANNELS * self.decoder.SAMPLING_RATE * (time.perf_counter() - self.starting_time)
             ) + data.decoded_data
@@ -897,7 +897,7 @@ class VoiceClient(VoiceProtocol):
             silence = data.timestamp - self.user_timestamps[data.ssrc] - 960
             self.user_timestamps[data.ssrc] = data.timestamp
 
-        data.decoded_data = struct.pack('<h', 0) * silence + data.decoded_data
+        data.decoded_data = struct.pack('<h', 0) * silence * 2 + data.decoded_data
         while data.ssrc not in self.ws.ssrc_map:
             time.sleep(0.05)
         self.sink.write(data.decoded_data, self.ws.ssrc_map[data.ssrc]['user_id'])
