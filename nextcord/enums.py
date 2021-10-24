@@ -591,6 +591,8 @@ class NSFWLevel(Enum, comparable=True):
 
 
 class Encodings(Enum):
+    # Would also like to add opus but don't
+    # know how I would go about it.
     wav = 'wav'
     mp3 = 'mp3'
     pcm = 'pcm'
