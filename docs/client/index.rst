@@ -1,9 +1,6 @@
 .. currentmodule:: nextcord
 
 .. _client_index:
-
-.. image:: https://raw.githubusercontent.com/nextcord/nextcord/master/assets/repo-banner.svg
-   :alt: Nextcord
    
 Interaction Commands
 =====================
