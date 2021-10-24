@@ -2,6 +2,9 @@
 
 .. _client_index:
 
+.. image:: assets/nextcord-banner.svg
+   :alt: Nextcord
+   
 Interaction Commands
 =====================
 
