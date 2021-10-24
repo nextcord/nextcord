@@ -2,7 +2,7 @@
 
 .. _client_index:
 
-.. image:: assets/nextcord-banner.svg
+.. image:: https://raw.githubusercontent.com/nextcord/nextcord/master/assets/repo-banner.svg
    :alt: Nextcord
    
 Interaction Commands
