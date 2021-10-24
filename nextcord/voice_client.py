@@ -887,13 +887,12 @@ class VoiceClient(VoiceProtocol):
     def recv_decoded_audio(self, data):
         if data.ssrc not in self.user_timestamps:
             self.user_timestamps.update({data.ssrc: data.timestamp})
-            # TODO: Mark the time into the recording at which they spoke and return that data in the callback (put the code shortly after the audio is decoded)
             silence = 0
         else:
             silence = data.timestamp - self.user_timestamps[data.ssrc] - 960
             self.user_timestamps[data.ssrc] = data.timestamp
 
-        data.decoded_data = struct.pack('<h', 0) * silence * 2 + data.decoded_data
+        data.decoded_data = struct.pack('<h', 0) * silence * opus._OpusStruct.CHANNELS + data.decoded_data
         while data.ssrc not in self.ws.ssrc_map:
             time.sleep(0.05)
         self.sink.write(data.decoded_data, self.ws.ssrc_map[data.ssrc]['user_id'])
