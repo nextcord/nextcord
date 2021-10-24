@@ -828,8 +828,7 @@ class VoiceClient(VoiceProtocol):
         self.recording = False
         self.recording_paused = False
 
-
-    async def pause_recording(self):
+    async def toggle_pause(self):
         """Pauses or unpauses the recording.
         Must be already recording.
 
@@ -844,7 +843,6 @@ class VoiceClient(VoiceProtocol):
             raise RecordException("Not currently recording audio.")
         self.recording_paused = not self.recording_paused
         await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=self.recording_paused)
-
 
     def empty_socket(self):
         while True:
@@ -889,15 +887,13 @@ class VoiceClient(VoiceProtocol):
     def recv_decoded_audio(self, data):
         if data.ssrc not in self.user_timestamps:
             self.user_timestamps.update({data.ssrc: data.timestamp})
-            # Add silence of when they were not being recorded.
-            data.decoded_data = struct.pack('<h', 0) * round(
-                self.decoder.CHANNELS * self.decoder.SAMPLING_RATE * (time.perf_counter() - self.starting_time)
-            ) + data.decoded_data
+            # TODO: Mark the time into the recording at which they spoke and return that data in the callback (put the code shortly after the audio is decoded)
+            silence = 0
         else:
+            silence = data.timestamp - self.user_timestamps[data.ssrc] - 960
             self.user_timestamps[data.ssrc] = data.timestamp
 
-        silence = data.timestamp - self.user_timestamps[data.ssrc] - 960
-        data.decoded_data = struct.pack('<h', 0) * silence + data.decoded_data
+        data.decoded_data = struct.pack('<h', 0) * silence * 2 + data.decoded_data
         while data.ssrc not in self.ws.ssrc_map:
             time.sleep(0.05)
         self.sink.write(data.decoded_data, self.ws.ssrc_map[data.ssrc]['user_id'])

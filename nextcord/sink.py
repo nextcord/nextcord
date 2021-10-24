@@ -84,7 +84,6 @@ class FiltersMixin:
         asyncio.run(self.vc.stop_recording())
 
 
-
 class RawData:
     """Handles raw data from Discord so that it can be decrypted and decoded to be used.
 
@@ -153,9 +152,6 @@ class Sink(FiltersMixin):
             filters = default_filters
         self.filters = filters
         FiltersMixin.__init__(self, **self.filters)
-
-        # Would also like to add opus but don't
-        # know how I would go about it.
 
         self.encoding: Encodings = encoding
         self.vc = None
