@@ -5,7 +5,11 @@
 Interaction Commands
 =====================
 
-As discord have limited the access of message content, Nextcord have decided to add Slash Commands to there fleet of features, This page will teach you the basics of slash commands how they work how you can use them and more!
+As discord have added interaction commands a feature with alot of possiblity's and idea's we at nextcord have decided to add them to our fleet of features,
+
+This doc will explain the innerworkings and how to use interaction commmands.
+
+We suggest you learn how to make regular commands before looking through here.
 
 How To Make A Simple Interaction Command
 -----------------------------------------
