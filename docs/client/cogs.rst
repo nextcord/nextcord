@@ -1,6 +1,6 @@
 .. currentmodule:: nextcord
 
-.. _ext_slash_temp_cogs:
+.. _client_cogs:
 
 Slash Command Cogs
 ===================
