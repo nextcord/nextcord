@@ -23,6 +23,7 @@ import asyncio
 import random
 import shutil
 import tempfile
+import datetime
 from typing import Optional, List, AnyStr
 
 from .errors import ClientException
@@ -170,7 +171,7 @@ class Sink(FiltersMixin):
     def write(self, data, user):
         if user not in self.audio_data:
             ssrc = self.vc.get_ssrc(user)
-            file = os.path.join(self.file_path, f'{ssrc}.pcm')
+            file = os.path.join(self.file_path, f'{ssrc}-{datetime.datetime.utcnow().timestamp()}.pcm')
             self.audio_data.update({user: AudioData(file)})
 
         file = self.audio_data[user]

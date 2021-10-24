@@ -828,7 +828,7 @@ class VoiceClient(VoiceProtocol):
         self.recording = False
         self.recording_paused = False
 
-    async def toggle_pause(self):
+    async def toggle_recording_pause(self):
         """Pauses or unpauses the recording.
         Must be already recording.
 
