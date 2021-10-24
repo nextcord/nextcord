@@ -165,7 +165,7 @@ html_context = {
   'discord_extensions': [
     ('nextcord.ext.commands', 'ext/commands'),
     ('nextcord.ext.tasks', 'ext/tasks'),
-    ('Interaction Commands', 'interactions'),
+    ('Interaction Commands', 'client'),
   ],
 }
 
