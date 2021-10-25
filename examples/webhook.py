@@ -8,6 +8,4 @@ async def send_to_webhook(url, content):
         await webhook.send(content)
 
 loop = asyncio.get_event_loop()
-url = 'url'
-content = 'Hello, world!'
-loop.run_until_complete(send_to_webhook(url, content))
+loop.run_until_complete(send_to_webhook('url', 'Hello, world!'))
