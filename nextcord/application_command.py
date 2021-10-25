@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Union, Optional, List
+from typing import TYPE_CHECKING, Union, Optional, List, Tuple
 # from enum import IntEnum
 from .enums import ApplicationCommandType, ApplicationCommandOptionType
 from .mixins import Hashable

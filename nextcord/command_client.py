@@ -9,7 +9,7 @@ from .application_command import ApplicationCommandResponse
 from inspect import signature, Parameter
 import logging
 
-from typing import Dict, List, Optional, Union, Type, Any, Callable
+from typing import Dict, List, Optional, Union, Type, Any, Callable, Tuple, Set
 from .user import User
 from .member import Member
 from .abc import GuildChannel
@@ -349,11 +349,19 @@ class ApplicationCommand(ApplicationSubcommand):
         self._guild_ids: Dict[int, int] = {}  # Guild ID is key, command ID is value.
 
     def parse_response(self, response: ApplicationCommandResponse):
-        self._state = response._state
-        if response.guild_id:
-            self._guild_ids[response.guild_id] = response.id
+        # self._state = response._state
+        # if response.guild_id:
+        #     self._guild_ids[response.guild_id] = response.id
+        # else:
+        #     self._global_id = response.id
+        self.raw_parse_result(response._state, response.guild_id, response.id)
+
+    def raw_parse_result(self, state: ConnectionState, guild_id: Optional[int], command_id):
+        self._state = state
+        if guild_id:
+            self._guild_ids[guild_id] = command_id
         else:
-            self._global_id = response.id
+            self._global_id = command_id
 
     async def call_from_interaction(self, interaction: Interaction):
         """Runs call using the held ConnectionState object and given interaction."""
@@ -423,7 +431,7 @@ class ApplicationCommand(ApplicationSubcommand):
         else:
             await self.callback(interaction, message, **kwargs)
 
-    async def invoke_user(self, interaction: Interaction, member: Member, **kwargs):
+    async def invoke_user(self, interaction: Interaction, member: Union[Member, User], **kwargs):
         """The parameters of this function should have the bare minimum needed to do a user command."""
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, member, **kwargs)
@@ -464,6 +472,29 @@ class ApplicationCommand(ApplicationSubcommand):
     @property
     def is_global(self) -> bool:
         return self._is_global
+
+    def get_signature(self, guild_id: Optional[int]) -> Optional[Tuple[str, int, Optional[int]]]:
+        if (guild_id is None and self.is_global) or (guild_id in self.guild_ids):
+            return self.name, self.type.value, guild_id
+        else:
+            return None
+
+    def get_signatures(self) -> Set[Tuple[str, int, Optional[int]]]:
+        ret = set()
+        if self.is_global:
+            ret.add((self.name, self.type.value, None))
+        if self.is_guild:
+            for guild_id in self.guild_ids:
+                ret.add((self.name, self.type.value, guild_id))
+        return ret
+
+    # def get_complex_signature(self, guild_id: Optional[int]) -> Optional[Tuple[Tuple[str, int, Optional[int]], ]]:
+    #     if (guild_id is None and self.is_global) or (guild_id in self.guild_ids):
+    #         ret = [self.get_signature(guild_id)]
+    #         for cmd_arg in self.arguments:
+    #             ret.append()
+    #     else:
+    #         return None
 
 
 # class CommandCogMeta(type):
@@ -509,15 +540,15 @@ class CommandClient(Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._cogs: List[CommandCog] = []  # TODO: Turn this into dict with names.
-        self._commands_to_reg_not_great = []
+        # self._commands_to_reg_not_great = []
 
     async def on_connect(self):
         self.register_cog_commands()
-        for command in self._commands_to_reg_not_great:
-            await self.register_command(command)
-
-        await super().on_connect()
-        print(f"ON CONNECT: Registered command count: {len(self._application_commands)}")
+        # for command in self._commands_to_reg_not_great:
+        #     await self.register_command(command)
+    #
+    #     await super().on_connect()
+    #     print(f"ON CONNECT: Registered command count: {len(self._application_commands)}")
 
     # async def register_application_commands(self):
     #     print(f"TO BE REGISTERED: {self._commands_to_register_bad}")
@@ -533,19 +564,19 @@ class CommandClient(Client):
                 for cmd in to_register:
                     print(f"REG COG CMD:     {cmd.name}")
                     # await self.register_command(cmd)
-                    self.add_application_command_request(cmd)
+                    self._internal_add_application_command(cmd)
 
-    async def register_command(self, command: ApplicationCommand):
-        # TODO: Make into bulk registration. Also look into having commands be both guild and global.
-        # await self.register_application_command(command)
-        self.add_application_command_to_bulk(command)
-        # if command.guild_ids:
-        #     for payload in command.payload:
-        #         response = await self.register_application_command(command.call_from_interaction, payload, payload["guild_id"])
-        #         command.parse_response(response)
-        # else:
-        #     response = await self.register_application_command(command.call_from_interaction, command.payload)
-        #     command.parse_response(response)
+    # async def register_command(self, command: ApplicationCommand):
+    #     # TODO: Make into bulk registration. Also look into having commands be both guild and global.
+    #     # await self.register_application_command(command)
+    #     self.add_application_command_to_bulk(command)
+    #     # if command.guild_ids:
+    #     #     for payload in command.payload:
+    #     #         response = await self.register_application_command(command.call_from_interaction, payload, payload["guild_id"])
+    #     #         command.parse_response(response)
+    #     # else:
+    #     #     response = await self.register_application_command(command.call_from_interaction, command.payload)
+    #     #     command.parse_response(response)
 
     # async def delete_unknown_commands(self):
     #     to_remove = []
@@ -562,10 +593,10 @@ class CommandClient(Client):
     #     for app_id in to_remove:
     #         self._connection._remove_application_command(app_id)
 
-    def add_application_command_request(self, application_command: ApplicationCommand):
-        # self._commands_to_register_bad.append(application_command)
-        # self.add_application_command_to_bulk(application_command)  # TODO: Unneeded, refactor.
-        self._commands_to_reg_not_great.append(application_command)
+    # def add_application_command_request(self, application_command: ApplicationCommand):
+    #     # self._commands_to_register_bad.append(application_command)
+    #     # self.add_application_command_to_bulk(application_command)  # TODO: Unneeded, refactor.
+    #     # self._commands_to_reg_not_great.append(application_command)
 
     def add_cog(self, cog: CommandCog):
         self._cogs.append(cog)
@@ -573,21 +604,24 @@ class CommandClient(Client):
     def user_command(self, *args, **kwargs):
         def decorator(func: Callable):
             result = user_command(*args, **kwargs)(func)
-            self.add_application_command_request(result)
+            # self.add_application_command_request(result)
+            self._internal_add_application_command(result)
             return result
         return decorator
 
     def message_command(self, *args, **kwargs):
         def decorator(func: Callable):
             result = message_command(*args, **kwargs)(func)
-            self.add_application_command_request(result)
+            # self.add_application_command_request(result)
+            self._internal_add_application_command(result)
             return result
         return decorator
 
     def slash_command(self, *args, **kwargs):
         def decorator(func: Callable):
             result = slash_command(*args, **kwargs)(func)
-            self.add_application_command_request(result)
+            # self.add_application_command_request(result)
+            self._internal_add_application_command(result)
             return result
         return decorator
 
