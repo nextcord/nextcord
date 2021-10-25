@@ -731,7 +731,7 @@ class VoiceClient(VoiceProtocol):
 
         self.checked_add('timestamp', opus.Encoder.SAMPLES_PER_FRAME, 4294967295)
 
-    def unpack_audio(self, data):
+    def _unpack_audio(self, data):
         """Takes an audio packet received from Discord and decodes it into pcm audio data.
         If there are no users talking in the channel, `None` will be returned.
         You must be connected to receive audio.
@@ -874,7 +874,7 @@ class VoiceClient(VoiceProtocol):
                 asyncio.run(self.stop_recording())
                 continue
 
-            self.unpack_audio(data)
+            self._unpack_audio(data)
 
         self.stopping_time = time.perf_counter()
         self.sink.cleanup()
