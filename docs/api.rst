@@ -2647,7 +2647,7 @@ Invite Target
 
 Video Quality Mode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: ViceoQualityMode
+.. attributetable:: VideoQualityMode
 
 .. class:: VideoQualityMode
 
