@@ -224,15 +224,22 @@ class Sink(FiltersMixin):
     ----------
     encoding: :class:`Encodings`
         The encoding to use. Valid types include wav, mp3, and pcm (even though it's not an actual encoding).
+
+    filters:
+        The filters to apply. Should be a dict. Currently supported are time, users and max_size. Time takes an integer
+        as amount of seconds after recording shall stop, users should be a list of user ids to ignore (ints) and
+        max_size is a limit for the max file of the pcms (bytes amounts as int). Please note that converting to
+        other formats might change the file size a bit
+
     Raises
     ------
     ClientException
         An invalid encoding type was specified.
     """
 
-    def __init__(self, *, encoding: Encodings = Encodings('wav'), filters=None,
+    def __init__(self, *, encoding: Encodings = Encodings('wav'), filters: Optional[dict] = MISSING,
                  tempfolder: Optional[os.PathLike] = MISSING):
-        if filters is None:
+        if filters is MISSING:
             filters = default_filters
         self.filters = filters
         FiltersMixin.__init__(self, **self.filters)
