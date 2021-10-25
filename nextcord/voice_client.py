@@ -732,17 +732,6 @@ class VoiceClient(VoiceProtocol):
         self.checked_add('timestamp', opus.Encoder.SAMPLES_PER_FRAME, 4294967295)
 
     def _unpack_audio(self, data):
-        """Takes an audio packet received from Discord and decodes it into pcm audio data.
-        If there are no users talking in the channel, `None` will be returned.
-        You must be connected to receive audio.
-
-        .. versionadded:: 2.0
-
-        Parameters
-        ---------
-        data: :class:`bytes`
-            Bytes received by Discord via the UDP connection used for sending and receiving voice data.
-        """
         if 200 <= data[1] <= 204:
             # RTCP received.
             # RTCP provides information about the connection
@@ -853,9 +842,9 @@ class VoiceClient(VoiceProtocol):
                 s.recv(4096)
 
     def recv_audio(self, sink, callback, *args):
-        #  Gets data from _recv_audio and sorts
-        #  it by user, handles pcm files and
-        #  silence that should be added.
+        """Gets data from _recv_audio and sorts
+        it by user, handles pcm files and
+        silence that should be added."""
 
         self.user_timestamps = {}
         self.starting_time = time.perf_counter()

@@ -63,7 +63,7 @@ def get_encoding(args):
 class Client(nextcord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.connections = {voice.guild.id: voice for voice in self.voice_clients}
+        self.connections = {}
         self.playlists = {}
 
         self.commands = {
