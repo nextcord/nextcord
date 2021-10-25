@@ -1,5 +1,6 @@
 """
     Copyright 2020 Ext-Creators
+    Copyright 2021 nextcord
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -17,7 +18,4 @@ from .utils import _
 from collections import namedtuple
 
 
-__version__ = "0.1.0"
 
-_VersionInfo = namedtuple("_VersionInfo", "major minor micro releaselevel serial")
-version_info = _VersionInfo(major=0, minor=1, micro=0, releaselevel="stable", serial=0)

@@ -22,5 +22,4 @@ from .bot import ConvertersBot, AutoShardedConvertersBot
 
 version = "0.1.0a"
 
-_VersionInfo = namedtuple("_VersionInfo", "major minor micro releaselevel serial")
-version_info = _VersionInfo(major=0, minor=1, micro=0, releaselevel="alpha", serial=0)
+

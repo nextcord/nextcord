@@ -1,5 +1,6 @@
 """
     Copyright (c) 2020 Ext-Creators
+    Copyright (c) 2021 nextcord
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,6 +20,4 @@ from .mixin import GetchMixin
 import collections
 
 
-_VersionInfo = collections.namedtuple("_VersionInfo", "major minor micro releaselevel serial")
-version_info = _VersionInfo(major=0, minor=1, micro=0, releaselevel="alpha", serial=0)
-version = "0.1.0"
+
