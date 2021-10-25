@@ -157,7 +157,7 @@ class FiltersMixin:
 
     async def wait_and_stop(self):
         if not self.finished:
-            await self.vc.stop_recording()
+            await self.vc.stop_listening()
 
 
 class RawData:
@@ -227,7 +227,7 @@ class Sink(FiltersMixin):
 
     filters:
         The filters to apply. Should be a dict. Currently supported are time, users and max_size. Time takes an integer
-        as amount of seconds after recording shall stop, users should be a list of user ids to ignore (ints) and
+        as amount of seconds after listening shall stop, users should be a list of user ids to ignore (ints) and
         max_size is a limit for the max file of the pcms (bytes amounts as int). Please note that converting to
         other formats might change the file size a bit
 
@@ -253,7 +253,7 @@ class Sink(FiltersMixin):
         self.file_path = tempfolder
         os.makedirs(tempfolder, exist_ok=True)
 
-    def init(self, vc):  # called under start_recording
+    def init(self, vc):  # called under start_listening
         self.vc = vc
         super().init(vc)
 
@@ -270,7 +270,7 @@ class Sink(FiltersMixin):
 
     def cleanup(self):
         """
-        Formats audio and ends recording
+        Formats audio and ends listening
         """
         self.finished = True
         for file in self.audio_data.values():
@@ -285,8 +285,8 @@ class Sink(FiltersMixin):
         """
         Formats one Audio File
         """
-        if self.vc.recording:
-            raise ClientException("Audio may only be formatted after recording is finished.")
+        if self.vc.listening:
+            raise ClientException("Audio may only be formatted after listening is finished.")
         if self.encoding is Encodings.pcm:
             return
         if self.encoding is Encodings.wav:

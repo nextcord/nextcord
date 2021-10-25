@@ -111,8 +111,8 @@ Note that newly-added :func:`nextcord.utils.utcnow()` can be used as an alias of
 
 Voice Changes
 ^^^^^^^^^^^^^^^^^
-:class:`VoiceClient` got different breaking changes and Voice Recording support. For Voice Recording see whats new
-In Order of making clear what is about recording and what about playing the following names changed
+:class:`VoiceClient` got different breaking changes and Voice Listening support. For Voice Recording see whats new
+In Order of making clear what is about listening and what about playing the following names changed
 
 Before: ::
 

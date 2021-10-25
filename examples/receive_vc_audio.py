@@ -106,19 +106,19 @@ class Client(nextcord.Client):
         if encoding is None:
             return await msg.channel.send("You must provide a valid output encoding.")
 
-        await vc.start_recording(nextcord.Sink(encoding=nextcord  .Encodings(encoding), filters=filters), self.finished_callback, msg.channel)
+        await vc.start_listening(nextcord.Sink(encoding=nextcord  .Encodings(encoding), filters=filters), self.finished_callback, msg.channel)
 
         await msg.channel.send("The recording has started!")
 
     @vc_required
     async def toggle_pause(self, msg, vc):
-        await vc.toggle_recording_pause()
-        await msg.channel.send(f"The recording has been {'paused' if vc.recording_paused else 'unpaused'}")
+        await vc.toggle_listening_pause()
+        await msg.channel.send(f"The recording has been {'paused' if vc.listening_paused else 'unpaused'}")
 
     @vc_required
     async def stop_recording(self, msg, vc):
         print("stopping")
-        await vc.stop_recording()
+        await vc.stop_listening()
 
     async def finished_callback(self, sink: nextcord.Sink, channel, *args):
         # Note: sink.audio_data = {user_id: AudioData}

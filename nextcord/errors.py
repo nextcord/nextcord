@@ -46,7 +46,7 @@ __all__ = (
     'Forbidden',
     'NotFound',
     'DiscordServerError',
-    'RecordException',
+    'ListeningException',
     'InvalidData',
     'InvalidArgument',
     'LoginFailure',
@@ -259,8 +259,8 @@ class PrivilegedIntentsRequired(ClientException):
         super().__init__(msg % shard_id)
 
 
-class RecordException(ClientException):
-    """Exception that's thrown when there is an error while trying to record
+class ListeningException(ClientException):
+    """Exception that's thrown when there is an error while trying to listening to
     audio from a voice channel.
     """
     pass
