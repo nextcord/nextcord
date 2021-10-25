@@ -222,7 +222,7 @@ class Sink(FiltersMixin):
 
     Parameters
     ----------
-    encoding: :class:`string`
+    encoding: :class:`Encodings`
         The encoding to use. Valid types include wav, mp3, and pcm (even though it's not an actual encoding).
     Raises
     ------

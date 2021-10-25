@@ -1173,6 +1173,9 @@ from being stringly typed in case the strings change in the future.
 All enumerations are subclasses of an internal class which mimics the behaviour
 of :class:`enum.Enum`.
 
+Channel Type
+~~~~~~~~~~~~~~
+
 .. class:: ChannelType
 
     Specifies the type of channel.
@@ -1223,6 +1226,10 @@ of :class:`enum.Enum`.
         A private thread
 
         .. versionadded:: 2.0
+
+
+Message Type
+~~~~~~~~~~~~~~~~~
 
 .. class:: MessageType
 
@@ -1345,6 +1352,9 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.0
 
+User Flags
+~~~~~~~~~~~~~~
+
 .. class:: UserFlags
 
     Represents Discord User flags.
@@ -1401,6 +1411,9 @@ of :class:`enum.Enum`.
 
         The user is a Discord Certified Moderator.
 
+Activity Type
+~~~~~~~~~~~~~~~~
+
 .. class:: ActivityType
 
     Specifies the type of :class:`Activity`. This is used to check how to
@@ -1430,6 +1443,10 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 1.5
 
+
+Interaction Type
+~~~~~~~~~~~~~~~~~~
+
 .. class:: InteractionType
 
     Specifies the type of :class:`Interaction`.
@@ -1445,6 +1462,9 @@ of :class:`enum.Enum`.
     .. attribute:: component
 
         Represents a component based interaction, i.e. using the Discord Bot UI Kit.
+
+Interaction Response Type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. class:: InteractionResponseType
 
@@ -1479,6 +1499,9 @@ of :class:`enum.Enum`.
 
         See also :meth:`InteractionResponse.edit_message`
 
+Component Type
+~~~~~~~~~~~~~~~~
+
 .. class:: ComponentType
 
     Represents the component type of a component.
@@ -1495,6 +1518,8 @@ of :class:`enum.Enum`.
 
         Represents a select component.
 
+Button Style
+~~~~~~~~~~~~~~~~~~
 
 .. class:: ButtonStyle
 
@@ -1536,6 +1561,9 @@ of :class:`enum.Enum`.
     .. attribute:: url
 
         An alias for :attr:`link`.
+
+Voice Region
+~~~~~~~~~~~~~~~~~~
 
 .. class:: VoiceRegion
 
@@ -1620,6 +1648,9 @@ of :class:`enum.Enum`.
 
         The US West region for VIP guilds.
 
+Verification Level
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. class:: VerificationLevel
 
     Specifies a :class:`Guild`\'s verification level, which is the criteria in
@@ -1667,6 +1698,9 @@ of :class:`enum.Enum`.
 
         Member must have a verified phone on their Discord account.
 
+Notification Level
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. class:: NotificationLevel
 
     Specifies whether a :class:`Guild` has notifications on for all messages or mentions only by default.
@@ -1700,6 +1734,9 @@ of :class:`enum.Enum`.
     .. attribute:: only_mentions
 
         Members receive notifications for messages they are mentioned in.
+
+Content Filter
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. class:: ContentFilter
 
@@ -1740,6 +1777,9 @@ of :class:`enum.Enum`.
 
         The guild has the content filter enabled for every member.
 
+Status
+~~~~~~~~~~~~
+
 .. class:: Status
 
     Specifies a :class:`Member` 's status.
@@ -1765,6 +1805,8 @@ of :class:`enum.Enum`.
         a presence a la :meth:`Client.change_presence`. When you receive a
         user's presence this will be :attr:`offline` instead.
 
+Audit Log Action
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. class:: AuditLogAction
 
@@ -2409,6 +2451,9 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.0
 
+Audit Log Action Category
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. class:: AuditLogActionCategory
 
     Represents the category that the :class:`AuditLogAction` belongs to.
@@ -2427,6 +2472,9 @@ of :class:`enum.Enum`.
 
         The action is the update of something.
 
+Team Membership State
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. class:: TeamMembershipState
 
     Represents the membership state of a team member retrieved through :func:`Client.application_info`.
@@ -2440,6 +2488,9 @@ of :class:`enum.Enum`.
     .. attribute:: accepted
 
         Represents a member currently in the team.
+
+Webhook Type
+~~~~~~~~~~~~~~~~
 
 .. class:: WebhookType
 
@@ -2461,6 +2512,9 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.0
 
+Expire Behaviour
+~~~~~~~~~~~~~~~~~~~~~~~
+
 .. class:: ExpireBehaviour
 
     Represents the behaviour the :class:`Integration` should perform
@@ -2478,6 +2532,9 @@ of :class:`enum.Enum`.
     .. attribute:: kick
 
         This will kick the user when their subscription is finished.
+
+Default Avatar
+~~~~~~~~~~~~~~~~~~~~~
 
 .. class:: DefaultAvatar
 
@@ -2507,6 +2564,9 @@ of :class:`enum.Enum`.
         Represents the default avatar with the color red.
         See also :attr:`Colour.red`
 
+Sticker Type
+~~~~~~~~~~~~~~~~~~
+
 .. class:: StickerType
 
     Represents the type of sticker.
@@ -2520,6 +2580,9 @@ of :class:`enum.Enum`.
     .. attribute:: guild
 
         Represents a custom sticker created in a guild.
+
+Sticker Format Type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. class:: StickerFormatType
 
@@ -2539,6 +2602,9 @@ of :class:`enum.Enum`.
 
         Represents a sticker with a lottie image.
 
+Invite Target
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. class:: InviteTarget
 
     Represents the invite type for voice channel invites.
@@ -2557,6 +2623,9 @@ of :class:`enum.Enum`.
 
         A stream invite that targets an embedded application.
 
+Video Quality Mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. class:: VideoQualityMode
 
     Represents the camera video quality mode for voice channel participants.
@@ -2570,6 +2639,9 @@ of :class:`enum.Enum`.
     .. attribute:: full
 
         Represents full camera video quality.
+
+Stage Privacy Level
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. class:: StagePrivacyLevel
 
@@ -2588,6 +2660,9 @@ of :class:`enum.Enum`.
     .. attribute:: guild_only
 
         Alias for :attr:`.closed`
+
+NSFW Level
+~~~~~~~~~~~~~~~
 
 .. class:: NSFWLevel
 
@@ -2631,6 +2706,9 @@ of :class:`enum.Enum`.
     .. attribute:: age_restricted
 
         The guild may contain NSFW content.
+
+Encodings
+~~~~~~~~~~~~~
 
 .. class:: Encodings
 
