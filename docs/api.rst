@@ -2650,6 +2650,26 @@ of :class:`enum.Enum`.
 
         No Encoding. PCM is also what will be used when receiving until formatted
 
+    .. attribute:: mp4
+
+        Encodes in .mp4 format. Requires ffmpeg to be present
+
+    .. attribute:: m4a
+
+        Encodes in .m4a format. Requires ffmpeg to be present
+
+    .. attribute:: mka
+
+        Encodes in .mka format. Requires ffmpeg to be present
+
+    .. attribute:: mkv
+
+        Encodes in .mkv format. Requires ffmpeg to be present
+
+    .. attribute:: ogg
+
+        Encodes in .ogg format. Requires ffmpeg to be present
+
 Async Iterator
 ----------------
 

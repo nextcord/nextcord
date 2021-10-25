@@ -591,11 +591,15 @@ class NSFWLevel(Enum, comparable=True):
 
 
 class Encodings(Enum):
-    # Would also like to add opus but don't
-    # know how I would go about it.
+    # https://trac.ffmpeg.org/wiki/Encode/HighQualityAudio
     wav = 'wav'
     mp3 = 'mp3'
     pcm = 'pcm'
+    mp4 = 'mp4'
+    ogg = 'ogg'
+    mkv = 'mkv'
+    mka = 'mka'
+    m4a = 'm4a'
 
 
 T = TypeVar('T')
