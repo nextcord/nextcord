@@ -24,8 +24,9 @@ import random
 import shutil
 import tempfile
 import datetime
-from typing import Optional, List, AnyStr
+from typing import Optional, List, AnyStr, Any
 
+from .backoff import ExponentialBackoff
 from .errors import ClientException
 import wave
 import os
@@ -44,6 +45,9 @@ __all__ = (
     'cleanuptempdir'
 )
 
+from .ext import tasks
+from .ext.tasks import LF
+
 from .utils import MISSING
 
 if sys.platform != 'win32':
@@ -58,6 +62,75 @@ default_filters = {
 }
 
 
+class _Scheduler(tasks.Loop):
+    def __init__(self, coro: LF, time: datetime.datetime):
+        super().__init__(coro=coro,
+                         seconds=1,
+                         hours=0,
+                         minutes=0,
+                         time=MISSING,
+                         count=1,
+                         reconnect=True,
+                         loop=MISSING)
+        self.scheduledtime = time
+
+    def _get_next_sleep_time(self) -> datetime.datetime:
+        return self.scheduledtime
+
+    async def _loop(self, *args: Any, **kwargs: Any) -> None:
+        backoff = ExponentialBackoff()
+        await self._call_loop_function('before_loop')
+        self._last_iteration_failed = False
+        now = datetime.datetime.now(datetime.timezone.utc)
+        if self.scheduledtime > now:
+            self._next_iteration = self.scheduledtime
+        else:
+            self._next_iteration = now
+        try:
+            await self._try_sleep_until(self._next_iteration)
+            while True:
+                if not self._last_iteration_failed:
+                    self._last_iteration = self._next_iteration
+                    self._next_iteration = self._get_next_sleep_time()
+                try:
+                    await self.coro(*args, **kwargs)
+                    self._last_iteration_failed = False
+                except self._valid_exception:
+                    self._last_iteration_failed = True
+                    if not self.reconnect:
+                        raise
+                    await asyncio.sleep(backoff.delay())
+                else:
+                    await self._try_sleep_until(self._next_iteration)
+
+                    if self._stop_next_iteration:
+                        return
+
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    if now > self._next_iteration:
+                        self._next_iteration = now
+                        if self._time is not MISSING:
+                            self._prepare_time_index(now)
+
+                    self._current_loop += 1
+                    if self._current_loop == self.count:
+                        break
+        except asyncio.CancelledError:
+            self._is_being_cancelled = True
+            raise
+        except Exception as exc:
+            self._has_failed = True
+            await self._call_loop_function('error', exc)
+            raise exc
+        finally:
+            await self._call_loop_function('after_loop')
+            self._handle.cancel()
+            self._is_being_cancelled = False
+            self._current_loop = 0
+            self._stop_next_iteration = False
+            self._has_failed = False
+
+
 class FiltersMixin:
     # TODO: Filter for max size per file; audio can be split into multiple files
     def __init__(self, **kwargs):
@@ -65,30 +138,32 @@ class FiltersMixin:
         self.seconds = kwargs.get('time', default_filters['time'])
         self.max_size = kwargs.get('max_size', default_filters['max_size'])
         self.finished = False
+        self.secondsfiler = MISSING
 
     @staticmethod
     def filter_decorator(func):  # Contains all filters
         def _filter(self, data, user):
             if not self.filtered_users or user in self.filtered_users:
                 return func(self, data, user)
+
         return _filter
 
     def init(self, vc):
-        if self.seconds != 0:
-            thread = threading.Thread(target=self.wait_and_stop)
-            thread.start()
+        if self.seconds > 0:
+            self.secondsfiler = _Scheduler(coro=self.wait_and_stop,
+                                           time=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=self.seconds))
+            self.secondsfiler.start()
 
-    def wait_and_stop(self):
-        time.sleep(self.seconds)
-        if self.finished:
-            return
-        asyncio.run(self.vc.stop_recording())
+    async def wait_and_stop(self):
+        if not self.finished:
+            await self.vc.stop_recording()
 
 
 class RawData:
     """Handles raw data from Discord so that it can be decrypted and decoded to be used.
 
     .. versionadded:: 2.0"""
+
     def __init__(self, data, client):
         self.data = bytearray(data)
         self.client = client
@@ -105,6 +180,7 @@ class AudioData:
 
     .. versionadded:: 2.0
     """
+
     def __init__(self, file):
         self.file = open(file, 'ab')
         self.dir_path = os.path.split(file)[0]
@@ -148,7 +224,8 @@ class Sink(FiltersMixin):
         An invalid encoding type was specified.
     """
 
-    def __init__(self, *, encoding: Encodings = Encodings('wav'), filters=None, tempfolder: Optional[os.PathLike] = MISSING):
+    def __init__(self, *, encoding: Encodings = Encodings('wav'), filters=None,
+                 tempfolder: Optional[os.PathLike] = MISSING):
         if filters is None:
             filters = default_filters
         self.filters = filters
@@ -159,7 +236,7 @@ class Sink(FiltersMixin):
         self.audio_data = {}
         if tempfolder is MISSING:
             tempfolder = tempfile.gettempdir() + "/nextcord/voicerecs/pcmtemps"
-        tempfolder = os.path.abspath(tempfolder+"/"+hex(id(self))+str(random.randint(-100000, 100000)))
+        tempfolder = os.path.abspath(tempfolder + "/" + hex(id(self)) + str(random.randint(-100000, 100000)))
         self.file_path = tempfolder
         os.makedirs(tempfolder, exist_ok=True)
 
@@ -185,6 +262,10 @@ class Sink(FiltersMixin):
         for file in self.audio_data.values():
             file.cleanup()
             self.format_audio(file)
+        try:
+            self.secondsfiler.stop()
+        except Exception:
+            pass
 
     def format_audio(self, audio):
         """
@@ -198,7 +279,8 @@ class Sink(FiltersMixin):
             mp3_file = audio.file.split('.')[0] + '.mp3'
             args = ['ffmpeg', '-f', 's16le', '-ar', '48000', '-ac', '2', '-i', audio.file, mp3_file]
             if os.path.exists(mp3_file):
-                os.remove(mp3_file)  # process will get stuck asking whether or not to overwrite, if file already exists.
+                os.remove(
+                    mp3_file)  # process will get stuck asking whether or not to overwrite, if file already exists.
             try:
                 process = subprocess.Popen(args, creationflags=CREATE_NO_WINDOW)
             except FileNotFoundError:
