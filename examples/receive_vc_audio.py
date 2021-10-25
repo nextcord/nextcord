@@ -24,6 +24,17 @@ def args_to_filters(args):
         except ValueError:
             return "You must provide an integer value."
         filters.update({'time': seconds})
+    if '--size' in args:
+        index = args.index('--size')
+        try:
+            size = args[index+1]
+        except IndexError:
+            return "You must provide an amount for the size (in Bytes)."
+        try:
+            size = int(size)
+        except ValueError:
+            return "You must provide an integer value."
+        filters.update({'max_size': size})
     if '--users' in args:
         users = []
         index = args.index('--users')+1

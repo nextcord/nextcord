@@ -24,6 +24,7 @@ import random
 import shutil
 import tempfile
 import datetime
+import typing
 from typing import Optional, List, AnyStr, Any
 
 from .backoff import ExponentialBackoff
@@ -185,12 +186,13 @@ class AudioData:
         self.file = open(file, 'ab')
         self.dir_path = os.path.split(file)[0]
         self.finished = False
+        self._size = 0
 
     def write(self, data):
         if self.finished:
             raise ClientException("This AudioData is already finished writing.")
         try:
-            self.file.write(data)
+            self._size += self.file.write(data)
         except ValueError:
             pass
 
@@ -207,6 +209,10 @@ class AudioData:
         name = os.path.split(self.file)[1]
         name = name.split('.')[0] + f'.{encoding.value}'
         self.file = os.path.join(self.dir_path, name)
+
+    def __len__(self):
+        print(self._size)
+        return self._size
 
 
 class Sink(FiltersMixin):
@@ -233,7 +239,7 @@ class Sink(FiltersMixin):
 
         self.encoding: Encodings = encoding
         self.vc = None
-        self.audio_data = {}
+        self.audio_data: typing.Dict[int, AudioData] = {}
         if tempfolder is MISSING:
             tempfolder = tempfile.gettempdir() + "/nextcord/voicerecs/pcmtemps"
         tempfolder = os.path.abspath(tempfolder + "/" + hex(id(self)) + str(random.randint(-100000, 100000)))
@@ -252,7 +258,8 @@ class Sink(FiltersMixin):
             self.audio_data.update({user: AudioData(file)})
 
         file = self.audio_data[user]
-        file.write(data)
+        if self.max_size == 0 or self.max_size >= len(file) + 3840:
+            file.write(data)
 
     def cleanup(self):
         """
