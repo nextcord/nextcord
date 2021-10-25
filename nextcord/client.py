@@ -1708,7 +1708,7 @@ class Client:
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 if app_cmd := self._application_command_signatures.get(response_signature):
                     # TODO: Make sure arguments match command. AKA ADD SAFEGUARDS FOR DEVS CHANGING COMMANDS.
-                    print("nextcord.Client: New interaction command found, Assigning ids now")
+                    print("nextcord.Client: New interaction command found, Assigning id now")
                     self._registered_application_commands[int(interaction.data["id"])] = app_cmd
                     # response = ApplicationCommandResponse(self._connection, interaction.data)
                     # app_cmd.parse_response(response)
