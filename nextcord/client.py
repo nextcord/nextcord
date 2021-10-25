@@ -1697,18 +1697,18 @@ class Client:
 
     async def on_interaction(self, interaction: Interaction):
         if interaction.type is InteractionType.application_command:
-            print("CLIENT.PY: APP CMD INTERACTION FOUND.")
+            print("nextcord.Client: Found an interaction command")
             if app_cmd := self._registered_application_commands.get(int(interaction.data["id"])):
-                print(f"CLIENT.PY: CALLING COMMAND {app_cmd.name}")
+                print(f"nextcord.Client: Calling your application command now {app_cmd.name}")
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
-                print(f"CLIENT.PY: INTERACTION WASN'T IN REGISTERED, DOING THING!")
-                print(f"CLIENT.PY: {interaction.data}")
+                print(f"nextcord.Client: Your interaction command failed to register")
+                print(f"nextcord.Client: {interaction.data}")
                 # response = ApplicationCommandResponse(self._connection, interaction.data)
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 if app_cmd := self._application_command_signatures.get(response_signature):
                     # TODO: Make sure arguments match command. AKA ADD SAFEGUARDS FOR DEVS CHANGING COMMANDS.
-                    print("CLIENT.PY: FOUND REGISTERED COMMAND, ASSIGNING ID!")
+                    print("nextcord.Client: New interaction command found, Assigning ids now")
                     self._registered_application_commands[int(interaction.data["id"])] = app_cmd
                     # response = ApplicationCommandResponse(self._connection, interaction.data)
                     # app_cmd.parse_response(response)
