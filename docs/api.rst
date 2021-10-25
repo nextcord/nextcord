@@ -1175,6 +1175,7 @@ of :class:`enum.Enum`.
 
 Channel Type
 ~~~~~~~~~~~~~~
+.. attributetable:: ChannelType
 
 .. class:: ChannelType
 
@@ -1230,6 +1231,7 @@ Channel Type
 
 Message Type
 ~~~~~~~~~~~~~~~~~
+.. attributetable:: MessageType
 
 .. class:: MessageType
 
@@ -1354,6 +1356,7 @@ Message Type
 
 User Flags
 ~~~~~~~~~~~~~~
+.. attributetable:: UserFlags
 
 .. class:: UserFlags
 
@@ -1413,6 +1416,7 @@ User Flags
 
 Activity Type
 ~~~~~~~~~~~~~~~~
+.. attributetable:: ActivityType
 
 .. class:: ActivityType
 
@@ -1446,6 +1450,7 @@ Activity Type
 
 Interaction Type
 ~~~~~~~~~~~~~~~~~~
+.. attributetable:: InteractionType
 
 .. class:: InteractionType
 
@@ -1465,6 +1470,7 @@ Interaction Type
 
 Interaction Response Type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: InteractionResponseType
 
 .. class:: InteractionResponseType
 
@@ -1501,6 +1507,7 @@ Interaction Response Type
 
 Component Type
 ~~~~~~~~~~~~~~~~
+.. attributetable:: ComponentType
 
 .. class:: ComponentType
 
@@ -1520,6 +1527,7 @@ Component Type
 
 Button Style
 ~~~~~~~~~~~~~~~~~~
+.. attributetable:: ButtonStyle
 
 .. class:: ButtonStyle
 
@@ -1564,6 +1572,7 @@ Button Style
 
 Voice Region
 ~~~~~~~~~~~~~~~~~~
+.. attributetable:: VoiceRegion
 
 .. class:: VoiceRegion
 
@@ -1650,6 +1659,7 @@ Voice Region
 
 Verification Level
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: VerificationLevel
 
 .. class:: VerificationLevel
 
@@ -1700,6 +1710,7 @@ Verification Level
 
 Notification Level
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: NotificationLevel
 
 .. class:: NotificationLevel
 
@@ -1737,6 +1748,7 @@ Notification Level
 
 Content Filter
 ~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: ContentFilter
 
 .. class:: ContentFilter
 
@@ -1779,6 +1791,7 @@ Content Filter
 
 Status
 ~~~~~~~~~~~~
+.. attributetable:: Status
 
 .. class:: Status
 
@@ -1807,6 +1820,7 @@ Status
 
 Audit Log Action
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: AuditLogAction
 
 .. class:: AuditLogAction
 
@@ -2453,6 +2467,7 @@ Audit Log Action
 
 Audit Log Action Category
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: AuditLogActionCategory
 
 .. class:: AuditLogActionCategory
 
@@ -2474,6 +2489,7 @@ Audit Log Action Category
 
 Team Membership State
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: TeamMembershipState
 
 .. class:: TeamMembershipState
 
@@ -2491,6 +2507,7 @@ Team Membership State
 
 Webhook Type
 ~~~~~~~~~~~~~~~~
+.. attributetable:: WebhookType
 
 .. class:: WebhookType
 
@@ -2514,6 +2531,7 @@ Webhook Type
 
 Expire Behaviour
 ~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: ExpireBehaviour
 
 .. class:: ExpireBehaviour
 
@@ -2535,6 +2553,7 @@ Expire Behaviour
 
 Default Avatar
 ~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: DefaultAvatar
 
 .. class:: DefaultAvatar
 
@@ -2566,6 +2585,7 @@ Default Avatar
 
 Sticker Type
 ~~~~~~~~~~~~~~~~~~
+.. attributetable:: StickerType
 
 .. class:: StickerType
 
@@ -2583,6 +2603,7 @@ Sticker Type
 
 Sticker Format Type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: StickerFormatType
 
 .. class:: StickerFormatType
 
@@ -2604,6 +2625,7 @@ Sticker Format Type
 
 Invite Target
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: InviteTarget
 
 .. class:: InviteTarget
 
@@ -2625,6 +2647,7 @@ Invite Target
 
 Video Quality Mode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: ViceoQualityMode
 
 .. class:: VideoQualityMode
 
@@ -2642,6 +2665,7 @@ Video Quality Mode
 
 Stage Privacy Level
 ~~~~~~~~~~~~~~~~~~~~~~
+.. attributetable:: StagePrivacyLevel
 
 .. class:: StagePrivacyLevel
 
@@ -2663,6 +2687,7 @@ Stage Privacy Level
 
 NSFW Level
 ~~~~~~~~~~~~~~~
+.. attributetable:: NSFWLevel
 
 .. class:: NSFWLevel
 
@@ -2709,6 +2734,7 @@ NSFW Level
 
 Encodings
 ~~~~~~~~~~~~~
+.. attributetable:: Encodings
 
 .. class:: Encodings
 
