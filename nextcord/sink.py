@@ -41,6 +41,7 @@ from .enums import Encodings
 __all__ = (
     'FiltersMixin',
     'Sink',
+    'FileSink',
     'AudioData',
     'RawData',
     'cleanuptempdir'
@@ -216,7 +217,58 @@ class AudioData:
 
 
 class Sink(FiltersMixin):
-    """A Sink "stores" all the audio data.
+    """A Sink handling all decoded voice packets.
+
+    .. versionadded:: 2.0
+
+    Parameters
+    ---------
+    coro:
+        A coroutine to handle data input. Should take to positional arguments data and user. Data will be pcm, user the
+        user id
+
+    filters:
+        The filters to apply. Should be a dict. Currently supported are time and users. Time takes an integer
+        as amount of seconds after listening shall stop, users should be a list of user ids to ignore (ints). Please
+        note that converting to
+        other formats might change the file size a bit
+
+    Raises
+    ------
+    ClientException
+        An invalid encoding type was specified.
+    """
+
+    def __init__(self, *, coro: LF, filters: Optional[dict] = MISSING):
+        if filters is MISSING:
+            filters = default_filters
+        self.filters = filters
+        FiltersMixin.__init__(self, **self.filters)
+        self.coro = coro
+        self.loop = asyncio.get_running_loop()
+        self.vc = None
+
+    def init(self, vc):  # called under start_listening
+        self.vc = vc
+        super().init(vc)
+
+    @FiltersMixin.filter_decorator
+    def write(self, data, user):
+        asyncio.run_coroutine_threadsafe(self.coro(data, user), self.loop)
+
+    def cleanup(self):
+        """
+        Stops time filter if present
+        """
+        self.finished = True
+        try:
+            self.secondsfiler.stop()
+        except Exception:
+            pass
+
+
+class FileSink(Sink):
+    """A Sink "stores" all the audio data into a file.
 
     .. versionadded:: 2.0
 

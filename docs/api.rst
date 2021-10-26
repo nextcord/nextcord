@@ -112,6 +112,10 @@ Sinks
     :members:
     :inherited-members:
 
+.. autoclass:: FileSink()
+    :members:
+    :inherited-members:
+
 Audio Data
 ~~~~~~~~~~~~
 

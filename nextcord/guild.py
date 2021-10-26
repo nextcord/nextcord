@@ -2951,6 +2951,7 @@ class Guild(Hashable):
         """|coro|
 
         Changes client's voice state in the guild.
+        Please note: Deafed clients wont receive voice and will just have a big mute at this point
 
         .. versionadded:: 1.4
 
