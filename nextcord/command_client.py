@@ -109,7 +109,7 @@ class CommandArgument(SlashOption):
         if self.channel_types and self.type is not CommandOptionType.channel:
             raise ValueError("channel_types can only be given when the var is typed as nextcord.abc.GuildChannel")
 
-    def handle_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
+    def handle_slash_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
         if self.type is CommandOptionType.channel:
             return state.get_channel(int(argument))
         elif self.type is CommandOptionType.user:  # TODO: Brutally test please.
@@ -126,6 +126,12 @@ class CommandArgument(SlashOption):
         elif self.type is Message:  # TODO: Brutally test please.
             return state._get_message(int(argument))
         return argument
+
+    def handle_message_argument(self, *args):
+        raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
+
+    def handle_user_argument(self, *args):
+        raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
     @property
     def payload(self) -> dict:
@@ -279,7 +285,7 @@ class ApplicationSubcommand:
             if arg_data["name"] in uncalled_args:
                 uncalled_args.pop(arg_data["name"])
                 kwargs[self.arguments[arg_data["name"]].functional_name] = \
-                    self.arguments[arg_data["name"]].handle_argument(state, arg_data["value"], interaction)
+                    self.arguments[arg_data["name"]].handle_slash_argument(state, arg_data["value"], interaction)
             else:
                 # TODO: Handle this better.
                 raise NotImplementedError(f"An argument was provided that wasn't already in the function, did you"
@@ -440,7 +446,7 @@ class ApplicationCommand(ApplicationSubcommand):
 
     @property
     # def payload(self) -> Union[List[Dict[str, ...]], Dict[str, ...]]:
-    def payload(self) -> List[dict]:
+    def payloads(self) -> List[dict]:
         """
 
         Returns
