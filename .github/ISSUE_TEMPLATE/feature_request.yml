@@ -16,6 +16,7 @@ body:
       options:
         - The core library
         - nextcord.ext.commands
+        - Interactions
         - nextcord.ext.tasks
         - The documentation
     validations:
