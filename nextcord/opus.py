@@ -508,8 +508,9 @@ class DecodeManager(threading.Thread, _OpusStruct):
         self._end_thread.set()
         while self.decoding:
             time.sleep(0.1)
+        for i in self.decoder:
+            del i
         self.decoder = {}
-        gc.collect()
 
     def get_decoder(self, ssrc):
         d = self.decoder.get(ssrc)
