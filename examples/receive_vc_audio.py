@@ -19,7 +19,6 @@ async def get_vc(message: nextcord.Message):
     if connection:
         if connection.channel.id == message.author.voice.channel.id:
             return connection
-
         await connection.move_to(vc.channel)
         return connection
     else:

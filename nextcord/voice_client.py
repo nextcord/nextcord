@@ -235,10 +235,10 @@ class VoiceClient(VoiceProtocol):
     ssrc: int
 
 
-    def __init__(self, client: Client, channel: abc.Connectable):
+    def __init__(self, client: Client, channel: abc.Connectable, auto_self_deaf: bool = False):
         if not has_nacl:
             raise RuntimeError("PyNaCl library needed in order to use voice")
-
+        self.auto_self_deaf = auto_self_deaf
         super().__init__(client, channel)
         state = client._connection
         self.token: str = MISSING
@@ -348,7 +348,10 @@ class VoiceClient(VoiceProtocol):
         self._voice_server_complete.set()
 
     async def voice_connect(self) -> None:
-        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
+        if self.auto_self_deaf:
+            await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
+        else:
+            await self.channel.guild.change_voice_state(channel=self.channel)
 
     async def voice_disconnect(self) -> None:
         _log.info('The voice handshake is being terminated for Channel ID %s (Guild ID %s)', self.channel.id, self.guild.id)
@@ -785,7 +788,8 @@ class VoiceClient(VoiceProtocol):
             raise ListeningException("Already listening.")
         if not isinstance(sink, Sink):
             raise ListeningException("Must provide a Sink object.")
-        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=False)
+        if self.auto_self_deaf:
+            await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=False)
 
         self.empty_socket()
 
@@ -811,7 +815,8 @@ class VoiceClient(VoiceProtocol):
         """
         if not self.listening:
             raise ListeningException("Not currently listening audio.")
-        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
+        if self.auto_self_deaf:
+            await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
         await asyncio.sleep(1)
         self.decoder.stop()
         self.listening = False
@@ -831,7 +836,8 @@ class VoiceClient(VoiceProtocol):
         if not self.listening:
             raise ListeningException("Not currently listening audio.")
         self.listening_paused = not self.listening_paused
-        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=self.listening_paused)
+        if self.auto_self_deaf:
+            await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=self.listening_paused)
 
     def empty_socket(self):
         while True:
