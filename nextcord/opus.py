@@ -475,7 +475,7 @@ class DecodeManager(threading.Thread, _OpusStruct):
         self.decode_queue = []
 
         self.decoder = {}
-        self.notdecodingoverrite = False
+        self._not_decoding_overwrite = False
 
         self._end_thread = threading.Event()
 
@@ -502,7 +502,7 @@ class DecodeManager(threading.Thread, _OpusStruct):
                 continue
 
             self.client.recv_decoded_audio(data)
-        self.notdecodingoverrite = True
+        self._not_decoding_overwrite = True
 
     def stop(self):
         self._end_thread.set()
@@ -521,7 +521,7 @@ class DecodeManager(threading.Thread, _OpusStruct):
 
     @property
     def decoding(self):
-        if self.notdecodingoverrite:
+        if self._not_decoding_overwrite:
             return False
         return bool(self.decode_queue)
 
