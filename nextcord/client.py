@@ -1698,6 +1698,7 @@ class Client:
     async def on_interaction(self, interaction: Interaction):
         if interaction.type is InteractionType.application_command:
             print("nextcord.Client: Found an interaction command")
+            print(f"nextcord.Client: {self._registered_application_commands}")
             if app_cmd := self._registered_application_commands.get(int(interaction.data["id"])):
                 print(f"nextcord.Client: Calling your application command now {app_cmd.name}")
                 await app_cmd.call_from_interaction(interaction)
@@ -1705,6 +1706,7 @@ class Client:
                 print(f"nextcord.Client: Your interaction command failed to register")
                 print(f"nextcord.Client: {interaction.data}")
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
+                print(f"nextcord.Client: {response_signature}")
                 if app_cmd := self._application_command_signatures.get(response_signature):
                     # TODO: Make sure arguments match command. AKA ADD SAFEGUARDS FOR DEVS CHANGING COMMANDS.
                     print("nextcord.Client: Basic signature matches, checking against raw payload.")
@@ -1733,19 +1735,44 @@ class Client:
         print(f"nextcord.Client: On Ready.")
         await self.perform_application_command_rollout()
 
-    async def perform_application_command_rollout(self, delete_unknown: bool = True):
+    async def perform_application_command_rollout(self, delete_unknown: bool = True, register_new: bool = True):
         # Note: Overwrite will delete un-added commands to guilds.
         if self._performing_application_command_rollout:
             raise NotImplementedError
         else:
             self._performing_application_command_rollout = True
-            global_commands, guild_commands = self._get_application_command_rollout_payload_lists()
-            print(f"nextcord.Client: {global_commands}    {guild_commands}")
-            print(f"nextcord.Client: {await self.http.get_global_commands(self.application_id)}")
-            print(f"nextcord.Client: {await self.http.get_guild_commands(self.application_id, 881118111967883295)}")
-            for guild_id in guild_commands:
-                for payload in guild_commands[guild_id]:
-                    print(f"nextcord.Client:     {payload}")
+            # global_commands, guild_commands = self._get_application_command_rollout_payload_lists()
+            # print(f"nextcord.Client: {self._application_command_signatures}")
+            raw_get_global_response = await self.http.get_global_commands(self.application_id)
+            unregistered_global_commands = self._get_global_commands()
+            print(f"nextcord.Client: {raw_get_global_response}")
+            for raw_response in raw_get_global_response:
+                response_signature = (raw_response["name"], int(raw_response['type']), None)
+                if app_cmd := self._application_command_signatures.get(response_signature):
+                    print(f"nextcord.Client: Found global command during rollout, {raw_response}")
+                    unregistered_global_commands.remove(app_cmd)
+                    self._registered_application_commands[int(raw_response["id"])] = app_cmd
+                    app_cmd.raw_parse_result(self._connection, None, int(raw_response["id"]))
+                    # self._registered_application_commands[int(raw_response["id"])] = global_cmd
+                elif delete_unknown:
+                    print(f"nextcord.Client: Found unknown global command with ID of {raw_response['id']}, removing.")
+                    await self.http.delete_global_command(self.application_id, raw_response["id"])
+            if register_new:
+                for global_cmd in unregistered_global_commands:
+
+                    raw_response = await self.http.upsert_global_command(self.application_id, global_cmd.global_payload)
+                    response = ApplicationCommandResponse(self._connection, raw_response)
+                    global_cmd.parse_response(response)
+                    print(f"nextcord.Client: Registering new global command {global_cmd.name}|{global_cmd.type} with"
+                          f"ID {response.id}")
+                    self._registered_application_commands[response.id] = global_cmd
+
+            # print(f"nextcord.Client: {global_commands}    {guild_commands}")
+            # print(f"nextcord.Client: {await self.http.get_global_commands(self.application_id)}")
+            # print(f"nextcord.Client: {await self.http.get_guild_commands(self.application_id, 881118111967883295)}")
+            # for guild_id in guild_commands:
+            #     for payload in guild_commands[guild_id]:
+            #         print(f"nextcord.Client:     {payload}")
             # if global_commands:
             #     if overwrite:
             #         raw_response = await self.http.bulk_upsert_global_commands(self.application_id, global_commands)
@@ -1758,8 +1785,6 @@ class Client:
             #             raw_response = await self.http.bulk_upsert_guild_commands(self.application_id, guild_id, guild_payload)
             #         else:
             #             raise NotImplementedError
-
-
 
             self._performing_application_command_rollout = False
 
@@ -1782,6 +1807,12 @@ class Client:
     def performing_application_command_rollout(self) -> bool:
         return self._performing_application_command_rollout
 
+    def _get_global_commands(self) -> Set[ApplicationCommand]:
+        ret = set()
+        for command in self._application_commands:
+            if command.is_global:
+                ret.add(command)
+        return ret
 
     # async def register_bulk_application_commands(self):
     #     # TODO: Using Bulk upsert seems to delete all commands
@@ -1809,6 +1840,14 @@ class Client:
     #
     #     self._application_commands_to_bulk_add.clear()
     #
+
+    # def _check_and_add_command(self, raw_response: dict):
+    #     response_signature = (raw_response["name"], int(raw_response['type']), None)
+    #     if app_cmd := self._application_command_signatures.get(response_signature):
+    #         print("nextcord.Client: New interaction command found, Assigning id now")
+    #         self._registered_application_commands[int(raw_response["id"])] = app_cmd
+    #         app_cmd.raw_parse_result(self._connection, None, int(raw_response["id"]))
+
     def _handle_bulk_application_commands(self, raw_response_list: List[dict]):
         for raw_response in raw_response_list:
             response = ApplicationCommandResponse(self._connection, raw_response)

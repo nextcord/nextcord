@@ -472,6 +472,17 @@ class ApplicationCommand(ApplicationSubcommand):
         return ret
 
     @property
+    def global_payload(self) -> dict:
+        if not self.is_global:
+            raise NotImplementedError
+        partial_payload = super().payload
+        if self.type is not CommandType.chat_input and "options" in partial_payload:
+            partial_payload.pop("options")
+        if self.default_permission is not None:
+            partial_payload["default_permission"] = self.default_permission
+        return partial_payload
+
+    @property
     def is_guild(self) -> bool:
         return self._is_guild
 
