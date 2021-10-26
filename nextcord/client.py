@@ -1704,36 +1704,82 @@ class Client:
             elif self._lazy_load_commands:
                 print(f"nextcord.Client: Your interaction command failed to register")
                 print(f"nextcord.Client: {interaction.data}")
-                # response = ApplicationCommandResponse(self._connection, interaction.data)
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 if app_cmd := self._application_command_signatures.get(response_signature):
                     # TODO: Make sure arguments match command. AKA ADD SAFEGUARDS FOR DEVS CHANGING COMMANDS.
-                    print("nextcord.Client: New interaction command found, Assigning id now")
-                    self._registered_application_commands[int(interaction.data["id"])] = app_cmd
-                    # response = ApplicationCommandResponse(self._connection, interaction.data)
-                    # app_cmd.parse_response(response)
-                    app_cmd.raw_parse_result(self._connection, interaction.guild_id, int(interaction.data["id"]))
-                    await app_cmd.call_from_interaction(interaction)
+                    print("nextcord.Client: Basic signature matches, checking against raw payload.")
+                    if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
+                        print("nextcord.Client: New interaction command found, Assigning id now")
+                        self._registered_application_commands[int(interaction.data["id"])] = app_cmd
+                        app_cmd.raw_parse_result(self._connection, interaction.guild_id, int(interaction.data["id"]))
+                        await app_cmd.call_from_interaction(interaction)
 
     async def add_application_command(self, app_cmd: ApplicationCommand, register=False):
-        self._internal_add_application_command(app_cmd)
+        self._internal_add_application_command(app_cmd, add_to_bulk=True)
         if register:
             raise NotImplementedError  # TODO: Add single-command registration.
 
-    def _internal_add_application_command(self, app_cmd: ApplicationCommand):
+    def _internal_add_application_command(self, app_cmd: ApplicationCommand, add_to_bulk: bool = False):
         self._application_commands.add(app_cmd)
         for signature in app_cmd.get_signatures():
-            self._application_command_signatures[signature] = app_cmd
+            if signature in self._application_command_signatures:
+                raise ValueError("You cannot add application commands with duplicate signatures.")
+            else:
+                self._application_command_signatures[signature] = app_cmd
+        if add_to_bulk:
+            self._application_commands_to_rollout.add(app_cmd)
+
+    async def on_ready(self):
+        print(f"nextcord.Client: On Ready.")
+        await self.perform_application_command_rollout()
+
+    async def perform_application_command_rollout(self, delete_unknown: bool = True):
+        # Note: Overwrite will delete un-added commands to guilds.
+        if self._performing_application_command_rollout:
+            raise NotImplementedError
+        else:
+            self._performing_application_command_rollout = True
+            global_commands, guild_commands = self._get_application_command_rollout_payload_lists()
+            print(f"nextcord.Client: {global_commands}    {guild_commands}")
+            print(f"nextcord.Client: {await self.http.get_global_commands(self.application_id)}")
+            print(f"nextcord.Client: {await self.http.get_guild_commands(self.application_id, 881118111967883295)}")
+            for guild_id in guild_commands:
+                for payload in guild_commands[guild_id]:
+                    print(f"nextcord.Client:     {payload}")
+            # if global_commands:
+            #     if overwrite:
+            #         raw_response = await self.http.bulk_upsert_global_commands(self.application_id, global_commands)
+            #     else:
+            #         raise NotImplementedError
+            #     self._handle_bulk_application_commands(raw_response)
+            # if guild_commands:
+            #     for guild_id, guild_payload in guild_commands.items():
+            #         if overwrite:
+            #             raw_response = await self.http.bulk_upsert_guild_commands(self.application_id, guild_id, guild_payload)
+            #         else:
+            #             raise NotImplementedError
 
 
-    async def perform_bulk_application_rollout(self, overwrite: bool = True):
-        self._performing_application_command_rollout = True
-        pass
-        self._performing_application_command_rollout = False
 
+            self._performing_application_command_rollout = False
+
+    def _get_application_command_rollout_payload_lists(self) -> Tuple[List[dict], Dict[int, List[dict]]]:
+        global_commands: List[dict] = []
+        guild_commands: Dict[int, List[dict]] = {}
+
+        for command in self._application_commands_to_rollout:
+            for payload in command.payload:
+                if guild_id := payload.get("guild_id"):
+                    if guild_id not in guild_commands:
+                        guild_commands[guild_id] = []
+                    guild_commands[guild_id].append(payload)
+                else:
+                    global_commands.append(payload)
+
+        return global_commands, guild_commands
 
     @property
-    def performing_bulk_application_rollout(self) -> bool:
+    def performing_application_command_rollout(self) -> bool:
         return self._performing_application_command_rollout
 
 
@@ -1763,21 +1809,25 @@ class Client:
     #
     #     self._application_commands_to_bulk_add.clear()
     #
-    # def _handle_bulk_application_commands(self, raw_response_list: List[dict]):
-    #     for raw_response in raw_response_list:
-    #         response = ApplicationCommandResponse(self._connection, raw_response)
-    #         payload_unique_id = (response.type, response.name, response.guild_id)
-    #         if payload_app_cmd := self._application_commands_to_bulk_add.get(payload_unique_id):
-    #             command = payload_app_cmd[1]
-    #             print(f"    CLIENT.PY: Parsing response of command {command.name} for guild {response.guild_id}. ID: {response.id}")
-    #             command.parse_response(response)
-    #             # TODO: Move this to own function probably.
-    #             if command not in self._application_commands:
-    #                 self._application_commands.append(command)
-    #             self._registered_application_commands[response.id] = command
-    #         else:
-    #             raise ValueError(f"What the FUCK is going on, Payload ID {payload_app_cmd} doesn't correspond to "
-    #                              f"anything in the dict of commands to bulk add!")  # TODO: Clean up language.
+    def _handle_bulk_application_commands(self, raw_response_list: List[dict]):
+        for raw_response in raw_response_list:
+            response = ApplicationCommandResponse(self._connection, raw_response)
+            payload_unique_id = response.signature
+            if command := self._application_command_signatures.get(payload_unique_id):
+                # command = payload_app_cmd[1]
+                print(f"    nextcord.Client: Parsing response of command {command.name} for guild {response.guild_id}."
+                      f"ID: {response.id}")
+                command.parse_response(response)
+                # TODO: Move this to own function probably.
+                if command not in self._application_commands:
+                    # self._application_commands.append(command)
+                    self._application_commands.add(command)
+                self._registered_application_commands[response.id] = command
+            else:
+                # raise ValueError(f"Your bots Payload ID {payload_app_cmd} doesn't correspond to "
+                #                  f"anything in the dict of commands to bulk add")
+                raise ValueError(f"Payload with signature of {payload_unique_id} doesn't correspond to any command"
+                                 f"currently stored.")
     #
     # def add_application_command_to_bulk(self, command: ApplicationCommand):
     #     payload_list = command.payload

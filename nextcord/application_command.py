@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional, List, Tuple
+from dataclasses import dataclass
 # from enum import IntEnum
 from .enums import ApplicationCommandType, ApplicationCommandOptionType
 from .mixins import Hashable
@@ -8,6 +9,7 @@ from . import utils
 if TYPE_CHECKING:
     from .state import ConnectionState
     from .guild import Guild
+    from .command_client import ApplicationCommand, ApplicationSubcommand
 
 
 # class ApplicationCommandType(IntEnum):
@@ -103,3 +105,82 @@ class ApplicationCommandResponse(Hashable):
 
     async def edit_permissions(self):
         raise NotImplementedError
+
+    @property
+    def signature(self) -> Tuple[str, int, Optional[int]]:
+        return self.name, self.type.value, self.guild_id
+
+
+# @dataclass
+# class ApplicationCommandOptionSignature:
+#     name: str
+#     type: int
+#     description: str
+#     required: Optional[bool] = None
+#     options: Tuple[ApplicationCommandOptionSignature] = None
+#
+#
+# @dataclass
+# class ApplicationCommandSignature:
+#     name: str
+#     type: int
+#     guild_id: Optional[int]
+#     description: Optional[str] = None
+#     default_permission: Optional[bool] = None
+#     options: Optional[Tuple[ApplicationCommandOptionSignature]] = None
+#
+#     @classmethod
+#     def from_application_command(cls, application_command: ApplicationCommand):
+#         pass
+#
+#     @classmethod
+#     def from_raw_response(cls, raw_response: dict):
+#         guild_id = int(guild_id) if (guild_id := raw_response.get("guild_id")) else guild_id
+#         options = tuple(_get_raw_recursive_options(option) for option in raw_response.get("options", []))
+#         return cls(name=raw_response["name"], type=int(raw_response["type"]), guild_id=guild_id,
+#                    description=raw_response["description"], default_permission=raw_response["guild_permission"],
+#                    options=options)
+#
+#     @classmethod
+#     def from_response(cls, response: ApplicationCommandResponse):
+#         pass
+#
+#
+# # def raw_response_to_signature(raw_response: dict):
+# #     return raw_response["name"], int(raw_response["type"]), \
+# #            int(guild_id) if (guild_id := raw_response.get("guild_id", None)) else None
+# #
+# #
+# # def raw_response_to_complex_signature(raw_response: dict):
+# #     # This MUST maintain parity with nextcord/command_client/ApplicationCommand.get_complex_signature()
+# #     signature = raw_response_to_signature(raw_response)
+# #     option_signatures = (_get_option_signature(option_sig) for option_sig in raw_response.get("options", tuple()))
+# #
+# #     pass
+#
+#
+# def _get_command_recursive_options(command: ApplicationSubcommand):
+#     # TODO: Look into choices getting added.
+#     tuple_options = None
+#     if cmd_children := command.children.values():
+#         tuple_options = tuple(_get_command_recursive_options(child) for child in cmd_children)
+#     elif arg_options := command.arguments.values():
+#         tuple_options = tuple()
+#
+#
+# def _get_raw_recursive_options(command_dict: dict) -> ApplicationCommandOptionSignature:
+#     # TODO: Look into choices getting added.
+#     tuple_options = None
+#     if raw_options := command_dict.get("options", None):
+#         tuple_options = tuple(_get_raw_recursive_options(option) for option in raw_options)
+#     # return int(command_dict["type"]), command_dict["name"], command_dict["description"], \
+#     #     command_dict.get("required", None), tuple_options
+#     return ApplicationCommandOptionSignature(name=command_dict["name"], type=int(command_dict["type"]),
+#                                              description=command_dict["description"],
+#                                              required=command_dict.get("required"), options=tuple_options)
+#
+# #
+# # def _get_option_signature(option_dict: dict):
+# #
+# #     return int(option_dict["type"]), option_dict["name"], option_dict["description"], option_dict.get("required", None)
+
