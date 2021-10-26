@@ -119,13 +119,11 @@ signal_ctl: SignalCtl = {
     'music': 3002,
 }
 
-
 def _err_lt(result: int, func: Callable, args: List) -> int:
     if result < OK:
         _log.info('error has happened in %s', func.__name__)
         raise OpusError(result)
     return result
-
 
 def _err_ne(result: T, func: Callable, args: List) -> T:
     ret = args[-1]._obj
@@ -133,7 +131,6 @@ def _err_ne(result: T, func: Callable, args: List) -> T:
         _log.info('error has happened in %s', func.__name__)
         raise OpusError(ret.value)
     return result
-
 
 # A list of exported functions.
 # The first argument is obviously the name.
@@ -190,7 +187,6 @@ exported_functions: List[Tuple[Any, ...]] = [
         [ctypes.c_char_p, ctypes.c_int], ctypes.c_int, _err_lt),
 ]
 
-
 def libopus_loader(name: str) -> Any:
     # create the library...
     lib = ctypes.cdll.LoadLibrary(name)
@@ -215,7 +211,6 @@ def libopus_loader(name: str) -> Any:
 
     return lib
 
-
 def _load_default() -> bool:
     global _lib
     try:
@@ -231,7 +226,6 @@ def _load_default() -> bool:
         _lib = None
 
     return _lib is not None
-
 
 def load_opus(name: str) -> None:
     """Loads the libopus shared library for use with voice.
@@ -271,7 +265,6 @@ def load_opus(name: str) -> None:
     global _lib
     _lib = libopus_loader(name)
 
-
 def is_loaded() -> bool:
     """Function to check if opus lib is successfully loaded either
     via the :func:`ctypes.util.find_library` call of :func:`load_opus`.
@@ -285,7 +278,6 @@ def is_loaded() -> bool:
     """
     global _lib
     return _lib is not None
-
 
 class OpusError(DiscordException):
     """An exception that is thrown for libopus related errors.
@@ -302,11 +294,9 @@ class OpusError(DiscordException):
         _log.info('"%s" has happened', msg)
         super().__init__(msg)
 
-
 class OpusNotLoaded(DiscordException):
     """An exception that is thrown for when libopus is not loaded."""
     pass
-
 
 class _OpusStruct:
     SAMPLING_RATE = 48000
@@ -323,7 +313,6 @@ class _OpusStruct:
             raise OpusNotLoaded()
 
         return _lib.opus_get_version_string().decode('utf-8')
-
 
 class Encoder(_OpusStruct):
     def __init__(self, application: int = APPLICATION_AUDIO):
@@ -383,7 +372,6 @@ class Encoder(_OpusStruct):
 
         # array can be initialized with bytes but mypy doesn't know
         return array.array('b', data[:ret]).tobytes() # type: ignore
-
 
 class Decoder(_OpusStruct):
     def __init__(self):
@@ -477,7 +465,7 @@ class Decoder(_OpusStruct):
 class DecodeManager(threading.Thread, _OpusStruct):
     def __init__(self, client):
         """
-        A class handling decoding of a voice channel. In order of beeing non blocking it creates a Thread reading a UDP
+        A class handling decoding of a voice channel. In order of being non blocking it creates a Thread reading a UDP
         Socket.
 
         """
