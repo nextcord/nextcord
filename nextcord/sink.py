@@ -134,7 +134,6 @@ class _Scheduler(tasks.Loop):
 
 
 class FiltersMixin:
-    # TODO: Filter for max size per file; audio can be split into multiple files
     def __init__(self, **kwargs):
         self.filtered_users = kwargs.get('users', default_filters['users'])
         self.seconds = kwargs.get('time', default_filters['time'])
@@ -317,7 +316,7 @@ class FileSink(Sink):
             self.audio_data.update({user: AudioData(file)})
 
         file = self.audio_data[user]
-        if self.max_size == 0 or self.max_size >= len(file) + 3840:
+        if self.max_size <= 0 or self.max_size >= len(file) + 3840:
             file.write(data)
 
     def cleanup(self):
