@@ -20,31 +20,20 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 import asyncio
-import random
-import shutil
-import tempfile
 import datetime
-import typing
-from typing import Optional, List, AnyStr, Any
+import os
+import struct
+import sys
+from typing import Optional, Any
 
 from .backoff import ExponentialBackoff
 from .errors import ClientException
-import wave
-import os
-import threading
-import time
-import subprocess
-import sys
-import struct
-from .enums import Encodings
 
 __all__ = (
     'FiltersMixin',
     'Sink',
-    'FileSink',
     'AudioData',
     'RawData',
-    'cleanuptempdir'
 )
 
 from .ext import tasks
@@ -152,7 +141,8 @@ class FiltersMixin:
     def init(self, vc):
         if self.seconds > 0:
             self.secondsfiler = _Scheduler(coro=self.wait_and_stop,
-                                           time=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=self.seconds))
+                                           time=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+                                               seconds=self.seconds))
             self.secondsfiler.start()
 
     async def wait_and_stop(self):
@@ -203,15 +193,15 @@ class AudioData:
         self.file = os.path.join(self.dir_path, self.file.name)
         self.finished = True
 
-    def on_format(self, encoding: Encodings):
+    def on_format(self, encoding):
         if not self.finished:
             raise ClientException("This AudioData is still writing.")
-        name = os.path.split(self.file)[1]
-        name = name.split('.')[0] + f'.{encoding.value}'
-        self.file = os.path.join(self.dir_path, name)
+        if encoding.name != 'pcm':
+            name = os.path.split(self.file)[1]
+            name = name.split('.')[0] + f'.{encoding.name}'
+            self.file = os.path.join(self.dir_path, name)
 
     def __len__(self):
-        print(self._size)
         return self._size
 
 
@@ -264,133 +254,3 @@ class Sink(FiltersMixin):
             self.secondsfiler.stop()
         except Exception:
             pass
-
-
-class FileSink(Sink):
-    """A Sink "stores" all the audio data into a file.
-
-    .. versionadded:: 2.0
-
-    Parameters
-    ----------
-    encoding: :class:`Encodings`
-        The encoding to use. Valid types include wav, mp3, and pcm (even though it's not an actual encoding).
-
-    filters:
-        The filters to apply. Should be a dict. Currently supported are time, users and max_size. Time takes an integer
-        as amount of seconds after listening shall stop, users should be a list of user ids to ignore (ints) and
-        max_size is a limit for the max file of the pcms (bytes amounts as int). Please note that converting to
-        other formats might change the file size a bit
-
-    Raises
-    ------
-    ClientException
-        An invalid encoding type was specified.
-    """
-
-    def __init__(self, *, encoding: Encodings = Encodings('wav'), filters: Optional[dict] = MISSING,
-                 tempfolder: Optional[os.PathLike] = MISSING):
-        if filters is MISSING:
-            filters = default_filters
-        self.filters = filters
-        FiltersMixin.__init__(self, **self.filters)
-
-        self.encoding: Encodings = encoding
-        self.vc = None
-        self.audio_data: typing.Dict[int, AudioData] = {}
-        if tempfolder is MISSING:
-            tempfolder = tempfile.gettempdir() + "/nextcord/voicerecs/pcmtemps"
-        tempfolder = os.path.abspath(tempfolder + "/" + hex(id(self)) + str(random.randint(-100000, 100000)))
-        self.file_path = tempfolder
-        os.makedirs(tempfolder, exist_ok=True)
-
-    def init(self, vc):  # called under start_listening
-        self.vc = vc
-        super().init(vc)
-
-    @FiltersMixin.filter_decorator
-    def write(self, data, user):
-        if user not in self.audio_data:
-            ssrc = self.vc.get_ssrc(user)
-            file = os.path.join(self.file_path, f'{ssrc}-{datetime.datetime.utcnow().timestamp()}.pcm')
-            self.audio_data.update({user: AudioData(file)})
-
-        file = self.audio_data[user]
-        if self.max_size <= 0 or self.max_size >= len(file) + 3840:
-            file.write(data)
-
-    def cleanup(self):
-        """
-        Formats audio and ends listening
-        """
-        self.finished = True
-        for file in self.audio_data.values():
-            file.cleanup()
-            self.format_audio(file)
-        try:
-            self.secondsfiler.stop()
-        except Exception:
-            pass
-
-    def format_audio(self, audio):
-        """
-        Formats one Audio File
-        """
-        if self.vc.listening:
-            raise ClientException("Audio may only be formatted after listening is finished.")
-        if self.encoding is Encodings.pcm:
-            return
-        if self.encoding is Encodings.wav:
-            with open(audio.file, 'rb') as pcm:
-                data = pcm.read()
-                pcm.close()
-
-            wav_file = audio.file.split('.')[0] + '.wav'
-            with wave.open(wav_file, 'wb') as f:
-                f.setnchannels(self.vc.decoder.CHANNELS)
-                f.setsampwidth(self.vc.decoder.SAMPLE_SIZE // self.vc.decoder.CHANNELS)
-                f.setframerate(self.vc.decoder.SAMPLING_RATE)
-                f.writeframes(data)
-                f.close()
-        else:
-            new_file = audio.file.split('.')[0] + '.' +self.encoding.value
-            args = ['ffmpeg', '-f', 's16le', '-ar', '48000', '-ac', '2', '-i', audio.file, new_file]
-            if os.path.exists(new_file):
-                os.remove(
-                    new_file)  # process will get stuck asking whether or not to overwrite, if file already exists.
-            try:
-                process = subprocess.Popen(args, creationflags=CREATE_NO_WINDOW)
-            except FileNotFoundError:
-                raise ClientException('ffmpeg was not found.') from None
-            except subprocess.SubprocessError as exc:
-                raise ClientException('Popen failed: {0.__class__.__name__}: {0}'.format(exc)) from exc
-            process.wait()
-
-        os.remove(audio.file)
-        audio.on_format(self.encoding)
-
-    def destroy(self):
-        """
-        Removes its tempdirectory
-        Will delete this sink
-        """
-        shutil.rmtree(self.file_path, ignore_errors=True)
-        del self
-
-    def get_files(self) -> List[AnyStr]:
-        """
-        Gives back all file paths
-        Note: These will be temporary pcm files until cleanup is called
-        """
-        return [os.path.realpath(x.file) for x in self.audio_data.values()]
-
-
-def cleanuptempdir(tempfolder: Optional[os.PathLike] = MISSING):
-    """
-    Attemps to remove all files out of the voicerecs tempfolder
-
-    .. versionadded:: 2.0
-    """
-    if tempfolder is MISSING:
-        tempfolder = tempfile.gettempdir() + "/nextcord/voicerecs/pcmtemps"
-    shutil.rmtree(tempfolder, ignore_errors=True)

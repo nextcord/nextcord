@@ -55,7 +55,6 @@ __all__ = (
     'InteractionType',
     'InteractionResponseType',
     'NSFWLevel',
-    'Encodings',
 )
 
 
@@ -588,18 +587,6 @@ class NSFWLevel(Enum, comparable=True):
     explicit = 1
     safe = 2
     age_restricted = 3
-
-
-class Encodings(Enum):
-    # https://trac.ffmpeg.org/wiki/Encode/HighQualityAudio
-    wav = 'wav'
-    mp3 = 'mp3'
-    pcm = 'pcm'
-    mp4 = 'mp4'
-    ogg = 'ogg'
-    mkv = 'mkv'
-    mka = 'mka'
-    m4a = 'm4a'
 
 
 T = TypeVar('T')

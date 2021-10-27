@@ -2,6 +2,7 @@ import os
 
 import nextcord
 import nextcord.ext.commands as commands
+import nextcord.ext.voicerecording as voicerecording
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=nextcord.Intents.all())
 bot.connections = {}
@@ -17,17 +18,21 @@ async def get_vc(message: nextcord.Message):
         return
     connection = bot.connections.get(message.guild.id)
     if connection:
+        if not connection.auto_self_deaf:
+            await connection.toggle_auto_self_deaf()
         if connection.channel.id == message.author.voice.channel.id:
             return connection
+
         await connection.move_to(vc.channel)
         return connection
     else:
         vc = await vc.channel.connect()
+        vc.toggle_auto_self_deaf()
         bot.connections.update({message.guild.id: vc})
         return vc
 
 
-async def finished_callback(sink: nextcord.FileSink, channel, *args):
+async def finished_callback(sink: voicerecording.FileSink, channel, *args):
     # Note: sink.audio_data = {user_id: AudioData}
     recorded_users = [f" <@{str(user_id)}> ({os.path.split(audio.file)[1]}) " for user_id, audio in
                       sink.audio_data.items()]
@@ -39,10 +44,10 @@ async def finished_callback(sink: nextcord.FileSink, channel, *args):
 
 
 @bot.command(name="record", aliases=["start_recording", "start"])
-async def start(ctx: commands.Context, encoding='wav', time: int = 0, size: int = 0):
+async def start(ctx: commands.Context, time: int = 0, size: int = 0):
     vc = await get_vc(ctx.message)
     await vc.start_listening(
-        nextcord.FileSink(encoding=nextcord.Encodings(encoding), filters={'time': time, 'max_size': size}),
+        voicerecording.FileSink(encoding=voicerecording.wav_encoder, filters={'time': time, 'max_size': size}),
         finished_callback, ctx.channel)
     await ctx.reply("The recording has started!")
 
@@ -74,5 +79,5 @@ async def on_voice_state_update(self, member, before, after):
 
 
 if __name__ == '__main__':
-    nextcord.cleanuptempdir()
+    voicerecording.cleanuptempdir()
     bot.run('token')

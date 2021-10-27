@@ -235,10 +235,10 @@ class VoiceClient(VoiceProtocol):
     ssrc: int
 
 
-    def __init__(self, client: Client, channel: abc.Connectable, auto_self_deaf: bool = False):
+    def __init__(self, client: Client, channel: abc.Connectable):
         if not has_nacl:
             raise RuntimeError("PyNaCl library needed in order to use voice")
-        self.auto_self_deaf = auto_self_deaf
+        self.auto_self_deaf = False
         super().__init__(client, channel)
         state = client._connection
         self.token: str = MISSING
@@ -821,6 +821,19 @@ class VoiceClient(VoiceProtocol):
         self.decoder.stop()
         self.listening = False
         self.listening_paused = False
+
+    async def toggle_auto_self_deaf(self):
+        """
+        Akctivates Autodeafing when not recording
+        """
+        if self.auto_self_deaf:
+            self.auto_self_deaf = False
+            if self.connected:
+                await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=False)
+        else:
+            self.auto_self_deaf = True
+            if self.connected and self.listening and not self.listening_paused:
+                await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
 
     async def toggle_listening_pause(self):
         """Pauses or unpauses the listening.
