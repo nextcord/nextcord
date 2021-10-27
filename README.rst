@@ -28,8 +28,6 @@ Key Features
 - Modern Pythonic API using ``async`` and ``await``
 - Proper rate limit handling
 - Optimised in both speed and memory
-- Interaction Commands
-- Selects And Buttons
 
 Installing
 ----------
