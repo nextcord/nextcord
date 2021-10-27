@@ -1168,10 +1168,6 @@ from being stringly typed in case the strings change in the future.
 All enumerations are subclasses of an internal class which mimics the behaviour
 of :class:`enum.Enum`.
 
-Channel Type
-~~~~~~~~~~~~~~
-.. attributetable:: ChannelType
-
 .. class:: ChannelType
 
     Specifies the type of channel.
@@ -1222,11 +1218,6 @@ Channel Type
         A private thread
 
         .. versionadded:: 2.0
-
-
-Message Type
-~~~~~~~~~~~~~~~~~
-.. attributetable:: MessageType
 
 .. class:: MessageType
 
@@ -1349,10 +1340,6 @@ Message Type
 
         .. versionadded:: 2.0
 
-User Flags
-~~~~~~~~~~~~~~
-.. attributetable:: UserFlags
-
 .. class:: UserFlags
 
     Represents Discord User flags.
@@ -1409,10 +1396,6 @@ User Flags
 
         The user is a Discord Certified Moderator.
 
-Activity Type
-~~~~~~~~~~~~~~~~
-.. attributetable:: ActivityType
-
 .. class:: ActivityType
 
     Specifies the type of :class:`Activity`. This is used to check how to
@@ -1442,11 +1425,6 @@ Activity Type
 
         .. versionadded:: 1.5
 
-
-Interaction Type
-~~~~~~~~~~~~~~~~~~
-.. attributetable:: InteractionType
-
 .. class:: InteractionType
 
     Specifies the type of :class:`Interaction`.
@@ -1462,10 +1440,6 @@ Interaction Type
     .. attribute:: component
 
         Represents a component based interaction, i.e. using the Discord Bot UI Kit.
-
-Interaction Response Type
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: InteractionResponseType
 
 .. class:: InteractionResponseType
 
@@ -1500,10 +1474,6 @@ Interaction Response Type
 
         See also :meth:`InteractionResponse.edit_message`
 
-Component Type
-~~~~~~~~~~~~~~~~
-.. attributetable:: ComponentType
-
 .. class:: ComponentType
 
     Represents the component type of a component.
@@ -1520,9 +1490,6 @@ Component Type
 
         Represents a select component.
 
-Button Style
-~~~~~~~~~~~~~~~~~~
-.. attributetable:: ButtonStyle
 
 .. class:: ButtonStyle
 
@@ -1564,10 +1531,6 @@ Button Style
     .. attribute:: url
 
         An alias for :attr:`link`.
-
-Voice Region
-~~~~~~~~~~~~~~~~~~
-.. attributetable:: VoiceRegion
 
 .. class:: VoiceRegion
 
@@ -1652,10 +1615,6 @@ Voice Region
 
         The US West region for VIP guilds.
 
-Verification Level
-~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: VerificationLevel
-
 .. class:: VerificationLevel
 
     Specifies a :class:`Guild`\'s verification level, which is the criteria in
@@ -1703,10 +1662,6 @@ Verification Level
 
         Member must have a verified phone on their Discord account.
 
-Notification Level
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: NotificationLevel
-
 .. class:: NotificationLevel
 
     Specifies whether a :class:`Guild` has notifications on for all messages or mentions only by default.
@@ -1740,10 +1695,6 @@ Notification Level
     .. attribute:: only_mentions
 
         Members receive notifications for messages they are mentioned in.
-
-Content Filter
-~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: ContentFilter
 
 .. class:: ContentFilter
 
@@ -1784,10 +1735,6 @@ Content Filter
 
         The guild has the content filter enabled for every member.
 
-Status
-~~~~~~~~~~~~
-.. attributetable:: Status
-
 .. class:: Status
 
     Specifies a :class:`Member` 's status.
@@ -1813,9 +1760,6 @@ Status
         a presence a la :meth:`Client.change_presence`. When you receive a
         user's presence this will be :attr:`offline` instead.
 
-Audit Log Action
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: AuditLogAction
 
 .. class:: AuditLogAction
 
@@ -2460,10 +2404,6 @@ Audit Log Action
 
         .. versionadded:: 2.0
 
-Audit Log Action Category
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: AuditLogActionCategory
-
 .. class:: AuditLogActionCategory
 
     Represents the category that the :class:`AuditLogAction` belongs to.
@@ -2482,10 +2422,6 @@ Audit Log Action Category
 
         The action is the update of something.
 
-Team Membership State
-~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: TeamMembershipState
-
 .. class:: TeamMembershipState
 
     Represents the membership state of a team member retrieved through :func:`Client.application_info`.
@@ -2499,10 +2435,6 @@ Team Membership State
     .. attribute:: accepted
 
         Represents a member currently in the team.
-
-Webhook Type
-~~~~~~~~~~~~~~~~
-.. attributetable:: WebhookType
 
 .. class:: WebhookType
 
@@ -2524,10 +2456,6 @@ Webhook Type
 
         .. versionadded:: 2.0
 
-Expire Behaviour
-~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: ExpireBehaviour
-
 .. class:: ExpireBehaviour
 
     Represents the behaviour the :class:`Integration` should perform
@@ -2545,10 +2473,6 @@ Expire Behaviour
     .. attribute:: kick
 
         This will kick the user when their subscription is finished.
-
-Default Avatar
-~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: DefaultAvatar
 
 .. class:: DefaultAvatar
 
@@ -2578,10 +2502,6 @@ Default Avatar
         Represents the default avatar with the color red.
         See also :attr:`Colour.red`
 
-Sticker Type
-~~~~~~~~~~~~~~~~~~
-.. attributetable:: StickerType
-
 .. class:: StickerType
 
     Represents the type of sticker.
@@ -2595,10 +2515,6 @@ Sticker Type
     .. attribute:: guild
 
         Represents a custom sticker created in a guild.
-
-Sticker Format Type
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: StickerFormatType
 
 .. class:: StickerFormatType
 
@@ -2618,10 +2534,6 @@ Sticker Format Type
 
         Represents a sticker with a lottie image.
 
-Invite Target
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: InviteTarget
-
 .. class:: InviteTarget
 
     Represents the invite type for voice channel invites.
@@ -2640,10 +2552,6 @@ Invite Target
 
         A stream invite that targets an embedded application.
 
-Video Quality Mode
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: VideoQualityMode
-
 .. class:: VideoQualityMode
 
     Represents the camera video quality mode for voice channel participants.
@@ -2657,10 +2565,6 @@ Video Quality Mode
     .. attribute:: full
 
         Represents full camera video quality.
-
-Stage Privacy Level
-~~~~~~~~~~~~~~~~~~~~~~
-.. attributetable:: StagePrivacyLevel
 
 .. class:: StagePrivacyLevel
 
@@ -2679,10 +2583,6 @@ Stage Privacy Level
     .. attribute:: guild_only
 
         Alias for :attr:`.closed`
-
-NSFW Level
-~~~~~~~~~~~~~~~
-.. attributetable:: NSFWLevel
 
 .. class:: NSFWLevel
 
@@ -2726,7 +2626,6 @@ NSFW Level
     .. attribute:: age_restricted
 
         The guild may contain NSFW content.
-
 
 Async Iterator
 ----------------
