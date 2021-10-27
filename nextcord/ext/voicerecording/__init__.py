@@ -100,9 +100,7 @@ class FileSink(Sink):
             file.write(data)
 
     def cleanup(self):
-        """
-        Formats audio and ends listening
-        """
+        """Formats audio and ends listening"""
         self.finished = True
         for file in self.audio_data.values():
             file.cleanup()
@@ -113,33 +111,28 @@ class FileSink(Sink):
             pass
 
     def format_audio(self, audio):
-        """
-        Formats one Audio File
-        """
+        """Formats one Audio File"""
         if self.vc.listening:
             raise ClientException("Audio may only be formatted after listening is finished.")
         self.encoding.func(self, audio)
         audio.on_format(self.encoding)
 
     def destroy(self):
-        """
-        Removes its tempdirectory
+        """Removes its tempdirectory
         Will delete this sink
         """
         shutil.rmtree(self.file_path, ignore_errors=True)
         del self
 
     def get_files(self) -> List[AnyStr]:
-        """
-        Gives back all file paths
+        """Gives back all file paths
         Note: These will be temporary pcm files until cleanup is called
         """
         return [os.path.realpath(x.file) for x in self.audio_data.values()]
 
 
 def cleanuptempdir(tempfolder: Optional[os.PathLike] = MISSING):
-    """
-    Attemps to remove all files out of the voicerecs tempfolder
+    """Attempts to remove all files out of the voicerecs tempfolder
 
     .. versionadded:: 2.0
     """

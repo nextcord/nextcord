@@ -464,10 +464,8 @@ class Decoder(_OpusStruct):
 
 class DecodeManager(threading.Thread, _OpusStruct):
     def __init__(self, client):
-        """
-        A class handling decoding of a voice channel. In order of being non blocking it creates a Thread reading a UDP
-        Socket.
-
+        """A class handling decoding of a voice channel. 
+        In order of being non blocking it creates a Thread reading a UDP Socket.
         """
         super().__init__(daemon=True, name='DecodeManager')
 

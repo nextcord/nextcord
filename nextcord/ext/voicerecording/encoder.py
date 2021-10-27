@@ -31,9 +31,7 @@ class Encodings(Enum):
 
 
 class Encoder:
-    """
-    Used to define how to encode recorded data
-    """
+    """Used to define how to encode recorded data"""
 
     def __init__(self, func, name: str):
         self.func = func
@@ -61,8 +59,8 @@ def wav_encode(sink, audio):
 
 
 def generate_ffmpeg_encoder(type: Encodings) -> Encoder:
-    """
-    Generates an Encoder which uses FFMPEG to encode the data to the specified type
+    """Generates an Encoder which uses FFMPEG to 
+    encode the data to the specified type
     """
 
     def encode(sink, audio):
