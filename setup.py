@@ -55,7 +55,7 @@ packages = [
     'nextcord.webhook',
     'nextcord.ext.commands',
     'nextcord.ext.tasks',
-    'nextcord.ext.voice-recording',
+    'nextcord.ext.voicerecording',
     
     # Compat
     "discord",
