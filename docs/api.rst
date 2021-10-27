@@ -112,10 +112,6 @@ Sinks
     :members:
     :inherited-members:
 
-.. autoclass:: FileSink()
-    :members:
-    :inherited-members:
-
 Audio Data
 ~~~~~~~~~~~~
 
@@ -125,11 +121,6 @@ Audio Data
     :members:
     :inherited-members:
     :undoc-members:
-
-Cleanup
-~~~~~~~~~~~~
-
-.. autofunction:: nextcord.sink.cleanuptempdir
 
 VoiceProtocol
 ~~~~~~~~~~~~~~~
@@ -2736,47 +2727,6 @@ NSFW Level
 
         The guild may contain NSFW content.
 
-Encodings
-~~~~~~~~~~~~~
-.. attributetable:: Encodings
-
-.. class:: Encodings
-
-    Represents all curently available Encodings for files received by recording
-
-    .. versionadded:: 2.0
-
-    .. attribute:: wav
-
-        Encodes in .wav format
-
-    .. attribute:: mp3
-
-        Encodes in .mp3 format. Requires ffmpeg to be present
-
-    .. attribute:: pcm
-
-        No Encoding. PCM is also what will be used when receiving until formatted
-
-    .. attribute:: mp4
-
-        Encodes in .mp4 format. Requires ffmpeg to be present
-
-    .. attribute:: m4a
-
-        Encodes in .m4a format. Requires ffmpeg to be present
-
-    .. attribute:: mka
-
-        Encodes in .mka format. Requires ffmpeg to be present
-
-    .. attribute:: mkv
-
-        Encodes in .mkv format. Requires ffmpeg to be present
-
-    .. attribute:: ogg
-
-        Encodes in .ogg format. Requires ffmpeg to be present
 
 Async Iterator
 ----------------
