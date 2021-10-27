@@ -22,18 +22,14 @@ Nextcord
    
 A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord written in Python.
 
-Fork notice
---------------------------
-
-This is a fork of discord.py, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ on 28th August 2021.
-Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py users a stable API wrapper for their bots.   
-
 Key Features
 -------------
 
 - Modern Pythonic API using ``async`` and ``await``
 - Proper rate limit handling
 - Optimised in both speed and memory
+- Interaction Commands
+- Selects And Buttons
 
 Installing
 ----------
@@ -93,24 +89,68 @@ Please note that on Linux installing voice you must install the following packag
 * python-dev (e.g. ``python3.6-dev`` for Python 3.6)
 
 
-Quick Example
-~~~~~~~~~~~~~
+Some Quick Example's
+~~~~~~~~~~~~~~~~~~~~~
+
+A Simple Slash Command:
 
 .. code:: py
 
-    from nextcord.ext import commands
+    import nextcord
+    from nextcord.command_client import slash_command
+
+    clint = CommandClient(command_prefix='$')
+
+    @client.slash_command()
+    async def ping(interaction):
+        await interaction.response.send_message('Pong!')
+
+    client.run('token')
+
+A Simple Dropdown Menu:
+
+.. code:: py
+
+   import nextcord
+   from nextcord.ext import commands
+
+   class Dropdown(nextcord.ui.Select):
+      def __init__(self):
+
+         options = [
+               nextcord.SelectOption(label='Red', description='Your favourite colour is red', emoji='🟥'),
+               nextcord.SelectOption(label='Green', description='Your favourite colour is green', emoji='🟩'),
+               nextcord.SelectOption(label='Blue', description='Your favourite colour is blue', emoji='🟦')
+         ]
+
+         super().__init__(placeholder='Choose your favourite colour...', min_values=1, max_values=1, options=options)
+
+      async def callback(self, interaction: nextcord.Interaction):
+         await interaction.response.send_message(f'Your favourite colour is {self.values[0]}')
 
 
-    bot = commands.Bot(command_prefix='$')
+   class DropdownView(nextcord.ui.View):
+      def __init__(self):
+         super().__init__()
 
-    @bot.command()
-    async def ping(ctx):
-        await ctx.reply('Pong!')
-
-    bot.run('token')
+         self.add_item(Dropdown())
 
 
-You can find more examples in the examples directory.
+   bot = commands.Bot(command_prefix='$')
+
+   @bot.command()
+   async def colour(ctx):
+      """Sends a message with our dropdown containing colours"""
+
+      view = DropdownView()
+
+      await ctx.send('Pick your favourite colour:', view=view)
+
+
+   bot.run('token')
+
+
+You can find more examples in the `examples <https://github.com/nextcord/nextcord/blob/master/examples//> direcory`_. 
 
 **NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/master/examples/secure_token_storage.py/>`_.
 
