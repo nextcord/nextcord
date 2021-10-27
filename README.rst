@@ -87,8 +87,8 @@ Please note that on Linux installing voice you must install the following packag
 * python-dev (e.g. ``python3.6-dev`` for Python 3.6)
 
 
-Some Quick Example's
-~~~~~~~~~~~~~~~~~~~~~
+Quick Examples
+~~~~~~~~~~~~~~
 
 A Simple Slash Command:
 
