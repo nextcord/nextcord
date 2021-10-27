@@ -684,8 +684,7 @@ class VoiceClient(VoiceProtocol):
 
     @property
     def source(self) -> Optional[AudioSource]:
-        """
-        Optional[:class:`AudioSource`]: The audio source being played, if playing.
+        """Optional[:class:`AudioSource`]: The audio source being played, if playing.
 
         This property can also be used to change the audio source currently being played.
         """
