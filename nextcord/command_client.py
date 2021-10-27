@@ -444,6 +444,16 @@ class ApplicationCommand(ApplicationSubcommand):
         else:
             await self.callback(interaction, member, **kwargs)
 
+
+    def _get_basic_application_payload(self) -> dict:
+        payload = super().payload
+        if self.type is not CommandType.chat_input and "options" in payload:
+            payload.pop("options")
+        if self.default_permission is not None:
+            payload["default_permission"] = self.default_permission
+        return payload
+
+
     @property
     # def payload(self) -> Union[List[Dict[str, ...]], Dict[str, ...]]:
     def payload(self) -> List[dict]:
@@ -454,11 +464,12 @@ class ApplicationCommand(ApplicationSubcommand):
 
         """
         # TODO: This always returns a list, should it be "payloads"? Won't override subcommand payload though.
-        partial_payload = super().payload
-        if self.type is not CommandType.chat_input and "options" in partial_payload:
-            partial_payload.pop("options")
-        if self.default_permission is not None:
-            partial_payload["default_permission"] = self.default_permission
+        # partial_payload = super().payload
+        # if self.type is not CommandType.chat_input and "options" in partial_payload:
+        #     partial_payload.pop("options")
+        # if self.default_permission is not None:
+        #     partial_payload["default_permission"] = self.default_permission
+        partial_payload = self._get_basic_application_payload()
 
     #     if self.guild_ids:
         ret = []
@@ -471,16 +482,24 @@ class ApplicationCommand(ApplicationSubcommand):
             ret.append(partial_payload)
         return ret
 
+    def get_guild_payload(self, guild_id: int) -> dict:
+        if not self.is_guild or guild_id not in self.guild_ids:
+            raise NotImplementedError  # TODO: Make a proper error.
+        partial_payload = self._get_basic_application_payload()
+        partial_payload["guild_id"] = guild_id
+        return partial_payload
+
+
     @property
     def global_payload(self) -> dict:
         if not self.is_global:
-            raise NotImplementedError
-        partial_payload = super().payload
-        if self.type is not CommandType.chat_input and "options" in partial_payload:
-            partial_payload.pop("options")
-        if self.default_permission is not None:
-            partial_payload["default_permission"] = self.default_permission
-        return partial_payload
+            raise NotImplementedError  # TODO: Make a proper error.
+        # partial_payload = super().payload
+        # if self.type is not CommandType.chat_input and "options" in partial_payload:
+        #     partial_payload.pop("options")
+        # if self.default_permission is not None:
+        #     partial_payload["default_permission"] = self.default_permission
+        return self._get_basic_application_payload()
 
     @property
     def is_guild(self) -> bool:
@@ -511,7 +530,7 @@ class ApplicationCommand(ApplicationSubcommand):
         for our_payload in self.payload:
             # if our_payload.get("guild_id", None) == raw_payload.get("guild_id", None):
             if our_payload.get("guild_id", None) == guild_id:
-                print(f"nextcord.command_client: {our_payload.get('guild_id', None)} == {guild_id}")
+                # print(f"nextcord.command_client: {our_payload.get('guild_id', None)} == {guild_id}")
                 if self._recursive_item_check(modded_payload, our_payload):
                     return True
         return False
@@ -521,7 +540,7 @@ class ApplicationCommand(ApplicationSubcommand):
         for our_payload in our_payloads:
             # if our_payload.get("guild_id", None) == (int(guild_id) if (guild_id := raw_payload.get("guild_id", None)) else guild_id):
             if our_payload.get("guild_id", None) == guild_id:
-                print(f"nextcord.command_client: {our_payload.get('guild_id', None)} == {guild_id}")
+                # print(f"nextcord.command_client: {our_payload.get('guild_id', None)} == {guild_id}")
                 # print(f"nextcord.command_client: {our_payload}")
                 # print(f"nextcord.command_client: {raw_payload}")
                 if self._recursive_item_check(our_payload, raw_payload):
@@ -534,12 +553,13 @@ class ApplicationCommand(ApplicationSubcommand):
         if isinstance(item1, dict) and isinstance(item2, dict):
             for key, item in item1.items():
                 if key == "value":
-                    print(f"nextcord.command_client: Key value found, ignoring.")
+                    # print(f"nextcord.command_client: Key value found, ignoring.")
+                    pass
                 elif key not in item2:
-                    print(f"nextcord.command_client: Recursive dict check failed: key {key} not in item2.")
+                    # print(f"nextcord.command_client: Recursive dict check failed: key {key} not in item2.")
                     return False
                 elif not self._recursive_item_check(item, item2[key]):
-                    print("nextcord.command_client: Recursive dict check failed.")
+                    # print("nextcord.command_client: Recursive dict check failed.")
                     return False
         elif isinstance(item1, list) and isinstance(item2, list):
             # if len(item1) == len(item2):
@@ -566,9 +586,14 @@ class ApplicationCommand(ApplicationSubcommand):
                 # else:
                 #     raise NotImplementedError
 
-        elif item1 != item2:
-            print(f"nextcord.command_client: Recursive item check failed: {item1} != {item2}")
-            return False
+        else:
+            if isinstance(item1, str) and item1.isdigit():
+                item1 = int(item1)
+            if isinstance(item2, str) and item2.isdigit():
+                item2 = int(item2)
+            if item1 != item2:
+                # print(f"nextcord.command_client: Recursive item check failed: {item1} != {item2}")
+                return False
         return True
 
     def _recursive_check_item_against_list(self, item1, list2: list) -> bool:
