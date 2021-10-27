@@ -97,13 +97,32 @@ A Simple Slash Command:
     import nextcord
     from nextcord.command_client import slash_command
 
-    client = CommandClient(command_prefix='$')
+    client = CommandClient()
 
-    @client.slash_command()
+    @client.slash_command(guild_ids=[])
     async def ping(interaction):
         await interaction.response.send_message('Pong!')
 
     client.run('token')
+    
+.. code:: py 
+   
+   import nextcord
+   from nextcord.command_client import slash_command
+   
+   client = CommandClient()
+   
+   @client.slash_command(guild_ids=[])
+   async def submain(interaction):
+      await interaction.response.send_message("I Am Never Called")
+      
+   @submain.subcommand()
+   async def opso(interaction):
+      await interaction.response.send_message("what does that even mean?")
+      
+   @submain.subcommand()
+   async def oof(interaction):
+      await interaction.response.send_message("thats a roblox reference, H")
 
 
 You can find more examples in the `examples directory <examples/>`_.
