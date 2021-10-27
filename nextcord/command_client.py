@@ -184,7 +184,7 @@ class ApplicationSubcommand:
         self._analyze_callback()
 
     def _analyze_content(self):
-        if isinstance(self._parent, ApplicationSubcommand) and self.children:
+        if self._parent and self._parent.type is CommandOptionType.sub_command_group and self.children:
             raise NotImplementedError("A subcommand can't have both subcommand parents and children! Discord does not"
                                       "support this.")
         if isinstance(self._parent, ApplicationCommand):
@@ -309,6 +309,7 @@ class ApplicationSubcommand:
     @property
     def payload(self) -> dict:
         # noinspection PyUnresolvedReferences
+        self._analyze_content()
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
         if self.required is not None:
             ret["required"] = self.required
