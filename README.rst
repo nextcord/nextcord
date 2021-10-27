@@ -150,7 +150,7 @@ A Simple Dropdown Menu:
    bot.run('token')
 
 
-You can find more examples in the `_examples <https://github.com/nextcord/nextcord/blob/master/examples//> direcory`_. 
+You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/master/examples//>`_. 
 
 **NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/master/examples/secure_token_storage.py/>`_.
 
