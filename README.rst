@@ -26,7 +26,7 @@ Fork
 -----
 This is a fork of discord.py and is mean't to be the next discord.py
 
-We wanted to facilitate a library which has old discord.py features and docs but also facilitates new features and fix bugs
+This library is mean't to facilitate a library which has old discord.py features and docs but also facilitates new features and fix bugs
 
 Key Features
 -------------
