@@ -153,7 +153,8 @@ class FiltersMixin:
 class RawData:
     """Handles raw data from Discord so that it can be decrypted and decoded to be used.
 
-    .. versionadded:: 2.0"""
+    .. versionadded:: 2.0
+    """
 
     def __init__(self, data, client):
         self.data = bytearray(data)

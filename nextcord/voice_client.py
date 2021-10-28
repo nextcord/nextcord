@@ -684,8 +684,7 @@ class VoiceClient(VoiceProtocol):
 
     @property
     def source(self) -> Optional[AudioSource]:
-        """
-        Optional[:class:`AudioSource`]: The audio source being played, if playing.
+        """Optional[:class:`AudioSource`]: The audio source being played, if playing.
 
         This property can also be used to change the audio source currently being played.
         """
@@ -759,7 +758,7 @@ class VoiceClient(VoiceProtocol):
 
         Please note befor using: Recording voice is not offically supported by the discord API. This code might
         break at any time without warning. It has been developed by Sheepposu and veni-vidi-code in good faith,
-        but since discord does not talk about rules for this it is your task to clearify if you are allowed to actually
+        but since discord does not talk about rules for this it is your task to clarify if you are allowed to actually
         record the channel the bot is in. Never do so without the permissions of the people in it!
 
         .. versionadded:: 2.0
@@ -803,7 +802,9 @@ class VoiceClient(VoiceProtocol):
         t.start()
 
     async def stop_listening(self):
-        """Stops the listening.
+        """|coro|
+
+        Stops the listening.
         Must be already listening.
 
         .. versionadded:: 2.0
@@ -823,9 +824,9 @@ class VoiceClient(VoiceProtocol):
         self.listening_paused = False
 
     async def toggle_auto_self_deaf(self):
-        """
-        Akctivates Autodeafing when not recording
-        """
+        """|coro|
+
+        Activates auto-deafening when not recording"""
         if self.auto_self_deaf:
             self.auto_self_deaf = False
             if self.connected:
@@ -863,7 +864,8 @@ class VoiceClient(VoiceProtocol):
     def recv_audio(self, sink, callback, *args):
         """Gets data from _recv_audio and sorts
         it by user, handles pcm files and
-        silence that should be added."""
+        silence that should be added.
+        """
 
         self.user_timestamps = {}
         self.starting_time = time.perf_counter()
