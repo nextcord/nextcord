@@ -623,8 +623,8 @@ class AudioPlayer(threading.Thread):
         self.client: VoiceClient = client
         self.after: Optional[Callable[[Optional[Exception]], Any]] = after
 
-        self._end: threading.Event = threading.Event()
-        self._resumed: threading.Event = threading.Event()
+        self._end = False
+        self._resumed = threading.Event()
         self._resumed.set() # we are not paused
         self._current_error: Optional[Exception] = None
         self._connected: threading.Event = client._connected
@@ -641,7 +641,7 @@ class AudioPlayer(threading.Thread):
         play_audio = self.client.send_audio_packet
         self._speak(True)
 
-        while not self._end.is_set():
+        while not self._end:
             # are we paused?
             if not self._resumed.is_set():
                 # wait until we aren't
@@ -695,7 +695,7 @@ class AudioPlayer(threading.Thread):
             traceback.print_exception(type(error), error, error.__traceback__)
 
     def stop(self) -> None:
-        self._end.set()
+        self._end = True
         self._resumed.set()
         self._speak(False)
 
@@ -712,10 +712,10 @@ class AudioPlayer(threading.Thread):
             self._speak(True)
 
     def is_playing(self) -> bool:
-        return self._resumed.is_set() and not self._end.is_set()
+        return self._resumed.is_set() and not self._end
 
     def is_paused(self) -> bool:
-        return not self._end.is_set() and not self._resumed.is_set()
+        return not self._end and not self._resumed.is_set()
 
     def _set_source(self, source: AudioSource) -> None:
         with self._lock:
