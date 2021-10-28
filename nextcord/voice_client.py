@@ -292,7 +292,7 @@ class VoiceClient(VoiceProtocol):
             # a channel move and an actual force disconnect
             if channel_id is None:
                 # We're being disconnected so cleanup
-                await self.disconnect()
+                await self.disconnect(force=True)
             else:
                 guild = self.guild
                 self.channel = channel_id and guild and guild.get_channel(int(channel_id))  # type: ignore
