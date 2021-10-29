@@ -22,11 +22,10 @@ Nextcord
    
 A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord written in Python.
 
-Fork notice
---------------------------
-
+Fork
+-----
 This is a fork of discord.py, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ on 28th August 2021.
-Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py users a stable API wrapper for their bots.   
+Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py users a stable API wrapper for their bots. 
 
 Key Features
 -------------
@@ -93,24 +92,47 @@ Please note that on Linux installing voice you must install the following packag
 * python-dev (e.g. ``python3.6-dev`` for Python 3.6)
 
 
-Quick Example
-~~~~~~~~~~~~~
+Quick Examples
+~~~~~~~~~~~~~~
+
+A Simple Slash Command:
 
 .. code:: py
 
-    from nextcord.ext import commands
+    import nextcord
+    from nextcord.command_client import slash_command
+
+    client = CommandClient()
+
+    @client.slash_command(guild_ids=[])
+    async def ping(interaction):
+        await interaction.response.send_message('Pong!')
+
+    client.run('token')
+    
+.. code:: py 
+   
+   import nextcord
+   from nextcord.command_client import slash_command
+   
+   client = CommandClient()
+   
+   @client.slash_command(guild_ids=[])
+   async def submain(interaction):
+      await interaction.response.send_message("I Am Never Called")
+      
+   @submain.subcommand()
+   async def opso(interaction):
+      await interaction.response.send_message("what does that even mean?")
+      
+   @submain.subcommand()
+   async def oof(interaction):
+      await interaction.response.send_message("thats a roblox reference, H")
+      
+   client.run('token')   
 
 
-    bot = commands.Bot(command_prefix='$')
-
-    @bot.command()
-    async def ping(ctx):
-        await ctx.reply('Pong!')
-
-    bot.run('token')
-
-
-You can find more examples in the examples directory.
+You can find more examples in the `examples directory <examples/>`_.
 
 **NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/master/examples/secure_token_storage.py/>`_.
 
