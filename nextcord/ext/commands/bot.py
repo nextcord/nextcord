@@ -682,7 +682,7 @@ class BotBase(GroupMixin):
             if not has_kwargs:
                 raise errors.InvalidSetupArguments(key)
             elif not isinstance(extras, dict):
-                raise TypeError("Expected 'extras' to be a dictionary")
+                raise errors.ExtensionFailed(key, TypeError("Expected 'extras' to be a dictionary"))
 
         try:
             if has_kwargs:
