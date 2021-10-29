@@ -30,7 +30,12 @@ import asyncio
 
 from . import utils
 from .enums import try_enum, InteractionType, InteractionResponseType
-from .errors import InteractionResponded, HTTPException, ClientException
+from .errors import (
+    InteractionResponded,
+    HTTPException,
+    ClientException,
+    InvalidData
+)
 from .channel import PartialMessageable, ChannelType
 
 from .user import User
@@ -358,6 +363,43 @@ class Interaction:
             self.token,
             session=self._session,
         )
+
+    async def send(self, *args, **kwargs) -> Optional[Message]:
+        """|coro|
+
+        This is a fallback function for help when sending messages in
+        response to an interaction. If the response
+        :property:`InteractionResponse.is_done()` then a messahe os sent
+        to the :property:`Interaction.channel` instead.
+
+        .. warning::
+
+            Ephemeral messages should not be sent with this as if
+            the :property:`Interaction.channel` is fallen back to,
+            ephemeral messages cannot be sent with this.
+
+        Returns
+        -------
+        Optional[:class:`Message`]
+            Message if the interaction has been responded to and the
+            interaction's channel was sent to. Else ``None``
+
+        Raises
+        ------
+        InvalidData
+            Somehow :property:`Interaction.channel` was ``None``,
+            this may occur in threads.
+        """
+
+        if not self.response.is_done():
+            await self.response.send_message(*args, **kwargs)
+        else:
+            if self.channel is not None:
+                await self.channel.send(*args, **kwargs)
+            else:
+                raise InvalidData(
+                    "Interaction.channel is None, this may occur in threads"
+                )
 
 
 class InteractionResponse:
