@@ -678,8 +678,11 @@ class BotBase(GroupMixin):
         sig = list(sig.parameters.keys())
         total_params = len(sig)
         has_kwargs = total_params != 1
-        if extras and not has_kwargs:
-            raise errors.InvalidSetupArguments(key)
+        if extras:
+            if not has_kwargs:
+                raise errors.InvalidSetupArguments(key)
+            elif not isinstance(extras, dict):
+                raise TypeError("Expected 'extras' to be a dictionary")
 
         try:
             if has_kwargs:
