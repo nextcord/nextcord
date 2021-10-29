@@ -262,6 +262,7 @@ class Client:
         # TODO: Work on rollout feature.
         self._application_commands_to_rollout: Set[ApplicationCommand] = set()
         self._performing_application_command_rollout: bool = False
+        # TODO: rollout_delete_unknown, rollout_register_new.
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -1732,7 +1733,7 @@ class Client:
             self._application_commands_to_rollout.add(app_cmd)
 
     async def on_ready(self):
-        print(f"nextcord.Client: On Ready.")
+        # print(f"nextcord.Client: On Ready.")
         await self.perform_application_command_rollout()
 
     async def perform_application_command_rollout(self, delete_unknown: bool = True, register_new: bool = True):
@@ -1755,7 +1756,7 @@ class Client:
         """Grabs Global commands, associates when it can, deletes unknowns when enabled, registers new when enabled."""
         raw_get_global_response = await self.http.get_global_commands(self.application_id)
         unregistered_global_commands = self._get_global_commands()
-        print(f"nextcord.Client: {raw_get_global_response}")
+        # print(f"nextcord.Client: {raw_get_global_response}")
         for raw_response in raw_get_global_response:
             response_signature = (raw_response["name"], int(raw_response['type']), None)
             if app_cmd := self._application_command_signatures.get(response_signature):

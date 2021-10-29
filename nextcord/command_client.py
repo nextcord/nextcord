@@ -42,6 +42,26 @@ class InvalidCommandType(Exception):
 class SlashOption:
     def __init__(self, name: str = None, description: str = None, required: bool = None, choices: dict = None,
                  default: Any = None, channel_types: List[ChannelType, ...] = None):
+        """Provides Discord with information about an option in a command.
+
+        When this class is set as the default argument of a parameter in an Application Command, additional information
+        about the parameter is sent to Discord for the user to see.
+
+        Parameters
+        ----------
+        name: Optional[:class:`str`]
+            The name of the Option on Discords side. If left as None, it defaults to the parameter name.
+        description: Optional[:class:'str']
+            The description of the Option on Discords side. If left as None, it defaults to "".
+        required: Optional[:class:'bool']
+            If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
+        choices: Optional[:class:`bool`]
+            TODO: Explain this, preferably by actually testing it.
+        default: Optional[Any]
+            When required is not True and the user doesn't provide a value for this Option, this value is given instead.
+        channel_types: Optional[List[:class:`enums.ChannelType`]]
+            The list of valid channel types for the user to choose from. Used only by channel Options.
+        """
         if not choices:
             choices = []
         self.name: Optional[str] = name
@@ -53,8 +73,31 @@ class SlashOption:
 
 
 class CommandArgument(SlashOption):
-    """This must set all variables from CmdArg, hence the subclass."""
+    option_types = {
+        str: CommandOptionType.string,
+        int: CommandOptionType.integer,
+        bool: CommandOptionType.boolean,
+        User: CommandOptionType.user,
+        Member: CommandOptionType.user,
+        GuildChannel: CommandOptionType.channel,
+        Role: CommandOptionType.role,
+        # TODO: Is this in the library at all currently? This includes Users and Roles.
+        # Mentionable: CommandOptionType.mentionable
+        float: CommandOptionType.number,
+        Message: CommandOptionType.integer,  # TODO: This is janky, the user provides an ID or something? Ugh.
+    }
+    """Maps Python typings to Discord typings."""
     def __init__(self, parameter: Parameter):
+        """
+
+        This must set and/or handle all variables from CmdArg, hence the subclass.
+
+        Parameters
+        ----------
+        parameter: :class:`inspect.Parameter`
+            The Application Command Parameter object to read,
+
+        """
         super().__init__()
         self.parameter = parameter
         cmd_arg_given = False
@@ -66,6 +109,8 @@ class CommandArgument(SlashOption):
         self.functional_name = parameter.name
 
         # TODO: Cleanup logic for this.
+        # All optional variables need to default to None for functions down the line to understand that they were never
+        # set. If Discord demands a value, it should be the minimum value required.
         self.name = cmd_arg.name if cmd_arg.name is not None else parameter.name
         self.description = cmd_arg.description if cmd_arg.description is not None else " "
         self.required = cmd_arg.required if cmd_arg.required is not None else None
@@ -80,29 +125,14 @@ class CommandArgument(SlashOption):
         self.type: CommandOptionType = self.get_type(parameter.annotation)
         self.verify()
 
-    def get_type(self, typing: Type) -> CommandOptionType:
+    def get_type(self, typing: type) -> CommandOptionType:
+
         if typing is self.parameter.empty:
             return CommandOptionType.string
-        elif typing is str:
-            return CommandOptionType.string
-        elif typing is int:
-            return CommandOptionType.integer
-        elif typing is bool:
-            return CommandOptionType.boolean
-        elif typing is User or typing is Member:
-            return CommandOptionType.user
-        elif typing is GuildChannel:  # TODO: Make this more inclusive.
-            return CommandOptionType.channel
-        elif typing is Role:
-            return CommandOptionType.role
-        # elif isinstance(typing, Mentionable):  # TODO: Is this in the library at all?? Includes Users AND Roles?
-        #     return CommandOptionType.MENTIONABLE
-        elif typing is float:
-            return CommandOptionType.number
-        elif typing is Message:  # TODO: Brutally test please.
-            return CommandOptionType.integer
+        elif valid_type := self.option_types.get(typing, None):
+            return valid_type
         else:
-            raise NotImplementedError(f"Type \"{typing}\" isn't supported.")
+            raise NotImplementedError(f"Type \"{typing}\" isn't a supported typing for Application Commands.")
 
     def verify(self):
         """This should run through CmdArg variables and raise errors when conflicting data is given."""
@@ -342,8 +372,8 @@ class ApplicationCommand(ApplicationSubcommand):
         # Basic input checking.
         if guild_ids is None:
             guild_ids = []
-        if not asyncio.iscoroutinefunction(callback):
-            raise TypeError("Callback must be a coroutine.")
+        # if not asyncio.iscoroutinefunction(callback):
+        #     raise TypeError("Callback must be a coroutine.")
         # Hidden variable init.
         self._state: Optional[ConnectionState] = None  # TODO: I thought there was a way around doing this, but *sigh*.
         self._is_global: Optional[bool] = True if (guild_ids and force_global) or (not guild_ids) else False
