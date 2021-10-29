@@ -128,6 +128,8 @@ A Simple Slash Command:
    @submain.subcommand()
    async def oof(interaction):
       await interaction.response.send_message("thats a roblox reference, H")
+      
+   client.run('token')   
 
 
 You can find more examples in the `examples directory <examples/>`_.
