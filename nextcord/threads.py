@@ -35,8 +35,8 @@ from .errors import ClientException
 from .utils import MISSING, parse_time, _get_as_snowflake
 
 __all__ = (
-    'Thread',
-    'ThreadMember',
+    "Thread",
+    "ThreadMember",
 )
 
 if TYPE_CHECKING:
@@ -124,25 +124,25 @@ class Thread(Messageable, Hashable):
     """
 
     __slots__ = (
-        'name',
-        'id',
-        'guild',
-        '_type',
-        '_state',
-        '_members',
-        'owner_id',
-        'parent_id',
-        'last_message_id',
-        'message_count',
-        'member_count',
-        'slowmode_delay',
-        'me',
-        'locked',
-        'archived',
-        'invitable',
-        'archiver_id',
-        'auto_archive_duration',
-        'archive_timestamp',
+        "name",
+        "id",
+        "guild",
+        "_type",
+        "_state",
+        "_members",
+        "owner_id",
+        "parent_id",
+        "last_message_id",
+        "message_count",
+        "member_count",
+        "slowmode_delay",
+        "me",
+        "locked",
+        "archived",
+        "invitable",
+        "archiver_id",
+        "auto_archive_duration",
+        "archive_timestamp",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload):
@@ -156,50 +156,50 @@ class Thread(Messageable, Hashable):
 
     def __repr__(self) -> str:
         return (
-            f'<Thread id={self.id!r} name={self.name!r} parent={self.parent}'
-            f' owner_id={self.owner_id!r} locked={self.locked} archived={self.archived}>'
+            f"<Thread id={self.id!r} name={self.name!r} parent={self.parent}"
+            f" owner_id={self.owner_id!r} locked={self.locked} archived={self.archived}>"
         )
 
     def __str__(self) -> str:
         return self.name
 
     def _from_data(self, data: ThreadPayload):
-        self.id = int(data['id'])
-        self.parent_id = int(data['parent_id'])
-        self.owner_id = int(data['owner_id'])
-        self.name = data['name']
-        self._type = try_enum(ChannelType, data['type'])
-        self.last_message_id = _get_as_snowflake(data, 'last_message_id')
-        self.slowmode_delay = data.get('rate_limit_per_user', 0)
-        self.message_count = data['message_count']
-        self.member_count = data['member_count']
-        self._unroll_metadata(data['thread_metadata'])
+        self.id = int(data["id"])
+        self.parent_id = int(data["parent_id"])
+        self.owner_id = int(data["owner_id"])
+        self.name = data["name"]
+        self._type = try_enum(ChannelType, data["type"])
+        self.last_message_id = _get_as_snowflake(data, "last_message_id")
+        self.slowmode_delay = data.get("rate_limit_per_user", 0)
+        self.message_count = data["message_count"]
+        self.member_count = data["member_count"]
+        self._unroll_metadata(data["thread_metadata"])
 
         try:
-            member = data['member']
+            member = data["member"]
         except KeyError:
             self.me = None
         else:
             self.me = ThreadMember(self, member)
 
     def _unroll_metadata(self, data: ThreadMetadata):
-        self.archived = data['archived']
-        self.archiver_id = _get_as_snowflake(data, 'archiver_id')
-        self.auto_archive_duration = data['auto_archive_duration']
-        self.archive_timestamp = parse_time(data['archive_timestamp'])
-        self.locked = data.get('locked', False)
-        self.invitable = data.get('invitable', True)
+        self.archived = data["archived"]
+        self.archiver_id = _get_as_snowflake(data, "archiver_id")
+        self.auto_archive_duration = data["auto_archive_duration"]
+        self.archive_timestamp = parse_time(data["archive_timestamp"])
+        self.locked = data.get("locked", False)
+        self.invitable = data.get("invitable", True)
 
     def _update(self, data):
         try:
-            self.name = data['name']
+            self.name = data["name"]
         except KeyError:
             pass
 
-        self.slowmode_delay = data.get('rate_limit_per_user', 0)
+        self.slowmode_delay = data.get("rate_limit_per_user", 0)
 
         try:
-            self._unroll_metadata(data['thread_metadata'])
+            self._unroll_metadata(data["thread_metadata"])
         except KeyError:
             pass
 
@@ -221,7 +221,7 @@ class Thread(Messageable, Hashable):
     @property
     def mention(self) -> str:
         """:class:`str`: The string that allows you to mention the thread."""
-        return f'<#{self.id}>'
+        return f"<#{self.id}>"
 
     @property
     def members(self) -> List[ThreadMember]:
@@ -252,7 +252,11 @@ class Thread(Messageable, Hashable):
         Optional[:class:`Message`]
             The last message in this channel or ``None`` if not found.
         """
-        return self._state._get_message(self.last_message_id) if self.last_message_id else None
+        return (
+            self._state._get_message(self.last_message_id)
+            if self.last_message_id
+            else None
+        )
 
     @property
     def category(self) -> Optional[CategoryChannel]:
@@ -271,9 +275,9 @@ class Thread(Messageable, Hashable):
 
         parent = self.parent
         if parent is None:
-            raise ClientException('Parent channel not found')
+            raise ClientException("Parent channel not found")
         return parent.category
-    
+
     @property
     def category_id(self) -> Optional[int]:
         """The category channel ID the parent channel belongs to, if applicable.
@@ -291,7 +295,7 @@ class Thread(Messageable, Hashable):
 
         parent = self.parent
         if parent is None:
-            raise ClientException('Parent channel not found')
+            raise ClientException("Parent channel not found")
         return parent.category_id
 
     def is_private(self) -> bool:
@@ -348,7 +352,7 @@ class Thread(Messageable, Hashable):
 
         parent = self.parent
         if parent is None:
-            raise ClientException('Parent channel not found')
+            raise ClientException("Parent channel not found")
         return parent.permissions_for(obj)
 
     async def delete_messages(self, messages: Iterable[Snowflake]) -> None:
@@ -398,7 +402,7 @@ class Thread(Messageable, Hashable):
             return
 
         if len(messages) > 100:
-            raise ClientException('Can only bulk delete messages up to 100 messages')
+            raise ClientException("Can only bulk delete messages up to 100 messages")
 
         message_ids: SnowflakeList = [m.id for m in messages]
         await self._state.http.delete_messages(self.id, message_ids)
@@ -473,11 +477,19 @@ class Thread(Messageable, Hashable):
         if check is MISSING:
             check = lambda m: True
 
-        iterator = self.history(limit=limit, before=before, after=after, oldest_first=oldest_first, around=around)
+        iterator = self.history(
+            limit=limit,
+            before=before,
+            after=after,
+            oldest_first=oldest_first,
+            around=around,
+        )
         ret: List[Message] = []
         count = 0
 
-        minimum_time = int((time.time() - 14 * 24 * 60 * 60) * 1000.0 - 1420070400000) << 22
+        minimum_time = (
+            int((time.time() - 14 * 24 * 60 * 60) * 1000.0 - 1420070400000) << 22
+        )
 
         async def _single_delete_strategy(messages: Iterable[Message]):
             for m in messages:
@@ -573,17 +585,17 @@ class Thread(Messageable, Hashable):
         """
         payload = {}
         if name is not MISSING:
-            payload['name'] = str(name)
+            payload["name"] = str(name)
         if archived is not MISSING:
-            payload['archived'] = archived
+            payload["archived"] = archived
         if auto_archive_duration is not MISSING:
-            payload['auto_archive_duration'] = auto_archive_duration
+            payload["auto_archive_duration"] = auto_archive_duration
         if locked is not MISSING:
-            payload['locked'] = locked
+            payload["locked"] = locked
         if invitable is not MISSING:
-            payload['invitable'] = invitable
+            payload["invitable"] = invitable
         if slowmode_delay is not MISSING:
-            payload['rate_limit_per_user'] = slowmode_delay
+            payload["rate_limit_per_user"] = slowmode_delay
 
         data = await self._state.http.edit_channel(self.id, **payload)
         # The data payload will always be a Thread payload
@@ -765,12 +777,12 @@ class ThreadMember(Hashable):
     """
 
     __slots__ = (
-        'id',
-        'thread_id',
-        'joined_at',
-        'flags',
-        '_state',
-        'parent',
+        "id",
+        "thread_id",
+        "joined_at",
+        "flags",
+        "_state",
+        "parent",
     )
 
     def __init__(self, parent: Thread, data: ThreadMemberPayload):
@@ -779,22 +791,22 @@ class ThreadMember(Hashable):
         self._from_data(data)
 
     def __repr__(self) -> str:
-        return f'<ThreadMember id={self.id} thread_id={self.thread_id} joined_at={self.joined_at!r}>'
+        return f"<ThreadMember id={self.id} thread_id={self.thread_id} joined_at={self.joined_at!r}>"
 
     def _from_data(self, data: ThreadMemberPayload):
         try:
-            self.id = int(data['user_id'])
+            self.id = int(data["user_id"])
         except KeyError:
             assert self._state.self_id is not None
             self.id = self._state.self_id
 
         try:
-            self.thread_id = int(data['id'])
+            self.thread_id = int(data["id"])
         except KeyError:
             self.thread_id = self.parent.id
 
-        self.joined_at = parse_time(data['join_timestamp'])
-        self.flags = data['flags']
+        self.joined_at = parse_time(data["join_timestamp"])
+        self.flags = data["flags"]
 
     @property
     def thread(self) -> Thread:

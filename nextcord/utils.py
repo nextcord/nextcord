@@ -72,18 +72,18 @@ else:
 
 
 __all__ = (
-    'oauth_url',
-    'snowflake_time',
-    'time_snowflake',
-    'find',
-    'get',
-    'sleep_until',
-    'utcnow',
-    'remove_markdown',
-    'escape_markdown',
-    'escape_mentions',
-    'as_chunks',
-    'format_dt',
+    "oauth_url",
+    "snowflake_time",
+    "time_snowflake",
+    "find",
+    "get",
+    "sleep_until",
+    "utcnow",
+    "remove_markdown",
+    "escape_markdown",
+    "escape_mentions",
+    "as_chunks",
+    "format_dt",
 )
 
 DISCORD_EPOCH = 1420070400000
@@ -97,7 +97,7 @@ class _MissingSentinel:
         return False
 
     def __repr__(self):
-        return '...'
+        return "..."
 
 
 MISSING: Any = _MissingSentinel()
@@ -106,7 +106,7 @@ MISSING: Any = _MissingSentinel()
 class _cached_property:
     def __init__(self, function):
         self.function = function
-        self.__doc__ = getattr(function, '__doc__')
+        self.__doc__ = getattr(function, "__doc__")
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -131,15 +131,14 @@ if TYPE_CHECKING:
     class _RequestLike(Protocol):
         headers: Mapping[str, Any]
 
-
-    P = ParamSpec('P')
+    P = ParamSpec("P")
 
 else:
     cached_property = _cached_property
 
 
-T = TypeVar('T')
-T_co = TypeVar('T_co', covariant=True)
+T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
 _Iter = Union[Iterator[T], AsyncIterator[T]]
 
 
@@ -147,7 +146,7 @@ class CachedSlotProperty(Generic[T, T_co]):
     def __init__(self, name: str, function: Callable[[T], T_co]) -> None:
         self.name = name
         self.function = function
-        self.__doc__ = getattr(function, '__doc__')
+        self.__doc__ = getattr(function, "__doc__")
 
     @overload
     def __get__(self, instance: None, owner: Type[T]) -> CachedSlotProperty[T, T_co]:
@@ -177,10 +176,12 @@ class classproperty(Generic[T_co]):
         return self.fget(owner)
 
     def __set__(self, instance, value) -> None:
-        raise AttributeError('cannot set attribute')
+        raise AttributeError("cannot set attribute")
 
 
-def cached_slot_property(name: str) -> Callable[[Callable[[T], T_co]], CachedSlotProperty[T, T_co]]:
+def cached_slot_property(
+    name: str,
+) -> Callable[[Callable[[T], T_co]], CachedSlotProperty[T, T_co]]:
     def decorator(func: Callable[[T], T_co]) -> CachedSlotProperty[T, T_co]:
         return CachedSlotProperty(name, func)
 
@@ -245,18 +246,22 @@ def copy_doc(original: Callable) -> Callable[[T], T]:
     return decorator
 
 
-def deprecated(instead: Optional[str] = None) -> Callable[[Callable[[P], T]], Callable[[P], T]]:
+def deprecated(
+    instead: Optional[str] = None,
+) -> Callable[[Callable[[P], T]], Callable[[P], T]]:
     def actual_decorator(func: Callable[[P], T]) -> Callable[[P], T]:
         @functools.wraps(func)
         def decorated(*args: P.args, **kwargs: P.kwargs) -> T:
-            warnings.simplefilter('always', DeprecationWarning)  # turn off filter
+            warnings.simplefilter("always", DeprecationWarning)  # turn off filter
             if instead:
                 fmt = "{0.__name__} is deprecated, use {1} instead."
             else:
-                fmt = '{0.__name__} is deprecated.'
+                fmt = "{0.__name__} is deprecated."
 
-            warnings.warn(fmt.format(func, instead), stacklevel=3, category=DeprecationWarning)
-            warnings.simplefilter('default', DeprecationWarning)  # reset filter
+            warnings.warn(
+                fmt.format(func, instead), stacklevel=3, category=DeprecationWarning
+            )
+            warnings.simplefilter("default", DeprecationWarning)  # reset filter
             return func(*args, **kwargs)
 
         return decorated
@@ -301,18 +306,18 @@ def oauth_url(
     :class:`str`
         The OAuth2 URL for inviting the bot into guilds.
     """
-    url = f'https://discord.com/oauth2/authorize?client_id={client_id}'
-    url += '&scope=' + '+'.join(scopes or ('bot',))
+    url = f"https://discord.com/oauth2/authorize?client_id={client_id}"
+    url += "&scope=" + "+".join(scopes or ("bot",))
     if permissions is not MISSING:
-        url += f'&permissions={permissions.value}'
+        url += f"&permissions={permissions.value}"
     if guild is not MISSING:
-        url += f'&guild_id={guild.id}'
+        url += f"&guild_id={guild.id}"
     if redirect_uri is not MISSING:
         from urllib.parse import urlencode
 
-        url += '&response_type=code&' + urlencode({'redirect_uri': redirect_uri})
+        url += "&response_type=code&" + urlencode({"redirect_uri": redirect_uri})
     if disable_guild_select:
-        url += '&disable_guild_select=true'
+        url += "&disable_guild_select=true"
     return url
 
 
@@ -435,13 +440,15 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     # Special case the single element call
     if len(attrs) == 1:
         k, v = attrs.popitem()
-        pred = attrget(k.replace('__', '.'))
+        pred = attrget(k.replace("__", "."))
         for elem in iterable:
             if pred(elem) == v:
                 return elem
         return None
 
-    converted = [(attrget(attr.replace('__', '.')), value) for attr, value in attrs.items()]
+    converted = [
+        (attrget(attr.replace("__", ".")), value) for attr, value in attrs.items()
+    ]
 
     for elem in iterable:
         if _all(pred(elem) == value for pred, value in converted):
@@ -463,46 +470,48 @@ def _get_as_snowflake(data: Any, key: str) -> Optional[int]:
 
 
 def _get_mime_type_for_image(data: bytes):
-    if data.startswith(b'\x89\x50\x4E\x47\x0D\x0A\x1A\x0A'):
-        return 'image/png'
-    elif data[0:3] == b'\xff\xd8\xff' or data[6:10] in (b'JFIF', b'Exif'):
-        return 'image/jpeg'
-    elif data.startswith((b'\x47\x49\x46\x38\x37\x61', b'\x47\x49\x46\x38\x39\x61')):
-        return 'image/gif'
-    elif data.startswith(b'RIFF') and data[8:12] == b'WEBP':
-        return 'image/webp'
+    if data.startswith(b"\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"):
+        return "image/png"
+    elif data[0:3] == b"\xff\xd8\xff" or data[6:10] in (b"JFIF", b"Exif"):
+        return "image/jpeg"
+    elif data.startswith((b"\x47\x49\x46\x38\x37\x61", b"\x47\x49\x46\x38\x39\x61")):
+        return "image/gif"
+    elif data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+        return "image/webp"
     else:
-        raise InvalidArgument('Unsupported image type given')
+        raise InvalidArgument("Unsupported image type given")
 
 
 def _bytes_to_base64_data(data: bytes) -> str:
-    fmt = 'data:{mime};base64,{data}'
+    fmt = "data:{mime};base64,{data}"
     mime = _get_mime_type_for_image(data)
-    b64 = b64encode(data).decode('ascii')
+    b64 = b64encode(data).decode("ascii")
     return fmt.format(mime=mime, data=b64)
 
 
 if HAS_ORJSON:
 
     def _to_json(obj: Any) -> str:  # type: ignore
-        return orjson.dumps(obj).decode('utf-8')
+        return orjson.dumps(obj).decode("utf-8")
 
     _from_json = orjson.loads  # type: ignore
 
 else:
 
     def _to_json(obj: Any) -> str:
-        return json.dumps(obj, separators=(',', ':'), ensure_ascii=True)
+        return json.dumps(obj, separators=(",", ":"), ensure_ascii=True)
 
     _from_json = json.loads
 
 
 def _parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
-    reset_after: Optional[str] = request.headers.get('X-Ratelimit-Reset-After')
+    reset_after: Optional[str] = request.headers.get("X-Ratelimit-Reset-After")
     if use_clock or not reset_after:
         utc = datetime.timezone.utc
         now = datetime.datetime.now(utc)
-        reset = datetime.datetime.fromtimestamp(float(request.headers['X-Ratelimit-Reset']), utc)
+        reset = datetime.datetime.fromtimestamp(
+            float(request.headers["X-Ratelimit-Reset"]), utc
+        )
         return (reset - now).total_seconds()
     else:
         return float(reset_after)
@@ -527,7 +536,9 @@ async def async_all(gen, *, check=_isawaitable):
 
 async def sane_wait_for(futures, *, timeout):
     ensured = [asyncio.ensure_future(fut) for fut in futures]
-    done, pending = await asyncio.wait(ensured, timeout=timeout, return_when=asyncio.ALL_COMPLETED)
+    done, pending = await asyncio.wait(
+        ensured, timeout=timeout, return_when=asyncio.ALL_COMPLETED
+    )
 
     if len(pending) != 0:
         raise asyncio.TimeoutError()
@@ -550,7 +561,9 @@ def compute_timedelta(dt: datetime.datetime):
     return max((dt - now).total_seconds(), 0)
 
 
-async def sleep_until(when: datetime.datetime, result: Optional[T] = None) -> Optional[T]:
+async def sleep_until(
+    when: datetime.datetime, result: Optional[T] = None
+) -> Optional[T]:
     """|coro|
 
     Sleep until a specified time.
@@ -612,7 +625,7 @@ class SnowflakeList(array.array):
             ...
 
     def __new__(cls, data: Iterable[int], *, is_sorted: bool = False):
-        return array.array.__new__(cls, 'Q', data if is_sorted else sorted(data))  # type: ignore
+        return array.array.__new__(cls, "Q", data if is_sorted else sorted(data))  # type: ignore
 
     def add(self, element: int) -> None:
         i = bisect_left(self, element)
@@ -627,7 +640,7 @@ class SnowflakeList(array.array):
         return i != len(self) and self[i] == element
 
 
-_IS_ASCII = re.compile(r'^[\x00-\x7f]+$')
+_IS_ASCII = re.compile(r"^[\x00-\x7f]+$")
 
 
 def _string_width(string: str, *, _IS_ASCII=_IS_ASCII) -> int:
@@ -636,7 +649,7 @@ def _string_width(string: str, *, _IS_ASCII=_IS_ASCII) -> int:
     if match:
         return match.endpos
 
-    UNICODE_WIDE_CHAR_TYPE = 'WFA'
+    UNICODE_WIDE_CHAR_TYPE = "WFA"
     func = unicodedata.east_asian_width
     return sum(2 if func(char) in UNICODE_WIDE_CHAR_TYPE else 1 for char in string)
 
@@ -660,7 +673,7 @@ def resolve_invite(invite: Union[Invite, str]) -> str:
     if isinstance(invite, Invite):
         return invite.code
     else:
-        rx = r'(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)'
+        rx = r"(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)"
         m = re.match(rx, invite)
         if m:
             return m.group(1)
@@ -688,22 +701,27 @@ def resolve_template(code: Union[Template, str]) -> str:
     if isinstance(code, Template):
         return code.code
     else:
-        rx = r'(?:https?\:\/\/)?discord(?:\.new|(?:app)?\.com\/template)\/(.+)'
+        rx = r"(?:https?\:\/\/)?discord(?:\.new|(?:app)?\.com\/template)\/(.+)"
         m = re.match(rx, code)
         if m:
             return m.group(1)
     return code
 
 
-_MARKDOWN_ESCAPE_SUBREGEX = '|'.join(r'\{0}(?=([\s\S]*((?<!\{0})\{0})))'.format(c) for c in ('*', '`', '_', '~', '|'))
+_MARKDOWN_ESCAPE_SUBREGEX = "|".join(
+    r"\{0}(?=([\s\S]*((?<!\{0})\{0})))".format(c) for c in ("*", "`", "_", "~", "|")
+)
 
-_MARKDOWN_ESCAPE_COMMON = r'^>(?:>>)?\s|\[.+\]\(.+\)'
+_MARKDOWN_ESCAPE_COMMON = r"^>(?:>>)?\s|\[.+\]\(.+\)"
 
-_MARKDOWN_ESCAPE_REGEX = re.compile(fr'(?P<markdown>{_MARKDOWN_ESCAPE_SUBREGEX}|{_MARKDOWN_ESCAPE_COMMON})', re.MULTILINE)
+_MARKDOWN_ESCAPE_REGEX = re.compile(
+    fr"(?P<markdown>{_MARKDOWN_ESCAPE_SUBREGEX}|{_MARKDOWN_ESCAPE_COMMON})",
+    re.MULTILINE,
+)
 
-_URL_REGEX = r'(?P<url><[^: >]+:\/[^ >]+>|(?:https?|steam):\/\/[^\s<]+[^<.,:;\"\'\]\s])'
+_URL_REGEX = r"(?P<url><[^: >]+:\/[^ >]+>|(?:https?|steam):\/\/[^\s<]+[^<.,:;\"\'\]\s])"
 
-_MARKDOWN_STOCK_REGEX = fr'(?P<markdown>[_\\~|\*`]|{_MARKDOWN_ESCAPE_COMMON})'
+_MARKDOWN_STOCK_REGEX = fr"(?P<markdown>[_\\~|\*`]|{_MARKDOWN_ESCAPE_COMMON})"
 
 
 def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
@@ -732,15 +750,17 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
 
     def replacement(match):
         groupdict = match.groupdict()
-        return groupdict.get('url', '')
+        return groupdict.get("url", "")
 
     regex = _MARKDOWN_STOCK_REGEX
     if ignore_links:
-        regex = f'(?:{_URL_REGEX}|{regex})'
+        regex = f"(?:{_URL_REGEX}|{regex})"
     return re.sub(regex, replacement, text, 0, re.MULTILINE)
 
 
-def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = True) -> str:
+def escape_markdown(
+    text: str, *, as_needed: bool = False, ignore_links: bool = True
+) -> str:
     r"""A helper function that escapes Discord's markdown.
 
     Parameters
@@ -769,18 +789,18 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
 
         def replacement(match):
             groupdict = match.groupdict()
-            is_url = groupdict.get('url')
+            is_url = groupdict.get("url")
             if is_url:
                 return is_url
-            return '\\' + groupdict['markdown']
+            return "\\" + groupdict["markdown"]
 
         regex = _MARKDOWN_STOCK_REGEX
         if ignore_links:
-            regex = f'(?:{_URL_REGEX}|{regex})'
+            regex = f"(?:{_URL_REGEX}|{regex})"
         return re.sub(regex, replacement, text, 0, re.MULTILINE)
     else:
-        text = re.sub(r'\\', r'\\\\', text)
-        return _MARKDOWN_ESCAPE_REGEX.sub(r'\\\1', text)
+        text = re.sub(r"\\", r"\\\\", text)
+        return _MARKDOWN_ESCAPE_REGEX.sub(r"\\\1", text)
 
 
 def escape_mentions(text: str) -> str:
@@ -806,7 +826,7 @@ def escape_mentions(text: str) -> str:
     :class:`str`
         The text with the mentions removed.
     """
-    return re.sub(r'@(everyone|here|[!&]?[0-9]{17,20})', '@\u200b\\1', text)
+    return re.sub(r"@(everyone|here|[!&]?[0-9]{17,20})", "@\u200b\\1", text)
 
 
 def _chunk(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]:
@@ -870,7 +890,7 @@ def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
         A new iterator which yields chunks of a given size.
     """
     if max_size <= 0:
-        raise ValueError('Chunk sizes must be greater than 0.')
+        raise ValueError("Chunk sizes must be greater than 0.")
 
     if isinstance(iterator, AsyncIterator):
         return _achunk(iterator, max_size)
@@ -916,11 +936,11 @@ def evaluate_annotation(
         cache[tp] = evaluated
         return evaluate_annotation(evaluated, globals, locals, cache)
 
-    if hasattr(tp, '__args__'):
+    if hasattr(tp, "__args__"):
         implicit_str = True
         is_literal = False
         args = tp.__args__
-        if not hasattr(tp, '__origin__'):
+        if not hasattr(tp, "__origin__"):
             if PY_310 and tp.__class__ is types.UnionType:  # type: ignore
                 converted = Union[args]  # type: ignore
                 return evaluate_annotation(converted, globals, locals, cache)
@@ -938,10 +958,17 @@ def evaluate_annotation(
             implicit_str = False
             is_literal = True
 
-        evaluated_args = tuple(evaluate_annotation(arg, globals, locals, cache, implicit_str=implicit_str) for arg in args)
+        evaluated_args = tuple(
+            evaluate_annotation(arg, globals, locals, cache, implicit_str=implicit_str)
+            for arg in args
+        )
 
-        if is_literal and not all(isinstance(x, (str, int, bool, type(None))) for x in evaluated_args):
-            raise TypeError('Literal arguments must be of type str, int, bool, or NoneType.')
+        if is_literal and not all(
+            isinstance(x, (str, int, bool, type(None))) for x in evaluated_args
+        ):
+            raise TypeError(
+                "Literal arguments must be of type str, int, bool, or NoneType."
+            )
 
         if evaluated_args == args:
             return tp
@@ -971,7 +998,7 @@ def resolve_annotation(
     return evaluate_annotation(annotation, globalns, locals, cache)
 
 
-TimestampStyle = Literal['f', 'F', 'd', 'D', 't', 'T', 'R']
+TimestampStyle = Literal["f", "F", "d", "D", "t", "T", "R"]
 
 
 def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) -> str:
@@ -1015,5 +1042,5 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
         The formatted string.
     """
     if style is None:
-        return f'<t:{int(dt.timestamp())}>'
-    return f'<t:{int(dt.timestamp())}:{style}>'
+        return f"<t:{int(dt.timestamp())}>"
+    return f"<t:{int(dt.timestamp())}:{style}>"

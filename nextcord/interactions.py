@@ -41,9 +41,9 @@ from .permissions import Permissions
 from .webhook.async_ import async_context, Webhook, handle_message_parameters
 
 __all__ = (
-    'Interaction',
-    'InteractionMessage',
-    'InteractionResponse',
+    "Interaction",
+    "InteractionMessage",
+    "InteractionResponse",
 )
 
 if TYPE_CHECKING:
@@ -58,11 +58,24 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from .embeds import Embed
     from .ui.view import View
-    from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
+    from .channel import (
+        VoiceChannel,
+        StageChannel,
+        TextChannel,
+        CategoryChannel,
+        StoreChannel,
+        PartialMessageable,
+    )
     from .threads import Thread
 
     InteractionChannel = Union[
-        VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
+        VoiceChannel,
+        StageChannel,
+        TextChannel,
+        CategoryChannel,
+        StoreChannel,
+        Thread,
+        PartialMessageable,
     ]
 
 MISSING: Any = utils.MISSING
@@ -100,23 +113,23 @@ class Interaction:
     """
 
     __slots__: Tuple[str, ...] = (
-        'id',
-        'type',
-        'guild_id',
-        'channel_id',
-        'data',
-        'application_id',
-        'message',
-        'user',
-        'token',
-        'version',
-        '_permissions',
-        '_state',
-        '_session',
-        '_original_message',
-        '_cs_response',
-        '_cs_followup',
-        '_cs_channel',
+        "id",
+        "type",
+        "guild_id",
+        "channel_id",
+        "data",
+        "application_id",
+        "message",
+        "user",
+        "token",
+        "version",
+        "_permissions",
+        "_state",
+        "_session",
+        "_original_message",
+        "_cs_response",
+        "_cs_followup",
+        "_cs_channel",
     )
 
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
@@ -126,18 +139,18 @@ class Interaction:
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
-        self.id: int = int(data['id'])
-        self.type: InteractionType = try_enum(InteractionType, data['type'])
-        self.data: Optional[InteractionData] = data.get('data')
-        self.token: str = data['token']
-        self.version: int = data['version']
-        self.channel_id: Optional[int] = utils._get_as_snowflake(data, 'channel_id')
-        self.guild_id: Optional[int] = utils._get_as_snowflake(data, 'guild_id')
-        self.application_id: int = int(data['application_id'])
+        self.id: int = int(data["id"])
+        self.type: InteractionType = try_enum(InteractionType, data["type"])
+        self.data: Optional[InteractionData] = data.get("data")
+        self.token: str = data["token"]
+        self.version: int = data["version"]
+        self.channel_id: Optional[int] = utils._get_as_snowflake(data, "channel_id")
+        self.guild_id: Optional[int] = utils._get_as_snowflake(data, "guild_id")
+        self.application_id: int = int(data["application_id"])
 
         self.message: Optional[Message]
         try:
-            self.message = Message(state=self._state, channel=self.channel, data=data['message'])  # type: ignore
+            self.message = Message(state=self._state, channel=self.channel, data=data["message"])  # type: ignore
         except KeyError:
             self.message = None
 
@@ -148,15 +161,15 @@ class Interaction:
         if self.guild_id:
             guild = self.guild or Object(id=self.guild_id)
             try:
-                member = data['member']  # type: ignore
+                member = data["member"]  # type: ignore
             except KeyError:
                 pass
             else:
                 self.user = Member(state=self._state, guild=guild, data=member)  # type: ignore
-                self._permissions = int(member.get('permissions', 0))
+                self._permissions = int(member.get("permissions", 0))
         else:
             try:
-                self.user = User(state=self._state, data=data['user'])
+                self.user = User(state=self._state, data=data["user"])
             except KeyError:
                 pass
 
@@ -165,7 +178,7 @@ class Interaction:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state and self._state._get_guild(self.guild_id)
 
-    @utils.cached_slot_property('_cs_channel')
+    @utils.cached_slot_property("_cs_channel")
     def channel(self) -> Optional[InteractionChannel]:
         """Optional[Union[:class:`abc.GuildChannel`, :class:`PartialMessageable`, :class:`Thread`]]: The channel the interaction was sent from.
 
@@ -176,8 +189,14 @@ class Interaction:
         channel = guild and guild._resolve_channel(self.channel_id)
         if channel is None:
             if self.channel_id is not None:
-                type = ChannelType.text if self.guild_id is not None else ChannelType.private
-                return PartialMessageable(state=self._state, id=self.channel_id, type=type)
+                type = (
+                    ChannelType.text
+                    if self.guild_id is not None
+                    else ChannelType.private
+                )
+                return PartialMessageable(
+                    state=self._state, id=self.channel_id, type=type
+                )
             return None
         return channel
 
@@ -189,7 +208,7 @@ class Interaction:
         """
         return Permissions(self._permissions)
 
-    @utils.cached_slot_property('_cs_response')
+    @utils.cached_slot_property("_cs_response")
     def response(self) -> InteractionResponse:
         """:class:`InteractionResponse`: Returns an object responsible for handling responding to the interaction.
 
@@ -198,13 +217,13 @@ class Interaction:
         """
         return InteractionResponse(self)
 
-    @utils.cached_slot_property('_cs_followup')
+    @utils.cached_slot_property("_cs_followup")
     def followup(self) -> Webhook:
         """:class:`Webhook`: Returns the follow up webhook for follow up interactions."""
         payload = {
-            'id': self.application_id,
-            'type': 3,
-            'token': self.token,
+            "id": self.application_id,
+            "type": 3,
+            "token": self.token,
         }
         return Webhook.from_state(data=payload, state=self._state)
 
@@ -238,7 +257,7 @@ class Interaction:
         # TODO: fix later to not raise?
         channel = self.channel
         if channel is None:
-            raise ClientException('Channel for message could not be resolved')
+            raise ClientException("Channel for message could not be resolved")
 
         adapter = async_context.get()
         data = await adapter.get_original_interaction_response(
@@ -369,8 +388,8 @@ class InteractionResponse:
     """
 
     __slots__: Tuple[str, ...] = (
-        '_responded',
-        '_parent',
+        "_responded",
+        "_parent",
     )
 
     def __init__(self, parent: Interaction):
@@ -416,12 +435,16 @@ class InteractionResponse:
         elif parent.type is InteractionType.application_command:
             defer_type = InteractionResponseType.deferred_channel_message.value
             if ephemeral:
-                data = {'flags': 64}
+                data = {"flags": 64}
 
         if defer_type:
             adapter = async_context.get()
             await adapter.create_interaction_response(
-                parent.id, parent.token, session=parent._session, type=defer_type, data=data
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=defer_type,
+                data=data,
             )
             self._responded = True
 
@@ -446,7 +469,10 @@ class InteractionResponse:
         if parent.type is InteractionType.ping:
             adapter = async_context.get()
             await adapter.create_interaction_response(
-                parent.id, parent.token, session=parent._session, type=InteractionResponseType.pong.value
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=InteractionResponseType.pong.value,
             )
             self._responded = True
 
@@ -498,28 +524,28 @@ class InteractionResponse:
             raise InteractionResponded(self._parent)
 
         payload: Dict[str, Any] = {
-            'tts': tts,
+            "tts": tts,
         }
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('cannot mix embed and embeds keyword arguments')
+            raise TypeError("cannot mix embed and embeds keyword arguments")
 
         if embed is not MISSING:
             embeds = [embed]
 
         if embeds:
             if len(embeds) > 10:
-                raise ValueError('embeds cannot exceed maximum of 10 elements')
-            payload['embeds'] = [e.to_dict() for e in embeds]
+                raise ValueError("embeds cannot exceed maximum of 10 elements")
+            payload["embeds"] = [e.to_dict() for e in embeds]
 
         if content is not None:
-            payload['content'] = str(content)
+            payload["content"] = str(content)
 
         if ephemeral:
-            payload['flags'] = 64
+            payload["flags"] = 64
 
         if view is not MISSING:
-            payload['components'] = view.to_components()
+            payload["components"] = view.to_components()
 
         parent = self._parent
         adapter = async_context.get()
@@ -591,12 +617,12 @@ class InteractionResponse:
         payload = {}
         if content is not MISSING:
             if content is None:
-                payload['content'] = None
+                payload["content"] = None
             else:
-                payload['content'] = str(content)
+                payload["content"] = str(content)
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('cannot mix both embed and embeds keyword arguments')
+            raise TypeError("cannot mix both embed and embeds keyword arguments")
 
         if embed is not MISSING:
             if embed is None:
@@ -605,17 +631,17 @@ class InteractionResponse:
                 embeds = [embed]
 
         if embeds is not MISSING:
-            payload['embeds'] = [e.to_dict() for e in embeds]
+            payload["embeds"] = [e.to_dict() for e in embeds]
 
         if attachments is not MISSING:
-            payload['attachments'] = [a.to_dict() for a in attachments]
+            payload["attachments"] = [a.to_dict() for a in attachments]
 
         if view is not MISSING:
             state.prevent_view_updates_for(message_id)
             if view is None:
-                payload['components'] = []
+                payload["components"] = []
             else:
-                payload['components'] = view.to_components()
+                payload["components"] = view.to_components()
 
         adapter = async_context.get()
         await adapter.create_interaction_response(
@@ -633,7 +659,7 @@ class InteractionResponse:
 
 
 class _InteractionMessageState:
-    __slots__ = ('_parent', '_interaction')
+    __slots__ = ("_parent", "_interaction")
 
     def __init__(self, interaction: Interaction, parent: ConnectionState):
         self._interaction: Interaction = interaction

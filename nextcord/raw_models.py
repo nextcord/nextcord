@@ -36,7 +36,7 @@ if TYPE_CHECKING:
         ReactionClearEvent,
         ReactionClearEmojiEvent,
         IntegrationDeleteEvent,
-        TypingEvent
+        TypingEvent,
     )
     from .message import Message
     from .partial_emoji import PartialEmoji
@@ -44,21 +44,21 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    'RawMessageDeleteEvent',
-    'RawBulkMessageDeleteEvent',
-    'RawMessageUpdateEvent',
-    'RawReactionActionEvent',
-    'RawReactionClearEvent',
-    'RawReactionClearEmojiEvent',
-    'RawIntegrationDeleteEvent',
-    'RawTypingEvent',
+    "RawMessageDeleteEvent",
+    "RawBulkMessageDeleteEvent",
+    "RawMessageUpdateEvent",
+    "RawReactionActionEvent",
+    "RawReactionClearEvent",
+    "RawReactionClearEmojiEvent",
+    "RawIntegrationDeleteEvent",
+    "RawTypingEvent",
 )
 
 
 class _RawReprMixin:
     def __repr__(self) -> str:
-        value = ' '.join(f'{attr}={getattr(self, attr)!r}' for attr in self.__slots__)
-        return f'<{self.__class__.__name__} {value}>'
+        value = " ".join(f"{attr}={getattr(self, attr)!r}" for attr in self.__slots__)
+        return f"<{self.__class__.__name__} {value}>"
 
 
 class RawMessageDeleteEvent(_RawReprMixin):
@@ -76,14 +76,14 @@ class RawMessageDeleteEvent(_RawReprMixin):
         The cached message, if found in the internal message cache.
     """
 
-    __slots__ = ('message_id', 'channel_id', 'guild_id', 'cached_message')
+    __slots__ = ("message_id", "channel_id", "guild_id", "cached_message")
 
     def __init__(self, data: MessageDeleteEvent) -> None:
-        self.message_id: int = int(data['id'])
-        self.channel_id: int = int(data['channel_id'])
+        self.message_id: int = int(data["id"])
+        self.channel_id: int = int(data["channel_id"])
         self.cached_message: Optional[Message] = None
         try:
-            self.guild_id: Optional[int] = int(data['guild_id'])
+            self.guild_id: Optional[int] = int(data["guild_id"])
         except KeyError:
             self.guild_id: Optional[int] = None
 
@@ -103,15 +103,15 @@ class RawBulkMessageDeleteEvent(_RawReprMixin):
         The cached messages, if found in the internal message cache.
     """
 
-    __slots__ = ('message_ids', 'channel_id', 'guild_id', 'cached_messages')
+    __slots__ = ("message_ids", "channel_id", "guild_id", "cached_messages")
 
     def __init__(self, data: BulkMessageDeleteEvent) -> None:
-        self.message_ids: Set[int] = {int(x) for x in data.get('ids', [])}
-        self.channel_id: int = int(data['channel_id'])
+        self.message_ids: Set[int] = {int(x) for x in data.get("ids", [])}
+        self.channel_id: int = int(data["channel_id"])
         self.cached_messages: List[Message] = []
 
         try:
-            self.guild_id: Optional[int] = int(data['guild_id'])
+            self.guild_id: Optional[int] = int(data["guild_id"])
         except KeyError:
             self.guild_id: Optional[int] = None
 
@@ -139,16 +139,16 @@ class RawMessageUpdateEvent(_RawReprMixin):
         it is modified by the data in :attr:`RawMessageUpdateEvent.data`.
     """
 
-    __slots__ = ('message_id', 'channel_id', 'guild_id', 'data', 'cached_message')
+    __slots__ = ("message_id", "channel_id", "guild_id", "data", "cached_message")
 
     def __init__(self, data: MessageUpdateEvent) -> None:
-        self.message_id: int = int(data['id'])
-        self.channel_id: int = int(data['channel_id'])
+        self.message_id: int = int(data["id"])
+        self.channel_id: int = int(data["channel_id"])
         self.data: MessageUpdateEvent = data
         self.cached_message: Optional[Message] = None
 
         try:
-            self.guild_id: Optional[int] = int(data['guild_id'])
+            self.guild_id: Optional[int] = int(data["guild_id"])
         except KeyError:
             self.guild_id: Optional[int] = None
 
@@ -182,19 +182,28 @@ class RawReactionActionEvent(_RawReprMixin):
         .. versionadded:: 1.3
     """
 
-    __slots__ = ('message_id', 'user_id', 'channel_id', 'guild_id', 'emoji',
-                 'event_type', 'member')
+    __slots__ = (
+        "message_id",
+        "user_id",
+        "channel_id",
+        "guild_id",
+        "emoji",
+        "event_type",
+        "member",
+    )
 
-    def __init__(self, data: ReactionActionEvent, emoji: PartialEmoji, event_type: str) -> None:
-        self.message_id: int = int(data['message_id'])
-        self.channel_id: int = int(data['channel_id'])
-        self.user_id: int = int(data['user_id'])
+    def __init__(
+        self, data: ReactionActionEvent, emoji: PartialEmoji, event_type: str
+    ) -> None:
+        self.message_id: int = int(data["message_id"])
+        self.channel_id: int = int(data["channel_id"])
+        self.user_id: int = int(data["user_id"])
         self.emoji: PartialEmoji = emoji
         self.event_type: str = event_type
         self.member: Optional[Member] = None
 
         try:
-            self.guild_id: Optional[int] = int(data['guild_id'])
+            self.guild_id: Optional[int] = int(data["guild_id"])
         except KeyError:
             self.guild_id: Optional[int] = None
 
@@ -212,14 +221,14 @@ class RawReactionClearEvent(_RawReprMixin):
         The guild ID where the reactions got cleared.
     """
 
-    __slots__ = ('message_id', 'channel_id', 'guild_id')
+    __slots__ = ("message_id", "channel_id", "guild_id")
 
     def __init__(self, data: ReactionClearEvent) -> None:
-        self.message_id: int = int(data['message_id'])
-        self.channel_id: int = int(data['channel_id'])
+        self.message_id: int = int(data["message_id"])
+        self.channel_id: int = int(data["channel_id"])
 
         try:
-            self.guild_id: Optional[int] = int(data['guild_id'])
+            self.guild_id: Optional[int] = int(data["guild_id"])
         except KeyError:
             self.guild_id: Optional[int] = None
 
@@ -241,15 +250,15 @@ class RawReactionClearEmojiEvent(_RawReprMixin):
         The custom or unicode emoji being removed.
     """
 
-    __slots__ = ('message_id', 'channel_id', 'guild_id', 'emoji')
+    __slots__ = ("message_id", "channel_id", "guild_id", "emoji")
 
     def __init__(self, data: ReactionClearEmojiEvent, emoji: PartialEmoji) -> None:
         self.emoji: PartialEmoji = emoji
-        self.message_id: int = int(data['message_id'])
-        self.channel_id: int = int(data['channel_id'])
+        self.message_id: int = int(data["message_id"])
+        self.channel_id: int = int(data["channel_id"])
 
         try:
-            self.guild_id: Optional[int] = int(data['guild_id'])
+            self.guild_id: Optional[int] = int(data["guild_id"])
         except KeyError:
             self.guild_id: Optional[int] = None
 
@@ -269,14 +278,14 @@ class RawIntegrationDeleteEvent(_RawReprMixin):
         The guild ID where the integration got deleted.
     """
 
-    __slots__ = ('integration_id', 'application_id', 'guild_id')
+    __slots__ = ("integration_id", "application_id", "guild_id")
 
     def __init__(self, data: IntegrationDeleteEvent) -> None:
-        self.integration_id: int = int(data['id'])
-        self.guild_id: int = int(data['guild_id'])
+        self.integration_id: int = int(data["id"])
+        self.guild_id: int = int(data["guild_id"])
 
         try:
-            self.application_id: Optional[int] = int(data['application_id'])
+            self.application_id: Optional[int] = int(data["application_id"])
         except KeyError:
             self.application_id: Optional[int] = None
 
@@ -285,7 +294,7 @@ class RawTypingEvent(_RawReprMixin):
     """Represents the payload for a :func:`on_raw_typing` event.
 
     .. versionadded:: 2.0
-    
+
     Attributes
     -----------
     channel_id: :class:`int`
@@ -303,12 +312,14 @@ class RawTypingEvent(_RawReprMixin):
     __slots__ = ("channel_id", "user_id", "when", "guild_id", "member")
 
     def __init__(self, data: TypingEvent) -> None:
-        self.channel_id: int = int(data['channel_id'])
-        self.user_id: int = int(data['user_id'])
-        self.when: datetime.datetime = datetime.datetime.fromtimestamp(data.get('timestamp'), tz=datetime.timezone.utc)
+        self.channel_id: int = int(data["channel_id"])
+        self.user_id: int = int(data["user_id"])
+        self.when: datetime.datetime = datetime.datetime.fromtimestamp(
+            data.get("timestamp"), tz=datetime.timezone.utc
+        )
         self.member: Optional[Member] = None
 
         try:
-            self.guild_id: Optional[int] = int(data['guild_id'])
+            self.guild_id: Optional[int] = int(data["guild_id"])
         except KeyError:
             self.guild_id: Optional[int] = None
