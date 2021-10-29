@@ -29,7 +29,7 @@ from .user import PartialUser
 from .snowflake import Snowflake
 
 
-StatusType = Literal['idle', 'dnd', 'online', 'offline']
+StatusType = Literal["idle", "dnd", "online", "offline"]
 
 
 class PartialPresenceUpdate(TypedDict):

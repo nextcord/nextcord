@@ -39,8 +39,8 @@ from ..components import (
 )
 
 __all__ = (
-    'Select',
-    'select',
+    "Select",
+    "select",
 )
 
 if TYPE_CHECKING:
@@ -50,8 +50,8 @@ if TYPE_CHECKING:
         ComponentInteractionData,
     )
 
-S = TypeVar('S', bound='Select')
-V = TypeVar('V', bound='View', covariant=True)
+S = TypeVar("S", bound="Select")
+V = TypeVar("V", bound="View", covariant=True)
 
 
 class Select(Item[V]):
@@ -89,11 +89,11 @@ class Select(Item[V]):
     """
 
     __item_repr_attributes__: Tuple[str, ...] = (
-        'placeholder',
-        'min_values',
-        'max_values',
-        'options',
-        'disabled',
+        "placeholder",
+        "min_values",
+        "max_values",
+        "options",
+        "disabled",
     )
 
     def __init__(
@@ -131,7 +131,7 @@ class Select(Item[V]):
     @custom_id.setter
     def custom_id(self, value: str):
         if not isinstance(value, str):
-            raise TypeError('custom_id must be None or str')
+            raise TypeError("custom_id must be None or str")
 
         self._underlying.custom_id = value
 
@@ -143,7 +143,7 @@ class Select(Item[V]):
     @placeholder.setter
     def placeholder(self, value: Optional[str]):
         if value is not None and not isinstance(value, str):
-            raise TypeError('placeholder must be None or str')
+            raise TypeError("placeholder must be None or str")
 
         self._underlying.placeholder = value
 
@@ -173,9 +173,9 @@ class Select(Item[V]):
     @options.setter
     def options(self, value: List[SelectOption]):
         if not isinstance(value, list):
-            raise TypeError('options must be a list of SelectOption')
+            raise TypeError("options must be a list of SelectOption")
         if not all(isinstance(obj, SelectOption) for obj in value):
-            raise TypeError('all list items must subclass SelectOption')
+            raise TypeError("all list items must subclass SelectOption")
 
         self._underlying.options = value
 
@@ -224,7 +224,6 @@ class Select(Item[V]):
             default=default,
         )
 
-
         self.append_option(option)
 
     def append_option(self, option: SelectOption):
@@ -242,7 +241,7 @@ class Select(Item[V]):
         """
 
         if len(self._underlying.options) > 25:
-            raise ValueError('maximum number of options already provided')
+            raise ValueError("maximum number of options already provided")
 
         self._underlying.options.append(option)
 
@@ -272,7 +271,7 @@ class Select(Item[V]):
 
     def refresh_state(self, interaction: Interaction) -> None:
         data: ComponentInteractionData = interaction.data  # type: ignore
-        self._selected_values = data.get('values', [])
+        self._selected_values = data.get("values", [])
 
     @classmethod
     def from_component(cls: Type[S], component: SelectMenu) -> S:
@@ -340,17 +339,17 @@ def select(
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
         if not inspect.iscoroutinefunction(func):
-            raise TypeError('select function must be a coroutine function')
+            raise TypeError("select function must be a coroutine function")
 
         func.__discord_ui_model_type__ = Select
         func.__discord_ui_model_kwargs__ = {
-            'placeholder': placeholder,
-            'custom_id': custom_id,
-            'row': row,
-            'min_values': min_values,
-            'max_values': max_values,
-            'options': options,
-            'disabled': disabled,
+            "placeholder": placeholder,
+            "custom_id": custom_id,
+            "row": row,
+            "min_values": min_values,
+            "max_values": max_values,
+            "options": options,
+            "disabled": disabled,
         }
         return func
 
