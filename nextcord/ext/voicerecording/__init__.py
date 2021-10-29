@@ -75,14 +75,21 @@ class FileSink(Sink):
         self.filters = filters
         FiltersMixin.__init__(self, **self.filters)
 
-        self.encoding = encoding
+        self.encoding: Encoder = encoding
         self.vc = None
         self.audio_data: typing.Dict[int, AudioData] = {}
         if tempfolder is MISSING:
             tempfolder = tempfile.gettempdir() + "/nextcord/voicerecs/pcmtemps"
-        tempfolder = os.path.abspath(tempfolder + "/" + hex(id(self)) + str(random.randint(-100000, 100000)))
-        self.file_path = tempfolder
-        os.makedirs(tempfolder, exist_ok=True)
+        tempfolder = os.path.abspath(tempfolder + "/" + hex(id(self)))
+        rint = str(random.randint(-100000, 100000))
+        maxcounter = 5
+        while os.path.exists(tempfolder+rint):
+            if maxcounter < 0:
+                raise FileExistsError("Unable to create a new tempdir. pls. consider cleaning them up")
+            maxcounter -= 1
+            rint = str(random.randint(-100000, 100000))
+        self.file_path = tempfolder+rint
+        os.makedirs(self.file_path, exist_ok=True)
 
     def init(self, vc):  # called under start_listening
         self.vc = vc

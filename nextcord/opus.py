@@ -25,20 +25,18 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-import gc
-import traceback
-from typing import List, Tuple, TypedDict, Any, TYPE_CHECKING, Callable, TypeVar, Literal, Optional, overload
-
 import array
+import asyncio
 import ctypes
 import ctypes.util
 import logging
 import math
-import threading
-import time
 import os.path
 import struct
 import sys
+import threading
+import time
+from typing import List, Tuple, TypedDict, Any, TYPE_CHECKING, Callable, TypeVar, Literal, Optional, overload
 
 from .errors import DiscordException, InvalidArgument
 from .sink import RawData
@@ -462,6 +460,12 @@ class Decoder(_OpusStruct):
         return array.array('h', pcm[:ret * channel_count]).tobytes()
 
 
+class Event_asyncio(asyncio.Event):
+    def set(self):
+        # Note: The _loop attribute is not documented as public api!
+        self._loop.call_soon_threadsafe(super().set)
+
+
 class DecodeManager(threading.Thread, _OpusStruct):
     def __init__(self, client):
         """A class handling decoding of a voice channel. 
@@ -473,9 +477,9 @@ class DecodeManager(threading.Thread, _OpusStruct):
         self.decode_queue = []
 
         self.decoder = {}
-        self._not_decoding_overwrite = False
 
         self._end_thread = threading.Event()
+        self._finished_decoding = Event_asyncio()
 
     def decode(self, opus_frame):
         if not isinstance(opus_frame, RawData):
@@ -495,20 +499,18 @@ class DecodeManager(threading.Thread, _OpusStruct):
                 else:
                     data.decoded_data = self.get_decoder(data.ssrc).decode(data.decrypted_data)
             except OpusError as e:
-                print("Error occurred decoding opus frame.")
-                traceback.print_tb(e)
+                _log.exception("Error occurred decoding opus frame.", exc_info=e)
                 continue
 
             self.client.recv_decoded_audio(data)
-        self._not_decoding_overwrite = True
-
-    def stop(self):
-        self._end_thread.set()
-        while self.decoding:
-            time.sleep(0.1)
+        self._finished_decoding.set()
         for i in self.decoder:
             del i
         self.decoder = {}
+
+    async def stop(self):
+        self._end_thread.set()
+        await self._finished_decoding.wait()
 
     def get_decoder(self, ssrc):
         d = self.decoder.get(ssrc)
@@ -520,7 +522,7 @@ class DecodeManager(threading.Thread, _OpusStruct):
 
     @property
     def decoding(self):
-        if self._not_decoding_overwrite:
+        if self._finished_decoding.is_set():
             return False
         return bool(self.decode_queue)
 

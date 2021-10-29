@@ -67,8 +67,9 @@ def generate_ffmpeg_encoder(type: Encodings) -> Encoder:
         new_file = audio.file.split('.')[0] + '.' + type.value
         args = ['ffmpeg', '-f', 's16le', '-ar', '48000', '-ac', '2', '-i', audio.file, new_file]
         if os.path.exists(new_file):
-            os.remove(
-                new_file)  # process will get stuck asking whether or not to overwrite, if file already exists.
+            raise FileExistsError(f"The file {new_file} already exists. Unable to convert to it. "
+                                  f"PCM file cna be found at {audio.file}")
+            # process will get stuck asking whether or not to overwrite, if file already exists.
         try:
             process = subprocess.Popen(args, creationflags=CREATE_NO_WINDOW)
         except FileNotFoundError:

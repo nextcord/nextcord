@@ -818,8 +818,8 @@ class VoiceClient(VoiceProtocol):
             raise ListeningException("Not currently listening audio.")
         if self.auto_self_deaf:
             await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
-        await asyncio.sleep(1)
-        self.decoder.stop()
+            await asyncio.sleep(1)
+        await self.decoder.stop()
         self.listening = False
         self.listening_paused = False
 
