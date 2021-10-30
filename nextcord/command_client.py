@@ -1,22 +1,21 @@
 from __future__ import annotations
 import asyncio
+import logging
+from inspect import signature, Parameter
+from typing import Dict, List, Optional, Union, Any, Callable, Tuple, Set
 
-from .interactions import Interaction
+from .role import Role
+from .user import User
 from .client import Client
-from .enums import ApplicationCommandOptionType as CommandOptionType
+from .member import Member
+from .message import Message
+from .abc import GuildChannel
+from .enums import ChannelType
+from .state import ConnectionState
+from .interactions import Interaction
 from .enums import ApplicationCommandType as CommandType
 from .application_command import ApplicationCommandResponse
-from inspect import signature, Parameter
-import logging
-
-from typing import Dict, List, Optional, Union, Type, Any, Callable, Tuple, Set
-from .user import User
-from .member import Member
-from .abc import GuildChannel
-from .role import Role
-from .state import ConnectionState
-from .enums import ChannelType
-from .message import Message
+from .enums import ApplicationCommandOptionType as CommandOptionType
 
 
 _log = logging.getLogger(__name__)
@@ -56,7 +55,7 @@ class SlashOption:
         required: Optional[:class:'bool']
             If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
         choices: Optional[:class:`bool`]
-            TODO: Explain this, preferably by actually testing it.
+            Dictionary of choices. The keys are what the user sees, the values correspond to what is sent to us.
         default: Optional[Any]
             When required is not True and the user doesn't provide a value for this Option, this value is given instead.
         channel_types: Optional[List[:class:`enums.ChannelType`]]
@@ -86,7 +85,7 @@ class CommandArgument(SlashOption):
         float: CommandOptionType.number,
         Message: CommandOptionType.integer,  # TODO: This is janky, the user provides an ID or something? Ugh.
     }
-    """Maps Python typings to Discord typings."""
+    """Maps Python typings to Discord Application Command typings."""
     def __init__(self, parameter: Parameter):
         """
 
@@ -105,7 +104,6 @@ class CommandArgument(SlashOption):
         if isinstance(parameter.default, SlashOption):
             cmd_arg = parameter.default
             cmd_arg_given = True
-        # print(f"CMD arg name: {cmd_arg.name}, Parameter name: {parameter.name}")
         self.functional_name = parameter.name
 
         # TODO: Cleanup logic for this.
@@ -165,13 +163,9 @@ class CommandArgument(SlashOption):
 
     @property
     def payload(self) -> dict:
-        # self.verify()
         # TODO: Figure out why pycharm is being a dingus about self.type.value being an unsolved attribute.
         # noinspection PyUnresolvedReferences
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
-        # ret["type"] = self.type.value
-        # ret["name"] = self.name
-        # ret["description"] = self.description
         if self.required is not None:
             ret["required"] = self.required
         if self.choices:
@@ -223,11 +217,8 @@ class ApplicationSubcommand:
             else:
                 self.type = CommandOptionType.sub_command
         if self.type is CommandType.user or self.type is CommandType.message:
-            # self.description = ""
             self.description = None
-            # print(f"ANALYZE CONTENT: Description: \"{self.description}\"")
         else:
-            # print(f"ANALYZE CONTENT: {self.type} {type(self.type)} {CommandType.user}")
             if not self.description:
                 self.description = " "
 
@@ -236,14 +227,11 @@ class ApplicationSubcommand:
             self.name = self._callback.__name__
         first_arg = True
 
-        # print(f"ANALYZE CALLBACK: Self Skip: {self_skip} {self.callback}")
         for value in signature(self.callback).parameters.values():
             self_skip = value.name == "self"  # TODO: What kind of hardcoding is this, figure out a better way for self!
             if first_arg:
                 # TODO: Is this even worth having?
-                # print(f"ANALYZE CALLBACK: First arg name is {value.name} {value.kind}")
                 if value.annotation is not value.empty and value.annotation is not Interaction:
-                    # print(f"ANALYZE CALLBACK: {value.name} - {value.annotation}")
                     raise TypeError("First argument in an Application Command should be an Interaction.")
                 if self_skip:
                     self_skip = False
@@ -327,7 +315,7 @@ class ApplicationSubcommand:
         await self.invoke_slash(interaction, **kwargs)
 
     async def invoke_slash(self, interaction: Interaction, **kwargs):
-        # Invokes the callback with the kwargs given.
+        """Invokes the callback with the kwargs given."""
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, **kwargs)
         else:
@@ -339,7 +327,6 @@ class ApplicationSubcommand:
 
     @property
     def payload(self) -> dict:
-        # noinspection PyUnresolvedReferences
         self._analyze_content()
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
         if self.required is not None:
@@ -373,9 +360,6 @@ class ApplicationCommand(ApplicationSubcommand):
         # Basic input checking.
         if guild_ids is None:
             guild_ids = []
-        # if not asyncio.iscoroutinefunction(callback):
-        #     raise TypeError("Callback must be a coroutine.")
-        # Hidden variable init.
         self._state: Optional[ConnectionState] = None  # TODO: I thought there was a way around doing this, but *sigh*.
         self._is_global: Optional[bool] = True if (guild_ids and force_global) or (not guild_ids) else False
         self._is_guild: Optional[bool] = True if guild_ids else False
@@ -387,11 +371,6 @@ class ApplicationCommand(ApplicationSubcommand):
         self._guild_ids: Dict[int, int] = {}  # Guild ID is key, command ID is value.
 
     def parse_response(self, response: ApplicationCommandResponse):
-        # self._state = response._state
-        # if response.guild_id:
-        #     self._guild_ids[response.guild_id] = response.id
-        # else:
-        #     self._global_id = response.id
         self.raw_parse_result(response._state, response.guild_id, response.id)
 
     def raw_parse_result(self, state: ConnectionState, guild_id: Optional[int], command_id):
@@ -459,7 +438,6 @@ class ApplicationCommand(ApplicationSubcommand):
             member = interaction.guild.get_member(int(interaction.data["target_id"]))
         else:
             member = state.get_user(int(interaction.data["target_id"]))
-        # member = interaction.guild.get_member(int(interaction.data["target_id"]))
         await self.invoke_user(interaction, member)
 
     async def invoke_message(self, interaction: Interaction, message: Message, **kwargs):
@@ -476,7 +454,6 @@ class ApplicationCommand(ApplicationSubcommand):
         else:
             await self.callback(interaction, member, **kwargs)
 
-
     def _get_basic_application_payload(self) -> dict:
         payload = super().payload
         if self.type is not CommandType.chat_input and "options" in payload:
@@ -485,29 +462,15 @@ class ApplicationCommand(ApplicationSubcommand):
             payload["default_permission"] = self.default_permission
         return payload
 
-
     @property
-    # def payload(self) -> Union[List[Dict[str, ...]], Dict[str, ...]]:
     def payload(self) -> List[dict]:
-        """
-
-        Returns
-        -------
-
-        """
         # TODO: This always returns a list, should it be "payloads"? Won't override subcommand payload though.
-        # partial_payload = super().payload
-        # if self.type is not CommandType.chat_input and "options" in partial_payload:
-        #     partial_payload.pop("options")
-        # if self.default_permission is not None:
-        #     partial_payload["default_permission"] = self.default_permission
         partial_payload = self._get_basic_application_payload()
 
-    #     if self.guild_ids:
         ret = []
         if self.is_guild:
             for guild_id in self.guild_ids:
-                temp = partial_payload.copy()  # This shouldn't need to be a deep copy, guild_id is on the top layer.
+                temp = partial_payload.copy()  # This shouldn't need to be a deep copy as guild_id is on the top layer.
                 temp["guild_id"] = guild_id
                 ret.append(temp)
         if self.is_global:
@@ -526,11 +489,6 @@ class ApplicationCommand(ApplicationSubcommand):
     def global_payload(self) -> dict:
         if not self.is_global:
             raise NotImplementedError  # TODO: Make a proper error.
-        # partial_payload = super().payload
-        # if self.type is not CommandType.chat_input and "options" in partial_payload:
-        #     partial_payload.pop("options")
-        # if self.default_permission is not None:
-        #     partial_payload["default_permission"] = self.default_permission
         return self._get_basic_application_payload()
 
     @property
@@ -560,9 +518,7 @@ class ApplicationCommand(ApplicationSubcommand):
         modded_payload = raw_payload.copy()
         modded_payload.pop("id")
         for our_payload in self.payload:
-            # if our_payload.get("guild_id", None) == raw_payload.get("guild_id", None):
             if our_payload.get("guild_id", None) == guild_id:
-                # print(f"nextcord.command_client: {our_payload.get('guild_id', None)} == {guild_id}")
                 if self._recursive_item_check(modded_payload, our_payload):
                     return True
         return False
@@ -570,15 +526,9 @@ class ApplicationCommand(ApplicationSubcommand):
     def check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int]) -> bool:
         our_payloads = self.payload
         for our_payload in our_payloads:
-            # if our_payload.get("guild_id", None) == (int(guild_id) if (guild_id := raw_payload.get("guild_id", None)) else guild_id):
             if our_payload.get("guild_id", None) == guild_id:
-                # print(f"nextcord.command_client: {our_payload.get('guild_id', None)} == {guild_id}")
-                # print(f"nextcord.command_client: {our_payload}")
-                # print(f"nextcord.command_client: {raw_payload}")
                 if self._recursive_item_check(our_payload, raw_payload):
                     return True
-            # else:
-            #     print(f"nextcord.command_client: Skipping payload: {our_payload.get('guild_id', None)} != {(int(guild_id) if (guild_id := raw_payload.get('guild_id', None)) else guild_id)}")
         return False
 
     def _recursive_item_check(self, item1, item2) -> bool:
@@ -594,30 +544,9 @@ class ApplicationCommand(ApplicationSubcommand):
                     # print("nextcord.command_client: Recursive dict check failed.")
                     return False
         elif isinstance(item1, list) and isinstance(item2, list):
-            # if len(item1) == len(item2):
-            #     for i in range(len(item1)):
-            #         if not self._recursive_item_check(item1[i], item2[i]):
-            #             print("nextcord.command_client: Recursive list check failed.")
-            #             return False
-            # else:
-            #     print(f"nextcord.command_client: Recursive list length check failed: {len(item1)} != {len(item2)}")
-            #     return False
             for our_item in item1:
                 if not self._recursive_check_item_against_list(our_item, item2):
                     return False
-                # if isinstance(our_item, list):
-                #     raise NotImplementedError
-                # elif isinstance(our_item, dict):
-                #     for their_item in item2:
-                #         if isinstance(their_item, list):
-                #             raise NotImplementedError
-                #         elif isinstance(their_item, dict):
-                #
-                #         else:
-                #             raise NotImplementedError
-                # else:
-                #     raise NotImplementedError
-
         else:
             if isinstance(item1, str) and item1.isdigit():
                 item1 = int(item1)
@@ -643,21 +572,6 @@ class ApplicationCommand(ApplicationSubcommand):
         else:
             raise NotImplementedError
         return False
-
-
-
-    # def get_complex_signature(self, guild_id: Optional[int]) -> Optional[Tuple[Tuple[str, int, Optional[int]], ]]:
-    #     if (guild_id is None and self.is_global) or (guild_id in self.guild_ids):
-    #         ret = [self.get_signature(guild_id)]
-    #         for cmd_arg in self.arguments:
-    #             ret.append()
-    #     else:
-    #         return None
-
-
-# class CommandCogMeta(type):
-#     def __new__(mcs, name, bases, namespace, **kwargs):
-#         new_cls = super(CommandCogMeta, mcs).__new__(mcs, name, bases, namespace, **kwargs)
 
 
 class CommandCog:
