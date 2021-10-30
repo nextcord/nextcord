@@ -105,7 +105,7 @@ class CommandArgument(SlashOption):
         if isinstance(parameter.default, SlashOption):
             cmd_arg = parameter.default
             cmd_arg_given = True
-        print(f"CMD arg name: {cmd_arg.name}, Parameter name: {parameter.name}")
+        # print(f"CMD arg name: {cmd_arg.name}, Parameter name: {parameter.name}")
         self.functional_name = parameter.name
 
         # TODO: Cleanup logic for this.
@@ -223,10 +223,11 @@ class ApplicationSubcommand:
             else:
                 self.type = CommandOptionType.sub_command
         if self.type is CommandType.user or self.type is CommandType.message:
-            self.description = ""
-            print(f"ANALYZE CONTENT: Description: \"{self.description}\"")
+            # self.description = ""
+            self.description = None
+            # print(f"ANALYZE CONTENT: Description: \"{self.description}\"")
         else:
-            print(f"ANALYZE CONTENT: {self.type} {type(self.type)} {CommandType.user}")
+            # print(f"ANALYZE CONTENT: {self.type} {type(self.type)} {CommandType.user}")
             if not self.description:
                 self.description = " "
 
@@ -672,13 +673,13 @@ class CommandCog:
     def _read_methods(self):
         self.__cog_to_register__ = []
         for base in reversed(self.__class__.__mro__):
-            print(f"COG: {base}")
+            # print(f"COG: {base}")
             for elem, value in base.__dict__.items():
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
                     value = value.__func__
                 if isinstance(value, ApplicationCommand):
-                    print(f"COG:     ADDING COMMAND {value.name}")
+                    # print(f"COG:     ADDING COMMAND {value.name}")
                     if isinstance(value, staticmethod):
                         raise TypeError(f"Command {self.__name__}.{elem} can not be a staticmethod.")
                     value.cog_parent = self
@@ -688,7 +689,7 @@ class CommandCog:
 
     @property
     def to_register(self) -> List[ApplicationCommand]:
-        print(f"TO REGISTER: {self.__cog_to_register__}")
+        # print(f"TO REGISTER: {self.__cog_to_register__}")
         return self.__cog_to_register__
 
 
@@ -713,12 +714,12 @@ class CommandClient(Client):
     #     self._commands_to_register_bad.clear()
 
     def register_cog_commands(self):
-        print("REG COG CMD: Called.")
+        # print("REG COG CMD: Called.")
         for cog in self._cogs:
-            print("REG COG CMD:   Cog.")
+            # print("REG COG CMD:   Cog.")
             if to_register := cog.to_register:
                 for cmd in to_register:
-                    print(f"REG COG CMD:     {cmd.name}")
+                    # print(f"REG COG CMD:     {cmd.name}")
                     # await self.register_command(cmd)
                     self._internal_add_application_command(cmd, add_to_bulk=True)
 

@@ -1747,6 +1747,7 @@ class Client:
                 # print(f"nextcord.Client: {self._application_command_signatures}")
                 await self._perform_global_application_command_rollout(delete_unknown, register_new)
                 await self._perform_guild_application_command_rollout(delete_unknown, register_new)
+                print("nextcord.client.Client: Successfully finished command rollout.")
             except Exception as e:
                 raise e
             finally:
@@ -1760,60 +1761,56 @@ class Client:
         for raw_response in raw_get_global_response:
             response_signature = (raw_response["name"], int(raw_response['type']), None)
             if app_cmd := self._application_command_signatures.get(response_signature):
-                print(f"nextcord.Client: Found signature match with command {app_cmd.name}.")
                 if app_cmd.check_against_raw_payload(raw_response, None):
-                    print(f"nextcord.Client: Command {app_cmd.name} passed payload check, adding.")
                     unregistered_global_commands.remove(app_cmd)
                     self._registered_application_commands[int(raw_response["id"])] = app_cmd
                     app_cmd.raw_parse_result(self._connection, None, int(raw_response["id"]))
+                    print(f"nextcord.client.Client: Global {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
                 elif delete_unknown:
-                    print(f"nextcord.Client: Found unknown global command with ID of {raw_response['id']}, removing.")
                     await self.http.delete_global_command(self.application_id, raw_response["id"])
+                    print(f"nextcord.client.Client: Global {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
             elif delete_unknown:
-                print(f"nextcord.Client: Found unknown global command with ID of {raw_response['id']}, removing.")
                 await self.http.delete_global_command(self.application_id, raw_response["id"])
+                print(f"nextcord.Client: Global command with ID of {raw_response['id']} failed signature check, removed.")
         if register_new:
             for global_cmd in unregistered_global_commands:
                 raw_response = await self.http.upsert_global_command(self.application_id, global_cmd.global_payload)
                 response = ApplicationCommandResponse(self._connection, raw_response)
                 global_cmd.parse_response(response)
-                print(f"nextcord.Client: Registering new global command {global_cmd.name}|{global_cmd.type} with"
-                      f"ID {response.id}")
                 self._registered_application_commands[response.id] = global_cmd
+                print(f"nextcord.client.Client: Global {global_cmd.type} {global_cmd.name} newly registered with ID {response.id}")
 
     async def _perform_guild_application_command_rollout(self, delete_unknown: bool, register_new: bool):
         for guild in self.guilds:
             unregistered_guild_commands = self._get_guild_commands()
             try:
                 raw_get_guild_response = await self.http.get_guild_commands(self.application_id, guild.id)
-
                 for raw_response in raw_get_guild_response:
                     response_signature = (raw_response["name"], int(raw_response["type"]), int(raw_response["guild_id"]))
                     if app_cmd := self._application_command_signatures.get(response_signature):
-                        print(f"nextcord.Client: Found signature match with command {app_cmd.name} in {guild.id}")
                         if app_cmd.check_against_raw_payload(raw_response, guild.id):
-                            print(f"nextcord.Client: Command {app_cmd.name} passed payload check, adding.")
                             unregistered_guild_commands[guild.id].remove(app_cmd)
                             self._registered_application_commands[int(raw_response["id"])] = app_cmd
                             app_cmd.raw_parse_result(self._connection, guild.id, int(raw_response["id"]))
+                            print(f"nextcord.client.Client: Guild ({guild.id}) {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
                         elif delete_unknown:
-                            print(f"nextcord.Client: Found unknown guild ({guild.id}) command ({raw_response['id']}), removing.")
-                            print(f"nextcord.Client:\n\n{app_cmd.get_guild_payload(guild.id)}\n\n{raw_response}")
                             await self.http.delete_guild_command(self.application_id, guild.id, raw_response["id"])
+                            print(f"nextcord.client.Client: Guild ({guild.id}) {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
                     elif delete_unknown:
-                        print(f"nextcord.Client: Found unknown guild ({guild.id}) command, removing.")
                         await self.http.delete_guild_command(self.application_id, guild.id, raw_response["id"])
+                        print(f"nextcord.Client: Guild ({guild.id}) command with ID of {raw_response['id']} failed signature check, removed.")
+
                 if register_new:
                     for guild_cmd in unregistered_guild_commands.get(guild.id, []):
                         raw_response = await self.http.upsert_guild_command(self.application_id, guild.id,
                                                                             guild_cmd.get_guild_payload(guild.id))
                         response = ApplicationCommandResponse(self._connection, raw_response)
                         guild_cmd.parse_response(response)
-                        print(f"nextcord.Client: Registered new guild ({guild.id}) command {guild_cmd.name}|{guild_cmd.type} with ID {response.id}")
                         self._registered_application_commands[response.id] = guild_cmd
+                        print(f"nextcord.client.Client: Guild ({guild.id}) {guild_cmd.type} {guild_cmd.name} newly registered with ID {response.id}")
 
             except Forbidden:
-                print(f"nextcord.Client: OAuth scope not enabled for guild {guild.id}, ignoring Forbidden error.")
+                print(f"nextcord.client.Client: OAuth scope not enabled for guild {guild.id}, ignoring Forbidden error.")
 
     def _get_application_command_rollout_payload_lists(self) -> Tuple[List[dict], Dict[int, List[dict]]]:
         global_commands: List[dict] = []
