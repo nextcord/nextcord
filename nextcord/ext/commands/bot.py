@@ -657,7 +657,7 @@ class BotBase(GroupMixin):
             self,
             spec: importlib.machinery.ModuleSpec,
             key: str,
-            extras: Dict[str, Any] = None
+            extras: Optional[Dict[str, Any]] = None
     ) -> None:
         # precondition: key not in self.__extensions
         lib = importlib.util.module_from_spec(spec)
@@ -674,10 +674,9 @@ class BotBase(GroupMixin):
             del sys.modules[key]
             raise errors.NoEntryPointError(key)
 
-        sig = inspect.signature(setup)
-        sig = list(sig.parameters.keys())
-        total_params = len(sig)
-        has_kwargs = total_params != 1
+        params = inspect.signature(setup).parameters
+        has_kwargs = len(params) > 1
+
         if extras:
             if not has_kwargs:
                 raise errors.InvalidSetupArguments(key)
@@ -685,12 +684,8 @@ class BotBase(GroupMixin):
                 raise errors.ExtensionFailed(key, TypeError("Expected 'extras' to be a dictionary"))
 
         try:
-            if has_kwargs:
-                # Fix mutable defaults
-                extras = extras or {}
-                setup(self, **extras)
-            else:
-                setup(self)
+            extras = extras or {}
+            setup(self, **extras)
         except Exception as e:
             del sys.modules[key]
             self._remove_module_references(lib.__name__)
@@ -710,7 +705,7 @@ class BotBase(GroupMixin):
             name: str,
             *,
             package: Optional[str] = None,
-            extras: Dict[str, Any] = None
+            extras: Optional[Dict[str, Any]] = None
     ) -> None:
         """Loads an extension.
 
