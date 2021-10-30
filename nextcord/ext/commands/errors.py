@@ -90,6 +90,7 @@ __all__ = (
     'ExtensionAlreadyLoaded',
     'ExtensionNotLoaded',
     'NoEntryPointError',
+    'InvalidSetupArguments',
     'ExtensionFailed',
     'ExtensionNotFound',
     'CommandRegistrationError',
