@@ -860,7 +860,8 @@ class NoEntryPointError(ExtensionError):
         super().__init__(f"Extension {name!r} has no 'setup' function.", name=name)
 
 class InvalidSetupArguments(ExtensionError):
-    """An exception raised when an extension contains a ``setup`` function which does except ``kwargs`` but ``kwargs`` were passed.
+    """An exception raised when an extension contains a ``setup`` function which does
+     except ``kwargs`` but ``kwargs`` were passed.
 
     This inherits from :exc:`ExtensionError`
     """

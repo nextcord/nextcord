@@ -732,7 +732,7 @@ class BotBase(GroupMixin):
             A mapping of kwargs to values to be passed to your
             cog's ``__init__`` method as key word arguments.
 
-            .. versionadded:: 2.0.0a4
+            .. versionadded:: 2.0.0
 
         Raises
         --------
