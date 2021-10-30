@@ -277,6 +277,17 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
 
         .. versionadded:: 2.0
+    inherit_hooks: :class:`bool`
+        If ``True`` and this command has a parent :class:`Group` then this command
+        will inherit all checks, pre_invoke and after_invoke's defined on the the :class:`Group`
+
+        .. note::
+            You can define a ``pre_invoke`` or ``after_invoke`` on this
+            command in conjunction with ``inherit_hooks=True`` however
+            the one defined for this command will not be replaced by
+            the parent hook.
+
+        .. versionadded:: 2.0.0
     """
     __original_kwargs__: Dict[str, Any]
 
@@ -385,6 +396,29 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             pass
         else:
             self.after_invoke(after_invoke)
+
+        # Attempt to bind to parent hooks if applicable
+        if not kwargs.get("inherit_hooks", False) or not self.parent:
+            return
+
+        inherited_before_invoke: Optional[Hook] = None
+        try:
+            inherited_before_invoke = self.parent._before_invoke  # type: ignore
+        except AttributeError:
+            pass
+        else:
+            self.before_invoke(inherited_before_invoke)
+
+        inherited_after_invoke: Optional[Hook] = None
+        try:
+            inherited_after_invoke = self.parent._after_invoke  # type: ignore
+        except AttributeError:
+            pass
+        else:
+            self.after_invoke(inherited_after_invoke)
+
+        self.checks.extend(self.parent.checks)  # type: ignore
+
 
     @property
     def callback(self) -> Union[
