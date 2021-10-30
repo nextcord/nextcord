@@ -407,7 +407,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         except AttributeError:
             pass
         else:
-            self.before_invoke(inherited_before_invoke)
+            if inherited_before_invoke:
+                self.before_invoke(inherited_before_invoke)
 
         inherited_after_invoke: Optional[Hook] = None
         try:
@@ -415,7 +416,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         except AttributeError:
             pass
         else:
-            self.after_invoke(inherited_after_invoke)
+            if inherited_after_invoke:
+                self.after_invoke(inherited_after_invoke)
 
         self.checks.extend(self.parent.checks)  # type: ignore
 
