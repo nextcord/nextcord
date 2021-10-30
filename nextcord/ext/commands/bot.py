@@ -677,7 +677,7 @@ class BotBase(GroupMixin):
         params = inspect.signature(setup).parameters
         has_kwargs = len(params) > 1
 
-        if extras:
+        if extras is not None:
             if not has_kwargs:
                 raise errors.InvalidSetupArguments(key)
             elif not isinstance(extras, dict):
