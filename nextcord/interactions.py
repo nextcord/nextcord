@@ -367,15 +367,15 @@ class Interaction:
     async def send(self, *args, **kwargs) -> Optional[Message]:
         """|coro|
 
-        This is a fallback function for help when sending messages in
+        This is a shorthand function for helping in sending messages in
         response to an interaction. If the response
-        :property:`InteractionResponse.is_done()` then a messahe os sent
-        to the :property:`Interaction.channel` instead.
+        :meth:`InteractionResponse.is_done()` then the message is sent
+        via the :attr:`Interaction.channel` instead.
 
         .. warning::
 
             Ephemeral messages should not be sent with this as if
-            the :property:`Interaction.channel` is fallen back to,
+            the :attr:`Interaction.channel` is fallen back to,
             ephemeral messages cannot be sent with this.
 
         Returns
@@ -387,7 +387,7 @@ class Interaction:
         Raises
         ------
         InvalidData
-            Somehow :property:`Interaction.channel` was ``None``,
+            Somehow :attr:`Interaction.channel` was ``None``,
             this may occur in threads.
         """
 
