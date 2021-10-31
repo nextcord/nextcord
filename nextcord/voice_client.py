@@ -862,11 +862,6 @@ class VoiceClient(VoiceProtocol):
                 s.recv(4096)
 
     def recv_audio(self, sink, callback, *args):
-        """Gets data from _recv_audio and sorts
-        it by user, handles pcm files and
-        silence that should be added.
-        """
-
         self.user_timestamps = {}
         self.starting_time = time.perf_counter()
         while self.listening:
