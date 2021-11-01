@@ -1,7 +1,7 @@
 .. image:: assets/repo-banner.svg
    :alt: Nextcord
 
-.. image:: https://discord.com/api/guilds/881118111967883295/embed.png
+.. image:: https://img.shields.io/discord/881118111967883295?color=blue
    :target: https://discord.gg/ZebatWssCB
    :alt: Discord server invite
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
