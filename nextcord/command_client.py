@@ -246,8 +246,7 @@ class ApplicationSubcommand:
         return self._callback
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
-        """
-        Calls the callback, gathering and inserting kwargs into the callback as needed.
+        """Calls the callback, gathering and inserting kwargs into the callback as needed.
         This must be able to call itself as subcommands may be subcommand groups, and thus have subcommands of their
         own.
 
@@ -259,12 +258,7 @@ class ApplicationSubcommand:
             Interaction object to pass to callback.
         option_data: :class:`list`
             List of option data dictionaries from interaction data payload.
-
-        Returns
-        -------
-
         """
-
         if self.children:
             # Discord currently does not allow commands that have subcommands to be ran. Therefore, if a command has
             # children, a subcommand must be being called.
@@ -280,8 +274,7 @@ class ApplicationSubcommand:
 
     async def call_invoke_slash(self, state: ConnectionState, interaction: Interaction,
                                 option_data: List[Dict[str, Any]]):
-        """
-        This invokes the slash command implementation with the given raw option data to turn into proper kwargs for the
+        """This invokes the slash command implementation with the given raw option data to turn into proper kwargs for the
         callback.
 
         Parameters
@@ -292,10 +285,6 @@ class ApplicationSubcommand:
             Interaction object to pass to the callback.
         option_data: :class:`list`
             List of option data dictionaries from interaction data payload.
-
-        Returns
-        -------
-
         """
         print(f"Running call + invoke in command {self.name}")
         kwargs = {}
@@ -383,13 +372,18 @@ class ApplicationCommand(ApplicationSubcommand):
         await self.call(self._state, interaction, interaction.data.get("options", {}))
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
-        """
-        Calls the callback, gathering and inserting kwargs into the callback as needed.
-        This handles CommandTypes that subcommands cannot handle, such as Message or User commands.
-        :param state: ConnectionState to fetch objects from cache.
-        :param interaction: Current Interaction object.
-        :param option_data: List of options, typically 'options' in the interaction data payload.
-        """
+        """|coro|
+
+            Calls the callback, gathering and inserting kwargs into the callback as needed.
+            This handles CommandTypes that subcommands cannot handle, such as Message or User commands.
+
+            state: :class:`ConnectionState`
+                ConnectionState to fetch objects from cache.
+            interaction: :class:`Interaction`
+                Current Interaction object.
+            option_data: List[Dict[:class:`str`, Any]]
+                List of options, typically 'options' in the interaction data payload.
+            """
         try:
             await super().call(state, interaction, option_data)
         except InvalidCommandType:
@@ -401,17 +395,15 @@ class ApplicationCommand(ApplicationSubcommand):
                 raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
     def _handle_resolved_message(self, message_data: dict):
-        """
-        TODO: This is garbage, find a better way to add a Message to the cache.
+        """Adds found message data and adds it to the internal cache.
+
         Parameters
         ----------
-        message_data: dict
+        message_data: :class:`dict`
             The resolved message payload to add to the internal cache.
-
-        Returns
-        -------
-
         """
+        # TODO: This is garbage, find a better way to add a Message to the cache.
+        #  It's not that I'm unhappy adding things to the cache, it's having to manually do it like this.
         # The interaction gives us message data, might as well use it and add it to the cache?
         channel, guild = self._state._get_guild_channel(message_data)
         message = Message(channel=channel, data=message_data, state=self._state)
@@ -619,7 +611,6 @@ class CommandClient(Client):
         for cog in self._cogs:
             if to_register := cog.to_register:
                 for cmd in to_register:
-
                     self._internal_add_application_command(cmd, add_to_bulk=True)
 
     def add_cog(self, cog: CommandCog):

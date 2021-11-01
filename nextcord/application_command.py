@@ -58,7 +58,8 @@ class ApplicationCommandResponse(Hashable):
 
     @property
     def signature(self) -> Tuple[str, int, Optional[int]]:
-        """Returns a simple high level signature of the command.
+        """Returns a simple high level signature of the command. No commands registered in the bot at the same time
+        should have identical signatures.
 
         Returns
         -------
