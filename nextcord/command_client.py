@@ -351,10 +351,6 @@ class ApplicationCommand(ApplicationSubcommand):
     def __init__(self, callback: Callable, cmd_type: CommandType,
                  name: str = "", description: str = "", guild_ids: List[int] = None, force_global: bool = False,
                  default_permission: Optional[bool] = None):
-        # TODO: Have global and guilds be off. Allow a command to be in the system, but not registered to guilds or
-        #  global. Global should be True, False, None where None makes it default to True if no guild_ids and false
-        #  if there are guild_ids. For super dynamic guild_id setting, it will be done at runtime. Thus, being able to
-        #  have a command not be global and not be a guild command must be possible. Index by type + name.
         super().__init__(callback=callback, parent=None, cmd_type=cmd_type, name=name, description=description,
                          guild_ids=None)
         # Basic input checking.
@@ -535,13 +531,10 @@ class ApplicationCommand(ApplicationSubcommand):
         if isinstance(item1, dict) and isinstance(item2, dict):
             for key, item in item1.items():
                 if key == "value":
-                    # print(f"nextcord.command_client: Key value found, ignoring.")
                     pass
                 elif key not in item2:
-                    # print(f"nextcord.command_client: Recursive dict check failed: key {key} not in item2.")
                     return False
                 elif not self._recursive_item_check(item, item2[key]):
-                    # print("nextcord.command_client: Recursive dict check failed.")
                     return False
         elif isinstance(item1, list) and isinstance(item2, list):
             for our_item in item1:
@@ -553,7 +546,6 @@ class ApplicationCommand(ApplicationSubcommand):
             if isinstance(item2, str) and item2.isdigit():
                 item2 = int(item2)
             if item1 != item2:
-                # print(f"nextcord.command_client: Recursive item check failed: {item1} != {item2}")
                 return False
         return True
 
@@ -573,6 +565,17 @@ class ApplicationCommand(ApplicationSubcommand):
             raise NotImplementedError
         return False
 
+    def subcommand(self, **kwargs):
+        if self.type != CommandType.chat_input:  # At this time, non-slash commands cannot have Subcommands.
+            raise TypeError(f"{self.type} cannot have subcommands.")
+        else:
+            def decorator(func: Callable):
+                result = ApplicationSubcommand(func, self, CommandOptionType.sub_command, **kwargs)
+                self.children[result.name] = result
+                return result
+
+            return decorator
+
 
 class CommandCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
@@ -587,13 +590,11 @@ class CommandCog:
     def _read_methods(self):
         self.__cog_to_register__ = []
         for base in reversed(self.__class__.__mro__):
-            # print(f"COG: {base}")
             for elem, value in base.__dict__.items():
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
                     value = value.__func__
                 if isinstance(value, ApplicationCommand):
-                    # print(f"COG:     ADDING COMMAND {value.name}")
                     if isinstance(value, staticmethod):
                         raise TypeError(f"Command {self.__name__}.{elem} can not be a staticmethod.")
                     value.cog_parent = self
@@ -603,7 +604,6 @@ class CommandCog:
 
     @property
     def to_register(self) -> List[ApplicationCommand]:
-        # print(f"TO REGISTER: {self.__cog_to_register__}")
         return self.__cog_to_register__
 
 
@@ -611,63 +611,16 @@ class CommandClient(Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._cogs: List[CommandCog] = []  # TODO: Turn this into dict with names.
-        # self._commands_to_reg_not_great = []
 
     async def on_connect(self):
         self.register_cog_commands()
-        # for command in self._commands_to_reg_not_great:
-        #     await self.register_command(command)
-    #
-    #     await super().on_connect()
-    #     print(f"ON CONNECT: Registered command count: {len(self._application_commands)}")
-
-    # async def register_application_commands(self):
-    #     print(f"TO BE REGISTERED: {self._commands_to_register_bad}")
-    #     for cmd in self._commands_to_register_bad:
-    #         await self.register_command(cmd)
-    #     self._commands_to_register_bad.clear()
 
     def register_cog_commands(self):
-        # print("REG COG CMD: Called.")
         for cog in self._cogs:
-            # print("REG COG CMD:   Cog.")
             if to_register := cog.to_register:
                 for cmd in to_register:
-                    # print(f"REG COG CMD:     {cmd.name}")
-                    # await self.register_command(cmd)
+
                     self._internal_add_application_command(cmd, add_to_bulk=True)
-
-    # async def register_command(self, command: ApplicationCommand):
-    #     # TODO: Make into bulk registration. Also look into having commands be both guild and global.
-    #     # await self.register_application_command(command)
-    #     self.add_application_command_to_bulk(command)
-    #     # if command.guild_ids:
-    #     #     for payload in command.payload:
-    #     #         response = await self.register_application_command(command.call_from_interaction, payload, payload["guild_id"])
-    #     #         command.parse_response(response)
-    #     # else:
-    #     #     response = await self.register_application_command(command.call_from_interaction, command.payload)
-    #     #     command.parse_response(response)
-
-    # async def delete_unknown_commands(self):
-    #     to_remove = []
-    #     for app_response in self._connection.application_commands:
-    #         if app_response.id not in self._registered_commands:
-    #             if app_response.guild_id:
-    #                 print(f"Removing command NAME {app_response.name} ID {app_response.id} from "
-    #                       f"GUILD {app_response.guild.name} ID {app_response.guild_id}")
-    #                 await self.http.delete_guild_command(self.application_id, app_response.guild_id, app_response.id)
-    #             else:
-    #                 print(f"Removing command NAME {app_response.name} ID {app_response.id}")
-    #                 await self.http.delete_global_command(self.application_id, app_response.id)
-    #             to_remove.append(app_response.id)
-    #     for app_id in to_remove:
-    #         self._connection._remove_application_command(app_id)
-
-    # def add_application_command_request(self, application_command: ApplicationCommand):
-    #     # self._commands_to_register_bad.append(application_command)
-    #     # self.add_application_command_to_bulk(application_command)  # TODO: Unneeded, refactor.
-    #     # self._commands_to_reg_not_great.append(application_command)
 
     def add_cog(self, cog: CommandCog):
         self._cogs.append(cog)
@@ -675,7 +628,6 @@ class CommandClient(Client):
     def user_command(self, *args, **kwargs):
         def decorator(func: Callable):
             result = user_command(*args, **kwargs)(func)
-            # self.add_application_command_request(result)
             self._internal_add_application_command(result, add_to_bulk=True)
             return result
         return decorator
@@ -683,7 +635,6 @@ class CommandClient(Client):
     def message_command(self, *args, **kwargs):
         def decorator(func: Callable):
             result = message_command(*args, **kwargs)(func)
-            # self.add_application_command_request(result)
             self._internal_add_application_command(result, add_to_bulk=True)
             return result
         return decorator
@@ -691,19 +642,9 @@ class CommandClient(Client):
     def slash_command(self, *args, **kwargs):
         def decorator(func: Callable):
             result = slash_command(*args, **kwargs)(func)
-            # self.add_application_command_request(result)
             self._internal_add_application_command(result, add_to_bulk=True)
             return result
         return decorator
-
-    # async def on_application_command(self, interaction: Interaction):
-    #     print(f"ON APPLICATION COMMAND: {interaction.data}")
-    #     print(f"ON APPLICATION COMMAND: \n{interaction.data}\n{self._registered_commands}")
-    #     # TODO: Well ain't this a bit hardcoded, huh?
-    #     if interaction.data['type'] in (1, 2, 3) and \
-    #             (app_cmd := self._registered_commands.get(int(interaction.data["id"]))):
-    #         print("Found viable command, calling it!")
-    #         await app_cmd.call(self._connection, interaction, interaction.data.get("options", {}))
 
 
 def slash_command(*args, **kwargs):
@@ -712,16 +653,6 @@ def slash_command(*args, **kwargs):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
         return ApplicationCommand(func, cmd_type=CommandType.chat_input, *args, **kwargs)
     return decorator
-
-
-# def slash_command(*args, **kwargs):
-#     def decorator(func: Callable):
-#         @wraps(func)
-#         async def wrapper(self, *other_args, **other_kwargs):
-#             return func(self, *other_args, **other_kwargs)
-#         return ApplicationCommand(wrapper, cmd_type=CommandType.CHAT_INPUT, *args, **kwargs)
-#
-#     return decorator
 
 
 def message_command(*args, **kwargs):
@@ -742,7 +673,3 @@ def user_command(*args, **kwargs):
 
 def options_to_args(options: List[Dict[str, Any]]) -> Dict[str, Any]:
     return {option["name"]: option["value"] for option in options}
-    # ret = {}
-    # for option in options:
-    #     ret[option["name"]] = option["value"]
-    # return ret

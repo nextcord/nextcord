@@ -196,7 +196,6 @@ class Client:
 
         .. versionadded:: 2.0
 
-    # TODO: Give better description
     lazy_load_commands: :class:`bool`
         Whether to attempt to associate an unknown incoming application command ID with an existing application command.
 
@@ -251,24 +250,13 @@ class Client:
         self._ready: asyncio.Event = asyncio.Event()
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
-        # self._application_commands_to_add: Dict[Coroutine, List[Dict[str, Any]]] = {}  # TODO: Figure out better way to pair callback with json payload.
-        # Key is a tuple: First is the command name, second is the Guild ID as an int or None if a global command.
-        # Value is a Tuple with the payload and ApplicationCommand.
-        # self._application_commands_to_add: Dict[Tuple[str, Optional[int]], Dict[str, Any]] = {}
-        # self._application_commands: Dict[int, Callable] = {}
-        # self._application_commands: List[ApplicationCommand] = []
-        # self._registered_application_commands: Dict[int, ApplicationCommand] = {}
-        # self._application_commands_to_bulk_add: Dict[Tuple[ApplicationCommandType, str, Optional[int]], Tuple[dict, ApplicationCommand]] = {}
-        # self._register_commands_on_startup: bool = options.pop('register_commands_on_startup', True)
         self._lazy_load_commands: bool = options.pop('lazy_load_commands', True)
         self._application_commands: Set[ApplicationCommand] = set()
         self._application_command_signatures: Dict[Tuple[str, int, Optional[int]],
                                                    ApplicationCommand] = {}
         self._registered_application_commands: Dict[int, ApplicationCommand] = {}
-        # TODO: Work on rollout feature.
         self._application_commands_to_rollout: Set[ApplicationCommand] = set()
         self._performing_application_command_rollout: bool = False
-        # TODO: rollout_delete_unknown, rollout_register_new.
         self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
         self._rollout_register_new: bool = options.pop("rollout_register_new", True)
 
