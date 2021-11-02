@@ -2,3 +2,14 @@
 *       @TAG-Epic
 
 /assets/ @DenverCoder1
+/docs/ @VincentRPS @ooliver1
+/.github/CODEOWNERS @veni-vidi-code 
+
+# Voice Rec
+/nextcord/ext/voicerecording/ @veni-vidi-code 
+nextcord/voice_client.py @veni-vidi-code 
+nextcord/opus.py @veni-vidi-code
+
+# Slash Commands
+nextcord/application_command.py @alentoghostflame
+nextcord/command_client.py @alentoghostflame
