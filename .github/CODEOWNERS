@@ -5,6 +5,7 @@
 /docs/ @VincentRPS @ooliver1
 /examples/ @VincentRPS @ooliver1
 /.github/CODEOWNERS @veni-vidi-code 
+/nextcord/ext/tasks/ @veni-vidi-code 
 
 # Voice Rec
 /nextcord/ext/voicerecording/ @veni-vidi-code 
