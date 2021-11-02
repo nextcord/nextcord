@@ -120,3 +120,5 @@ Links
 - `Documentation <https://nextcord.readthedocs.io/en/latest/>`_
 - `Official Discord Server <https://discord.gg/ZebatWssCB>`_
 - `Discord API <https://discord.gg/discord-api>`_
+- `Discord Developers <https://discord.gg/discord-developers>`_
+- `Python Discord Server <https://discord.gg/python>`_
