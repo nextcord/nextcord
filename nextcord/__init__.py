@@ -4,7 +4,7 @@ Discord API Wrapper
 
 A basic wrapper for the Discord API.
 
-:copyright: (c) 2015-present Rapptz
+:copyright: (c) 2015-2021 Rapptz & 2021-present tag-epic
 :license: MIT, see LICENSE for more details.
 
 """
