@@ -1,13 +1,13 @@
 .. image:: assets/repo-banner.svg
    :alt: Nextcord
 
-.. image:: https://img.shields.io/discord/881118111967883295?color=blue&label=Discord
+.. image:: https://img.shields.io/discord/881118111967883295?color=blue&label=discord
    :target: https://discord.gg/ZebatWssCB
    :alt: Discord server invite
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI version info
-.. image:: 	https://img.shields.io/pypi/dm/nextcord?color=informational&label=Pypi%20downloads
+.. image:: 	https://img.shields.io/pypi/dm/nextcord?color=informational&label=pypi%20downloads
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI version info
 .. image:: https://img.shields.io/pypi/pyversions/nextcord.svg
