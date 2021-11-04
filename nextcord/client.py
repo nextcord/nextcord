@@ -35,7 +35,7 @@ from typing import Any, Callable, Coroutine, Dict, Generator, List, Optional, Se
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import ApplicationCommandResponse, ApplicationCommandType
+from .application_command import ApplicationCommandResponse, ApplicationCommandType, slash_command, message_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import _threaded_channel_factory, PartialMessageable
 from .emoji import Emoji
@@ -66,6 +66,7 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
+    from .application_command import ApplicationCommand, ClientCog
     from .channel import DMChannel
     from .command_client import ApplicationCommand
     from .member import Member
@@ -81,6 +82,7 @@ Coro = TypeVar('Coro', bound=Callable[..., Coroutine[Any, Any, Any]])
 
 
 _log = logging.getLogger(__name__)
+
 
 def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
     tasks = {t for t in asyncio.all_tasks(loop=loop) if not t.done()}
@@ -252,11 +254,11 @@ class Client:
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
         self._lazy_load_commands: bool = options.pop('lazy_load_commands', True)
+        self._command_cogs: Set[ClientCog] = set()
         self._application_commands: Set[ApplicationCommand] = set()
         self._application_command_signatures: Dict[Tuple[str, int, Optional[int]],
                                                    ApplicationCommand] = {}
         self._registered_application_commands: Dict[int, ApplicationCommand] = {}
-        self._application_commands_to_rollout: Set[ApplicationCommand] = set()
         self._performing_application_command_rollout: bool = False
         self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
         self._rollout_register_new: bool = options.pop("rollout_register_new", True)
@@ -1678,7 +1680,7 @@ class Client:
                 _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
-                _log.info(f"nextcord.Client: Your interaction command failed to register")
+                _log.info(f"nextcord.Client: Your interaction command failed to register, attempting to lazy load.")
                 _log.debug(f"nextcord.Client: {interaction.data}")
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 _log.debug(f"nextcord.Client: {response_signature}")
@@ -1691,21 +1693,20 @@ class Client:
                         await app_cmd.call_from_interaction(interaction)
 
     async def add_application_command(self, app_cmd: ApplicationCommand, register=False):
-        self._internal_add_application_command(app_cmd, add_to_bulk=True)
+        self._internal_add_application_command(app_cmd)
         if register:
             raise NotImplementedError  # TODO: Add single-command registration.
 
-    def _internal_add_application_command(self, app_cmd: ApplicationCommand, add_to_bulk: bool = False):
+    def _internal_add_application_command(self, app_cmd: ApplicationCommand):
         self._application_commands.add(app_cmd)
         for signature in app_cmd.get_signatures():
             if signature in self._application_command_signatures:
                 raise ValueError("You cannot add application commands with duplicate signatures.")
             else:
                 self._application_command_signatures[signature] = app_cmd
-        if add_to_bulk:
-            self._application_commands_to_rollout.add(app_cmd)
 
     async def on_ready(self):
+        self.register_all_cog_commands()
         await self.perform_application_command_rollout(delete_unknown=self._rollout_delete_unknown,
                                                        register_new=self._rollout_register_new)
 
@@ -1729,14 +1730,11 @@ class Client:
         else:
             try:
                 self._performing_application_command_rollout = True
-                # global_commands, guild_commands = self._get_application_command_rollout_payload_lists()
                 await self._perform_global_application_command_rollout(delete_unknown, register_new)
                 await self._perform_guild_application_command_rollout(delete_unknown, register_new)
                 _log.info("nextcord.client.Client: Successfully finished command rollout.")
             except Exception as e:
                 raise e
-            else:
-                self._application_commands_to_rollout.clear()
             finally:
                 self._performing_application_command_rollout = False
 
@@ -1754,7 +1752,7 @@ class Client:
                     _log.info(f"nextcord.client.Client: Global {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
                 elif delete_unknown:
                     await self.http.delete_global_command(self.application_id, raw_response["id"])
-                    _log.info(f"nextcord.client.Client: Global {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
+                    _log.info(f"nextcord.Client: Global {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
             elif delete_unknown:
                 await self.http.delete_global_command(self.application_id, raw_response["id"])
                 _log.info(f"nextcord.Client: Global command with ID of {raw_response['id']} failed signature check, removed.")
@@ -1764,7 +1762,7 @@ class Client:
                 response = ApplicationCommandResponse(self._connection, raw_response)
                 global_cmd.parse_response(response)
                 self._registered_application_commands[response.id] = global_cmd
-                _log.info(f"nextcord.client.Client: Global {global_cmd.type} {global_cmd.name} newly registered with ID {response.id}")
+                _log.info(f"nextcord.Client: Global {global_cmd.type} {global_cmd.name} newly registered with ID {response.id}")
 
     async def _perform_guild_application_command_rollout(self, delete_unknown: bool, register_new: bool):
         for guild in self.guilds:
@@ -1778,10 +1776,11 @@ class Client:
                             unregistered_guild_commands[guild.id].remove(app_cmd)
                             self._registered_application_commands[int(raw_response["id"])] = app_cmd
                             app_cmd.raw_parse_result(self._connection, guild.id, int(raw_response["id"]))
-                            _log.info(f"nextcord.client.Client: Guild ({guild.id}) {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
+                            _log.info(f"nextcord.Client: Guild ({guild.id}) {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
                         elif delete_unknown:
                             await self.http.delete_guild_command(self.application_id, guild.id, raw_response["id"])
-                            _log.info(f"nextcord.client.Client: Guild ({guild.id}) {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
+                            _log.info(f"nextcord.Client: Guild ({guild.id}) {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
+                            _log.debug(f"nextcord.Client: Payload \n{app_cmd.get_guild_payload(guild.id)}\nvs\n{raw_response}")
                     elif delete_unknown:
                         await self.http.delete_guild_command(self.application_id, guild.id, raw_response["id"])
                         _log.info(f"nextcord.Client: Guild ({guild.id}) command with ID of {raw_response['id']} failed signature check, removed.")
@@ -1792,9 +1791,9 @@ class Client:
                         response = ApplicationCommandResponse(self._connection, raw_response)
                         guild_cmd.parse_response(response)
                         self._registered_application_commands[response.id] = guild_cmd
-                        _log.info(f"nextcord.client.Client: Guild ({guild.id}) {guild_cmd.type} {guild_cmd.name} newly registered with ID {response.id}")
+                        _log.info(f"nextcord.Client: Guild ({guild.id}) {guild_cmd.type} {guild_cmd.name} newly registered with ID {response.id}")
             except Forbidden:
-                _log.warning(f"nextcord.client.Client: OAuth scope not enabled for guild {guild.id}, ignoring Forbidden error.")
+                _log.warning(f"nextcord.Client: OAuth scope not enabled for guild {guild.id}, ignoring Forbidden error.")
 
     @property
     def performing_application_command_rollout(self) -> bool:
@@ -1824,3 +1823,33 @@ class Client:
         # update/overwrite existing commands, which may (needs testing) wipe out all permissions associated with those
         # commands. Look for an opportunity to use bulk upsert.
         raise NotImplementedError
+
+    def register_all_cog_commands(self):
+        for cog in self._command_cogs:
+            if to_register := cog.to_register:
+                for cmd in to_register:
+                    self._internal_add_application_command(cmd)
+
+    def add_cog(self, cog: ClientCog):
+        self._command_cogs.add(cog)
+
+    def user_command(self, *args, **kwargs):
+        def decorator(func: Callable):
+            result = user_command(*args, **kwargs)(func)
+            self._internal_add_application_command(result)
+            return result
+        return decorator
+
+    def message_command(self, *args, **kwargs):
+        def decorator(func: Callable):
+            result = message_command(*args, **kwargs)(func)
+            self._internal_add_application_command(result)
+            return result
+        return decorator
+
+    def slash_command(self, *args, **kwargs):
+        def decorator(func: Callable):
+            result = slash_command(*args, **kwargs)(func)
+            self._internal_add_application_command(result)
+            return result
+        return decorator
