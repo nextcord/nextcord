@@ -45,6 +45,12 @@ extras_require = {
         'aiodns>=1.1',
         'Brotli',
         'cchardet'
+    ],
+    'menus': [
+        'nextcord-ext-menus',
+    ],
+    'ipc': [
+        'nextcord-ext-ipc',
     ]
 }
 
