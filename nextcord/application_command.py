@@ -1,16 +1,17 @@
 from __future__ import annotations
 import asyncio
-from typing import TYPE_CHECKING, Union, Optional, List, Tuple, Dict, Any, Callable, Set
 from inspect import signature, Parameter
+from typing import Any, Callable, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Union
+
 from . import utils
-from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
-from .mixins import Hashable
-from .user import User
-from .member import Member
-from .role import Role
-from .message import Message
 from .abc import GuildChannel
+from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
 from .interactions import Interaction
+from .member import Member
+from .message import Message
+from .mixins import Hashable
+from .role import Role
+from .user import User
 
 if TYPE_CHECKING:
     from .guild import Guild
@@ -38,7 +39,7 @@ class InvalidCommandType(Exception):
 
 
 class ApplicationCommandResponse(Hashable):
-    """Represents the response that Discord sends back when asked about Application Commands.
+    """Represents the response that Discord sends back when queried for Application Commands.
 
     Attributes
     ----------
