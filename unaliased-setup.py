@@ -54,6 +54,9 @@ extras_require = {
     ],
     'events': [
         'nextcord-ext-events',
+    ],
+    'alternatives': [
+        'nextcord-ext-alternatives',
     ]
 }
 
