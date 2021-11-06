@@ -52,7 +52,7 @@ extras_require = {
     'ipc': [
         'nextcord-ext-ipc',
     ],
-    'ipc': [
+    'events': [
         'nextcord-ext-events',
     ]
 }
