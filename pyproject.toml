@@ -7,8 +7,11 @@ requires = [
 
 [tool.yapfignore]
 ignore_patterns = [
-  "discordy",
-  "docs/**.py"
+  "docs/**.py",
+  "setup.py",
+  "unaliased-setup.py",
+  "alias_license.py",
+  "aliasgen.py"
 ]
 
 [style]
