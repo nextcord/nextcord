@@ -14,7 +14,12 @@ docs/crowdin.py
 *.jpg
 *.flac
 *.mo
+.env
+*.ts
+tsconfig.json
 dist/
+pyproject.toml
+*mp4
 .history/
 .idea/
 .DS_Store
