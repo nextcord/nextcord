@@ -35,7 +35,7 @@ from typing import Any, Callable, Coroutine, Dict, Generator, List, Optional, Se
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import ApplicationCommandResponse, ApplicationCommandType, slash_command, message_command, user_command
+from .application_command import ApplicationCommandResponse, message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import _threaded_channel_factory, PartialMessageable
 from .emoji import Emoji
@@ -68,7 +68,6 @@ if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
     from .application_command import ApplicationCommand, ClientCog
     from .channel import DMChannel
-    from .command_client import ApplicationCommand
     from .member import Member
     from .message import Message
     from .voice_client import VoiceProtocol
@@ -254,7 +253,7 @@ class Client:
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
         self._lazy_load_commands: bool = options.pop('lazy_load_commands', True)
-        self._command_cogs: Set[ClientCog] = set()
+        self._client_cogs: Set[ClientCog] = set()
         self._application_commands: Set[ApplicationCommand] = set()
         self._application_command_signatures: Dict[Tuple[str, int, Optional[int]],
                                                    ApplicationCommand] = {}
@@ -1765,6 +1764,8 @@ class Client:
                 _log.info(f"nextcord.Client: Global {global_cmd.type} {global_cmd.name} newly registered with ID {response.id}")
 
     async def _perform_guild_application_command_rollout(self, delete_unknown: bool, register_new: bool):
+        """Grabs Guild commands, associates when it can, ignores guilds without the OAuth, deletes unknowns when
+        enabled, registers new when enabled."""
         for guild in self.guilds:
             unregistered_guild_commands = self._get_guild_commands()
             try:
@@ -1797,6 +1798,7 @@ class Client:
 
     @property
     def performing_application_command_rollout(self) -> bool:
+        """Returns if an Application Command rollout is occurring"""
         return self._performing_application_command_rollout
 
     def _get_global_commands(self) -> Set[ApplicationCommand]:
@@ -1825,13 +1827,13 @@ class Client:
         raise NotImplementedError
 
     def register_all_cog_commands(self):
-        for cog in self._command_cogs:
+        for cog in self._client_cogs:
             if to_register := cog.to_register:
                 for cmd in to_register:
                     self._internal_add_application_command(cmd)
 
     def add_cog(self, cog: ClientCog):
-        self._command_cogs.add(cog)
+        self._client_cogs.add(cog)
 
     def user_command(self, *args, **kwargs):
         def decorator(func: Callable):

@@ -25,7 +25,7 @@ __all__ = (
     'SlashOption',
     'ApplicationCommand',
     'ApplicationSubcommand',
-    'CommandArgument',
+    'CommandOption',
     'ClientCog',
     'InvalidCommandType',
     'slash_command',
@@ -35,6 +35,7 @@ __all__ = (
 
 
 class InvalidCommandType(Exception):
+    """Raised when an unhandled Application Command type is encountered."""
     pass
 
 
@@ -208,7 +209,7 @@ class SlashOption:
         self.channel_types: Optional[List[ChannelType, ...]] = channel_types
 
 
-class CommandArgument(SlashOption):
+class CommandOption(SlashOption):
     option_types = {
         str: ApplicationCommandOptionType.string,
         int: ApplicationCommandOptionType.integer,
@@ -224,15 +225,15 @@ class CommandArgument(SlashOption):
     }
     """Maps Python typings to Discord Application Command typings."""
     def __init__(self, parameter: Parameter):
-        """
+        """Represents a Python function parameter that corresponds to a Discord Option.
 
         This must set and/or handle all variables from CmdArg, hence the subclass.
+        This shouldn't be created by the user, only by other Application Command-related classes.
 
         Parameters
         ----------
         parameter: :class:`inspect.Parameter`
-            The Application Command Parameter object to read,
-
+            The Application Command Parameter object to read and make usable by Discord.
         """
         super().__init__()
         self.parameter = parameter
@@ -275,9 +276,10 @@ class CommandArgument(SlashOption):
             raise ValueError("channel_types can only be given when the var is typed as nextcord.abc.GuildChannel")
 
     def handle_slash_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
+        """Handles arguments, specifically for Slash Commands."""
         if self.type is ApplicationCommandOptionType.channel:
             return state.get_channel(int(argument))
-        elif self.type is ApplicationCommandOptionType.user:  # TODO: Brutally test please.
+        elif self.type is ApplicationCommandOptionType.user:
             if interaction.guild:
                 return interaction.guild.get_member(int(argument))
             else:
@@ -288,18 +290,29 @@ class CommandArgument(SlashOption):
             return int(argument)
         elif self.type is ApplicationCommandOptionType.number:
             return float(argument)
-        elif self.type is Message:  # TODO: Brutally test please.
+        elif self.type is Message:
             return state._get_message(int(argument))
         return argument
 
     def handle_message_argument(self, *args):
+        """For possible future use, will handle arguments specific to Message Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
     def handle_user_argument(self, *args):
+        """For possible future use, will handle arguments specific to User Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
     @property
     def payload(self) -> dict:
+        """Returns a payload meant for Discord for this specific Option.
+
+        Options that are not specified AND not required won't be in the returned payload.
+
+        Returns
+        -------
+        payload: :class:`dict`
+            The Discord payload for this specific Option.
+        """
         # TODO: Figure out why pycharm is being a dingus about self.type.value being an unsolved attribute.
         # noinspection PyUnresolvedReferences
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
@@ -308,7 +321,6 @@ class CommandArgument(SlashOption):
         if self.choices:
             ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
         if self.channel_types:
-            # TODO: Figure out why pycharm is being a dingus about channel_type.value being an unsolved attribute.
             # noinspection PyUnresolvedReferences
             ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
         # We don't ask for the payload if we have options, so no point in checking for options.
@@ -319,12 +331,31 @@ class ApplicationSubcommand:
     def __init__(self, callback: Callable, parent: Optional[Union[ApplicationCommand, ApplicationSubcommand]],
                  cmd_type: Union[ApplicationCommandType, ApplicationCommandOptionType],
                  cog_parent: Optional[ClientCog] = None, name: str = "", description: str = "",
-                 required: Optional[bool] = None, guild_ids: List[int] = None, choices: Dict[str, Any] = None):
-        if guild_ids is None:
-            guild_ids = []
-        else:
-            # TODO: Per-guild subcommands.
-            raise NotImplementedError("Per-guild subcommands are not yet handled properly. Ask Alento about them!")
+                 choices: Optional[Dict[str, Any]] = None):
+        """Represents a Python function that corresponds to a Discord Subcommand (Group). Turns a given function into
+        a class able to feed Discord-given arguments to an async function.
+
+        This contains the base methods that both regular application commands and subcommands need to have access to.
+        This shouldn't be created by the user, only by other Application Command-related classes.
+
+        Parameters
+        ----------
+        callback: Callable
+            The function to call when the subcommand is triggered. Must be a coroutine.
+        parent: Optional[Union[:class:`ApplicationCommand`, :class:`ApplicationSubcommand`]]
+            Parent command or subcommand.
+        cmd_type: Union[:class:`ApplicationCommandType`, :class:`ApplicationCommandOptionType`]
+            Application Command type, or specific Application Command Option types.
+        cog_parent: Optional[:class:`ClientCog`]
+            Cog parent, supplied as the first argument to the callback if provided.
+        name: :class:`str`
+            Name of the command on Discord. Defaults to the name of the callback.
+        description: :class:`str`
+            Description of the command on Discord, if applicable. Defaults to an empty string.
+        choices: Optional[Dict[:class:`str`, Any]]
+            A dictionary of choices. Keys are the Discord-facing name of the choice, the values are what Discord sends
+            back.
+        """
         if not asyncio.iscoroutinefunction(callback):
             raise TypeError("Callback must be a coroutine.")
 
@@ -334,17 +365,16 @@ class ApplicationSubcommand:
         self.type: Union[ApplicationCommandType, ApplicationCommandOptionType] = cmd_type
         self.name: str = name
         self.description: str = description
-        self.required: Optional[bool] = required
-        self.guild_ids: List[int] = guild_ids
         self.choices: Dict[str, Any] = choices
 
         self.cog_parent: Optional[ClientCog] = cog_parent
-        self.arguments: Dict[str, CommandArgument] = {}
+        self.arguments: Dict[str, CommandOption] = {}
         self.children: Dict[str, ApplicationSubcommand] = {}
         self._analyze_content()
         self._analyze_callback()
 
     def _analyze_content(self):
+        """This reads the content of itself and performs validation and changes to variables as needed."""
         if self._parent and self._parent.type is ApplicationCommandOptionType.sub_command_group and self.children:
             raise NotImplementedError("A subcommand can't have both subcommand parents and children! Discord does not"
                                       "support this.")
@@ -360,6 +390,7 @@ class ApplicationSubcommand:
                 self.description = " "
 
     def _analyze_callback(self):
+        """This reads the callback, performs validation, and changes variables as needed."""
         if not self.name:
             self.name = self._callback.__name__
         first_arg = True
@@ -369,13 +400,11 @@ class ApplicationSubcommand:
             if first_arg:
                 # TODO: Is this even worth having?
                 if value.annotation is not value.empty and value.annotation is not Interaction:
-                    raise TypeError("First argument in an Application Command should be an Interaction.")
-                if self_skip:
-                    self_skip = False
-                else:
+                    raise TypeError("The first argument in an Application Command should be typed as an Interaction")
+                if not self_skip:
                     first_arg = False
             else:
-                arg = CommandArgument(value)
+                arg = CommandOption(value)
                 self.arguments[arg.name] = arg
 
     @property
@@ -405,13 +434,13 @@ class ApplicationSubcommand:
             await self.call_invoke_slash(state, interaction, option_data)
         else:
             # Anything that can't be handled in here should be raised for ApplicationCommand to handle.
-            # TODO: Figure out how to hide this in exception trace log.
+            # TODO: Figure out how to hide this in exception trace log, devs don't need to see it.
             raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
     async def call_invoke_slash(self, state: ConnectionState, interaction: Interaction,
                                 option_data: List[Dict[str, Any]]):
-        """This invokes the slash command implementation with the given raw option data to turn into proper kwargs for the
-        callback.
+        """This invokes the slash command implementation with the given raw option data to turn into proper kwargs for
+        the callback.
 
         Parameters
         ----------
@@ -451,10 +480,9 @@ class ApplicationSubcommand:
 
     @property
     def payload(self) -> dict:
+        """:class:`dict`: Outputs a Discord "Application Command Option Structure" payload."""
         self._analyze_content()
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
-        if self.required is not None:
-            ret["required"] = self.required
         if self.choices:
             ret["choices"] = [{key: value} for key, value in self.choices.items()]
         if self.children:
@@ -464,6 +492,7 @@ class ApplicationSubcommand:
         return ret
 
     def subcommand(self, **kwargs):
+        """Creates a new subcommand off of this one."""
         def decorator(func: Callable):
             result = ApplicationSubcommand(func, self, ApplicationCommandOptionType.sub_command, **kwargs)
             self.children[result.name] = result
@@ -475,8 +504,7 @@ class ApplicationCommand(ApplicationSubcommand):
     def __init__(self, callback: Callable, cmd_type: ApplicationCommandType,
                  name: str = "", description: str = "", guild_ids: List[int] = None, force_global: bool = False,
                  default_permission: Optional[bool] = None):
-        super().__init__(callback=callback, parent=None, cmd_type=cmd_type, name=name, description=description,
-                         guild_ids=None)
+        super().__init__(callback=callback, parent=None, cmd_type=cmd_type, name=name, description=description)
         # Basic input checking.
         if guild_ids is None:
             guild_ids = []
@@ -491,9 +519,21 @@ class ApplicationCommand(ApplicationSubcommand):
         self._guild_ids: Dict[int, int] = {}  # Guild ID is key, command ID is value.
 
     def parse_response(self, response: ApplicationCommandResponse):
+        """Takes information from an :class:`ApplicationCommandResponse` and parses it for use."""
         self.raw_parse_result(response._state, response.guild_id, response.id)
 
-    def raw_parse_result(self, state: ConnectionState, guild_id: Optional[int], command_id):
+    def raw_parse_result(self, state: ConnectionState, guild_id: Optional[int], command_id: int):
+        """Takes direct information and uses it. Use when getting a :class:`ApplicationCommandResponse` is unreasonable.
+
+        Parameters
+        ----------
+        state: :class:`ConnectionState`
+            State object used to fetch cached data.
+        guild_id: Optional[:class:`int`]
+            Guild ID the Application Command corresponds to. If None, it's assumed to be Global.
+        command_id: :class:`int`
+            Command ID from Discord that corresponds to this object.
+        """
         self._state = state
         if guild_id:
             self._guild_ids[guild_id] = command_id
@@ -546,6 +586,7 @@ class ApplicationCommand(ApplicationSubcommand):
             self._state._messages.append(message)
 
     async def call_invoke_message(self, state: ConnectionState, interaction: Interaction):
+        """Interprets the given interaction and invokes the callback as a Message Command."""
         # TODO: Look into function arguments being autoconverted and given? Arg typed "Channel" gets filled with the
         #  channel?
         for message_data in interaction.data["resolved"]["messages"].values():
@@ -554,6 +595,7 @@ class ApplicationCommand(ApplicationSubcommand):
         await self.invoke_message(interaction, message)
 
     async def call_invoke_user(self, state: ConnectionState, interaction: Interaction):
+        """Interprets the given interaction and invokes the callback as a User Command."""
         # TODO: Look into function arguments being autoconverted and given? Arg typed "Channel" gets filled with the
         #  channel?
         if interaction.guild:
@@ -563,20 +605,21 @@ class ApplicationCommand(ApplicationSubcommand):
         await self.invoke_user(interaction, member)
 
     async def invoke_message(self, interaction: Interaction, message: Message, **kwargs):
-        """The parameters of this function should have the bare minimum needed to do a user command."""
+        """Invokes the callback with the given interaction, message, and kwargs as a Message Command."""
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, message, **kwargs)
         else:
             await self.callback(interaction, message, **kwargs)
 
     async def invoke_user(self, interaction: Interaction, member: Union[Member, User], **kwargs):
-        """The parameters of this function should have the bare minimum needed to do a user command."""
+        """Invokes the callback with the given interaction, member/user, and kwargs as a User Command."""
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, member, **kwargs)
         else:
             await self.callback(interaction, member, **kwargs)
 
     def _get_basic_application_payload(self) -> dict:
+        """Bare minimum payload that both Global and Guild commands can use."""
         payload = super().payload
         if self.type is not ApplicationCommandType.chat_input and "options" in payload:
             payload.pop("options")
@@ -586,6 +629,14 @@ class ApplicationCommand(ApplicationSubcommand):
 
     @property
     def payload(self) -> List[dict]:
+        """Returns a list of Discord "Application Command Structure" payloads.
+
+        Returns
+        -------
+        payloads: List[:class:`dict`]
+            Returns a list containing the global command payload, if enabled, and payloads corresponding to every guild
+            ID specified.
+        """
         # TODO: This always returns a list, should it be "payloads"? Won't override subcommand payload though.
         partial_payload = self._get_basic_application_payload()
 
@@ -600,15 +651,27 @@ class ApplicationCommand(ApplicationSubcommand):
         return ret
 
     def get_guild_payload(self, guild_id: int) -> dict:
+        """Creates a payload specific to a guild.
+
+        Parameters
+        ----------
+        guild_id: :class:`int`
+            Guild ID to create the payload for. Must be added to the ApplicationCommand.
+
+        Returns
+        -------
+        :class:`dict`
+            A Discord "Application Command Structure" payload specifically for a given Guild ID.
+        """
         if not self.is_guild or guild_id not in self.guild_ids:
             raise NotImplementedError  # TODO: Make a proper error.
         partial_payload = self._get_basic_application_payload()
         partial_payload["guild_id"] = guild_id
         return partial_payload
 
-
     @property
     def global_payload(self) -> dict:
+        """Creates a Discord "Application Command Structure" payload for a Global command."""
         if not self.is_global:
             raise NotImplementedError  # TODO: Make a proper error.
         return self._get_basic_application_payload()
@@ -622,12 +685,14 @@ class ApplicationCommand(ApplicationSubcommand):
         return self._is_global
 
     def get_signature(self, guild_id: Optional[int]) -> Optional[Tuple[str, int, Optional[int]]]:
+        """Returns a basic signature for a given Guild ID. If None is given, then it is assumed Global."""
         if (guild_id is None and self.is_global) or (guild_id in self.guild_ids):
             return self.name, self.type.value, guild_id
         else:
             return None
 
     def get_signatures(self) -> Set[Tuple[str, int, Optional[int]]]:
+        """Returns all basic signatures for this ApplicationCommand."""
         ret = set()
         if self.is_global:
             ret.add((self.name, self.type.value, None))
@@ -636,7 +701,52 @@ class ApplicationCommand(ApplicationSubcommand):
                 ret.add((self.name, self.type.value, guild_id))
         return ret
 
+    def check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int]) -> bool:
+        """Checks if self.payload values match with what the given raw payload has.
+
+        This doesn't make sure they are equal. Instead, this checks if all key:value pairs inside of any of our payloads
+        also exist inside of the raw_payload. If there are extra keys inside of the raw_payload that aren't in our
+        payloads, they will be ignored.
+
+
+        Parameters
+        ----------
+        raw_payload: :class:`dict`
+            Dictionary payload our payloads are compared against.
+        guild_id: Optional[:class:`int`]
+            Guild ID to compare against. If None, it's assumed to be a Global command.
+
+        Returns
+        -------
+        :class:`bool`
+            True if any of our payloads has every key:value pair corresponding with key:value's in the raw_payload,
+            False otherwise.
+        """
+        our_payloads = self.payload
+        for our_payload in our_payloads:
+            if our_payload.get("guild_id", None) == guild_id:
+                if self._recursive_item_check(our_payload, raw_payload):
+                    return True
+        return False
+
     def reverse_check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int]) -> bool:
+        """Checks if the given raw payload values match with what self.payload has.
+
+        This doesn't make sure they are equal, and works opposite of check_against_raw_payload. This checks if all
+        key:value's inside of the raw_payload also exist inside one of our payloads.
+
+        Parameters
+        ----------
+        raw_payload: :class:`dict`
+            Dictionary payload to compare against our payloads.
+        guild_id: :class:`int`
+            Guild ID to compare against. If None, it's assumed to be a Global command.
+
+        Returns
+        -------
+        :class:`bool`
+            True if the raw_payload has every key:value pair corresponding to any of our payloads, False otherwise.
+        """
         modded_payload = raw_payload.copy()
         modded_payload.pop("id")
         for our_payload in self.payload:
@@ -645,15 +755,11 @@ class ApplicationCommand(ApplicationSubcommand):
                     return True
         return False
 
-    def check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int]) -> bool:
-        our_payloads = self.payload
-        for our_payload in our_payloads:
-            if our_payload.get("guild_id", None) == guild_id:
-                if self._recursive_item_check(our_payload, raw_payload):
-                    return True
-        return False
-
     def _recursive_item_check(self, item1, item2) -> bool:
+        """Checks if item1 and item2 are equal.
+
+        If both are lists, switches to list check. If dict, recurses. Else, checks equality.
+        """
         if isinstance(item1, dict) and isinstance(item2, dict):
             for key, item in item1.items():
                 if key == "value":
@@ -692,6 +798,7 @@ class ApplicationCommand(ApplicationSubcommand):
         return False
 
     def subcommand(self, **kwargs):
+        """Makes a function into a subcommand."""
         if self.type != ApplicationCommandType.chat_input:  # At this time, non-slash commands cannot have Subcommands.
             raise TypeError(f"{self.type} cannot have subcommands.")
         else:
@@ -704,6 +811,7 @@ class ApplicationCommand(ApplicationSubcommand):
 
 
 def slash_command(*args, **kwargs):
+    """Creates a Slash Application Command, used inside of a ClientCog."""
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
@@ -712,6 +820,7 @@ def slash_command(*args, **kwargs):
 
 
 def message_command(*args, **kwargs):
+    """Creates a Message Application Command, used inside of a ClientCog."""
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
@@ -720,6 +829,7 @@ def message_command(*args, **kwargs):
 
 
 def user_command(*args, **kwargs):
+    """Creates a User Application Command, used inside of a ClientCog."""
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
