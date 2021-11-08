@@ -1,0 +1,19 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "aiohttp>=3.6.0,<3.8.0"
+]
+
+[tool.yapfignore]
+ignore_patterns = [
+  "discordy",
+  "docs/**.py"
+]
+
+[style]
+based_on_style = pep8
+spaces_before_comment = 4
+split_before_logical_operator = true
+
+build-backend = "setuptools.build_meta"
