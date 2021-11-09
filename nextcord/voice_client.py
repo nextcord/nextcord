@@ -52,7 +52,7 @@ from typing import Any, Callable, List, Optional, TYPE_CHECKING, Tuple
 from . import opus, utils
 from .backoff import ExponentialBackoff
 from .gateway import *
-from .errors import ClientException, ConnectionClosed, ListeningException
+from .errors import ClientException, ConnectionClosed, NotConnected, NotListening, AlreadyListening, MissingSink
 from .player import AudioPlayer, AudioSource
 from .utils import MISSING
 from .sink import Sink, RawData
@@ -756,10 +756,12 @@ class VoiceClient(VoiceProtocol):
         Must be in a voice channel to use.
         Must not be already listening.
 
-        Please note befor using: Recording voice is not offically supported by the discord API. This code might
-        break at any time without warning. It has been developed by Sheepposu and veni-vidi-code in good faith,
-        but since discord does not talk about rules for this it is your task to clarify if you are allowed to actually
-        record the channel the bot is in. Never do so without the permissions of the people in it!
+
+        .. warning::
+            Recording voice is not offically supported by the discord API. This code might
+            break at any time without warning. It has been developed in good faith,
+            but since discord does not talk about rules for this it is your task to clarify if you are allowed to
+            actually record the channel the bot is in. Please take a look at dev tos!
 
         .. versionadded:: 2.0
 
@@ -774,19 +776,19 @@ class VoiceClient(VoiceProtocol):
             Args which will be passed to the callback function.
         Raises
         ------
-        ListeningException
+        NotConnected
             Not connected to a voice channel.
-        ListeningException
+        AlreadyListening
             Already listening.
-        ListeningException
+        MissingSink
             Must provide a Sink object.
         """
         if not self.connected:
-            raise ListeningException('Not connected to voice channel.')
+            raise NotConnected('Not connected to voice channel.')
         if self.listening:
-            raise ListeningException("Already listening.")
+            raise AlreadyListening("Already listening.")
         if not isinstance(sink, Sink):
-            raise ListeningException("Must provide a Sink object.")
+            raise MissingSink("Must provide a Sink object.")
         if self.auto_self_deaf:
             await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=False)
 
@@ -811,11 +813,11 @@ class VoiceClient(VoiceProtocol):
 
         Raises
         ------
-        ListeningException
+        NotListening
             Not currently listening.
         """
         if not self.listening:
-            raise ListeningException("Not currently listening audio.")
+            raise NotListening("Not currently listening audio.")
         if self.auto_self_deaf:
             await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
             await asyncio.sleep(1)
@@ -844,11 +846,11 @@ class VoiceClient(VoiceProtocol):
 
         Raises
         ------
-        ListeningException
+        NotListening
             Not currently listening.
          """
         if not self.listening:
-            raise ListeningException("Not currently listening audio.")
+            raise NotListening("Not currently listening audio.")
         self.listening_paused = not self.listening_paused
         if self.auto_self_deaf:
             await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=self.listening_paused)
