@@ -1672,6 +1672,10 @@ class Client:
         return self._connection.persistent_views
 
     async def on_interaction(self, interaction: Interaction):
+        await self.process_application_commands(interaction)
+
+    async def process_application_commands(self, interaction: Interaction):
+        """Reads the interaction and runs an Application Command as needed. Lazy loads if enabled."""
         if interaction.type is InteractionType.application_command:
             _log.info("nextcord.Client: Found an interaction command.")
             _log.debug(f"nextcord.Client: {self._registered_application_commands}")
@@ -1719,10 +1723,10 @@ class Client:
         ----------
         delete_unknown: :class:`bool`
             Removes all Application Commands that are registered with Discord, but not the bot. Disable to prevent
-            commands from getting de-registered from Discord.
+            commands from getting de-registered from Discord. Defaults to True.
         register_new: :class:`bool`
             Registers all Application Commands that are added to the bot, but not registered with Discord. Disable to
-            prevent new commands from getting added.
+            prevent new commands from getting added. Defaults to True.
         """
         if self._performing_application_command_rollout:
             raise NotImplementedError("Multiple rollouts cannot be ran at the same time.")
