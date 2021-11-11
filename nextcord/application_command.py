@@ -290,7 +290,7 @@ class CommandOption(SlashOption):
             return int(argument)
         elif self.type is ApplicationCommandOptionType.number:
             return float(argument)
-        elif self.type is Message:
+        elif self.type is Message:  # TODO: This is mostly a workaround for Message commands, switch to handles below.
             return state._get_message(int(argument))
         return argument
 
@@ -563,19 +563,24 @@ class ApplicationCommand(ApplicationSubcommand):
             await super().call(state, interaction, option_data)
         except InvalidCommandType:
             if self.type is ApplicationCommandType.message:
-                await self.call_invoke_message(state, interaction)
+                await self.call_invoke_message(interaction)
             elif self.type is ApplicationCommandType.user:
-                await self.call_invoke_user(state, interaction)
+                await self.call_invoke_user(interaction)
             else:
                 raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
-    def _handle_resolved_message(self, message_data: dict):
+    def _handle_resolved_message(self, message_data: dict) -> Message:
         """Adds found message data and adds it to the internal cache.
 
         Parameters
         ----------
         message_data: :class:`dict`
             The resolved message payload to add to the internal cache.
+
+        Returns
+        -------
+        :class:`Message`
+            The Python representation of a Discord message.
         """
         # TODO: This is garbage, find a better way to add a Message to the cache.
         #  It's not that I'm unhappy adding things to the cache, it's having to manually do it like this.
@@ -584,25 +589,41 @@ class ApplicationCommand(ApplicationSubcommand):
         message = Message(channel=channel, data=message_data, state=self._state)
         if not self._state._get_message(message.id) and self._state._messages is not None:
             self._state._messages.append(message)
+        return message
 
-    async def call_invoke_message(self, state: ConnectionState, interaction: Interaction):
+    def _handle_resolved_user(self, user_data: dict) -> User:
+        """
+
+        Parameters
+        ----------
+        user_data: :class:`dict`
+            The resolved user payload to add to the internal cache.
+
+        Returns
+        -------
+        :class:`User`
+            Represents a Discord user.
+        """
+        return self._state.store_user(user_data)
+
+    async def call_invoke_message(self, interaction: Interaction):
         """Interprets the given interaction and invokes the callback as a Message Command."""
         # TODO: Look into function arguments being autoconverted and given? Arg typed "Channel" gets filled with the
         #  channel?
-        for message_data in interaction.data["resolved"]["messages"].values():
-            self._handle_resolved_message(message_data)
-        message = state._get_message(int(interaction.data["target_id"]))
+        # Is this kinda dumb? Yeah, but at this time it can only return one message.
+        message = self._handle_resolved_message(list(interaction.data["resolved"]["messages"].values())[0])
         await self.invoke_message(interaction, message)
 
-    async def call_invoke_user(self, state: ConnectionState, interaction: Interaction):
+    async def call_invoke_user(self, interaction: Interaction):
         """Interprets the given interaction and invokes the callback as a User Command."""
         # TODO: Look into function arguments being autoconverted and given? Arg typed "Channel" gets filled with the
         #  channel?
-        if interaction.guild:
-            member = interaction.guild.get_member(int(interaction.data["target_id"]))
+        # Is this kinda dumb? Yeah, but at this time it can only return one user.
+        user = self._handle_resolved_user(list(interaction.data["resolved"]["users"].values())[0])
+        if interaction.guild and (member := interaction.guild.get_member(user.id)):
+            await self.invoke_user(interaction, member)
         else:
-            member = state.get_user(int(interaction.data["target_id"]))
-        await self.invoke_user(interaction, member)
+            await self.invoke_user(interaction, user)
 
     async def invoke_message(self, interaction: Interaction, message: Message, **kwargs):
         """Invokes the callback with the given interaction, message, and kwargs as a Message Command."""
