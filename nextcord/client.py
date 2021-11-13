@@ -1708,40 +1708,7 @@ class Client:
             else:
                 self._application_command_signatures[signature] = app_cmd
 
-    async def on_ready(self):
-        self.register_all_cog_commands()
-        await self.perform_application_command_rollout(delete_unknown=self._rollout_delete_unknown,
-                                                       register_new=self._rollout_register_new)
-
-    async def perform_application_command_rollout(self, delete_unknown: bool = True, register_new: bool = True):
-        """Rolls out added Application Commands to Global and to all applicable Guilds.
-
-        Guilds that we don't have the``applications.commands`` scope for cannot be added to.
-        Multiple rollouts running at the same time are not supported and will raise an error.
-
-        Parameters
-        ----------
-        delete_unknown: :class:`bool`
-            Removes all Application Commands that are registered with Discord, but not the bot. Disable to prevent
-            commands from getting de-registered from Discord. Defaults to True.
-        register_new: :class:`bool`
-            Registers all Application Commands that are added to the bot, but not registered with Discord. Disable to
-            prevent new commands from getting added. Defaults to True.
-        """
-        if self._performing_application_command_rollout:
-            raise NotImplementedError("Multiple rollouts cannot be ran at the same time.")
-        else:
-            try:
-                self._performing_application_command_rollout = True
-                await self._perform_global_application_command_rollout(delete_unknown, register_new)
-                await self._perform_guild_application_command_rollout(delete_unknown, register_new)
-                _log.info("nextcord.client.Client: Successfully finished command rollout.")
-            except Exception as e:
-                raise e
-            finally:
-                self._performing_application_command_rollout = False
-
-    async def _perform_global_application_command_rollout(self, delete_unknown: bool, register_new: bool):
+    async def perform_application_command_rollout_to_global(self, delete_unknown: bool, register_new: bool):
         """Grabs Global commands, associates when it can, deletes unknowns when enabled, registers new when enabled."""
         raw_get_global_response = await self.http.get_global_commands(self.application_id)
         unregistered_global_commands = self._get_global_commands()
@@ -1767,43 +1734,44 @@ class Client:
                 self._registered_application_commands[response.id] = global_cmd
                 _log.info(f"nextcord.Client: Global {global_cmd.type} {global_cmd.name} newly registered with ID {response.id}")
 
-    async def _perform_guild_application_command_rollout(self, delete_unknown: bool, register_new: bool):
+    async def perform_application_command_rollout_to_guild(self, guild_id: int, delete_unknown: bool,
+                                                            register_new: bool):
         """Grabs Guild commands, associates when it can, ignores guilds without the OAuth, deletes unknowns when
         enabled, registers new when enabled."""
-        for guild in self.guilds:
-            unregistered_guild_commands = self._get_guild_commands()
-            try:
-                raw_get_guild_response = await self.http.get_guild_commands(self.application_id, guild.id)
-                for raw_response in raw_get_guild_response:
-                    response_signature = (raw_response["name"], int(raw_response["type"]), int(raw_response["guild_id"]))
-                    if app_cmd := self._application_command_signatures.get(response_signature):
-                        if app_cmd.check_against_raw_payload(raw_response, guild.id):
-                            unregistered_guild_commands[guild.id].remove(app_cmd)
-                            self._registered_application_commands[int(raw_response["id"])] = app_cmd
-                            app_cmd.raw_parse_result(self._connection, guild.id, int(raw_response["id"]))
-                            _log.info(f"nextcord.Client: Guild ({guild.id}) {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
-                        elif delete_unknown:
-                            await self.http.delete_guild_command(self.application_id, guild.id, raw_response["id"])
-                            _log.info(f"nextcord.Client: Guild ({guild.id}) {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
-                            _log.debug(f"nextcord.Client: Payload \n{app_cmd.get_guild_payload(guild.id)}\nvs\n{raw_response}")
+        _log.debug(f"nextcord.Client: Attempting to rollout commands to Guild {guild_id}")
+        unregistered_guild_commands = self._get_guild_commands()
+        try:
+            raw_get_guild_response = await self.http.get_guild_commands(self.application_id, guild_id)
+            for raw_response in raw_get_guild_response:
+                response_signature = (raw_response["name"], int(raw_response["type"]), int(raw_response["guild_id"]))
+                if app_cmd := self._application_command_signatures.get(response_signature):
+                    if app_cmd.check_against_raw_payload(raw_response, guild_id):
+                        unregistered_guild_commands[guild_id].remove(app_cmd)
+                        self._registered_application_commands[int(raw_response["id"])] = app_cmd
+                        app_cmd.raw_parse_result(self._connection, guild_id, int(raw_response["id"]))
+                        _log.info(
+                            f"nextcord.Client: Guild ({guild_id}) {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
                     elif delete_unknown:
-                        await self.http.delete_guild_command(self.application_id, guild.id, raw_response["id"])
-                        _log.info(f"nextcord.Client: Guild ({guild.id}) command with ID of {raw_response['id']} failed signature check, removed.")
-                if register_new:
-                    for guild_cmd in unregistered_guild_commands.get(guild.id, []):
-                        raw_response = await self.http.upsert_guild_command(self.application_id, guild.id,
-                                                                            guild_cmd.get_guild_payload(guild.id))
-                        response = ApplicationCommandResponse(self._connection, raw_response)
-                        guild_cmd.parse_response(response)
-                        self._registered_application_commands[response.id] = guild_cmd
-                        _log.info(f"nextcord.Client: Guild ({guild.id}) {guild_cmd.type} {guild_cmd.name} newly registered with ID {response.id}")
-            except Forbidden:
-                _log.warning(f"nextcord.Client: OAuth scope not enabled for guild {guild.id}, ignoring Forbidden error.")
-
-    @property
-    def performing_application_command_rollout(self) -> bool:
-        """Returns if an Application Command rollout is occurring"""
-        return self._performing_application_command_rollout
+                        await self.http.delete_guild_command(self.application_id, guild_id, raw_response["id"])
+                        _log.info(
+                            f"nextcord.Client: Guild ({guild_id}) {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
+                        _log.debug(
+                            f"nextcord.Client: Payload \n{app_cmd.get_guild_payload(guild_id)}\nvs\n{raw_response}")
+                elif delete_unknown:
+                    await self.http.delete_guild_command(self.application_id, guild_id, raw_response["id"])
+                    _log.info(
+                        f"nextcord.Client: Guild ({guild_id}) command with ID of {raw_response['id']} failed signature check, removed.")
+            if register_new:
+                for guild_cmd in unregistered_guild_commands.get(guild_id, []):
+                    raw_response = await self.http.upsert_guild_command(self.application_id, guild_id,
+                                                                        guild_cmd.get_guild_payload(guild_id))
+                    response = ApplicationCommandResponse(self._connection, raw_response)
+                    guild_cmd.parse_response(response)
+                    self._registered_application_commands[response.id] = guild_cmd
+                    _log.info(
+                        f"nextcord.Client: Guild ({guild_id}) {guild_cmd.type} {guild_cmd.name} newly registered with ID {response.id}")
+        except Forbidden:
+            _log.warning(f"nextcord.Client: OAuth scope not enabled for guild {guild_id}, ignoring Forbidden error.")
 
     def _get_global_commands(self) -> Set[ApplicationCommand]:
         ret = set()
@@ -1829,6 +1797,15 @@ class Client:
         # update/overwrite existing commands, which may (needs testing) wipe out all permissions associated with those
         # commands. Look for an opportunity to use bulk upsert.
         raise NotImplementedError
+
+    async def on_connect(self):
+        self.register_all_cog_commands()
+        await self.perform_application_command_rollout_to_global(self._rollout_delete_unknown,
+                                                                 self._rollout_register_new)
+
+    async def on_guild_available(self, guild: Guild):
+        await self.perform_application_command_rollout_to_guild(guild.id, self._rollout_delete_unknown,
+                                                                self._rollout_register_new)
 
     def register_all_cog_commands(self):
         for cog in self._client_cogs:
