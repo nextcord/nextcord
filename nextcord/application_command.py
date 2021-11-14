@@ -671,7 +671,7 @@ class ApplicationCommand(ApplicationSubcommand):
             ret.append(partial_payload)
         return ret
 
-    def get_guild_payload(self, guild_id: int) -> dict:
+    def get_guild_payload(self, guild_id: int) -> Optional[dict]:
         """Creates a payload specific to a guild.
 
         Parameters
@@ -681,11 +681,12 @@ class ApplicationCommand(ApplicationSubcommand):
 
         Returns
         -------
-        :class:`dict`
-            A Discord "Application Command Structure" payload specifically for a given Guild ID.
+        Optional[:class:`dict`]
+            A Discord "Application Command Structure" payload specifically for a given Guild ID. Returns None if the
+            guild ID specified isn't added.
         """
         if not self.is_guild or guild_id not in self.guild_ids:
-            raise NotImplementedError  # TODO: Make a proper error.
+            return None
         partial_payload = self._get_basic_application_payload()
         partial_payload["guild_id"] = guild_id
         return partial_payload

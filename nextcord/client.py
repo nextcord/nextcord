@@ -1698,7 +1698,9 @@ class Client:
     async def add_application_command(self, app_cmd: ApplicationCommand, register=False):
         self._internal_add_application_command(app_cmd)
         if register:
-            raise NotImplementedError  # TODO: Add single-command registration.
+            await self.register_application_command_to_global(app_cmd)
+            for guild_id in app_cmd.guild_ids:
+                await self.register_application_command_to_guild(app_cmd, guild_id)
 
     def _internal_add_application_command(self, app_cmd: ApplicationCommand):
         self._application_commands.add(app_cmd)
@@ -1728,14 +1730,10 @@ class Client:
                 _log.info(f"nextcord.Client: Global command with ID of {raw_response['id']} failed signature check, removed.")
         if register_new:
             for global_cmd in unregistered_global_commands:
-                raw_response = await self.http.upsert_global_command(self.application_id, global_cmd.global_payload)
-                response = ApplicationCommandResponse(self._connection, raw_response)
-                global_cmd.parse_response(response)
-                self._registered_application_commands[response.id] = global_cmd
-                _log.info(f"nextcord.Client: Global {global_cmd.type} {global_cmd.name} newly registered with ID {response.id}")
+                await self.register_application_command_to_global(global_cmd)
 
     async def perform_application_command_rollout_to_guild(self, guild_id: int, delete_unknown: bool,
-                                                            register_new: bool):
+                                                           register_new: bool):
         """Grabs Guild commands, associates when it can, ignores guilds without the OAuth, deletes unknowns when
         enabled, registers new when enabled."""
         _log.debug(f"nextcord.Client: Attempting to rollout commands to Guild {guild_id}")
@@ -1763,15 +1761,39 @@ class Client:
                         f"nextcord.Client: Guild ({guild_id}) command with ID of {raw_response['id']} failed signature check, removed.")
             if register_new:
                 for guild_cmd in unregistered_guild_commands.get(guild_id, []):
-                    raw_response = await self.http.upsert_guild_command(self.application_id, guild_id,
-                                                                        guild_cmd.get_guild_payload(guild_id))
-                    response = ApplicationCommandResponse(self._connection, raw_response)
-                    guild_cmd.parse_response(response)
-                    self._registered_application_commands[response.id] = guild_cmd
-                    _log.info(
-                        f"nextcord.Client: Guild ({guild_id}) {guild_cmd.type} {guild_cmd.name} newly registered with ID {response.id}")
+                    await self.register_application_command_to_guild(guild_cmd, guild_id)
         except Forbidden:
             _log.warning(f"nextcord.Client: OAuth scope not enabled for guild {guild_id}, ignoring Forbidden error.")
+
+    async def register_application_command_to_global(self, app_cmd: ApplicationCommand):
+        """Registers a single ApplicationCommand object as a global command with Discord."""
+        if app_cmd.is_global:
+            _log.debug("nextcord.Client: Attempting single global command registration.")
+            raw_response = await self.http.upsert_global_command(self.application_id, app_cmd.global_payload)
+            response = ApplicationCommandResponse(self._connection, raw_response)
+            app_cmd.parse_response(response)
+            self._registered_application_commands[response.id] = app_cmd
+            _log.info(f"nextcord.Client: Global {app_cmd.type} {app_cmd.name} newly single registered with ID "
+                      f"{response.id}")
+        else:
+            _log.debug("nextcord.Client: Ignoring single global command registration, not enabled for global.")
+
+    async def register_application_command_to_guild(self, app_cmd: ApplicationCommand, guild_id: int):
+        if app_cmd.is_guild:
+            if payload := app_cmd.get_guild_payload(guild_id):
+                _log.debug(f"nextcord.Client: Attempting single guidl command registration for {guild_id}")
+                raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
+                response = ApplicationCommandResponse(self._connection, raw_response)
+                app_cmd.parse_response(response)
+                self._registered_application_commands[response.id] = app_cmd
+                _log.info(f"nextcord.Client: Guild {app_cmd.type} {app_cmd.name} newly single registered for guild "
+                          f"{guild_id} with ID {response.id}")
+            else:
+                _log.debug(f"nextcord.Client: Ignoring single guild registration for {guild_id}, command not enabled for"
+                           f"that specific guild.")
+        else:
+            _log.debug(f"nextcord.Client: Ignoring single guild registration for {guild_id}, command not enabled for "
+                       f"guilds.")
 
     def _get_global_commands(self) -> Set[ApplicationCommand]:
         ret = set()
