@@ -22,8 +22,10 @@ jobs:
 
       - name: Install Python dependencies
         run: pip install black
-      
-      - name: Run Lints
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        git_name: "Tag Epics God | Linters"
-        run: python -m black ./
+
+      - name: Run linters
+        uses: wearerequired/lint-action@v1.10.0
+        with:
+          black: true
+          git_name: "Black"
+          check_name: "Used ${linter} In ${dir}"
