@@ -1,0 +1,29 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  run-linters:
+    name: Running Linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
+      - name: Install Python dependencies
+        run: pip install black
+      
+      - name: Run Lints
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        git_name: "Tag Epics God | Linters"
+        run: python -m black ./
