@@ -316,7 +316,9 @@ class CommandOption(SlashOption):
         # TODO: Figure out why pycharm is being a dingus about self.type.value being an unsolved attribute.
         # noinspection PyUnresolvedReferences
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
-        if self.required is not None:
+        # False is included in this because that's the default for Discord currently. Not putting in the required param
+        # when possible minimizes the payload size and makes checks between registered and found commands easier.
+        if self.required not in (None, False):
             ret["required"] = self.required
         if self.choices:
             ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]

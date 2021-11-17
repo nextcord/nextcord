@@ -1781,7 +1781,7 @@ class Client:
     async def register_application_command_to_guild(self, app_cmd: ApplicationCommand, guild_id: int):
         if app_cmd.is_guild:
             if payload := app_cmd.get_guild_payload(guild_id):
-                _log.debug(f"nextcord.Client: Attempting single guidl command registration for {guild_id}")
+                _log.debug(f"nextcord.Client: Attempting single guild command registration for {guild_id}")
                 raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
                 response = ApplicationCommandResponse(self._connection, raw_response)
                 app_cmd.parse_response(response)
