@@ -398,7 +398,11 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             self.after_invoke(after_invoke)
 
         # Attempt to bind to parent hooks if applicable
-        if not kwargs.get("inherit_hooks", False) or not self.parent:
+        if not kwargs.get("inherit_hooks", False):
+            return
+
+        # We should be binding hooks
+        if not self.parent:
             return
 
         inherited_before_invoke: Optional[Hook] = None
