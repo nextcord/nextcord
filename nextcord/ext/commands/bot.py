@@ -683,8 +683,8 @@ class BotBase(GroupMixin):
             elif not isinstance(extras, dict):
                 raise errors.ExtensionFailed(key, TypeError("Expected 'extras' to be a dictionary"))
 
+        extras = extras or {}
         try:
-            extras = extras or {}
             setup(self, **extras)
         except Exception as e:
             del sys.modules[key]
