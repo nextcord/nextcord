@@ -1675,7 +1675,9 @@ class Client:
         await self.process_application_commands(interaction)
 
     async def process_application_commands(self, interaction: Interaction):
-        """Reads the interaction and runs an Application Command as needed. Lazy loads if enabled."""
+        """|coro|
+
+        Reads the interaction and runs an Application Command as needed. Lazy loads if enabled."""
         if interaction.type is InteractionType.application_command:
             _log.info("nextcord.Client: Found an interaction command.")
             _log.debug(f"nextcord.Client: {self._registered_application_commands}")
@@ -1711,7 +1713,9 @@ class Client:
                 self._application_command_signatures[signature] = app_cmd
 
     async def perform_application_command_rollout_to_global(self, delete_unknown: bool, register_new: bool):
-        """Grabs Global commands, associates when it can, deletes unknowns when enabled, registers new when enabled."""
+        """|coro|
+
+        Grabs Global commands, associates when it can, deletes unknowns when enabled, registers new when enabled."""
         raw_get_global_response = await self.http.get_global_commands(self.application_id)
         unregistered_global_commands = self._get_global_commands()
         for raw_response in raw_get_global_response:
@@ -1734,7 +1738,9 @@ class Client:
 
     async def perform_application_command_rollout_to_guild(self, guild_id: int, delete_unknown: bool,
                                                            register_new: bool):
-        """Grabs Guild commands, associates when it can, ignores guilds without the OAuth, deletes unknowns when
+        """|coro|
+
+        Grabs Guild commands, associates when it can, ignores guilds without the OAuth, deletes unknowns when
         enabled, registers new when enabled."""
         _log.debug(f"nextcord.Client: Attempting to rollout commands to Guild {guild_id}")
         unregistered_guild_commands = self._get_guild_commands()
@@ -1766,7 +1772,9 @@ class Client:
             _log.warning(f"nextcord.Client: OAuth scope not enabled for guild {guild_id}, ignoring Forbidden error.")
 
     async def register_application_command_to_global(self, app_cmd: ApplicationCommand):
-        """Registers a single ApplicationCommand object as a global command with Discord."""
+        """|coro|
+
+        Registers a single ApplicationCommand object as a global command with Discord."""
         if app_cmd.is_global:
             _log.debug("nextcord.Client: Attempting single global command registration.")
             raw_response = await self.http.upsert_global_command(self.application_id, app_cmd.global_payload)

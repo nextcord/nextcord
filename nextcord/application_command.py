@@ -414,7 +414,9 @@ class ApplicationSubcommand:
         return self._callback
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
-        """Calls the callback, gathering and inserting kwargs into the callback as needed.
+        """|coro|
+
+        Calls the callback, gathering and inserting kwargs into the callback as needed.
         This must be able to call itself as subcommands may be subcommand groups, and thus have subcommands of their
         own.
 
@@ -441,7 +443,9 @@ class ApplicationSubcommand:
 
     async def call_invoke_slash(self, state: ConnectionState, interaction: Interaction,
                                 option_data: List[Dict[str, Any]]):
-        """This invokes the slash command implementation with the given raw option data to turn into proper kwargs for
+        """|coro|
+
+        This invokes the slash command implementation with the given raw option data to turn into proper kwargs for
         the callback.
 
         Parameters
@@ -470,7 +474,9 @@ class ApplicationSubcommand:
         await self.invoke_slash(interaction, **kwargs)
 
     async def invoke_slash(self, interaction: Interaction, **kwargs):
-        """Invokes the callback with the kwargs given."""
+        """|coro|
+
+        Invokes the callback with the kwargs given."""
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, **kwargs)
         else:
@@ -525,7 +531,9 @@ class ApplicationCommand(ApplicationSubcommand):
         self.raw_parse_result(response._state, response.guild_id, response.id)
 
     def raw_parse_result(self, state: ConnectionState, guild_id: Optional[int], command_id: int):
-        """Takes direct information and uses it. Use when getting a :class:`ApplicationCommandResponse` is unreasonable.
+        """|coro|
+
+        Takes direct information and uses it. Use when getting a :class:`ApplicationCommandResponse` is unreasonable.
 
         Parameters
         ----------
@@ -543,7 +551,9 @@ class ApplicationCommand(ApplicationSubcommand):
             self._global_id = command_id
 
     async def call_from_interaction(self, interaction: Interaction):
-        """Runs call using the held ConnectionState object and given interaction."""
+        """|coro|
+
+        Runs call using the held ConnectionState object and given interaction."""
         if not self._state:
             raise NotImplementedError("State hasn't been set yet, this isn't handled yet!")
         await self.call(self._state, interaction, interaction.data.get("options", {}))
@@ -551,15 +561,15 @@ class ApplicationCommand(ApplicationSubcommand):
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
         """|coro|
 
-            Calls the callback, gathering and inserting kwargs into the callback as needed.
-            This handles CommandTypes that subcommands cannot handle, such as Message or User commands.
+        Calls the callback, gathering and inserting kwargs into the callback as needed.
+        This handles CommandTypes that subcommands cannot handle, such as Message or User commands.
 
-            state: :class:`ConnectionState`
-                ConnectionState to fetch objects from cache.
-            interaction: :class:`Interaction`
-                Current Interaction object.
-            option_data: List[Dict[:class:`str`, Any]]
-                List of options, typically 'options' in the interaction data payload.
+        state: :class:`ConnectionState`
+            ConnectionState to fetch objects from cache.
+        interaction: :class:`Interaction`
+            Current Interaction object.
+        option_data: List[Dict[:class:`str`, Any]]
+            List of options, typically 'options' in the interaction data payload.
             """
         try:
             await super().call(state, interaction, option_data)
@@ -572,7 +582,7 @@ class ApplicationCommand(ApplicationSubcommand):
                 raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
     def _handle_resolved_message(self, message_data: dict) -> Message:
-        """Adds found message data and adds it to the internal cache.
+        """Adds found message data and adds it to the internal cache if needed.
 
         Parameters
         ----------
@@ -594,7 +604,7 @@ class ApplicationCommand(ApplicationSubcommand):
         return message
 
     def _handle_resolved_user(self, user_data: dict) -> User:
-        """
+        """Adds found user data and adds it to the internal cache if needed.
 
         Parameters
         ----------
@@ -609,7 +619,9 @@ class ApplicationCommand(ApplicationSubcommand):
         return self._state.store_user(user_data)
 
     async def call_invoke_message(self, interaction: Interaction):
-        """Interprets the given interaction and invokes the callback as a Message Command."""
+        """|coro|
+
+        Interprets the given interaction and invokes the callback as a Message Command."""
         # TODO: Look into function arguments being autoconverted and given? Arg typed "Channel" gets filled with the
         #  channel?
         # Is this kinda dumb? Yeah, but at this time it can only return one message.
@@ -617,7 +629,9 @@ class ApplicationCommand(ApplicationSubcommand):
         await self.invoke_message(interaction, message)
 
     async def call_invoke_user(self, interaction: Interaction):
-        """Interprets the given interaction and invokes the callback as a User Command."""
+        """|coro|
+
+        Interprets the given interaction and invokes the callback as a User Command."""
         # TODO: Look into function arguments being autoconverted and given? Arg typed "Channel" gets filled with the
         #  channel?
         # Is this kinda dumb? Yeah, but at this time it can only return one user.
@@ -628,14 +642,18 @@ class ApplicationCommand(ApplicationSubcommand):
             await self.invoke_user(interaction, user)
 
     async def invoke_message(self, interaction: Interaction, message: Message, **kwargs):
-        """Invokes the callback with the given interaction, message, and kwargs as a Message Command."""
+        """|coro|
+
+        Invokes the callback with the given interaction, message, and kwargs as a Message Command."""
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, message, **kwargs)
         else:
             await self.callback(interaction, message, **kwargs)
 
     async def invoke_user(self, interaction: Interaction, member: Union[Member, User], **kwargs):
-        """Invokes the callback with the given interaction, member/user, and kwargs as a User Command."""
+        """|coro|
+
+        Invokes the callback with the given interaction, member/user, and kwargs as a User Command."""
         if self.cog_parent:
             await self.callback(self.cog_parent, interaction, member, **kwargs)
         else:
