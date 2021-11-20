@@ -24,13 +24,14 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-import aiohttp
 import asyncio
 import logging
 import signal
 import sys
 import traceback
 from typing import Any, Callable, Coroutine, Dict, Generator, List, Optional, Sequence, Set, TYPE_CHECKING, Tuple, TypeVar, Union
+
+import aiohttp
 
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
@@ -1674,7 +1675,7 @@ class Client:
     async def on_interaction(self, interaction: Interaction):
         await self.process_application_commands(interaction)
 
-    async def process_application_commands(self, interaction: Interaction):
+    async def process_application_commands(self, interaction: Interaction) -> None:
         """|coro|
 
         Reads the interaction and runs an Application Command as needed. Lazy loads if enabled."""
@@ -1697,14 +1698,14 @@ class Client:
                         app_cmd.raw_parse_result(self._connection, interaction.guild_id, int(interaction.data["id"]))
                         await app_cmd.call_from_interaction(interaction)
 
-    async def add_application_command(self, app_cmd: ApplicationCommand, register=False):
+    async def add_application_command(self, app_cmd: ApplicationCommand, register=False) -> None:
         self._internal_add_application_command(app_cmd)
         if register:
             await self.register_application_command_to_global(app_cmd)
             for guild_id in app_cmd.guild_ids:
                 await self.register_application_command_to_guild(app_cmd, guild_id)
 
-    def _internal_add_application_command(self, app_cmd: ApplicationCommand):
+    def _internal_add_application_command(self, app_cmd: ApplicationCommand) -> None:
         self._application_commands.add(app_cmd)
         for signature in app_cmd.get_signatures():
             if signature in self._application_command_signatures:
@@ -1712,7 +1713,7 @@ class Client:
             else:
                 self._application_command_signatures[signature] = app_cmd
 
-    async def perform_application_command_rollout_to_global(self, delete_unknown: bool, register_new: bool):
+    async def perform_application_command_rollout_to_global(self, delete_unknown: bool, register_new: bool) -> None:
         """|coro|
 
         Grabs Global commands, associates when it can, deletes unknowns when enabled, registers new when enabled."""
@@ -1737,7 +1738,7 @@ class Client:
                 await self.register_application_command_to_global(global_cmd)
 
     async def perform_application_command_rollout_to_guild(self, guild_id: int, delete_unknown: bool,
-                                                           register_new: bool):
+                                                           register_new: bool) -> None:
         """|coro|
 
         Grabs Guild commands, associates when it can, ignores guilds without the OAuth, deletes unknowns when
@@ -1771,7 +1772,7 @@ class Client:
         except Forbidden:
             _log.warning(f"nextcord.Client: OAuth scope not enabled for guild {guild_id}, ignoring Forbidden error.")
 
-    async def register_application_command_to_global(self, app_cmd: ApplicationCommand):
+    async def register_application_command_to_global(self, app_cmd: ApplicationCommand) -> None:
         """|coro|
 
         Registers a single ApplicationCommand object as a global command with Discord."""
@@ -1786,7 +1787,7 @@ class Client:
         else:
             _log.debug("nextcord.Client: Ignoring single global command registration, not enabled for global.")
 
-    async def register_application_command_to_guild(self, app_cmd: ApplicationCommand, guild_id: int):
+    async def register_application_command_to_guild(self, app_cmd: ApplicationCommand, guild_id: int) -> None:
         if app_cmd.is_guild:
             if payload := app_cmd.get_guild_payload(guild_id):
                 _log.debug(f"nextcord.Client: Attempting single guild command registration for {guild_id}")
@@ -1820,7 +1821,7 @@ class Client:
                     ret[guild_id].add(command)
         return ret
 
-    async def register_bulk_application_commands(self):
+    async def register_bulk_application_commands(self) -> None:
         # TODO: Using Bulk upsert seems to delete all commands
         # It might be good to keep this around as a reminder for future work. Bulk upsert seem to delete everything
         # that isn't part of that bulk upsert, for both global and guild commands. While useful, this will
@@ -1828,12 +1829,12 @@ class Client:
         # commands. Look for an opportunity to use bulk upsert.
         raise NotImplementedError
 
-    async def on_connect(self):
+    async def on_connect(self) -> None:
         self.register_all_cog_commands()
         await self.perform_application_command_rollout_to_global(self._rollout_delete_unknown,
                                                                  self._rollout_register_new)
 
-    async def on_guild_available(self, guild: Guild):
+    async def on_guild_available(self, guild: Guild) -> None:
         await self.perform_application_command_rollout_to_guild(guild.id, self._rollout_delete_unknown,
                                                                 self._rollout_register_new)
 

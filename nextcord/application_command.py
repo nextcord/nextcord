@@ -1,7 +1,7 @@
 from __future__ import annotations
 import asyncio
 from inspect import signature, Parameter
-from typing import Any, Callable, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Type, Union
 
 from . import utils
 from .abc import GuildChannel
@@ -151,12 +151,12 @@ class ClientCog:
     __cog_application_commands__: Dict[int, ApplicationCommand]
     __cog_to_register__: List[ApplicationCommand]
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: List[Any], **kwargs: Dict[Any, Any]):
         new_cls = super(ClientCog, cls).__new__(cls)
         new_cls._read_methods()
         return new_cls
 
-    def _read_methods(self):
+    def _read_methods(self) -> None:
         self.__cog_to_register__ = []
         for base in reversed(self.__class__.__mro__):
             for elem, value in base.__dict__.items():
@@ -270,7 +270,7 @@ class CommandOption(SlashOption):
         else:
             raise NotImplementedError(f"Type \"{typing}\" isn't a supported typing for Application Commands.")
 
-    def verify(self):
+    def verify(self) -> None:
         """This should run through CmdArg variables and raise errors when conflicting data is given."""
         if self.channel_types and self.type is not ApplicationCommandOptionType.channel:
             raise ValueError("channel_types can only be given when the var is typed as nextcord.abc.GuildChannel")
@@ -294,11 +294,11 @@ class CommandOption(SlashOption):
             return state._get_message(int(argument))
         return argument
 
-    def handle_message_argument(self, *args):
+    def handle_message_argument(self, *args: List[Any]):
         """For possible future use, will handle arguments specific to Message Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
-    def handle_user_argument(self, *args):
+    def handle_user_argument(self, *args: List[Any]):
         """For possible future use, will handle arguments specific to User Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
@@ -375,7 +375,7 @@ class ApplicationSubcommand:
         self._analyze_content()
         self._analyze_callback()
 
-    def _analyze_content(self):
+    def _analyze_content(self) -> None:
         """This reads the content of itself and performs validation and changes to variables as needed."""
         if self._parent and self._parent.type is ApplicationCommandOptionType.sub_command_group and self.children:
             raise NotImplementedError("A subcommand can't have both subcommand parents and children! Discord does not"
@@ -391,7 +391,7 @@ class ApplicationSubcommand:
             if not self.description:
                 self.description = " "
 
-    def _analyze_callback(self):
+    def _analyze_callback(self) -> None:
         """This reads the callback, performs validation, and changes variables as needed."""
         if not self.name:
             self.name = self._callback.__name__
@@ -413,7 +413,7 @@ class ApplicationSubcommand:
     def callback(self) -> Callable:
         return self._callback
 
-    async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
+    async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
 
         Calls the callback, gathering and inserting kwargs into the callback as needed.
@@ -442,7 +442,7 @@ class ApplicationSubcommand:
             raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
     async def call_invoke_slash(self, state: ConnectionState, interaction: Interaction,
-                                option_data: List[Dict[str, Any]]):
+                                option_data: List[Dict[str, Any]]) -> None:
         """|coro|
 
         This invokes the slash command implementation with the given raw option data to turn into proper kwargs for
@@ -473,7 +473,7 @@ class ApplicationSubcommand:
             kwargs[uncalled_arg.functional_name] = uncalled_arg.default
         await self.invoke_slash(interaction, **kwargs)
 
-    async def invoke_slash(self, interaction: Interaction, **kwargs):
+    async def invoke_slash(self, interaction: Interaction, **kwargs: Dict[Any, Any]) -> None:
         """|coro|
 
         Invokes the callback with the kwargs given."""
@@ -499,7 +499,7 @@ class ApplicationSubcommand:
             ret["options"] = [argument.payload for argument in self.arguments.values()]
         return ret
 
-    def subcommand(self, **kwargs):
+    def subcommand(self, **kwargs: Dict[Any, Any]):
         """Creates a new subcommand off of this one."""
         def decorator(func: Callable):
             result = ApplicationSubcommand(func, self, ApplicationCommandOptionType.sub_command, **kwargs)
@@ -526,11 +526,11 @@ class ApplicationCommand(ApplicationSubcommand):
         self._global_id: Optional[int] = None
         self._guild_ids: Dict[int, int] = {}  # Guild ID is key, command ID is value.
 
-    def parse_response(self, response: ApplicationCommandResponse):
+    def parse_response(self, response: ApplicationCommandResponse) -> None:
         """Takes information from an :class:`ApplicationCommandResponse` and parses it for use."""
         self.raw_parse_result(response._state, response.guild_id, response.id)
 
-    def raw_parse_result(self, state: ConnectionState, guild_id: Optional[int], command_id: int):
+    def raw_parse_result(self, state: ConnectionState, guild_id: Optional[int], command_id: int) -> None:
         """|coro|
 
         Takes direct information and uses it. Use when getting a :class:`ApplicationCommandResponse` is unreasonable.
@@ -550,7 +550,7 @@ class ApplicationCommand(ApplicationSubcommand):
         else:
             self._global_id = command_id
 
-    async def call_from_interaction(self, interaction: Interaction):
+    async def call_from_interaction(self, interaction: Interaction) -> None:
         """|coro|
 
         Runs call using the held ConnectionState object and given interaction."""
@@ -558,7 +558,7 @@ class ApplicationCommand(ApplicationSubcommand):
             raise NotImplementedError("State hasn't been set yet, this isn't handled yet!")
         await self.call(self._state, interaction, interaction.data.get("options", {}))
 
-    async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]):
+    async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
 
         Calls the callback, gathering and inserting kwargs into the callback as needed.
@@ -618,7 +618,7 @@ class ApplicationCommand(ApplicationSubcommand):
         """
         return self._state.store_user(user_data)
 
-    async def call_invoke_message(self, interaction: Interaction):
+    async def call_invoke_message(self, interaction: Interaction) -> None:
         """|coro|
 
         Interprets the given interaction and invokes the callback as a Message Command."""
@@ -628,7 +628,7 @@ class ApplicationCommand(ApplicationSubcommand):
         message = self._handle_resolved_message(list(interaction.data["resolved"]["messages"].values())[0])
         await self.invoke_message(interaction, message)
 
-    async def call_invoke_user(self, interaction: Interaction):
+    async def call_invoke_user(self, interaction: Interaction) -> None:
         """|coro|
 
         Interprets the given interaction and invokes the callback as a User Command."""
@@ -641,7 +641,7 @@ class ApplicationCommand(ApplicationSubcommand):
         else:
             await self.invoke_user(interaction, user)
 
-    async def invoke_message(self, interaction: Interaction, message: Message, **kwargs):
+    async def invoke_message(self, interaction: Interaction, message: Message, **kwargs: Dict[Any, Any]) -> None:
         """|coro|
 
         Invokes the callback with the given interaction, message, and kwargs as a Message Command."""
@@ -650,7 +650,7 @@ class ApplicationCommand(ApplicationSubcommand):
         else:
             await self.callback(interaction, message, **kwargs)
 
-    async def invoke_user(self, interaction: Interaction, member: Union[Member, User], **kwargs):
+    async def invoke_user(self, interaction: Interaction, member: Union[Member, User], **kwargs: Dict[Any, Any]) -> None:
         """|coro|
 
         Invokes the callback with the given interaction, member/user, and kwargs as a User Command."""
@@ -839,7 +839,7 @@ class ApplicationCommand(ApplicationSubcommand):
             raise NotImplementedError
         return False
 
-    def subcommand(self, **kwargs):
+    def subcommand(self, **kwargs: Dict[Any, Any]):
         """Makes a function into a subcommand."""
         if self.type != ApplicationCommandType.chat_input:  # At this time, non-slash commands cannot have Subcommands.
             raise TypeError(f"{self.type} cannot have subcommands.")
@@ -852,7 +852,7 @@ class ApplicationCommand(ApplicationSubcommand):
             return decorator
 
 
-def slash_command(*args, **kwargs):
+def slash_command(*args: List[Any], **kwargs: Dict[Any, Any]):
     """Creates a Slash Application Command, used inside of a ClientCog."""
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
@@ -861,7 +861,7 @@ def slash_command(*args, **kwargs):
     return decorator
 
 
-def message_command(*args, **kwargs):
+def message_command(*args: List[Any], **kwargs: Dict[Any, Any]):
     """Creates a Message Application Command, used inside of a ClientCog."""
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
@@ -870,7 +870,7 @@ def message_command(*args, **kwargs):
     return decorator
 
 
-def user_command(*args, **kwargs):
+def user_command(*args: List[Any], **kwargs: Dict[Any, Any]):
     """Creates a User Application Command, used inside of a ClientCog."""
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
