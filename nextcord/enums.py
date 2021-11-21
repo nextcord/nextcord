@@ -598,6 +598,23 @@ class NSFWLevel(Enum, comparable=True):
     age_restricted = 3
 
 
+class EntityType(Enum):
+    stage_instance =  1
+    voice = 2
+    external = 3
+
+
+class EventPrivacyLevel(Enum):
+    guild_only = 2
+
+
+class EventStatus(Enum):
+    scheduled = 1
+    active = 2
+    completed = 3
+    canceled = 4
+
+
 T = TypeVar('T')
 
 
