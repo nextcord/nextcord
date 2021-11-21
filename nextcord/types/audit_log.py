@@ -25,8 +25,14 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import List, Literal, Optional, TypedDict, Union
-from .webhook import Webhook
-from .guild import MFALevel, VerificationLevel, ExplicitContentFilterLevel, DefaultMessageNotificationLevel
+
+from .channel import ChannelType, VideoQualityMode, PermissionOverwrite
+from .guild import (
+    MFALevel,
+    VerificationLevel,
+    ExplicitContentFilterLevel,
+    DefaultMessageNotificationLevel
+)
 from .integration import IntegrationExpireBehavior, PartialIntegration
 from .user import User
 from .snowflake import Snowflake
