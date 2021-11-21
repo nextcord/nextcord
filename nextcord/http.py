@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -1922,3 +1923,114 @@ class HTTPClient:
 
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
         return self.request(Route('GET', '/users/{user_id}', user_id=user_id))
+
+    def get_guild_events(self, guild_id: Snowflake, with_user_count: bool):
+        # TODO: RETURN TYPE
+        payload: Dict[str, bool] = {
+            'with_user_count': with_user_count
+        }
+        r = Route(
+            'GET',
+            '/guilds/{guild_id}/scheduled-events',
+            guild_id=guild_id
+        )
+        return self.request(r, json=payload)
+
+    def create_event(
+        self,
+        guild_id: Snowflake,
+        **payload: Any
+    ):  # TODO: ADD RETURN TYPE
+        valid_keys = {
+            'channel_id',
+            'entity_metadata'
+            'name',
+            'privacy_level',
+            'scheduled_start_time',
+            'scheduled_end_time',
+            'description',
+            'entity_type'
+        }
+        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        r = Route(
+            'POST',
+            '/guilds/{guild_id}/scheduled-events',
+            guild_id=guild_id
+        )
+        return self.request(r, json=payload)
+
+    def get_event(
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake,
+        with_user_count: bool
+    ):  # TODO: RETURN TYPE
+        payload: Dict[str, bool] = {
+            'with_user_count': with_user_count
+        }
+        r = Route(
+            'GET',
+            '/guilds/{guild_id}/scheduled-events/{event_id}',
+            guild_id=guild_id,
+            event_id=event_id
+        )
+        return self.request(r, json=payload)
+
+    def update_event(
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake,
+        **payload: Any
+    ):  # TODO: ADD RETURN TYPE
+        valid_keys = {
+            'channel_id',
+            'event_metadata',
+            'name',
+            'privacy_level',
+            'scheduled_start_time',
+            'scheduled_end_time',
+            'description',
+            'entity_type'
+        }
+        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        r = Route(
+            'PATCH',
+            '/guilds/{guild_id}/scheduled-events/{event_id}',
+            guild_id=guild_id,
+            event_id=event_id
+        )
+        return self.request(r, json=payload)
+
+    def delete_event(
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake
+    ) -> Response[None]:
+        r = Route(
+            'DELETE',
+            '/guilds/{guild_id}/scheduled-events/{event_id}',
+            guild_id=guild_id,
+            event_id=event_id
+        )
+        return self.request(r)
+
+    def get_event_users(
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake,
+        **payload
+    ):
+        valid_keys = {
+            'limit',
+            'with_member',
+            'before',
+            'after'
+        }
+        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        r = Route(
+            'GET',
+            '/guilds/{guild_id}/scheduled-events/{event_id}/users',
+            guild_id=guild_id,
+            event_id=event_id
+        )
+        return self.request(r, json=payload)
