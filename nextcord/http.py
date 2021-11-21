@@ -85,6 +85,7 @@ if TYPE_CHECKING:
         threads,
         voice,
         sticker,
+        scheduled_events
     )
     from .types.snowflake import Snowflake, SnowflakeList
 
@@ -1924,8 +1925,11 @@ class HTTPClient:
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
         return self.request(Route('GET', '/users/{user_id}', user_id=user_id))
 
-    def get_guild_events(self, guild_id: Snowflake, with_user_count: bool):
-        # TODO: RETURN TYPE
+    def get_guild_events(
+        self,
+        guild_id: Snowflake,
+        with_user_count: bool
+    ) -> Response[List[scheduled_events.ScheduledEvent]]:
         payload: Dict[str, bool] = {
             'with_user_count': with_user_count
         }
@@ -1940,7 +1944,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         **payload: Any
-    ):  # TODO: ADD RETURN TYPE
+    ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
             'channel_id',
             'entity_metadata'
@@ -1964,7 +1968,7 @@ class HTTPClient:
         guild_id: Snowflake,
         event_id: Snowflake,
         with_user_count: bool
-    ):  # TODO: RETURN TYPE
+    ) -> Response[scheduled_events.ScheduledEvent]:
         payload: Dict[str, bool] = {
             'with_user_count': with_user_count
         }
@@ -1981,7 +1985,7 @@ class HTTPClient:
         guild_id: Snowflake,
         event_id: Snowflake,
         **payload: Any
-    ):  # TODO: ADD RETURN TYPE
+    ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
             'channel_id',
             'event_metadata',
@@ -2019,7 +2023,7 @@ class HTTPClient:
         guild_id: Snowflake,
         event_id: Snowflake,
         **payload
-    ):
+    ) -> Response[List[scheduled_events.EventUser]]:
         valid_keys = {
             'limit',
             'with_member',
