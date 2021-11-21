@@ -21,6 +21,40 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-from typing import Literal
+
+from typing import Literal, TypedDict
+
+from .member import Member
+from .snowflake import Snowflake
+from .user import User
+
 
 EntityType = Literal[1, 2, 3]
+EventPrivacyLevel = Literal[2]
+EventStatus = Literal[1, 2, 3, 4]
+
+
+class EntityMetadata(TypedDict, total=False):
+    location: str
+
+
+class ScheduledEvent(TypedDict, total=False):
+    id: Snowflake
+    guild_id: Snowflake
+    channel_id: Snowflake
+    name: str
+    description: str
+    scheduled_start_time: str
+    scheduled_end_time: str
+    privacy_level: EventPrivacyLevel
+    status: EventStatus
+    entity_type: EntityType
+    entity_id: Snowflake
+    entity_metadata: EntityMetadata
+    creator: User
+    user_count: int
+
+class EventUser(TypedDict, total=False):
+    guild_scheduled_event_id: Snowflake
+    user: User
+    member: Member
