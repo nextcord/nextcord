@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -34,11 +35,12 @@ from .guild import (
     DefaultMessageNotificationLevel
 )
 from .integration import IntegrationExpireBehavior, PartialIntegration
-from .user import User
 from .snowflake import Snowflake
 from .role import Role
-from .channel import ChannelType, VideoQualityMode, PermissionOverwrite
+from .scheduled_events import EntityType
 from .threads import Thread
+from .user import User
+from .webhook import Webhook
 
 AuditLogEvent = Literal[
     1,
@@ -82,6 +84,9 @@ AuditLogEvent = Literal[
     90,
     91,
     92,
+    100,
+    101,
+    102,
     110,
     111,
     112,
@@ -144,16 +149,16 @@ class _AuditLogChange_Bool(TypedDict):
 class _AuditLogChange_Int(TypedDict):
     key: Literal[
         'afk_timeout',
-        'prune_delete_days',
-        'position',
-        'bitrate',
-        'rate_limit_per_user',
-        'color',
-        'max_uses',
-        'max_age',
-        'user_limit',
         'auto_archive_duration',
+        'bitrate',
+        'color',
         'default_auto_archive_duration',
+        'max_age',
+        'max_uses',
+        'position',
+        'prune_delete_days',
+        'rate_limit_per_user',
+        'user_limit',
     ]
     new_value: int
     old_value: int
@@ -211,6 +216,12 @@ class _AuditLogChange_Overwrites(TypedDict):
     key: Literal['permission_overwrites']
     new_value: List[PermissionOverwrite]
     old_value: List[PermissionOverwrite]
+
+
+class _AuditLogChange_EntityType(TypedDict):
+    key: Literal['entity_type']
+    new_value: EntityType
+    old_value: EntityType
 
 
 AuditLogChange = Union[
