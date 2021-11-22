@@ -86,7 +86,17 @@ class EventUser(Hashable):
     def _update(self, data: EventUserPayload) -> None:
         self.user: User = self._state.store_user(data['user'])
         if member := data.get('member'):
-            self.member: Optional[Member] = self._state.add_members([member])
+            if not self._state.member_cache_flags._empty:
+                try:
+                    self.member: Optional[Member] = self.guild.get_member(
+                        member['id']
+                    )
+                except KeyError:
+                    m = Member(data=member, guild=self.guild, state=self._state)
+                    self.member: Optional[Member] = m
+            else:
+                m = Member(data=member, guild=self.guild, state=self._state)
+                self.member: Optional[Member] = m
         else:
             self.member: Optional[Member] = None
 
