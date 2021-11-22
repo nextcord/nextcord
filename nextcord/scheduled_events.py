@@ -76,7 +76,7 @@ class ScheduledEvent(Hashable):
     ) -> None:
         self.guild: Guild = guild
         self._state: ConnectionState = state
-        self._from_data(data)
+        self._update(data)
 
     def _update(self, data: ScheduledEventPayload) -> None:
         self.id: int = int(data['id'])
@@ -109,3 +109,40 @@ class ScheduledEvent(Hashable):
 
     async def delete(self) -> None:
         await self._state.http.delete_event(self.guild.id, self.id)
+
+    async def edit(
+        self,
+        *,
+        channel: Optional[GuildChannel] = MISSING,
+        metadata: Optional[EntityMetadata] = MISSING,
+        name: str = MISSING,
+        privacy_level: Optional[PrivacyLevel] = MISSING,
+        start_time: Optional[datetime] = MISSING,
+        end_time: Optional[datetime] = MISSING,
+        description: str = MISSING,
+        type: Optional[EntityType] = MISSING,
+        status: Optional[EventStatus] = MISSING
+    ) -> ScheduledEvent:
+        payload: dict = {}
+        if channel is not MISSING:
+            payload['channel_id'] = channel.id
+        if metadata is not MISSING:
+            payload['entity_metadata'] = metadata.__dict__
+        if name is not MISSING:
+            payload['name'] = name
+        if privacy_level is not MISSING:
+            payload['privacy_level'] = privacy_level.value
+        if start_time is not MISSING:
+            payload['scheduled_start_time'] = start_time.toisoformat()
+        if end_time is not MISSING:
+            payload['scheduled_end_time'] = end_time.toisoformat()
+        if description is not MISSING:
+            payload['description'] = description
+        if type is not MISSING:
+            payload['type'] = type.value
+        if status is not MISSING:
+            payload['status'] = status.value
+        if not payload:
+            return self
+        data = self._state.http.edit_event(**payload)
+        return ScheduledEvent(guild=self.guild, state=self._state, data=data)
