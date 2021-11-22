@@ -2974,3 +2974,11 @@ class Guild(Hashable):
         with_users: bool = False
     ) -> ScheduledEventIterator:
         return ScheduledEventIterator(self, with_users=with_users)
+
+    async def fetch_event(
+        self,
+        id,
+        *,
+        with_users: bool = False
+    ) -> ScheduledEvent:
+        return self._state.http.get_event(self.id, id, with_users=with_users)
