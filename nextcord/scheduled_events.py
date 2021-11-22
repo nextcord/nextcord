@@ -100,7 +100,6 @@ class ScheduledEvent(Hashable):
         'end_time',
         'guild',
         'id',
-        'location',
         'metadata',
         'name',
         'privacy_level',
