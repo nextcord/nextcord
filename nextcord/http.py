@@ -1930,15 +1930,15 @@ class HTTPClient:
         guild_id: Snowflake,
         with_user_count: bool
     ) -> Response[List[scheduled_events.ScheduledEvent]]:
-        payload: Dict[str, bool] = {
-            'with_user_count': with_user_count
+        params: Dict[str, Any] = {
+            'with_user_count': str(with_user_count)
         }
         r = Route(
             'GET',
             '/guilds/{guild_id}/scheduled-events',
             guild_id=guild_id
         )
-        return self.request(r, json=payload)
+        return self.request(r, params=params)
 
     def create_event(
         self,
@@ -1969,8 +1969,8 @@ class HTTPClient:
         event_id: Snowflake,
         with_user_count: bool
     ) -> Response[scheduled_events.ScheduledEvent]:
-        payload: Dict[str, bool] = {
-            'with_user_count': with_user_count
+        params: Dict[str, Any] = {
+            'with_user_count': str(with_user_count)
         }
         r = Route(
             'GET',
@@ -1978,7 +1978,7 @@ class HTTPClient:
             guild_id=guild_id,
             event_id=event_id
         )
-        return self.request(r, json=payload)
+        return self.request(r, params=params)
 
     def edit_event(
         self,
@@ -2022,19 +2022,25 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         event_id: Snowflake,
-        **payload
+        *,
+        limit: int = MISSING,
+        with_member: bool = MISSING,
+        before: Snowflake = MISSING,
+        after: Snowflake = MISSING
     ) -> Response[List[scheduled_events.EventUser]]:
-        valid_keys = {
-            'limit',
-            'with_member',
-            'before',
-            'after'
-        }
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        params: Dict[str, Any] = {}
+        if limit is not MISSING:
+            params['limit'] = limit
+        if with_member is not MISSING:
+            params['with_member'] = str(with_member)
+        if before is not MISSING:
+            params['before'] = before
+        if after is not MISSING:
+            params['after'] = after
         r = Route(
             'GET',
             '/guilds/{guild_id}/scheduled-events/{event_id}/users',
             guild_id=guild_id,
             event_id=event_id
         )
-        return self.request(r, json=payload)
+        return self.request(r, params=params)
