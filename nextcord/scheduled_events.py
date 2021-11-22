@@ -133,9 +133,9 @@ class ScheduledEvent(Hashable):
         if privacy_level is not MISSING:
             payload['privacy_level'] = privacy_level.value
         if start_time is not MISSING:
-            payload['scheduled_start_time'] = start_time.toisoformat()
+            payload['scheduled_start_time'] = start_time.isoformat()
         if end_time is not MISSING:
-            payload['scheduled_end_time'] = end_time.toisoformat()
+            payload['scheduled_end_time'] = end_time.isoformat()
         if description is not MISSING:
             payload['description'] = description
         if type is not MISSING:
