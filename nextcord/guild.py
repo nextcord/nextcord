@@ -63,7 +63,10 @@ from .enums import (
     ContentFilter,
     NotificationLevel,
     NSFWLevel,
+    EntityType,
+    EventPrivacyLevel,
 )
+from .scheduled_events import EntityMetadata
 from .mixins import Hashable
 from .user import User
 from .invite import Invite
@@ -2981,4 +2984,36 @@ class Guild(Hashable):
         *,
         with_users: bool = False
     ) -> ScheduledEvent:
-        return self._state.http.get_event(self.id, id, with_users=with_users)
+        return await self._state.http.get_event(self.id, id, with_users=with_users)
+
+    async def create_event(
+        self,
+        *,
+        channel: abc.GuildChannel = MISSING,
+        metadata: EntityMetadata = MISSING,
+        name: str = MISSING,
+        privacy_level: EventPrivacyLevel = MISSING,
+        start_time: datetime.datetime = MISSING,
+        end_time: datetime.datetime = MISSING,
+        description: str = MISSING,
+        entity_type: EntityType = MISSING
+    ) -> ScheduledEvent:
+        payload: Dict[str, Any] = {}
+        if channel is not MISSING:
+            payload['channel_id'] = channel.id
+        if metadata is not MISSING:
+            payload['entity_metadata'] = metadata.__dict__
+        if name is not MISSING:
+            payload['name'] = name
+        if privacy_level is not MISSING:
+            payload['privacy_level'] = privacy_level.value
+        if start_time is not MISSING:
+            payload['scheduled_start_time'] = start_time.isoformat()
+        if end_time is not MISSING:
+            payload['scheduled_end_time'] = end_time.isoformat()
+        if description is not MISSING:
+            payload['description'] = description
+        if entity_type is not MISSING:
+            payload['entity_type'] = entity_type.value
+        data = self._state.http.create_event(self.id, **payload)
+        return ScheduledEvent(guild=self, state=self._state, data=data)
