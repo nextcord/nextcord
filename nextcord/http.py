@@ -1980,7 +1980,7 @@ class HTTPClient:
         )
         return self.request(r, json=payload)
 
-    def update_event(
+    def edit_event(
         self,
         guild_id: Snowflake,
         event_id: Snowflake,
