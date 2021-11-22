@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, Tuple, TYPE_CHECKING
 
-from .enums import PrivacyLevel
+from .enums import EventPrivacyLevel
 from .iterators import EventUserIterator
 from .mixins import Hashable
 from .types.snowflake import Snowflake
@@ -153,7 +153,7 @@ class ScheduledEvent(Hashable):
         channel: Optional[GuildChannel] = MISSING,
         metadata: Optional[EntityMetadata] = MISSING,
         name: str = MISSING,
-        privacy_level: Optional[PrivacyLevel] = MISSING,
+        privacy_level: Optional[EventPrivacyLevel] = MISSING,
         start_time: Optional[datetime] = MISSING,
         end_time: Optional[datetime] = MISSING,
         description: str = MISSING,

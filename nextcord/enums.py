@@ -56,6 +56,9 @@ __all__ = (
     'InteractionType',
     'InteractionResponseType',
     'NSFWLevel',
+    'EntityType',
+    'EventPrivacyLevel',
+    'EventStatus',
 )
 
 
