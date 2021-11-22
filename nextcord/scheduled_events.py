@@ -139,8 +139,9 @@ class ScheduledEvent(Hashable):
         return self.name
 
     def __repr__(self) -> str:
-        value = ' '.join(f'{attr}={getattr(self, attr)!r}' for attr in self.__slots__)
-        return f'<{self.__class__.__name__} {value}>'
+        return f'<ScheduledEvent name={self.name} id={self.id} guild={self.guild!r}\
+             description={self.description} start_time={self.start_time!r}\
+                 end_time={self.end_time!r}>'
 
     @property
     def location(self) -> str:
