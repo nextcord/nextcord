@@ -2968,5 +2968,9 @@ class Guild(Hashable):
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
-    async def fetch_events(self, *, with_users: bool = False) -> List[ScheduledEvent]:
+    async def fetch_events(
+        self,
+        *,
+        with_users: bool = False
+    ) -> ScheduledEventIterator:
         return ScheduledEventIterator(self, with_users=with_users)
