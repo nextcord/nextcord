@@ -27,13 +27,14 @@ from __future__ import annotations
 from typing import Any, Optional, Tuple, TYPE_CHECKING
 
 from .enums import PrivacyLevel
-from .errors import InvalidArgument
+from .iterators import EventUserIterator
 from .mixins import Hashable
-from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
+from .types.snowflake import Snowflake
 from .utils import MISSING, parse_time
 
 __all__: Tuple[str] = (
     'EntityMetadata',
+    'EventUser',
     'ScheduledEvent'
 )
 
@@ -43,15 +44,51 @@ if TYPE_CHECKING:
     from .abc import GuildChannel
     from .enums import EventStatus, EntityType
     from .guild import Guild
+    from .member import Member
     from .state import ConnectionState
+    from .types.scheduled_events import (
+        ScheduledEvent as ScheduledEventPayload,
+        EventUser as EventUserPayload
+    )
     from .user import User
 
 
 class EntityMetadata:
+    __slots__: Tuple[str] = (
+        'location'
+    )
+
     def __init__(self, *, location: Optional[str] = None, **kwargs: Any) -> None:
         self.location: Optional[str] = location
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+
+class EventUser(Hashable):
+    __slots__: Tuple[str] = (
+        'event',
+        'user',
+        'member'
+    )
+
+    def __init__(
+        self,
+        *,
+        event: ScheduledEvent,
+        state: ConnectionState,
+        data: EventUserPayload
+    ) -> None:
+        self.event = event
+        self._state = state
+
+        self._update(data)
+
+    def _update(self, data: EventUserPayload) -> None:
+        self.user: User = self._state.store_user(data['user'])
+        if member := data.get('member'):
+            self.member: Optional[Member] = self._state.add_members([member])
+        else:
+            self.member: Optional[Member] = None
 
 
 class ScheduledEvent(Hashable):
@@ -146,3 +183,20 @@ class ScheduledEvent(Hashable):
             return self
         data = self._state.http.edit_event(**payload)
         return ScheduledEvent(guild=self.guild, state=self._state, data=data)
+
+    async def fetch_users(
+        self,
+        *,
+        limit: int = 100,
+        with_member: bool = False,
+        before: Snowflake = None,
+        after: Snowflake = None
+    ) -> EventUserIterator:
+        return EventUserIterator(
+            self.guild,
+            self,
+            limit=limit,
+            with_member=with_member,
+            before=before,
+            after=after
+        )
