@@ -56,7 +56,7 @@ class EntityMetadata:
             if k not in valid_keys:
                 raise InvalidArgument(f'Invalid key: {k}')
             else:
-                setattr(self, k, v)
+            setattr(self, k, v)
 
 
 class ScheduledEvent(Hashable):
