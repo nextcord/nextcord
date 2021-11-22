@@ -101,6 +101,7 @@ class ScheduledEvent(Hashable):
         'guild',
         'id',
         'location',
+        'metadata',
         'name',
         'privacy_level',
         'start_time',
@@ -125,7 +126,9 @@ class ScheduledEvent(Hashable):
         self.description: str = data.get('description', '')
         self.start_time: datetime = parse_time(data['scheduled_start_time'])
         self.end_time: Optional[datetime] = parse_time(data['scheduled_end_time'])
-        self.privacy_level: PrivacyLevel = PrivacyLevel(data['privacy_level'])
+        self.privacy_level: EventPrivacyLevel = EventPrivacyLevel(
+            data['privacy_level']
+        )
         self.metadata: EntityMetadata = EntityMetadata(**data.get('metadata', {}))
         self.user_count: int = data.get('user_count', 0)
         self.channel: Optional[GuildChannel] = self._state.get_channel(
