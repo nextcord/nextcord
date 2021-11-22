@@ -45,6 +45,9 @@ if TYPE_CHECKING:
     from .types.audit_log import (
         AuditLog as AuditLogPayload,
     )
+    from .types.scheduled_events import (
+        ScheduledEvent as ScheduledEventPayload,
+    )
     from .types.guild import (
         Guild as GuildPayload,
     )
@@ -59,6 +62,7 @@ if TYPE_CHECKING:
         Thread as ThreadPayload,
     )
 
+    from .scheduled_events import ScheduledEvent
     from .member import Member
     from .user import User
     from .message import Message
@@ -751,3 +755,36 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
     def create_thread(self, data: ThreadPayload) -> Thread:
         from .threads import Thread
         return Thread(guild=self.guild, state=self.guild._state, data=data)
+
+
+class ScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
+    def __init__(self, guild, with_users=False):
+        self.guild = guild
+        self.with_users = with_users
+
+        self.state = self.guild._state
+        self.get_guild_events = self.state.http.get_guild_events
+        self.queue = asyncio.Queue()
+
+    async def next(self) -> Member:
+        if self.queue.empty():
+            await self.fill_queue()
+
+        try:
+            return self.queue.get_nowait()
+        except asyncio.QueueEmpty:
+            raise NoMoreItems()
+
+    async def fill_queue(self):
+        data = await self.get_guild_events(self.guild.id, self.with_users)
+        if not data:
+            # no data, terminate
+            return
+
+        for element in reversed(data):
+             await self.queue.put(self.create_event(element))
+
+    def create_event(self, data):
+        from .scheduled_events import ScheduledEvent
+
+        return ScheduledEvent(data=data, guild=self.guild, state=self.state)

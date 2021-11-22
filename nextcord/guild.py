@@ -67,11 +67,12 @@ from .enums import (
 from .mixins import Hashable
 from .user import User
 from .invite import Invite
-from .iterators import AuditLogIterator, MemberIterator
+from .iterators import AuditLogIterator, MemberIterator, ScheduledEventIterator
 from .widget import Widget
 from .asset import Asset
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
+from .scheduled_events import ScheduledEvent
 from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
@@ -2966,3 +2967,6 @@ class Guild(Hashable):
         ws = self._state._get_websocket(self.id)
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
+
+    async def fetch_events(self, *, with_users: bool = False) -> List[ScheduledEvent]:
+        return ScheduledEventIterator(self, with_users=with_users)
