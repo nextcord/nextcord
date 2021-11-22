@@ -48,14 +48,9 @@ if TYPE_CHECKING:
 
 
 class EntityMetadata:
-    def __init__(self, **kwargs) -> None:
-        valid_keys = {
-            'location'
-        }
+    def __init__(self, *, location: Optional[str] = None, **kwargs: Any) -> None:
+        self.location: Optional[str] = location
         for k, v in kwargs.items():
-            if k not in valid_keys:
-                raise InvalidArgument(f'Invalid key: {k}')
-            else:
             setattr(self, k, v)
 
 
