@@ -1428,7 +1428,7 @@ class ConnectionState:
                 self.dispatch('guild_scheduled_event_update', old, event)
             else:
               _log.debug('GUILD_SCHEDULED_EVENT_UPDATE referencing unknown event '
-                        'ID: %s. Discarding.', data['id'])
+                         'ID: %s. Discarding.', data['id'])
         else:
             _log.debug('GUILD_SCHEDULED_EVENT_UPDATE referencing unknown guild '
                        'ID: %s. Discarding.', data['guild_id'])
