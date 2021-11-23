@@ -595,7 +595,7 @@ class Guild(Hashable):
 
     @property
     def scheduled_events(self) -> List[ScheduledEvent]:
-        return self._scheduled_events
+        return list(self._scheduled_events.values())
 
     def by_category(self) -> List[ByCategoryItem]:
         """Returns every :class:`CategoryChannel` and their associated channels.

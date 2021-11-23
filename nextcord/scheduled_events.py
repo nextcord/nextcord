@@ -182,7 +182,7 @@ class ScheduledEvent(Hashable):
         return self.metadata.location
 
     @property  # TODO: mention in docs its not accurate until fetch users
-    def users(self) -> ScheduledEventUser:
+    def users(self) -> List[ScheduledEventUser]:
         return list(self._users.values())
  
     async def delete(self) -> None:
