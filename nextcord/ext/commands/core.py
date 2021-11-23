@@ -282,9 +282,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         will inherit all checks, pre_invoke and after_invoke's defined on the the :class:`Group`
 
         .. note::
-            You can define a ``pre_invoke`` or ``after_invoke`` on this
-            command in conjunction with ``inherit_hooks=True``, however
-            it will override the parent hook if applicable
+            Any ``pre_invoke`` or ``after_invoke``'s defined on this will override parent ones.
 
         .. versionadded:: 2.0.0
     """
