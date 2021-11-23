@@ -142,7 +142,7 @@ class ScheduledEvent(Hashable):
         self.metadata: EntityMetadata = EntityMetadata(**data.get('metadata', {}))
         self.user_count: int = data.get('user_count', 0)
         self.channel: Optional[GuildChannel] = self._state.get_channel(
-            int(data.get('channel_id'))
+            int(data.get('channel_id', 0))
         )
         self.channel_id: Optional[int] = data.get('channel_id')
         self._users: Dict[int, ScheduledEventUser] = {}
