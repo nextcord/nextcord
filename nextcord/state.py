@@ -61,6 +61,7 @@ from .sticker import GuildSticker
 
 if TYPE_CHECKING:
     from .abc import PrivateChannel
+    from .scheduled_events import ScheduledEvent
     from .message import MessageableChannel
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
@@ -70,6 +71,7 @@ if TYPE_CHECKING:
 
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
+    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.user import User as UserPayload
     from .types.emoji import Emoji as EmojiPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
@@ -1404,6 +1406,44 @@ class ConnectionState:
         self, *, channel: Union[TextChannel, Thread, DMChannel, GroupChannel, PartialMessageable], data: MessagePayload
     ) -> Message:
         return Message(state=self, channel=channel, data=data)
+
+    def create_scheduled_event(
+        self, *, guild: Guild, data: ScheduledEventPayload
+    ) -> ScheduledEvent:
+        return ScheduledEvent(state=self, guild=guild, data=data)
+
+    def parse_guild_scheduled_event_create(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            event = self.create_scheduled_event(guild=guild, data=data)
+            self.dispatch('guild_scheduled_event_create', event)
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_CREATE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_update(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_event(data['id']):
+                old = copy.copy(event)
+                event._update(data)
+                self.dispatch('guild_scheduled_event_update', old, event)
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_UPDATE referencing unknown event '
+                        'ID: %s. Discarding.', data['id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_UPDATE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_delete(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_event(data['id']):
+                guild._remove_event(event.id)
+                self.dispatch('guild_scheduled_event_delete', event)
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown event '
+                        'ID: %s. Discarding.', data['id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
 
 
 class AutoShardedConnectionState(ConnectionState):

@@ -225,6 +225,9 @@ class ScheduledEvent(Hashable):
         data = self._state.http.edit_event(**payload)
         return ScheduledEvent(guild=self.guild, state=self._state, data=data)
 
+    def get_user(self, id: int) -> ScheduledEventUser:
+        return self._users.get(id)
+
     async def fetch_users(
         self,
         *,
