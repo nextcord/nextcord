@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from .abc import GuildChannel
-    from .enums import EventStatus, EntityType
+    from .enums import ScheduledEventStatus, EntityType
     from .guild import Guild
     from .member import Member
     from .state import ConnectionState
@@ -135,7 +135,7 @@ class ScheduledEvent(Hashable):
         self.description: str = data.get('description', '')
         self.start_time: datetime = parse_time(data['scheduled_start_time'])
         self.end_time: Optional[datetime] = parse_time(data['scheduled_end_time'])
-        self.privacy_level: EventPrivacyLevel = EventPrivacyLevel(
+        self.privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel(
             data['privacy_level']
         )
         self.metadata: EntityMetadata = EntityMetadata(**data.get('metadata', {}))
@@ -166,12 +166,12 @@ class ScheduledEvent(Hashable):
         channel: Optional[GuildChannel] = MISSING,
         metadata: Optional[EntityMetadata] = MISSING,
         name: str = MISSING,
-        privacy_level: Optional[EventPrivacyLevel] = MISSING,
+        privacy_level: Optional[ScheduledEventPrivacyLevel] = MISSING,
         start_time: Optional[datetime] = MISSING,
         end_time: Optional[datetime] = MISSING,
         description: str = MISSING,
         type: Optional[EntityType] = MISSING,
-        status: Optional[EventStatus] = MISSING
+        status: Optional[ScheduledEventStatus] = MISSING
     ) -> ScheduledEvent:
         payload: dict = {}
         if channel is not MISSING:
