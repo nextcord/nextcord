@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
@@ -115,7 +115,8 @@ class ScheduledEvent(Hashable):
         'privacy_level',
         'start_time',
         'user_count',
-        '_state'
+        '_state',
+        '_users',
     )
 
     def __init__(
@@ -144,19 +145,46 @@ class ScheduledEvent(Hashable):
             int(data.get('channel_id'))
         )
         self.channel_id: Optional[int] = data.get('channel_id')
+        self._users: Dict[int, ScheduledEventUser] = {}
+        self._update_users(data.get('users', []))
+
+    def _update_users(self, data: List[ScheduledEventUserPayload]) -> None:
+        for user in data:
+            self._users[user['user']['id']] = ScheduledEventUser(
+                event=self, state=self._state, data=user
+            )
+
+    def _update_user(self, data: ScheduledEventUserPayload) -> ScheduledEventUser:
+        if user := self._users.get(data['user']['id']):
+            user._update(data)
+        else:
+            user = ScheduledEventUser(event=self, state=self._state, data=data)
+            self._users[user.user.id] = user
+        return user
 
     def __str__(self) -> str:
         return self.name
 
     def __repr__(self) -> str:
-        return f'<ScheduledEvent name={self.name} id={self.id} guild={self.guild!r}\
-             description={self.description} start_time={self.start_time!r}\
-                 end_time={self.end_time!r}>'
+        attrs: List[Tuple[str, Any]] = [
+            ('id', self.id),
+            ('name', self.name),
+            ('guild_id', self.guild),
+            ('description', self.description)
+            ('start_time', self.start_time),
+            ('end_time', self.end_time),
+        ]
+        joined = ' '.join('%s=%r' % t for t in attrs)
+        return f'<{self.__class__.__name__} {joined}>'
 
     @property
     def location(self) -> str:
         return self.metadata.location
 
+    @property  # TODO: mention in docs its not accurate until fetch users
+    def users(self) -> ScheduledEventUser:
+        return list(self._users.values())
+ 
     async def delete(self) -> None:
         await self._state.http.delete_event(self.guild.id, self.id)
 

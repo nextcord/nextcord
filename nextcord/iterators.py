@@ -756,8 +756,8 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
         return Thread(guild=self.guild, state=self.guild._state, data=data)
 
 
-class ScheduledScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
-    def __init__(self, guild, with_users=False):
+class ScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
+    def __init__(self, guild: Guild, with_users: bool = False):
         self.guild = guild
         self.with_users = with_users
 
@@ -784,20 +784,18 @@ class ScheduledScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
              await self.queue.put(self.create_event(element))
 
     def create_event(self, data):
-        from .scheduled_events import ScheduledEvent
-
-        return ScheduledEvent(data=data, guild=self.guild, state=self.state)
+        return self.guild._store_event(data)
 
 
 class ScheduledEventUserIterator(_AsyncIterator['ScheduledEventUser']):
     def __init__(
         self,
-        guild,
-        event,
-        limit=100,
-        with_member=False,
-        before=None,
-        after=None
+        guild: Guild,
+        event: ScheduledEvent,
+        limit: int = 100,
+        with_member: bool = False,
+        before: Snowflake = None,
+        after: Snowflake = None
     ):
         self.guild = guild
         self.event = event
@@ -826,9 +824,9 @@ class ScheduledEventUserIterator(_AsyncIterator['ScheduledEventUser']):
             return
 
         for element in reversed(data):
-             await self.queue.put(self.create_user(element))
+            await self.queue.put(self.create_user(element))
 
     def create_user(self, data):
-        from .scheduled_events import ScheduledEventUser
-
-        return ScheduledEventUser(data=data, guild=self.guild, state=self.state)
+        return self.event._update_user(
+            data=data, guild=self.guild, state=self.state
+        )

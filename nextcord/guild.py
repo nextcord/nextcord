@@ -279,6 +279,7 @@ class Guild(Hashable):
         '_public_updates_channel_id',
         '_stage_instances',
         '_threads',
+        '_events',
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -292,6 +293,7 @@ class Guild(Hashable):
     def __init__(self, *, data: GuildPayload, state: ConnectionState):
         self._channels: Dict[int, GuildChannel] = {}
         self._members: Dict[int, Member] = {}
+        self._events: Dict[int, ScheduledEvent] = {}
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
         self._state: ConnectionState = state
@@ -336,6 +338,17 @@ class Guild(Hashable):
         for k in to_remove:
             del self._threads[k]
         return to_remove
+
+    def _add_event(self, event: ScheduledEvent) -> None:
+        self._events[event.id] = event
+
+    def _remove_event(self, event: Snowflake) -> None:
+        self._events.pop(event.id, None)
+
+    def _store_event(self, payload: ScheduledEventPayload) -> ScheduledEvent:
+        event = ScheduledEvent(guild=self, state=self._state, data=payload)
+        self._events[event.id] = event
+        return event
 
     def __str__(self) -> str:
         return self.name or ''
@@ -467,6 +480,9 @@ class Guild(Hashable):
 
         for obj in guild.get('voice_states', []):
             self._update_voice_state(obj, int(obj['channel_id']))
+
+        for event in guild.get('guild_scheduled_events', []):
+            self._add_event(event)
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
@@ -2993,7 +3009,7 @@ class Guild(Hashable):
         channel: abc.GuildChannel = MISSING,
         metadata: EntityMetadata = MISSING,
         name: str = MISSING,
-        privacy_level: EventPrivacyLevel = MISSING,
+        privacy_level: ScheduledEventPrivacyLevel = MISSING,
         start_time: datetime.datetime = MISSING,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
@@ -3017,4 +3033,4 @@ class Guild(Hashable):
         if entity_type is not MISSING:
             payload['entity_type'] = entity_type.value
         data = self._state.http.create_event(self.id, **payload)
-        return ScheduledEvent(guild=self, state=self._state, data=data)
+        return self._store_event(data)
