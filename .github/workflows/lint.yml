@@ -1,31 +1,16 @@
 name: Lint
 
-on:
-  push:
-    branches:
-      - master
-  pull_request:
+on: [push, pull_request]
 
 jobs:
-  run-linters:
-    name: Running Linter
+  lint:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v2
-
-      - name: Set up Python
-        uses: actions/setup-python@v1
+      - uses: actions/checkout@v2
         with:
-          python-version: 3.8
-
-      - name: Install Python dependencies
-        run: pip install black
-
-      - name: Run linters
-        uses: wearerequired/lint-action@v1.10.0
+          fetch-depth: 0
+      - uses: akaihola/darker@1.4.0
         with:
-          black: true
-          git_name: "Black"
-          check_name: "Used ${linter} In ${dir}"
+         options: "--check --verbose"
+         src: "./nextcord"
+         version: "1.3.2"
