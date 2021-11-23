@@ -171,8 +171,8 @@ class ScheduledEvent(Hashable):
             ('name', self.name),
             ('guild_id', self.guild),
             ('description', self.description),
-            ('start_time', self.start_time),
-            ('end_time', self.end_time),
+            ('start_time', str(self.start_time)),
+            ('end_time', str(self.end_time)),
         ]
         joined = ' '.join('%s=%r' % t for t in attrs)
         return f'<{self.__class__.__name__} {joined}>'
