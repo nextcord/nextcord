@@ -64,7 +64,7 @@ from .enums import (
     NotificationLevel,
     NSFWLevel,
     EntityType,
-    EventPrivacyLevel,
+    ScheduledEventPrivacyLevel,
 )
 from .scheduled_events import EntityMetadata
 from .mixins import Hashable
@@ -90,6 +90,7 @@ MISSING = utils.MISSING
 
 if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
+    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
     from .types.threads import (
         Thread as ThreadPayload,
@@ -2971,14 +2972,14 @@ class Guild(Hashable):
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
-    async def fetch_events(
+    async def fetch_scheduled_events(
         self,
         *,
         with_users: bool = False
     ) -> ScheduledEventIterator:
         return ScheduledEventIterator(self, with_users=with_users)
 
-    async def fetch_event(
+    async def fetch_scheduled_event(
         self,
         id,
         *,
@@ -2986,7 +2987,7 @@ class Guild(Hashable):
     ) -> ScheduledEvent:
         return await self._state.http.get_event(self.id, id, with_users=with_users)
 
-    async def create_event(
+    async def create_scheduled_event(
         self,
         *,
         channel: abc.GuildChannel = MISSING,

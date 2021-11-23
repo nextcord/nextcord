@@ -57,8 +57,8 @@ __all__ = (
     'InteractionResponseType',
     'NSFWLevel',
     'EntityType',
-    'EventPrivacyLevel',
-    'EventStatus',
+    'ScheduledEventPrivacyLevel',
+    'ScheduledEventStatus',
 )
 
 
@@ -607,11 +607,11 @@ class EntityType(Enum):
     external = 3
 
 
-class EventPrivacyLevel(Enum):
+class ScheduledEventPrivacyLevel(Enum):
     guild_only = 2
 
 
-class EventStatus(Enum):
+class ScheduledEventStatus(Enum):
     scheduled = 1
     active = 2
     completed = 3

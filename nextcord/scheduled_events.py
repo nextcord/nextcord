@@ -26,15 +26,15 @@ from __future__ import annotations
 
 from typing import Any, Optional, Tuple, TYPE_CHECKING
 
-from .enums import EventPrivacyLevel
-from .iterators import EventUserIterator
+from .enums import ScheduledEventPrivacyLevel
+from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
 from .types.snowflake import Snowflake
 from .utils import MISSING, parse_time
 
 __all__: Tuple[str] = (
     'EntityMetadata',
-    'EventUser',
+    'ScheduledEventUser',
     'ScheduledEvent'
 )
 
@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.scheduled_events import (
         ScheduledEvent as ScheduledEventPayload,
-        EventUser as EventUserPayload
+        ScheduledEventUser as ScheduledEventUserPayload
     )
     from .user import User
 
@@ -64,7 +64,7 @@ class EntityMetadata:
             setattr(self, k, v)
 
 
-class EventUser(Hashable):
+class ScheduledEventUser(Hashable):
     __slots__: Tuple[str] = (
         'event',
         'user',
@@ -76,14 +76,14 @@ class EventUser(Hashable):
         *,
         event: ScheduledEvent,
         state: ConnectionState,
-        data: EventUserPayload
+        data: ScheduledEventUserPayload
     ) -> None:
         self.event = event
         self._state = state
 
         self._update(data)
 
-    def _update(self, data: EventUserPayload) -> None:
+    def _update(self, data: ScheduledEventUserPayload) -> None:
         self.user: User = self._state.store_user(data['user'])
         if member := data.get('member'):
             if not self._state.member_cache_flags._empty:
@@ -204,8 +204,8 @@ class ScheduledEvent(Hashable):
         with_member: bool = False,
         before: Snowflake = None,
         after: Snowflake = None
-    ) -> EventUserIterator:
-        return EventUserIterator(
+    ) -> ScheduledEventUserIterator:
+        return ScheduledEventUserIterator(
             self.guild,
             self,
             limit=limit,

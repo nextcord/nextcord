@@ -40,7 +40,7 @@ __all__ = (
     'GuildIterator',
     'MemberIterator',
     'ScheduledEventIterator',
-    'EventUserIterator',
+    'ScheduledEventUserIterator',
 )
 
 if TYPE_CHECKING:
@@ -61,7 +61,7 @@ if TYPE_CHECKING:
         Thread as ThreadPayload,
     )
 
-    from .scheduled_events import ScheduledEvent, EventUser
+    from .scheduled_events import ScheduledEvent, ScheduledEventUser
     from .member import Member
     from .user import User
     from .message import Message
@@ -756,7 +756,7 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
         return Thread(guild=self.guild, state=self.guild._state, data=data)
 
 
-class ScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
+class ScheduledScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
     def __init__(self, guild, with_users=False):
         self.guild = guild
         self.with_users = with_users
@@ -789,7 +789,7 @@ class ScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
         return ScheduledEvent(data=data, guild=self.guild, state=self.state)
 
 
-class EventUserIterator(_AsyncIterator['EventUser']):
+class ScheduledEventUserIterator(_AsyncIterator['ScheduledEventUser']):
     def __init__(
         self,
         guild,
@@ -829,6 +829,6 @@ class EventUserIterator(_AsyncIterator['EventUser']):
              await self.queue.put(self.create_user(element))
 
     def create_user(self, data):
-        from .scheduled_events import EventUser
+        from .scheduled_events import ScheduledEventUser
 
-        return EventUser(data=data, guild=self.guild, state=self.state)
+        return ScheduledEventUser(data=data, guild=self.guild, state=self.state)

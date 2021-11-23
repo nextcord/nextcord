@@ -2027,7 +2027,7 @@ class HTTPClient:
         with_member: bool = MISSING,
         before: Snowflake = MISSING,
         after: Snowflake = MISSING
-    ) -> Response[List[scheduled_events.EventUser]]:
+    ) -> Response[List[scheduled_events.ScheduledEventUser]]:
         params: Dict[str, Any] = {}
         if limit is not MISSING:
             params['limit'] = limit
