@@ -169,7 +169,7 @@ class ScheduledEvent(Hashable):
         attrs: List[Tuple[str, Any]] = [
             ('id', self.id),
             ('name', self.name),
-            ('guild_id', self.guild),
+            ('guild_id', self.guild.id),
             ('description', self.description),
             ('start_time', str(self.start_time)),
             ('end_time', str(self.end_time)),
