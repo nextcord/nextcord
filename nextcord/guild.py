@@ -279,7 +279,7 @@ class Guild(Hashable):
         '_public_updates_channel_id',
         '_stage_instances',
         '_threads',
-        '_events',
+        '_scheduled_events',
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -293,7 +293,7 @@ class Guild(Hashable):
     def __init__(self, *, data: GuildPayload, state: ConnectionState):
         self._channels: Dict[int, GuildChannel] = {}
         self._members: Dict[int, Member] = {}
-        self._events: Dict[int, ScheduledEvent] = {}
+        self._scheduled_events: Dict[int, ScheduledEvent] = {}
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
         self._state: ConnectionState = state
@@ -340,14 +340,14 @@ class Guild(Hashable):
         return to_remove
 
     def _add_event(self, event: ScheduledEvent) -> None:
-        self._events[event.id] = event
+        self._scheduled_events[event.id] = event
 
     def _remove_event(self, event: Snowflake) -> None:
-        self._events.pop(event.id, None)
+        self._scheduled_events.pop(event.id, None)
 
     def _store_event(self, payload: ScheduledEventPayload) -> ScheduledEvent:
         event = ScheduledEvent(guild=self, state=self._state, data=payload)
-        self._events[event.id] = event
+        self._scheduled_events[event.id] = event
         return event
 
     def __str__(self) -> str:
@@ -482,7 +482,7 @@ class Guild(Hashable):
             self._update_voice_state(obj, int(obj['channel_id']))
 
         for event in guild.get('guild_scheduled_events', []):
-            self._add_event(event)
+            self.store_event(event)
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
@@ -592,6 +592,10 @@ class Guild(Hashable):
         r = [ch for ch in self._channels.values() if isinstance(ch, CategoryChannel)]
         r.sort(key=lambda c: (c.position, c.id))
         return r
+
+    @property
+    def scheduled_events(self) -> List[ScheduledEvent]:
+        return self._scheduled_events
 
     def by_category(self) -> List[ByCategoryItem]:
         """Returns every :class:`CategoryChannel` and their associated channels.
