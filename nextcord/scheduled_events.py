@@ -170,7 +170,7 @@ class ScheduledEvent(Hashable):
             ('id', self.id),
             ('name', self.name),
             ('guild_id', self.guild),
-            ('description', self.description)
+            ('description', self.description),
             ('start_time', self.start_time),
             ('end_time', self.end_time),
         ]
