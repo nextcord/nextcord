@@ -283,9 +283,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         .. note::
             You can define a ``pre_invoke`` or ``after_invoke`` on this
-            command in conjunction with ``inherit_hooks=True`` however
-            the one defined for this command will not be replaced by
-            the parent hook.
+            command in conjunction with ``inherit_hooks=True``, however
+            it will override the parent hook if applicable
 
         .. versionadded:: 2.0.0
     """
