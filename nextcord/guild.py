@@ -482,7 +482,7 @@ class Guild(Hashable):
             self._update_voice_state(obj, int(obj['channel_id']))
 
         for event in guild.get('guild_scheduled_events', []):
-            self.store_event(event)
+            self._store_event(event)
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
