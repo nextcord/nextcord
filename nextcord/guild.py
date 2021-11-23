@@ -3000,7 +3000,7 @@ class Guild(Hashable):
         return ScheduledEventIterator(self, with_users=with_users)
 
     def get_scheduled_event(self, id: int) -> ScheduledEvent:
-        return self._users.get(id)
+        return self._scheduled_events.get(id)
 
     async def fetch_scheduled_event(
         self,
