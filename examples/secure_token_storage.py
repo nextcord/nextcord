@@ -13,4 +13,4 @@ load_dotenv()
 bot = commands.Bot(command_prefix="$")
 
 # run the bot using the token in .env
-bot.run(os.getenv('BOT_TOKEN'))
+bot.run(os.getenv(BOT_TOKEN))
