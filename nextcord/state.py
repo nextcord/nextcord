@@ -58,10 +58,10 @@ from .ui.view import ViewStore, View
 from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
+from .scheduled_events import ScheduledEvent
 
 if TYPE_CHECKING:
     from .abc import PrivateChannel
-    from .scheduled_events import ScheduledEvent
     from .message import MessageableChannel
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
