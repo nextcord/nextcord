@@ -1422,7 +1422,7 @@ class ConnectionState:
 
     def parse_guild_scheduled_event_update(self, data) -> None:
         if guild := self._get_guild(int(data['guild_id'])):
-            if event := guild.get_scheduled_event(data['id']):
+            if event := guild.get_scheduled_event(int(data['id'])):
                 old = copy.copy(event)
                 event._update(data)
                 self.dispatch('guild_scheduled_event_update', old, event)
@@ -1435,12 +1435,12 @@ class ConnectionState:
 
     def parse_guild_scheduled_event_delete(self, data) -> None:
         if guild := self._get_guild(int(data['guild_id'])):
-            if event := guild.get_scheduled_event(data['id']):
+            if event := guild.get_scheduled_event(int(data['id'])):
                 guild._remove_event(event.id)
                 self.dispatch('guild_scheduled_event_delete', event)
             else:
               _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown event '
-                        'ID: %s. Discarding.', data['id'])
+                         'ID: %s. Discarding.', data['id'])
         else:
             _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild '
                        'ID: %s. Discarding.', data['guild_id'])
