@@ -3098,7 +3098,7 @@ class Guild(Hashable):
         self,
         *,
         name: str,
-        entity_type: EntityType
+        entity_type: EntityType,
         start_time: datetime.datetime,
         channel: abc.GuildChannel = MISSING,
         metadata: EntityMetadata = MISSING,
