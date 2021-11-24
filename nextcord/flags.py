@@ -868,6 +868,16 @@ class Intents(BaseFlags):
 
     @flag_value
     def scheduled_events(self):
+        """:class:`bool`: Whether scheduled events related events are enabled.
+
+        This corresponds to the following events:
+
+        - :func:`on_guild_scheduled_event_create`
+        - :func:`on_guild_scheduled_event_delete`
+        - :func:`on_guild_scheduled_event_update`
+
+        This does not correspond to any attributes or classes in the library in terms of cache.
+        """
         return 1 << 16
 
 

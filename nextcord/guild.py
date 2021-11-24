@@ -595,6 +595,10 @@ class Guild(Hashable):
 
     @property
     def scheduled_events(self) -> List[ScheduledEvent]:
+        """List[:class:`ScheduledEvent`]: A list of scheduled events in this guild.
+
+        .. versionadded:: 2.0
+        """
         return list(self._scheduled_events.values())
 
     def by_category(self) -> List[ByCategoryItem]:
@@ -2997,18 +3001,98 @@ class Guild(Hashable):
         *,
         with_users: bool = False
     ) -> ScheduledEventIterator:
+        """Retrieves an :class:`.AsyncIterator` that enables receiving scheduled
+        events on this guild
+
+        .. note::
+
+            This method is an API call. For general usage, consider 
+            :attr:`scheduled_events` instead.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        ----------
+        with_users: Optional[:class:`bool`]
+            If the event should be received with :attr:`ScheduledEvent.users`
+
+        Raises
+        ------
+        HTTPException
+            Getting the events failed.
+
+        Yields
+        ------
+        :class:`.ScheduledEvent`
+            The event with users if applicable
+
+        Examples
+        --------
+
+        Usage ::
+
+            async for event in guild.fetch_scheduled_events():
+                print(event.name)
+
+        Flattening into a list ::
+
+            events = await guild.fetch_scheduled_events().flatten()
+            # events is now a list of ScheduledEvent...
+        """
         return ScheduledEventIterator(self, with_users=with_users)
 
-    def get_scheduled_event(self, event_id: int) -> ScheduledEvent:
+    def get_scheduled_event(self, event_id: int) -> Optional[ScheduledEvent]:
+        """Get a scheduled event from cache by id.
+
+        .. note::
+
+            This may not return the updated users, use 
+            :meth:`~Guild.fetch_scheduled_event` if that is desired.
+
+        Parameters
+        ----------
+        event_id : int
+            The scheduled event id to fetch.
+
+        Returns
+        -------
+        Optional[ScheduledEvent]
+            The event object, if found.
+        """
         return self._scheduled_events.get(event_id)
 
     async def fetch_scheduled_event(
         self,
-        id,
+        event_id,
         *,
         with_users: bool = False
     ) -> ScheduledEvent:
-        return await self._state.http.get_event(self.id, id, with_users=with_users)
+        """|coro|
+
+        Fetch a scheduled event object.
+
+        .. note::
+
+            This is an api call, if updated users is not needed, 
+            consisder :meth:`~Guild.get_scheduled_event`
+
+        Parameters
+        ----------
+        event_id: :class:`int`
+            The event id to fetch
+        with_users: :class:`bool`
+            If the users should be received and cached too, by default False
+
+        Returns
+        -------
+        :class:`ScheduledEvent`
+            The received event object
+        """
+        return await self._state.http.get_event(
+            self.id,
+            event_id,
+            with_users=with_users
+        )
 
     async def create_scheduled_event(
         self,
@@ -3022,6 +3106,34 @@ class Guild(Hashable):
         description: str = MISSING,
         entity_type: EntityType = MISSING
     ) -> ScheduledEvent:
+        """|coro|
+
+        Create a new scheduled event object.
+
+        Parameters
+        ----------
+        channel: :class:`abc.GuildChannel`
+            The channel the event will happen in, if any
+        metadata: :class:`EntityMetadata`
+            The metadata for the event
+        name: :class:`str`
+            The name of the event
+        privacy_level: :class:`ScheduledEventPrivacyLevel`
+            The privacy level for the event
+        start_time: :class:`py:datetime.datetime`
+            The scheduled start time
+        end_time: :class:`py:datetime.datetime`
+            The scheduled end time
+        description: :class:`str`
+            The description for the event
+        entity_type: :class:`EntityType`
+            The type of event
+
+        Returns
+        -------
+        :class:`ScheduledEvent`
+            The created event object.
+        """
         payload: Dict[str, Any] = {}
         if channel is not MISSING:
             payload['channel_id'] = channel.id

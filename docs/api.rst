@@ -2608,6 +2608,50 @@ of :class:`enum.Enum`.
 
         The guild may contain NSFW content.
 
+.. class:: EntityType
+
+    Represents the type of an entity on a scheduled event.
+
+    .. attribute:: stage_instance
+
+        The event is for a stage.
+
+    .. attribute:: voice
+
+        The event is for a voice channel.
+
+    .. attribute:: external
+
+        The event is happening elsewhere.
+
+.. class:: ScheduledEventPrivacyLevel
+
+    Represents the privacy level of scheduled event.
+
+    .. attribute:: guild_only
+
+        The scheduled event is only visible to members of the guild.
+
+.. class:: ScheduledEventStatus
+
+    Represents the status of a scheduled event.
+
+    .. attribute:: scheduled
+
+        The event is scheduled to happen.
+
+    .. attribute:: active
+
+        The event is happening.
+
+    .. attribute:: completed
+
+        The event has finished.
+
+    .. attribute:: cancelled
+
+        The event was cancelled.
+
 Async Iterator
 ----------------
 
@@ -3938,6 +3982,21 @@ PartialWebhookChannel
 
 .. autoclass:: PartialWebhookChannel()
     :members:
+
+ScheduledEvent
+~~~~~~~~~~~~~~
+
+.. attributetable:: ScheduledEvent
+
+.. autoclass:: ScheduledEvent()
+    :members:
+
+.. attributetable:: ScheduledEventUser
+
+.. autoclass:: ScheduledEventUser()
+    :members:
+
+.. autoclass:: EntityMetadata
 
 .. _discord_api_data:
 

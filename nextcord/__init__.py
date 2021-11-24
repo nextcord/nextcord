@@ -60,6 +60,7 @@ from .interactions import *
 from .components import *
 from .threads import *
 from .health_check import *
+from .scheduled_events import *
 
 class VersionInfo(NamedTuple):
     major: int
