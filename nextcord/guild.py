@@ -64,7 +64,7 @@ from .enums import (
     ContentFilter,
     NotificationLevel,
     NSFWLevel,
-    EntityType,
+    ScheduledEventEntityType,
     ScheduledEventPrivacyLevel,
 )
 from .scheduled_events import EntityMetadata
@@ -3099,7 +3099,7 @@ class Guild(Hashable):
         self,
         *,
         name: str,
-        entity_type: EntityType,
+        entity_type: ScheduledEventEntityType,
         start_time: datetime.datetime,
         channel: abc.GuildChannel = MISSING,
         metadata: EntityMetadata = MISSING,
@@ -3127,7 +3127,7 @@ class Guild(Hashable):
             The scheduled end time
         description: :class:`str`
             The description for the event
-        entity_type: :class:`EntityType`
+        entity_type: :class:`ScheduledEventEntityType`
             The type of event
 
         Returns

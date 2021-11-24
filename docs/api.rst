@@ -2608,7 +2608,7 @@ of :class:`enum.Enum`.
 
         The guild may contain NSFW content.
 
-.. class:: EntityType
+.. class:: ScheduledEventEntityType
 
     Represents the type of an entity on a scheduled event.
 

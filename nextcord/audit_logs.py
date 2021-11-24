@@ -208,7 +208,7 @@ class AuditLogChanges:
         'video_quality_mode':            (None, _enum_transformer(enums.VideoQualityMode)),
         'privacy_level':                 (None, _enum_transformer(enums.StagePrivacyLevel)),
         'format_type':                   (None, _enum_transformer(enums.StickerFormatType)),
-        'entity_type':                   (None, _enum_transformer(enums.EntityType)),
+        'entity_type':                   (None, _enum_transformer(enums.ScheduledEventEntityType)),
         'type':                          (None, _transform_type),
     }
     # fmt: on

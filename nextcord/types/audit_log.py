@@ -37,7 +37,7 @@ from .guild import (
 from .integration import IntegrationExpireBehavior, PartialIntegration
 from .snowflake import Snowflake
 from .role import Role
-from .scheduled_events import EntityType
+from .scheduled_events import ScheduledEventEntityType
 from .threads import Thread
 from .user import User
 from .webhook import Webhook
@@ -218,10 +218,10 @@ class _AuditLogChange_Overwrites(TypedDict):
     old_value: List[PermissionOverwrite]
 
 
-class _AuditLogChange_EntityType(TypedDict):
+class _AuditLogChange_ScheduledEventEntityType(TypedDict):
     key: Literal['entity_type']
-    new_value: EntityType
-    old_value: EntityType
+    new_value: ScheduledEventEntityType
+    old_value: ScheduledEventEntityType
 
 
 AuditLogChange = Union[
@@ -229,7 +229,7 @@ AuditLogChange = Union[
     _AuditLogChange_Bool,
     _AuditLogChange_ChannelType,
     _AuditLogChange_DefaultMessageNotificationLevel,
-    _AuditLogChange_EntityType,
+    _AuditLogChange_ScheduledEventEntityType,
     _AuditLogChange_ExplicitContentFilter,
     _AuditLogChange_Int,
     _AuditLogChange_IntegrationExpireBehaviour,

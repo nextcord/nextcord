@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from .abc import GuildChannel
-    from .enums import ScheduledEventStatus, EntityType
+    from .enums import ScheduledEventStatus, ScheduledEventEntityType
     from .guild import Guild
     from .member import Member
     from .state import ConnectionState
@@ -275,7 +275,7 @@ class ScheduledEvent(Hashable):
         start_time: Optional[datetime] = MISSING,
         end_time: Optional[datetime] = MISSING,
         description: str = MISSING,
-        type: Optional[EntityType] = MISSING,
+        type: Optional[ScheduledEventEntityType] = MISSING,
         status: Optional[ScheduledEventStatus] = MISSING
     ) -> ScheduledEvent:
         """|coro|
@@ -298,7 +298,7 @@ class ScheduledEvent(Hashable):
             The new scheduled end time.
         description: :class:`str`
             The new description for the event.
-        type: :class:`EntityType`
+        type: :class:`ScheduledEventEntityType`
             The new type for the event.
         status: :class:`ScheduledEventStatus`
             The new status for the event.

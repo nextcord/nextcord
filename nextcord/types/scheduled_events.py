@@ -29,7 +29,7 @@ from .snowflake import Snowflake
 from .user import User
 
 
-EntityType = Literal[1, 2, 3]
+ScheduledEventEntityType = Literal[1, 2, 3]
 ScheduledEventPrivacyLevel = Literal[2]
 ScheduledEventStatus = Literal[1, 2, 3, 4]
 
@@ -48,7 +48,7 @@ class ScheduledEvent(TypedDict, total=False):
     scheduled_end_time: str
     privacy_level: ScheduledEventPrivacyLevel
     status: ScheduledEventStatus
-    entity_type: EntityType
+    entity_type: ScheduledEventEntityType
     entity_id: Snowflake
     entity_metadata: EntityMetadata
     creator: User

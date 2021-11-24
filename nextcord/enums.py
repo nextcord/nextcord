@@ -56,7 +56,7 @@ __all__ = (
     'InteractionType',
     'InteractionResponseType',
     'NSFWLevel',
-    'EntityType',
+    'ScheduledEventEntityType',
     'ScheduledEventPrivacyLevel',
     'ScheduledEventStatus',
 )
@@ -601,7 +601,7 @@ class NSFWLevel(Enum, comparable=True):
     age_restricted = 3
 
 
-class EntityType(Enum):
+class ScheduledEventEntityType(Enum):
     stage_instance =  1
     voice = 2
     external = 3
