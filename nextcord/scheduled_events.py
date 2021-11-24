@@ -329,7 +329,7 @@ class ScheduledEvent(Hashable):
             payload['status'] = status.value
         if not payload:
             return self
-        data = self._state.http.edit_event(**payload)
+        data = await self._state.http.edit_event(**payload)
         return ScheduledEvent(guild=self.guild, state=self._state, data=data)
 
     def get_user(self, user_id: int) -> Optional[ScheduledEventUser]:
