@@ -3097,11 +3097,11 @@ class Guild(Hashable):
     async def create_scheduled_event(
         self,
         *,
+        name: str,
+        start_time: datetime.datetime,
         channel: abc.GuildChannel = MISSING,
         metadata: EntityMetadata = MISSING,
-        name: str = MISSING,
-        privacy_level: ScheduledEventPrivacyLevel = MISSING,
-        start_time: datetime.datetime = MISSING,
+        privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
         entity_type: EntityType = MISSING
