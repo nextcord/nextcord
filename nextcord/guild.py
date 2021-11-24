@@ -3151,5 +3151,5 @@ class Guild(Hashable):
             payload['description'] = description
         if entity_type is not MISSING:
             payload['entity_type'] = entity_type.value
-        data = self._state.http.create_event(self.id, **payload)
+        data = await self._state.http.create_event(self.id, **payload)
         return self._store_event(data)
