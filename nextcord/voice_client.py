@@ -47,13 +47,14 @@ import struct
 import threading
 import select
 import time
-from typing import Any, Callable, List, Optional, TYPE_CHECKING, Tuple
+from typing import Any, Callable, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable, Mapping
 
 from . import opus, utils
 from .backoff import ExponentialBackoff
 from .gateway import *
 from .errors import ClientException, ConnectionClosed, NotConnected, NotListening, AlreadyListening, MissingSink
 from .player import AudioPlayer, AudioSource
+from .types.channel import VoiceChannel, StageChannel
 from .utils import MISSING
 from .sink import Sink, RawData
 
@@ -70,7 +71,7 @@ if TYPE_CHECKING:
         VoiceServerUpdate as VoiceServerUpdatePayload,
         SupportedModes,
     )
-    
+
 
 has_nacl: bool
 
@@ -238,7 +239,6 @@ class VoiceClient(VoiceProtocol):
     def __init__(self, client: Client, channel: abc.Connectable):
         if not has_nacl:
             raise RuntimeError("PyNaCl library needed in order to use voice")
-        self.auto_self_deaf = False
         super().__init__(client, channel)
         state = client._connection
         self.token: str = MISSING
@@ -325,8 +325,8 @@ class VoiceClient(VoiceProtocol):
         endpoint = data.get('endpoint')
 
         if endpoint is None or self.token is None:
-            _log.warning('Awaiting endpoint... This requires waiting. ' \
-                        'If timeout occurred considering raising the timeout and reconnecting.')
+            _log.warning('Awaiting endpoint... This requires waiting. ' 
+                         'If timeout occurred considering raising the timeout and reconnecting.')
             return
 
         self.endpoint, _, _ = endpoint.rpartition(':')
@@ -348,10 +348,7 @@ class VoiceClient(VoiceProtocol):
         self._voice_server_complete.set()
 
     async def voice_connect(self) -> None:
-        if self.auto_self_deaf:
-            await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
-        else:
-            await self.channel.guild.change_voice_state(channel=self.channel)
+        await self.channel.guild.change_voice_state(channel=self.channel)
 
     async def voice_disconnect(self) -> None:
         _log.info('The voice handshake is being terminated for Channel ID %s (Guild ID %s)', self.channel.id, self.guild.id)
@@ -509,7 +506,7 @@ class VoiceClient(VoiceProtocol):
         if not force and not self.connected:
             return
 
-        self.stop_playing()
+        self.stop()
         self._connected.clear()
 
         try:
@@ -522,7 +519,7 @@ class VoiceClient(VoiceProtocol):
             if self.socket:
                 self.socket.close()
 
-    async def move_to(self, channel: abc.Snowflake) -> None:
+    async def move_to(self, channel: Optional[Union[VoiceChannel, StageChannel]]) -> None:
         """|coro|
 
         Moves you to a different voice channel.
@@ -666,18 +663,18 @@ class VoiceClient(VoiceProtocol):
         """Indicates if we're playing audio, but if we're paused."""
         return self._player is not None and self._player.is_paused()
 
-    def stop_playing(self) -> None:
+    def stop(self) -> None:
         """Stops playing audio."""
         if self._player:
             self._player.stop()
             self._player = None
 
-    def pause_playing(self) -> None:
+    def pause(self) -> None:
         """Pauses the audio playing."""
         if self._player:
             self._player.pause()
 
-    def resume_playing(self) -> None:
+    def resume(self) -> None:
         """Resumes the audio playing."""
         if self._player:
             self._player.resume()
@@ -750,11 +747,13 @@ class VoiceClient(VoiceProtocol):
 
         self.decoder.decode(data)
 
-    async def start_listening(self, sink, callback, *args):
+    async def start_listening(self, sink, callback, args: Iterable = MISSING,
+                              kwargs: Optional[Mapping[str, Any]] = MISSING):
         """The bot will begin listening audio from the current voice channel it is in.
         This function uses a thread so the current code line will not be stopped.
         Must be in a voice channel to use.
         Must not be already listening.
+        In order of pausing (writing no sound) simply mute the bot.
 
 
         .. warning::
@@ -772,8 +771,10 @@ class VoiceClient(VoiceProtocol):
             A Sink which will "store" all the audio data.
         callback: :class:`asynchronous function`
             A function which is called after the bot has stopped listening.
-        *args:
+        args:
             Args which will be passed to the callback function.
+        kwargs:
+            Kwargs which will be passed to the callback function.
         Raises
         ------
         NotConnected
@@ -783,14 +784,18 @@ class VoiceClient(VoiceProtocol):
         MissingSink
             Must provide a Sink object.
         """
+        if args is MISSING:
+            args = []
+        if kwargs is MISSING:
+            kwargs = {}
         if not self.connected:
             raise NotConnected('Not connected to voice channel.')
         if self.listening:
             raise AlreadyListening("Already listening.")
         if not isinstance(sink, Sink):
             raise MissingSink("Must provide a Sink object.")
-        if self.auto_self_deaf:
-            await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=False)
+
+        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=False)
 
         self.empty_socket()
 
@@ -800,7 +805,7 @@ class VoiceClient(VoiceProtocol):
         self.sink = sink
         sink.init(self)
 
-        t = threading.Thread(target=self.recv_audio, args=(sink, callback, *args,))
+        t = threading.Thread(target=self.recv_audio, args=(callback, *args), kwargs=kwargs)
         t.start()
 
     async def stop_listening(self):
@@ -818,29 +823,14 @@ class VoiceClient(VoiceProtocol):
         """
         if not self.listening:
             raise NotListening("Not currently listening audio.")
-        if self.auto_self_deaf:
-            await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
-            await asyncio.sleep(1)
         await self.decoder.stop()
         self.listening = False
         self.listening_paused = False
 
-    async def toggle_auto_self_deaf(self):
-        """|coro|
-
-        Activates auto-deafening when not recording"""
-        if self.auto_self_deaf:
-            self.auto_self_deaf = False
-            if self.connected:
-                await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=False)
-        else:
-            self.auto_self_deaf = True
-            if self.connected and self.listening and not self.listening_paused:
-                await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True)
-
     async def toggle_listening_pause(self):
         """Pauses or unpauses the listening.
         Must be already listening.
+        Since currently muting does not work as expected this method should be used
 
         .. versionadded:: 2.0
 
@@ -852,8 +842,6 @@ class VoiceClient(VoiceProtocol):
         if not self.listening:
             raise NotListening("Not currently listening audio.")
         self.listening_paused = not self.listening_paused
-        if self.auto_self_deaf:
-            await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=self.listening_paused)
 
     def empty_socket(self):
         while True:
@@ -863,7 +851,7 @@ class VoiceClient(VoiceProtocol):
             for s in ready:
                 s.recv(4096)
 
-    def recv_audio(self, sink, callback, *args):
+    def recv_audio(self, callback, *args, **kwargs):
         self.user_timestamps = {}
         self.starting_time = time.perf_counter()
         while self.listening:
@@ -885,7 +873,7 @@ class VoiceClient(VoiceProtocol):
 
         self.stopping_time = time.perf_counter()
         self.sink.cleanup()
-        callback = asyncio.run_coroutine_threadsafe(callback(self.sink, *args), self.loop)
+        callback = asyncio.run_coroutine_threadsafe(callback(self.sink, *args, **kwargs), self.loop)
         result = callback.result()
 
         if result is not None:

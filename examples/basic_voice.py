@@ -120,7 +120,7 @@ class Music(commands.Cog):
                 await ctx.send("You are not connected to a voice channel.")
                 raise commands.CommandError("Author not connected to a voice channel.")
         elif ctx.voice_client.playing:
-            ctx.voice_client.stop_playing()
+            ctx.voice_client.stop()
 
 bot = commands.Bot(command_prefix="$", description='Relatively simple music bot example')
 

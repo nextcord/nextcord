@@ -16,8 +16,6 @@ async def get_vc(message: nextcord.Message):
         return
     connection = bot.connections.get(message.guild.id)
     if connection:
-        if not connection.auto_self_deaf:
-            await connection.toggle_auto_self_deaf()
         if connection.channel.id == message.author.voice.channel.id:
             return connection
 
@@ -25,7 +23,6 @@ async def get_vc(message: nextcord.Message):
         return connection
     else:
         vc = await vc.channel.connect()
-        vc.toggle_auto_self_deaf()
         bot.connections.update({message.guild.id: vc})
         return vc
 
@@ -42,11 +39,12 @@ async def finished_callback(sink: voicerecording.FileSink, channel, *args):
 
 
 @bot.command(name="record", aliases=["start_recording", "start"])
-async def start(ctx: commands.Context, time: int = 0, size: int = 0):
+async def start(ctx: commands.Context, time: int = 0, size: int = 1000000):
+    # please note: There is an upload limit for Files, so it is suggested to have a low enough size
     vc = await get_vc(ctx.message)
     await vc.start_listening(
         voicerecording.FileSink(encoding=voicerecording.wav_encoder, filters={'time': time, 'max_size': size}),
-        finished_callback, ctx.channel)
+        finished_callback, [ctx.channel])
     await ctx.reply("The recording has started!")
 
 
