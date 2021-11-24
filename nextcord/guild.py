@@ -3098,13 +3098,13 @@ class Guild(Hashable):
         self,
         *,
         name: str,
+        entity_type: EntityType
         start_time: datetime.datetime,
         channel: abc.GuildChannel = MISSING,
         metadata: EntityMetadata = MISSING,
         privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
-        entity_type: EntityType = MISSING
     ) -> ScheduledEvent:
         """|coro|
 
