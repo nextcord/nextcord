@@ -142,7 +142,7 @@ class Embed:
         The description of the embed.
         This can be set during initialisation.
     url: :class:`str`
-        The hyperlink of the title of the embed.
+        The hyperlink of the embed title.
         This can be set during initialisation.
         This makes no effect if there is no ``title`` field.
     timestamp: :class:`datetime.datetime`
