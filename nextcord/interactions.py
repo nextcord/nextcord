@@ -34,7 +34,8 @@ from .errors import (
     InteractionResponded,
     HTTPException,
     ClientException,
-    InvalidData
+    InvalidData,
+    InvalidArgument
 )
 from .channel import PartialMessageable, ChannelType
 
@@ -397,6 +398,34 @@ class Interaction:
             return await self.channel.send(*args, **kwargs)
         raise InvalidData(
             "Interaction.channel is None, this may occur in threads"
+        )
+
+    async def edit(self, *args, **kwargs) -> Optional[Message]:
+        """|coro|
+
+        This is a shorthand function for helping in editing messages in
+        response to an interaction. If the response
+        :meth:`InteractionResponse.is_done()` then the message is edited
+        via the :attr:`Interaction.message` instead.
+
+        Returns
+        -------
+        Optional[:class:`Message`]
+            Message if the interaction has been responded to and the
+            interaction's message was edited w/o using response. Else ``None``
+
+        Raises
+        ------
+        InvalidArgument
+            :attr:`Interaction.message` was ``None``,
+            this may occur in threads.
+        """
+        if not self.response.is_done():
+            return await self.response.edit_message(*args, **kwargs)
+        if self.message is not None:
+            return await self.message.edit(*args, **kwargs)
+        raise InvalidArgument(
+            "Interaction.message is None, this method is only for views"
         )
 
 
