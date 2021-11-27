@@ -340,13 +340,13 @@ class Guild(Hashable):
             del self._threads[k]
         return to_remove
 
-    def _add_event(self, event: ScheduledEvent) -> None:
+    def _add_scheduled_event(self, event: ScheduledEvent) -> None:
         self._scheduled_events[event.id] = event
 
-    def _remove_event(self, event: Snowflake) -> None:
+    def _remove_scheduled_event(self, event: Snowflake) -> None:
         self._scheduled_events.pop(event.id, None)
 
-    def _store_event(self, payload: ScheduledEventPayload) -> ScheduledEvent:
+    def _store_scheduled_event(self, payload: ScheduledEventPayload) -> ScheduledEvent:
         event = ScheduledEvent(guild=self, state=self._state, data=payload)
         self._scheduled_events[event.id] = event
         return event
@@ -483,7 +483,7 @@ class Guild(Hashable):
             self._update_voice_state(obj, int(obj['channel_id']))
 
         for event in guild.get('guild_scheduled_events', []):
-            self._store_event(event)
+            self._store_scheduled_event(event)
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
@@ -3153,4 +3153,4 @@ class Guild(Hashable):
         if entity_type is not MISSING:
             payload['entity_type'] = entity_type.value
         data = await self._state.http.create_event(self.id, **payload)
-        return self._store_event(data)
+        return self._store_scheduled_event(data)

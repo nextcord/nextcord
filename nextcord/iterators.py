@@ -785,7 +785,7 @@ class ScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
              await self.queue.put(self.create_event(element))
 
     def create_event(self, data):
-        return self.guild._store_event(data)
+        return self.guild._store_scheduled_event(data)
 
 
 class ScheduledEventUserIterator(_AsyncIterator['ScheduledEventUser']):
