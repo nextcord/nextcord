@@ -3064,7 +3064,7 @@ class Guild(Hashable):
 
     async def fetch_scheduled_event(
         self,
-        event_id,
+        event_id: Snowflake,
         *,
         with_users: bool = False
     ) -> ScheduledEvent:
