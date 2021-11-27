@@ -392,14 +392,12 @@ class Interaction:
         """
 
         if not self.response.is_done():
-            await self.response.send_message(*args, **kwargs)
-        else:
-            if self.channel is not None:
-                await self.channel.send(*args, **kwargs)
-            else:
-                raise InvalidData(
-                    "Interaction.channel is None, this may occur in threads"
-                )
+            return await self.response.send_message(*args, **kwargs)
+        if self.channel is not None:
+            return await self.channel.send(*args, **kwargs)
+        raise InvalidData(
+            "Interaction.channel is None, this may occur in threads"
+        )
 
 
 class InteractionResponse:
