@@ -90,6 +90,7 @@ __all__ = (
     'ExtensionAlreadyLoaded',
     'ExtensionNotLoaded',
     'NoEntryPointError',
+    'InvalidSetupArguments',
     'ExtensionFailed',
     'ExtensionNotFound',
     'CommandRegistrationError',
@@ -858,6 +859,15 @@ class NoEntryPointError(ExtensionError):
     """
     def __init__(self, name: str) -> None:
         super().__init__(f"Extension {name!r} has no 'setup' function.", name=name)
+
+class InvalidSetupArguments(ExtensionError):
+    """An exception raised when an extension contains a ``setup`` function which does
+     except ``kwargs`` but ``kwargs`` were passed.
+
+    This inherits from :exc:`ExtensionError`
+    """
+    def __init__(self, name: str) -> None:
+        super().__init__(f"Extension {name!r} does not take 'kwargs' but 'kwargs' were given.", name=name)
 
 class ExtensionFailed(ExtensionError):
     """An exception raised when an extension failed to load during execution of the module or ``setup`` entry point.
