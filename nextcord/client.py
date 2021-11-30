@@ -256,8 +256,7 @@ class Client:
         self._lazy_load_commands: bool = options.pop('lazy_load_commands', True)
         self._client_cogs: Set[ClientCog] = set()
         self._application_commands: Set[ApplicationCommand] = set()
-        self._application_command_signatures: Dict[Tuple[str, int, Optional[int]],
-                                                   ApplicationCommand] = {}
+        self._application_command_signatures: Dict[Tuple[str, int, Optional[int]], ApplicationCommand] = {}
         self._registered_application_commands: Dict[int, ApplicationCommand] = {}
         self._performing_application_command_rollout: bool = False
         self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
@@ -1695,7 +1694,7 @@ class Client:
                     if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
                         _log.info("nextcord.Client: New interaction command found, Assigning id now")
                         self._registered_application_commands[int(interaction.data["id"])] = app_cmd
-                        app_cmd.raw_parse_result(self._connection, interaction.guild_id, int(interaction.data["id"]))
+                        app_cmd.parse_discord_response(self._connection, int(interaction.data["id"]), interaction.guild_id)
                         await app_cmd.call_from_interaction(interaction)
 
     async def add_application_command(self, app_cmd: ApplicationCommand, register=False) -> None:
@@ -1720,12 +1719,13 @@ class Client:
         raw_get_global_response = await self.http.get_global_commands(self.application_id)
         unregistered_global_commands = self._get_global_commands()
         for raw_response in raw_get_global_response:
-            response_signature = (raw_response["name"], int(raw_response['type']), None)
+            response_signature = (raw_response["name"], int(raw_response["type"]), None)
             if app_cmd := self._application_command_signatures.get(response_signature):
                 if app_cmd.check_against_raw_payload(raw_response, None):
                     unregistered_global_commands.remove(app_cmd)
                     self._registered_application_commands[int(raw_response["id"])] = app_cmd
-                    app_cmd.raw_parse_result(self._connection, None, int(raw_response["id"]))
+                    # app_cmd.raw_parse_result(self._connection, int(raw_response["id"]), None)
+                    app_cmd.parse_discord_response(self._connection, int(raw_response["id"]), None)
                     _log.info(f"nextcord.client.Client: Global {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
                 elif delete_unknown:
                     await self.http.delete_global_command(self.application_id, raw_response["id"])
@@ -1748,24 +1748,24 @@ class Client:
         try:
             raw_get_guild_response = await self.http.get_guild_commands(self.application_id, guild_id)
             for raw_response in raw_get_guild_response:
-                response_signature = (raw_response["name"], int(raw_response["type"]), int(raw_response["guild_id"]))
+                response_signature = (
+                    raw_response["name"],
+                    int(raw_response["type"]),
+                    int(raw_response["guild_id"]),
+                )
                 if app_cmd := self._application_command_signatures.get(response_signature):
                     if app_cmd.check_against_raw_payload(raw_response, guild_id):
                         unregistered_guild_commands[guild_id].remove(app_cmd)
                         self._registered_application_commands[int(raw_response["id"])] = app_cmd
-                        app_cmd.raw_parse_result(self._connection, guild_id, int(raw_response["id"]))
-                        _log.info(
-                            f"nextcord.Client: Guild ({guild_id}) {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
+                        app_cmd.parse_discord_response(self._connection, int(raw_response["id"]), guild_id)
+                        _log.info(f"nextcord.Client: Guild ({guild_id}) {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
                     elif delete_unknown:
                         await self.http.delete_guild_command(self.application_id, guild_id, raw_response["id"])
-                        _log.info(
-                            f"nextcord.Client: Guild ({guild_id}) {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
-                        _log.debug(
-                            f"nextcord.Client: Payload \n{app_cmd.get_guild_payload(guild_id)}\nvs\n{raw_response}")
+                        _log.info(f"nextcord.Client: Guild ({guild_id}) {app_cmd.type} {app_cmd.name} with ID {raw_response['id']} failed payload check, removed.")
+                        _log.debug(f"nextcord.Client: Payload \n{app_cmd.get_guild_payload(guild_id)}\nvs\n{raw_response}")
                 elif delete_unknown:
                     await self.http.delete_guild_command(self.application_id, guild_id, raw_response["id"])
-                    _log.info(
-                        f"nextcord.Client: Guild ({guild_id}) command with ID of {raw_response['id']} failed signature check, removed.")
+                    _log.info(f"nextcord.Client: Guild ({guild_id}) command with ID of {raw_response['id']} failed signature check, removed.")
             if register_new:
                 for guild_cmd in unregistered_guild_commands.get(guild_id, []):
                     await self.register_application_command_to_guild(guild_cmd, guild_id)
@@ -1775,12 +1775,20 @@ class Client:
     async def register_application_command_to_global(self, app_cmd: ApplicationCommand) -> None:
         """|coro|
 
-        Registers a single ApplicationCommand object as a global command with Discord."""
+        Registers a :class:`ApplicationCommand` object globally. Note that global registration can take up to an hour
+        to take effect.
+        If the ApplicationCommand object doesn't have global enabled, it will not be registered.
+
+        Parameters
+        ----------
+        app_cmd: :class:`ApplicationCommand`
+            Command to register globally.
+        """
         if app_cmd.is_global:
             _log.debug("nextcord.Client: Attempting single global command registration.")
             raw_response = await self.http.upsert_global_command(self.application_id, app_cmd.global_payload)
             response = ApplicationCommandResponse(self._connection, raw_response)
-            app_cmd.parse_response(response)
+            app_cmd.parse_discord_response(self._connection, int(raw_response["id"]), None)
             self._registered_application_commands[response.id] = app_cmd
             _log.info(f"nextcord.Client: Global {app_cmd.type} {app_cmd.name} newly single registered with ID "
                       f"{response.id}")
@@ -1788,18 +1796,30 @@ class Client:
             _log.debug("nextcord.Client: Ignoring single global command registration, not enabled for global.")
 
     async def register_application_command_to_guild(self, app_cmd: ApplicationCommand, guild_id: int) -> None:
+        """|coro|
+
+        Registers a :class:`ApplicationCommand` object with the :class:`Guild` that corresponds to the `guild_id`.
+        If the ApplicationCommand object doesn't have that guild set, it will not be registered.
+
+        Parameters
+        ----------
+        app_cmd: :class:`ApplicationCommand`
+            Command to register with the given guild.
+        guild_id: :class:`int`
+            Guild ID to register the given command to.
+        """
         if app_cmd.is_guild:
             if payload := app_cmd.get_guild_payload(guild_id):
                 _log.debug(f"nextcord.Client: Attempting single guild command registration for {guild_id}")
                 raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
                 response = ApplicationCommandResponse(self._connection, raw_response)
-                app_cmd.parse_response(response)
+                app_cmd.parse_discord_response(self._connection, int(raw_response["id"]), guild_id)
                 self._registered_application_commands[response.id] = app_cmd
                 _log.info(f"nextcord.Client: Guild {app_cmd.type} {app_cmd.name} newly single registered for guild "
                           f"{guild_id} with ID {response.id}")
             else:
-                _log.debug(f"nextcord.Client: Ignoring single guild registration for {guild_id}, command not enabled for"
-                           f"that specific guild.")
+                _log.debug(f"nextcord.Client: Ignoring single guild registration for {guild_id}, command not enabled "
+                           f"for that specific guild.")
         else:
             _log.debug(f"nextcord.Client: Ignoring single guild registration for {guild_id}, command not enabled for "
                        f"guilds.")
@@ -1830,15 +1850,18 @@ class Client:
         raise NotImplementedError
 
     async def on_connect(self) -> None:
-        self.register_all_cog_commands()
-        await self.perform_application_command_rollout_to_global(self._rollout_delete_unknown,
-                                                                 self._rollout_register_new)
+        self.add_all_cog_commands()
+        await self.perform_application_command_rollout_to_global(
+            self._rollout_delete_unknown, self._rollout_register_new
+        )
 
     async def on_guild_available(self, guild: Guild) -> None:
-        await self.perform_application_command_rollout_to_guild(guild.id, self._rollout_delete_unknown,
-                                                                self._rollout_register_new)
+        await self.perform_application_command_rollout_to_guild(
+            guild.id, self._rollout_delete_unknown, self._rollout_register_new
+        )
 
-    def register_all_cog_commands(self):
+    def add_all_cog_commands(self):
+        """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
         for cog in self._client_cogs:
             if to_register := cog.to_register:
                 for cmd in to_register:
@@ -1847,23 +1870,26 @@ class Client:
     def add_cog(self, cog: ClientCog):
         self._client_cogs.add(cog)
 
-    def user_command(self, *args, **kwargs):
+    def user_command(self, **kwargs):
         def decorator(func: Callable):
-            result = user_command(*args, **kwargs)(func)
+            result = user_command(**kwargs)(func)
             self._internal_add_application_command(result)
             return result
+
         return decorator
 
-    def message_command(self, *args, **kwargs):
+    def message_command(self, **kwargs):
         def decorator(func: Callable):
-            result = message_command(*args, **kwargs)(func)
+            result = message_command(**kwargs)(func)
             self._internal_add_application_command(result)
             return result
+
         return decorator
 
-    def slash_command(self, *args, **kwargs):
+    def slash_command(self, **kwargs):
         def decorator(func: Callable):
-            result = slash_command(*args, **kwargs)(func)
+            result = slash_command(**kwargs)(func)
             self._internal_add_application_command(result)
             return result
+
         return decorator
