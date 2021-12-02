@@ -212,16 +212,28 @@ class ClientCog:
         return self.__cog_to_register__
 
 
+# class SlashOption:
+#     def __init__(
+#         self,
+#         name: str = None,
+#         description: str = None,
+#         required: bool = None,
+#         choices: dict = None,
+#         default: Any = None,
+#         channel_types: List[ChannelType] = None,
+# ):
 class SlashOption:
-    def __init__(
-        self,
-        name: str = None,
-        description: str = None,
-        required: bool = None,
-        choices: dict = None,
-        default: Any = None,
-        channel_types: List[ChannelType] = None,
-    ):
+    def __init__(self, name: str = MISSING,
+                 description: str = MISSING,
+                 required: bool = MISSING,
+                 choices: Dict[str, Union[str, int, float]] = MISSING,
+                 channel_types: List[ChannelType] = MISSING,
+                 min_value: Union[int, float] = MISSING,
+                 max_value: Union[int, float] = MISSING,
+                 autocomplete: bool = MISSING,
+                 default: Any = MISSING,
+                 verify: bool = True
+                 ):
         """Provides Discord with information about an option in a command.
 
         When this class is set as the default argument of a parameter in an Application Command, additional information
@@ -242,14 +254,24 @@ class SlashOption:
         channel_types: Optional[List[:class:`enums.ChannelType`]]
             The list of valid channel types for the user to choose from. Used only by channel Options.
         """
-        if not choices:
-            choices = []
         self.name: Optional[str] = name
         self.description: Optional[str] = description
         self.required: Optional[bool] = required
         self.choices: Optional[dict] = choices
-        self.default: Optional[Any] = default
         self.channel_types: Optional[List[ChannelType, ...]] = channel_types
+        self.min_value: Optional[Union[int, float]] = min_value
+        self.max_value: Optional[Union[int, float]] = max_value
+        self.autocomplete: Optional[bool] = autocomplete
+        self.default: Optional[Any] = default
+        if verify:
+            self.verify()
+
+    def verify(self) -> bool:
+        """Checks if the given values conflict with one another or are invalid."""
+
+        if self.choices and self.autocomplete:  # Incompatible according to Discord Docs.
+            raise ValueError("Autocomplete may not be set to true if choices are present.")
+        return True
 
 
 class CommandOption(SlashOption):
@@ -270,7 +292,7 @@ class CommandOption(SlashOption):
     def __init__(self, parameter: Parameter):
         """Represents a Python function parameter that corresponds to a Discord Option.
 
-        This must set and/or handle all variables from CmdArg, hence the subclass.
+        This must set and/or handle all variables from SlashOption, hence the subclass.
         This shouldn't be created by the user, only by other Application Command-related classes.
 
         Parameters
@@ -287,15 +309,16 @@ class CommandOption(SlashOption):
             cmd_arg_given = True
         self.functional_name = parameter.name
 
-        # TODO: Cleanup logic for this.
         # All optional variables need to default to None for functions down the line to understand that they were never
         # set. If Discord demands a value, it should be the minimum value required.
-        # self.name = cmd_arg.name if cmd_arg.name is not None else parameter.name
         self.name = cmd_arg.name or parameter.name
-        self.description = cmd_arg.description or " "
-        self.required = cmd_arg.required or None
-        self.choices = cmd_arg.choices or {}
-        self.channel_types = cmd_arg.channel_types or []
+        self._description = cmd_arg.description or MISSING
+        self.required = cmd_arg.required or MISSING
+        self.choices = cmd_arg.choices or MISSING
+        self.channel_types = cmd_arg.channel_types or MISSING
+        self.min_value = cmd_arg.min_value or MISSING
+        self.max_value = cmd_arg.max_value or MISSING
+        self.autocomplete = cmd_arg.autocomplete or MISSING
 
         if not cmd_arg_given and parameter.default is not parameter.empty:
             self.default = parameter.default
@@ -308,6 +331,19 @@ class CommandOption(SlashOption):
         self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
         self.verify()
 
+    # Basic getters and setters.
+
+    @property
+    def description(self) -> str:
+        if not self._description:
+            return " "
+        else:
+            return self._description
+
+    @description.setter
+    def description(self, value: str):
+        self._description = value
+
     def get_type(self, typing: type) -> ApplicationCommandOptionType:
 
         if typing is self.parameter.empty:
@@ -319,8 +355,16 @@ class CommandOption(SlashOption):
 
     def verify(self) -> None:
         """This should run through CmdArg variables and raise errors when conflicting data is given."""
+        super().verify()
         if self.channel_types and self.type is not ApplicationCommandOptionType.channel:
             raise ValueError("channel_types can only be given when the var is typed as nextcord.abc.GuildChannel")
+        if self.min_value is not MISSING and type(self.min_value) not in (int, float):
+            raise ValueError("min_value must be an int or float.")
+        if self.max_value is not MISSING and type(self.max_value) not in (int, float):
+            raise ValueError("max_value must be an int or float.")
+        if (self.min_value is not MISSING or self.max_value is not MISSING) and self.type not in (
+                ApplicationCommandOptionType.integer, ApplicationCommandOptionType.number):
+            raise ValueError("min_value or max_value can only be set if the type is integer or number.")
 
     def handle_slash_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
         """Handles arguments, specifically for Slash Commands."""
@@ -365,7 +409,7 @@ class CommandOption(SlashOption):
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
         # False is included in this because that's the default for Discord currently. Not putting in the required param
         # when possible minimizes the payload size and makes checks between registered and found commands easier.
-        if self.required not in (None, False):
+        if self.required is not MISSING:
             ret["required"] = self.required
         if self.choices:
             ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
@@ -373,6 +417,10 @@ class CommandOption(SlashOption):
             # noinspection PyUnresolvedReferences
             ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
         # We don't ask for the payload if we have options, so no point in checking for options.
+        if self.min_value is not MISSING:
+            ret["min_value"] = self.min_value
+        if self.max_value is not MISSING:
+            ret["max_value"] = self.max_value
         return ret
 
 
@@ -411,22 +459,22 @@ class ApplicationSubcommand:
         self,
         callback: Callable = MISSING,
         parent_command: Optional[Union[ApplicationCommand, ApplicationSubcommand]] = MISSING,
-        cmd_type: Union[ApplicationCommandType, ApplicationCommandOptionType] = MISSING,
+        cmd_type: Optional[Union[ApplicationCommandType, ApplicationCommandOptionType]] = MISSING,
         self_argument: Union[ClientCog, Any] = MISSING,
         name: str = MISSING,
         description: str = MISSING,
-        choices: Optional[Dict[str, Any]] = MISSING,
     ):
-        self._callback: Optional[Callable] = None  # TODO: Add verification if callback is added later.
+        self._callback: Optional[Callable] = None  # TODO: Add verification against vars if callback is added later.
         self.parent_command: Optional[Union[ApplicationCommand, ApplicationSubcommand]] = parent_command
-        self.type: Optional[Union[ApplicationCommandOptionType]] = cmd_type
+        self.type: Optional[ApplicationCommandOptionType] = cmd_type
         self._self_argument: Optional[ClientCog] = self_argument
         self.name: Optional[str] = name
         self._description: str = description
-        # self.choices: Dict[str, Any] = choices
 
         self.options: Dict[str, CommandOption] = {}
         self.children: Dict[str, ApplicationSubcommand] = {}
+
+        self._on_autocomplete: Dict[str, Callable] = {}  # TODO: Maybe move the callbacks into the CommandOptions?
 
         if callback:
             self._from_callback(callback)
@@ -439,7 +487,7 @@ class ApplicationSubcommand:
 
     @property
     def description(self) -> str:
-        if self._description is MISSING:  # Return Discord's bare minimum for a command.
+        if self._description is MISSING:  # Return Discords bare minimum for a command.
             return " "
         else:
             return self._description
@@ -460,6 +508,7 @@ class ApplicationSubcommand:
     #     else:
     #         if not self.description:
     #             self.description = " "
+
     def verify_content(self):
         """This verifies the content of the subcommand and raises errors for violations."""
         if not self.callback:
@@ -473,7 +522,13 @@ class ApplicationSubcommand:
             raise ValueError(f"{self.error_name} ")
         if self.parent_command and self.type is ApplicationCommandOptionType.sub_command_group and \
                 self.parent_command.type is ApplicationCommandOptionType.sub_command_group:
-            raise NotImplementedError("Discord has not implemented subcommands more than 2 levels deep.")
+            raise NotImplementedError(f"{self.error_name}Discord has not implemented subcommands more than 2 levels deep.")
+        for option in self.options.values():
+            if option.autocomplete:
+                if not self._on_autocomplete.get(option.functional_name, None):
+                    raise ValueError(f"{self.error_name} Kwarg has autocomplete enabled, but no on_autocomplete assigned.")
+                # While we could check if it has autocomplete disabled but an on_autocomplete function, why should we
+                # bother people who are likely reworking their code? It also doesn't break anything.
 
     @classmethod
     def from_callback(cls, callback: Callable) -> ApplicationSubcommand:
@@ -483,7 +538,8 @@ class ApplicationSubcommand:
         # TODO: Add kwarg support.
         # ret = ApplicationSubcommand()
         self.set_callback(callback)
-        self.name = self.callback.__name__
+        if not self.name:
+            self.name = self.callback.__name__
         first_arg = True
 
         for value in signature(self.callback).parameters.values():
@@ -570,11 +626,14 @@ class ApplicationSubcommand:
             ret["options"] = [argument.payload for argument in self.options.values()]
         return ret
 
-    def subcommand(self, **kwargs: Dict[Any, Any]):
+    def subcommand(self, **kwargs):
         def decorator(func: Callable):
             # result = ApplicationSubcommand(func, self, ApplicationCommandOptionType.sub_command, **kwargs)
-            result = ApplicationSubcommand.from_callback(func)
-            result.type = ApplicationCommandOptionType.sub_command
+            # result = ApplicationSubcommand.from_callback(func)
+
+            # result.type = ApplicationCommandOptionType.sub_command
+            result = ApplicationSubcommand(callback=func, parent_command=self,
+                                           cmd_type=ApplicationCommandOptionType.sub_command, **kwargs)
             self.type = ApplicationCommandOptionType.sub_command_group
             self.children[result.name] = result
             return result
@@ -665,6 +724,8 @@ class ApplicationCommand(ApplicationSubcommand):
             raise ValueError(f"{self.error_name} Command type is not set to a valid type.")
         if self.type in (ApplicationCommandType.user, ApplicationCommandType.message) and self.children:
             raise ValueError(f"{self.error_name} This type of command cannot have children.")
+        if self.description and self.type in (ApplicationCommandType.user, ApplicationCommandType.message):
+            raise ValueError(f"{self.error_name} This type of command cannot have a description.")
 
     def parse_discord_response(self, state: ConnectionState, command_id: int, guild_id: Optional[int], ) -> None:
         self.set_state(state)
@@ -885,20 +946,20 @@ class ApplicationCommand(ApplicationSubcommand):
             raise NotImplementedError
         return False
 
-    def subcommand(self, **kwargs: Dict[Any, Any]):
+    def subcommand(self, **kwargs):
         """Makes a function into a subcommand."""
         if self.type != ApplicationCommandType.chat_input:  # At this time, non-slash commands cannot have Subcommands.
             raise TypeError(f"{self.type} cannot have subcommands.")
         else:
             def decorator(func: Callable):
                 # result = ApplicationSubcommand(func, self, ApplicationCommandOptionType.sub_command, **kwargs)
-                result = ApplicationSubcommand.from_callback(func)
+                # result = ApplicationSubcommand.from_callback(func)
+                result = ApplicationSubcommand(callback=func, parent_command=self, **kwargs)
                 result.type = ApplicationCommandOptionType.sub_command
                 self.children[result.name] = result
                 return result
 
             return decorator
-
 
 
 def slash_command(**kwargs):
@@ -907,11 +968,12 @@ def slash_command(**kwargs):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
         # return ApplicationCommand(func, cmd_type=ApplicationCommandType.chat_input, **kwargs)
-        app_cmd = ApplicationCommand.from_callback(func)
-        app_cmd.type = ApplicationCommandType.chat_input
-        if guild_ids := kwargs.get("guild_ids"):
-            print("GOT GUILD IDS!")
-            app_cmd.guild_ids = guild_ids
+        # app_cmd = ApplicationCommand.from_callback(func)
+        # app_cmd.type = ApplicationCommandType.chat_input
+        # if guild_ids := kwargs.get("guild_ids"):
+        #     # print("GOT GUILD IDS!")
+        #     app_cmd.guild_ids = guild_ids
+        app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.chat_input, **kwargs)
         return app_cmd
 
     return decorator
@@ -923,8 +985,9 @@ def message_command(**kwargs):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
         # return ApplicationCommand(func, cmd_type=ApplicationCommandType.message, **kwargs)
-        app_cmd = ApplicationCommand.from_callback(func)
-        app_cmd.type = ApplicationCommandType.message
+        # app_cmd = ApplicationCommand.from_callback(func)
+        # app_cmd.type = ApplicationCommandType.message
+        app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.message, **kwargs)
         return app_cmd
     return decorator
 
@@ -935,7 +998,8 @@ def user_command(**kwargs):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
         # return ApplicationCommand(func, cmd_type=ApplicationCommandType.user, **kwargs)
-        app_cmd = ApplicationCommand.from_callback(func)
-        app_cmd.type = ApplicationCommandType.user
+        # app_cmd = ApplicationCommand.from_callback(func)
+        # app_cmd.type = ApplicationCommandType.user
+        app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.user, **kwargs)
         return app_cmd
     return decorator
