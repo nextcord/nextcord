@@ -1786,6 +1786,7 @@ class Client:
         """
         if app_cmd.is_global:
             _log.debug("nextcord.Client: Attempting single global command registration.")
+            _log.debug(f"nextcord.Client: Attempting to register payload {app_cmd.global_payload}")
             raw_response = await self.http.upsert_global_command(self.application_id, app_cmd.global_payload)
             response = ApplicationCommandResponse(self._connection, raw_response)
             app_cmd.parse_discord_response(self._connection, int(raw_response["id"]), None)
@@ -1811,6 +1812,7 @@ class Client:
         if app_cmd.is_guild:
             if payload := app_cmd.get_guild_payload(guild_id):
                 _log.debug(f"nextcord.Client: Attempting single guild command registration for {guild_id}")
+                _log.debug(f"nextcord.Client: Attempting to register payload {payload}")
                 raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
                 response = ApplicationCommandResponse(self._connection, raw_response)
                 app_cmd.parse_discord_response(self._connection, int(raw_response["id"]), guild_id)
