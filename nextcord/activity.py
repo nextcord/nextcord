@@ -218,29 +218,49 @@ class Activity(BaseActivity):
         "buttons",
     )
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.state: Optional[str] = kwargs.pop("state", None)
-        self.details: Optional[str] = kwargs.pop("details", None)
-        self.timestamps: ActivityTimestamps = kwargs.pop("timestamps", {})
-        self.assets: ActivityAssets = kwargs.pop("assets", {})
-        self.party: ActivityParty = kwargs.pop("party", {})
-        self.application_id: Optional[int] = _get_as_snowflake(kwargs, "application_id")
-        self.name: Optional[str] = kwargs.pop("name", None)
-        self.url: Optional[str] = kwargs.pop("url", None)
-        self.flags: int = kwargs.pop("flags", 0)
-        self.sync_id: Optional[str] = kwargs.pop("sync_id", None)
-        self.session_id: Optional[str] = kwargs.pop("session_id", None)
-        self.buttons: List[ActivityButton] = kwargs.pop("buttons", [])
+    def __init__(
+            self,
+            created_at: Optional[float] = None,
+            state: Optional[str] = None,
+            details: Optional[str] = None,
+            timestamps: Optional[Dict] = None,
+            assets: Optional[ActivityAssets] = None,
+            party: Optional[ActivityParty] = None,
+            application_id: Optional[int] = None,
+            name: Optional[str] = None,
+            url: Optional[str] = None,
+            flags: Optional[int] = 0,
+            sync_id: Optional[str] = None,
+            session_id: Optional[str] = None,
+            buttons: Optional[List[ActivityButton]] = None,
+            type: Optional[int] = -1,
+            emoji: Optional[PartialEmoji] = None
+    ):
+        super().__init__(created_at)
+        self.state: Optional[str] = state
+        self.details: Optional[str] = details
+        self.timestamps: ActivityTimestamps = timestamps or {}
+        self.assets: ActivityAssets = assets or {}
+        self.party: ActivityParty = party or {}
+        self.application_id: Optional[int] = _get_as_snowflake(
+            {"application_id": application_id} if application_id else {},
+            "application_id"
+        )
+        self.name: Optional[str] = name
+        self.url: Optional[str] = url
+        self.flags: int = flags
+        self.sync_id: Optional[str] = sync_id
+        self.session_id: Optional[str] = session_id
+        self.buttons: List[ActivityButton] = buttons
 
-        activity_type = kwargs.pop("type", -1)
+        activity_type = type
         self.type: ActivityType = (
             activity_type
             if isinstance(activity_type, ActivityType)
             else try_enum(ActivityType, activity_type)
         )
 
-        emoji = kwargs.pop("emoji", None)
+        emoji = emoji
         self.emoji: Optional[PartialEmoji] = (
             PartialEmoji.from_dict(emoji) if emoji is not None else None
         )
