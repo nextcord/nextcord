@@ -231,7 +231,7 @@ class SlashOption:
                  min_value: Union[int, float] = MISSING,
                  max_value: Union[int, float] = MISSING,
                  autocomplete: bool = MISSING,
-                 default: Any = MISSING,
+                 default: Optional[Any] = None,
                  verify: bool = True
                  ):
         """Provides Discord with information about an option in a command.
@@ -309,24 +309,32 @@ class CommandOption(SlashOption):
             cmd_arg_given = True
         self.functional_name = parameter.name
 
-        # All optional variables need to default to None for functions down the line to understand that they were never
-        # set. If Discord demands a value, it should be the minimum value required.
+        # All optional variables need to default to MISSING for functions down the line to understand that they were
+        # never set. If Discord demands a value, it should be the minimum value required.
         self.name = cmd_arg.name or parameter.name
         self._description = cmd_arg.description or MISSING
-        self.required = cmd_arg.required or MISSING
+        # While long, this is required. If cmd_arg.required is False, the expression:
+        # self.required = cmd_arg.required or MISSING
+        # will cause self.required to be MISSING, not False.
+        self.required = cmd_arg.required if cmd_arg.required is not MISSING else MISSING
         self.choices = cmd_arg.choices or MISSING
         self.channel_types = cmd_arg.channel_types or MISSING
-        self.min_value = cmd_arg.min_value or MISSING
-        self.max_value = cmd_arg.max_value or MISSING
-        self.autocomplete = cmd_arg.autocomplete or MISSING
+        # min_value of 0 will cause an `or` to give the variable MISSING
+        self.min_value = cmd_arg.min_value if cmd_arg.min_value is not MISSING else MISSING
+        # max_value of 0 will cause an `or` to give the variable MISSING
+        self.max_value = cmd_arg.max_value if cmd_arg.max_value is not MISSING else MISSING
+        # autocomplete set to False will cause an `or` to give the variable MISSING
+        self.autocomplete = cmd_arg.autocomplete if cmd_arg.autocomplete is not MISSING else MISSING
 
         if not cmd_arg_given and parameter.default is not parameter.empty:
             self.default = parameter.default
         else:
             self.default = cmd_arg.default
 
-        if self.default is None and cmd_arg.required in (None, True):
-            self.required = True
+        # if self.required is MISSING and self.default is None:
+        #     self.required = True
+
+        self.autocomplete_function: Optional[Callable] = MISSING
 
         self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
         self.verify()
@@ -411,6 +419,9 @@ class CommandOption(SlashOption):
         # when possible minimizes the payload size and makes checks between registered and found commands easier.
         if self.required is not MISSING:
             ret["required"] = self.required
+        else:
+            ret["required"] = True
+
         if self.choices:
             ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
         if self.channel_types:
@@ -421,37 +432,9 @@ class CommandOption(SlashOption):
             ret["min_value"] = self.min_value
         if self.max_value is not MISSING:
             ret["max_value"] = self.max_value
+        if self.autocomplete is not MISSING:
+            ret["autocomplete"] = self.autocomplete
         return ret
-
-
-# class SlashOptionNew:
-#     def __init__(self, option_type: ApplicationCommandOptionType,
-#                    name: str, description: str, required: bool = MISSING,
-#                    choices: Dict[str, Union[str, int, float]] = MISSING,
-#                    channel_types: List[ChannelType] = MISSING,
-#                    min_value: Union[int, float] = MISSING, max_value: Union[int, float] = MISSING,
-#                    autocomplete: bool = MISSING, default: Any = MISSING, verify: bool = True):
-#         self.type: ApplicationCommandOptionType = option_type
-#         self.name: str = name
-#         self.description: str = description
-#         self.required: bool = required
-#         self.choices: Dict[str, Union[str, int, float]] = choices
-#         self.channel_types: List[ChannelType] = channel_types
-#         self.min_value: Union[int, float] = min_value
-#         self.max_value: Union[int, float] = max_value
-#         self.autocomplete: bool = autocomplete
-#         self.default: Any = default
-#         if verify:
-#             self.verify()
-#
-#     def verify(self) -> bool:
-#         """Checks if the given values conflict with one another."""
-#         if (self.min_value is not MISSING or self.max_value is not MISSING) and self.type not in (
-#                 ApplicationCommandOptionType.integer, ApplicationCommandOptionType.number):
-#             raise ValueError("min_value or max_value can only be set if the type is integer or number.")
-#         if self.choices and self.autocomplete is not MISSING:
-#             raise ValueError("Autocomplete cannot be set while choices exist.")
-#         return True
 
 
 class ApplicationSubcommand:
@@ -474,12 +457,12 @@ class ApplicationSubcommand:
         self.options: Dict[str, CommandOption] = {}
         self.children: Dict[str, ApplicationSubcommand] = {}
 
-        self._on_autocomplete: Dict[str, Callable] = {}  # TODO: Maybe move the callbacks into the CommandOptions?
+        # self._on_autocomplete: Dict[str, Callable] = {}  # TODO: Maybe move the callbacks into the CommandOptions?
 
         if callback:
             self._from_callback(callback)
 
-    # Property Methods.
+    # Simple getter and setter methods..
 
     @property
     def error_name(self) -> str:
@@ -491,6 +474,13 @@ class ApplicationSubcommand:
             return " "
         else:
             return self._description
+
+    # def get_option_functional_names(self) -> List[str]:
+    #     """Returns a list with the functional, kwarg names of options."""
+    #     if self.options:  # If performance from list comprehension is an issue, look into keeping a set/list around.
+    #         return [option.functional_name for option in self.options.values()]
+    #     else:
+    #         return []
 
     # def _analyze_content(self) -> None:
     #     """This reads the content of itself and performs validation and changes to variables as needed."""
@@ -525,8 +515,8 @@ class ApplicationSubcommand:
             raise NotImplementedError(f"{self.error_name}Discord has not implemented subcommands more than 2 levels deep.")
         for option in self.options.values():
             if option.autocomplete:
-                if not self._on_autocomplete.get(option.functional_name, None):
-                    raise ValueError(f"{self.error_name} Kwarg has autocomplete enabled, but no on_autocomplete assigned.")
+                if not option.autocomplete_function:
+                    raise ValueError(f"{self.error_name} Kwarg {option.functional_name} has autocomplete enabled, but no on_autocomplete assigned.")
                 # While we could check if it has autocomplete disabled but an on_autocomplete function, why should we
                 # bother people who are likely reworking their code? It also doesn't break anything.
 
@@ -565,6 +555,38 @@ class ApplicationSubcommand:
     def set_self_argument(self, self_arg: ClientCog) -> ApplicationSubcommand:
         self._self_argument = self_arg
         return self
+
+    def add_option_autocomplete(self, option: CommandOption, func: Callable):
+        if not asyncio.iscoroutinefunction(func):
+            raise ValueError(f"{self.error_name} Autocomplete callbacks need to be a coroutine.")
+        option.autocomplete_function = func
+
+    async def call_autocomplete(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
+        if self.children:
+            await self.children[option_data[0]["name"]].call_autocomplete(state, interaction, option_data[0].get("options", {}))
+        elif self.type in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):
+            kwargs = {}
+            focused_option = None
+            option_data_names = {}
+            functional_name_to_disc = {option.functional_name: option.name for option in self.options.values()}
+            for raw_arg in option_data:
+                if raw_arg.get("focused", None):
+                    focused_option = self.options[raw_arg["name"]]
+                option_data_names[raw_arg["name"]] = raw_arg["value"]
+                    # kwargs[focused_option.functional_name] = \
+                    #     focused_option.handle_slash_argument(state, raw_arg["value"], interaction)
+            # function_params = {value.name: value for value in signature(focused_option.autocomplete_function).parameters.values()}
+            # TODO: Reminder that defaults exist.
+            # for value in signature(focused_option.autocomplete_function).parameters.values():
+            #     if discord_arg_name := functional_name_to_disc.get(value.name, None):
+            #         option = self.options[discord_arg_name]
+            #         kwargs[option.functional_name] =
+
+
+
+        else:
+            raise NotImplementedError(f"{self.error_name} Autocomplete isn't handled by this type of command, how did "
+                                      f"you get here?")
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         if self.children:
@@ -625,6 +647,25 @@ class ApplicationSubcommand:
         elif self.options:
             ret["options"] = [argument.payload for argument in self.options.values()]
         return ret
+
+    def on_autocomplete(self, on_kwarg: str):
+        if self.type not in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):  # At this time, non-slash commands cannot have autocomplete.
+            raise TypeError(f"{self.error_name} {self.type} cannot have autocomplete.")
+        found = False
+        for name, option in self.options.items():
+            if option.functional_name == on_kwarg:
+                found = True
+                if option.autocomplete:
+                    def decorator(func: Callable):
+                        self.add_option_autocomplete(option, func)
+                        return func
+                    return decorator
+                else:
+                    print(type(option.autocomplete))
+                    raise ValueError(f"{self.error_name} autocomplete for kwarg {on_kwarg} not enabled, cannot add "
+                                     f"autocomplete function.")
+        if found is False:
+            raise TypeError(f"{self.error_name} kwarg {on_kwarg} not found, cannot add autocomplete function.")
 
     def subcommand(self, **kwargs):
         def decorator(func: Callable):
@@ -733,6 +774,9 @@ class ApplicationCommand(ApplicationSubcommand):
             self._guild_command_ids[guild_id] = command_id
         else:
             self._global_command_id = command_id
+
+    async def call_autocomplete_from_interaction(self, interaction: Interaction):
+        pass
 
     async def call_from_interaction(self, interaction: Interaction) -> None:
         if not self._state:
@@ -949,7 +993,7 @@ class ApplicationCommand(ApplicationSubcommand):
     def subcommand(self, **kwargs):
         """Makes a function into a subcommand."""
         if self.type != ApplicationCommandType.chat_input:  # At this time, non-slash commands cannot have Subcommands.
-            raise TypeError(f"{self.type} cannot have subcommands.")
+            raise TypeError(f"{self.error_name} {self.type} cannot have subcommands.")
         else:
             def decorator(func: Callable):
                 # result = ApplicationSubcommand(func, self, ApplicationCommandOptionType.sub_command, **kwargs)

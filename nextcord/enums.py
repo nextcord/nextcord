@@ -530,6 +530,7 @@ class InteractionType(Enum):
     ping = 1
     application_command = 2
     component = 3
+    application_command_autocomplete = 4
 
 
 class InteractionResponseType(Enum):
@@ -540,6 +541,7 @@ class InteractionResponseType(Enum):
     deferred_channel_message = 5  # (with source)
     deferred_message_update = 6  # for components
     message_update = 7  # for components
+    application_command_autocomplete_result = 8
 
 
 class ApplicationCommandType(Enum):

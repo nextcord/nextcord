@@ -1685,7 +1685,7 @@ class Client:
                 _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
-                _log.info(f"nextcord.Client: Your interaction command failed to register, attempting to lazy load.")
+                _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
                 _log.debug(f"nextcord.Client: {interaction.data}")
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 _log.debug(f"nextcord.Client: {response_signature}")
@@ -1696,6 +1696,13 @@ class Client:
                         self._registered_application_commands[int(interaction.data["id"])] = app_cmd
                         app_cmd.parse_discord_response(self._connection, int(interaction.data["id"]), interaction.guild_id)
                         await app_cmd.call_from_interaction(interaction)
+        elif interaction.type is InteractionType.application_command_autocomplete:
+            # TODO: Is it really worth trying to lazy load with this?
+            _log.info("nextcord.Client: Autocomplete interaction received.")
+            _log.debug(f"nextcord.Client: {interaction.data}")
+            if app_cmd := self._registered_application_commands.get(int(interaction.data["id"])):
+                _log.info(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
+                await app_cmd.call_autocomplete(interaction)
 
     async def add_application_command(self, app_cmd: ApplicationCommand, register=False) -> None:
         self._internal_add_application_command(app_cmd)
