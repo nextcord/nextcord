@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  suggest:
+  format:
     runs-on: ubuntu-latest
 
     steps:
