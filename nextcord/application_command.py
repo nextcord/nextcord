@@ -572,7 +572,7 @@ class ApplicationSubcommand:
         elif self.type in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):
             focused_option_name = None
             for arg in option_data:
-                if arg["focused"] is True:
+                if arg.get("focused", None) is True:
                     if focused_option_name:
                         raise ValueError("Multiple options are focused, is that supposed to be possible?")
                     focused_option_name = arg["name"]
