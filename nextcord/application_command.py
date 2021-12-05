@@ -678,6 +678,8 @@ class ApplicationSubcommand:
         for name, option in self.options.items():
             if option.functional_name == on_kwarg:
                 found = True
+                if option.autocomplete is MISSING:
+                    option.autocomplete = True
                 if option.autocomplete:
                     def decorator(func: Callable):
                         self.add_option_autocomplete(option, func)
