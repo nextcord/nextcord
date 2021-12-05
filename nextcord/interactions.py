@@ -450,6 +450,28 @@ class InteractionResponse:
             )
             self._responded = True
 
+    async def send_autocomplete(self, choices: Union[dict, list]):
+        if not isinstance(choices, dict):
+            choice_list = [{"name": choice, "value": choice} for choice in choices]
+        else:
+            choice_list = [{"name": key, "value": value} for key, value in choices.items()]
+
+        if self._responded:
+            raise InteractionResponded(self._parent)
+
+        payload = {"choices": choice_list}
+
+        adapter = async_context.get()
+        await adapter.create_interaction_response(
+            self._parent.id,
+            self._parent.token,
+            session=self._parent._session,
+            type=InteractionResponseType.application_command_autocomplete_result.value,
+            data=payload
+        )
+        self._responded = True
+
+
     async def send_message(
         self,
         content: Optional[Any] = None,

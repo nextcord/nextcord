@@ -1702,7 +1702,7 @@ class Client:
             _log.debug(f"nextcord.Client: {interaction.data}")
             if app_cmd := self._registered_application_commands.get(int(interaction.data["id"])):
                 _log.info(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
-                await app_cmd.call_autocomplete(interaction)
+                await app_cmd.call_autocomplete_from_interaction(interaction)
 
     async def add_application_command(self, app_cmd: ApplicationCommand, register=False) -> None:
         self._internal_add_application_command(app_cmd)

@@ -417,9 +417,14 @@ class CommandOption(SlashOption):
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
         # False is included in this because that's the default for Discord currently. Not putting in the required param
         # when possible minimizes the payload size and makes checks between registered and found commands easier.
-        if self.required is not MISSING:
+        if self.required:
             ret["required"] = self.required
+        if self.required is not MISSING:
+            pass  # Discord doesn't currently provide Required if it's False due to it being default.
         else:
+            # While this violates Discord's default and our goal (not specified should return minimum or nothing), a
+            # parameter being optional by default goes against traditional programming. A parameter not explicitly
+            # stated to be optional should be required.
             ret["required"] = True
 
         if self.choices:
@@ -561,32 +566,50 @@ class ApplicationSubcommand:
             raise ValueError(f"{self.error_name} Autocomplete callbacks need to be a coroutine.")
         option.autocomplete_function = func
 
-    async def call_autocomplete(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
-        if self.children:
+    async def call_autocomplete(self, state, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
+        if self.children:  # If this has subcommands, it needs to be forwarded to them to handle.
             await self.children[option_data[0]["name"]].call_autocomplete(state, interaction, option_data[0].get("options", {}))
         elif self.type in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):
-            kwargs = {}
-            focused_option = None
-            option_data_names = {}
-            functional_name_to_disc = {option.functional_name: option.name for option in self.options.values()}
-            for raw_arg in option_data:
-                if raw_arg.get("focused", None):
-                    focused_option = self.options[raw_arg["name"]]
-                option_data_names[raw_arg["name"]] = raw_arg["value"]
-                    # kwargs[focused_option.functional_name] = \
-                    #     focused_option.handle_slash_argument(state, raw_arg["value"], interaction)
-            # function_params = {value.name: value for value in signature(focused_option.autocomplete_function).parameters.values()}
-            # TODO: Reminder that defaults exist.
-            # for value in signature(focused_option.autocomplete_function).parameters.values():
-            #     if discord_arg_name := functional_name_to_disc.get(value.name, None):
-            #         option = self.options[discord_arg_name]
-            #         kwargs[option.functional_name] =
+            focused_option_name = None
+            for arg in option_data:
+                if arg["focused"] is True:
+                    if focused_option_name:
+                        raise ValueError("Multiple options are focused, is that supposed to be possible?")
+                    focused_option_name = arg["name"]
+                    # break
 
-
-
+            if focused_option_name:
+                focused_option = self.options[focused_option_name]
+                autocomplete_kwargs = signature(focused_option.autocomplete_function).parameters.keys()
+                kwargs = {}
+                uncalled_options = self.options.copy()
+                for arg_data in option_data:
+                    if option := uncalled_options.get(arg_data["name"], None):
+                        uncalled_options.pop(option.name)
+                        if option.functional_name in autocomplete_kwargs:
+                            kwargs[option.functional_name] = option.handle_slash_argument(state, arg_data["value"], interaction)
+                    else:
+                        # TODO: Handle this better.
+                        raise NotImplementedError(
+                            f"An argument was provided that wasn't already in the function, did you"
+                            f"recently change it?\nRegistered Options: {self.options}, Discord-sent"
+                            f"args: {interaction.data['options']}, broke on {arg_data}"
+                        )
+                for option in uncalled_options.values():
+                    if option.functional_name in autocomplete_kwargs:
+                        kwargs[option.functional_name] = option.default
+                await self.invoke_autocomplete(interaction, focused_option, **kwargs)
+            else:
+                raise ValueError("There's supposed to be a focused option, but it's not found?")
         else:
             raise NotImplementedError(f"{self.error_name} Autocomplete isn't handled by this type of command, how did "
                                       f"you get here?")
+
+    async def invoke_autocomplete(self, interaction: Interaction, focused_option: CommandOption, **kwargs) -> None:
+        if self._self_argument:
+            await focused_option.autocomplete_function(self._self_argument, interaction, **kwargs)
+        else:
+            await focused_option.autocomplete_function(interaction, **kwargs)
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         if self.children:
@@ -747,8 +770,6 @@ class ApplicationCommand(ApplicationSubcommand):
     def from_callback(cls, callback: Callable) -> ApplicationCommand:
         return cls()._from_callback(callback)
 
-
-
     # def parse_response(self, response: ApplicationCommandResponse) -> None:
     #     self.raw_parse_result(response._state, response.id, response.guild_id)
 
@@ -776,7 +797,9 @@ class ApplicationCommand(ApplicationSubcommand):
             self._global_command_id = command_id
 
     async def call_autocomplete_from_interaction(self, interaction: Interaction):
-        pass
+        if not self._state:
+            raise NotImplementedError("State hasn't been set yet, this isn't handled yet!")
+        await self.call_autocomplete(self._state, interaction, interaction.data.get("options", {}))
 
     async def call_from_interaction(self, interaction: Interaction) -> None:
         if not self._state:
@@ -797,7 +820,7 @@ class ApplicationCommand(ApplicationSubcommand):
     def _handle_resolved_message(self, message_data: dict) -> Message:
         # TODO: This is garbage, find a better way to add a Message to the cache.
         #  It's not that I'm unhappy adding things to the cache, it's having to manually do it like this.
-        # The interaction gives us message data, might as well use it and add it to the cache?
+        # The interaction gives us message data, might as well use it and add it to the cache.
         channel, guild = self._state._get_guild_channel(message_data)
         message = Message(channel=channel, data=message_data, state=self._state)
         if not self._state._get_message(message.id) and self._state._messages is not None:
@@ -915,11 +938,17 @@ class ApplicationCommand(ApplicationSubcommand):
             True if any of our payloads has every key:value pair corresponding with key:value's in the raw_payload,
             False otherwise.
         """
-        our_payloads = self.payload
-        for our_payload in our_payloads:
-            if our_payload.get("guild_id", None) == guild_id:
-                if self._recursive_item_check(our_payload, raw_payload):
-                    return True
+        # our_payloads = self.payload
+        # for our_payload in our_payloads:
+        #     if our_payload.get("guild_id", None) == guild_id:
+        #         if self._recursive_item_check(our_payload, raw_payload):
+        #             return True
+        if guild_id:
+            if self._recursive_item_check(self.get_guild_payload(guild_id), raw_payload):
+                return True
+        else:
+            if self._recursive_item_check(self.global_payload, raw_payload):
+                return True
         return False
 
     def reverse_check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int]) -> bool:
