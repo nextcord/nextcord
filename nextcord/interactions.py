@@ -450,14 +450,33 @@ class InteractionResponse:
             )
             self._responded = True
 
-    async def send_autocomplete(self, choices: Union[dict, list]):
+    async def send_autocomplete(self, choices: Union[dict, list]) -> None:
+        """|coro|
+
+        Responds to this interaction by sending an autocomplete payload.
+
+        Parameters
+        ----------
+        choices: Union[:class:`dict`, :class:`list`]
+            The choices to send the user.
+            If a :class:`dict` is given, each key-value pair is turned into a name-value pair. Name is what Discord
+            shows the user, value is what Discord sends to the bot.
+            If something not a :class:`dict`, such as a :class:`list`, is given, each value is turned into a duplicate
+            name-value pair, where the display name and the value Discord sends back are the same.
+
+        Raises
+        -------
+        HTTPException
+            Sending the message failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+        """
+        if self._responded:
+            raise InteractionResponded(self._parent)
         if not isinstance(choices, dict):
             choice_list = [{"name": choice, "value": choice} for choice in choices]
         else:
             choice_list = [{"name": key, "value": value} for key, value in choices.items()]
-
-        if self._responded:
-            raise InteractionResponded(self._parent)
 
         payload = {"choices": choice_list}
 
