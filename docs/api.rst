@@ -1107,6 +1107,44 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param user: The user that joined or left.
     :type user: :class:`User`
 
+.. function:: on_guild_scheduled_event_create(event)
+
+    Called when a :class:`ScheduledEvent` is created.
+
+    :param event: The event that was created.
+    :type event: :class:`ScheduledEvent`
+
+.. function:: on_guild_scheduled_event_update(before, after)
+
+    Called when a :class:`ScheduledEvent` is updated.
+
+    :param before: The event before it was updated.
+    :type before: :class:`ScheduledEvent`
+    :param after: The event after it was updated.
+    :type after: :class:`ScheduledEvent`
+
+.. function:: on_guild_scheduled_event_delete(event)
+
+    Called when a :class:`ScheduledEvent` is deleted.
+
+    :param event: The event that was deleted.
+    :type event: :class:`ScheduledEvent`
+
+.. function:: on_guild_scheduled_event_user_add(event, user)
+              on_guild_scheduled_event_user_remove(event, user)
+
+    Called when a :class:`User` is interested in a scheduled event.
+
+    .. warning::
+
+        The parameter user may be ``None``, this may occur if you
+        don't have :attr:`Intents.members` enabled.
+
+    :param event: The event that the user is interested in.
+    :type event: :class:`ScheduledEvent`
+    :param user: The user that interested.
+    :type user: Optional[:class:`User`]
+
 .. _discord-api-utils:
 
 Utility Functions
