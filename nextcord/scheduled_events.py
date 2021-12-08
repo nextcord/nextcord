@@ -226,7 +226,12 @@ class ScheduledEvent(Hashable):
         else:
             user = ScheduledEventUser(event=self, state=self._state, data=data)
             self._users[user.user.id] = user
+            self.user_count += 1
         return user
+
+    def _remove_user(self, user_id: int) -> None:
+        if  self._users.pop(user_id, None):
+            self.user_count -= 1
 
     def __str__(self) -> str:
         return self.name
