@@ -1446,6 +1446,41 @@ class ConnectionState:
             _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild '
                        'ID: %s. Discarding.', data['guild_id'])
 
+    def parse_guild_scheduled_event_user_add(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(
+                int(data['guild_scheduled_event_id'])
+            ):
+                self.dispatch(
+                    'guild_scheduled_event_user_add',
+                    event,
+                    self.get_user(data['user_id'])
+                )
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown event '
+                         'ID: %s. Discarding.', data['user_id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_user_rempve(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(
+                int(data['guild_scheduled_event_id'])
+            ):
+                self.dispatch(
+                    'guild_scheduled_event_user_remove',
+                    event,
+                    self.get_user(data['user_id'])
+                )
+                event._remove_user(data['user_id'])
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown'
+                         ' event ID: %s. Discarding.', data['user_id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_USER_REMOVE referencing unknown'
+                       ' guild ID: %s. Discarding.', data['guild_id'])
+
 
 class AutoShardedConnectionState(ConnectionState):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
