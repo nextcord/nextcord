@@ -1175,8 +1175,7 @@ class GroupMixin(Generic[CogT]):
     case_insensitive: :class:`bool`
         Whether the commands should be case insensitive. Defaults to ``False``.
     """
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        case_insensitive = kwargs.get('case_insensitive', False)
+    def __init__(self, *args: Any, case_insensitive: bool = False, **kwargs: Any) -> None:
         self.all_commands: Dict[str, Command[CogT, Any, Any]] = _CaseInsensitiveDict() if case_insensitive else {}
         self.case_insensitive: bool = case_insensitive
         super().__init__(*args, **kwargs)
@@ -1442,9 +1441,15 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
         Indicates if the group's commands should be case insensitive.
         Defaults to ``False``.
     """
-    def __init__(self, *args: Any, **attrs: Any) -> None:
-        self.invoke_without_command: bool = attrs.pop('invoke_without_command', False)
-        super().__init__(*args, **attrs)
+    def __init__(
+        self,
+        *args: Any,
+        invoke_without_command: bool = False,
+        case_insensitive: bool = False,
+        **attrs: Any
+    ) -> None:
+        self.invoke_without_command: bool = invoke_without_command
+        super().__init__(*args, case_insensitive=case_insensitive, **attrs)
 
     def copy(self: GroupT) -> GroupT:
         """Creates a copy of this :class:`Group`.
