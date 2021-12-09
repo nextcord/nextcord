@@ -1421,7 +1421,7 @@ class ConnectionState:
         else:
             _log.debug('GUILD_SCHEDULED_EVENT_CREATE referencing unknown guild '
                        'ID: %s. Discarding.', data['guild_id'])
-int()
+
     def parse_guild_scheduled_event_update(self, data) -> None:
         if guild := self._get_guild(int(data['guild_id'])):
             if event := guild.get_scheduled_event(int(data['id'])):
