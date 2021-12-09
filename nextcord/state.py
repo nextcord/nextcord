@@ -1459,11 +1459,11 @@ class ConnectionState:
                     )
                 )
             else:
-              _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown event '
-                         'ID: %s. Discarding.', data['user_id'])
+              _log.debug('GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown'
+                         ' event ID: %s. Discarding.', data['user_id'])
         else:
-            _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild '
-                       'ID: %s. Discarding.', data['guild_id'])
+            _log.debug('GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown'
+                       ' guild ID: %s. Discarding.', data['guild_id'])
 
     def parse_guild_scheduled_event_user_remove(self, data) -> None:
         if guild := self._get_guild(int(data['guild_id'])):
@@ -1479,7 +1479,7 @@ class ConnectionState:
                 )
                 event._remove_user(data['user_id'])
             else:
-              _log.debug('GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown'
+              _log.debug('GUILD_SCHEDULED_EVENT_USER_REMOVE referencing unknown'
                          ' event ID: %s. Discarding.', data['user_id'])
         else:
             _log.debug('GUILD_SCHEDULED_EVENT_USER_REMOVE referencing unknown'
