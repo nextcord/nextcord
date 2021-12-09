@@ -84,6 +84,7 @@ class ScheduledEventUser(Hashable):
     user_id: int
         The id of the interested user
 
+
     .. warning::
 
         user or member may be ``None``, this may occur if you don't have

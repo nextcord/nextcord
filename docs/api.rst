@@ -1133,7 +1133,8 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 .. function:: on_guild_scheduled_event_user_add(event, user)
               on_guild_scheduled_event_user_remove(event, user)
 
-    Called when a :class:`User` is interested in a scheduled event.
+    Called when a :class:`ScheduledEventUser` is interested in a 
+    :class:`ScheduledEvent`.
 
     :param event: The event that the user is interested in.
     :type event: :class:`ScheduledEvent`
