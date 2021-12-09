@@ -1456,7 +1456,7 @@ class ConnectionState:
                     'guild_scheduled_event_user_add',
                     event,
                     ScheduledEventUser.from_id(
-                        event=event, user_id=data['user_id'], state=self
+                        event=event, user_id=int(data['user_id']), state=self
                     )
                 )
             else:
@@ -1475,7 +1475,7 @@ class ConnectionState:
                     'guild_scheduled_event_user_remove',
                     event,
                     ScheduledEventUser.from_id(
-                        event=event, user_id=data['user_id'], state=self
+                        event=event, user_id=int(data['user_id']), state=self
                     )
                 )
                 event._remove_user(data['user_id'])

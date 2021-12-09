@@ -91,6 +91,7 @@ class ScheduledEventUser(Hashable):
         :attr:`Intents.members` enabled.
     """
     __slots__: Tuple[str] = (
+        '_state',
         'event',
         'user',
         'member'
@@ -104,11 +105,21 @@ class ScheduledEventUser(Hashable):
         state: ConnectionState,
         data: ScheduledEventUserPayload = None
     ) -> None:
-        self.event = event
+        self.event: ScheduledEvent = event
         self._state = state
 
         if update:
             self._update(data)
+
+    def __repr__(self) -> str:
+        attrs: List[Tuple[str, Any]] = [
+            ('user_id', self.user_id),
+            ('event', str(self.event)),
+            ('user', str(self.user)),
+            ('member', str(self.member)),
+        ]
+        joined = ' '.join('%s=%r' % t for t in attrs)
+        return f'<{self.__class__.__name__} {joined}>'
 
     @classmethod
     def from_id(
