@@ -1135,15 +1135,10 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     Called when a :class:`User` is interested in a scheduled event.
 
-    .. warning::
-
-        The parameter user may be ``None``, this may occur if you
-        don't have :attr:`Intents.members` enabled.
-
     :param event: The event that the user is interested in.
     :type event: :class:`ScheduledEvent`
     :param user: The user that interested.
-    :type user: Optional[:class:`User`]
+    :type user: :class:`ScheduledEventUser`
 
 .. _discord-api-utils:
 

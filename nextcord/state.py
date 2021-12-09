@@ -59,7 +59,7 @@ from .ui.view import ViewStore, View
 from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
-from .scheduled_events import ScheduledEvent
+from .scheduled_events import ScheduledEvent, ScheduledEventUser
 
 if TYPE_CHECKING:
     from .abc import PrivateChannel
@@ -1454,7 +1454,9 @@ class ConnectionState:
                 self.dispatch(
                     'guild_scheduled_event_user_add',
                     event,
-                    self.get_user(data['user_id'])
+                    ScheduledEventUser.from_id(
+                        event=event, user_id=data['user_id'], state=self
+                    )
                 )
             else:
               _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown event '
@@ -1463,7 +1465,7 @@ class ConnectionState:
             _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild '
                        'ID: %s. Discarding.', data['guild_id'])
 
-    def parse_guild_scheduled_event_user_rempve(self, data) -> None:
+    def parse_guild_scheduled_event_user_remove(self, data) -> None:
         if guild := self._get_guild(int(data['guild_id'])):
             if event := guild.get_scheduled_event(
                 int(data['guild_scheduled_event_id'])
@@ -1471,7 +1473,9 @@ class ConnectionState:
                 self.dispatch(
                     'guild_scheduled_event_user_remove',
                     event,
-                    self.get_user(data['user_id'])
+                    ScheduledEventUser.from_id(
+                        event=event, user_id=data['user_id'], state=self
+                    )
                 )
                 event._remove_user(data['user_id'])
             else:

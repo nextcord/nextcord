@@ -76,11 +76,18 @@ class ScheduledEventUser(Hashable):
     ----------
     event: :class:`ScheduledEvent`
         The event the user is interested in.
-    user: :class:`User`
-        The related user object.
+    user: Optional[:class:`User`]
+        The related user object. Blank if no member intents
     member: Optional[:class:`Member`]
         The related member object, if requested with 
         :meth:`ScheduledEvent.fetch_users`.
+    user_id: int
+        The id of the interested user
+
+    .. warning::
+
+        user or member may be ``None``, this may occur if you don't have
+        :attr:`Intents.members` enabled.
     """
     __slots__: Tuple[str] = (
         'event',
@@ -91,28 +98,45 @@ class ScheduledEventUser(Hashable):
     def __init__(
         self,
         *,
+        update: bool = True,
         event: ScheduledEvent,
         state: ConnectionState,
-        data: ScheduledEventUserPayload
+        data: ScheduledEventUserPayload = None
     ) -> None:
         self.event = event
         self._state = state
 
-        self._update(data)
+        if update:
+            self._update(data)
+
+    @classmethod
+    def from_id(
+        cls,
+        *,
+        event: ScheduledEvent,
+        state: ConnectionState,
+        user_id: int
+    ) -> ScheduledEventUser:
+        obj = cls(event=event, state=state, update=False)
+        obj.user_id = user_id
+        obj.user = state.get_user(user_id)
+        obj.member = event.guild.get_member(user_id)
+        return obj
 
     def _update(self, data: ScheduledEventUserPayload) -> None:
         self.user: User = self._state.store_user(data['user'])
+        self.user_id: int = data['user']['id']
         if member := data.get('member'):
             if not self._state.member_cache_flags._empty:
                 try:
-                    self.member: Optional[Member] = self.guild.get_member(
+                    self.member: Optional[Member] = self.event.guild.get_member(
                         member['id']
                     )
                 except KeyError:
-                    m = Member(data=member, guild=self.guild, state=self._state)
+                    m = Member(data=member, guild=self.event.guild, state=self._state)
                     self.member: Optional[Member] = m
             else:
-                m = Member(data=member, guild=self.guild, state=self._state)
+                m = Member(data=member, guild=self.event.guild, state=self._state)
                 self.member: Optional[Member] = m
         else:
             self.member: Optional[Member] = None
