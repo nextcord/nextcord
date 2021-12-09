@@ -304,55 +304,75 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         self.__original_kwargs__ = kwargs.copy()
         return self
 
-    def __init__(self, func: Union[
+    def __init__(
+        self,
+        func: Union[
             Callable[Concatenate[CogT, ContextT, P], Coro[T]],
             Callable[Concatenate[ContextT, P], Coro[T]],
-        ], **kwargs: Any):
+        ],
+        name: Optional[str] = None,
+        enabled: Optional[bool] = True,
+        rest_is_raw: Optional[bool] = False,
+        hidden: Optional[bool] = False,
+        help: Optional[str] = None,
+        brief: Optional[str] = None,
+        usage: Optional[str] = None,
+        description: Optional[str] = '',
+        checks: Optional[List] = None,
+        aliases: Optional[Union[List[str], Tuple[str]]] = None,
+        extras: Optional[Dict[str, Any]] = None,
+        cooldown: Optional[Union[Cooldown, CooldownMapping]] = None,
+        max_concurrency: Optional[MaxConcurrency] = None,
+        require_var_positional: Optional[bool] = False,
+        ignore_extra: Optional[bool] = True,
+        cooldown_after_parsing: Optional[bool] = False,
+        inherit_hooks: Optional[bool] = False,
+        **kwargs: Any
+    ) -> None:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError('Callback must be a coroutine.')
 
-        name = kwargs.get('name') or func.__name__
+        name = name or func.__name__
         if not isinstance(name, str):
             raise TypeError('Name of a command must be a string.')
         self.name: str = name
 
         self.callback = func
-        self.enabled: bool = kwargs.get('enabled', True)
+        self.enabled: bool = enabled
 
-        help_doc = kwargs.get('help')
-        if help_doc is not None:
-            help_doc = inspect.cleandoc(help_doc)
+        if help is not None:
+            help = inspect.cleandoc(help)
         else:
-            help_doc = inspect.getdoc(func)
-            if isinstance(help_doc, bytes):
-                help_doc = help_doc.decode('utf-8')
+            help = inspect.getdoc(func)
+            if isinstance(help, bytes):
+                help = help.decode('utf-8')
 
-        self.help: Optional[str] = help_doc
+        self.help: Optional[str] = help
 
-        self.brief: Optional[str] = kwargs.get('brief')
-        self.usage: Optional[str] = kwargs.get('usage')
-        self.rest_is_raw: bool = kwargs.get('rest_is_raw', False)
-        self.aliases: Union[List[str], Tuple[str]] = kwargs.get('aliases', [])
-        self.extras: Dict[str, Any] = kwargs.get('extras', {})
+        self.brief: Optional[str] = brief
+        self.usage: Optional[str] = usage
+        self.rest_is_raw: bool = rest_is_raw
+        self.aliases: Union[List[str], Tuple[str]] = aliases or []
+        self.extras: Dict[str, Any] = extras or {}
 
         if not isinstance(self.aliases, (list, tuple)):
             raise TypeError("Aliases of a command must be a list or a tuple of strings.")
 
-        self.description: str = inspect.cleandoc(kwargs.get('description', ''))
-        self.hidden: bool = kwargs.get('hidden', False)
+        self.description: str = inspect.cleandoc(description)
+        self.hidden: bool = hidden
 
         try:
             checks = func.__commands_checks__
             checks.reverse()
         except AttributeError:
-            checks = kwargs.get('checks', [])
+            checks = checks or []
 
         self.checks: List[Check] = checks
 
         try:
-            cooldown = func.__commands_cooldown__
+            cooldown: Optional[Union[Cooldown, CooldownMapping]] = func.__commands_cooldown__
         except AttributeError:
-            cooldown = kwargs.get('cooldown')
+            cooldown: Optional[Union[Cooldown, CooldownMapping]] = cooldown
         
         if cooldown is None:
             buckets = CooldownMapping(cooldown, BucketType.default)
@@ -365,13 +385,13 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         try:
             max_concurrency = func.__commands_max_concurrency__
         except AttributeError:
-            max_concurrency = kwargs.get('max_concurrency')
+            pass
 
         self._max_concurrency: Optional[MaxConcurrency] = max_concurrency
 
-        self.require_var_positional: bool = kwargs.get('require_var_positional', False)
-        self.ignore_extra: bool = kwargs.get('ignore_extra', True)
-        self.cooldown_after_parsing: bool = kwargs.get('cooldown_after_parsing', False)
+        self.require_var_positional: bool = require_var_positional
+        self.ignore_extra: bool = ignore_extra
+        self.cooldown_after_parsing: bool = cooldown_after_parsing
         self.cog: Optional[CogT] = None
 
         # bandaid for the fact that sometimes parent can be the bot instance
@@ -395,7 +415,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             self.after_invoke(after_invoke)
 
         # Attempt to bind to parent hooks if applicable
-        if not kwargs.get("inherit_hooks", False):
+        if not inherit_hooks:
             return
 
         # We should be binding hooks
@@ -1363,6 +1383,7 @@ class GroupMixin(Generic[CogT]):
         Callable[..., :class:`Command`]
             A decorator that converts the provided method into a Command, adds it to the bot, then returns it.
         """
+        # TODO This is still a req
         def decorator(func: Callable[Concatenate[ContextT, P], Coro[Any]]) -> CommandT:
             kwargs.setdefault('parent', self)
             result = command(name=name, cls=cls, *args, **kwargs)(func)
@@ -1411,6 +1432,7 @@ class GroupMixin(Generic[CogT]):
         Callable[..., :class:`Group`]
             A decorator that converts the provided method into a Group, adds it to the bot, then returns it.
         """
+        # TODO This is still a todo
         def decorator(func: Callable[Concatenate[ContextT, P], Coro[Any]]) -> GroupT:
             kwargs.setdefault('parent', self)
             result = group(name=name, cls=cls, *args, **kwargs)(func)
