@@ -94,7 +94,8 @@ class ScheduledEventUser(Hashable):
         '_state',
         'event',
         'user',
-        'member'
+        'member',
+        'user_id'
     )
 
     def __init__(
@@ -271,6 +272,10 @@ class ScheduledEvent(Hashable):
 
     def __str__(self) -> str:
         return self.name
+
+    def _add_user(self, user: ScheduledEventUser) -> None:
+        self._users[user.user.id] = user
+        self.user_count += 1
 
     def __repr__(self) -> str:
         attrs: List[Tuple[str, Any]] = [

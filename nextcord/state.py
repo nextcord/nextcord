@@ -1452,12 +1452,14 @@ class ConnectionState:
             if event := guild.get_scheduled_event(
                 int(data['guild_scheduled_event_id'])
             ):
+                u = ScheduledEventUser.from_id(
+                    event=event, user_id=int(data['user_id']), state=self
+                )
+                event._add_user(u)
                 self.dispatch(
                     'guild_scheduled_event_user_add',
                     event,
-                    ScheduledEventUser.from_id(
-                        event=event, user_id=int(data['user_id']), state=self
-                    )
+                    u
                 )
             else:
               _log.debug('GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown'
@@ -1471,6 +1473,7 @@ class ConnectionState:
             if event := guild.get_scheduled_event(
                 int(data['guild_scheduled_event_id'])
             ):
+                event._remove_user(int(data['user_id']))
                 self.dispatch(
                     'guild_scheduled_event_user_remove',
                     event,
@@ -1478,7 +1481,6 @@ class ConnectionState:
                         event=event, user_id=int(data['user_id']), state=self
                     )
                 )
-                event._remove_user(data['user_id'])
             else:
               _log.debug('GUILD_SCHEDULED_EVENT_USER_REMOVE referencing unknown'
                          ' event ID: %s. Discarding.', data['user_id'])
