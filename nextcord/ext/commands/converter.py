@@ -865,7 +865,13 @@ class GuildStickerConverter(IDConverter[nextcord.GuildSticker]):
 
 
 _EVENT_INVITE_RE = re.compile(
-    r'(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)?event=(\d+)'
+    r'(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)'
+    '?event=(\d+)'
+)
+
+_EVENT_API_RE = re.compile(
+    r'(?:https?\:\/\/)?(?:(ptb|canary|www)\.)?discord'
+    r'(?:(?:app)?\.com\/events)\/(\d+)\/(\d+)'
 )
 
 
@@ -894,11 +900,18 @@ class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
         if result is None:
             match = _EVENT_INVITE_RE.match(argument)
 
-            if match is None:
-                raise ScheduledEventNotFound(argument)
-            else:
+            if match is not None:
                 event_id = int(match.group(2))
                 result = bot.get_scheduled_event(event_id)
+            else:
+                match = _EVENT_API_RE.match(argument)
+                guild_id = int(match.group(2))
+                guild = bot.get_guild(guild_id)
+                if guild is not None:
+                    result = guild.get_scheduled_event(int(match.group(3)))
+                else:
+                    raise ScheduledEventNotFound(argument)
+                raise ScheduledEventNotFound(argument)
 
         return result
 
