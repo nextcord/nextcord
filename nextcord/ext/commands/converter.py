@@ -877,7 +877,6 @@ class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
         result = None
         bot = ctx.bot
         guild = ctx.guild
-        eventre = re.compile()
 
         if match is None:
             # Try to get the scheduled event by name. Try local guild first.
