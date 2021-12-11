@@ -868,11 +868,7 @@ _EVENT_INVITE_RE = re.compile(
     r'(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)?event=(\d+)'
 )
 
-# Create a converter for ScheduledEvent called ScheduledEventConverter
-# it resolves id, then name, then invite link
-# an example invite link is https://discord.gg/CnRwPzah?event=919256812065284116
-# the link is in the format discord.gg/invite?event=snowflake
-# raise ScheduledEventNotFound if all conversions fail
+
 class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
     async def convert(
         self, ctx: Context, argument: str
