@@ -75,6 +75,7 @@ __all__ = (
     'ThreadConverter',
     'GuildChannelConverter',
     'GuildStickerConverter',
+    'ScheduledEventConverter',
     'clean_content',
     'Greedy',
     'run_converters',
@@ -863,6 +864,50 @@ class GuildStickerConverter(IDConverter[nextcord.GuildSticker]):
         return result
 
 
+_EVENT_INVITE_RE = re.compile(
+    r'(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)?event=(\d+)'
+)
+
+# Create a converter for ScheduledEvent called ScheduledEventConverter
+# it resolves id, then name, then invite link
+# an example invite link is https://discord.gg/CnRwPzah?event=919256812065284116
+# the link is in the format discord.gg/invite?event=snowflake
+# raise ScheduledEventNotFound if all conversions fail
+class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
+    async def convert(
+        self, ctx: Context, argument: str
+    ) -> nextcord.ScheduledEvent:
+        match = self._get_id_match(argument)
+        result = None
+        bot = ctx.bot
+        guild = ctx.guild
+        eventre = re.compile()
+
+        if match is None:
+            # Try to get the scheduled event by name. Try local guild first.
+            if guild:
+                result = nextcord.utils.get(guild.scheduled_events, name=argument)
+
+            if result is None:
+                result = nextcord.utils.get(bot.scheduled_events, name=argument)
+        else:
+            scheduled_event_id = int(match.group(1))
+
+            # Try to look up scheduled event by id.
+            result = bot.get_scheduled_event(scheduled_event_id)
+
+        if result is None:
+            match = re.match(_EVENT_INVITE_RE, argument)
+
+            if match is None:
+                raise ScheduledEventNotFound(argument)
+            else:
+                event_id = int(match.group(2))
+                result = bot.get_scheduled_event(event_id)
+
+        return result
+
+
 class clean_content(Converter[str]):
     """Converts the argument to mention scrubbed version of
     said content.
@@ -1053,6 +1098,7 @@ CONVERTER_MAPPING: Dict[Type[Any], Any] = {
     nextcord.Thread: ThreadConverter,
     nextcord.abc.GuildChannel: GuildChannelConverter,
     nextcord.GuildSticker: GuildStickerConverter,
+    nextcord.ScheduledEvent: ScheduledEventConverter,
 }
 
 

@@ -1403,6 +1403,14 @@ class ConnectionState:
             if channel is not None:
                 return channel
 
+    def get_scheduled_event(self, id: Optional[int]) -> Optional[ScheduledEvent]:
+        if id is None:
+            return None
+
+        for guild in self.guilds:
+            if event := guild.get_scheduled_event(id):
+                return event
+
     def create_message(
         self, *, channel: Union[TextChannel, Thread, DMChannel, GroupChannel, PartialMessageable], data: MessagePayload
     ) -> Message:
