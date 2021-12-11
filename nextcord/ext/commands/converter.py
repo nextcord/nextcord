@@ -876,6 +876,20 @@ _EVENT_API_RE = re.compile(
 
 
 class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
+    """Converts to a :class:`~nextcord.ScheduledEvent`.
+
+    All lookups are done for the local guild first, if available. If that lookup
+    fails, then it checks the client's global cache.
+
+    The lookup strategy is as follows (in order):
+
+    1. Lookup by ID.
+    3. Lookup by name
+    3. Lookup by url (invite?event=id and /guildid/eventid)
+
+    .. versionadded:: 2.0
+    """
+
     async def convert(
         self, ctx: Context, argument: str
     ) -> nextcord.ScheduledEvent:
@@ -911,7 +925,9 @@ class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
                     result = guild.get_scheduled_event(int(match.group(3)))
                 else:
                     raise ScheduledEventNotFound(argument)
-                raise ScheduledEventNotFound(argument)
+
+                if result is None:
+                    raise ScheduledEventNotFound(argument)
 
         return result
 
