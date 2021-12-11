@@ -897,7 +897,7 @@ class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
             result = bot.get_scheduled_event(scheduled_event_id)
 
         if result is None:
-            match = re.match(_EVENT_INVITE_RE, argument)
+            match = _EVENT_INVITE_RE.match(argument)
 
             if match is None:
                 raise ScheduledEventNotFound(argument)
