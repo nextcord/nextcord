@@ -349,6 +349,8 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
             guild_id = None
         else:
             guild_id = int(guild_id)
+        if channel_id is None:
+            channel_id = ctx.channel.id
         return guild_id, message_id, channel_id
 
     @staticmethod

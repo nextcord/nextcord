@@ -895,7 +895,7 @@ class Guild(Hashable):
 
     @property
     def member_count(self) -> Optional[int]:
-        """Optional[:class:`int`]: Returns the true member count, if availible.
+        """Optional[:class:`int`]: Returns the true member count, if available.
 
         .. warning::
 

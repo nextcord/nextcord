@@ -142,8 +142,9 @@ class Embed:
         The description of the embed.
         This can be set during initialisation.
     url: :class:`str`
-        The URL of the embed.
+        The hyperlink of the embed title.
         This can be set during initialisation.
+        This makes no effect if there is no ``title`` field.
     timestamp: :class:`datetime.datetime`
         The timestamp of the embed content. This is an aware datetime.
         If a naive datetime is passed, it is converted to an aware

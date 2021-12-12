@@ -601,6 +601,9 @@ Exceptions
 .. autoexception:: nextcord.ext.commands.NoEntryPointError
     :members:
 
+.. autoexception:: nextcord.ext.commands.InvalidSetupArguments
+    :members:
+
 .. autoexception:: nextcord.ext.commands.ExtensionFailed
     :members:
 
@@ -669,6 +672,7 @@ Exception Hierarchy
             - :exc:`~.commands.ExtensionAlreadyLoaded`
             - :exc:`~.commands.ExtensionNotLoaded`
             - :exc:`~.commands.NoEntryPointError`
+            - :exc:`~.commands.InvalidSetupArguments`
             - :exc:`~.commands.ExtensionFailed`
             - :exc:`~.commands.ExtensionNotFound`
     - :exc:`~.ClientException`

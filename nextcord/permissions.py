@@ -550,10 +550,10 @@ class Permissions(BaseFlags):
         .. versionadded:: 2.0
         """
         return 1 << 38
-    
+
     @flag_value
     def start_embedded_activities(self) -> int:
-        """:`bool`: Returns ``True`` if a user can launch activities in a voice channel.
+        """:class:`bool`: Returns ``True`` if a user can launch activities in a voice channel.
 
         .. versionadded:: 2.0
         """
@@ -672,6 +672,7 @@ class PermissionOverwrite:
         send_messages_in_threads: Optional[bool]
         external_stickers: Optional[bool]
         use_external_stickers: Optional[bool]
+        start_embedded_activities: Optional[bool]
 
     def __init__(self, **kwargs: Optional[bool]):
         self._values: Dict[str, Optional[bool]] = {}

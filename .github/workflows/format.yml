@@ -1,0 +1,16 @@
+name: format
+
+on: [push, pull_request]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: akaihola/darker@github-action-v1.3.2-2
+        with:
+          options: "--check --verbose"
+          src: "./nextcord"
+          version: "1.3.2"

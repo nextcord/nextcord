@@ -106,6 +106,6 @@ A quick example to showcase how events work:
 
     @bot.event
     async def on_message(message):
-        print(f'Message from {messsage.author}: {message.content}')
+        print(f'Message from {message.author}: {message.content}')
 
     bot.run('token')
