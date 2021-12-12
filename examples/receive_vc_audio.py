@@ -9,7 +9,7 @@ bot.connections = {}
 
 
 async def get_vc(message: nextcord.Message):
-    """Finds the corresponding vc to a message user or generates a new one"""
+    """Finds the corresponding VC to a message user or generates a new one"""
     vc = message.author.voice
     if not vc:
         await message.channel.send("You're not in a vc right now")
