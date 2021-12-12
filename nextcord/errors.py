@@ -271,7 +271,7 @@ class ListeningException(ClientException):
 
 
 class NotConnected(ListeningException):
-    """Exception that's thrown when trying to listen while not connected"""
+    """Exception that's thrown when trying to listen while not connected to a voice channel"""
     pass
 
 
