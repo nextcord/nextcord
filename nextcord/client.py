@@ -871,7 +871,7 @@ class Client:
         Parameters
         -----------
         id: :class:`int`
-            The ID to search for.
+            The scheduled event's ID to search for.
 
         Returns
         --------

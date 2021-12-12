@@ -3016,6 +3016,8 @@ class Guild(Hashable):
         ----------
         with_users: Optional[:class:`bool`]
             If the event should be received with :attr:`ScheduledEvent.users`
+            This defaults to ``False`` - the events' :attr:`~ScheduledEvent.users` 
+            will be empty.
 
         Raises
         ------
@@ -3136,21 +3138,18 @@ class Guild(Hashable):
             The created event object.
         """
         payload: Dict[str, Any] = {}
+        payload['name'] = name
+        payload['entity_type'] = entity_type.value
+        payload['scheduled_start_time'] = start_time.isoformat()
         if channel is not MISSING:
             payload['channel_id'] = channel.id
         if metadata is not MISSING:
             payload['entity_metadata'] = metadata.__dict__
-        if name is not MISSING:
-            payload['name'] = name
         if privacy_level is not MISSING:
             payload['privacy_level'] = privacy_level.value
-        if start_time is not MISSING:
-            payload['scheduled_start_time'] = start_time.isoformat()
         if end_time is not MISSING:
             payload['scheduled_end_time'] = end_time.isoformat()
         if description is not MISSING:
             payload['description'] = description
-        if entity_type is not MISSING:
-            payload['entity_type'] = entity_type.value
         data = await self._state.http.create_event(self.id, **payload)
         return self._store_scheduled_event(data)
