@@ -599,7 +599,7 @@ class Message(Hashable):
 
         .. versionadded:: 2.0
     thread: Optional[:class:`Thread`]
-        The thread created from this message, if any.
+        The thread created from a message, if any.
 
         .. versionadded:: 2.0
     guild: Optional[:class:`Guild`]
