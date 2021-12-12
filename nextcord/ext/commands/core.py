@@ -277,6 +277,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
 
         .. versionadded:: 2.0
+
     inherit_hooks: :class:`bool`, default=False
         If ``True`` and this command has a parent :class:`Group` then this command
         will inherit all checks, pre_invoke and after_invoke's defined on the the :class:`Group`
