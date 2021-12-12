@@ -30,7 +30,13 @@ import asyncio
 
 from . import utils
 from .enums import try_enum, InteractionType, InteractionResponseType
-from .errors import InteractionResponded, HTTPException, ClientException
+from .errors import (
+    InteractionResponded,
+    HTTPException,
+    ClientException,
+    InvalidData,
+    InvalidArgument
+)
 from .channel import PartialMessageable, ChannelType
 
 from .user import User
@@ -357,6 +363,69 @@ class Interaction:
             self.application_id,
             self.token,
             session=self._session,
+        )
+
+    async def send(self, *args, **kwargs) -> Optional[Message]:
+        """|coro|
+
+        This is a shorthand function for helping in sending messages in
+        response to an interaction. If the response
+        :meth:`InteractionResponse.is_done()` then the message is sent
+        via the :attr:`Interaction.channel` instead.
+
+        .. warning::
+
+            Ephemeral messages should not be sent with this as if
+            the :attr:`Interaction.channel` is fallen back to,
+            ephemeral messages cannot be sent with this.
+
+        Returns
+        -------
+        Optional[:class:`Message`]
+            Message if the interaction has been responded to and the
+            interaction's channel was sent to. Else ``None``
+
+        Raises
+        ------
+        InvalidData
+            Somehow :attr:`Interaction.channel` was ``None``,
+            this may occur in threads.
+        """
+
+        if not self.response.is_done():
+            return await self.response.send_message(*args, **kwargs)
+        if self.channel is not None:
+            return await self.channel.send(*args, **kwargs)
+        raise InvalidData(
+            "Interaction.channel is None, this may occur in threads"
+        )
+
+    async def edit(self, *args, **kwargs) -> Optional[Message]:
+        """|coro|
+
+        This is a shorthand function for helping in editing messages in
+        response to an interaction. If the response
+        :meth:`InteractionResponse.is_done()` then the message is edited
+        via the :attr:`Interaction.message` instead.
+
+        Returns
+        -------
+        Optional[:class:`Message`]
+            Message if the interaction has been responded to and the
+            interaction's message was edited w/o using response. Else ``None``
+
+        Raises
+        ------
+        InvalidArgument
+            :attr:`Interaction.message` was ``None``,
+            this may occur in threads.
+        """
+        if not self.response.is_done():
+            return await self.response.edit_message(*args, **kwargs)
+        if self.message is not None:
+            return await self.message.edit(*args, **kwargs)
+        raise InvalidArgument(
+            "Interaction.message is None, this method is only for views"
         )
 
 
