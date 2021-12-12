@@ -813,7 +813,7 @@ class ApplicationCommand(ApplicationSubcommand):
         cmd_type: ApplicationCommandType = MISSING,
         name: str = MISSING,
         description: str = MISSING,
-        guild_ids: List[int] = MISSING,
+        guild_ids: Union[Set[int], List[int]] = MISSING,
         default_permission: Optional[bool] = MISSING,
         force_global: bool = False,
     ):
@@ -821,7 +821,7 @@ class ApplicationCommand(ApplicationSubcommand):
         self._state: Optional[ConnectionState] = None
         self.force_global: bool = force_global
         self.default_permission: bool = default_permission or True
-        self.guild_ids: List[int] = guild_ids or []
+        self.guild_ids: Set[int] = set(guild_ids) if guild_ids else set()
         self._global_command_id: Optional[int] = None
         self._guild_command_ids: Dict[int, int] = {}  # Guild ID is key, command ID is value.
 
@@ -921,6 +921,7 @@ class ApplicationCommand(ApplicationSubcommand):
         self.set_state(state)
         if guild_id:
             self._guild_command_ids[guild_id] = command_id
+
         else:
             self._global_command_id = command_id
 
@@ -969,8 +970,6 @@ class ApplicationCommand(ApplicationSubcommand):
         if self.is_global:
             ret.append(partial_payload)
         return ret
-
-
 
     def check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int]) -> bool:
         """Checks if self.payload values match with what the given raw payload has.
