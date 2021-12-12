@@ -683,7 +683,7 @@ class Message(Hashable):
             self.guild = state._get_guild(utils._get_as_snowflake(data, 'guild_id'))
 
         thread_data = data.get('thread')
-        if self.guild and thread_data:
+        if thread_data:
             self.thread: Optional[Thread] = Thread(guild=self.guild, state=state, data=thread_data)
         else:
             self.thread: Optional[Thread] = None
