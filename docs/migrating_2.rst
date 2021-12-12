@@ -119,18 +119,12 @@ Before: ::
     vc.is_playing()
     vc.is_paused()
     vc.is_connected()
-    vc.stop()
-    vc.pause()
-    vc.resume()
 
 After: ::
 
     vc.playing
     vc.playing_paused
     vc.connected
-    vc.stop_playing()
-    vc.pause_playing()
-    vc.resume_playing()
 
 
 Embed.__bool__ change
