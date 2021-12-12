@@ -276,7 +276,7 @@ class NotConnected(ListeningException):
 
 
 class AlreadyListening(ListeningException):
-    """Exception that's thrown when trying to listen while already listening"""
+    """Exception that's thrown when trying to listen while already listening to a voice channel"""
     pass
 
 
