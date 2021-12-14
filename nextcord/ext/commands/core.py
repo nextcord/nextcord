@@ -23,6 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
+import warnings
 from typing import (
     Any,
     Callable,
@@ -331,6 +332,13 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     ) -> None:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError('Callback must be a coroutine.')
+
+        if kwargs.get("pass_context", False):
+            warnings.warn(
+                "pass_context is from the 0.x.x version of discord.py/nextcord. "
+                "You are currently using 2.x.x, please see the migration guides.",
+                DeprecationWarning
+            )
 
         name = name or func.__name__
         if not isinstance(name, str):
@@ -1348,6 +1356,22 @@ class GroupMixin(Generic[CogT]):
         name: str = ...,
         cls: Type[Command[CogT, P, T]] = ...,
         *args: Any,
+        aliases: Optional[Union[List[str], Tuple[str]]] = ...,
+        brief: Optional[str] = ...,
+        checks: Optional[List] = ...,
+        cooldown: Optional[Union[Cooldown, CooldownMapping]] = ...,
+        cooldown_after_parsing: Optional[bool] = ...,
+        description: Optional[str] = ...,
+        enabled: Optional[bool] = ...,
+        extras: Optional[Dict[str, Any]] = ...,
+        help: Optional[str] = ...,
+        hidden: Optional[bool] = ...,
+        ignore_extra: Optional[bool] = ...,
+        inherit_hooks: Optional[bool] = ...,
+        max_concurrency: Optional[MaxConcurrency] = ...,
+        require_var_positional: Optional[bool] = ...,
+        rest_is_raw: Optional[bool] = ...,
+        usage: Optional[str] = ...,
         **kwargs: Any,
     ) -> Callable[
         [
@@ -1364,6 +1388,22 @@ class GroupMixin(Generic[CogT]):
         name: str = ...,
         cls: Type[CommandT] = ...,
         *args: Any,
+        aliases: Optional[Union[List[str], Tuple[str]]] = ...,
+        brief: Optional[str] = ...,
+        checks: Optional[List] = ...,
+        cooldown: Optional[Union[Cooldown, CooldownMapping]] = ...,
+        cooldown_after_parsing: Optional[bool] = ...,
+        description: Optional[str] = ...,
+        enabled: Optional[bool] = ...,
+        extras: Optional[Dict[str, Any]] = ...,
+        help: Optional[str] = ...,
+        hidden: Optional[bool] = ...,
+        ignore_extra: Optional[bool] = ...,
+        inherit_hooks: Optional[bool] = ...,
+        max_concurrency: Optional[MaxConcurrency] = ...,
+        require_var_positional: Optional[bool] = ...,
+        rest_is_raw: Optional[bool] = ...,
+        usage: Optional[str] = ...,
         **kwargs: Any,
     ) -> Callable[[Callable[Concatenate[ContextT, P], Coro[Any]]], CommandT]:
         ...
@@ -1373,7 +1413,23 @@ class GroupMixin(Generic[CogT]):
         name: str = MISSING,
         cls: Type[CommandT] = MISSING,
         *args: Any,
-        **kwargs: Any,
+        enabled: Optional[bool] = True,
+        rest_is_raw: Optional[bool] = False,
+        hidden: Optional[bool] = False,
+        help: Optional[str] = None,
+        brief: Optional[str] = None,
+        usage: Optional[str] = None,
+        description: Optional[str] = '',
+        checks: Optional[List] = None,
+        aliases: Optional[Union[List[str], Tuple[str]]] = None,
+        extras: Optional[Dict[str, Any]] = None,
+        cooldown: Optional[Union[Cooldown, CooldownMapping]] = None,
+        max_concurrency: Optional[MaxConcurrency] = None,
+        require_var_positional: Optional[bool] = False,
+        ignore_extra: Optional[bool] = True,
+        cooldown_after_parsing: Optional[bool] = False,
+        inherit_hooks: Optional[bool] = False,
+        **kwargs: Any
     ) -> Callable[[Callable[Concatenate[ContextT, P], Coro[Any]]], CommandT]:
         """A shortcut decorator that invokes :func:`.command` and adds it to
         the internal command list via :meth:`~.GroupMixin.add_command`.
@@ -1386,7 +1442,28 @@ class GroupMixin(Generic[CogT]):
         # TODO This is still a req
         def decorator(func: Callable[Concatenate[ContextT, P], Coro[Any]]) -> CommandT:
             kwargs.setdefault('parent', self)
-            result = command(name=name, cls=cls, *args, **kwargs)(func)
+            result = command(
+                name=name,
+                cls=cls,
+                *args,
+                enabled=enabled,
+                rest_is_raw=rest_is_raw,
+                hidden=hidden,
+                help=help,
+                brief=brief,
+                usage=usage,
+                description= description,
+                checks=checks,
+                aliases=aliases,
+                extras=extras,
+                cooldown=cooldown,
+                max_concurrency=max_concurrency,
+                require_var_positional=require_var_positional,
+                ignore_extra=ignore_extra,
+                cooldown_after_parsing=cooldown_after_parsing,
+                inherit_hooks=inherit_hooks,
+                **kwargs
+            )(func)
             self.add_command(result)
             return result
 
@@ -1468,10 +1545,46 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
         *args: Any,
         invoke_without_command: bool = False,
         case_insensitive: bool = False,
-        **attrs: Any
+        enabled: Optional[bool] = True,
+        rest_is_raw: Optional[bool] = False,
+        hidden: Optional[bool] = False,
+        help: Optional[str] = None,
+        brief: Optional[str] = None,
+        usage: Optional[str] = None,
+        description: Optional[str] = '',
+        checks: Optional[List] = None,
+        aliases: Optional[Union[List[str], Tuple[str]]] = None,
+        extras: Optional[Dict[str, Any]] = None,
+        cooldown: Optional[Union[Cooldown, CooldownMapping]] = None,
+        max_concurrency: Optional[MaxConcurrency] = None,
+        require_var_positional: Optional[bool] = False,
+        ignore_extra: Optional[bool] = True,
+        cooldown_after_parsing: Optional[bool] = False,
+        inherit_hooks: Optional[bool] = False,
+        **kwargs: Any
     ) -> None:
         self.invoke_without_command: bool = invoke_without_command
-        super().__init__(*args, case_insensitive=case_insensitive, **attrs)
+        super().__init__(
+            *args,
+            case_insensitive=case_insensitive,
+            enabled=enabled,
+            rest_is_raw=rest_is_raw,
+            hidden=hidden,
+            help=help,
+            brief=brief,
+            usage=usage,
+            description=description,
+            checks=checks,
+            aliases=aliases,
+            extras=extras,
+            cooldown=cooldown,
+            max_concurrency=max_concurrency,
+            require_var_positional=require_var_positional,
+            ignore_extra=ignore_extra,
+            cooldown_after_parsing=cooldown_after_parsing,
+            inherit_hooks=inherit_hooks,
+            **kwargs,
+        )
 
     def copy(self: GroupT) -> GroupT:
         """Creates a copy of this :class:`Group`.
@@ -1563,7 +1676,23 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
 def command(
     name: str = ...,
     cls: Type[Command[CogT, P, T]] = ...,
-    **attrs: Any,
+    aliases: Optional[Union[List[str], Tuple[str]]] = ...,
+    brief: Optional[str] = ...,
+    checks: Optional[List] = ...,
+    cooldown: Optional[Union[Cooldown, CooldownMapping]] = ...,
+    cooldown_after_parsing: Optional[bool] = ...,
+    description: Optional[str] = ...,
+    enabled: Optional[bool] = ...,
+    extras: Optional[Dict[str, Any]] = ...,
+    help: Optional[str] = ...,
+    hidden: Optional[bool] = ...,
+    ignore_extra: Optional[bool] = ...,
+    inherit_hooks: Optional[bool] = ...,
+    max_concurrency: Optional[MaxConcurrency] = ...,
+    require_var_positional: Optional[bool] = ...,
+    rest_is_raw: Optional[bool] = ...,
+    usage: Optional[str] = ...,
+    **kwargs: Any,
 ) -> Callable[
     [
         Union[
@@ -1578,7 +1707,23 @@ def command(
 def command(
     name: str = ...,
     cls: Type[CommandT] = ...,
-    **attrs: Any,
+    aliases: Optional[Union[List[str], Tuple[str]]] = ...,
+    brief: Optional[str] = ...,
+    checks: Optional[List] = ...,
+    cooldown: Optional[Union[Cooldown, CooldownMapping]] = ...,
+    cooldown_after_parsing: Optional[bool] = ...,
+    description: Optional[str] = ...,
+    enabled: Optional[bool] = ...,
+    extras: Optional[Dict[str, Any]] = ...,
+    help: Optional[str] = ...,
+    hidden: Optional[bool] = ...,
+    ignore_extra: Optional[bool] = ...,
+    inherit_hooks: Optional[bool] = ...,
+    max_concurrency: Optional[MaxConcurrency] = ...,
+    require_var_positional: Optional[bool] = ...,
+    rest_is_raw: Optional[bool] = ...,
+    usage: Optional[str] = ...,
+    **kwargs: Any,
 ) -> Callable[
     [
         Union[
@@ -1592,7 +1737,23 @@ def command(
 def command(
     name: str = MISSING,
     cls: Type[CommandT] = MISSING,
-    **attrs: Any
+    aliases: Optional[Union[List[str], Tuple[str]]] = ...,
+    brief: Optional[str] = ...,
+    checks: Optional[List] = ...,
+    cooldown: Optional[Union[Cooldown, CooldownMapping]] = ...,
+    cooldown_after_parsing: Optional[bool] = ...,
+    description: Optional[str] = ...,
+    enabled: Optional[bool] = ...,
+    extras: Optional[Dict[str, Any]] = ...,
+    help: Optional[str] = ...,
+    hidden: Optional[bool] = ...,
+    ignore_extra: Optional[bool] = ...,
+    inherit_hooks: Optional[bool] = ...,
+    max_concurrency: Optional[MaxConcurrency] = ...,
+    require_var_positional: Optional[bool] = ...,
+    rest_is_raw: Optional[bool] = ...,
+    usage: Optional[str] = ...,
+    **kwargs: Any,
 ) -> Callable[
     [
         Union[
@@ -1621,9 +1782,65 @@ def command(
     cls
         The class to construct with. By default this is :class:`.Command`.
         You usually do not change this.
-    attrs
-        Keyword arguments to pass into the construction of the class denoted
-        by ``cls``.
+    help: Optional[:class:`str`]
+        The long help text for the command.
+    brief: Optional[:class:`str`]
+        The short help text for the command.
+    usage: Optional[:class:`str`]
+        A replacement for arguments in the default help text.
+    aliases: Union[List[:class:`str`], Tuple[:class:`str`]]
+        The list of aliases the command can be invoked under.
+    enabled: :class:`bool`
+        A boolean that indicates if the command is currently enabled.
+        If the command is invoked while it is disabled, then
+        :exc:`.DisabledCommand` is raised to the :func:`.on_command_error`
+        event. Defaults to ``True``.
+    parent: Optional[:class:`Group`]
+        The parent group that this command belongs to. ``None`` if there
+        isn't one.
+    cog: Optional[:class:`Cog`]
+        The cog that this command belongs to. ``None`` if there isn't one.
+    checks: List[Callable[[:class:`.Context`], :class:`bool`]]
+        A list of predicates that verifies if the command could be executed
+        with the given :class:`.Context` as the sole parameter. If an exception
+        is necessary to be thrown to signal failure, then one inherited from
+        :exc:`.CommandError` should be used. Note that if the checks fail then
+        :exc:`.CheckFailure` exception is raised to the :func:`.on_command_error`
+        event.
+    description: :class:`str`
+        The message prefixed into the default help command.
+    hidden: :class:`bool`
+        If ``True``\, the default help command does not show this in the
+        help output.
+    rest_is_raw: :class:`bool`
+        If ``False`` and a keyword-only argument is provided then the keyword
+        only argument is stripped and handled as if it was a regular argument
+        that handles :exc:`.MissingRequiredArgument` and default values in a
+        regular matter rather than passing the rest completely raw. If ``True``
+        then the keyword-only argument will pass in the rest of the arguments
+        in a completely raw matter. Defaults to ``False``.
+    invoked_subcommand: Optional[:class:`Command`]
+        The subcommand that was invoked, if any.
+    require_var_positional: :class:`bool`
+        If ``True`` and a variadic positional argument is specified, requires
+        the user to specify at least one argument. Defaults to ``False``.
+
+        .. versionadded:: 1.5
+
+    ignore_extra: :class:`bool`
+        If ``True``\, ignores extraneous strings passed to a command if all its
+        requirements are met (e.g. ``?foo a b c`` when only expecting ``a``
+        and ``b``). Otherwise :func:`.on_command_error` and local error handlers
+        are called with :exc:`.TooManyArguments`. Defaults to ``True``.
+    cooldown_after_parsing: :class:`bool`
+        If ``True``\, cooldown processing is done after argument parsing,
+        which calls converters. If ``False`` then cooldown processing is done
+        first and then the converters are called second. Defaults to ``False``.
+    extras: :class:`dict`
+        A dict of user provided extras to attach to the Command.
+
+        .. note::
+            This object may be copied by the library.
 
     Raises
     -------
@@ -1639,15 +1856,52 @@ def command(
         ]) -> CommandT:
         if isinstance(func, Command):
             raise TypeError('Callback is already a command.')
-        return cls(func, name=name, **attrs)
+        return cls(
+            func,
+            name=name,
+            enabled=enabled,
+            rest_is_raw=rest_is_raw,
+            hidden=hidden,
+            help=help,
+            brief=brief,
+            usage=usage,
+            description=description,
+            checks=checks,
+            aliases=aliases,
+            extras=extras,
+            cooldown=cooldown,
+            max_concurrency=max_concurrency,
+            require_var_positional=require_var_positional,
+            ignore_extra=ignore_extra,
+            cooldown_after_parsing=cooldown_after_parsing,
+            inherit_hooks=inherit_hooks,
+            **kwargs
+        )
 
     return decorator
 
+# TODO Add group specifics in
 @overload
 def group(
     name: str = ...,
     cls: Type[Group[CogT, P, T]] = ...,
-    **attrs: Any,
+    aliases: Optional[Union[List[str], Tuple[str]]] = ...,
+    brief: Optional[str] = ...,
+    checks: Optional[List] = ...,
+    cooldown: Optional[Union[Cooldown, CooldownMapping]] = ...,
+    cooldown_after_parsing: Optional[bool] = ...,
+    description: Optional[str] = ...,
+    enabled: Optional[bool] = ...,
+    extras: Optional[Dict[str, Any]] = ...,
+    help: Optional[str] = ...,
+    hidden: Optional[bool] = ...,
+    ignore_extra: Optional[bool] = ...,
+    inherit_hooks: Optional[bool] = ...,
+    max_concurrency: Optional[MaxConcurrency] = ...,
+    require_var_positional: Optional[bool] = ...,
+    rest_is_raw: Optional[bool] = ...,
+    usage: Optional[str] = ...,
+    **kwargs: Any,
 ) -> Callable[
     [
         Union[
@@ -1662,7 +1916,23 @@ def group(
 def group(
     name: str = ...,
     cls: Type[GroupT] = ...,
-    **attrs: Any,
+    aliases: Optional[Union[List[str], Tuple[str]]] = ...,
+    brief: Optional[str] = ...,
+    checks: Optional[List] = ...,
+    cooldown: Optional[Union[Cooldown, CooldownMapping]] = ...,
+    cooldown_after_parsing: Optional[bool] = ...,
+    description: Optional[str] = ...,
+    enabled: Optional[bool] = ...,
+    extras: Optional[Dict[str, Any]] = ...,
+    help: Optional[str] = ...,
+    hidden: Optional[bool] = ...,
+    ignore_extra: Optional[bool] = ...,
+    inherit_hooks: Optional[bool] = ...,
+    max_concurrency: Optional[MaxConcurrency] = ...,
+    require_var_positional: Optional[bool] = ...,
+    rest_is_raw: Optional[bool] = ...,
+    usage: Optional[str] = ...,
+    **kwargs: Any,
 ) -> Callable[
     [
         Union[
@@ -1676,7 +1946,23 @@ def group(
 def group(
     name: str = MISSING,
     cls: Type[GroupT] = MISSING,
-    **attrs: Any,
+    aliases: Optional[Union[List[str], Tuple[str]]] = ...,
+    brief: Optional[str] = ...,
+    checks: Optional[List] = ...,
+    cooldown: Optional[Union[Cooldown, CooldownMapping]] = ...,
+    cooldown_after_parsing: Optional[bool] = ...,
+    description: Optional[str] = ...,
+    enabled: Optional[bool] = ...,
+    extras: Optional[Dict[str, Any]] = ...,
+    help: Optional[str] = ...,
+    hidden: Optional[bool] = ...,
+    ignore_extra: Optional[bool] = ...,
+    inherit_hooks: Optional[bool] = ...,
+    max_concurrency: Optional[MaxConcurrency] = ...,
+    require_var_positional: Optional[bool] = ...,
+    rest_is_raw: Optional[bool] = ...,
+    usage: Optional[str] = ...,
+    **kwargs: Any,
 ) -> Callable[
     [
         Union[
@@ -1695,7 +1981,27 @@ def group(
     """
     if cls is MISSING:
         cls = Group  # type: ignore
-    return command(name=name, cls=cls, **attrs)  # type: ignore
+    return command(
+        name=name,
+        cls=cls,
+        enabled=enabled,
+        rest_is_raw=rest_is_raw,
+        hidden=hidden,
+        help=help,
+        brief=brief,
+        usage=usage,
+        description=description,
+        checks=checks,
+        aliases=aliases,
+        extras=extras,
+        cooldown=cooldown,
+        max_concurrency=max_concurrency,
+        require_var_positional=require_var_positional,
+        ignore_extra=ignore_extra,
+        cooldown_after_parsing=cooldown_after_parsing,
+        inherit_hooks=inherit_hooks,
+        **kwargs
+    )  # type: ignore
 
 def check(predicate: Check) -> Callable[[T], T]:
     r"""A decorator that adds a check to the :class:`.Command` or its
