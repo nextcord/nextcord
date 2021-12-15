@@ -2479,7 +2479,7 @@ class Guild(Hashable):
             Defaults to ``False``.
         reason: Optional[:class:`str`]
             The reason for creating this role. Shows up on the audit log.
-        icon: Optional[Union[:class:`str`, :class:`bytes`]
+        icon: Optional[Union[:class:`str`, :class:`bytes`]]
             The icon of the role. Supports unicode emojis and images
 
         Raises
