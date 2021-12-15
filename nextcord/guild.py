@@ -78,7 +78,6 @@ from .sticker import GuildSticker
 from .file import File
 
 
-
 __all__ = (
     'Guild',
 )
