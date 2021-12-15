@@ -30,7 +30,8 @@ import copy
 import datetime
 import itertools
 import logging
-from typing import Dict, Optional, TYPE_CHECKING, Union, Callable, Any, List, TypeVar, Coroutine, Sequence, Tuple, Deque
+from typing import Dict, Optional, TYPE_CHECKING, Union, Callable, Any, List, TypeVar, Coroutine, Sequence, Tuple, \
+    Deque, Set
 import inspect
 
 import os
@@ -61,6 +62,7 @@ from .sticker import GuildSticker
 
 if TYPE_CHECKING:
     from .abc import PrivateChannel
+    from .application_command import ApplicationCommand
     from .message import MessageableChannel
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
@@ -223,6 +225,13 @@ class ConnectionState:
         self._activity: Optional[ActivityPayload] = activity
         self._status: Optional[str] = status
         self._intents: Intents = intents
+        # A set of all application command objects available. Set because duplicates should not exist.
+        self._application_commands: Set[ApplicationCommand] = set()
+        # A dictionary of all available unique command signatures. Compiled at runtime because needing to iterate
+        # through all application commands would take far more time. If memory is problematic, perhaps this can go?
+        self._application_command_signatures: Dict[Tuple[str, int, Optional[int]], ApplicationCommand] = {}
+        # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
+        self._application_command_ids: Dict[int, ApplicationCommand] = {}
 
         if not intents.members or cache_flags._empty:
             self.store_user = self.create_user  # type: ignore
@@ -253,6 +262,9 @@ class ConnectionState:
         self._emojis: Dict[int, Emoji] = {}
         self._stickers: Dict[int, GuildSticker] = {}
         self._guilds: Dict[int, Guild] = {}
+        self._application_commands = set()
+        self._application_command_signatures = {}
+        self._application_command_ids = {}
         if views:
             self._view_store: ViewStore = ViewStore(self)
 
@@ -473,6 +485,43 @@ class ConnectionState:
             channel = guild and guild._resolve_channel(channel_id)
 
         return channel or PartialMessageable(state=self, id=channel_id), guild
+
+    @property
+    def application_commands(self) -> Set[ApplicationCommand]:
+        return self._application_commands
+
+    def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
+        return self._application_command_ids.get(command_id, None)
+
+    def get_application_command_from_signature(self, name: str, cmd_type: int,
+                                               guild_id: Optional[int]) -> Optional[ApplicationCommand]:
+        return self._application_command_signatures.get((name, cmd_type, guild_id), None)
+
+    def add_application_command(self, command: ApplicationCommand, overwrite: bool = False,
+                                use_rollout: bool = False) -> None:
+        """If this is called multiple times for the same command, it should be handled and update listings properly."""
+        signature_set = command.get_rollout_signatures() if use_rollout else command.get_signatures()
+        for signature in signature_set:
+            if not overwrite and (found_command := self._application_command_signatures.get(signature, None)):
+                if found_command is not command:
+                    raise ValueError(f"{command.error_name} You cannot add application commands with duplicate "
+                                     f"signatures.")
+                # No else because we do not care if the command has its signature already in.
+            else:
+                self._application_command_signatures[signature] = command
+        for command_id in command.command_ids.values():
+            if not overwrite and (found_command := self._application_command_ids.get(command_id, None)) and \
+                    found_command is not command:
+                raise ValueError(f"{command.error_name} You cannot add application commands with duplicate IDs.")
+            else:
+                self._application_command_ids[command_id] = command
+        # TODO: Add the command to guilds.
+        self._application_commands.add(command)
+
+    def add_all_rollout_signatures(self) -> None:
+        """This adds all command signatures for rollouts to the signature cache."""
+        for command in self._application_commands:
+            self.add_application_command(command, use_rollout=True)
 
     async def chunker(
         self, guild_id: int, query: str = '', limit: int = 0, presences: bool = False, *, nonce: Optional[str] = None

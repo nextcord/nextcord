@@ -255,10 +255,10 @@ class Client:
         self._connection._get_client = lambda: self
         self._lazy_load_commands: bool = options.pop('lazy_load_commands', True)
         self._client_cogs: Set[ClientCog] = set()
-        self._application_commands: Set[ApplicationCommand] = set()
-        self._application_command_signatures: Dict[Tuple[str, int, Optional[int]], ApplicationCommand] = {}
-        self._registered_application_commands: Dict[int, ApplicationCommand] = {}
-        self._performing_application_command_rollout: bool = False
+        # self._application_commands: Set[ApplicationCommand] = set()
+        # self._application_command_signatures: Dict[Tuple[str, int, Optional[int]], ApplicationCommand] = {}
+        # self._registered_application_commands: Dict[int, ApplicationCommand] = {}
+        # self._performing_application_command_rollout: bool = False
         self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
         self._rollout_register_new: bool = options.pop("rollout_register_new", True)
 
@@ -1680,8 +1680,9 @@ class Client:
         Reads the interaction and runs an Application Command as needed. Lazy loads if enabled."""
         if interaction.type is InteractionType.application_command:
             _log.info("nextcord.Client: Found an interaction command.")
-            _log.debug(f"nextcord.Client: {self._registered_application_commands}")
-            if app_cmd := self._registered_application_commands.get(int(interaction.data["id"])):
+            # _log.debug(f"nextcord.Client: {self._registered_application_commands}")
+            # if app_cmd := self._registered_application_commands.get(int(interaction.data["id"])):
+            if app_cmd := self.get_application_command(int(interaction.data["id"])):
                 _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
@@ -1689,49 +1690,69 @@ class Client:
                 _log.debug(f"nextcord.Client: {interaction.data}")
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 _log.debug(f"nextcord.Client: {response_signature}")
-                if app_cmd := self._application_command_signatures.get(response_signature):
+                # if app_cmd := self._application_command_signatures.get(response_signature):
+                if app_cmd := self._connection.get_application_command_from_signature(interaction.data["name"],
+                                                                                      int(interaction.data['type']),
+                                                                                      interaction.guild_id):
                     _log.info("nextcord.Client: Basic signature matches, checking against raw payload.")
                     if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
                         _log.info("nextcord.Client: New interaction command found, Assigning id now")
-                        self._registered_application_commands[int(interaction.data["id"])] = app_cmd
+                        # self._registered_application_commands[int(interaction.data["id"])] = app_cmd
                         app_cmd.parse_discord_response(self._connection, int(interaction.data["id"]), interaction.guild_id)
+                        self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
             _log.info("nextcord.Client: Autocomplete interaction received.")
             _log.debug(f"nextcord.Client: {interaction.data}")
-            if app_cmd := self._registered_application_commands.get(int(interaction.data["id"])):
+            # if app_cmd := self._registered_application_commands.get(int(interaction.data["id"])):
+            if app_cmd := self.get_application_command(int(interaction.data["id"])):
                 _log.info(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
                 await app_cmd.call_autocomplete_from_interaction(interaction)
 
-    async def add_application_command(self, app_cmd: ApplicationCommand, register=False) -> None:
-        """|coro|
+    # async def add_application_command(self, app_cmd: ApplicationCommand, register=False) -> None:
+    #     """|coro|
+    #
+    #
+    #
+    #     Parameters
+    #     ----------
+    #     app_cmd
+    #     register
+    #
+    #     Returns
+    #     -------
+    #
+    #     """
+    #     self._internal_add_application_command(app_cmd)
+    #     if register:
+    #         if app_cmd.is_global:
+    #             await self.register_application_command_to_global(app_cmd)
+    #         for guild_id in app_cmd.guild_ids:
+    #             await self.register_application_command_to_guild(app_cmd, guild_id)
+    #
+    # def _internal_add_application_command(self, app_cmd: ApplicationCommand) -> None:
+    #     self._application_commands.add(app_cmd)
+    #     for signature in app_cmd.get_signatures():
+    #         if signature in self._application_command_signatures:
+    #             raise ValueError("You cannot add application commands with duplicate signatures.")
+    #         else:
+    #             self._application_command_signatures[signature] = app_cmd
 
-
+    def add_application_command(self, command: ApplicationCommand, overwrite: bool = False) -> None:
+        """Adds an ApplicationCommand object to the client for use.
 
         Parameters
         ----------
-        app_cmd
-        register
-
-        Returns
-        -------
-
+        command: :class:`ApplicationCommand`
+            Command to add to the client for usage.
+        overwrite: :class:`bool`
+            If to overwrite any existing commands that would conflict with this one.
         """
-        self._internal_add_application_command(app_cmd)
-        if register:
-            if app_cmd.is_global:
-                await self.register_application_command_to_global(app_cmd)
-            for guild_id in app_cmd.guild_ids:
-                await self.register_application_command_to_guild(app_cmd, guild_id)
+        self._connection.add_application_command(command, overwrite=overwrite)
 
-    def _internal_add_application_command(self, app_cmd: ApplicationCommand) -> None:
-        self._application_commands.add(app_cmd)
-        for signature in app_cmd.get_signatures():
-            if signature in self._application_command_signatures:
-                raise ValueError("You cannot add application commands with duplicate signatures.")
-            else:
-                self._application_command_signatures[signature] = app_cmd
+    def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
+        return self._connection.get_application_command(command_id)
 
     async def perform_application_command_rollout_to_global(self, delete_unknown: bool, register_new: bool) -> None:
         """|coro|
@@ -1751,10 +1772,10 @@ class Client:
         unregistered_global_commands = self._get_global_commands()
         for raw_response in raw_get_global_response:
             response_signature = (raw_response["name"], int(raw_response["type"]), None)
-            if app_cmd := self._application_command_signatures.get(response_signature):
+            if app_cmd := self._connection._application_command_signatures.get(response_signature):
                 if app_cmd.check_against_raw_payload(raw_response, None):
                     unregistered_global_commands.remove(app_cmd)
-                    self._registered_application_commands[int(raw_response["id"])] = app_cmd
+                    self._connection._application_command_ids[int(raw_response["id"])] = app_cmd
                     app_cmd.parse_discord_response(self._connection, int(raw_response["id"]), None)
                     _log.info(f"nextcord.client.Client: Global {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
                 elif delete_unknown:
@@ -1774,7 +1795,7 @@ class Client:
         Grabs Guild commands, associates when it can, ignores guilds without the OAuth, deletes unknowns when
         enabled, registers new when enabled."""
         _log.debug(f"nextcord.Client: Attempting to rollout commands to Guild {guild_id}")
-        unregistered_guild_commands = self._get_guild_commands()
+        unregistered_guild_commands = self._get_guild_rollout_commands()
         try:
             raw_get_guild_response = await self.http.get_guild_commands(self.application_id, guild_id)
             for raw_response in raw_get_guild_response:
@@ -1783,13 +1804,13 @@ class Client:
                     int(raw_response["type"]),
                     int(raw_response["guild_id"]),
                 )
-                if app_cmd := self._application_command_signatures.get(response_signature):
+                if app_cmd := self._connection._application_command_signatures.get(response_signature):
                     if app_cmd.check_against_raw_payload(raw_response, guild_id):
                         # If a command is added while rolling out and that command is already registered to the
                         # guild, using .remove() can throw a key error because it may not be in
                         # unregistered_guild_commands[guild_id].
                         unregistered_guild_commands[guild_id].discard(app_cmd)
-                        self._registered_application_commands[int(raw_response["id"])] = app_cmd
+                        self._connection._application_command_ids[int(raw_response["id"])] = app_cmd
                         app_cmd.parse_discord_response(self._connection, int(raw_response["id"]), guild_id)
                         _log.info(f"nextcord.Client: Guild ({guild_id}) {app_cmd.type} {app_cmd.name} associated with ID {raw_response['id']}")
                     elif delete_unknown:
@@ -1822,9 +1843,11 @@ class Client:
         raw_response = await self.http.upsert_global_command(self.application_id, app_cmd.global_payload)
         response_id = int(raw_response["id"])
         app_cmd.parse_discord_response(self._connection, response_id, None)
-        self._registered_application_commands[response_id] = app_cmd
-        if cmd_sig := app_cmd.get_signature(None) not in self._application_command_signatures:
-            self._internal_add_application_command(cmd_sig)
+        self._connection._application_command_ids[response_id] = app_cmd
+        if cmd_sig := app_cmd.get_signature(None) not in self._connection._application_command_signatures:
+            # self._internal_add_application_command(cmd_sig)
+            # TODO: ??? did this ever work???
+            self.add_application_command(cmd_sig)
         _log.info(f"nextcord.Client: Global {app_cmd.type} {app_cmd.name} newly single registered with ID "
                   f"{response_id}")
 
@@ -1846,24 +1869,25 @@ class Client:
         raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
         response_id = int(raw_response["id"])
         app_cmd.parse_discord_response(self._connection, response_id, guild_id)
-        self._registered_application_commands[response_id] = app_cmd
-        if cmd_sig := app_cmd.get_signature(guild_id) not in self._application_command_signatures:
-            self._internal_add_application_command(cmd_sig)
+        # self._registered_application_commands[response_id] = app_cmd
+        if cmd_sig := app_cmd.get_signature(guild_id) not in self._connection._application_command_signatures:
+            # self._internal_add_application_command(cmd_sig)
+            self.add_application_command(app_cmd)
         _log.info(f"nextcord.Client: Guild {app_cmd.type} {app_cmd.name} newly single registered for guild "
                   f"{guild_id} with ID {response_id}")
 
     def _get_global_commands(self) -> Set[ApplicationCommand]:
         ret = set()
-        for command in self._application_commands:
+        for command in self._connection._application_commands:
             if command.is_global:
                 ret.add(command)
         return ret
 
-    def _get_guild_commands(self) -> Dict[int, Set[ApplicationCommand]]:
+    def _get_guild_rollout_commands(self) -> Dict[int, Set[ApplicationCommand]]:
         ret = {}
-        for command in self._application_commands:
+        for command in self._connection._application_commands:
             if command.is_guild:
-                for guild_id in command.guild_ids:
+                for guild_id in command.guild_ids_to_rollout:
                     if guild_id not in ret:
                         ret[guild_id] = set()
                     ret[guild_id].add(command)
@@ -1879,6 +1903,7 @@ class Client:
 
     async def on_connect(self) -> None:
         self.add_all_cog_commands()
+        self._connection.add_all_rollout_signatures()
         await self.perform_application_command_rollout_to_global(
             self._rollout_delete_unknown, self._rollout_register_new
         )
@@ -1893,7 +1918,8 @@ class Client:
         for cog in self._client_cogs:
             if to_register := cog.to_register:
                 for cmd in to_register:
-                    self._internal_add_application_command(cmd)
+                    # self._internal_add_application_command(cmd)
+                    self.add_application_command(cmd)
 
     def add_cog(self, cog: ClientCog):
         self._client_cogs.add(cog)
@@ -1901,7 +1927,8 @@ class Client:
     def user_command(self, **kwargs):
         def decorator(func: Callable):
             result = user_command(**kwargs)(func)
-            self._internal_add_application_command(result)
+            # self._internal_add_application_command(result)
+            self.add_application_command(result)
             return result
 
         return decorator
@@ -1909,7 +1936,8 @@ class Client:
     def message_command(self, **kwargs):
         def decorator(func: Callable):
             result = message_command(**kwargs)(func)
-            self._internal_add_application_command(result)
+            # self._internal_add_application_command(result)
+            self.add_application_command(result)
             return result
 
         return decorator
@@ -1917,7 +1945,8 @@ class Client:
     def slash_command(self, **kwargs):
         def decorator(func: Callable):
             result = slash_command(**kwargs)(func)
-            self._internal_add_application_command(result)
+            # self._internal_add_application_command(result)
+            self.add_application_command(result)
             return result
 
         return decorator

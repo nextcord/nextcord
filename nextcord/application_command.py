@@ -29,6 +29,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterable,
     List,
     Optional,
     Set,
@@ -42,6 +43,7 @@ from . import utils
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
 from .interactions import Interaction
+from .guild import Guild
 from .member import Member
 from .message import Message
 from .mixins import Hashable
@@ -50,14 +52,10 @@ from .user import User
 from .utils import MISSING
 
 if TYPE_CHECKING:
-    from .guild import Guild
     from .state import ConnectionState
 
 
 __all__ = (
-    # "ApplicationCommandResponse",
-    # "ApplicationCommandResponseOptionChoice",
-    # "ApplicationCommandResponseOption",
     "ClientCog",
     "SlashOption",
     "ApplicationSubcommand",
@@ -72,114 +70,6 @@ __all__ = (
 class InvalidCommandType(Exception):
     """Raised when an unhandled Application Command type is encountered."""
     pass
-
-
-# class ApplicationCommandResponse(Hashable):
-#     """Represents the response that Discord sends back when queried for Application Commands.
-#
-#     Attributes
-#     ----------
-#     id: :class:`int`
-#         Discord ID of the Application Command.
-#      type: :class:`nextcord.ApplicationCommandType`
-#     asdf: :class:`asdf`
-#         Enum corresponding to the Application Command type. (slash, message, user)
-#     guild_id: Optional[:class:`int`]
-#         The Guild ID associated with the Application Command. If None, it's a global command.
-#     name: :class:`str`
-#         Name of the Application Command.
-#     description: :class:`str`
-#         Description of the Application Command.
-#     options: List[:class:`nextcord.ApplicationCommandResponseOption`]
-#         A list of options or subcommands that the Application Command has.
-#     default_permission: :class:`bool`
-#         If the command is enabled for users by default.
-#     """
-#
-#     def __init__(self, state: ConnectionState, payload: dict):
-#         self._state: ConnectionState = state
-#         self.id: int = int(payload["id"])
-#         self.type: ApplicationCommandType = ApplicationCommandType(payload["type"])
-#         self.guild_id: Optional[int] = utils._get_as_snowflake(payload, "guild_id")
-#         self.name: str = payload["name"]
-#         self.description: str = payload["description"]
-#         self.options: List[
-#             ApplicationCommandResponseOption
-#         ] = ApplicationCommandResponseOption._create_options(payload.get("options", []))
-#         self.default_permission: Optional[bool] = payload.get(
-#             "default_permission", True
-#         )
-#
-#     @property
-#     def guild(self) -> Optional[Guild]:
-#         """Optional[:class:`Guild`]: Returns the :class:`Guild` associated with this Response, if any."""
-#         return self._state._get_guild(self.guild_id)
-#
-#     @property
-#     def signature(self) -> Tuple[str, int, Optional[int]]:
-#         """Returns a simple high level signature of the command. No commands registered in the bot at the same time
-#         should have identical signatures.
-#
-#         Returns
-#         -------
-#         name: :class:`str`
-#             Name of the Application Command.
-#         type: :class:`int`
-#             Discord's integer value of the Application Command type
-#         guild_id: Optional[:class:`int`]
-#             The Guild ID associated with the Application Command. If None, it's a global command.
-#         """
-#         return self.name, self.type.value, self.guild_id
-#
-#
-# class ApplicationCommandResponseOptionChoice:
-#     """Represents a single choice in a list of options.
-#
-#     Attributes
-#     ----------
-#     name: :class:`str`
-#         Name of the choice, this is what users see in Discord.
-#     value: Union[:class:`str`, :class:`int`, :class:`float`]
-#         Value of the choice, this is what Discord sends back to us.
-#     """
-#
-#     def __init__(self, payload: Optional[dict] = None):
-#         if not payload:
-#             payload = {}
-#         self.name: str = payload["name"]
-#         self.value: Union[str, int, float] = payload["value"]
-#
-#
-# class ApplicationCommandResponseOption:
-#     """Represents an argument/parameter/option or subcommand of an Application Command.
-#
-#     Attributes
-#     ----------
-#     type: :class:`ApplicationCommandOptionType`
-#         Enum corresponding to the Application Command Option type. (subcommand, string, integer, etc.)
-#     name: :class:`str`
-#         Name of the option or subcommand.
-#     description: :class:`str`
-#         Description of the option or subcommand.
-#     required: :class:`bool`
-#         If this option is required for users or not.
-#     """
-#
-#     def __init__(self, payload: dict):
-#         self.type = ApplicationCommandOptionType(int(payload["type"]))
-#         self.name: str = payload["name"]
-#         self.description: str = payload["description"]
-#         self.required: Optional[bool] = payload.get("required")
-#         self.choices: List[ApplicationCommandResponseOptionChoice] = self._create_choices(payload.get("choices", []))
-#         self.options: List[ApplicationCommandResponseOption] = self._create_options(payload.get("options", []))
-#
-#     @staticmethod
-#     def _create_choices(data: List[dict]) -> List[ApplicationCommandResponseOptionChoice]:
-#         return [ApplicationCommandResponseOptionChoice(raw_choice) for raw_choice in data]
-#
-#     @staticmethod
-#     def _create_options(data: List[dict]) -> List[ApplicationCommandResponseOption]:
-#         return [ApplicationCommandResponseOption(raw_option) for raw_option in data]
 
 
 class ClientCog:
@@ -212,16 +102,6 @@ class ClientCog:
         return self.__cog_to_register__
 
 
-# class SlashOption:
-#     def __init__(
-#         self,
-#         name: str = None,
-#         description: str = None,
-#         required: bool = None,
-#         choices: dict = None,
-#         default: Any = None,
-#         channel_types: List[ChannelType] = None,
-# ):
 class SlashOption:
     def __init__(self, name: str = MISSING,
                  description: str = MISSING,
@@ -292,7 +172,7 @@ class CommandOption(SlashOption):
         """Represents a Python function parameter that corresponds to a Discord Option.
 
         This must set and/or handle all variables from SlashOption, hence the subclass.
-        This shouldn't be created by the user, only by other Application Command-related classes.
+        This should not be created by the user, only by other Application Command-related classes.
 
         Parameters
         ----------
@@ -326,6 +206,7 @@ class CommandOption(SlashOption):
         self.autocomplete = cmd_arg.autocomplete if cmd_arg.autocomplete is not MISSING else MISSING
 
         if not cmd_arg_given and parameter.default is not parameter.empty:
+            # If the parameter default is not a SlashOption, it should be set as the default.
             self.default = parameter.default
         else:
             self.default = cmd_arg.default
@@ -813,7 +694,7 @@ class ApplicationCommand(ApplicationSubcommand):
         cmd_type: ApplicationCommandType = MISSING,
         name: str = MISSING,
         description: str = MISSING,
-        guild_ids: Union[Set[int], List[int]] = MISSING,
+        guild_ids: Iterable[int] = MISSING,
         default_permission: Optional[bool] = MISSING,
         force_global: bool = False,
     ):
@@ -821,11 +702,48 @@ class ApplicationCommand(ApplicationSubcommand):
         self._state: Optional[ConnectionState] = None
         self.force_global: bool = force_global
         self.default_permission: bool = default_permission or True
-        self.guild_ids: Set[int] = set(guild_ids) if guild_ids else set()
-        self._global_command_id: Optional[int] = None
-        self._guild_command_ids: Dict[int, int] = {}  # Guild ID is key, command ID is value.
+        self._guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
+        self._guild_ids: Set[int] = set()
+        self._command_ids: Dict[Optional[int], int] = {}  # Guild ID is key (None is global), command ID is value.
 
     # Simple-ish getter + setters methods.
+
+    @property
+    def command_ids(self) -> Dict[Optional[int], int]:
+        return self._command_ids
+
+    @property
+    def guild_ids(self) -> Tuple[int]:
+        # People should not edit this, people are stupid.
+        return tuple(self._guild_ids)
+
+    @property
+    def guild_ids_to_rollout(self) -> Tuple[int]:
+        # I don't want people trying to stupidly edit it. Is that so wrong?
+        # This also makes it so the implementation can be changed later and the API technically will not change.
+        return tuple(self._guild_ids_to_rollout)
+
+    def add_guild_rollout(self, guild: Union[int, Guild]) -> None:
+        """Adds a Guild to the command to be rolled out when the rollout is run.
+
+        Parameters
+        ----------
+        guild: Union[:class:`int`, :class:`Guild`]
+            Guild or Guild ID to add this command to roll out to.
+        """
+        if isinstance(guild, Guild):
+            # I don't like doing `guild = guild.id` and this keeps it extendable.
+            guild_id = guild.id
+        else:
+            guild_id = guild
+        self._guild_ids_to_rollout.add(guild_id)
+
+    def remove_guild_rollout(self, guild: Union[int, Guild]) -> None:
+        if isinstance(guild, Guild):
+            guild_id = guild.id
+        else:
+            guild_id = guild
+        self._guild_ids_to_rollout.remove(guild_id)
 
     @property
     def description(self) -> str:
@@ -846,7 +764,8 @@ class ApplicationCommand(ApplicationSubcommand):
     @property
     def is_guild(self) -> bool:
         """Returns True if any guild IDs have been added."""
-        return True if self.guild_ids else False
+        # return True if self._guild_ids else False
+        return True if (self._guild_ids or self._guild_ids_to_rollout) else False
 
     @property
     def is_global(self) -> bool:
@@ -892,10 +811,6 @@ class ApplicationCommand(ApplicationSubcommand):
 
         """Returns a basic signature for a given Guild ID. If None is given, then it is assumed Global."""
         return self.name, self.type.value, guild_id
-        # if (guild_id is None and self.is_global) or (guild_id in self.guild_ids):
-        #     return self.name, self.type.value, guild_id
-        # else:
-        #     return None
 
     def get_signatures(self) -> Set[Tuple[str, int, Optional[int]]]:
         """Returns all basic signatures for this ApplicationCommand."""
@@ -905,6 +820,14 @@ class ApplicationCommand(ApplicationSubcommand):
         if self.is_guild:
             for guild_id in self.guild_ids:
                 ret.add((self.name, self.type.value, guild_id))
+        return ret
+
+    def get_rollout_signatures(self) -> Set[Tuple[str, int, Optional[int]]]:
+        ret = set()
+        if self.is_global:
+            ret.add((self.name, self.type.value, None))
+        for guild_id in self._guild_ids_to_rollout:
+            ret.add((self.name, self.type.value, guild_id))
         return ret
 
     # Shortcuts for ApplicationCommand creation.
@@ -920,10 +843,13 @@ class ApplicationCommand(ApplicationSubcommand):
     def parse_discord_response(self, state: ConnectionState, command_id: int, guild_id: Optional[int], ) -> None:
         self.set_state(state)
         if guild_id:
-            self._guild_command_ids[guild_id] = command_id
-
+            # self._guild_command_ids[guild_id] = command_id
+            self._command_ids[guild_id] = command_id
+            self._guild_ids.add(guild_id)
+            self.add_guild_rollout(guild_id)
         else:
-            self._global_command_id = command_id
+            # self._global_command_id = command_id
+            self._command_ids[None] = command_id
 
     def _get_basic_application_payload(self) -> dict:
         """Bare minimum payload that both Global and Guild commands can use."""
@@ -945,6 +871,7 @@ class ApplicationCommand(ApplicationSubcommand):
         return message
 
     def _handle_resolved_user(self, user_data: dict) -> User:
+        """Takes the raw user data payload from Discord and adds it to the state cache."""
         # This is what I prefer _handle_resolved_message to look like.
         return self._state.store_user(user_data)
 
@@ -1164,12 +1091,6 @@ def slash_command(**kwargs):
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
-        # return ApplicationCommand(func, cmd_type=ApplicationCommandType.chat_input, **kwargs)
-        # app_cmd = ApplicationCommand.from_callback(func)
-        # app_cmd.type = ApplicationCommandType.chat_input
-        # if guild_ids := kwargs.get("guild_ids"):
-        #     # print("GOT GUILD IDS!")
-        #     app_cmd.guild_ids = guild_ids
         app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.chat_input, **kwargs)
         return app_cmd
 
@@ -1181,9 +1102,6 @@ def message_command(**kwargs):
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
-        # return ApplicationCommand(func, cmd_type=ApplicationCommandType.message, **kwargs)
-        # app_cmd = ApplicationCommand.from_callback(func)
-        # app_cmd.type = ApplicationCommandType.message
         app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.message, **kwargs)
         return app_cmd
     return decorator
@@ -1194,9 +1112,6 @@ def user_command(**kwargs):
     def decorator(func: Callable):
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
-        # return ApplicationCommand(func, cmd_type=ApplicationCommandType.user, **kwargs)
-        # app_cmd = ApplicationCommand.from_callback(func)
-        # app_cmd.type = ApplicationCommandType.user
         app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.user, **kwargs)
         return app_cmd
     return decorator
