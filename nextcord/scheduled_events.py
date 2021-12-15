@@ -322,7 +322,8 @@ class ScheduledEvent(Hashable):
         end_time: Optional[datetime] = MISSING,
         description: str = MISSING,
         type: Optional[ScheduledEventEntityType] = MISSING,
-        status: Optional[ScheduledEventStatus] = MISSING
+        status: Optional[ScheduledEventStatus] = MISSING,
+        reason: Optional[str] = None
     ) -> ScheduledEvent:
         """|coro|
 
@@ -375,7 +376,7 @@ class ScheduledEvent(Hashable):
             payload['status'] = status.value
         if not payload:
             return self
-        data = await self._state.http.edit_event(**payload)
+        data = await self._state.http.edit_event(reason=reason, **payload)
         return ScheduledEvent(guild=self.guild, state=self._state, data=data)
 
     def get_user(self, user_id: int) -> Optional[ScheduledEventUser]:

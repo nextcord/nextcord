@@ -1943,6 +1943,8 @@ class HTTPClient:
     def create_event(
         self,
         guild_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
         **payload: Any
     ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
@@ -1961,7 +1963,7 @@ class HTTPClient:
             '/guilds/{guild_id}/scheduled-events',
             guild_id=guild_id
         )
-        return self.request(r, json=payload)
+        return self.request(r, json=payload, reason=reason)
 
     def get_event(
         self,
@@ -1984,6 +1986,8 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         event_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
         **payload: Any
     ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
@@ -2003,7 +2007,7 @@ class HTTPClient:
             guild_id=guild_id,
             event_id=event_id
         )
-        return self.request(r, json=payload)
+        return self.request(r, json=payload, reason=reason)
 
     def delete_event(
         self,

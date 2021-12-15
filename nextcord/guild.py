@@ -28,60 +28,56 @@ from __future__ import annotations
 import copy
 import unicodedata
 from typing import (
+    TYPE_CHECKING,
     Any,
     ClassVar,
     Dict,
     List,
+    Literal,
     NamedTuple,
+    Optional,
     Sequence,
     Set,
-    Literal,
-    Optional,
-    TYPE_CHECKING,
     Tuple,
     Union,
     overload,
 )
 
-from . import utils, abc
-from .role import Role
-from .member import Member, VoiceState
-from .emoji import Emoji
-from .errors import InvalidData
-from .permissions import PermissionOverwrite
-from .colour import Colour
-from .errors import InvalidArgument, ClientException
+from . import abc, utils
+from .asset import Asset
 from .channel import *
-from .channel import _guild_channel_factory
-from .channel import _threaded_guild_channel_factory
+from .channel import _guild_channel_factory, _threaded_guild_channel_factory
+from .colour import Colour
+from .emoji import Emoji
 from .enums import (
     AuditLogAction,
-    VideoQualityMode,
-    VoiceRegion,
     ChannelType,
-    try_enum,
-    VerificationLevel,
     ContentFilter,
     NotificationLevel,
     NSFWLevel,
     ScheduledEventEntityType,
     ScheduledEventPrivacyLevel,
+    VerificationLevel,
+    VideoQualityMode,
+    VoiceRegion,
+    try_enum,
 )
-from .scheduled_events import EntityMetadata
-from .mixins import Hashable
-from .user import User
-from .invite import Invite
-from .iterators import AuditLogIterator, MemberIterator, ScheduledEventIterator
-from .widget import Widget
-from .asset import Asset
+from .errors import ClientException, InvalidArgument, InvalidData
+from .file import File
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
-from .scheduled_events import ScheduledEvent
+from .invite import Invite
+from .iterators import AuditLogIterator, MemberIterator, ScheduledEventIterator
+from .member import Member, VoiceState
+from .mixins import Hashable
+from .permissions import PermissionOverwrite
+from .role import Role
+from .scheduled_events import EntityMetadata, ScheduledEvent
 from .stage_instance import StageInstance
-from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
-from .file import File
-
+from .threads import Thread, ThreadMember
+from .user import User
+from .widget import Widget
 
 __all__ = (
     'Guild',
@@ -90,21 +86,27 @@ __all__ = (
 MISSING = utils.MISSING
 
 if TYPE_CHECKING:
-    from .abc import Snowflake, SnowflakeTime
-    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
-    from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
-    from .types.threads import (
-        Thread as ThreadPayload,
-    )
-    from .types.voice import GuildVoiceState
-    from .permissions import Permissions
-    from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel
-    from .template import Template
-    from .webhook import Webhook
-    from .state import ConnectionState
-    from .voice_client import VoiceProtocol
-
     import datetime
+
+    from .abc import Snowflake, SnowflakeTime
+    from .channel import (
+        CategoryChannel,
+        StageChannel,
+        StoreChannel,
+        TextChannel,
+        VoiceChannel,
+    )
+    from .permissions import Permissions
+    from .state import ConnectionState
+    from .template import Template
+    from .types.guild import Ban as BanPayload
+    from .types.guild import Guild as GuildPayload
+    from .types.guild import GuildFeature, MFALevel
+    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
+    from .types.threads import Thread as ThreadPayload
+    from .types.voice import GuildVoiceState
+    from .voice_client import VoiceProtocol
+    from .webhook import Webhook
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
     GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel]
@@ -3108,6 +3110,7 @@ class Guild(Hashable):
         privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
+        reason: Optional[str] = None
     ) -> ScheduledEvent:
         """|coro|
 
@@ -3151,5 +3154,5 @@ class Guild(Hashable):
             payload['scheduled_end_time'] = end_time.isoformat()
         if description is not MISSING:
             payload['description'] = description
-        data = await self._state.http.create_event(self.id, **payload)
+        data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)
