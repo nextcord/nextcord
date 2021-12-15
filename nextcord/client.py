@@ -1739,7 +1739,8 @@ class Client:
     #         else:
     #             self._application_command_signatures[signature] = app_cmd
 
-    def add_application_command(self, command: ApplicationCommand, overwrite: bool = False) -> None:
+    def add_application_command(self, command: ApplicationCommand, overwrite: bool = False,
+                                use_rollout: bool = False) -> None:
         """Adds an ApplicationCommand object to the client for use.
 
         Parameters
@@ -1748,8 +1749,10 @@ class Client:
             Command to add to the client for usage.
         overwrite: :class:`bool`
             If to overwrite any existing commands that would conflict with this one.
+        use_rollout: :class:`bool`
+            If to apply the rollout signatures instead of existing ones.
         """
-        self._connection.add_application_command(command, overwrite=overwrite)
+        self._connection.add_application_command(command, overwrite=overwrite, use_rollout=use_rollout)
 
     def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
         return self._connection.get_application_command(command_id)
@@ -1872,7 +1875,7 @@ class Client:
         # self._registered_application_commands[response_id] = app_cmd
         if cmd_sig := app_cmd.get_signature(guild_id) not in self._connection._application_command_signatures:
             # self._internal_add_application_command(cmd_sig)
-            self.add_application_command(app_cmd)
+            self.add_application_command(app_cmd, use_rollout=True)
         _log.info(f"nextcord.Client: Guild {app_cmd.type} {app_cmd.name} newly single registered for guild "
                   f"{guild_id} with ID {response_id}")
 
