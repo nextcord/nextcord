@@ -496,11 +496,13 @@ class ApplicationSubcommand:
             await self.children[option_data[0]["name"]].call_autocomplete(state, interaction, option_data[0].get("options", {}))
         elif self.type in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):
             focused_option_name = None
+            # option_data_missing_focused = option_data.copy()
             for arg in option_data:
                 if arg.get("focused", None) is True:
                     if focused_option_name:
                         raise ValueError("Multiple options are focused, is that supposed to be possible?")
                     focused_option_name = arg["name"]
+                    # option_data_missing_focused.remove(arg)
                     # break
 
             if focused_option_name:
@@ -509,11 +511,14 @@ class ApplicationSubcommand:
                 kwargs = {}
                 uncalled_options = self.options.copy()
                 uncalled_options.pop(focused_option.name)
+                focused_option_value = None
                 for arg_data in option_data:
                     if option := uncalled_options.get(arg_data["name"], None):
                         uncalled_options.pop(option.name)
                         if option.functional_name in autocomplete_kwargs:
                             kwargs[option.functional_name] = option.handle_slash_argument(state, arg_data["value"], interaction)
+                    elif arg_data["name"] == focused_option.name:
+                        focused_option_value = focused_option.handle_slash_argument(state, arg_data["value"], interaction)
                     else:
                         # TODO: Handle this better.
                         raise NotImplementedError(
@@ -524,7 +529,7 @@ class ApplicationSubcommand:
                 for option in uncalled_options.values():
                     if option.functional_name in autocomplete_kwargs:
                         kwargs[option.functional_name] = option.default
-                await self.invoke_autocomplete(interaction, focused_option, **kwargs)
+                await self.invoke_autocomplete(interaction, focused_option, focused_option_value, **kwargs)
             else:
                 raise ValueError("There's supposed to be a focused option, but it's not found?")
         else:
