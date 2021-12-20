@@ -926,19 +926,19 @@ class ApplicationCommand(ApplicationSubcommand):
             False otherwise.
         """
         return self._check_against_raw_payload(raw_payload, guild_id)
-        if guild_id:
-            if self._recursive_item_check(self.get_guild_payload(guild_id), raw_payload):
-                return True
-        else:
-            if self._recursive_item_check(self.global_payload, raw_payload):
-                return True
-        return False
+        # TODO: Migrate this over once complete.
+        # if guild_id:
+        #     if self._recursive_item_check(self.get_guild_payload(guild_id), raw_payload):
+        #         return True
+        # else:
+        #     if self._recursive_item_check(self.global_payload, raw_payload):
+        #         return True
+        # return False
 
     def _check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int]) -> bool:
         if guild_id:
             cmd_payload = self.get_guild_payload(guild_id)
             if cmd_payload["guild_id"] != int(raw_payload["guild_id"]):
-                print("Failed basic guild check.")
                 return False
         else:
             cmd_payload = self.global_payload
@@ -950,13 +950,15 @@ class ApplicationCommand(ApplicationSubcommand):
         for cmd_option in cmd_payload.get("options", []):
             found_correct_value = False
             for raw_option in raw_payload.get("options", []):
-                # if check_dictionary_values(cmd_option, raw_option, "name"):
                 if cmd_option["name"] == raw_option["name"]:
                     found_correct_value = True
-                    if not check_dictionary_values(cmd_option, raw_option, "type", "name", "description", "required",
-                                                   "autocomplete"):
-                        print(f"Failed options check.\n{cmd_option}\nvs\n{raw_option}")
+                    if not deep_dictionary_check(cmd_option, raw_option):
                         return False
+                    # if not check_dictionary_values(cmd_option, raw_option, "type", "name", "description", "required",
+                    #                                "autocomplete"):
+                    #     return False
+                    # if self.name == "main":
+                    #     print(self.global_payload)
             if not found_correct_value:
                 return False
         return True
@@ -1106,8 +1108,6 @@ class ApplicationCommand(ApplicationSubcommand):
             raise TypeError(f"{self.error_name} {self.type} cannot have subcommands.")
         else:
             def decorator(func: Callable):
-                # result = ApplicationSubcommand(func, self, ApplicationCommandOptionType.sub_command, **kwargs)
-                # result = ApplicationSubcommand.from_callback(func)
                 result = ApplicationSubcommand(callback=func, parent_command=self, **kwargs)
                 result.type = ApplicationCommandOptionType.sub_command
                 self.children[result.name] = result
@@ -1117,19 +1117,18 @@ class ApplicationCommand(ApplicationSubcommand):
 
 
 def slash_command(**kwargs):
-    """Creates a Slash Application Command, used inside of a ClientCog."""
-    def decorator(func: Callable):
+    """Creates a Slash Application Command, used inside a ClientCog."""
+    def decorator(func: Callable) -> ApplicationCommand:
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
         app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.chat_input, **kwargs)
         return app_cmd
-
     return decorator
 
 
 def message_command(**kwargs):
-    """Creates a Message Application Command, used inside of a ClientCog."""
-    def decorator(func: Callable):
+    """Creates a Message Application Command, used inside a ClientCog."""
+    def decorator(func: Callable) -> ApplicationCommand:
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
         app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.message, **kwargs)
@@ -1138,8 +1137,8 @@ def message_command(**kwargs):
 
 
 def user_command(**kwargs):
-    """Creates a User Application Command, used inside of a ClientCog."""
-    def decorator(func: Callable):
+    """Creates a User Application Command, used inside a ClientCog."""
+    def decorator(func: Callable) -> ApplicationCommand:
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
         app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.user, **kwargs)
@@ -1148,18 +1147,39 @@ def user_command(**kwargs):
 
 
 def check_dictionary_values(dict1, dict2, *keywords) -> bool:
+    """Helper function to quickly check if 2 dictionaries share the equal value for the same keyword(s).
+    Used primarily for checking against the registered command data from Discord.
+
+    Will not work great if values inside the dictionary can be or are None.
+    If both dictionaries lack the keyword(s), it can still return True.
+
+    Parameters
+    ----------
+    dict1: :class:`dict`
+        First dictionary to compare.
+    dict2: :class:`dict`
+        Second dictionary to compare.
+    keywords: :class:`str`
+        Words to compare both dictionaries to.
+
+    Returns
+    -------
+    :class:`bool`
+        True if keyword values in both dictionaries match, False otherwise.
+    """
     for keyword in keywords:
         if dict1.get(keyword, None) != dict2.get(keyword, None):
-            print(f"Failed on keyword {keyword}")
             return False
     return True
 
 
 def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
+    """Used to check if all keys and values between two dicts are equal, and recurses if it encounters a nested dict."""
     if dict1.keys() != dict2.keys():
-        print("Keys are not equal.")
         return False
     for key in dict1:
-        if isinstance(dict1[key], dict):
-            return deep_dictionary_check(dict1[key], dict2[key])
+        if isinstance(dict1[key], dict) and not deep_dictionary_check(dict1[key], dict2[key]):
+            return False
+        elif dict1[key] != dict2[key]:
+            return False
     return True
