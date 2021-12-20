@@ -86,6 +86,7 @@ MISSING = utils.MISSING
 
 if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
+    from .application_command import ApplicationCommand
     from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
     from .types.threads import (
         Thread as ThreadPayload,
@@ -257,6 +258,7 @@ class Guild(Hashable):
         'premium_subscription_count',
         'preferred_locale',
         'nsfw_level',
+        '_application_commands',
         '_members',
         '_channels',
         '_icon',
@@ -289,6 +291,7 @@ class Guild(Hashable):
         self._members: Dict[int, Member] = {}
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
+        self._application_commands: Dict[int, ApplicationCommand] = {}
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -2966,3 +2969,8 @@ class Guild(Hashable):
         ws = self._state._get_websocket(self.id)
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
+
+    def add_application_command(self, app_cmd: ApplicationCommand):
+        app_cmd.add_guild_rollout(self.id)
+        self._state.add_application_command(app_cmd)
+

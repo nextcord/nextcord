@@ -505,33 +505,35 @@ class ApplicationSubcommand:
                     # option_data_missing_focused.remove(arg)
                     # break
 
-            if focused_option_name:
-                focused_option = self.options[focused_option_name]
-                autocomplete_kwargs = signature(focused_option.autocomplete_function).parameters.keys()
-                kwargs = {}
-                uncalled_options = self.options.copy()
-                uncalled_options.pop(focused_option.name)
-                focused_option_value = None
-                for arg_data in option_data:
-                    if option := uncalled_options.get(arg_data["name"], None):
-                        uncalled_options.pop(option.name)
-                        if option.functional_name in autocomplete_kwargs:
-                            kwargs[option.functional_name] = option.handle_slash_argument(state, arg_data["value"], interaction)
-                    elif arg_data["name"] == focused_option.name:
-                        focused_option_value = focused_option.handle_slash_argument(state, arg_data["value"], interaction)
-                    else:
-                        # TODO: Handle this better.
-                        raise NotImplementedError(
-                            f"An argument was provided that wasn't already in the function, did you"
-                            f"recently change it?\nRegistered Options: {self.options}, Discord-sent"
-                            f"args: {interaction.data['options']}, broke on {arg_data}"
-                        )
-                for option in uncalled_options.values():
-                    if option.functional_name in autocomplete_kwargs:
-                        kwargs[option.functional_name] = option.default
-                await self.invoke_autocomplete(interaction, focused_option, focused_option_value, **kwargs)
-            else:
+            if not focused_option_name:
                 raise ValueError("There's supposed to be a focused option, but it's not found?")
+            focused_option = self.options[focused_option_name]
+            if focused_option.autocomplete_function is MISSING:
+                raise ValueError(f"{self.error_name} Autocomplete called for option {focused_option.functional_name} "
+                                 f"but it doesn't have an autocomplete function?")
+            autocomplete_kwargs = signature(focused_option.autocomplete_function).parameters.keys()
+            kwargs = {}
+            uncalled_options = self.options.copy()
+            uncalled_options.pop(focused_option.name)
+            focused_option_value = None
+            for arg_data in option_data:
+                if option := uncalled_options.get(arg_data["name"], None):
+                    uncalled_options.pop(option.name)
+                    if option.functional_name in autocomplete_kwargs:
+                        kwargs[option.functional_name] = option.handle_slash_argument(state, arg_data["value"], interaction)
+                elif arg_data["name"] == focused_option.name:
+                    focused_option_value = focused_option.handle_slash_argument(state, arg_data["value"], interaction)
+                else:
+                    # TODO: Handle this better.
+                    raise NotImplementedError(
+                        f"An argument was provided that wasn't already in the function, did you"
+                        f"recently change it?\nRegistered Options: {self.options}, Discord-sent"
+                        f"args: {interaction.data['options']}, broke on {arg_data}"
+                    )
+            for option in uncalled_options.values():
+                if option.functional_name in autocomplete_kwargs:
+                    kwargs[option.functional_name] = option.default
+            await self.invoke_autocomplete(interaction, focused_option, focused_option_value, **kwargs)
         else:
             raise NotImplementedError(f"{self.error_name} Autocomplete isn't handled by this type of command, how did "
                                       f"you get here?")
@@ -582,7 +584,7 @@ class ApplicationSubcommand:
             await self.call_invoke_slash(state, interaction, option_data)
         else:
             # Anything that can't be handled in here should be raised for ApplicationCommand to handle.
-            # TODO: Figure out how to hide this in exception trace log, devs don't need to see it.
+            # TODO: Figure out how to hide this in exception trace log, people don't need to see it.
             raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
     async def call_invoke_slash(self, state: ConnectionState, interaction: Interaction,
@@ -923,11 +925,7 @@ class ApplicationCommand(ApplicationSubcommand):
             True if any of our payloads has every key:value pair corresponding with key:value's in the raw_payload,
             False otherwise.
         """
-        # our_payloads = self.payload
-        # for our_payload in our_payloads:
-        #     if our_payload.get("guild_id", None) == guild_id:
-        #         if self._recursive_item_check(our_payload, raw_payload):
-        #             return True
+        return self._check_against_raw_payload(raw_payload, guild_id)
         if guild_id:
             if self._recursive_item_check(self.get_guild_payload(guild_id), raw_payload):
                 return True
@@ -936,11 +934,38 @@ class ApplicationCommand(ApplicationSubcommand):
                 return True
         return False
 
+    def _check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int]) -> bool:
+        if guild_id:
+            cmd_payload = self.get_guild_payload(guild_id)
+            if cmd_payload["guild_id"] != int(raw_payload["guild_id"]):
+                print("Failed basic guild check.")
+                return False
+        else:
+            cmd_payload = self.global_payload
+
+        if not check_dictionary_values(cmd_payload, raw_payload, "default_permission", "description", "type", "name"):
+            print("Failed first main check.")
+            return False
+
+        for cmd_option in cmd_payload.get("options", []):
+            found_correct_value = False
+            for raw_option in raw_payload.get("options", []):
+                # if check_dictionary_values(cmd_option, raw_option, "name"):
+                if cmd_option["name"] == raw_option["name"]:
+                    found_correct_value = True
+                    if not check_dictionary_values(cmd_option, raw_option, "type", "name", "description", "required",
+                                                   "autocomplete"):
+                        print(f"Failed options check.\n{cmd_option}\nvs\n{raw_option}")
+                        return False
+            if not found_correct_value:
+                return False
+        return True
+
     def reverse_check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int]) -> bool:
         """Checks if the given raw payload values match with what self.payload has.
 
         This doesn't make sure they are equal, and works opposite of check_against_raw_payload. This checks if all
-        key:value's inside of the raw_payload also exist inside one of our payloads.
+        key:value's inside the raw_payload also exist inside one of our payloads.
 
         Parameters
         ----------
@@ -1120,3 +1145,21 @@ def user_command(**kwargs):
         app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.user, **kwargs)
         return app_cmd
     return decorator
+
+
+def check_dictionary_values(dict1, dict2, *keywords) -> bool:
+    for keyword in keywords:
+        if dict1.get(keyword, None) != dict2.get(keyword, None):
+            print(f"Failed on keyword {keyword}")
+            return False
+    return True
+
+
+def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
+    if dict1.keys() != dict2.keys():
+        print("Keys are not equal.")
+        return False
+    for key in dict1:
+        if isinstance(dict1[key], dict):
+            return deep_dictionary_check(dict1[key], dict2[key])
+    return True
