@@ -9,7 +9,7 @@ One of the most appealing aspects of the command extension is how easy it is to 
 how you can arbitrarily nest groups and commands to have a rich sub-command system.
 
 Commands are defined by attaching it to a regular Python function. The command is then invoked by the user using a similar
-signature to the Python function.ScheduledEventNotFound
+signature to the Python function.
 
 For example, in the given command definition:
 
