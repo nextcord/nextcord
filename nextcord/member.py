@@ -776,7 +776,10 @@ class Member(abc.Messageable, _UserTag):
             payload['roles'] = tuple(r.id for r in roles)
 
         if timeout is not MISSING:
-            payload['communication_disabled_until'] = timeout.isoformat()
+            if timeout is not None:
+                payload['communication_disabled_until'] = timeout.isoformat()
+            else:
+                payload['communication_disabled_until'] = None
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
