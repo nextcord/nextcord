@@ -619,7 +619,7 @@ class Member(abc.Messageable, _UserTag):
 
         .. note::
 
-            This is ``None`` if the user can chat/interact.
+            This is ``None`` if the user has no timeout.
 
         .. versionadded:: 2.0
         """
@@ -656,14 +656,14 @@ class Member(abc.Messageable, _UserTag):
     async def edit(
         self,
         *,
-        timeout: datetime.datetime = MISSING,
-        deafen: bool = MISSING,
-        mute: bool = MISSING,
         nick: Optional[str] = MISSING,
-        reason: Optional[str] = None,
-        roles: List[abc.Snowflake] = MISSING,
+        mute: bool = MISSING,
+        deafen: bool = MISSING,
         suppress: bool = MISSING,
+        roles: List[abc.Snowflake] = MISSING,
         voice_channel: Optional[VocalGuildChannel] = MISSING,
+        reason: Optional[str] = None,
+        timeout: Optional[datetime.datetime] = MISSING,
     ) -> Optional[Member]:
         """|coro|
 
