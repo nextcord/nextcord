@@ -1421,7 +1421,7 @@ class ConnectionState:
     def parse_guild_scheduled_event_create(self, data) -> None:
         if guild := self._get_guild(int(data['guild_id'])):
             event = self.create_scheduled_event(guild=guild, data=data)
-            guild._add_event(event)
+            guild._add_scheduled_event(event)
             self.dispatch('guild_scheduled_event_create', event)
         else:
             _log.debug('GUILD_SCHEDULED_EVENT_CREATE referencing unknown guild '
