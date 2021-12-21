@@ -254,17 +254,18 @@ class Member(abc.Messageable, _UserTag):
     """
 
     __slots__ = (
-        '_roles',
-        'joined_at',
-        'premium_since',
         'activities',
         'guild',
-        'pending',
+        'joined_at',
         'nick',
-        '_client_status',
-        '_user',
-        '_state',
+        'pending',
+        'premium_since',
         '_avatar',
+        '_client_status',
+        '_roles',
+        '_state',
+        '_timeout',
+        '_user',
     )
 
     if TYPE_CHECKING:
@@ -296,6 +297,9 @@ class Member(abc.Messageable, _UserTag):
         self.nick: Optional[str] = data.get('nick', None)
         self.pending: bool = data.get('pending', False)
         self._avatar: Optional[str] = data.get('avatar')
+        self._timeout: Optional[datetime.datetime] = utils.parse_time(
+            data.get('communication_disabled_until')
+        )
 
     def __str__(self) -> str:
         return str(self._user)
@@ -608,6 +612,17 @@ class Member(abc.Messageable, _UserTag):
         """Optional[:class:`VoiceState`]: Returns the member's current voice state."""
         return self.guild._voice_state_for(self._user.id)
 
+    @property
+    def timeout(self) -> Optional[datetime.datetime]:
+        """Optional[:class:`datetime.datetime`]: A datetime object that represents 
+        the time in which the member will be able to interact again.
+
+        .. versionadded:: 2.0
+        """
+        if self._timeout is None or self._timeout < utils.utcnow():
+            return None
+        return self._timeout
+
     async def ban(
         self,
         *,
@@ -637,13 +652,14 @@ class Member(abc.Messageable, _UserTag):
     async def edit(
         self,
         *,
-        nick: Optional[str] = MISSING,
-        mute: bool = MISSING,
+        timeout: datetime.datetime = MISSING,
         deafen: bool = MISSING,
-        suppress: bool = MISSING,
-        roles: List[abc.Snowflake] = MISSING,
-        voice_channel: Optional[VocalGuildChannel] = MISSING,
+        mute: bool = MISSING,
+        nick: Optional[str] = MISSING,
         reason: Optional[str] = None,
+        roles: List[abc.Snowflake] = MISSING,
+        suppress: bool = MISSING,
+        voice_channel: Optional[VocalGuildChannel] = MISSING,
     ) -> Optional[Member]:
         """|coro|
 
@@ -663,6 +679,8 @@ class Member(abc.Messageable, _UserTag):
         | roles         | :attr:`Permissions.manage_roles`     |
         +---------------+--------------------------------------+
         | voice_channel | :attr:`Permissions.move_members`     |
+        +---------------+--------------------------------------+
+        | timeout       | :attr:`Permissions.moderate_members` |
         +---------------+--------------------------------------+
 
         All parameters are optional.
@@ -693,6 +711,9 @@ class Member(abc.Messageable, _UserTag):
             Pass ``None`` to kick them from voice.
         reason: Optional[:class:`str`]
             The reason for editing this member. Shows up on the audit log.
+        timeout: Optional[:class:`datetime.datetime`]
+            The time until the member should not be timed out.
+            Set this to None to turn off their timeout.
 
         Raises
         -------
@@ -707,6 +728,7 @@ class Member(abc.Messageable, _UserTag):
             The newly updated member, if applicable. This is only returned
             when certain fields are updated.
         """
+
         http = self._state.http
         guild_id = self.guild.id
         me = self._state.self_id == self.id
@@ -748,6 +770,9 @@ class Member(abc.Messageable, _UserTag):
 
         if roles is not MISSING:
             payload['roles'] = tuple(r.id for r in roles)
+
+        if timeout is not MISSING:
+            payload['communication_disabled_until'] = timeout.isoformat()
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
