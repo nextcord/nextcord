@@ -563,7 +563,7 @@ class Permissions(BaseFlags):
     def moderate_members(self) -> int:
         """:class:`bool`: Returns ``True`` if a user can moderate members (add timeouts).
 
-        Referred as ``Timeout Members`` in the official discord client.
+        Referred to as ``Timeout Members`` in the discord client.
 
         .. versionadded:: 2.0
         """
