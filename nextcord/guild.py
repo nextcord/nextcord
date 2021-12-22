@@ -898,7 +898,7 @@ class Guild(Hashable):
 
     @property
     def member_count(self) -> Optional[int]:
-        """Optional[:class:`int`]: Returns the true member count, if availible.
+        """Optional[:class:`int`]: Returns the true member count, if available.
 
         .. warning::
 
@@ -2214,12 +2214,12 @@ class Guild(Hashable):
         :class:`GuildSticker`
             The created sticker.
         """
+        if description is None:
+            description = ''
         payload = {
             'name': name,
+            'description': description,
         }
-
-        if description:
-            payload['description'] = description
 
         try:
             emoji = unicodedata.name(emoji)

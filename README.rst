@@ -1,13 +1,13 @@
-.. image:: assets/nextcord-banner.svg
+.. image:: assets/repo-banner.svg
    :alt: Nextcord
 
-.. image:: https://discord.com/api/guilds/881118111967883295/embed.png
+.. image:: https://img.shields.io/discord/881118111967883295?color=blue&label=discord
    :target: https://discord.gg/ZebatWssCB
    :alt: Discord server invite
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI version info
-.. image:: 	https://img.shields.io/pypi/dm/nextcord?color=informational&label=Pypi%20downloads
+.. image:: 	https://img.shields.io/pypi/dm/nextcord?color=informational&label=pypi%20downloads
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI version info
 .. image:: https://img.shields.io/pypi/pyversions/nextcord.svg
@@ -90,7 +90,7 @@ Optional Packages
 Please note that on Linux installing voice you must install the following packages via your favourite package manager (e.g. ``apt``, ``dnf``, etc) before running the above commands:
 
 * libffi-dev (or ``libffi-devel`` on some systems)
-* python-dev (e.g. ``python3.6-dev`` for Python 3.6)
+* python-dev (e.g. ``python3.8-dev`` for Python 3.8)
 
 
 Quick Example

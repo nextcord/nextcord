@@ -82,9 +82,9 @@
       <label for="documentation_select">{{ _('View Documentation For') }}</label>
       <select id="documentation_select" onchange="window.location = this.value;">
         {%- if pagename is prefixedwith 'ext/' %}
-        <option value="{{ pathto(master_doc)|e }}">discord</option>
+        <option value="{{ pathto(master_doc)|e }}">nextcord</option>
         {%- else %}
-        <option value="{{ pathto(pagename) }}" selected>discord</option>
+        <option value="{{ pathto(pagename) }}" selected>nextcord</option>
         {%- endif %}
         {%- for ext, p in discord_extensions %}
         <option value="{{ pathto(p + '/index')|e }}" {% if pagename is prefixedwith p %}selected{% endif %}>{{ ext }}</option>
