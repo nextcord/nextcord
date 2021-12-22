@@ -1047,7 +1047,6 @@ dl.exception > dt {
   padding: 1px 10px;
 }
 
-/* bug in sphinx: https://github.com/sphinx-doc/sphinx/issues/9384 */
 dl.property > dt > span.descname + em.property {
   display: none;
 }
