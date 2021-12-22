@@ -611,7 +611,7 @@ class ConnectionState:
             Guild ID to associate application commands to. If `None`, global commands are associated.
         """
         await self.deploy_application_commands(data=data, guild_id=guild_id, associate_known=True, delete_unknown=False,
-                                              update_known=False)
+                                               update_known=False)
 
     async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None,
                                                   guild_id: Optional[int] = None):

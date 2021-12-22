@@ -107,7 +107,7 @@ class SlashOption:
                  description: str = MISSING,
                  required: bool = MISSING,
                  choices: Dict[str, Union[str, int, float]] = MISSING,
-                 channel_types: List[ChannelType] = MISSING,
+                 channel_types: List[Type[ChannelType]] = MISSING,
                  min_value: Union[int, float] = MISSING,
                  max_value: Union[int, float] = MISSING,
                  autocomplete: bool = MISSING,
@@ -138,7 +138,7 @@ class SlashOption:
         self.description: Optional[str] = description
         self.required: Optional[bool] = required
         self.choices: Optional[dict] = choices
-        self.channel_types: Optional[List[ChannelType, ...]] = channel_types
+        self.channel_types: Optional[List[Type[ChannelType]]] = channel_types
         self.min_value: Optional[Union[int, float]] = min_value
         self.max_value: Optional[Union[int, float]] = max_value
         self.autocomplete: Optional[bool] = autocomplete
@@ -692,14 +692,34 @@ class ApplicationSubcommand:
 class ApplicationCommand(ApplicationSubcommand):
     def __init__(
         self,
-        callback: Callable = MISSING,
+        callback: Optional[Callable] = MISSING,
         cmd_type: ApplicationCommandType = MISSING,
-        name: str = MISSING,
-        description: str = MISSING,
-        guild_ids: Iterable[int] = MISSING,
+        name: Optional[str] = MISSING,
+        description: Optional[str] = MISSING,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         default_permission: Optional[bool] = MISSING,
         force_global: bool = False,
     ):
+        """Represents an application command that can be or is registered with Discord.
+
+        Parameters
+        ----------
+        callback: Optional[Callable]
+            Function or method to call when the application command is triggered. Must be a coroutine.
+        cmd_type: :class:`ApplicationCommandType`
+            Type of application command this should be.
+        name: Optional[:class:`str`]
+            Name of the command that users will see. If not set, it defaults to the name of the callback.
+        description: Optional[:class:'str']
+            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+        default_permission: Optional[:class:`bool`]
+            If users should be able to use this command by default or not. Defaults to Discords default.
+        force_global: :class:`bool`
+            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
+            register to guilds. Has no effect if `guild_ids` are never set or added to.
+        """
         super().__init__(callback=callback, cmd_type=cmd_type, name=name, description=description)
         self._state: Optional[ConnectionState] = None
         self.force_global: bool = force_global
@@ -1111,32 +1131,98 @@ class ApplicationCommand(ApplicationSubcommand):
             return decorator
 
 
-def slash_command(**kwargs):
-    """Creates a Slash Application Command, used inside a ClientCog."""
+def slash_command(name: str = MISSING,
+                  description: str = MISSING,
+                  guild_ids: Iterable[int] = MISSING,
+                  default_permission: bool = MISSING,
+                  force_global: bool = False):
+    """Creates a Slash application command from the decorated function.
+    Used inside :class:`ClientCog`'s or something that subclasses it.
+
+    Parameters
+    ----------
+    name: :class:`str`
+        Name of the command that users will see. If not set, it defaults to the name of the callback.
+    description: :class:'str'
+        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+    guild_ids: Iterable[:class:`int`]
+        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    default_permission: :class:`bool`
+        If users should be able to use this command by default or not. Defaults to Discords default.
+    force_global: :class:`bool`
+        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
+        register to guilds. Has no effect if `guild_ids` are never set or added to.
+    """
     def decorator(func: Callable) -> ApplicationCommand:
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
-        app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.chat_input, **kwargs)
+        app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.chat_input, name=name,
+                                     description=description, guild_ids=guild_ids,
+                                     default_permission=default_permission, force_global=force_global)
         return app_cmd
     return decorator
 
 
-def message_command(**kwargs):
-    """Creates a Message Application Command, used inside a ClientCog."""
+def message_command(name: str = MISSING,
+                    description: str = MISSING,
+                    guild_ids: Iterable[int] = MISSING,
+                    default_permission: bool = MISSING,
+                    force_global: bool = False):
+    """Creates a Message context command from the decorated function.
+    Used inside :class:`ClientCog`'s or something that subclasses it.
+
+    Parameters
+    ----------
+    name: :class:`str`
+        Name of the command that users will see. If not set, it defaults to the name of the callback.
+    description: :class:'str'
+        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+    guild_ids: Iterable[:class:`int`]
+        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    default_permission: :class:`bool`
+        If users should be able to use this command by default or not. Defaults to Discords default.
+    force_global: :class:`bool`
+        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
+        register to guilds. Has no effect if `guild_ids` are never set or added to.
+    """
     def decorator(func: Callable) -> ApplicationCommand:
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
-        app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.message, **kwargs)
+        app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.message, name=name,
+                                     description=description, guild_ids=guild_ids,
+                                     default_permission=default_permission, force_global=force_global)
         return app_cmd
     return decorator
 
 
-def user_command(**kwargs):
-    """Creates a User Application Command, used inside a ClientCog."""
+def user_command(name: str = MISSING,
+                 description: str = MISSING,
+                 guild_ids: Iterable[int] = MISSING,
+                 default_permission: bool = MISSING,
+                 force_global: bool = False):
+    """Creates a User context command from the decorated function.
+    Used inside :class:`ClientCog`'s or something that subclasses it.
+
+    Parameters
+    ----------
+    name: :class:`str`
+        Name of the command that users will see. If not set, it defaults to the name of the callback.
+    description: :class:'str'
+        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+    guild_ids: Iterable[:class:`int`]
+        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    default_permission: :class:`bool`
+        If users should be able to use this command by default or not. Defaults to Discords default.
+    force_global: :class:`bool`
+        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
+        register to guilds. Has no effect if `guild_ids` are never set or added to.
+    """
     def decorator(func: Callable) -> ApplicationCommand:
         if isinstance(func, ApplicationCommand):
             raise TypeError("Callback is already an ApplicationCommandRequest.")
-        app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.user, **kwargs)
+        app_cmd = ApplicationCommand(callback=func, cmd_type=ApplicationCommandType.user, name=name,
+                                     description=description, guild_ids=guild_ids,
+                                     default_permission=default_permission, force_global=force_global)
         return app_cmd
     return decorator
 

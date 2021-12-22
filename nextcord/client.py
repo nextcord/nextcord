@@ -29,7 +29,7 @@ import logging
 import signal
 import sys
 import traceback
-from typing import Any, Callable, Coroutine, Dict, Generator, List, Optional, Sequence, Set, TYPE_CHECKING, Tuple, TypeVar, Union
+from typing import Any, Callable, Coroutine, Dict, Generator, Iterable, List, Optional, Sequence, Set, TYPE_CHECKING, Tuple, TypeVar, Union
 
 import aiohttp
 
@@ -1829,25 +1829,88 @@ class Client:
     def add_cog(self, cog: ClientCog) -> None:
         self._client_cogs.add(cog)
 
-    def user_command(self, **kwargs):
+    def user_command(self, name: str = MISSING,
+                     description: str = MISSING,
+                     guild_ids: Iterable[int] = MISSING,
+                     default_permission: bool = MISSING,
+                     force_global: bool = False):
+        """Creates a User context command from the decorated function.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of the command that users will see. If not set, it defaults to the name of the callback.
+        description: :class:'str'
+            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+        guild_ids: Iterable[:class:`int`]
+            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+        default_permission: :class:`bool`
+            If users should be able to use this command by default or not. Defaults to Discords default.
+        force_global: :class:`bool`
+            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
+            register to guilds. Has no effect if `guild_ids` are never set or added to.
+        """
         def decorator(func: Callable):
-            result = user_command(**kwargs)(func)
+            result = user_command(name=name, description=description, guild_ids=guild_ids,
+                                  default_permission=default_permission, force_global=force_global)(func)
             self.add_application_command(result)
             return result
 
         return decorator
 
-    def message_command(self, **kwargs):
+    def message_command(self, name: str = MISSING,
+                        description: str = MISSING,
+                        guild_ids: Iterable[int] = MISSING,
+                        default_permission: bool = MISSING,
+                        force_global: bool = False):
+        """Creates a Message context command from the decorated function.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of the command that users will see. If not set, it defaults to the name of the callback.
+        description: :class:'str'
+            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+        guild_ids: Iterable[:class:`int`]
+            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+        default_permission: :class:`bool`
+            If users should be able to use this command by default or not. Defaults to Discords default.
+        force_global: :class:`bool`
+            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
+            register to guilds. Has no effect if `guild_ids` are never set or added to.
+        """
         def decorator(func: Callable):
-            result = message_command(**kwargs)(func)
+            result = message_command(name=name, description=description, guild_ids=guild_ids,
+                                     default_permission=default_permission, force_global=force_global)(func)
             self.add_application_command(result)
             return result
 
         return decorator
 
-    def slash_command(self, **kwargs):
+    def slash_command(self, name: str = MISSING,
+                      description: str = MISSING,
+                      guild_ids: Iterable[int] = MISSING,
+                      default_permission: bool = MISSING,
+                      force_global: bool = False):
+        """Creates a Slash application command from the decorated function.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of the command that users will see. If not set, it defaults to the name of the callback.
+        description: :class:'str'
+            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+        guild_ids: Iterable[:class:`int`]
+            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+        default_permission: :class:`bool`
+            If users should be able to use this command by default or not. Defaults to Discords default.
+        force_global: :class:`bool`
+            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
+            register to guilds. Has no effect if `guild_ids` are never set or added to.
+        """
         def decorator(func: Callable):
-            result = slash_command(**kwargs)(func)
+            result = slash_command(name=name, description=description, guild_ids=guild_ids,
+                                   default_permission=default_permission, force_global=force_global)(func)
             self.add_application_command(result)
             return result
 
