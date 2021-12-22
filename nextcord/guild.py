@@ -346,7 +346,7 @@ class Guild(Hashable):
         self._scheduled_events[event.id] = event
 
     def _remove_scheduled_event(self, event: Snowflake) -> None:
-        self._scheduled_events.pop(event.id, None)
+        self._scheduled_events.pop(event, None)
 
     def _store_scheduled_event(self, payload: ScheduledEventPayload) -> ScheduledEvent:
         event = ScheduledEvent(guild=self, state=self._state, data=payload)
