@@ -92,6 +92,10 @@ class Interaction:
         The guild ID the interaction was sent from.
     channel_id: Optional[:class:`int`]
         The channel ID the interaction was sent from.
+    locale: Optional[:class:`str`]
+        The users locale.
+    guild_locale: Optional[:class:`str`]
+        The guilds preferred locale, if invoked in a guild.
     application_id: :class:`int`
         The application ID that the interaction was for.
     user: Optional[Union[:class:`User`, :class:`Member`]]
@@ -114,6 +118,8 @@ class Interaction:
         'application_id',
         'message',
         'user',
+        'locale',
+        'guild_locale',
         'token',
         'version',
         '_permissions',
@@ -140,6 +146,8 @@ class Interaction:
         self.channel_id: Optional[int] = utils._get_as_snowflake(data, 'channel_id')
         self.guild_id: Optional[int] = utils._get_as_snowflake(data, 'guild_id')
         self.application_id: int = int(data['application_id'])
+        self.locale: Optional[str] = data['locale']
+        self.guild_locale: Optional[str] = data['guild_locale']
 
         self.message: Optional[Message]
         try:
