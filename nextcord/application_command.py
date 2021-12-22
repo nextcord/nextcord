@@ -466,8 +466,6 @@ class ApplicationSubcommand:
             "name": self.name,
             "description": self.description,
         }
-        # if self.choices:
-        #     ret["choices"] = [{key: value} for key, value in self.choices.items()]
         if self.children:
             ret["options"] = [child.payload for child in self.children.values()]
         elif self.options:
@@ -496,14 +494,11 @@ class ApplicationSubcommand:
             await self.children[option_data[0]["name"]].call_autocomplete(state, interaction, option_data[0].get("options", {}))
         elif self.type in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):
             focused_option_name = None
-            # option_data_missing_focused = option_data.copy()
             for arg in option_data:
                 if arg.get("focused", None) is True:
                     if focused_option_name:
                         raise ValueError("Multiple options are focused, is that supposed to be possible?")
                     focused_option_name = arg["name"]
-                    # option_data_missing_focused.remove(arg)
-                    # break
 
             if not focused_option_name:
                 raise ValueError("There's supposed to be a focused option, but it's not found?")
