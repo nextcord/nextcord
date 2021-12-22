@@ -847,9 +847,12 @@ class ApplicationCommand(ApplicationSubcommand):
 
     # Data wrangling.
 
-    def parse_discord_response(self, state: ConnectionState, command_id: int, guild_id: Optional[int], ) -> None:
+    # def parse_discord_response(self, state: ConnectionState, command_id: int, guild_id: Optional[int], ) -> None:
+    def parse_discord_response(self, state: ConnectionState, data: dict) -> None:
         self.set_state(state)
-        if guild_id:
+        # if guild_id:
+        command_id = int(data["id"])
+        if guild_id := data.get("guild_id", None):
             # self._guild_command_ids[guild_id] = command_id
             self._command_ids[guild_id] = command_id
             self._guild_ids.add(guild_id)
@@ -952,13 +955,11 @@ class ApplicationCommand(ApplicationSubcommand):
             for raw_option in raw_payload.get("options", []):
                 if cmd_option["name"] == raw_option["name"]:
                     found_correct_value = True
+                    # At this time, ApplicationCommand options are identical between locally-generated payloads and
+                    # payloads from Discord. If that were to change, switched to a recursive setup and manually
+                    # check_dictionary_values.
                     if not deep_dictionary_check(cmd_option, raw_option):
                         return False
-                    # if not check_dictionary_values(cmd_option, raw_option, "type", "name", "description", "required",
-                    #                                "autocomplete"):
-                    #     return False
-                    # if self.name == "main":
-                    #     print(self.global_payload)
             if not found_correct_value:
                 return False
         return True
@@ -1112,7 +1113,6 @@ class ApplicationCommand(ApplicationSubcommand):
                 result.type = ApplicationCommandOptionType.sub_command
                 self.children[result.name] = result
                 return result
-
             return decorator
 
 
