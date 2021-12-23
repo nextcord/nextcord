@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 
 __all__ = (
     'DiscordException',
+    'InvalidCommandType',
     'ClientException',
     'NoMoreItems',
     'GatewayNotFound',
@@ -61,6 +62,11 @@ class DiscordException(Exception):
     Ideally speaking, this could be caught to handle any exceptions raised from this library.
     """
 
+    pass
+
+
+class InvalidCommandType(DiscordException):
+    """Raised when an unhandled Application Command type is encountered."""
     pass
 
 
