@@ -268,6 +268,7 @@ class Client:
         self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
         self._rollout_register_new: bool = options.pop("rollout_register_new", True)
         self._rollout_update_known: bool = options.pop("rollout_update_known", True)
+        self._application_commands_to_add: Set[ApplicationCommand] = set()
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -1796,6 +1797,7 @@ class Client:
         await self.rollout_global_application_commands()
 
     async def rollout_global_application_commands(self) -> None:
+        self._add_decorated_application_commands()
         self.add_all_cog_commands()
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(data=global_payload, associate_known=self._rollout_associate_known,
@@ -1818,6 +1820,11 @@ class Client:
                                                 update_known=self._rollout_update_known)
         if self._rollout_register_new:
             await guild.register_new_application_commands(data=guild_payload)
+
+    def _add_decorated_application_commands(self) -> None:
+        for command in self._application_commands_to_add:
+            self.add_application_command(command, use_rollout=True)
+        self._application_commands_to_add.clear()
 
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
@@ -1853,7 +1860,7 @@ class Client:
         def decorator(func: Callable):
             result = user_command(name=name, description=description, guild_ids=guild_ids,
                                   default_permission=default_permission, force_global=force_global)(func)
-            self.add_application_command(result)
+            self._application_commands_to_add.add(result)
             return result
 
         return decorator
@@ -1882,7 +1889,7 @@ class Client:
         def decorator(func: Callable):
             result = message_command(name=name, description=description, guild_ids=guild_ids,
                                      default_permission=default_permission, force_global=force_global)(func)
-            self.add_application_command(result)
+            self._application_commands_to_add.add(result)
             return result
 
         return decorator
@@ -1911,7 +1918,7 @@ class Client:
         def decorator(func: Callable):
             result = slash_command(name=name, description=description, guild_ids=guild_ids,
                                    default_permission=default_permission, force_global=force_global)(func)
-            self.add_application_command(result)
+            self._application_commands_to_add.add(result)
             return result
 
         return decorator
