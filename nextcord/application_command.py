@@ -35,7 +35,6 @@ from typing import (
     Set,
     TYPE_CHECKING,
     Tuple,
-    Type,
     Union,
 )
 
@@ -107,7 +106,7 @@ class SlashOption:
             min_value: Union[int, float] = MISSING,
             max_value: Union[int, float] = MISSING,
             autocomplete: bool = MISSING,
-            default: Optional[Any] = None,
+            default: Any = None,
             verify: bool = True
     ):
         """Provides Discord with information about an option in a command.
@@ -137,7 +136,7 @@ class SlashOption:
         autocomplete: :class:`bool`
             If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
             if an autocomplete function for it is found.
-        default: Optional[Any]
+        default: Any
             When required is not True and the user doesn't provide a value for this Option, this value is given instead.
         verify: :class:`bool`
             If True, the given values will be checked to ensure that the payload to Discord is valid.
@@ -150,7 +149,7 @@ class SlashOption:
         self.min_value: Optional[Union[int, float]] = min_value
         self.max_value: Optional[Union[int, float]] = max_value
         self.autocomplete: Optional[bool] = autocomplete
-        self.default: Optional[Any] = default
+        self.default: Any = default
         self._verify = verify
         if self._verify:
             self.verify()
