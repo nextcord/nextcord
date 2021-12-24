@@ -65,17 +65,17 @@ class DiscordException(Exception):
     pass
 
 
-class InvalidCommandType(DiscordException):
-    """Raised when an unhandled Application Command type is encountered."""
-    pass
-
-
 class ClientException(DiscordException):
     """Exception that's raised when an operation in the :class:`Client` fails.
 
     These are usually for exceptions that happened due to user input.
     """
 
+    pass
+
+
+class InvalidCommandType(ClientException):
+    """Raised when an unhandled Application Command type is encountered."""
     pass
 
 
