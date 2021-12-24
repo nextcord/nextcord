@@ -532,9 +532,14 @@ class ConnectionState:
         for command in self._application_commands:
             self.add_application_command(command, use_rollout=True)
 
-    async def deploy_application_commands(self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None,
-                                          associate_known: bool = True, delete_unknown: bool = True,
-                                          update_known: bool = True) -> None:
+    async def deploy_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None,
+            associate_known: bool = True,
+            delete_unknown: bool = True,
+            update_known: bool = True
+    ) -> None:
         """|coro|
         Associates existing, deletes unknown, and updates modified commands for either global commands or a specific
         guild. This does a deep check on found commands, which may be expensive CPU-wise.
@@ -594,8 +599,11 @@ class ConnectionState:
                 else:
                     await self.http.delete_global_command(self.application_id, raw_response["id"])
 
-    async def associate_application_commands(self, data: Optional[List[dict]] = None,
-                                             guild_id: Optional[int] = None) -> None:
+    async def associate_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None
+    ) -> None:
         """|coro|
         Associates known signatures with data that matches what Discord has. Rollout signatures should be added
         before this method is called.
@@ -610,11 +618,19 @@ class ConnectionState:
         guild_id: Optional[:class:`int`]
             Guild ID to associate application commands to. If `None`, global commands are associated.
         """
-        await self.deploy_application_commands(data=data, guild_id=guild_id, associate_known=True, delete_unknown=False,
-                                               update_known=False)
+        await self.deploy_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=True,
+            delete_unknown=False,
+            update_known=False
+        )
 
-    async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None,
-                                                  guild_id: Optional[int] = None):
+    async def delete_unknown_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None
+    ):
         """|coro|
         Deletes unknown signatures found on Discord that don't match what the bot has. Rollout signatures should be
         added before this method is called.
@@ -630,11 +646,19 @@ class ConnectionState:
             Guild ID to delete unknown application commands from. If `None`, global commands are deleted from.
 
         """
-        await self.deploy_application_commands(data=data, guild_id=guild_id, associate_known=False, delete_unknown=True,
-                                              update_known=False)
+        await self.deploy_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=False,
+            delete_unknown=True,
+            update_known=False
+        )
 
-    async def update_application_commands(self, data: Optional[List[dict]] = None,
-                                          guild_id: Optional[int] = None) -> None:
+    async def update_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None
+    ) -> None:
         """|coro|
         Updates application commands with a matching signature on Discord, but fails a deep check. Rollout signatures
         should be added before this method is called. Non-trivia CPU usage, consider using the check function if you
@@ -648,11 +672,19 @@ class ConnectionState:
         guild_id: Optional[:class:`int`]
             Guild ID to update application commands for. If `None`, global commands are updated.
         """
-        await self.deploy_application_commands(data=data, guild_id=guild_id, associate_known=False, delete_unknown=False,
-                                              update_known=True)
+        await self.deploy_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=False,
+            delete_unknown=False,
+            update_known=True
+        )
 
-    async def register_new_application_commands(self, data: Optional[List[dict]] = None,
-                                                guild_id: Optional[int] = None) -> None:
+    async def register_new_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None
+    ) -> None:
         """|coro|
         Registers locally added application commands that don't match a signature that Discord has registered for
         either global commands or a specific guild.
