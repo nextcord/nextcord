@@ -29,19 +29,18 @@ import inspect
 import itertools
 import sys
 from operator import attrgetter
-from typing import Any, Dict, List, Literal, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union, overload
+from typing import (TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple,
+                    Type, TypeVar, Union, overload)
 
-from . import abc
-
-from . import utils
+from . import abc, utils
+from .activity import ActivityTypes, create_activity
 from .asset import Asset
-from .utils import MISSING
-from .user import BaseUser, User, _UserTag
-from .activity import create_activity, ActivityTypes
-from .permissions import Permissions
-from .enums import Status, try_enum
 from .colour import Colour
+from .enums import Status, try_enum
 from .object import Object
+from .permissions import Permissions
+from .user import BaseUser, User, _UserTag
+from .utils import MISSING
 
 __all__ = (
     'VoiceState',
@@ -49,21 +48,19 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from .abc import Snowflake
     from .asset import Asset
-    from .channel import DMChannel, VoiceChannel, StageChannel
+    from .channel import DMChannel, StageChannel, VoiceChannel
     from .flags import PublicUserFlags
     from .guild import Guild
-    from .types.activity import PartialPresenceUpdate
-    from .types.member import (
-        MemberWithUser as MemberWithUserPayload,
-        Member as MemberPayload,
-        UserWithMember as UserWithMemberPayload,
-    )
-    from .types.user import User as UserPayload
-    from .abc import Snowflake
-    from .state import ConnectionState
     from .message import Message
     from .role import Role
+    from .state import ConnectionState
+    from .types.activity import PartialPresenceUpdate
+    from .types.member import Member as MemberPayload
+    from .types.member import MemberWithUser as MemberWithUserPayload
+    from .types.member import UserWithMember as UserWithMemberPayload
+    from .types.user import User as UserPayload
     from .types.voice import VoiceState as VoiceStatePayload
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
@@ -265,6 +262,7 @@ class Member(abc.Messageable, _UserTag):
         '_user',
         '_state',
         '_avatar',
+        '_timeout',
     )
 
     if TYPE_CHECKING:
@@ -296,6 +294,9 @@ class Member(abc.Messageable, _UserTag):
         self.nick: Optional[str] = data.get('nick', None)
         self.pending: bool = data.get('pending', False)
         self._avatar: Optional[str] = data.get('avatar')
+        self._timeout: Optional[datetime.datetime] = utils.parse_time(
+            data.get('communication_disabled_until')
+        )
 
     def __str__(self) -> str:
         return str(self._user)
@@ -327,6 +328,7 @@ class Member(abc.Messageable, _UserTag):
         self._roles = utils.SnowflakeList(map(int, data['roles']))
         self.nick = data.get('nick', None)
         self.pending = data.get('pending', False)
+        self._timeout = utils.parse_time(data.get('communication_disabled_until'))
 
     @classmethod
     def _try_upgrade(cls: Type[M], *, data: UserWithMemberPayload, guild: Guild, state: ConnectionState) -> Union[User, M]:
@@ -353,6 +355,7 @@ class Member(abc.Messageable, _UserTag):
         self.activities = member.activities
         self._state = member._state
         self._avatar = member._avatar
+        self._timeout = member._timeout
 
         # Reference will not be copied unless necessary by PRESENCE_UPDATE
         # See below
@@ -379,6 +382,7 @@ class Member(abc.Messageable, _UserTag):
         self.premium_since = utils.parse_time(data.get('premium_since'))
         self._roles = utils.SnowflakeList(map(int, data['roles']))
         self._avatar = data.get('avatar')
+        self._timeout = utils.parse_time(data.get('communication_disabled_until'))
 
     def _presence_update(self, data: PartialPresenceUpdate, user: UserPayload) -> Optional[Tuple[User, User]]:
         self.activities = tuple(map(create_activity, data['activities']))
@@ -608,6 +612,21 @@ class Member(abc.Messageable, _UserTag):
         """Optional[:class:`VoiceState`]: Returns the member's current voice state."""
         return self.guild._voice_state_for(self._user.id)
 
+    @property
+    def timeout(self) -> Optional[datetime.datetime]:
+        """Optional[:class:`datetime.datetime`]: A datetime object that represents 
+        the time in which the member will be able to interact again.
+
+        .. note::
+
+            This is ``None`` if the user has no timeout.
+
+        .. versionadded:: 2.0
+        """
+        if self._timeout is None or self._timeout < utils.utcnow():
+            return None
+        return self._timeout
+
     async def ban(
         self,
         *,
@@ -644,6 +663,10 @@ class Member(abc.Messageable, _UserTag):
         roles: List[abc.Snowflake] = MISSING,
         voice_channel: Optional[VocalGuildChannel] = MISSING,
         reason: Optional[str] = None,
+        timeout: Optional[Union[
+            datetime.datetime,
+            datetime.timedelta
+        ]] = MISSING,
     ) -> Optional[Member]:
         """|coro|
 
@@ -663,6 +686,8 @@ class Member(abc.Messageable, _UserTag):
         | roles         | :attr:`Permissions.manage_roles`     |
         +---------------+--------------------------------------+
         | voice_channel | :attr:`Permissions.move_members`     |
+        +---------------+--------------------------------------+
+        | timeout       | :attr:`Permissions.moderate_members` |
         +---------------+--------------------------------------+
 
         All parameters are optional.
@@ -693,6 +718,21 @@ class Member(abc.Messageable, _UserTag):
             Pass ``None`` to kick them from voice.
         reason: Optional[:class:`str`]
             The reason for editing this member. Shows up on the audit log.
+        timeout: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
+            The time until the member should not be timed out.
+            Set this to None to disable their timeout.
+
+            Example
+            -------
+            .. code-block:: py
+
+                from datetime import timedelta
+
+                ...
+
+                await member.edit(timeout=timedelta(hours=1))
+
+            .. versionadded:: 2.0
 
         Raises
         -------
@@ -707,6 +747,7 @@ class Member(abc.Messageable, _UserTag):
             The newly updated member, if applicable. This is only returned
             when certain fields are updated.
         """
+
         http = self._state.http
         guild_id = self.guild.id
         me = self._state.self_id == self.id
@@ -748,6 +789,20 @@ class Member(abc.Messageable, _UserTag):
 
         if roles is not MISSING:
             payload['roles'] = tuple(r.id for r in roles)
+
+        if isinstance(timeout, datetime.timedelta):
+            payload['communication_disabled_until'] = (
+                utils.utcnow() + timeout
+            ).isoformat()
+        elif isinstance(timeout, datetime.datetime):
+            payload['communication_disabled_until'] = timeout.isoformat()
+        elif timeout is None:
+            payload['communication_disabled_until'] = None
+        else:
+            raise TypeError(
+                "Timeout must be a `datetime.datetime` or `datetime.timedelta`"
+                f"not {timeout.__class__.__name__}"
+            )
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
