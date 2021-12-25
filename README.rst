@@ -33,7 +33,7 @@ Key Features
 
 - Modern Pythonic API using ``async`` and ``await``
 - Proper rate limit handling
-- Optimised in both speed and memory
+- Optimized in both speed and memory
 
 Installing
 ----------
