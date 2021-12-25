@@ -29,19 +29,18 @@ import inspect
 import itertools
 import sys
 from operator import attrgetter
-from typing import Any, Dict, List, Literal, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union, overload
+from typing import (TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple,
+                    Type, TypeVar, Union, overload)
 
-from . import abc
-
-from . import utils
+from . import abc, utils
+from .activity import ActivityTypes, create_activity
 from .asset import Asset
-from .utils import MISSING
-from .user import BaseUser, User, _UserTag
-from .activity import create_activity, ActivityTypes
-from .permissions import Permissions
-from .enums import Status, try_enum
 from .colour import Colour
+from .enums import Status, try_enum
 from .object import Object
+from .permissions import Permissions
+from .user import BaseUser, User, _UserTag
+from .utils import MISSING
 
 __all__ = (
     'VoiceState',
@@ -49,21 +48,19 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from .abc import Snowflake
     from .asset import Asset
-    from .channel import DMChannel, VoiceChannel, StageChannel
+    from .channel import DMChannel, StageChannel, VoiceChannel
     from .flags import PublicUserFlags
     from .guild import Guild
-    from .types.activity import PartialPresenceUpdate
-    from .types.member import (
-        MemberWithUser as MemberWithUserPayload,
-        Member as MemberPayload,
-        UserWithMember as UserWithMemberPayload,
-    )
-    from .types.user import User as UserPayload
-    from .abc import Snowflake
-    from .state import ConnectionState
     from .message import Message
     from .role import Role
+    from .state import ConnectionState
+    from .types.activity import PartialPresenceUpdate
+    from .types.member import Member as MemberPayload
+    from .types.member import MemberWithUser as MemberWithUserPayload
+    from .types.member import UserWithMember as UserWithMemberPayload
+    from .types.user import User as UserPayload
     from .types.voice import VoiceState as VoiceStatePayload
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
@@ -666,7 +663,10 @@ class Member(abc.Messageable, _UserTag):
         roles: List[abc.Snowflake] = MISSING,
         voice_channel: Optional[VocalGuildChannel] = MISSING,
         reason: Optional[str] = None,
-        timeout: Optional[datetime.datetime] = MISSING,
+        timeout: Optional[Union[
+            datetime.datetime,
+            datetime.timedelta
+        ]] = MISSING,
     ) -> Optional[Member]:
         """|coro|
 
@@ -718,9 +718,21 @@ class Member(abc.Messageable, _UserTag):
             Pass ``None`` to kick them from voice.
         reason: Optional[:class:`str`]
             The reason for editing this member. Shows up on the audit log.
-        timeout: Optional[:class:`datetime.datetime`]
+        timeout: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
             The time until the member should not be timed out.
             Set this to None to disable their timeout.
+
+            Example
+            -------
+            .. code-block:: py
+
+                from datetime import timedelta
+
+                ...
+
+                await member.edit(timeout=timedelta(hours=1))
+
+            .. versionadded:: 2.0
 
         Raises
         -------
@@ -778,11 +790,19 @@ class Member(abc.Messageable, _UserTag):
         if roles is not MISSING:
             payload['roles'] = tuple(r.id for r in roles)
 
-        if timeout is not MISSING:
-            if timeout is not None:
-                payload['communication_disabled_until'] = timeout.isoformat()
-            else:
-                payload['communication_disabled_until'] = None
+        if isinstance(timeout, datetime.timedelta):
+            payload['communication_disabled_until'] = (
+                utils.utcnow() + timeout
+            ).isoformat()
+        elif isinstance(timeout, datetime.datetime):
+            payload['communication_disabled_until'] = timeout.isoformat()
+        elif timeout is None:
+            payload['communication_disabled_until'] = None
+        else:
+            raise TypeError(
+                "Timeout must be a `datetime.datetime` or `datetime.timedelta`"
+                f"not {timeout.__class__.__name__}"
+            )
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
