@@ -30,7 +30,8 @@ import copy
 import datetime
 import itertools
 import logging
-from typing import Dict, Optional, TYPE_CHECKING, Union, Callable, Any, List, TypeVar, Coroutine, Sequence, Tuple, Deque
+from typing import Dict, Optional, TYPE_CHECKING, Union, Callable, Any, List, TypeVar, Coroutine, Sequence, Tuple, \
+    Deque, Set
 import inspect
 
 import os
@@ -61,6 +62,7 @@ from .sticker import GuildSticker
 
 if TYPE_CHECKING:
     from .abc import PrivateChannel
+    from .application_command import ApplicationCommand
     from .message import MessageableChannel
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
@@ -223,6 +225,13 @@ class ConnectionState:
         self._activity: Optional[ActivityPayload] = activity
         self._status: Optional[str] = status
         self._intents: Intents = intents
+        # A set of all application command objects available. Set because duplicates should not exist.
+        self._application_commands: Set[ApplicationCommand] = set()
+        # A dictionary of all available unique command signatures. Compiled at runtime because needing to iterate
+        # through all application commands would take far more time. If memory is problematic, perhaps this can go?
+        self._application_command_signatures: Dict[Tuple[str, int, Optional[int]], ApplicationCommand] = {}
+        # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
+        self._application_command_ids: Dict[int, ApplicationCommand] = {}
 
         if not intents.members or cache_flags._empty:
             self.store_user = self.create_user  # type: ignore
@@ -247,12 +256,16 @@ class ConnectionState:
 
         # Since this is undesirable, a mapping is now used instead with stored
         # references now using a regular dictionary with eviction being done
-        # using __del__. Testing this for memory leaks led to no discernable leaks,
+        # using __del__. Testing this for memory leaks led to no discernible leaks,
         # though more testing will have to be done.
         self._users: Dict[int, User] = {}
         self._emojis: Dict[int, Emoji] = {}
         self._stickers: Dict[int, GuildSticker] = {}
         self._guilds: Dict[int, Guild] = {}
+        # TODO: Why aren't the above and stuff below application_commands declared in __init__?
+        self._application_commands = set()
+        self._application_command_signatures = {}
+        self._application_command_ids = {}
         if views:
             self._view_store: ViewStore = ViewStore(self)
 
@@ -473,6 +486,272 @@ class ConnectionState:
             channel = guild and guild._resolve_channel(channel_id)
 
         return channel or PartialMessageable(state=self, id=channel_id), guild
+
+    @property
+    def application_commands(self) -> Set[ApplicationCommand]:
+        return self._application_commands
+
+    def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
+        return self._application_command_ids.get(command_id, None)
+
+    def get_application_command_from_signature(self, name: str, cmd_type: int,
+                                               guild_id: Optional[int]) -> Optional[ApplicationCommand]:
+        return self._application_command_signatures.get((name, cmd_type, guild_id), None)
+
+    def add_application_command(self, command: ApplicationCommand, overwrite: bool = False,
+                                use_rollout: bool = False) -> None:
+        """If this is called multiple times for the same command, it should be handled and update listings properly."""
+        signature_set = command.get_rollout_signatures() if use_rollout else command.get_signatures()
+        for signature in signature_set:
+            if not overwrite and (found_command := self._application_command_signatures.get(signature, None)):
+                if found_command is not command:
+                    raise ValueError(f"{command.error_name} You cannot add application commands with duplicate "
+                                     f"signatures.")
+                # No else because we do not care if the command has its signature already in.
+            else:
+                self._application_command_signatures[signature] = command
+        for command_id in command.command_ids.values():
+            if not overwrite and (found_command := self._application_command_ids.get(command_id, None)) and \
+                    found_command is not command:
+                raise ValueError(f"{command.error_name} You cannot add application commands with duplicate IDs.")
+            else:
+                self._application_command_ids[command_id] = command
+        # TODO: Add the command to guilds. Should it? Check if it does in the Guild add.
+        self._application_commands.add(command)
+
+    def remove_application_command(self, command: ApplicationCommand):
+        signature_set = command.get_rollout_signatures()
+        for signature in signature_set:
+            self._application_command_signatures.pop(signature, None)
+        for cmd_id in command.command_ids:
+            self._application_command_ids.pop(cmd_id, None)
+        self._application_commands.remove(command)
+
+    def add_all_rollout_signatures(self) -> None:
+        """This adds all command signatures for rollouts to the signature cache."""
+        for command in self._application_commands:
+            self.add_application_command(command, use_rollout=True)
+
+    async def deploy_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None,
+            associate_known: bool = True,
+            delete_unknown: bool = True,
+            update_known: bool = True
+    ) -> None:
+        """|coro|
+        Associates existing, deletes unknown, and updates modified commands for either global commands or a specific
+        guild. This does a deep check on found commands, which may be expensive CPU-wise.
+
+        Running this for global or the same guild multiple times at once may cause unexpected or unstable behavior.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict]]
+            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
+            the payload will be retrieved from Discord.
+        guild_id: Optional[:class:`int`]
+            Guild ID to deploy application commands to. If `None`, global commands are deployed to.
+        associate_known: :class:`bool`
+            If True, commands on Discord that pass a signature check and a deep check will be associated with locally
+            added ApplicationCommand objects.
+        delete_unknown: :class:`bool`
+            If `True`, commands on Discord that fail a signature check will be removed. If `update_known` is False,
+            commands that pass the signature check but fail the deep check will also be removed.
+        update_known: :class:`bool`
+            If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
+        """
+        if not data:
+            if guild_id:
+                data = await self.http.get_guild_commands(self.application_id, guild_id)
+            else:
+                data = await self.http.get_global_commands(self.application_id)
+        for raw_response in data:
+            fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else temp
+            response_signature = (
+                raw_response["name"],
+                int(raw_response["type"]),
+                fixed_guild_id
+            )
+            if app_cmd := self.get_application_command_from_signature(*response_signature):
+                if app_cmd.check_against_raw_payload(raw_response, guild_id):
+                    if associate_known:
+                        _log.debug(f"nextcord.ConnectionState: Command with signature {response_signature} associated "
+                                   f"with added command.")
+                        # app_cmd.parse_discord_response(self, int(raw_response["id"]), guild_id)
+                        app_cmd.parse_discord_response(self, raw_response)
+                        self.add_application_command(app_cmd)
+                elif update_known:
+                    _log.info(f"nextcord.ConnectionState: Command with signature {response_signature} found but failed "
+                              f"deep check, updating.")
+                    await self.register_application_command(app_cmd, guild_id)
+                elif delete_unknown:
+                    _log.info(f"nextcord.ConnectionState: Command with signature {response_signature} found but failed "
+                              f"deep check, removing.")
+                    # TODO: Re-examine how worthwhile this is.
+                    await self.delete_application_command(app_cmd, guild_id)
+            elif delete_unknown:
+                _log.info(f"nextcord.ConnectionState: Unknown command with signature {response_signature} failed "
+                          f"signature check, removing.")
+                if guild_id:
+                    await self.http.delete_guild_command(self.application_id, guild_id, raw_response["id"])
+                else:
+                    await self.http.delete_global_command(self.application_id, raw_response["id"])
+
+    async def associate_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Associates known signatures with data that matches what Discord has. Rollout signatures should be added
+        before this method is called.
+        Non-trivial CPU usage, consider using the check function if you want association, deletes, and/or updates at
+        the same time.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to associate with. If None,
+            the payload will be retrieved from Discord.
+        guild_id: Optional[:class:`int`]
+            Guild ID to associate application commands to. If `None`, global commands are associated.
+        """
+        await self.deploy_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=True,
+            delete_unknown=False,
+            update_known=False
+        )
+
+    async def delete_unknown_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None
+    ):
+        """|coro|
+        Deletes unknown signatures found on Discord that don't match what the bot has. Rollout signatures should be
+        added before this method is called.
+        Non-trivial CPU usage, consider using the check function if you want deletes, association, and/or updates at
+        the same time.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to delete from. If None,
+            the payload will be retrieved from Discord.
+        guild_id: Optional[:class:`int`]
+            Guild ID to delete unknown application commands from. If `None`, global commands are deleted from.
+
+        """
+        await self.deploy_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=False,
+            delete_unknown=True,
+            update_known=False
+        )
+
+    async def update_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Updates application commands with a matching signature on Discord, but fails a deep check. Rollout signatures
+        should be added before this method is called. Non-trivia CPU usage, consider using the check function if you
+        want updates, association, and/or deletes at the same time.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to update from. If None,
+            the payload will be retrieved from Discord.
+        guild_id: Optional[:class:`int`]
+            Guild ID to update application commands for. If `None`, global commands are updated.
+        """
+        await self.deploy_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=False,
+            delete_unknown=False,
+            update_known=True
+        )
+
+    async def register_new_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Registers locally added application commands that don't match a signature that Discord has registered for
+        either global commands or a specific guild.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to check against. If None,
+            the payload will be retrieved from Discord.
+        guild_id: Optional[:class:`int`]
+            Guild ID to register new application commands to. If `None`, global commands are registered.
+        """
+        if not data:
+            if guild_id:
+                data = await self.http.get_guild_commands(self.application_id, guild_id)
+            else:
+                data = await self.http.get_global_commands(self.application_id)
+        data_signatures = [
+            (raw_response["name"],
+             int(raw_response["type"]),
+             int(temp) if (temp := raw_response.get("guild_id", None)) else temp)
+            for raw_response in data]
+        # add_application_command can change the size of the dictionary, and apparently .items() doesn't prevent that
+        # "RuntimeError: dictionary changed size during iteration" from happening. So a copy is made for just this.
+        for signature, app_cmd in self._application_command_signatures.copy().items():
+            if signature not in data_signatures and signature[2] == guild_id:  # index 2 of the tuple is the guild ID.
+                await self.register_application_command(app_cmd, guild_id)
+
+    async def register_application_command(self, command: ApplicationCommand, guild_id: Optional[int] = None) -> None:
+        """|coro|
+        Registers the given application command either for a specific guild or globally.
+
+        Parameters
+        ----------
+        command: :class:`ApplicationCommand`
+            Application command to register.
+        guild_id: Optional[:class:`int`]
+            Guild ID to register the application commands to. If `None`, the command is registered globally.
+        """
+        payload = command.get_guild_payload(guild_id) if guild_id else command.global_payload
+        _log.info(f"nextcord.ConnectionState: Registering command with signature {command.get_signature(guild_id)}")
+        if guild_id:
+            raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
+        else:
+            raw_response = await self.http.upsert_global_command(self.application_id, payload)
+        # response_id = int(raw_response["id"])
+        command.parse_discord_response(self, raw_response)
+        self.add_application_command(command)
+
+    async def delete_application_command(self, command: ApplicationCommand, guild_id: Optional[int] = None) -> None:
+        """|coro|
+        Deletes the given application from Discord for the given guild ID or globally, then removes the signature and
+        command ID from the cache if possible.
+
+        Parameters
+        ----------
+        command: :class:`ApplicationCommand`
+            Application command to delete.
+        guild_id: Optional[:class:`int`]
+            Guild ID to delete the application commands from. If `None`, the command is deleted from global.
+        """
+        if guild_id:
+            await self.http.delete_guild_command(self.application_id, guild_id, command.command_ids[guild_id])
+        else:
+            await self.http.delete_global_command(self.application_id, command.command_ids[guild_id])
+        self._application_command_ids.pop(command.command_ids[guild_id], None)
+        self._application_command_signatures.pop(command.get_signature(guild_id))
 
     async def chunker(
         self, guild_id: int, query: str = '', limit: int = 0, presences: bool = False, *, nonce: Optional[str] = None
