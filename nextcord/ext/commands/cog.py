@@ -45,6 +45,7 @@ FuncT = TypeVar('FuncT', bound=Callable[..., Any])
 
 MISSING: Any = nextcord.utils.MISSING
 
+
 class CogMeta(type):
     """A metaclass for defining a cog.
 
@@ -173,7 +174,8 @@ def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
     return func
 
-class Cog(metaclass=CogMeta):
+
+class Cog(nextcord.ClientCog, metaclass=CogMeta):
     """The base class that all cogs must inherit from.
 
     A cog is a collection of commands, listeners, and optional state to

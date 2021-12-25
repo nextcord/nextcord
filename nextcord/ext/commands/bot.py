@@ -67,6 +67,7 @@ T = TypeVar('T')
 CFT = TypeVar('CFT', bound='CoroFunc')
 CXT = TypeVar('CXT', bound='Context')
 
+
 def when_mentioned(bot: Union[Bot, AutoShardedBot], msg: Message) -> List[str]:
     """A callable that implements a command prefix equivalent to being mentioned.
 
@@ -554,6 +555,14 @@ class BotBase(GroupMixin):
 
         cog = cog._inject(self)
         self.__cogs[cog_name] = cog
+        # TODO: This blind call to nextcord.Client is dumb.
+        super().add_cog(cog)
+        # Info: To add the ability to use ApplicationCommands in Cogs, the Client has to be aware of cogs. For minimal
+        # editing, BotBase must call Client's add_cog function. While it all works out in the end because Bot and
+        # AutoShardedBot both end up subclassing Client, this is BotBase and BotBase does not subclass Client, hence
+        # this being a "blind call" to nextcord.Client
+        # Whatever warning that your IDE is giving about the above line of code is correct. When Bot + BotBase
+        # inevitably get reworked, make me happy and fix this.
 
     def get_cog(self, name: str) -> Optional[Cog]:
         """Gets the cog instance requested.
@@ -1063,6 +1072,7 @@ class BotBase(GroupMixin):
     async def on_message(self, message):
         await self.process_commands(message)
 
+
 class Bot(BotBase, nextcord.Client):
     """Represents a discord bot.
 
@@ -1134,6 +1144,7 @@ class Bot(BotBase, nextcord.Client):
         .. versionadded:: 1.7
     """
     pass
+
 
 class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
     """This is similar to :class:`.Bot` except that it is inherited from
