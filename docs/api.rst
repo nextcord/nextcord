@@ -4178,6 +4178,46 @@ Select
 .. autofunction:: nextcord.ui.select
 
 
+Application Commands
+--------------------
+
+.. attributetable:: ApplicationCommand
+
+.. autoclass:: ApplicationCommand
+    :members:
+
+.. attributetable:: ApplicationSubcommand
+
+.. autoclass:: ApplicationSubcommand
+    :members:
+
+Options
+~~~~~~~
+
+.. attributetable:: CommandOption
+
+.. autoclass:: CommandOption
+    :members:
+
+.. attributetable:: SlashOption
+
+.. autoclass:: SlashOption
+    :members:
+
+Cogs
+~~~~
+
+.. autoclass:: ClientCog
+    :members:
+Decorators
+~~~~~~~~~~
+
+.. autoclass:: message_command
+
+.. autoclass:: slash_command
+
+.. autoclass:: user_command
+
 Exceptions
 ------------
 
