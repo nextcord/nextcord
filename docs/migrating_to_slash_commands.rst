@@ -10,7 +10,9 @@ Differences
 -------------
 One of the biggest difference's is the use of :class:`~nextcord.Interaction` instead of :class:`~nextcord.ext.commands.Context`
 
-**NOTE:** It may take up to an hour for a slash command to register globally so we recommend you put guild_ids[] to limit the amount of guilds for testing 
+.. note::
+    
+    It may take up to an hour for a slash command to register globally so we recommend you put guild_ids[] to limit the amount of guilds for testing 
 
 Old Commands:
 
@@ -30,7 +32,9 @@ New Commands:
     async def example(interaction):
       await interaction.response.send_message("Oye mate slash command here!")
       
-**Note:** You have to respond to messages using response so discord counts it as responded to; And not say ``interaction failed`` to the user
+.. note::
+    
+    You have to respond to messages using response so discord counts it as responded to; And not say ``interaction failed`` to the user
 
 For more info on interaction Look at the :doc:`api` Docs
 
