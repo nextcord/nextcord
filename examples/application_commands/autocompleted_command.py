@@ -15,8 +15,8 @@ list_of_dog_breeds = [  # the list of dog breeds
 async def your_favorite_dog(
     interaction: Interaction,
     dog: int = SlashOption(
-        name="Your favorite dog", # the name
-        description="Choose the best dog from this autocompleted list!", # our description
+        name="Your favorite dog",  # the name
+        description="Choose the best dog from this autocompleted list!",  # our description
     ),
 ):  # our slash option.
     await interaction.response.send_message(

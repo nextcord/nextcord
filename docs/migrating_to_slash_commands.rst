@@ -20,7 +20,7 @@ Old Commands:
     async def example(ctx):
       await ctx.send("Hey!")
       
-**This Way Is Deprecated For Slash Commands And CANT Be Used**
+**This Way Is Deprecated For Slash Commands And Can't Be Used**
 
 New Commands:
 

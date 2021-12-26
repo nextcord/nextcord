@@ -1,4 +1,4 @@
-from nextcord import slash_command, user_command, message_command, Interaction
+from nextcord import Interaction, message_command, slash_command, user_command
 from nextcord.ext import commands
 
 

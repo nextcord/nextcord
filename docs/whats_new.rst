@@ -17,9 +17,7 @@ v2.0.0
 --------
 
 The changeset for this version are too big to be listed here, for more information please
-see :ref:`the migrating page <migrating_2_0>`. Since the original discord.py repro ended
-its work this is the point where our fork comes in place. Please see
-:ref:`the migrating page <migrating_nextcord>` for more informations.
+see :ref:`the migrating page <migrating>`.
 
 .. _vp1p7p3:
 

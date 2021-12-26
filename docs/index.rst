@@ -74,6 +74,6 @@ If you're looking for something related to the project itself, it's here.
 
   whats_new
   version_guarantees
+  interactions
   migrating
-  migrating_2
-  migrating_to_nextcord
+  migrating_to_slash_commands

@@ -2,10 +2,10 @@
 
 .. currentmodule:: nextcord
 
-.. _client_index:
+.. _interactions:
    
-Interaction Commands
-======================
+Slash Commands
+==============
 
 Since Discord has added interaction commands a feature with many possibilities, we at Nextcord have decided to add them to our fleet of features.
 
@@ -13,8 +13,8 @@ This doc will explain the innerworkings and how to use interaction commmands.
 
 We suggest you learn how to make regular commands before looking through here, we suggest looking at the :doc:`quickstart`
 
-How To Make A Simple Interaction Command
-------------------------------------------
+How To Make A Simple Slash Command
+----------------------------------
 
 This right here is a simple ping pong command made with Nextcords slash feature.
 
@@ -35,7 +35,7 @@ Example:
     @bot.slash_command(guild_ids=[id1, id2])
 
 How To Use Sub-Commands
--------------------------
+-----------------------
 
 The way sub-commands work is that you make a normal slash command that will never be called, and then make the sub-commands and have them do the work of real slash commands. There is no difference with slash commands and sub-commands. The only thing you will need to change is functions.
 
@@ -43,26 +43,35 @@ As shown in the demonstration below you make a main slash command or a dummy sla
 
 .. code-block:: python3
 
-    @bot.slash_command()
-    async def main(interaction):
-        await interaction.response.send_message("This will never get called if this has subcommands.")
+        @bot.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
+        async def main(
+                interaction,
+            ):  # passing through interaction and indentifing the sub-command group name
+        await interaction.response.send_message(
+        "This will never get called if this has subcommands."
+            )  # a function never called
 
 
-    @main.subcommand()
-    async def sub1(interaction):
-        await interaction.response.send_message("This is subcommand 1!")
+        @main.subcommand()  # Identifying The Sub-Command
+        async def sub1(
+                interaction,
+            ):  # Making The Sub Command Name And Passing Through Interaction
+        await interaction.response.send_message(
+            "This is subcommand 1!"
+            )  # Sending A Response
 
 
-    @main.subcommand(name="sub2", description="Sub2s Description")
-    async def subcommand_two(
-                            interaction: Interaction,
-                            arg1: str = SlashOption(name="argument1", description="The first argument."),
-                            arg2: str = SlashOption(description="The second argument!", default=None)
-                              ):
-        await interaction.response.send_message(f"This is subcommand 2 with arg1 {arg1} and arg2 {arg2}")
+        @main.subcommand(
+            description="Aha! Another subcommand"
+            )  # Identifying The Sub-Command And Adding A Descripton
+        async def subcommand_two(interaction: Interaction):  # Passing in interaction
+
+        await interaction.response.send_message(
+            "This is subcommand 2!"
+            )       # Responding With The Args/Fields
         
 Fields And Requirements
-------------------------
+-----------------------
 Fields are meant to facilitate an easier way to fill info, letting people using your slash command get a different response for each answer.
 
 Nextcord's implementation of slash commands has fields and is very simple. in the example below is a field.
@@ -75,19 +84,19 @@ Nextcord's implementation of slash commands has fields and is very simple. in th
          setting: str = SlashOption(name="settings", description="Configure Your Settings")
      ):
          if setting == "music":
-             await interaction.response.send_message(f"MOOSIC")
+             await interaction.response.send_message(f"Sorry we aren't connected to lavalink currently")
          elif setting == "moderation":
-             await interaction.response.send_message(f"Mods party? POOG")
+             await interaction.response.send_message(f"Moderation?")
          else:
              await interaction.response.send_message("Odd, I don't know that setting")
 
 
 How To Make Slash Commands In Cogs
------------------------------------
+----------------------------------
 Show below is an example of a simple command running in a cog.
 
 .. code-block:: python3
-      
+
     class ExampleCog(commands.Cog):
         def __init__(self):
             self.count = 0
@@ -96,14 +105,11 @@ Show below is an example of a simple command running in a cog.
         async def slash_example_cog_command(self, interaction):
             await interaction.response.send_message("Hello i am a slash command in a cog!")
 
-
-bot.add_cog(ExampleCog())
-
 The example shown above responds to a user when they do a slash command. It is identical to a normal slash command and to normal commands in general.
 
-How To Make Application Commands
-------------------------------------
-Application commands display commands on a menu of a message/user.
+How To Make Context Menu Commands
+---------------------------------
+Context Menu commands display commands on a menu of a message/user.
 
 User Commands
 ~~~~~~~~~~~~~~

@@ -1,5 +1,5 @@
-from nextcord.ext import commands
 from nextcord import Interaction
+from nextcord.ext import commands
 
 bot = commands.Bot(command_prefix="/")
 
