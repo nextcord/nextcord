@@ -40,9 +40,18 @@ Client
 
 .. autoclass:: Client
     :members:
-    :exclude-members: fetch_guilds, event
+    :exclude-members: fetch_guilds, event, slash_command, user_command, message_command
 
     .. automethod:: Client.event()
+        :decorator:
+
+    .. automethod:: Client.slash_command
+        :decorator:
+    
+    .. automethod:: Client.user_command
+        :decorator:
+        
+    .. automethod:: Client.message_command
         :decorator:
 
     .. automethod:: Client.fetch_guilds
