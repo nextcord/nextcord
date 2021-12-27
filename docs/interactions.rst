@@ -16,7 +16,7 @@ We suggest you learn how to make regular commands before looking through here, w
 How To Make A Simple Slash Command
 ----------------------------------
 
-This right here is a simple ping pong command made with Nextcords slash feature.
+This right here is a simple ping pong command made with Nextcord's slash feature.
 
 .. code-block:: python3
 
@@ -45,10 +45,7 @@ As shown in the demonstration below you make a main slash command or a dummy sla
 
         @bot.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
         async def main(interaction):  
-        # passing through interaction and indentifing the sub-command group name
-        await interaction.response.send_message(
-        "This will never get called if this has subcommands."
-            )  # a function never called
+        ...
 
 
         @main.subcommand()  # Identifying The Sub-Command
