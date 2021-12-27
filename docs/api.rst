@@ -1376,6 +1376,9 @@ of :class:`enum.Enum`.
     .. attribute:: discord_certified_moderator
 
         The user is a Discord Certified Moderator.
+    .. attribute:: known_spammer
+
+        The user is a Discord Certified Moderator.
 
 .. class:: ActivityType
 
