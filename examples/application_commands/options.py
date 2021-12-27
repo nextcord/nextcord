@@ -1,11 +1,11 @@
+import nextcord
 from nextcord import SlashOption
-from nextcord.ext import commands
 from nextcord.interactions import Interaction
 
-bot = commands.Bot(command_prefix="$")  # won't let you do $my_slash_command
+client = nextcord.Client()
 
 
-@bot.slash_command(guild_ids=[...])  # Limits the guildes
+@client.slash_command(guild_ids=[...])  # Limits the guildes
 async def my_select_command(
     interaction: Interaction, help: str = SlashOption(name="Say a help option!")
 ):
@@ -23,4 +23,4 @@ async def my_select_command(
         interaction.response.send_message("Could not find that help option!")
 
 
-bot.run("TOKEN")
+client.run("TOKEN")

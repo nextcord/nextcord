@@ -1,10 +1,10 @@
+import nextcord
 from nextcord import Interaction, SlashOption
-from nextcord.ext import commands
 
-bot = commands.Bot(command_prefix="$")  # won't let you do $my_slash_command
+client = nextcord.Client()
 
 
-@bot.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
+@client.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
 async def main(
     interaction: Interaction,
 ):  # passing through interaction and indentifing the sub-command group name
@@ -27,4 +27,4 @@ async def subcommand_two(interaction: Interaction):  # Passing in interaction
     # Responding With The Args/Fields
 
 
-bot.run("TOKEN")
+client.run("TOKEN")

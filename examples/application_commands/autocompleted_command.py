@@ -1,7 +1,7 @@
+import nextcord
 from nextcord import Interaction, SlashOption
-from nextcord.ext import commands
 
-bot = commands.Bot(command_prefix="$")  # won't let you do $my_slash_command
+client = nextcord.Client()
 
 list_of_dog_breeds = [  # the list of dog breeds
     "German Shepard",
@@ -11,7 +11,7 @@ list_of_dog_breeds = [  # the list of dog breeds
 ]
 
 
-@bot.slash_command(guild_ids=[...])  # Limits guilds
+@client.slash_command(guild_ids=[...])  # Limits guilds
 async def your_favorite_dog(
     interaction: Interaction,
     dog: int = SlashOption(
@@ -25,7 +25,7 @@ async def your_favorite_dog(
 
 
 @your_favorite_dog.on_autocomplete("dog")
-async def favorite_dog(interaction: Interaction, dog):
+async def favorite_dog(interaction: Interaction):
 
     await interaction.response.send_autocomplete(list_of_dog_breeds)  
     # sending the list to discord.
