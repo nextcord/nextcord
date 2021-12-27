@@ -5,7 +5,7 @@ from nextcord.interactions import Interaction
 bot = commands.Bot(command_prefix="$") # won't let you do $my_slash_command
 
 
-@bot.slash_command(guild_ids=[...])  # Limits the guides
+@bot.slash_command(guild_ids=[...])  # Limits the guildes
 async def my_select_command(
     interaction: Interaction, help: str = SlashOption(name="Say a help option!")
 ):
