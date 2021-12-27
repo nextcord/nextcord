@@ -1,7 +1,7 @@
 from nextcord.ext import commands
 from nextcord.interactions import Interaction
 
-bot = commands.Bot(command_prefix="$") # won't let you do $my_slash_command
+bot = commands.Bot(command_prefix="$")  # won't let you do $my_slash_command
 
 
 @bot.user_command(guild_ids=[...])  # limits guilds
