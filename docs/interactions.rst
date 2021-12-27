@@ -45,9 +45,7 @@ As shown in the demonstration below you make a main slash command or a dummy sla
 
         @client.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
         async def my_main_command(interaction):  
-            await interaction.response.send_message(
-            "This will never get called if this has subcommands."
-                )  # a function never called
+            ...
 
 
         @my_main_command.subcommand()  # Identifying The Sub-Command
