@@ -76,4 +76,5 @@ If you're looking for something related to the project itself, it's here.
   version_guarantees
   interactions
   migrating
-  migrating_to_slash_commands
+  migrating_2
+  migrating_to_nextcord

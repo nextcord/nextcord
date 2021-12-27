@@ -20,13 +20,12 @@ async def your_favorite_dog(
     ),
 ):  # our slash option.
     await interaction.response.send_message(
-        f"your favorite dog it {dog}!"
+        f"your favorite dog is {dog}!"
     )  # sends the autocompleted result
 
 
 @your_favorite_dog.on_autocomplete("dog")
 async def favorite_dog(interaction: Interaction, dog):
-    list_of_dogs = list_of_dog_breeds(dog)  # defining our list.
 
-    await interaction.response.send_autocomplete(list_of_dogs)  
+    await interaction.response.send_autocomplete(list_of_dog_breeds)  
     # sending the list to discord.
