@@ -53,9 +53,7 @@ As shown in the demonstration below you make a main slash command or a dummy sla
 
 
         @main.subcommand()  # Identifying The Sub-Command
-        async def sub1(
-                interaction,
-            ):  # Making The Sub Command Name And Passing Through Interaction
+        async def sub1(interaction):  # Making The Sub Command Name And Passing Through Interaction
         await interaction.response.send_message(
             "This is subcommand 1!"
             )  # Sending A Response
