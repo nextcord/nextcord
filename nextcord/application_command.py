@@ -101,7 +101,8 @@ class SlashOption:
             name: str = MISSING,
             description: str = MISSING,
             required: bool = MISSING,
-            choices: Dict[str, Union[str, int, float]] = MISSING,
+            # choices: Dict[str, Union[str, int, float]] = MISSING,
+            choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]] = MISSING,
             channel_types: List[ChannelType] = MISSING,
             min_value: Union[int, float] = MISSING,
             max_value: Union[int, float] = MISSING,
@@ -116,14 +117,17 @@ class SlashOption:
 
         Parameters
         ----------
-        name: Optional[:class:`str`]
+        name: :class:`str`
             The name of the Option on Discords side. If left as None, it defaults to the parameter name.
-        description: Optional[:class:'str']
+        description: :class:'str'
             The description of the Option on Discords side. If left as None, it defaults to "".
-        required: Optional[:class:'bool']
+        required: :class:'bool'
             If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
-        choices: Optional[:class:`bool`]
-            Dictionary of choices. The keys are what the user sees, the values correspond to what is sent to us.
+        choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]], Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
+            A list of choices that a user must choose.
+            If a :class:`dict` is given, the keys are what the users are able to see, the values are what is sent back
+            to the bot.
+            Otherwise, it is treated as an `Iterable` where what the user sees and is sent back to the bot are the same.
         channel_types: List[:class:`ChannelType`]
             List of `ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
             typed as :class:`GuildChannel` for this to function.
@@ -144,7 +148,7 @@ class SlashOption:
         self.name: Optional[str] = name
         self.description: Optional[str] = description
         self.required: Optional[bool] = required
-        self.choices: Optional[dict] = choices
+        self.choices: Optional[Union[Iterable, dict]] = choices
         self.channel_types: Optional[List[ChannelType]] = channel_types
         self.min_value: Optional[Union[int, float]] = min_value
         self.max_value: Optional[Union[int, float]] = max_value
@@ -329,7 +333,10 @@ class CommandOption(SlashOption):
             ret["required"] = True
 
         if self.choices:
-            ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
+            if isinstance(self.choices, dict):
+                ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
+            else:
+                ret["choices"] = [{"name": value, "value": value} for value in self.choices]
         if self.channel_types:
             # noinspection PyUnresolvedReferences
             ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
