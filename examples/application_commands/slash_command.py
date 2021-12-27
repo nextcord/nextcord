@@ -1,6 +1,6 @@
 from nextcord.ext import commands
 
-bot = commands.Bot(command_prefix="/")
+bot = commands.Bot(command_prefix="$")
 
 # This Example Can Be Found On The Docs Aswell.
 @bot.slash_command(guild_ids=[...])
