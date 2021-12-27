@@ -6,9 +6,8 @@ bot = commands.Bot(command_prefix="$")  # won't let you do $my_slash_command
 @bot.slash_command(guild_ids=[...])
 # Call The Function Define The Name If You Need It For Dynamic Help Commands And Which Guilds Get The Slash Command.
 async def ping(interaction):  # Passing Through interaction And The Name.
-    await interaction.response.send_message(
-        "Pong!"
-    )  # Send The Response, Please Don't Use CTX.
+    await interaction.response.send_message("Pong!")  
+    # Send The Response, Please Don't Use CTX.
 
 
 bot.run("TOKEN")

@@ -44,9 +44,8 @@ As shown in the demonstration below you make a main slash command or a dummy sla
 .. code-block:: python3
 
         @bot.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
-        async def main(
-                interaction,
-            ):  # passing through interaction and indentifing the sub-command group name
+        async def main(interaction):  
+        # passing through interaction and indentifing the sub-command group name
         await interaction.response.send_message(
         "This will never get called if this has subcommands."
             )  # a function never called
@@ -59,9 +58,8 @@ As shown in the demonstration below you make a main slash command or a dummy sla
             )  # Sending A Response
 
 
-        @main.subcommand(
-            description="Aha! Another subcommand"
-            )  # Identifying The Sub-Command And Adding A Descripton
+        @main.subcommand(description="Aha! Another subcommand")  
+        # Identifying The Sub-Command And Adding A Descripton
         async def subcommand_two(interaction: Interaction):  # Passing in interaction
 
         await interaction.response.send_message(

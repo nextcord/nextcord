@@ -28,6 +28,5 @@ async def your_favorite_dog(
 async def favorite_dog(interaction: Interaction, dog):
     list_of_dogs = list_of_dog_breeds(dog)  # defining our list.
 
-    await interaction.response.send_autocomplete(
-        list_of_dogs
-    )  # sending the list to discord.
+    await interaction.response.send_autocomplete(list_of_dogs)  
+    # sending the list to discord.
