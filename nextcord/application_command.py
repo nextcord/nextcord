@@ -279,15 +279,20 @@ class CommandOption(SlashOption):
                 ApplicationCommandOptionType.integer, ApplicationCommandOptionType.number):
             raise ValueError("min_value or max_value can only be set if the type is integer or number.")
 
-    def handle_slash_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
+    async def handle_slash_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
         """Handles arguments, specifically for Slash Commands."""
         if self.type is ApplicationCommandOptionType.channel:
             return state.get_channel(int(argument))
         elif self.type is ApplicationCommandOptionType.user:
             if interaction.guild:
-                return interaction.guild.get_member(int(argument))
+                if not (member := interaction.guild.get_member(int(argument))):
+                    member = await interaction.guild.fetch_member(int(argument))
+                return member
             else:
-                return state.get_user(int(argument))
+                if not (user := state.get_user(int(argument))):
+                    data = await state.http.get_user(int(argument))
+                    user = User(state=state, data=data)
+                return user
         elif self.type is ApplicationCommandOptionType.role:
             return interaction.guild.get_role(int(argument))
         elif self.type is ApplicationCommandOptionType.integer:
@@ -298,11 +303,11 @@ class CommandOption(SlashOption):
             return state._get_message(int(argument))
         return argument
 
-    def handle_message_argument(self, *args: List[Any]):
+    async def handle_message_argument(self, *args: List[Any]):
         """For possible future use, will handle arguments specific to Message Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
-    def handle_user_argument(self, *args: List[Any]):
+    async def handle_user_argument(self, *args: List[Any]):
         """For possible future use, will handle arguments specific to User Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
@@ -541,9 +546,9 @@ class ApplicationSubcommand:
                 if option := uncalled_options.get(arg_data["name"], None):
                     uncalled_options.pop(option.name)
                     if option.functional_name in autocomplete_kwargs:
-                        kwargs[option.functional_name] = option.handle_slash_argument(state, arg_data["value"], interaction)
+                        kwargs[option.functional_name] = await option.handle_slash_argument(state, arg_data["value"], interaction)
                 elif arg_data["name"] == focused_option.name:
-                    focused_option_value = focused_option.handle_slash_argument(state, arg_data["value"], interaction)
+                    focused_option_value = await focused_option.handle_slash_argument(state, arg_data["value"], interaction)
                 else:
                     # TODO: Handle this better.
                     raise NotImplementedError(
@@ -637,7 +642,7 @@ class ApplicationSubcommand:
             if arg_data["name"] in uncalled_args:
                 uncalled_args.pop(arg_data["name"])
                 kwargs[self.options[arg_data["name"]].functional_name] = \
-                    self.options[arg_data["name"]].handle_slash_argument(state, arg_data["value"], interaction)
+                    await self.options[arg_data["name"]].handle_slash_argument(state, arg_data["value"], interaction)
             else:
                 # TODO: Handle this better.
                 raise NotImplementedError(
