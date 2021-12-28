@@ -14,8 +14,8 @@ list_of_dog_breeds = [  # the list of dog breeds
 @client.slash_command(guild_ids=[...])  # Limits guilds
 async def your_favorite_dog(
     interaction: Interaction,
-    dog: int = SlashOption(
-        name="Your favorite dog",  # the name
+    dog: str = SlashOption(
+        name="dog",  # the name
         description="Choose the best dog from this autocompleted list!",  # our description
     ),
 ):  # our slash option.
@@ -25,7 +25,9 @@ async def your_favorite_dog(
 
 
 @your_favorite_dog.on_autocomplete("dog")
-async def favorite_dog(interaction: Interaction):
+async def favorite_dog(interaction: Interaction, dog):
 
-    await interaction.response.send_autocomplete(list_of_dog_breeds)  
+    await interaction.response.send_autocomplete(list_of_dog_breeds)
     # sending the list to discord.
+
+client.run("TOKEN")
