@@ -240,6 +240,13 @@ class Client:
         Whether during the application command rollout to update known applications that share the same signature but
         don't quite match what is registered on Discord. Defaults to ``True``.
 
+    rollout_all_guilds: :class:`bool`
+        Whether during the application command rollout to update to all guilds, instead of only ones with at least one
+        command to roll out to them. Defaults to ``False``
+
+        Warning: While enabling this will prevent "ghost" commands on guilds with removed code references, rolling out
+        to ALL guilds with anything other than a very small bot will likely cause it to get rate limited.
+
 
     Attributes
     -----------
@@ -288,6 +295,7 @@ class Client:
         self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
         self._rollout_register_new: bool = options.pop("rollout_register_new", True)
         self._rollout_update_known: bool = options.pop("rollout_update_known", True)
+        self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
         self._application_commands_to_add: Set[ApplicationCommand] = set()
 
         if VoiceClient.warn_nacl:
@@ -1855,15 +1863,18 @@ class Client:
                          f"enabled? {e}")
 
     async def rollout_guild_application_commands(self, guild: Guild) -> None:
-        guild_payload = await self.http.get_guild_commands(self.application_id, guild.id)
-        await guild.deploy_application_commands(
-            data=guild_payload,
-            associate_known=self._rollout_associate_known,
-            delete_unknown=self._rollout_delete_unknown,
-            update_known=self._rollout_update_known
-        )
-        if self._rollout_register_new:
-            await guild.register_new_application_commands(data=guild_payload)
+        if self._rollout_all_guilds or self._connection.get_guild_application_commands(guild.id, rollout=True):
+            guild_payload = await self.http.get_guild_commands(self.application_id, guild.id)
+            await guild.deploy_application_commands(
+                data=guild_payload,
+                associate_known=self._rollout_associate_known,
+                delete_unknown=self._rollout_delete_unknown,
+                update_known=self._rollout_update_known
+            )
+            if self._rollout_register_new:
+                await guild.register_new_application_commands(data=guild_payload)
+        else:
+            _log.info(f"No locally added commands explicitly registered for {guild.name}|{guild.id}, not checking.")
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
