@@ -925,6 +925,7 @@ class ApplicationCommand(ApplicationSubcommand):
         self.set_state(state)
         command_id = int(data["id"])
         if guild_id := data.get("guild_id", None):
+            guild_id = int(guild_id)
             self._command_ids[guild_id] = command_id
             self._guild_ids.add(guild_id)
             self.add_guild_rollout(guild_id)

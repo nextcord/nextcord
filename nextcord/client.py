@@ -1730,17 +1730,37 @@ class Client:
                 _log.debug(f"nextcord.Client: {interaction.data}")
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 _log.debug(f"nextcord.Client: {response_signature}")
+                do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
                         interaction.data["name"],
                         int(interaction.data['type']),
                         interaction.guild_id
                 ):
                     _log.info("nextcord.Client: Basic signature matches, checking against raw payload.")
+                    # TODO: Lazy load is completely broken. Figure out how to fix it.
                     if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
+                    # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
                         _log.info("nextcord.Client: New interaction command found, Assigning id now")
                         app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
+                    else:
+                        do_deploy = True
+                else:
+                    do_deploy = True
+                if do_deploy:
+                    if interaction.guild:
+                        await interaction.guild.deploy_application_commands(
+                            associate_known=self._rollout_associate_known,
+                            delete_unknown=self._rollout_delete_unknown,
+                            update_known=self._rollout_update_known
+                        )
+                    else:
+                        await self.deploy_application_commands(
+                            associate_known=self._rollout_associate_known,
+                            delete_unknown=self._rollout_delete_unknown,
+                            update_known=self._rollout_update_known
+                        )
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
             _log.info("nextcord.Client: Autocomplete interaction received.")
@@ -1889,7 +1909,16 @@ class Client:
                     self.add_application_command(cmd, use_rollout=True)
 
     def add_cog(self, cog: ClientCog) -> None:
+        for app_cmd in cog.to_register:
+            self.add_application_command(app_cmd, use_rollout=True)
         self._client_cogs.add(cog)
+
+    def remove_cog(self, cog: ClientCog) -> None:
+        print("Removing cog...")
+        for app_cmd in cog.to_register:
+            print(f"Removing {app_cmd.name}")
+            self._connection.remove_application_command(app_cmd)
+        self._client_cogs.discard(cog)
 
     def user_command(
             self,

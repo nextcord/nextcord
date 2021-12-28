@@ -536,9 +536,10 @@ class ConnectionState:
 
     def remove_application_command(self, command: ApplicationCommand):
         signature_set = command.get_rollout_signatures()
+        print(f"{signature_set} {command.command_ids}")
         for signature in signature_set:
             self._application_command_signatures.pop(signature, None)
-        for cmd_id in command.command_ids:
+        for cmd_id in command.command_ids.values():
             self._application_command_ids.pop(cmd_id, None)
         self._application_commands.remove(command)
 
@@ -577,6 +578,10 @@ class ConnectionState:
         update_known: :class:`bool`
             If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
         """
+        if not associate_known and not delete_unknown and not update_known:
+            # If everything is disabled, there is no point in doing anything.
+            return
+
         if not data:
             if guild_id:
                 data = await self.http.get_guild_commands(self.application_id, guild_id)
