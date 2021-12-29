@@ -92,4 +92,15 @@ async def example4_command(
     )
 
 
+# In a Cog it will be like:
+from nextcord import slash_command
+
+class SlashCog(commands.Cog):
+    def __init__(self, bot) -> None:
+        self.bot = bot
+        
+    @slash_command(guild_ids=[TESTING_GUILD_ID])
+    async def cog_slash(self, interaction: Interaction):
+        await interaction.response.send_message("Hello from Cogs!")
+
 client.run("put_your_token_here")
