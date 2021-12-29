@@ -725,16 +725,6 @@ class Member(abc.Messageable, _UserTag):
             The time until the member should not be timed out.
             Set this to None to disable their timeout.
 
-            Example
-            -------
-            .. code-block:: py
-
-                from datetime import timedelta
-
-                ...
-
-                await member.edit(timeout=timedelta(hours=1))
-
             .. versionadded:: 2.0
 
         Raises
