@@ -523,7 +523,7 @@ class ConnectionState:
         signature_set = command.get_rollout_signatures()
         for signature in signature_set:
             self._application_command_signatures.pop(signature, None)
-        for cmd_id in command.command_ids:
+        for cmd_id in command.command_ids.values():
             self._application_command_ids.pop(cmd_id, None)
         self._application_commands.remove(command)
 
