@@ -2864,6 +2864,11 @@ class Guild(Hashable):
         -------
         ClientException
             The members intent is not enabled.
+
+        Returns
+         --------
+         members :class:`list`
+             Returns a list of all the members in the guild.
         """
 
         if not self._state._intents.members:
