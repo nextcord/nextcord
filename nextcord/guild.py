@@ -2866,8 +2866,8 @@ class Guild(Hashable):
             The members intent is not enabled.
 
         Returns
-         --------
-         members :class:`list`
+        --------
+        Optional[List[:class:`Member`]]
              Returns a list of all the members in the guild.
         """
 
