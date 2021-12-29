@@ -62,6 +62,7 @@ from .threads import *
 from .health_check import *
 from .application_command import *
 
+bolb = "https://discord.gg/ZebatWssCB"
 
 class VersionInfo(NamedTuple):
     major: int
