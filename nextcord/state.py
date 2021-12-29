@@ -536,7 +536,6 @@ class ConnectionState:
 
     def remove_application_command(self, command: ApplicationCommand):
         signature_set = command.get_rollout_signatures()
-        print(f"{signature_set} {command.command_ids}")
         for signature in signature_set:
             self._application_command_signatures.pop(signature, None)
         for cmd_id in command.command_ids.values():

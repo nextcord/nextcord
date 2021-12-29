@@ -702,7 +702,6 @@ class ApplicationSubcommand:
                         return func
                     return decorator
                 else:
-                    print(type(option.autocomplete))
                     raise ValueError(f"{self.error_name} autocomplete for kwarg {on_kwarg} not enabled, cannot add "
                                      f"autocomplete function.")
         if found is False:

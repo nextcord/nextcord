@@ -1860,11 +1860,36 @@ class Client:
         raise NotImplementedError
 
     async def on_connect(self) -> None:
-        await self.rollout_global_application_commands()
+        self.add_startup_application_commands()
+        await self.rollout_application_commands()
 
-    async def rollout_global_application_commands(self) -> None:
+    def add_startup_application_commands(self) -> None:
+        """Adds application commands for use on startup.
+
+        This is a workaround for the cache (ConnectionState) clearing on startup. This will add all commands that were
+        decorated directly by the bot, and all commands inside added cogs, to the cache.
+        """
         self._add_decorated_application_commands()
         self.add_all_cog_commands()
+
+    async def on_guild_available(self, guild: Guild) -> None:
+        try:
+            if (await guild.rollout_application_commands(
+                    associate_known=self._rollout_associate_known,
+                    delete_unknown=self._rollout_delete_unknown,
+                    update_known=self._rollout_update_known
+            )):
+                pass
+            else:
+                _log.info(f"No locally added commands explicitly registered for {guild.name}|{guild.id}, not checking.")
+        except Forbidden as e:
+            _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
+                         f"enabled? {e}")
+
+    async def rollout_application_commands(self) -> None:
+        """|coro|
+        Deploys global application commands and registers new ones if enabled.
+        """
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(
             data=global_payload,
@@ -1873,33 +1898,11 @@ class Client:
             update_known=self._rollout_update_known
         )
         if self._rollout_register_new:
-            await self.register_new_application_commands(global_payload)
-
-    async def on_guild_available(self, guild: Guild) -> None:
-        try:
-            await self.rollout_guild_application_commands(guild)
-        except Forbidden as e:
-            _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
-                         f"enabled? {e}")
-
-    async def rollout_guild_application_commands(self, guild: Guild) -> None:
-        if self._rollout_all_guilds or self._connection.get_guild_application_commands(guild.id, rollout=True):
-            guild_payload = await self.http.get_guild_commands(self.application_id, guild.id)
-            await guild.deploy_application_commands(
-                data=guild_payload,
-                associate_known=self._rollout_associate_known,
-                delete_unknown=self._rollout_delete_unknown,
-                update_known=self._rollout_update_known
-            )
-            if self._rollout_register_new:
-                await guild.register_new_application_commands(data=guild_payload)
-        else:
-            _log.info(f"No locally added commands explicitly registered for {guild.name}|{guild.id}, not checking.")
+            await self.register_new_application_commands(data=global_payload)
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
             self.add_application_command(command, use_rollout=True)
-        self._application_commands_to_add.clear()
 
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
@@ -1914,9 +1917,7 @@ class Client:
         self._client_cogs.add(cog)
 
     def remove_cog(self, cog: ClientCog) -> None:
-        print("Removing cog...")
         for app_cmd in cog.to_register:
-            print(f"Removing {app_cmd.name}")
             self._connection.remove_application_command(app_cmd)
         self._client_cogs.discard(cog)
 
