@@ -498,6 +498,21 @@ class ConnectionState:
                                                guild_id: Optional[int]) -> Optional[ApplicationCommand]:
         return self._application_command_signatures.get((name, cmd_type, guild_id), None)
 
+    def get_guild_application_commands(
+            self,
+            guild_id: Optional[int] = None,
+            rollout: bool = False
+    ) -> List[ApplicationCommand]:
+        """Gets all commands that have the guild ID. If guild_id is None, all guild commands are returned. if rollout
+        is True, guild_ids_to_rollout is used."""
+        ret = []
+        for app_cmd in self._application_commands:
+            if guild_id is None or guild_id in app_cmd.guild_ids or (
+                    rollout and guild_id in app_cmd.guild_ids_to_rollout
+            ):
+                ret.append(app_cmd)
+        return ret
+
     def add_application_command(self, command: ApplicationCommand, overwrite: bool = False,
                                 use_rollout: bool = False) -> None:
         """If this is called multiple times for the same command, it should be handled and update listings properly."""
@@ -523,7 +538,7 @@ class ConnectionState:
         signature_set = command.get_rollout_signatures()
         for signature in signature_set:
             self._application_command_signatures.pop(signature, None)
-        for cmd_id in command.command_ids:
+        for cmd_id in command.command_ids.values():
             self._application_command_ids.pop(cmd_id, None)
         self._application_commands.remove(command)
 
@@ -562,6 +577,10 @@ class ConnectionState:
         update_known: :class:`bool`
             If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
         """
+        if not associate_known and not delete_unknown and not update_known:
+            # If everything is disabled, there is no point in doing anything.
+            return
+
         if not data:
             if guild_id:
                 data = await self.http.get_guild_commands(self.application_id, guild_id)
