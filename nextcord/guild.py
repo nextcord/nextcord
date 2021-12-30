@@ -2845,7 +2845,7 @@ class Guild(Hashable):
 
         await self._state.http.edit_widget(self.id, payload=payload)
 
-    async def chunk(self, *, cache: bool = True) -> Optional(List[Member]):
+    async def chunk(self, *, cache: bool = True) -> Optional[List[Member]]:
         """|coro|
 
         Requests all members that belong to this guild. In order to use this,
