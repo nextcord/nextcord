@@ -498,27 +498,15 @@ class HTTPClient:
             payload["attachments"] = [{"filename": files[attachment["id"]].filename, **attachment} for attachment in attachments]
 
         form.append({'name': 'payload_json', 'value': utils._to_json(payload)})
-        if len(files) == 1 and False:
-            file = files[0]
+        for index, file in enumerate(files):
             form.append(
                 {
-                    'name': 'file',
+                    'name': f'files[{index}]',
                     'value': file.fp,
                     'filename': file.filename,
                     'content_type': 'application/octet-stream',
                 }
             )
-        else:
-            for index, file in enumerate(files):
-                print(index, file)
-                form.append(
-                    {
-                        'name': f'files[{index}]',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
 
         return self.request(route, form=form, files=files)
 
