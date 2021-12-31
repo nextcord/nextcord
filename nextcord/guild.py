@@ -86,6 +86,7 @@ MISSING = utils.MISSING
 
 if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
+    from .application_command import ApplicationCommand
     from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
     from .types.threads import (
         Thread as ThreadPayload,
@@ -257,6 +258,7 @@ class Guild(Hashable):
         'premium_subscription_count',
         'preferred_locale',
         'nsfw_level',
+        '_application_commands',
         '_members',
         '_channels',
         '_icon',
@@ -289,6 +291,7 @@ class Guild(Hashable):
         self._members: Dict[int, Member] = {}
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
+        self._application_commands: Dict[int, ApplicationCommand] = {}
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -2842,7 +2845,7 @@ class Guild(Hashable):
 
         await self._state.http.edit_widget(self.id, payload=payload)
 
-    async def chunk(self, *, cache: bool = True) -> None:
+    async def chunk(self, *, cache: bool = True) -> Optional[List[Member]]:
         """|coro|
 
         Requests all members that belong to this guild. In order to use this,
@@ -2861,6 +2864,11 @@ class Guild(Hashable):
         -------
         ClientException
             The members intent is not enabled.
+
+        Returns
+        --------
+        Optional[List[:class:`Member`]]
+             Returns a list of all the members in the guild.
         """
 
         if not self._state._intents.members:
@@ -2966,3 +2974,48 @@ class Guild(Hashable):
         ws = self._state._get_websocket(self.id)
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
+
+    def add_application_command(
+            self,
+            app_cmd: ApplicationCommand,
+            overwrite: bool = False,
+            use_rollout: bool = False
+    ) -> None:
+        app_cmd.add_guild_rollout(self.id)
+        self._state.add_application_command(app_cmd, overwrite=overwrite, use_rollout=use_rollout)
+
+    async def deploy_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            associate_known: bool = True,
+            delete_unknown: bool = True,
+            update_known: bool = True
+    ) -> None:
+        await self._state.deploy_application_commands(
+            data=data,
+            guild_id=self.id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known
+        )
+
+    async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
+        await self._state.delete_unknown_application_commands(data=data, guild_id=self.id)
+
+    async def associate_application_commands(self, data: Optional[List[dict]] = None) -> None:
+        await self._state.associate_application_commands(data=data, guild_id=self.id)
+
+    async def update_application_commands(self, data: Optional[List[dict]] = None) -> None:
+        await self._state.update_application_commands(data=data, guild_id=self.id)
+
+    async def register_new_application_commands(self, data: Optional[List[dict]] = None) -> None:
+        await self._state.register_new_application_commands(data=data, guild_id=self.id)
+
+    async def register_application_commands(self, *commands: ApplicationCommand) -> None:
+        for command in commands:
+            await self._state.register_application_command(command, guild_id=self.id)
+
+    async def delete_application_commands(self, *commands: ApplicationCommand) -> None:
+        for command in commands:
+            await self._state.delete_application_command(command, guild_id=self.id)
+

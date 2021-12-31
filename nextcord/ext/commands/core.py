@@ -55,7 +55,6 @@ from .cog import Cog
 from .context import Context
 
 
-
 if TYPE_CHECKING:
     from typing_extensions import Concatenate, ParamSpec, TypeGuard
 
@@ -112,6 +111,7 @@ if TYPE_CHECKING:
     P = ParamSpec('P')
 else:
     P = TypeVar('P')
+
 
 def unwrap_function(function: Callable[..., Any]) -> Callable[..., Any]:
     partial = functools.partial
@@ -1616,6 +1616,7 @@ def command(
         return cls(func, name=name, **attrs)
 
     return decorator
+
 
 @overload
 def group(
