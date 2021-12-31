@@ -24,7 +24,6 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 import asyncio
 from inspect import signature, Parameter
-from functools import wraps
 from typing import (
     Any,
     Callable,
@@ -36,7 +35,6 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
-    Coroutine,
     TypeVar
 )
 
@@ -63,7 +61,6 @@ __all__ = (
     "message_command",
     "SlashOption",
     "slash_command",
-    "check",
     "user_command",
 )
 
@@ -1276,46 +1273,6 @@ def slash_command(
         )
         return app_cmd
     return decorator
-
-Coro = Coroutine[Any, Any, T]
-MaybeCoro = Union[T, Coro[T]]
-CoroFunc = Callable[..., Coro[Any]]
-ApplicationCheck = Union[Callable[["ClientCog", Interaction], MaybeCoro[bool]], Callable[[Interaction], MaybeCoro[bool]]]
-
-def check(predicate: ApplicationCheck) -> Callable[[T], T]:
-    r"""A decorator that adds a check to the :class:`ApplicationSubcommand` or its
-    subclasses. These checks could be accessed via :attr:`ApplicationSubcommand.checks`.
-    These checks should be predicates that take in a single parameter taking
-    a :class:`.Interaction`. If the check returns a ``False``\-like value then
-    during invocation a :exc:`ApplicationCheckFailure` exception is raised and sent to
-    the :func:`.on_command_error` event.
-    If an exception should be thrown in the predicate then it should be a
-    subclass of :exc:`.CommandError`. Any exception not subclassed from it
-    will be propagated while those subclassed will be sent to
-    :func:`.on_command_error`.
-    """
-
-    def decorator(func: Union[ApplicationSubcommand, CoroFunc]) -> Union[ApplicationSubcommand, CoroFunc]:
-        if isinstance(func, ApplicationSubcommand):
-            func.checks.insert(0, predicate)
-        else:
-            if not hasattr(func, '__slash_command_checks__'):
-                func.__slash_command_checks__ = []
-
-            func.__slash_command_checks__.append(predicate)
-
-        return func
-
-    if asyncio.iscoroutinefunction(predicate):
-        decorator.predicate = predicate
-    else:
-        @wraps(predicate)
-        async def wrapper(ctx):
-            return predicate(ctx)
-        decorator.predicate = wrapper
-
-    return decorator
-
 
 def message_command(
         name: str = MISSING,
