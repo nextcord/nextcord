@@ -2845,7 +2845,7 @@ class Guild(Hashable):
 
         await self._state.http.edit_widget(self.id, payload=payload)
 
-    async def chunk(self, *, cache: bool = True) -> None:
+    async def chunk(self, *, cache: bool = True) -> Optional[List[Member]]:
         """|coro|
 
         Requests all members that belong to this guild. In order to use this,
@@ -2864,6 +2864,11 @@ class Guild(Hashable):
         -------
         ClientException
             The members intent is not enabled.
+
+        Returns
+        --------
+        Optional[List[:class:`Member`]]
+             Returns a list of all the members in the guild.
         """
 
         if not self._state._intents.members:
