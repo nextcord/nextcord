@@ -51,11 +51,11 @@ from .member import Member
 from .message import Message
 from .role import Role
 from .user import User
-from .utils import MISSING, async_all
+from .utils import MISSING
 
 if TYPE_CHECKING:
-    from .checks import ApplicationCheck
     from .state import ConnectionState
+    from .checks import ApplicationCheck
 
 
 __all__ = (
@@ -478,6 +478,38 @@ class ApplicationSubcommand:
     def set_self_argument(self, self_arg: ClientCog) -> ApplicationSubcommand:
         """Sets the `self` argument, used when the callback is inside a class."""
         self._self_argument = self_arg
+        return self
+
+    def add_check(self, func: 'ApplicationCheck') -> ApplicationSubcommand:
+        """Adds a check to the ApplicationCommand.
+
+        This function is idempotent and will not raise an exception if the function is not in the command’s checks.
+
+        Parameters
+        ----------
+        func
+            The function that will be used as a check.
+        """
+        self.checks.append(func)
+        return self
+
+    def remove_check(self, func: 'ApplicationCheck') -> ApplicationSubcommand:
+        """Removes a check from the ApplicationCommand.
+
+        This function is idempotent and will not raise an exception
+        if the function is not in the command's checks.
+
+        Parameters
+        ----------
+        func
+            The function to remove from the checks.
+        """
+        
+        try:
+            self.checks.remove(func)
+        except ValueError:
+            pass
+
         return self
 
     def verify_content(self):
