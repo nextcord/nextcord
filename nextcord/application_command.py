@@ -42,14 +42,14 @@ from typing import (
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
-from .errors import InvalidCommandType
+from .errors import InvalidCommandType, ApplicationCommandCheckFailure
 from .interactions import Interaction
 from .guild import Guild
 from .member import Member
 from .message import Message
 from .role import Role
 from .user import User
-from .utils import MISSING
+from .utils import MISSING, async_all
 
 if TYPE_CHECKING:
     from .state import ConnectionState
@@ -63,7 +63,7 @@ __all__ = (
     "message_command",
     "SlashOption",
     "slash_command",
-    "slash_command_check",
+    "check",
     "user_command",
 )
 
@@ -418,6 +418,38 @@ class ApplicationSubcommand:
         """Returns the callback associated with this ApplicationCommand."""
         return self._callback
 
+    @property
+    def full_parent_name(self) -> str:
+        """:class:`str`: Retrieves the fully qualified parent command name.
+
+        This the base command name required to execute it. For example,
+        in ``/one two three`` the parent name would be ``one two``.
+        """
+        entries = []
+        command = self
+        # command.parent is type-hinted as GroupMixin some attributes are resolved via MRO
+        while command.parent_command: # type: ignore
+            command = command.parent_command # type: ignore
+            entries.append(command.name) # type: ignore
+
+        return ' '.join(reversed(entries))
+
+    
+    @property
+    def qualified_name(self) -> str:
+        """:class:`str`: Retrieves the fully qualified command name.
+
+        This is the full parent name with the command name as well.
+        For example, in ``/one two three`` the qualified name would be
+        ``one two three``.
+        """
+
+        parent = self.full_parent_name
+        if parent:
+            return parent + ' ' + self.name
+        else:
+            return self.name
+
     def set_callback(self, callback: Callable) -> ApplicationSubcommand:
         """Sets the callback associated with this ApplicationCommand."""
         if not asyncio.iscoroutinefunction(callback):
@@ -644,7 +676,30 @@ class ApplicationSubcommand:
                 )
         for uncalled_arg in uncalled_args.values():
             kwargs[uncalled_arg.functional_name] = uncalled_arg.default
-        await self.invoke_slash(interaction, **kwargs)
+
+        if await self.can_run(interaction):
+            await self.invoke_slash(interaction, **kwargs)
+
+    async def can_run(self, interaction: Interaction, raise_exceptions: bool = True) -> bool:
+        """|coro|
+        Validates the checks associated with this command.
+        Parameters
+        ----------
+        interaction: :class:`Interaction`
+            Interaction associated with the application command event.
+        raise_exceptions: :class:`bool`
+            Whether or not to raise exceptions if the command can't be run.
+        """
+
+        self_checks = await async_all(check(interaction) for check in self.checks)
+
+        if not self_checks:
+            if raise_exceptions:
+                raise ApplicationCommandCheckFailure(f'The check functions for application command {self.qualified_name} failed.')
+            else:
+                return False
+        
+        return True
 
     async def invoke_slash(self, interaction: Interaction, **kwargs) -> None:
         """|coro|
@@ -657,7 +712,7 @@ class ApplicationSubcommand:
         kwargs:
             Keyword arguments to forward to the callback.
         """
-        # TODO add check validations here.
+
         if self._self_argument:
             await self.callback(self._self_argument, interaction, **kwargs)
         else:
@@ -1227,7 +1282,7 @@ MaybeCoro = Union[T, Coro[T]]
 CoroFunc = Callable[..., Coro[Any]]
 ApplicationCheck = Union[Callable[["ClientCog", Interaction], MaybeCoro[bool]], Callable[[Interaction], MaybeCoro[bool]]]
 
-def slash_command_check(predicate: ApplicationCheck) -> Callable[[T], T]:
+def check(predicate: ApplicationCheck) -> Callable[[T], T]:
     r"""A decorator that adds a check to the :class:`ApplicationSubcommand` or its
     subclasses. These checks could be accessed via :attr:`ApplicationSubcommand.checks`.
     These checks should be predicates that take in a single parameter taking
