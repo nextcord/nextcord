@@ -57,9 +57,9 @@ def check(predicate: ApplicationCheck) -> Callable[[T], T]:
     during invocation a :exc:`ApplicationCheckFailure` exception is raised and sent to
     the :func:`.on_command_error` event.
     If an exception should be thrown in the predicate then it should be a
-    subclass of :exc:`.CommandError`. Any exception not subclassed from it
+    subclass of :exc:`.ApplicationCommandError`. Any exception not subclassed from it
     will be propagated while those subclassed will be sent to
-    :func:`.on_command_error`.
+    :func:`.on_application_command_error`.
     """
 
     def decorator(func: Union[ApplicationSubcommand, CoroFunc]) -> Union[ApplicationSubcommand, CoroFunc]:
