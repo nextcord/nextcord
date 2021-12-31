@@ -387,8 +387,6 @@ class ApplicationSubcommand:
             self._from_callback(callback)
 
         self.checks: List[ApplicationCheck] = []
-        if inherit_checks and parent_command:
-            self.checks.extend(parent_command.checks)
 
         try:
             checks = callback.__slash_command_checks__
@@ -397,6 +395,9 @@ class ApplicationSubcommand:
             pass
         else:
             self.checks.extend(checks)
+            
+        if inherit_checks and parent_command:
+            self.checks.extend(parent_command.checks)
 
     # Simple-ish getter + setters methods.
 
