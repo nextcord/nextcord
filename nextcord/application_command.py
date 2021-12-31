@@ -638,7 +638,7 @@ class ApplicationSubcommand:
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
-        Calls the callback associated with this command with the given interaction and option data. Will only run if all ApplicationCommand checks have passed.s
+        Calls the callback associated with this command with the given interaction and option data. Will only run if all ApplicationCommand checks have passed.
         Parameters
         ----------
         state: :class:`ConnectionState`
