@@ -50,6 +50,7 @@ from .user import User
 from .utils import MISSING, async_all
 
 if TYPE_CHECKING:
+    from .checks import ApplicationCheck
     from .state import ConnectionState
 
 
@@ -383,7 +384,7 @@ class ApplicationSubcommand:
         if callback:
             self._from_callback(callback)
 
-        self.checks: List[ApplicationCheck] = []
+        self.checks: List['ApplicationCheck'] = []
 
         try:
             checks = callback.__slash_command_checks__
