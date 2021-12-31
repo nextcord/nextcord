@@ -724,11 +724,13 @@ class ApplicationSubcommand:
                     check_result = await check(interaction)
                 else:
                     check_result = check(interaction)
+            # To catch any subclasses of ApplicationCommandCheckFailure.
             except ApplicationCommandCheckFailure as error:
                 if raise_exceptions:
                     await self._raise_application_command_error(error)
 
                 return False
+            # If the check returns False, the command can't be run.
             else:
                 if not check_result:
                     error = ApplicationCommandCheckFailure(f"The check functions for application command {self.qualified_name} failed.")
