@@ -1,5 +1,6 @@
 from nextcord import Client, Interaction, SlashOption, ChannelType
 from nextcord.abc import GuildChannel
+import nextcord
 
 
 # Replace the number here with the ID of your testing guild/server.
@@ -89,6 +90,29 @@ async def example4_command(
     await interaction.response.send_message(
         f"Fourth slash command! firstarg: {firstarg}, "
         f"secondarg: {secondarg.mention}"
+    )
+
+@client.slash_command(
+    name="example5",
+    description="The fifth example command with options!",
+    guild_ids=[TESTING_GUILD_ID],
+)
+async def example5_command(
+    interaction: Interaction,
+    firstarg: int = SlashOption(
+        name="number",
+        choices={"1": 1, "2": 2, "3": 3, "4": 4, "5": 5},
+        description="Choose a number between 1 and 5!",
+    ),
+    secondarg: nextcord.Member = SlashOption(
+        name="member",
+        description="Choose a member to mention!",
+    ),
+):
+    # This give a select menu of the members in the guild.
+    await interaction.response.send_message(
+        f"Fifth slash command! firstarg: {firstarg}, "
+        f"secondarg: {secondarg.mention}({secondarg.id})"
     )
 
 
