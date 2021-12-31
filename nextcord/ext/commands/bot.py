@@ -611,6 +611,10 @@ class BotBase(GroupMixin):
             help_command.cog = None
         cog._eject(self)
 
+        # TODO: This blind call to nextcord.Client is dumb.
+        super().remove_cog(cog)
+        # See Bot.add_cog() for the reason why.
+
         return cog
 
     @property
