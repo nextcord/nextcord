@@ -1,6 +1,5 @@
 """
 The MIT License (MIT)
-
 Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 import asyncio
 from inspect import signature, Parameter
+from functools import wraps
 from typing import (
     Any,
     Callable,
@@ -36,6 +36,8 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
+    Coroutine,
+    TypeVar
 )
 
 from .abc import GuildChannel
@@ -61,8 +63,11 @@ __all__ = (
     "message_command",
     "SlashOption",
     "slash_command",
+    "slash_command_check",
     "user_command",
 )
+
+T = TypeVar('T')
 
 
 class ClientCog:
@@ -110,10 +115,8 @@ class SlashOption:
             verify: bool = True
     ):
         """Provides Discord with information about an option in a command.
-
         When this class is set as the default argument of a parameter in an Application Command, additional information
         about the parameter is sent to Discord for the user to see.
-
         Parameters
         ----------
         name: Optional[:class:`str`]
@@ -178,10 +181,8 @@ class CommandOption(SlashOption):
     """Maps Python typings to Discord Application Command typings."""
     def __init__(self, parameter: Parameter):
         """Represents a Python function parameter that corresponds to a Discord Option.
-
         This must set and/or handle all variables from SlashOption, hence the subclass.
         This should not be created by the user, only by other Application Command-related classes.
-
         Parameters
         ----------
         parameter: :class:`inspect.Parameter`
@@ -241,7 +242,6 @@ class CommandOption(SlashOption):
 
     def get_type(self, typing: type) -> ApplicationCommandOptionType:
         """Translates a Python or Nextcord :class:`type` into a Discord typing.
-
         Parameters
         ----------
         typing: :class:`type`
@@ -305,9 +305,7 @@ class CommandOption(SlashOption):
     @property
     def payload(self) -> dict:
         """Returns a payload meant for Discord for this specific Option.
-
         Options that are not specified AND not required won't be in the returned payload.
-
         Returns
         -------
         payload: :class:`dict`
@@ -352,9 +350,9 @@ class ApplicationSubcommand:
         self_argument: Union[ClientCog, Any] = MISSING,
         name: str = MISSING,
         description: str = MISSING,
+        inherit_checks: bool = True
     ):
         """Represents an application subcommand attached to a callback.
-
         Parameters
         ----------
         callback: Callable
@@ -370,6 +368,8 @@ class ApplicationSubcommand:
         description: :class:`str`
             The description of the subcommand that users will see. If not set, it will be the minimum value that
             Discord supports.
+        inherit_checks: :class:`bool`
+            Whether or not to inherit checks from the parent command.
         """
         self._callback: Optional[Callable] = None  # TODO: Add verification against vars if callback is added later.
         self.parent_command: Optional[Union[ApplicationCommand, ApplicationSubcommand]] = parent_command
@@ -385,6 +385,18 @@ class ApplicationSubcommand:
 
         if callback:
             self._from_callback(callback)
+
+        self.checks: List[ApplicationCheck] = []
+        if inherit_checks and parent_command:
+            self.checks.extend(parent_command.checks)
+
+        try:
+            checks = callback.__slash_command_checks__
+            checks.reverse()
+        except AttributeError:
+            pass
+        else:
+            self.checks.extend(checks)
 
     # Simple-ish getter + setters methods.
 
@@ -471,9 +483,7 @@ class ApplicationSubcommand:
     @property
     def payload(self) -> dict:
         """Verifies the content of the ApplicationSubommand then constructs and returns the payload for this subcommand.
-
         This does not return a complete application command payload for Discord, only the subcommand portion of it.
-
         Returns
         -------
         :class:`dict`
@@ -495,10 +505,8 @@ class ApplicationSubcommand:
 
     async def call_autocomplete(self, state, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
-
         This will route autocomplete data as needed, either handing it off to subcommands or calling one of the
         autocomplete callbacks registered.
-
         Parameters
         ----------
         state: :class:`ConnectionState`
@@ -507,7 +515,6 @@ class ApplicationSubcommand:
             Interaction associated with the autocomplete event.
         option_data: List[Dict[:class:`str`, Any]]
             List of raw option data from Discord.
-
         """
         if self.children:  # If this has subcommands, it needs to be forwarded to them to handle.
             await self.children[option_data[0]["name"]].call_autocomplete(state, interaction, option_data[0].get("options", {}))
@@ -560,10 +567,8 @@ class ApplicationSubcommand:
     ) -> None:
         """|coro|
         Invokes the autocomplete callback of the given option.
-
         The given interaction, focused option value, and any other kwargs are forwarded to the autocomplete function.
         If this command was given a self argument, it will be forwarded in first.
-
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -583,7 +588,6 @@ class ApplicationSubcommand:
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
         Calls the callback associated with this command with the given interaction and option data.
-
         Parameters
         ----------
         state: :class:`ConnectionState`
@@ -614,7 +618,6 @@ class ApplicationSubcommand:
         """|coro|
         Calls the callback associated with this command specifically for slash with the given interaction and option
         data.
-
         Parameters
         ----------
         state: :class:`ConnectionState`
@@ -646,7 +649,6 @@ class ApplicationSubcommand:
         """|coro|
         Invokes the callback associated with this command specifically for slash with the given interaction and keyword
         arguments.
-
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -654,6 +656,7 @@ class ApplicationSubcommand:
         kwargs:
             Keyword arguments to forward to the callback.
         """
+        # TODO add check validations here.
         if self._self_argument:
             await self.callback(self._self_argument, interaction, **kwargs)
         else:
@@ -668,7 +671,6 @@ class ApplicationSubcommand:
     def on_autocomplete(self, on_kwarg: str) -> Callable:
         """Decorates a function, adding it as the autocomplete callback for the given keyword argument that is inside
         the slash command.
-
         Parameters
         ----------
         on_kwarg: :class:`str`
@@ -698,9 +700,7 @@ class ApplicationSubcommand:
 
     def subcommand(self, name: str = MISSING, description: str = MISSING) -> Callable:
         """Decorates a function, creating a subcommand with the given kwargs forwarded to it.
-
         Adding a subcommand will prevent the callback associated with this command from being called.
-
         Parameters
         ----------
         name: :class:`str`
@@ -732,10 +732,10 @@ class ApplicationCommand(ApplicationSubcommand):
         description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
         default_permission: bool = MISSING,
-        force_global: bool = False
+        force_global: bool = False,
+        inherit_checks: bool = True,
     ):
         """Represents an application command that can be or is registered with Discord.
-
         Parameters
         ----------
         callback: Callable
@@ -753,8 +753,10 @@ class ApplicationCommand(ApplicationSubcommand):
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
+        inherit_checks: :class:`bool`
+            Whether or not to inherit checks from the parent command.
         """
-        super().__init__(callback=callback, cmd_type=cmd_type, name=name, description=description)
+        super().__init__(callback=callback, cmd_type=cmd_type, name=name, description=description, inherit_checks=inherit_checks)
         self._state: Optional[ConnectionState] = None
         self.force_global: bool = force_global
         self.default_permission: bool = default_permission or True
@@ -781,7 +783,6 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def add_guild_rollout(self, guild: Union[int, Guild]) -> None:
         """Adds a Guild to the command to be rolled out when the rollout is run.
-
         Parameters
         ----------
         guild: Union[:class:`int`, :class:`Guild`]
@@ -834,12 +835,10 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def get_guild_payload(self, guild_id: int) -> dict:
         """Returns a guild application command payload.
-
         Parameters
         ----------
         guild_id: :class:`int`
             Discord Guild ID to make the payload for.
-
         Returns
         -------
         :class:`dict`
@@ -851,15 +850,12 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def get_signature(self, guild_id: Optional[int] = None) -> Tuple[str, int, Optional[int]]:
         """Returns a basic signature for the application command.
-
         This signature is unique, in the sense that two application commands with the same signature cannot be
         registered with Discord at the same time.
-
         Parameters
         ----------
         guild_id: Optional[:class:`int`]
             Integer Guild ID for the signature. For a global application command, None is used.
-
         Returns
         -------
         Tuple[:class:`str`, :class:`int`, Optional[:class:`int`]]
@@ -892,14 +888,11 @@ class ApplicationCommand(ApplicationSubcommand):
     @classmethod
     def from_callback(cls, callback: Callable) -> ApplicationCommand:
         """Returns an ApplicationCommand object created from the given callback.
-
         Overridden from ApplicationSubcommand for typing purposes.
-
         Parameters
         ----------
         callback: Callable
             Function or method to run when the command is called. Must be a coroutine.
-
         Returns
         -------
         :class:`ApplicationCommand`
@@ -946,7 +939,6 @@ class ApplicationCommand(ApplicationSubcommand):
     @property
     def payload(self) -> List[dict]:
         """Returns a list of Discord "Application Command Structure" payloads.
-
         Returns
         -------
         payloads: List[:class:`dict`]
@@ -968,17 +960,14 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int] = None) -> bool:
         """Checks if `self.payload` values match with what the given raw payload has.
-
         This doesn't make sure they are equal. Instead, this checks if most key:value pairs inside our payload
         also exist inside the raw_payload.
-
         Parameters
         ----------
         raw_payload: :class:`dict`
             Dictionary payload our payloads are compared against.
         guild_id: Optional[:class:`int`]
             Guild ID to compare against. If None, it's assumed to be a Global command.
-
         Returns
         -------
         :class:`bool`
@@ -1011,17 +1000,14 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def reverse_check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int] = None) -> bool:
         """Checks if the given raw payload values match with what self.payload has.
-
         This doesn't make sure they are equal, and works opposite of check_against_raw_payload. This checks if all
         key:value's inside the raw_payload also exist inside one of our payloads.
-
         Parameters
         ----------
         raw_payload: :class:`dict`
             Dictionary payload to compare against our payloads.
         guild_id: Optional[:class:`int`]
             Guild ID to compare against. If None, it's assumed to be a Global command.
-
         Returns
         -------
         :class:`bool`
@@ -1037,7 +1023,6 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def _recursive_item_check(self, item1, item2) -> bool:
         """Checks if item1 and item2 are equal.
-
         If both are lists, switches to list check. If dict, recurses. Else, checks equality.
         """
         if isinstance(item1, dict) and isinstance(item2, dict):
@@ -1117,7 +1102,6 @@ class ApplicationCommand(ApplicationSubcommand):
     async def call_invoke_message(self, interaction: Interaction) -> None:
         """|coro|
         Calls the callback as a message command using the given interaction.
-
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -1138,7 +1122,6 @@ class ApplicationCommand(ApplicationSubcommand):
     async def call_invoke_user(self, interaction: Interaction) -> None:
         """|coro|
         Calls the callback as a user command using the given interaction.
-
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -1156,7 +1139,6 @@ class ApplicationCommand(ApplicationSubcommand):
     async def invoke_user(self, interaction: Interaction, member: Union[Member, User], **kwargs: Dict[Any, Any]) -> None:
         """|coro|
         Invokes the callback with the given interaction, member/user, and any additional kwargs added.
-
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -1173,11 +1155,9 @@ class ApplicationCommand(ApplicationSubcommand):
 
     # Decorators.
 
-    def subcommand(self, name: str = MISSING, description: str = MISSING) -> Callable:
+    def subcommand(self, name: str = MISSING, description: str = MISSING, inherit_checks: bool = True) -> Callable:
         """Decorates a function, creating a subcommand with the given kwargs forwarded to it.
-
         Adding a subcommand will prevent the callback associated with this command from being called.
-
         Parameters
         ----------
         name: :class:`str`
@@ -1195,7 +1175,8 @@ class ApplicationCommand(ApplicationSubcommand):
                     parent_command=self,
                     cmd_type=ApplicationCommandOptionType.sub_command,
                     name=name,
-                    description=description
+                    description=description,
+                    inherit_checks=inherit_checks
                 )
                 self.children[result.name] = result
                 return result
@@ -1211,7 +1192,6 @@ def slash_command(
 ):
     """Creates a Slash application command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
-
     Parameters
     ----------
     name: :class:`str`
@@ -1241,6 +1221,45 @@ def slash_command(
         return app_cmd
     return decorator
 
+Coro = Coroutine[Any, Any, T]
+MaybeCoro = Union[T, Coro[T]]
+CoroFunc = Callable[..., Coro[Any]]
+ApplicationCheck = Union[Callable[["ClientCog", Interaction], MaybeCoro[bool]], Callable[[Interaction], MaybeCoro[bool]]]
+
+def slash_command_check(predicate: ApplicationCheck) -> Callable[[T], T]:
+    r"""A decorator that adds a check to the :class:`ApplicationSubcommand` or its
+    subclasses. These checks could be accessed via :attr:`ApplicationSubcommand.checks`.
+    These checks should be predicates that take in a single parameter taking
+    a :class:`.Interaction`. If the check returns a ``False``\-like value then
+    during invocation a :exc:`ApplicationCheckFailure` exception is raised and sent to
+    the :func:`.on_command_error` event.
+    If an exception should be thrown in the predicate then it should be a
+    subclass of :exc:`.CommandError`. Any exception not subclassed from it
+    will be propagated while those subclassed will be sent to
+    :func:`.on_command_error`.
+    """
+
+    def decorator(func: Union[ApplicationSubcommand, CoroFunc]) -> Union[ApplicationSubcommand, CoroFunc]:
+        if isinstance(func, ApplicationSubcommand):
+            func.checks.insert(0, predicate)
+        else:
+            if not hasattr(func, '__slash_command_checks__'):
+                func.__slash_command_checks__ = []
+
+            func.__slash_command_checks__.append(predicate)
+
+        return func
+
+    if asyncio.iscoroutinefunction(predicate):
+        decorator.predicate = predicate
+    else:
+        @wraps(predicate)
+        async def wrapper(ctx):
+            return predicate(ctx)
+        decorator.predicate = wrapper
+
+    return decorator
+
 
 def message_command(
         name: str = MISSING,
@@ -1251,7 +1270,6 @@ def message_command(
 ):
     """Creates a Message context command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
-
     Parameters
     ----------
     name: :class:`str`
@@ -1291,7 +1309,6 @@ def user_command(
 ):
     """Creates a User context command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
-
     Parameters
     ----------
     name: :class:`str`
@@ -1324,10 +1341,8 @@ def user_command(
 def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
     """Helper function to quickly check if 2 dictionaries share the equal value for the same keyword(s).
     Used primarily for checking against the registered command data from Discord.
-
     Will not work great if values inside the dictionary can be or are None.
     If both dictionaries lack the keyword(s), it can still return True.
-
     Parameters
     ----------
     dict1: :class:`dict`
@@ -1336,7 +1351,6 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
         Second dictionary to compare.
     keywords: :class:`str`
         Words to compare both dictionaries to.
-
     Returns
     -------
     :class:`bool`
