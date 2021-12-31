@@ -284,15 +284,16 @@ class CommandOption(SlashOption):
         if self.type is ApplicationCommandOptionType.channel:
             return state.get_channel(int(argument))
         elif self.type is ApplicationCommandOptionType.user:
-            if interaction.guild:
-                if not (member := interaction.guild.get_member(int(argument))):
-                    member = await interaction.guild.fetch_member(int(argument))
-                return member
+            user_id = int(argument)
+            ret = interaction.guild.get_member(user_id) if interaction.guild else state.get_user(user_id)
+            if ret:
+                return ret
             else:
-                if not (user := state.get_user(int(argument))):
-                    data = await state.http.get_user(int(argument))
-                    user = User(state=state, data=data)
-                return user
+                # The interaction data gives a dictionary of resolved users, best to use it if cache isn't available.
+                resolved_users_payload = interaction.data["resolved"]["users"]
+                resolved_users = {int(raw_id): state.store_user(user_payload) for
+                                  raw_id, user_payload in resolved_users_payload.items()}
+                return resolved_users[user_id]
         elif self.type is ApplicationCommandOptionType.role:
             return interaction.guild.get_role(int(argument))
         elif self.type is ApplicationCommandOptionType.integer:
