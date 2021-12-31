@@ -24,6 +24,6 @@ async def my_select_command(
         
 @client.slash_command(guild_ids=[...]) # limits the guilds with this command
 async def hi(interacton: Interaction, member: nextcord.Member = SlashOption(name="user", description="the user to say hi to")):
-    await interaction.response.send_message(f"{interaction.user} just said hi to {member}”)
+    await interaction.response.send_message(f"{interaction.user} just said hi to {member.mention}”)
 
 client.run("TOKEN")
