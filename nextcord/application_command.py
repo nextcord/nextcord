@@ -638,7 +638,7 @@ class ApplicationSubcommand:
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
-        Calls the callback associated with this command with the given interaction and option data.
+        Calls the callback associated with this command with the given interaction and option data. Will only run if all ApplicationCommand checks have passed.s
         Parameters
         ----------
         state: :class:`ConnectionState`
@@ -654,7 +654,8 @@ class ApplicationSubcommand:
             await self.children[option_data[0]["name"]].call(state, interaction, option_data[0].get("options", {}))
         elif self.type in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):
             # Slash commands are able to have subcommands, therefore that is handled here.
-            await self.call_invoke_slash(state, interaction, option_data)
+            if await self.verify_checks(interaction):
+                await self.call_invoke_slash(state, interaction, option_data)
         else:
             # Anything that can't be handled in here should be raised for ApplicationCommand to handle.
             # TODO: Figure out how to hide this in exception trace log, people don't need to see it.
@@ -695,8 +696,7 @@ class ApplicationSubcommand:
         for uncalled_arg in uncalled_args.values():
             kwargs[uncalled_arg.functional_name] = uncalled_arg.default
 
-        if await self.verify_checks(interaction):
-            await self.invoke_slash(interaction, **kwargs)
+        await self.invoke_slash(interaction, **kwargs)
 
     async def _raise_application_command_error(self, error: ApplicationCommandError) -> None:
 
@@ -1199,9 +1199,11 @@ class ApplicationCommand(ApplicationSubcommand):
             await super().call(state, interaction, option_data)
         except InvalidCommandType:
             if self.type is ApplicationCommandType.message:
-                await self.call_invoke_message(interaction)
+                if await self.verify_checks(interaction):
+                    await self.call_invoke_message(interaction)
             elif self.type is ApplicationCommandType.user:
-                await self.call_invoke_user(interaction)
+                if await self.verify_checks(interaction):
+                    await self.call_invoke_user(interaction)
             else:
                 raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
