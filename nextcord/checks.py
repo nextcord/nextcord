@@ -26,7 +26,13 @@ from nextcord import utils
 from typing import Callable, Union, TypeVar, TYPE_CHECKING
 
 from .application_command import ApplicationSubcommand, Interaction
-from .errors import ApplicationCheckAnyFailure, ApplicationCheckFailure, NoPrivateMessage, MissingRole
+from .errors import (
+    ApplicationCheckAnyFailure,
+    ApplicationCheckFailure,
+    ApplicationNoPrivateMessage,
+    ApplicationMissingRole,
+    ApplicationMissingAnyRole,
+)
 
 if TYPE_CHECKING:
     from .application_command import ClientCog
@@ -164,15 +170,53 @@ def has_role(item: Union[int, str]) -> Callable[[T], T]:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise NoPrivateMessage()
+            raise ApplicationNoPrivateMessage()
 
-        # ctx.guild is None doesn't narrow ctx.author to Member
+        # interaction.guild is None doesn't narrow interaction.user to Member
         if isinstance(item, int):
             role = utils.get(interaction.user.roles, id=item)  # type: ignore
         else:
             role = utils.get(interaction.user.roles, name=item)  # type: ignore
         if role is None:
-            raise MissingRole(item)
+            raise ApplicationMissingRole(item)
         return True
+
+    return check(predicate)
+
+def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
+    r"""A :func:`.check` that is added that checks if the member invoking the
+    command has **any** of the roles specified. This means that if they have
+    one out of the three roles specified, then this check will return `True`.
+
+    Similar to :func:`.has_role`\, the names or IDs passed in must be exact.
+
+    This check raises one of two special exceptions, :exc:`.MissingAnyRole` if the user
+    is missing all roles, or :exc:`.NoPrivateMessage` if it is used in a private message.
+    Both inherit from :exc:`.ApplicationCheckFailure`.
+
+    Parameters
+    -----------
+    items: List[Union[:class:`str`, :class:`int`]]
+        An argument list of names or IDs to check that the member has roles wise.
+
+    Example
+    --------
+
+    .. code-block:: python3
+
+        @bot.slash_command()
+        @checks.has_any_role('Library Devs', 'Moderators', 492212595072434186)
+        async def cool(interaction: Interaction):
+            await interaction.response.send_message('You are cool indeed')
+    """
+    def predicate(interaction: Interaction) -> bool:
+        if interaction.guild is None:
+            raise ApplicationNoPrivateMessage()
+
+        # interaction.guild is None doesn't narrow interaction.user to Member
+        getter = functools.partial(utils.get, interaction.user.roles)  # type: ignore
+        if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in items):
+            return True
+        raise ApplicationMissingAnyRole(list(items))
 
     return check(predicate)

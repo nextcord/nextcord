@@ -36,7 +36,7 @@ if TYPE_CHECKING:
         _ResponseType = ClientResponse
 
     from .interactions import Interaction
-    from .types import Snowflake
+    from .types.snowflake import Snowflake, SnowflakeList
 
 __all__ = (
     'DiscordException',
@@ -54,6 +54,12 @@ __all__ = (
     'ConnectionClosed',
     'PrivilegedIntentsRequired',
     'InteractionResponded',
+    'ApplicationError',
+    'ApplicationCheckFailure',
+    'ApplicationCheckAnyFailure',
+    'ApplicationNoPrivateMessage',
+    'ApplicationMissingRole',
+    'ApplicationMissingAnyRole'
 )
 
 
@@ -342,7 +348,7 @@ class ApplicationCheckAnyFailure(ApplicationCheckFailure):
         self.errors: List[Callable[[Interaction], bool]] = errors
         super().__init__('You do not have permission to run this command.')
 
-class NoPrivateMessage(ApplicationCheckFailure):
+class ApplicationNoPrivateMessage(ApplicationCheckFailure):
     """Exception raised when an operation does not work in private message
     contexts.
 
@@ -352,7 +358,7 @@ class NoPrivateMessage(ApplicationCheckFailure):
     def __init__(self, message: Optional[str] = None) -> None:
         super().__init__(message or 'This command cannot be used in private messages.')
 
-class MissingRole(ApplicationCheckFailure):
+class ApplicationMissingRole(ApplicationCheckFailure):
     """Exception raised when the command invoker lacks a role to run a command.
 
     This inherits from :exc:`ApplicationCheckFailure`
@@ -368,4 +374,29 @@ class MissingRole(ApplicationCheckFailure):
     def __init__(self, missing_role: Snowflake) -> None:
         self.missing_role: Snowflake = missing_role
         message = f'Role {missing_role!r} is required to run this command.'
+        super().__init__(message)
+
+class ApplicationMissingAnyRole(ApplicationCheckFailure):
+    """Exception raised when the command invoker lacks any of
+    the roles specified to run a command.
+
+    This inherits from :exc:`ApplicationCheckFailure`
+
+    Attributes
+    -----------
+    missing_roles: List[Union[:class:`str`, :class:`int`]]
+        The roles that the invoker is missing.
+        These are the parameters passed to :func:`~.commands.has_any_role`.
+    """
+    def __init__(self, missing_roles: SnowflakeList) -> None:
+        self.missing_roles: SnowflakeList = missing_roles
+
+        missing = [f"'{role}'" for role in missing_roles]
+
+        if len(missing) > 2:
+            fmt = '{}, or {}'.format(", ".join(missing[:-1]), missing[-1])
+        else:
+            fmt = ' or '.join(missing)
+
+        message = f"You are missing at least one of the required roles: {fmt}"
         super().__init__(message)
