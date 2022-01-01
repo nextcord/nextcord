@@ -64,7 +64,8 @@ __all__ = (
     'ApplicationBotMissingAnyRole',
     'ApplicationMissingPermissions',
     'ApplicationBotMissingPermissions',
-    'ApplicationPrivateMessageOnly'
+    'ApplicationPrivateMessageOnly',
+    'ApplicationNotOwner'
 )
 
 
@@ -506,3 +507,11 @@ class ApplicationPrivateMessageOnly(ApplicationCheckFailure):
     """
     def __init__(self, message: Optional[str] = None) -> None:
         super().__init__(message or 'This command can only be used in private messages.')
+
+
+class ApplicationNotOwner(ApplicationCheckFailure):
+    """Exception raised when the message author is not the owner of the bot.
+
+    This inherits from :exc:`ApplicationCheckFailure`
+    """
+    pass

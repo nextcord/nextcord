@@ -424,3 +424,20 @@ def guild_only() -> Callable[[T], T]:
         return True
 
     return check(predicate)
+
+def is_owner() -> Callable[[T], T]:
+    """A :func:`.check` that checks if the person invoking this command is the
+    owner of the bot.
+
+    This is powered by :meth:`.Client.is_owner`.
+
+    This check raises a special exception, :exc:`.ApplicationNotOwner` that is derived
+    from :exc:`.ApplicationCheckFailure`.
+    """
+
+    async def predicate(interaction: Interaction) -> bool:
+        if not await interaction.bot.is_owner(interaction.user):
+            raise ApplicationNotOwner('You do not own this bot.')
+        return True
+
+    return check(predicate)
