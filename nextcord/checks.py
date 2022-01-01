@@ -339,3 +339,29 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
         raise ApplicationBotMissingPermissions(missing)
 
     return check(predicate)
+
+def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
+    """Similar to :func:`.has_permissions`, but operates on guild wide
+    permissions instead of the current channel permissions.
+
+    If this check is called in a DM context, it will raise an
+    exception, :exc:`.ApplicationNoPrivateMessage`.
+    """
+
+    invalid = set(perms) - set(nextcord.Permissions.VALID_FLAGS)
+    if invalid:
+        raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
+
+    def predicate(interaction: Interaction) -> bool:
+        if not interaction.guild:
+            raise ApplicationNoPrivateMessage
+
+        permissions = interaction.user.guild_permissions  # type: ignore
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+
+        if not missing:
+            return True
+
+        raise ApplicationMissingPermissions(missing)
+
+    return check(predicate)
