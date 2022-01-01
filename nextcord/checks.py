@@ -34,7 +34,8 @@ from .errors import (
     ApplicationMissingAnyRole,
     ApplicationBotMissingRole,
     ApplicationBotMissingAnyRole,
-    ApplicationMissingPermissions
+    ApplicationMissingPermissions,
+    ApplicationBotMissingPermissions,
 )
 
 if TYPE_CHECKING:
@@ -310,5 +311,31 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
             return True
 
         raise ApplicationMissingPermissions(missing)
+
+    return check(predicate)
+
+def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
+    """Similar to :func:`.has_permissions` except checks if the bot itself has
+    the permissions listed.
+
+    This check raises a special exception, :exc:`.ApplicationBotMissingPermissions`
+    that is inherited from :exc:`.ApplicationCheckFailure`.
+    """
+
+    invalid = set(perms) - set(nextcord.Permissions.VALID_FLAGS)
+    if invalid:
+        raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
+
+    def predicate(interaction: Interaction) -> bool:
+        guild = interaction.guild
+        me = guild.me if guild is not None else interaction.bot.user
+        permissions = interaction.channel.permissions_for(me)  # type: ignore
+
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+
+        if not missing:
+            return True
+
+        raise ApplicationBotMissingPermissions(missing)
 
     return check(predicate)
