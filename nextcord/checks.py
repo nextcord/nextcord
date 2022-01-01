@@ -260,7 +260,7 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
         if interaction.guild is None:
             raise ApplicationNoPrivateMessage()
 
-        me = interaction.guild.me
+        me = interaction.guild.me or interaction.client.user
         getter = functools.partial(nextcord.utils.get, me.roles)
         if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in items):
             return True
@@ -328,7 +328,7 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
 
     def predicate(interaction: Interaction) -> bool:
         guild = interaction.guild
-        me = guild.me if guild is not None else interaction.bot.user
+        me = guild.me if guild is not None else interaction.client.user
         permissions = interaction.channel.permissions_for(me)  # type: ignore
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
@@ -363,5 +363,28 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
             return True
 
         raise ApplicationMissingPermissions(missing)
+
+    return check(predicate)
+
+def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
+    """Similar to :func:`.has_guild_permissions`, but checks the bot
+    members guild permissions.
+    """
+
+    invalid = set(perms) - set(nextcord.Permissions.VALID_FLAGS)
+    if invalid:
+        raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
+
+    def predicate(interaction: Interaction) -> bool:
+        if not interaction.guild:
+            raise ApplicationNoPrivateMessage
+
+        permissions = interaction.guild.me.guild_permissions  # type: ignore
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+
+        if not missing:
+            return True
+
+        raise ApplicationBotMissingPermissions(missing)
 
     return check(predicate)
