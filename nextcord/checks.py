@@ -22,7 +22,7 @@ DEALINGS IN THE SOFTWARE.
 """
 import asyncio
 import functools
-from nextcord import utils
+import nextcord
 from typing import Callable, Union, TypeVar, TYPE_CHECKING
 
 from .application_command import ApplicationSubcommand, Interaction
@@ -33,7 +33,8 @@ from .errors import (
     ApplicationMissingRole,
     ApplicationMissingAnyRole,
     ApplicationBotMissingRole,
-    ApplicationBotMissingAnyRole
+    ApplicationBotMissingAnyRole,
+    ApplicationMissingPermissions
 )
 
 if TYPE_CHECKING:
@@ -176,9 +177,9 @@ def has_role(item: Union[int, str]) -> Callable[[T], T]:
 
         # interaction.guild is None doesn't narrow interaction.user to Member
         if isinstance(item, int):
-            role = utils.get(interaction.user.roles, id=item)  # type: ignore
+            role = nextcord.utils.get(interaction.user.roles, id=item)  # type: ignore
         else:
-            role = utils.get(interaction.user.roles, name=item)  # type: ignore
+            role = nextcord.utils.get(interaction.user.roles, name=item)  # type: ignore
         if role is None:
             raise ApplicationMissingRole(item)
         return True
@@ -216,7 +217,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
             raise ApplicationNoPrivateMessage()
 
         # interaction.guild is None doesn't narrow interaction.user to Member
-        getter = functools.partial(utils.get, interaction.user.roles)  # type: ignore
+        getter = functools.partial(nextcord.utils.get, interaction.user.roles)  # type: ignore
         if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in items):
             return True
         raise ApplicationMissingAnyRole(list(items))
@@ -238,9 +239,9 @@ def bot_has_role(item: int) -> Callable[[T], T]:
 
         me = interaction.guild.me
         if isinstance(item, int):
-            role = utils.get(me.roles, id=item)
+            role = nextcord.utils.get(me.roles, id=item)
         else:
-            role = utils.get(me.roles, name=item)
+            role = nextcord.utils.get(me.roles, name=item)
         if role is None:
             raise ApplicationBotMissingRole(item)
         return True
@@ -259,8 +260,55 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
             raise ApplicationNoPrivateMessage()
 
         me = interaction.guild.me
-        getter = functools.partial(utils.get, me.roles)
+        getter = functools.partial(nextcord.utils.get, me.roles)
         if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in items):
             return True
         raise ApplicationBotMissingAnyRole(list(items))
+    return check(predicate)
+
+def has_permissions(**perms: bool) -> Callable[[T], T]:
+    """A :func:`.check` that is added that checks if the member has all of
+    the permissions necessary.
+
+    Note that this check operates on the current channel permissions, not the
+    guild wide permissions.
+
+    The permissions passed in must be exactly like the properties shown under
+    :class:`.nextcord.Permissions`.
+
+    This check raises a special exception, :exc:`.ApplicationMissingPermissions`
+    that is inherited from :exc:`.ApplicationCheckFailure`.
+
+    Parameters
+    ------------
+    perms
+        An argument list of permissions to check for.
+
+    Example
+    ---------
+
+    .. code-block:: python3
+
+        @bot.slash_command()
+        @checks.has_permissions(manage_messages=True)
+        async def test(interaction: Interaction):
+            await interaction.response.send_message('You can manage messages.')
+
+    """
+
+    invalid = set(perms) - set(nextcord.Permissions.VALID_FLAGS)
+    if invalid:
+        raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
+
+    def predicate(interaction: Interaction) -> bool:
+        ch = interaction.channel
+        permissions = ch.permissions_for(interaction.user)  # type: ignore
+
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+
+        if not missing:
+            return True
+
+        raise ApplicationMissingPermissions(missing)
+
     return check(predicate)
