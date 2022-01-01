@@ -32,14 +32,15 @@ from typing import (
 )
 
 from .application_command import ApplicationSubcommand, Interaction
-from .errors import ApplicationCheckAnyFailure
+from .errors import ApplicationCheckAnyFailure, ApplicationCheckFailure
 
 if TYPE_CHECKING:
     from .application_command import ClientCog
 
 
 __all__ = (
-    "check"
+    "check",
+    "check_any"
 )
 
 
@@ -83,3 +84,69 @@ def check(predicate: ApplicationCheck) -> Callable[[T], T]:
         decorator.predicate = wrapper
 
     return decorator
+
+def check_any(*checks: ApplicationCheck) -> Callable[[T], T]:
+    r"""A :func:`check` that is added that checks if any of the checks passed
+    will pass, i.e. using logical OR.
+
+    If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal the failure.
+    It inherits from :exc:`.ApplicationCheckFailure`.
+
+    .. note::
+
+        The ``predicate`` attribute for this function **is** a coroutine.
+
+    Parameters
+    ------------
+    \*checks: Callable[[:class:`Interaction`], :class:`bool`]
+        An argument list of checks that have been decorated with
+        the :func:`check` decorator.
+
+    Raises
+    -------
+    TypeError
+        A check passed has not been decorated with the :func:`check`
+        decorator.
+
+    Examples
+    ---------
+
+    Creating a basic check to see if it's the bot owner or
+    the server owner:
+
+    .. code-block:: python3
+
+        def is_guild_owner():
+            def predicate(interaction: Interaction):
+                return interaction.guild is not None and interaction.guild.owner_id == ctx.author.id
+            return commands.check(predicate)
+
+        @bot.command()
+        @checks.check_any(checks.is_owner(), is_guild_owner())
+        async def only_for_owners(interaction: Interaction):
+            await interaction.response.send_message('Hello mister owner!')
+    """
+
+    unwrapped = []
+    for wrapped in checks:
+        try:
+            pred = wrapped.predicate
+        except AttributeError:
+            raise TypeError(f'{wrapped!r} must be wrapped by checks.check decorator') from None
+        else:
+            unwrapped.append(pred)
+
+    async def predicate(interaction: Interaction) -> bool:
+        errors = []
+        for func in unwrapped:
+            try:
+                value = await func(interaction)
+            except ApplicationCheckFailure as e:
+                errors.append(e)
+            else:
+                if value:
+                    return True
+        # if we're here, all checks failed
+        raise ApplicationCheckAnyFailure(unwrapped, errors)
+
+    return check(predicate)

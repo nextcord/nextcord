@@ -341,7 +341,7 @@ class CommandOption(SlashOption):
             ret["autocomplete"] = self.autocomplete
         return ret
 
-ApplicationErrorCallback = Optional[Union[Callable[["ClientCog", ApplicationError], Awaitable[Any]], Callable[[ApplicationError], Awaitable[Any]]]]
+ApplicationErrorCallback = Optional[Union[Callable[["ClientCog", Interaction, ApplicationError], Awaitable[Any]], Callable[[Interaction, ApplicationError], Awaitable[Any]]]]
 class ApplicationSubcommand:
     def __init__(
         self,
@@ -729,13 +729,13 @@ class ApplicationSubcommand:
 
         await self.invoke_slash(interaction, **kwargs)
 
-    async def _raise_application_command_error(self, error: ApplicationError) -> None:
+    async def _raise_application_command_error(self, interaction: Interaction, error: ApplicationError) -> None:
 
         if self.error_callback:
             if self._self_argument:
-                await self.error_callback(self._self_argument, error)
+                await self.error_callback(self._self_argument, interaction, error)
             else:
-                await self.error_callback(error)
+                await self.error_callback(interaction, error)
         else:
             raise error
 
@@ -758,7 +758,7 @@ class ApplicationSubcommand:
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure as error:
                 if raise_exceptions:
-                    await self._raise_application_command_error(error)
+                    await self._raise_application_command_error(interaction, error)
 
                 return False
             # If the check returns False, the command can't be run.
@@ -767,7 +767,7 @@ class ApplicationSubcommand:
                     error = ApplicationCheckFailure(f"The check functions for application command {self.qualified_name} failed.")
 
                     if raise_exceptions:
-                        await self._raise_application_command_error(error)
+                        await self._raise_application_command_error(interaction, error)
 
                     return False
 
@@ -797,7 +797,7 @@ class ApplicationSubcommand:
 
         Parameters
         ----------
-        callback: Callable[[:class:`ApplicationError`], :class:`asyncio.Awaitable[Any]`]
+        callback: Callable[[:class:`Interaction`, :class:`ApplicationError`], :class:`asyncio.Awaitable[Any]`]
             The callback to call when an error occurs.
         """
 

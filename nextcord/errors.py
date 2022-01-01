@@ -326,7 +326,7 @@ class ApplicationCheckFailure(ApplicationError):
 class ApplicationCheckAnyFailure(ApplicationCheckFailure):
     """Exception raised when all predicates in :func:`check_any` fail.
 
-    This inherits from :exc:`ApplicationError`.
+    This inherits from :exc:`ApplicationCheckFailure`.
 
     Attributes
     ------------
@@ -339,4 +339,4 @@ class ApplicationCheckAnyFailure(ApplicationCheckFailure):
     def __init__(self, checks: List[ApplicationCheckFailure], errors: List[Callable[[Interaction], bool]]) -> None:
         self.checks: List[ApplicationCheckFailure] = checks
         self.errors: List[Callable[[Interaction], bool]] = errors
-        super().__init__('You do not have permission to run this command.')
+        super().__init__('All checks failed.')
