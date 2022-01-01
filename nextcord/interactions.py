@@ -66,6 +66,7 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
+    from .client import Client
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
@@ -103,6 +104,10 @@ class Interaction:
         for 15 minutes.
     data: :class:`dict`
         The raw interaction data.
+    client: :class:`Client`
+        The client that handled the interaction.
+    bot: :class:`Client`:
+        An alias for ``client``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -116,6 +121,7 @@ class Interaction:
         'user',
         'token',
         'version',
+        '_client',
         '_permissions',
         '_state',
         '_session',
@@ -140,6 +146,7 @@ class Interaction:
         self.channel_id: Optional[int] = utils._get_as_snowflake(data, 'channel_id')
         self.guild_id: Optional[int] = utils._get_as_snowflake(data, 'guild_id')
         self.application_id: int = int(data['application_id'])
+        self._client: Client = data.get('client')
 
         self.message: Optional[Message]
         try:
@@ -165,6 +172,16 @@ class Interaction:
                 self.user = User(state=self._state, data=data['user'])
             except KeyError:
                 pass
+
+    @property
+    def client(self):
+        """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``bot``."""
+        return self._client
+    
+    @property
+    def bot(self):
+        """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``client``."""
+        return self._client
 
     @property
     def guild(self) -> Optional[Guild]:
