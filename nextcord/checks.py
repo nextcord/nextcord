@@ -250,14 +250,9 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
     """Similar to :func:`.has_any_role` except checks if the bot itself has
     any of the roles listed.
 
-    This check raises one of two special exceptions, :exc:`.BotMissingAnyRole` if the bot
-    is missing all roles, or :exc:`.NoPrivateMessage` if it is used in a private message.
-    Both inherit from :exc:`.CheckFailure`.
-
-    .. versionchanged:: 1.1
-
-        Raise :exc:`.BotMissingAnyRole` or :exc:`.NoPrivateMessage`
-        instead of generic checkfailure
+    This check raises one of two special exceptions, :exc:`.ApplicationBotMissingAnyRole` if the bot
+    is missing all roles, or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
+    Both inherit from :exc:`.ApplicationCheckFailure`.
     """
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
