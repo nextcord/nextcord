@@ -64,6 +64,7 @@ __all__ = (
     'ApplicationBotMissingAnyRole',
     'ApplicationMissingPermissions',
     'ApplicationBotMissingPermissions',
+    'ApplicationPrivateMessageOnly'
 )
 
 
@@ -496,3 +497,12 @@ class ApplicationBotMissingPermissions(ApplicationCheckFailure):
             fmt = ' and '.join(missing)
         message = f'Bot requires {fmt} permission(s) to run this command.'
         super().__init__(message, *args)
+
+class ApplicationPrivateMessageOnly(ApplicationCheckFailure):
+    """Exception raised when an operation does not work outside of private
+    message contexts.
+
+    This inherits from :exc:`ApplicationCheckFailure`
+    """
+    def __init__(self, message: Optional[str] = None) -> None:
+        super().__init__(message or 'This command can only be used in private messages.')

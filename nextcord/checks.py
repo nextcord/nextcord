@@ -36,6 +36,8 @@ from .errors import (
     ApplicationBotMissingAnyRole,
     ApplicationMissingPermissions,
     ApplicationBotMissingPermissions,
+    ApplicationPrivateMessageOnly,
+    ApplicationNotOwner
 )
 
 if TYPE_CHECKING:
@@ -386,5 +388,39 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
             return True
 
         raise ApplicationBotMissingPermissions(missing)
+
+    return check(predicate)
+
+def dm_only() -> Callable[[T], T]:
+    """A :func:`.check` that indicates this command must only be used in a
+    DM context. Only private messages are allowed when
+    using the command.
+
+    This check raises a special exception, :exc:`.ApplicationPrivateMessageOnly`
+    that is inherited from :exc:`.ApplicationCheckFailure`.
+
+    .. versionadded:: 1.1
+    """
+
+    def predicate(interaction: Interaction) -> bool:
+        if interaction.guild is not None:
+            raise ApplicationPrivateMessageOnly()
+        return True
+
+    return check(predicate)
+
+def guild_only() -> Callable[[T], T]:
+    """A :func:`.check` that indicates this command must only be used in a
+    guild context only. Basically, no private messages are allowed when
+    using the command.
+
+    This check raises a special exception, :exc:`.ApplicationNoPrivateMessage`
+    that is inherited from :exc:`.ApplicationCheckFailure`.
+    """
+
+    def predicate(interaction: Interaction) -> bool:
+        if interaction.guild is None:
+            raise ApplicationNoPrivateMessage()
+        return True
 
     return check(predicate)
