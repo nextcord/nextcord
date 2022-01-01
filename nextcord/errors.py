@@ -36,6 +36,7 @@ if TYPE_CHECKING:
         _ResponseType = ClientResponse
 
     from .interactions import Interaction
+    from .types import Snowflake
 
 __all__ = (
     'DiscordException',
@@ -339,4 +340,32 @@ class ApplicationCheckAnyFailure(ApplicationCheckFailure):
     def __init__(self, checks: List[ApplicationCheckFailure], errors: List[Callable[[Interaction], bool]]) -> None:
         self.checks: List[ApplicationCheckFailure] = checks
         self.errors: List[Callable[[Interaction], bool]] = errors
-        super().__init__('All checks failed.')
+        super().__init__('You do not have permission to run this command.')
+
+class NoPrivateMessage(ApplicationCheckFailure):
+    """Exception raised when an operation does not work in private message
+    contexts.
+
+    This inherits from :exc:`ApplicationCheckFailure`
+    """
+
+    def __init__(self, message: Optional[str] = None) -> None:
+        super().__init__(message or 'This command cannot be used in private messages.')
+
+class MissingRole(ApplicationCheckFailure):
+    """Exception raised when the command invoker lacks a role to run a command.
+
+    This inherits from :exc:`ApplicationCheckFailure`
+
+    .. versionadded:: 1.1
+
+    Attributes
+    -----------
+    missing_role: Union[:class:`str`, :class:`int`]
+        The required role that is missing.
+        This is the parameter passed to :func:`~.checks.has_role`.
+    """
+    def __init__(self, missing_role: Snowflake) -> None:
+        self.missing_role: Snowflake = missing_role
+        message = f'Role {missing_role!r} is required to run this command.'
+        super().__init__(message)

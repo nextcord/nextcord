@@ -22,20 +22,15 @@ DEALINGS IN THE SOFTWARE.
 """
 import asyncio
 import functools
-from typing import (
-    Any,
-    Callable,
-    Union,
-    Coroutine,
-    TypeVar,
-    TYPE_CHECKING
-)
+from nextcord import utils
+from typing import Callable, Union, TypeVar, TYPE_CHECKING
 
 from .application_command import ApplicationSubcommand, Interaction
-from .errors import ApplicationCheckAnyFailure, ApplicationCheckFailure
+from .errors import ApplicationCheckAnyFailure, ApplicationCheckFailure, NoPrivateMessage, MissingRole
 
 if TYPE_CHECKING:
     from .application_command import ClientCog
+    from .types.checks import ApplicationCheck, CoroFunc
 
 
 __all__ = (
@@ -43,15 +38,9 @@ __all__ = (
     "check_any"
 )
 
-
 T = TypeVar('T')
 
-Coro = Coroutine[Any, Any, T]
-MaybeCoro = Union[T, Coro[T]]
-CoroFunc = Callable[..., Coro[Any]]
-ApplicationCheck = Union[Callable[["ClientCog", Interaction], MaybeCoro[bool]], Callable[[Interaction], MaybeCoro[bool]]]
-
-def check(predicate: ApplicationCheck) -> Callable[[T], T]:
+def check(predicate: 'ApplicationCheck') -> Callable[[T], T]:
     r"""A decorator that adds a check to the :class:`ApplicationSubcommand` or its
     subclasses. These checks could be accessed via :attr:`ApplicationSubcommand.checks`.
     These checks should be predicates that take in a single parameter taking
@@ -64,7 +53,7 @@ def check(predicate: ApplicationCheck) -> Callable[[T], T]:
     :func:`.on_application_command_error`.
     """
 
-    def decorator(func: Union[ApplicationSubcommand, CoroFunc]) -> Union[ApplicationSubcommand, CoroFunc]:
+    def decorator(func: Union[ApplicationSubcommand, 'CoroFunc']) -> Union[ApplicationSubcommand, 'CoroFunc']:
         if isinstance(func, ApplicationSubcommand):
             func.checks.insert(0, predicate)
         else:
@@ -85,7 +74,7 @@ def check(predicate: ApplicationCheck) -> Callable[[T], T]:
 
     return decorator
 
-def check_any(*checks: ApplicationCheck) -> Callable[[T], T]:
+def check_any(*checks: 'ApplicationCheck') -> Callable[[T], T]:
     r"""A :func:`check` that is added that checks if any of the checks passed
     will pass, i.e. using logical OR.
 
@@ -148,5 +137,42 @@ def check_any(*checks: ApplicationCheck) -> Callable[[T], T]:
                     return True
         # if we're here, all checks failed
         raise ApplicationCheckAnyFailure(unwrapped, errors)
+
+    return check(predicate)
+
+def has_role(item: Union[int, str]) -> Callable[[T], T]:
+    """A :func:`.check` that is added that checks if the member invoking the
+    command has the role specified via the name or ID specified.
+
+    If a string is specified, you must give the exact name of the role, including
+    caps and spelling.
+
+    If an integer is specified, you must give the exact snowflake ID of the role.
+
+    If the message is invoked in a private message context then the check will
+    return ``False``.
+
+    This check raises one of two special exceptions, :exc:`.MissingRole` if the user
+    is missing a role, or :exc:`.NoPrivateMessage` if it is used in a private message.
+    Both inherit from :exc:`.ApplicationCheckFailure`.
+
+    Parameters
+    -----------
+    item: Union[:class:`int`, :class:`str`]
+        The name or ID of the role to check.
+    """
+
+    def predicate(interaction: Interaction) -> bool:
+        if interaction.guild is None:
+            raise NoPrivateMessage()
+
+        # ctx.guild is None doesn't narrow ctx.author to Member
+        if isinstance(item, int):
+            role = utils.get(interaction.user.roles, id=item)  # type: ignore
+        else:
+            role = utils.get(interaction.user.roles, name=item)  # type: ignore
+        if role is None:
+            raise MissingRole(item)
+        return True
 
     return check(predicate)
