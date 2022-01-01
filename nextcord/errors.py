@@ -23,7 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Dict, List, Optional, TYPE_CHECKING, Any, Tuple, Union
+from typing import Dict, List, Optional, TYPE_CHECKING, Any, Tuple, Union, Callable
 
 if TYPE_CHECKING:
     from aiohttp import ClientResponse, ClientWebSocketResponse
@@ -282,7 +282,7 @@ class InteractionResponded(ClientException):
         self.interaction: Interaction = interaction
         super().__init__('This interaction has already been responded to before')
 
-class ApplicationCommandError(DiscordException):
+class ApplicationError(DiscordException):
     r"""The base exception type for all command related errors.
 
     This inherits from :exc:`nextcord.DiscordException`.
@@ -299,8 +299,8 @@ class ApplicationCommandError(DiscordException):
         else:
             super().__init__(*args)
 
-class ApplicationCommandError(DiscordException):
-    r"""The base exception type for all command related errors.
+class ApplicationError(DiscordException):
+    r"""The base exception type for all application command related errors.
 
     This inherits from :exc:`nextcord.DiscordException`.
 
@@ -316,9 +316,27 @@ class ApplicationCommandError(DiscordException):
         else:
             super().__init__(*args)
 
-class ApplicationCommandCheckFailure(ApplicationCommandError):
+class ApplicationCheckFailure(ApplicationError):
     """Exception raised when the predicates in :attr:`.ApplicationCommand.checks` have failed.
 
-    This inherits from :exc:`ApplicationCommandError`
+    This inherits from :exc:`ApplicationError`
     """
     pass
+
+class ApplicationCheckAnyFailure(ApplicationCheckFailure):
+    """Exception raised when all predicates in :func:`check_any` fail.
+
+    This inherits from :exc:`ApplicationError`.
+
+    Attributes
+    ------------
+    errors: List[:class:`ApplicationCheckFailure`]
+        A list of errors that were caught during execution.
+    checks: List[Callable[[:class:`Interaction`], :class:`bool`]]
+        A list of check predicates that failed.
+    """
+
+    def __init__(self, checks: List[ApplicationCheckFailure], errors: List[Callable[[Interaction], bool]]) -> None:
+        self.checks: List[ApplicationCheckFailure] = checks
+        self.errors: List[Callable[[Interaction], bool]] = errors
+        super().__init__('You do not have permission to run this command.')

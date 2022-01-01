@@ -36,7 +36,6 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
-    Coroutine,
     TypeVar
 )
 
@@ -44,7 +43,7 @@ from nextcord.__main__ import parse_args
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
-from .errors import InvalidCommandType, ApplicationCommandCheckFailure, ApplicationCommandError
+from .errors import InvalidCommandType, ApplicationCheckFailure, ApplicationError
 from .interactions import Interaction
 from .guild import Guild
 from .member import Member
@@ -342,7 +341,7 @@ class CommandOption(SlashOption):
             ret["autocomplete"] = self.autocomplete
         return ret
 
-ApplicationCommandErrorCallback = Optional[Union[Callable[["ClientCog", ApplicationCommandError], Awaitable[Any]], Callable[[ApplicationCommandError], Awaitable[Any]]]]
+ApplicationErrorCallback = Optional[Union[Callable[["ClientCog", ApplicationError], Awaitable[Any]], Callable[[ApplicationError], Awaitable[Any]]]]
 class ApplicationSubcommand:
     def __init__(
         self,
@@ -383,7 +382,7 @@ class ApplicationSubcommand:
         self.options: Dict[str, CommandOption] = {}
         self.children: Dict[str, ApplicationSubcommand] = {}
 
-        self._error_callback: ApplicationCommandErrorCallback
+        self._error_callback: ApplicationErrorCallback
         if parent_command is not MISSING and parent_command._error_callback:
             self._error_callback = parent_command._error_callback
         else:
@@ -459,7 +458,7 @@ class ApplicationSubcommand:
             return self.name
 
     @property
-    def error_callback(self) -> Optional[ApplicationCommandErrorCallback]:
+    def error_callback(self) -> Optional[ApplicationErrorCallback]:
         """Returns the error callback associated with this ApplicationCommand. This callback can be inherited from the parent application command."""
         if self._error_callback:
             return self._error_callback
@@ -730,7 +729,7 @@ class ApplicationSubcommand:
 
         await self.invoke_slash(interaction, **kwargs)
 
-    async def _raise_application_command_error(self, error: ApplicationCommandError) -> None:
+    async def _raise_application_command_error(self, error: ApplicationError) -> None:
 
         if self.error_callback:
             if self._self_argument:
@@ -748,7 +747,7 @@ class ApplicationSubcommand:
         interaction: :class:`Interaction`
             Interaction associated with the application command event.
         raise_exceptions: :class:`bool`
-            Whether or not to raise exceptions if the command can't be run. If ``True``, :class:`ApplicationCommandCheckFailure` exceptions will be fowarded to the :attr:`ApplicationCommand.error_callback` and :meth:`.Bot.on_command_error`. If neither are set, the exception will be raised.
+            Whether or not to raise exceptions if the command can't be run. If ``True``, :class:`ApplicationCheckFailure` exceptions will be fowarded to the :attr:`ApplicationCommand.error_callback` and :meth:`.Bot.on_command_error`. If neither are set, the exception will be raised.
         """
         for check in self.checks:
             try:
@@ -756,8 +755,8 @@ class ApplicationSubcommand:
                     check_result = await check(interaction)
                 else:
                     check_result = check(interaction)
-            # To catch any subclasses of ApplicationCommandCheckFailure.
-            except ApplicationCommandCheckFailure as error:
+            # To catch any subclasses of ApplicationCheckFailure.
+            except ApplicationCheckFailure as error:
                 if raise_exceptions:
                     await self._raise_application_command_error(error)
 
@@ -765,7 +764,7 @@ class ApplicationSubcommand:
             # If the check returns False, the command can't be run.
             else:
                 if not check_result:
-                    error = ApplicationCommandCheckFailure(f"The check functions for application command {self.qualified_name} failed.")
+                    error = ApplicationCheckFailure(f"The check functions for application command {self.qualified_name} failed.")
 
                     if raise_exceptions:
                         await self._raise_application_command_error(error)
@@ -793,12 +792,12 @@ class ApplicationSubcommand:
 
     # Decorators
 
-    def error(self, callback: ApplicationCommandErrorCallback) -> None:
-        """Decorates a function, setting it as a callback to be called when a :class:`ApplicationCommandError` or any of its subclasses is raised inside the :class:`ApplicationCommand`.
+    def error(self, callback: ApplicationErrorCallback) -> None:
+        """Decorates a function, setting it as a callback to be called when a :class:`ApplicationError` or any of its subclasses is raised inside the :class:`ApplicationCommand`.
 
         Parameters
         ----------
-        callback: Callable[[:class:`ApplicationCommandError`], :class:`asyncio.Awaitable[Any]`]
+        callback: Callable[[:class:`ApplicationError`], :class:`asyncio.Awaitable[Any]`]
             The callback to call when an error occurs.
         """
 
