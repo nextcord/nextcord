@@ -33,6 +33,7 @@ from .errors import (
     ApplicationMissingRole,
     ApplicationMissingAnyRole,
     ApplicationBotMissingRole,
+    ApplicationBotMissingAnyRole
 )
 
 if TYPE_CHECKING:
@@ -243,4 +244,28 @@ def bot_has_role(item: int) -> Callable[[T], T]:
         if role is None:
             raise ApplicationBotMissingRole(item)
         return True
+    return check(predicate)
+
+def bot_has_any_role(*items: int) -> Callable[[T], T]:
+    """Similar to :func:`.has_any_role` except checks if the bot itself has
+    any of the roles listed.
+
+    This check raises one of two special exceptions, :exc:`.BotMissingAnyRole` if the bot
+    is missing all roles, or :exc:`.NoPrivateMessage` if it is used in a private message.
+    Both inherit from :exc:`.CheckFailure`.
+
+    .. versionchanged:: 1.1
+
+        Raise :exc:`.BotMissingAnyRole` or :exc:`.NoPrivateMessage`
+        instead of generic checkfailure
+    """
+    def predicate(interaction: Interaction) -> bool:
+        if interaction.guild is None:
+            raise ApplicationNoPrivateMessage()
+
+        me = interaction.guild.me
+        getter = functools.partial(utils.get, me.roles)
+        if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in items):
+            return True
+        raise ApplicationBotMissingAnyRole(list(items))
     return check(predicate)

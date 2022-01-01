@@ -60,7 +60,8 @@ __all__ = (
     'ApplicationNoPrivateMessage',
     'ApplicationMissingRole',
     'ApplicationMissingAnyRole',
-    'ApplicationBotMissingRole'
+    'ApplicationBotMissingRole',
+    'ApplicationBotMissingAnyRole'
 )
 
 
@@ -418,4 +419,32 @@ class ApplicationBotMissingRole(ApplicationCheckFailure):
     def __init__(self, missing_role: Snowflake) -> None:
         self.missing_role: Snowflake = missing_role
         message = f'Bot requires the role {missing_role!r} to run this command'
+        super().__init__(message)
+
+class ApplicationBotMissingAnyRole(ApplicationCheckFailure):
+    """Exception raised when the bot's member lacks any of
+    the roles specified to run a command.
+
+    This inherits from :exc:`ApplicationCheckFailure`
+
+    .. versionadded:: 1.1
+
+    Attributes
+    -----------
+    missing_roles: List[Union[:class:`str`, :class:`int`]]
+        The roles that the bot's member is missing.
+        These are the parameters passed to :func:`~.commands.has_any_role`.
+
+    """
+    def __init__(self, missing_roles: SnowflakeList) -> None:
+        self.missing_roles: SnowflakeList = missing_roles
+
+        missing = [f"'{role}'" for role in missing_roles]
+
+        if len(missing) > 2:
+            fmt = '{}, or {}'.format(", ".join(missing[:-1]), missing[-1])
+        else:
+            fmt = ' or '.join(missing)
+
+        message = f"Bot is missing at least one of the required roles: {fmt}"
         super().__init__(message)
