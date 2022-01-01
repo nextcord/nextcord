@@ -105,7 +105,7 @@ class Interaction:
     data: :class:`dict`
         The raw interaction data.
     client: :class:`Client`
-        The client that handled the interaction.
+        The client that handled the interaction. Can be a subclass of :class:`Client`.
     bot: :class:`Client`:
         An alias for ``client``.
     """
