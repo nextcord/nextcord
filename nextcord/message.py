@@ -1237,12 +1237,18 @@ class Message(Hashable):
             the view is removed.
         file: Optional[:class:`File`]
             A new file to add to the message.
+
+            .. versionadded:: 2.0
         files: Optional[List[:class:`File`]]
             A list of new files to add to the message.
+
+            .. versionadded:: 2.0
         append_files: Optional[:class:`bool`]
             Whether to append files to the message.
             If set to True (default), files will be appended to the message.
             If set to False, files will override the current files on the message.
+
+            .. versionadded:: 2.0
 
         Raises
         -------
