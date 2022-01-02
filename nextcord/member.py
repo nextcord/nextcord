@@ -789,8 +789,10 @@ class Member(abc.Messageable, _UserTag):
             ).isoformat()
         elif isinstance(timeout, datetime.datetime):
             payload['communication_disabled_until'] = timeout.isoformat()
-        elif timeout is MISSING or timeout is None:
+        elif timeout is None:
             payload['communication_disabled_until'] = None
+        elif timeout is MISSING:
+            pass
         else:
             raise TypeError(
                 "Timeout must be a `datetime.datetime` or `datetime.timedelta`"
