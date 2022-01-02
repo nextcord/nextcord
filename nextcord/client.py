@@ -54,6 +54,7 @@ from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
 from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
+from .checks import check
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, InteractionType, Status, VoiceRegion
@@ -79,7 +80,7 @@ from .template import Template
 from .threads import Thread
 from .ui.view import View
 from .user import ClientUser, User
-from .utils import MISSING
+from .utils import MISSING, async_all
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
@@ -87,11 +88,12 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
-    from .application_command import ApplicationCommand, ClientCog
+    from .application_command import ApplicationCommand, ClientCog, ApplicationSubcommand
     from .channel import DMChannel
     from .member import Member
     from .message import Message
     from .voice_client import VoiceProtocol
+    from .types.checks import ApplicationCheck
 
 
 __all__ = (
@@ -303,6 +305,9 @@ class Client:
         self._rollout_update_known: bool = options.pop("rollout_update_known", True)
         self._application_commands_to_add: Set[ApplicationCommand] = set()
 
+        # Global application command checks
+        self._application_checks: List[ApplicationCheck] = []
+
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
             _log.warning("PyNaCl is not installed, voice will NOT be supported")
@@ -490,6 +495,28 @@ class Client:
         """
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
+
+    async def on_application_error(self, interaction: Interaction, application_command: Union[ApplicationSubcommand, ApplicationCommand], exception: ApplicationError) -> None:
+        """|coro|
+
+        The default application command error handler provided by the bot.
+
+        By default this prints to :data:`sys.stderr` however it could be
+        overridden to have a different implementation.
+
+        This only fires if you do not specify any listeners for command error.
+        """
+        if application_command and application_command.has_error_handler():
+            await application_command.on_error(interaction, exception)
+            return
+
+        # TODO implement cog error handling
+        # cog = context.cog
+        # if cog and cog.has_error_handler():
+        #     return
+
+        print(f'Ignoring exception in command {application_command}:', file=sys.stderr)
+        traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
 
     # hooks
 
@@ -1758,6 +1785,48 @@ class Client:
         """
         return self._connection.persistent_views
 
+    async def _raise_application_error(self, interaction: Interaction, application_command: Union[ApplicationSubcommand, ApplicationCommand], error: ApplicationError) -> None:
+        await self.dispatch('application_error', interaction, application_command, error)
+
+    async def verify_checks(self, interaction: Interaction, application_command: Union[ApplicationSubcommand, ApplicationCommand], raise_exceptions: bool = True) -> bool:
+        """Validates the global checks associated with this command.
+        Parameters
+        ----------
+        interaction: :class:`Interaction`
+            Interaction associated with the application command event.
+        application_command: Union[:class:`ApplicationSubcommand`, :class:`ApplicationCommand`]
+            The application command object.
+        raise_exceptions: :class:`bool`
+            Whether or not to raise exceptions if the command can't be run.
+        """
+        
+        # TODO: Foward exceptions to client.on_application_error event
+        for check in self._application_checks:
+            try:
+                if asyncio.iscoroutinefunction(check):
+                    check_result = await check(interaction)
+                else:
+                    check_result = check(interaction)
+            # To catch any subclasses of ApplicationCheckFailure.
+            except ApplicationCheckFailure as error:
+
+                if raise_exceptions:
+                    await self._raise_application_error(interaction, application_command, error)
+
+                return False
+            # If the check returns False, the command can't be run.
+            else:
+                if not check_result:
+                    error = ApplicationCheckFailure(f"The global check functions for application command {application_command.qualified_name} failed.")
+
+                    if raise_exceptions:
+                        await self._raise_application_error(interaction, application_command, error)
+
+
+                    return False
+        
+        return True
+
     async def on_interaction(self, interaction: Interaction):
         await self.process_application_commands(interaction)
 
@@ -1939,6 +2008,38 @@ class Client:
     def add_cog(self, cog: ClientCog) -> None:
         self._client_cogs.add(cog)
 
+    def add_application_check(self, func: ApplicationCheck) -> None:
+        """Adds a global application check to the bot.
+
+        This is the non-decorator interface to :meth:`.check`
+        and :meth:`.check_once`.
+
+        Parameters
+        -----------
+        func
+            The function that was used as a global application check.
+        """
+
+        self._application_checks.append(func)
+
+    def remove_application_check(self, func: ApplicationCheck) -> None:
+        """Removes a global check from the bot.
+
+        This function is idempotent and will not raise an exception
+        if the function is not in the global checks.
+
+        Parameters
+        -----------
+        func
+            The function to remove from the global application checks.
+        """
+
+        try:
+            self._application_checks.remove(func)
+        except ValueError:
+            pass
+
+
     def user_command(
             self,
             name: str = MISSING,
@@ -2034,3 +2135,30 @@ class Client:
             return result
 
         return decorator
+
+    def application_check(self, func: Callable) -> ApplicationCheck:
+        r"""A decorator that adds a global application check to the bot.
+
+        A global check is similar to a :func:`.check` that is applied
+        on a per command basis except it is run before any command checks
+        have been verified and applies to every command the bot has.
+
+        .. note::
+
+            This function can either be a regular function or a coroutine.
+
+        Similar to a command :func:`.check`\, this takes a single parameter
+        of type :class:`.Interaction` and can only raise exceptions inherited from
+        :exc:`.ApplicationError`.
+
+        Example
+        ---------
+
+        .. code-block:: python3
+
+            @client.check
+            def check_commands(interaction: Interaction):
+                return ctx.command.qualified_name in allowed_commands
+
+        """
+        return self.add_application_check(func)

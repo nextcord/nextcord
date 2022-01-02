@@ -383,17 +383,15 @@ class ApplicationSubcommand:
         self.children: Dict[str, ApplicationSubcommand] = {}
 
         self._error_callback: ApplicationErrorCallback
-        if parent_command is not MISSING and parent_command._error_callback:
+        if parent_command is not MISSING and getattr(parent_command, '_error_callback', False):
             self._error_callback = parent_command._error_callback
-        else:
-            self._error_callback = None
 
         # self._on_autocomplete: Dict[str, Callable] = {}  # TODO: Maybe move the callbacks into the CommandOptions?
 
         if callback:
             self._from_callback(callback)
 
-        self.checks: List['ApplicationCheck'] = []
+        self.checks: List[ApplicationCheck] = []
 
         try:
             checks = callback.__slash_command_checks__
@@ -458,7 +456,7 @@ class ApplicationSubcommand:
             return self.name
 
     @property
-    def error_callback(self) -> Optional[ApplicationErrorCallback]:
+    def on_error(self) -> Optional[ApplicationErrorCallback]:
         """Returns the error callback associated with this ApplicationCommand. This callback can be inherited from the parent application command."""
         if self._error_callback:
             return self._error_callback
@@ -466,6 +464,9 @@ class ApplicationSubcommand:
             return self.parent_command._error_callback
         else:
             return None
+
+    def __str__(self) -> str:
+        return self.qualified_name
 
     def set_callback(self, callback: Callable) -> ApplicationSubcommand:
         """Sets the callback associated with this ApplicationCommand."""
@@ -479,7 +480,7 @@ class ApplicationSubcommand:
         self._self_argument = self_arg
         return self
 
-    def add_check(self, func: 'ApplicationCheck') -> ApplicationSubcommand:
+    def add_check(self, func: ApplicationCheck) -> ApplicationSubcommand:
         """Adds a check to the ApplicationCommand.
 
         This function is idempotent and will not raise an exception if the function is not in the command’s checks.
@@ -492,7 +493,7 @@ class ApplicationSubcommand:
         self.checks.append(func)
         return self
 
-    def remove_check(self, func: 'ApplicationCheck') -> ApplicationSubcommand:
+    def remove_check(self, func: ApplicationCheck) -> ApplicationSubcommand:
         """Removes a check from the ApplicationCommand.
 
         This function is idempotent and will not raise an exception
@@ -640,6 +641,11 @@ class ApplicationSubcommand:
         else:
             raise TypeError(f"{self.error_name} Autocomplete is not handled by this type of command.")
 
+    def has_error_handler(self) -> bool:
+        """:class:`bool`: Checks whether the command has an error handler registered.
+        """
+        return hasattr(self, '_error_callback')
+
     async def invoke_autocomplete(
             self,
             interaction: Interaction,
@@ -729,19 +735,20 @@ class ApplicationSubcommand:
 
         await self.invoke_slash(interaction, **kwargs)
 
-    async def _raise_application_command_error(self, interaction: Interaction, error: ApplicationError) -> None:
+    async def _raise_application_error(self, interaction: Interaction, error: ApplicationError) -> None:
 
-        if self.error_callback:
+        interaction.bot.dispatch('application_error', interaction, self, error)
+
+        if self.has_error_handler():
             if self._self_argument:
-                await self.error_callback(self._self_argument, interaction, error)
+                await self.on_error(self._self_argument, interaction, error)
             else:
-                await self.error_callback(interaction, error)
+                await self.on_error(interaction, error)
         else:
             raise error
 
     async def verify_checks(self, interaction: Interaction, raise_exceptions: bool = True) -> bool:
-        """Validates the checks associated with this command.
-        This function only validates checks locally, it does not verify bot or cog checks. It will, however, validate checks inherited from the parent ApplicationCommand.
+        """Validates the checks associated with this command. Will verify global, cog, and local checks.
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -749,6 +756,10 @@ class ApplicationSubcommand:
         raise_exceptions: :class:`bool`
             Whether or not to raise exceptions if the command can't be run. If ``True``, :class:`ApplicationCheckFailure` exceptions will be fowarded to the :attr:`ApplicationCommand.error_callback` and :meth:`.Bot.on_command_error`. If neither are set, the exception will be raised.
         """
+        
+        if not await interaction.client.verify_checks(interaction, self, raise_exceptions = raise_exceptions):
+            return False
+
         for check in self.checks:
             try:
                 if asyncio.iscoroutinefunction(check):
@@ -758,16 +769,16 @@ class ApplicationSubcommand:
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure as error:
                 if raise_exceptions:
-                    await self._raise_application_command_error(interaction, error)
+                    await self._raise_application_error(interaction, error)
 
                 return False
             # If the check returns False, the command can't be run.
             else:
                 if not check_result:
-                    error = ApplicationCheckFailure(f"The check functions for application command {self.qualified_name} failed.")
+                    error = ApplicationCheckFailure(f"The global check functions for application command {self.qualified_name} failed.")
 
                     if raise_exceptions:
-                        await self._raise_application_command_error(interaction, error)
+                        await self._raise_application_error(interaction, error)
 
                     return False
 

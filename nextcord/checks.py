@@ -54,16 +54,71 @@ __all__ = (
 T = TypeVar('T')
 
 def check(predicate: 'ApplicationCheck') -> Callable[[T], T]:
-    r"""A decorator that adds a check to the :class:`ApplicationSubcommand` or its
-    subclasses. These checks could be accessed via :attr:`ApplicationSubcommand.checks`.
+    r"""A decorator that adds a check to the :class:`.ApplicationCommand` or its
+    subclasses. These checks could be accessed via :attr:`.ApplicationCommand.checks`.
+
     These checks should be predicates that take in a single parameter taking
     a :class:`.Interaction`. If the check returns a ``False``\-like value then
-    during invocation a :exc:`ApplicationCheckFailure` exception is raised and sent to
-    the :func:`.on_command_error` event.
+    during invocation a :exc:`.ApplicationCheckFailure` exception is raised and sent to
+    the :func:`.on_application_error` event.
+
     If an exception should be thrown in the predicate then it should be a
     subclass of :exc:`.ApplicationError`. Any exception not subclassed from it
     will be propagated while those subclassed will be sent to
-    :func:`.on_application_command_error`.
+    :func:`.on_application_error`.
+
+    A special attribute named ``predicate`` is bound to the value
+    returned by this decorator to retrieve the predicate passed to the
+    decorator. This allows the following introspection and chaining to be done:
+
+    .. code-block:: python3
+
+        def owner_or_permissions(**perms):
+            original = commands.has_permissions(**perms).predicate
+            async def extended_check(interaction: Interaction):
+                if interaction.guild is None:
+                    return False
+                return interaction.guild.owner_id == interaction.user.id or await original(interaction)
+            return commands.check(extended_check)
+
+    .. note::
+
+        The function returned by ``predicate`` is **always** a coroutine,
+        even if the original function was not a coroutine.
+
+    Examples
+    ---------
+
+    Creating a basic check to see if the command invoker is you.
+
+    .. code-block:: python3
+
+        def check_if_it_is_me(interaction: Interaction):
+            return interaction.message.author.id == 85309593344815104
+
+        @bot.slash_command()
+        @checks.check(check_if_it_is_me)
+        async def only_for_me(interaction: Interaction):
+            await interaction.response.send_message('I know you!')
+
+    Transforming common checks into its own decorator:
+
+    .. code-block:: python3
+
+        def is_me():
+            def predicate(interaction: Interaction):
+                return ctx.message.author.id == 85309593344815104
+            return commands.check(predicate)
+
+        @bot.slash_command()
+        @is_me()
+        async def only_me(interaction: Interaction):
+            await interaction.response.send_message('Only you!')
+
+    Parameters
+    -----------
+    predicate: Callable[[:class:`Interaction`], :class:`bool`]
+        The predicate to check if the command should be invoked.
     """
 
     def decorator(func: Union[ApplicationSubcommand, 'CoroFunc']) -> Union[ApplicationSubcommand, 'CoroFunc']:
