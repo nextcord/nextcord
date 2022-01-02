@@ -328,6 +328,7 @@ class RawMemberRemoveEvent(_RawReprMixin):
         The guild ID where the member left from.
     user: :class:`User`
         The user who left the guild."""
+
     __slots__ = ("guild_id", "user")
 
     def __init__(self, data: MemberRemoveEvent) -> None:
