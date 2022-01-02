@@ -101,7 +101,8 @@ class SlashOption:
             name: str = MISSING,
             description: str = MISSING,
             required: bool = MISSING,
-            choices: Dict[str, Union[str, int, float]] = MISSING,
+            # choices: Dict[str, Union[str, int, float]] = MISSING,
+            choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]] = MISSING,
             channel_types: List[ChannelType] = MISSING,
             min_value: Union[int, float] = MISSING,
             max_value: Union[int, float] = MISSING,
@@ -116,14 +117,17 @@ class SlashOption:
 
         Parameters
         ----------
-        name: Optional[:class:`str`]
+        name: :class:`str`
             The name of the Option on Discords side. If left as None, it defaults to the parameter name.
-        description: Optional[:class:'str']
+        description: :class:'str'
             The description of the Option on Discords side. If left as None, it defaults to "".
-        required: Optional[:class:'bool']
+        required: :class:'bool'
             If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
-        choices: Optional[:class:`bool`]
-            Dictionary of choices. The keys are what the user sees, the values correspond to what is sent to us.
+        choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]], Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
+            A list of choices that a user must choose.
+            If a :class:`dict` is given, the keys are what the users are able to see, the values are what is sent back
+            to the bot.
+            Otherwise, it is treated as an `Iterable` where what the user sees and is sent back to the bot are the same.
         channel_types: List[:class:`ChannelType`]
             List of `ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
             typed as :class:`GuildChannel` for this to function.
@@ -144,7 +148,7 @@ class SlashOption:
         self.name: Optional[str] = name
         self.description: Optional[str] = description
         self.required: Optional[bool] = required
-        self.choices: Optional[dict] = choices
+        self.choices: Optional[Union[Iterable, dict]] = choices
         self.channel_types: Optional[List[ChannelType]] = channel_types
         self.min_value: Optional[Union[int, float]] = min_value
         self.max_value: Optional[Union[int, float]] = max_value
@@ -275,15 +279,21 @@ class CommandOption(SlashOption):
                 ApplicationCommandOptionType.integer, ApplicationCommandOptionType.number):
             raise ValueError("min_value or max_value can only be set if the type is integer or number.")
 
-    def handle_slash_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
+    async def handle_slash_argument(self, state: ConnectionState, argument: Any, interaction: Interaction) -> Any:
         """Handles arguments, specifically for Slash Commands."""
         if self.type is ApplicationCommandOptionType.channel:
             return state.get_channel(int(argument))
         elif self.type is ApplicationCommandOptionType.user:
-            if interaction.guild:
-                return interaction.guild.get_member(int(argument))
+            user_id = int(argument)
+            ret = interaction.guild.get_member(user_id) if interaction.guild else state.get_user(user_id)
+            if ret:
+                return ret
             else:
-                return state.get_user(int(argument))
+                # The interaction data gives a dictionary of resolved users, best to use it if cache isn't available.
+                resolved_users_payload = interaction.data["resolved"]["users"]
+                resolved_users = {int(raw_id): state.store_user(user_payload) for
+                                  raw_id, user_payload in resolved_users_payload.items()}
+                return resolved_users[user_id]
         elif self.type is ApplicationCommandOptionType.role:
             return interaction.guild.get_role(int(argument))
         elif self.type is ApplicationCommandOptionType.integer:
@@ -294,11 +304,11 @@ class CommandOption(SlashOption):
             return state._get_message(int(argument))
         return argument
 
-    def handle_message_argument(self, *args: List[Any]):
+    async def handle_message_argument(self, *args: List[Any]):
         """For possible future use, will handle arguments specific to Message Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
-    def handle_user_argument(self, *args: List[Any]):
+    async def handle_user_argument(self, *args: List[Any]):
         """For possible future use, will handle arguments specific to User Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
@@ -329,7 +339,10 @@ class CommandOption(SlashOption):
             ret["required"] = True
 
         if self.choices:
-            ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
+            if isinstance(self.choices, dict):
+                ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
+            else:
+                ret["choices"] = [{"name": value, "value": value} for value in self.choices]
         if self.channel_types:
             # noinspection PyUnresolvedReferences
             ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
@@ -534,9 +547,9 @@ class ApplicationSubcommand:
                 if option := uncalled_options.get(arg_data["name"], None):
                     uncalled_options.pop(option.name)
                     if option.functional_name in autocomplete_kwargs:
-                        kwargs[option.functional_name] = option.handle_slash_argument(state, arg_data["value"], interaction)
+                        kwargs[option.functional_name] = await option.handle_slash_argument(state, arg_data["value"], interaction)
                 elif arg_data["name"] == focused_option.name:
-                    focused_option_value = focused_option.handle_slash_argument(state, arg_data["value"], interaction)
+                    focused_option_value = await focused_option.handle_slash_argument(state, arg_data["value"], interaction)
                 else:
                     # TODO: Handle this better.
                     raise NotImplementedError(
@@ -630,7 +643,7 @@ class ApplicationSubcommand:
             if arg_data["name"] in uncalled_args:
                 uncalled_args.pop(arg_data["name"])
                 kwargs[self.options[arg_data["name"]].functional_name] = \
-                    self.options[arg_data["name"]].handle_slash_argument(state, arg_data["value"], interaction)
+                    await self.options[arg_data["name"]].handle_slash_argument(state, arg_data["value"], interaction)
             else:
                 # TODO: Handle this better.
                 raise NotImplementedError(
@@ -690,7 +703,6 @@ class ApplicationSubcommand:
                         return func
                     return decorator
                 else:
-                    print(type(option.autocomplete))
                     raise ValueError(f"{self.error_name} autocomplete for kwarg {on_kwarg} not enabled, cannot add "
                                      f"autocomplete function.")
         if found is False:
@@ -913,6 +925,7 @@ class ApplicationCommand(ApplicationSubcommand):
         self.set_state(state)
         command_id = int(data["id"])
         if guild_id := data.get("guild_id", None):
+            guild_id = int(guild_id)
             self._command_ids[guild_id] = command_id
             self._guild_ids.add(guild_id)
             self.add_guild_rollout(guild_id)
