@@ -37,6 +37,8 @@ if TYPE_CHECKING:
 
     from .interactions import Interaction
     from .types.snowflake import Snowflake, SnowflakeList
+    from .abc import GuildChannel
+    from .threads import Thread
 
 __all__ = (
     'DiscordException',
@@ -65,7 +67,8 @@ __all__ = (
     'ApplicationMissingPermissions',
     'ApplicationBotMissingPermissions',
     'ApplicationPrivateMessageOnly',
-    'ApplicationNotOwner'
+    'ApplicationNotOwner',
+    'ApplicationNSFWChannelRequired'
 )
 
 
@@ -515,3 +518,19 @@ class ApplicationNotOwner(ApplicationCheckFailure):
     This inherits from :exc:`ApplicationCheckFailure`
     """
     pass
+
+class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
+    """Exception raised when a channel does not have the required NSFW setting.
+
+    This inherits from :exc:`ApplicationCheckFailure`.
+
+    .. versionadded:: 1.1
+
+    Parameters
+    -----------
+    channel: Union[:class:`.abc.GuildChannel`, :class:`.Thread`]
+        The channel that does not have NSFW enabled.
+    """
+    def __init__(self, channel: Union[GuildChannel, Thread]) -> None:
+        self.channel: Union[GuildChannel, Thread] = channel
+        super().__init__(f"Channel '{channel}' needs to be NSFW for this command to work.")

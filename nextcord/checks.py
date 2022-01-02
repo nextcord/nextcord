@@ -37,7 +37,8 @@ from .errors import (
     ApplicationMissingPermissions,
     ApplicationBotMissingPermissions,
     ApplicationPrivateMessageOnly,
-    ApplicationNotOwner
+    ApplicationNotOwner,
+    ApplicationNSFWChannelRequired
 )
 
 if TYPE_CHECKING:
@@ -441,3 +442,16 @@ def is_owner() -> Callable[[T], T]:
         return True
 
     return check(predicate)
+
+def is_nsfw() -> Callable[[T], T]:
+    """A :func:`.check` that checks if the channel is a NSFW channel.
+
+    This check raises a special exception, :exc:`.ApplicationNSFWChannelRequired`
+    that is derived from :exc:`.ApplicationCheckFailure`.
+    """
+    def pred(interaction: Interaction) -> bool:
+        ch = interaction.channel
+        if interaction.guild is None or (isinstance(ch, (nextcord.TextChannel, nextcord.Thread)) and ch.is_nsfw()):
+            return True
+        raise ApplicationNSFWChannelRequired(ch)  # type: ignore
+    return check(pred)
