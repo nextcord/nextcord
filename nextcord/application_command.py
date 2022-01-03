@@ -756,10 +756,6 @@ class ApplicationSubcommand:
         raise_exceptions: :class:`bool`
             Whether or not to raise exceptions if the command can't be run. If ``True``, :class:`ApplicationCheckFailure` exceptions will be fowarded to the :attr:`ApplicationCommand.error_callback` and :meth:`.Bot.on_command_error`. If neither are set, the exception will be raised.
         """
-        
-        if not await interaction.client.verify_checks(interaction, self, raise_exceptions = raise_exceptions):
-            return False
-
         for check in self.checks:
             try:
                 if asyncio.iscoroutinefunction(check):

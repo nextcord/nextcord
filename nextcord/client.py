@@ -507,7 +507,6 @@ class Client:
         This only fires if you do not specify any listeners for command error.
         """
         if application_command and application_command.has_error_handler():
-            await application_command.on_error(interaction, exception)
             return
 
         # TODO implement cog error handling
@@ -1786,7 +1785,7 @@ class Client:
         return self._connection.persistent_views
 
     async def _raise_application_error(self, interaction: Interaction, application_command: Union[ApplicationSubcommand, ApplicationCommand], error: ApplicationError) -> None:
-        await self.dispatch('application_error', interaction, application_command, error)
+        self.dispatch('application_error', interaction, application_command, error)
 
     async def verify_checks(self, interaction: Interaction, application_command: Union[ApplicationSubcommand, ApplicationCommand], raise_exceptions: bool = True) -> bool:
         """Validates the global checks associated with this command.
@@ -1800,7 +1799,6 @@ class Client:
             Whether or not to raise exceptions if the command can't be run.
         """
         
-        # TODO: Foward exceptions to client.on_application_error event
         for check in self._application_checks:
             try:
                 if asyncio.iscoroutinefunction(check):
@@ -1844,7 +1842,8 @@ class Client:
             _log.info("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
                 _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
-                await app_cmd.call_from_interaction(interaction)
+                if await self.verify_checks(interaction, app_cmd):
+                    await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
                 _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
                 _log.debug(f"nextcord.Client: {interaction.data}")
@@ -1860,7 +1859,8 @@ class Client:
                         _log.info("nextcord.Client: New interaction command found, Assigning id now")
                         app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
-                        await app_cmd.call_from_interaction(interaction)
+                        if await self.verify_checks(interaction, app_cmd):
+                            await app_cmd.call_from_interaction(interaction)
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
             _log.info("nextcord.Client: Autocomplete interaction received.")
