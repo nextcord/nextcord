@@ -1809,9 +1809,7 @@ class Client:
                     await app_cmd.on_error(app_cmd._self_argument, interaction, error)
                 else:
                     await app_cmd.on_error(interaction, error)
-            else:
-                raise error
-
+                    
     async def application_can_run(self, interaction: Interaction, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]) -> bool:
         
         

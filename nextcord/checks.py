@@ -338,6 +338,9 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
     This check raises a special exception, :exc:`.ApplicationMissingPermissions`
     that is inherited from :exc:`.ApplicationCheckFailure`.
 
+    If this check is called in a DM context, it will raise an
+    exception, :exc:`.ApplicationNoPrivateMessage`.
+
     Parameters
     ------------
     perms
@@ -361,7 +364,10 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
 
     def predicate(interaction: Interaction) -> bool:
         ch = interaction.channel
-        permissions = ch.permissions_for(interaction.user)  # type: ignore
+        try:
+            permissions = ch.permissions_for(interaction.user)  # type: ignore
+        except AttributeError:
+            raise ApplicationNoPrivateMessage()
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
@@ -378,6 +384,9 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
 
     This check raises a special exception, :exc:`.ApplicationBotMissingPermissions`
     that is inherited from :exc:`.ApplicationCheckFailure`.
+
+    If this check is called in a DM context, it will raise an
+    exception, :exc:`.ApplicationNoPrivateMessage`.
     """
 
     invalid = set(perms) - set(nextcord.Permissions.VALID_FLAGS)
@@ -387,7 +396,11 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
     def predicate(interaction: Interaction) -> bool:
         guild = interaction.guild
         me = guild.me if guild is not None else interaction.client.user
-        permissions = interaction.channel.permissions_for(me)  # type: ignore
+        ch = interaction.channel
+        try:
+            permissions = ch.permissions_for(me)  # type: ignore
+        except AttributeError:
+            raise ApplicationNoPrivateMessage()
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
