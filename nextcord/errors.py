@@ -57,6 +57,7 @@ __all__ = (
     'PrivilegedIntentsRequired',
     'InteractionResponded',
     'ApplicationError',
+    'ApplicationInvokeError',
     'ApplicationCheckFailure',
     'ApplicationCheckAnyFailure',
     'ApplicationNoPrivateMessage',
@@ -331,6 +332,21 @@ class ApplicationError(DiscordException):
             super().__init__(m, *args)
         else:
             super().__init__(*args)
+
+class ApplicationInvokeError(ApplicationError):
+    """Exception raised when the command being invoked raised an exception.
+
+    This inherits from :exc:`ApplicationError`
+
+    Attributes
+    -----------
+    original: :exc:`Exception`
+        The original exception that was raised. You can also get this via
+        the ``__cause__`` attribute.
+    """
+    def __init__(self, e: Exception) -> None:
+        self.original: Exception = e
+        super().__init__(f'Command raised an exception: {e.__class__.__name__}: {e}')
 
 class ApplicationCheckFailure(ApplicationError):
     """Exception raised when the predicates in :attr:`.ApplicationCommand.checks` have failed.

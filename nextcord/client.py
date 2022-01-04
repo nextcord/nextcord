@@ -493,6 +493,7 @@ class Client:
         overridden to have a different implementation.
         Check :func:`~nextcord.on_error` for more details.
         """
+
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
 
@@ -509,6 +510,7 @@ class Client:
         if application_command and application_command.has_error_handler():
             return
 
+        print(application_command.has_error_handler())
         # TODO implement cog error handling
         # cog = context.cog
         # if cog and cog.has_error_handler():
@@ -1784,20 +1786,34 @@ class Client:
         """
         return self._connection.persistent_views
 
-    async def _raise_application_error(self, interaction: Interaction, application_command: Union[ApplicationSubcommand, ApplicationCommand], error: ApplicationError) -> None:
-        self.dispatch('application_error', interaction, application_command, error)
+    async def invoke_application_command(self, app_cmd: ApplicationCommand, interaction: Interaction, *args, **kwargs) -> None:
+        """|coro|
+        Validates all checks and invokes the given application command.
 
-    async def verify_checks(self, interaction: Interaction, application_command: Union[ApplicationSubcommand, ApplicationCommand], raise_exceptions: bool = True) -> bool:
-        """Validates the global checks associated with this command.
         Parameters
         ----------
+        app_cmd: :class:`ApplicationCommand`
+            The application command to invoke.
         interaction: :class:`Interaction`
-            Interaction associated with the application command event.
-        application_command: Union[:class:`ApplicationSubcommand`, :class:`ApplicationCommand`]
-            The application command object.
-        raise_exceptions: :class:`bool`
-            Whether or not to raise exceptions if the command can't be run.
+            The interaction to invoke the command with.
         """
+
+        try:
+            if await app_cmd.application_can_run(interaction):
+                await app_cmd.call_from_interaction(interaction, *args, **kwargs)
+        except Exception as error:
+            self.dispatch('application_error', interaction, app_cmd, error)
+
+            if app_cmd.has_error_handler():
+                if app_cmd._self_argument:
+                    await app_cmd.on_error(app_cmd._self_argument, interaction, error)
+                else:
+                    await app_cmd.on_error(interaction, error)
+            else:
+                raise error
+
+    async def application_can_run(self, interaction: Interaction, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]) -> bool:
+        
         
         for check in self._application_checks:
             try:
@@ -1806,22 +1822,13 @@ class Client:
                 else:
                     check_result = check(interaction)
             # To catch any subclasses of ApplicationCheckFailure.
-            except ApplicationCheckFailure as error:
-
-                if raise_exceptions:
-                    await self._raise_application_error(interaction, application_command, error)
-
-                return False
+            except ApplicationCheckFailure:
+                raise
             # If the check returns False, the command can't be run.
             else:
                 if not check_result:
-                    error = ApplicationCheckFailure(f"The global check functions for application command {application_command.qualified_name} failed.")
-
-                    if raise_exceptions:
-                        await self._raise_application_error(interaction, application_command, error)
-
-
-                    return False
+                    error = ApplicationCheckFailure(f"The global check functions for application command {app_cmd.qualified_name} failed.")
+                    raise error
         
         return True
 
@@ -1842,8 +1849,7 @@ class Client:
             _log.info("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
                 _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
-                if await self.verify_checks(interaction, app_cmd):
-                    await app_cmd.call_from_interaction(interaction)
+                await self.invoke_application_command(app_cmd, interaction)
             elif self._lazy_load_commands:
                 _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
                 _log.debug(f"nextcord.Client: {interaction.data}")
@@ -1859,8 +1865,7 @@ class Client:
                         _log.info("nextcord.Client: New interaction command found, Assigning id now")
                         app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
-                        if await self.verify_checks(interaction, app_cmd):
-                            await app_cmd.call_from_interaction(interaction)
+                        await self.invoke_application_command(app_cmd, interaction)
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
             _log.info("nextcord.Client: Autocomplete interaction received.")

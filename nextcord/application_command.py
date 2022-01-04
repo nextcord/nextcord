@@ -23,6 +23,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 import asyncio
+import functools
 from inspect import signature, Parameter
 from typing import (
     Any,
@@ -43,7 +44,7 @@ from nextcord.__main__ import parse_args
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
-from .errors import InvalidCommandType, ApplicationCheckFailure, ApplicationError
+from .errors import InvalidCommandType, ApplicationCheckFailure, ApplicationError, ApplicationInvokeError
 from .interactions import Interaction
 from .guild import Guild
 from .member import Member
@@ -382,9 +383,9 @@ class ApplicationSubcommand:
         self.options: Dict[str, CommandOption] = {}
         self.children: Dict[str, ApplicationSubcommand] = {}
 
-        self._error_callback: ApplicationErrorCallback
-        if parent_command is not MISSING and getattr(parent_command, '_error_callback', False):
-            self._error_callback = parent_command._error_callback
+        self.on_error: ApplicationErrorCallback
+        if parent_command is not MISSING and getattr(parent_command, 'on_error', False):
+            self.on_error = parent_command.on_error
 
         # self._on_autocomplete: Dict[str, Callable] = {}  # TODO: Maybe move the callbacks into the CommandOptions?
 
@@ -454,16 +455,6 @@ class ApplicationSubcommand:
             return parent + ' ' + self.name
         else:
             return self.name
-
-    @property
-    def on_error(self) -> Optional[ApplicationErrorCallback]:
-        """Returns the error callback associated with this ApplicationCommand. This callback can be inherited from the parent application command."""
-        if self._error_callback:
-            return self._error_callback
-        elif self.parent_command is not MISSING and self.parent_command._error_callback:
-            return self.parent_command._error_callback
-        else:
-            return None
 
     def __str__(self) -> str:
         return self.qualified_name
@@ -644,7 +635,7 @@ class ApplicationSubcommand:
     def has_error_handler(self) -> bool:
         """:class:`bool`: Checks whether the command has an error handler registered.
         """
-        return hasattr(self, '_error_callback')
+        return hasattr(self, 'on_error')
 
     async def invoke_autocomplete(
             self,
@@ -691,8 +682,7 @@ class ApplicationSubcommand:
             await self.children[option_data[0]["name"]].call(state, interaction, option_data[0].get("options", {}))
         elif self.type in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):
             # Slash commands are able to have subcommands, therefore that is handled here.
-            if await self.verify_checks(interaction):
-                await self.call_invoke_slash(state, interaction, option_data)
+            await self.call_invoke_slash(state, interaction, option_data)
         else:
             # Anything that can't be handled in here should be raised for ApplicationCommand to handle.
             # TODO: Figure out how to hide this in exception trace log, people don't need to see it.
@@ -735,9 +725,8 @@ class ApplicationSubcommand:
 
         await self.invoke_slash(interaction, **kwargs)
 
-    async def _raise_application_error(self, interaction: Interaction, error: ApplicationError) -> None:
-
-        interaction.bot.dispatch('application_error', interaction, self, error)
+    # This method is only meant to be called by nextcord.Client
+    async def _send_error(self, interaction: Interaction, error: ApplicationError) -> None:
 
         if self.has_error_handler():
             if self._self_argument:
@@ -747,15 +736,30 @@ class ApplicationSubcommand:
         else:
             raise error
 
-    async def verify_checks(self, interaction: Interaction, raise_exceptions: bool = True) -> bool:
-        """Validates the checks associated with this command. Will verify global, cog, and local checks.
+    async def application_can_run(self, interaction: Interaction) -> bool:
+        """|coro|
+
+        Checks if the command can be executed by checking all the predicates
+        inside the :attr:`~ApplicationCommand.checks` attribute, as well as all global and cog checks.
+
         Parameters
-        ----------
-        interaction: :class:`Interaction`
-            Interaction associated with the application command event.
-        raise_exceptions: :class:`bool`
-            Whether or not to raise exceptions if the command can't be run. If ``True``, :class:`ApplicationCheckFailure` exceptions will be fowarded to the :attr:`ApplicationCommand.error_callback` and :meth:`.Bot.on_command_error`. If neither are set, the exception will be raised.
+        -----------
+        interaction: :class:`.Interaction`
+            The interaction of the command currently being invoked.
+
+        Raises
+        -------
+        :class:`ApplicationError`
+            Any application command error that was raised during a check call will be propagated
+            by this function.
+
+        Returns
+        --------
+        :class:`bool`
+            A boolean indicating if the command can be invoked.
         """
+        if not await interaction.client.application_can_run(interaction, self): return False
+
         for check in self.checks:
             try:
                 if asyncio.iscoroutinefunction(check):
@@ -764,19 +768,12 @@ class ApplicationSubcommand:
                     check_result = check(interaction)
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure as error:
-                if raise_exceptions:
-                    await self._raise_application_error(interaction, error)
-
-                return False
+                raise
             # If the check returns False, the command can't be run.
             else:
                 if not check_result:
-                    error = ApplicationCheckFailure(f"The global check functions for application command {self.qualified_name} failed.")
-
-                    if raise_exceptions:
-                        await self._raise_application_error(interaction, error)
-
-                    return False
+                    error = ApplicationCheckFailure(f"The check functions for application command {self.qualified_name} failed.")
+                    raise error
 
         return True
 
@@ -811,7 +808,7 @@ class ApplicationSubcommand:
         if not asyncio.iscoroutinefunction(callback):
             raise TypeError("The error handler must be a coroutine.")
 
-        self._error_callback = callback
+        self.on_error = callback
         return callback
 
     def on_autocomplete(self, on_kwarg: str) -> Callable:
@@ -1239,11 +1236,9 @@ class ApplicationCommand(ApplicationSubcommand):
             await super().call(state, interaction, option_data)
         except InvalidCommandType:
             if self.type is ApplicationCommandType.message:
-                if await self.verify_checks(interaction):
-                    await self.call_invoke_message(interaction)
+                await self.call_invoke_message(interaction)
             elif self.type is ApplicationCommandType.user:
-                if await self.verify_checks(interaction):
-                    await self.call_invoke_user(interaction)
+                await self.call_invoke_user(interaction)
             else:
                 raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 

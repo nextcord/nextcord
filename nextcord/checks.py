@@ -492,7 +492,7 @@ def is_owner() -> Callable[[T], T]:
     """
 
     async def predicate(interaction: Interaction) -> bool:
-        if not await interaction.bot.is_owner(interaction.user):
+        if not await interaction.client.is_owner(interaction.user):
             raise ApplicationNotOwner('You do not own this bot.')
         return True
 
