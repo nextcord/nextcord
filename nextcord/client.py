@@ -1803,9 +1803,7 @@ class Client:
                 await app_cmd.call_from_interaction(interaction, *args, **kwargs)
         except Exception as error:
             self.dispatch('application_error', interaction, app_cmd, error)
-
-            if app_cmd.has_error_handler():
-                await app_cmd._send_error(interaction, error)
+            await app_cmd._send_error(interaction, error)
 
     async def application_can_run(self, interaction: Interaction, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]) -> bool:
         
