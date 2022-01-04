@@ -611,6 +611,10 @@ class BotBase(GroupMixin):
             help_command.cog = None
         cog._eject(self)
 
+        # TODO: This blind call to nextcord.Client is dumb.
+        super().remove_cog(cog)
+        # See Bot.add_cog() for the reason why.
+
         return cog
 
     @property
@@ -740,6 +744,24 @@ class BotBase(GroupMixin):
         extras: Optional[:class:`dict`]
             A mapping of kwargs to values to be passed to your
             cog's ``__init__`` method as key word arguments.
+
+            Usage ::
+
+                # main.py
+                bot.load_extensions("cogs.me_cog", extras={"keyword_arg": True})
+
+                # cogs/me_cog.py
+                class MeCog(commands.Cog):
+                    def __init__(self, bot, keyword_arg):
+                        self.bot = bot
+                        self.keyword_arg = keyword_arg
+
+                def setup(bot, **kwargs):
+                    bot.add_cog(MeCog(bot, **kwargs))
+
+                # Alternately
+                def setup(bot, keyword_arg):
+                    bot.add_cog(MeCog(bot, keyword_arg))
 
             .. versionadded:: 2.0.0
 

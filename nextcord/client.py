@@ -240,6 +240,13 @@ class Client:
         Whether during the application command rollout to update known applications that share the same signature but
         don't quite match what is registered on Discord. Defaults to ``True``.
 
+    rollout_all_guilds: :class:`bool`
+        Whether during the application command rollout to update to all guilds, instead of only ones with at least one
+        command to roll out to them. Defaults to ``False``
+
+        Warning: While enabling this will prevent "ghost" commands on guilds with removed code references, rolling out
+        to ALL guilds with anything other than a very small bot will likely cause it to get rate limited.
+
 
     Attributes
     -----------
@@ -288,6 +295,7 @@ class Client:
         self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
         self._rollout_register_new: bool = options.pop("rollout_register_new", True)
         self._rollout_update_known: bool = options.pop("rollout_update_known", True)
+        self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
         self._application_commands_to_add: Set[ApplicationCommand] = set()
 
         if VoiceClient.warn_nacl:
@@ -1722,17 +1730,37 @@ class Client:
                 _log.debug(f"nextcord.Client: {interaction.data}")
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 _log.debug(f"nextcord.Client: {response_signature}")
+                do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
                         interaction.data["name"],
                         int(interaction.data['type']),
                         interaction.guild_id
                 ):
                     _log.info("nextcord.Client: Basic signature matches, checking against raw payload.")
+                    # TODO: Lazy load is completely broken. Figure out how to fix it.
                     if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
+                    # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
                         _log.info("nextcord.Client: New interaction command found, Assigning id now")
                         app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
+                    else:
+                        do_deploy = True
+                else:
+                    do_deploy = True
+                if do_deploy:
+                    if interaction.guild:
+                        await interaction.guild.deploy_application_commands(
+                            associate_known=self._rollout_associate_known,
+                            delete_unknown=self._rollout_delete_unknown,
+                            update_known=self._rollout_update_known
+                        )
+                    else:
+                        await self.deploy_application_commands(
+                            associate_known=self._rollout_associate_known,
+                            delete_unknown=self._rollout_delete_unknown,
+                            update_known=self._rollout_update_known
+                        )
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
             _log.info("nextcord.Client: Autocomplete interaction received.")
@@ -1832,11 +1860,36 @@ class Client:
         raise NotImplementedError
 
     async def on_connect(self) -> None:
-        await self.rollout_global_application_commands()
+        self.add_startup_application_commands()
+        await self.rollout_application_commands()
 
-    async def rollout_global_application_commands(self) -> None:
+    def add_startup_application_commands(self) -> None:
+        """Adds application commands for use on startup.
+
+        This is a workaround for the cache (ConnectionState) clearing on startup. This will add all commands that were
+        decorated directly by the bot, and all commands inside added cogs, to the cache.
+        """
         self._add_decorated_application_commands()
         self.add_all_cog_commands()
+
+    async def on_guild_available(self, guild: Guild) -> None:
+        try:
+            if (await guild.rollout_application_commands(
+                    associate_known=self._rollout_associate_known,
+                    delete_unknown=self._rollout_delete_unknown,
+                    update_known=self._rollout_update_known
+            )):
+                pass
+            else:
+                _log.info(f"No locally added commands explicitly registered for {guild.name}|{guild.id}, not checking.")
+        except Forbidden as e:
+            _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
+                         f"enabled? {e}")
+
+    async def rollout_application_commands(self) -> None:
+        """|coro|
+        Deploys global application commands and registers new ones if enabled.
+        """
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(
             data=global_payload,
@@ -1845,30 +1898,11 @@ class Client:
             update_known=self._rollout_update_known
         )
         if self._rollout_register_new:
-            await self.register_new_application_commands(global_payload)
-
-    async def on_guild_available(self, guild: Guild) -> None:
-        try:
-            await self.rollout_guild_application_commands(guild)
-        except Forbidden as e:
-            _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
-                         f"enabled? {e}")
-
-    async def rollout_guild_application_commands(self, guild: Guild) -> None:
-        guild_payload = await self.http.get_guild_commands(self.application_id, guild.id)
-        await guild.deploy_application_commands(
-            data=guild_payload,
-            associate_known=self._rollout_associate_known,
-            delete_unknown=self._rollout_delete_unknown,
-            update_known=self._rollout_update_known
-        )
-        if self._rollout_register_new:
-            await guild.register_new_application_commands(data=guild_payload)
+            await self.register_new_application_commands(data=global_payload)
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
             self.add_application_command(command, use_rollout=True)
-        self._application_commands_to_add.clear()
 
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
@@ -1878,7 +1912,14 @@ class Client:
                     self.add_application_command(cmd, use_rollout=True)
 
     def add_cog(self, cog: ClientCog) -> None:
+        for app_cmd in cog.to_register:
+            self.add_application_command(app_cmd, use_rollout=True)
         self._client_cogs.add(cog)
+
+    def remove_cog(self, cog: ClientCog) -> None:
+        for app_cmd in cog.to_register:
+            self._connection.remove_application_command(app_cmd)
+        self._client_cogs.discard(cog)
 
     def user_command(
             self,

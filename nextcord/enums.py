@@ -464,6 +464,7 @@ class UserFlags(Enum):
     verified_bot = 65536
     verified_bot_developer = 131072
     discord_certified_moderator = 262144
+    known_spammer = 1048576
 
 
 class ActivityType(Enum):

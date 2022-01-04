@@ -2999,6 +2999,44 @@ class Guild(Hashable):
             update_known=update_known
         )
 
+    async def rollout_application_commands(
+            self,
+            associate_known: bool = True,
+            delete_unknown: bool = True,
+            update_known: bool = True,
+            register_new: bool = True
+    ) -> bool:
+        """|coro|
+        Rolls out application commands to the guild, associating, deleting, updating, and/or newly
+        registering as needed.
+
+        Parameters
+        ----------
+        associate_known: :class:`bool`
+            Whether commands on Discord that match a locally added command should be associated with each other.
+            Defaults to ``True``
+        delete_unknown
+        update_known
+        register_new
+
+        Returns
+        -------
+        :class:`bool`
+            ``False`` if no commands that specify a guild have been added to the bot. ``True`` otherwise.
+        """
+        if self._state.get_guild_application_commands(self.id, rollout=True):
+            guild_payload = await self._state.http.get_guild_commands(self._state.application_id, self.id)
+            await self.deploy_application_commands(
+                data=guild_payload,
+                associate_known=associate_known,
+                delete_unknown=delete_unknown,
+                update_known=update_known
+            )
+            if register_new:
+                await self.register_new_application_commands(data=guild_payload)
+            return True
+        return False
+
     async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
         await self._state.delete_unknown_application_commands(data=data, guild_id=self.id)
 
