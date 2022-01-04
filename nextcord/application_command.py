@@ -733,8 +733,6 @@ class ApplicationSubcommand:
                 await self.on_error(self._self_argument, interaction, error)
             else:
                 await self.on_error(interaction, error)
-        else:
-            raise error
 
     async def application_can_run(self, interaction: Interaction) -> bool:
         """|coro|

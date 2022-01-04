@@ -1805,11 +1805,8 @@ class Client:
             self.dispatch('application_error', interaction, app_cmd, error)
 
             if app_cmd.has_error_handler():
-                if app_cmd._self_argument:
-                    await app_cmd.on_error(app_cmd._self_argument, interaction, error)
-                else:
-                    await app_cmd.on_error(interaction, error)
-                    
+                await app_cmd._send_error(interaction, error)
+
     async def application_can_run(self, interaction: Interaction, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]) -> bool:
         
         
