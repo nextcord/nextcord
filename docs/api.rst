@@ -1410,6 +1410,9 @@ of :class:`enum.Enum`.
     .. attribute:: discord_certified_moderator
 
         The user is a Discord Certified Moderator.
+    .. attribute:: known_spammer
+
+        The user is a Known Spammer.
 
 .. class:: ActivityType
 
@@ -4317,6 +4320,7 @@ Exception Hierarchy
     - :exc:`Exception`
         - :exc:`DiscordException`
             - :exc:`ClientException`
+                - :exc:`InvaildCommandType`
                 - :exc:`InvalidData`
                 - :exc:`InvalidArgument`
                 - :exc:`LoginFailure`

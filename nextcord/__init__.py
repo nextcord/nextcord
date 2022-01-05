@@ -14,7 +14,7 @@ __title__ = 'discord'
 __author__ = 'tag-epic & Rapptz'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2015-present Rapptz'
-__version__ = '2.0.0a4'
+__version__ = '2.0.0a5'
 
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
 
@@ -62,6 +62,8 @@ from .components import *
 from .threads import *
 from .health_check import *
 from .scheduled_events import *
+from .application_command import *
+
 
 class VersionInfo(NamedTuple):
     major: int
