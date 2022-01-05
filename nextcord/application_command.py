@@ -51,7 +51,7 @@ from .member import Member
 from .message import Message
 from .role import Role
 from .user import User
-from .utils import MISSING
+from .utils import MISSING, maybe_coroutine
 
 if TYPE_CHECKING:
     from .state import ConnectionState
@@ -70,7 +70,11 @@ __all__ = (
 )
 
 T = TypeVar('T')
+FuncT = TypeVar('FuncT', bound=Callable[..., Any])
 
+def _cog_special_method(func: FuncT) -> FuncT:
+    func.__cog_special_method__ = None
+    return func
 
 class ClientCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
@@ -100,6 +104,22 @@ class ClientCog:
     @property
     def to_register(self) -> List[ApplicationCommand]:
         return self.__cog_to_register__
+
+    @_cog_special_method
+    def cog_application_check(self, interaction: Interaction) -> bool:
+        """A special method that registers as a :func:`~nextcord.checks.check`
+        for every application command and subcommand in this cog.
+
+        This function **can** be a coroutine and must take a sole parameter,
+        ``interaction``, to represent the :class:`.Interaction`.
+        """
+        return True
+        
+    @classmethod
+    def _get_overridden_method(cls, method: FuncT) -> Optional[FuncT]:
+        """Return None if the method is not overridden. Otherwise returns the overridden method."""
+        return getattr(method.__func__, '__cog_special_method__', method)
+
 
 
 class SlashOption:
@@ -756,14 +776,20 @@ class ApplicationSubcommand:
         :class:`bool`
             A boolean indicating if the command can be invoked.
         """
+
+        # Global checks
         if not await interaction.client.application_can_run(interaction, self): return False
 
+        # Cog check
+        if self._self_argument:
+            cog_check = ClientCog._get_overridden_method(self._self_argument.cog_application_check)
+            if cog_check is not None and not await maybe_coroutine(cog_check, interaction):
+                raise ApplicationCheckFailure(f"The check functions for application command {self.qualified_name} failed.")
+
+        # Command checks
         for check in self.checks:
             try:
-                if asyncio.iscoroutinefunction(check):
-                    check_result = await check(interaction)
-                else:
-                    check_result = check(interaction)
+                check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure as error:
                 raise

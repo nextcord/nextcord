@@ -54,7 +54,6 @@ from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
 from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
-from .checks import check
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, InteractionType, Status, VoiceRegion
@@ -80,7 +79,7 @@ from .template import Template
 from .threads import Thread
 from .ui.view import View
 from .user import ClientUser, User
-from .utils import MISSING, async_all
+from .utils import MISSING, maybe_coroutine
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
@@ -510,7 +509,6 @@ class Client:
         if application_command and application_command.has_error_handler():
             return
 
-        print(application_command.has_error_handler())
         # TODO implement cog error handling
         # cog = context.cog
         # if cog and cog.has_error_handler():
@@ -1810,10 +1808,7 @@ class Client:
         
         for check in self._application_checks:
             try:
-                if asyncio.iscoroutinefunction(check):
-                    check_result = await check(interaction)
-                else:
-                    check_result = check(interaction)
+                check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
