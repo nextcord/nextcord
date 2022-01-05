@@ -832,6 +832,18 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param member: The member who joined or left.
     :type member: :class:`Member`
 
+.. function:: on_raw_member_remove(payload)
+
+    Called when a :class:`Member` leaves a :class:`Guild`. Unlike :func:`on_member_remove` this is called
+    regardless of the state of the internal message cache.
+
+    This requires :attr:`Intents.members` to be enabled.
+
+    .. versionadded:: 2.0
+
+    :param payload: The raw event payload data.
+    :type payload: :class:`RawMemberRemoveEvent`
+
 .. function:: on_member_update(before, after)
 
     Called when a :class:`Member` updates their profile.
