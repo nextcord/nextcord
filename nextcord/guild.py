@@ -95,6 +95,7 @@ if TYPE_CHECKING:
         StoreChannel,
         TextChannel,
         VoiceChannel,
+    )
     from .application_command import ApplicationCommand
     from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
     from .types.threads import (
