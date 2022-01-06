@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -27,56 +28,56 @@ from __future__ import annotations
 import copy
 import unicodedata
 from typing import (
+    TYPE_CHECKING,
     Any,
     ClassVar,
     Dict,
     List,
+    Literal,
     NamedTuple,
+    Optional,
     Sequence,
     Set,
-    Literal,
-    Optional,
-    TYPE_CHECKING,
     Tuple,
     Union,
     overload,
 )
 
-from . import utils, abc
-from .role import Role
-from .member import Member, VoiceState
-from .emoji import Emoji
-from .errors import InvalidData
-from .permissions import PermissionOverwrite
-from .colour import Colour
-from .errors import InvalidArgument, ClientException
+from . import abc, utils
+from .asset import Asset
 from .channel import *
-from .channel import _guild_channel_factory
-from .channel import _threaded_guild_channel_factory
+from .channel import _guild_channel_factory, _threaded_guild_channel_factory
+from .colour import Colour
+from .emoji import Emoji
 from .enums import (
     AuditLogAction,
-    VideoQualityMode,
-    VoiceRegion,
     ChannelType,
-    try_enum,
-    VerificationLevel,
     ContentFilter,
     NotificationLevel,
     NSFWLevel,
+    ScheduledEventEntityType,
+    ScheduledEventPrivacyLevel,
+    VerificationLevel,
+    VideoQualityMode,
+    VoiceRegion,
+    try_enum,
 )
-from .mixins import Hashable
-from .user import User
-from .invite import Invite
-from .iterators import AuditLogIterator, MemberIterator
-from .widget import Widget
-from .asset import Asset
+from .errors import ClientException, InvalidArgument, InvalidData
+from .file import File
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
+from .invite import Invite
+from .iterators import AuditLogIterator, MemberIterator, ScheduledEventIterator
+from .member import Member, VoiceState
+from .mixins import Hashable
+from .permissions import PermissionOverwrite
+from .role import Role
+from .scheduled_events import EntityMetadata, ScheduledEvent
 from .stage_instance import StageInstance
-from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
-from .file import File
-
+from .threads import Thread, ThreadMember
+from .user import User
+from .widget import Widget
 
 __all__ = (
     'Guild',
@@ -85,21 +86,32 @@ __all__ = (
 MISSING = utils.MISSING
 
 if TYPE_CHECKING:
+    import datetime
+
     from .abc import Snowflake, SnowflakeTime
+    from .channel import (
+        CategoryChannel,
+        StageChannel,
+        StoreChannel,
+        TextChannel,
+        VoiceChannel,
+    )
     from .application_command import ApplicationCommand
     from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
     from .types.threads import (
         Thread as ThreadPayload,
     )
-    from .types.voice import GuildVoiceState
     from .permissions import Permissions
-    from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel
-    from .template import Template
-    from .webhook import Webhook
     from .state import ConnectionState
+    from .template import Template
+    from .types.guild import Ban as BanPayload
+    from .types.guild import Guild as GuildPayload
+    from .types.guild import GuildFeature, MFALevel
+    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
+    from .types.threads import Thread as ThreadPayload
+    from .types.voice import GuildVoiceState
     from .voice_client import VoiceProtocol
-
-    import datetime
+    from .webhook import Webhook
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
     GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel]
@@ -276,6 +288,7 @@ class Guild(Hashable):
         '_public_updates_channel_id',
         '_stage_instances',
         '_threads',
+        '_scheduled_events',
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -289,6 +302,7 @@ class Guild(Hashable):
     def __init__(self, *, data: GuildPayload, state: ConnectionState):
         self._channels: Dict[int, GuildChannel] = {}
         self._members: Dict[int, Member] = {}
+        self._scheduled_events: Dict[int, ScheduledEvent] = {}
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
@@ -334,6 +348,17 @@ class Guild(Hashable):
         for k in to_remove:
             del self._threads[k]
         return to_remove
+
+    def _add_scheduled_event(self, event: ScheduledEvent) -> None:
+        self._scheduled_events[event.id] = event
+
+    def _remove_scheduled_event(self, event: Snowflake) -> None:
+        self._scheduled_events.pop(event, None)
+
+    def _store_scheduled_event(self, payload: ScheduledEventPayload) -> ScheduledEvent:
+        event = ScheduledEvent(guild=self, state=self._state, data=payload)
+        self._scheduled_events[event.id] = event
+        return event
 
     def __str__(self) -> str:
         return self.name or ''
@@ -466,6 +491,9 @@ class Guild(Hashable):
         for obj in guild.get('voice_states', []):
             self._update_voice_state(obj, int(obj['channel_id']))
 
+        for event in guild.get('guild_scheduled_events', []):
+            self._store_scheduled_event(event)
+
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
         try:
@@ -574,6 +602,14 @@ class Guild(Hashable):
         r = [ch for ch in self._channels.values() if isinstance(ch, CategoryChannel)]
         r.sort(key=lambda c: (c.position, c.id))
         return r
+
+    @property
+    def scheduled_events(self) -> List[ScheduledEvent]:
+        """List[:class:`ScheduledEvent`]: A list of scheduled events in this guild.
+
+        .. versionadded:: 2.0
+        """
+        return list(self._scheduled_events.values())
 
     def by_category(self) -> List[ByCategoryItem]:
         """Returns every :class:`CategoryChannel` and their associated channels.
@@ -2975,6 +3011,164 @@ class Guild(Hashable):
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
+    async def fetch_scheduled_events(
+        self,
+        *,
+        with_users: bool = False
+    ) -> ScheduledEventIterator:
+        """Retrieves an :class:`.AsyncIterator` that enables receiving scheduled
+        events on this guild
+
+        .. note::
+
+            This method is an API call. For general usage, consider 
+            :attr:`scheduled_events` instead.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        ----------
+        with_users: Optional[:class:`bool`]
+            If the event should be received with :attr:`ScheduledEvent.users`
+            This defaults to ``False`` - the events' :attr:`~ScheduledEvent.users` 
+            will be empty.
+
+        Raises
+        ------
+        HTTPException
+            Getting the events failed.
+
+        Yields
+        ------
+        :class:`.ScheduledEvent`
+            The event with users if applicable
+
+        Examples
+        --------
+
+        Usage ::
+
+            async for event in guild.fetch_scheduled_events():
+                print(event.name)
+
+        Flattening into a list ::
+
+            events = await guild.fetch_scheduled_events().flatten()
+            # events is now a list of ScheduledEvent...
+        """
+        return ScheduledEventIterator(self, with_users=with_users)
+
+    def get_scheduled_event(self, event_id: int) -> Optional[ScheduledEvent]:
+        """Get a scheduled event from cache by id.
+
+        .. note::
+
+            This may not return the updated users, use 
+            :meth:`~Guild.fetch_scheduled_event` if that is desired.
+
+        Parameters
+        ----------
+        event_id : int
+            The scheduled event id to fetch.
+
+        Returns
+        -------
+        Optional[ScheduledEvent]
+            The event object, if found.
+        """
+        return self._scheduled_events.get(event_id)
+
+    async def fetch_scheduled_event(
+        self,
+        event_id: Snowflake,
+        *,
+        with_users: bool = False
+    ) -> ScheduledEvent:
+        """|coro|
+
+        Fetch a scheduled event object.
+
+        .. note::
+
+            This is an api call, if updated users is not needed, 
+            consisder :meth:`~Guild.get_scheduled_event`
+
+        Parameters
+        ----------
+        event_id: :class:`int`
+            The event id to fetch
+        with_users: :class:`bool`
+            If the users should be received and cached too, by default False
+
+        Returns
+        -------
+        :class:`ScheduledEvent`
+            The received event object
+        """
+        return await self._state.http.get_event(
+            self.id,
+            event_id,
+            with_users=with_users
+        )
+
+    async def create_scheduled_event(
+        self,
+        *,
+        name: str,
+        entity_type: ScheduledEventEntityType,
+        start_time: datetime.datetime,
+        channel: abc.GuildChannel = MISSING,
+        metadata: EntityMetadata = MISSING,
+        privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
+        end_time: datetime.datetime = MISSING,
+        description: str = MISSING,
+        reason: Optional[str] = None
+    ) -> ScheduledEvent:
+        """|coro|
+
+        Create a new scheduled event object.
+
+        Parameters
+        ----------
+        channel: :class:`abc.GuildChannel`
+            The channel the event will happen in, if any
+        metadata: :class:`EntityMetadata`
+            The metadata for the event
+        name: :class:`str`
+            The name of the event
+        privacy_level: :class:`ScheduledEventPrivacyLevel`
+            The privacy level for the event
+        start_time: :class:`py:datetime.datetime`
+            The scheduled start time
+        end_time: :class:`py:datetime.datetime`
+            The scheduled end time
+        description: :class:`str`
+            The description for the event
+        entity_type: :class:`ScheduledEventEntityType`
+            The type of event
+
+        Returns
+        -------
+        :class:`ScheduledEvent`
+            The created event object.
+        """
+        payload: Dict[str, Any] = {}
+        payload['name'] = name
+        payload['entity_type'] = entity_type.value
+        payload['scheduled_start_time'] = start_time.isoformat()
+        if channel is not MISSING:
+            payload['channel_id'] = channel.id
+        if metadata is not MISSING:
+            payload['entity_metadata'] = metadata.__dict__
+        if privacy_level is not MISSING:
+            payload['privacy_level'] = privacy_level.value
+        if end_time is not MISSING:
+            payload['scheduled_end_time'] = end_time.isoformat()
+        if description is not MISSING:
+            payload['description'] = description
+        data = await self._state.http.create_event(self.id, reason=reason, **payload)
+        return self._store_scheduled_event(data)
+
     def add_application_command(
             self,
             app_cmd: ApplicationCommand,
@@ -3056,4 +3250,3 @@ class Guild(Hashable):
     async def delete_application_commands(self, *commands: ApplicationCommand) -> None:
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)
-

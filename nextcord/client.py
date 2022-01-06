@@ -91,6 +91,7 @@ if TYPE_CHECKING:
     from .member import Member
     from .message import Message
     from .voice_client import VoiceProtocol
+    from .scheduled_events import ScheduledEvent
 
 
 __all__ = (
@@ -925,6 +926,23 @@ class Client:
         """
         return self._connection.get_sticker(id)
 
+    def get_scheduled_event(self, id: int, /) -> Optional[ScheduledEvent]:
+        """Returns a scheduled event with the given ID.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        -----------
+        id: :class:`int`
+            The scheduled event's ID to search for.
+
+        Returns
+        --------
+        Optional[:class:`.ScheduledEvent`]
+            The scheduled event or ``None`` if not found.
+        """
+        return self._connection.get_scheduled_event(id)
+
     def get_all_channels(self) -> Generator[GuildChannel, None, None]:
         """A generator that retrieves every :class:`.abc.GuildChannel` the client can 'access'.
 
@@ -1707,6 +1725,18 @@ class Client:
         """
         return self._connection.persistent_views
 
+
+    @property
+    def scheduled_events(self) -> List[ScheduledEvent]:
+        """List[ScheduledEvent]: A list of scheduled events
+
+        .. versionadded:: 2.0
+        """
+        return [
+            event for guild in self.guilds
+            for event in guild.scheduled_events
+        ]
+
     async def on_interaction(self, interaction: Interaction):
         await self.process_application_commands(interaction)
 
@@ -2016,3 +2046,4 @@ class Client:
             return result
 
         return decorator
+

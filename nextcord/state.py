@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -59,6 +60,7 @@ from .ui.view import ViewStore, View
 from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
+from .scheduled_events import ScheduledEvent, ScheduledEventUser
 
 if TYPE_CHECKING:
     from .abc import PrivateChannel
@@ -72,6 +74,7 @@ if TYPE_CHECKING:
 
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
+    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.user import User as UserPayload
     from .types.emoji import Emoji as EmojiPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
@@ -1703,10 +1706,95 @@ class ConnectionState:
             if channel is not None:
                 return channel
 
+    def get_scheduled_event(self, id: int) -> Optional[ScheduledEvent]:
+        for guild in self.guilds:
+            if event := guild.get_scheduled_event(id):
+                return event
+
     def create_message(
         self, *, channel: Union[TextChannel, Thread, DMChannel, GroupChannel, PartialMessageable], data: MessagePayload
     ) -> Message:
         return Message(state=self, channel=channel, data=data)
+
+    def create_scheduled_event(
+        self, *, guild: Guild, data: ScheduledEventPayload
+    ) -> ScheduledEvent:
+        return ScheduledEvent(state=self, guild=guild, data=data)
+
+    def parse_guild_scheduled_event_create(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            event = self.create_scheduled_event(guild=guild, data=data)
+            guild._add_scheduled_event(event)
+            self.dispatch('guild_scheduled_event_create', event)
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_CREATE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_update(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(int(data['id'])):
+                old = copy.copy(event)
+                event._update(data)
+                self.dispatch('guild_scheduled_event_update', old, event)
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_UPDATE referencing unknown event '
+                         'ID: %s. Discarding.', data['id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_UPDATE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_delete(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(int(data['id'])):
+                guild._remove_scheduled_event(event.id)
+                self.dispatch('guild_scheduled_event_delete', event)
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown event '
+                         'ID: %s. Discarding.', data['id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_user_add(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(
+                int(data['guild_scheduled_event_id'])
+            ):
+                u = ScheduledEventUser.from_id(
+                    event=event, user_id=int(data['user_id']), state=self
+                )
+                event._add_user(u)
+                self.dispatch(
+                    'guild_scheduled_event_user_add',
+                    event,
+                    u
+                )
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown'
+                         ' event ID: %s. Discarding.', data['user_id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown'
+                       ' guild ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_user_remove(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(
+                int(data['guild_scheduled_event_id'])
+            ):
+                event._remove_user(int(data['user_id']))
+                self.dispatch(
+                    'guild_scheduled_event_user_remove',
+                    event,
+                    ScheduledEventUser.from_id(
+                        event=event, user_id=int(data['user_id']), state=self
+                    )
+                )
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_USER_REMOVE referencing unknown'
+                         ' event ID: %s. Discarding.', data['user_id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_USER_REMOVE referencing unknown'
+                       ' guild ID: %s. Discarding.', data['guild_id'])
 
 
 class AutoShardedConnectionState(ConnectionState):

@@ -1119,6 +1119,40 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param user: The user that joined or left.
     :type user: :class:`User`
 
+.. function:: on_guild_scheduled_event_create(event)
+
+    Called when a :class:`ScheduledEvent` is created.
+
+    :param event: The event that was created.
+    :type event: :class:`ScheduledEvent`
+
+.. function:: on_guild_scheduled_event_update(before, after)
+
+    Called when a :class:`ScheduledEvent` is updated.
+
+    :param before: The event before it was updated.
+    :type before: :class:`ScheduledEvent`
+    :param after: The event after it was updated.
+    :type after: :class:`ScheduledEvent`
+
+.. function:: on_guild_scheduled_event_delete(event)
+
+    Called when a :class:`ScheduledEvent` is deleted.
+
+    :param event: The event that was deleted.
+    :type event: :class:`ScheduledEvent`
+
+.. function:: on_guild_scheduled_event_user_add(event, user)
+              on_guild_scheduled_event_user_remove(event, user)
+
+    Called when a :class:`ScheduledEventUser` is interested in a 
+    :class:`ScheduledEvent`.
+
+    :param event: The event that the user is interested in.
+    :type event: :class:`ScheduledEvent`
+    :param user: The user that interested.
+    :type user: :class:`ScheduledEventUser`
+
 .. _discord-api-utils:
 
 Utility Functions
@@ -2623,6 +2657,50 @@ of :class:`enum.Enum`.
 
         The guild may contain NSFW content.
 
+.. class:: ScheduledEventEntityType
+
+    Represents the type of an entity on a scheduled event.
+
+    .. attribute:: stage_instance
+
+        The event is for a stage.
+
+    .. attribute:: voice
+
+        The event is for a voice channel.
+
+    .. attribute:: external
+
+        The event is happening elsewhere.
+
+.. class:: ScheduledEventPrivacyLevel
+
+    Represents the privacy level of scheduled event.
+
+    .. attribute:: guild_only
+
+        The scheduled event is only visible to members of the guild.
+
+.. class:: ScheduledEventStatus
+
+    Represents the status of a scheduled event.
+
+    .. attribute:: scheduled
+
+        The event is scheduled to happen.
+
+    .. attribute:: active
+
+        The event is happening.
+
+    .. attribute:: completed
+
+        The event has finished.
+
+    .. attribute:: cancelled
+
+        The event was cancelled.
+
 Async Iterator
 ----------------
 
@@ -3953,6 +4031,21 @@ PartialWebhookChannel
 
 .. autoclass:: PartialWebhookChannel()
     :members:
+
+ScheduledEvent
+~~~~~~~~~~~~~~
+
+.. attributetable:: ScheduledEvent
+
+.. autoclass:: ScheduledEvent()
+    :members:
+
+.. attributetable:: ScheduledEventUser
+
+.. autoclass:: ScheduledEventUser()
+    :members:
+
+.. autoclass:: EntityMetadata
 
 .. _discord_api_data:
 
