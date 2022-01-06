@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -873,6 +874,20 @@ class Intents(BaseFlags):
         This does not correspond to any attributes or classes in the library in terms of cache.
         """
         return 1 << 14
+
+    @flag_value
+    def scheduled_events(self):
+        """:class:`bool`: Whether scheduled events related events are enabled.
+
+        This corresponds to the following events:
+
+        - :func:`on_guild_scheduled_event_create`
+        - :func:`on_guild_scheduled_event_delete`
+        - :func:`on_guild_scheduled_event_update`
+
+        This does not correspond to any attributes or classes in the library in terms of cache.
+        """
+        return 1 << 16
 
 
 @fill_with_flags()
