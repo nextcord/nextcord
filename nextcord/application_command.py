@@ -44,7 +44,7 @@ from nextcord.__main__ import parse_args
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
-from .errors import InvalidCommandType, ApplicationCheckFailure, ApplicationError, ApplicationInvokeError
+from .errors import InvalidCommandType, ApplicationCheckFailure, ApplicationError
 from .interactions import Interaction
 from .guild import Guild
 from .member import Member
@@ -56,6 +56,7 @@ from .utils import MISSING, maybe_coroutine
 if TYPE_CHECKING:
     from .state import ConnectionState
     from .checks import ApplicationCheck
+    from .types.checks import ApplicationErrorCallback
 
 
 __all__ = (
@@ -361,8 +362,6 @@ class CommandOption(SlashOption):
         if self.autocomplete is not MISSING:
             ret["autocomplete"] = self.autocomplete
         return ret
-
-ApplicationErrorCallback = Optional[Union[Callable[["ClientCog", Interaction, ApplicationError], Awaitable[Any]], Callable[[Interaction, ApplicationError], Awaitable[Any]]]]
 class ApplicationSubcommand:
     def __init__(
         self,

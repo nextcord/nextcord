@@ -67,6 +67,7 @@ if TYPE_CHECKING:
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
     from .client import Client
+    from .application_command import ApplicationSubcommand, ApplicationCommand
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
@@ -104,6 +105,8 @@ class Interaction:
         for 15 minutes.
     data: :class:`dict`
         The raw interaction data.
+    application_command: Optional[:class:`ApplicationCommand`]
+        The application command that handled the interaction.
     client: :class:`Client`
         The client that handled the interaction. Can be a subclass of :class:`Client`.
     bot: :class:`Client`:
@@ -121,6 +124,7 @@ class Interaction:
         'user',
         'token',
         'version',
+        'application_command',
         '_client',
         '_permissions',
         '_state',
@@ -135,6 +139,7 @@ class Interaction:
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session
         self._original_message: Optional[InteractionMessage] = None
+        self.application_command: Optional[ApplicationCommand] = None
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
@@ -187,6 +192,9 @@ class Interaction:
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state and self._state._get_guild(self.guild_id)
+
+    def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
+        self.application_command = app_cmd
 
     @utils.cached_slot_property('_cs_channel')
     def channel(self) -> Optional[InteractionChannel]:

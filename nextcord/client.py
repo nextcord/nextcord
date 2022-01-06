@@ -496,7 +496,7 @@ class Client:
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
 
-    async def on_application_error(self, interaction: Interaction, application_command: Union[ApplicationSubcommand, ApplicationCommand], exception: ApplicationError) -> None:
+    async def on_application_error(self, interaction: Interaction, exception: ApplicationError) -> None:
         """|coro|
 
         The default application command error handler provided by the bot.
@@ -506,7 +506,7 @@ class Client:
 
         This only fires if you do not specify any listeners for command error.
         """
-        if application_command and application_command.has_error_handler():
+        if interaction.application_command and interaction.application_command.has_error_handler():
             return
 
         # TODO implement cog error handling
@@ -514,7 +514,7 @@ class Client:
         # if cog and cog.has_error_handler():
         #     return
 
-        print(f'Ignoring exception in command {application_command}:', file=sys.stderr)
+        print(f'Ignoring exception in command {interaction.application_command}:', file=sys.stderr)
         traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
 
     # hooks
@@ -1795,12 +1795,13 @@ class Client:
         interaction: :class:`Interaction`
             The interaction to invoke the command with.
         """
+        interaction._set_application_command(app_cmd)
 
         try:
             if await app_cmd.application_can_run(interaction):
                 await app_cmd.call_from_interaction(interaction, *args, **kwargs)
         except Exception as error:
-            self.dispatch('application_error', interaction, app_cmd, error)
+            self.dispatch('application_error', interaction, error)
             await app_cmd._send_error(interaction, error)
 
     async def application_can_run(self, interaction: Interaction, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]) -> bool:
