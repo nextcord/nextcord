@@ -56,7 +56,7 @@ from .utils import MISSING, maybe_coroutine
 if TYPE_CHECKING:
     from .state import ConnectionState
     from .checks import ApplicationCheck
-    from .types.checks import ApplicationErrorCallback
+    from .types.checks import ApplicationErrorCallback, ApplicationHook
 
 
 __all__ = (
@@ -371,7 +371,7 @@ class ApplicationSubcommand:
         self_argument: Union[ClientCog, Any] = MISSING,
         name: str = MISSING,
         description: str = MISSING,
-        inherit_checks: bool = True
+        inherit_hooks: bool = False
     ):
         """Represents an application subcommand attached to a callback.
         Parameters
@@ -389,8 +389,12 @@ class ApplicationSubcommand:
         description: :class:`str`
             The description of the subcommand that users will see. If not set, it will be the minimum value that
             Discord supports.
-        inherit_checks: :class:`bool`
-            Whether or not to inherit checks from the parent command.
+        inherit_hooks: :class:`bool` default=False
+            If ``True`` and this command has a parent :class:`ApplicationCommand` then this command
+            will inherit all checks, application_before_invoke and application_after_invoke's defined on the the :class:`ApplicationCommand`
+
+            .. note::
+                Any ``application_before_invoke`` or ``application_after_invoke``'s defined on this will override parent ones.
         """
         self._callback: Optional[Callable] = None  # TODO: Add verification against vars if callback is added later.
         self.parent_command: Optional[Union[ApplicationCommand, ApplicationSubcommand]] = parent_command
@@ -412,6 +416,8 @@ class ApplicationSubcommand:
             self._from_callback(callback)
 
         self.checks: List[ApplicationCheck] = []
+        self._application_before_invoke: ApplicationHook = None
+        self._application_after_invoke: ApplicationHook = None
 
         try:
             checks = callback.__slash_command_checks__
@@ -420,9 +426,26 @@ class ApplicationSubcommand:
             pass
         else:
             self.checks.extend(checks)
-            
-        if inherit_checks and parent_command is not MISSING:
+
+        if inherit_hooks and parent_command is not MISSING:
             self.checks.extend(parent_command.checks)
+
+            self._application_before_invoke: Optional[ApplicationHook] = parent_command._application_before_invoke
+            self._application_after_invoke: Optional[ApplicationHook] = parent_command._application_after_invoke
+        else:
+            try:
+                before_invoke = callback.__application_before_invoke__
+            except AttributeError:
+                pass
+            else:
+                self._application_before_invoke = before_invoke
+
+            try:
+                after_invoke = callback.__application_after_invoke__
+            except AttributeError:
+                pass
+            else:
+                self._application_after_invoke = after_invoke
 
     # Simple-ish getter + setters methods.
 
@@ -864,7 +887,7 @@ class ApplicationSubcommand:
         if found is False:
             raise TypeError(f"{self.error_name} kwarg {on_kwarg} not found, cannot add autocomplete function.")
 
-    def subcommand(self, name: str = MISSING, description: str = MISSING) -> Callable:
+    def subcommand(self, name: str = MISSING, description: str = MISSING, inherit_hooks: bool = False) -> Callable:
         """Decorates a function, creating a subcommand with the given kwargs forwarded to it.
         Adding a subcommand will prevent the callback associated with this command from being called.
         Parameters
@@ -874,6 +897,12 @@ class ApplicationSubcommand:
         description: :class:`str`
             The description of the subcommand that users will see. If not set, it will be the minimum value that
             Discord supports.
+        inherit_hooks: :class:`bool` default=False
+            If ``True`` and this command has a parent :class:`ApplicationCommand` then this command
+            will inherit all checks, application_before_invoke and application_after_invoke's defined on the the :class:`ApplicationCommand`
+
+            .. note::
+                Any ``application_before_invoke`` or ``application_after_invoke``'s defined on this will override parent ones.
         """
         def decorator(func: Callable):
             result = ApplicationSubcommand(
@@ -881,12 +910,67 @@ class ApplicationSubcommand:
                 parent_command=self,
                 cmd_type=ApplicationCommandOptionType.sub_command,
                 name=name,
-                description=description
+                description=description,
+                inherit_hooks=inherit_hooks
             )
             self.type = ApplicationCommandOptionType.sub_command_group
             self.children[result.name] = result
             return result
         return decorator
+
+    def application_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+        """A decorator that registers a coroutine as a pre-invoke hook.
+
+        A pre-invoke hook is called directly before the command is
+        called. This makes it a useful function to set up database
+        connections or any type of set up required.
+
+        This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
+        See :meth:`.Client.application_before_invoke` for more info.
+
+        Parameters
+        -----------
+        coro: :ref:`coroutine <coroutine>`
+            The coroutine to register as the pre-invoke hook.
+
+        Raises
+        -------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError('The pre-invoke hook must be a coroutine.')
+
+        self._application_before_invoke = coro
+        return coro
+
+    def application_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+        """A decorator that registers a coroutine as a post-invoke hook.
+
+        A post-invoke hook is called directly after the command is
+        called. This makes it a useful function to clean-up database
+        connections or any type of clean up required.
+
+        This post-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
+        See :meth:`.Client.application_after_invoke` for more info.
+
+        Parameters
+        -----------
+        coro: :ref:`coroutine <coroutine>`
+            The coroutine to register as the post-invoke hook.
+
+        Raises
+        -------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError('The post-invoke hook must be a coroutine.')
+
+        self._application_after_invoke = coro
+        return coro
 
 
 class ApplicationCommand(ApplicationSubcommand):
@@ -899,7 +983,7 @@ class ApplicationCommand(ApplicationSubcommand):
         guild_ids: Iterable[int] = MISSING,
         default_permission: bool = MISSING,
         force_global: bool = False,
-        inherit_checks: bool = True,
+        inherit_hooks: bool = False,
     ):
         """Represents an application command that can be or is registered with Discord.
         Parameters
@@ -919,10 +1003,14 @@ class ApplicationCommand(ApplicationSubcommand):
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
-        inherit_checks: :class:`bool`
-            Whether or not to inherit checks from the parent command.
+        inherit_hooks: :class:`bool` default=False
+            If ``True`` and this command has a parent :class:`ApplicationCommand` then this command
+            will inherit all checks, application_before_invoke and application_after_invoke's defined on the the :class:`ApplicationCommand`
+
+            .. note::
+                Any ``application_before_invoke`` or ``application_after_invoke``'s defined on this will override parent ones.
         """
-        super().__init__(callback=callback, cmd_type=cmd_type, name=name, description=description, inherit_checks=inherit_checks)
+        super().__init__(callback=callback, cmd_type=cmd_type, name=name, description=description, inherit_hooks=inherit_hooks)
         self._state: Optional[ConnectionState] = None
         self.force_global: bool = force_global
         self.default_permission: bool = default_permission or True
@@ -1252,7 +1340,14 @@ class ApplicationCommand(ApplicationSubcommand):
     async def call_from_interaction(self, interaction: Interaction) -> None:
         if not self._state:
             raise NotImplementedError("State hasn't been set yet, this isn't handled yet!")
+        
+        if self._application_before_invoke:
+            await self._application_before_invoke(interaction)
+
         await self.call(self._state, interaction, interaction.data.get("options", {}))
+
+        if self._application_after_invoke:
+            await self._application_after_invoke(interaction)
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         try:
@@ -1321,7 +1416,7 @@ class ApplicationCommand(ApplicationSubcommand):
 
     # Decorators.
 
-    def subcommand(self, name: str = MISSING, description: str = MISSING, inherit_checks: bool = True) -> Callable:
+    def subcommand(self, name: str = MISSING, description: str = MISSING, inherit_hooks: bool = False) -> Callable:
         """Decorates a function, creating a subcommand with the given kwargs forwarded to it.
         Adding a subcommand will prevent the callback associated with this command from being called.
         Parameters
@@ -1331,6 +1426,12 @@ class ApplicationCommand(ApplicationSubcommand):
         description: :class:`str`
             The description of the subcommand that users will see. If not set, it will be the minimum value that
             Discord supports.
+        inherit_hooks: :class:`bool` default=False
+            If ``True`` and this command has a parent :class:`ApplicationCommand` then this command
+            will inherit all checks, application_before_invoke and application_after_invoke's defined on the the :class:`ApplicationCommand`
+
+            .. note::
+                Any ``application_before_invoke`` or ``application_after_invoke``'s defined on this will override parent ones.
         """
         if self.type != ApplicationCommandType.chat_input:  # At this time, non-slash commands cannot have Subcommands.
             raise TypeError(f"{self.error_name} {self.type} cannot have subcommands.")
@@ -1342,7 +1443,7 @@ class ApplicationCommand(ApplicationSubcommand):
                     cmd_type=ApplicationCommandOptionType.sub_command,
                     name=name,
                     description=description,
-                    inherit_checks=inherit_checks
+                    inherit_hooks=inherit_hooks
                 )
                 self.children[result.name] = result
                 return result

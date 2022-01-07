@@ -42,7 +42,6 @@ from .errors import (
 )
 
 if TYPE_CHECKING:
-    from .application_command import ClientCog
     from .types.checks import ApplicationCheck, CoroFunc
 
 
@@ -523,3 +522,63 @@ def is_nsfw() -> Callable[[T], T]:
             return True
         raise ApplicationNSFWChannelRequired(ch)  # type: ignore
     return check(pred)
+
+def application_before_invoke(coro) -> Callable[[T], T]:
+    """A decorator that registers a coroutine as a pre-invoke hook.
+
+    This allows you to refer to one before invoke hook for several commands that
+    do not have to be within the same cog.
+
+    .. versionadded:: 1.4
+
+    Example
+    ---------
+
+    .. code-block:: python3
+
+        async def record_usage(interaction: Interaction):
+            print(interaction.user, 'used', interaction.application_command, 'at', interaction.message.created_at)
+
+        @bot.slash_command()
+        @commands.before_invoke(record_usage)
+        async def who(interaction: Interaction): # Output: <User> used who at <Time>
+            await interaction.response.send_message('i am a bot')
+
+        class What(commands.Cog):
+
+            @commands.before_invoke(record_usage)
+            @slash_command()
+            async def when(self, interaction: Interaction): # Output: <User> used when at <Time>
+                await interaction.response.send_message(f'and i have existed since {interaction.bot.user.created_at}')
+
+            @slash_command()
+            async def where(self, interaction: Interaction): # Output: <Nothing>
+                await interaction.response.send_message('on Discord')
+
+            @slash_command()
+            async def why(self, interaction: Interaction): # Output: <Nothing>
+                await interaction.response.send_message('because someone made me')
+
+        bot.add_cog(What())
+    """
+    def decorator(func: Union[ApplicationSubcommand, 'CoroFunc']) -> Union[ApplicationSubcommand, 'CoroFunc']:
+        if isinstance(func, ApplicationSubcommand):
+            func.application_before_invoke(coro)
+        else:
+            func.__application_before_invoke__ = coro
+        return func
+    return decorator  # type: ignore
+
+def application_after_invoke(coro) -> Callable[[T], T]:
+    """A decorator that registers a coroutine as a post-invoke hook.
+
+    This allows you to refer to one after invoke hook for several commands that
+    do not have to be within the same cog.
+    """
+    def decorator(func: Union[ApplicationSubcommand, 'CoroFunc']) -> Union[ApplicationSubcommand, 'CoroFunc']:
+        if isinstance(func, ApplicationSubcommand):
+            func.application_after_invoke(coro)
+        else:
+            func.__application_after_invoke__ = coro
+        return func
+    return decorator  # type: ignore
