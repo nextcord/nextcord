@@ -92,7 +92,7 @@ if TYPE_CHECKING:
     from .member import Member
     from .message import Message
     from .voice_client import VoiceProtocol
-    from .types.checks import ApplicationCheck
+    from .types.checks import ApplicationCheck, ApplicationHook
 
 
 __all__ = (
@@ -306,6 +306,8 @@ class Client:
 
         # Global application command checks
         self._application_checks: List[ApplicationCheck] = []
+        self._application_before_invoke: ApplicationHook = None
+        self._application_after_invoke: ApplicationHook = None
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -1795,14 +1797,52 @@ class Client:
         interaction: :class:`Interaction`
             The interaction to invoke the command with.
         """
-        interaction._set_application_command(app_cmd)
+        try:
+            # find the subcommand the user invoking first, so that all the correct hooks are called
+            app_subcmd = app_cmd._find_subcommand(interaction.data.get("options", {}))[0]
+        except InvalidCommandType:
+            app_subcmd = app_cmd
+            interaction._set_application_command(app_cmd)
+        else:
+            interaction._set_application_command(app_subcmd)
+
 
         try:
-            if await app_cmd.application_can_run(interaction):
-                await app_cmd.call_from_interaction(interaction, *args, **kwargs)
+            can_run = await app_subcmd.application_can_run(interaction)
         except Exception as error:
             self.dispatch('application_error', interaction, error)
-            await app_cmd._send_error(interaction, error)
+            await app_subcmd._send_error(interaction, error)
+
+        if can_run:
+            if app_subcmd._application_before_invoke is not None:
+                await app_subcmd._application_before_invoke(interaction)
+            # TODO cog before invoke here
+            if self._application_before_invoke is not None:
+                await self._application_before_invoke(interaction)
+
+            invoke_error = None
+            try:
+                await app_cmd.call_from_interaction(interaction, *args, **kwargs)
+            except Exception as error:
+                invoke_error = ApplicationInvokeError(error)
+
+            after_invoke_error = None
+            try:
+                if app_subcmd._application_after_invoke is not None:
+                    await app_subcmd._application_after_invoke(interaction)
+                # TODO cog after invoke here
+                if self._application_after_invoke is not None:
+                    await self._application_after_invoke(interaction)
+            except Exception as error:
+                after_invoke_error = error
+
+            if invoke_error is not None:
+                self.dispatch('application_error', interaction, invoke_error)
+                await app_subcmd._send_error(interaction, invoke_error)
+            if after_invoke_error is not None:
+                raise after_invoke_error
+            
+
 
     async def application_can_run(self, interaction: Interaction, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]) -> bool:
         
@@ -2156,3 +2196,67 @@ class Client:
 
         """
         return self.add_application_check(func)
+
+    def application_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+        """A decorator that registers a coroutine as a pre-invoke hook.
+
+        A pre-invoke hook is called directly before the command is
+        called. This makes it a useful function to set up database
+        connections or any type of set up required.
+
+        This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
+        .. note::
+
+            The :meth:`~.Client.application_before_invoke` and :meth:`~.Client.application_after_invoke`
+            hooks are only called if all checks pass without error. If any check fails, then the hooks
+            are not called.
+
+        Parameters
+        -----------
+        coro: :ref:`coroutine <coroutine>`
+            The coroutine to register as the pre-invoke hook.
+
+        Raises
+        -------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError('The pre-invoke hook must be a coroutine.')
+
+        self._application_before_invoke = coro
+        return coro
+
+
+    def application_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+        r"""A decorator that registers a coroutine as a post-invoke hook.
+
+        A post-invoke hook is called directly after the command is
+        called. This makes it a useful function to clean-up database
+        connections or any type of clean up required.
+
+        This post-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
+        .. note::
+
+            Similar to :meth:`~.Client.application_before_invoke`\, this is not called unless
+            checks succeed. This hook is, however, **always** called regardless of the internal command
+            callback raising an error (i.e. :exc:`.ApplicationInvokeError`\).
+            This makes it ideal for clean-up scenarios.
+
+        Parameters
+        -----------
+        coro: :ref:`coroutine <coroutine>`
+            The coroutine to register as the post-invoke hook.
+
+        Raises
+        -------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError('The post-invoke hook must be a coroutine.')
+
+        self._application_after_invoke = coro
+        return coro

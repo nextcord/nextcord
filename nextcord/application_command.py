@@ -708,7 +708,7 @@ class ApplicationSubcommand:
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
-        Calls the callback associated with this command with the given interaction and option data. Will only run if all ApplicationCommand checks have passed.
+        Calls the callback associated with this command with the given interaction and option data.
         Parameters
         ----------
         state: :class:`ConnectionState`
@@ -718,16 +718,15 @@ class ApplicationSubcommand:
         option_data: List[Dict[:class:`str`, Any]]
             List of raw option data from Discord.
         """
+        app_cmd, new_option_data = self._find_subcommand(option_data)
+        await app_cmd.call_invoke_slash(state, interaction, new_option_data)
+
+    def _find_subcommand(self, option_data: List[Dict[str, Any]]) -> Tuple[Union[ApplicationSubcommand, ApplicationCommand], List[Dict[str, Any]]]:
         if self.children:
-            # Discord currently does not allow commands that have subcommands to be run. Therefore, if a command has
-            # children, a subcommand must be being called.
-            await self.children[option_data[0]["name"]].call(state, interaction, option_data[0].get("options", {}))
+            return self.children[option_data[0]["name"]]._find_subcommand(option_data[0].get("options", {}))
         elif self.type in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):
-            # Slash commands are able to have subcommands, therefore that is handled here.
-            await self.call_invoke_slash(state, interaction, option_data)
+            return self, option_data
         else:
-            # Anything that can't be handled in here should be raised for ApplicationCommand to handle.
-            # TODO: Figure out how to hide this in exception trace log, people don't need to see it.
             raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
     async def call_invoke_slash(
@@ -798,7 +797,6 @@ class ApplicationSubcommand:
         :class:`bool`
             A boolean indicating if the command can be invoked.
         """
-
         # Global checks
         if not await interaction.client.application_can_run(interaction, self): return False
 
@@ -1340,14 +1338,8 @@ class ApplicationCommand(ApplicationSubcommand):
     async def call_from_interaction(self, interaction: Interaction) -> None:
         if not self._state:
             raise NotImplementedError("State hasn't been set yet, this isn't handled yet!")
-        
-        if self._application_before_invoke:
-            await self._application_before_invoke(interaction)
 
         await self.call(self._state, interaction, interaction.data.get("options", {}))
-
-        if self._application_after_invoke:
-            await self._application_after_invoke(interaction)
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         try:
