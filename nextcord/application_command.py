@@ -290,23 +290,25 @@ class CommandOption(SlashOption):
                 return ret
             else:
                 # Return an Member object if the required data is available, otherwise fallback to User.
-                if "members" in interaction.data["resolved"] and (interaction.guild_id or interaction.guild):
+                if "members" in interaction.data["resolved"] and (interaction.guild, interaction.guild_id):
                     resolved_members_payload = interaction.data["resolved"]["members"]
-                    resloved_members: Dict[int, Member] = {}
+                    resolved_members: Dict[int, Member] = {}
                     guild = interaction.guild or state._get_guild(interaction.guild_id)
-                    for member_id, member_payload in resolved_members_payload.items():
+                    # Because we modify the payload further down,
+                    # a copy is made to avoid affecting methods that read the interaction data ahead of this function.
+                    for member_id, member_payload in resolved_members_payload.copy().items():
                         member = guild.get_member(int(member_id))
-                        # Can't find the member in cache, let's construct it ourselves.
+                        # Can't find the member in cache, let's construct one.
                         if not member:
-                            user = interaction.data["resolved"]["users"][member_id]
-                            # Bit hacky but it's required to construct the Member.
-                            member_payload["user"] = user
+                            user_payload = interaction.data["resolved"]["users"][member_id]
+                            # This is required to construct the Member.
+                            member_payload["user"] = user_payload
                             member = Member(data=member_payload, guild=guild, state=state)
                             guild._add_member(member)
 
-                        resloved_members[member.id] = member 
+                        resolved_members[member.id] = member 
 
-                    return resloved_members[user_id]
+                    return resolved_members[user_id]
                 else:
                     # The interaction data gives a dictionary of resolved users, best to use it if cache isn't available.
                     resolved_users_payload = interaction.data["resolved"]["users"]
