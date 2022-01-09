@@ -30,6 +30,8 @@ from .snowflake import Snowflake
 
 class _RoleOptional(TypedDict, total=False):
     tags: RoleTags
+    unicode_emoji: str
+    icon: str
 
 
 class Role(_RoleOptional):

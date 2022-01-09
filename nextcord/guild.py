@@ -2458,6 +2458,7 @@ class Guild(Hashable):
         colour: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
+        icon: Optional[Union[str, bytes, File]] = ...,
     ) -> Role:
         ...
 
@@ -2471,6 +2472,7 @@ class Guild(Hashable):
         color: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
+        icon: Optional[Union[str, bytes, File]] = ...,
     ) -> Role:
         ...
 
@@ -2484,6 +2486,7 @@ class Guild(Hashable):
         hoist: bool = MISSING,
         mentionable: bool = MISSING,
         reason: Optional[str] = None,
+        icon: Optional[Union[str, bytes, File]] = MISSING,
     ) -> Role:
         """|coro|
 
@@ -2514,6 +2517,8 @@ class Guild(Hashable):
             Defaults to ``False``.
         reason: Optional[:class:`str`]
             The reason for creating this role. Shows up on the audit log.
+        icon: Optional[Union[:class:`str`, :class:`bytes`]]
+            The icon of the role. Supports unicode emojis and images
 
         Raises
         -------
@@ -2549,6 +2554,16 @@ class Guild(Hashable):
 
         if name is not MISSING:
             fields['name'] = name
+
+        if icon is not MISSING:
+            if icon is None:
+                fields['icon'] = icon
+            elif isinstance(icon, str):
+                fields['unicode_emoji'] = icon
+            elif isinstance(icon, File):
+                fields['icon'] = utils._bytes_to_base64_data(icon.fp.read())
+            else:
+                fields['icon'] = utils._bytes_to_base64_data(icon)
 
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
         role = Role(guild=self, data=data, state=self._state)
