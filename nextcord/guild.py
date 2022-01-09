@@ -3169,6 +3169,19 @@ class Guild(Hashable):
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)
 
+    def get_application_commands(self, rollout: bool = False):
+        """Gets all application commands registered for this guild.
+
+        Parameters
+        ----------
+        rollout: :class:`bool`
+
+        Returns
+        -------
+
+        """
+        return self._state.get_guild_application_commands(guild_id=self.id, rollout=rollout)
+
     def add_application_command(
             self,
             app_cmd: ApplicationCommand,
@@ -3199,7 +3212,7 @@ class Guild(Hashable):
             delete_unknown: bool = True,
             update_known: bool = True,
             register_new: bool = True
-    ) -> bool:
+    ) -> None:
         """|coro|
         Rolls out application commands to the guild, associating, deleting, updating, and/or newly
         registering as needed.
@@ -3212,24 +3225,16 @@ class Guild(Hashable):
         delete_unknown
         update_known
         register_new
-
-        Returns
-        -------
-        :class:`bool`
-            ``False`` if no commands that specify a guild have been added to the bot. ``True`` otherwise.
         """
-        if self._state.get_guild_application_commands(self.id, rollout=True):
-            guild_payload = await self._state.http.get_guild_commands(self._state.application_id, self.id)
-            await self.deploy_application_commands(
-                data=guild_payload,
-                associate_known=associate_known,
-                delete_unknown=delete_unknown,
-                update_known=update_known
-            )
-            if register_new:
-                await self.register_new_application_commands(data=guild_payload)
-            return True
-        return False
+        guild_payload = await self._state.http.get_guild_commands(self._state.application_id, self.id)
+        await self.deploy_application_commands(
+            data=guild_payload,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known
+        )
+        if register_new:
+            await self.register_new_application_commands(data=guild_payload)
 
     async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
         await self._state.delete_unknown_application_commands(data=data, guild_id=self.id)
