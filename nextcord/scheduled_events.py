@@ -262,7 +262,7 @@ class ScheduledEvent(Hashable):
             user._update(data)
         else:
             user = ScheduledEventUser(event=self, state=self._state, data=data)
-            self._users[user.user.id] = user
+            self._users[user.user_id] = user
             self.user_count += 1
         return user
 
@@ -274,7 +274,7 @@ class ScheduledEvent(Hashable):
         return self.name
 
     def _add_user(self, user: ScheduledEventUser) -> None:
-        self._users[user.user.id] = user
+        self._users[user.user_id] = user
         self.user_count += 1
 
     def __repr__(self) -> str:
