@@ -492,7 +492,10 @@ class ConnectionState:
 
     @property
     def application_commands(self) -> Set[ApplicationCommand]:
-        return self._application_commands
+        """Gets a copy of the ApplicationCommand object set. If the original is given out and modified, massive desyncs
+        may occur. This should be used internally as well if size-changed-during-iteration is a worry.
+        """
+        return self._application_commands.copy()
 
     def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
         return self._application_command_ids.get(command_id, None)
@@ -506,13 +509,22 @@ class ConnectionState:
             guild_id: Optional[int] = None,
             rollout: bool = False
     ) -> List[ApplicationCommand]:
-        """Gets all commands that have the guild ID. If guild_id is None, all guild commands are returned. if rollout
-        is True, guild_ids_to_rollout is used."""
+        """Gets all commands that have the given guild ID. If guild_id is None, all guild commands are returned. if
+        rollout is True, guild_ids_to_rollout is used.
+        """
         ret = []
-        for app_cmd in self._application_commands:
+        for app_cmd in self.application_commands:
             if guild_id is None or guild_id in app_cmd.guild_ids or (
                     rollout and guild_id in app_cmd.guild_ids_to_rollout
             ):
+                ret.append(app_cmd)
+        return ret
+
+    def get_global_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+        """Gets all commands that are registered globally. If rollout is True, is_global is used."""
+        ret = []
+        for app_cmd in self.application_commands:
+            if (rollout and app_cmd.is_global) or None in app_cmd.command_ids:
                 ret.append(app_cmd)
         return ret
 
@@ -525,7 +537,7 @@ class ConnectionState:
                 if found_command is not command:
                     raise ValueError(f"{command.error_name} You cannot add application commands with duplicate "
                                      f"signatures.")
-                # No else because we do not care if the command has its signature already in.
+                # No else because we do not care if the command has its own signature already in.
             else:
                 self._application_command_signatures[signature] = command
         for command_id in command.command_ids.values():
