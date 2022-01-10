@@ -5,6 +5,7 @@ nextcord.ext.commands
 An extension module to facilitate creation of bot commands.
 
 :copyright: (c) 2015-present Rapptz
+:copyright: (c) 2021-present tag-epic
 :license: MIT, see LICENSE for more details.
 """
 

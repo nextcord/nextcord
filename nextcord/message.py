@@ -598,6 +598,10 @@ class Message(Hashable):
         A list of components in the message.
 
         .. versionadded:: 2.0
+    thread: Optional[:class:`Thread`]
+        The thread created from a message, if any.
+
+        .. versionadded:: 2.0
     guild: Optional[:class:`Guild`]
         The guild that the message belongs to, if applicable.
     """
@@ -632,6 +636,7 @@ class Message(Hashable):
         'activity',
         'stickers',
         'components',
+        'thread',
         'guild',
     )
 
@@ -676,6 +681,12 @@ class Message(Hashable):
             self.guild = channel.guild  # type: ignore
         except AttributeError:
             self.guild = state._get_guild(utils._get_as_snowflake(data, 'guild_id'))
+
+        thread_data = data.get('thread')
+        if thread_data:
+            self.thread: Optional[Thread] = Thread(guild=self.guild, state=state, data=thread_data)
+        else:
+            self.thread: Optional[Thread] = None
 
         try:
             ref = data['message_reference']
