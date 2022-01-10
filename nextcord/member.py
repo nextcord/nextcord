@@ -666,7 +666,10 @@ class Member(abc.Messageable, _UserTag):
         roles: List[abc.Snowflake] = MISSING,
         voice_channel: Optional[VocalGuildChannel] = MISSING,
         reason: Optional[str] = None,
-        timeout: Optional[datetime.datetime] = MISSING,
+        timeout: Optional[Union[
+            datetime.datetime,
+            datetime.timedelta
+        ]] = MISSING,
     ) -> Optional[Member]:
         """|coro|
 
@@ -718,9 +721,11 @@ class Member(abc.Messageable, _UserTag):
             Pass ``None`` to kick them from voice.
         reason: Optional[:class:`str`]
             The reason for editing this member. Shows up on the audit log.
-        timeout: Optional[:class:`datetime.datetime`]
+        timeout: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
             The time until the member should not be timed out.
             Set this to None to disable their timeout.
+
+            .. versionadded:: 2.0
 
         Raises
         -------
@@ -778,11 +783,21 @@ class Member(abc.Messageable, _UserTag):
         if roles is not MISSING:
             payload['roles'] = tuple(r.id for r in roles)
 
-        if timeout is not MISSING:
-            if timeout is not None:
-                payload['communication_disabled_until'] = timeout.isoformat()
-            else:
-                payload['communication_disabled_until'] = None
+        if isinstance(timeout, datetime.timedelta):
+            payload['communication_disabled_until'] = (
+                utils.utcnow() + timeout
+            ).isoformat()
+        elif isinstance(timeout, datetime.datetime):
+            payload['communication_disabled_until'] = timeout.isoformat()
+        elif timeout is None:
+            payload['communication_disabled_until'] = None
+        elif timeout is MISSING:
+            pass
+        else:
+            raise TypeError(
+                "Timeout must be a `datetime.datetime` or `datetime.timedelta`"
+                f"not {timeout.__class__.__name__}"
+            )
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
