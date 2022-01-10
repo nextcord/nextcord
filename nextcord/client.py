@@ -1816,7 +1816,11 @@ class Client:
         if can_run:
             if app_subcmd._application_before_invoke is not None:
                 await app_subcmd._application_before_invoke(interaction)
-            # TODO cog before invoke here
+
+            cog_application_before_invoke = app_subcmd.cog_application_before_invoke
+            if cog_application_before_invoke is not None:
+                await cog_application_before_invoke(interaction)
+
             if self._application_before_invoke is not None:
                 await self._application_before_invoke(interaction)
 
@@ -1830,7 +1834,11 @@ class Client:
             try:
                 if app_subcmd._application_after_invoke is not None:
                     await app_subcmd._application_after_invoke(interaction)
-                # TODO cog after invoke here
+                
+                cog_application_after_invoke = app_subcmd.cog_application_after_invoke
+                if cog_application_after_invoke is not None:
+                    await cog_application_after_invoke(interaction)
+
                 if self._application_after_invoke is not None:
                     await self._application_after_invoke(interaction)
             except Exception as error:

@@ -106,6 +106,11 @@ class ClientCog:
     def to_register(self) -> List[ApplicationCommand]:
         return self.__cog_to_register__
 
+    @classmethod
+    def _get_overridden_method(cls, method: FuncT) -> Optional[FuncT]:
+        """Return None if the method is not overridden. Otherwise returns the overridden method."""
+        return getattr(method.__func__, '__cog_special_method__', method)
+
     @_cog_special_method
     def cog_application_check(self, interaction: Interaction) -> bool:
         """A special method that registers as a :func:`~nextcord.checks.check`
@@ -115,11 +120,36 @@ class ClientCog:
         ``interaction``, to represent the :class:`.Interaction`.
         """
         return True
-        
-    @classmethod
-    def _get_overridden_method(cls, method: FuncT) -> Optional[FuncT]:
-        """Return None if the method is not overridden. Otherwise returns the overridden method."""
-        return getattr(method.__func__, '__cog_special_method__', method)
+    
+    @_cog_special_method
+    async def cog_application_before_invoke(self, interaction: Interaction) -> None:
+        """A special method that acts as a cog local pre-invoke hook.
+
+        This is similar to :meth:`.ApplicationCommand.before_invoke`.
+
+        This **must** be a coroutine.
+
+        Parameters
+        -----------
+        interaction: :class:`.Interaction`
+            The invocation interaction.
+        """
+        pass
+
+    @_cog_special_method
+    async def cog_application_after_invoke(self, interaction: Interaction) -> None:
+        """A special method that acts as a cog local post-invoke hook.
+
+        This is similar to :meth:`.Command.after_invoke`.
+
+        This **must** be a coroutine.
+
+        Parameters
+        -----------
+        interaction: :class:`.Interaction`
+            The invocation interaction.
+        """
+        pass
 
 
 
@@ -617,6 +647,20 @@ class ApplicationSubcommand:
             ret["options"] = [argument.payload for argument in self.options.values()]
         return ret
 
+    @property
+    def cog_application_before_invoke(self) -> Optional[ApplicationHook]:
+        """Returns the cog_application_before_invoke method for the cog that this command is in. Returns ``None`` if not the method is not found."""
+        if not self._self_argument: return None
+
+        return ClientCog._get_overridden_method(self._self_argument.cog_application_before_invoke)
+
+    @property
+    def cog_application_after_invoke(self) -> Optional[ApplicationHook]:
+        """Returns the cog_application_after_invoke method for the cog that this command is in. Returns ``None`` if not the method is not found."""
+        if not self._self_argument: return None
+
+        return ClientCog._get_overridden_method(self._self_argument.cog_application_after_invoke)
+
     # Methods that can end up running the callback.
 
     async def call_autocomplete(self, state, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
@@ -774,6 +818,8 @@ class ApplicationSubcommand:
                 await self.on_error(self._self_argument, interaction, error)
             else:
                 await self.on_error(interaction, error)
+
+    
 
     async def application_can_run(self, interaction: Interaction) -> bool:
         """|coro|
