@@ -1236,11 +1236,11 @@ class Message(Hashable):
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
         file: Optional[:class:`File`]
-            A new file to add to the message.
+            If provided, a new file to add to the message.
 
             .. versionadded:: 2.0
         files: Optional[List[:class:`File`]]
-            A list of new files to add to the message.
+            If provided, a list of new files to add to the message.
 
             .. versionadded:: 2.0
         append_files: Optional[:class:`bool`]
