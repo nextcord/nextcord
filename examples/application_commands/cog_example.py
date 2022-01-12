@@ -3,18 +3,18 @@ from nextcord.ext import commands
 
 
 class ApplicationCommandCog(commands.Cog):  # Subclassing commands.Cog as you always do.
-    def __init__(self, bot):  # takes in bot for the setup later
+    def __init__(self, bot: commands.Bot):  # takes in bot for the setup later
         self.bot = bot  # making it global to this class.
 
     @slash_command(guild_ids=[...])  # isn't really any different to normal commands.
     async def my_slash_command(self, interaction: Interaction):
-        await interaction.response.send_message("this is a slash command in a cog!")
+        await interaction.response.send_message("This is a slash command in a cog!")
 
     @user_command(guild_ids=[...])  # Again very simular to normal commands.
     async def my_user_command(
         self, interaction: Interaction, member
     ):  # passing in member as it is intaked
-        await interaction.response.send_message(f"hello! {member}")
+        await interaction.response.send_message(f"Hello, {member}!")
 
     @message_command(guild_ids=[...])  # limits guilds
     async def my_message_command(

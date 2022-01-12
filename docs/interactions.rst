@@ -9,14 +9,14 @@ Slash Commands
 
 Since Discord has added interaction commands a feature with many possibilities, we at Nextcord have decided to add them to our fleet of features.
 
-This doc will explain the innerworkings and how to use interaction commmands.
+This document will explain the inner workings and how to use interaction commands.
 
-We suggest you learn how to make regular commands before looking through here, we suggest looking at the :doc:`quickstart`
+We suggest you learn how to make regular commands before looking through here, we suggest looking at the main :doc:`quickstart` guide for commands.
 
 How To Make A Simple Slash Command
 ----------------------------------
 
-This right here is a simple ping pong command made with Nextcord's slash feature.
+The following example is a simple ping/pong command using Nextcord's slash commands:
 
 .. code-block:: python3
 
@@ -24,9 +24,9 @@ This right here is a simple ping pong command made with Nextcord's slash feature
     async def ping(interaction):
         await interaction.response.send_message("Pong!")
         
-The way it works is that you use the :meth:`~Client.slash_command` function to interact with discord's application commands endpoint.
+The way it works is by using:meth:`~Client.slash_command` decorator to add a slash command for the bot to register with Discord.
 
-``guild_ids`` is used to limit the guilds that the slash command is available to. This is also useful for testing, as global slash commands can take up to an hour to register.
+``guild_ids`` is used to limit the guilds that the slash command is available to. This is useful for testing as global slash commands can take up to an hour to register.
 
 Example:
 
@@ -44,15 +44,17 @@ As shown in the demonstration below you make a main slash command or a dummy sla
 .. code-block:: python3
 
         @client.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
-        async def my_main_command(interaction):  
+        async def my_main_command(interaction: Interaction):  
             ...
 
 
         @my_main_command.subcommand()  # Identifying The Sub-Command
-        async def subcommand_one(interaction):  # Making The Sub Command Name And Passing Through Interaction
+        async def subcommand_one(
+            interaction: Interaction
+        ):  # Making The Sub Command Name And Passing Through Interaction
         await interaction.response.send_message(
             "This is subcommand 1!"
-            )  # Sending A Response
+        )  # Sending A Response
 
 
         # Identifying The Sub-Command And Adding A Descripton
@@ -61,7 +63,7 @@ As shown in the demonstration below you make a main slash command or a dummy sla
 
         await interaction.response.send_message(
             "This is subcommand 2!"
-            )       # Responding With The Args/Fields
+        )  # Responding With The Args/Fields
         
 Fields And Requirements
 -----------------------
@@ -86,7 +88,7 @@ Nextcord's implementation of slash commands has fields and is very simple. in th
 
 How To Make Slash Commands In Cogs
 ----------------------------------
-Show below is an example of a simple command running in a cog.
+Shown below is an example of a simple command running in a cog:
 
 .. code-block:: python3
 
@@ -95,32 +97,32 @@ Show below is an example of a simple command running in a cog.
             self.count = 0
 
         @nextcord.slash_command()
-        async def slash_example_cog_command(self, interaction):
-            await interaction.response.send_message("Hello i am a slash command in a cog!")
+        async def slash_example_cog_command(self, interaction: Interaction):
+            await interaction.response.send_message("Hello I am a slash command in a cog!")
 
-The example shown above responds to a user when they do a slash command. It is identical to a normal slash command and to normal commands in general.
+The example shown above responds to a user when they do a slash command. Its function is the same as a slash command on the client, adjusted to work in a class, only its decorator is different.
 
 How To Make Context Menu Commands
 ---------------------------------
-Context Menu commands display commands on a menu of a message/user.
+Context Menu commands display commands on the right-click menu of a message/user.
 
 User Commands
 ~~~~~~~~~~~~~~
-What we show below just dumps the user's username but should be enough to get the point.
+The following code simply prints out the name of the member it was performed on, but can be used for more complex actions too:
 
 .. code-block:: python3
 
     @client.user_command()
-    async def hello(interaction, member):
+    async def hello(interaction: Interaction, member: Member):
         await interaction.response.send_message(f"Hello! {member}")
 
 Message Commands
 ~~~~~~~~~~~~~~~~~
-Below is a simple example of message command that says the message given.
+The following is a simple example of a message command which sends the content of the target message as an ephemeral response to the user who invoked it.
 
 .. code-block:: python3
 
     @client.message_command()
-    async def say(interaction, message: Message):
-        await interaction.response.send_message(f"{message}")
+    async def say(interaction: Interaction, message: Message):
+        await interaction.response.send_message(message.content, ephemeral=True)
         
