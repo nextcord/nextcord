@@ -7,8 +7,6 @@
 Slash Commands
 ==============
 
-Since Discord has added interaction commands a feature with many possibilities, we at Nextcord have decided to add them to our fleet of features.
-
 This document will explain the inner workings and how to use interaction commands.
 
 We suggest you learn how to make regular commands before looking through here, we suggest looking at the main :doc:`quickstart` guide for commands.
