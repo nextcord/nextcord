@@ -55,7 +55,6 @@ from .cog import Cog
 from .context import Context
 
 
-
 if TYPE_CHECKING:
     from typing_extensions import Concatenate, ParamSpec, TypeGuard
 
@@ -112,6 +111,7 @@ if TYPE_CHECKING:
     P = ParamSpec('P')
 else:
     P = TypeVar('P')
+
 
 def unwrap_function(function: Callable[..., Any]) -> Callable[..., Any]:
     partial = functools.partial
@@ -277,6 +277,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
 
         .. versionadded:: 2.0
+
     inherit_hooks: :class:`bool`, default=False
         If ``True`` and this command has a parent :class:`Group` then this command
         will inherit all checks, pre_invoke and after_invoke's defined on the the :class:`Group`
@@ -1615,6 +1616,7 @@ def command(
         return cls(func, name=name, **attrs)
 
     return decorator
+
 
 @overload
 def group(

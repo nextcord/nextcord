@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -54,7 +55,12 @@ __all__ = (
     'StagePrivacyLevel',
     'InteractionType',
     'InteractionResponseType',
+    'ApplicationCommandType',
+    'ApplicationCommandOptionType',
     'NSFWLevel',
+    'ScheduledEventEntityType',
+    'ScheduledEventPrivacyLevel',
+    'ScheduledEventStatus',
 )
 
 
@@ -354,6 +360,9 @@ class AuditLogAction(Enum):
     sticker_create           = 90
     sticker_update           = 91
     sticker_delete           = 92
+    scheduled_event_create   = 100
+    scheduled_event_update   = 101
+    scheduled_event_delete   = 102
     thread_create            = 110
     thread_update            = 111
     thread_delete            = 112
@@ -363,50 +372,53 @@ class AuditLogAction(Enum):
     def category(self) -> Optional[AuditLogActionCategory]:
         # fmt: off
         lookup: Dict[AuditLogAction, Optional[AuditLogActionCategory]] = {
-            AuditLogAction.guild_update:          AuditLogActionCategory.update,
-            AuditLogAction.channel_create:        AuditLogActionCategory.create,
-            AuditLogAction.channel_update:        AuditLogActionCategory.update,
-            AuditLogAction.channel_delete:        AuditLogActionCategory.delete,
-            AuditLogAction.overwrite_create:      AuditLogActionCategory.create,
-            AuditLogAction.overwrite_update:      AuditLogActionCategory.update,
-            AuditLogAction.overwrite_delete:      AuditLogActionCategory.delete,
-            AuditLogAction.kick:                  None,
-            AuditLogAction.member_prune:          None,
-            AuditLogAction.ban:                   None,
-            AuditLogAction.unban:                 None,
-            AuditLogAction.member_update:         AuditLogActionCategory.update,
-            AuditLogAction.member_role_update:    AuditLogActionCategory.update,
-            AuditLogAction.member_move:           None,
-            AuditLogAction.member_disconnect:     None,
-            AuditLogAction.bot_add:               None,
-            AuditLogAction.role_create:           AuditLogActionCategory.create,
-            AuditLogAction.role_update:           AuditLogActionCategory.update,
-            AuditLogAction.role_delete:           AuditLogActionCategory.delete,
-            AuditLogAction.invite_create:         AuditLogActionCategory.create,
-            AuditLogAction.invite_update:         AuditLogActionCategory.update,
-            AuditLogAction.invite_delete:         AuditLogActionCategory.delete,
-            AuditLogAction.webhook_create:        AuditLogActionCategory.create,
-            AuditLogAction.webhook_update:        AuditLogActionCategory.update,
-            AuditLogAction.webhook_delete:        AuditLogActionCategory.delete,
-            AuditLogAction.emoji_create:          AuditLogActionCategory.create,
-            AuditLogAction.emoji_update:          AuditLogActionCategory.update,
-            AuditLogAction.emoji_delete:          AuditLogActionCategory.delete,
-            AuditLogAction.message_delete:        AuditLogActionCategory.delete,
-            AuditLogAction.message_bulk_delete:   AuditLogActionCategory.delete,
-            AuditLogAction.message_pin:           None,
-            AuditLogAction.message_unpin:         None,
-            AuditLogAction.integration_create:    AuditLogActionCategory.create,
-            AuditLogAction.integration_update:    AuditLogActionCategory.update,
-            AuditLogAction.integration_delete:    AuditLogActionCategory.delete,
-            AuditLogAction.stage_instance_create: AuditLogActionCategory.create,
-            AuditLogAction.stage_instance_update: AuditLogActionCategory.update,
-            AuditLogAction.stage_instance_delete: AuditLogActionCategory.delete,
-            AuditLogAction.sticker_create:        AuditLogActionCategory.create,
-            AuditLogAction.sticker_update:        AuditLogActionCategory.update,
-            AuditLogAction.sticker_delete:        AuditLogActionCategory.delete,
-            AuditLogAction.thread_create:         AuditLogActionCategory.create,
-            AuditLogAction.thread_update:         AuditLogActionCategory.update,
-            AuditLogAction.thread_delete:         AuditLogActionCategory.delete,
+            AuditLogAction.guild_update:           AuditLogActionCategory.update,
+            AuditLogAction.channel_create:         AuditLogActionCategory.create,
+            AuditLogAction.channel_update:         AuditLogActionCategory.update,
+            AuditLogAction.channel_delete:         AuditLogActionCategory.delete,
+            AuditLogAction.overwrite_create:       AuditLogActionCategory.create,
+            AuditLogAction.overwrite_update:       AuditLogActionCategory.update,
+            AuditLogAction.overwrite_delete:       AuditLogActionCategory.delete,
+            AuditLogAction.kick:                   None,
+            AuditLogAction.member_prune:           None,
+            AuditLogAction.ban:                    None,
+            AuditLogAction.unban:                  None,
+            AuditLogAction.member_update:          AuditLogActionCategory.update,
+            AuditLogAction.member_role_update:     AuditLogActionCategory.update,
+            AuditLogAction.member_move:            None,
+            AuditLogAction.member_disconnect:      None,
+            AuditLogAction.bot_add:                None,
+            AuditLogAction.role_create:            AuditLogActionCategory.create,
+            AuditLogAction.role_update:            AuditLogActionCategory.update,
+            AuditLogAction.role_delete:            AuditLogActionCategory.delete,
+            AuditLogAction.invite_create:          AuditLogActionCategory.create,
+            AuditLogAction.invite_update:          AuditLogActionCategory.update,
+            AuditLogAction.invite_delete:          AuditLogActionCategory.delete,
+            AuditLogAction.webhook_create:         AuditLogActionCategory.create,
+            AuditLogAction.webhook_update:         AuditLogActionCategory.update,
+            AuditLogAction.webhook_delete:         AuditLogActionCategory.delete,
+            AuditLogAction.emoji_create:           AuditLogActionCategory.create,
+            AuditLogAction.emoji_update:           AuditLogActionCategory.update,
+            AuditLogAction.emoji_delete:           AuditLogActionCategory.delete,
+            AuditLogAction.message_delete:         AuditLogActionCategory.delete,
+            AuditLogAction.message_bulk_delete:    AuditLogActionCategory.delete,
+            AuditLogAction.message_pin:            None,
+            AuditLogAction.message_unpin:          None,
+            AuditLogAction.integration_create:     AuditLogActionCategory.create,
+            AuditLogAction.integration_update:     AuditLogActionCategory.update,
+            AuditLogAction.integration_delete:     AuditLogActionCategory.delete,
+            AuditLogAction.stage_instance_create:  AuditLogActionCategory.create,
+            AuditLogAction.stage_instance_update:  AuditLogActionCategory.update,
+            AuditLogAction.stage_instance_delete:  AuditLogActionCategory.delete,
+            AuditLogAction.sticker_create:         AuditLogActionCategory.create,
+            AuditLogAction.sticker_update:         AuditLogActionCategory.update,
+            AuditLogAction.sticker_delete:         AuditLogActionCategory.delete,
+            AuditLogAction.scheduled_event_create: AuditLogActionCategory.create,
+            AuditLogAction.scheduled_event_update: AuditLogActionCategory.update,
+            AuditLogAction.scheduled_event_delete: AuditLogActionCategory.delete,
+            AuditLogAction.thread_create:          AuditLogActionCategory.create,
+            AuditLogAction.thread_update:          AuditLogActionCategory.update,
+            AuditLogAction.thread_delete:          AuditLogActionCategory.delete,
         }
         # fmt: on
         return lookup[self]
@@ -440,6 +452,8 @@ class AuditLogAction(Enum):
             return 'stage_instance'
         elif v < 93:
             return 'sticker'
+        elif v < 103:
+            return 'event'
         elif v < 113:
             return 'thread'
 
@@ -462,6 +476,7 @@ class UserFlags(Enum):
     verified_bot = 65536
     verified_bot_developer = 131072
     discord_certified_moderator = 262144
+    known_spammer = 1048576
 
 
 class ActivityType(Enum):
@@ -528,6 +543,7 @@ class InteractionType(Enum):
     ping = 1
     application_command = 2
     component = 3
+    application_command_autocomplete = 4
 
 
 class InteractionResponseType(Enum):
@@ -538,6 +554,26 @@ class InteractionResponseType(Enum):
     deferred_channel_message = 5  # (with source)
     deferred_message_update = 6  # for components
     message_update = 7  # for components
+    application_command_autocomplete_result = 8
+
+
+class ApplicationCommandType(Enum):
+    chat_input = 1
+    user = 2
+    message = 3
+
+
+class ApplicationCommandOptionType(Enum):
+    sub_command = 1
+    sub_command_group = 2
+    string = 3
+    integer = 4
+    boolean = 5
+    user = 6
+    channel = 7
+    role = 8
+    mentionable = 9
+    number = 10  # A double, AKA floating point.
 
 
 class VideoQualityMode(Enum):
@@ -587,6 +623,23 @@ class NSFWLevel(Enum, comparable=True):
     explicit = 1
     safe = 2
     age_restricted = 3
+
+
+class ScheduledEventEntityType(Enum):
+    stage_instance =  1
+    voice = 2
+    external = 3
+
+
+class ScheduledEventPrivacyLevel(Enum):
+    guild_only = 2
+
+
+class ScheduledEventStatus(Enum):
+    scheduled = 1
+    active = 2
+    completed = 3
+    canceled = 4
 
 
 T = TypeVar('T')

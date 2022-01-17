@@ -75,6 +75,7 @@ __all__ = (
     'ThreadConverter',
     'GuildChannelConverter',
     'GuildStickerConverter',
+    'ScheduledEventConverter',
     'clean_content',
     'Greedy',
     'run_converters',
@@ -349,6 +350,8 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
             guild_id = None
         else:
             guild_id = int(guild_id)
+        if channel_id is None:
+            channel_id = ctx.channel.id
         return guild_id, message_id, channel_id
 
     @staticmethod
@@ -863,6 +866,74 @@ class GuildStickerConverter(IDConverter[nextcord.GuildSticker]):
         return result
 
 
+_EVENT_INVITE_RE = re.compile(
+    r'(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)'
+    '?event=(\d+)'
+)
+
+_EVENT_API_RE = re.compile(
+    r'(?:https?\:\/\/)?(?:(ptb|canary|www)\.)?discord'
+    r'(?:(?:app)?\.com\/events)\/(\d+)\/(\d+)'
+)
+
+
+class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
+    """Converts to a :class:`~nextcord.ScheduledEvent`.
+
+    All lookups are done for the local guild first, if available. If that lookup
+    fails, then it checks the client's global cache.
+
+    The lookup strategy is as follows (in order):
+
+    1. Lookup by ID.
+    3. Lookup by name
+    3. Lookup by url (invite?event=id and /guildid/eventid)
+
+    .. versionadded:: 2.0
+    """
+
+    async def convert(
+        self, ctx: Context, argument: str
+    ) -> nextcord.ScheduledEvent:
+        match = self._get_id_match(argument)
+        result = None
+        bot = ctx.bot
+        guild = ctx.guild
+
+        if match is None:
+            # Try to get the scheduled event by name. Try local guild first.
+            if guild:
+                result = nextcord.utils.get(guild.scheduled_events, name=argument)
+
+            if result is None:
+                result = nextcord.utils.get(bot.scheduled_events, name=argument)
+        else:
+            scheduled_event_id = int(match.group(1))
+
+            # Try to look up scheduled event by id.
+            result = bot.get_scheduled_event(scheduled_event_id)
+
+        if result is None:
+            match = _EVENT_INVITE_RE.match(argument)
+
+            if match is not None:
+                event_id = int(match.group(2))
+                result = bot.get_scheduled_event(event_id)
+            else:
+                match = _EVENT_API_RE.match(argument)
+                guild_id = int(match.group(2))
+                guild = bot.get_guild(guild_id)
+                if guild is not None:
+                    result = guild.get_scheduled_event(int(match.group(3)))
+                else:
+                    raise ScheduledEventNotFound(argument)
+
+                if result is None:
+                    raise ScheduledEventNotFound(argument)
+
+        return result
+
+
 class clean_content(Converter[str]):
     """Converts the argument to mention scrubbed version of
     said content.
@@ -1053,6 +1124,7 @@ CONVERTER_MAPPING: Dict[Type[Any], Any] = {
     nextcord.Thread: ThreadConverter,
     nextcord.abc.GuildChannel: GuildChannelConverter,
     nextcord.GuildSticker: GuildStickerConverter,
+    nextcord.ScheduledEvent: ScheduledEventConverter,
 }
 
 

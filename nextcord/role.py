@@ -25,11 +25,14 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 from typing import Any, Dict, List, Optional, TypeVar, Union, overload, TYPE_CHECKING
 
+from .asset import Asset
+from .utils import _bytes_to_base64_data
 from .permissions import Permissions
 from .errors import InvalidArgument
 from .colour import Colour
 from .mixins import Hashable
 from .utils import snowflake_time, _get_as_snowflake, MISSING
+from .file import File
 
 __all__ = (
     'RoleTags',
@@ -183,6 +186,7 @@ class Role(Hashable):
         'hoist',
         'guild',
         'tags',
+        '_icon',
         '_state',
     )
 
@@ -242,6 +246,9 @@ class Role(Hashable):
         self.hoist: bool = data.get('hoist', False)
         self.managed: bool = data.get('managed', False)
         self.mentionable: bool = data.get('mentionable', False)
+        self._icon: Optional[str] = data.get('icon', None)
+        if self._icon is None:
+            self._icon: Optional[str] = data.get('unicode_emoji', None)
         self.tags: Optional[RoleTags]
 
         try:
@@ -305,7 +312,10 @@ class Role(Hashable):
     @property
     def mention(self) -> str:
         """:class:`str`: Returns a string that allows you to mention a role."""
-        return f'<@&{self.id}>'
+        if self.id != self.guild.id:
+            return f'<@&{self.id}>'
+        else:
+            return '@everyone'
 
     @property
     def members(self) -> List[Member]:
@@ -316,6 +326,16 @@ class Role(Hashable):
 
         role_id = self.id
         return [member for member in all_members if member._roles.has(role_id)]
+
+    @property
+    def icon(self) -> Optional[Union[Asset, str]]:
+        """Optional[Union[:class:`Asset`, :class:`str`]]: Returns the role's icon asset or its
+        unicode emoji, if available."""
+        if self._icon is None:
+            return None
+        if len(self._icon) == 1:
+            return self._icon
+        return Asset._from_icon(self._state, self.id, self._icon, "role")
 
     async def _move(self, position: int, reason: Optional[str]) -> None:
         if position <= 0:
@@ -351,6 +371,7 @@ class Role(Hashable):
         mentionable: bool = MISSING,
         position: int = MISSING,
         reason: Optional[str] = MISSING,
+        icon: Optional[Union[str, bytes, File]] = MISSING,
     ) -> Optional[Role]:
         """|coro|
 
@@ -424,6 +445,17 @@ class Role(Hashable):
 
         if mentionable is not MISSING:
             payload['mentionable'] = mentionable
+
+        if icon is not MISSING:
+            if icon is None:
+                payload['icon'] = icon
+            elif isinstance(icon, str):
+                payload['unicode_emoji'] = icon
+                payload['icon'] = None
+            elif isinstance(icon, File):
+                payload['icon'] = _bytes_to_base64_data(icon.fp.read())
+            else:
+                payload['icon'] = _bytes_to_base64_data(icon)
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         return Role(guild=self.guild, data=data, state=self._state)
