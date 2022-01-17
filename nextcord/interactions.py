@@ -666,14 +666,19 @@ class InteractionResponse:
 
         parent = self._parent
         adapter = async_context.get()
-        await adapter.create_interaction_response(
-            parent.id,
-            parent.token,
-            session=parent._session,
-            type=InteractionResponseType.channel_message.value,
-            data=payload,
-            files=files,
-        )
+        try:
+            await adapter.create_interaction_response(
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=InteractionResponseType.channel_message.value,
+                data=payload,
+                files=files,
+            )
+        finally:
+            if files:
+                for file in files:
+                    file.close()
 
         if view is not MISSING:
             if ephemeral and view.timeout is None:
