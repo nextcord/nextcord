@@ -39,6 +39,7 @@ from .errors import (
 from .channel import PartialMessageable, ChannelType
 
 from .file import File
+from .embeds import Embed
 from .user import User
 from .member import Member
 from .message import Message, Attachment
@@ -61,7 +62,6 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
-    from .embeds import Embed
     from .ui.view import View
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
@@ -639,8 +639,8 @@ class InteractionResponse:
             embeds = [embed]
 
         if embeds:
-            if len(embeds) > 10:
-                raise ValueError('Embeds cannot exceed maximum of 10 elements')
+            if any(not isinstance(embed, Embed) for embed in embeds):
+                raise TypeError('Embeds must be of type Embed')
             payload['embeds'] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
@@ -650,7 +650,7 @@ class InteractionResponse:
             files = [file]
 
         if files and any(not isinstance(f, File) for f in files):
-            raise TypeError('Files must be an instance of File')
+            raise TypeError('Files must be of type File')
 
         if content is not None:
             payload['content'] = str(content)
