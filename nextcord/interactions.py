@@ -38,6 +38,7 @@ from .errors import (
 )
 from .channel import PartialMessageable, ChannelType
 
+from .file import File
 from .user import User
 from .member import Member
 from .message import Message, Attachment
@@ -58,7 +59,6 @@ if TYPE_CHECKING:
     )
     from .guild import Guild
     from .state import ConnectionState
-    from .file import File
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
     from .embeds import Embed
@@ -580,6 +580,8 @@ class InteractionResponse:
         *,
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
+        file: File = MISSING,
+        files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
         ephemeral: bool = False,
@@ -598,6 +600,11 @@ class InteractionResponse:
         embed: :class:`Embed`
             The rich embed for the content to send. This cannot be mixed with
             ``embeds`` parameter.
+        file: :class:`File`
+            The file to upload.
+        files: List[:class:`File`]
+            A list of files to upload. Maximum of 10. This cannot be mixed with
+            the ``file`` parameter.
         tts: :class:`bool`
             Indicates if the message should be sent using text-to-speech.
         view: :class:`nextcord.ui.View`
@@ -612,7 +619,7 @@ class InteractionResponse:
         HTTPException
             Sending the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
         InteractionResponded
@@ -636,6 +643,18 @@ class InteractionResponse:
                 raise ValueError('embeds cannot exceed maximum of 10 elements')
             payload['embeds'] = [e.to_dict() for e in embeds]
 
+        if file is not MISSING and files is not MISSING:
+            raise TypeError('cannot mix file and files keyword arguments')
+
+        if file is not MISSING:
+            files = [file]
+
+        if files:
+            if len(files) > 10:
+                raise ValueError('files cannot exceed maximum of 10 elements')
+            if any(not isinstance(f, File) for f in files):
+                raise TypeError('files must be an instance of File')
+
         if content is not None:
             payload['content'] = str(content)
 
@@ -653,6 +672,7 @@ class InteractionResponse:
             session=parent._session,
             type=InteractionResponseType.channel_message.value,
             data=payload,
+            files=files,
         )
 
         if view is not MISSING:
