@@ -633,27 +633,24 @@ class InteractionResponse:
         }
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('cannot mix embed and embeds keyword arguments')
+            raise TypeError('Cannot mix embed and embeds keyword arguments')
 
         if embed is not MISSING:
             embeds = [embed]
 
         if embeds:
             if len(embeds) > 10:
-                raise ValueError('embeds cannot exceed maximum of 10 elements')
+                raise ValueError('Embeds cannot exceed maximum of 10 elements')
             payload['embeds'] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
-            raise TypeError('cannot mix file and files keyword arguments')
+            raise TypeError('Cannot mix file and files keyword arguments')
 
         if file is not MISSING:
             files = [file]
 
-        if files:
-            if len(files) > 10:
-                raise ValueError('files cannot exceed maximum of 10 elements')
-            if any(not isinstance(f, File) for f in files):
-                raise TypeError('files must be an instance of File')
+        if files and any(not isinstance(f, File) for f in files):
+            raise TypeError('Files must be an instance of File')
 
         if content is not None:
             payload['content'] = str(content)
