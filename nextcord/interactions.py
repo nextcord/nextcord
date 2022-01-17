@@ -639,8 +639,6 @@ class InteractionResponse:
             embeds = [embed]
 
         if embeds:
-            if any(not isinstance(embed, Embed) for embed in embeds):
-                raise TypeError('Embeds must be of type Embed')
             payload['embeds'] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
@@ -649,8 +647,8 @@ class InteractionResponse:
         if file is not MISSING:
             files = [file]
 
-        if files and any(not isinstance(f, File) for f in files):
-            raise TypeError('Files must be of type File')
+        if files and not all(isinstance(f, File) for f in files):
+            raise TypeError('Files parameter must be a list of type File')
 
         if content is not None:
             payload['content'] = str(content)

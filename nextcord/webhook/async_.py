@@ -467,8 +467,6 @@ def handle_message_parameters(
 
     payload = {}
     if embeds is not MISSING:
-        if len(embeds) > 10:
-            raise InvalidArgument('embeds has a maximum of 10 elements.')
         payload['embeds'] = [e.to_dict() for e in embeds]
 
     if embed is not MISSING:
