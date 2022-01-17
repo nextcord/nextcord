@@ -59,7 +59,7 @@ if TYPE_CHECKING:
     )
 
     from .types.components import Component as ComponentPayload
-    from .types.threads import ThreadArchiveDuration
+    from .types.threads import ThreadArchiveDuration, Thread as ThreadPayload
     from .types.member import (
         Member as MemberPayload,
         UserWithMember as UserWithMemberPayload,
@@ -884,6 +884,12 @@ class Message(Hashable):
 
     def _handle_components(self, components: List[ComponentPayload]):
         self.components = [_component_factory(d) for d in components]
+
+    def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
+        if thread:
+            self.thread = Thread(guild=self.guild, state=self._state, data=thread)
+        else:
+            self.thread = None
 
     def _rebind_cached_references(self, new_guild: Guild, new_channel: Union[TextChannel, Thread]) -> None:
         self.guild = new_guild
