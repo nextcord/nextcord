@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -25,14 +26,21 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import List, Literal, Optional, TypedDict, Union
-from .webhook import Webhook
-from .guild import MFALevel, VerificationLevel, ExplicitContentFilterLevel, DefaultMessageNotificationLevel
+
+from .channel import ChannelType, VideoQualityMode, PermissionOverwrite
+from .guild import (
+    MFALevel,
+    VerificationLevel,
+    ExplicitContentFilterLevel,
+    DefaultMessageNotificationLevel
+)
 from .integration import IntegrationExpireBehavior, PartialIntegration
-from .user import User
 from .snowflake import Snowflake
 from .role import Role
-from .channel import ChannelType, VideoQualityMode, PermissionOverwrite
+from .scheduled_events import ScheduledEventEntityType
 from .threads import Thread
+from .user import User
+from .webhook import Webhook
 
 AuditLogEvent = Literal[
     1,
@@ -76,6 +84,9 @@ AuditLogEvent = Literal[
     90,
     91,
     92,
+    100,
+    101,
+    102,
     110,
     111,
     112,
@@ -138,16 +149,16 @@ class _AuditLogChange_Bool(TypedDict):
 class _AuditLogChange_Int(TypedDict):
     key: Literal[
         'afk_timeout',
-        'prune_delete_days',
-        'position',
-        'bitrate',
-        'rate_limit_per_user',
-        'color',
-        'max_uses',
-        'max_age',
-        'user_limit',
         'auto_archive_duration',
+        'bitrate',
+        'color',
         'default_auto_archive_duration',
+        'max_age',
+        'max_uses',
+        'position',
+        'prune_delete_days',
+        'rate_limit_per_user',
+        'user_limit',
     ]
     new_value: int
     old_value: int
@@ -207,21 +218,28 @@ class _AuditLogChange_Overwrites(TypedDict):
     old_value: List[PermissionOverwrite]
 
 
+class _AuditLogChange_ScheduledEventEntityType(TypedDict):
+    key: Literal['entity_type']
+    new_value: ScheduledEventEntityType
+    old_value: ScheduledEventEntityType
+
+
 AuditLogChange = Union[
-    _AuditLogChange_Str,
     _AuditLogChange_AssetHash,
-    _AuditLogChange_Snowflake,
-    _AuditLogChange_Int,
     _AuditLogChange_Bool,
+    _AuditLogChange_ChannelType,
+    _AuditLogChange_DefaultMessageNotificationLevel,
+    _AuditLogChange_ScheduledEventEntityType,
+    _AuditLogChange_ExplicitContentFilter,
+    _AuditLogChange_Int,
+    _AuditLogChange_IntegrationExpireBehaviour,
     _AuditLogChange_ListRole,
     _AuditLogChange_MFALevel,
-    _AuditLogChange_VerificationLevel,
-    _AuditLogChange_ExplicitContentFilter,
-    _AuditLogChange_DefaultMessageNotificationLevel,
-    _AuditLogChange_ChannelType,
-    _AuditLogChange_IntegrationExpireBehaviour,
-    _AuditLogChange_VideoQualityMode,
     _AuditLogChange_Overwrites,
+    _AuditLogChange_Snowflake,
+    _AuditLogChange_Str,
+    _AuditLogChange_VerificationLevel,
+    _AuditLogChange_VideoQualityMode,
 ]
 
 

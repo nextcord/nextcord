@@ -526,6 +526,9 @@ Exceptions
 .. autoexception:: nextcord.ext.commands.ChannelNotFound
     :members:
 
+.. autoexception:: nextcord.ext.commands.ScheduledEventNotFound
+    :members:
+
 .. autoexception:: nextcord.ext.commands.ChannelNotReadable
     :members:
 
@@ -640,6 +643,7 @@ Exception Hierarchy
                     - :exc:`~.commands.PartialEmojiConversionFailure`
                     - :exc:`~.commands.BadBoolArgument`
                     - :exc:`~.commands.ThreadNotFound`
+                    ~ :exc:`~.commands.ScheduledEventNotFound`
                     - :exc:`~.commands.FlagError`
                         - :exc:`~.commands.BadFlagArgument`
                         - :exc:`~.commands.MissingFlagArgument`
