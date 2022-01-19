@@ -225,7 +225,14 @@ class CommandOption(SlashOption):
 
         self.autocomplete_function: Optional[Callable] = MISSING
 
-        self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
+        if (
+            isinstance(parameter.annotation, str)
+            and parameter.annotation != parameter.empty
+        ):
+            found_type = eval(parameter.annotation, globals(), locals())
+            self.type: ApplicationCommandOptionType = self.get_type(found_type)
+        else:
+            self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
         if cmd_arg._verify:
             self.verify()
 
