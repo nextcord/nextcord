@@ -37,7 +37,7 @@ if TYPE_CHECKING:
         ReactionClearEmojiEvent,
         IntegrationDeleteEvent,
         TypingEvent,
-        MemberRemoveEvent
+        MemberRemoveEvent,
     )
     from .message import Message
     from .partial_emoji import PartialEmoji
