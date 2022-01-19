@@ -54,7 +54,7 @@ __all__ = (
     'RawReactionClearEmojiEvent',
     'RawIntegrationDeleteEvent',
     'RawTypingEvent',
-    "RawMemberRemoveEvent"
+    "RawMemberRemoveEvent",
 )
 
 
