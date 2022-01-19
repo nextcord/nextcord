@@ -1,7 +1,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -22,30 +22,39 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from __future__ import annotations
+from typing import Literal, TypedDict
 
-from typing import TypedDict
+from .member import Member
 from .snowflake import Snowflake
+from .user import User
 
 
-class _RoleOptional(TypedDict, total=False):
-    tags: RoleTags
-    unicode_emoji: str
-    icon: str
+ScheduledEventEntityType = Literal[1, 2, 3]
+ScheduledEventPrivacyLevel = Literal[2]
+ScheduledEventStatus = Literal[1, 2, 3, 4]
 
 
-class Role(_RoleOptional):
+class EntityMetadata(TypedDict, total=False):
+    location: str
+
+
+class ScheduledEvent(TypedDict, total=False):
     id: Snowflake
+    guild_id: Snowflake
+    channel_id: Snowflake
     name: str
-    color: int
-    hoist: bool
-    position: int
-    permissions: str
-    managed: bool
-    mentionable: bool
+    description: str
+    scheduled_start_time: str
+    scheduled_end_time: str
+    privacy_level: ScheduledEventPrivacyLevel
+    status: ScheduledEventStatus
+    entity_type: ScheduledEventEntityType
+    entity_id: Snowflake
+    entity_metadata: EntityMetadata
+    creator: User
+    user_count: int
 
-
-class RoleTags(TypedDict, total=False):
-    bot_id: Snowflake
-    integration_id: Snowflake
-    premium_subscriber: None
+class ScheduledEventUser(TypedDict, total=False):
+    guild_scheduled_event_id: Snowflake
+    user: User
+    member: Member

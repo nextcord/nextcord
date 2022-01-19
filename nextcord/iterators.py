@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -39,6 +40,8 @@ __all__ = (
     'AuditLogIterator',
     'GuildIterator',
     'MemberIterator',
+    'ScheduledEventIterator',
+    'ScheduledEventUserIterator',
 )
 
 if TYPE_CHECKING:
@@ -59,6 +62,7 @@ if TYPE_CHECKING:
         Thread as ThreadPayload,
     )
 
+    from .scheduled_events import ScheduledEvent, ScheduledEventUser
     from .member import Member
     from .user import User
     from .message import Message
@@ -751,3 +755,79 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
     def create_thread(self, data: ThreadPayload) -> Thread:
         from .threads import Thread
         return Thread(guild=self.guild, state=self.guild._state, data=data)
+
+
+class ScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
+    def __init__(self, guild: Guild, with_users: bool = False):
+        self.guild = guild
+        self.with_users = with_users
+
+        self.state = self.guild._state
+        self.get_guild_events = self.state.http.get_guild_events
+        self.queue = asyncio.Queue()
+
+    async def next(self) -> Member:
+        if self.queue.empty():
+            await self.fill_queue()
+
+        try:
+            return self.queue.get_nowait()
+        except asyncio.QueueEmpty:
+            raise NoMoreItems()
+
+    async def fill_queue(self):
+        data = await self.get_guild_events(self.guild.id, self.with_users)
+        if not data:
+            # no data, terminate
+            return
+
+        for element in reversed(data):
+             await self.queue.put(self.create_event(element))
+
+    def create_event(self, data):
+        return self.guild._store_scheduled_event(data)
+
+
+class ScheduledEventUserIterator(_AsyncIterator['ScheduledEventUser']):
+    def __init__(
+        self,
+        guild: Guild,
+        event: ScheduledEvent,
+        limit: int = 100,
+        with_member: bool = False,
+        before: Snowflake = None,
+        after: Snowflake = None
+    ):
+        self.guild = guild
+        self.event = event
+        self.limit = limit
+        self.with_member = with_member
+        self.before = before
+        self.after = after
+
+        self.state = self.guild._state
+        self.get_event_users = self.state.http.get_event_users
+        self.queue = asyncio.Queue()
+
+    async def next(self) -> Member:
+        if self.queue.empty():
+            await self.fill_queue()
+
+        try:
+            return self.queue.get_nowait()
+        except asyncio.QueueEmpty:
+            raise NoMoreItems()
+
+    async def fill_queue(self):
+        data = await self.get_event_users()
+        if not data:
+            # no data, terminate
+            return
+
+        for element in reversed(data):
+            await self.queue.put(self.create_user(element))
+
+    def create_user(self, data):
+        return self.event._update_user(
+            data=data, guild=self.guild, state=self.state
+        )

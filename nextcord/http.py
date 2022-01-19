@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -84,6 +85,7 @@ if TYPE_CHECKING:
         threads,
         voice,
         sticker,
+        scheduled_events
     )
     from .types.snowflake import Snowflake, SnowflakeList
 
@@ -108,7 +110,7 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
 
 
 class Route:
-    BASE: ClassVar[str] = 'https://discord.com/api/v8'
+    BASE: ClassVar[str] = 'https://discord.com/api/v9'
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
@@ -473,6 +475,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[sticker.StickerItem]] = None,
         components: Optional[List[components.Component]] = None,
+        attachments: Optional[List[dict]] = None
     ) -> Response[message.Message]:
         form = []
 
@@ -493,28 +496,19 @@ class HTTPClient:
             payload['components'] = components
         if stickers:
             payload['sticker_ids'] = stickers
+        if attachments:
+            payload["attachments"] = [{"filename": files[attachment["id"]].filename, **attachment} for attachment in attachments]
 
         form.append({'name': 'payload_json', 'value': utils._to_json(payload)})
-        if len(files) == 1:
-            file = files[0]
+        for index, file in enumerate(files):
             form.append(
                 {
-                    'name': 'file',
+                    'name': f'files[{index}]',
                     'value': file.fp,
                     'filename': file.filename,
                     'content_type': 'application/octet-stream',
                 }
             )
-        else:
-            for index, file in enumerate(files):
-                form.append(
-                    {
-                        'name': f'file{index}',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
 
         return self.request(route, form=form, files=files)
 
@@ -566,6 +560,15 @@ class HTTPClient:
 
     def edit_message(self, channel_id: Snowflake, message_id: Snowflake, **fields: Any) -> Response[message.Message]:
         r = Route('PATCH', '/channels/{channel_id}/messages/{message_id}', channel_id=channel_id, message_id=message_id)
+        if "files" in fields:
+            fields["tts"] = None
+            fields["nonce"] = None
+            fields["message_reference"] = None
+            fields["stickers"] = None
+            attachments = fields.pop("attachments", None)
+            if attachments is not None:
+                fields["attachments"] = attachments
+            return self.send_multipart_helper(r, **fields)
         return self.request(r, json=fields)
 
     def add_reaction(self, channel_id: Snowflake, message_id: Snowflake, emoji: str) -> Response[None]:
@@ -1415,7 +1418,7 @@ class HTTPClient:
         self, guild_id: Snowflake, role_id: Snowflake, *, reason: Optional[str] = None, **fields: Any
     ) -> Response[role.Role]:
         r = Route('PATCH', '/guilds/{guild_id}/roles/{role_id}', guild_id=guild_id, role_id=role_id)
-        valid_keys = ('name', 'permissions', 'color', 'hoist', 'mentionable')
+        valid_keys = ('name', 'permissions', 'color', 'hoist', 'mentionable', 'icon', 'unicode_emoji')
         payload = {k: v for k, v in fields.items() if k in valid_keys}
         return self.request(r, json=payload, reason=reason)
 
@@ -1922,3 +1925,127 @@ class HTTPClient:
 
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
         return self.request(Route('GET', '/users/{user_id}', user_id=user_id))
+
+    def get_guild_events(
+        self,
+        guild_id: Snowflake,
+        with_user_count: bool
+    ) -> Response[List[scheduled_events.ScheduledEvent]]:
+        params: Dict[str, Any] = {
+            'with_user_count': str(with_user_count)
+        }
+        r = Route(
+            'GET',
+            '/guilds/{guild_id}/scheduled-events',
+            guild_id=guild_id
+        )
+        return self.request(r, params=params)
+
+    def create_event(
+        self,
+        guild_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        **payload: Any
+    ) -> Response[scheduled_events.ScheduledEvent]:
+        valid_keys = {
+            'channel_id',
+            'entity_metadata',
+            'name',
+            'privacy_level',
+            'scheduled_start_time',
+            'scheduled_end_time',
+            'description',
+            'entity_type'
+        }
+        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        r = Route(
+            'POST',
+            '/guilds/{guild_id}/scheduled-events',
+            guild_id=guild_id
+        )
+        return self.request(r, json=payload, reason=reason)
+
+    def get_event(
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake,
+        with_user_count: bool
+    ) -> Response[scheduled_events.ScheduledEvent]:
+        params: Dict[str, Any] = {
+            'with_user_count': str(with_user_count)
+        }
+        r = Route(
+            'GET',
+            '/guilds/{guild_id}/scheduled-events/{event_id}',
+            guild_id=guild_id,
+            event_id=event_id
+        )
+        return self.request(r, params=params)
+
+    def edit_event(
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        **payload: Any
+    ) -> Response[scheduled_events.ScheduledEvent]:
+        valid_keys = {
+            'channel_id',
+            'event_metadata',
+            'name',
+            'privacy_level',
+            'scheduled_start_time',
+            'scheduled_end_time',
+            'description',
+            'entity_type'
+        }
+        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        r = Route(
+            'PATCH',
+            '/guilds/{guild_id}/scheduled-events/{event_id}',
+            guild_id=guild_id,
+            event_id=event_id
+        )
+        return self.request(r, json=payload, reason=reason)
+
+    def delete_event(
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake
+    ) -> Response[None]:
+        r = Route(
+            'DELETE',
+            '/guilds/{guild_id}/scheduled-events/{event_id}',
+            guild_id=guild_id,
+            event_id=event_id
+        )
+        return self.request(r)
+
+    def get_event_users(
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake,
+        *,
+        limit: int = MISSING,
+        with_member: bool = MISSING,
+        before: Snowflake = MISSING,
+        after: Snowflake = MISSING
+    ) -> Response[List[scheduled_events.ScheduledEventUser]]:
+        params: Dict[str, Any] = {}
+        if limit is not MISSING:
+            params['limit'] = limit
+        if with_member is not MISSING:
+            params['with_member'] = str(with_member)
+        if before is not MISSING:
+            params['before'] = before
+        if after is not MISSING:
+            params['after'] = after
+        r = Route(
+            'GET',
+            '/guilds/{guild_id}/scheduled-events/{event_id}/users',
+            guild_id=guild_id,
+            event_id=event_id
+        )
+        return self.request(r, params=params)

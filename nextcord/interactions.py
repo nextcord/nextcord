@@ -38,6 +38,8 @@ from .errors import (
 )
 from .channel import PartialMessageable, ChannelType
 
+from .file import File
+from .embeds import Embed
 from .user import User
 from .member import Member
 from .message import Message, Attachment
@@ -58,10 +60,8 @@ if TYPE_CHECKING:
     )
     from .guild import Guild
     from .state import ConnectionState
-    from .file import File
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
-    from .embeds import Embed
     from .ui.view import View
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
@@ -91,6 +91,10 @@ class Interaction:
         The guild ID the interaction was sent from.
     channel_id: Optional[:class:`int`]
         The channel ID the interaction was sent from.
+    locale: Optional[:class:`str`]
+        The users locale.
+    guild_locale: Optional[:class:`str`]
+        The guilds preferred locale, if invoked in a guild.
     application_id: :class:`int`
         The application ID that the interaction was for.
     user: Optional[Union[:class:`User`, :class:`Member`]]
@@ -113,6 +117,8 @@ class Interaction:
         'application_id',
         'message',
         'user',
+        'locale',
+        'guild_locale',
         'token',
         'version',
         '_permissions',
@@ -139,6 +145,8 @@ class Interaction:
         self.channel_id: Optional[int] = utils._get_as_snowflake(data, 'channel_id')
         self.guild_id: Optional[int] = utils._get_as_snowflake(data, 'guild_id')
         self.application_id: int = int(data['application_id'])
+        self.locale: Optional[str] = data.get('locale')
+        self.guild_locale: Optional[str] = data.get('guild_locale')
 
         self.message: Optional[Message]
         try:
@@ -525,12 +533,55 @@ class InteractionResponse:
             )
             self._responded = True
 
+    async def send_autocomplete(self, choices: Union[dict, list]) -> None:
+        """|coro|
+
+        Responds to this interaction by sending an autocomplete payload.
+
+        Parameters
+        ----------
+        choices: Union[:class:`dict`, :class:`list`]
+            The choices to send the user.
+            If a :class:`dict` is given, each key-value pair is turned into a name-value pair. Name is what Discord
+            shows the user, value is what Discord sends to the bot.
+            If something not a :class:`dict`, such as a :class:`list`, is given, each value is turned into a duplicate
+            name-value pair, where the display name and the value Discord sends back are the same.
+
+        Raises
+        -------
+        HTTPException
+            Sending the message failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+        """
+        if self._responded:
+            raise InteractionResponded(self._parent)
+        if not isinstance(choices, dict):
+            choice_list = [{"name": choice, "value": choice} for choice in choices]
+        else:
+            choice_list = [{"name": key, "value": value} for key, value in choices.items()]
+
+        payload = {"choices": choice_list}
+
+        adapter = async_context.get()
+        await adapter.create_interaction_response(
+            self._parent.id,
+            self._parent.token,
+            session=self._parent._session,
+            type=InteractionResponseType.application_command_autocomplete_result.value,
+            data=payload
+        )
+        self._responded = True
+
+
     async def send_message(
         self,
         content: Optional[Any] = None,
         *,
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
+        file: File = MISSING,
+        files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
         ephemeral: bool = False,
@@ -549,6 +600,11 @@ class InteractionResponse:
         embed: :class:`Embed`
             The rich embed for the content to send. This cannot be mixed with
             ``embeds`` parameter.
+        file: :class:`File`
+            The file to upload.
+        files: List[:class:`File`]
+            A list of files to upload. Maximum of 10. This cannot be mixed with
+            the ``file`` parameter.
         tts: :class:`bool`
             Indicates if the message should be sent using text-to-speech.
         view: :class:`nextcord.ui.View`
@@ -563,7 +619,7 @@ class InteractionResponse:
         HTTPException
             Sending the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
         InteractionResponded
@@ -577,15 +633,22 @@ class InteractionResponse:
         }
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('cannot mix embed and embeds keyword arguments')
+            raise TypeError('Cannot mix embed and embeds keyword arguments')
 
         if embed is not MISSING:
             embeds = [embed]
 
         if embeds:
-            if len(embeds) > 10:
-                raise ValueError('embeds cannot exceed maximum of 10 elements')
             payload['embeds'] = [e.to_dict() for e in embeds]
+
+        if file is not MISSING and files is not MISSING:
+            raise TypeError('Cannot mix file and files keyword arguments')
+
+        if file is not MISSING:
+            files = [file]
+
+        if files and not all(isinstance(f, File) for f in files):
+            raise TypeError('Files parameter must be a list of type File')
 
         if content is not None:
             payload['content'] = str(content)
@@ -598,13 +661,19 @@ class InteractionResponse:
 
         parent = self._parent
         adapter = async_context.get()
-        await adapter.create_interaction_response(
-            parent.id,
-            parent.token,
-            session=parent._session,
-            type=InteractionResponseType.channel_message.value,
-            data=payload,
-        )
+        try:
+            await adapter.create_interaction_response(
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=InteractionResponseType.channel_message.value,
+                data=payload,
+                files=files,
+            )
+        finally:
+            if files:
+                for file in files:
+                    file.close()
 
         if view is not MISSING:
             if ephemeral and view.timeout is None:
