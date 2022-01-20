@@ -349,6 +349,7 @@ class AsyncWebhookAdapter:
         session: aiohttp.ClientSession,
         type: int,
         data: Optional[Dict[str, Any]] = None,
+        files: Optional[List[File]] = None,
     ) -> Response[None]:
         payload: Dict[str, Any] = {
             'type': type,
@@ -357,6 +358,29 @@ class AsyncWebhookAdapter:
         if data is not None:
             payload['data'] = data
 
+        multipart = []
+
+        if files:
+            multipart.append({'name': 'payload_json'})
+            payload['attachments'] = []
+            for index, file in enumerate(files):
+                payload['attachments'].append(
+                    {
+                        'id': index,
+                        'filename': file.filename,
+                    }
+                )
+                multipart.append(
+                    {
+                        'name': f'files[{index}]',
+                        'value': file.fp,
+                        'filename': file.filename,
+                        'content_type': 'application/octet-stream',
+                    }
+                )
+            multipart[0]['value'] = utils._to_json(payload)
+            payload = None
+
         route = Route(
             'POST',
             '/interactions/{webhook_id}/{webhook_token}/callback',
@@ -364,7 +388,7 @@ class AsyncWebhookAdapter:
             webhook_token=token,
         )
 
-        return self.request(route, session=session, payload=payload)
+        return self.request(route, session=session, payload=payload, multipart=multipart, files=files)
 
     def get_original_interaction_response(
         self,
@@ -443,8 +467,6 @@ def handle_message_parameters(
 
     payload = {}
     if embeds is not MISSING:
-        if len(embeds) > 10:
-            raise InvalidArgument('embeds has a maximum of 10 elements.')
         payload['embeds'] = [e.to_dict() for e in embeds]
 
     if embed is not MISSING:
