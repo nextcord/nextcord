@@ -178,7 +178,7 @@ class Interaction:
 
     @property
     def client(self):
-        """:class:`Client`: Returns the client that handled the interaction."""
+        """:class:`Client`: The client that handled the interaction."""
         return self._client
 
     @property
