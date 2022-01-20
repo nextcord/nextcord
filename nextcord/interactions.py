@@ -65,6 +65,7 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
+    from .client import Client
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
@@ -106,6 +107,11 @@ class Interaction:
         for 15 minutes.
     data: :class:`dict`
         The raw interaction data.
+    client: :class:`Client`
+        The client that handled the interaction. Can be a subclass
+        of :class:`Client` such as :class:`~ext.commands.Bot`.
+    bot: :class:`Client`:
+        An alias for ``client``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -121,6 +127,7 @@ class Interaction:
         'guild_locale',
         'token',
         'version',
+        '_client',
         '_permissions',
         '_state',
         '_session',
@@ -133,6 +140,7 @@ class Interaction:
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session
+        self._client: Client = state._get_client()
         self._original_message: Optional[InteractionMessage] = None
         self._from_data(data)
 
@@ -172,6 +180,16 @@ class Interaction:
                 self.user = User(state=self._state, data=data['user'])
             except KeyError:
                 pass
+
+    @property
+    def client(self):
+        """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``bot``."""
+        return self._client
+
+    @property
+    def bot(self):
+        """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``client``."""
+        return self._client
 
     @property
     def guild(self) -> Optional[Guild]:
