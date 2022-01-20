@@ -107,11 +107,6 @@ class Interaction:
         for 15 minutes.
     data: :class:`dict`
         The raw interaction data.
-    client: :class:`Client`
-        The client that handled the interaction. Can be a subclass
-        of :class:`Client` such as :class:`~ext.commands.Bot`.
-    bot: :class:`Client`:
-        An alias for ``client``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -183,12 +178,7 @@ class Interaction:
 
     @property
     def client(self):
-        """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``bot``."""
-        return self._client
-
-    @property
-    def bot(self):
-        """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``client``."""
+        """:class:`Client`: Returns the client that handled the interaction."""
         return self._client
 
     @property
