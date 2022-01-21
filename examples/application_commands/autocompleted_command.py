@@ -25,9 +25,12 @@ async def your_favorite_dog(
 
 
 @your_favorite_dog.on_autocomplete("dog")
-async def favorite_dog(interaction: Interaction, dog):
+async def favorite_dog(interaction: Interaction, dog: str) -> None:
+    if not dog:
+        await interaction.response.send_autocomplete(list_of_dog_breeds)  # sending the list to discord.
+        return
 
-    await interaction.response.send_autocomplete(list_of_dog_breeds)
-    # sending the list to discord.
+    results = [d for d in list_of_dog_breeds if d.lower().startswith(dog.lower())]
+    await interaction.response.send_autocomplete(results)
 
 client.run("TOKEN")

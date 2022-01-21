@@ -9,8 +9,6 @@ Slash Commands
 
 This document will explain the inner workings and how to use interaction commands.
 
-We suggest you learn how to make regular commands before looking through here, we suggest looking at the main :doc:`quickstart` guide for commands.
-
 How To Make A Simple Slash Command
 ----------------------------------
 
@@ -74,14 +72,12 @@ Nextcord's implementation of slash commands has fields and is very simple. in th
      @client.slash_command()
      async def help(
          interaction: Interaction,
-         setting: str = SlashOption(name="settings", description="Configure Your Settings", choices=[])
+         setting: str = SlashOption(name="settings", description="Configure Your Settings", choices=["music", "moderation"])
      ):
          if setting == "music":
              await interaction.response.send_message("Sorry we don't have PyNaCl installed currently")
          elif setting == "moderation":
              await interaction.response.send_message("Moderation?")
-         else:
-             await interaction.response.send_message("Odd, I don't know that setting")
 
 
 How To Make Slash Commands In Cogs
