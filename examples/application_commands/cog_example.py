@@ -1,4 +1,11 @@
-from nextcord import Interaction, message_command, slash_command, user_command, Message, Member
+from nextcord import (
+    Interaction,
+    message_command,
+    slash_command,
+    user_command,
+    Message,
+    Member,
+)
 from nextcord.ext import commands
 
 
@@ -11,9 +18,7 @@ class ApplicationCommandCog(commands.Cog):  # Subclassing commands.Cog as you al
         await interaction.response.send_message("This is a slash command in a cog!")
 
     @user_command(guild_ids=[...])  # Again very simular to normal commands.
-    async def my_user_command(
-        self, interaction: Interaction, member: Member
-    ):  # passing in member as it is intaked
+    async def my_user_command(self, interaction: Interaction, member: Member):  # passing in member as it is intaked
         await interaction.response.send_message(f"Hello, {member}!")
 
     @message_command(guild_ids=[...])  # limits guilds

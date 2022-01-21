@@ -19,9 +19,7 @@ async def your_favorite_dog(
         description="Choose the best dog from this autocompleted list!",  # our description
     ),
 ):  # our slash option.
-    await interaction.response.send_message(
-        f"your favorite dog is {dog}!"
-    )  # sends the autocompleted result
+    await interaction.response.send_message(f"your favorite dog is {dog}!")  # sends the autocompleted result
 
 
 @your_favorite_dog.on_autocomplete("dog")
@@ -32,5 +30,6 @@ async def favorite_dog(interaction: Interaction, dog: str) -> None:
 
     results = [d for d in list_of_dog_breeds if d.lower().startswith(dog.lower())]
     await interaction.response.send_autocomplete(results)
+
 
 client.run("TOKEN")
