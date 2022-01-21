@@ -177,7 +177,7 @@ class Interaction:
                 pass
 
     @property
-    def client(self):
+    def client(self) -> Client:
         """:class:`Client`: The client that handled the interaction."""
         return self._client
 
