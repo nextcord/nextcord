@@ -122,7 +122,6 @@ class Interaction:
         'guild_locale',
         'token',
         'version',
-        '_client',
         '_permissions',
         '_state',
         '_session',
@@ -135,7 +134,6 @@ class Interaction:
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session
-        self._client: Client = state._get_client()
         self._original_message: Optional[InteractionMessage] = None
         self._from_data(data)
 
@@ -179,7 +177,7 @@ class Interaction:
     @property
     def client(self) -> Client:
         """:class:`Client`: The client that handled the interaction."""
-        return self._client
+        return self._state._get_client()
 
     @property
     def guild(self) -> Optional[Guild]:
