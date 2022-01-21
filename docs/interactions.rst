@@ -61,7 +61,7 @@ As shown in the demonstration below you make a main slash command or a dummy sla
 
         await interaction.response.send_message(
             "This is subcommand 2!"
-        )  # Responding With The Args/Fields
+        )  # Responding with a message
         
 Fields And Requirements
 -----------------------
@@ -74,7 +74,7 @@ Nextcord's implementation of slash commands has fields and is very simple. in th
      @client.slash_command()
      async def help(
          interaction: Interaction,
-         setting: str = SlashOption(name="settings", description="Configure Your Settings")
+         setting: str = SlashOption(name="settings", description="Configure Your Settings", choices=[])
      ):
          if setting == "music":
              await interaction.response.send_message("Sorry we don't have PyNaCl installed currently")
