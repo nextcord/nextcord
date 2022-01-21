@@ -3,7 +3,7 @@
 .. currentmodule:: nextcord
 
 .. _interactions:
-   
+
 Slash Commands
 ==============
 
@@ -19,7 +19,7 @@ The following example is a simple ping/pong command using Nextcord's slash comma
     @client.slash_command()
     async def ping(interaction):
         await interaction.response.send_message("Pong!")
-        
+
 The way it works is by using:meth:`~Client.slash_command` decorator to add a slash command for the bot to register with Discord.
 
 ``guild_ids`` is used to limit the guilds that the slash command is available to. This is useful for testing as global slash commands can take up to an hour to register.
@@ -27,7 +27,7 @@ The way it works is by using:meth:`~Client.slash_command` decorator to add a sla
 Example:
 
 .. code-block:: python3
-      
+
     @client.slash_command(guild_ids=[id1, id2])
 
 How To Use Sub-Commands
@@ -60,7 +60,7 @@ As shown in the demonstration below you make a main slash command or a dummy sla
         await interaction.response.send_message(
             "This is subcommand 2!"
         )  # Responding with a message
-        
+
 Fields And Requirements
 -----------------------
 Fields are meant to facilitate an easier way to fill info, letting people using your slash command get a different response for each answer.
@@ -68,16 +68,16 @@ Fields are meant to facilitate an easier way to fill info, letting people using 
 Nextcord's implementation of slash commands has fields and is very simple. in the example below is a field.
 
 .. code-block:: python3
-     
-     @client.slash_command()
-     async def help(
-         interaction: Interaction,
-         setting: str = SlashOption(name="settings", description="Configure Your Settings", choices=["music", "moderation"])
-     ):
-         if setting == "music":
-             await interaction.response.send_message("Sorry we don't have PyNaCl installed currently")
-         elif setting == "moderation":
-             await interaction.response.send_message("Moderation?")
+
+    @client.slash_command()
+    async def help(
+        interaction: Interaction,
+        setting: str = SlashOption(name="settings", description="Configure Your Settings", choices=["music", "moderation"])
+    ):
+        if setting == "music":
+            await interaction.response.send_message("Sorry we don't have PyNaCl installed currently")
+        elif setting == "moderation":
+            await interaction.response.send_message("Moderation?")
 
 
 How To Make Slash Commands In Cogs
@@ -119,4 +119,4 @@ The following is a simple example of a message command which sends the content o
     @client.message_command()
     async def say(interaction: Interaction, message: Message):
         await interaction.response.send_message(message.content, ephemeral=True)
-        
+
