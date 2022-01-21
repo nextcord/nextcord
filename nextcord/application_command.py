@@ -995,10 +995,26 @@ class ApplicationCommand(ApplicationSubcommand):
                 self._state._messages.append(message)
         return message
 
-    def _handle_resolved_user(self, user_data: dict) -> User:
-        """Takes the raw user data payload from Discord and adds it to the state cache."""
-        # This is what I prefer _handle_resolved_message to look like.
-        return self._state.store_user(user_data)
+    def _handle_resolved_user(self, resolved_payload: dict, guild: Optional[Union[Guild, int]] = None) -> Union[User, Member]:
+        """Takes the raw user data payload from Discord and adds it to the state cache.""" # needs changing?
+        user_id, user_payload = list(resolved_payload["users"].items())[0]
+        if not guild:
+            return self._state.store_user(user_payload)
+            
+        else:
+            if isinstance(guild, int):
+                guild = self._state.get_guild(guild)
+
+            member = guild.get_member(int(user_id))
+
+            if not member and "members" in resolved_payload:
+                member_payload = list(resolved_payload["members"].values())[0]
+                # This is required to construct the Member.
+                member_payload["user"] = user_payload
+                member = Member(data=member_payload, guild=guild, state=self._state)  # type: ignore
+                guild._add_member(member)
+
+            return member
 
     @property
     def payload(self) -> List[dict]:
@@ -1204,11 +1220,8 @@ class ApplicationCommand(ApplicationSubcommand):
         # TODO: Look into function arguments being autoconverted and given? Arg typed "Channel" gets filled with the
         #  channel?
         # Is this kinda dumb? Yeah, but at this time it can only return one user.
-        user = self._handle_resolved_user(list(interaction.data["resolved"]["users"].values())[0])
-        if interaction.guild and (member := interaction.guild.get_member(user.id)):
-            await self.invoke_user(interaction, member)
-        else:
-            await self.invoke_user(interaction, user)
+        user = self._handle_resolved_user(interaction.data["resolved"], interaction.guild or interaction.guild_id)
+        await self.invoke_user(interaction, user)
 
     async def invoke_user(self, interaction: Interaction, member: Union[Member, User], **kwargs: Dict[Any, Any]) -> None:
         """|coro|
