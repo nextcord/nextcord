@@ -38,6 +38,8 @@ from .errors import (
 )
 from .channel import PartialMessageable, ChannelType
 
+from .file import File
+from .embeds import Embed
 from .user import User
 from .member import Member
 from .message import Message, Attachment
@@ -58,10 +60,8 @@ if TYPE_CHECKING:
     )
     from .guild import Guild
     from .state import ConnectionState
-    from .file import File
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
-    from .embeds import Embed
     from .ui.view import View
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
@@ -580,6 +580,8 @@ class InteractionResponse:
         *,
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
+        file: File = MISSING,
+        files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
         ephemeral: bool = False,
@@ -598,6 +600,11 @@ class InteractionResponse:
         embed: :class:`Embed`
             The rich embed for the content to send. This cannot be mixed with
             ``embeds`` parameter.
+        file: :class:`File`
+            The file to upload.
+        files: List[:class:`File`]
+            A list of files to upload. Maximum of 10. This cannot be mixed with
+            the ``file`` parameter.
         tts: :class:`bool`
             Indicates if the message should be sent using text-to-speech.
         view: :class:`nextcord.ui.View`
@@ -612,7 +619,7 @@ class InteractionResponse:
         HTTPException
             Sending the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
         InteractionResponded
@@ -626,15 +633,22 @@ class InteractionResponse:
         }
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('cannot mix embed and embeds keyword arguments')
+            raise TypeError('Cannot mix embed and embeds keyword arguments')
 
         if embed is not MISSING:
             embeds = [embed]
 
         if embeds:
-            if len(embeds) > 10:
-                raise ValueError('embeds cannot exceed maximum of 10 elements')
             payload['embeds'] = [e.to_dict() for e in embeds]
+
+        if file is not MISSING and files is not MISSING:
+            raise TypeError('Cannot mix file and files keyword arguments')
+
+        if file is not MISSING:
+            files = [file]
+
+        if files and not all(isinstance(f, File) for f in files):
+            raise TypeError('Files parameter must be a list of type File')
 
         if content is not None:
             payload['content'] = str(content)
@@ -647,13 +661,19 @@ class InteractionResponse:
 
         parent = self._parent
         adapter = async_context.get()
-        await adapter.create_interaction_response(
-            parent.id,
-            parent.token,
-            session=parent._session,
-            type=InteractionResponseType.channel_message.value,
-            data=payload,
-        )
+        try:
+            await adapter.create_interaction_response(
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=InteractionResponseType.channel_message.value,
+                data=payload,
+                files=files,
+            )
+        finally:
+            if files:
+                for file in files:
+                    file.close()
 
         if view is not MISSING:
             if ephemeral and view.timeout is None:

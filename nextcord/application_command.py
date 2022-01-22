@@ -289,11 +289,32 @@ class CommandOption(SlashOption):
             if ret:
                 return ret
             else:
-                # The interaction data gives a dictionary of resolved users, best to use it if cache isn't available.
-                resolved_users_payload = interaction.data["resolved"]["users"]
-                resolved_users = {int(raw_id): state.store_user(user_payload) for
-                                  raw_id, user_payload in resolved_users_payload.items()}
-                return resolved_users[user_id]
+                # Return an Member object if the required data is available, otherwise fallback to User.
+                if "members" in interaction.data["resolved"] and (interaction.guild, interaction.guild_id):
+                    resolved_members_payload = interaction.data["resolved"]["members"]
+                    resolved_members: Dict[int, Member] = {}
+                    guild = interaction.guild or state._get_guild(interaction.guild_id)
+                    # Because we modify the payload further down,
+                    # a copy is made to avoid affecting methods that read the interaction data ahead of this function.
+                    for member_id, member_payload in resolved_members_payload.copy().items():
+                        member = guild.get_member(int(member_id))
+                        # Can't find the member in cache, let's construct one.
+                        if not member:
+                            user_payload = interaction.data["resolved"]["users"][member_id]
+                            # This is required to construct the Member.
+                            member_payload["user"] = user_payload
+                            member = Member(data=member_payload, guild=guild, state=state)
+                            guild._add_member(member)
+
+                        resolved_members[member.id] = member 
+
+                    return resolved_members[user_id]
+                else:
+                    # The interaction data gives a dictionary of resolved users, best to use it if cache isn't available.
+                    resolved_users_payload = interaction.data["resolved"]["users"]
+                    resolved_users = {int(raw_id): state.store_user(user_payload) for raw_id, user_payload in resolved_users_payload.items()}
+                    return resolved_users[user_id]
+
         elif self.type is ApplicationCommandOptionType.role:
             return interaction.guild.get_role(int(argument))
         elif self.type is ApplicationCommandOptionType.integer:
