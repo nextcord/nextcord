@@ -275,7 +275,6 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         .. note::
             This object may be copied by the library.
 
-
         .. versionadded:: 2.0
 
     inherit_hooks: :class:`bool`
