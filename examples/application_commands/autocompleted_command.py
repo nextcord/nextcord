@@ -27,9 +27,9 @@ async def favorite_dog(interaction: Interaction, dog: str) -> None:
     if not dog:
         await interaction.response.send_autocomplete(list_of_dog_breeds)  # sending the list to discord.
         return
-
-    results = [d for d in list_of_dog_breeds if d.lower().startswith(dog.lower())]
-    await interaction.response.send_autocomplete(results)
+    # gets the nearest dog to the users autocomplete search.
+    get_near_dog = [breed for breed in list_of_dog_breeds if breed.lower().startswith(dog.lower())]
+    await interaction.response.send_autocomplete(get_near_dog)
 
 
 client.run("TOKEN")
