@@ -6,20 +6,15 @@ client = nextcord.Client()
 
 
 @client.slash_command(guild_ids=[...])  # Limits the guildes
-async def my_select_command(
+async def choose_a_number(
     interaction: Interaction,
-    help: str = SlashOption(
-        name="option",
-        description="The option you want",
-        choices=["fun", "music", "mod"],
+    number: str = SlashOption(
+        name="picker",
+        description="The number you want",
+        choices={"1": 1, "2": 2, "3": 3},
     ),
 ):
-    if help == "fun":
-        interaction.response.send_message("Fun!")
-    elif help == "music":
-        interaction.response.send_message("Music..")
-    elif help == "mod":
-        interaction.response.send_message("Moderation is now moved to somewhere else...")
+    await interaction.response.send_message(f"You chose {number}!")
 
 
 @client.slash_command(guild_ids=[...])  # limits the guilds with this command

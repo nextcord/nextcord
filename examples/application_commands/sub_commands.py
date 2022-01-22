@@ -1,5 +1,5 @@
 import nextcord
-from nextcord import Interaction, SlashOption
+from nextcord import Interaction
 
 client = nextcord.Client()
 

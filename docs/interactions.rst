@@ -7,8 +7,6 @@
 Slash Commands
 ==============
 
-This document will explain the inner workings and how to use interaction commands.
-
 How To Make A Simple Slash Command
 ----------------------------------
 
@@ -20,7 +18,7 @@ The following example is a simple ping/pong command using Nextcord's slash comma
     async def ping(interaction):
         await interaction.response.send_message("Pong!")
 
-The way it works is by using:meth:`~Client.slash_command` decorator to add a slash command for the bot to register with Discord.
+The way it works is by using :meth:`~Client.slash_command` decorator to add a slash command for the bot to register with Discord.
 
 ``guild_ids`` is used to limit the guilds that the slash command is available to. This is useful for testing as global slash commands can take up to an hour to register.
 
@@ -70,14 +68,11 @@ Nextcord's implementation of slash commands has fields and is very simple. in th
 .. code-block:: python3
 
     @client.slash_command()
-    async def help(
+    async def choose_a_number(
         interaction: Interaction,
-        setting: str = SlashOption(name="settings", description="Configure Your Settings", choices=["music", "moderation"])
+        number: str = SlashOption(name="settings", description="Configure Your Settings", choices={"1": 1, "2": 2,"3": 3})
     ):
-        if setting == "music":
-            await interaction.response.send_message("Sorry we don't have PyNaCl installed currently")
-        elif setting == "moderation":
-            await interaction.response.send_message("Moderation?")
+        await interaction.response.send_message(f"You chose {number}")
 
 
 How To Make Slash Commands In Cogs
@@ -91,7 +86,7 @@ Shown below is an example of a simple command running in a cog:
             self.count = 0
 
         @nextcord.slash_command()
-        async def slash_example_cog_command(self, interaction: Interaction):
+        async def slash_command_cog(self, interaction: Interaction):
             await interaction.response.send_message("Hello I am a slash command in a cog!")
 
 The example shown above responds to a user when they do a slash command. Its function is the same as a slash command on the client, adjusted to work in a class, only its decorator is different.
