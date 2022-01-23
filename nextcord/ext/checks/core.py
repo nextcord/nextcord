@@ -25,7 +25,7 @@ import functools
 import nextcord
 from typing import Callable, Union, TypeVar, TYPE_CHECKING
 
-from .application_command import ApplicationSubcommand, Interaction
+from nextcord.application_command import ApplicationSubcommand, Interaction
 from .errors import (
     ApplicationCheckAnyFailure,
     ApplicationCheckFailure,
@@ -42,12 +42,26 @@ from .errors import (
 )
 
 if TYPE_CHECKING:
-    from .types.checks import ApplicationCheck, CoroFunc
+    from nextcord.types.checks import ApplicationCheck, CoroFunc
 
 
 __all__ = (
     "check",
-    "check_any"
+    "check_any",
+    "has_role",
+    "has_any_role",
+    "bot_has_role",
+    "bot_has_any_role",
+    "has_permissions",
+    "bot_has_permissions",
+    "has_guild_permissions",
+    "bot_has_guild_permissions",
+    "dm_only",
+    "guild_only",
+    "is_owner",
+    "is_nsfw",
+    "application_before_invoke",
+    "application_after_invoke"
 )
 
 T = TypeVar('T')

@@ -1837,6 +1837,7 @@ class Client:
         except Exception as error:
             self.dispatch('application_error', interaction, error)
             await app_subcmd._send_error(interaction, error)
+            return
 
         if can_run:
             if app_subcmd._application_before_invoke is not None:

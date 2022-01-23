@@ -23,11 +23,9 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 import asyncio
-import functools
 from inspect import signature, Parameter
 from typing import (
     Any,
-    Awaitable,
     Callable,
     Dict,
     Iterable,
@@ -39,8 +37,6 @@ from typing import (
     Union,
     TypeVar
 )
-
-from nextcord.__main__ import parse_args
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
@@ -55,8 +51,7 @@ from .utils import MISSING, maybe_coroutine
 
 if TYPE_CHECKING:
     from .state import ConnectionState
-    from .checks import ApplicationCheck
-    from .types.checks import ApplicationErrorCallback, ApplicationHook
+    from .types.checks import ApplicationErrorCallback, ApplicationHook, ApplicationCheck
 
 
 __all__ = (
