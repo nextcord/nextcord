@@ -1974,6 +1974,25 @@ class Client:
     def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
         return self._connection.get_application_command(command_id)
 
+    def get_all_application_commands(self) -> Set[ApplicationCommand]:
+        """Returns a copied set of all added :class:`ApplicationCommand` objects."""
+        return self._connection.application_commands
+
+    def get_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+        """Gets registered global commands.
+
+        Parameters
+        ----------
+        rollout: :class:`bool`
+            Whether unregistered/unassociated commands should be returned as well. Defaults to ``False``
+
+        Returns
+        -------
+        List[:class:`ApplicationCommand`]
+            List of :class:`ApplicationCommand` objects that are global.
+        """
+        return self._connection.get_global_application_commands(rollout=rollout)
+
     def add_application_command(
             self,
             command: ApplicationCommand,
@@ -2050,14 +2069,6 @@ class Client:
                     ret[guild_id].add(command)
         return ret
 
-    async def register_bulk_application_commands(self) -> None:
-        # TODO: Using Bulk upsert seems to delete all commands
-        # It might be good to keep this around as a reminder for future work. Bulk upsert seem to delete everything
-        # that isn't part of that bulk upsert, for both global and guild commands. While useful, this will
-        # update/overwrite existing commands, which may (needs testing) wipe out all permissions associated with those
-        # commands. Look for an opportunity to use bulk upsert.
-        raise NotImplementedError
-
     async def on_connect(self) -> None:
         self.add_startup_application_commands()
         await self.rollout_application_commands()
@@ -2073,14 +2084,16 @@ class Client:
 
     async def on_guild_available(self, guild: Guild) -> None:
         try:
-            if (await guild.rollout_application_commands(
+            if self._rollout_all_guilds or self._connection.get_guild_application_commands(guild.id, rollout=True):
+                _log.info(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
+                await guild.rollout_application_commands(
                     associate_known=self._rollout_associate_known,
                     delete_unknown=self._rollout_delete_unknown,
                     update_known=self._rollout_update_known
-            )):
-                pass
+                )
             else:
-                _log.info(f"No locally added commands explicitly registered for {guild.name}|{guild.id}, not checking.")
+                _log.info(f"nextcord.Client: No locally added commands explicitly registered for "
+                          f"{guild.name}|{guild.id}, not checking.")
         except Forbidden as e:
             _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
                          f"enabled? {e}")

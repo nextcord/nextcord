@@ -352,11 +352,11 @@ class CommandOption(SlashOption):
             return state._get_message(int(argument))
         return argument
 
-    async def handle_message_argument(self, *args: List[Any]):
+    async def handle_message_argument(self, state: ConnectionState, argument: Any, interaction: Interaction):
         """For possible future use, will handle arguments specific to Message Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
-    async def handle_user_argument(self, *args: List[Any]):
+    async def handle_user_argument(self, state: ConnectionState, argument: Any, interaction: Interaction):
         """For possible future use, will handle arguments specific to User Commands (Context Menu type.)"""
         raise NotImplementedError  # TODO: Even worth doing? We pass in what we know already.
 
@@ -376,8 +376,10 @@ class CommandOption(SlashOption):
         # when possible minimizes the payload size and makes checks between registered and found commands easier.
         if self.required:
             ret["required"] = self.required
-        if self.required is not MISSING:
+        elif self.required is False:
             pass  # Discord doesn't currently provide Required if it's False due to it being default.
+        elif self.required is MISSING and self.default:
+            pass  # If required isn't explicitly set and a default exists, don't say that this param is required.
         else:
             # While this violates Discord's default and our goal (not specified should return minimum or nothing), a
             # parameter being optional by default goes against traditional programming. A parameter not explicitly
@@ -385,10 +387,11 @@ class CommandOption(SlashOption):
             ret["required"] = True
 
         if self.choices:
+            # Discord returns the names as strings, might as well do it here so payload comparison is easy.
             if isinstance(self.choices, dict):
-                ret["choices"] = [{"name": key, "value": value} for key, value in self.choices.items()]
+                ret["choices"] = [{"name": str(key), "value": value} for key, value in self.choices.items()]
             else:
-                ret["choices"] = [{"name": value, "value": value} for value in self.choices]
+                ret["choices"] = [{"name": str(value), "value": value} for value in self.choices]
         if self.channel_types:
             # noinspection PyUnresolvedReferences
             ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
@@ -499,6 +502,10 @@ class ApplicationSubcommand:
         else:
             return self._description
 
+    @description.setter
+    def description(self, new_desc: str):
+        self._description = new_desc
+
     @property
     def callback(self) -> Optional[Callable]:
         """Returns the callback associated with this ApplicationCommand."""
@@ -545,6 +552,12 @@ class ApplicationSubcommand:
             raise TypeError("Callback must be a coroutine.")
         self._callback = callback
         return self
+
+    @property
+    def self_argument(self) -> Optional:
+        """Returns the argument used for ``self``. Optional is used because :class:`ClientCog` isn't strictly correct.
+        """
+        return self._self_argument
 
     def set_self_argument(self, self_arg: ClientCog) -> ApplicationSubcommand:
         """Sets the `self` argument, used when the callback is inside a class."""
@@ -646,7 +659,8 @@ class ApplicationSubcommand:
         self.verify_content()
         ret = {
             "type": self.type.value,
-            "name": self.name,
+            # Might as well stringify the name, will come in handy if people try using numbers
+            "name": str(self.name),
             "description": self.description,
         }
         if self.children:
@@ -722,7 +736,10 @@ class ApplicationSubcommand:
             for option in uncalled_options.values():
                 if option.functional_name in autocomplete_kwargs:
                     kwargs[option.functional_name] = option.default
-            await self.invoke_autocomplete(interaction, focused_option, focused_option_value, **kwargs)
+            value = await self.invoke_autocomplete(interaction, focused_option, focused_option_value, **kwargs)
+            # Handles when the autocomplete callback returns something and didn't run the autocomplete function.
+            if value and not interaction.response.is_done():
+                await interaction.response.send_autocomplete(value)
         else:
             raise TypeError(f"{self.error_name} Autocomplete is not handled by this type of command.")
 
@@ -737,7 +754,7 @@ class ApplicationSubcommand:
             focused_option: CommandOption,
             focused_option_value: Any,
             **kwargs
-    ) -> None:
+    ) -> Any:
         """|coro|
         Invokes the autocomplete callback of the given option.
         The given interaction, focused option value, and any other kwargs are forwarded to the autocomplete function.
@@ -754,9 +771,11 @@ class ApplicationSubcommand:
             Keyword arguments to forward to the autocomplete callback.
         """
         if self._self_argument:
-            await focused_option.autocomplete_function(self._self_argument, interaction, focused_option_value, **kwargs)
+            return await focused_option.autocomplete_function(
+                self._self_argument, interaction, focused_option_value, **kwargs
+            )
         else:
-            await focused_option.autocomplete_function(interaction, focused_option_value, **kwargs)
+            return await focused_option.autocomplete_function(interaction, focused_option_value, **kwargs)
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
@@ -1232,9 +1251,13 @@ class ApplicationCommand(ApplicationSubcommand):
         #  It's not that I'm unhappy adding things to the cache, it's having to manually do it like this.
         # The interaction gives us message data, might as well use it and add it to the cache.
         channel, guild = self._state._get_guild_channel(message_data)
+
         message = Message(channel=channel, data=message_data, state=self._state)
-        if not self._state._get_message(message.id) and self._state._messages is not None:
-            self._state._messages.append(message)
+        if cached_message := self._state._get_message(message.id):
+            return cached_message
+        else:
+            if self._state._messages is not None:
+                self._state._messages.append(message)
         return message
 
     def _handle_resolved_user(self, user_data: dict) -> User:
@@ -1386,13 +1409,12 @@ class ApplicationCommand(ApplicationSubcommand):
 
     async def call_autocomplete_from_interaction(self, interaction: Interaction):
         if not self._state:
-            raise NotImplementedError("State hasn't been set yet, this isn't handled yet!")
+            raise NotImplementedError("State hasn't been set, this isn't handled yet!")
         await self.call_autocomplete(self._state, interaction, interaction.data.get("options", {}))
 
     async def call_from_interaction(self, interaction: Interaction) -> None:
         if not self._state:
-            raise NotImplementedError("State hasn't been set yet, this isn't handled yet!")
-
+            raise NotImplementedError("State hasn't been set, this isn't handled yet!")
         await self.call(self._state, interaction, interaction.data.get("options", {}))
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
