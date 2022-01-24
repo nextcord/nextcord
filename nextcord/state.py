@@ -1290,6 +1290,11 @@ class ConnectionState:
             except AttributeError:
                 pass
 
+            raw = RawMemberRemoveEvent(data)
+            user = User(state=self, data=data["user"])
+            raw.user = user
+            self.dispatch("raw_member_remove", raw)
+
             user_id = int(data['user']['id'])
             member = guild.get_member(user_id)
             if member is not None:

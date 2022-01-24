@@ -36,11 +36,13 @@ if TYPE_CHECKING:
         ReactionClearEvent,
         ReactionClearEmojiEvent,
         IntegrationDeleteEvent,
-        TypingEvent
+        TypingEvent,
+        MemberRemoveEvent,
     )
     from .message import Message
     from .partial_emoji import PartialEmoji
     from .member import Member
+    from .user import User
 
 
 __all__ = (
@@ -52,6 +54,7 @@ __all__ = (
     'RawReactionClearEmojiEvent',
     'RawIntegrationDeleteEvent',
     'RawTypingEvent',
+    "RawMemberRemoveEvent",
 )
 
 
@@ -285,7 +288,7 @@ class RawTypingEvent(_RawReprMixin):
     """Represents the payload for a :func:`on_raw_typing` event.
 
     .. versionadded:: 2.0
-    
+
     Attributes
     -----------
     channel_id: :class:`int`
@@ -312,3 +315,21 @@ class RawTypingEvent(_RawReprMixin):
             self.guild_id: Optional[int] = int(data['guild_id'])
         except KeyError:
             self.guild_id: Optional[int] = None
+
+
+class RawMemberRemoveEvent(_RawReprMixin):
+    """Represents the payload for a :func:`on_raw_member_remove` event.
+    .. versionadded:: 2.0
+    Attributes
+    -----------
+    guild_id: :class:`int`
+        The guild ID where the member left from.
+    user: :class:`User`
+        The user who left the guild.
+    """
+
+    __slots__ = ("guild_id", "user")
+
+    def __init__(self, data: MemberRemoveEvent) -> None:
+        self.guild_id: int = int(data["guild_id"])
+        self.user: User = None
