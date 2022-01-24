@@ -40,7 +40,7 @@ from typing import (
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
-from .errors import InvalidCommandType, ApplicationCheckFailure, ApplicationError
+from .errors import InvalidCommandType, ApplicationCheckFailure, ApplicationError, ApplicationInvokeError
 from .interactions import Interaction
 from .guild import Guild
 from .member import Member
@@ -779,7 +779,7 @@ class ApplicationSubcommand:
 
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
-        Calls the callback associated with this command with the given interaction and option data.
+        Calls the callback and its hooks associated with this command with the given interaction and option data.
         Parameters
         ----------
         state: :class:`ConnectionState`
@@ -790,7 +790,56 @@ class ApplicationSubcommand:
             List of raw option data from Discord.
         """
         app_cmd, new_option_data = self._find_subcommand(option_data)
-        await app_cmd.call_invoke_slash(state, interaction, new_option_data)
+        
+        await self._call_with_hooks(state, interaction, app_cmd, app_cmd.call_invoke_slash, (state, interaction, new_option_data))
+
+
+    async def _call_with_hooks(self, state: ConnectionState, interaction: Interaction,  app_cmd: Union[ApplicationSubcommand, ApplicationCommand], callback: Callable, args: Tuple[Any, ...]) -> None:
+        interaction._set_application_command(app_cmd)
+
+        try:
+            can_run = await app_cmd.application_can_run(interaction)
+        except Exception as error:
+            state.dispatch('application_error', interaction, error)
+            await app_cmd.dispatch_error(interaction, error)
+            return
+
+        if can_run:
+            if app_cmd._application_before_invoke is not None:
+                await app_cmd._application_before_invoke(interaction)
+
+            cog_application_before_invoke = app_cmd.cog_application_before_invoke
+            if cog_application_before_invoke is not None:
+                await cog_application_before_invoke(interaction)
+
+            if state._application_before_invoke is not None:
+                await state._application_before_invoke(interaction)
+
+            invoke_error = None
+            try:
+                await callback(*args)
+            except Exception as error:
+                invoke_error = ApplicationInvokeError(error)
+
+            after_invoke_error = None
+            try:
+                if app_cmd._application_after_invoke is not None:
+                    await app_cmd._application_after_invoke(interaction)
+                
+                cog_application_after_invoke = app_cmd.cog_application_after_invoke
+                if cog_application_after_invoke is not None:
+                    await cog_application_after_invoke(interaction)
+
+                if state._application_after_invoke is not None:
+                    await state._application_after_invoke(interaction)
+            except Exception as error:
+                after_invoke_error = error
+
+            if invoke_error is not None:
+                state.dispatch('application_error', interaction, invoke_error)
+                await app_cmd.dispatch_error(interaction, invoke_error)
+            if after_invoke_error is not None:
+                raise after_invoke_error
 
     def _find_subcommand(self, option_data: List[Dict[str, Any]]) -> Tuple[Union[ApplicationSubcommand, ApplicationCommand], List[Dict[str, Any]]]:
         if self.children:
@@ -837,16 +886,13 @@ class ApplicationSubcommand:
 
         await self.invoke_slash(interaction, **kwargs)
 
-    # This method is only meant to be called by nextcord.Client
-    async def _send_error(self, interaction: Interaction, error: ApplicationError) -> None:
+    async def dispatch_error(self, interaction: Interaction, error: ApplicationError) -> None:
 
         if self.has_error_handler():
             if self._self_argument:
                 await self.on_error(self._self_argument, interaction, error)
             else:
-                await self.on_error(interaction, error)
-
-    
+                await self.on_error(interaction, error)    
 
     async def application_can_run(self, interaction: Interaction) -> bool:
         """|coro|
@@ -871,13 +917,23 @@ class ApplicationSubcommand:
             A boolean indicating if the command can be invoked.
         """
         # Global checks
-        if not await interaction.client.application_can_run(interaction, self): return False
+        for check in interaction.client._connection._application_checks:
+            try:
+                check_result = await maybe_coroutine(check, interaction)
+            # To catch any subclasses of ApplicationCheckFailure.
+            except ApplicationCheckFailure:
+                raise
+            # If the check returns False, the command can't be run.
+            else:
+                if not check_result:
+                    error = ApplicationCheckFailure(f"The global check functions for application command {self.qualified_name} failed.")
+                    raise error
 
         # Cog check
         if self._self_argument:
             cog_check = ClientCog._get_overridden_method(self._self_argument.cog_application_check)
             if cog_check is not None and not await maybe_coroutine(cog_check, interaction):
-                raise ApplicationCheckFailure(f"The check functions for application command {self.qualified_name} failed.")
+                raise ApplicationCheckFailure(f"The cog check functions for application command {self.qualified_name} failed.")
 
         # Command checks
         for check in self.checks:
@@ -1420,13 +1476,16 @@ class ApplicationCommand(ApplicationSubcommand):
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         try:
             await super().call(state, interaction, option_data)
+            return
         except InvalidCommandType:
             if self.type is ApplicationCommandType.message:
-                await self.call_invoke_message(interaction)
+                callback = self.call_invoke_message
             elif self.type is ApplicationCommandType.user:
-                await self.call_invoke_user(interaction)
+                callback = self.call_invoke_user
             else:
                 raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
+        
+        await self._call_with_hooks(state, interaction, self, callback, (interaction,))
 
     async def call_invoke_message(self, interaction: Interaction) -> None:
         """|coro|

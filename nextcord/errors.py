@@ -315,6 +315,7 @@ class ApplicationInvokeError(ApplicationError):
     """
     def __init__(self, e: Exception) -> None:
         self.original: Exception = e
+        self.__cause__ = e
         super().__init__(f'Command raised an exception: {e.__class__.__name__}: {e}')
 
 class ApplicationCheckFailure(ApplicationError):

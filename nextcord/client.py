@@ -312,11 +312,6 @@ class Client:
         self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
         self._application_commands_to_add: Set[ApplicationCommand] = set()
 
-        # Global application command checks
-        self._application_checks: List[ApplicationCheck] = []
-        self._application_before_invoke: ApplicationHook = None
-        self._application_after_invoke: ApplicationHook = None
-
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
             _log.warning("PyNaCl is not installed, voice will NOT be supported")
@@ -523,7 +518,7 @@ class Client:
         # cog = context.cog
         # if cog and cog.has_error_handler():
         #     return
-
+        
         print(f'Ignoring exception in command {interaction.application_command}:', file=sys.stderr)
         traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
 
@@ -1811,90 +1806,6 @@ class Client:
         """
         return self._connection.persistent_views
 
-    async def invoke_application_command(self, app_cmd: ApplicationCommand, interaction: Interaction, *args, **kwargs) -> None:
-        """|coro|
-        Validates all checks and invokes the given application command.
-
-        Parameters
-        ----------
-        app_cmd: :class:`ApplicationCommand`
-            The application command to invoke.
-        interaction: :class:`Interaction`
-            The interaction to invoke the command with.
-        """
-        try:
-            # find the subcommand the user invoking first, so that all the correct hooks are called
-            app_subcmd = app_cmd._find_subcommand(interaction.data.get("options", {}))[0]
-        except InvalidCommandType:
-            app_subcmd = app_cmd
-            interaction._set_application_command(app_cmd)
-        else:
-            interaction._set_application_command(app_subcmd)
-
-
-        try:
-            can_run = await app_subcmd.application_can_run(interaction)
-        except Exception as error:
-            self.dispatch('application_error', interaction, error)
-            await app_subcmd._send_error(interaction, error)
-            return
-
-        if can_run:
-            if app_subcmd._application_before_invoke is not None:
-                await app_subcmd._application_before_invoke(interaction)
-
-            cog_application_before_invoke = app_subcmd.cog_application_before_invoke
-            if cog_application_before_invoke is not None:
-                await cog_application_before_invoke(interaction)
-
-            if self._application_before_invoke is not None:
-                await self._application_before_invoke(interaction)
-
-            invoke_error = None
-            try:
-                await app_cmd.call_from_interaction(interaction, *args, **kwargs)
-            except Exception as error:
-                invoke_error = ApplicationInvokeError(error)
-
-            after_invoke_error = None
-            try:
-                if app_subcmd._application_after_invoke is not None:
-                    await app_subcmd._application_after_invoke(interaction)
-                
-                cog_application_after_invoke = app_subcmd.cog_application_after_invoke
-                if cog_application_after_invoke is not None:
-                    await cog_application_after_invoke(interaction)
-
-                if self._application_after_invoke is not None:
-                    await self._application_after_invoke(interaction)
-            except Exception as error:
-                after_invoke_error = error
-
-            if invoke_error is not None:
-                self.dispatch('application_error', interaction, invoke_error)
-                await app_subcmd._send_error(interaction, invoke_error)
-            if after_invoke_error is not None:
-                raise after_invoke_error
-            
-
-
-    async def application_can_run(self, interaction: Interaction, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]) -> bool:
-        
-        
-        for check in self._application_checks:
-            try:
-                check_result = await maybe_coroutine(check, interaction)
-            # To catch any subclasses of ApplicationCheckFailure.
-            except ApplicationCheckFailure:
-                raise
-            # If the check returns False, the command can't be run.
-            else:
-                if not check_result:
-                    error = ApplicationCheckFailure(f"The global check functions for application command {app_cmd.qualified_name} failed.")
-                    raise error
-        
-        return True
-
     @property
     def scheduled_events(self) -> List[ScheduledEvent]:
         """List[ScheduledEvent]: A list of scheduled events
@@ -1923,7 +1834,7 @@ class Client:
             _log.info("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
                 _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
-                await self.invoke_application_command(app_cmd, interaction)
+                await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
                 _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
                 _log.debug(f"nextcord.Client: {interaction.data}")
@@ -1942,7 +1853,7 @@ class Client:
                         _log.info("nextcord.Client: New interaction command found, Assigning id now")
                         app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
-                        await self.invoke_application_command(app_cmd, interaction)
+                        await app_cmd.call_from_interaction(interaction)
                     else:
                         do_deploy = True
                 else:
@@ -2140,7 +2051,7 @@ class Client:
             The function that was used as a global application check.
         """
 
-        self._application_checks.append(func)
+        self._connection._application_checks.append(func)
 
     def remove_application_check(self, func: ApplicationCheck) -> None:
         """Removes a global check from the bot.
@@ -2155,7 +2066,7 @@ class Client:
         """
 
         try:
-            self._application_checks.remove(func)
+            self._connection._application_checks.remove(func)
         except ValueError:
             pass
 
@@ -2315,7 +2226,7 @@ class Client:
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError('The pre-invoke hook must be a coroutine.')
 
-        self._application_before_invoke = coro
+        self._connection._application_before_invoke = coro
         return coro
 
 
@@ -2348,5 +2259,5 @@ class Client:
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError('The post-invoke hook must be a coroutine.')
 
-        self._application_after_invoke = coro
+        self._connection._application_after_invoke = coro
         return coro
