@@ -1999,7 +1999,8 @@ class HTTPClient:
             'scheduled_start_time',
             'scheduled_end_time',
             'description',
-            'entity_type'
+            'entity_type',
+            'status'
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(
