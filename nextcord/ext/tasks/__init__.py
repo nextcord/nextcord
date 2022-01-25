@@ -599,6 +599,8 @@ class Loop(Generic[LF]):
         utc: datetime.timezone = datetime.timezone.utc,
     ) -> List[datetime.time]:
         if isinstance(time, dt):
+            if time.tzinfo is not None and time.tzinfo.utcoffset(None) is None:
+                raise TypeError("Incompatible timezone module used. Please use datetime.timezone instead.")
             inner = time if time.tzinfo is not None else time.replace(tzinfo=utc)
             return [inner]
         if not isinstance(time, Sequence):
