@@ -229,7 +229,7 @@ class CommandOption(SlashOption):
             isinstance(parameter.annotation, str)
             and parameter.annotation != parameter.empty
         ):
-            found_type = eval(parameter.annotation.strip("'").strip('"'), globals(), locals())
+            found_type = eval(parameter.annotation.strip("'").strip('"'), globals())
             self.type: ApplicationCommandOptionType = self.get_type(found_type)
         else:
             self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
