@@ -150,7 +150,7 @@ class Thread(Messageable, Hashable):
         'archiver_id',
         'auto_archive_duration',
         'archive_timestamp',
-        "create_timestamp"
+        'create_timestamp',
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload):
