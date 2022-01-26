@@ -65,6 +65,7 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
+    from .client import Client
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
@@ -172,6 +173,11 @@ class Interaction:
                 self.user = User(state=self._state, data=data['user'])
             except KeyError:
                 pass
+
+    @property
+    def client(self) -> Client:
+        """:class:`Client`: The client that handled the interaction."""
+        return self._state._get_client()
 
     @property
     def guild(self) -> Optional[Guild]:
