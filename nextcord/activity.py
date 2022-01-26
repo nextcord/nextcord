@@ -741,9 +741,9 @@ class CustomActivity(BaseActivity):
 
     __slots__ = ('name', 'emoji', 'state', "_state")
 
-    def __init__(self, _state: ConnectionState, name: Optional[str], *, emoji: Optional[PartialEmoji] = None, **extra: Any):
+    def __init__(self, name: Optional[str], *, _connection_state: Optional[ConnectionState] = None, emoji: Optional[PartialEmoji] = None, **extra: Any):
         super().__init__(**extra)
-        self._state = _state
+        self._state = _connection_state
         self.name: Optional[str] = name
         self.state: Optional[str] = extra.pop('state', None)
         if self.name == 'Custom Status':
@@ -835,7 +835,7 @@ def create_activity(state: ConnectionState, data: Optional[ActivityPayload]) -> 
             return Activity(**data)
         else:
             # we removed the name key from data already
-            return CustomActivity(_state=state, name=name, **data) # type: ignore
+            return CustomActivity(name=name, _connection_state=state, **data) # type: ignore
     elif game_type is ActivityType.streaming:
         if 'url' in data:
             # the url won't be None here
