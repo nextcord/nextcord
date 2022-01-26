@@ -591,6 +591,7 @@ class InteractionResponse:
         view: View = MISSING,
         tts: bool = False,
         ephemeral: bool = False,
+        delete_after: Optional[float] = None,
     ) -> None:
         """|coro|
 
@@ -619,6 +620,10 @@ class InteractionResponse:
             Indicates if the message should only be visible to the user who started the interaction.
             If a view is sent with an ephemeral message and it has no timeout set then the timeout
             is set to 15 minutes.
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just sent. If the deletion fails,
+            then it is silently ignored.
 
         Raises
         -------
@@ -689,6 +694,10 @@ class InteractionResponse:
 
         self._responded = True
 
+        if delete_after is not None:
+            message = await self._parent.original_message()
+            await message.delete(delay=delete_after)
+
     async def edit_message(
         self,
         *,
@@ -697,6 +706,7 @@ class InteractionResponse:
         embeds: List[Embed] = MISSING,
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
+        delete_after: Optional[float] = None,
     ) -> None:
         """|coro|
 
@@ -718,6 +728,11 @@ class InteractionResponse:
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just sent. If the deletion fails,
+            then it is silently ignored.
+        
 
         Raises
         -------
@@ -781,6 +796,12 @@ class InteractionResponse:
 
         self._responded = True
 
+        if delete_after is not None:
+            message = await self._parent.original_message()
+            await message.delete(delay=delete_after)
+
+        
+
 
 class _InteractionMessageState:
     __slots__ = ('_parent', '_interaction')
@@ -830,6 +851,7 @@ class InteractionMessage(Message):
         files: List[File] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        delete_after: Optional[float] = None,
     ) -> InteractionMessage:
         """|coro|
 
@@ -855,6 +877,10 @@ class InteractionMessage(Message):
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just edited. If the deletion fails,
+            then it is silently ignored.
 
         Raises
         -------
@@ -872,7 +898,7 @@ class InteractionMessage(Message):
         :class:`InteractionMessage`
             The newly edited message.
         """
-        return await self._state._interaction.edit_original_message(
+        message = await self._state._interaction.edit_original_message(
             content=content,
             embeds=embeds,
             embed=embed,
@@ -881,6 +907,11 @@ class InteractionMessage(Message):
             view=view,
             allowed_mentions=allowed_mentions,
         )
+
+        if delete_after is not None:
+            await self.delete(delay=delete_after)
+
+        return message
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
