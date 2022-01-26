@@ -640,6 +640,7 @@ class ScheduledEventStatus(Enum):
     active = 2
     completed = 3
     canceled = 4
+    cancelled = 4
 
 
 T = TypeVar('T')

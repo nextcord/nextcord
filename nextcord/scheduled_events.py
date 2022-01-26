@@ -353,9 +353,9 @@ class ScheduledEvent(Hashable):
             .. note::
 
                 Only the following edits to an event's status are permitted:
-                SCHEDULED --> ACTIVE
-                ACTIVE -----> COMPLETED
-                SCHEDULED --> CANCELED
+                scheduled -> active ;
+                active -> completed ;
+                scheduled -> canceled
 
         Returns
         -------
