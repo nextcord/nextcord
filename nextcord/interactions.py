@@ -384,9 +384,12 @@ class Interaction:
         *,
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
+        file: File = MISSING,
+        files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
-        ephemeral: bool = False
+        ephemeral: bool = False,
+        delete_after: Optional[float] = None,
     ) -> Optional[Union[Message, WebhookMessage]]:
         """|coro|
 
@@ -407,17 +410,23 @@ class Interaction:
                 content=content,
                 embed=embed,
                 embeds=embeds,
+                file=file,
+                files=files,
                 view=view,
                 tts=tts,
-                ephemeral=ephemeral
+                ephemeral=ephemeral,
+                delete_after=delete_after,
             )
         return await self.followup.send(
             content=content,  # type: ignore
             embed=embed,
             embeds=embeds,
+            file=file,
+            files=files,
             view=view,
             tts=tts,
-            ephemeral=ephemeral
+            ephemeral=ephemeral,
+            delete_after=delete_after,
         )
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
