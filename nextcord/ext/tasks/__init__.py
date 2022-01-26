@@ -599,6 +599,8 @@ class Loop(Generic[LF]):
         utc: datetime.timezone = datetime.timezone.utc,
     ) -> List[datetime.time]:
         if isinstance(time, dt):
+            if time.tzinfo is not None and time.tzinfo.utcoffset(None) is None:
+                raise TypeError("Incompatible timezone module used. Please use datetime.timezone instead.")
             inner = time if time.tzinfo is not None else time.replace(tzinfo=utc)
             return [inner]
         if not isinstance(time, Sequence):
@@ -721,6 +723,11 @@ def loop(
 
             Duplicate times will be ignored, and only run once.
 
+        .. warning::
+
+            "Semi-aware" timezones cannot be used.
+            Using :func:`pytz.timezone` to pass ``tzinfo`` will raise an exception.
+
         .. versionadded:: 2.0
 
     count: Optional[:class:`int`]
@@ -740,7 +747,8 @@ def loop(
         An invalid value was given.
     TypeError
         The function was not a coroutine, an invalid value for the ``time`` parameter was passed,
-        or ``time`` parameter was passed in conjunction with relative time parameters.
+        ``time`` parameter was passed in conjunction with relative time parameters,
+        or an incompatible timezone module was used for the ``tzinfo`` parameter of ``time``.
     """
 
     def decorator(func: LF) -> Loop[LF]:
