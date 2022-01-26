@@ -626,7 +626,7 @@ class NSFWLevel(Enum, comparable=True):
 
 
 class ScheduledEventEntityType(Enum):
-    stage_instance =  1
+    stage_instance = 1
     voice = 2
     external = 3
 
