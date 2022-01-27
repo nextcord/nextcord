@@ -40,9 +40,18 @@ Client
 
 .. autoclass:: Client
     :members:
-    :exclude-members: fetch_guilds, event
+    :exclude-members: fetch_guilds, event, slash_command, user_command, message_command
 
     .. automethod:: Client.event()
+        :decorator:
+
+    .. automethod:: Client.slash_command
+        :decorator:
+    
+    .. automethod:: Client.user_command
+        :decorator:
+        
+    .. automethod:: Client.message_command
         :decorator:
 
     .. automethod:: Client.fetch_guilds
@@ -4289,6 +4298,46 @@ Select
 
 .. autofunction:: nextcord.ui.select
 
+
+Application Commands
+--------------------
+
+.. attributetable:: ApplicationCommand
+
+.. autoclass:: ApplicationCommand
+    :members:
+
+.. attributetable:: ApplicationSubcommand
+
+.. autoclass:: ApplicationSubcommand
+    :members:
+
+Options
+~~~~~~~
+
+.. attributetable:: CommandOption
+
+.. autoclass:: CommandOption
+    :members:
+
+.. attributetable:: SlashOption
+
+.. autoclass:: SlashOption
+    :members:
+
+Cogs
+~~~~
+
+.. autoclass:: ClientCog
+    :members:
+Decorators
+~~~~~~~~~~
+
+.. autoclass:: message_command
+
+.. autoclass:: slash_command
+
+.. autoclass:: user_command
 
 Exceptions
 ------------
