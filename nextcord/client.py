@@ -393,7 +393,7 @@ class Client:
         If this is not passed via ``__init__`` then this is retrieved
         through the gateway when an event contains the data. Usually
         after :func:`~nextcord.on_connect` is called.
-        
+
         .. versionadded:: 2.0
         """
         return self._connection.application_id
@@ -533,7 +533,7 @@ class Client:
         """
 
         _log.info('logging in using static token')
-        
+
         if not isinstance(token, str):
             raise TypeError(f"The token provided was of type {type(token)} but was expected to be str")
 
@@ -754,7 +754,7 @@ class Client:
             self._connection._activity = value.to_dict() # type: ignore
         else:
             raise TypeError('activity must derive from BaseActivity.')
-    
+
     @property
     def status(self):
         """:class:`.Status`:
@@ -825,7 +825,7 @@ class Client:
 
         This is useful if you have a channel_id but don't want to do an API call
         to send messages to it.
-        
+
         .. versionadded:: 2.0
 
         Parameters
@@ -1688,7 +1688,7 @@ class Client:
 
         This method should be used for when a view is comprised of components
         that last longer than the lifecycle of the program.
-        
+
         .. versionadded:: 2.0
 
         Parameters
@@ -1720,7 +1720,7 @@ class Client:
     @property
     def persistent_views(self) -> Sequence[View]:
         """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
-        
+
         .. versionadded:: 2.0
         """
         return self._connection.persistent_views
@@ -1751,26 +1751,26 @@ class Client:
             Interaction from Discord to read data from.
         """
         if interaction.type is InteractionType.application_command:
-            _log.info("nextcord.Client: Found an interaction command.")
+            _log.debug("Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
+                _log.info(f"Calling your application command now {app_cmd.name}")
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
-                _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
-                _log.debug(f"nextcord.Client: {interaction.data}")
+                _log.info("Interaction command not found, attempting to lazy load.")
+                _log.debug(f"{interaction.data}")
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
-                _log.debug(f"nextcord.Client: {response_signature}")
+                _log.debug(f"{response_signature}")
                 do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
                         interaction.data["name"],
                         int(interaction.data['type']),
                         interaction.guild_id
                 ):
-                    _log.info("nextcord.Client: Basic signature matches, checking against raw payload.")
+                    _log.info("Basic signature matches, checking against raw payload.")
                     # TODO: Lazy load is completely broken. Figure out how to fix it.
                     if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
                     # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
-                        _log.info("nextcord.Client: New interaction command found, Assigning id now")
+                        _log.info("New interaction command found, Assigning id now")
                         app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
@@ -1793,10 +1793,10 @@ class Client:
                         )
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
-            _log.info("nextcord.Client: Autocomplete interaction received.")
-            _log.debug(f"nextcord.Client: {interaction.data}")
+            _log.info("Autocomplete interaction received.")
+            _log.debug(f"{interaction.data}")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.info(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
+                _log.info(f"Autocomplete for command {app_cmd.name}.")
                 await app_cmd.call_autocomplete_from_interaction(interaction)
             else:
                 raise ValueError(f"Received autocomplete interaction for {interaction.data['name']} but command isn't "
@@ -1916,14 +1916,14 @@ class Client:
     async def on_guild_available(self, guild: Guild) -> None:
         try:
             if self._rollout_all_guilds or self._connection.get_guild_application_commands(guild.id, rollout=True):
-                _log.info(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
+                _log.info(f"Rolling out commands to guild {guild.name}|{guild.id}")
                 await guild.rollout_application_commands(
                     associate_known=self._rollout_associate_known,
                     delete_unknown=self._rollout_delete_unknown,
                     update_known=self._rollout_update_known
                 )
             else:
-                _log.info(f"nextcord.Client: No locally added commands explicitly registered for "
+                _log.info(f"No locally added commands explicitly registered for "
                           f"{guild.name}|{guild.id}, not checking.")
         except Forbidden as e:
             _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
