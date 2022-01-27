@@ -350,6 +350,13 @@ class ScheduledEvent(Hashable):
         status: :class:`ScheduledEventStatus`
             The new status for the event.
 
+            .. note::
+
+                Only the following edits to an event's status are permitted:
+                scheduled -> active ;
+                active -> completed ;
+                scheduled -> canceled
+
         Returns
         -------
         :class:`ScheduledEvent`
