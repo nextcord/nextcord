@@ -637,7 +637,6 @@ class Message(Hashable):
         'activity',
         'stickers',
         'components',
-        'thread',
         'guild',
     )
 
@@ -683,11 +682,9 @@ class Message(Hashable):
         except AttributeError:
             self.guild = state._get_guild(utils._get_as_snowflake(data, 'guild_id'))
 
-        thread_data = data.get('thread')
-        if thread_data:
-            self.thread: Optional[Thread] = Thread(guild=self.guild, state=state, data=thread_data)
-        else:
-            self.thread: Optional[Thread] = None
+        if thread_data := data.get('thread'):
+            if not self.thread and self.guild:
+                self.guild._store_thread(thread_data)
 
         try:
             ref = data['message_reference']
@@ -995,6 +992,11 @@ class Message(Hashable):
         """:class:`str`: Returns a URL that allows the client to jump to this message."""
         guild_id = getattr(self.guild, 'id', '@me')
         return f'https://discord.com/channels/{guild_id}/{self.channel.id}/{self.id}'
+
+    @property
+    def thread(self) -> Optional[Thread]:
+        """Optional[:class:`Thread`]: The thread started from this message. None if no thread was started."""
+        return self.guild and self.guild.get_thread(self.id)
 
     def is_system(self) -> bool:
         """:class:`bool`: Whether the message is a system message.
