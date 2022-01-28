@@ -761,7 +761,8 @@ class CustomActivity(BaseActivity):
         else:
             raise TypeError(f'Expected str, PartialEmoji, or None, received {type(emoji)!r} instead.')
 
-        self.emoji._state = self._state
+        if self.emoji is not None:
+            self.emoji._state = self._state
 
     @property
     def type(self) -> ActivityType:
