@@ -406,6 +406,7 @@ class Interaction:
         view: View = MISSING,
         tts: bool = False,
         ephemeral: bool = False,
+        wait: bool = False,
         delete_after: Optional[float] = None,
     ) -> Optional[Union[InteractionMessage, WebhookMessage]]:
         """|coro|
@@ -423,7 +424,7 @@ class Interaction:
         """
 
         if not self.response.is_done():
-            await self.response.send_message(
+            return await self.response.send_message(
                 content=content,
                 embed=embed,
                 embeds=embeds,
@@ -432,9 +433,9 @@ class Interaction:
                 view=view,
                 tts=tts,
                 ephemeral=ephemeral,
+                wait=wait,
                 delete_after=delete_after,
             )
-            return await self.original_message()
         return await self.followup.send(
             content=content,  # type: ignore
             embed=embed,
@@ -444,6 +445,7 @@ class Interaction:
             view=view,
             tts=tts,
             ephemeral=ephemeral,
+            wait=wait,
             delete_after=delete_after,
         )
 
@@ -624,8 +626,9 @@ class InteractionResponse:
         view: View = MISSING,
         tts: bool = False,
         ephemeral: bool = False,
+        wait: bool = False,
         delete_after: Optional[float] = None,
-    ) -> None:
+    ) -> Optional[InteractionMessage]:
         """|coro|
 
         Responds to this interaction by sending a message.
@@ -653,10 +656,19 @@ class InteractionResponse:
             Indicates if the message should only be visible to the user who started the interaction.
             If a view is sent with an ephemeral message and it has no timeout set then the timeout
             is set to 15 minutes.
+        wait: :class:`bool`
+            Whether the server should wait before sending a response. This essentially
+            means that the return type of this function changes from ``None`` to
+            a :class:`InteractionMessage` if set to ``True``.
         delete_after: Optional[:class:`float`]
             If provided, the number of seconds to wait in the background
             before deleting the message we just sent. If the deletion fails,
             then it is silently ignored.
+
+        Returns
+        --------
+
+        An :class:`InteractionMessage` if ``wait`` is ``True``. Otherwise ``None``.
 
         Raises
         -------
@@ -730,6 +742,9 @@ class InteractionResponse:
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
 
+        if wait:
+            return await self._parent.original_message()
+
     async def edit_message(
         self,
         *,
@@ -738,8 +753,9 @@ class InteractionResponse:
         embeds: List[Embed] = MISSING,
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
+        wait: bool = False,
         delete_after: Optional[float] = None,
-    ) -> None:
+    ) -> Optional[InteractionMessage]:
         """|coro|
 
         Responds to this interaction by editing the original message of
@@ -760,12 +776,20 @@ class InteractionResponse:
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
+        wait: :class:`bool`
+            Whether the server should wait before sending a response. This essentially
+            means that the return type of this function changes from ``None`` to
+            a :class:`InteractionMessage` if set to ``True``.
         delete_after: Optional[:class:`float`]
             If provided, the number of seconds to wait in the background
             before deleting the message we just sent. If the deletion fails,
             then it is silently ignored.
-        
 
+        Returns
+        --------
+
+        An :class:`InteractionMessage` if ``wait`` is ``True``. Otherwise ``None``.
+        
         Raises
         -------
         HTTPException
@@ -830,6 +854,9 @@ class InteractionResponse:
 
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
+
+        if wait:
+            return await self._parent.original_message()
 
         
 
