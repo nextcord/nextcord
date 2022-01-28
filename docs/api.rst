@@ -40,9 +40,18 @@ Client
 
 .. autoclass:: Client
     :members:
-    :exclude-members: fetch_guilds, event
+    :exclude-members: fetch_guilds, event, slash_command, user_command, message_command
 
     .. automethod:: Client.event()
+        :decorator:
+
+    .. automethod:: Client.slash_command
+        :decorator:
+    
+    .. automethod:: Client.user_command
+        :decorator:
+        
+    .. automethod:: Client.message_command
         :decorator:
 
     .. automethod:: Client.fetch_guilds
@@ -371,7 +380,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
 .. function:: on_raw_typing(payload)
 
-    Called when someone begins typing a message. Unlike :func:`on_typing`, this is 
+    Called when someone begins typing a message. Unlike :func:`on_typing`, this is
     called regardless if the user can be found in the bot's cache or not.
 
     If the typing event is occuring in a guild,
@@ -1145,7 +1154,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 .. function:: on_guild_scheduled_event_user_add(event, user)
               on_guild_scheduled_event_user_remove(event, user)
 
-    Called when a :class:`ScheduledEventUser` is interested in a 
+    Called when a :class:`ScheduledEventUser` is interested in a
     :class:`ScheduledEvent`.
 
     :param event: The event that the user is interested in.
@@ -2697,9 +2706,13 @@ of :class:`enum.Enum`.
 
         The event has finished.
 
+    .. attribute:: canceled
+
+        The event was canceled.
+
     .. attribute:: cancelled
 
-        The event was cancelled.
+        An alias for :attr:`canceled`.
 
 Async Iterator
 ----------------
@@ -4285,6 +4298,46 @@ Select
 
 .. autofunction:: nextcord.ui.select
 
+
+Application Commands
+--------------------
+
+.. attributetable:: ApplicationCommand
+
+.. autoclass:: ApplicationCommand
+    :members:
+
+.. attributetable:: ApplicationSubcommand
+
+.. autoclass:: ApplicationSubcommand
+    :members:
+
+Options
+~~~~~~~
+
+.. attributetable:: CommandOption
+
+.. autoclass:: CommandOption
+    :members:
+
+.. attributetable:: SlashOption
+
+.. autoclass:: SlashOption
+    :members:
+
+Cogs
+~~~~
+
+.. autoclass:: ClientCog
+    :members:
+Decorators
+~~~~~~~~~~
+
+.. autoclass:: message_command
+
+.. autoclass:: slash_command
+
+.. autoclass:: user_command
 
 Exceptions
 ------------
