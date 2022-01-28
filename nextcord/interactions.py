@@ -419,8 +419,8 @@ class Interaction:
         Returns
         -------
         Optional[:class:`InteractionMessage`, :class:`WebhookMessage`]
-            The :class:`InteractionMessage` that was sent, a :class:`WebhookMessage`
-            if the interaction has been responded to before.
+            The :class:`InteractionMessage` that was sent if ``wait`` is ``True`` and
+            the interaction has not been responded to, a :class:`WebhookMessage` otherwise.
         """
 
         if not self.response.is_done():
@@ -667,8 +667,8 @@ class InteractionResponse:
 
         Returns
         --------
-
-        An :class:`InteractionMessage` if ``wait`` is ``True``. Otherwise ``None``.
+        Optional[:class:`InteractionMessage`]
+            The message sent if ``wait`` is ``True``, otherwise ``None``.
 
         Raises
         -------
@@ -787,8 +787,8 @@ class InteractionResponse:
 
         Returns
         --------
-
-        An :class:`InteractionMessage` if ``wait`` is ``True``. Otherwise ``None``.
+        Optional[:class:`InteractionMessage`]
+            The message sent if ``wait`` is ``True``, otherwise ``None``.
         
         Raises
         -------
