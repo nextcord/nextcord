@@ -407,7 +407,7 @@ class Interaction:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
-    ) -> Optional[Union[Message, WebhookMessage]]:
+    ) -> Optional[Union[InteractionMessage, WebhookMessage]]:
         """|coro|
 
         This is a shorthand function for helping in sending messages in
@@ -417,13 +417,13 @@ class Interaction:
 
         Returns
         -------
-        Optional[:class:`Message`, :class:`WebhookMessage`]
-            The :class:`Message` that was sent, a :class:`WebhookMessage` if the
-            interaction has been responded to before.
+        Optional[:class:`InteractionMessage`, :class:`WebhookMessage`]
+            The :class:`InteractionMessage` that was sent, a :class:`WebhookMessage`
+            if the interaction has been responded to before.
         """
 
         if not self.response.is_done():
-            return await self.response.send_message(
+            await self.response.send_message(
                 content=content,
                 embed=embed,
                 embeds=embeds,
@@ -434,6 +434,7 @@ class Interaction:
                 ephemeral=ephemeral,
                 delete_after=delete_after,
             )
+            return await self.original_message()
         return await self.followup.send(
             content=content,  # type: ignore
             embed=embed,
