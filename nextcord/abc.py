@@ -1338,8 +1338,6 @@ class Messageable:
             embed = embed.to_dict()
 
         elif embeds is not None:
-            if len(embeds) > 10:
-                raise InvalidArgument('embeds parameter must be a list of up to 10 elements')
             embeds = [embed.to_dict() for embed in embeds]
 
         if stickers is not None:
@@ -1396,10 +1394,8 @@ class Messageable:
                 file.close()
 
         elif files is not None:
-            if len(files) > 10:
-                raise InvalidArgument('files parameter must be a list of up to 10 elements')
-            elif not all(isinstance(file, File) for file in files):
-                raise InvalidArgument('files parameter must be a list of File')
+            if not all(isinstance(file, File) for file in files):
+                raise TypeError('Files parameter must be a list of type File')
 
             try:
                 data = await state.http.send_files(

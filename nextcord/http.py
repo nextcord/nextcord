@@ -475,6 +475,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[sticker.StickerItem]] = None,
         components: Optional[List[components.Component]] = None,
+        attachments: Optional[List[dict]] = None
     ) -> Response[message.Message]:
         form = []
 
@@ -495,28 +496,19 @@ class HTTPClient:
             payload['components'] = components
         if stickers:
             payload['sticker_ids'] = stickers
+        if attachments:
+            payload["attachments"] = [{"filename": files[attachment["id"]].filename, **attachment} for attachment in attachments]
 
         form.append({'name': 'payload_json', 'value': utils._to_json(payload)})
-        if len(files) == 1:
-            file = files[0]
+        for index, file in enumerate(files):
             form.append(
                 {
-                    'name': 'file',
+                    'name': f'files[{index}]',
                     'value': file.fp,
                     'filename': file.filename,
                     'content_type': 'application/octet-stream',
                 }
             )
-        else:
-            for index, file in enumerate(files):
-                form.append(
-                    {
-                        'name': f'file{index}',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
 
         return self.request(route, form=form, files=files)
 
@@ -568,6 +560,15 @@ class HTTPClient:
 
     def edit_message(self, channel_id: Snowflake, message_id: Snowflake, **fields: Any) -> Response[message.Message]:
         r = Route('PATCH', '/channels/{channel_id}/messages/{message_id}', channel_id=channel_id, message_id=message_id)
+        if "files" in fields:
+            fields["tts"] = None
+            fields["nonce"] = None
+            fields["message_reference"] = None
+            fields["stickers"] = None
+            attachments = fields.pop("attachments", None)
+            if attachments is not None:
+                fields["attachments"] = attachments
+            return self.send_multipart_helper(r, **fields)
         return self.request(r, json=fields)
 
     def add_reaction(self, channel_id: Snowflake, message_id: Snowflake, emoji: str) -> Response[None]:
@@ -1998,7 +1999,8 @@ class HTTPClient:
             'scheduled_start_time',
             'scheduled_end_time',
             'description',
-            'entity_type'
+            'entity_type',
+            'status'
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(

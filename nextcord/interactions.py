@@ -38,6 +38,8 @@ from .errors import (
 )
 from .channel import PartialMessageable, ChannelType
 
+from .file import File
+from .embeds import Embed
 from .user import User
 from .member import Member
 from .message import Message, Attachment
@@ -58,10 +60,8 @@ if TYPE_CHECKING:
     )
     from .guild import Guild
     from .state import ConnectionState
-    from .file import File
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
-    from .embeds import Embed
     from .ui.view import View
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
@@ -190,7 +190,6 @@ class Interaction:
         self.channel_id: Optional[int] = utils._get_as_snowflake(data, 'channel_id')
         self.guild_id: Optional[int] = utils._get_as_snowflake(data, 'guild_id')
         self.application_id: int = int(data['application_id'])
-        self._client: Client = data.get('client')
         self.locale: Optional[str] = data.get('locale')
         self.guild_locale: Optional[str] = data.get('guild_locale')
 
@@ -222,12 +221,12 @@ class Interaction:
     @property
     def client(self):
         """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``bot``."""
-        return self._client
+        return self._state._get_client()
     
     @property
     def bot(self):
         """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``client``."""
-        return self._client
+        return self.client
 
     @property
     def guild(self) -> Optional[Guild]:
@@ -409,13 +408,19 @@ class Interaction:
             self._state.store_view(view, message.id)
         return message
 
-    async def delete_original_message(self) -> None:
+    async def delete_original_message(self, *, delay: Optional[float] = None) -> None:
         """|coro|
 
         Deletes the original interaction response message.
 
         This is a lower level interface to :meth:`InteractionMessage.delete` in case
         you do not want to fetch the message and save an HTTP request.
+
+        Parameters
+        -----------
+        delay: Optional[:class:`float`]
+            If provided, the number of seconds to wait before deleting the message.
+            The waiting is done in the background and deletion failures are ignored.
 
         Raises
         -------
@@ -425,11 +430,22 @@ class Interaction:
             Deleted a message that is not yours.
         """
         adapter = async_context.get()
-        await adapter.delete_original_interaction_response(
+        delete_func = adapter.delete_original_interaction_response(
             self.application_id,
             self.token,
             session=self._session,
         )
+
+        if delay is not None:
+            async def inner_call(delay: float = delay):
+                await asyncio.sleep(delay)
+                try:
+                    await delete_func
+                except HTTPException:
+                    pass
+            asyncio.create_task(inner_call())
+        else:
+            await delete_func
 
     async def send(
         self,
@@ -437,9 +453,12 @@ class Interaction:
         *,
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
+        file: File = MISSING,
+        files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
-        ephemeral: bool = False
+        ephemeral: bool = False,
+        delete_after: Optional[float] = None,
     ) -> Optional[Union[Message, WebhookMessage]]:
         """|coro|
 
@@ -460,17 +479,23 @@ class Interaction:
                 content=content,
                 embed=embed,
                 embeds=embeds,
+                file=file,
+                files=files,
                 view=view,
                 tts=tts,
-                ephemeral=ephemeral
+                ephemeral=ephemeral,
+                delete_after=delete_after,
             )
         return await self.followup.send(
             content=content,  # type: ignore
             embed=embed,
             embeds=embeds,
+            file=file,
+            files=files,
             view=view,
             tts=tts,
-            ephemeral=ephemeral
+            ephemeral=ephemeral,
+            delete_after=delete_after,
         )
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
@@ -526,7 +551,7 @@ class InteractionResponse:
         """
         return self._responded
 
-    async def defer(self, *, ephemeral: bool = False) -> None:
+    async def defer(self, *, ephemeral: bool = False, with_message: bool = False) -> None:
         """|coro|
 
         Defers the interaction response.
@@ -538,7 +563,13 @@ class InteractionResponse:
         -----------
         ephemeral: :class:`bool`
             Indicates whether the deferred message will eventually be ephemeral.
-            This only applies for interactions of type :attr:`InteractionType.application_command`.
+            This only applies for interactions of type :attr:`InteractionType.application_command` or when ``with_message`` is True
+        with_message: :class:`bool`
+            Indicates whether the response will be a message with thinking state (bot is thinking...).
+            This is always True for interactions of type :attr:`InteractionType.application_command`.
+            For interactions of type :attr:`InteractionType.component` this defaults to False.
+            
+            .. versionadded:: 2.0
 
         Raises
         -------
@@ -553,12 +584,12 @@ class InteractionResponse:
         defer_type: int = 0
         data: Optional[Dict[str, Any]] = None
         parent = self._parent
-        if parent.type is InteractionType.component:
-            defer_type = InteractionResponseType.deferred_message_update.value
-        elif parent.type is InteractionType.application_command:
+        if parent.type is InteractionType.application_command or with_message:
             defer_type = InteractionResponseType.deferred_channel_message.value
             if ephemeral:
                 data = {'flags': 64}
+        elif parent.type is InteractionType.component:
+            defer_type = InteractionResponseType.deferred_message_update.value
 
         if defer_type:
             adapter = async_context.get()
@@ -639,9 +670,12 @@ class InteractionResponse:
         *,
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
+        file: File = MISSING,
+        files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
         ephemeral: bool = False,
+        delete_after: Optional[float] = None,
     ) -> None:
         """|coro|
 
@@ -657,6 +691,11 @@ class InteractionResponse:
         embed: :class:`Embed`
             The rich embed for the content to send. This cannot be mixed with
             ``embeds`` parameter.
+        file: :class:`File`
+            The file to upload.
+        files: List[:class:`File`]
+            A list of files to upload. Maximum of 10. This cannot be mixed with
+            the ``file`` parameter.
         tts: :class:`bool`
             Indicates if the message should be sent using text-to-speech.
         view: :class:`nextcord.ui.View`
@@ -665,13 +704,17 @@ class InteractionResponse:
             Indicates if the message should only be visible to the user who started the interaction.
             If a view is sent with an ephemeral message and it has no timeout set then the timeout
             is set to 15 minutes.
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just sent. If the deletion fails,
+            then it is silently ignored.
 
         Raises
         -------
         HTTPException
             Sending the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
         InteractionResponded
@@ -685,15 +728,22 @@ class InteractionResponse:
         }
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('cannot mix embed and embeds keyword arguments')
+            raise TypeError('Cannot mix embed and embeds keyword arguments')
 
         if embed is not MISSING:
             embeds = [embed]
 
         if embeds:
-            if len(embeds) > 10:
-                raise ValueError('embeds cannot exceed maximum of 10 elements')
             payload['embeds'] = [e.to_dict() for e in embeds]
+
+        if file is not MISSING and files is not MISSING:
+            raise TypeError('Cannot mix file and files keyword arguments')
+
+        if file is not MISSING:
+            files = [file]
+
+        if files and not all(isinstance(f, File) for f in files):
+            raise TypeError('Files parameter must be a list of type File')
 
         if content is not None:
             payload['content'] = str(content)
@@ -706,13 +756,19 @@ class InteractionResponse:
 
         parent = self._parent
         adapter = async_context.get()
-        await adapter.create_interaction_response(
-            parent.id,
-            parent.token,
-            session=parent._session,
-            type=InteractionResponseType.channel_message.value,
-            data=payload,
-        )
+        try:
+            await adapter.create_interaction_response(
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=InteractionResponseType.channel_message.value,
+                data=payload,
+                files=files,
+            )
+        finally:
+            if files:
+                for file in files:
+                    file.close()
 
         if view is not MISSING:
             if ephemeral and view.timeout is None:
@@ -722,6 +778,9 @@ class InteractionResponse:
 
         self._responded = True
 
+        if delete_after is not None:
+            await self._parent.delete_original_message(delay=delete_after)
+
     async def edit_message(
         self,
         *,
@@ -730,6 +789,7 @@ class InteractionResponse:
         embeds: List[Embed] = MISSING,
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
+        delete_after: Optional[float] = None,
     ) -> None:
         """|coro|
 
@@ -751,6 +811,11 @@ class InteractionResponse:
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just sent. If the deletion fails,
+            then it is silently ignored.
+        
 
         Raises
         -------
@@ -814,6 +879,11 @@ class InteractionResponse:
 
         self._responded = True
 
+        if delete_after is not None:
+            await self._parent.delete_original_message(delay=delete_after)
+
+        
+
 
 class _InteractionMessageState:
     __slots__ = ('_parent', '_interaction')
@@ -863,6 +933,7 @@ class InteractionMessage(Message):
         files: List[File] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        delete_after: Optional[float] = None,
     ) -> InteractionMessage:
         """|coro|
 
@@ -888,6 +959,10 @@ class InteractionMessage(Message):
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just edited. If the deletion fails,
+            then it is silently ignored.
 
         Raises
         -------
@@ -905,7 +980,7 @@ class InteractionMessage(Message):
         :class:`InteractionMessage`
             The newly edited message.
         """
-        return await self._state._interaction.edit_original_message(
+        message = await self._state._interaction.edit_original_message(
             content=content,
             embeds=embeds,
             embed=embed,
@@ -914,6 +989,11 @@ class InteractionMessage(Message):
             view=view,
             allowed_mentions=allowed_mentions,
         )
+
+        if delete_after is not None:
+            await self.delete(delay=delete_after)
+
+        return message
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
@@ -936,15 +1016,4 @@ class InteractionMessage(Message):
             Deleting the message failed.
         """
 
-        if delay is not None:
-
-            async def inner_call(delay: float = delay):
-                await asyncio.sleep(delay)
-                try:
-                    await self._state._interaction.delete_original_message()
-                except HTTPException:
-                    pass
-
-            asyncio.create_task(inner_call())
-        else:
-            await self._state._interaction.delete_original_message()
+        await self._state._interaction.delete_original_message(delay=delay)

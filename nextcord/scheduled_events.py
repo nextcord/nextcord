@@ -79,7 +79,7 @@ class ScheduledEventUser(Hashable):
     user: Optional[:class:`User`]
         The related user object. Blank if no member intents
     member: Optional[:class:`Member`]
-        The related member object, if requested with 
+        The related member object, if requested with
         :meth:`ScheduledEvent.fetch_users`.
     user_id: int
         The id of the interested user
@@ -267,7 +267,7 @@ class ScheduledEvent(Hashable):
         return user
 
     def _remove_user(self, user_id: int) -> None:
-        if  self._users.pop(user_id, None):
+        if self._users.pop(user_id, None):
             self.user_count -= 1
 
     def __str__(self) -> str:
@@ -299,11 +299,11 @@ class ScheduledEvent(Hashable):
         """List[:class:`ScheduledEventUser`]: The users who are interested in the event.
 
         .. note::
-            This may not be accurate or populated until 
+            This may not be accurate or populated until
             :meth:`~.ScheduledEvent.fetch_users` is called
         """
         return list(self._users.values())
- 
+
     async def delete(self) -> None:
         """|coro|
 
@@ -350,6 +350,13 @@ class ScheduledEvent(Hashable):
         status: :class:`ScheduledEventStatus`
             The new status for the event.
 
+            .. note::
+
+                Only the following edits to an event's status are permitted:
+                scheduled -> active ;
+                active -> completed ;
+                scheduled -> canceled
+
         Returns
         -------
         :class:`ScheduledEvent`
@@ -376,7 +383,7 @@ class ScheduledEvent(Hashable):
             payload['status'] = status.value
         if not payload:
             return self
-        data = await self._state.http.edit_event(reason=reason, **payload)
+        data = await self._state.http.edit_event(self.guild.id, self.id, reason=reason, **payload)
         return ScheduledEvent(guild=self.guild, state=self._state, data=data)
 
     def get_user(self, user_id: int) -> Optional[ScheduledEventUser]:
@@ -384,7 +391,7 @@ class ScheduledEvent(Hashable):
 
         .. note::
 
-            This may not be accurate or populated until 
+            This may not be accurate or populated until
             :meth:`ScheduledEvent.fetch_users` is called.
 
         Parameters
