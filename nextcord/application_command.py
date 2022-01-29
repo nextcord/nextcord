@@ -801,7 +801,7 @@ class ApplicationSubcommand:
             can_run = await app_cmd.application_can_run(interaction)
         except Exception as error:
             state.dispatch('application_error', interaction, error)
-            await app_cmd.dispatch_error(interaction, error)
+            await app_cmd.invoke_error(interaction, error)
             return
 
         if can_run:
@@ -837,7 +837,7 @@ class ApplicationSubcommand:
 
             if invoke_error is not None:
                 state.dispatch('application_error', interaction, invoke_error)
-                await app_cmd.dispatch_error(interaction, invoke_error)
+                await app_cmd.invoke_error(interaction, invoke_error)
             if after_invoke_error is not None:
                 raise after_invoke_error
 
@@ -886,13 +886,13 @@ class ApplicationSubcommand:
 
         await self.invoke_slash(interaction, **kwargs)
 
-    async def dispatch_error(self, interaction: Interaction, error: ApplicationError) -> None:
+    async def invoke_error(self, interaction: Interaction, error: ApplicationError) -> None:
 
         if self.has_error_handler():
             if self._self_argument:
                 await self.on_error(self._self_argument, interaction, error)
             else:
-                await self.on_error(interaction, error)    
+                await self.on_error(interaction, error)
 
     async def application_can_run(self, interaction: Interaction) -> bool:
         """|coro|
