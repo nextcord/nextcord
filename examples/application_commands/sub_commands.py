@@ -45,7 +45,7 @@ async def main_group(interaction: nextcord.Interaction):
 @main_group.subcommand(description="Subcommand group subcommand 1")
 async def subsub1(interaction: nextcord.Interaction):
     """
-    This is a subcommand of the '/main subgroup' subcommand group.
+    This is a subcommand of the '/main main_group' subcommand group.
     It will appear in the menu as '/main main_group subsub1'.
     """
     await interaction.response.send_message("This is a subcommand group's subcommand!")
@@ -54,7 +54,7 @@ async def subsub1(interaction: nextcord.Interaction):
 @main_group.subcommand(description="Subcommand group subcommand 2")
 async def subsub2(interaction: nextcord.Interaction):
     """
-    This is another subcommand of the '/main subgroup' subcommand group.
+    This is another subcommand of the '/main main_group' subcommand group.
     It will appear in the menu as '/main main_group subsub2'.
     """
     await interaction.response.send_message("This is subcommand group subcommand 2!")
