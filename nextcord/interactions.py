@@ -45,6 +45,7 @@ from .member import Member
 from .message import Message, Attachment
 from .object import Object
 from .permissions import Permissions
+from .mentions import AllowedMentions
 from .webhook.async_ import async_context, Webhook, handle_message_parameters, WebhookMessage
 
 __all__ = (
@@ -407,6 +408,7 @@ class Interaction:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
+        allowed_mentions: AllowedMentions = AllowedMentions.all(),
     ) -> Optional[Union[Message, WebhookMessage]]:
         """|coro|
 
@@ -433,6 +435,7 @@ class Interaction:
                 tts=tts,
                 ephemeral=ephemeral,
                 delete_after=delete_after,
+                allowed_mentions=allowed_mentions,
             )
         return await self.followup.send(
             content=content,  # type: ignore
@@ -444,6 +447,7 @@ class Interaction:
             tts=tts,
             ephemeral=ephemeral,
             delete_after=delete_after,
+            allowed_mentions=allowed_mentions,
         )
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
@@ -624,6 +628,7 @@ class InteractionResponse:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
+        allowed_mentions: AllowedMentions = AllowedMentions.all(),
     ) -> None:
         """|coro|
 
@@ -656,6 +661,8 @@ class InteractionResponse:
             If provided, the number of seconds to wait in the background
             before deleting the message we just sent. If the deletion fails,
             then it is silently ignored.
+        allowed_mentions: :class:`nextcord.AllowedMentions`
+            The allowed mentions scope for the interaction response.
 
         Raises
         -------
@@ -673,6 +680,7 @@ class InteractionResponse:
 
         payload: Dict[str, Any] = {
             'tts': tts,
+            'allowed_mentions': allowed_mentions.to_dict(),
         }
 
         if embed is not MISSING and embeds is not MISSING:
