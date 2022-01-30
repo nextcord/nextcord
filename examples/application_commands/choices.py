@@ -1,5 +1,3 @@
-from typing import Optional
-
 import nextcord
 from nextcord import Interaction, SlashOption
 
