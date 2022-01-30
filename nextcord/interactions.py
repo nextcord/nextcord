@@ -61,7 +61,6 @@ if TYPE_CHECKING:
     )
     from .guild import Guild
     from .state import ConnectionState
-    from .mentions import AllowedMentions
     from aiohttp import ClientSession
     from .ui.view import View
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
@@ -408,7 +407,7 @@ class Interaction:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
-        allowed_mentions: AllowedMentions = AllowedMentions.all(),
+        allowed_mentions: Optional[AllowedMentions] = None,
     ) -> Optional[Union[Message, WebhookMessage]]:
         """|coro|
 
@@ -628,7 +627,7 @@ class InteractionResponse:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
-        allowed_mentions: AllowedMentions = AllowedMentions.all(),
+        allowed_mentions: Optional[AllowedMentions] = MISSING,
     ) -> None:
         """|coro|
 
@@ -661,8 +660,9 @@ class InteractionResponse:
             If provided, the number of seconds to wait in the background
             before deleting the message we just sent. If the deletion fails,
             then it is silently ignored.
-        allowed_mentions: :class:`nextcord.AllowedMentions`
-            The allowed mentions scope for the interaction response.
+        allowed_mentions: :class:`AllowedMentions`
+            Controls the mentions being processed in this message.
+            See :meth:`.abc.Messageable.send` for more information.
 
         Raises
         -------
@@ -680,7 +680,6 @@ class InteractionResponse:
 
         payload: Dict[str, Any] = {
             'tts': tts,
-            'allowed_mentions': allowed_mentions.to_dict(),
         }
 
         if embed is not MISSING and embeds is not MISSING:
@@ -709,6 +708,15 @@ class InteractionResponse:
 
         if view is not MISSING:
             payload['components'] = view.to_components()
+
+        if allowed_mentions is MISSING or allowed_mentions is None:
+            if self._parent._state.allowed_mentions is not None:
+                payload['allowed_mentions'] = self._parent._state.allowed_mentions.to_dict()
+        else:
+            if self._parent._state.allowed_mentions is not None:
+                payload['allowed_mentions'] = self._parent._state.allowed_mentions.merge(allowed_mentions).to_dict()
+            else:
+                payload['allowed_mentions'] = allowed_mentions.to_dict()
 
         parent = self._parent
         adapter = async_context.get()
