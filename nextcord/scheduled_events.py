@@ -222,7 +222,7 @@ class ScheduledEvent(Hashable):
         'user_count',
         '_state',
         '_users',
-        "cover"
+        'cover'
     )
 
     def __init__(
