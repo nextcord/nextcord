@@ -25,8 +25,6 @@ async def hi(
     interaction: Interaction,
     member: nextcord.Member = SlashOption(name="user", description="User to say hi to"),
 ):
-    if not member:
-        await interaction.response.send_message(f"{interaction.user} just said hi!")
     await interaction.response.send_message(
         f"{interaction.user} just said hi to {member.mention}"
     )
