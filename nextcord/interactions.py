@@ -45,7 +45,6 @@ from .member import Member
 from .message import Message, Attachment
 from .object import Object
 from .permissions import Permissions
-from .mentions import AllowedMentions
 from .webhook.async_ import async_context, Webhook, handle_message_parameters, WebhookMessage
 
 __all__ = (
@@ -61,6 +60,7 @@ if TYPE_CHECKING:
     )
     from .guild import Guild
     from .state import ConnectionState
+    from .mentions import AllowedMentions
     from aiohttp import ClientSession
     from .ui.view import View
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
