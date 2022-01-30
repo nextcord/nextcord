@@ -407,7 +407,7 @@ class Interaction:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
-        allowed_mentions: Optional[AllowedMentions] = None,
+        allowed_mentions: Optional[AllowedMentions] = MISSING,
     ) -> Optional[Union[Message, WebhookMessage]]:
         """|coro|
 
