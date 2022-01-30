@@ -23,9 +23,7 @@ async def choose_a_number(
 @client.slash_command(guild_ids=[TESTING_GUILD_ID])
 async def hi(
     interaction: Interaction,
-    member: Optional[nextcord.Member] = SlashOption(
-        name="user", description="User to say hi to", required=False
-    ),
+    member: nextcord.Member = SlashOption(name="user", description="User to say hi to"),
 ):
     if not member:
         await interaction.response.send_message(f"{interaction.user} just said hi!")
