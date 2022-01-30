@@ -1,13 +1,27 @@
+from typing import Optional
 import nextcord
+
+TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 
 client = nextcord.Client()
 
-
-@client.slash_command(guild_ids=[...])  # limits guilds with this command.
-async def ping(
-    interaction: nextcord.Interaction,
-):
+# command will be global if guild_ids is not specified
+@client.slash_command(guild_ids=[TESTING_GUILD_ID])
+async def ping(interaction: nextcord.Interaction):
     await interaction.response.send_message("Pong!")
 
 
-client.run("TOKEN")
+@client.slash_command(guild_ids=[TESTING_GUILD_ID])
+async def echo(interaction: nextcord.Interaction, arg: str):
+    await interaction.response.send_message(arg)
+
+
+@client.slash_command(guild_ids=[TESTING_GUILD_ID])
+async def enter_a_number(interaction: nextcord.Interaction, number: int = SlashOption(required=False)):
+    if not number:
+        await interaction.response.send_message("You need to specify a number!", ephemeral=True)
+    else:
+        await interaction.response.send_message(f"You chose {number}!")
+
+
+client.run("token")
