@@ -30,6 +30,7 @@ import itertools
 import sys
 from operator import attrgetter
 from typing import Any, Dict, List, Literal, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union, overload
+from functools import partial
 
 from . import abc
 
@@ -388,7 +389,7 @@ class Member(abc.Messageable, _UserTag):
         self._timeout = utils.parse_time(data.get('communication_disabled_until'))
 
     def _presence_update(self, data: PartialPresenceUpdate, user: UserPayload) -> Optional[Tuple[User, User]]:
-        self.activities = tuple(map(create_activity, data['activities']))
+        self.activities = tuple(map(lambda x: create_activity(self._state, x), data['activities']))
         self._client_status = {
             sys.intern(key): sys.intern(value) for key, value in data.get('client_status', {}).items()  # type: ignore
         }
@@ -617,7 +618,7 @@ class Member(abc.Messageable, _UserTag):
 
     @property
     def timeout(self) -> Optional[datetime.datetime]:
-        """Optional[:class:`datetime.datetime`]: A datetime object that represents 
+        """Optional[:class:`datetime.datetime`]: A datetime object that represents
         the time in which the member will be able to interact again.
 
         .. note::

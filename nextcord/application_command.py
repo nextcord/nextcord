@@ -96,6 +96,41 @@ class ClientCog:
 
 
 class SlashOption:
+    """Provides Discord with information about an option in a command.
+
+    When this class is set as the default argument of a parameter in an Application Command, additional information
+    about the parameter is sent to Discord for the user to see.
+
+    Parameters
+    ----------
+    name: :class:`str`
+        The name of the Option on Discords side. If left as None, it defaults to the parameter name.
+    description: :class:'str'
+        The description of the Option on Discords side. If left as None, it defaults to "".
+    required: :class:'bool'
+        If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
+    choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]], Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
+        A list of choices that a user must choose.
+        If a :class:`dict` is given, the keys are what the users are able to see, the values are what is sent back
+        to the bot.
+        Otherwise, it is treated as an `Iterable` where what the user sees and is sent back to the bot are the same.
+    channel_types: List[:class:`ChannelType`]
+        List of `ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
+        typed as :class:`GuildChannel` for this to function.
+    min_value: Union[:class:`int`, :class:`float`]
+        Minimum integer or floating point value the user is allowed to input. The parameter must be typed as an
+        :class:`int` or :class:`float` for this to function.
+    max_value: Union[:class:`int`, :class:`float`]
+        Maximum integer or floating point value the user is allowed to input. The parameter must be typed as an
+        :class:`int` or :class:`float` for this to function.
+    autocomplete: :class:`bool`
+        If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
+        if an autocomplete function for it is found.
+    default: Any
+        When required is not True and the user doesn't provide a value for this Option, this value is given instead.
+    verify: :class:`bool`
+        If True, the given values will be checked to ensure that the payload to Discord is valid.
+    """
     def __init__(
             self,
             name: str = MISSING,
@@ -110,41 +145,6 @@ class SlashOption:
             default: Any = None,
             verify: bool = True
     ):
-        """Provides Discord with information about an option in a command.
-
-        When this class is set as the default argument of a parameter in an Application Command, additional information
-        about the parameter is sent to Discord for the user to see.
-
-        Parameters
-        ----------
-        name: :class:`str`
-            The name of the Option on Discords side. If left as None, it defaults to the parameter name.
-        description: :class:'str'
-            The description of the Option on Discords side. If left as None, it defaults to "".
-        required: :class:'bool'
-            If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
-        choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]], Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
-            A list of choices that a user must choose.
-            If a :class:`dict` is given, the keys are what the users are able to see, the values are what is sent back
-            to the bot.
-            Otherwise, it is treated as an `Iterable` where what the user sees and is sent back to the bot are the same.
-        channel_types: List[:class:`ChannelType`]
-            List of `ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
-            typed as :class:`GuildChannel` for this to function.
-        min_value: Union[:class:`int`, :class:`float`]
-            Minimum integer or floating point value the user is allowed to input. The parameter must be typed as an
-            :class:`int` or :class:`float` for this to function.
-        max_value: Union[:class:`int`, :class:`float`]
-            Maximum integer or floating point value the user is allowed to input. The parameter must be typed as an
-            :class:`int` or :class:`float` for this to function.
-        autocomplete: :class:`bool`
-            If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
-            if an autocomplete function for it is found.
-        default: Any
-            When required is not True and the user doesn't provide a value for this Option, this value is given instead.
-        verify: :class:`bool`
-            If True, the given values will be checked to ensure that the payload to Discord is valid.
-        """
         self.name: Optional[str] = name
         self.description: Optional[str] = description
         self.required: Optional[bool] = required
@@ -166,6 +166,17 @@ class SlashOption:
 
 
 class CommandOption(SlashOption):
+    """Represents a Python function parameter that corresponds to a Discord Option.
+
+    This must set and/or handle all variables from SlashOption, hence the subclass.
+    This should not be created by the user, only by other Application Command-related classes.
+
+    Parameters
+    ----------
+    parameter: :class:`inspect.Parameter`
+        The Application Command Parameter object to read and make usable by Discord.
+    """
+
     option_types = {
         str: ApplicationCommandOptionType.string,
         int: ApplicationCommandOptionType.integer,
@@ -181,16 +192,6 @@ class CommandOption(SlashOption):
     }
     """Maps Python typings to Discord Application Command typings."""
     def __init__(self, parameter: Parameter):
-        """Represents a Python function parameter that corresponds to a Discord Option.
-
-        This must set and/or handle all variables from SlashOption, hence the subclass.
-        This should not be created by the user, only by other Application Command-related classes.
-
-        Parameters
-        ----------
-        parameter: :class:`inspect.Parameter`
-            The Application Command Parameter object to read and make usable by Discord.
-        """
         super().__init__()
         self.parameter = parameter
         cmd_arg_given = False
@@ -313,7 +314,7 @@ class CommandOption(SlashOption):
                             member = Member(data=member_payload, guild=guild, state=state)
                             guild._add_member(member)
 
-                        resolved_members[member.id] = member 
+                        resolved_members[member.id] = member
 
                     return resolved_members[user_id]
                 else:
@@ -388,6 +389,24 @@ class CommandOption(SlashOption):
 
 
 class ApplicationSubcommand:
+    """Represents an application subcommand attached to a callback.
+
+    Parameters
+    ----------
+    callback: Callable
+        Function/method to call when the subcommand is triggered.
+    parent_command: Optional[Union[:class:`ApplicationCommand`, :class:`ApplicationSubcommand`]]
+        Application (sub)command that has this subcommand as its child.
+    cmd_type: Optional[Union[:class:`ApplicationCommandType`, :class:`ApplicationCommandOptionType`]]
+        Specific type of subcommand this should be.
+    self_argument: Union[:class:`ClientCog`, Any]
+        Object to pass as `self` to the callback. If not set, the callback will not be given a `self` argument.
+    name: :class:`str`
+        The name of the subcommand that users will see. If not set, the name of the callback will be used.
+    description: :class:`str`
+        The description of the subcommand that users will see. If not set, it will be the minimum value that
+        Discord supports.
+    """
     def __init__(
         self,
         callback: Callable = MISSING,
@@ -397,24 +416,6 @@ class ApplicationSubcommand:
         name: str = MISSING,
         description: str = MISSING,
     ):
-        """Represents an application subcommand attached to a callback.
-
-        Parameters
-        ----------
-        callback: Callable
-            Function/method to call when the subcommand is triggered.
-        parent_command: Optional[Union[:class:`ApplicationCommand`, :class:`ApplicationSubcommand`]]
-            Application (sub)command that has this subcommand as its child.
-        cmd_type: Optional[Union[:class:`ApplicationCommandType`, :class:`ApplicationCommandOptionType`]]
-            Specific type of subcommand this should be.
-        self_argument: Union[:class:`ClientCog`, Any]
-            Object to pass as `self` to the callback. If not set, the callback will not be given a `self` argument.
-        name: :class:`str`
-            The name of the subcommand that users will see. If not set, the name of the callback will be used.
-        description: :class:`str`
-            The description of the subcommand that users will see. If not set, it will be the minimum value that
-            Discord supports.
-        """
         self._callback: Optional[Callable] = None  # TODO: Add verification against vars if callback is added later.
         self.parent_command: Optional[Union[ApplicationCommand, ApplicationSubcommand]] = parent_command
         self.type: Optional[ApplicationCommandOptionType] = cmd_type
@@ -783,6 +784,26 @@ class ApplicationSubcommand:
 
 
 class ApplicationCommand(ApplicationSubcommand):
+    """Represents an application command that can be or is registered with Discord.
+
+    Parameters
+    ----------
+    callback: Callable
+        Function or method to call when the application command is triggered. Must be a coroutine.
+    cmd_type: :class:`ApplicationCommandType`
+        Type of application command this should be.
+    name: :class:`str`
+        Name of the command that users will see. If not set, it defaults to the name of the callback.
+    description: :class:'str'
+        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+    guild_ids: Iterable[:class:`int`]
+        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    default_permission: :class:`bool`
+        If users should be able to use this command by default or not. Defaults to Discords default.
+    force_global: :class:`bool`
+        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
+        register to guilds. Has no effect if `guild_ids` are never set or added to.
+    """
     def __init__(
         self,
         callback: Callable = MISSING,
@@ -793,26 +814,6 @@ class ApplicationCommand(ApplicationSubcommand):
         default_permission: bool = MISSING,
         force_global: bool = False
     ):
-        """Represents an application command that can be or is registered with Discord.
-
-        Parameters
-        ----------
-        callback: Callable
-            Function or method to call when the application command is triggered. Must be a coroutine.
-        cmd_type: :class:`ApplicationCommandType`
-            Type of application command this should be.
-        name: :class:`str`
-            Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default.
-        force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
-        """
         super().__init__(callback=callback, cmd_type=cmd_type, name=name, description=description)
         self._state: Optional[ConnectionState] = None
         self.force_global: bool = force_global

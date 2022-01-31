@@ -1290,6 +1290,11 @@ class ConnectionState:
             except AttributeError:
                 pass
 
+            raw = RawMemberRemoveEvent(data)
+            user = User(state=self, data=data["user"])
+            raw.user = user
+            self.dispatch("raw_member_remove", raw)
+
             user_id = int(data['user']['id'])
             member = guild.get_member(user_id)
             if member is not None:
@@ -1370,7 +1375,8 @@ class ConnectionState:
         return guild.id not in self._guilds
 
     async def chunk_guild(self, guild, *, wait=True, cache=None):
-        cache = cache or self.member_cache_flags.joined
+        if cache is None:
+            cache = self.member_cache_flags.joined
         request = self._chunk_requests.get(guild.id)
         if request is None:
             self._chunk_requests[guild.id] = request = ChunkRequest(guild.id, self.loop, self._get_guild, cache=cache)
@@ -1626,6 +1632,7 @@ class ConnectionState:
                     asyncio.create_task(logging_coroutine(coro, info='Voice Protocol voice state update handler'))
 
             member, before, after = guild._update_voice_state(data, channel_id)  # type: ignore
+            after = copy.copy(after)
             if member is not None:
                 if flags.voice:
                     if channel_id is None and flags._voice_only and member.id != self_id:

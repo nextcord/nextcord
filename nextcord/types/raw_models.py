@@ -26,6 +26,7 @@ from typing import TypedDict, List
 from .snowflake import Snowflake
 from .member import Member
 from .emoji import PartialEmoji
+from .user import User
 
 
 class _MessageEventOptional(TypedDict, total=False):
@@ -96,3 +97,8 @@ class TypingEvent(_TypingEventOptional):
     channel_id: Snowflake
     user_id: Snowflake
     timestamp: int
+
+
+class MemberRemoveEvent(TypedDict):
+    guild_id: Snowflake
+    user: User

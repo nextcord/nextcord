@@ -215,9 +215,10 @@ class MessageType(Enum):
     guild_discovery_grace_period_final_warning = 17
     thread_created = 18
     reply = 19
-    application_command = 20
+    chat_input_command = 20
     thread_starter_message = 21
     guild_invite_reminder = 22
+    context_menu_command = 23
 
 
 class VoiceRegion(Enum):
@@ -626,7 +627,7 @@ class NSFWLevel(Enum, comparable=True):
 
 
 class ScheduledEventEntityType(Enum):
-    stage_instance =  1
+    stage_instance = 1
     voice = 2
     external = 3
 
@@ -640,6 +641,7 @@ class ScheduledEventStatus(Enum):
     active = 2
     completed = 3
     canceled = 4
+    cancelled = 4
 
 
 T = TypeVar('T')

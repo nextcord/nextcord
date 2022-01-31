@@ -669,6 +669,7 @@ class WebhookMessage(Message):
         files: List[File] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        delete_after: Optional[bool] = None,
     ) -> WebhookMessage:
         """|coro|
 
@@ -705,6 +706,12 @@ class WebhookMessage(Message):
             the view is removed.
 
             .. versionadded:: 2.0
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just edited. If the deletion fails,
+            then it is silently ignored.
+
+            .. versionadded:: 2.0
 
         Raises
         -------
@@ -724,7 +731,7 @@ class WebhookMessage(Message):
         :class:`WebhookMessage`
             The newly edited message.
         """
-        return await self._state._webhook.edit_message(
+        message = await self._state._webhook.edit_message(
             self.id,
             content=content,
             embeds=embeds,
@@ -734,6 +741,11 @@ class WebhookMessage(Message):
             view=view,
             allowed_mentions=allowed_mentions,
         )
+
+        if delete_after is not None:
+            await self.delete(delay=delete_after)
+
+        return message
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
@@ -1239,6 +1251,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[True],
+        delete_after: Optional[bool] = None,
     ) -> WebhookMessage:
         ...
 
@@ -1259,6 +1272,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[False] = ...,
+        delete_after: Optional[bool] = None,
     ) -> None:
         ...
 
@@ -1278,6 +1292,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: bool = False,
+        delete_after: Optional[bool] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1315,6 +1330,10 @@ class Webhook(BaseWebhook):
             This is only available to :attr:`WebhookType.application` webhooks.
             If a view is sent with an ephemeral message and it has no timeout set
             then the timeout is set to 15 minutes.
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just sent. If the deletion fails,
+            then it is silently ignored.
 
             .. versionadded:: 2.0
         file: :class:`File`
@@ -1424,6 +1443,9 @@ class Webhook(BaseWebhook):
         if view is not MISSING and not view.is_finished():
             message_id = None if msg is None else msg.id
             self._state.store_view(view, message_id)
+
+        if delete_after is not None:
+            await msg.delete(delay=delete_after)
 
         return msg
 
