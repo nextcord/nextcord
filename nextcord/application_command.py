@@ -266,7 +266,7 @@ class CommandOption(SlashOption):
             return ApplicationCommandOptionType.string
         elif valid_type := self.option_types.get(typing, None):
             return valid_type
-        elif typing._name == Optional.__name__ and (valid_type := self.option_types.get(typing.__args__[0], None)):
+        elif typing._name == Optional._name and (valid_type := self.option_types.get(typing.__args__[0], None)):
             self.required = False
             return valid_type
         else:
