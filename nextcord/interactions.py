@@ -407,6 +407,7 @@ class Interaction:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
+        allowed_mentions: Optional[AllowedMentions] = MISSING,
     ) -> Optional[Union[Message, WebhookMessage]]:
         """|coro|
 
@@ -433,6 +434,7 @@ class Interaction:
                 tts=tts,
                 ephemeral=ephemeral,
                 delete_after=delete_after,
+                allowed_mentions=allowed_mentions,
             )
         return await self.followup.send(
             content=content,  # type: ignore
@@ -444,6 +446,7 @@ class Interaction:
             tts=tts,
             ephemeral=ephemeral,
             delete_after=delete_after,
+            allowed_mentions=allowed_mentions,
         )
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
@@ -624,6 +627,7 @@ class InteractionResponse:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
+        allowed_mentions: Optional[AllowedMentions] = MISSING,
     ) -> None:
         """|coro|
 
@@ -656,6 +660,9 @@ class InteractionResponse:
             If provided, the number of seconds to wait in the background
             before deleting the message we just sent. If the deletion fails,
             then it is silently ignored.
+        allowed_mentions: :class:`AllowedMentions`
+            Controls the mentions being processed in this message.
+            See :meth:`.abc.Messageable.send` for more information.
 
         Raises
         -------
@@ -701,6 +708,15 @@ class InteractionResponse:
 
         if view is not MISSING:
             payload['components'] = view.to_components()
+
+        if allowed_mentions is MISSING or allowed_mentions is None:
+            if self._parent._state.allowed_mentions is not None:
+                payload['allowed_mentions'] = self._parent._state.allowed_mentions.to_dict()
+        else:
+            if self._parent._state.allowed_mentions is not None:
+                payload['allowed_mentions'] = self._parent._state.allowed_mentions.merge(allowed_mentions).to_dict()
+            else:
+                payload['allowed_mentions'] = allowed_mentions.to_dict()
 
         parent = self._parent
         adapter = async_context.get()
