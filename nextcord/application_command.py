@@ -48,7 +48,7 @@ from .member import Member
 from .message import Attachment, Message
 from .role import Role
 from .user import User
-from .utils import MISSING, normalise_optional_params
+from .utils import MISSING
 
 if TYPE_CHECKING:
     from .state import ConnectionState
