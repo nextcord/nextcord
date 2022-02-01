@@ -48,7 +48,7 @@ from .member import Member
 from .message import Attachment, Message
 from .role import Role
 from .user import User
-from .utils import MISSING
+from .utils import MISSING, find
 
 if TYPE_CHECKING:
     from .state import ConnectionState
@@ -274,7 +274,7 @@ class CommandOption(SlashOption):
         # If the typing is Optional[...] or Union[..., None], get the type of the first non-None type.
         elif (
             type(None) in getattr(typing, '__args__', ())
-            and (inner_type := [t for t in typing.__args__ if t is not type(None)][0])
+            and (inner_type := find(lambda t: t is not type(None), typing.__args__))
             and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
