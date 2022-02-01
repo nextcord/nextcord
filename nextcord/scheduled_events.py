@@ -205,9 +205,9 @@ class ScheduledEvent(Hashable):
     user_count: :class:`int`
         An approximate count of the 'interested' users.
     cover: :class:`Asset`
-        The event cover image
+        The event cover image.
     """
-    __slots__: Tuple[str,...] = (
+    __slots__: Tuple[str, ...] = (
         'channel',
         'channel_id',
         'creator',
@@ -222,7 +222,7 @@ class ScheduledEvent(Hashable):
         'user_count',
         '_state',
         '_users',
-        'cover'
+        'cover',
     )
 
     def __init__(
@@ -257,7 +257,7 @@ class ScheduledEvent(Hashable):
         if cover := data.get("image"):
             self.cover: Optional[Asset] = Asset._from_scheduled_event_cover(self._state, self.id, cover)
         else:
-            self.cover: Optional[int] = None
+            self.cover: Optional[Asset] = None
 
     def _update_users(self, data: List[ScheduledEventUserPayload]) -> None:
         for user in data:
