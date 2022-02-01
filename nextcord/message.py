@@ -47,6 +47,7 @@ from .guild import Guild
 from .mixins import Hashable
 from .sticker import StickerItem
 from .threads import Thread
+from .object import Object
 
 if TYPE_CHECKING:
     from .types.message import (
@@ -59,7 +60,7 @@ if TYPE_CHECKING:
     )
 
     from .types.components import Component as ComponentPayload
-    from .types.threads import ThreadArchiveDuration
+    from .types.threads import ThreadArchiveDuration, Thread as ThreadPayload
     from .types.member import (
         Member as MemberPayload,
         UserWithMember as UserWithMemberPayload,
@@ -598,6 +599,10 @@ class Message(Hashable):
         A list of components in the message.
 
         .. versionadded:: 2.0
+    thread: Optional[:class:`Thread`]
+        The thread created from a message, if any.
+
+        .. versionadded:: 2.0
     guild: Optional[:class:`Guild`]
         The guild that the message belongs to, if applicable.
     """
@@ -676,6 +681,10 @@ class Message(Hashable):
             self.guild = channel.guild  # type: ignore
         except AttributeError:
             self.guild = state._get_guild(utils._get_as_snowflake(data, 'guild_id'))
+
+        if thread_data := data.get('thread'):
+            if not self.thread and self.guild:
+                self.guild._store_thread(thread_data)
 
         try:
             ref = data['message_reference']
@@ -874,6 +883,12 @@ class Message(Hashable):
     def _handle_components(self, components: List[ComponentPayload]):
         self.components = [_component_factory(d) for d in components]
 
+    def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
+        if thread:
+            self.thread = Thread(guild=self.guild, state=self._state, data=thread)
+        else:
+            self.thread = None
+
     def _rebind_cached_references(self, new_guild: Guild, new_channel: Union[TextChannel, Thread]) -> None:
         self.guild = new_guild
         self.channel = new_channel
@@ -977,6 +992,11 @@ class Message(Hashable):
         """:class:`str`: Returns a URL that allows the client to jump to this message."""
         guild_id = getattr(self.guild, 'id', '@me')
         return f'https://discord.com/channels/{guild_id}/{self.channel.id}/{self.id}'
+
+    @property
+    def thread(self) -> Optional[Thread]:
+        """Optional[:class:`Thread`]: The thread started from this message. None if no thread was started."""
+        return self.guild and self.guild.get_thread(self.id)
 
     def is_system(self) -> bool:
         """:class:`bool`: Whether the message is a system message.
@@ -1184,6 +1204,9 @@ class Message(Hashable):
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
         view: Optional[View] = MISSING,
+        file: Optional[File] = MISSING,
+        files: Optional[List[File]] = MISSING,
+        append_files: Optional[bool] = MISSING
     ) -> Message:
         """|coro|
 
@@ -1231,6 +1254,20 @@ class Message(Hashable):
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
+        file: Optional[:class:`File`]
+            If provided, a new file to add to the message.
+
+            .. versionadded:: 2.0
+        files: Optional[List[:class:`File`]]
+            If provided, a list of new files to add to the message.
+
+            .. versionadded:: 2.0
+        append_files: Optional[:class:`bool`]
+            Whether to append files to the message.
+            If set to True (default), files will be appended to the message.
+            If set to False, files will override the current files on the message.
+
+            .. versionadded:: 2.0
 
         Raises
         -------
@@ -1252,6 +1289,12 @@ class Message(Hashable):
 
         if embed is not MISSING and embeds is not MISSING:
             raise InvalidArgument('cannot pass both embed and embeds parameter to edit()')
+        if file is not MISSING and files is not MISSING:
+            raise InvalidArgument('cannot pass both file and files parameter to edit()')
+        if file is not MISSING and attachments is not MISSING:
+            raise InvalidArgument('cannot pass both file and attachments parameter to edit()')
+        if files is not MISSING and attachments is not MISSING:
+            raise InvalidArgument('cannot pass both files and fileattachments parameter to edit()')
 
         if embed is not MISSING:
             if embed is None:
@@ -1285,6 +1328,14 @@ class Message(Hashable):
                 payload['components'] = view.to_components()
             else:
                 payload['components'] = []
+
+        if file is not MISSING:
+            payload["files"] = [file]
+        elif files is not MISSING:
+            payload["files"] = files
+
+        if "files" in payload and append_files is not MISSING and not append_files:
+            payload["attachments"] = [{"id": i} for i in range(len(payload["files"]))]
 
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)

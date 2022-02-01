@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -59,6 +60,7 @@ from .ui.view import ViewStore, View
 from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
+from .scheduled_events import ScheduledEvent, ScheduledEventUser
 
 if TYPE_CHECKING:
     from .abc import PrivateChannel
@@ -72,6 +74,7 @@ if TYPE_CHECKING:
 
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
+    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.user import User as UserPayload
     from .types.emoji import Emoji as EmojiPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
@@ -489,7 +492,10 @@ class ConnectionState:
 
     @property
     def application_commands(self) -> Set[ApplicationCommand]:
-        return self._application_commands
+        """Gets a copy of the ApplicationCommand object set. If the original is given out and modified, massive desyncs
+        may occur. This should be used internally as well if size-changed-during-iteration is a worry.
+        """
+        return self._application_commands.copy()
 
     def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
         return self._application_command_ids.get(command_id, None)
@@ -503,13 +509,22 @@ class ConnectionState:
             guild_id: Optional[int] = None,
             rollout: bool = False
     ) -> List[ApplicationCommand]:
-        """Gets all commands that have the guild ID. If guild_id is None, all guild commands are returned. if rollout
-        is True, guild_ids_to_rollout is used."""
+        """Gets all commands that have the given guild ID. If guild_id is None, all guild commands are returned. if
+        rollout is True, guild_ids_to_rollout is used.
+        """
         ret = []
-        for app_cmd in self._application_commands:
+        for app_cmd in self.application_commands:
             if guild_id is None or guild_id in app_cmd.guild_ids or (
                     rollout and guild_id in app_cmd.guild_ids_to_rollout
             ):
+                ret.append(app_cmd)
+        return ret
+
+    def get_global_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+        """Gets all commands that are registered globally. If rollout is True, is_global is used."""
+        ret = []
+        for app_cmd in self.application_commands:
+            if (rollout and app_cmd.is_global) or None in app_cmd.command_ids:
                 ret.append(app_cmd)
         return ret
 
@@ -522,7 +537,7 @@ class ConnectionState:
                 if found_command is not command:
                     raise ValueError(f"{command.error_name} You cannot add application commands with duplicate "
                                      f"signatures.")
-                # No else because we do not care if the command has its signature already in.
+                # No else because we do not care if the command has its own signature already in.
             else:
                 self._application_command_signatures[signature] = command
         for command_id in command.command_ids.values():
@@ -771,6 +786,14 @@ class ConnectionState:
             await self.http.delete_global_command(self.application_id, command.command_ids[guild_id])
         self._application_command_ids.pop(command.command_ids[guild_id], None)
         self._application_command_signatures.pop(command.get_signature(guild_id))
+
+    # async def register_bulk_application_commands(self) -> None:
+    #     # TODO: Using Bulk upsert seems to delete all commands
+    #     # It might be good to keep this around as a reminder for future work. Bulk upsert seem to delete everything
+    #     # that isn't part of that bulk upsert, for both global and guild commands. While useful, this will
+    #     # update/overwrite existing commands, which may (needs testing) wipe out all permissions associated with those
+    #     # commands. Look for an opportunity to use bulk upsert.
+    #     raise NotImplementedError
 
     async def chunker(
         self, guild_id: int, query: str = '', limit: int = 0, presences: bool = False, *, nonce: Optional[str] = None
@@ -1267,6 +1290,11 @@ class ConnectionState:
             except AttributeError:
                 pass
 
+            raw = RawMemberRemoveEvent(data)
+            user = User(state=self, data=data["user"])
+            raw.user = user
+            self.dispatch("raw_member_remove", raw)
+
             user_id = int(data['user']['id'])
             member = guild.get_member(user_id)
             if member is not None:
@@ -1347,7 +1375,8 @@ class ConnectionState:
         return guild.id not in self._guilds
 
     async def chunk_guild(self, guild, *, wait=True, cache=None):
-        cache = cache or self.member_cache_flags.joined
+        if cache is None:
+            cache = self.member_cache_flags.joined
         request = self._chunk_requests.get(guild.id)
         if request is None:
             self._chunk_requests[guild.id] = request = ChunkRequest(guild.id, self.loop, self._get_guild, cache=cache)
@@ -1603,6 +1632,7 @@ class ConnectionState:
                     asyncio.create_task(logging_coroutine(coro, info='Voice Protocol voice state update handler'))
 
             member, before, after = guild._update_voice_state(data, channel_id)  # type: ignore
+            after = copy.copy(after)
             if member is not None:
                 if flags.voice:
                     if channel_id is None and flags._voice_only and member.id != self_id:
@@ -1698,10 +1728,95 @@ class ConnectionState:
             if channel is not None:
                 return channel
 
+    def get_scheduled_event(self, id: int) -> Optional[ScheduledEvent]:
+        for guild in self.guilds:
+            if event := guild.get_scheduled_event(id):
+                return event
+
     def create_message(
         self, *, channel: Union[TextChannel, Thread, DMChannel, GroupChannel, PartialMessageable], data: MessagePayload
     ) -> Message:
         return Message(state=self, channel=channel, data=data)
+
+    def create_scheduled_event(
+        self, *, guild: Guild, data: ScheduledEventPayload
+    ) -> ScheduledEvent:
+        return ScheduledEvent(state=self, guild=guild, data=data)
+
+    def parse_guild_scheduled_event_create(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            event = self.create_scheduled_event(guild=guild, data=data)
+            guild._add_scheduled_event(event)
+            self.dispatch('guild_scheduled_event_create', event)
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_CREATE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_update(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(int(data['id'])):
+                old = copy.copy(event)
+                event._update(data)
+                self.dispatch('guild_scheduled_event_update', old, event)
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_UPDATE referencing unknown event '
+                         'ID: %s. Discarding.', data['id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_UPDATE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_delete(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(int(data['id'])):
+                guild._remove_scheduled_event(event.id)
+                self.dispatch('guild_scheduled_event_delete', event)
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown event '
+                         'ID: %s. Discarding.', data['id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild '
+                       'ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_user_add(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(
+                int(data['guild_scheduled_event_id'])
+            ):
+                u = ScheduledEventUser.from_id(
+                    event=event, user_id=int(data['user_id']), state=self
+                )
+                event._add_user(u)
+                self.dispatch(
+                    'guild_scheduled_event_user_add',
+                    event,
+                    u
+                )
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown'
+                         ' event ID: %s. Discarding.', data['user_id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown'
+                       ' guild ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_scheduled_event_user_remove(self, data) -> None:
+        if guild := self._get_guild(int(data['guild_id'])):
+            if event := guild.get_scheduled_event(
+                int(data['guild_scheduled_event_id'])
+            ):
+                event._remove_user(int(data['user_id']))
+                self.dispatch(
+                    'guild_scheduled_event_user_remove',
+                    event,
+                    ScheduledEventUser.from_id(
+                        event=event, user_id=int(data['user_id']), state=self
+                    )
+                )
+            else:
+              _log.debug('GUILD_SCHEDULED_EVENT_USER_REMOVE referencing unknown'
+                         ' event ID: %s. Discarding.', data['user_id'])
+        else:
+            _log.debug('GUILD_SCHEDULED_EVENT_USER_REMOVE referencing unknown'
+                       ' guild ID: %s. Discarding.', data['guild_id'])
 
 
 class AutoShardedConnectionState(ConnectionState):

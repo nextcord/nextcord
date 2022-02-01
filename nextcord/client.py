@@ -91,6 +91,7 @@ if TYPE_CHECKING:
     from .member import Member
     from .message import Message
     from .voice_client import VoiceProtocol
+    from .scheduled_events import ScheduledEvent
 
 
 __all__ = (
@@ -392,7 +393,7 @@ class Client:
         If this is not passed via ``__init__`` then this is retrieved
         through the gateway when an event contains the data. Usually
         after :func:`~nextcord.on_connect` is called.
-        
+
         .. versionadded:: 2.0
         """
         return self._connection.application_id
@@ -532,7 +533,7 @@ class Client:
         """
 
         _log.info('logging in using static token')
-        
+
         if not isinstance(token, str):
             raise TypeError(f"The token provided was of type {type(token)} but was expected to be str")
 
@@ -742,7 +743,7 @@ class Client:
         """Optional[:class:`.BaseActivity`]: The activity being used upon
         logging in.
         """
-        return create_activity(self._connection._activity)
+        return create_activity(self._connection, self._connection._activity)
 
     @activity.setter
     def activity(self, value: Optional[ActivityTypes]) -> None:
@@ -753,7 +754,7 @@ class Client:
             self._connection._activity = value.to_dict() # type: ignore
         else:
             raise TypeError('activity must derive from BaseActivity.')
-    
+
     @property
     def status(self):
         """:class:`.Status`:
@@ -824,7 +825,7 @@ class Client:
 
         This is useful if you have a channel_id but don't want to do an API call
         to send messages to it.
-        
+
         .. versionadded:: 2.0
 
         Parameters
@@ -924,6 +925,23 @@ class Client:
             The sticker or ``None`` if not found.
         """
         return self._connection.get_sticker(id)
+
+    def get_scheduled_event(self, id: int, /) -> Optional[ScheduledEvent]:
+        """Returns a scheduled event with the given ID.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        -----------
+        id: :class:`int`
+            The scheduled event's ID to search for.
+
+        Returns
+        --------
+        Optional[:class:`.ScheduledEvent`]
+            The scheduled event or ``None`` if not found.
+        """
+        return self._connection.get_scheduled_event(id)
 
     def get_all_channels(self) -> Generator[GuildChannel, None, None]:
         """A generator that retrieves every :class:`.abc.GuildChannel` the client can 'access'.
@@ -1670,7 +1688,7 @@ class Client:
 
         This method should be used for when a view is comprised of components
         that last longer than the lifecycle of the program.
-        
+
         .. versionadded:: 2.0
 
         Parameters
@@ -1702,10 +1720,22 @@ class Client:
     @property
     def persistent_views(self) -> Sequence[View]:
         """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
-        
+
         .. versionadded:: 2.0
         """
         return self._connection.persistent_views
+
+
+    @property
+    def scheduled_events(self) -> List[ScheduledEvent]:
+        """List[ScheduledEvent]: A list of scheduled events
+
+        .. versionadded:: 2.0
+        """
+        return [
+            event for guild in self.guilds
+            for event in guild.scheduled_events
+        ]
 
     async def on_interaction(self, interaction: Interaction):
         await self.process_application_commands(interaction)
@@ -1774,6 +1804,25 @@ class Client:
 
     def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
         return self._connection.get_application_command(command_id)
+
+    def get_all_application_commands(self) -> Set[ApplicationCommand]:
+        """Returns a copied set of all added :class:`ApplicationCommand` objects."""
+        return self._connection.application_commands
+
+    def get_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+        """Gets registered global commands.
+
+        Parameters
+        ----------
+        rollout: :class:`bool`
+            Whether unregistered/unassociated commands should be returned as well. Defaults to ``False``
+
+        Returns
+        -------
+        List[:class:`ApplicationCommand`]
+            List of :class:`ApplicationCommand` objects that are global.
+        """
+        return self._connection.get_global_application_commands(rollout=rollout)
 
     def add_application_command(
             self,
@@ -1851,14 +1900,6 @@ class Client:
                     ret[guild_id].add(command)
         return ret
 
-    async def register_bulk_application_commands(self) -> None:
-        # TODO: Using Bulk upsert seems to delete all commands
-        # It might be good to keep this around as a reminder for future work. Bulk upsert seem to delete everything
-        # that isn't part of that bulk upsert, for both global and guild commands. While useful, this will
-        # update/overwrite existing commands, which may (needs testing) wipe out all permissions associated with those
-        # commands. Look for an opportunity to use bulk upsert.
-        raise NotImplementedError
-
     async def on_connect(self) -> None:
         self.add_startup_application_commands()
         await self.rollout_application_commands()
@@ -1874,14 +1915,16 @@ class Client:
 
     async def on_guild_available(self, guild: Guild) -> None:
         try:
-            if (await guild.rollout_application_commands(
+            if self._rollout_all_guilds or self._connection.get_guild_application_commands(guild.id, rollout=True):
+                _log.info(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
+                await guild.rollout_application_commands(
                     associate_known=self._rollout_associate_known,
                     delete_unknown=self._rollout_delete_unknown,
                     update_known=self._rollout_update_known
-            )):
-                pass
+                )
             else:
-                _log.info(f"No locally added commands explicitly registered for {guild.name}|{guild.id}, not checking.")
+                _log.info(f"nextcord.Client: No locally added commands explicitly registered for "
+                          f"{guild.name}|{guild.id}, not checking.")
         except Forbidden as e:
             _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
                          f"enabled? {e}")
@@ -2016,3 +2059,4 @@ class Client:
             return result
 
         return decorator
+

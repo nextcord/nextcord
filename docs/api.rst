@@ -40,9 +40,18 @@ Client
 
 .. autoclass:: Client
     :members:
-    :exclude-members: fetch_guilds, event
+    :exclude-members: fetch_guilds, event, slash_command, user_command, message_command
 
     .. automethod:: Client.event()
+        :decorator:
+
+    .. automethod:: Client.slash_command
+        :decorator:
+    
+    .. automethod:: Client.user_command
+        :decorator:
+        
+    .. automethod:: Client.message_command
         :decorator:
 
     .. automethod:: Client.fetch_guilds
@@ -371,7 +380,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
 .. function:: on_raw_typing(payload)
 
-    Called when someone begins typing a message. Unlike :func:`on_typing`, this is 
+    Called when someone begins typing a message. Unlike :func:`on_typing`, this is
     called regardless if the user can be found in the bot's cache or not.
 
     If the typing event is occuring in a guild,
@@ -832,6 +841,18 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param member: The member who joined or left.
     :type member: :class:`Member`
 
+.. function:: on_raw_member_remove(payload)
+
+    Called when a :class:`Member` leaves a :class:`Guild`. Unlike :func:`on_member_remove` this is called
+    regardless of the state of the internal message cache.
+
+    This requires :attr:`Intents.members` to be enabled.
+
+    .. versionadded:: 2.0
+
+    :param payload: The raw event payload data.
+    :type payload: :class:`RawMemberRemoveEvent`
+
 .. function:: on_member_update(before, after)
 
     Called when a :class:`Member` updates their profile.
@@ -1106,6 +1127,40 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :type channel: :class:`GroupChannel`
     :param user: The user that joined or left.
     :type user: :class:`User`
+
+.. function:: on_guild_scheduled_event_create(event)
+
+    Called when a :class:`ScheduledEvent` is created.
+
+    :param event: The event that was created.
+    :type event: :class:`ScheduledEvent`
+
+.. function:: on_guild_scheduled_event_update(before, after)
+
+    Called when a :class:`ScheduledEvent` is updated.
+
+    :param before: The event before it was updated.
+    :type before: :class:`ScheduledEvent`
+    :param after: The event after it was updated.
+    :type after: :class:`ScheduledEvent`
+
+.. function:: on_guild_scheduled_event_delete(event)
+
+    Called when a :class:`ScheduledEvent` is deleted.
+
+    :param event: The event that was deleted.
+    :type event: :class:`ScheduledEvent`
+
+.. function:: on_guild_scheduled_event_user_add(event, user)
+              on_guild_scheduled_event_user_remove(event, user)
+
+    Called when a :class:`ScheduledEventUser` is interested in a
+    :class:`ScheduledEvent`.
+
+    :param event: The event that the user is interested in.
+    :type event: :class:`ScheduledEvent`
+    :param user: The user that interested.
+    :type user: :class:`ScheduledEventUser`
 
 .. _discord-api-utils:
 
@@ -2611,6 +2666,54 @@ of :class:`enum.Enum`.
 
         The guild may contain NSFW content.
 
+.. class:: ScheduledEventEntityType
+
+    Represents the type of an entity on a scheduled event.
+
+    .. attribute:: stage_instance
+
+        The event is for a stage.
+
+    .. attribute:: voice
+
+        The event is for a voice channel.
+
+    .. attribute:: external
+
+        The event is happening elsewhere.
+
+.. class:: ScheduledEventPrivacyLevel
+
+    Represents the privacy level of scheduled event.
+
+    .. attribute:: guild_only
+
+        The scheduled event is only visible to members of the guild.
+
+.. class:: ScheduledEventStatus
+
+    Represents the status of a scheduled event.
+
+    .. attribute:: scheduled
+
+        The event is scheduled to happen.
+
+    .. attribute:: active
+
+        The event is happening.
+
+    .. attribute:: completed
+
+        The event has finished.
+
+    .. attribute:: canceled
+
+        The event was canceled.
+
+    .. attribute:: cancelled
+
+        An alias for :attr:`canceled`.
+
 Async Iterator
 ----------------
 
@@ -3942,6 +4045,21 @@ PartialWebhookChannel
 .. autoclass:: PartialWebhookChannel()
     :members:
 
+ScheduledEvent
+~~~~~~~~~~~~~~
+
+.. attributetable:: ScheduledEvent
+
+.. autoclass:: ScheduledEvent()
+    :members:
+
+.. attributetable:: ScheduledEventUser
+
+.. autoclass:: ScheduledEventUser()
+    :members:
+
+.. autoclass:: EntityMetadata
+
 .. _discord_api_data:
 
 Data Classes
@@ -4180,6 +4298,46 @@ Select
 
 .. autofunction:: nextcord.ui.select
 
+
+Application Commands
+--------------------
+
+.. attributetable:: ApplicationCommand
+
+.. autoclass:: ApplicationCommand
+    :members:
+
+.. attributetable:: ApplicationSubcommand
+
+.. autoclass:: ApplicationSubcommand
+    :members:
+
+Options
+~~~~~~~
+
+.. attributetable:: CommandOption
+
+.. autoclass:: CommandOption
+    :members:
+
+.. attributetable:: SlashOption
+
+.. autoclass:: SlashOption
+    :members:
+
+Cogs
+~~~~
+
+.. autoclass:: ClientCog
+    :members:
+Decorators
+~~~~~~~~~~
+
+.. autoclass:: message_command
+
+.. autoclass:: slash_command
+
+.. autoclass:: user_command
 
 Exceptions
 ------------
