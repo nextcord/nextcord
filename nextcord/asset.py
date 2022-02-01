@@ -252,11 +252,11 @@ class Asset(AssetMixin):
             animated=animated
         )
     @classmethod
-    def _from_scheduled_event_cover(cls, state, event_id: int, cover_hash: str) -> Asset:
+    def _from_scheduled_event_image(cls, state, event_id: int, image_hash: str) -> Asset:
         return cls(
             state,
-            url=f'{cls.BASE}/guild-events/{event_id}/{cover_hash}.png',
-            key=cover_hash,
+            url=f'{cls.BASE}/guild-events/{event_id}/{image_hash}.png',
+            key=image_hash,
             animated=False
         )
 
