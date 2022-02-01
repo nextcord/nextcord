@@ -48,7 +48,7 @@ from .member import Member
 from .message import Attachment, Message
 from .role import Role
 from .user import User
-from .utils import MISSING
+from .utils import MISSING, normalise_optional_params
 
 if TYPE_CHECKING:
     from .state import ConnectionState
@@ -198,6 +198,7 @@ class CommandOption(SlashOption):
         self.parameter = parameter
         cmd_arg_given = False
         cmd_arg = SlashOption()
+
         if isinstance(parameter.default, SlashOption):
             cmd_arg = parameter.default
             cmd_arg_given = True
@@ -211,7 +212,8 @@ class CommandOption(SlashOption):
         # self.required = cmd_arg.required or MISSING
         # will cause self.required to be MISSING, not False.
         self.required = cmd_arg.required if cmd_arg.required is not MISSING else MISSING
-        if getattr(parameter.annotation, "_name", None) == Optional._name:
+        # Set required to False if an Optional[...] or Union[..., None] type annotation is given.
+        if type(None) in getattr(parameter.annotation, '__args__', ()):
             self.required = False
         self.choices = cmd_arg.choices or MISSING
         self.channel_types = cmd_arg.channel_types or MISSING
@@ -264,12 +266,14 @@ class CommandOption(SlashOption):
         :class:`NotImplementedError`
             Raised if the given typing cannot be translated to a Discord typing.
         """
+
         if typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
         elif valid_type := self.option_types.get(typing, None):
             return valid_type
+        # If the typing is Optional[...] or Union[..., None], get the type of the first argument.
         elif (
-            getattr(typing, "_name", None) == Optional._name
+            type(None) in getattr(typing, '__args__', ())
             and (valid_type := self.option_types.get(typing.__args__[0], None))
         ):
             return valid_type
