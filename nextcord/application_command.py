@@ -211,7 +211,7 @@ class CommandOption(SlashOption):
         # self.required = cmd_arg.required or MISSING
         # will cause self.required to be MISSING, not False.
         self.required = cmd_arg.required if cmd_arg.required is not MISSING else MISSING
-        if (getattr(parameter.annotation, "_name", None) == Optional._name):
+        if getattr(parameter.annotation, "_name", None) == Optional._name:
             self.required = False
         self.choices = cmd_arg.choices or MISSING
         self.channel_types = cmd_arg.channel_types or MISSING
@@ -268,7 +268,10 @@ class CommandOption(SlashOption):
             return ApplicationCommandOptionType.string
         elif valid_type := self.option_types.get(typing, None):
             return valid_type
-        elif typing._name == Optional._name and (valid_type := self.option_types.get(typing.__args__[0], None)):
+        elif (
+            getattr(typing, "_name", None) == Optional._name
+            and (valid_type := self.option_types.get(typing.__args__[0], None))
+        ):
             return valid_type
         else:
             raise NotImplementedError(f'Type "{typing}" isn\'t a supported typing for Application Commands.')
