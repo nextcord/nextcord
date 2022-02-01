@@ -271,10 +271,11 @@ class CommandOption(SlashOption):
             return ApplicationCommandOptionType.string
         elif valid_type := self.option_types.get(typing, None):
             return valid_type
-        # If the typing is Optional[...] or Union[..., None], get the type of the first argument.
+        # If the typing is Optional[...] or Union[..., None], get the type of the first non-None type.
         elif (
             type(None) in getattr(typing, '__args__', ())
-            and (valid_type := self.option_types.get(typing.__args__[0], None))
+            and (inner_type := (t for t in typing.__args__ if t is not type(None)).__next__())
+            and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
         else:
