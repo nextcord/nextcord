@@ -1969,7 +1969,7 @@ class Client:
             name: str = MISSING,
             description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            default_permission: Optional[bool] = None,
             force_global: bool = False
     ):
         """Creates a User context command from the decorated function.
@@ -2001,7 +2001,7 @@ class Client:
             name: str = MISSING,
             description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            default_permission: Optional[bool] = None,
             force_global: bool = False
     ):
         """Creates a Message context command from the decorated function.
@@ -2033,7 +2033,7 @@ class Client:
             name: str = MISSING,
             description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            default_permission: Optional[bool] = None,
             force_global: bool = False
     ):
         """Creates a Slash application command from the decorated function.

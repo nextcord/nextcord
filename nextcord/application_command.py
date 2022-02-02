@@ -783,7 +783,7 @@ class ApplicationCommand(ApplicationSubcommand):
         name: str = MISSING,
         description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
-        default_permission: bool = MISSING,
+        default_permission: Optional[bool] = None,
         force_global: bool = False
     ):
         """Represents an application command that can be or is registered with Discord.
@@ -809,7 +809,7 @@ class ApplicationCommand(ApplicationSubcommand):
         super().__init__(callback=callback, cmd_type=cmd_type, name=name, description=description)
         self._state: Optional[ConnectionState] = None
         self.force_global: bool = force_global
-        self.default_permission: bool = default_permission if default_permission is not MISSING else True
+        self.default_permission: Optional[bool] = default_permission if default_permission is not None else True
         self._guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
         self._guild_ids: Set[int] = set()
         self._command_ids: Dict[Optional[int], int] = {}  # Guild ID is key (None is global), command ID is value.
@@ -1263,7 +1263,7 @@ def slash_command(
         name: str = MISSING,
         description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
-        default_permission: bool = MISSING,
+        default_permission: Optional[bool] = None,
         force_global: bool = False
 ):
     """Creates a Slash application command from the decorated function.
@@ -1303,7 +1303,7 @@ def message_command(
         name: str = MISSING,
         description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
-        default_permission: bool = MISSING,
+        default_permission: Optional[bool] = None,
         force_global: bool = False
 ):
     """Creates a Message context command from the decorated function.
@@ -1343,7 +1343,7 @@ def user_command(
         name: str = MISSING,
         description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
-        default_permission: bool = MISSING,
+        default_permission: Optional[bool] = None,
         force_global: bool = False
 ):
     """Creates a User context command from the decorated function.
