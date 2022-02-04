@@ -657,8 +657,12 @@ class Member(abc.Messageable, _UserTag):
         """
         await self.guild.kick(self, reason=reason)
         
-    async def timeout(self, timeout: Union[datetime.datetime, datetime.timedelta],
-                      *, reason: Optional[str] = None):
+    async def timeout(
+        self,
+        timeout: Union[datetime.datetime, datetime.timedelta],
+        *,
+        reason: Optional[str] = None,
+    ) -> None:
         """|coro|
 
         Times out this member.
