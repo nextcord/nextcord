@@ -1923,7 +1923,7 @@ class Client:
                     update_known=self._rollout_update_known
                 )
             else:
-                _log.info(f"nextcord.Client: No locally added commands explicitly registered for "
+                _log.debug(f"nextcord.Client: No locally added commands explicitly registered for "
                           f"{guild.name}|{guild.id}, not checking.")
         except Forbidden as e:
             _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
