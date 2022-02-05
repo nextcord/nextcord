@@ -105,9 +105,9 @@ class SlashOption:
     ----------
     name: :class:`str`
         The name of the Option on Discords side. If left as None, it defaults to the parameter name.
-    description: :class:'str'
+    description: :class:`str`
         The description of the Option on Discords side. If left as None, it defaults to "".
-    required: :class:'bool'
+    required: :class:`bool`
         If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
     choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]], Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
         A list of choices that a user must choose.
