@@ -629,6 +629,7 @@ class Message(Hashable):
         'nonce',
         'pinned',
         'role_mentions',
+        'thread',
         'type',
         'flags',
         'reactions',
