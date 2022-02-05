@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 import asyncio
+import typing
 from inspect import signature, Parameter
 from typing import (
     Any,
@@ -190,7 +191,7 @@ class CommandOption(SlashOption):
         float: ApplicationCommandOptionType.number,
         Message: ApplicationCommandOptionType.integer  # TODO: This is janky, the user provides an ID or something? Ugh.
     }
-    """Maps Python typings to Discord Application Command typings."""
+    """Maps Python annotations/typehints to Discord Application Command type values."""
     def __init__(self, parameter: Parameter):
         super().__init__()
         self.parameter = parameter
@@ -225,8 +226,8 @@ class CommandOption(SlashOption):
             self.default = cmd_arg.default
 
         self.autocomplete_function: Optional[Callable] = MISSING
-
         self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
+
         if cmd_arg._verify:
             self.verify()
 
@@ -496,7 +497,7 @@ class ApplicationSubcommand:
         return cls()._from_callback(callback)
 
     def _from_callback(self, callback: Callable) -> ApplicationSubcommand:
-        """Internal method for """
+        """Internal method for returning an ApplicationSubcommand object created from the given callback."""
         # TODO: Add kwarg support.
         # ret = ApplicationSubcommand()
         self.set_callback(callback)
@@ -504,13 +505,17 @@ class ApplicationSubcommand:
             self.name = self.callback.__name__
         first_arg = True
 
-        for value in signature(self.callback).parameters.values():
-            self_skip = value.name == "self"  # TODO: What kind of hardcoding is this, figure out a better way for self!
+        typehints = typing.get_type_hints(callback)
+        for name, param in signature(self.callback).parameters.items():
+            self_skip = name == "self"  # TODO: What kind of hardcoding is this, figure out a better way for self!
             if first_arg:
                 if not self_skip:
                     first_arg = False
             else:
-                arg = CommandOption(value)
+                if isinstance(param.annotation, str):
+                    # Thank you Disnake for the guidance to use this.
+                    param = param.replace(annotation=typehints.get(name, param.empty))
+                arg = CommandOption(param)
                 self.options[arg.name] = arg
         return self
 
