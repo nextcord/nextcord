@@ -38,6 +38,7 @@ from typing import (
     Tuple,
     Union,
 )
+import typing
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
@@ -213,7 +214,7 @@ class CommandOption(SlashOption):
         # will cause self.required to be MISSING, not False.
         self.required = cmd_arg.required if cmd_arg.required is not MISSING else MISSING
         # Set required to False if an Optional[...] or Union[..., None] type annotation is given.
-        if type(None) in getattr(parameter.annotation, '__args__', ()):
+        if type(None) in typing.get_args(parameter.annotation):
             self.required = False
         self.choices = cmd_arg.choices or MISSING
         self.channel_types = cmd_arg.channel_types or MISSING
@@ -250,12 +251,12 @@ class CommandOption(SlashOption):
     def description(self, value: str):
         self._description = value
 
-    def get_type(self, typing: type) -> ApplicationCommandOptionType:
+    def get_type(self, param_typing: type) -> ApplicationCommandOptionType:
         """Translates a Python or Nextcord :class:`type` into a Discord typing.
 
         Parameters
         ----------
-        typing: :class:`type`
+        param_typing: :class:`type`
             Python or Nextcord type to translate.
         Returns
         -------
@@ -267,19 +268,19 @@ class CommandOption(SlashOption):
             Raised if the given typing cannot be translated to a Discord typing.
         """
 
-        if typing is self.parameter.empty:
+        if param_typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
-        elif valid_type := self.option_types.get(typing, None):
+        elif valid_type := self.option_types.get(param_typing, None):
             return valid_type
         # If the typing is Optional[...] or Union[..., None], get the type of the first non-None type.
         elif (
-            type(None) in getattr(typing, '__args__', ())
-            and (inner_type := find(lambda t: t is not type(None), typing.__args__))
+            type(None) in typing.get_args(param_typing)
+            and (inner_type := find(lambda t: t is not type(None), typing.get_args(param_typing)))
             and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
         else:
-            raise NotImplementedError(f'Type "{typing}" isn\'t a supported typing for Application Commands.')
+            raise NotImplementedError(f'Type "{param_typing}" isn\'t a supported typing for Application Commands.')
 
     def verify(self) -> None:
         """This should run through :class:`SlashOption` variables and raise errors when conflicting data is given."""
