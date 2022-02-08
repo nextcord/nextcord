@@ -501,7 +501,7 @@ class Client:
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
 
-    async def on_application_error(self, interaction: Interaction, exception: ApplicationError) -> None:
+    async def on_application_command_error(self, interaction: Interaction, exception: ApplicationError) -> None:
         """|coro|
 
         The default application command error handler provided by the bot.

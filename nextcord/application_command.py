@@ -821,7 +821,7 @@ class ApplicationSubcommand:
         try:
             can_run = await app_cmd.application_can_run(interaction)
         except Exception as error:
-            state.dispatch('application_error', interaction, error)
+            state.dispatch('application_command_error', interaction, error)
             await app_cmd.invoke_error(interaction, error)
             return
 
@@ -857,7 +857,7 @@ class ApplicationSubcommand:
                 after_invoke_error = error
 
             if invoke_error is not None:
-                state.dispatch('application_error', interaction, invoke_error)
+                state.dispatch('application_command_error', interaction, invoke_error)
                 await app_cmd.invoke_error(interaction, invoke_error)
             if after_invoke_error is not None:
                 raise after_invoke_error
