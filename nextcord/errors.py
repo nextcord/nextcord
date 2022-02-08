@@ -55,7 +55,7 @@ __all__ = (
     'InteractionResponded',
     'ApplicationError',
     'ApplicationInvokeError',
-    'ApplicationCheckFailure'
+    'ApplicationCheckFailure',
 )
 
 
