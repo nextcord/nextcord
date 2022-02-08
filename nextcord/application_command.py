@@ -107,7 +107,7 @@ class ClientCog:
         return getattr(method.__func__, '__cog_special_method__', method)
 
     @_cog_special_method
-    def cog_application_check(self, interaction: Interaction) -> bool:
+    def cog_application_command_check(self, interaction: Interaction) -> bool:
         """A special method that registers as a :func:`~nextcord.checks.check`
         for every application command and subcommand in this cog.
 
@@ -952,7 +952,7 @@ class ApplicationSubcommand:
 
         # Cog check
         if self._self_argument:
-            cog_check = ClientCog._get_overridden_method(self._self_argument.cog_application_check)
+            cog_check = ClientCog._get_overridden_method(self._self_argument.cog_application_command_check)
             if cog_check is not None and not await maybe_coroutine(cog_check, interaction):
                 raise ApplicationCheckFailure(f"The cog check functions for application command {self.qualified_name} failed.")
 

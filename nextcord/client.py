@@ -2039,7 +2039,7 @@ class Client:
             self.add_application_command(app_cmd, use_rollout=True)
         self._client_cogs.add(cog)
 
-    def add_application_check(self, func: ApplicationCheck) -> None:
+    def add_application_command_check(self, func: ApplicationCheck) -> None:
         """Adds a global application check to the bot.
 
         This is the non-decorator interface to :meth:`.check`
@@ -2053,7 +2053,7 @@ class Client:
 
         self._connection._application_checks.append(func)
 
-    def remove_application_check(self, func: ApplicationCheck) -> None:
+    def remove_application_command_check(self, func: ApplicationCheck) -> None:
         """Removes a global check from the bot.
 
         This function is idempotent and will not raise an exception
@@ -2196,7 +2196,7 @@ class Client:
                 return ctx.command.qualified_name in allowed_commands
 
         """
-        return self.add_application_check(func)
+        return self.add_application_command_check(func)
 
     def application_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
         """A decorator that registers a coroutine as a pre-invoke hook.
