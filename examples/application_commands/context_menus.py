@@ -1,18 +1,18 @@
 import nextcord
-from nextcord.interactions import Interaction
+
+TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 
 client = nextcord.Client()
 
 
-@client.user_command(guild_ids=[...])  # limits guilds
-async def member_info(interaction: Interaction, member: nextcord.Member):  # takes a member
-    await interaction.response.send_message(f"Member: {member}")  # sends info about the member
+@client.user_command(guild_ids=[TESTING_GUILD_ID])
+async def member_info(interaction: nextcord.Interaction, member: nextcord.Member):
+    await interaction.response.send_message(f"Member: {member}")
 
 
-@client.message_command(guild_ids=[...])  # limits guilds
-async def my_message_command(interaction: Interaction, message: nextcord.Message):
-    # takes in message and uses Interaction.
-    await interaction.response.send_message(f"Message: {message}")  # sends the message.
+@client.message_command(guild_ids=[TESTING_GUILD_ID])
+async def my_message_command(interaction: nextcord.Interaction, message: nextcord.Message):
+    await interaction.response.send_message(f"Message: {message}")
 
 
-client.run("TOKEN")
+client.run("token")

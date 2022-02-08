@@ -2192,7 +2192,7 @@ class Client:
         .. code-block:: python3
 
             @client.check
-            def check_commands(interaction: Interaction):
+            def check_commands(interaction: Interaction) -> bool:
                 return ctx.command.qualified_name in allowed_commands
 
         """
