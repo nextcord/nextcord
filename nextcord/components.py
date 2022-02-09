@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
-from .enums import try_enum, ComponentType, ButtonStyle
+from .enums import try_enum, ComponentType, ButtonStyle, TextInputStyle
 from .utils import get_slots, MISSING
 from .partial_emoji import PartialEmoji, _EmojiTag
 
@@ -36,6 +36,7 @@ if TYPE_CHECKING:
         SelectMenu as SelectMenuPayload,
         SelectOption as SelectOptionPayload,
         ActionRow as ActionRowPayload,
+        TextInputComponent as TextInputComponentPayload
     )
     from .emoji import Emoji
 
@@ -46,6 +47,7 @@ __all__ = (
     'Button',
     'SelectMenu',
     'SelectOption',
+    'TextInput',
 )
 
 C = TypeVar('C', bound='Component')
@@ -368,6 +370,58 @@ class SelectOption:
             payload['description'] = self.description
 
         return payload
+
+
+class TextInput(Component):
+
+    __slots__: Tuple[str, ...] = (
+        'style',
+        'custom_id',
+        'label',
+        'min_lenght',
+        'max_lenght',
+        'required',
+        'value',
+        'placeholder',
+    )
+
+    __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    def __init__(self, data: TextInputComponentPayload):
+        self.type: ComponentType = try_enum(ComponentType, data['type'])
+        self.style: TextInputStyle = try_enum(TextInputStyle, data['style'])
+        self.custom_id: str = data.get('custom_id')
+        self.label: str = data.get('label')
+        self.min_lenght: Optional[int] = data.get('min_lenght')
+        self.max_lenght: Optional[int] = data.get('max_lenght')
+        self.required: Optional[bool] = data.get('required')
+        self.value: Optional[str] = data.get('value')
+        self.placeholder: Optional[str] = data.get('placeholder')
+
+    def to_dict(self) -> ButtonComponentPayload:
+        payload = {
+            'type': 4,
+            'custom_id': self.custom_id,
+            'style': int(self.style),
+            'label': self.label,
+        }
+        
+        if self.min_lenght:
+            payload['min_lenght'] = self.min_lenght
+        
+        if self.max_lenght:
+            payload['max_lenght'] = self.max_lenght
+        
+        if self.required is not None:
+            payload['required'] = self.required
+        
+        if self.value:
+            payload['value'] = self.value
+        
+        if self.placeholder:
+            payload['placeholder'] = self.placeholder
+
+        return payload  # type: ignore
 
 
 def _component_factory(data: ComponentPayload) -> Component:
