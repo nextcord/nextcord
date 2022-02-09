@@ -2050,7 +2050,7 @@ class Client:
             The function that was used as a global application check.
         """
 
-        self._connection._application_checks.append(func)
+        self._connection._application_command_checks.append(func)
 
     def remove_application_command_check(self, func: ApplicationCheck) -> None:
         """Removes a global check from the bot.
@@ -2065,7 +2065,7 @@ class Client:
         """
 
         try:
-            self._connection._application_checks.remove(func)
+            self._connection._application_command_checks.remove(func)
         except ValueError:
             pass
 
@@ -2170,7 +2170,7 @@ class Client:
 
         return decorator
 
-    def application_check(self, func: Callable) -> ApplicationCheck:
+    def application_command_check(self, func: Callable) -> ApplicationCheck:
         r"""A decorator that adds a global application check to the bot.
 
         A global check is similar to a :func:`.check` that is applied
@@ -2197,7 +2197,7 @@ class Client:
         """
         return self.add_application_command_check(func)
 
-    def application_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+    def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
         """A decorator that registers a coroutine as a pre-invoke hook.
 
         A pre-invoke hook is called directly before the command is
@@ -2208,7 +2208,7 @@ class Client:
 
         .. note::
 
-            The :meth:`~.Client.application_before_invoke` and :meth:`~.Client.application_after_invoke`
+            The :meth:`~.Client.application_command_before_invoke` and :meth:`~.Client.application_command_after_invoke`
             hooks are only called if all checks pass without error. If any check fails, then the hooks
             are not called.
 
@@ -2225,11 +2225,11 @@ class Client:
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError('The pre-invoke hook must be a coroutine.')
 
-        self._connection._application_before_invoke = coro
+        self._connection._application_command_before_invoke = coro
         return coro
 
 
-    def application_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+    def application_command_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
         r"""A decorator that registers a coroutine as a post-invoke hook.
 
         A post-invoke hook is called directly after the command is
@@ -2240,7 +2240,7 @@ class Client:
 
         .. note::
 
-            Similar to :meth:`~.Client.application_before_invoke`\, this is not called unless
+            Similar to :meth:`~.Client.application_command_before_invoke`\, this is not called unless
             checks succeed. This hook is, however, **always** called regardless of the internal command
             callback raising an error (i.e. :exc:`.ApplicationInvokeError`\).
             This makes it ideal for clean-up scenarios.
@@ -2258,5 +2258,5 @@ class Client:
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError('The post-invoke hook must be a coroutine.')
 
-        self._connection._application_after_invoke = coro
+        self._connection._application_command_after_invoke = coro
         return coro

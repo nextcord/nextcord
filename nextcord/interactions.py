@@ -77,7 +77,7 @@ MISSING: Any = utils.MISSING
 class InteractionAttached(dict):
     """Represents the attached data of an interaction.
 
-    This is used to store information about an :class:`Interaction`. This is useful if you want to save some data from a :meth:`ApplicationCommand.application_before_invoke` to use later in the callback.
+    This is used to store information about an :class:`Interaction`. This is useful if you want to save some data from a :meth:`ApplicationCommand.application_command_before_invoke` to use later in the callback.
 
     Example
     ---------
@@ -139,7 +139,7 @@ class Interaction:
     data: :class:`dict`
         The raw interaction data.
     attached: :class:`InteractionAttached`
-        The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_before_invoke`.
+        The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
     application_command: Optional[:class:`ApplicationCommand`]
         The application command that handled the interaction.
     client: :class:`Client`

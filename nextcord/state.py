@@ -247,9 +247,9 @@ class ConnectionState:
                 parsers[attr[6:].upper()] = func
 
         # Global application command checks
-        self._application_checks: List[ApplicationCheck] = []
-        self._application_before_invoke: ApplicationHook = None
-        self._application_after_invoke: ApplicationHook = None
+        self._application_command_checks: List[ApplicationCheck] = []
+        self._application_command_before_invoke: ApplicationHook = None
+        self._application_command_after_invoke: ApplicationHook = None
 
         self.clear()
 

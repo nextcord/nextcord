@@ -119,7 +119,7 @@ class ClientCog:
         return True
     
     @_cog_special_method
-    async def cog_application_before_invoke(self, interaction: Interaction) -> None:
+    async def cog_application_command_before_invoke(self, interaction: Interaction) -> None:
         """A special method that acts as a cog local pre-invoke hook.
 
         This is similar to :meth:`.ApplicationCommand.before_invoke`.
@@ -134,7 +134,7 @@ class ClientCog:
         pass
 
     @_cog_special_method
-    async def cog_application_after_invoke(self, interaction: Interaction) -> None:
+    async def cog_application_command_after_invoke(self, interaction: Interaction) -> None:
         """A special method that acts as a cog local post-invoke hook.
 
         This is similar to :meth:`.Command.after_invoke`.
@@ -480,8 +480,8 @@ class ApplicationSubcommand:
             self._from_callback(callback)
 
         self.checks: List[ApplicationCheck] = []
-        self._application_before_invoke: ApplicationHook = None
-        self._application_after_invoke: ApplicationHook = None
+        self._application_command_before_invoke: ApplicationHook = None
+        self._application_command_after_invoke: ApplicationHook = None
 
         try:
             checks = callback.__slash_command_checks__
@@ -494,22 +494,22 @@ class ApplicationSubcommand:
         if inherit_hooks and parent_command is not MISSING:
             self.checks.extend(parent_command.checks)
 
-            self._application_before_invoke: Optional[ApplicationHook] = parent_command._application_before_invoke
-            self._application_after_invoke: Optional[ApplicationHook] = parent_command._application_after_invoke
+            self._application_command_before_invoke: Optional[ApplicationHook] = parent_command._application_command_before_invoke
+            self._application_command_after_invoke: Optional[ApplicationHook] = parent_command._application_command_after_invoke
         else:
             try:
-                before_invoke = callback.__application_before_invoke__
+                before_invoke = callback.__application_command_before_invoke__
             except AttributeError:
                 pass
             else:
-                self._application_before_invoke = before_invoke
+                self._application_command_before_invoke = before_invoke
 
             try:
-                after_invoke = callback.__application_after_invoke__
+                after_invoke = callback.__application_command_after_invoke__
             except AttributeError:
                 pass
             else:
-                self._application_after_invoke = after_invoke
+                self._application_command_after_invoke = after_invoke
 
     # Simple-ish getter + setters methods.
 
@@ -693,18 +693,18 @@ class ApplicationSubcommand:
         return ret
 
     @property
-    def cog_application_before_invoke(self) -> Optional[ApplicationHook]:
-        """Returns the cog_application_before_invoke method for the cog that this command is in. Returns ``None`` if not the method is not found."""
+    def cog_application_command_before_invoke(self) -> Optional[ApplicationHook]:
+        """Returns the cog_application_command_before_invoke method for the cog that this command is in. Returns ``None`` if not the method is not found."""
         if not self._self_argument: return None
 
-        return ClientCog._get_overridden_method(self._self_argument.cog_application_before_invoke)
+        return ClientCog._get_overridden_method(self._self_argument.cog_application_command_before_invoke)
 
     @property
-    def cog_application_after_invoke(self) -> Optional[ApplicationHook]:
-        """Returns the cog_application_after_invoke method for the cog that this command is in. Returns ``None`` if not the method is not found."""
+    def cog_application_command_after_invoke(self) -> Optional[ApplicationHook]:
+        """Returns the cog_application_command_after_invoke method for the cog that this command is in. Returns ``None`` if not the method is not found."""
         if not self._self_argument: return None
 
-        return ClientCog._get_overridden_method(self._self_argument.cog_application_after_invoke)
+        return ClientCog._get_overridden_method(self._self_argument.cog_application_command_after_invoke)
 
     # Methods that can end up running the callback.
 
@@ -839,15 +839,15 @@ class ApplicationSubcommand:
             return
 
         if can_run:
-            if app_cmd._application_before_invoke is not None:
-                await app_cmd._application_before_invoke(interaction)
+            if app_cmd._application_command_before_invoke is not None:
+                await app_cmd._application_command_before_invoke(interaction)
 
-            cog_application_before_invoke = app_cmd.cog_application_before_invoke
-            if cog_application_before_invoke is not None:
-                await cog_application_before_invoke(interaction)
+            cog_application_command_before_invoke = app_cmd.cog_application_command_before_invoke
+            if cog_application_command_before_invoke is not None:
+                await cog_application_command_before_invoke(interaction)
 
-            if state._application_before_invoke is not None:
-                await state._application_before_invoke(interaction)
+            if state._application_command_before_invoke is not None:
+                await state._application_command_before_invoke(interaction)
 
             invoke_error = None
             try:
@@ -857,15 +857,15 @@ class ApplicationSubcommand:
 
             after_invoke_error = None
             try:
-                if app_cmd._application_after_invoke is not None:
-                    await app_cmd._application_after_invoke(interaction)
+                if app_cmd._application_command_after_invoke is not None:
+                    await app_cmd._application_command_after_invoke(interaction)
                 
-                cog_application_after_invoke = app_cmd.cog_application_after_invoke
-                if cog_application_after_invoke is not None:
-                    await cog_application_after_invoke(interaction)
+                cog_application_command_after_invoke = app_cmd.cog_application_command_after_invoke
+                if cog_application_command_after_invoke is not None:
+                    await cog_application_command_after_invoke(interaction)
 
-                if state._application_after_invoke is not None:
-                    await state._application_after_invoke(interaction)
+                if state._application_command_after_invoke is not None:
+                    await state._application_command_after_invoke(interaction)
             except Exception as error:
                 after_invoke_error = error
 
@@ -957,7 +957,7 @@ class ApplicationSubcommand:
             A boolean indicating if the command can be invoked.
         """
         # Global checks
-        for check in interaction.client._connection._application_checks:
+        for check in interaction.client._connection._application_command_checks:
             try:
                 check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
@@ -1067,10 +1067,10 @@ class ApplicationSubcommand:
             Discord supports.
         inherit_hooks: :class:`bool` default=False
             If ``True`` and this command has a parent :class:`ApplicationCommand` then this command
-            will inherit all checks, application_before_invoke and application_after_invoke's defined on the the :class:`ApplicationCommand`
+            will inherit all checks, application_command_before_invoke and application_command_after_invoke's defined on the the :class:`ApplicationCommand`
 
             .. note::
-                Any ``application_before_invoke`` or ``application_after_invoke``'s defined on this will override parent ones.
+                Any ``application_command_before_invoke`` or ``application_command_after_invoke``'s defined on this will override parent ones.
         """
         def decorator(func: Callable):
             result = ApplicationSubcommand(
@@ -1086,7 +1086,7 @@ class ApplicationSubcommand:
             return result
         return decorator
 
-    def application_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+    def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
         """A decorator that registers a coroutine as a pre-invoke hook.
 
         A pre-invoke hook is called directly before the command is
@@ -1095,7 +1095,7 @@ class ApplicationSubcommand:
 
         This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
 
-        See :meth:`.Client.application_before_invoke` for more info.
+        See :meth:`.Client.application_command_before_invoke` for more info.
 
         Parameters
         -----------
@@ -1110,10 +1110,10 @@ class ApplicationSubcommand:
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError('The pre-invoke hook must be a coroutine.')
 
-        self._application_before_invoke = coro
+        self._application_command_before_invoke = coro
         return coro
 
-    def application_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+    def application_command_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
         """A decorator that registers a coroutine as a post-invoke hook.
 
         A post-invoke hook is called directly after the command is
@@ -1122,7 +1122,7 @@ class ApplicationSubcommand:
 
         This post-invoke hook takes a sole parameter, a :class:`.Interaction`.
 
-        See :meth:`.Client.application_after_invoke` for more info.
+        See :meth:`.Client.application_command_after_invoke` for more info.
 
         Parameters
         -----------
@@ -1137,7 +1137,7 @@ class ApplicationSubcommand:
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError('The post-invoke hook must be a coroutine.')
 
-        self._application_after_invoke = coro
+        self._application_command_after_invoke = coro
         return coro
 
 
@@ -1614,10 +1614,10 @@ class ApplicationCommand(ApplicationSubcommand):
             Discord supports.
         inherit_hooks: :class:`bool` default=False
             If ``True`` and this command has a parent :class:`ApplicationCommand` then this command
-            will inherit all checks, application_before_invoke and application_after_invoke's defined on the the :class:`ApplicationCommand`
+            will inherit all checks, application_command_before_invoke and application_command_after_invoke's defined on the the :class:`ApplicationCommand`
 
             .. note::
-                Any ``application_before_invoke`` or ``application_after_invoke``'s defined on this will override parent ones.
+                Any ``application_command_before_invoke`` or ``application_command_after_invoke``'s defined on this will override parent ones.
         """
         if self.type != ApplicationCommandType.chat_input:  # At this time, non-slash commands cannot have Subcommands.
             raise TypeError(f"{self.error_name} {self.type} cannot have subcommands.")
@@ -1768,7 +1768,7 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
         Second dictionary to compare.
     keywords: :class:`str`
         Words to compare both dictionaries to.
-        
+
     Returns
     -------
     :class:`bool`

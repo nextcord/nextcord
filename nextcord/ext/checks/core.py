@@ -61,8 +61,8 @@ __all__ = (
     "guild_only",
     "is_owner",
     "is_nsfw",
-    "application_before_invoke",
-    "application_after_invoke",
+    "application_command_before_invoke",
+    "application_command_after_invoke",
 )
 
 T = TypeVar('T')
@@ -538,7 +538,7 @@ def is_nsfw() -> Callable[[T], T]:
         raise ApplicationNSFWChannelRequired(ch)  # type: ignore
     return check(pred)
 
-def application_before_invoke(coro) -> Callable[[T], T]:
+def application_command_before_invoke(coro) -> Callable[[T], T]:
     """A decorator that registers a coroutine as a pre-invoke hook.
 
     This allows you to refer to one before invoke hook for several commands that
@@ -578,13 +578,13 @@ def application_before_invoke(coro) -> Callable[[T], T]:
     """
     def decorator(func: Union[ApplicationSubcommand, 'CoroFunc']) -> Union[ApplicationSubcommand, 'CoroFunc']:
         if isinstance(func, ApplicationSubcommand):
-            func.application_before_invoke(coro)
+            func.application_command_before_invoke(coro)
         else:
-            func.__application_before_invoke__ = coro
+            func.__application_command_before_invoke__ = coro
         return func
     return decorator  # type: ignore
 
-def application_after_invoke(coro) -> Callable[[T], T]:
+def application_command_after_invoke(coro) -> Callable[[T], T]:
     """A decorator that registers a coroutine as a post-invoke hook.
 
     This allows you to refer to one after invoke hook for several commands that
@@ -592,8 +592,8 @@ def application_after_invoke(coro) -> Callable[[T], T]:
     """
     def decorator(func: Union[ApplicationSubcommand, 'CoroFunc']) -> Union[ApplicationSubcommand, 'CoroFunc']:
         if isinstance(func, ApplicationSubcommand):
-            func.application_after_invoke(coro)
+            func.application_command_after_invoke(coro)
         else:
-            func.__application_after_invoke__ = coro
+            func.__application_command_after_invoke__ = coro
         return func
     return decorator  # type: ignore
