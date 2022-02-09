@@ -29,7 +29,7 @@ from typing import (
     List,
     Optional,
     TYPE_CHECKING,
-    Union
+    Union,
 )
 
 from nextcord.types.snowflake import Snowflake, SnowflakeList
@@ -47,7 +47,7 @@ __all__ = (
     'ApplicationBotMissingPermissions',
     'ApplicationPrivateMessageOnly',
     'ApplicationNotOwner',
-    'ApplicationNSFWChannelRequired'
+    'ApplicationNSFWChannelRequired',
 )
 
 class ApplicationCheckAnyFailure(ApplicationCheckFailure):

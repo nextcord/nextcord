@@ -710,8 +710,10 @@ class ApplicationSubcommand:
 
     async def call_autocomplete(self, state, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
+
         This will route autocomplete data as needed, either handing it off to subcommands or calling one of the
         autocomplete callbacks registered.
+
         Parameters
         ----------
         state: :class:`ConnectionState`
@@ -767,8 +769,7 @@ class ApplicationSubcommand:
             raise TypeError(f"{self.error_name} Autocomplete is not handled by this type of command.")
 
     def has_error_handler(self) -> bool:
-        """:class:`bool`: Checks whether the command has an error handler registered.
-        """
+        """:class:`bool`: Checks whether the command has an error handler registered."""
         return self.on_error is not MISSING
 
     async def invoke_autocomplete(
@@ -780,8 +781,10 @@ class ApplicationSubcommand:
     ) -> Any:
         """|coro|
         Invokes the autocomplete callback of the given option.
+
         The given interaction, focused option value, and any other kwargs are forwarded to the autocomplete function.
         If this command was given a self argument, it will be forwarded in first.
+
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -803,6 +806,7 @@ class ApplicationSubcommand:
     async def call(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]]) -> None:
         """|coro|
         Calls the callback and its hooks associated with this command with the given interaction and option data.
+
         Parameters
         ----------
         state: :class:`ConnectionState`
@@ -817,7 +821,14 @@ class ApplicationSubcommand:
         await self._call_with_hooks(state, interaction, app_cmd, app_cmd.call_invoke_slash, (state, interaction, new_option_data))
 
 
-    async def _call_with_hooks(self, state: ConnectionState, interaction: Interaction,  app_cmd: Union[ApplicationSubcommand, ApplicationCommand], callback: Callable, args: Tuple[Any, ...]) -> None:
+    async def _call_with_hooks(
+        self,
+        state: ConnectionState,
+        interaction: Interaction,
+        app_cmd: Union[ApplicationSubcommand, ApplicationCommand],
+        callback: Callable,
+        args: Tuple[Any, ...],
+    ) -> None:
         interaction._set_application_command(app_cmd)
 
         try:
@@ -866,10 +877,15 @@ class ApplicationSubcommand:
 
     def _find_subcommand(self, option_data: List[Dict[str, Any]]) -> Tuple[Union[ApplicationSubcommand, ApplicationCommand], List[Dict[str, Any]]]:
         if self.children:
+            # Discord currently does not allow commands that have subcommands to be run. Therefore, if a command has
+            # children, a subcommand must be being called.
             return self.children[option_data[0]["name"]]._find_subcommand(option_data[0].get("options", {}))
         elif self.type in (ApplicationCommandType.chat_input, ApplicationCommandOptionType.sub_command):
+            # Slash commands are able to have subcommands, therefore that is handled here.
             return self, option_data
         else:
+            # Anything that can't be handled in here should be raised for ApplicationCommand to handle.
+            # TODO: Figure out how to hide this in exception trace log, people don't need to see it.
             raise InvalidCommandType(f"{self.type} is not a handled Application Command type.")
 
     async def call_invoke_slash(
@@ -881,6 +897,7 @@ class ApplicationSubcommand:
         """|coro|
         Calls the callback associated with this command specifically for slash with the given interaction and option
         data.
+
         Parameters
         ----------
         state: :class:`ConnectionState`
@@ -977,6 +994,7 @@ class ApplicationSubcommand:
         """|coro|
         Invokes the callback associated with this command specifically for slash with the given interaction and keyword
         arguments.
+
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -984,7 +1002,6 @@ class ApplicationSubcommand:
         kwargs:
             Keyword arguments to forward to the callback.
         """
-
         if self._self_argument:
             await self.callback(self._self_argument, interaction, **kwargs)
         else:
@@ -992,7 +1009,7 @@ class ApplicationSubcommand:
 
     # Decorators
 
-    def error(self, callback: ApplicationErrorCallback) -> None:
+    def error(self, callback: ApplicationErrorCallback) -> Callable:
         """Decorates a function, setting it as a callback to be called when a :class:`ApplicationError` or any of its subclasses is raised inside the :class:`ApplicationCommand`.
 
         Parameters
@@ -1000,7 +1017,6 @@ class ApplicationSubcommand:
         callback: Callable[[:class:`Interaction`, :class:`ApplicationError`], :class:`asyncio.Awaitable[Any]`]
             The callback to call when an error occurs.
         """
-
         if not asyncio.iscoroutinefunction(callback):
             raise TypeError("The error handler must be a coroutine.")
 
@@ -1010,6 +1026,7 @@ class ApplicationSubcommand:
     def on_autocomplete(self, on_kwarg: str) -> Callable:
         """Decorates a function, adding it as the autocomplete callback for the given keyword argument that is inside
         the slash command.
+
         Parameters
         ----------
         on_kwarg: :class:`str`
@@ -1038,7 +1055,9 @@ class ApplicationSubcommand:
 
     def subcommand(self, name: str = MISSING, description: str = MISSING, inherit_hooks: bool = False) -> Callable:
         """Decorates a function, creating a subcommand with the given kwargs forwarded to it.
+
         Adding a subcommand will prevent the callback associated with this command from being called.
+
         Parameters
         ----------
         name: :class:`str`
@@ -1060,7 +1079,7 @@ class ApplicationSubcommand:
                 cmd_type=ApplicationCommandOptionType.sub_command,
                 name=name,
                 description=description,
-                inherit_hooks=inherit_hooks
+                inherit_hooks=inherit_hooks,
             )
             self.type = ApplicationCommandOptionType.sub_command_group
             self.children[result.name] = result
@@ -1181,6 +1200,7 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def add_guild_rollout(self, guild: Union[int, Guild]) -> None:
         """Adds a Guild to the command to be rolled out when the rollout is run.
+        
         Parameters
         ----------
         guild: Union[:class:`int`, :class:`Guild`]
@@ -1233,10 +1253,12 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def get_guild_payload(self, guild_id: int) -> dict:
         """Returns a guild application command payload.
+
         Parameters
         ----------
         guild_id: :class:`int`
             Discord Guild ID to make the payload for.
+
         Returns
         -------
         :class:`dict`
@@ -1248,12 +1270,15 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def get_signature(self, guild_id: Optional[int] = None) -> Tuple[str, int, Optional[int]]:
         """Returns a basic signature for the application command.
+
         This signature is unique, in the sense that two application commands with the same signature cannot be
         registered with Discord at the same time.
+
         Parameters
         ----------
         guild_id: Optional[:class:`int`]
             Integer Guild ID for the signature. For a global application command, None is used.
+        
         Returns
         -------
         Tuple[:class:`str`, :class:`int`, Optional[:class:`int`]]
@@ -1286,11 +1311,14 @@ class ApplicationCommand(ApplicationSubcommand):
     @classmethod
     def from_callback(cls, callback: Callable) -> ApplicationCommand:
         """Returns an ApplicationCommand object created from the given callback.
+
         Overridden from ApplicationSubcommand for typing purposes.
+
         Parameters
         ----------
         callback: Callable
             Function or method to run when the command is called. Must be a coroutine.
+
         Returns
         -------
         :class:`ApplicationCommand`
@@ -1342,6 +1370,7 @@ class ApplicationCommand(ApplicationSubcommand):
     @property
     def payload(self) -> List[dict]:
         """Returns a list of Discord "Application Command Structure" payloads.
+
         Returns
         -------
         payloads: List[:class:`dict`]
@@ -1363,14 +1392,17 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int] = None) -> bool:
         """Checks if `self.payload` values match with what the given raw payload has.
+
         This doesn't make sure they are equal. Instead, this checks if most key:value pairs inside our payload
         also exist inside the raw_payload.
+
         Parameters
         ----------
         raw_payload: :class:`dict`
             Dictionary payload our payloads are compared against.
         guild_id: Optional[:class:`int`]
             Guild ID to compare against. If None, it's assumed to be a Global command.
+
         Returns
         -------
         :class:`bool`
@@ -1403,14 +1435,17 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def reverse_check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int] = None) -> bool:
         """Checks if the given raw payload values match with what self.payload has.
+
         This doesn't make sure they are equal, and works opposite of check_against_raw_payload. This checks if all
         key:value's inside the raw_payload also exist inside one of our payloads.
+
         Parameters
         ----------
         raw_payload: :class:`dict`
             Dictionary payload to compare against our payloads.
         guild_id: Optional[:class:`int`]
             Guild ID to compare against. If None, it's assumed to be a Global command.
+        
         Returns
         -------
         :class:`bool`
@@ -1426,6 +1461,7 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def _recursive_item_check(self, item1, item2) -> bool:
         """Checks if item1 and item2 are equal.
+
         If both are lists, switches to list check. If dict, recurses. Else, checks equality.
         """
         if isinstance(item1, dict) and isinstance(item2, dict):
@@ -1508,6 +1544,7 @@ class ApplicationCommand(ApplicationSubcommand):
     async def call_invoke_message(self, interaction: Interaction) -> None:
         """|coro|
         Calls the callback as a message command using the given interaction.
+
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -1528,6 +1565,7 @@ class ApplicationCommand(ApplicationSubcommand):
     async def call_invoke_user(self, interaction: Interaction) -> None:
         """|coro|
         Calls the callback as a user command using the given interaction.
+
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -1545,6 +1583,7 @@ class ApplicationCommand(ApplicationSubcommand):
     async def invoke_user(self, interaction: Interaction, member: Union[Member, User], **kwargs: Dict[Any, Any]) -> None:
         """|coro|
         Invokes the callback with the given interaction, member/user, and any additional kwargs added.
+        
         Parameters
         ----------
         interaction: :class:`Interaction`
@@ -1563,7 +1602,9 @@ class ApplicationCommand(ApplicationSubcommand):
 
     def subcommand(self, name: str = MISSING, description: str = MISSING, inherit_hooks: bool = False) -> Callable:
         """Decorates a function, creating a subcommand with the given kwargs forwarded to it.
+
         Adding a subcommand will prevent the callback associated with this command from being called.
+
         Parameters
         ----------
         name: :class:`str`
@@ -1588,7 +1629,7 @@ class ApplicationCommand(ApplicationSubcommand):
                     cmd_type=ApplicationCommandOptionType.sub_command,
                     name=name,
                     description=description,
-                    inherit_hooks=inherit_hooks
+                    inherit_hooks=inherit_hooks,
                 )
                 self.children[result.name] = result
                 return result
@@ -1604,6 +1645,7 @@ def slash_command(
 ):
     """Creates a Slash application command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
+    
     Parameters
     ----------
     name: :class:`str`
@@ -1642,6 +1684,7 @@ def message_command(
 ):
     """Creates a Message context command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
+
     Parameters
     ----------
     name: :class:`str`
@@ -1713,8 +1756,10 @@ def user_command(
 def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
     """Helper function to quickly check if 2 dictionaries share the equal value for the same keyword(s).
     Used primarily for checking against the registered command data from Discord.
+
     Will not work great if values inside the dictionary can be or are None.
     If both dictionaries lack the keyword(s), it can still return True.
+
     Parameters
     ----------
     dict1: :class:`dict`
@@ -1723,6 +1768,7 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
         Second dictionary to compare.
     keywords: :class:`str`
         Words to compare both dictionaries to.
+        
     Returns
     -------
     :class:`bool`

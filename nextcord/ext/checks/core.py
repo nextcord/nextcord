@@ -20,11 +20,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+
 import asyncio
 import functools
-import nextcord
 from typing import Callable, Union, TypeVar, TYPE_CHECKING
 
+import nextcord
 from nextcord.application_command import ApplicationSubcommand, Interaction
 from .errors import (
     ApplicationCheckAnyFailure,
@@ -61,7 +62,7 @@ __all__ = (
     "is_owner",
     "is_nsfw",
     "application_before_invoke",
-    "application_after_invoke"
+    "application_after_invoke",
 )
 
 T = TypeVar('T')

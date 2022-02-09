@@ -302,6 +302,7 @@ class ApplicationError(DiscordException):
         else:
             super().__init__(*args)
 
+
 class ApplicationInvokeError(ApplicationError):
     """Exception raised when the command being invoked raised an exception.
 
@@ -317,6 +318,7 @@ class ApplicationInvokeError(ApplicationError):
         self.original: Exception = e
         self.__cause__ = e
         super().__init__(f'Command raised an exception: {e.__class__.__name__}: {e}')
+
 
 class ApplicationCheckFailure(ApplicationError):
     """Exception raised when the predicates in :attr:`.ApplicationCommand.checks` have failed.

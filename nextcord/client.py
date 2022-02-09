@@ -497,7 +497,6 @@ class Client:
         overridden to have a different implementation.
         Check :func:`~nextcord.on_error` for more details.
         """
-
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
 
