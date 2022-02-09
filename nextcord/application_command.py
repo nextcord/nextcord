@@ -73,6 +73,7 @@ def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
     return func
 
+
 class ClientCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
     __cog_application_commands__: Dict[int, ApplicationCommand]
