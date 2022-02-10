@@ -558,6 +558,7 @@ class InteractionResponseType(Enum):
     deferred_message_update = 6  # for components
     message_update = 7  # for components
     application_command_autocomplete_result = 8
+    modal = 9
 
 
 class ApplicationCommandType(Enum):

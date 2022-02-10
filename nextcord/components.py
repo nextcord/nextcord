@@ -389,7 +389,7 @@ class TextInput(Component):
 
     def __init__(self, data: TextInputComponentPayload):
         self.type: ComponentType = try_enum(ComponentType, data['type'])
-        self.style: TextInputStyle = try_enum(TextInputStyle, data['style'])
+        self.style: TextInputStyle = try_enum(TextInputStyle, data.get('style'))
         self.custom_id: str = data.get('custom_id')
         self.label: str = data.get('label')
         self.min_lenght: Optional[int] = data.get('min_lenght')
@@ -402,7 +402,7 @@ class TextInput(Component):
         payload = {
             'type': 4,
             'custom_id': self.custom_id,
-            'style': int(self.style),
+            'style': int(self.style.value),
             'label': self.label,
         }
         
@@ -432,6 +432,8 @@ def _component_factory(data: ComponentPayload) -> Component:
         return Button(data)  # type: ignore
     elif component_type == 3:
         return SelectMenu(data)  # type: ignore
+    elif component_type == 4:
+        return TextInput(data)
     else:
         as_enum = try_enum(ComponentType, component_type)
         return Component._raw_construct(type=as_enum)

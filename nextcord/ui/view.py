@@ -39,6 +39,7 @@ from ..components import (
     _component_factory,
     Button as ButtonComponent,
     SelectMenu as SelectComponent,
+    TextInput as TextComponent,
 )
 
 __all__ = (
@@ -70,6 +71,10 @@ def _component_to_item(component: Component) -> Item:
         from .select import Select
 
         return Select.from_component(component)
+    if isinstance(component, TextComponent):
+        from .text_input import TextInput
+        
+        return TextInput.from_component(component)
     return Item.from_component(component)
 
 

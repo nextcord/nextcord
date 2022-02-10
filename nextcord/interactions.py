@@ -63,6 +63,7 @@ if TYPE_CHECKING:
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
     from .ui.view import View
+    from .ui.modal import Modal
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
     from .client import Client
@@ -744,6 +745,22 @@ class InteractionResponse:
 
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
+    
+    async def send_modal(self, modal: Modal) -> None:
+        if self._responded:
+            raise InteractionResponded(self._parent)
+        
+        parent = self._parent
+        adapter = async_context.get()
+        await adapter.create_interaction_response(
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=InteractionResponseType.modal.value,
+                data=modal.to_dict(),
+            )
+        
+        self._parent._state.store_modal(modal, self._parent.user.id)
 
     async def edit_message(
         self,

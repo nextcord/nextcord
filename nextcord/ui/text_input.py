@@ -34,6 +34,7 @@ from .item import Item, ItemCallbackType
 from ..enums import TextInputStyle, ComponentType
 from ..components import TextInput as TextInputComponent
 from ..utils import MISSING
+from ..interactions import Interaction
 
 __all__ = (
     'TextInput',
@@ -49,6 +50,17 @@ V = TypeVar('V', bound='View', covariant=True)
 
 
 class TextInput(Item[V]):
+    
+    __item_repr_attributes__ = (
+        'custom_id',
+        'label',
+        'style',
+        'min_lenght',
+        'max_lenght',
+        'required',
+        'value',
+        'placeholder',
+    )
 
     def __init__(
         self,
@@ -164,6 +176,10 @@ class TextInput(Item[V]):
         if value is not None and not isinstance(value, str):
             raise TypeError('placeholder must be None or str')
         self._underlying.placeholder = value
+    
+    @property
+    def width(self) -> int:
+        return 5
 
     @classmethod
     def from_component(cls: Type[T], text_input: TextInputComponent) -> T:
@@ -187,41 +203,7 @@ class TextInput(Item[V]):
         return self._underlying.to_dict()
 
     def is_dispatchable(self) -> bool:
-        return self.custom_id is not None
+        return True
 
     def refresh_component(self, text_input: TextInputComponent) -> None:
         self._underlying = text_input
-
-
-def text_input(
-    *,
-    style: TextInputStyle = TextInputStyle.short,
-    custom_id: Optional[str] = None,
-    label: str = MISSING,
-    row: Optional[int] = None,
-    min_lenght: int = 0,
-    max_lenght: int = 4000,
-    required: bool = None,
-    value: Optional[str] = None,
-    placeholder: Optional[str] = None, 
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
-
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
-        if not inspect.iscoroutinefunction(func):
-            raise TypeError('text_input function must be a coroutine function')
-
-        func.__discord_ui_model_type__ = TextInput
-        func.__discord_ui_model_kwargs__ = {
-            'style': style,
-            'custom_id': custom_id,
-            'label': label,
-            'row': row,
-            'min_lenght': min_lenght,
-            'max_lenght': max_lenght,
-            'required': required,
-            'value': value,
-            'placeholder': placeholder,
-        }
-        return func
-
-    return decorator
