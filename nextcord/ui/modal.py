@@ -17,17 +17,51 @@ from .view import (
 from .item import Item
 from ..components import Component, _component_factory
 
-if TYPE_CHECKING:
-    from ..interactions import Interaction
-    from ..state import ConnectionState
-    from ..types.components import Component as ComponentPayload
-
 __all__ = (
     'Modal',
     'ModalStore',
 )
 
+
+if TYPE_CHECKING:
+    from ..interactions import Interaction
+    from ..state import ConnectionState
+    from ..types.components import Component as ComponentPayload
+
+
 class Modal:
+    """Represents a discord modal popup.
+
+    This object must be inherited to create a modal within Discord.
+
+    .. versionadded:: 2.0
+
+    Parameters
+    -----------
+    title: :class:`str`
+        The title of the modal.
+    timeout: Optional[:class:`float`] = None
+        Timeout in seconds from last interaction with the UI before no longer accepting input.
+        If ``None`` then there is no timeout.
+    custom_id: :class:`str` = MISSING
+        The ID of the modal that gets received during an interaction.
+        If the ``custom_id`` is MISSING, then a random ``custom_id`` is set.
+    **components:
+        keyword-arguments of :class:`Item` representing the components of the
+        Modal where the kwarg value gets added as an attribute named to the
+        kwarg key.
+
+    Attributes
+    ------------
+    timeout: Optional[:class:`float`]
+        Timeout from last interaction with the UI before no longer accepting input.
+        If ``None`` then there is no timeout.
+    children: List[:class:`Item`]
+        The list of children attached to this view.
+    custom_id: str
+        The ID of the modal that gets received during an interaction.
+    """
+    
     def __init__(
         self,
         title: str,
@@ -118,8 +152,7 @@ class Modal:
         TypeError
             An :class:`Item` was not passed.
         ValueError
-            Maximum number of children has been exceeded (25)
-            or the row the item is trying to be added to is full.
+            The row the item is trying to be added to is full.
         """
 
         if not isinstance(item, Item):
@@ -151,7 +184,19 @@ class Modal:
         self.__weights.clear()
     
     async def callback(self, interaction: Interaction):
-        pass
+        """|coro|
+        
+        The callback that is called when the user press the submit button.
+        
+        The default implementation does nothing and the user see an error
+        message on is screen, so you need to overwrite this function.
+        
+        Parameters
+        ----------
+        interaction: Interaction
+            The interaction fired by the user.
+        
+        """
         
     async def on_timeout(self) -> None:
         """|coro|
