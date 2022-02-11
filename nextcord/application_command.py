@@ -237,7 +237,7 @@ class CommandOption(SlashOption):
     def description(self) -> str:
         """If no description is set, it returns the bare minimum that Discord demands."""
         if not self._description:
-            return " "
+            return "No description provided"
         else:
             return self._description
 
@@ -435,7 +435,7 @@ class ApplicationSubcommand:
     def description(self) -> str:
         """Returns the description of the command. If the description is MISSING, it returns the bare minimum needed."""
         if self._description is MISSING:  # Return Discords bare minimum for a command.
-            return " "
+            return "No description provided"
         else:
             return self._description
 
@@ -864,7 +864,8 @@ class ApplicationCommand(ApplicationSubcommand):
         """Returns the description of the command. If the description is MISSING, it returns the bare minimum needed."""
         if self._description is MISSING:  # Return Discord's bare minimum for a command.
             if self.type is ApplicationCommandType.chat_input:
-                return " "
+                # return " "
+                return super().description
             elif self.type in (ApplicationCommandType.user, ApplicationCommandType.message):
                 return ""
         else:
