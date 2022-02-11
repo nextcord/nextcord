@@ -3095,7 +3095,7 @@ class Guild(Hashable):
 
     async def fetch_scheduled_event(
         self,
-        event_id: Snowflake,
+        event_id: int,
         *,
         with_users: bool = False
     ) -> ScheduledEvent:
@@ -3120,11 +3120,13 @@ class Guild(Hashable):
         :class:`ScheduledEvent`
             The received event object
         """
-        return await self._state.http.get_event(
+        event_payload = await self._state.http.get_event(
             self.id,
             event_id,
-            with_users=with_users
+            with_user_count=with_users
         )
+        
+        return self._store_scheduled_event(event_payload)
 
     async def create_scheduled_event(
         self,

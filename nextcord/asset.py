@@ -251,6 +251,14 @@ class Asset(AssetMixin):
             key=banner_hash,
             animated=animated
         )
+    @classmethod
+    def _from_scheduled_event_image(cls, state, event_id: int, image_hash: str) -> Asset:
+        return cls(
+            state,
+            url=f'{cls.BASE}/guild-events/{event_id}/{image_hash}.png',
+            key=image_hash,
+            animated=False
+        )
 
     def __str__(self) -> str:
         return self._url
