@@ -88,7 +88,7 @@ class TextInput(Item[V]):
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = TextInputComponent._raw_construct(
-            type=ComponentType.textinput,
+            type=ComponentType.text_input,
             custom_id=custom_id,
             label=label,
             style=style,

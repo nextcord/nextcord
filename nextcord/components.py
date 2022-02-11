@@ -401,7 +401,7 @@ class TextInput(Component):
         self.value: Optional[str] = data.get('value')
         self.placeholder: Optional[str] = data.get('placeholder')
 
-    def to_dict(self) -> ButtonComponentPayload:
+    def to_dict(self) -> TextInputComponentPayload:
         payload = {
             'type': 4,
             'custom_id': self.custom_id,

@@ -592,7 +592,7 @@ class ComponentType(Enum):
     action_row = 1
     button = 2
     select = 3
-    textinput = 4
+    text_input = 4
 
     def __int__(self):
         return self.value

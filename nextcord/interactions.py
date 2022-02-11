@@ -760,6 +760,8 @@ class InteractionResponse:
                 data=modal.to_dict(),
             )
         
+        self._responded = True
+        
         self._parent._state.store_modal(modal, self._parent.user.id)
 
     async def edit_message(

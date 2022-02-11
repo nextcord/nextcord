@@ -32,7 +32,7 @@ class Modal:
         self,
         title: str,
         *,
-        timeout: Optional[float] = 180.0,
+        timeout: Optional[float] = None,
         custom_id: str = MISSING,
         **components,
     ):
@@ -122,9 +122,6 @@ class Modal:
             or the row the item is trying to be added to is full.
         """
 
-        if len(self.children) > 25:
-            raise ValueError('maximum number of children exceeded')
-
         if not isinstance(item, Item):
             raise TypeError(f'expected Item not {item.__class__!r}')
 
@@ -138,7 +135,7 @@ class Modal:
         Parameters
         -----------
         item: :class:`Item`
-            The item to remove from the view.
+            The item to remove from the modal.
         """
 
         try:
@@ -149,40 +146,12 @@ class Modal:
             self.__weights.remove_item(item)
 
     def clear_items(self) -> None:
-        """Removes all items from the view."""
+        """Removes all items from the modal."""
         self.children.clear()
         self.__weights.clear()
     
     async def callback(self, interaction: Interaction):
         pass
-    
-    async def interaction_check(self, interaction: Interaction) -> bool:
-        """|coro|
-
-        A callback that is called when an interaction happens within the view
-        that checks whether the view should process item callbacks for the interaction.
-
-        This is useful to override if, for example, you want to ensure that the
-        interaction author is a given user.
-
-        The default implementation of this returns ``True``.
-
-        .. note::
-
-            If an exception occurs within the body then the check
-            is considered a failure and :meth:`on_error` is called.
-
-        Parameters
-        -----------
-        interaction: :class:`~nextcord.Interaction`
-            The interaction that occurred.
-
-        Returns
-        ---------
-        :class:`bool`
-            Whether the view children's callbacks should be called.
-        """
-        return True
         
     async def on_timeout(self) -> None:
         """|coro|
@@ -218,10 +187,6 @@ class Modal:
             if self.timeout:
                 self.__timeout_expiry = time.monotonic() + self.timeout
 
-            allow = await self.interaction_check(interaction)
-            if not allow:
-                return
-
             await self.callback(interaction)
             if not interaction.response._responded:
                 await interaction.response.defer()
@@ -243,13 +208,13 @@ class Modal:
             return
 
         self.__stopped.set_result(True)
-        asyncio.create_task(self.on_timeout(), name=f'discord-ui-view-timeout-{self.id}')
+        asyncio.create_task(self.on_timeout(), name=f'discord-ui-modal-timeout-{self.id}')
     
     def _dispatch(self, interaction: Interaction):
         if self.__stopped.done():
             return
 
-        asyncio.create_task(self._scheduled_task(interaction), name=f'discord-ui-view-dispatch-{self.id}')
+        asyncio.create_task(self._scheduled_task(interaction), name=f'discord-ui-modal-dispatch-{self.id}')
     
     def refresh(self, components: List[Component]):
         # This is pretty hacky at the moment
@@ -274,7 +239,7 @@ class Modal:
         self.children = children
     
     def stop(self) -> None:
-        """Stops listening to interaction events from this view.
+        """Stops listening to interaction events from this modal.
 
         This operation cannot be undone.
         """
@@ -291,32 +256,32 @@ class Modal:
             self.__cancel_callback = None
     
     def is_finished(self) -> bool:
-        """:class:`bool`: Whether the view has finished interacting."""
+        """:class:`bool`: Whether the modal has finished interacting."""
         return self.__stopped.done()
 
     def is_dispatching(self) -> bool:
-        """:class:`bool`: Whether the view has been added for dispatching purposes."""
+        """:class:`bool`: Whether the modal has been added for dispatching purposes."""
         return self.__cancel_callback is not None
 
     def is_persistent(self) -> bool:
-        """:class:`bool`: Whether the view is set up as persistent.
+        """:class:`bool`: Whether the modal is set up as persistent.
 
-        A persistent view has all their components with a set ``custom_id`` and
+        A persistent modal has a set ``custom_id`` and all their components with a set ``custom_id`` and
         a :attr:`timeout` set to ``None``.
         """
         return self._provided_custom_id and self.timeout is None and all(item.is_persistent() for item in self.children)
 
     async def wait(self) -> bool:
-        """Waits until the view has finished interacting.
+        """Waits until the modal has finished interacting.
 
-        A view is considered finished when :meth:`stop` is called
+        A modal is considered finished when :meth:`stop` is called
         or it times out.
 
         Returns
         --------
         :class:`bool`
-            If ``True``, then the view timed out. If ``False`` then
-            the view finished normally.
+            If ``True``, then the modal timed out. If ``False`` then
+            the modal finished normally.
         """
         return await self.__stopped
 
