@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Callable, Optional, TYPE_CHECKING, Type, TypeVar
+from typing import Callable, Optional, TYPE_CHECKING, Type, TypeVar, List, Iterator
 import inspect
 import os
 
@@ -38,15 +38,25 @@ from ..interactions import Interaction
 
 __all__ = (
     'TextInput',
-    'text_input',
 )
 
 if TYPE_CHECKING:
     from .view import View
     from ..emoji import Emoji
+    from ..types.interactions import (
+        ComponentInteractionData,
+    )
 
 T = TypeVar('T', bound='TextInput')
 V = TypeVar('V', bound='View', covariant=True)
+
+
+def _walk_all_components(components):
+    for item in components:
+        if item['type'] == 1:
+            yield from item['components']
+        else:
+            yield item
 
 
 class TextInput(Item[V]):
@@ -55,8 +65,8 @@ class TextInput(Item[V]):
         'custom_id',
         'label',
         'style',
-        'min_lenght',
-        'max_lenght',
+        'min_length',
+        'max_length',
         'required',
         'value',
         'placeholder',
@@ -69,10 +79,10 @@ class TextInput(Item[V]):
         style: TextInputStyle = TextInputStyle.short,
         custom_id: str = MISSING,
         row: Optional[int] = None,
-        min_lenght: int = 0,
-        max_lenght: int = 4000,
+        min_length: int = 0,
+        max_length: int = 4000,
         required: bool = None,
-        value: Optional[str] = None,
+        default_value: Optional[str] = None,
         placeholder: Optional[str] = None,
     ):
         self._provided_custom_id = custom_id is not MISSING
@@ -82,13 +92,14 @@ class TextInput(Item[V]):
             custom_id=custom_id,
             label=label,
             style=style,
-            min_lenght=min_lenght,
-            max_lenght=max_lenght,
+            min_length=min_length,
+            max_length=max_length,
             required=required,
-            value=value,
+            value=default_value,
             placeholder=placeholder,
         )
         self.row = row
+        self._inputed_value: str = None
 
     @property
     def style(self) -> TextInputStyle:
@@ -126,22 +137,22 @@ class TextInput(Item[V]):
         self._underlying.label = str(value)
     
     @property
-    def min_lenght(self) -> int:
+    def min_length(self) -> int:
         """:class:`int`: The minimum input length for a text input"""
-        return self._underlying.min_lenght
+        return self._underlying.min_length
     
-    @min_lenght.setter
-    def min_lenght(self, value: int):
-        self._underlying.min_lenght = value
+    @min_length.setter
+    def min_length(self, value: int):
+        self._underlying.min_length = value
     
     @property
-    def max_lenght(self) -> int:
+    def max_length(self) -> int:
         """:class:`int`: The maximum input length for a text input"""
-        return self._underlying.max_lenght
+        return self._underlying.max_length
     
-    @max_lenght.setter
-    def max_lenght(self, value: int):
-        self._underlying.max_lenght = value
+    @max_length.setter
+    def max_length(self, value: int):
+        self._underlying.max_length = value
     
     @property
     def required(self) -> bool:
@@ -158,14 +169,18 @@ class TextInput(Item[V]):
         self._underlying.required = value
     
     @property
-    def value(self) -> Optional[str]:
+    def default_value(self) -> Optional[str]:
         return self._underlying.value
     
-    @value.setter
-    def value(self, value: Optional[str]):
+    @default_value.setter
+    def default_value(self, value: Optional[str]):
         if value is not None and not isinstance(value, str):
-            raise TypeError('value must be None or str')
+            raise TypeError('default_value must be None or str')
         self._underlying.value = value
+    
+    @property
+    def value(self) -> Optional[str]:
+        return self._inputed_value
     
     @property
     def placeholder(self) -> Optional[str]:
@@ -187,8 +202,8 @@ class TextInput(Item[V]):
             style=text_input.style,
             custom_id=text_input.custom_id,
             label=text_input.label,
-            min_lenght=text_input.min_lenght,
-            max_lenght=text_input.max_lenght,
+            min_length=text_input.min_length,
+            max_length=text_input.max_length,
             required=text_input.required,
             value=text_input.value,
             placeholder=text_input.placeholder,
@@ -207,3 +222,10 @@ class TextInput(Item[V]):
 
     def refresh_component(self, text_input: TextInputComponent) -> None:
         self._underlying = text_input
+
+    def refresh_state(self, interaction: Interaction) -> None:
+        data: ComponentInteractionData = interaction.data  # type: ignore
+        for component_data in _walk_all_components(data['components']):
+            if component_data['custom_id'] == self.custom_id:
+                self._inputed_value = component_data['value']
+                return

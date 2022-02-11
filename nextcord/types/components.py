@@ -75,8 +75,8 @@ class SelectMenu(_SelectMenuOptional):
 
 
 class _TextInputComponentOptional(TypedDict, total=False):
-    min_lenght: int
-    max_lenght: int
+    min_length: int
+    max_length: int
     required: bool
     value: str
     placeholder: str

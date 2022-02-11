@@ -1723,7 +1723,7 @@ class Client:
             raise TypeError(f'expected an instance of Modal not {modal.__class__!r}')
 
         if not modal.is_persistent():
-            raise ValueError('Modal is not persistent. Mocal must have no timeout and Items and Modal need to have custom_id set')
+            raise ValueError('Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set')
 
         self._connection.store_modal(modal, user_id)
 

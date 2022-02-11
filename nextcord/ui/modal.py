@@ -22,6 +22,11 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
 
+__all__ = (
+    'Modal',
+    'ModalStore',
+)
+
 class Modal:
     def __init__(
         self,
@@ -207,6 +212,8 @@ class Modal:
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
     
     async def _scheduled_task(self, interaction: Interaction):
+        for children in self.children:
+            children.refresh_state(interaction)
         try:
             if self.timeout:
                 self.__timeout_expiry = time.monotonic() + self.timeout
@@ -357,8 +364,5 @@ class ModalStore:
         modal = self._modals.get(key) or self._modals.get((None, custom_id))
         if modal is None:
             return
-        components = [
-            _component_factory(d) for d in interaction.data['components']
-        ]
-        modal.refresh(components)
+        
         modal._dispatch(interaction)

@@ -378,8 +378,8 @@ class TextInput(Component):
         'style',
         'custom_id',
         'label',
-        'min_lenght',
-        'max_lenght',
+        'min_length',
+        'max_length',
         'required',
         'value',
         'placeholder',
@@ -389,11 +389,14 @@ class TextInput(Component):
 
     def __init__(self, data: TextInputComponentPayload):
         self.type: ComponentType = try_enum(ComponentType, data['type'])
-        self.style: TextInputStyle = try_enum(TextInputStyle, data.get('style'))
+        self.style: TextInputStyle = try_enum(
+            TextInputStyle,
+            data.get('style', 1),
+        )
         self.custom_id: str = data.get('custom_id')
         self.label: str = data.get('label')
-        self.min_lenght: Optional[int] = data.get('min_lenght')
-        self.max_lenght: Optional[int] = data.get('max_lenght')
+        self.min_length: Optional[int] = data.get('min_length')
+        self.max_length: Optional[int] = data.get('max_length')
         self.required: Optional[bool] = data.get('required')
         self.value: Optional[str] = data.get('value')
         self.placeholder: Optional[str] = data.get('placeholder')
@@ -406,11 +409,11 @@ class TextInput(Component):
             'label': self.label,
         }
         
-        if self.min_lenght:
-            payload['min_lenght'] = self.min_lenght
+        if self.min_length:
+            payload['min_length'] = self.min_length
         
-        if self.max_lenght:
-            payload['max_lenght'] = self.max_lenght
+        if self.max_length:
+            payload['max_length'] = self.max_length
         
         if self.required is not None:
             payload['required'] = self.required
