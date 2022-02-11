@@ -459,6 +459,7 @@ class Interaction:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
+        allowed_mentions: Optional[AllowedMentions] = MISSING,
     ) -> Optional[Union[Message, WebhookMessage]]:
         """|coro|
 
@@ -485,6 +486,7 @@ class Interaction:
                 tts=tts,
                 ephemeral=ephemeral,
                 delete_after=delete_after,
+                allowed_mentions=allowed_mentions,
             )
         return await self.followup.send(
             content=content,  # type: ignore
@@ -496,6 +498,7 @@ class Interaction:
             tts=tts,
             ephemeral=ephemeral,
             delete_after=delete_after,
+            allowed_mentions=allowed_mentions,
         )
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
@@ -676,6 +679,7 @@ class InteractionResponse:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
+        allowed_mentions: Optional[AllowedMentions] = MISSING,
     ) -> None:
         """|coro|
 
@@ -708,6 +712,9 @@ class InteractionResponse:
             If provided, the number of seconds to wait in the background
             before deleting the message we just sent. If the deletion fails,
             then it is silently ignored.
+        allowed_mentions: :class:`AllowedMentions`
+            Controls the mentions being processed in this message.
+            See :meth:`.abc.Messageable.send` for more information.
 
         Raises
         -------
@@ -754,6 +761,15 @@ class InteractionResponse:
         if view is not MISSING:
             payload['components'] = view.to_components()
 
+        if allowed_mentions is MISSING or allowed_mentions is None:
+            if self._parent._state.allowed_mentions is not None:
+                payload['allowed_mentions'] = self._parent._state.allowed_mentions.to_dict()
+        else:
+            if self._parent._state.allowed_mentions is not None:
+                payload['allowed_mentions'] = self._parent._state.allowed_mentions.merge(allowed_mentions).to_dict()
+            else:
+                payload['allowed_mentions'] = allowed_mentions.to_dict()
+
         parent = self._parent
         adapter = async_context.get()
         try:
@@ -787,6 +803,8 @@ class InteractionResponse:
         content: Optional[Any] = MISSING,
         embed: Optional[Embed] = MISSING,
         embeds: List[Embed] = MISSING,
+        file: File = MISSING,
+        files: List[File] = MISSING,
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         delete_after: Optional[float] = None,
@@ -805,6 +823,11 @@ class InteractionResponse:
         embed: Optional[:class:`Embed`]
             The embed to edit the message with. ``None`` suppresses the embeds.
             This should not be mixed with the ``embeds`` parameter.
+        file: :class:`File`
+            The file to upload.
+        files: List[:class:`File`]
+            A list of files to upload. Maximum of 10. This cannot be mixed with
+            the ``file`` parameter.
         attachments: List[:class:`Attachment`]
             A list of attachments to keep in the message. If ``[]`` is passed
             then all attachments are removed.
@@ -822,7 +845,8 @@ class InteractionResponse:
         HTTPException
             Editing the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            or ``attachments`` and ``file/files``.
         InteractionResponded
             This interaction has already been responded to before.
         """
@@ -855,7 +879,18 @@ class InteractionResponse:
         if embeds is not MISSING:
             payload['embeds'] = [e.to_dict() for e in embeds]
 
+        if file is not MISSING and files is not MISSING:
+            raise TypeError('Cannot mix file and files keyword arguments')
+
+        if file is not MISSING:
+            files = [file]
+
+        if files and not all(isinstance(f, File) for f in files):
+            raise TypeError('Files parameter must be a list of type File')
+
         if attachments is not MISSING:
+            if file is not MISSING or files is not MISSING:
+                raise TypeError('Cannot mix attachments and file/files keyword arguments')
             payload['attachments'] = [a.to_dict() for a in attachments]
 
         if view is not MISSING:
@@ -866,13 +901,19 @@ class InteractionResponse:
                 payload['components'] = view.to_components()
 
         adapter = async_context.get()
-        await adapter.create_interaction_response(
-            parent.id,
-            parent.token,
-            session=parent._session,
-            type=InteractionResponseType.message_update.value,
-            data=payload,
-        )
+        try:
+            await adapter.create_interaction_response(
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=InteractionResponseType.message_update.value,
+                data=payload,
+                files=files,
+            )
+        finally:
+            if files:
+                for file in files:
+                    file.close()
 
         if view and not view.is_finished():
             state.store_view(view, message_id)

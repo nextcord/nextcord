@@ -2002,7 +2002,7 @@ class Client:
                     update_known=self._rollout_update_known
                 )
             else:
-                _log.info(f"nextcord.Client: No locally added commands explicitly registered for "
+                _log.debug(f"nextcord.Client: No locally added commands explicitly registered for "
                           f"{guild.name}|{guild.id}, not checking.")
         except Forbidden as e:
             _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
@@ -2088,7 +2088,7 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
+        description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
@@ -2120,7 +2120,7 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
+        description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
@@ -2152,7 +2152,7 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
+        description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
