@@ -864,7 +864,6 @@ class ApplicationCommand(ApplicationSubcommand):
         """Returns the description of the command. If the description is MISSING, it returns the bare minimum needed."""
         if self._description is MISSING:  # Return Discord's bare minimum for a command.
             if self.type is ApplicationCommandType.chat_input:
-                # return " "
                 return super().description
             elif self.type in (ApplicationCommandType.user, ApplicationCommandType.message):
                 return ""
