@@ -186,6 +186,8 @@ class Modal:
         self.__weights.add_item(item)
 
         self.children.append(item)
+        
+        return self
 
     def remove_item(self, item: Item) -> None:
         """Removes an item from the modal.
@@ -202,6 +204,8 @@ class Modal:
             pass
         else:
             self.__weights.remove_item(item)
+        
+        return self
 
     def clear_items(self) -> None:
         """Removes all items from the modal."""
@@ -213,8 +217,8 @@ class Modal:
         
         The callback that is called when the user press the submit button.
         
-        The default implementation does nothing and the user see an error
-        message on is screen, so you need to overwrite this function.
+        The default implementation does nothing and the user sees an error
+        message on their screen, so you need to overwrite this function.
         
         Parameters
         ----------
