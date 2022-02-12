@@ -4268,6 +4268,14 @@ View
 .. autoclass:: nextcord.ui.View
     :members:
 
+Modal
+~~~~~~~
+
+.. attributetable:: nextcord.ui.Modal
+
+.. autoclass:: nextcord.ui.Modal
+    :members:
+
 Item
 ~~~~~~~
 
@@ -4286,6 +4294,15 @@ Button
     :inherited-members:
 
 .. autofunction:: nextcord.ui.button
+
+TextInput
+~~~~~~~
+
+.. attributetable:: nextcord.ui.TextInput
+
+.. autoclass:: nextcord.ui.TextInput
+    :members:
+    :inherited-members:
 
 Select
 ~~~~~~~
