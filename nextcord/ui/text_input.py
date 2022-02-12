@@ -1,7 +1,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -25,9 +25,8 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import Optional, TYPE_CHECKING, Type, TypeVar, Tuple
-import inspect
 import os
-
+import inspect
 
 from .item import Item, ItemCallbackType
 from ..enums import TextInputStyle, ComponentType

@@ -753,12 +753,12 @@ class InteractionResponse:
         parent = self._parent
         adapter = async_context.get()
         await adapter.create_interaction_response(
-                parent.id,
-                parent.token,
-                session=parent._session,
-                type=InteractionResponseType.modal.value,
-                data=modal.to_dict(),
-            )
+            parent.id,
+            parent.token,
+            session=parent._session,
+            type=InteractionResponseType.modal.value,
+            data=modal.to_dict(),
+        )
         
         self._responded = True
         

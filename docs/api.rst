@@ -1571,6 +1571,17 @@ of :class:`enum.Enum`.
 
         An alias for :attr:`link`.
 
+.. class:: TextInputStyle
+
+    Represent the style of a text input component.
+
+    .. attribute:: short
+
+        Represent a single line input
+    .. attribute:: paragraph
+
+        Represent a multi line input
+
 .. class:: VoiceRegion
 
     Specifies the region a voice server belongs to.

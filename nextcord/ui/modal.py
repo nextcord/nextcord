@@ -1,13 +1,38 @@
+"""
+The MIT License (MIT)
+
+Copyright (c) 2021-present tag-epic
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+"""
+
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, List, Callable, Dict, Any, Tuple, Sequence
+from typing import TYPE_CHECKING, Optional, List, Callable, Dict, Any, Tuple
 from functools import partial
 from itertools import groupby
 
-import traceback
-import asyncio
+import sys
 import os
 import time
-import sys
+import traceback
+import asyncio
+
 from ..utils import MISSING
 from .view import (
     _ViewWeights,
@@ -275,7 +300,6 @@ class Modal:
             try:
                 older = old_state[(component.type.value, component.custom_id)]  # type: ignore
             except (KeyError, AttributeError):
-                print("error", component)
                 children.append(_component_to_item(component))
             else:
                 older.refresh_component(component)
@@ -337,7 +361,7 @@ class ModalStore:
         self._state: ConnectionState = state
 
     @property
-    def persistent_modals(self) -> Sequence[Modal]:
+    def persistent_modals(self) -> List[Modal]:
         # fmt: off
         modals = {
             modal.id: modal
