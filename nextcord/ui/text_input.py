@@ -99,6 +99,7 @@ class TextInput(Item[V]):
         'min_length',
         'max_length',
         'required',
+        'default_value',
         'value',
         'placeholder',
     )
