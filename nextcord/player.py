@@ -698,8 +698,9 @@ class AudioPlayer(threading.Thread):
                 # Run the after function
                 after_return = self.after(error)
 
-                # If what we got back was an awaitable, await it
-                if isinstance(after_return, Awaitable):
+                # If what we got back was a coroutine, submit it to
+                # the main event loop for processing
+                if asyncio.coroutines.iscoroutine(after_return):
                     asyncio.run_coroutine_threadsafe(after_return, self.client.loop)
             except Exception as exc:
                 _log.exception('Calling the after function failed.')
