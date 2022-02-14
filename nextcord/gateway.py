@@ -382,7 +382,7 @@ class DiscordWebSocket:
                 },
                 'compress': True,
                 'large_threshold': 250,
-                'v': 3
+                'v': 10
             }
         }
 
