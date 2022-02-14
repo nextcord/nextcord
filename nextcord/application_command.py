@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 import asyncio
+import typing
 from inspect import signature, Parameter
 from typing import (
     Any,
@@ -105,9 +106,9 @@ class SlashOption:
     ----------
     name: :class:`str`
         The name of the Option on Discords side. If left as None, it defaults to the parameter name.
-    description: :class:'str'
+    description: :class:`str`
         The description of the Option on Discords side. If left as None, it defaults to "".
-    required: :class:'bool'
+    required: :class:`bool`
         If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
     choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]], Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
         A list of choices that a user must choose.
@@ -190,7 +191,7 @@ class CommandOption(SlashOption):
         float: ApplicationCommandOptionType.number,
         Message: ApplicationCommandOptionType.integer  # TODO: This is janky, the user provides an ID or something? Ugh.
     }
-    """Maps Python typings to Discord Application Command typings."""
+    """Maps Python annotations/typehints to Discord Application Command type values."""
     def __init__(self, parameter: Parameter):
         super().__init__()
         self.parameter = parameter
@@ -225,8 +226,8 @@ class CommandOption(SlashOption):
             self.default = cmd_arg.default
 
         self.autocomplete_function: Optional[Callable] = MISSING
-
         self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
+
         if cmd_arg._verify:
             self.verify()
 
@@ -234,9 +235,9 @@ class CommandOption(SlashOption):
 
     @property
     def description(self) -> str:
-        """If no description is set, it returns the bare minimum that Discord demands."""
+        """If no description is set, it returns "No description provided" """
         if not self._description:
-            return " "
+            return "No description provided"
         else:
             return self._description
 
@@ -432,9 +433,11 @@ class ApplicationSubcommand:
 
     @property
     def description(self) -> str:
-        """Returns the description of the command. If the description is MISSING, it returns the bare minimum needed."""
-        if self._description is MISSING:  # Return Discords bare minimum for a command.
-            return " "
+        """
+        Returns the description of the command. If the description is MISSING, it returns "No description provided"
+        """
+        if self._description is MISSING:
+            return "No description provided"
         else:
             return self._description
 
@@ -496,7 +499,7 @@ class ApplicationSubcommand:
         return cls()._from_callback(callback)
 
     def _from_callback(self, callback: Callable) -> ApplicationSubcommand:
-        """Internal method for """
+        """Internal method for returning an ApplicationSubcommand object created from the given callback."""
         # TODO: Add kwarg support.
         # ret = ApplicationSubcommand()
         self.set_callback(callback)
@@ -504,13 +507,17 @@ class ApplicationSubcommand:
             self.name = self.callback.__name__
         first_arg = True
 
-        for value in signature(self.callback).parameters.values():
-            self_skip = value.name == "self"  # TODO: What kind of hardcoding is this, figure out a better way for self!
+        typehints = typing.get_type_hints(callback)
+        for name, param in signature(self.callback).parameters.items():
+            self_skip = name == "self"  # TODO: What kind of hardcoding is this, figure out a better way for self!
             if first_arg:
                 if not self_skip:
                     first_arg = False
             else:
-                arg = CommandOption(value)
+                if isinstance(param.annotation, str):
+                    # Thank you Disnake for the guidance to use this.
+                    param = param.replace(annotation=typehints.get(name, param.empty))
+                arg = CommandOption(param)
                 self.options[arg.name] = arg
         return self
 
@@ -787,7 +794,7 @@ class ApplicationCommand(ApplicationSubcommand):
         Type of application command this should be.
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
-    description: :class:'str'
+    description: :class:`str`
         Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
@@ -856,10 +863,12 @@ class ApplicationCommand(ApplicationSubcommand):
 
     @property
     def description(self) -> str:
-        """Returns the description of the command. If the description is MISSING, it returns the bare minimum needed."""
-        if self._description is MISSING:  # Return Discord's bare minimum for a command.
+        """
+        Returns the description of the command. If the description is MISSING, it returns "No description provided"
+        """
+        if self._description is MISSING:
             if self.type is ApplicationCommandType.chat_input:
-                return " "
+                return super().description
             elif self.type in (ApplicationCommandType.user, ApplicationCommandType.message):
                 return ""
         else:
@@ -1283,7 +1292,7 @@ def slash_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
-    description: :class:'str'
+    description: :class:`str`
         Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
@@ -1323,7 +1332,7 @@ def message_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
-    description: :class:'str'
+    description: :class:`str`
         Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
@@ -1363,7 +1372,7 @@ def user_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
-    description: :class:'str'
+    description: :class:`str`
         Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.

@@ -1978,7 +1978,7 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
+        description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
@@ -2010,7 +2010,7 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
+        description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
@@ -2042,7 +2042,7 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
+        description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.

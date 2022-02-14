@@ -8,7 +8,7 @@ class ApplicationCommandCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @nextcord.slash_command(guild_ids=[TESTING_GUILD_ID])
+    @nextcord.slash_command(guild_ids=[TESTING_GUILD_ID], description="Test command")
     async def my_slash_command(self, interaction: nextcord.Interaction):
         await interaction.response.send_message("This is a slash command in a cog!")
 

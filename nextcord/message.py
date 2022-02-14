@@ -885,9 +885,7 @@ class Message(Hashable):
 
     def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
         if thread:
-            self.thread = Thread(guild=self.guild, state=self._state, data=thread)
-        else:
-            self.thread = None
+            self.guild._store_thread(thread)
 
     def _rebind_cached_references(self, new_guild: Guild, new_channel: Union[TextChannel, Thread]) -> None:
         self.guild = new_guild
@@ -1009,7 +1007,7 @@ class Message(Hashable):
         return self.type not in (
             MessageType.default,
             MessageType.reply,
-            MessageType.application_command,
+            MessageType.chat_input_command,
             MessageType.thread_starter_message,
         )
 
