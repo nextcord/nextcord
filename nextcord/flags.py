@@ -878,14 +878,21 @@ class Intents(BaseFlags):
 
     @flag_value
     def message_content(self):
-        """:class:`bool`: Whether most message content related events are enabled.
+        """:class:`bool`: Whether most message content can be accessed.
 
-        This corresponds to the following attributes and classes in terms of cache:
+        Without this intent, the following attributes and classes may appear empty - either an
+        empty string or empty array depending on the data type:
 
         - :attr:`Message.content`
         - :attr:`Message.embeds`
         - :attr:`Message.attachments`
         - :attr:`Message.components`
+
+        A bot will always be able to get these attributes from:
+
+        - Messages the bot sends
+        - Messages the bot receives in DMs
+        - Messages in which the bot is mentioned
         """
         return 1 << 15
 
