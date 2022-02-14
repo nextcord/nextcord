@@ -16,7 +16,7 @@ async def echo(interaction: Interaction, arg: str = SlashOption(description="Mes
     await interaction.response.send_message(arg)
 
 
-@client.slash_command(guild_ids=[TESTING_GUILD_ID])
+@client.slash_command(guild_ids=[TESTING_GUILD_ID], description="Choose a number")
 async def enter_a_number(
     interaction: Interaction,
     number: int = SlashOption(description="Your number", required=False),
