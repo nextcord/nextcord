@@ -492,11 +492,12 @@ class Intents(BaseFlags):
     @classmethod
     def default(cls: Type[Intents]) -> Intents:
         """A factory method that creates a :class:`Intents` with everything enabled
-        except :attr:`presences` and :attr:`members`.
+        except :attr:`presences`, :attr:`members`, and :attr:`message_content`.
         """
         self = cls.all()
         self.presences = False
         self.members = False
+        self.message_content = False
         return self
 
     @flag_value
@@ -876,6 +877,19 @@ class Intents(BaseFlags):
         return 1 << 14
 
     @flag_value
+    def message_content(self):
+        """:class:`bool`: Whether most message content related events are enabled.
+
+        This corresponds to the following attributes and classes in terms of cache:
+
+        - :attr:`Message.content`
+        - :attr:`Message.embeds`
+        - :attr:`Message.attachments`
+        - :attr:`Message.components`
+        """
+        return 1 << 15
+
+    @flag_value
     def scheduled_events(self):
         """:class:`bool`: Whether scheduled events related events are enabled.
 
@@ -884,6 +898,8 @@ class Intents(BaseFlags):
         - :func:`on_guild_scheduled_event_create`
         - :func:`on_guild_scheduled_event_delete`
         - :func:`on_guild_scheduled_event_update`
+        - :func:`on_guild_scheduled_event_user_add`
+        - :func:`on_guild_scheduled_event_user_remove`
 
         This does not correspond to any attributes or classes in the library in terms of cache.
         """
@@ -1089,3 +1105,17 @@ class ApplicationFlags(BaseFlags):
     def embedded(self):
         """:class:`bool`: Returns ``True`` if the application is embedded within the Discord client."""
         return 1 << 17
+
+    @flag_value
+    def gateway_message_content(self):
+        """:class:`bool`: Returns ``True`` if the application is allowed to receive message content
+        over the gateway.
+        """
+        return 1 << 18
+
+    @flag_value
+    def gateway_message_content_limited(self):
+        """:class:`bool`: Returns ``True`` if the application is allowed to receive limited
+        message content over the gateway.
+        """
+        return 1 << 19
