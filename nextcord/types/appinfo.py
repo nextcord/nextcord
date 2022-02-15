@@ -35,7 +35,6 @@ class BaseAppInfo(TypedDict):
     name: str
     verify_key: str
     icon: Optional[str]
-    summary: str
     description: str
 
 class _AppInfoOptional(TypedDict, total=False):
