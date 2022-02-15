@@ -1335,7 +1335,7 @@ class Messageable:
             raise InvalidArgument('cannot pass both embed and embeds parameter to send()')
 
         if embed is not None:
-            embed = [embed.to_dict()]
+            embeds = [embed.to_dict()]
 
         elif embeds is not None:
             embeds = [embed.to_dict() for embed in embeds]
@@ -1383,7 +1383,6 @@ class Messageable:
                     allowed_mentions=allowed_mentions,
                     content=content,
                     tts=tts,
-                    embed=embed,
                     embeds=embeds,
                     nonce=nonce,
                     message_reference=reference,
