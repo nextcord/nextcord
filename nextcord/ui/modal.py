@@ -164,7 +164,7 @@ class Modal:
             return time.monotonic() + self.timeout
         return None
     
-    def add_item(self, item: Item) -> None:
+    def add_item(self, item: Item) -> Modal:
         """Adds an item to the modal.
 
         Parameters
@@ -189,7 +189,7 @@ class Modal:
         
         return self
 
-    def remove_item(self, item: Item) -> None:
+    def remove_item(self, item: Item) -> Modal:
         """Removes an item from the modal.
 
         Parameters
