@@ -1827,7 +1827,7 @@ class PartialMessage(Hashable):
             pass
         else:
             if embed is not None:
-                fields['embed'] = [embed.to_dict()]
+                fields['embeds'] = [embed.to_dict()]
 
         try:
             suppress: bool = fields.pop('suppress')
