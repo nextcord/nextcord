@@ -1264,6 +1264,7 @@ class Messageable:
             Indicates if the message should be sent using text-to-speech.
         embed: :class:`~nextcord.Embed`
             The rich embed for the content.
+            .. deprecated:: 2.0
         file: :class:`~nextcord.File`
             The file to upload.
         files: List[:class:`~nextcord.File`]
