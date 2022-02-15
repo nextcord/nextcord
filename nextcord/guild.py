@@ -1664,16 +1664,21 @@ class Guild(Hashable):
             return channel
 
         return [convert(d) for d in data]
-        
+
     async def active_threads(self) -> List[Thread]:
         """|coro|
+
         Returns a list of active :class:`Thread` that the client can access.
+
         This includes both private and public threads.
+
         .. versionadded:: 2.0
+
         Raises
         ------
         HTTPException
             The request to get the active threads failed.
+            
         Returns
         --------
         List[:class:`Thread`]
