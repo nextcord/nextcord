@@ -874,6 +874,17 @@ class Intents(BaseFlags):
         This does not correspond to any attributes or classes in the library in terms of cache.
         """
         return 1 << 14
+    
+    @flag_value
+    def message_content(self):
+        """:class:`bool`: Whether you can receive messages content.
+
+        This corresponds to the following attributes:
+        - :class:`Message.content`
+
+        This does not correspond to any attributes or classes in the library in terms of cache.
+        """
+        return 1 << 15
 
     @flag_value
     def scheduled_events(self):
