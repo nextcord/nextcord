@@ -100,7 +100,6 @@ Quick Example
 
     from nextcord.ext import commands
 
-
     bot = commands.Bot(command_prefix='$')
 
     @bot.command()
@@ -119,4 +118,5 @@ Links
 
 - `Documentation <https://nextcord.readthedocs.io/en/latest/>`_
 - `Official Discord Server <https://discord.gg/ZebatWssCB>`_
+- `PyPI <https://pypi.python.org/pypi/nextcord>`_
 - `Discord API <https://discord.gg/discord-api>`_
