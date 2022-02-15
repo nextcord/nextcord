@@ -1678,7 +1678,7 @@ class Guild(Hashable):
         ------
         HTTPException
             The request to get the active threads failed.
-            
+
         Returns
         --------
         List[:class:`Thread`]
