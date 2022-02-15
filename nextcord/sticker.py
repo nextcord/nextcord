@@ -510,7 +510,7 @@ class GuildSticker(Sticker):
         HTTPException
             An error occurred deleting the sticker.
         """
-        await self._state.http.delete_guild_sticker(self.guild_id, self.id, reason)
+        await self._state.http.delete_guild_sticker(self.guild_id, self.id, reason=reason)
 
 
 def _sticker_factory(sticker_type: Literal[1, 2]) -> Tuple[Type[Union[StandardSticker, GuildSticker, Sticker]], StickerType]:
