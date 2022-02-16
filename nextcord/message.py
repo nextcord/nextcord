@@ -1235,8 +1235,7 @@ class Message(Hashable):
         attachments: List[:class:`Attachment`]
             A list of attachments to keep in the message. If ``[]`` is passed
             then all attachments are removed.
-            .. note:: 
-
+            .. note::
                 Due to recent API change, existing attachments must be specified when editing messages with new attachments. Any attachments not specified will be removed and replaced with the specified list.
         suppress: :class:`bool`
             Whether to suppress embeds for the message. This removes
