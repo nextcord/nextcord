@@ -713,6 +713,9 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
             You do not have permissions to create a thread.
         HTTPException
             Starting the thread failed.
+            .. note:: 
+
+                This can include if the guild isn't level two boosting yet and you are trying to create a private thread.
 
         Returns
         --------
@@ -739,6 +742,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
                 auto_archive_duration=auto_archive_duration or self.default_auto_archive_duration,
                 reason=reason,
             )
+
 
         return Thread(guild=self.guild, state=self._state, data=data)
 
