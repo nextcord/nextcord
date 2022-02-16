@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -213,7 +214,7 @@ class DiscordClientWebSocketResponse(aiohttp.ClientWebSocketResponse):
         return await super().close(code=code, message=message)
 
 class DiscordWebSocket:
-    """Implements a WebSocket for Discord's gateway v6.
+    """Implements a WebSocket for Discord's gateway.
 
     Attributes
     -----------
@@ -381,8 +382,7 @@ class DiscordWebSocket:
                     '$referring_domain': ''
                 },
                 'compress': True,
-                'large_threshold': 250,
-                'v': 3
+                'large_threshold': 250
             }
         }
 
