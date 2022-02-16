@@ -214,7 +214,7 @@ class DiscordClientWebSocketResponse(aiohttp.ClientWebSocketResponse):
         return await super().close(code=code, message=message)
 
 class DiscordWebSocket:
-    """Implements a WebSocket for Discord's gateway.
+    """Implements a WebSocket for Discord's gateway v6.
 
     Attributes
     -----------
@@ -382,7 +382,8 @@ class DiscordWebSocket:
                     '$referring_domain': ''
                 },
                 'compress': True,
-                'large_threshold': 250
+                'large_threshold': 250,
+                'v': 3
             }
         }
 
