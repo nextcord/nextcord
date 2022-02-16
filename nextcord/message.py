@@ -518,7 +518,7 @@ class Message(Hashable):
         A :class:`Member` that sent the message. If :attr:`channel` is a
         private channel or the user has the left the guild, then it is a :class:`User` instead.
     content: Optional[:class:`str`]
-        The actual contents of the message.
+        The actual contents of the message. Can be ``None`` if ``Intents.messages_content`` is not enabled.
     nonce: Optional[Union[:class:`str`, :class:`int`]]
         The value used by the discord guild and the client to verify that the message is successfully sent.
         This is not stored long term within Discord's servers and is only used ephemerally.
