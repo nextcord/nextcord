@@ -714,7 +714,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         HTTPException
             Starting the thread failed.
 
-            .. note:: 
+            .. note::
                 
                 This can include if the guild isn't at least level two boosting yet and you are trying to create a private thread.
 
