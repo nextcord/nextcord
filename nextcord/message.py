@@ -672,7 +672,7 @@ class Message(Hashable):
         self.flags: MessageFlags = MessageFlags._from_value(data.get('flags', 0))
         self.mention_everyone: bool = data['mention_everyone']
         self.tts: bool = data['tts']
-        self.content: Optional[str] = data['content']
+        self.content: Optional[str] = data.get('content')
         self.nonce: Optional[Union[int, str]] = data.get('nonce')
         self.stickers: List[StickerItem] = [StickerItem(data=d, state=state) for d in data.get('sticker_items', [])]
         self.components: List[Component] = [_component_factory(d) for d in data.get('components', [])]
