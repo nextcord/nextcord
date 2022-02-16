@@ -711,11 +711,7 @@ class HTTPClient:
 
     def kick(self, user_id: Snowflake, guild_id: Snowflake, reason: Optional[str] = None) -> Response[None]:
         r = Route('DELETE', '/guilds/{guild_id}/members/{user_id}', guild_id=guild_id, user_id=user_id)
-        if reason:
-            # thanks aiohttp
-            r.url = f'{r.url}?reason={_uriquote(reason)}'
-
-        return self.request(r)
+        return self.request(r, reason=reason)
 
     def ban(
         self,
