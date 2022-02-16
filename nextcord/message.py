@@ -517,7 +517,7 @@ class Message(Hashable):
     author: Union[:class:`Member`, :class:`abc.User`]
         A :class:`Member` that sent the message. If :attr:`channel` is a
         private channel or the user has the left the guild, then it is a :class:`User` instead.
-    content: :class:`str`
+    content: Optional[:class:`str`]
         The actual contents of the message.
     nonce: Optional[Union[:class:`str`, :class:`int`]]
         The value used by the discord guild and the client to verify that the message is successfully sent.
@@ -672,7 +672,7 @@ class Message(Hashable):
         self.flags: MessageFlags = MessageFlags._from_value(data.get('flags', 0))
         self.mention_everyone: bool = data['mention_everyone']
         self.tts: bool = data['tts']
-        self.content: str = data['content']
+        self.content: Optional[str] = data['content']
         self.nonce: Optional[Union[int, str]] = data.get('nonce')
         self.stickers: List[StickerItem] = [StickerItem(data=d, state=state) for d in data.get('sticker_items', [])]
         self.components: List[Component] = [_component_factory(d) for d in data.get('components', [])]
