@@ -713,6 +713,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
             You do not have permissions to create a thread.
         HTTPException
             Starting the thread failed.
+            
             .. note:: 
 
                 This can include if the guild isn't at least level two boosting yet and you are trying to create a private thread.
