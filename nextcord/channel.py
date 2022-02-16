@@ -711,8 +711,6 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         reason: :class:`str`
             The reason for creating a new thread. Shows up on the audit log.
 
-        
-
         Raises
         -------
         Forbidden
