@@ -837,8 +837,6 @@ class InteractionResponse:
             raise TypeError('Files parameter must be a list of type File')
 
         if attachments is not MISSING:
-            if file is not MISSING or files is not MISSING:
-                raise TypeError('Cannot mix attachments and file/files keyword arguments')
             payload['attachments'] = [a.to_dict() for a in attachments]
 
         if view is not MISSING:
