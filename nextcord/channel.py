@@ -743,7 +743,6 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
                 reason=reason,
             )
 
-
         return Thread(guild=self.guild, state=self._state, data=data)
 
     def archived_threads(
