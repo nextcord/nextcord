@@ -707,6 +707,10 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         reason: :class:`str`
             The reason for creating a new thread. Shows up on the audit log.
 
+        .. note::
+
+            This will raise :exc:`HTTPException` if the guild isn't at least level two boosting yet and you are trying to create a private thread.
+
         Raises
         -------
         Forbidden
@@ -714,9 +718,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         HTTPException
             Starting the thread failed.
 
-            .. note::
-                
-                This can include if the guild isn't at least level two boosting yet and you are trying to create a private thread.
+            
 
         Returns
         --------
