@@ -50,7 +50,7 @@ adapter arguments of :meth:`Webhook.partial` and :meth:`Webhook.from_url` are re
         )
     webhook.send("Hello from nextcord!")
     async with aiohttp.ClientSession() as session:
-        webhook = discord.Webhook.partial(
+        webhook = nextcord.Webhook.partial(
                 id,
                 token,
                 session=session
