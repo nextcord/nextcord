@@ -30,7 +30,7 @@ Overview
 - Many method arguments now reject ``None``.
 - Many arguments are now specified as positional-only or keyword-only; e.g. :func:`oauth_url` now takes keyword-only arguments, and methods starting with ``get_`` or ``fetch_`` take positional-only arguments.
 - ``AppInfo.summary`` has been removed.
-- Due to recent API change, existing attachments must be specified when editing messages with new attachments. Any attachments not specified will be removed and replaced with the specified list.
+- Due to a recent API change, existing attachments must be specified when editing messages with new attachments. Any attachments not specified will be removed and replaced with the specified list.
 
 Changes
 -----------------------
