@@ -718,8 +718,6 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         HTTPException
             Starting the thread failed.
 
-            
-
         Returns
         --------
         :class:`Thread`
