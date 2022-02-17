@@ -124,7 +124,7 @@ _default = _DefaultRepr()
 class BotBase(GroupMixin):
     def __init__(self, command_prefix=MISSING, help_command=_default, description=None, **options):
         super().__init__(**options)
-        self.command_prefix = command_prefix
+        self.command_prefix = command_prefix if command_prefix is not MISSING else tuple()
         self.extra_events: Dict[str, List[CoroFunc]] = {}
         self.__cogs: Dict[str, Cog] = {}
         self.__extensions: Dict[str, types.ModuleType] = {}
@@ -945,9 +945,6 @@ class BotBase(GroupMixin):
         if callable(prefix):
             ret = await nextcord.utils.maybe_coroutine(prefix, self, message)
 
-        if prefix is MISSING:
-            return []
-
         if not isinstance(ret, str):
             try:
                 ret = list(ret)
@@ -959,9 +956,6 @@ class BotBase(GroupMixin):
 
                 raise TypeError("command_prefix must be plain string, iterable of strings, or callable "
                                 f"returning either of these, not {ret.__class__.__name__}")
-
-            if not ret:
-                raise ValueError("Iterable command_prefix must contain at least one prefix")
 
         return ret
 
@@ -1127,8 +1121,7 @@ class Bot(BotBase, nextcord.Client):
         The command prefix could also be an iterable of strings indicating that
         multiple checks for the prefix should be used and the first one to
         match will be the invocation prefix. You can get this prefix via
-        :attr:`.Context.prefix`. To avoid confusion empty iterables are not
-        allowed.
+        :attr:`.Context.prefix`.
 
         .. note::
 
