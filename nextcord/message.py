@@ -1555,6 +1555,10 @@ class Message(Hashable):
 
         .. versionadded:: 2.0
 
+        .. note::
+
+            This will raise :exc:`HTTPException` if the guild features isn't contain ``PRIVATE_THREADS`` and you are trying to create a private thread.
+
         Parameters
         -----------
         name: :class:`str`
