@@ -691,7 +691,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         .. note::
 
-            This will raise :exc:`HTTPException` if the guild features does not include ``PRIVATE_THREADS`` and you are trying to create a private thread.
+            This will raise :exc:`HTTPException` if the guild features does not have the feature ``PRIVATE_THREADS`` and you are trying to create a private thread.
 
         Parameters
         -----------
