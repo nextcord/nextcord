@@ -1557,7 +1557,7 @@ class Message(Hashable):
 
         .. note::
 
-            This will raise :exc:`HTTPException` if the guild features isn't contain ``PRIVATE_THREADS`` and you are trying to create a private thread.
+            This will raise :exc:`HTTPException` if the guild features does not include ``PRIVATE_THREADS`` and you are trying to create a private thread.
 
         Parameters
         -----------
