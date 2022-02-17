@@ -1233,8 +1233,7 @@ class Message(Hashable):
 
             .. versionadded:: 2.0
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message.
 
             .. note::
 
