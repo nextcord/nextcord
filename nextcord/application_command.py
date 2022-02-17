@@ -45,7 +45,7 @@ from .errors import InvalidCommandType
 from .interactions import Interaction
 from .guild import Guild
 from .member import Member
-from .message import Message
+from .message import Attachment, Message
 from .role import Role
 from .user import User
 from .utils import MISSING
@@ -189,7 +189,8 @@ class CommandOption(SlashOption):
         # TODO: Is this in the library at all currently? This includes Users and Roles.
         # Mentionable: CommandOptionType.mentionable
         float: ApplicationCommandOptionType.number,
-        Message: ApplicationCommandOptionType.integer  # TODO: This is janky, the user provides an ID or something? Ugh.
+        Message: ApplicationCommandOptionType.integer,  # TODO: This is janky, the user provides an ID or something? Ugh.
+        Attachment: ApplicationCommandOptionType.attachment
     }
     """Maps Python annotations/typehints to Discord Application Command type values."""
     def __init__(self, parameter: Parameter):
@@ -325,6 +326,9 @@ class CommandOption(SlashOption):
             return float(argument)
         elif self.type is Message:  # TODO: This is mostly a workaround for Message commands, switch to handles below.
             return state._get_message(int(argument))
+        elif self.type is ApplicationCommandOptionType.attachment:
+            resolved_attachment_data: dict = interaction.data["resolved"]["attachments"][argument]
+            return Attachment(data=resolved_attachment_data, state=state)
         return argument
 
     async def handle_message_argument(self, state: ConnectionState, argument: Any, interaction: Interaction):
