@@ -839,7 +839,7 @@ class ApplicationSubcommand:
         interaction._set_application_command(app_cmd)
 
         try:
-            can_run = await app_cmd.application_can_run(interaction)
+            can_run = await app_cmd.application_command_can_run(interaction)
         except Exception as error:
             state.dispatch('application_command_error', interaction, error)
             await app_cmd.invoke_error(interaction, error)
@@ -941,7 +941,7 @@ class ApplicationSubcommand:
             else:
                 await self.on_error(interaction, error)
 
-    async def application_can_run(self, interaction: Interaction) -> bool:
+    async def application_command_can_run(self, interaction: Interaction) -> bool:
         """|coro|
 
         Checks if the command can be executed by checking all the predicates
