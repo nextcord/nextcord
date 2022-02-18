@@ -1074,26 +1074,27 @@ def parse_docstring(func: Callable, max_length: int = MISSING) -> Dict[str, Any]
             description = _trim_text(description, max_length)
 
         # Extract the arguments
-        # Look only at the lines that are indented
+        # For Google-style, look only at the lines that are indented
         section_lines = inspect.cleandoc("\n".join(line for line in docstring.splitlines() if line.startswith(("\t", "  "))))
-        docstring_styles = {
-            "google": _GOOGLE_DOCSTRING_ARG_REGEX.finditer(section_lines),
-            "numpy": _NUMPY_DOCSTRING_ARG_REGEX.finditer(docstring),
-            "rst": _RST_DOCSTRING_ARG_REGEX.finditer(docstring),
-        }
+        docstring_styles = [
+            _GOOGLE_DOCSTRING_ARG_REGEX.finditer(section_lines),
+            _NUMPY_DOCSTRING_ARG_REGEX.finditer(docstring),
+            _SPHINX_DOCSTRING_ARG_REGEX.finditer(docstring),
+            _RST_SIMPLIFIED_DOCSTRING_ARG_REGEX.finditer(docstring),
+        ]
 
         # choose the style with the largest number of arguments matched
-        actual_args = inspect.signature(func).parameters.keys()
         matched_args = []
-        for style, matches in docstring_styles.items():
-            style_matched_args = [match.groupdict() for match in matches if match.group("name") in actual_args]
+        actual_args = inspect.signature(func).parameters.keys()
+        for matches in docstring_styles:
+            style_matched_args = [match for match in matches if match.group("name") in actual_args]
             if len(style_matched_args) > len(matched_args):
                 matched_args = style_matched_args
 
         for arg in matched_args:
-            arg_description = re.sub(r"\n\s*", " ", arg["description"]).strip()
+            arg_description = re.sub(r"\n\s*", " ", arg.group("description")).strip()
             if max_length is not MISSING:
                 arg_description = _trim_text(arg_description, max_length)
-            args[arg["name"]] = arg_description
+            args[arg.group("name")] = arg_description
 
     return {"description": description, "args": args}
