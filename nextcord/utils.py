@@ -1023,7 +1023,8 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
 _FUNCTION_DESCRIPTION_REGEX = re.compile("\A(.|\n)+?(?=\Z|\n\n)", re.MULTILINE)
 _NUMPY_DOCSTRING_ARG_REGEX = re.compile("(?P<name>[^\s:]+)\s+:\s+(?P<type>.+)?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
 _GOOGLE_DOCSTRING_ARG_REGEX = re.compile("(?P<name>[^\s:]+)\s*(?P<type>\([^\)]+\))?\s*:[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
-_RST_DOCSTRING_ARG_REGEX = re.compile("(?P<name>[^\s:]+):\s+(?P<type>.+)?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
+_SPHINX_DOCSTRING_ARG_REGEX = re.compile(":param (?P<name>[^\s:]+):\s+(?P<description>(.|\n)+?(\Z|\n(?=([\S\n]))))", re.MULTILINE)
+_RST_SIMPLIFIED_DOCSTRING_ARG_REGEX = re.compile("(?<!:param )(?P<name>[^\s:]+):\s+(?P<type>.+)?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
 
 def _trim_text(text: str, max_chars: int) -> str:
     """Trims a string and adds an ellpsis if it exceeds the maximum length.
