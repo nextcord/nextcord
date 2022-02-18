@@ -793,8 +793,7 @@ class InteractionResponse:
         HTTPException
             Editing the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
-            or ``attachments`` and ``file/files``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         InteractionResponded
             This interaction has already been responded to before.
         """
@@ -837,8 +836,6 @@ class InteractionResponse:
             raise TypeError('Files parameter must be a list of type File')
 
         if attachments is not MISSING:
-            if file is not MISSING or files is not MISSING:
-                raise TypeError('Cannot mix attachments and file/files keyword arguments')
             payload['attachments'] = [a.to_dict() for a in attachments]
 
         if view is not MISSING:
