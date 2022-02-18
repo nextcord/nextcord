@@ -107,9 +107,10 @@ class SlashOption:
     Parameters
     ----------
     name: :class:`str`
-        The name of the Option on Discords side. If left as None, it defaults to the parameter name.
+        The name of the Option. If left as MISSING, it defaults to the parameter name.
     description: :class:`str`
-        The description of the Option on Discords side. If left as None, it defaults to "No description provided".
+        The description of the Option. If left as MISSING, the docstring will be used. If no docstring is found for the
+        parameter, it defaults to "No description provided".
     required: :class:`bool`
         If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
     choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]], Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
@@ -404,8 +405,8 @@ class ApplicationSubcommand:
     name: :class:`str`
         The name of the subcommand that users will see. If not set, the name of the callback will be used.
     description: :class:`str`
-        The description of the subcommand that users will see. If not set, it will be the minimum value that
-        Discord supports.
+        The description of the subcommand that users will see. If left as MISSING, the docstring will be used.
+        If no docstring is found for the subcommand callback, it defaults to "No description provided".
     """
     def __init__(
         self,
@@ -776,8 +777,8 @@ class ApplicationSubcommand:
         name: :class:`str`
             The name of the subcommand that users will see. If not set, the name of the callback will be used.
         description: :class:`str`
-            The description of the subcommand that users will see. If not set, it will be the minimum value that
-            Discord supports.
+            The description of the subcommand that users will see. If left as MISSING, the docstring will be used.
+            If no docstring is found for the subcommand callback, it defaults to "No description provided".
         """
         def decorator(func: Callable):
             result = ApplicationSubcommand(
@@ -805,7 +806,8 @@ class ApplicationCommand(ApplicationSubcommand):
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
     description: :class:`str`
-        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+        Description of the command that users will see. If left as MISSING, the docstring will be used.
+        If no docstring is found for the command callback, it defaults to "No description provided".
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     default_permission: :class:`bool`
@@ -876,13 +878,9 @@ class ApplicationCommand(ApplicationSubcommand):
         """
         Returns the description of the command. If the description is MISSING, it returns "No description provided"
         """
-        if self._description is MISSING:
-            if self.type is ApplicationCommandType.chat_input:
-                return super().description
-            elif self.type in (ApplicationCommandType.user, ApplicationCommandType.message):
-                return ""
-        else:
-            return self._description
+        if self.type in (ApplicationCommandType.user, ApplicationCommandType.message):
+            return ""
+        return super().description
 
     @property
     def global_payload(self) -> dict:
@@ -1269,8 +1267,8 @@ class ApplicationCommand(ApplicationSubcommand):
         name: :class:`str`
             The name of the subcommand that users will see. If not set, the name of the callback will be used.
         description: :class:`str`
-            The description of the subcommand that users will see. If not set, it will be the minimum value that
-            Discord supports.
+            The description of the subcommand that users will see. If left as MISSING, the docstring will be used.
+            If no docstring is found for the subcommand callback, it defaults to "No description provided".
         """
         if self.type != ApplicationCommandType.chat_input:  # At this time, non-slash commands cannot have Subcommands.
             raise TypeError(f"{self.error_name} {self.type} cannot have subcommands.")
@@ -1303,7 +1301,8 @@ def slash_command(
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
     description: :class:`str`
-        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+        Description of the command that users will see. If left as MISSING, the docstring will be used.
+        If no docstring is found for the command callback, it defaults to "No description provided".
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     default_permission: :class:`bool`
@@ -1330,7 +1329,6 @@ def slash_command(
 
 def message_command(
         name: str = MISSING,
-        description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
         default_permission: bool = MISSING,
         force_global: bool = False
@@ -1342,8 +1340,6 @@ def message_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
-    description: :class:`str`
-        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     default_permission: :class:`bool`
@@ -1359,7 +1355,6 @@ def message_command(
             callback=func,
             cmd_type=ApplicationCommandType.message,
             name=name,
-            description=description,
             guild_ids=guild_ids,
             default_permission=default_permission,
             force_global=force_global
@@ -1370,7 +1365,6 @@ def message_command(
 
 def user_command(
         name: str = MISSING,
-        description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
         default_permission: bool = MISSING,
         force_global: bool = False
@@ -1382,8 +1376,6 @@ def user_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
-    description: :class:`str`
-        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     default_permission: :class:`bool`
@@ -1399,7 +1391,7 @@ def user_command(
             callback=func,
             cmd_type=ApplicationCommandType.user,
             name=name,
-            description=description, guild_ids=guild_ids,
+            guild_ids=guild_ids,
             default_permission=default_permission,
             force_global=force_global
         )

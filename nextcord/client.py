@@ -1967,7 +1967,6 @@ class Client:
     def user_command(
             self,
             name: str = MISSING,
-            description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
             default_permission: bool = MISSING,
             force_global: bool = False
@@ -1978,8 +1977,6 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:`str`
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
         default_permission: :class:`bool`
@@ -1989,7 +1986,7 @@ class Client:
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
-            result = user_command(name=name, description=description, guild_ids=guild_ids,
+            result = user_command(name=name, guild_ids=guild_ids,
                                   default_permission=default_permission, force_global=force_global)(func)
             self._application_commands_to_add.add(result)
             return result
@@ -1999,7 +1996,6 @@ class Client:
     def message_command(
             self,
             name: str = MISSING,
-            description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
             default_permission: bool = MISSING,
             force_global: bool = False
@@ -2010,8 +2006,6 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:`str`
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
         default_permission: :class:`bool`
@@ -2021,7 +2015,7 @@ class Client:
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
-            result = message_command(name=name, description=description, guild_ids=guild_ids,
+            result = message_command(name=name, guild_ids=guild_ids,
                                      default_permission=default_permission, force_global=force_global)(func)
             self._application_commands_to_add.add(result)
             return result
@@ -2043,7 +2037,8 @@ class Client:
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
         description: :class:`str`
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+            Description of the command that users will see. If not set, the docstring will be used.
+            If no docstring is found for the command callback, it defaults to "No description provided".
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
         default_permission: :class:`bool`
