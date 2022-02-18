@@ -666,7 +666,7 @@ class BotBase(GroupMixin):
                 if _is_submodule(name, module):
                     del sys.modules[module]
 
-    def _load_from_module_spec(
+    async def _load_from_module_spec(
             self,
             spec: importlib.machinery.ModuleSpec,
             key: str,
@@ -698,10 +698,11 @@ class BotBase(GroupMixin):
 
         extras = extras or {}
         try:
+            running_loop = asyncio.get_running_loop()
             if inspect.iscoroutinefunction(setup):
-                asyncio.run(setup(self, **extras))
+                await setup(self, **extras)
             else:
-                setup(self, **extras)
+                await running_loop.run_in_executor(setup(self, **extras))
         except Exception as e:
             del sys.modules[key]
             self._remove_module_references(lib.__name__)
@@ -716,7 +717,7 @@ class BotBase(GroupMixin):
         except ImportError:
             raise errors.ExtensionNotFound(name)
 
-    def load_extension(
+    async def load_extension(
             self,
             name: str,
             *,
@@ -793,7 +794,7 @@ class BotBase(GroupMixin):
         if spec is None:
             raise errors.ExtensionNotFound(name)
 
-        self._load_from_module_spec(spec, name, extras=extras)
+        await self._load_from_module_spec(spec, name, extras=extras)
 
     def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
         """Unloads an extension.
