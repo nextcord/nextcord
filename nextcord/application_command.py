@@ -107,9 +107,9 @@ class SlashOption:
     Parameters
     ----------
     name: :class:`str`
-        The name of the Option. If left as MISSING, it defaults to the parameter name.
+        The name of the Option that users will see. If left as MISSING, it defaults to the parameter name.
     description: :class:`str`
-        The description of the Option. If left as MISSING, the docstring will be used. If no docstring is found for the
+        The description of the Option that users will see. If left as MISSING, the docstring will be used. If no docstring is found for the
         parameter, it defaults to "No description provided".
     required: :class:`bool`
         If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)

@@ -1055,13 +1055,14 @@ def parse_docstring(func: Callable, max_chars: int = MISSING) -> Dict[str, Any]:
     func: :class:`Callable`
         The function to parse the docstring of.
     max_chars: :class:`int`
-        The maximum number of characters to allow in the description.
+        The maximum number of characters to allow in the descriptions.
         If MISSING, then there is no maximum.
 
     Returns
     --------
     :class:`Dict[str, Any]`
-        The parsed docstring including the function description and arguments.
+        The parsed docstring including the function description and
+        descriptions of arguments.
     """
     description = ""
     args = {}
