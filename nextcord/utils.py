@@ -1034,7 +1034,7 @@ _GOOGLE_DOCSTRING_ARG_REGEX = re.compile(
 )
 
 _SPHINX_DOCSTRING_ARG_REGEX = re.compile(
-    rf"^:param {_ARG_NAME_SUBREGEX}:[ \t]+{_ARG_DESCRIPTION_SUBREGEX}[ \t]*(?::type {_ARG_TYPE_SUBREGEX}:)?",
+    rf"^:param {_ARG_NAME_SUBREGEX}:[ \t]+{_ARG_DESCRIPTION_SUBREGEX}[ \t]*(?::type [^\s:]+:[ \t]+{_ARG_TYPE_SUBREGEX})?",
     re.MULTILINE
 )
 
