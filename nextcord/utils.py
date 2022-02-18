@@ -1074,21 +1074,15 @@ def parse_docstring(func: Callable, max_length: int = MISSING) -> Dict[str, Any]
             description = _trim_text(description, max_length)
 
         # Extract the arguments
-
-        # Numpy Style
-        for arg in _NUMPY_DOCSTRING_ARG_REGEX.finditer(docstring):
-            arg_description = re.sub(r"\n\s*", " ", arg.group("description")).strip()
-            if max_length is not MISSING:
-                arg_description = _trim_text(arg_description, max_length)
-            args[arg.group("name")] = arg_description
-
-        # Google Style
         # Look only at the lines that are indented
         section_lines = inspect.cleandoc("\n".join(line for line in docstring.splitlines() if line.startswith(("\t", "  "))))
-        for arg in _GOOGLE_DOCSTRING_ARG_REGEX.finditer(section_lines):
-            arg_description = re.sub(r"\n\s*", " ", arg.group("description")).strip()
+        google_style_matches = [arg.groupdict() for arg in _GOOGLE_DOCSTRING_ARG_REGEX.finditer(section_lines)]
+        numpy_style_matches = [arg.groupdict() for arg in _NUMPY_DOCSTRING_ARG_REGEX.finditer(docstring)]
+
+        for arg in google_style_matches + numpy_style_matches:
+            arg_description = re.sub(r"\n\s*", " ", arg["description"]).strip()
             if max_length is not MISSING:
                 arg_description = _trim_text(arg_description, max_length)
-            args[arg.group("name")] = arg_description
+            args[arg["name"]] = arg_description
 
     return {"description": description, "args": args}
