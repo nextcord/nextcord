@@ -1021,10 +1021,10 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
 
 
 _FUNCTION_DESCRIPTION_REGEX = re.compile("\A(.|\n)+?(?=\Z|\n\n)", re.MULTILINE)
-_NUMPY_DOCSTRING_ARG_REGEX = re.compile("(?P<name>[^\s:]+)\s+:\s+(?P<type>.+)?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
-_GOOGLE_DOCSTRING_ARG_REGEX = re.compile("(?P<name>[^\s:]+)\s*(?P<type>\([^\)]+\))?\s*:[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
-_SPHINX_DOCSTRING_ARG_REGEX = re.compile(":param (?P<name>[^\s:]+):\s+(?P<description>(.|\n)+?(\Z|\n(?=([\S\n]))))", re.MULTILINE)
-_RST_SIMPLIFIED_DOCSTRING_ARG_REGEX = re.compile("(?<!:param )(?P<name>[^\s:]+):\s+(?P<type>.+)?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
+_NUMPY_DOCSTRING_ARG_REGEX = re.compile("^(?P<name>[^\s:]+)(?:\s+:\s+(?P<type>.+))?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
+_GOOGLE_DOCSTRING_ARG_REGEX = re.compile("^(?P<name>[^\s:]+)\s*(?P<type>\([^\)]+\))?\s*:[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
+_SPHINX_DOCSTRING_ARG_REGEX = re.compile("^:param (?P<name>[^\s:]+):\s+(?P<description>(.|\n)+?(\Z|\n(?=([\S\n]))))", re.MULTILINE)
+_RST_SIMPLIFIED_DOCSTRING_ARG_REGEX = re.compile("^(?<!:param )(?P<name>[^\s:]+):\s+(?P<type>.+)?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))", re.MULTILINE)
 
 def _trim_text(text: str, max_chars: int) -> str:
     """Trims a string and adds an ellpsis if it exceeds the maximum length.
@@ -1047,14 +1047,14 @@ def _trim_text(text: str, max_chars: int) -> str:
     return text
 
 
-def parse_docstring(func: Callable, max_length: int = MISSING) -> Dict[str, Any]:
+def parse_docstring(func: Callable, max_chars: int = MISSING) -> Dict[str, Any]:
     """Parses the docstring of a function into a dictionary.
 
     Parameters
     ------------
     func: :class:`Callable`
         The function to parse the docstring of.
-    max_length: :class:`int`
+    max_chars: :class:`int`
         The maximum number of characters to allow in the description.
         If MISSING, then there is no maximum.
 
@@ -1071,8 +1071,8 @@ def parse_docstring(func: Callable, max_length: int = MISSING) -> Dict[str, Any]
         description_match = _FUNCTION_DESCRIPTION_REGEX.search(docstring)
         if description_match:
             description = re.sub(r"\n\s*", " ", description_match.group(0)).strip()
-        if max_length is not MISSING:
-            description = _trim_text(description, max_length)
+        if max_chars is not MISSING:
+            description = _trim_text(description, max_chars)
 
         # Extract the arguments
         # For Google-style, look only at the lines that are indented
@@ -1094,8 +1094,8 @@ def parse_docstring(func: Callable, max_length: int = MISSING) -> Dict[str, Any]
 
         for arg in matched_args:
             arg_description = re.sub(r"\n\s*", " ", arg.group("description")).strip()
-            if max_length is not MISSING:
-                arg_description = _trim_text(arg_description, max_length)
+            if max_chars is not MISSING:
+                arg_description = _trim_text(arg_description, max_chars)
             args[arg.group("name")] = arg_description
 
     return {"description": description, "args": args}
