@@ -1023,7 +1023,7 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
 _FUNCTION_DESCRIPTION_REGEX = re.compile("\A(.|\n)+?(?=\Z|\n\n)", re.MULTILINE)
 _NUMPY_DOCSTRING_ARG_REGEX = re.compile("(?P<name>[^\s:]+)\s+:\s+(?P<type>.+)?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\w\n])))", re.MULTILINE)
 _GOOGLE_DOCSTRING_ARG_REGEX = re.compile("(?P<name>[^\s:]+)\s*(?P<type>\([^\)]+\))?\s*:[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\w\n])))", re.MULTILINE)
-
+_RST_DOCSTRING_ARG_REGEX = re.compile("(?P<name>[^\s:]+):\s+(?P<type>.+)?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\w\n])))", re.MULTILINE)
 
 def _trim_text(text: str, max_chars: int) -> str:
     """Trims a string and adds an ellpsis if it exceeds the maximum length.
@@ -1078,8 +1078,13 @@ def parse_docstring(func: Callable, max_length: int = MISSING) -> Dict[str, Any]
         section_lines = inspect.cleandoc("\n".join(line for line in docstring.splitlines() if line.startswith(("\t", "  "))))
         google_style_matches = [arg.groupdict() for arg in _GOOGLE_DOCSTRING_ARG_REGEX.finditer(section_lines)]
         numpy_style_matches = [arg.groupdict() for arg in _NUMPY_DOCSTRING_ARG_REGEX.finditer(docstring)]
+        rst_style_matches = [arg.groupdict() for arg in _RST_DOCSTRING_ARG_REGEX.finditer(docstring)]
 
-        for arg in google_style_matches + numpy_style_matches:
+        # choose the style with the largest number of arguments matched
+        matches = google_style_matches if len(google_style_matches) > len(numpy_style_matches) else numpy_style_matches
+        matches = matches if len(matches) > len(rst_style_matches) else rst_style_matches
+
+        for arg in matches:
             arg_description = re.sub(r"\n\s*", " ", arg["description"]).strip()
             if max_length is not MISSING:
                 arg_description = _trim_text(arg_description, max_length)
