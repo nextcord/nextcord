@@ -564,7 +564,7 @@ def application_command_before_invoke(coro) -> Callable[[T], T]:
             @checks.application_command_before_invoke(record_usage)
             @slash_command()
             async def when(self, interaction: Interaction): # Output: <User> used when at <Time>
-                await interaction.response.send_message(f'and i have existed since {interaction.bot.user.created_at}')
+                await interaction.response.send_message(f'and i have existed since {interaction.client.user.created_at}')
 
             @slash_command()
             async def where(self, interaction: Interaction): # Output: <Nothing>

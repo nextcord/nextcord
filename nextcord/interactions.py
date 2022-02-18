@@ -219,14 +219,9 @@ class Interaction:
                 pass
 
     @property
-    def client(self):
-        """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``bot``."""
+    def client(self) -> Client:
+        """:class:`Client`: The client that handled the interaction."""
         return self._state._get_client()
-    
-    @property
-    def bot(self):
-        """:class:`Client`: Returns the client that handled the interaction. An alias exists under ``client``."""
-        return self.client
 
     @property
     def guild(self) -> Optional[Guild]:
