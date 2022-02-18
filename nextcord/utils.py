@@ -1020,18 +1020,27 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
     return f'<t:{int(dt.timestamp())}:{style}>'
 
 
-_FUNCTION_DESCRIPTION_REGEX = re.compile(r"\A(.|\n)+?(?=\Z|\n\n)", re.MULTILINE)
+_FUNCTION_DESCRIPTION_REGEX = re.compile(r"\A(?:.|\n)+?(?=\Z|\r?\n\r?\n)", re.MULTILINE)
+
+_ARG_NAME_SUBREGEX = r"(\\?\*)*(?P<name>[^\s:]+)"
+
+_ARG_DESCRIPTION_SUBREGEX = r"(?P<description>(.|\n)+?(\Z|\r?\n(?=[\S\r\n])))"
+
+_ARG_TYPE_SUBREGEX = r"(?P<type>.+)"
+
 _GOOGLE_DOCSTRING_ARG_REGEX = re.compile(
-    r"^(\\?\*)*(?P<name>[^\s:]+)\s*(?P<type>\([^\)]+\))?\s*:[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))",
-    re.MULTILINE,
+    rf"^{_ARG_NAME_SUBREGEX}[ \t]*(?:\({_ARG_TYPE_SUBREGEX}\))?[ \t]*:[ \t]*{_ARG_DESCRIPTION_SUBREGEX}",
+    re.MULTILINE
 )
+
 _SPHINX_DOCSTRING_ARG_REGEX = re.compile(
-    r"^:param (\\?\*)*(?P<name>[^\s:]+):\s+(?P<description>(.|\n)+?(\Z|\n(?=([\S\n]))))",
-    re.MULTILINE,
+    rf"^:param {_ARG_NAME_SUBREGEX}:[ \t]+{_ARG_DESCRIPTION_SUBREGEX}[ \t]*(?::type {_ARG_TYPE_SUBREGEX}:)?",
+    re.MULTILINE
 )
+
 _NUMPY_DOCSTRING_ARG_REGEX = re.compile(
-    r"^(?<!:param )(\\?\*)*(?P<name>[^\s:]+)(\s*:\s+(?P<type>.+))?\s*\n[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\S\n])))",
-    re.MULTILINE,
+    rf"^{_ARG_NAME_SUBREGEX}(?:[ \t]*:[ \t]+{_ARG_TYPE_SUBREGEX})?[ \t]*\r?\n[ \t]*{_ARG_DESCRIPTION_SUBREGEX}",
+    re.MULTILINE
 )
 
 def _trim_text(text: str, max_chars: int) -> str:
