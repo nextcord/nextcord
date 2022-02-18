@@ -48,7 +48,7 @@ from .member import Member
 from .message import Message
 from .role import Role
 from .user import User
-from .utils import MISSING
+from .utils import MISSING, parse_docstring
 
 if TYPE_CHECKING:
     from .state import ConnectionState
@@ -65,6 +65,8 @@ __all__ = (
     "user_command",
 )
 
+# Maximum allowed length of a command or option description
+_MAX_COMMAND_DESCRIPTION_LENGTH = 100
 
 class ClientCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
@@ -107,7 +109,7 @@ class SlashOption:
     name: :class:`str`
         The name of the Option on Discords side. If left as None, it defaults to the parameter name.
     description: :class:`str`
-        The description of the Option on Discords side. If left as None, it defaults to "".
+        The description of the Option on Discords side. If left as None, it defaults to "No description provided".
     required: :class:`bool`
         If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
     choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]], Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
@@ -192,9 +194,10 @@ class CommandOption(SlashOption):
         Message: ApplicationCommandOptionType.integer  # TODO: This is janky, the user provides an ID or something? Ugh.
     }
     """Maps Python annotations/typehints to Discord Application Command type values."""
-    def __init__(self, parameter: Parameter):
+    def __init__(self, parameter: Parameter, command: ApplicationSubcommand):
         super().__init__()
         self.parameter = parameter
+        self.command = command
         cmd_arg_given = False
         cmd_arg = SlashOption()
         if isinstance(parameter.default, SlashOption):
@@ -236,10 +239,13 @@ class CommandOption(SlashOption):
     @property
     def description(self) -> str:
         """If no description is set, it returns "No description provided" """
-        if not self._description:
-            return "No description provided"
-        else:
+        if self._description:
             return self._description
+        elif docstring := self.command._parsed_docstring["args"].get(self.name):
+            return docstring
+        else:
+            return "No description provided"
+            
 
     @description.setter
     def description(self, value: str):
@@ -416,6 +422,7 @@ class ApplicationSubcommand:
         self._self_argument: Optional[ClientCog] = self_argument
         self.name: Optional[str] = name
         self._description: str = description
+        self._parsed_docstring: Optional[Dict[str, Any]] = None
 
         self.options: Dict[str, CommandOption] = {}
         self.children: Dict[str, ApplicationSubcommand] = {}
@@ -436,10 +443,12 @@ class ApplicationSubcommand:
         """
         Returns the description of the command. If the description is MISSING, it returns "No description provided"
         """
-        if self._description is MISSING:
-            return "No description provided"
-        else:
+        if self._description:
             return self._description
+        elif docstring := self._parsed_docstring["description"]:
+            return docstring
+        else:
+            return "No description provided"
 
     @description.setter
     def description(self, new_desc: str):
@@ -458,7 +467,7 @@ class ApplicationSubcommand:
         return self
 
     @property
-    def self_argument(self) -> Optional:
+    def self_argument(self) -> Optional[ClientCog]:
         """Returns the argument used for ``self``. Optional is used because :class:`ClientCog` isn't strictly correct.
         """
         return self._self_argument
@@ -503,6 +512,7 @@ class ApplicationSubcommand:
         # TODO: Add kwarg support.
         # ret = ApplicationSubcommand()
         self.set_callback(callback)
+        self._parsed_docstring = parse_docstring(callback, _MAX_COMMAND_DESCRIPTION_LENGTH)
         if not self.name:
             self.name = self.callback.__name__
         first_arg = True
@@ -517,7 +527,7 @@ class ApplicationSubcommand:
                 if isinstance(param.annotation, str):
                     # Thank you Disnake for the guidance to use this.
                     param = param.replace(annotation=typehints.get(name, param.empty))
-                arg = CommandOption(param)
+                arg = CommandOption(param, self)
                 self.options[arg.name] = arg
         return self
 

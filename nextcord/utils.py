@@ -26,6 +26,7 @@ from __future__ import annotations
 import array
 import asyncio
 import collections.abc
+import inspect
 from typing import (
     Any,
     AsyncIterator,
@@ -1017,3 +1018,67 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
     if style is None:
         return f'<t:{int(dt.timestamp())}>'
     return f'<t:{int(dt.timestamp())}:{style}>'
+
+
+_FUNCTION_DESCRIPTION_REGEX = re.compile("\A(.|\n)+?(?=\Z|\n\n)", re.MULTILINE)
+_GOOGLE_DOCSTRING_ARG_REGEX = re.compile("(?P<name>[^\s:]+)\s*(?P<type>\([^\)]+\))?\s*:[^\S\n]*(?P<description>(.|\n)+?(\Z|\n(?=[\w\n])))", re.MULTILINE)
+
+
+def _trim_text(text: str, max_chars: int) -> str:
+    """Trims a string and adds an ellpsis if it exceeds the maximum length.
+
+    Parameters
+    -----------
+    text: :class:`str`
+        The string to trim.
+    max_chars: :class:`int`
+        The maximum number of characters to allow.
+
+    Returns
+    --------
+    :class:`str`
+        The trimmed string.
+    """
+    if len(text) > max_chars:
+        # \u2026 = ellipsis
+        return text[:max_chars - 1] + "\u2026"
+    return text
+
+
+def parse_docstring(func: Callable, max_length: int = MISSING) -> Dict[str, Any]:
+    """Parses the docstring of a function into a dictionary.
+
+    Parameters
+    ------------
+    func: :class:`Callable`
+        The function to parse the docstring of.
+    max_length: :class:`int`
+        The maximum number of characters to allow in the description.
+        If MISSING, then there is no maximum.
+
+    Returns
+    --------
+    :class:`Dict[str, Any]`
+        The parsed docstring including the function description and arguments.
+    """
+    description = ""
+    args = {}
+
+    if docstring := inspect.cleandoc(inspect.getdoc(func) or "").strip():
+        # Extract the function description
+        description_match = _FUNCTION_DESCRIPTION_REGEX.search(docstring)
+        if description_match:
+            description = re.sub(r"\n\s*", " ", description_match.group(0)).strip()
+        if max_length is not MISSING:
+            description = _trim_text(description, max_length)
+
+        # Extract the arguments
+        # Look at only the lines that are indented
+        section_lines = inspect.cleandoc("\n".join(line for line in docstring.splitlines() if line.startswith(("\t", "  "))))
+        for arg in _GOOGLE_DOCSTRING_ARG_REGEX.finditer(section_lines):
+            arg_description = re.sub(r"\n\s*", " ", arg.group("description")).strip()
+            if max_length is not MISSING:
+                arg_description = _trim_text(arg_description, max_length)
+            args[arg.group("name")] = arg_description
+
+    return {"description": description, "args": args}
