@@ -1073,7 +1073,11 @@ class ApplicationCommand(ApplicationSubcommand):
         if not check_dictionary_values(cmd_payload, raw_payload, "default_permission", "description", "type", "name"):
             return False
 
+        if len(cmd_payload.get("options", [])) != len(raw_payload.get("options", [])):
+            return False
+
         for cmd_option in cmd_payload.get("options", []):
+            # I absolutely do not trust Discord or us ordering things nicely, so check through both.
             found_correct_value = False
             for raw_option in raw_payload.get("options", []):
                 if cmd_option["name"] == raw_option["name"]:
@@ -1083,6 +1087,7 @@ class ApplicationCommand(ApplicationSubcommand):
                     # check_dictionary_values.
                     if not deep_dictionary_check(cmd_option, raw_option):
                         return False
+                    break
             if not found_correct_value:
                 return False
         return True
