@@ -714,9 +714,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         HTTPException
             Starting the thread failed.
 
-        .. note::
-        
-            This will raise :exc:`HTTPException` if the guild does not have the feature ``PRIVATE_THREADS`` and you are trying to create a private thread.
+            This can be raised if the guild does not have the feature ``PRIVATE_THREADS`` and you are trying to create a private thread.
 
         Returns
         --------
