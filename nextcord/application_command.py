@@ -190,7 +190,7 @@ class CommandOption(SlashOption):
         # Mentionable: CommandOptionType.mentionable
         float: ApplicationCommandOptionType.number,
         Message: ApplicationCommandOptionType.integer,  # TODO: This is janky, the user provides an ID or something? Ugh.
-        Attachment: ApplicationCommandOptionType.attachment
+        Attachment: ApplicationCommandOptionType.attachment,
     }
     """Maps Python annotations/typehints to Discord Application Command type values."""
     def __init__(self, parameter: Parameter):
