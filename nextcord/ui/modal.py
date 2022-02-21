@@ -71,10 +71,6 @@ class Modal:
     custom_id: :class:`str` = MISSING
         The ID of the modal that gets received during an interaction.
         If the ``custom_id`` is MISSING, then a random ``custom_id`` is set.
-    **components:
-        keyword-arguments of :class:`Item` representing the components of the
-        Modal where the kwarg value gets added as an attribute named to the
-        kwarg key.
 
     Attributes
     ------------
@@ -93,18 +89,13 @@ class Modal:
         *,
         timeout: Optional[float] = None,
         custom_id: str = MISSING,
-        **components,
     ):
         self.title = title
         self.timeout = timeout
         self._provided_custom_id = custom_id is not MISSING
         self.custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         
-        self.children: List[Item] = []
-        for key, component in components.items():
-            setattr(self, key, component)
-            self.children.append(component)
-        
+        self.children = []
         self.__weights = _ViewWeights(self.children)
         loop = asyncio.get_running_loop()
         self.id: str = os.urandom(16).hex()
@@ -226,6 +217,7 @@ class Modal:
             The interaction fired by the user.
         
         """
+        pass
         
     async def on_timeout(self) -> None:
         """|coro|
