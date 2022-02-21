@@ -3139,7 +3139,8 @@ class Guild(Hashable):
         privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
-        reason: Optional[str] = None
+        image: bytes = MISSING,
+        reason: Optional[str] = None,
     ) -> ScheduledEvent:
         """|coro|
 
@@ -3163,7 +3164,9 @@ class Guild(Hashable):
             The description for the event
         entity_type: :class:`ScheduledEventEntityType`
             The type of event
-
+        image: :class:`bytes`
+            A :term:`py:bytes-like object` representing the cover image.
+            
         Returns
         -------
         :class:`ScheduledEvent`
@@ -3183,6 +3186,8 @@ class Guild(Hashable):
             payload['scheduled_end_time'] = end_time.isoformat()
         if description is not MISSING:
             payload['description'] = description
+        if image is not MISSING:
+            payload['image'] = utils._bytes_to_base64_data(image)
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)
 
