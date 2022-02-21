@@ -575,6 +575,7 @@ class ApplicationCommandOptionType(Enum):
     role = 8
     mentionable = 9
     number = 10  # A double, AKA floating point.
+    attachment = 11
 
 
 class VideoQualityMode(Enum):
