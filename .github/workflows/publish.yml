@@ -47,6 +47,7 @@ jobs:
       run: |
         rm -rf discord/
         mv unaliased-setup.py setup.py
+        mv .github/unaliased_health_check.py nextcord/health_check.py
         python setup.py sdist
     - name: Upload package
       uses: pypa/gh-action-pypi-publish@release/v1

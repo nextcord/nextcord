@@ -44,15 +44,15 @@ adapter arguments of :meth:`Webhook.partial` and :meth:`Webhook.from_url` are re
 .. code-block:: python3
 
     webhook = discord.SyncWebhook.from_url(
-        f"https://discord.com/api/webhooks/{id}/{token}"
-    )
+            f"https://discord.com/api/webhooks/{id}/{token}"
+        )
     webhook.send("Hello from discord.py 2.0")
     async with aiohttp.ClientSession() as session:
         webhook = discord.Webhook.partial(
-        id,
-        token,
-        session=session
-        )
+                id,
+                token,
+                session=session
+            )
         await webhook.send("Hello from discord.py 2.0")
         
 
@@ -340,6 +340,10 @@ Sticker.image
 Sticker.tags
 ^^^^^^^^^^^^^^^^^^^^^^^
 Due to the introduction of :class:`GuildSticker`, ``Sticker.tags`` is removed from the parent class :class:`Sticker` and moved to :attr:`StandardSticker.tags`.
+
+MessageType.application_command
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This was renamed to :attr:`MessageType.chat_input_command` due to Discord adding context menu commands.
 
 
 Meta Change

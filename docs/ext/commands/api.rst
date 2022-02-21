@@ -643,7 +643,7 @@ Exception Hierarchy
                     - :exc:`~.commands.PartialEmojiConversionFailure`
                     - :exc:`~.commands.BadBoolArgument`
                     - :exc:`~.commands.ThreadNotFound`
-                    ~ :exc:`~.commands.ScheduledEventNotFound`
+                    - :exc:`~.commands.ScheduledEventNotFound`
                     - :exc:`~.commands.FlagError`
                         - :exc:`~.commands.BadFlagArgument`
                         - :exc:`~.commands.MissingFlagArgument`
