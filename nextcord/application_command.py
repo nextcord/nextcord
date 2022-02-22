@@ -813,7 +813,7 @@ class ApplicationCommand(ApplicationSubcommand):
         callback: Callable = MISSING,
         cmd_type: ApplicationCommandType = MISSING,
         name: str = MISSING,
-        description: Optional[str] = MISSING,
+        description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
         default_permission: bool = MISSING,
         force_global: bool = False
