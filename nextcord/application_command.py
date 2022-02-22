@@ -1391,7 +1391,7 @@ def user_command(
             callback=func,
             cmd_type=ApplicationCommandType.user,
             name=name,
-            description=description, guild_ids=guild_ids,
+            guild_ids=guild_ids,
             default_permission=default_permission,
             force_global=force_global
         )
