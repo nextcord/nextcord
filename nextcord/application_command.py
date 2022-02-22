@@ -809,7 +809,7 @@ class ApplicationCommand(ApplicationSubcommand):
         callback: Callable = MISSING,
         cmd_type: ApplicationCommandType = MISSING,
         name: str = MISSING,
-        description: str = MISSING,
+        description: Optional[str] = MISSING,
         guild_ids: Iterable[int] = MISSING,
         default_permission: bool = MISSING,
         force_global: bool = False
@@ -1320,7 +1320,6 @@ def slash_command(
 
 def message_command(
         name: str = MISSING,
-        description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
         default_permission: bool = MISSING,
         force_global: bool = False
@@ -1332,8 +1331,6 @@ def message_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
-    description: :class:`str`
-        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     default_permission: :class:`bool`
@@ -1349,7 +1346,6 @@ def message_command(
             callback=func,
             cmd_type=ApplicationCommandType.message,
             name=name,
-            description=description,
             guild_ids=guild_ids,
             default_permission=default_permission,
             force_global=force_global
@@ -1360,7 +1356,6 @@ def message_command(
 
 def user_command(
         name: str = MISSING,
-        description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
         default_permission: bool = MISSING,
         force_global: bool = False
@@ -1372,8 +1367,6 @@ def user_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
-    description: :class:`str`
-        Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     default_permission: :class:`bool`
