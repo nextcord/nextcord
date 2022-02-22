@@ -244,8 +244,8 @@ this together we can do the following: ::
         fut = asyncio.run_coroutine_threadsafe(coro, client.loop)
         try:
             fut.result()
-        except:
-            # an error happened sending the message
+        except nextcord.Forbidden:
+            # Missing permissions to send message to that channel
             pass
 
     voice.play(nextcord.FFmpegPCMAudio(url), after=my_after)
