@@ -1,9 +1,9 @@
 import nextcord
-from nextcord import commands
+from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 
-bot = commands.Bot()
+bot = commands.Bot(command_prefix='!')
 
 
 @bot.slash_command(guild_ids=[TESTING_GUILD_ID], description="main command")
