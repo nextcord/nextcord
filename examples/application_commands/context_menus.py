@@ -1,8 +1,9 @@
 import nextcord
+from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 
-client = nextcord.Client()
+bot = commands.Bot()
 
 
 @client.user_command(guild_ids=[TESTING_GUILD_ID])
@@ -15,4 +16,4 @@ async def my_message_command(interaction: nextcord.Interaction, message: nextcor
     await interaction.response.send_message(f"Message: {message}")
 
 
-client.run("token")
+bot.run("token")

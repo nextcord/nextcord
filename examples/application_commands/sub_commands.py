@@ -1,11 +1,12 @@
 import nextcord
+from nextcord import commands
 
 TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 
-client = nextcord.Client()
+bot = commands.Bot()
 
 
-@client.slash_command(guild_ids=[TESTING_GUILD_ID], description="main command")
+@bot.slash_command(guild_ids=[TESTING_GUILD_ID], description="main command")
 async def main(interaction: nextcord.Interaction):
     """
     This is the main slash command that will be the prefix of all commands below.
@@ -60,4 +61,4 @@ async def subsub2(interaction: nextcord.Interaction):
     await interaction.response.send_message("This is subcommand group subcommand 2!")
 
 
-client.run("token")
+bot.run("token")
