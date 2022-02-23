@@ -880,7 +880,7 @@ class Intents(BaseFlags):
     def message_content(self):
         """:class:`bool`: Whether most message content can be accessed.
 
-        Without this intent, the following attributes and classes may appear empty - either an
+        Without this intent, the following attributes may appear empty - either an
         empty string or empty array depending on the data type:
 
         - :attr:`Message.content`
@@ -893,6 +893,13 @@ class Intents(BaseFlags):
         - Messages the bot sends
         - Messages the bot receives in DMs
         - Messages in which the bot is mentioned
+
+        For more information go to the :ref:`message content intent documentation <need_message_content_intent>`.
+
+        .. note::
+
+            As of April 30, 2022, this requires opting in explicitly via the developer portal as well.
+            Bots in over 100 guilds will need to apply to Discord for verification.
         """
         return 1 << 15
 

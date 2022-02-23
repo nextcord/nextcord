@@ -4330,6 +4330,7 @@ Cogs
 
 .. autoclass:: ClientCog
     :members:
+
 Decorators
 ~~~~~~~~~~
 
