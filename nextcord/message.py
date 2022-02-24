@@ -1569,6 +1569,8 @@ class Message(Hashable):
             You do not have permissions to create a thread.
         HTTPException
             Creating the thread failed.
+            
+            This will raise :exc:`HTTPException` if the guild does not have the feature ``PRIVATE_THREADS`` and you are trying to create a private thread.
         InvalidArgument
             This message does not have guild info attached.
 
