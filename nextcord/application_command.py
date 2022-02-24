@@ -209,13 +209,11 @@ class CommandOption(SlashOption):
         # never set. If Discord demands a value, it should be the minimum value required.
         self.name = cmd_arg.name or parameter.name
         self._description = cmd_arg.description or MISSING
-        # While long, this is required. If cmd_arg.required is False, the expression:
-        # self.required = cmd_arg.required or MISSING
-        # will cause self.required to be MISSING, not False.
-        self.required = cmd_arg.required if cmd_arg.required is not MISSING else MISSING
         # Set required to False if an Optional[...] or Union[..., None] type annotation is given.
-        if type(None) in typing.get_args(parameter.annotation):
-            self.required = False
+        self.required = False if type(None) in typing.get_args(parameter.annotation) else MISSING
+        # Override self.required if it was set in the command argument.
+        if cmd_arg.required is not MISSING:
+            self.required = cmd_arg.required
         self.choices = cmd_arg.choices or MISSING
         self.channel_types = cmd_arg.channel_types or MISSING
         # min_value of 0 will cause an `or` to give the variable MISSING
