@@ -30,7 +30,7 @@ from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
 from .types.snowflake import Snowflake
-from .utils import MISSING, parse_time
+from .utils import MISSING, parse_time, _bytes_to_base64_data
 from .asset import Asset
 __all__: Tuple[str] = (
     'EntityMetadata',
@@ -331,7 +331,8 @@ class ScheduledEvent(Hashable):
         description: str = MISSING,
         type: Optional[ScheduledEventEntityType] = MISSING,
         status: Optional[ScheduledEventStatus] = MISSING,
-        reason: Optional[str] = None
+        reason: Optional[str] = None,
+        image: Optional[bytes] = MISSING
     ) -> ScheduledEvent:
         """|coro|
 
@@ -364,6 +365,9 @@ class ScheduledEvent(Hashable):
                 scheduled -> active ;
                 active -> completed ;
                 scheduled -> canceled
+        image: Optional[:class:`bytes`]
+            A :term:`py:bytes-like object` representing the cover image.
+            Could be ``None`` to denote removal of the cover image.
 
         Returns
         -------
@@ -389,6 +393,12 @@ class ScheduledEvent(Hashable):
             payload['type'] = type.value
         if status is not MISSING:
             payload['status'] = status.value
+        if image is not MISSING:
+            if image is None:
+                payload['image'] = image
+            else:
+                payload['image'] = _bytes_to_base64_data(image)
+
         if not payload:
             return self
         data = await self._state.http.edit_event(self.guild.id, self.id, reason=reason, **payload)
