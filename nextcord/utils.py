@@ -393,10 +393,9 @@ def _key_fmt(key: str) -> str:
     # ex. "_privateattr___subattr" -> "_privateattr_.subattr"
 
     if key.startswith("__") and key.endswith("__"):
-        return re.sub(r"((__){1}__(__){1})", "__.__", key)
+        return re.sub(r"_{6}", "__.__", key)
     else:
-        slices = re.split(r"(?=__)", key)
-        return "".join([s.replace("__", ".") for s in slices])
+        return re.sub(r"__(?!_)", ".", key)
 
 
 def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
