@@ -107,9 +107,9 @@ class SlashOption:
     Parameters
     ----------
     name: :class:`str`
-        The name of the Option that users will see. If left as MISSING, it defaults to the parameter name.
+        The name of the Option that users will see. If not specified, it defaults to the parameter name.
     description: :class:`str`
-        The description of the Option that users will see. If left as MISSING, the docstring will be used. If no docstring is found for the
+        The description of the Option that users will see. If not specified, the docstring will be used. If no docstring is found for the
         parameter, it defaults to "No description provided".
     required: :class:`bool`
         If a user is required to provide this argument before sending the command. Defaults to Discords choice. (False at this time)
@@ -405,7 +405,7 @@ class ApplicationSubcommand:
     name: :class:`str`
         The name of the subcommand that users will see. If not set, the name of the callback will be used.
     description: :class:`str`
-        The description of the subcommand that users will see. If left as MISSING, the docstring will be used.
+        The description of the subcommand that users will see. If not specified, the docstring will be used.
         If no docstring is found for the subcommand callback, it defaults to "No description provided".
     """
     def __init__(
@@ -777,7 +777,7 @@ class ApplicationSubcommand:
         name: :class:`str`
             The name of the subcommand that users will see. If not set, the name of the callback will be used.
         description: :class:`str`
-            The description of the subcommand that users will see. If left as MISSING, the docstring will be used.
+            The description of the subcommand that users will see. If not specified, the docstring will be used.
             If no docstring is found for the subcommand callback, it defaults to "No description provided".
         """
         def decorator(func: Callable):
@@ -806,7 +806,7 @@ class ApplicationCommand(ApplicationSubcommand):
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
     description: :class:`str`
-        Description of the command that users will see. If left as MISSING, the docstring will be used.
+        Description of the command that users will see. If not specified, the docstring will be used.
         If no docstring is found for the command callback, it defaults to "No description provided".
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
@@ -1267,7 +1267,7 @@ class ApplicationCommand(ApplicationSubcommand):
         name: :class:`str`
             The name of the subcommand that users will see. If not set, the name of the callback will be used.
         description: :class:`str`
-            The description of the subcommand that users will see. If left as MISSING, the docstring will be used.
+            The description of the subcommand that users will see. If not specified, the docstring will be used.
             If no docstring is found for the subcommand callback, it defaults to "No description provided".
         """
         if self.type != ApplicationCommandType.chat_input:  # At this time, non-slash commands cannot have Subcommands.
@@ -1301,7 +1301,7 @@ def slash_command(
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
     description: :class:`str`
-        Description of the command that users will see. If left as MISSING, the docstring will be used.
+        Description of the command that users will see. If not specified, the docstring will be used.
         If no docstring is found for the command callback, it defaults to "No description provided".
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
