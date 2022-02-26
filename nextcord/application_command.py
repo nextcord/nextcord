@@ -37,6 +37,7 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
+    TYPE_CHECKING,
 )
 
 from .abc import GuildChannel
@@ -97,7 +98,7 @@ class ClientCog:
 
 
 # Extends Any so that type checkers won't complain that it's a default for a parameter of a different type
-class SlashOption(Any):
+class SlashOption(Any if TYPE_CHECKING else object):
     """Provides Discord with information about an option in a command.
 
     When this class is set as the default argument of a parameter in an Application Command, additional information
