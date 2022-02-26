@@ -43,17 +43,17 @@ adapter arguments of :meth:`Webhook.partial` and :meth:`Webhook.from_url` are re
 
 .. code-block:: python3
 
-    webhook = discord.SyncWebhook.from_url(
+    webhook = nextcord.SyncWebhook.from_url(
             f"https://discord.com/api/webhooks/{id}/{token}"
         )
-    webhook.send("Hello from discord.py 2.0")
+    webhook.send("Hello from nextcord!")
     async with aiohttp.ClientSession() as session:
-        webhook = discord.Webhook.partial(
+        webhook = nextcord.Webhook.partial(
                 id,
                 token,
                 session=session
             )
-        await webhook.send("Hello from discord.py 2.0")
+        await webhook.send("Hello from nextcord!")
         
 
 Asset changes
