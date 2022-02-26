@@ -53,6 +53,9 @@ from .utils import MISSING
 
 if TYPE_CHECKING:
     from .state import ConnectionState
+    _SlashOptionMetaBase = Any
+else:
+    _SlashOptionMetaBase = object
 
 
 __all__ = (
@@ -98,7 +101,7 @@ class ClientCog:
 
 
 # Extends Any so that type checkers won't complain that it's a default for a parameter of a different type
-class SlashOption(Any if TYPE_CHECKING else object):
+class SlashOption(_SlashOptionMetaBase):
     """Provides Discord with information about an option in a command.
 
     When this class is set as the default argument of a parameter in an Application Command, additional information
