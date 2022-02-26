@@ -53,7 +53,7 @@ adapter arguments of :meth:`Webhook.partial` and :meth:`Webhook.from_url` are re
                 token,
                 session=session
             )
-        await webhook.send("Hello from nextcord")
+        await webhook.send("Hello from nextcord!")
         
 
 Asset changes
