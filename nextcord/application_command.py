@@ -37,7 +37,6 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
-    TYPE_CHECKING,
 )
 
 from .abc import GuildChannel
