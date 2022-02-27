@@ -2424,7 +2424,7 @@ class Guild(Hashable):
 
         await self._state.http.delete_custom_emoji(self.id, emoji.id, reason=reason)
 
-    async def fetch_roles(self) -> List[Role]:
+    async def fetch_roles(self, *, cache: bool=False) -> List[Role]:
         """|coro|
 
         Retrieves all :class:`Role` that the guild has.
@@ -2433,7 +2433,11 @@ class Guild(Hashable):
 
             This method is an API call. For general usage, consider :attr:`roles` instead.
 
-        .. versionadded:: 1.3
+        Parameters
+        ----------
+        cache: bool
+            Whether or not to also update this guilds
+            role cache. Defaults to ``False``.
 
         Raises
         -------
@@ -2446,7 +2450,13 @@ class Guild(Hashable):
             All roles in the guild.
         """
         data = await self._state.http.get_roles(self.id)
-        return [Role(guild=self, state=self._state, data=d) for d in data]
+        roles = [Role(guild=self, state=self._state, data=d) for d in data]
+        if cache:
+            self._roles: Dict[int, Role] = {}
+            for role in roles:
+                self._roles[role.id] = role
+
+        return roles
 
     @overload
     async def create_role(
