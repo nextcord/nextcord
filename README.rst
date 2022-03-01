@@ -1,4 +1,4 @@
-.. image:: assets/repo-banner.svg
+.. image:: https://raw.githubusercontent.com/nextcord/nextcord/master/assets/repo-banner.svg
    :alt: Nextcord
 
 .. image:: https://img.shields.io/discord/881118111967883295?color=blue&label=discord
@@ -14,7 +14,7 @@
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI supported Python versions
 .. image:: https://img.shields.io/readthedocs/nextcord
-   :target: https://nextcord.readthedocs.io/en/latest
+   :target: https://nextcord.readthedocs.io/en/stable
    :alt: Nextcord documentation
    
 Nextcord
@@ -110,13 +110,13 @@ Quick Example
     bot.run('token')
 
 
-You can find more examples in the examples directory.
+You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 
-**NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/master/examples/secure_token_storage.py/>`_.
+**NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/stable/examples/secure_token_storage.py/>`_.
 
 Links
 ------
 
-- `Documentation <https://nextcord.readthedocs.io/en/latest/>`_
+- `Documentation <https://nextcord.readthedocs.io/en/stable/>`_
 - `Official Discord Server <https://discord.gg/ZebatWssCB>`_
 - `Discord API <https://discord.gg/discord-api>`_
