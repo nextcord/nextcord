@@ -2192,7 +2192,7 @@ class Client:
 
             @client.check
             def check_commands(interaction: Interaction) -> bool:
-                return ctx.command.qualified_name in allowed_commands
+                return interaction.application_command.qualified_name in allowed_commands
 
         """
         return self.add_application_command_check(func)
@@ -2234,7 +2234,8 @@ class Client:
 
         A post-invoke hook is called directly after the command is
         called. This makes it a useful function to clean-up database
-        connections or any type of clean up required.
+        connections or any type of clean up required. There may only be 
+        one global post-invoke hook.
 
         This post-invoke hook takes a sole parameter, a :class:`.Interaction`.
 
@@ -2247,7 +2248,7 @@ class Client:
 
         Parameters
         -----------
-        coro: :ref:`coroutine <coroutine>`
+        coro: :ref:`coroutine`
             The coroutine to register as the post-invoke hook.
 
         Raises
