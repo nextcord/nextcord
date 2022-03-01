@@ -53,7 +53,7 @@ async def on_ready():
     description="Send your feedback to the bot developer!",
     guild_ids=[TESTING_GUILD_ID],
 )
-async def feedback(inter: nextcord.Interaction):
-    await inter.response.send_modal(feedback_modal)
+async def feedback(interaction: nextcord.Interaction):
+    await interaction.response.send_modal(feedback_modal)
 
 bot.run("token")
