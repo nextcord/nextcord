@@ -256,6 +256,11 @@ class BaseUser(_UserTag):
         is returned instead.
         """
         return self.name
+    
+    @property
+    def tag(self) -> str:
+        """:class:`str` Returns the user's tag (username and discriminator)."""
+        return f"{self.name}#{self.discriminator}"
 
     def mentioned_in(self, message: Message) -> bool:
         """Checks if the user is mentioned in the specified message.
