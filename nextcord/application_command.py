@@ -38,6 +38,7 @@ from typing import (
     Tuple,
     Union,
 )
+import typing
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
@@ -48,7 +49,7 @@ from .member import Member
 from .message import Attachment, Message
 from .role import Role
 from .user import User
-from .utils import MISSING
+from .utils import MISSING, find
 
 if TYPE_CHECKING:
     from .state import ConnectionState
@@ -202,6 +203,7 @@ class CommandOption(SlashOption):
         self.parameter = parameter
         cmd_arg_given = False
         cmd_arg = SlashOption()
+
         if isinstance(parameter.default, SlashOption):
             cmd_arg = parameter.default
             cmd_arg_given = True
@@ -211,10 +213,11 @@ class CommandOption(SlashOption):
         # never set. If Discord demands a value, it should be the minimum value required.
         self.name = cmd_arg.name or parameter.name
         self._description = cmd_arg.description or MISSING
-        # While long, this is required. If cmd_arg.required is False, the expression:
-        # self.required = cmd_arg.required or MISSING
-        # will cause self.required to be MISSING, not False.
-        self.required = cmd_arg.required if cmd_arg.required is not MISSING else MISSING
+        # Set required to False if an Optional[...] or Union[..., None] type annotation is given.
+        self.required = False if type(None) in typing.get_args(parameter.annotation) else MISSING
+        # Override self.required if it was set in the command argument.
+        if cmd_arg.required is not MISSING:
+            self.required = cmd_arg.required
         self.choices = cmd_arg.choices or MISSING
         self.channel_types = cmd_arg.channel_types or MISSING
         # min_value of 0 will cause an `or` to give the variable MISSING
@@ -250,12 +253,12 @@ class CommandOption(SlashOption):
     def description(self, value: str):
         self._description = value
 
-    def get_type(self, typing: type) -> ApplicationCommandOptionType:
+    def get_type(self, param_typing: type) -> ApplicationCommandOptionType:
         """Translates a Python or Nextcord :class:`type` into a Discord typing.
 
         Parameters
         ----------
-        typing: :class:`type`
+        param_typing: :class:`type`
             Python or Nextcord type to translate.
         Returns
         -------
@@ -266,12 +269,20 @@ class CommandOption(SlashOption):
         :class:`NotImplementedError`
             Raised if the given typing cannot be translated to a Discord typing.
         """
-        if typing is self.parameter.empty:
+
+        if param_typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
-        elif valid_type := self.option_types.get(typing, None):
+        elif valid_type := self.option_types.get(param_typing, None):
+            return valid_type
+        # If the typing is Optional[...] or Union[..., None], get the type of the first non-None type.
+        elif (
+            type(None) in typing.get_args(param_typing)
+            and (inner_type := find(lambda t: t is not type(None), typing.get_args(param_typing)))
+            and (valid_type := self.option_types.get(inner_type, None))
+        ):
             return valid_type
         else:
-            raise NotImplementedError(f'Type "{typing}" isn\'t a supported typing for Application Commands.')
+            raise NotImplementedError(f'Type "{param_typing}" isn\'t a supported typing for Application Commands.')
 
     def verify(self) -> None:
         """This should run through :class:`SlashOption` variables and raise errors when conflicting data is given."""
