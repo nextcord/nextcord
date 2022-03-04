@@ -1,4 +1,5 @@
 import nextcord
+from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456798  # Replace with your testing guild id
 
@@ -25,10 +26,10 @@ class Pet(nextcord.ui.Modal):
     async def callback(self, inter: nextcord.Interaction) -> None:
         response = f"{inter.user.mention} favourite pet's name is {self.name.value}."
         if self.description.value != "":
-            response += f"\nIts pet can be recognized by this information:\n{self.description.value}"
+            response += f"\nTheir pet can be recognized by this information:\n{self.description.value}"
         await inter.send(response)
 
-bot = nextcord.Client()
+bot = commands.Bot()
 
 @bot.slash_command(
     name="pet",

@@ -383,7 +383,10 @@ class ModalStore:
         self._modals[(user_id, modal.custom_id)] = modal
 
     def remove_modal(self, modal: Modal):
-        self._modals.popitem(modal)
+        _modals = self._modals.copy()
+        for key, value in _modals.items():
+            if value is modal:
+                del self._modals[key]
 
     def dispatch(self, custom_id: str, interaction: Interaction):
         self.__verify_integrity()

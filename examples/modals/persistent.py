@@ -1,4 +1,5 @@
 import nextcord
+from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456798  # Replace with your testing guild id
 
@@ -34,11 +35,11 @@ class Feedback(nextcord.ui.Modal):
         await interaction.send(
             f"{interaction.user.mention} feedback :\n"
             f"Rating: {self.rating.value}\n"
-            f"Where did he discover the bot: {self.discovered.value}\n"
+            f"Where they discovered the bot: {self.discovered.value}\n"
             f"How could the bot improve: {self.improve.value}\n"
         )
 
-bot = nextcord.Client()
+bot = commands.Bot()
 
 feedback_modal = None
 
