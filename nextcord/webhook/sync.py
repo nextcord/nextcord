@@ -41,7 +41,7 @@ from typing import Any, Dict, List, Literal, Optional, TYPE_CHECKING, Tuple, Typ
 
 from .. import utils
 from ..errors import InvalidArgument, HTTPException, Forbidden, NotFound, DiscordServerError
-from ..message import Message
+from ..message import Attachment, Message
 from ..http import Route
 from ..channel import PartialMessageable
 
@@ -380,6 +380,7 @@ class SyncWebhookMessage(Message):
         content: Optional[str] = MISSING,
         embeds: List[Embed] = MISSING,
         embed: Optional[Embed] = MISSING,
+        attachments: List[Attachment] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
@@ -400,6 +401,9 @@ class SyncWebhookMessage(Message):
         files: List[:class:`File`]
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
+        attachments: List[:class:`Attachment`]
+            A list of attachments to keep in the message. If ``[]`` is passed
+            then all attachments are removed.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -429,6 +433,7 @@ class SyncWebhookMessage(Message):
             embed=embed,
             file=file,
             files=files,
+            attachments=attachments,
             allowed_mentions=allowed_mentions,
         )
 
@@ -967,6 +972,7 @@ class SyncWebhook(BaseWebhook):
         embed: Optional[Embed] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
+        attachments: List[Attachment] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> SyncWebhookMessage:
         """Edits a message owned by this webhook.
@@ -992,6 +998,9 @@ class SyncWebhook(BaseWebhook):
         files: List[:class:`File`]
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
+        attachments: List[:class:`Attachment`]
+            A list of attachments to keep in the message. If ``[]`` is passed
+            then all attachments are removed.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -1018,6 +1027,7 @@ class SyncWebhook(BaseWebhook):
             content=content,
             file=file,
             files=files,
+            attachments=attachments,
             embed=embed,
             embeds=embeds,
             allowed_mentions=allowed_mentions,
