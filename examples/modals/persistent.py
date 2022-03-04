@@ -3,32 +3,35 @@ from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456798  # Replace with your testing guild id
 
-class Feedback(nextcord.ui.Modal):
+class FeedbackModal(nextcord.ui.Modal):
     def __init__(self):
         super().__init__(
             title="Feedback",
-            custom_id="feedback",
+            custom_id="feedback", # required to make the modal persistent
             timeout=None,
         )
+        
         self.discovered = nextcord.ui.TextInput(
             label="How did you discover the bot?",
             required=False,
             style=nextcord.TextInputStyle.paragraph,
-            custom_id="discovered",
+            custom_id="discovered", # required to make the modal persistent
         )
+        self.add_item(self.discovered)
+        
         self.rating = nextcord.ui.TextInput(
             label="How would you rate the bot?",
             placeholder="I would give the bot a ten out of ten...",
-            custom_id="rating",
+            custom_id="rating", # required to make the modal persistent
         )
+        self.add_item(self.rating)
+        
         self.improve = nextcord.ui.TextInput(
             label="How could the bot improve?",
             style=nextcord.TextInputStyle.paragraph,
             required=False,
-            custom_id="improve",
+            custom_id="improve", # required to make the modal persistent
         )
-        self.add_item(self.discovered)
-        self.add_item(self.rating)
         self.add_item(self.improve)
     
     async def callback(self, interaction: nextcord.Interaction):
@@ -39,15 +42,21 @@ class Feedback(nextcord.ui.Modal):
             f"How could the bot improve: {self.improve.value}\n"
         )
 
-bot = commands.Bot()
+class Bot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.persistent_views_added = False
 
-feedback_modal = None
+    async def on_ready(self):
+        if not self.persistent_views_added:
+            # Register the persistent modal for listening here.
+            self.add_modal(FeedbackModal())
+            self.persistent_views_added = True
 
-@bot.event
-async def on_ready():
-    global feedback_modal
-    feedback_modal = Feedback()
-    bot.add_modal(feedback_modal)
+        print(f'Logged in as {self.user} (ID: {self.user.id})')
+        print('------')
+
+bot = Bot('!')
 
 @bot.slash_command(
     name="feedback",
@@ -55,6 +64,6 @@ async def on_ready():
     guild_ids=[TESTING_GUILD_ID],
 )
 async def feedback(interaction: nextcord.Interaction):
-    await interaction.response.send_modal(feedback_modal)
+    await interaction.response.send_modal(FeedbackModal())
 
 bot.run("token")
