@@ -471,7 +471,7 @@ class ApplicationSubcommand:
         self.options: Dict[str, CommandOption] = {}
         self.children: Dict[str, ApplicationSubcommand] = {}
 
-        self.on_error: ApplicationErrorCallback = MISSING
+        self.on_error: Optional[ApplicationErrorCallback] = None
         if parent_command is not MISSING and getattr(parent_command, 'on_error', False):
             self.on_error = parent_command.on_error
 
@@ -777,7 +777,7 @@ class ApplicationSubcommand:
 
     def has_error_handler(self) -> bool:
         """:class:`bool`: Checks whether the command has an error handler registered."""
-        return self.on_error is not MISSING
+        return self.on_error is not None
 
     async def invoke_autocomplete(
             self,
