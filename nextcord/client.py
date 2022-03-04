@@ -2046,7 +2046,7 @@ class Client:
 
         Parameters
         -----------
-        func
+        func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
             The function that was used as a global application check.
         """
 
@@ -2060,7 +2060,7 @@ class Client:
 
         Parameters
         -----------
-        func
+        func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
             The function to remove from the global application checks.
         """
 
