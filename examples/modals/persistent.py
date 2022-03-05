@@ -45,13 +45,13 @@ class FeedbackModal(nextcord.ui.Modal):
 class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.persistent_views_added = False
+        self.persistent_modals_added = False
 
     async def on_ready(self):
-        if not self.persistent_views_added:
+        if not self.persistent_modals_added:
             # Register the persistent modal for listening here.
             self.add_modal(FeedbackModal())
-            self.persistent_views_added = True
+            self.persistent_modals_added = True
 
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
