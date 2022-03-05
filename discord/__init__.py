@@ -22,10 +22,10 @@ Module to allow for backwards compatibility for existing code and extensions
 
 from nextcord import *
 
-__title__ = 'nextcord'
-__author__ = 'tag-epic & Rapptz'
-__license__ = 'MIT'
-__copyright__ = 'Copyright 2015-present Rapptz & tag-epic'
-__version__ = '2.0.0a3'
+__title__ = "nextcord"
+__author__ = "tag-epic & Rapptz"
+__license__ = "MIT"
+__copyright__ = "Copyright 2015-present Rapptz & tag-epic"
+__version__ = "2.0.0a3"
 
-__path__ = __import__('pkgutil').extend_path(__path__, __name__)
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
