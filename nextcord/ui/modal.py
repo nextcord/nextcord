@@ -89,11 +89,13 @@ class Modal:
         *,
         timeout: Optional[float] = None,
         custom_id: str = MISSING,
+        auto_defer: bool = True,
     ):
         self.title = title
         self.timeout = timeout
         self._provided_custom_id = custom_id is not MISSING
         self.custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
+        self.auto_defer = auto_defer
         
         self.children = []
         self.__weights = _ViewWeights(self.children)
@@ -254,7 +256,7 @@ class Modal:
                 self.__timeout_expiry = time.monotonic() + self.timeout
 
             await self.callback(interaction)
-            if not interaction.response._responded:
+            if not interaction.response._responded and self.auto_defer:
                 await interaction.response.defer()
         except Exception as e:
             return await self.on_error(e, interaction)
