@@ -325,6 +325,7 @@ class Interaction:
         embed: Optional[Embed] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
+        attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> InteractionMessage:
@@ -352,6 +353,9 @@ class Interaction:
         files: List[:class:`File`]
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
+        attachments: List[:class:`Attachment`]
+            A list of attachments to keep in the message. If ``[]`` is passed
+            then all attachments are removed.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -381,6 +385,7 @@ class Interaction:
             content=content,
             file=file,
             files=files,
+            attachments=attachments,
             embed=embed,
             embeds=embeds,
             view=view,
@@ -840,8 +845,7 @@ class InteractionResponse:
         HTTPException
             Editing the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
-            or ``attachments`` and ``file/files``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         InteractionResponded
             This interaction has already been responded to before.
         """
@@ -884,8 +888,6 @@ class InteractionResponse:
             raise TypeError('Files parameter must be a list of type File')
 
         if attachments is not MISSING:
-            if file is not MISSING or files is not MISSING:
-                raise TypeError('Cannot mix attachments and file/files keyword arguments')
             payload['attachments'] = [a.to_dict() for a in attachments]
 
         if view is not MISSING:
@@ -967,6 +969,7 @@ class InteractionMessage(Message):
         embed: Optional[Embed] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
+        attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         delete_after: Optional[float] = None,
@@ -989,6 +992,9 @@ class InteractionMessage(Message):
         files: List[:class:`File`]
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
+        attachments: List[:class:`Attachment`]
+            A list of attachments to keep in the message. If ``[]`` is passed
+            then all attachments are removed.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -1022,6 +1028,7 @@ class InteractionMessage(Message):
             embed=embed,
             file=file,
             files=files,
+            attachments=attachments,
             view=view,
             allowed_mentions=allowed_mentions,
         )

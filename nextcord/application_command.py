@@ -39,6 +39,7 @@ from typing import (
     Union,
     TypeVar
 )
+import typing
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
@@ -46,15 +47,17 @@ from .errors import InvalidCommandType, ApplicationCheckFailure, ApplicationErro
 from .interactions import Interaction
 from .guild import Guild
 from .member import Member
-from .message import Message
+from .message import Attachment, Message
 from .role import Role
 from .user import User
-from .utils import MISSING, maybe_coroutine
+from .utils import MISSING, maybe_coroutine, find
 
 if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.checks import ApplicationErrorCallback, ApplicationHook, ApplicationCheck
-
+    _SlashOptionMetaBase = Any
+else:
+    _SlashOptionMetaBase = object
 
 __all__ = (
     "ApplicationCommand",
@@ -151,7 +154,8 @@ class ClientCog:
 
 
 
-class SlashOption:
+# Extends Any so that type checkers won't complain that it's a default for a parameter of a different type
+class SlashOption(_SlashOptionMetaBase):
     """Provides Discord with information about an option in a command.
 
     When this class is set as the default argument of a parameter in an Application Command, additional information
@@ -244,7 +248,8 @@ class CommandOption(SlashOption):
         # TODO: Is this in the library at all currently? This includes Users and Roles.
         # Mentionable: CommandOptionType.mentionable
         float: ApplicationCommandOptionType.number,
-        Message: ApplicationCommandOptionType.integer  # TODO: This is janky, the user provides an ID or something? Ugh.
+        Message: ApplicationCommandOptionType.integer,  # TODO: This is janky, the user provides an ID or something? Ugh.
+        Attachment: ApplicationCommandOptionType.attachment,
     }
     """Maps Python annotations/typehints to Discord Application Command type values."""
     def __init__(self, parameter: Parameter):
@@ -252,6 +257,7 @@ class CommandOption(SlashOption):
         self.parameter = parameter
         cmd_arg_given = False
         cmd_arg = SlashOption()
+
         if isinstance(parameter.default, SlashOption):
             cmd_arg = parameter.default
             cmd_arg_given = True
@@ -261,10 +267,11 @@ class CommandOption(SlashOption):
         # never set. If Discord demands a value, it should be the minimum value required.
         self.name = cmd_arg.name or parameter.name
         self._description = cmd_arg.description or MISSING
-        # While long, this is required. If cmd_arg.required is False, the expression:
-        # self.required = cmd_arg.required or MISSING
-        # will cause self.required to be MISSING, not False.
-        self.required = cmd_arg.required if cmd_arg.required is not MISSING else MISSING
+        # Set required to False if an Optional[...] or Union[..., None] type annotation is given.
+        self.required = False if type(None) in typing.get_args(parameter.annotation) else MISSING
+        # Override self.required if it was set in the command argument.
+        if cmd_arg.required is not MISSING:
+            self.required = cmd_arg.required
         self.choices = cmd_arg.choices or MISSING
         self.channel_types = cmd_arg.channel_types or MISSING
         # min_value of 0 will cause an `or` to give the variable MISSING
@@ -300,11 +307,11 @@ class CommandOption(SlashOption):
     def description(self, value: str):
         self._description = value
 
-    def get_type(self, typing: type) -> ApplicationCommandOptionType:
+    def get_type(self, param_typing: type) -> ApplicationCommandOptionType:
         """Translates a Python or Nextcord :class:`type` into a Discord typing.
         Parameters
         ----------
-        typing: :class:`type`
+        param_typing: :class:`type`
             Python or Nextcord type to translate.
         Returns
         -------
@@ -315,12 +322,20 @@ class CommandOption(SlashOption):
         :class:`NotImplementedError`
             Raised if the given typing cannot be translated to a Discord typing.
         """
-        if typing is self.parameter.empty:
+
+        if param_typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
-        elif valid_type := self.option_types.get(typing, None):
+        elif valid_type := self.option_types.get(param_typing, None):
+            return valid_type
+        # If the typing is Optional[...] or Union[..., None], get the type of the first non-None type.
+        elif (
+            type(None) in typing.get_args(param_typing)
+            and (inner_type := find(lambda t: t is not type(None), typing.get_args(param_typing)))
+            and (valid_type := self.option_types.get(inner_type, None))
+        ):
             return valid_type
         else:
-            raise NotImplementedError(f'Type "{typing}" isn\'t a supported typing for Application Commands.')
+            raise NotImplementedError(f'Type "{param_typing}" isn\'t a supported typing for Application Commands.')
 
     def verify(self) -> None:
         """This should run through :class:`SlashOption` variables and raise errors when conflicting data is given."""
@@ -379,6 +394,9 @@ class CommandOption(SlashOption):
             return float(argument)
         elif self.type is Message:  # TODO: This is mostly a workaround for Message commands, switch to handles below.
             return state._get_message(int(argument))
+        elif self.type is ApplicationCommandOptionType.attachment:
+            resolved_attachment_data: dict = interaction.data["resolved"]["attachments"][argument]
+            return Attachment(data=resolved_attachment_data, state=state)
         return argument
 
     async def handle_message_argument(self, state: ConnectionState, argument: Any, interaction: Interaction):
@@ -1433,7 +1451,11 @@ class ApplicationCommand(ApplicationSubcommand):
         if not check_dictionary_values(cmd_payload, raw_payload, "default_permission", "description", "type", "name"):
             return False
 
+        if len(cmd_payload.get("options", [])) != len(raw_payload.get("options", [])):
+            return False
+
         for cmd_option in cmd_payload.get("options", []):
+            # I absolutely do not trust Discord or us ordering things nicely, so check through both.
             found_correct_value = False
             for raw_option in raw_payload.get("options", []):
                 if cmd_option["name"] == raw_option["name"]:
@@ -1443,6 +1465,7 @@ class ApplicationCommand(ApplicationSubcommand):
                     # check_dictionary_values.
                     if not deep_dictionary_check(cmd_option, raw_option):
                         return False
+                    break
             if not found_correct_value:
                 return False
         return True

@@ -10,11 +10,11 @@ A basic wrapper for the Discord API.
 
 """
 
-__title__ = 'discord'
+__title__ = 'nextcord'
 __author__ = 'tag-epic & Rapptz'
 __license__ = 'MIT'
-__copyright__ = 'Copyright 2015-present Rapptz'
-__version__ = '2.0.0a7'
+__copyright__ = 'Copyright 2015-present Rapptz & tag-epic'
+__version__ = '2.0.0a9'
 
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
 
