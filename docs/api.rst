@@ -1361,7 +1361,7 @@ of :class:`enum.Enum`.
         .. versionadded:: 2.0
     .. attribute:: chat_input_command
 
-        The system message denoting that an application (or "slash") command was executed.
+        The system message denoting that a slash command was executed.
 
         .. versionadded:: 2.0
     .. attribute:: thread_starter_message
