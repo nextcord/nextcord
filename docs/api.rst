@@ -1359,9 +1359,15 @@ of :class:`enum.Enum`.
         The system message denoting that the author is replying to a message.
 
         .. versionadded:: 2.0
-    .. attribute:: application_command
+    .. attribute:: chat_input_command
 
         The system message denoting that an application (or "slash") command was executed.
+
+        .. versionadded:: 2.0
+    .. attribute:: thread_starter_message
+
+        The system message denoting the message in the thread that is the one that started the
+        thread's conversation topic.
 
         .. versionadded:: 2.0
     .. attribute:: guild_invite_reminder
@@ -1369,10 +1375,9 @@ of :class:`enum.Enum`.
         The system message sent as a reminder to invite people to the guild.
 
         .. versionadded:: 2.0
-    .. attribute:: thread_starter_message
+    .. attribute:: context_menu_command
 
-        The system message denoting the message in the thread that is the one that started the
-        thread's conversation topic.
+        The system message denoting that a context menu command was executed.
 
         .. versionadded:: 2.0
 
@@ -4330,6 +4335,7 @@ Cogs
 
 .. autoclass:: ClientCog
     :members:
+
 Decorators
 ~~~~~~~~~~
 
