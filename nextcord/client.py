@@ -259,10 +259,16 @@ class Client:
         The event loop that the client uses for asynchronous operations.
     """
     def __init__(
-        self,
-        *,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
-        **options: Any,
+            self,
+            *,
+            loop: Optional[asyncio.AbstractEventLoop] = None,
+            lazy_load_commands: bool = True,
+            rollout_associate_known: bool = True,
+            rollout_delete_unknown: bool = True,
+            rollout_register_new: bool = True,
+            rollout_update_known: bool = True,
+            rollout_all_guilds: bool = False,
+            **options: Any,
     ):
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
@@ -292,13 +298,19 @@ class Client:
         self._ready: asyncio.Event = asyncio.Event()
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
-        self._lazy_load_commands: bool = options.pop('lazy_load_commands', True)
+        self._lazy_load_commands: bool = lazy_load_commands
+        # self._lazy_load_commands: bool = options.pop('lazy_load_commands', True)
         self._client_cogs: Set[ClientCog] = set()
-        self._rollout_associate_known: bool = options.pop("rollout_associate_known", True)
-        self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
-        self._rollout_register_new: bool = options.pop("rollout_register_new", True)
-        self._rollout_update_known: bool = options.pop("rollout_update_known", True)
-        self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
+        self._rollout_associate_known: bool = rollout_associate_known
+        self._rollout_delete_unknown: bool = rollout_delete_unknown
+        self._rollout_register_new: bool = rollout_register_new
+        self._rollout_update_known: bool = rollout_update_known
+        self._rollout_all_guilds: bool = rollout_all_guilds
+        # self._rollout_associate_known: bool = options.pop("rollout_associate_known", True)
+        # self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
+        # self._rollout_register_new: bool = options.pop("rollout_register_new", True)
+        # self._rollout_update_known: bool = options.pop("rollout_update_known", True)
+        # self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
         self._application_commands_to_add: Set[ApplicationCommand] = set()
 
         if VoiceClient.warn_nacl:
@@ -1820,19 +1832,25 @@ class Client:
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
                 _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
-                _log.debug(f"nextcord.Client: {interaction.data}")
+                # _log.debug(f"nextcord.Client: {interaction.data}")
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 _log.debug(f"nextcord.Client: {response_signature}")
                 do_deploy = False
+                # from testing import data_to_nice_str
+                # await interaction.send(
+                #     f"Attempt to lazy load failed: ```py\n{data_to_nice_str(interaction.data)}\n```", ephemeral=True
+                # )
+                # _log.debug(f"{self._connection._application_command_signatures}")
                 if app_cmd := self._connection.get_application_command_from_signature(
                         interaction.data["name"],
                         int(interaction.data['type']),
-                        interaction.guild_id
+                        int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None
                 ):
                     _log.info("nextcord.Client: Basic signature matches, checking against raw payload.")
-                    # TODO: Lazy load is completely broken. Figure out how to fix it.
-                    if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
+
+                    # if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
                     # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
+                    if app_cmd.is_interaction_valid(interaction):
                         _log.info("nextcord.Client: New interaction command found, Assigning id now")
                         app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
@@ -2008,6 +2026,8 @@ class Client:
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
+            command.from_callback(command.callback, call_children=True)
+
             self.add_application_command(command, use_rollout=True)
 
     def add_all_cog_commands(self) -> None:
@@ -2018,6 +2038,7 @@ class Client:
                     self.add_application_command(cmd, use_rollout=True)
 
     def add_cog(self, cog: ClientCog) -> None:
+        # cog.process_app_cmds()
         for app_cmd in cog.to_register:
             self.add_application_command(app_cmd, use_rollout=True)
         self._client_cogs.add(cog)
@@ -2052,7 +2073,7 @@ class Client:
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
-            result = user_command(name=name, description=description, guild_ids=guild_ids,
+            result = user_command(name=name, guild_ids=guild_ids,
                                   default_permission=default_permission, force_global=force_global)(func)
             self._application_commands_to_add.add(result)
             return result
@@ -2084,7 +2105,7 @@ class Client:
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
-            result = message_command(name=name, description=description, guild_ids=guild_ids,
+            result = message_command(name=name, guild_ids=guild_ids,
                                      default_permission=default_permission, force_global=force_global)(func)
             self._application_commands_to_add.add(result)
             return result
