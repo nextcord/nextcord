@@ -91,12 +91,12 @@ def check(predicate: 'ApplicationCheck') -> Callable[[T], T]:
     .. code-block:: python3
 
         def owner_or_permissions(**perms):
-            original = commands.has_permissions(**perms).predicate
+            original = application_checks.has_permissions(**perms).predicate
             async def extended_check(interaction: Interaction):
                 if interaction.guild is None:
                     return False
                 return interaction.guild.owner_id == interaction.user.id or await original(interaction)
-            return commands.check(extended_check)
+            return application_checks.check(extended_check)
 
     .. note::
 
@@ -114,7 +114,7 @@ def check(predicate: 'ApplicationCheck') -> Callable[[T], T]:
             return interaction.message.author.id == 85309593344815104
 
         @bot.slash_command()
-        @checks.check(check_if_it_is_me)
+        @application_checks.check(check_if_it_is_me)
         async def only_for_me(interaction: Interaction):
             await interaction.response.send_message('I know you!')
 
@@ -124,8 +124,8 @@ def check(predicate: 'ApplicationCheck') -> Callable[[T], T]:
 
         def is_me():
             def predicate(interaction: Interaction):
-                return ctx.message.author.id == 85309593344815104
-            return commands.check(predicate)
+                return interaction.user.id == 85309593344815104
+            return application_checks.check(predicate)
 
         @bot.slash_command()
         @is_me()
