@@ -134,7 +134,15 @@ class BotBase(GroupMixin):
         self._after_invoke = None
         self._help_command = None
         self.description = inspect.cleandoc(description) if description else ''
+        self.owner_id = options.get('owner_id')
+        self.owner_ids = options.get('owner_ids', set())
         self.strip_after_prefix = options.get('strip_after_prefix', False)
+
+        if self.owner_id and self.owner_ids:
+            raise TypeError('Both owner_id and owner_ids are set.')
+
+        if self.owner_ids and not isinstance(self.owner_ids, collections.abc.Collection):
+            raise TypeError(f'owner_ids must be a collection not {self.owner_ids.__class__!r}')
 
         if help_command is _default:
             self.help_command = DefaultHelpCommand()
@@ -308,6 +316,39 @@ class BotBase(GroupMixin):
 
         # type-checker doesn't distinguish between functions and methods
         return await nextcord.utils.async_all(f(ctx) for f in data)  # type: ignore
+
+    async def is_owner(self, user: nextcord.User) -> bool:
+        """|coro|
+        Checks if a :class:`~nextcord.User` or :class:`~nextcord.Member` is the owner of
+        this bot.
+        If an :attr:`owner_id` is not set, it is fetched automatically
+        through the use of :meth:`~.Bot.application_info`.
+        .. versionchanged:: 1.3
+            The function also checks if the application is team-owned if
+            :attr:`owner_ids` is not set.
+        Parameters
+        -----------
+        user: :class:`.abc.User`
+            The user to check for.
+        Returns
+        --------
+        :class:`bool`
+            Whether the user is the owner.
+        """
+
+        if self.owner_id:
+            return user.id == self.owner_id
+        elif self.owner_ids:
+            return user.id in self.owner_ids
+        else:
+
+            app = await self.application_info()  # type: ignore
+            if app.team:
+                self.owner_ids = ids = {m.id for m in app.team.members}
+                return user.id in ids
+            else:
+                self.owner_id = owner_id = app.owner.id
+                return user.id == owner_id
 
     def before_invoke(self, coro: CFT) -> CFT:
         """A decorator that registers a coroutine as a pre-invoke hook.
@@ -1096,6 +1137,18 @@ class Bot(BotBase, nextcord.Client):
         The help command implementation to use. This can be dynamically
         set at runtime. To remove the help command pass ``None``. For more
         information on implementing a help command, see :ref:`ext_commands_help_command`.
+    owner_id: Optional[:class:`int`]
+        The user ID that owns the bot. If this is not set and is then queried via
+        :meth:`.is_owner` then it is fetched automatically using
+        :meth:`~.Bot.application_info`.
+    owner_ids: Optional[Collection[:class:`int`]]
+        The user IDs that owns the bot. This is similar to :attr:`owner_id`.
+        If this is not set and the application is team based, then it is
+        fetched automatically using :meth:`~.Bot.application_info`.
+        For performance reasons it is recommended to use a :class:`set`
+        for the collection. You cannot set both ``owner_id`` and ``owner_ids``.
+        
+        .. versionadded:: 1.3
     strip_after_prefix: :class:`bool`
         Whether to strip whitespace characters after encountering the command
         prefix. This allows for ``!   hello`` and ``!hello`` to both work if

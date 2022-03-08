@@ -243,17 +243,6 @@ class Client:
         Whether during the application command rollout to update known applications that share the same signature but
         don't quite match what is registered on Discord. Defaults to ``True``.
 
-    owner_id: Optional[:class:`int`]
-        The user ID that owns the bot. If this is not set and is then queried via
-        :meth:`.is_owner` then it is fetched automatically using
-        :meth:`~.Client.application_info`.
-
-    owner_ids: Optional[Collection[:class:`int`]]
-        The user IDs that owns the bot. This is similar to :attr:`owner_id`.
-        If this is not set and the application is team based, then it is
-        fetched automatically using :meth:`~.Client.application_info`.
-        For performance reasons it is recommended to use a :class:`set`
-        for the collection. You cannot set both ``owner_id`` and ``owner_ids``.
     rollout_all_guilds: :class:`bool`
         Whether during the application command rollout to update to all guilds, instead of only ones with at least one
         command to roll out to them. Defaults to ``False``
@@ -315,15 +304,6 @@ class Client:
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
             _log.warning("PyNaCl is not installed, voice will NOT be supported")
-
-        self.owner_id = options.pop('owner_id', None)
-        self.owner_ids = options.pop('owner_ids', set())
-
-        if self.owner_id and self.owner_ids:
-            raise TypeError('Both owner_id and owner_ids are set.')
-
-        if self.owner_ids and not isinstance(self.owner_ids, collections.abc.Collection):
-            raise TypeError(f'owner_ids must be a collection not {self.owner_ids.__class__!r}')
 
     # internals
 
@@ -1556,43 +1536,6 @@ class Client:
         if 'rpc_origins' not in data:
             data['rpc_origins'] = None
         return AppInfo(self._connection, data)
-
-    async def is_owner(self, user: User) -> bool:
-        """|coro|
-
-        Checks if a :class:`~nextcord.User` or :class:`~nextcord.Member` is the owner of
-        this bot.
-
-        If an :attr:`owner_id` is not set, it is fetched automatically
-        through the use of :meth:`~.Client.application_info`.
-
-        The function also checks if the application is team-owned if
-        :attr:`owner_ids` is not set.
-
-        Parameters
-        -----------
-        user: :class:`.abc.User`
-            The user to check for.
-
-        Returns
-        --------
-        :class:`bool`
-            Whether the user is the owner.
-        """
-
-        if self.owner_id:
-            return user.id == self.owner_id
-        elif self.owner_ids:
-            return user.id in self.owner_ids
-        else:
-
-            app = await self.application_info()  # type: ignore
-            if app.team:
-                self.owner_ids = ids = {m.id for m in app.team.members}
-                return user.id in ids
-            else:
-                self.owner_id = owner_id = app.owner.id
-                return user.id == owner_id
 
     async def fetch_user(self, user_id: int, /) -> User:
         """|coro|
