@@ -834,7 +834,7 @@ class BotBase(GroupMixin):
         self._call_module_finalizers(lib, name)
 
     def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        """Atomically reloads an extension.
+        """ Automatically reloads an extension.
 
         This replaces the extension with the same extension, only refreshed. This is
         equivalent to a :meth:`unload_extension` followed by a :meth:`load_extension`
