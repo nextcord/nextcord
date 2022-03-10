@@ -1719,6 +1719,29 @@ class Client:
         self._connection.store_view(view, message_id)
     
     def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
+        """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
+        
+        This method can be called for modals whose lifetime must be eventually
+        superior to the one of the program or for modals whose call does not
+        depend on particular criteria.
+
+        Parameters
+        ------------
+        modal: :class:`nextcord.ui.Modal`
+            The view to register for dispatching.
+        user_id: Optional[:class:`int`]
+            The user ID that the view is attached to. This is used to filter
+            the modal calls based on the users.
+
+        Raises
+        -------
+        TypeError
+            A modal was not passed.
+        ValueError
+            The modal is not persistent. A persistent modal has a set
+            custom_id and all their components with a set custom_id
+            and a timeout set to None.
+        """
         if not isinstance(modal, Modal):
             raise TypeError(f'expected an instance of Modal not {modal.__class__!r}')
 

@@ -747,6 +747,23 @@ class InteractionResponse:
             await self._parent.delete_original_message(delay=delete_after)
     
     async def send_modal(self, modal: Modal) -> None:
+        """|coro|
+        
+        Respond to this interaction by sending a modal.
+        
+        Parameters
+        ----------
+        modal: :class:`nextcord.ui.Modal`
+            The modal to be sent in response to the interaction and which will
+            be displayed on the user's screen.
+        
+        Raises
+        -------
+        HTTPException
+            Sending the modal failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+        """
         if self._responded:
             raise InteractionResponded(self._parent)
         

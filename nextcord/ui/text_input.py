@@ -64,7 +64,7 @@ class TextInput(Item[V]):
     
     Parameters
     ----------
-    label: str
+    label: :class:`str`
         The label of the text input
     style: :class:`TextInputStyle`
         The style of the text input.

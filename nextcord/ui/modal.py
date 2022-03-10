@@ -79,7 +79,7 @@ class Modal:
         If ``None`` then there is no timeout.
     children: List[:class:`Item`]
         The list of children attached to this modal.
-    custom_id: str
+    custom_id: :class:`str`
         The ID of the modal that gets received during an interaction.
     """
     
@@ -215,7 +215,7 @@ class Modal:
         
         Parameters
         ----------
-        interaction: Interaction
+        interaction: :class:`Interaction`
             The interaction fired by the user.
         
         """
