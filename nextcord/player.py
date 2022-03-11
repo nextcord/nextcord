@@ -36,7 +36,19 @@ import sys
 import re
 import io
 
-from typing import Any, Callable,  Generic, IO, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Generic,
+    IO,
+    Optional,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from .errors import ClientException
 from .opus import Encoder as OpusEncoder
@@ -683,7 +695,13 @@ class AudioPlayer(threading.Thread):
 
         if self.after is not None:
             try:
-                self.after(error)
+                # Run the after function
+                after_return = self.after(error)
+
+                # If what we got back was a coroutine, submit it to
+                # the main event loop for processing
+                if asyncio.coroutines.iscoroutine(after_return):
+                    asyncio.run_coroutine_threadsafe(after_return, self.client.loop)
             except Exception as exc:
                 _log.exception('Calling the after function failed.')
                 exc.__context__ = error
