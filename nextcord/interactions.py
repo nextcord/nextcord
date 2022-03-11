@@ -413,7 +413,7 @@ class Interaction:
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-    ) -> Optional[Union[Message, WebhookMessage]]:
+    ) -> Optional[WebhookMessage]:
         """|coro|
 
         This is a shorthand function for helping in sending messages in
@@ -423,9 +423,12 @@ class Interaction:
 
         Returns
         -------
-        Optional[:class:`Message`, :class:`WebhookMessage`]
-            The :class:`Message` that was sent, a :class:`WebhookMessage` if the
-            interaction has been responded to before.
+        Optional[:class:`WebhookMessage`]
+            If the interaction has not been responded to, returns None. To access the
+            :class:`InteractionMessage` that was sent, the methods: :meth:`Interaction.original_message()`,
+            :meth:`Interaction.edit_original_message()`, and :meth:`Interaction.delete_original_message()`
+            should be used.
+            If the interaction has been responded to, returns the :class:`WebhookMessage`.
         """
 
         if not self.response.is_done():
