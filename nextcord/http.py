@@ -508,7 +508,7 @@ class HTTPClient:
                 for attachment in attachments
             ]
 
-        form.append({'name': 'payload_json', 'value': utils._to_json(payload)})
+        form.append({'name': 'payload_json'})
         for index, file in enumerate(files):
             payload['attachments'].append({
                 'id': index,
@@ -523,6 +523,7 @@ class HTTPClient:
                     'content_type': 'application/octet-stream',
                 }
             )
+        form[0]['value'] = utils._to_json(payload)
 
         return self.request(route, form=form, files=files)
 
