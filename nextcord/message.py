@@ -152,9 +152,13 @@ class Attachment(Hashable):
         The attachment's `media type <https://en.wikipedia.org/wiki/Media_type>`_
 
         .. versionadded:: 1.7
+    description: Optional[:class:`str`]
+        The attachment's description. This is used for alternative text in the Discord client.
+
+        .. versionadded:: 2.0
     """
 
-    __slots__ = ('id', 'size', 'height', 'width', 'filename', 'url', 'proxy_url', '_http', 'content_type')
+    __slots__ = ('id', 'size', 'height', 'width', 'filename', 'url', 'proxy_url', '_http', 'content_type', 'description')
 
     def __init__(self, *, data: AttachmentPayload, state: ConnectionState):
         self.id: int = int(data['id'])
@@ -166,6 +170,7 @@ class Attachment(Hashable):
         self.proxy_url: str = data.get('proxy_url')
         self._http = state.http
         self.content_type: Optional[str] = data.get('content_type')
+        self.description: Optional[str] = data.get('description')
 
     def is_spoiler(self) -> bool:
         """:class:`bool`: Whether this attachment contains a spoiler."""
@@ -302,7 +307,7 @@ class Attachment(Hashable):
         """
 
         data = await self.read(use_cached=use_cached)
-        return File(io.BytesIO(data), filename=self.filename, spoiler=spoiler)
+        return File(io.BytesIO(data), filename=self.filename, description=self.description, spoiler=spoiler)
 
     def to_dict(self) -> AttachmentPayload:
         result: AttachmentPayload = {
@@ -319,6 +324,8 @@ class Attachment(Hashable):
             result['width'] = self.width
         if self.content_type:
             result['content_type'] = self.content_type
+        if self.description:
+            result['description'] = self.description
         return result
 
 
@@ -1295,7 +1302,7 @@ class Message(Hashable):
         if file is not MISSING and attachments is not MISSING:
             raise InvalidArgument('cannot pass both file and attachments parameter to edit()')
         if files is not MISSING and attachments is not MISSING:
-            raise InvalidArgument('cannot pass both files and fileattachments parameter to edit()')
+            raise InvalidArgument('cannot pass both files and attachments parameter to edit()')
 
         if embed is not MISSING:
             if embed is None:
@@ -1336,7 +1343,14 @@ class Message(Hashable):
             payload["files"] = files
 
         if "files" in payload and append_files is not MISSING and not append_files:
-            payload["attachments"] = [{"id": i} for i in range(len(payload["files"]))]
+            payload["attachments"] = [
+                {
+                    "id": i,
+                    "filename": file.filename,
+                    "description": file.description,
+                }
+                for i, file in enumerate(payload["files"])
+            ]
 
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)

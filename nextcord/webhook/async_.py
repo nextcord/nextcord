@@ -141,7 +141,7 @@ class AsyncWebhookAdapter:
                     file.reset(seek=attempt)
 
                 if multipart:
-                    form_data = aiohttp.FormData()
+                    form_data = aiohttp.FormData(quote_fields=False)
                     for p in multipart:
                         form_data.add_field(**p)
                     to_send = form_data
@@ -368,6 +368,7 @@ class AsyncWebhookAdapter:
                     {
                         'id': index,
                         'filename': file.filename,
+                        'description': file.description,
                     }
                 )
                 multipart.append(

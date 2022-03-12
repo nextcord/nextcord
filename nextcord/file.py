@@ -60,15 +60,19 @@ class File:
         The filename to display when uploading to Discord.
         If this is not given then it defaults to ``fp.name`` or if ``fp`` is
         a string then the ``filename`` will default to the string given.
+    description: Optional[:class:`str`]
+        The description for the file. This is used to display alternative text
+        in the Discord client.
     spoiler: :class:`bool`
         Whether the attachment is a spoiler.
     """
 
-    __slots__ = ('fp', 'filename', 'spoiler', '_original_pos', '_owner', '_closer')
+    __slots__ = ('fp', 'filename', 'spoiler', '_original_pos', '_owner', '_closer', 'description')
 
     if TYPE_CHECKING:
         fp: io.BufferedIOBase
         filename: Optional[str]
+        description: Optional[str]
         spoiler: bool
 
     def __init__(
@@ -76,6 +80,7 @@ class File:
         fp: Union[str, bytes, os.PathLike, io.BufferedIOBase],
         filename: Optional[str] = None,
         *,
+        description: Optional[str] = None,
         spoiler: bool = False,
     ):
         if isinstance(fp, io.IOBase):
@@ -103,6 +108,8 @@ class File:
                 self.filename = getattr(fp, 'name', None)
         else:
             self.filename = filename
+
+        self.description = description
 
         if spoiler and self.filename is not None and not self.filename.startswith('SPOILER_'):
             self.filename = 'SPOILER_' + self.filename
