@@ -881,18 +881,15 @@ class ApplicationSubcommand:
                 state.dispatch('application_command_error', interaction, ApplicationInvokeError(error))
                 await app_cmd.invoke_error(interaction, error)
             finally:
-                try:
-                    if app_cmd._application_command_after_invoke is not None:
-                        await app_cmd._application_command_after_invoke(interaction)
-                    
-                    cog_application_command_after_invoke = app_cmd.cog_application_command_after_invoke
-                    if cog_application_command_after_invoke is not None:
-                        await cog_application_command_after_invoke(interaction)
+                if app_cmd._application_command_after_invoke is not None:
+                    await app_cmd._application_command_after_invoke(interaction)
+                
+                cog_application_command_after_invoke = app_cmd.cog_application_command_after_invoke
+                if cog_application_command_after_invoke is not None:
+                    await cog_application_command_after_invoke(interaction)
 
-                    if state._application_command_after_invoke is not None:
-                        await state._application_command_after_invoke(interaction)
-                except Exception as error:
-                    raise error
+                if state._application_command_after_invoke is not None:
+                    await state._application_command_after_invoke(interaction)
 
     def _find_subcommand(self, option_data: List[Dict[str, Any]]) -> Tuple[Union[ApplicationSubcommand, ApplicationCommand], List[Dict[str, Any]]]:
         if self.children:
