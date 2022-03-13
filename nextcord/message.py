@@ -1214,7 +1214,6 @@ class Message(Hashable):
         view: Optional[View] = MISSING,
         file: Optional[File] = MISSING,
         files: Optional[List[File]] = MISSING,
-        append_files: Optional[bool] = MISSING
     ) -> Message:
         """|coro|
 
@@ -1270,12 +1269,6 @@ class Message(Hashable):
             If provided, a list of new files to add to the message.
 
             .. versionadded:: 2.0
-        append_files: Optional[:class:`bool`]
-            Whether to append files to the message.
-            If set to True (default), files will be appended to the message.
-            If set to False, files will override the current files on the message.
-
-            .. versionadded:: 2.0
 
         Raises
         -------
@@ -1326,9 +1319,6 @@ class Message(Hashable):
 
         if attachments is not MISSING:
             payload['attachments'] = [a.to_dict() for a in attachments]
-
-        if append_files is not MISSING and append_files:
-            payload['attachments'] = [a.to_dict() for a in self.attachments]
 
         if view is not MISSING:
             self._state.prevent_view_updates_for(self.id)
