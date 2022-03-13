@@ -1342,16 +1342,6 @@ class Message(Hashable):
         elif files is not MISSING:
             payload["files"] = files
 
-        if "files" in payload and append_files is not MISSING and not append_files:
-            payload["attachments"] = [
-                {
-                    "id": i,
-                    "filename": file.filename,
-                    "description": file.description,
-                }
-                for i, file in enumerate(payload["files"])
-            ]
-
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)
 
