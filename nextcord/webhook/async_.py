@@ -355,6 +355,9 @@ class AsyncWebhookAdapter:
             'type': type,
         }
 
+        if files and 'attachments' not in data:
+            data['attachments'] = []
+
         if data is not None:
             payload['data'] = data
 
@@ -362,9 +365,8 @@ class AsyncWebhookAdapter:
 
         if files:
             multipart.append({'name': 'payload_json'})
-            payload['attachments'] = []
             for index, file in enumerate(files):
-                payload['attachments'].append(
+                payload['data']['attachments'].append(
                     {
                         'id': index,
                         'filename': file.filename,
