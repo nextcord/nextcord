@@ -33,7 +33,7 @@ from ..components import TextInput as TextInputComponent
 from ..utils import MISSING
 from ..interactions import Interaction
 
-__all__ = ('TextInput')
+__all__ = ('TextInput',)
 
 if TYPE_CHECKING:
     from .view import View
