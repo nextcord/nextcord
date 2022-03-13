@@ -27,7 +27,7 @@ class Pet(nextcord.ui.Modal):
         self.add_item(self.description)
 
     async def callback(self, interaction: nextcord.Interaction) -> None:
-        response = (f"{interaction.user.mention} favourite pet's name is {self.name.value}.")
+        response = f"{interaction.user.mention} favourite pet's name is {self.name.value}."
         if self.description.value != "":
             response += f"\nTheir pet can be recognized by this information:\n{self.description.value}"
         await interaction.send(response)
