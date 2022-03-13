@@ -29,7 +29,7 @@ class Pet(nextcord.ui.Modal):
             response += f"\nTheir pet can be recognized by this information:\n{self.description.value}"
         await inter.send(response)
 
-bot = commands.Bot("&")
+bot = commands.Bot("$")
 
 @bot.slash_command(
     name="pet",

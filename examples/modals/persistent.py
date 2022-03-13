@@ -56,7 +56,7 @@ class Bot(commands.Bot):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
 
-bot = Bot('&')
+bot = Bot("$")
 
 @bot.slash_command(
     name="feedback",
