@@ -23,6 +23,7 @@ class FeedbackModal(nextcord.ui.Modal):
 
         self.discovered = nextcord.ui.TextInput(
             label="How did you discover the bot?",
+            placeholder="e.g. Discord server, friend, etc.",
             required=False,
             style=nextcord.TextInputStyle.paragraph,
             custom_id="persistent_modal:discovered",
@@ -30,14 +31,16 @@ class FeedbackModal(nextcord.ui.Modal):
         self.add_item(self.discovered)
 
         self.rating = nextcord.ui.TextInput(
-            label="How would you rate the bot?",
-            placeholder="I would give the bot a ten out of ten...",
+            label="How would you rate the bot out of 10?",
+            placeholder="10",
+            max_length=2,
             custom_id="persistent_modal:rating",
         )
         self.add_item(self.rating)
 
         self.improve = nextcord.ui.TextInput(
             label="How could the bot improve?",
+            placeholder="e.g. add more features, improve the UI, etc.",
             style=nextcord.TextInputStyle.paragraph,
             required=False,
             custom_id="persistent_modal:improve",
@@ -46,7 +49,7 @@ class FeedbackModal(nextcord.ui.Modal):
 
     async def callback(self, interaction: nextcord.Interaction):
         await interaction.send(
-            f"{interaction.user.mention} feedback :\n"
+            f"Feedback from {interaction.user.mention}:\n"
             f"Rating: {self.rating.value}\n"
             f"Where they discovered the bot: {self.discovered.value}\n"
             f"How could the bot improve: {self.improve.value}\n"
