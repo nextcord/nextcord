@@ -63,6 +63,7 @@ if TYPE_CHECKING:
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
     from .ui.view import View
+    from .ui.modal import Modal
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
     from .client import Client
@@ -547,7 +548,7 @@ class InteractionResponse:
             defer_type = InteractionResponseType.deferred_channel_message.value
             if ephemeral:
                 data = {'flags': 64}
-        elif parent.type is InteractionType.component:
+        elif parent.type is InteractionType.component or parent.type is InteractionType.modal_submit:
             defer_type = InteractionResponseType.deferred_message_update.value
 
         if defer_type:
@@ -752,6 +753,41 @@ class InteractionResponse:
 
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
+    
+    async def send_modal(self, modal: Modal) -> None:
+        """|coro|
+        
+        Respond to this interaction by sending a modal.
+        
+        Parameters
+        ----------
+        modal: :class:`nextcord.ui.Modal`
+            The modal to be sent in response to the interaction and which will
+            be displayed on the user's screen.
+        
+        Raises
+        -------
+        HTTPException
+            Sending the modal failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+        """
+        if self._responded:
+            raise InteractionResponded(self._parent)
+        
+        parent = self._parent
+        adapter = async_context.get()
+        await adapter.create_interaction_response(
+            parent.id,
+            parent.token,
+            session=parent._session,
+            type=InteractionResponseType.modal.value,
+            data=modal.to_dict(),
+        )
+        
+        self._responded = True
+        
+        self._parent._state.store_modal(modal, self._parent.user.id)
 
     async def edit_message(
         self,
@@ -812,8 +848,6 @@ class InteractionResponse:
         msg = parent.message
         state = parent._state
         message_id = msg.id if msg else None
-        if parent.type is not InteractionType.component:
-            return
 
         payload = {}
         if content is not MISSING:

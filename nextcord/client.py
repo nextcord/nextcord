@@ -77,6 +77,7 @@ from .sticker import (
 from .template import Template
 from .threads import Thread
 from .ui.view import View
+from .ui.modal import Modal
 from .user import ClientUser, User
 from .utils import MISSING
 from .voice_client import VoiceClient
@@ -1716,6 +1717,38 @@ class Client:
             raise ValueError('View is not persistent. Items need to have a custom_id set and View must have no timeout')
 
         self._connection.store_view(view, message_id)
+    
+    def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
+        """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
+        
+        This method can be called for modals whose lifetime must be eventually
+        superior to the one of the program or for modals whose call does not
+        depend on particular criteria.
+
+        Parameters
+        ------------
+        modal: :class:`nextcord.ui.Modal`
+            The view to register for dispatching.
+        user_id: Optional[:class:`int`]
+            The user ID that the view is attached to. This is used to filter
+            the modal calls based on the users.
+
+        Raises
+        -------
+        TypeError
+            A modal was not passed.
+        ValueError
+            The modal is not persistent. A persistent modal has a set
+            custom_id and all their components with a set custom_id
+            and a timeout set to None.
+        """
+        if not isinstance(modal, Modal):
+            raise TypeError(f'expected an instance of Modal not {modal.__class__!r}')
+
+        if not modal.is_persistent():
+            raise ValueError('Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set')
+
+        self._connection.store_modal(modal, user_id)
 
     @property
     def persistent_views(self) -> Sequence[View]:

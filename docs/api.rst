@@ -1576,6 +1576,17 @@ of :class:`enum.Enum`.
 
         An alias for :attr:`link`.
 
+.. class:: TextInputStyle
+
+    Represent the style of a text input component.
+
+    .. attribute:: short
+
+        Represent a single line input
+    .. attribute:: paragraph
+
+        Represent a multi line input
+
 .. class:: VoiceRegion
 
     Specifies the region a voice server belongs to.
@@ -4273,6 +4284,14 @@ View
 .. autoclass:: nextcord.ui.View
     :members:
 
+Modal
+~~~~~~~
+
+.. attributetable:: nextcord.ui.Modal
+
+.. autoclass:: nextcord.ui.Modal
+    :members:
+
 Item
 ~~~~~~~
 
@@ -4291,6 +4310,15 @@ Button
     :inherited-members:
 
 .. autofunction:: nextcord.ui.button
+
+TextInput
+~~~~~~~
+
+.. attributetable:: nextcord.ui.TextInput
+
+.. autoclass:: nextcord.ui.TextInput
+    :members:
+    :inherited-members:
 
 Select
 ~~~~~~~

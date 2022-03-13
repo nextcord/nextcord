@@ -57,6 +57,7 @@ from .invite import Invite
 from .integrations import _integration_factory
 from .interactions import Interaction
 from .ui.view import ViewStore, View
+from .ui.modal import ModalStore, Modal
 from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
@@ -247,7 +248,7 @@ class ConnectionState:
 
         self.clear()
 
-    def clear(self, *, views: bool = True) -> None:
+    def clear(self, *, views: bool = True, modals: bool = True) -> None:
         self.user: Optional[ClientUser] = None
         # Originally, this code used WeakValueDictionary to maintain references to the
         # global user mapping.
@@ -271,6 +272,8 @@ class ConnectionState:
         self._application_command_ids = {}
         if views:
             self._view_store: ViewStore = ViewStore(self)
+        if modals:
+            self._modal_store: ModalStore = ModalStore(self)
 
         self._voice_clients: Dict[int, VoiceProtocol] = {}
 
@@ -377,6 +380,9 @@ class ConnectionState:
 
     def store_view(self, view: View, message_id: Optional[int] = None) -> None:
         self._view_store.add_view(view, message_id)
+    
+    def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
+        self._modal_store.add_modal(modal, user_id)
 
     def prevent_view_updates_for(self, message_id: int) -> Optional[View]:
         return self._view_store.remove_message_tracking(message_id)
@@ -1025,6 +1031,9 @@ class ConnectionState:
             custom_id = interaction.data['custom_id']  # type: ignore
             component_type = interaction.data['component_type']  # type: ignore
             self._view_store.dispatch(component_type, custom_id, interaction)
+        if data['type'] == 5: # modal submit
+            custom_id = interaction.data['custom_id']
+            self._modal_store.dispatch(custom_id, interaction)
 
         self.dispatch('interaction', interaction)
 
