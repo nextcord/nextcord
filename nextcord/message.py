@@ -1286,7 +1286,7 @@ class Message(Hashable):
             edited a message's content or embed that isn't yours.
         ~nextcord.InvalidArgument
             You specified both ``embed`` and ``embeds``
-            or ``files`` and ``files``.
+            or ``file`` and ``files``.
         """
 
         payload: Dict[str, Any] = {}
