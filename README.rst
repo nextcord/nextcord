@@ -22,10 +22,6 @@ Nextcord
    
 A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord written in Python.
 
-Fork notice
---------------------------
-
-This is a fork of discord.py. 
 
 Key Features
 -------------
