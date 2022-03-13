@@ -13,6 +13,7 @@ class Pet(nextcord.ui.Modal):
 
         self.name = nextcord.ui.TextInput(
             label="Your pet's name",
+            min_length=2,
             max_length=50,
         )
         self.add_item(self.name)
