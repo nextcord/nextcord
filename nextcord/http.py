@@ -479,8 +479,10 @@ class HTTPClient:
     ) -> Response[message.Message]:
         form = []
 
-        payload: Dict[str, Any] = {'tts': tts}
-        payload['attachments'] = []
+        payload: Dict[str, Any] = {
+            'tts': tts,
+            'attachments': attachments or [],
+        }
 
         if content:
             payload['content'] = content
@@ -498,8 +500,6 @@ class HTTPClient:
             payload['components'] = components
         if stickers:
             payload['sticker_ids'] = stickers
-        if attachments:
-            payload['attachments'] = attachments
 
         form.append({'name': 'payload_json'})
         for index, file in enumerate(files):

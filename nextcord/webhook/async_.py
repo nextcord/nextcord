@@ -355,34 +355,33 @@ class AsyncWebhookAdapter:
             'type': type,
         }
 
-        if files and 'attachments' not in data:
-            data['attachments'] = []
+        multipart = []
 
         if data is not None:
             payload['data'] = data
 
-        multipart = []
-
-        if files:
-            multipart.append({'name': 'payload_json'})
-            for index, file in enumerate(files):
-                payload['data']['attachments'].append(
-                    {
-                        'id': index,
-                        'filename': file.filename,
-                        'description': file.description,
-                    }
-                )
-                multipart.append(
-                    {
-                        'name': f'files[{index}]',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
-            multipart[0]['value'] = utils._to_json(payload)
-            payload = None
+            if files:
+                if 'attachments' not in payload['data']:
+                    payload['data']['attachments'] = []
+                multipart.append({'name': 'payload_json'})
+                for index, file in enumerate(files):
+                    payload['data']['attachments'].append(
+                        {
+                            'id': index,
+                            'filename': file.filename,
+                            'description': file.description,
+                        }
+                    )
+                    multipart.append(
+                        {
+                            'name': f'files[{index}]',
+                            'value': file.fp,
+                            'filename': file.filename,
+                            'content_type': 'application/octet-stream',
+                        }
+                    )
+                multipart[0]['value'] = utils._to_json(payload)
+                payload = None
 
         route = Route(
             'POST',
