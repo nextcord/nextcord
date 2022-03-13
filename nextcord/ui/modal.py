@@ -70,6 +70,10 @@ class Modal:
     custom_id: :class:`str` = MISSING
         The ID of the modal that gets received during an interaction.
         If the ``custom_id`` is MISSING, then a random ``custom_id`` is set.
+    auto_defer: :class:`bool` = True
+        Whether or not to automatically defer the modal when the callback completes
+        without responding to the interaction. Set this to ``False`` if you want to
+        handle the modal interaction outside of the callback.
 
     Attributes
     ------------
