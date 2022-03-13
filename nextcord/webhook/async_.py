@@ -705,8 +705,8 @@ class WebhookMessage(Message):
 
             .. versionadded:: 2.0
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep all existing attachments,
+            pass ``message.attachments``.
 
             .. versionadded:: 2.0
         allowed_mentions: :class:`AllowedMentions`
@@ -1548,8 +1548,7 @@ class Webhook(BaseWebhook):
 
             .. versionadded:: 2.0
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message.
 
             .. versionadded:: 2.0
         allowed_mentions: :class:`AllowedMentions`
