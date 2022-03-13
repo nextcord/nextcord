@@ -1286,6 +1286,7 @@ class Message(Hashable):
             edited a message's content or embed that isn't yours.
         ~nextcord.InvalidArgument
             You specified both ``embed`` and ``embeds``
+            or ``files`` and ``files``.
         """
 
         payload: Dict[str, Any] = {}
@@ -1299,10 +1300,6 @@ class Message(Hashable):
             raise InvalidArgument('cannot pass both embed and embeds parameter to edit()')
         if file is not MISSING and files is not MISSING:
             raise InvalidArgument('cannot pass both file and files parameter to edit()')
-        if file is not MISSING and attachments is not MISSING:
-            raise InvalidArgument('cannot pass both file and attachments parameter to edit()')
-        if files is not MISSING and attachments is not MISSING:
-            raise InvalidArgument('cannot pass both files and attachments parameter to edit()')
 
         if embed is not MISSING:
             if embed is None:
@@ -1329,6 +1326,9 @@ class Message(Hashable):
 
         if attachments is not MISSING:
             payload['attachments'] = [a.to_dict() for a in attachments]
+
+        if append_files is not MISSING and append_files:
+            payload['attachments'] = [a.to_dict() for a in self.attachments]
 
         if view is not MISSING:
             self._state.prevent_view_updates_for(self.id)
