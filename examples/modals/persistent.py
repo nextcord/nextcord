@@ -3,37 +3,47 @@ from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456798  # Replace with your testing guild id
 
+
+# Define a simple Modal that persists between bot restarts
+# In order for a Modal to persist between restarts it needs to meet the following conditions:
+# 1) The timeout of the Modal has to be set to None
+# 2) The Modal has to have a custom_id set
+# 3) Every item in the Modal has to have a custom_id set
+# It is recommended that the custom_id be sufficiently unique to
+# prevent conflicts with other modals the bot sends.
+# For this example the custom_id is prefixed with the name of the bot.
+# Note that custom_ids can only be up to 100 characters long.
 class FeedbackModal(nextcord.ui.Modal):
     def __init__(self):
         super().__init__(
             title="Feedback",
-            custom_id="feedback", # required to make the modal persistent
+            custom_id="persistent_modal:feedback",
             timeout=None,
         )
-        
+
         self.discovered = nextcord.ui.TextInput(
             label="How did you discover the bot?",
             required=False,
             style=nextcord.TextInputStyle.paragraph,
-            custom_id="discovered", # required to make the modal persistent
+            custom_id="persistent_modal:discovered",
         )
         self.add_item(self.discovered)
-        
+
         self.rating = nextcord.ui.TextInput(
             label="How would you rate the bot?",
             placeholder="I would give the bot a ten out of ten...",
-            custom_id="rating", # required to make the modal persistent
+            custom_id="persistent_modal:rating",
         )
         self.add_item(self.rating)
-        
+
         self.improve = nextcord.ui.TextInput(
             label="How could the bot improve?",
             style=nextcord.TextInputStyle.paragraph,
             required=False,
-            custom_id="improve", # required to make the modal persistent
+            custom_id="persistent_modal:improve",
         )
         self.add_item(self.improve)
-    
+
     async def callback(self, interaction: nextcord.Interaction):
         await interaction.send(
             f"{interaction.user.mention} feedback :\n"
@@ -41,6 +51,7 @@ class FeedbackModal(nextcord.ui.Modal):
             f"Where they discovered the bot: {self.discovered.value}\n"
             f"How could the bot improve: {self.improve.value}\n"
         )
+
 
 class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
@@ -53,10 +64,12 @@ class Bot(commands.Bot):
             self.add_modal(FeedbackModal())
             self.persistent_modals_added = True
 
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
+        print(f"Logged in as {self.user} (ID: {self.user.id})")
+        print("------")
 
-bot = Bot("$")
+
+bot = Bot(command_prefix="$")
+
 
 @bot.slash_command(
     name="feedback",
@@ -65,5 +78,6 @@ bot = Bot("$")
 )
 async def feedback(interaction: nextcord.Interaction):
     await interaction.response.send_modal(FeedbackModal())
+
 
 bot.run("token")

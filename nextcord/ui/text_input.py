@@ -26,24 +26,19 @@ from __future__ import annotations
 
 from typing import Optional, TYPE_CHECKING, Type, TypeVar, Tuple
 import os
-import inspect
 
-from .item import Item, ItemCallbackType
+from .item import Item
 from ..enums import TextInputStyle, ComponentType
 from ..components import TextInput as TextInputComponent
 from ..utils import MISSING
 from ..interactions import Interaction
 
-__all__ = (
-    'TextInput',
-)
+__all__ = ('TextInput')
 
 if TYPE_CHECKING:
     from .view import View
-    from ..emoji import Emoji
-    from ..types.interactions import (
-        ComponentInteractionData,
-    )
+    from ..types.interactions import ComponentInteractionData
+
 
 T = TypeVar('T', bound='TextInput')
 V = TypeVar('V', bound='View', covariant=True)

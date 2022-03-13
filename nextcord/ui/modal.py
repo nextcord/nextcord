@@ -40,7 +40,7 @@ from .view import (
     _component_to_item,
 )
 from .item import Item
-from ..components import Component, _component_factory
+from ..components import Component
 
 __all__ = (
     'Modal',
@@ -51,11 +51,10 @@ __all__ = (
 if TYPE_CHECKING:
     from ..interactions import Interaction
     from ..state import ConnectionState
-    from ..types.components import Component as ComponentPayload
 
 
 class Modal:
-    """Represents a discord modal popup.
+    """Represents a Discord modal popup.
 
     This object must be inherited to create a modal within Discord.
 
@@ -82,7 +81,7 @@ class Modal:
     custom_id: :class:`str`
         The ID of the modal that gets received during an interaction.
     """
-    
+
     def __init__(
         self,
         title: str,
@@ -96,7 +95,7 @@ class Modal:
         self._provided_custom_id = custom_id is not MISSING
         self.custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self.auto_defer = auto_defer
-        
+
         self.children = []
         self.__weights = _ViewWeights(self.children)
         loop = asyncio.get_running_loop()
@@ -105,7 +104,7 @@ class Modal:
         self.__timeout_expiry: Optional[float] = None
         self.__timeout_task: Optional[asyncio.Task[None]] = None
         self.__stopped: asyncio.Future[bool] = loop.create_future()
-    
+
     async def __timeout_task_impl(self) -> None:
         while True:
             # Guard just in case someone changes the value of the timeout at runtime
@@ -150,13 +149,13 @@ class Modal:
             'components': self.to_components(),
         }
         return payload
-    
+
     @property
     def _expires_at(self) -> Optional[float]:
         if self.timeout:
             return time.monotonic() + self.timeout
         return None
-    
+
     def add_item(self, item: Item) -> Modal:
         """Adds an item to the modal.
 
@@ -179,7 +178,7 @@ class Modal:
         self.__weights.add_item(item)
 
         self.children.append(item)
-        
+
         return self
 
     def remove_item(self, item: Item) -> Modal:
@@ -197,37 +196,37 @@ class Modal:
             pass
         else:
             self.__weights.remove_item(item)
-        
+
         return self
 
     def clear_items(self) -> None:
         """Removes all items from the modal."""
         self.children.clear()
         self.__weights.clear()
-    
+
     async def callback(self, interaction: Interaction):
         """|coro|
-        
+
         The callback that is called when the user press the submit button.
-        
+
         The default implementation does nothing and the user sees an error
         message on their screen, so you need to overwrite this function.
-        
+
         Parameters
         ----------
         interaction: :class:`Interaction`
             The interaction fired by the user.
-        
+
         """
         pass
-        
+
     async def on_timeout(self) -> None:
         """|coro|
 
         A callback that is called when a modal's timeout elapses without being explicitly stopped.
         """
         pass
-    
+
     async def on_error(self, error: Exception, interaction: Interaction) -> None:
         """|coro|
 
@@ -247,7 +246,7 @@ class Modal:
         """
         print(f'Ignoring exception in modal {self}:', file=sys.stderr)
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
-    
+
     async def _scheduled_task(self, interaction: Interaction):
         for children in self.children:
             children.refresh_state(interaction)
@@ -260,7 +259,7 @@ class Modal:
                 await interaction.response.defer()
         except Exception as e:
             return await self.on_error(e, interaction)
-    
+
     def _start_listening_from_store(self, store: ModalStore) -> None:
         self.__cancel_callback = partial(store.remove_modal)
         if self.timeout:
@@ -270,20 +269,20 @@ class Modal:
 
             self.__timeout_expiry = time.monotonic() + self.timeout
             self.__timeout_task = loop.create_task(self.__timeout_task_impl())
-    
+
     def _dispatch_timeout(self):
         if self.__stopped.done():
             return
 
         self.__stopped.set_result(True)
         asyncio.create_task(self.on_timeout(), name=f'discord-ui-modal-timeout-{self.id}')
-    
+
     def _dispatch(self, interaction: Interaction):
         if self.__stopped.done():
             return
 
         asyncio.create_task(self._scheduled_task(interaction), name=f'discord-ui-modal-dispatch-{self.id}')
-    
+
     def refresh(self, components: List[Component]):
         # This is pretty hacky at the moment
         # fmt: off
@@ -304,7 +303,7 @@ class Modal:
                 children.append(older)
 
         self.children = children
-    
+
     def stop(self) -> None:
         """Stops listening to interaction events from this modal.
 
@@ -321,7 +320,7 @@ class Modal:
         if self.__cancel_callback:
             self.__cancel_callback(self)
             self.__cancel_callback = None
-    
+
     def is_finished(self) -> bool:
         """:class:`bool`: Whether the modal has finished interacting."""
         return self.__stopped.done()
@@ -351,6 +350,7 @@ class Modal:
             the modal finished normally.
         """
         return await self.__stopped
+
 
 class ModalStore:
     def __init__(self, state: ConnectionState):
@@ -392,12 +392,12 @@ class ModalStore:
 
     def dispatch(self, custom_id: str, interaction: Interaction):
         self.__verify_integrity()
-        
+
         key = (interaction.user.id, custom_id)
         # Fallback to None user_id searches in case a persistent modal
         # was added without an associated message_id
         modal = self._modals.get(key) or self._modals.get((None, custom_id))
         if modal is None:
             return
-        
+
         modal._dispatch(interaction)
