@@ -569,13 +569,6 @@ class HTTPClient:
     def edit_message(self, channel_id: Snowflake, message_id: Snowflake, **fields: Any) -> Response[message.Message]:
         r = Route('PATCH', '/channels/{channel_id}/messages/{message_id}', channel_id=channel_id, message_id=message_id)
         if "files" in fields:
-            fields["tts"] = None
-            fields["nonce"] = None
-            fields["message_reference"] = None
-            fields["stickers"] = None
-            attachments = fields.pop("attachments", None)
-            if attachments is not None:
-                fields["attachments"] = attachments
             return self.send_multipart_helper(r, **fields)
         return self.request(r, json=fields)
 
