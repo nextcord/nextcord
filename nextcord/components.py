@@ -408,19 +408,19 @@ class TextInput(Component):
             'style': int(self.style.value),
             'label': self.label,
         }
-        
+
         if self.min_length:
             payload['min_length'] = self.min_length
-        
+
         if self.max_length:
             payload['max_length'] = self.max_length
-        
+
         if self.required is not None:
             payload['required'] = self.required
-        
+
         if self.value:
             payload['value'] = self.value
-        
+
         if self.placeholder:
             payload['placeholder'] = self.placeholder
 

@@ -4312,7 +4312,7 @@ Button
 .. autofunction:: nextcord.ui.button
 
 TextInput
-~~~~~~~
+~~~~~~~~~~
 
 .. attributetable:: nextcord.ui.TextInput
 
