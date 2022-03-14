@@ -64,11 +64,12 @@ class Bot(commands.Bot):
     async def on_ready(self):
         if not self.persistent_modals_added:
             # Register the persistent modal for listening here.
+            # Note that this does not display the modal to the user.
+            # To do that, you need to respond to an interaction as shown below.
             self.add_modal(FeedbackModal())
             self.persistent_modals_added = True
 
-        print(f"Logged in as {self.user} (ID: {self.user.id})")
-        print("------")
+        print(f'Logged in as {self.user} (ID: {self.user.id})')
 
 
 bot = Bot(command_prefix="$")
