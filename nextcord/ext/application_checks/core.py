@@ -77,9 +77,9 @@ def check(predicate: ApplicationCheck) -> Callable[[T], T]:
     subclasses. These checks could be accessed via :attr:`.ApplicationCommand.checks`.
 
     These checks should be predicates that take in a single parameter taking
-    a :class:`.Interaction`. If the check returns a ``False``\-like value then
-    during invocation a :exc:`.ApplicationCheckFailure` exception is raised and sent to
-    the :func:`on_application_command_error` event.
+    a :class:`.Interaction`. If the check returns a ``False``\-like value, 
+    a ApplicationCheckFailure is raised during invocation and sent to the 
+    :func:`.on_application_command_error` event.
 
     If an exception should be thrown in the predicate then it should be a
     subclass of :exc:`.ApplicationError`. Any exception not subclassed from it

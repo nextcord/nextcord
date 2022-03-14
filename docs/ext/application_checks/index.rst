@@ -16,8 +16,8 @@ Checks
 .. autofunction:: check_any
     :decorator:
 
-Pre-built Checks
-----------------
+Included Checks
+---------------
 
 Role Checks
 ~~~~~~~~~~~
