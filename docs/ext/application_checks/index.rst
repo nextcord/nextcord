@@ -5,7 +5,7 @@
 ===============================================================================
 
 To help with development, this extension is here to assist in development of application commands by hooking and checking before, during, after invoke and handling errors.
-It has a similar interface to :ref:`discord_ext_commands`\\.
+It has a similar interface to :ref:`ext.commands checks <discord_ext_commands>`
 
 Checks
 ------
