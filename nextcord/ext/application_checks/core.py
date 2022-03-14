@@ -79,12 +79,12 @@ def check(predicate: ApplicationCheck) -> Callable[[T], T]:
     These checks should be predicates that take in a single parameter taking
     a :class:`.Interaction`. If the check returns a ``False``\-like value then
     during invocation a :exc:`.ApplicationCheckFailure` exception is raised and sent to
-    the :func:`.on_application_command_error` event.
+    the :func:`on_application_command_error` event.
 
     If an exception should be thrown in the predicate then it should be a
     subclass of :exc:`.ApplicationError`. Any exception not subclassed from it
     will be propagated while those subclassed will be sent to
-    :func:`.on_application_command_error`.
+    :func:`on_application_command_error`.
 
     A special attribute named ``predicate`` is bound to the value
     returned by this decorator to retrieve the predicate passed to the
@@ -136,7 +136,7 @@ def check(predicate: ApplicationCheck) -> Callable[[T], T]:
 
     Parameters
     -----------
-    predicate: Callable[[:class:`Interaction`], :class:`bool`]
+    predicate: Callable[[:class:`~.Interaction`], :class:`bool`]
         The predicate to check if the command should be invoked.
     """
 
@@ -174,7 +174,7 @@ def check_any(*checks: ApplicationCheck) -> Callable[[T], T]:
 
     Parameters
     ------------
-    \*checks: Callable[[:class:`Interaction`], :class:`bool`]
+    \*checks: Callable[[:class:`~.Interaction`], :class:`bool`]
         An argument list of checks that have been decorated with
         the :func:`check` decorator.
 

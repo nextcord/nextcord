@@ -76,6 +76,18 @@ Hooks
 .. autofunction:: application_command_after_invoke
     :decorator:
 
+Events
+------
+
+.. function:: on_application_command_error(interaction, error)
+
+    The event that is fired when an error occurs during application command invocation.
+
+    :param interaction: The interaction that caused the error.
+    :type interaction: :class:`~.Interaction`
+    :param error: The error that occurred.
+    :type error: :class:`Exception`
+
 Exceptions
 ----------
 

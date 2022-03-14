@@ -114,7 +114,7 @@ class ClientCog:
 
     @_cog_special_method
     def cog_application_command_check(self, interaction: Interaction) -> bool:
-        """A special method that registers as a :func:`~nextcord.checks.check`
+        """A special method that registers as a :func:`.ext.application_checks.check`
         for every application command and subcommand in this cog.
 
         This function **can** be a coroutine and must take a sole parameter,
