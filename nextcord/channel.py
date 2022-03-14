@@ -267,8 +267,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         .. versionadded:: 2.0
         """
-        guild_id = self.guild.id 
-        return f'https://discord.com/channels/{guild_id}/{self.id}'
+        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
 
     @overload
     async def edit(
