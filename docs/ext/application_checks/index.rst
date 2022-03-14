@@ -120,17 +120,17 @@ Exception Hierarchy
 
 .. exception_hierarchy::
 
-    :exc:`~.DiscordException`
-        :exc:`~.ApplicationCheckFailure`
-            :exc:`~.ApplicationCheckAnyFailure`
-            :exc:`~.ApplicationNoPrivateMessage`
-            :exc:`~.ApplicationMissingRole`
-            :exc:`~.ApplicationMissingAnyRole`
-            :exc:`~.ApplicationBotMissingRole`
-            :exc:`~.ApplicationBotMissingAnyRole`
-            :exc:`~.ApplicationMissingPermissions`
-            :exc:`~.ApplicationBotMissingPermissions`
-            :exc:`~.ApplicationPrivateMessageOnly`
-            :exc:`~.ApplicationNotOwner`
-            :exc:`~.ApplicationNSFWChannelRequired`
-            :exc:`~.ApplicationCheckForBotOnly`
+    - :exc:`~.DiscordException`
+        - :exc:`~.ApplicationCheckFailure`
+            - :exc:`~.ApplicationCheckAnyFailure`
+            - :exc:`~.ApplicationNoPrivateMessage`
+            - :exc:`~.ApplicationMissingRole`
+            - :exc:`~.ApplicationMissingAnyRole`
+            - :exc:`~.ApplicationBotMissingRole`
+            - :exc:`~.ApplicationBotMissingAnyRole`
+            - :exc:`~.ApplicationMissingPermissions`
+            - :exc:`~.ApplicationBotMissingPermissions`
+            - :exc:`~.ApplicationPrivateMessageOnly`
+            - :exc:`~.ApplicationNotOwner`
+            - :exc:`~.ApplicationNSFWChannelRequired`
+            - :exc:`~.ApplicationCheckForBotOnly`

@@ -23,6 +23,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import annotations
+
 import asyncio
 import functools
 from typing import Callable, Union, TypeVar, TYPE_CHECKING
@@ -70,7 +72,7 @@ __all__ = (
 
 T = TypeVar('T')
 
-def check(predicate: 'ApplicationCheck') -> Callable[[T], T]:
+def check(predicate: ApplicationCheck) -> Callable[[T], T]:
     r"""A decorator that adds a check to the :class:`.ApplicationCommand` or its
     subclasses. These checks could be accessed via :attr:`.ApplicationCommand.checks`.
 
@@ -159,7 +161,7 @@ def check(predicate: 'ApplicationCheck') -> Callable[[T], T]:
 
     return decorator
 
-def check_any(*checks: 'ApplicationCheck') -> Callable[[T], T]:
+def check_any(*checks: ApplicationCheck) -> Callable[[T], T]:
     r"""A :func:`check` that is added that checks if any of the checks passed
     will pass, i.e. using logical OR.
 
@@ -484,8 +486,6 @@ def dm_only() -> Callable[[T], T]:
 
     This check raises a special exception, :exc:`.ApplicationPrivateMessageOnly`
     that is inherited from :exc:`.ApplicationCheckFailure`.
-
-    .. versionadded:: 1.1
     """
 
     def predicate(interaction: Interaction) -> bool:
@@ -515,7 +515,7 @@ def is_owner() -> Callable[[T], T]:
     """A :func:`.check` that checks if the person invoking this command is the
     owner of the bot.
 
-    This is powered by :meth:`.Client.is_owner`.
+    This is powered by :meth:`.ext.commands.Bot.is_owner`.
 
     This check raises a special exception, :exc:`.ApplicationNotOwner` that is derived
     from :exc:`.ApplicationCheckFailure`.
@@ -553,8 +553,6 @@ def application_command_before_invoke(coro) -> Callable[[T], T]:
     This allows you to refer to one before invoke hook for several commands that
     do not have to be within the same cog.
 
-    .. versionadded:: 1.4
-
     Example
     ---------
 
@@ -564,13 +562,13 @@ def application_command_before_invoke(coro) -> Callable[[T], T]:
             print(interaction.user, 'used', interaction.application_command, 'at', interaction.message.created_at)
 
         @bot.slash_command()
-        @checks.application_command_before_invoke(record_usage)
+        @application_checks.application_command_before_invoke(record_usage)
         async def who(interaction: Interaction): # Output: <User> used who at <Time>
             await interaction.response.send_message('i am a bot')
 
         class What(commands.Cog):
 
-            @checks.application_command_before_invoke(record_usage)
+            @application_checks.application_command_before_invoke(record_usage)
             @slash_command()
             async def when(self, interaction: Interaction): # Output: <User> used when at <Time>
                 await interaction.response.send_message(f'and i have existed since {interaction.client.user.created_at}')
