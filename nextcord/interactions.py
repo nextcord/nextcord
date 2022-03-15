@@ -91,8 +91,8 @@ class InteractionAttached(dict):
             interaction.attached.db.close()
 
         @bot.slash_command()
-        @commands.before_invoke(attach_db)
-        @commands.after_invoke(release_db)
+        @application_checks.before_invoke(attach_db)
+        @application_checks.after_invoke(release_db)
         async def who(interaction: Interaction): # Output: <User> used who at <Time>
             data = interaction.attached.db.get_data(interaction.user.id)
             await interaction.response.send_message(data)
