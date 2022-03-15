@@ -55,13 +55,13 @@ __all__ = (
 class ApplicationCheckAnyFailure(ApplicationCheckFailure):
     """Exception raised when all predicates in :func:`check_any` fail.
 
-    This inherits from :exc:`ApplicationCheckFailure`.
+    This inherits from :exc:`~.ApplicationCheckFailure`.
 
     Attributes
     ------------
-    errors: List[:class:`ApplicationCheckFailure`]
+    errors: List[:class:`~.ApplicationCheckFailure`]
         A list of errors that were caught during execution.
-    checks: List[Callable[[:class:`Interaction`], :class:`bool`]]
+    checks: List[Callable[[:class:`~.Interaction`], :class:`bool`]]
         A list of check predicates that failed.
     """
 
@@ -79,7 +79,7 @@ class ApplicationNoPrivateMessage(ApplicationCheckFailure):
     """Exception raised when an operation does not work in private message
     contexts.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
     """
 
     def __init__(self, message: Optional[str] = None) -> None:
@@ -89,7 +89,7 @@ class ApplicationNoPrivateMessage(ApplicationCheckFailure):
 class ApplicationMissingRole(ApplicationCheckFailure):
     """Exception raised when the command invoker lacks a role to run a command.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
 
     .. versionadded:: 1.1
 
@@ -97,7 +97,7 @@ class ApplicationMissingRole(ApplicationCheckFailure):
     -----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
-        This is the parameter passed to :func:`~.checks.has_role`.
+        This is the parameter passed to :func:`~.application_checks.has_role`.
     """
 
     def __init__(self, missing_role: Snowflake) -> None:
@@ -110,13 +110,13 @@ class ApplicationMissingAnyRole(ApplicationCheckFailure):
     """Exception raised when the command invoker lacks any of
     the roles specified to run a command.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
     -----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the invoker is missing.
-        These are the parameters passed to :func:`~.commands.has_any_role`.
+        These are the parameters passed to :func:`has_any_role`.
     """
 
     def __init__(self, missing_roles: SnowflakeList) -> None:
@@ -136,7 +136,7 @@ class ApplicationMissingAnyRole(ApplicationCheckFailure):
 class ApplicationBotMissingRole(ApplicationCheckFailure):
     """Exception raised when the bot's member lacks a role to run a command.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
 
     .. versionadded:: 1.1
 
@@ -144,7 +144,7 @@ class ApplicationBotMissingRole(ApplicationCheckFailure):
     -----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
-        This is the parameter passed to :func:`~.commands.has_role`.
+        This is the parameter passed to :func:`has_role`.
     """
 
     def __init__(self, missing_role: Snowflake) -> None:
@@ -157,7 +157,7 @@ class ApplicationBotMissingAnyRole(ApplicationCheckFailure):
     """Exception raised when the bot's member lacks any of
     the roles specified to run a command.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
 
     .. versionadded:: 1.1
 
@@ -165,7 +165,7 @@ class ApplicationBotMissingAnyRole(ApplicationCheckFailure):
     -----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the bot's member is missing.
-        These are the parameters passed to :func:`~.commands.has_any_role`.
+        These are the parameters passed to :func:`has_any_role`.
 
     """
 
@@ -187,7 +187,7 @@ class ApplicationMissingPermissions(ApplicationCheckFailure):
     """Exception raised when the command invoker lacks permissions to run a
     command.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
     -----------
@@ -215,7 +215,7 @@ class ApplicationBotMissingPermissions(ApplicationCheckFailure):
     """Exception raised when the bot's member lacks permissions to run a
     command.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
     -----------
@@ -243,7 +243,7 @@ class ApplicationPrivateMessageOnly(ApplicationCheckFailure):
     """Exception raised when an operation does not work outside of private
     message contexts.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
     """
 
     def __init__(self, message: Optional[str] = None) -> None:
@@ -255,7 +255,7 @@ class ApplicationPrivateMessageOnly(ApplicationCheckFailure):
 class ApplicationNotOwner(ApplicationCheckFailure):
     """Exception raised when the message author is not the owner of the bot.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
     """
 
     pass
@@ -264,7 +264,7 @@ class ApplicationNotOwner(ApplicationCheckFailure):
 class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
     """Exception raised when a channel does not have the required NSFW setting.
 
-    This inherits from :exc:`ApplicationCheckFailure`.
+    This inherits from :exc:`~.ApplicationCheckFailure`.
 
     Parameters
     -----------
@@ -282,7 +282,7 @@ class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
 class ApplicationCheckForBotOnly(ApplicationCheckFailure):
     """Exception raised when the application check may only be used for :class:`~ext.commands.Bot`.
 
-    This inherits from :exc:`ApplicationCheckFailure`
+    This inherits from :exc:`~.ApplicationCheckFailure`
     """
 
     def __init__(self) -> None:
