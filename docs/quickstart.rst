@@ -28,8 +28,12 @@ It looks something like this:
         print(f'We have logged in as {bot.user}')
 
     @bot.command()
-    async def hello(ctx):
+    async def hello(ctx: commands.Context):
         await ctx.send("Hello!")
+    
+    @bot.slash_command()
+    async def hello(interaction: nextcord.Interaction):
+        await interaction.response.send_message("Hello!")
 
     bot.run('your token here')
 
