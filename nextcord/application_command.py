@@ -239,9 +239,8 @@ class SlashOption(_SlashOptionMetaBase):
 
     def verify(self) -> bool:
         """Checks if the given values conflict with one another or are invalid."""
-        if (
-            self.choices and self.autocomplete
-        ):  # Incompatible according to Discord Docs.
+        # Incompatible according to Discord Docs.
+        if self.choices and self.autocomplete:
             raise ValueError(
                 "Autocomplete may not be set to true if choices are present."
             )
@@ -457,9 +456,7 @@ class CommandOption(SlashOption):
             return int(argument)
         elif self.type is ApplicationCommandOptionType.number:
             return float(argument)
-        elif (
-            self.type is Message
-        ):  # TODO: This is mostly a workaround for Message commands, switch to handles below.
+        elif self.type is Message:  # TODO: This is mostly a workaround for Message commands, switch to handles below.
             return state._get_message(int(argument))
         elif self.type is ApplicationCommandOptionType.attachment:
             resolved_attachment_data: dict = interaction.data["resolved"][
@@ -570,9 +567,8 @@ class ApplicationSubcommand:
         description: str = MISSING,
         inherit_hooks: bool = False,
     ):
-        self._callback: Optional[
-            Callable
-        ] = None  # TODO: Add verification against vars if callback is added later.
+        # TODO: Add verification against vars if callback is added later.
+        self._callback: Optional[Callable] = None
         self.parent_command: Optional[
             Union[ApplicationCommand, ApplicationSubcommand]
         ] = parent_command
@@ -796,9 +792,8 @@ class ApplicationSubcommand:
 
         typehints = typing.get_type_hints(callback)
         for name, param in signature(self.callback).parameters.items():
-            self_skip = (
-                name == "self"
-            )  # TODO: What kind of hardcoding is this, figure out a better way for self!
+            # TODO: What kind of hardcoding is this, figure out a better way for self!
+            self_skip = name == "self"
             if first_arg:
                 if not self_skip:
                     first_arg = False
@@ -873,9 +868,8 @@ class ApplicationSubcommand:
         option_data: List[Dict[:class:`str`, Any]]
             List of raw option data from Discord.
         """
-        if (
-            self.children
-        ):  # If this has subcommands, it needs to be forwarded to them to handle.
+        # If this has subcommands, it needs to be forwarded to them to handle.
+        if self.children:
             await self.children[option_data[0]["name"]].call_autocomplete(
                 state, interaction, option_data[0].get("options", {})
             )
@@ -1412,9 +1406,8 @@ class ApplicationCommand(ApplicationSubcommand):
         self.default_permission: bool = default_permission or True
         self._guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
         self._guild_ids: Set[int] = set()
-        self._command_ids: Dict[
-            Optional[int], int
-        ] = {}  # Guild ID is key (None is global), command ID is value.
+        # Guild ID is key (None is global), command ID is value.
+        self._command_ids: Dict[Optional[int], int] = {}
 
     # Simple-ish getter + setters methods.
 
@@ -1638,9 +1631,8 @@ class ApplicationCommand(ApplicationSubcommand):
         ret = []
         if self.is_guild:
             for guild_id in self.guild_ids:
-                temp = (
-                    partial_payload.copy()
-                )  # We don't need to make a deep copy as guild_id is on the top layer.
+                # We don't need to make a deep copy as guild_id is on the top layer.
+                temp = partial_payload.copy()
                 temp["guild_id"] = guild_id
                 ret.append(temp)
         if self.is_global:
@@ -1925,9 +1917,8 @@ class ApplicationCommand(ApplicationSubcommand):
             .. note::
                 Any ``application_command_before_invoke`` or ``application_command_after_invoke``'s defined on this will override parent ones.
         """
-        if (
-            self.type != ApplicationCommandType.chat_input
-        ):  # At this time, non-slash commands cannot have Subcommands.
+        # At this time, non-slash commands cannot have Subcommands.
+        if self.type != ApplicationCommandType.chat_input:
             raise TypeError(f"{self.error_name} {self.type} cannot have subcommands.")
         else:
 
