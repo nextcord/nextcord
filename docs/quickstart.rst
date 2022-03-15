@@ -19,23 +19,19 @@ It looks something like this:
 
 .. code-block:: python3
 
-    import nextcord
+    from nextcord.ext import commands
 
-    client = nextcord.Client()
+    bot = commands.Bot(command_prefix = "$")
 
-    @client.event
+    @bot.event
     async def on_ready():
-        print(f'We have logged in as {client.user}')
+        print(f'We have logged in as {bot.user}')
 
-    @client.event
-    async def on_message(message):
-        if message.author == client.user:
-            return
+    @bot.command()
+    async def hello(ctx):
+        await ctx.send("Hello!")
 
-        if message.content.startswith('$hello'):
-            await message.channel.send('Hello!')
-
-    client.run('your token here')
+    bot.run('your token here')
 
 Let's name this file ``example_bot.py``. Make sure not to name it ``nextcord`` as that'll conflict
 with the library.
