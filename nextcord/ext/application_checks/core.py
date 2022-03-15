@@ -75,7 +75,7 @@ T = TypeVar("T")
 
 def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
     r"""A decorator that adds a check to the :class:`.ApplicationCommand` or its
-    subclasses. These checks could be accessed via :attr:`.ApplicationCommand.checks`.
+    subclasses. These checks are accessible via :attr:`.ApplicationCommand.checks`.
 
     These checks should be predicates that take in a single parameter taking
     a :class:`.Interaction`. If the check returns a ``False``\-like value, 
@@ -98,7 +98,11 @@ def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
             async def extended_check(interaction: Interaction):
                 if interaction.guild is None:
                     return False
-                return interaction.guild.owner_id == interaction.user.id or await original(interaction)
+
+                return (
+                    interaction.guild.owner_id == interaction.user.id
+                    or await original(interaction)
+                )
             return application_checks.check(extended_check)
 
     .. note::
@@ -168,11 +172,11 @@ def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
 
 
 def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
-    r"""A :func:`check` that is added that checks if any of the checks passed
-    will pass, i.e. using logical OR.
+    r"""A :func:`check` that will pass if any of the given checks pass, 
+    i.e. using logical OR.
 
-    If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal the failure.
-    It inherits from :exc:`.ApplicationCheckFailure`.
+    If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal 
+    the failure. It inherits from :exc:`.ApplicationCheckFailure`.
 
     .. note::
 
@@ -200,7 +204,10 @@ def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
 
         def is_guild_owner():
             def predicate(interaction: Interaction):
-                return interaction.guild is not None and interaction.guild.owner_id == ctx.author.id
+                return (
+                    interaction.guild is not None
+                    and interaction.guild.owner_id == ctx.author.id
+                )
             return commands.check(predicate)
 
         @bot.command()
@@ -296,7 +303,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
     .. code-block:: python3
 
         @bot.slash_command()
-        @checks.has_any_role('Library Devs', 'Moderators', 492212595072434186)
+        @checks.has_any_role('Library `Dev`s', 'Moderators', 492212595072434186)
         async def cool(interaction: Interaction):
             await interaction.response.send_message('You are cool indeed')
     """
@@ -323,8 +330,9 @@ def bot_has_role(item: int) -> Callable[[T], T]:
     """Similar to :func:`.has_role` except checks if the bot itself has the
     role.
 
-    This check raises one of two special exceptions, :exc:`.ApplicationBotMissingRole` if the bot
-    is missing the role, or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
+    This check raises one of two special exceptions, 
+    :exc:`.ApplicationBotMissingRole` if the bot is missing the role, 
+    or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
     """
 
@@ -348,8 +356,9 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
     """Similar to :func:`.has_any_role` except checks if the bot itself has
     any of the roles listed.
 
-    This check raises one of two special exceptions, :exc:`.ApplicationBotMissingAnyRole` if the bot
-    is missing all roles, or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
+    This check raises one of two special exceptions, 
+    :exc:`.ApplicationBotMissingAnyRole` if the bot is missing all roles, 
+    or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
     """
 
@@ -606,27 +615,36 @@ def application_command_before_invoke(coro) -> Callable[[T], T]:
     .. code-block:: python3
 
         async def record_usage(interaction: Interaction):
-            print(interaction.user, 'used', interaction.application_command, 'at', interaction.message.created_at)
+            print(
+                interaction.user,
+                "used",
+                interaction.application_command,
+                "at",
+                interaction.message.created_at
+            )
 
         @bot.slash_command()
         @application_checks.application_command_before_invoke(record_usage)
         async def who(interaction: Interaction): # Output: <User> used who at <Time>
-            await interaction.response.send_message('i am a bot')
+            await interaction.response.send_message("I am a bot")
 
         class What(commands.Cog):
 
             @application_checks.application_command_before_invoke(record_usage)
             @slash_command()
-            async def when(self, interaction: Interaction): # Output: <User> used when at <Time>
-                await interaction.response.send_message(f'and i have existed since {interaction.client.user.created_at}')
+            async def when(self, interaction: Interaction):
+                # Output: <User> used when at <Time>
+                await interaction.response.send_message(
+                    f"and i have existed since {interaction.client.user.created_at}"
+                )
 
             @slash_command()
             async def where(self, interaction: Interaction): # Output: <Nothing>
-                await interaction.response.send_message('on Discord')
+                await interaction.response.send_message("on Discord")
 
             @slash_command()
             async def why(self, interaction: Interaction): # Output: <Nothing>
-                await interaction.response.send_message('because someone made me')
+                await interaction.response.send_message("because someone made me")
 
         bot.add_cog(What())
     """
