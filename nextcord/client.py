@@ -45,6 +45,7 @@ from typing import (
     TypeVar,
     Union,
 )
+import collections
 
 import aiohttp
 
@@ -79,7 +80,7 @@ from .threads import Thread
 from .ui.view import View
 from .ui.modal import Modal
 from .user import ClientUser, User
-from .utils import MISSING
+from .utils import MISSING, maybe_coroutine
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
@@ -87,7 +88,7 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
-    from .application_command import ApplicationCommand, ClientCog
+    from .application_command import ApplicationCommand, ClientCog, ApplicationSubcommand
     from .channel import DMChannel
     from .member import Member
     from .message import Message
@@ -478,6 +479,27 @@ class Client:
         """
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
+
+    async def on_application_command_error(self, interaction: Interaction, exception: ApplicationError) -> None:
+        """|coro|
+
+        The default application command error handler provided by the bot.
+
+        By default this prints to :data:`sys.stderr` however it could be
+        overridden to have a different implementation.
+
+        This only fires if you do not specify any listeners for command error.
+        """
+        if interaction.application_command and interaction.application_command.has_error_handler():
+            return
+
+        # TODO implement cog error handling
+        # cog = context.cog
+        # if cog and cog.has_error_handler():
+        #     return
+        
+        print(f'Ignoring exception in command {interaction.application_command}:', file=sys.stderr)
+        traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
 
     # hooks
 
@@ -1767,7 +1789,6 @@ class Client:
         """
         return self._connection.persistent_views
 
-
     @property
     def scheduled_events(self) -> List[ScheduledEvent]:
         """List[ScheduledEvent]: A list of scheduled events
@@ -2101,4 +2122,3 @@ class Client:
             return result
 
         return decorator
-

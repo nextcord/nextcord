@@ -80,6 +80,7 @@ if TYPE_CHECKING:
     from .types.sticker import GuildSticker as GuildStickerPayload
     from .types.guild import Guild as GuildPayload
     from .types.message import Message as MessagePayload
+    from .types.checks import ApplicationCheck, ApplicationHook
 
     T = TypeVar('T')
     CS = TypeVar('CS', bound='ConnectionState')
@@ -244,6 +245,11 @@ class ConnectionState:
         for attr, func in inspect.getmembers(self):
             if attr.startswith('parse_'):
                 parsers[attr[6:].upper()] = func
+
+        # Global application command checks
+        self._application_command_checks: List[ApplicationCheck] = []
+        self._application_command_before_invoke: ApplicationHook = None
+        self._application_command_after_invoke: ApplicationHook = None
 
         self.clear()
 

@@ -4411,6 +4411,12 @@ The following exceptions are thrown by the library.
 
 .. autoexception:: nextcord.opus.OpusNotLoaded
 
+.. autoexception:: ApplicationError
+
+.. autoexception:: ApplicationInvokeError
+
+.. autoexception:: ApplicationCheckFailure
+
 Exception Hierarchy
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -4432,3 +4438,6 @@ Exception Hierarchy
                 - :exc:`Forbidden`
                 - :exc:`NotFound`
                 - :exc:`DiscordServerError`
+        - :exc:`ApplicationError`
+            - :exc:`ApplicationInvokeError`
+            - :exc:`ApplicationCheckFailure`

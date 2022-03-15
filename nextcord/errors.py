@@ -38,21 +38,24 @@ if TYPE_CHECKING:
     from .interactions import Interaction
 
 __all__ = (
-    'DiscordException',
-    'InvalidCommandType',
-    'ClientException',
-    'NoMoreItems',
-    'GatewayNotFound',
-    'HTTPException',
-    'Forbidden',
-    'NotFound',
-    'DiscordServerError',
-    'InvalidData',
-    'InvalidArgument',
-    'LoginFailure',
-    'ConnectionClosed',
-    'PrivilegedIntentsRequired',
-    'InteractionResponded',
+    "DiscordException",
+    "InvalidCommandType",
+    "ClientException",
+    "NoMoreItems",
+    "GatewayNotFound",
+    "HTTPException",
+    "Forbidden",
+    "NotFound",
+    "DiscordServerError",
+    "InvalidData",
+    "InvalidArgument",
+    "LoginFailure",
+    "ConnectionClosed",
+    "PrivilegedIntentsRequired",
+    "InteractionResponded",
+    "ApplicationError",
+    "ApplicationInvokeError",
+    "ApplicationCheckFailure",
 )
 
 
@@ -76,6 +79,7 @@ class ClientException(DiscordException):
 
 class InvalidCommandType(ClientException):
     """Raised when an unhandled Application Command type is encountered."""
+
     pass
 
 
@@ -89,22 +93,22 @@ class GatewayNotFound(DiscordException):
     """An exception that is raised when the gateway for Discord could not be found"""
 
     def __init__(self):
-        message = 'The gateway to connect to discord was not found.'
+        message = "The gateway to connect to discord was not found."
         super().__init__(message)
 
 
-def _flatten_error_dict(d: Dict[str, Any], key: str = '') -> Dict[str, str]:
+def _flatten_error_dict(d: Dict[str, Any], key: str = "") -> Dict[str, str]:
     items: List[Tuple[str, str]] = []
     for k, v in d.items():
-        new_key = key + '.' + k if key else k
+        new_key = key + "." + k if key else k
 
         if isinstance(v, dict):
             try:
-                _errors: List[Dict[str, Any]] = v['_errors']
+                _errors: List[Dict[str, Any]] = v["_errors"]
             except KeyError:
                 items.extend(_flatten_error_dict(v, new_key).items())
             else:
-                items.append((new_key, ' '.join(x.get('message', '') for x in _errors)))
+                items.append((new_key, " ".join(x.get("message", "") for x in _errors)))
         else:
             items.append((new_key, v))
 
@@ -129,28 +133,30 @@ class HTTPException(DiscordException):
         The Discord specific error code for the failure.
     """
 
-    def __init__(self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]):
+    def __init__(
+        self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]
+    ):
         self.response: _ResponseType = response
         self.status: int = response.status  # type: ignore
         self.code: int
         self.text: str
         if isinstance(message, dict):
-            self.code = message.get('code', 0)
-            base = message.get('message', '')
-            errors = message.get('errors')
+            self.code = message.get("code", 0)
+            base = message.get("message", "")
+            errors = message.get("errors")
             if errors:
                 errors = _flatten_error_dict(errors)
-                helpful = '\n'.join('In %s: %s' % t for t in errors.items())
-                self.text = base + '\n' + helpful
+                helpful = "\n".join("In %s: %s" % t for t in errors.items())
+                self.text = base + "\n" + helpful
             else:
                 self.text = base
         else:
-            self.text = message or ''
+            self.text = message or ""
             self.code = 0
 
-        fmt = '{0.status} {0.reason} (error code: {1})'
+        fmt = "{0.status} {0.reason} (error code: {1})"
         if len(self.text):
-            fmt += ': {2}'
+            fmt += ": {2}"
 
         super().__init__(fmt.format(self.response, self.code, self.text))
 
@@ -227,14 +233,20 @@ class ConnectionClosed(ClientException):
         The shard ID that got closed if applicable.
     """
 
-    def __init__(self, socket: ClientWebSocketResponse, *, shard_id: Optional[int], code: Optional[int] = None):
+    def __init__(
+        self,
+        socket: ClientWebSocketResponse,
+        *,
+        shard_id: Optional[int],
+        code: Optional[int] = None,
+    ):
         # This exception is just the same exception except
         # reconfigured to subclass ClientException for users
         self.code: int = code or socket.close_code or -1
         # aiohttp doesn't seem to consistently provide close reason
-        self.reason: str = ''
+        self.reason: str = ""
         self.shard_id: Optional[int] = shard_id
-        super().__init__(f'Shard ID {self.shard_id} WebSocket closed with {self.code}')
+        super().__init__(f"Shard ID {self.shard_id} WebSocket closed with {self.code}")
 
 
 class PrivilegedIntentsRequired(ClientException):
@@ -256,10 +268,10 @@ class PrivilegedIntentsRequired(ClientException):
     def __init__(self, shard_id: Optional[int]):
         self.shard_id: Optional[int] = shard_id
         msg = (
-            'Shard ID %s is requesting privileged intents that have not been explicitly enabled in the '
-            'developer portal. It is recommended to go to https://discord.com/developers/applications/ '
-            'and explicitly enable the privileged intents within your application\'s page. If this is not '
-            'possible, then consider disabling the privileged intents instead.'
+            "Shard ID %s is requesting privileged intents that have not been explicitly enabled in the "
+            "developer portal. It is recommended to go to https://discord.com/developers/applications/ "
+            "and explicitly enable the privileged intents within your application's page. If this is not "
+            "possible, then consider disabling the privileged intents instead."
         )
         super().__init__(msg % shard_id)
 
@@ -280,4 +292,52 @@ class InteractionResponded(ClientException):
 
     def __init__(self, interaction: Interaction):
         self.interaction: Interaction = interaction
-        super().__init__('This interaction has already been responded to before')
+        super().__init__("This interaction has already been responded to before")
+
+
+class ApplicationError(DiscordException):
+    r"""The base exception type for all command related errors.
+
+    This inherits from :exc:`nextcord.DiscordException`.
+
+    This exception and exceptions inherited from it are handled
+    in a special way as they are caught and passed into a special event
+    from :class:`.Bot`\, :func:`.on_command_error`.
+    """
+
+    def __init__(self, message: Optional[str] = None, *args: Any) -> None:
+        if message is not None:
+            # clean-up @everyone and @here mentions
+            m = message.replace("@everyone", "@\u200beveryone").replace(
+                "@here", "@\u200bhere"
+            )
+            super().__init__(m, *args)
+        else:
+            super().__init__(*args)
+
+
+class ApplicationInvokeError(ApplicationError):
+    """Exception raised when the command being invoked raised an exception.
+
+    This inherits from :exc:`ApplicationError`
+
+    Attributes
+    -----------
+    original: :exc:`Exception`
+        The original exception that was raised. You can also get this via
+        the ``__cause__`` attribute.
+    """
+
+    def __init__(self, e: Exception) -> None:
+        self.original: Exception = e
+        self.__cause__ = e
+        super().__init__(f"Command raised an exception: {e.__class__.__name__}: {e}")
+
+
+class ApplicationCheckFailure(ApplicationError):
+    """Exception raised when the predicates in :attr:`.ApplicationCommand.checks` have failed.
+
+    This inherits from :exc:`ApplicationError`
+    """
+
+    pass

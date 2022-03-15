@@ -24,6 +24,8 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import inspect
+from nextcord.application_command import _cog_special_method
+from nextcord.interactions import Interaction
 import nextcord.utils
 
 from typing import Any, Callable, ClassVar, Dict, Generator, List, Optional, TYPE_CHECKING, Tuple, TypeVar, Type
@@ -170,10 +172,6 @@ class CogMeta(type):
     def qualified_name(cls) -> str:
         return cls.__cog_name__
 
-def _cog_special_method(func: FuncT) -> FuncT:
-    func.__cog_special_method__ = None
-    return func
-
 
 class Cog(nextcord.ClientCog, metaclass=CogMeta):
     """The base class that all cogs must inherit from.
@@ -272,11 +270,6 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
             The listeners defined in this cog.
         """
         return [(name, getattr(self, method_name)) for name, method_name in self.__cog_listeners__]
-
-    @classmethod
-    def _get_overridden_method(cls, method: FuncT) -> Optional[FuncT]:
-        """Return None if the method is not overridden. Otherwise returns the overridden method."""
-        return getattr(method.__func__, '__cog_special_method__', method)
 
     @classmethod
     def listener(cls, name: str = MISSING) -> Callable[[FuncT], FuncT]:
