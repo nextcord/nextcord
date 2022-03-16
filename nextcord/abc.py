@@ -186,6 +186,15 @@ class PrivateChannel(Snowflake, Protocol):
     __slots__ = ()
 
     me: ClientUser
+    jump_url: str
+
+    @property
+    def jump_url(self) -> str:
+        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
+
+        .. versionadded:: 2.0
+        """
+        return f'https://discord.com/channels/@me/{self.id}'
 
 
 class _Overwrites:
@@ -251,6 +260,7 @@ class GuildChannel:
     category_id: Optional[int]
     _state: ConnectionState
     _overwrites: List[_Overwrites]
+    jump_url: str
 
     if TYPE_CHECKING:
 
@@ -522,6 +532,14 @@ class GuildChannel:
 
         category = self.guild.get_channel(self.category_id)
         return bool(category and category.overwrites == self.overwrites)
+
+    @property
+    def jump_url(self) -> str:
+        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
+
+        .. versionadded:: 2.0
+        """
+        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
 
     def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
         """Handles permission resolution for the :class:`~nextcord.Member`

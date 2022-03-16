@@ -954,6 +954,14 @@ class VoiceChannel(VocalGuildChannel):
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.voice
 
+    @property
+    def jump_url(self) -> str:
+        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
+
+        .. versionadded:: 2.0
+        """
+        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
+
     @utils.copy_doc(abc.GuildChannel.clone)
     async def clone(self, *, name: Optional[str] = None, reason: Optional[str] = None) -> VoiceChannel:
         return await self._clone_impl({'bitrate': self.bitrate, 'user_limit': self.user_limit}, name=name, reason=reason)
@@ -1156,6 +1164,14 @@ class StageChannel(VocalGuildChannel):
     def type(self) -> ChannelType:
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.stage_voice
+
+    @property
+    def jump_url(self) -> str:
+        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
+
+        .. versionadded:: 2.0
+        """
+        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
 
     @utils.copy_doc(abc.GuildChannel.clone)
     async def clone(self, *, name: Optional[str] = None, reason: Optional[str] = None) -> StageChannel:
@@ -1617,7 +1633,7 @@ class StoreChannel(abc.GuildChannel, Hashable):
         return ChannelType.text.value
 
     @property
-    def type(self) -> ChannelType:
+    def type(self) -> ChannelType:#
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.store
 
@@ -1715,7 +1731,7 @@ class StoreChannel(abc.GuildChannel, Hashable):
 DMC = TypeVar('DMC', bound='DMChannel')
 
 
-class DMChannel(abc.Messageable, Hashable):
+class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable):
     """Represents a Discord direct message channel.
 
     .. container:: operations
@@ -1787,13 +1803,6 @@ class DMChannel(abc.Messageable, Hashable):
         """:class:`datetime.datetime`: Returns the direct message channel's creation time in UTC."""
         return utils.snowflake_time(self.id)
 
-    @property
-    def jump_url(self) -> str:
-        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
-
-        .. versionadded:: 2.0
-        """
-        return f'https://discord.com/channels/@me/{self.id}'
 
     def permissions_for(self, obj: Any = None, /) -> Permissions:
         """Handles permission resolution for a :class:`User`.
@@ -1849,7 +1858,7 @@ class DMChannel(abc.Messageable, Hashable):
         return PartialMessage(channel=self, id=message_id)
 
 
-class GroupChannel(abc.Messageable, Hashable):
+class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable):
     """Represents a Discord group channel.
 
     .. container:: operations
@@ -1939,14 +1948,6 @@ class GroupChannel(abc.Messageable, Hashable):
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
         return utils.snowflake_time(self.id)
-
-    @property
-    def jump_url(self) -> str:
-        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
-
-        .. versionadded:: 2.0
-        """
-        return f'https://discord.com/channels/@me/{self.id}'
 
     def permissions_for(self, obj: Snowflake, /) -> Permissions:
         """Handles permission resolution for a :class:`User`.
