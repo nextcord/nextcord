@@ -25,9 +25,11 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
+from dataclasses import replace
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable
 from datetime import datetime, timedelta
 import asyncio
+import pytz
 
 from . import utils
 from .enums import try_enum, InteractionType, InteractionResponseType
@@ -246,7 +248,7 @@ class Interaction:
         
     def has_expired(self):
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
-        return datetime.now() > self.expires_at
+        return datetime.utcnow().replace(tzinfo=pytz.UTC) > self.expires_at
 
     def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
         self.application_command = app_cmd
