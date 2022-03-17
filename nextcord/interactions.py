@@ -28,7 +28,6 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable
 from datetime import datetime, timedelta
 import asyncio
-import pytz
 
 from . import utils
 from .enums import try_enum, InteractionType, InteractionResponseType
@@ -247,7 +246,7 @@ class Interaction:
         
     def is_expired(self) -> bool:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
-        return datetime.utcnow().replace(tzinfo=pytz.UTC) > self.expires_at
+        return utils.utcnow() > self.expires_at
 
     def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
         self.application_command = app_cmd
