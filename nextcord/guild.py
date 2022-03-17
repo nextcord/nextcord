@@ -245,50 +245,66 @@ class Guild(Hashable):
         The guild's NSFW level.
 
         .. versionadded:: 2.0
+
+    approximate_member_count: Optional[:class:`int`]
+        The approximate number of members in the guild. This is ``None`` unless the guild is obtained
+        using :meth:`Client.fetch_guild` with ``with_counts=True``.
+
+        .. versionadded:: 2.0
+
+    approximate_presence_count: Optional[:class:`int`]
+        The approximate number of members currently active in the guild.
+        This includes idle, dnd, online, and invisible members. Offline members are excluded.
+        This is ``None`` unless the guild is obtained using :meth:`Client.fetch_guild`
+        with ``with_counts=True``.
+
+        .. versionadded:: 2.0
     """
 
     __slots__ = (
-        'afk_timeout',
-        'afk_channel',
-        'name',
-        'id',
-        'unavailable',
-        'region',
-        'owner_id',
-        'mfa_level',
-        'emojis',
-        'stickers',
-        'features',
-        'verification_level',
-        'explicit_content_filter',
-        'default_notifications',
-        'description',
-        'max_presences',
-        'max_members',
-        'max_video_channel_users',
-        'premium_tier',
-        'premium_subscription_count',
-        'preferred_locale',
-        'nsfw_level',
-        '_application_commands',
-        '_members',
-        '_channels',
-        '_icon',
-        '_banner',
-        '_state',
-        '_roles',
-        '_member_count',
-        '_large',
-        '_splash',
-        '_voice_states',
-        '_system_channel_id',
-        '_system_channel_flags',
-        '_discovery_splash',
-        '_rules_channel_id',
-        '_public_updates_channel_id',
-        '_stage_instances',
-        '_threads',
-        '_scheduled_events',
+        "afk_timeout",
+        "afk_channel",
+        "name",
+        "id",
+        "unavailable",
+        "region",
+        "owner_id",
+        "mfa_level",
+        "emojis",
+        "stickers",
+        "features",
+        "verification_level",
+        "explicit_content_filter",
+        "default_notifications",
+        "description",
+        "max_presences",
+        "max_members",
+        "max_video_channel_users",
+        "premium_tier",
+        "premium_subscription_count",
+        "preferred_locale",
+        "nsfw_level",
+        "_application_commands",
+        "_members",
+        "_channels",
+        "_icon",
+        "_banner",
+        "_state",
+        "_roles",
+        "_member_count",
+        "_large",
+        "_splash",
+        "_voice_states",
+        "_system_channel_id",
+        "_system_channel_flags",
+        "_discovery_splash",
+        "_rules_channel_id",
+        "_public_updates_channel_id",
+        "_stage_instances",
+        "_threads",
+        "_scheduled_events",
+        "approximate_member_count",
+        "approximate_presence_count",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -454,21 +470,33 @@ class Guild(Hashable):
         self.stickers: Tuple[GuildSticker, ...] = tuple(
             map(lambda d: state.store_sticker(self, d), guild.get('stickers', []))
         )
-        self.features: List[GuildFeature] = guild.get('features', [])
-        self._splash: Optional[str] = guild.get('splash')
-        self._system_channel_id: Optional[int] = utils._get_as_snowflake(guild, 'system_channel_id')
-        self.description: Optional[str] = guild.get('description')
-        self.max_presences: Optional[int] = guild.get('max_presences')
-        self.max_members: Optional[int] = guild.get('max_members')
-        self.max_video_channel_users: Optional[int] = guild.get('max_video_channel_users')
-        self.premium_tier: int = guild.get('premium_tier', 0)
-        self.premium_subscription_count: int = guild.get('premium_subscription_count') or 0
-        self._system_channel_flags: int = guild.get('system_channel_flags', 0)
-        self.preferred_locale: Optional[str] = guild.get('preferred_locale')
-        self._discovery_splash: Optional[str] = guild.get('discovery_splash')
-        self._rules_channel_id: Optional[int] = utils._get_as_snowflake(guild, 'rules_channel_id')
-        self._public_updates_channel_id: Optional[int] = utils._get_as_snowflake(guild, 'public_updates_channel_id')
-        self.nsfw_level: NSFWLevel = try_enum(NSFWLevel, guild.get('nsfw_level', 0))
+        self.features: List[GuildFeature] = guild.get("features", [])
+        self._splash: Optional[str] = guild.get("splash")
+        self._system_channel_id: Optional[int] = utils._get_as_snowflake(
+            guild, "system_channel_id"
+        )
+        self.description: Optional[str] = guild.get("description")
+        self.max_presences: Optional[int] = guild.get("max_presences")
+        self.max_members: Optional[int] = guild.get("max_members")
+        self.max_video_channel_users: Optional[int] = guild.get(
+            "max_video_channel_users"
+        )
+        self.premium_tier: int = guild.get("premium_tier", 0)
+        self.premium_subscription_count: int = (
+            guild.get("premium_subscription_count") or 0
+        )
+        self._system_channel_flags: int = guild.get("system_channel_flags", 0)
+        self.preferred_locale: Optional[str] = guild.get("preferred_locale")
+        self._discovery_splash: Optional[str] = guild.get("discovery_splash")
+        self._rules_channel_id: Optional[int] = utils._get_as_snowflake(
+            guild, "rules_channel_id"
+        )
+        self._public_updates_channel_id: Optional[int] = utils._get_as_snowflake(
+            guild, "public_updates_channel_id"
+        )
+        self.nsfw_level: NSFWLevel = try_enum(NSFWLevel, guild.get("nsfw_level", 0))
+        self.approximate_presence_count = guild.get("approximate_presence_count")
+        self.approximate_member_count = guild.get("approximate_member_count")
 
         self._stage_instances: Dict[int, StageInstance] = {}
         for s in guild.get('stage_instances', []):
@@ -2424,7 +2452,7 @@ class Guild(Hashable):
 
         await self._state.http.delete_custom_emoji(self.id, emoji.id, reason=reason)
 
-    async def fetch_roles(self) -> List[Role]:
+    async def fetch_roles(self, *, cache: bool = False) -> List[Role]:
         """|coro|
 
         Retrieves all :class:`Role` that the guild has.
@@ -2433,7 +2461,11 @@ class Guild(Hashable):
 
             This method is an API call. For general usage, consider :attr:`roles` instead.
 
-        .. versionadded:: 1.3
+        Parameters
+        ----------
+        cache: bool
+            Whether or not to also update this guilds
+            role cache. Defaults to ``False``.
 
         Raises
         -------
@@ -2446,7 +2478,13 @@ class Guild(Hashable):
             All roles in the guild.
         """
         data = await self._state.http.get_roles(self.id)
-        return [Role(guild=self, state=self._state, data=d) for d in data]
+        roles = [Role(guild=self, state=self._state, data=d) for d in data]
+        if cache:
+            self._roles: Dict[int, Role] = {}
+            for role in roles:
+                self._roles[role.id] = role
+
+        return roles
 
     @overload
     async def create_role(
@@ -3139,7 +3177,8 @@ class Guild(Hashable):
         privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
-        reason: Optional[str] = None
+        image: bytes = MISSING,
+        reason: Optional[str] = None,
     ) -> ScheduledEvent:
         """|coro|
 
@@ -3163,7 +3202,9 @@ class Guild(Hashable):
             The description for the event
         entity_type: :class:`ScheduledEventEntityType`
             The type of event
-
+        image: :class:`bytes`
+            A :term:`py:bytes-like object` representing the cover image.
+            
         Returns
         -------
         :class:`ScheduledEvent`
@@ -3183,6 +3224,8 @@ class Guild(Hashable):
             payload['scheduled_end_time'] = end_time.isoformat()
         if description is not MISSING:
             payload['description'] = description
+        if image is not MISSING:
+            payload['image'] = utils._bytes_to_base64_data(image)
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)
 
