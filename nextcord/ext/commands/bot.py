@@ -694,7 +694,10 @@ class BotBase(GroupMixin):
 
         extras = extras or {}
         try:
-            setup(self, **extras)
+            if asyncio.iscoroutinefunction(setup):
+                asyncio.create_task(setup(self, **extras))
+            else:
+                setup(self, **extras)
         except Exception as e:
             del sys.modules[key]
             self._remove_module_references(lib.__name__)
