@@ -245,50 +245,66 @@ class Guild(Hashable):
         The guild's NSFW level.
 
         .. versionadded:: 2.0
+
+    approximate_member_count: Optional[:class:`int`]
+        The approximate number of members in the guild. This is ``None`` unless the guild is obtained
+        using :meth:`Client.fetch_guild` with ``with_counts=True``.
+
+        .. versionadded:: 2.0
+
+    approximate_presence_count: Optional[:class:`int`]
+        The approximate number of members currently active in the guild.
+        This includes idle, dnd, online, and invisible members. Offline members are excluded.
+        This is ``None`` unless the guild is obtained using :meth:`Client.fetch_guild`
+        with ``with_counts=True``.
+
+        .. versionadded:: 2.0
     """
 
     __slots__ = (
-        'afk_timeout',
-        'afk_channel',
-        'name',
-        'id',
-        'unavailable',
-        'region',
-        'owner_id',
-        'mfa_level',
-        'emojis',
-        'stickers',
-        'features',
-        'verification_level',
-        'explicit_content_filter',
-        'default_notifications',
-        'description',
-        'max_presences',
-        'max_members',
-        'max_video_channel_users',
-        'premium_tier',
-        'premium_subscription_count',
-        'preferred_locale',
-        'nsfw_level',
-        '_application_commands',
-        '_members',
-        '_channels',
-        '_icon',
-        '_banner',
-        '_state',
-        '_roles',
-        '_member_count',
-        '_large',
-        '_splash',
-        '_voice_states',
-        '_system_channel_id',
-        '_system_channel_flags',
-        '_discovery_splash',
-        '_rules_channel_id',
-        '_public_updates_channel_id',
-        '_stage_instances',
-        '_threads',
-        '_scheduled_events',
+        "afk_timeout",
+        "afk_channel",
+        "name",
+        "id",
+        "unavailable",
+        "region",
+        "owner_id",
+        "mfa_level",
+        "emojis",
+        "stickers",
+        "features",
+        "verification_level",
+        "explicit_content_filter",
+        "default_notifications",
+        "description",
+        "max_presences",
+        "max_members",
+        "max_video_channel_users",
+        "premium_tier",
+        "premium_subscription_count",
+        "preferred_locale",
+        "nsfw_level",
+        "_application_commands",
+        "_members",
+        "_channels",
+        "_icon",
+        "_banner",
+        "_state",
+        "_roles",
+        "_member_count",
+        "_large",
+        "_splash",
+        "_voice_states",
+        "_system_channel_id",
+        "_system_channel_flags",
+        "_discovery_splash",
+        "_rules_channel_id",
+        "_public_updates_channel_id",
+        "_stage_instances",
+        "_threads",
+        "_scheduled_events",
+        "approximate_member_count",
+        "approximate_presence_count",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -454,21 +470,33 @@ class Guild(Hashable):
         self.stickers: Tuple[GuildSticker, ...] = tuple(
             map(lambda d: state.store_sticker(self, d), guild.get('stickers', []))
         )
-        self.features: List[GuildFeature] = guild.get('features', [])
-        self._splash: Optional[str] = guild.get('splash')
-        self._system_channel_id: Optional[int] = utils._get_as_snowflake(guild, 'system_channel_id')
-        self.description: Optional[str] = guild.get('description')
-        self.max_presences: Optional[int] = guild.get('max_presences')
-        self.max_members: Optional[int] = guild.get('max_members')
-        self.max_video_channel_users: Optional[int] = guild.get('max_video_channel_users')
-        self.premium_tier: int = guild.get('premium_tier', 0)
-        self.premium_subscription_count: int = guild.get('premium_subscription_count') or 0
-        self._system_channel_flags: int = guild.get('system_channel_flags', 0)
-        self.preferred_locale: Optional[str] = guild.get('preferred_locale')
-        self._discovery_splash: Optional[str] = guild.get('discovery_splash')
-        self._rules_channel_id: Optional[int] = utils._get_as_snowflake(guild, 'rules_channel_id')
-        self._public_updates_channel_id: Optional[int] = utils._get_as_snowflake(guild, 'public_updates_channel_id')
-        self.nsfw_level: NSFWLevel = try_enum(NSFWLevel, guild.get('nsfw_level', 0))
+        self.features: List[GuildFeature] = guild.get("features", [])
+        self._splash: Optional[str] = guild.get("splash")
+        self._system_channel_id: Optional[int] = utils._get_as_snowflake(
+            guild, "system_channel_id"
+        )
+        self.description: Optional[str] = guild.get("description")
+        self.max_presences: Optional[int] = guild.get("max_presences")
+        self.max_members: Optional[int] = guild.get("max_members")
+        self.max_video_channel_users: Optional[int] = guild.get(
+            "max_video_channel_users"
+        )
+        self.premium_tier: int = guild.get("premium_tier", 0)
+        self.premium_subscription_count: int = (
+            guild.get("premium_subscription_count") or 0
+        )
+        self._system_channel_flags: int = guild.get("system_channel_flags", 0)
+        self.preferred_locale: Optional[str] = guild.get("preferred_locale")
+        self._discovery_splash: Optional[str] = guild.get("discovery_splash")
+        self._rules_channel_id: Optional[int] = utils._get_as_snowflake(
+            guild, "rules_channel_id"
+        )
+        self._public_updates_channel_id: Optional[int] = utils._get_as_snowflake(
+            guild, "public_updates_channel_id"
+        )
+        self.nsfw_level: NSFWLevel = try_enum(NSFWLevel, guild.get("nsfw_level", 0))
+        self.approximate_presence_count = guild.get("approximate_presence_count")
+        self.approximate_member_count = guild.get("approximate_member_count")
 
         self._stage_instances: Dict[int, StageInstance] = {}
         for s in guild.get('stage_instances', []):
