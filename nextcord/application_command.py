@@ -357,17 +357,48 @@ class CallbackMixin:
             Class that the callback resides on. Will be passed into the callback if provided.
         """
         self.callback: Callable = callback
+        self._callback_before_invoke: Optional[ApplicationHook] = None
+        self._callback_after_invoke: Optional[ApplicationHook] = None
+        self.error_callback: Optional[Callable] = None
+        self.checks: List[ApplicationCheck] = []
         if self.callback:
             if not asyncio.iscoroutinefunction(self.callback):
                 print(self.callback, type(self.callback))
                 raise TypeError("Callback must be a coroutine")
         self.parent_cog = parent_cog
 
-    async def invoke_callback(self, interaction: Interaction, *args, **kwargs):
-        if self.parent_cog:
-            await self.callback(self.parent_cog, interaction, *args, **kwargs)
-        else:
-            await self.callback(interaction, *args, **kwargs)
+    @property
+    def error_name(self) -> str:
+        """Returns a string containing the class name, command name, and the callback to use in raising exceptions."""
+        return f"{self.__class__.__name__} {self.name} {self.callback}"
+
+    @property
+    def cog_before_invoke(self) -> Optional[ApplicationHook]:
+        """Returns the cog_application_command_before_invoke method for the cog that this command is in.
+        Returns ``None`` if not the method is not found.
+        """
+        if not self.parent_cog:
+            return None
+
+        return ClientCog._get_overridden_method(
+            self.parent_cog.cog_application_command_before_invoke
+        )
+
+    @property
+    def cog_after_invoke(self) -> Optional[ApplicationHook]:
+        """Returns the cog_application_command_after_invoke method for the cog that this command is in.
+        Returns ``None`` if not the method is not found.
+        """
+        if not self.parent_cog:
+            return None
+
+        return ClientCog._get_overridden_method(
+            self.parent_cog.cog_application_command_after_invoke
+        )
+
+    def has_error_handler(self) -> bool:
+        """:class:`bool`: Checks whether the command has an error handler registered."""
+        return self.error_callback is not None
 
     def from_callback(
             self,
@@ -419,10 +450,136 @@ class CallbackMixin:
                     arg = option_class(param, parent_cog=self.parent_cog)
                     self.options[arg.name] = arg
 
-    @property
-    def error_name(self) -> str:
-        """Returns a string containing the class name, command name, and the callback to use in raising exceptions."""
-        return f"{self.__class__.__name__} {self.name} {self.callback}"
+    async def can_run(self, interaction: Interaction):
+        """|coro|
+
+        Checks if the command can be executed by checking all the predicates
+        inside the :attr:`~ApplicationCommand.checks` attribute, as well as all global and cog checks.
+
+        Parameters
+        -----------
+        interaction: :class:`.Interaction`
+            The interaction of the command currently being invoked.
+
+        Raises
+        -------
+        :class:`ApplicationError`
+            Any application command error that was raised during a check call will be propagated
+            by this function.
+
+        Returns
+        --------
+        :class:`bool`
+            A boolean indicating if the command can be invoked.
+        """
+        # Global checks
+        for check in interaction.client._connection._application_command_checks:
+            try:
+                check_result = await maybe_coroutine(check, interaction)
+            # To catch any subclasses of ApplicationCheckFailure.
+            except ApplicationCheckFailure:
+                raise
+            # If the check returns False, the command can't be run.
+            else:
+                if not check_result:
+                    error = ApplicationCheckFailure(
+                        f"The global check functions for application command {self.qualified_name} failed."
+                    )
+                    raise error
+
+        # Cog check
+        if self.parent_cog:
+            cog_check = ClientCog._get_overridden_method(
+                self.parent_cog.cog_application_command_check
+            )
+            if cog_check is not None and not await maybe_coroutine(
+                    cog_check, interaction
+            ):
+                raise ApplicationCheckFailure(
+                    f"The cog check functions for application command {self.qualified_name} failed."
+                )
+
+        # Command checks
+        for check in self.checks:
+            try:
+                check_result = await maybe_coroutine(check, interaction)
+            # To catch any subclasses of ApplicationCheckFailure.
+            except ApplicationCheckFailure as error:
+                raise
+            # If the check returns False, the command can't be run.
+            else:
+                if not check_result:
+                    error = ApplicationCheckFailure(
+                        f"The check functions for application command {self.qualified_name} failed."
+                    )
+                    raise error
+
+        return True
+
+    async def invoke_callback_with_hooks(self, state: ConnectionState, interaction: Interaction, *args, **kwargs):
+        interaction._set_application_command(self)
+        try:
+            can_run = await self.can_run(interaction)
+        except Exception as error:
+            state.dispatch("application_command_error", interaction, error)
+            await self.invoke_error(interaction, error)
+            return
+
+        if can_run:
+            if self._callback_before_invoke is not None:
+                await self._callback_before_invoke(interaction)
+
+            if (before_invoke := self.cog_before_invoke) is not None:
+                await before_invoke(interaction)
+            if (before_invoke := state._application_command_before_invoke) is not None:
+                await before_invoke(interaction)
+
+            try:
+                await self.invoke_callback(interaction, *args, **kwargs)
+            except Exception as error:
+                state.dispatch(
+                    "application_command_error",
+                    interaction,
+                    ApplicationInvokeError(error),
+                )
+                await self.invoke_error(interaction, error)
+            finally:
+                if self._callback_after_invoke is not None:
+                    await self._callback_after_invoke(interaction)
+
+                if (after_invoke := self.cog_after_invoke) is not None:
+                    await after_invoke(interaction)
+
+                if (after_invoke := state._application_command_after_invoke) is not None:
+                    await after_invoke(interaction)
+
+    async def invoke_callback(self, interaction: Interaction, *args, **kwargs):
+        if self.parent_cog:
+            await self.callback(self.parent_cog, interaction, *args, **kwargs)
+        else:
+            await self.callback(interaction, *args, **kwargs)
+
+    async def invoke_error(self, interaction: Interaction, error: ApplicationError) -> None:
+        if self.has_error_handler():
+            if self.parent_cog:
+                await self.error_callback(self.parent_cog, interaction, error)
+            else:
+                await self.error_callback(interaction, error)
+
+    def error(self, callback: ApplicationErrorCallback) -> Callable:
+        """Decorates a function, setting it as a callback to be called when a :class:`ApplicationError` or any of
+        its subclasses is raised inside the :class:`ApplicationCommand`.
+
+        Parameters
+        ----------
+        callback: Callable[[:class:`Interaction`, :class:`ApplicationError`], :class:`asyncio.Awaitable[Any]`]
+            The callback to call when an error occurs.
+        """
+        if not asyncio.iscoroutinefunction(callback):
+            raise TypeError("The error handler must be a coroutine.")
+
+        self.error_callback = callback
+        return callback
 
 
 class AutocompleteOptionMixin:
@@ -571,6 +728,10 @@ class SlashCommandMixin(metaclass=ABCMeta):
     async def invoke_callback(self, interaction: Interaction, *args, **kwargs):
         pass
 
+    @abstractmethod
+    async def invoke_callback_with_hooks(self, state: ConnectionState, interaction: Interaction, *args, **kwargs):
+        pass
+
     @property
     @abstractmethod
     def error_name(self) -> str:
@@ -599,55 +760,8 @@ class SlashCommandMixin(metaclass=ABCMeta):
                     )
             for uncalled_arg in uncalled_args.values():
                 kwargs[uncalled_arg.functional_name] = uncalled_arg.default
-            await self.invoke_callback(interaction, **kwargs)
-
-    # async def call_autocomplete(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]] = None):
-    #     if option_data is None:
-    #         option_data = interaction.data.get("options", {})
-    #     if self.children:  # If this has subcommands, it needs to be forwarded to them to handle.
-    #         await self.children[option_data[0]["name"]].call_autocomplete(state, interaction, option_data[0].get("options", {}))
-    #     else:
-    #         focused_option_name = None
-    #         for arg in option_data:
-    #             if arg.get("focused", None) is True:
-    #                 if focused_option_name:
-    #                     raise ValueError("Multiple options are focused, is that supposed to be possible?")
-    #                 focused_option_name = arg["name"]
-    #
-    #         if not focused_option_name:
-    #             raise ValueError("There's supposed to be a focused option, but it's not found?")
-    #         focused_option = self.options[focused_option_name]
-    #         if focused_option.autocomplete_function is MISSING:
-    #             raise ValueError(f"{self.error_name} Autocomplete called for option {focused_option.functional_name} "
-    #                              f"but it doesn't have an autocomplete function?")
-    #         autocomplete_kwargs = signature(focused_option.autocomplete_function).parameters.keys()
-    #         kwargs = {}
-    #         uncalled_options = self.options.copy()
-    #         uncalled_options.pop(focused_option.name)
-    #         focused_option_value = None
-    #         for arg_data in option_data:
-    #             if option := uncalled_options.get(arg_data["name"], None):
-    #                 uncalled_options.pop(option.name)
-    #                 if option.functional_name in autocomplete_kwargs:
-    #                     kwargs[option.functional_name] = await option.handle_value(state, arg_data["value"],
-    #                                                                                interaction)
-    #             elif arg_data["name"] == focused_option.name:
-    #                 focused_option_value = await focused_option.handle_value(state, arg_data["value"],
-    #                                                                          interaction)
-    #             else:
-    #                 # TODO: Handle this better.
-    #                 raise NotImplementedError(
-    #                     f"An argument was provided that wasn't already in the function, did you"
-    #                     f"recently change it?\nRegistered Options: {self.options}, Discord-sent"
-    #                     f"args: {interaction.data['options']}, broke on {arg_data}"
-    #                 )
-    #         for option in uncalled_options.values():
-    #             if option.functional_name in autocomplete_kwargs:
-    #                 kwargs[option.functional_name] = option.default
-    #         value = await focused_option.invoke_autocomplete_callback(interaction, focused_option_value, **kwargs)
-    #         # Handles when the autocomplete callback returns something and didn't run the autocomplete function.
-    #         if value and not interaction.response.is_done():
-    #             await interaction.response.send_autocomplete(value)
+            # await self.invoke_callback(interaction, **kwargs)
+            await self.invoke_callback_with_hooks(state, interaction, **kwargs)
 
 
 # Extends Any so that type checkers won't complain that it's a default for a parameter of a different type
@@ -1384,7 +1498,8 @@ class UserApplicationCommand(BaseApplicationCommand):
         await self.call(self._state, interaction)
 
     async def call(self, state: ConnectionState, interaction: Interaction):
-        await self.invoke_callback(interaction, get_users_from_interaction(self._state, interaction)[0])
+        # await self.invoke_callback(interaction, get_users_from_interaction(self._state, interaction)[0])
+        await self.invoke_callback_with_hooks(state, interaction, get_users_from_interaction(state, interaction)[0])
 
     def from_callback(
             self,
@@ -1411,7 +1526,8 @@ class MessageApplicationCommand(BaseApplicationCommand):
         await self.call(self._state, interaction)
 
     async def call(self, state: ConnectionState, interaction: Interaction):
-        await self.invoke_callback(interaction, get_messages_from_interaction(state, interaction)[0])
+        # await self.invoke_callback(interaction, get_messages_from_interaction(state, interaction)[0])
+        await self.invoke_callback_with_hooks(state, interaction, get_messages_from_interaction(state, interaction)[0])
 
     def from_callback(
             self,
