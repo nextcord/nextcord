@@ -7,6 +7,7 @@
 /docs/ @RPSMain @ooliver1
 /examples/ @RPSMain @ooliver1
 /.github/CODEOWNERS @veni-vidi-code 
+/nextcord/ext/application_checks @okay1204
 /nextcord/ext/tasks/ @veni-vidi-code 
 /nextcord/scheduled_events.py @ooliver1
 /nextcord/types/scheduled_events.py @ooliver1
