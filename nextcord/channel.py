@@ -261,14 +261,6 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         """
         return self._state._get_message(self.last_message_id) if self.last_message_id else None
 
-    @property
-    def jump_url(self) -> str:
-        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
-
-        .. versionadded:: 2.0
-        """
-        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
-
     @overload
     async def edit(
         self,
@@ -954,14 +946,6 @@ class VoiceChannel(VocalGuildChannel):
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.voice
 
-    @property
-    def jump_url(self) -> str:
-        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
-
-        .. versionadded:: 2.0
-        """
-        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
-
     @utils.copy_doc(abc.GuildChannel.clone)
     async def clone(self, *, name: Optional[str] = None, reason: Optional[str] = None) -> VoiceChannel:
         return await self._clone_impl({'bitrate': self.bitrate, 'user_limit': self.user_limit}, name=name, reason=reason)
@@ -1164,14 +1148,6 @@ class StageChannel(VocalGuildChannel):
     def type(self) -> ChannelType:
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.stage_voice
-
-    @property
-    def jump_url(self) -> str:
-        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
-
-        .. versionadded:: 2.0
-        """
-        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
 
     @utils.copy_doc(abc.GuildChannel.clone)
     async def clone(self, *, name: Optional[str] = None, reason: Optional[str] = None) -> StageChannel:
