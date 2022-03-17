@@ -245,7 +245,7 @@ class Interaction:
         else:
             return self.created_at + timedelta(seconds=3)
         
-    def has_expired(self):
+    def is_expired(self) -> bool:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
         return datetime.utcnow().replace(tzinfo=pytz.UTC) > self.expires_at
 
