@@ -73,6 +73,22 @@ __all__ = (
 T = TypeVar("T")
 
 
+class CheckWrapper(AppCmdCallbackWrapper):
+    def __init__(self, callback: Union[Callable, AppCmdCallbackWrapper], predicate):
+        super().__init__(callback)
+
+        if not asyncio.iscoroutinefunction(predicate):
+            @functools.wraps(predicate)
+            async def async_wrapper(ctx):
+                return predicate(ctx)
+            self.predicate = async_wrapper
+        else:
+            self.predicate = predicate
+
+    def modify(self, app_cmd: BaseApplicationCommand):
+        app_cmd.checks.append(self.predicate)
+
+
 # def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
 def check(predicate: "ApplicationCheck") -> Union[BaseApplicationCommand, BaseApplicationSubcommand, "CheckWrapper"]:
     r"""A decorator that adds a check to the :class:`.ApplicationCommand` or its
@@ -145,16 +161,16 @@ def check(predicate: "ApplicationCheck") -> Union[BaseApplicationCommand, BaseAp
     predicate: Callable[[:class:`~.Interaction`], :class:`bool`]
         The predicate to check if the command should be invoked.
     """
-    print("Base check called.")
-    if not asyncio.iscoroutinefunction(predicate):
-        @functools.wraps(predicate)
-        async def async_wrapper(ctx):
-            return predicate(ctx)
-        predicate = async_wrapper
+    # print("Base check called.")
+    # if not asyncio.iscoroutinefunction(predicate):
+    #     @functools.wraps(predicate)
+    #     async def async_wrapper(ctx):
+    #         return predicate(ctx)
+    #     predicate = async_wrapper
 
-    class CheckWrapper(AppCmdCallbackWrapper):
-        def modify(self, app_cmd: BaseApplicationCommand):
-            app_cmd.checks.insert(0, predicate)
+    # class CheckWrapper(AppCmdCallbackWrapper):
+    #     def modify(self, app_cmd: BaseApplicationCommand):
+    #         app_cmd.checks.insert(0, predicate)
 
     # def decorator(
     #     func: Union[ApplicationSubcommand, "CoroFunc"]
@@ -168,9 +184,15 @@ def check(predicate: "ApplicationCheck") -> Union[BaseApplicationCommand, BaseAp
     #         func.__slash_command_checks__.append(predicate)
     #
     #     return func
+    # def wrapper(func):
+    #     print("Check wrapper called, returning it!")
+    #     return CheckWrapper(func)
+
+
     def wrapper(func):
-        print("Check wrapper called, returning it!")
-        return CheckWrapper(func)
+        return CheckWrapper(func, predicate)
+    return wrapper
+
 
 
     # if asyncio.iscoroutinefunction(predicate):
@@ -183,7 +205,8 @@ def check(predicate: "ApplicationCheck") -> Union[BaseApplicationCommand, BaseAp
     #     decorator.predicate = async_wrapper
 
     # return decorator
-    return wrapper
+    # return wrapper
+
 
 
 def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:

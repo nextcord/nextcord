@@ -100,11 +100,13 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 class AppCmdCallbackWrapper:
     def __new__(
             cls,
-            callback: Union[Callable, AppCmdCallbackWrapper, BaseApplicationCommand, BaseApplicationSubcommand]
+            callback: Union[Callable, AppCmdCallbackWrapper, BaseApplicationCommand, BaseApplicationSubcommand],
+            *args,
+            **kwargs,
     ):
         # wrapper = cls(callback)
         wrapper = super(AppCmdCallbackWrapper, cls).__new__(cls)
-        wrapper.__init__(callback=callback)
+        wrapper.__init__(callback, *args, **kwargs)
         if isinstance(callback, (BaseApplicationCommand, BaseApplicationSubcommand)):
             print(callback, type(callback), wrapper, type(wrapper))
             callback.modify_callbacks += wrapper.modify_callbacks
@@ -500,6 +502,7 @@ class CallbackMixin:
                 )
 
         # Command checks
+        print(f"Check list {self.checks}")
         for check in self.checks:
             try:
                 check_result = await maybe_coroutine(check, interaction)
