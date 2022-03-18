@@ -278,6 +278,7 @@ class CommandOption(SlashOption):
         Attachment: ApplicationCommandOptionType.attachment,
     }
     """Maps Python annotations/typehints to Discord Application Command type values."""
+    
     def __init__(self, parameter: Parameter, command: ApplicationSubcommand):
         super().__init__()
         self.parameter = parameter
