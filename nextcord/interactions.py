@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable
 import asyncio
 
 from . import utils
@@ -63,9 +63,11 @@ if TYPE_CHECKING:
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
     from .ui.view import View
+    from .ui.modal import Modal
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
     from .client import Client
+    from .application_command import ApplicationSubcommand, ApplicationCommand
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
@@ -73,6 +75,36 @@ if TYPE_CHECKING:
 
 MISSING: Any = utils.MISSING
 
+class InteractionAttached(dict):
+    """Represents the attached data of an interaction.
+
+    This is used to store information about an :class:`Interaction`. This is useful if you want to save some data from a :meth:`ApplicationCommand.application_command_before_invoke` to use later in the callback.
+
+    Example
+    ---------
+
+    .. code-block:: python3
+
+        async def attach_db(interaction: Interaction):
+            interaction.attached.db = some_real_database()
+
+        async def release_db(interaction: Interaction):
+            interaction.attached.db.close()
+
+        @bot.slash_command()
+        @application_checks.before_invoke(attach_db)
+        @application_checks.after_invoke(release_db)
+        async def who(interaction: Interaction): # Output: <User> used who at <Time>
+            data = interaction.attached.db.get_data(interaction.user.id)
+            await interaction.response.send_message(data)
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.__dict__ = self
+
+    def __repr__(self):
+        return f'<InteractionAttached {super().__repr__()}>'
 
 class Interaction:
     """Represents a Discord interaction.
@@ -107,6 +139,14 @@ class Interaction:
         for 15 minutes.
     data: :class:`dict`
         The raw interaction data.
+    attached: :class:`InteractionAttached`
+        The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
+    application_command: Optional[:class:`ApplicationCommand`]
+        The application command that handled the interaction.
+    client: :class:`Client`
+        The client that handled the interaction. Can be a subclass of :class:`Client`.
+    bot: :class:`Client`:
+        An alias for ``client``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -122,6 +162,9 @@ class Interaction:
         'guild_locale',
         'token',
         'version',
+        'application_command',
+        'attached',
+        '_client',
         '_permissions',
         '_state',
         '_session',
@@ -135,6 +178,8 @@ class Interaction:
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session
         self._original_message: Optional[InteractionMessage] = None
+        self.attached = InteractionAttached()
+        self.application_command: Optional[ApplicationCommand] = None
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
@@ -183,6 +228,9 @@ class Interaction:
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state and self._state._get_guild(self.guild_id)
+
+    def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
+        self.application_command = app_cmd
 
     @utils.cached_slot_property('_cs_channel')
     def channel(self) -> Optional[InteractionChannel]:
@@ -413,7 +461,7 @@ class Interaction:
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-    ) -> Optional[Union[Message, WebhookMessage]]:
+    ) -> Optional[WebhookMessage]:
         """|coro|
 
         This is a shorthand function for helping in sending messages in
@@ -423,9 +471,12 @@ class Interaction:
 
         Returns
         -------
-        Optional[:class:`Message`, :class:`WebhookMessage`]
-            The :class:`Message` that was sent, a :class:`WebhookMessage` if the
-            interaction has been responded to before.
+        Optional[:class:`WebhookMessage`]
+            If the interaction has not been responded to, returns None. To access the
+            :class:`InteractionMessage` that was sent, the methods: :meth:`Interaction.original_message()`,
+            :meth:`Interaction.edit_original_message()`, and :meth:`Interaction.delete_original_message()`
+            should be used.
+            If the interaction has been responded to, returns the :class:`WebhookMessage`.
         """
 
         if not self.response.is_done():
@@ -544,7 +595,7 @@ class InteractionResponse:
             defer_type = InteractionResponseType.deferred_channel_message.value
             if ephemeral:
                 data = {'flags': 64}
-        elif parent.type is InteractionType.component:
+        elif parent.type is InteractionType.component or parent.type is InteractionType.modal_submit:
             defer_type = InteractionResponseType.deferred_message_update.value
 
         if defer_type:
@@ -749,6 +800,41 @@ class InteractionResponse:
 
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
+    
+    async def send_modal(self, modal: Modal) -> None:
+        """|coro|
+        
+        Respond to this interaction by sending a modal.
+        
+        Parameters
+        ----------
+        modal: :class:`nextcord.ui.Modal`
+            The modal to be sent in response to the interaction and which will
+            be displayed on the user's screen.
+        
+        Raises
+        -------
+        HTTPException
+            Sending the modal failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+        """
+        if self._responded:
+            raise InteractionResponded(self._parent)
+        
+        parent = self._parent
+        adapter = async_context.get()
+        await adapter.create_interaction_response(
+            parent.id,
+            parent.token,
+            session=parent._session,
+            type=InteractionResponseType.modal.value,
+            data=modal.to_dict(),
+        )
+        
+        self._responded = True
+        
+        self._parent._state.store_modal(modal, self._parent.user.id)
 
     async def edit_message(
         self,
@@ -809,8 +895,6 @@ class InteractionResponse:
         msg = parent.message
         state = parent._state
         message_id = msg.id if msg else None
-        if parent.type is not InteractionType.component:
-            return
 
         payload = {}
         if content is not MISSING:
