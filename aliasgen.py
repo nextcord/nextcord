@@ -58,7 +58,7 @@ def scan_dir(folder):
         if file.is_file():
             file_extension = unprefixed.split(".")[-1]
             if file_extension == "py":
-                # Should create a alias
+                # Should create an alias
                 import_name = str(file)[:-3].replace("/", ".").replace("\\", ".")
                 module = import_module(import_name)
                 alias_file = ""

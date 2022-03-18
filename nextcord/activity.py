@@ -187,7 +187,7 @@ class Activity(BaseActivity):
         - ``id``: A string representing the party ID.
         - ``size``: A list of up to two integer elements denoting (current_size, maximum_size).
     buttons: List[:class:`dict`]
-        An list of dictionaries representing custom buttons shown in a rich presence.
+        A list of dictionaries representing custom buttons shown in a rich presence.
         Each dictionary contains the following keys:
 
         - ``label``: A string representing the text shown on the button.

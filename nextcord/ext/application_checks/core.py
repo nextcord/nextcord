@@ -79,7 +79,7 @@ def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
 
     These checks should be predicates that take in a single parameter taking
     a :class:`.Interaction`. If the check returns a ``False``\-like value, 
-    a ApplicationCheckFailure is raised during invocation and sent to the 
+    an ApplicationCheckFailure is raised during invocation and sent to the 
     :func:`.on_application_command_error` event.
 
     If an exception should be thrown in the predicate then it should be a
