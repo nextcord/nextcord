@@ -1468,7 +1468,9 @@ class ApplicationCommand(ApplicationSubcommand):
     @property
     def description(self) -> str:
         """
-        Returns the description of the command. If the description is MISSING, it returns "No description provided"
+        Returns the description of the command. If the description is MISSING, the docstring will be used.
+        If no docstring is found for the command callback, it defaults to "No description provided".
+        For user and message commands, the description will always be the empty string.
         """
         if self.type in (ApplicationCommandType.user, ApplicationCommandType.message):
             return ""
