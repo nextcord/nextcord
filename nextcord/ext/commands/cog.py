@@ -23,6 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
+import asyncio
 import inspect
 from nextcord.application_command import _cog_special_method
 from nextcord.interactions import Interaction
@@ -143,7 +144,7 @@ class CogMeta(type):
                     if elem.startswith(('cog_', 'bot_')):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
-                elif inspect.iscoroutinefunction(value):
+                elif asyncio.iscoroutinefunction(value):
                     try:
                         getattr(value, '__cog_listener__')
                     except AttributeError:
@@ -297,7 +298,7 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
             actual = func
             if isinstance(actual, staticmethod):
                 actual = actual.__func__
-            if not inspect.iscoroutinefunction(actual):
+            if not asyncio.iscoroutinefunction(actual):
                 raise TypeError('Listener function must be a coroutine function.')
             actual.__cog_listener__ = True
             to_assign = name or actual.__name__
