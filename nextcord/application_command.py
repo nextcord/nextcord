@@ -333,8 +333,11 @@ class CommandOption(SlashOption):
 
     @property
     def description(self) -> str:
-        """If no description is set, it returns "No description provided" """
-        if self._description:
+        """
+        Returns the description of the command. If the description is MISSING, the docstring will be used.
+        If no docstring is found for the command callback, it defaults to "No description provided".
+        """
+        if self._description is not MISSING:
             return self._description
         elif docstring := self.command._parsed_docstring["args"].get(self.name):
             return docstring
@@ -643,9 +646,10 @@ class ApplicationSubcommand:
     @property
     def description(self) -> str:
         """
-        Returns the description of the command. If the description is MISSING, it returns "No description provided"
+        Returns the description of the command. If the description is MISSING, the docstring will be used.
+        If no docstring is found for the command callback, it defaults to "No description provided".
         """
-        if self._description:
+        if self._description is not MISSING:
             return self._description
         elif docstring := self._parsed_docstring["description"]:
             return docstring
