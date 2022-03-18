@@ -839,7 +839,7 @@ def create_activity(state: ConnectionState, data: Optional[ActivityPayload]) -> 
             return CustomActivity(name=name, _connection_state=state, **data) # type: ignore
     elif game_type is ActivityType.streaming:
         if 'url' in data:
-            # the url won't be None here
+            # the URL won't be None here
             return Streaming(**data) # type: ignore
         return Activity(**data)
     elif game_type is ActivityType.listening and 'sync_id' in data and 'session_id' in data:
