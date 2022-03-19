@@ -244,9 +244,16 @@ class View:
 
     @property
     def _expires_at(self) -> Optional[float]:
-        if self.timeout:
-            return time.monotonic() + self.timeout
-        return None
+        """The monotonic time this view times out at.
+
+        Returns
+        -------
+        Optional[float]
+            When this view times out.
+
+            None if no timeout is set.
+        """
+        return self.__timeout_expiry
 
     def add_item(self, item: Item) -> None:
         """Adds an item to the view.
