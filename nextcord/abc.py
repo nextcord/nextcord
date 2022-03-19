@@ -186,7 +186,6 @@ class PrivateChannel(Snowflake, Protocol):
     __slots__ = ()
 
     me: ClientUser
-    jump_url: str
 
     @property
     def jump_url(self) -> str:
@@ -260,7 +259,6 @@ class GuildChannel:
     category_id: Optional[int]
     _state: ConnectionState
     _overwrites: List[_Overwrites]
-    jump_url: str
 
     if TYPE_CHECKING:
 

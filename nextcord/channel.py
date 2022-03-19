@@ -1609,7 +1609,7 @@ class StoreChannel(abc.GuildChannel, Hashable):
         return ChannelType.text.value
 
     @property
-    def type(self) -> ChannelType:#
+    def type(self) -> ChannelType:
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.store
 
@@ -1778,7 +1778,6 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable):
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: Returns the direct message channel's creation time in UTC."""
         return utils.snowflake_time(self.id)
-
 
     def permissions_for(self, obj: Any = None, /) -> Permissions:
         """Handles permission resolution for a :class:`User`.
