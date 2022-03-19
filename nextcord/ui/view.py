@@ -248,9 +248,7 @@ class View:
 
             None if no timeout is set.
         """
-        if self.timeout and self.__timeout_expiry is not None:
-            return self.__timeout_expiry
-        return None
+        return self.__timeout_expiry
 
     def add_item(self, item: Item) -> None:
         """Adds an item to the view.
