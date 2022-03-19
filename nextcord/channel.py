@@ -1707,7 +1707,7 @@ class StoreChannel(abc.GuildChannel, Hashable):
 DMC = TypeVar('DMC', bound='DMChannel')
 
 
-class DMChannel(abc.Messageable, Hashable):
+class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable):
     """Represents a Discord direct message channel.
 
     .. container:: operations
@@ -1833,7 +1833,7 @@ class DMChannel(abc.Messageable, Hashable):
         return PartialMessage(channel=self, id=message_id)
 
 
-class GroupChannel(abc.Messageable, Hashable):
+class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable):
     """Represents a Discord group channel.
 
     .. container:: operations

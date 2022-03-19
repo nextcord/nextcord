@@ -216,7 +216,7 @@ class Thread(Messageable, Hashable):
     def created_at(self) -> Optional[datetime]:
         """Optional[:class:`datetime.datetime`]: Returns the threads's creation time in UTC.
         This is ``None`` if the thread was created before January 9th, 2021.
-        
+
         .. versionadded:: 2.0
         """
         return self.create_timestamp
@@ -291,7 +291,7 @@ class Thread(Messageable, Hashable):
         if parent is None:
             raise ClientException('Parent channel not found')
         return parent.category
-    
+
     @property
     def category_id(self) -> Optional[int]:
         """The category channel ID the parent channel belongs to, if applicable.
@@ -311,6 +311,14 @@ class Thread(Messageable, Hashable):
         if parent is None:
             raise ClientException('Parent channel not found')
         return parent.category_id
+
+    @property
+    def jump_url(self) -> str:
+        """:class:`str`: Returns a URL that allows the client to jump to this channel.
+
+        .. versionadded:: 2.0
+        """
+        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
 
     def is_private(self) -> bool:
         """:class:`bool`: Whether the thread is a private thread.
