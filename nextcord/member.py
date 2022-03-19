@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
-import inspect
+import asyncio
 import itertools
 import sys
 from operator import attrgetter
@@ -178,7 +178,7 @@ def flatten_user(cls):
             # probably a member function by now
             def generate_function(x):
                 # We want sphinx to properly show coroutine functions as coroutines
-                if inspect.iscoroutinefunction(value):
+                if asyncio.iscoroutinefunction(value):
 
                     async def general(self, *args, **kwargs):  # type: ignore
                         return await getattr(self._user, x)(*args, **kwargs)

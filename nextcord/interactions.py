@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable
 import asyncio
 
 from . import utils
@@ -67,6 +67,7 @@ if TYPE_CHECKING:
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
     from .client import Client
+    from .application_command import ApplicationSubcommand, ApplicationCommand
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
@@ -74,6 +75,36 @@ if TYPE_CHECKING:
 
 MISSING: Any = utils.MISSING
 
+class InteractionAttached(dict):
+    """Represents the attached data of an interaction.
+
+    This is used to store information about an :class:`Interaction`. This is useful if you want to save some data from a :meth:`ApplicationCommand.application_command_before_invoke` to use later in the callback.
+
+    Example
+    ---------
+
+    .. code-block:: python3
+
+        async def attach_db(interaction: Interaction):
+            interaction.attached.db = some_real_database()
+
+        async def release_db(interaction: Interaction):
+            interaction.attached.db.close()
+
+        @bot.slash_command()
+        @application_checks.before_invoke(attach_db)
+        @application_checks.after_invoke(release_db)
+        async def who(interaction: Interaction): # Output: <User> used who at <Time>
+            data = interaction.attached.db.get_data(interaction.user.id)
+            await interaction.response.send_message(data)
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.__dict__ = self
+
+    def __repr__(self):
+        return f'<InteractionAttached {super().__repr__()}>'
 
 class Interaction:
     """Represents a Discord interaction.
@@ -108,6 +139,14 @@ class Interaction:
         for 15 minutes.
     data: :class:`dict`
         The raw interaction data.
+    attached: :class:`InteractionAttached`
+        The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
+    application_command: Optional[:class:`ApplicationCommand`]
+        The application command that handled the interaction.
+    client: :class:`Client`
+        The client that handled the interaction. Can be a subclass of :class:`Client`.
+    bot: :class:`Client`:
+        An alias for ``client``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -123,6 +162,9 @@ class Interaction:
         'guild_locale',
         'token',
         'version',
+        'application_command',
+        'attached',
+        '_client',
         '_permissions',
         '_state',
         '_session',
@@ -136,6 +178,8 @@ class Interaction:
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session
         self._original_message: Optional[InteractionMessage] = None
+        self.attached = InteractionAttached()
+        self.application_command: Optional[ApplicationCommand] = None
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
@@ -184,6 +228,9 @@ class Interaction:
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state and self._state._get_guild(self.guild_id)
+
+    def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
+        self.application_command = app_cmd
 
     @utils.cached_slot_property('_cs_channel')
     def channel(self) -> Optional[InteractionChannel]:
