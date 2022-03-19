@@ -206,12 +206,12 @@ def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
             def predicate(interaction: Interaction):
                 return (
                     interaction.guild is not None
-                    and interaction.guild.owner_id == ctx.author.id
+                    and interaction.guild.owner_id == interaction.user.id
                 )
-            return commands.check(predicate)
+            return application_checks.check(predicate)
 
-        @bot.command()
-        @checks.check_any(checks.is_owner(), is_guild_owner())
+        @bot.slash_command()
+        @application_checks.check_any(applications_checks.is_owner(), is_guild_owner())
         async def only_for_owners(interaction: Interaction):
             await interaction.response.send_message('Hello mister owner!')
     """
@@ -222,7 +222,7 @@ def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
             pred = wrapped.predicate
         except AttributeError:
             raise TypeError(
-                f"{wrapped!r} must be wrapped by checks.check decorator"
+                f"{wrapped!r} must be wrapped by application_checks.check decorator"
             ) from None
         else:
             unwrapped.append(pred)
@@ -263,6 +263,16 @@ def has_role(item: Union[int, str]) -> Callable[[T], T]:
     -----------
     item: Union[:class:`int`, :class:`str`]
         The name or ID of the role to check.
+
+    Example
+    --------
+
+    .. code-block:: python3
+
+        @bot.slash_command()
+        @application_checks.has_role('Cool Role')
+        async def cool(interaction: Interaction):
+            await interaction.response.send_message('You are cool indeed')
     """
 
     def predicate(interaction: Interaction) -> bool:
@@ -303,7 +313,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
     .. code-block:: python3
 
         @bot.slash_command()
-        @checks.has_any_role('Library `Dev`s', 'Moderators', 492212595072434186)
+        @application_checks.has_any_role('Moderators', 492212595072434186)
         async def cool(interaction: Interaction):
             await interaction.response.send_message('You are cool indeed')
     """
@@ -334,6 +344,21 @@ def bot_has_role(item: int) -> Callable[[T], T]:
     :exc:`.ApplicationBotMissingRole` if the bot is missing the role, 
     or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
+    
+    Parameters
+    -----------
+    item: Union[:class:`int`, :class:`str`]
+        The name or ID of the role to check.
+
+    Example
+    --------
+
+    .. code-block:: python3
+
+        @bot.slash_command()
+        @application_checks.bot_has_role(492212595072434186)
+        async def cool(interaction: Interaction):
+            await interaction.response.send_message('I have the required role!')
     """
 
     def predicate(interaction: Interaction) -> bool:
@@ -360,6 +385,21 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
     :exc:`.ApplicationBotMissingAnyRole` if the bot is missing all roles, 
     or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
+
+    Parameters
+    -----------
+    items: List[Union[:class:`str`, :class:`int`]]
+        An argument list of names or IDs to check that the bot has roles wise.
+
+    Example
+    --------
+
+    .. code-block:: python3
+
+        @bot.slash_command()
+        @application_checks.bot_has_any_role('Moderators', 492212595072434186)
+        async def cool(interaction: Interaction):
+            await interaction.response.send_message('You are cool indeed')
     """
 
     def predicate(interaction: Interaction) -> bool:
@@ -398,7 +438,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
 
     Parameters
     ------------
-    perms
+    perms: :class:`bool`
         An argument list of permissions to check for.
 
     Example
@@ -407,8 +447,8 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
     .. code-block:: python3
 
         @bot.slash_command()
-        @checks.has_permissions(manage_messages=True)
-        async def test(interaction: Interaction):
+        @application_checks.has_permissions(manage_messages=True)
+        async def testperms(interaction: Interaction):
             await interaction.response.send_message('You can manage messages.')
 
     """
@@ -478,6 +518,21 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
 
     If this check is called in a DM context, it will raise an
     exception, :exc:`.ApplicationNoPrivateMessage`.
+
+    Parameters
+    -----------
+    perms: :class:`bool`
+        An argument list of guild permissions to check for.
+
+    Example
+    --------
+
+    .. code-block:: python3
+
+        @bot.slash_command()
+        @application_checks.has_guild_permissions(manage_messages=True)
+        async def permcmd(interaction: Interaction):
+            await interaction.response.send_message('You can manage messages!')
     """
 
     invalid = set(perms) - set(nextcord.Permissions.VALID_FLAGS)
@@ -534,6 +589,16 @@ def dm_only() -> Callable[[T], T]:
 
     This check raises a special exception, :exc:`.ApplicationPrivateMessageOnly`
     that is inherited from :exc:`.ApplicationCheckFailure`.
+
+    Example
+    --------
+
+    .. code-block:: python3
+
+        @bot.slash_command()
+        @application_checks.dm_only()
+        async def dmcmd(interaction: Interaction):
+            await interaction.response.send_message('This is in DMS!')
     """
 
     def predicate(interaction: Interaction) -> bool:
@@ -551,6 +616,16 @@ def guild_only() -> Callable[[T], T]:
 
     This check raises a special exception, :exc:`.ApplicationNoPrivateMessage`
     that is inherited from :exc:`.ApplicationCheckFailure`.
+
+    Example
+    --------
+
+    .. code-block:: python3
+
+        @bot.slash_command()
+        @application_checks.guild_only()
+        async def dmcmd(interaction: Interaction):
+            await interaction.response.send_message('This is in a GUILD!')
     """
 
     def predicate(interaction: Interaction) -> bool:
@@ -572,6 +647,18 @@ def is_owner() -> Callable[[T], T]:
 
     This check may only be used with :class:`~ext.commands.Bot`. Otherwise, it will
     raise :exc:`.ApplicationCheckForBotOnly`.
+
+    Example
+    --------
+
+    .. code-block:: python3
+
+        bot = commands.Bot(owner_id=297045071457681409)
+    
+        @bot.slash_command()
+        @application_checks.is_owner()
+        async def ownercmd(interaction: Interaction):
+            await interaction.response.send_message('Only you!')
     """
 
     async def predicate(interaction: Interaction) -> bool:
@@ -590,6 +677,16 @@ def is_nsfw() -> Callable[[T], T]:
 
     This check raises a special exception, :exc:`.ApplicationNSFWChannelRequired`
     that is derived from :exc:`.ApplicationCheckFailure`.
+
+    Example
+    --------
+
+    .. code-block:: python3
+    
+        @bot.slash_command()
+        @application_checks.is_nsfw()
+        async def ownercmd(interaction: Interaction):
+            await interaction.response.send_message('Only NSFW channels!')
     """
 
     def pred(interaction: Interaction) -> bool:
@@ -629,20 +726,19 @@ def application_command_before_invoke(coro) -> Callable[[T], T]:
             await interaction.response.send_message("I am a bot")
 
         class What(commands.Cog):
-
             @application_checks.application_command_before_invoke(record_usage)
-            @slash_command()
+            @nextcord.slash_command()
             async def when(self, interaction: Interaction):
                 # Output: <User> used when at <Time>
                 await interaction.response.send_message(
                     f"and i have existed since {interaction.client.user.created_at}"
                 )
 
-            @slash_command()
+            @nextcord.slash_command()
             async def where(self, interaction: Interaction): # Output: <Nothing>
                 await interaction.response.send_message("on Discord")
 
-            @slash_command()
+            @nextcord.slash_command()
             async def why(self, interaction: Interaction): # Output: <Nothing>
                 await interaction.response.send_message("because someone made me")
 
