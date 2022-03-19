@@ -533,7 +533,7 @@ class GuildChannel:
 
     @property
     def jump_url(self) -> str:
-        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
+        """:class:`str`: Returns a URL that allows the client to jump to this channel.
 
         .. versionadded:: 2.0
         """
