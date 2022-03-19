@@ -26,6 +26,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable
+from datetime import datetime, timedelta
 import asyncio
 
 from . import utils
@@ -45,6 +46,7 @@ from .member import Member
 from .message import Message, Attachment
 from .object import Object
 from .permissions import Permissions
+from .utils import snowflake_time
 from .webhook.async_ import async_context, Webhook, handle_message_parameters, WebhookMessage
 
 __all__ = (
@@ -228,6 +230,23 @@ class Interaction:
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state and self._state._get_guild(self.guild_id)
+    
+    @property
+    def created_at(self) -> datetime:
+        """:class:`datetime.datetime`: An aware datetime in UTC representing the creation time of the interaction."""
+        return snowflake_time(self.id)
+    
+    @property
+    def expires_at(self) -> datetime:
+        """:class:`datetime.datetime`: An aware datetime in UTC representing the time when the interaction will expire."""
+        if self.response.is_done():
+            return self.created_at + timedelta(minutes=15)
+        else:
+            return self.created_at + timedelta(seconds=3)
+        
+    def is_expired(self) -> bool:
+        """:class:`bool` A boolean whether the interaction token is invalid or not."""
+        return utils.utcnow() > self.expires_at
 
     def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
         self.application_command = app_cmd
