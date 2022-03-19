@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import Callable, Union, TypeVar, TYPE_CHECKING
+from typing import Callable, Type, TypeVar, TYPE_CHECKING, Union
 
 import nextcord
 from nextcord.application_command import ApplicationSubcommand, Interaction, AppCmdCallbackWrapper, BaseApplicationCommand, BaseApplicationSubcommand
@@ -90,7 +90,7 @@ class CheckWrapper(AppCmdCallbackWrapper):
 
 
 # def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
-def check(predicate: "ApplicationCheck") -> Union[BaseApplicationCommand, BaseApplicationSubcommand, "CheckWrapper"]:
+def check(predicate: "ApplicationCheck") -> Type[CheckWrapper]:
     r"""A decorator that adds a check to the :class:`.ApplicationCommand` or its
     subclasses. These checks are accessible via :attr:`.ApplicationCommand.checks`.
 
@@ -257,7 +257,8 @@ def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
     unwrapped = []
     for wrapped in checks:
         try:
-            pred = wrapped.predicate
+            wrapper = wrapped(None)
+            pred = wrapper.predicate
         except AttributeError:
             raise TypeError(
                 f"{wrapped!r} must be wrapped by checks.check decorator"
