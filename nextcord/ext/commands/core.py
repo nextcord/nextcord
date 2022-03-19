@@ -1754,7 +1754,7 @@ def check(predicate: Check) -> Callable[[T], T]:
 
         return func
 
-    if inspect.iscoroutinefunction(predicate):
+    if asyncio.iscoroutinefunction(predicate):
         decorator.predicate = predicate
     else:
         @functools.wraps(predicate)
