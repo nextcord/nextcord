@@ -2051,7 +2051,6 @@ class Client:
     def user_command(
             self,
             name: str = MISSING,
-            description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
             default_permission: bool = MISSING,
             force_global: bool = False
@@ -2062,8 +2061,6 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:`str`
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
         default_permission: :class:`bool`
@@ -2083,7 +2080,6 @@ class Client:
     def message_command(
             self,
             name: str = MISSING,
-            description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
             default_permission: bool = MISSING,
             force_global: bool = False
@@ -2094,8 +2090,6 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:`str`
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
         default_permission: :class:`bool`
@@ -2127,7 +2121,8 @@ class Client:
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
         description: :class:`str`
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+            Description of the command that users will see. If not set, the docstring will be used.
+            If no docstring is found for the command callback, it defaults to "No description provided".
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
         default_permission: :class:`bool`
