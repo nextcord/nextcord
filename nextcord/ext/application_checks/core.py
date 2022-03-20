@@ -30,7 +30,7 @@ import functools
 from typing import Callable, Type, TypeVar, TYPE_CHECKING, Union
 
 import nextcord
-from nextcord.application_command import ApplicationSubcommand, Interaction, AppCmdCallbackWrapper, BaseApplicationCommand, BaseApplicationSubcommand
+from nextcord.application_command import ApplicationSubcommand, Interaction, AppCmdCallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand
 from .errors import (
     ApplicationCheckAnyFailure,
     ApplicationCheckFailure,
