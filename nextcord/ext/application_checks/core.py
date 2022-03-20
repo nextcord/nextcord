@@ -357,7 +357,7 @@ def bot_has_role(item: int) -> Callable[[T], T]:
 
         @bot.slash_command()
         @application_checks.bot_has_role(492212595072434186)
-        async def cool(interaction: Interaction):
+        async def hasrole(interaction: Interaction):
             await interaction.response.send_message('I have the required role!')
     """
 
