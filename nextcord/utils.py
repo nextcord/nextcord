@@ -1039,7 +1039,7 @@ _SPHINX_DOCSTRING_ARG_REGEX = re.compile(
 )
 
 _NUMPY_DOCSTRING_ARG_REGEX = re.compile(
-    rf"^{_ARG_NAME_SUBREGEX}(?:[ \t]*:[ \t]+{_ARG_TYPE_SUBREGEX})?[ \t]*\r?\n[ \t]*{_ARG_DESCRIPTION_SUBREGEX}",
+    rf"^{_ARG_NAME_SUBREGEX}(?:[ \t]*:)?(?:[ \t]+{_ARG_TYPE_SUBREGEX})?[ \t]*\r?\n[ \t]*{_ARG_DESCRIPTION_SUBREGEX}",
     re.MULTILINE
 )
 
