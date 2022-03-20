@@ -14,11 +14,11 @@ The following example is a simple ping/pong command using Nextcord's slash comma
 
 .. code-block:: python3
 
-    @client.slash_command()
+    @bot.slash_command()
     async def ping(interaction):
         await interaction.response.send_message("Pong!")
 
-The way it works is by using :meth:`~Client.slash_command` decorator to add a slash command for the bot to register with Discord.
+The way it works is by using :meth:`~bot.slash_command` decorator to add a slash command for the bot to register with Discord.
 
 ``guild_ids`` is used to limit the guilds that the slash command is available to. This is useful for testing as global slash commands can take up to an hour to register.
 
@@ -26,7 +26,7 @@ Example:
 
 .. code-block:: python3
 
-    @client.slash_command(guild_ids=[id1, id2])
+    @bot.slash_command(guild_ids=[id1, id2])
 
 How To Use Sub-Commands
 -----------------------
@@ -37,7 +37,7 @@ As shown in the demonstration below you make a main slash command or a dummy sla
 
 .. code-block:: python3
 
-        @client.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
+        @bot.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
         async def my_main_command(interaction: Interaction):  
             ...
 
@@ -67,7 +67,7 @@ Nextcord's implementation of slash commands has fields and is very simple. in th
 
 .. code-block:: python3
 
-    @client.slash_command()
+    @bot.slash_command()
     async def choose_a_number(
         interaction: Interaction,
         number: str = SlashOption(name="settings", description="Configure Your Settings", choices={"1": 1, "2": 2,"3": 3})
@@ -89,7 +89,7 @@ Shown below is an example of a simple command running in a cog:
         async def slash_command_cog(self, interaction: Interaction):
             await interaction.response.send_message("Hello I am a slash command in a cog!")
 
-The example shown above responds to a user when they do a slash command. Its function is the same as a slash command on the client, adjusted to work in a class, only its decorator is different.
+The example shown above responds to a user when they do a slash command. Its function is the same as a slash command on the bot, adjusted to work in a class, only its decorator is different.
 
 How To Make Context Menu Commands
 ---------------------------------
@@ -101,7 +101,7 @@ The following code simply prints out the name of the member it was performed on,
 
 .. code-block:: python3
 
-    @client.user_command()
+    @bot.user_command()
     async def hello(interaction: Interaction, member: Member):
         await interaction.response.send_message(f"Hello! {member}")
 
@@ -111,7 +111,7 @@ The following is a simple example of a message command which sends the content o
 
 .. code-block:: python3
 
-    @client.message_command()
+    @bot.message_command()
     async def say(interaction: Interaction, message: Message):
         await interaction.response.send_message(message.content, ephemeral=True)
 
