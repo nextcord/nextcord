@@ -422,7 +422,7 @@ class CommandOption(SlashOption):
             if ret:
                 return ret
             else:
-                # Return an Member object if the required data is available, otherwise fallback to User.
+                # Return a Member object if the required data is available, otherwise fallback to User.
                 if "members" in interaction.data["resolved"] and (
                     interaction.guild,
                     interaction.guild_id,

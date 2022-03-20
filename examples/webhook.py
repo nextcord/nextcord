@@ -1,4 +1,4 @@
-# This is an example for sending message to a channel using its webhook url.
+# This is an example for sending message to a channel using its webhook URL.
 # You can use this to send messages to a channel without using the bot.
 
 import aiohttp

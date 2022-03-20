@@ -1,5 +1,6 @@
-# This is a example for head and tails
-# It is like coinflip but then in discord.
+# This is an example for head and tails
+# It is a simple game where the user has to guess
+# if the coin flip will result in heads or tails
 
 # example: $headortails heads
 
@@ -10,7 +11,7 @@ from nextcord.ext import commands
 bot = commands.Bot(command_prefix="$")
 
 @bot.command()
-async def headortails(ctx, answer=None):
+async def headortails(ctx, answer):
     if random.choice(["heads", "tails"]) == answer:
         await ctx.reply("Congratulations")
     else:
