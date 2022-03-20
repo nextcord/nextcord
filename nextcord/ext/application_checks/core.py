@@ -399,7 +399,7 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
         @bot.slash_command()
         @application_checks.bot_has_any_role('Moderators', 492212595072434186)
         async def cool(interaction: Interaction):
-            await interaction.response.send_message('You are cool indeed')
+            await interaction.response.send_message('I have a required role!')
     """
 
     def predicate(interaction: Interaction) -> bool:
