@@ -18,7 +18,7 @@ The following example is a simple ping/pong command using Nextcord's slash comma
     async def ping(interaction):
         await interaction.response.send_message("Pong!")
 
-The way it works is by using :meth:`~bot.slash_command` decorator to add a slash command for the bot to register with Discord.
+The way it works is by using the :meth:`~nextcord.ext.commands.Bot.slash_command` decorator to add a slash command for the bot to register with Discord.
 
 ``guild_ids`` is used to limit the guilds that the slash command is available to. This is useful for testing as global slash commands can take up to an hour to register.
 
