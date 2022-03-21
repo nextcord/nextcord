@@ -385,6 +385,20 @@ def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
     return None
 
 
+def _key_fmt(key: str) -> str:
+    # Private helper for `nextcord.utils.get`. Formats the attribute
+    # names in a content aware manner. When special variables are
+    # provided, double trailing and leading underscores are ignored.
+    # ex. "__class______name__" -> "__class__.__name__"
+    # In case of underscore conflicts, it will assume trailing underscores.
+    # ex. "_privateattr___subattr" -> "_privateattr_.subattr"
+
+    if key.startswith("__") and key.endswith("__"):
+        return re.sub(r"_{6}", "__.__", key)
+    else:
+        return re.sub(r"__(?!_)", ".", key)
+
+
 def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     r"""A helper that returns the first element in the iterable that meets
     all the traits passed in ``attrs``. This is an alternative for
@@ -436,13 +450,13 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     # Special case the single element call
     if len(attrs) == 1:
         k, v = attrs.popitem()
-        pred = attrget(k.replace('__', '.'))
+        pred = attrget(_key_fmt(k))
         for elem in iterable:
             if pred(elem) == v:
                 return elem
         return None
 
-    converted = [(attrget(attr.replace('__', '.')), value) for attr, value in attrs.items()]
+    converted = [(attrget(_key_fmt(attr)), value) for attr, value in attrs.items()]
 
     for elem in iterable:
         if _all(pred(elem) == value for pred, value in converted):
