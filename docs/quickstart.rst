@@ -41,7 +41,7 @@ with the library.
 
 A lot is going on here, so let's walk you through it step by step.
 
-1. The first line just imports the library, if this raises a :esc:`ModuleNotFoundError` or :exc:`ImportError`
+1. The first line just imports the library, if this raises a :exc:`ModuleNotFoundError` or :exc:`ImportError`
    then head on over to :ref:`installing` section to properly install.
 2. The second line imports the :doc:`Bot commands framework <./ext/commands/index>` which allows us to use the
    :class:`~nextcord.ext.commands.Bot` class to create our bot.
