@@ -79,4 +79,4 @@ On other systems:
 
 Now you can try playing around with your basic bot.
 
-You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_ on GitHub.
+You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/master/examples/>`_ on GitHub.
