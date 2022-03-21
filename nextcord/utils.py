@@ -1015,6 +1015,8 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
     :class:`str`
         The formatted string.
     """
+    if not isinstance(dt, datetime.datetime):
+        raise InvalidArgument("'dt' must be of type 'datetime.datetime'")
     if style is None:
         return f'<t:{int(dt.timestamp())}>'
     return f'<t:{int(dt.timestamp())}:{style}>'
