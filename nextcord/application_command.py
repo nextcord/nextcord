@@ -1256,6 +1256,13 @@ class ApplicationSubcommand:
         ----------
         on_kwarg: :class:`str`
             Name that corresponds to a keyword argument in the slash command.
+
+        Raises
+        -------
+        :class:`TypeError`
+            The given argument is not a keyword argument or the command type cannot have autocomplete.
+        :class:`ValueError`
+            The given argument already has an autocomplete callback or autocomplete is disabled for the option.
         """
         if self.type not in (
             ApplicationCommandType.chat_input,
@@ -1274,7 +1281,7 @@ class ApplicationSubcommand:
 
                     def decorator(func: Callable):
                         if isinstance(option.autocomplete_function, Callable):
-                            raise TypeError(
+                            raise ValueError(
                                 f"{self.error_name} already has an autocomplete function for '{on_kwarg}'."
                             )
                         option.autocomplete_function = func
