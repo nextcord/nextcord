@@ -70,7 +70,7 @@ class File:
     -----------
     fp: Union[:class:`io.BufferedReader`, :class:`io.BufferedIOBase`]
         A file-like object opened in binary mode and read mode.
-        This will be a :class:`io.BufferedIOBase` if the an
+        This will be a :class:`io.BufferedIOBase` if an
         object of type :class:`io.IOBase` was passed, or a
         :class:`io.BufferedReader` if a filename was passed.
     filename: Optional[:class:`str`]
