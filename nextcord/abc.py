@@ -1259,8 +1259,8 @@ class Messageable:
         Sends a message to the destination with the content given.
 
         The content must be a type that can convert to a string through ``str(content)``.
-        If the content is set to ``None`` (the default), then the ``embed`` parameter must
-        be provided.
+        If the content is set to ``None`` (the default), then the ``embed`` or ``embeds``
+        parameter must be provided.
 
         To upload a single file, the ``file`` parameter should be used with a
         single :class:`~nextcord.File` object. To upload multiple files, the ``files``
