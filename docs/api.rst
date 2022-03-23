@@ -307,6 +307,10 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param kwargs: The keyword arguments for the event that raised the
         exception.
 
+.. function:: on_close()
+
+    Called when the client is exiting the event loop and shutting down.
+
 .. function:: on_socket_event_type(event_type)
 
     Called whenever a websocket event is received from the WebSocket.
