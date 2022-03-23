@@ -2038,6 +2038,7 @@ def user_command(
 ):
     """Creates a User context command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
+
     Parameters
     ----------
     name: :class:`str`
