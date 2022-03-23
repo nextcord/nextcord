@@ -2045,7 +2045,7 @@ def user_command(
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     default_permission: :class:`bool`
-        If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        If users should be able to use this command by default or not. Defaults to Discord's default, `True`.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.
