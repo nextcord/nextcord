@@ -484,21 +484,21 @@ class HTTPClient:
             'attachments': attachments or [],
         }
 
-        if content:
+        if content is not None:
             payload['content'] = content
-        if embed:
+        if embed is not None:
             payload['embeds'] = [embed]
-        if embeds:
+        if embeds is not None:
             payload['embeds'] = embeds
-        if nonce:
+        if nonce is not None:
             payload['nonce'] = nonce
-        if allowed_mentions:
+        if allowed_mentions is not None:
             payload['allowed_mentions'] = allowed_mentions
-        if message_reference:
+        if message_reference is not None:
             payload['message_reference'] = message_reference
-        if components:
+        if components is not None:
             payload['components'] = components
-        if stickers:
+        if stickers is not None:
             payload['sticker_ids'] = stickers
 
         form.append({'name': 'payload_json'})
