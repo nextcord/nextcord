@@ -374,8 +374,9 @@ class Interaction:
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep existing attachments,
+            you must fetch the message with :meth:`original_message` and pass
+            ``message.attachments`` to this parameter.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -887,8 +888,8 @@ class InteractionResponse:
             A list of files to upload. Maximum of 10. This cannot be mixed with
             the ``file`` parameter.
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep all existing attachments,
+            pass ``interaction.message.attachments``.
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
@@ -1049,8 +1050,9 @@ class InteractionMessage(Message):
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep existing attachments,
+            you must fetch the message with :meth:`original_message` and pass
+            ``message.attachments`` to this parameter.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.

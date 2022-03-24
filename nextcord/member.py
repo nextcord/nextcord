@@ -617,7 +617,7 @@ class Member(abc.Messageable, _UserTag):
         return self.guild._voice_state_for(self._user.id)
 
     @property
-    def timeout(self) -> Optional[datetime.datetime]:
+    def communication_disabled_until(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: A datetime object that represents
         the time in which the member will be able to interact again.
 
@@ -656,6 +656,33 @@ class Member(abc.Messageable, _UserTag):
         Kicks this member. Equivalent to :meth:`Guild.kick`.
         """
         await self.guild.kick(self, reason=reason)
+        
+    async def timeout(
+        self,
+        timeout: Union[datetime.datetime, datetime.timedelta],
+        *,
+        reason: Optional[str] = None,
+    ) -> None:
+        """|coro|
+
+        Times out this member.
+
+        .. note::
+
+            This is a more direct method of timing out a member.
+            You can also time out members using :meth:`Member.edit`.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        -----------
+        timeout: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]]
+            The time until the member should not be timed out.
+            Set this to None to disable their timeout.
+        reason: Optional[:class:`str`]
+            The reason for editing this member. Shows up on the audit log.
+        """
+        await self.edit(timeout=timeout, reason=reason)
 
     async def edit(
         self,

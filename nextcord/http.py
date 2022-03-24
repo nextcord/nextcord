@@ -266,7 +266,7 @@ class HTTPClient:
                         f.reset(seek=tries)
 
                 if form:
-                    form_data = aiohttp.FormData()
+                    form_data = aiohttp.FormData(quote_fields=False)
                     for params in form:
                         form_data.add_field(**params)
                     kwargs['data'] = form_data
@@ -479,7 +479,11 @@ class HTTPClient:
     ) -> Response[message.Message]:
         form = []
 
-        payload: Dict[str, Any] = {'tts': tts}
+        payload: Dict[str, Any] = {
+            'tts': tts,
+            'attachments': attachments or [],
+        }
+
         if content:
             payload['content'] = content
         if embed:
@@ -496,11 +500,14 @@ class HTTPClient:
             payload['components'] = components
         if stickers:
             payload['sticker_ids'] = stickers
-        if attachments:
-            payload["attachments"] = [{"filename": files[attachment["id"]].filename, **attachment} for attachment in attachments]
 
-        form.append({'name': 'payload_json', 'value': utils._to_json(payload)})
+        form.append({'name': 'payload_json'})
         for index, file in enumerate(files):
+            payload['attachments'].append({
+                'id': index,
+                'filename': file.filename,
+                'description': file.description,
+            })
             form.append(
                 {
                     'name': f'files[{index}]',
@@ -509,6 +516,7 @@ class HTTPClient:
                     'content_type': 'application/octet-stream',
                 }
             )
+        form[0]['value'] = utils._to_json(payload)
 
         return self.request(route, form=form, files=files)
 
@@ -561,13 +569,6 @@ class HTTPClient:
     def edit_message(self, channel_id: Snowflake, message_id: Snowflake, **fields: Any) -> Response[message.Message]:
         r = Route('PATCH', '/channels/{channel_id}/messages/{message_id}', channel_id=channel_id, message_id=message_id)
         if "files" in fields:
-            fields["tts"] = None
-            fields["nonce"] = None
-            fields["message_reference"] = None
-            fields["stickers"] = None
-            attachments = fields.pop("attachments", None)
-            if attachments is not None:
-                fields["attachments"] = attachments
             return self.send_multipart_helper(r, **fields)
         return self.request(r, json=fields)
 

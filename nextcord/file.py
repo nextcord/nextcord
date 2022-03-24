@@ -42,9 +42,10 @@ class File:
         File objects are single use and are not meant to be reused in
         multiple :meth:`abc.Messageable.send`\s.
 
-    Attributes
+    Parameters
     -----------
-    fp: Union[:class:`os.PathLike`, :class:`io.BufferedIOBase`]
+
+    fp: Union[str, bytes, os.PathLike, io.BufferedIOBase]
         A file-like object opened in binary mode and read mode
         or a filename representing a file in the hard drive to
         open.
@@ -55,20 +56,38 @@ class File:
             modes 'rb' should be used.
 
             To pass binary data, consider usage of ``io.BytesIO``.
-
     filename: Optional[:class:`str`]
         The filename to display when uploading to Discord.
         If this is not given then it defaults to ``fp.name`` or if ``fp`` is
         a string then the ``filename`` will default to the string given.
+    description: Optional[:class:`str`]
+        The description for the file. This is used to display alternative text
+        in the Discord client.
+    spoiler: :class:`bool`
+        Whether the attachment is a spoiler.
+
+    Attributes
+    -----------
+    fp: Union[:class:`io.BufferedReader`, :class:`io.BufferedIOBase`]
+        A file-like object opened in binary mode and read mode.
+        This will be a :class:`io.BufferedIOBase` if an
+        object of type :class:`io.IOBase` was passed, or a
+        :class:`io.BufferedReader` if a filename was passed.
+    filename: Optional[:class:`str`]
+        The filename to display when uploading to Discord.
+    description: Optional[:class:`str`]
+        The description for the file. This is used to display alternative text
+        in the Discord client.
     spoiler: :class:`bool`
         Whether the attachment is a spoiler.
     """
 
-    __slots__ = ('fp', 'filename', 'spoiler', '_original_pos', '_owner', '_closer')
+    __slots__ = ('fp', 'filename', 'spoiler', '_original_pos', '_owner', '_closer', 'description')
 
     if TYPE_CHECKING:
-        fp: io.BufferedIOBase
+        fp: Union[io.BufferedReader, io.BufferedIOBase]
         filename: Optional[str]
+        description: Optional[str]
         spoiler: bool
 
     def __init__(
@@ -76,6 +95,7 @@ class File:
         fp: Union[str, bytes, os.PathLike, io.BufferedIOBase],
         filename: Optional[str] = None,
         *,
+        description: Optional[str] = None,
         spoiler: bool = False,
     ):
         if isinstance(fp, io.IOBase):
@@ -103,6 +123,8 @@ class File:
                 self.filename = getattr(fp, 'name', None)
         else:
             self.filename = filename
+
+        self.description = description
 
         if spoiler and self.filename is not None and not self.filename.startswith('SPOILER_'):
             self.filename = 'SPOILER_' + self.filename

@@ -402,8 +402,8 @@ class SyncWebhookMessage(Message):
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep all existing attachments,
+            pass ``message.attachments``.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -999,8 +999,7 @@ class SyncWebhook(BaseWebhook):
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
