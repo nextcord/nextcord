@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+import aiohttp
 import asyncio
 import logging
 import signal
@@ -45,14 +46,14 @@ from typing import (
     TypeVar,
     Union,
 )
-import collections
-
-import aiohttp
+import warnings
 
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import message_command, slash_command, user_command
+from .application_command import (
+    message_command, slash_command, user_command, SlashApplicationCommand, SlashApplicationSubcommand
+)
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
@@ -88,7 +89,7 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
-    from .application_command import ApplicationCommand, ClientCog, ApplicationSubcommand
+    from .application_command import BaseApplicationCommand, ClientCog
     from .channel import DMChannel
     from .member import Member
     from .message import Message
@@ -311,7 +312,7 @@ class Client:
         # self._rollout_register_new: bool = options.pop("rollout_register_new", True)
         # self._rollout_update_known: bool = options.pop("rollout_update_known", True)
         # self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
-        self._application_commands_to_add: Set[ApplicationCommand] = set()
+        self._application_commands_to_add: Set[BaseApplicationCommand] = set()
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -1883,14 +1884,14 @@ class Client:
                 raise ValueError(f"Received autocomplete interaction for {interaction.data['name']} but command isn't "
                                  f"found/associated!")
 
-    def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
+    def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
         return self._connection.get_application_command(command_id)
 
-    def get_all_application_commands(self) -> Set[ApplicationCommand]:
+    def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
         """Returns a copied set of all added :class:`ApplicationCommand` objects."""
         return self._connection.application_commands
 
-    def get_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+    def get_application_commands(self, rollout: bool = False) -> List[BaseApplicationCommand]:
         """Gets registered global commands.
 
         Parameters
@@ -1907,7 +1908,7 @@ class Client:
 
     def add_application_command(
             self,
-            command: ApplicationCommand,
+            command: BaseApplicationCommand,
             overwrite: bool = False,
             use_rollout: bool = False
     ) -> None:
@@ -1924,54 +1925,121 @@ class Client:
         """
         self._connection.add_application_command(command, overwrite=overwrite, use_rollout=use_rollout)
 
-    async def deploy_application_commands(
+    async def sync_all_application_commands(
+            self,
+            data: Optional[Dict[Optional[int], List[dict]]] = None,
+            use_rollout: bool = True,
+            associate_known: bool = True,
+            delete_unknown: bool = True,
+            update_known: bool = True,
+            register_new: bool = True,
+    ):
+        """|coro|
+
+
+
+        Parameters
+        ----------
+        data
+        use_rollout
+        associate_known
+        delete_unknown
+        update_known
+        register_new
+
+        Returns
+        -------
+
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated there.
+        await self._connection.sync_all_application_commands(
+            data=data, use_rollout=use_rollout, associate_known=associate_known, delete_unknown=delete_unknown,
+            update_known=update_known, register_new=register_new
+        )
+
+    async def sync_application_commands(
             self,
             data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None,
+            associate_known: bool = True,
+            delete_unknown: bool = True,
+            update_known: bool = True,
+            register_new: bool = True,
+    ) -> None:
+        await self._connection.sync_application_commands(
+            data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
+            update_known=update_known, register_new=register_new
+        )
+
+    async def discover_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None,
             associate_known: bool = True,
             delete_unknown: bool = True,
             update_known: bool = True
     ) -> None:
-
         """Updates and associates recognizable global application commands, and deletes unknown ones."""
-        # TODO: Look, I need to get this out of the door. Properish documentation of this is in ConnectionState, and
-        #  this could be an easy "I want to contribute to Nextcord in a meaningful way" PR.
-        await self._connection.deploy_application_commands(data=data, guild_id=None, associate_known=associate_known,
-                                                           delete_unknown=delete_unknown, update_known=update_known)
+        await self._connection.discover_application_commands(
+            data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
+            update_known=update_known
+        )
+
+    async def deploy_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None,
+            associate_known: bool = True,
+            delete_unknown: bool = True,
+            update_known: bool = True
+    ) -> None:
+        warnings.warn(".deploy_application_commands is deprecated, use .discover_application_commands instead.",
+                      stacklevel=2, category=FutureWarning)
+        await self.discover_application_commands(
+            data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
+            update_known=update_known
+        )
 
     async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
         """Deletes unknown global commands."""
+        warnings.warn(".delete_unknown_application_commands is deprecated, use .sync_application_commands and set "
+                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
         await self._connection.delete_unknown_application_commands(data=data, guild_id=None)
 
     async def associate_application_commands(self, data: Optional[List[dict]] = None) -> None:
         """Associates global commands registered with Discord with locally added commands."""
+        warnings.warn(".associate_application_commands is deprecated, use .sync_application_commands and set "
+                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
         await self._connection.associate_application_commands(data=data, guild_id=None)
 
     async def update_application_commands(self, data: Optional[List[dict]] = None) -> None:
         """Updates global commands that have slightly changed with Discord."""
+        warnings.warn(".update_application_commands is deprecated, use .sync_application_commands and set "
+                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
         await self._connection.update_application_commands(data=data, guild_id=None)
 
     async def register_new_application_commands(self, data: Optional[List[dict]] = None) -> None:
         """Registers global commands that were added locally, but aren't in Discord yet."""
         await self._connection.register_new_application_commands(data=data, guild_id=None)
 
-    async def register_application_commands(self, *commands: ApplicationCommand) -> None:
+    async def register_application_commands(self, *commands: BaseApplicationCommand) -> None:
         """Registers the given global application commands with Discord."""
         for command in commands:
             await self._connection.register_application_command(command, guild_id=None)
 
-    async def delete_application_commands(self, *commands: ApplicationCommand) -> None:
+    async def delete_application_commands(self, *commands: BaseApplicationCommand) -> None:
         """Deletes the given global application commands from Discord."""
         for command in commands:
             await self._connection.delete_application_command(command, guild_id=None)
 
-    def _get_global_commands(self) -> Set[ApplicationCommand]:
+    def _get_global_commands(self) -> Set[BaseApplicationCommand]:
         ret = set()
         for command in self._connection._application_commands:
             if command.is_global:
                 ret.add(command)
         return ret
 
-    def _get_guild_rollout_commands(self) -> Dict[int, Set[ApplicationCommand]]:
+    def _get_guild_rollout_commands(self) -> Dict[int, Set[BaseApplicationCommand]]:
         ret = {}
         for command in self._connection._application_commands:
             if command.is_guild:
@@ -1983,21 +2051,33 @@ class Client:
 
     async def on_connect(self) -> None:
         self.add_startup_application_commands()
-        await self.rollout_application_commands()
+        # await self.rollout_application_commands()
+        await self.sync_application_commands(
+            guild_id=None, associate_known=self._rollout_associate_known, delete_unknown=self._rollout_delete_unknown,
+            update_known=self._rollout_update_known, register_new=self._rollout_register_new
+        )
+
+    def add_all_application_commands(self) -> None:
+        """Adds application commands that are either decorated by the Client or added via a cog to the state.
+        This does not register commands with Discord. If you want that, use
+        :meth:`~Client.sync_all_application_commands` instead.
+
+        """
+        self._add_decorated_application_commands()
+        self.add_all_cog_commands()
 
     def add_startup_application_commands(self) -> None:
-        """Adds application commands for use on startup.
-
-        This is a workaround for the cache (ConnectionState) clearing on startup. This will add all commands that were
-        decorated directly by the bot, and all commands inside added cogs, to the cache.
-        """
+        warnings.warn(
+            ".add_startup_application_commands is deprecated, use .add_all_application_commands instead.",
+            stacklevel=2, category=FutureWarning
+        )
         self._add_decorated_application_commands()
         self.add_all_cog_commands()
 
     async def on_guild_available(self, guild: Guild) -> None:
         try:
             if self._rollout_all_guilds or self._connection.get_guild_application_commands(guild.id, rollout=True):
-                _log.info(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
+                _log.debug(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
                 await guild.rollout_application_commands(
                     associate_known=self._rollout_associate_known,
                     delete_unknown=self._rollout_delete_unknown,
@@ -2005,7 +2085,7 @@ class Client:
                 )
             else:
                 _log.debug(f"nextcord.Client: No locally added commands explicitly registered for "
-                          f"{guild.name}|{guild.id}, not checking.")
+                           f"{guild.name}|{guild.id}, not checking.")
         except Forbidden as e:
             _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
                          f"enabled? {e}")
@@ -2014,6 +2094,8 @@ class Client:
         """|coro|
         Deploys global application commands and registers new ones if enabled.
         """
+        warnings.warn(".rollout_application_commands is deprecated, use .sync_application_commands and set "
+                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(
             data=global_payload,
@@ -2026,7 +2108,10 @@ class Client:
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
-            command.from_callback(command.callback, call_children=True)
+            if isinstance(command, (SlashApplicationCommand, SlashApplicationSubcommand)):
+                command.from_callback(command.callback, call_children=False)
+            else:
+                command.from_callback(command.callback)
 
             self.add_application_command(command, use_rollout=True)
 

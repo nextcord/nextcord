@@ -75,14 +75,26 @@ else:
     _CustomTypingMetaBase = object
 
 __all__ = (
-    "ApplicationCommand",
-    "ApplicationSubcommand",
+    "AppCmdCallbackWrapper",
+    # "AppCmdWrapperMixin",
+    "ApplicationCommandOption",
+    # "BaseCommandOption",
+    "OptionConverter",
     "ClientCog",
-    "Mentionable",
-    "message_command",
+    "CallbackMixin",
+    # "AutocompleteOptionMixin",
+    # "AutocompleteCommandMixin",
     "SlashOption",
+    # "SlashCommandOption",
+    # "SlashCommandMixin",
+    "SlashApplicationSubcommand",
+    "SlashApplicationCommand",
+    "UserApplicationCommand",
+    "MessageApplicationCommand",
     "slash_command",
+    "message_command",
     "user_command",
+    "Mentionable",
 )
 
 # Maximum allowed length of a command or option description
@@ -268,16 +280,22 @@ class ClientCog:
                 if is_static_method:
                     value = value.__func__
                 # if isinstance(value, ApplicationCommand):
-                if isinstance(value, BaseApplicationCommand):
+                if isinstance(value, SlashApplicationCommand):
+                    value.parent_cog = self
+                    value.from_callback(value.callback, call_children=False)
+                    self.__cog_application_commands__.append(value)
+                elif isinstance(value, SlashApplicationSubcommand):
+                    # As ApplicationSubcommands are part of a parent command and
+                    #  not usable on their own, we don't add them to the command list, but do set the self_argument and
+                    #  run them from the callback.
+                    value.parent_cog = self
+                    value.from_callback(value.callback, call_children=False)
+                elif isinstance(value, BaseApplicationCommand):
                     value.parent_cog = self
                     value.from_callback(value.callback)
                     self.__cog_application_commands__.append(value)
                 # elif isinstance(value, ApplicationSubcommand):
-                elif isinstance(value, SlashApplicationSubcommand):
-                    # As ApplicationSubcommands are part of a parent command and
-                    # not usable on their own, we mostly ignore them, but do set the self_argument.
-                    value.parent_cog = self
-                    value.from_callback(value.callback)
+
 
     @property
     def __cog_to_register__(self) -> List[BaseApplicationCommand]:
@@ -924,7 +942,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         ):
             return valid_type
         else:
-            raise NotImplementedError(f'Type "{param_typing}" isn\'t a supported typing for Application Commands.')
+            raise NotImplementedError(f'{self.command.error_name} Type "{param_typing}" isn\'t a supported typing for Application Commands.')
 
     def verify(self) -> None:
         """This should run through :class:`SlashOption` variables and raise errors when conflicting data is given."""
@@ -979,10 +997,6 @@ class SlashCommandMixin(CallbackMixin):
         self._parsed_docstring: Optional[Dict[str, Any]] = None
 
     @property
-    def error_name(self) -> str:
-        raise NotImplementedError
-
-    @property
     def description(self) -> str:
         if self._description is not MISSING:
             return self._description
@@ -993,6 +1007,8 @@ class SlashCommandMixin(CallbackMixin):
 
     def from_callback(self, callback: Callable, option_class: Optional[Type[BaseCommandOption]] = SlashCommandOption):
         CallbackMixin.from_callback(self, callback=callback, option_class=option_class)
+        # Right now, only slash commands can have descriptions. If User/Message commands gain descriptions, move
+        #  this to CallbackMixin.
         self._parsed_docstring = parse_docstring(callback, _MAX_COMMAND_DESCRIPTION_LENGTH)
 
     async def call_slash(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]] = None):
@@ -1265,11 +1281,9 @@ class BaseApplicationCommand(CallbackMixin, AppCmdWrapperMixin):
             print("Failed basic dictionary check.")
             return False
         else:
-            print("Starting more complex check.")
             data_options = data.get("options")
             payload_options = our_payload.get("options")
             if data_options and payload_options:
-                print("Starting recursive subcommand check.")
                 return recursive_subcommand_check(data, our_payload)
             elif data_options is None and payload_options is None:
                 return True  # User and Message commands don't have options.
@@ -1335,7 +1349,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ap
             self,
             callback: Callable,
             option_class: Type[SlashCommandOption] = SlashCommandOption,
-            call_children: bool = False
+            call_children: bool = True
     ):
         SlashCommandMixin.from_callback(self, callback=callback, option_class=option_class)
         if call_children:
@@ -1417,7 +1431,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             self,
             callback: Callable,
             option_class: Type[SlashCommandOption] = SlashCommandOption,
-            call_children: bool = False
+            call_children: bool = True
     ):
         BaseApplicationCommand.from_callback(self, callback=callback, option_class=option_class)
         SlashCommandMixin.from_callback(self, callback=callback)

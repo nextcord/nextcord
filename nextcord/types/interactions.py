@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -39,9 +40,12 @@ if TYPE_CHECKING:
 
 ApplicationCommandType = Literal[1, 2, 3]
 
+
 class _ApplicationCommandOptional(TypedDict, total=False):
-    options: List[ApplicationCommandOption]
     type: ApplicationCommandType
+    guild_id: Snowflake
+    options: List[ApplicationCommandOption]
+    default_permission: bool
 
 
 class ApplicationCommand(_ApplicationCommandOptional):
@@ -49,26 +53,31 @@ class ApplicationCommand(_ApplicationCommandOptional):
     application_id: Snowflake
     name: str
     description: str
+    version: Snowflake
+
+
+class ApplicationCommandOptionChoice(TypedDict):
+    name: str
+    value: Union[str, int, float]
 
 
 class _ApplicationCommandOptionOptional(TypedDict, total=False):
+    required: bool
     choices: List[ApplicationCommandOptionChoice]
     options: List[ApplicationCommandOption]
+    channel_types: List[ChannelType]
+    min_value: Union[int, float]
+    max_value: Union[int, float]
+    autocomplete: bool
 
 
-ApplicationCommandOptionType = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+ApplicationCommandOptionType = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 
 class ApplicationCommandOption(_ApplicationCommandOptionOptional):
     type: ApplicationCommandOptionType
     name: str
     description: str
-    required: bool
-
-
-class ApplicationCommandOptionChoice(TypedDict):
-    name: str
-    value: Union[str, int]
 
 
 ApplicationCommandPermissionType = Literal[1, 2]
@@ -222,9 +231,6 @@ class MessageInteraction(TypedDict):
     type: InteractionType
     name: str
     user: User
-
-
-
 
 
 class _EditApplicationCommandOptional(TypedDict, total=False):
