@@ -1860,8 +1860,9 @@ class PartialMessage(Hashable):
         if 'embed' in fields and 'embeds' in fields:
             raise InvalidArgument('Cannot pass both embed and embeds parameter to edit()')
 
-        if 'embed' in fields and fields['embed'] is not None:
-            fields['embed'] = fields['embed'].to_dict()
+        if 'embed' in fields:
+            embed = fields.pop('embed')
+            fields['embeds'] = [embed] if embed is not None else []
 
         elif 'embeds' in fields:
             fields['embeds'] = [e.to_dict() for e in fields['embeds']]
