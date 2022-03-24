@@ -1862,10 +1862,10 @@ class PartialMessage(Hashable):
 
         if 'embed' in fields:
             embed = fields.pop('embed')
-            fields['embeds'] = [embed] if embed is not None else []
+            fields['embeds'] = [embed.to_dict()] if embed is not None else []
 
         elif 'embeds' in fields:
-            fields['embeds'] = [e.to_dict() for e in fields['embeds']]
+            fields['embeds'] = [embed.to_dict() for embed in fields['embeds']]
 
         try:
             suppress: bool = fields.pop('suppress')
