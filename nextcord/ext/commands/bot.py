@@ -698,7 +698,11 @@ class BotBase(GroupMixin):
                 try:
                     asyncio.create_task(setup(self, **extras))
                 except RuntimeError:
-                    raise RuntimeError(f"Seems like this extension is having an async setup function. Please read our FAQ here: https://nextcord.readthedocs.io/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it")
+                    raise RuntimeError(f"""
+                    Looks like your attempting to load an asynchronous setup function incorrectly.
+                    Please read our FAQ here:
+                    https://nextcord.readthedocs.io/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
+                    """)
             else:
                 setup(self, **extras)
         except Exception as e:
