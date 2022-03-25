@@ -410,3 +410,19 @@ Example: ::
         await ctx.send(f'Pushing to {remote} {branch}')
 
 This could then be used as ``?git push origin master``.
+
+How do I make my setup function a coroutine and load it?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a new coroutine when you load the cog.
+
+Example: ::
+
+    import asyncio
+
+    async def main():
+        bot.load_extension('cog_name')
+        await bot.start("token")
+    
+    asyncio.run(main())
+
