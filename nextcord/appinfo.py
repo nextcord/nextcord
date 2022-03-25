@@ -76,6 +76,10 @@ class AppInfo:
         If this application is a game sold on Discord,
         this field will be the summary field for the store page of its primary SKU.
 
+        .. warning::
+
+            This attribute now returns an empty string and will be removed in API v11.       
+
         .. versionadded:: 1.3
 
     verify_key: :class:`str`
@@ -213,6 +217,10 @@ class PartialAppInfo:
     summary: :class:`str`
         If this application is a game sold on Discord,
         this field will be the summary field for the store page of its primary SKU.
+
+        .. warning::
+            
+            This attribute now returns an empty string and will be removed in API v11. 
     verify_key: :class:`str`
         The hex encoded key for verification in interactions and the
         GameSDK's `GetTicket <https://discord.com/developers/docs/game-sdk/applications#getticket>`_.
