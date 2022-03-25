@@ -132,6 +132,10 @@ class View:
     timeout: Optional[:class:`float`]
         Timeout in seconds from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
+    auto_defer: :class:`bool` = True
+        Whether or not to automatically defer the component interaction when the callback
+        completes without responding to the interaction. Set this to ``False`` if you want to
+        handle view interactions outside of the callback.
 
     Attributes
     ------------
@@ -157,8 +161,9 @@ class View:
 
         cls.__view_children_items__ = children
 
-    def __init__(self, *, timeout: Optional[float] = 180.0):
+    def __init__(self, *, timeout: Optional[float] = 180.0, auto_defer: bool = True):
         self.timeout = timeout
+        self.auto_defer = auto_defer
         self.children: List[Item] = []
         for func in self.__view_children_items__:
             item: Item = func.__discord_ui_model_type__(**func.__discord_ui_model_kwargs__)
@@ -369,9 +374,12 @@ class View:
                 return
 
             await item.callback(interaction)
-            if not interaction.response._responded:
-                if not interaction.is_expired():
-                    await interaction.response.defer()
+            if (
+                not interaction.response._responded
+                and not interaction.is_expired()
+                and self.auto_defer
+            ):
+                await interaction.response.defer()
         except Exception as e:
             return await self.on_error(e, item, interaction)
 
