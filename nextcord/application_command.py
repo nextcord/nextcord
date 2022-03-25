@@ -912,7 +912,7 @@ class ApplicationSubcommand:
                     "There's supposed to be a focused option, but it's not found?"
                 )
             focused_option = self.options[focused_option_name]
-            if focused_option.autocomplete_function is MISSING:
+            if not focused_option.autocomplete_function:
                 raise ValueError(
                     f"{self.error_name} Autocomplete called for option {focused_option.functional_name} "
                     f"but it doesn't have an autocomplete function?"
