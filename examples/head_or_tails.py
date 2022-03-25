@@ -1,4 +1,4 @@
-# This is an example for head and tails
+# This is an example for heads or tails
 # It is a simple game where the user has to guess
 # if the coin flip will result in heads or tails
 
