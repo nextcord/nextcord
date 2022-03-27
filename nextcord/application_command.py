@@ -206,6 +206,9 @@ class SlashOption(_SlashOptionMetaBase):
     autocomplete: :class:`bool`
         If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
         if an autocomplete function for it is found.
+    autocomplete_function: Optional[:class:`Callable`]
+        The function that will be used to autocomplete this parameter. If not specified, it will be looked for
+        using the :meth:`~ApplicationSubcommand.on_autocomplete` decorator.
     default: Any
         When required is not True and the user doesn't provide a value for this Option, this value is given instead.
     verify: :class:`bool`
@@ -225,6 +228,7 @@ class SlashOption(_SlashOptionMetaBase):
         min_value: Union[int, float] = MISSING,
         max_value: Union[int, float] = MISSING,
         autocomplete: bool = MISSING,
+        autocomplete_function: Optional[Callable] = None,
         default: Any = None,
         verify: bool = True,
     ):
@@ -235,7 +239,8 @@ class SlashOption(_SlashOptionMetaBase):
         self.channel_types: Optional[List[ChannelType]] = channel_types
         self.min_value: Optional[Union[int, float]] = min_value
         self.max_value: Optional[Union[int, float]] = max_value
-        self.autocomplete: Optional[bool] = autocomplete
+        self.autocomplete: bool = autocomplete_function is not None or autocomplete
+        self.autocomplete_function: Optional[Callable] = autocomplete_function
         self.default: Any = default
         self._verify = verify
         if self._verify:
@@ -323,7 +328,7 @@ class CommandOption(SlashOption):
         else:
             self.default = cmd_arg.default
 
-        self.autocomplete_function: Optional[Callable] = MISSING
+        self.autocomplete_function: Optional[Callable] = cmd_arg.autocomplete_function
         self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
 
         if cmd_arg._verify:
@@ -907,7 +912,7 @@ class ApplicationSubcommand:
                     "There's supposed to be a focused option, but it's not found?"
                 )
             focused_option = self.options[focused_option_name]
-            if focused_option.autocomplete_function is MISSING:
+            if not focused_option.autocomplete_function:
                 raise ValueError(
                     f"{self.error_name} Autocomplete called for option {focused_option.functional_name} "
                     f"but it doesn't have an autocomplete function?"
@@ -1251,6 +1256,13 @@ class ApplicationSubcommand:
         ----------
         on_kwarg: :class:`str`
             Name that corresponds to a keyword argument in the slash command.
+
+        Raises
+        -------
+        :class:`TypeError`
+            The given argument is not a keyword argument or the command type cannot have autocomplete.
+        :class:`ValueError`
+            The given argument already has an autocomplete callback or autocomplete is disabled for the option.
         """
         if self.type not in (
             ApplicationCommandType.chat_input,
@@ -1268,6 +1280,10 @@ class ApplicationSubcommand:
                 if option.autocomplete:
 
                     def decorator(func: Callable):
+                        if isinstance(option.autocomplete_function, Callable):
+                            raise ValueError(
+                                f"{self.error_name} already has an autocomplete function for '{on_kwarg}'."
+                            )
                         option.autocomplete_function = func
                         return func
 
