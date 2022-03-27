@@ -699,7 +699,7 @@ class BotBase(GroupMixin):
                     asyncio.create_task(setup(self, **extras))
                 except RuntimeError:
                     raise RuntimeError(f"""
-                    Looks like your attempting to load an asynchronous setup function incorrectly.
+                    Looks like you are attempting to load an asynchronous setup function incorrectly.
                     Please read our FAQ here:
                     https://nextcord.readthedocs.io/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
                     """)
