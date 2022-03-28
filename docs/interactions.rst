@@ -78,7 +78,7 @@ Choices
 
 You can also use choices to make fields that only accept certain values.
 
-The choices can be specified using ``choices`` which can be a list of choices or a mapping of choices to their values.
+The choices can be specified using ``choices`` in a :class:`~nextcord.SlashOption` which can be a list of choices or a mapping of choices to their values.
 
 .. code-block:: python3
 
@@ -263,8 +263,5 @@ Shown below is an example of a simple command running in a cog:
         async def slash_command_cog(self, interaction: nextcord.Interaction):
             """This is a slash command in a cog"""
             await interaction.response.send_message("Hello I am a slash command in a cog!")
-
-The example shown above responds to a user when they do a slash command. Its function is the same as a slash command on the bot,
-adjusted to work in a class, only its decorator is different.
 
 Context menu commands can also be made in cogs using the :meth:`nextcord.user_command` or :meth:`nextcord.message_command` decorators.
