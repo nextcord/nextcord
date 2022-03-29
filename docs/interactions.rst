@@ -260,7 +260,7 @@ Shown below is an example of a simple command running in a cog:
         def __init__(self):
             self.count = 0
 
-        @nextcord.slash_command()
+        @nextcord.slash_command(guild_ids=[TESTING_GUILD_ID])
         async def slash_command_cog(self, interaction: nextcord.Interaction):
             """This is a slash command in a cog"""
             await interaction.response.send_message("Hello I am a slash command in a cog!")
