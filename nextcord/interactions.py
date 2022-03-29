@@ -66,13 +66,13 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from .ui.view import View
     from .ui.modal import Modal
-    from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
+    from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, PartialMessageable
     from .threads import Thread
     from .client import Client
     from .application_command import ApplicationSubcommand, ApplicationCommand
 
     InteractionChannel = Union[
-        VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
+        VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
     ]
 
 MISSING: Any = utils.MISSING
