@@ -96,7 +96,7 @@ if TYPE_CHECKING:
         TextChannel,
         VoiceChannel,
     )
-    from .application_command import ApplicationCommand
+    from .application_command import BaseApplicationCommand
     from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
     from .types.threads import (
         Thread as ThreadPayload,
@@ -321,7 +321,7 @@ class Guild(Hashable):
         self._scheduled_events: Dict[int, ScheduledEvent] = {}
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
-        self._application_commands: Dict[int, ApplicationCommand] = {}
+        self._application_commands: Dict[int, BaseApplicationCommand] = {}
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -3244,7 +3244,7 @@ class Guild(Hashable):
 
     def add_application_command(
             self,
-            app_cmd: ApplicationCommand,
+            app_cmd: BaseApplicationCommand,
             overwrite: bool = False,
             use_rollout: bool = False
     ) -> None:
@@ -3258,7 +3258,7 @@ class Guild(Hashable):
             delete_unknown: bool = True,
             update_known: bool = True
     ) -> None:
-        await self._state.deploy_application_commands(
+        await self._state.discover_application_commands(
             data=data,
             guild_id=self.id,
             associate_known=associate_known,
@@ -3308,10 +3308,10 @@ class Guild(Hashable):
     async def register_new_application_commands(self, data: Optional[List[dict]] = None) -> None:
         await self._state.register_new_application_commands(data=data, guild_id=self.id)
 
-    async def register_application_commands(self, *commands: ApplicationCommand) -> None:
+    async def register_application_commands(self, *commands: BaseApplicationCommand) -> None:
         for command in commands:
             await self._state.register_application_command(command, guild_id=self.id)
 
-    async def delete_application_commands(self, *commands: ApplicationCommand) -> None:
+    async def delete_application_commands(self, *commands: BaseApplicationCommand) -> None:
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)

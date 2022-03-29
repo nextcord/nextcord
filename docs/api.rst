@@ -4335,22 +4335,42 @@ Select
 Application Commands
 --------------------
 
-.. attributetable:: ApplicationCommand
+.. attributetable:: BaseApplicationCommand
 
-.. autoclass:: ApplicationCommand
+.. autoclass:: BaseApplicationCommand
     :members:
 
-.. attributetable:: ApplicationSubcommand
+.. attributetable:: SlashApplicationCommand
 
-.. autoclass:: ApplicationSubcommand
+.. autoclass:: SlashApplicationCommand
+    :members:
+
+.. attributetable:: UserApplicationCommand
+
+.. autoclass:: UserApplicationCommand
+    :members:
+
+.. attributetable:: MessageApplicationCommand
+
+.. autoclass:: MessageApplicationCommand
+    :members:
+
+.. attributetable:: SlashApplicationSubcommand
+
+.. autoclass:: SlashApplicationSubcommand
     :members:
 
 Options
 ~~~~~~~
 
-.. attributetable:: CommandOption
+.. attributetable:: BaseCommandOption
 
-.. autoclass:: CommandOption
+.. autoclass:: BaseCommandOption
+    :members:
+
+.. attributetable:: SlashCommandOption
+
+.. autoclass:: SlashCommandOption
     :members:
 
 .. attributetable:: SlashOption

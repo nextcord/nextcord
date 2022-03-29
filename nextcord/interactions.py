@@ -69,7 +69,7 @@ if TYPE_CHECKING:
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
     from .client import Client
-    from .application_command import ApplicationSubcommand, ApplicationCommand
+    from .application_command import SlashApplicationSubcommand, BaseApplicationCommand
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
@@ -181,7 +181,7 @@ class Interaction:
         self._session: ClientSession = state.http._HTTPClient__session
         self._original_message: Optional[InteractionMessage] = None
         self.attached = InteractionAttached()
-        self.application_command: Optional[ApplicationCommand] = None
+        self.application_command: Optional[BaseApplicationCommand] = None
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
@@ -248,7 +248,7 @@ class Interaction:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
         return utils.utcnow() > self.expires_at
 
-    def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
+    def _set_application_command(self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]):
         self.application_command = app_cmd
 
     @utils.cached_slot_property('_cs_channel')

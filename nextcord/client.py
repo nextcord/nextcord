@@ -787,7 +787,7 @@ class Client:
             self._connection._activity = None
         elif isinstance(value, BaseActivity):
             # ConnectionState._activity is typehinted as ActivityPayload, we're passing Dict[str, Any]
-            self._connection._activity = value.to_dict() # type: ignore
+            self._connection._activity = value.to_dict()  # type: ignore
         else:
             raise TypeError('activity must derive from BaseActivity.')
 
@@ -1888,7 +1888,7 @@ class Client:
         return self._connection.get_application_command(command_id)
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
-        """Returns a copied set of all added :class:`ApplicationCommand` objects."""
+        """Returns a copied set of all added :class:`BaseApplicationCommand` objects."""
         return self._connection.application_commands
 
     def get_application_commands(self, rollout: bool = False) -> List[BaseApplicationCommand]:
@@ -1901,8 +1901,8 @@ class Client:
 
         Returns
         -------
-        List[:class:`ApplicationCommand`]
-            List of :class:`ApplicationCommand` objects that are global.
+        List[:class:`BaseApplicationCommand`]
+            List of :class:`BaseApplicationCommand` objects that are global.
         """
         return self._connection.get_global_application_commands(rollout=rollout)
 
@@ -1912,7 +1912,7 @@ class Client:
             overwrite: bool = False,
             use_rollout: bool = False
     ) -> None:
-        """Adds an ApplicationCommand object to the client for use.
+        """Adds a BaseApplicationCommand object to the client for use.
 
         Parameters
         ----------
@@ -1933,25 +1933,43 @@ class Client:
             delete_unknown: bool = True,
             update_known: bool = True,
             register_new: bool = True,
-    ):
+    ) -> None:
         """|coro|
 
+        Syncs all application commands with Discord. Will sync global commands if any commands added are global, and
+        syncs with all guilds that have an application command targeting them.
 
+        This may call Discord many times depending on how different guilds you have local commands for, and how many
+        commands Discord needs to be updated or added, which may cause your bot to be rate limited or even Cloudflare
+        banned in VERY extreme cases.
+
+        This may incur high CPU usage depending on how many commands you have and how complex they are, which may cause
+        your bot to halt while it checks local commands against the existing commands that Discord has.
+
+        For a more targeted version of this method, see :func:`Client.sync_application_commands`
 
         Parameters
         ----------
-        data
-        use_rollout
-        associate_known
-        delete_unknown
-        update_known
-        register_new
-
-        Returns
-        -------
-
+        data: Optional[Dict[Optional[:class:`int`], List[:class:`dict`]]]
+            Data to use when comparing local application commands to what Discord has. The key should be the
+            :class:`int` guild ID (`None` for global) corresponding to the value list of application command payloads
+            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to `None`
+        use_rollout: :class:`bool`
+            If the rollout guild IDs of commands should be used. Defaults to `True`
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to `True`
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to `True`
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to `True`
         """
-        # All this does is passthrough to connection state. All documentation updates should also be updated there.
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
         await self._connection.sync_all_application_commands(
             data=data, use_rollout=use_rollout, associate_known=associate_known, delete_unknown=delete_unknown,
             update_known=update_known, register_new=register_new
@@ -1966,6 +1984,32 @@ class Client:
             update_known: bool = True,
             register_new: bool = True,
     ) -> None:
+        """|coro|
+        Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
+        global commands if the guild_id is `None`.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
+            Defaults to `None`.
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to `True`
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to `True`
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to `True`
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
         await self._connection.sync_application_commands(
             data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
             update_known=update_known, register_new=register_new
@@ -1979,7 +2023,30 @@ class Client:
             delete_unknown: bool = True,
             update_known: bool = True
     ) -> None:
-        """Updates and associates recognizable global application commands, and deletes unknown ones."""
+        """|coro|
+        Associates existing, deletes unknown, and updates modified commands for either global commands or a specific
+        guild. This does a deep check on found commands, which may be expensive CPU-wise.
+
+        Running this for global or the same guild multiple times at once may cause unexpected or unstable behavior.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict]]
+            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
+            the payload will be retrieved from Discord.
+        guild_id: Optional[:class:`int`]
+            Guild ID to deploy application commands to. If `None`, global commands are deployed to.
+        associate_known: :class:`bool`
+            If True, commands on Discord that pass a signature check and a deep check will be associated with locally
+            added ApplicationCommand objects.
+        delete_unknown: :class:`bool`
+            If `True`, commands on Discord that fail a signature check will be removed. If `update_known` is False,
+            commands that pass the signature check but fail the deep check will also be removed.
+        update_known: :class:`bool`
+            If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
         await self._connection.discover_application_commands(
             data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
             update_known=update_known
@@ -2018,17 +2085,65 @@ class Client:
                       "kwargs in it instead.", stacklevel=2, category=FutureWarning)
         await self._connection.update_application_commands(data=data, guild_id=None)
 
-    async def register_new_application_commands(self, data: Optional[List[dict]] = None) -> None:
-        """Registers global commands that were added locally, but aren't in Discord yet."""
-        await self._connection.register_new_application_commands(data=data, guild_id=None)
+    async def register_new_application_commands(
+            self,
+            data: Optional[List[dict]] = None,
+            guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Registers locally added application commands that don't match a signature that Discord has registered for
+        either global commands or a specific guild.
 
-    async def register_application_commands(self, *commands: BaseApplicationCommand) -> None:
-        """Registers the given global application commands with Discord."""
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`
+        guild_id: Optional[:class:`int`]
+            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
+            Defaults to `None`.
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._connection.register_new_application_commands(data=data, guild_id=guild_id)
+
+    async def register_application_commands(
+            self,
+            *commands: BaseApplicationCommand,
+            guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Registers the given application commands either for a specific guild or globally, and adds the commands to
+        the bot.
+
+        Parameters
+        ----------
+        commands: :class:`BaseApplicationCommand`
+            Application command to register. Multiple args are accepted.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to register the application commands to. If set to `None`, the commands will be registered
+            as global commands instead. Defaults to `None`.
+        """
         for command in commands:
-            await self._connection.register_application_command(command, guild_id=None)
+            await self._connection.register_application_command(command, guild_id=guild_id)
 
-    async def delete_application_commands(self, *commands: BaseApplicationCommand) -> None:
-        """Deletes the given global application commands from Discord."""
+    async def delete_application_commands(
+            self,
+            *commands: BaseApplicationCommand,
+            guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Deletes the given application commands either from a specific guild or globally, and removes the command IDs +
+        signatures from the bot.
+
+        Parameters
+        ----------
+        commands: :class:`BaseApplicationCommand`
+            Application command to delete. Multiple args are accepted.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to delete the application commands from. If set to `None`, the commands will be deleted
+            from global commands instead. Defaults to `None`.
+        """
         for command in commands:
             await self._connection.delete_application_command(command, guild_id=None)
 
@@ -2118,18 +2233,18 @@ class Client:
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
         for cog in self._client_cogs:
-            if to_register := cog.to_register:
+            if to_register := cog.application_commands:
                 for cmd in to_register:
                     self.add_application_command(cmd, use_rollout=True)
 
     def add_cog(self, cog: ClientCog) -> None:
         # cog.process_app_cmds()
-        for app_cmd in cog.to_register:
+        for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
         self._client_cogs.add(cog)
 
     def remove_cog(self, cog: ClientCog) -> None:
-        for app_cmd in cog.to_register:
+        for app_cmd in cog.application_commands:
             self._connection.remove_application_command(app_cmd)
         self._client_cogs.discard(cog)
 

@@ -335,7 +335,7 @@ class ApplicationInvokeError(ApplicationError):
 
 
 class ApplicationCheckFailure(ApplicationError):
-    """Exception raised when the predicates in :attr:`.ApplicationCommand.checks` have failed.
+    """Exception raised when the predicates in :attr:`.BaseApplicationCommand.checks` have failed.
 
     This inherits from :exc:`ApplicationError`
     """

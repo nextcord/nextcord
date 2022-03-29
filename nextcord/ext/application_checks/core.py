@@ -30,7 +30,7 @@ import functools
 from typing import Callable, Type, TypeVar, TYPE_CHECKING, Union
 
 import nextcord
-from nextcord.application_command import ApplicationSubcommand, Interaction, AppCmdCallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand
+from nextcord.application_command import SlashApplicationSubcommand, Interaction, AppCmdCallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand
 from .errors import (
     ApplicationCheckAnyFailure,
     ApplicationCheckFailure,
@@ -91,8 +91,8 @@ class CheckWrapper(AppCmdCallbackWrapper):
 
 # def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
 def check(predicate: "ApplicationCheck") -> Type[CheckWrapper]:
-    r"""A decorator that adds a check to the :class:`.ApplicationCommand` or its
-    subclasses. These checks are accessible via :attr:`.ApplicationCommand.checks`.
+    r"""A decorator that adds a check to the :class:`.BaseApplicationCommand` or its
+    subclasses. These checks are accessible via :attr:`.BaseApplicationCommand.checks`.
 
     These checks should be predicates that take in a single parameter taking
     a :class:`.Interaction`. If the check returns a ``False``\-like value, 
@@ -785,9 +785,9 @@ def application_command_before_invoke(coro) -> Callable[[T], T]:
     """
 
     def decorator(
-        func: Union[ApplicationSubcommand, "CoroFunc"]
-    ) -> Union[ApplicationSubcommand, "CoroFunc"]:
-        if isinstance(func, ApplicationSubcommand):
+        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
+    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]:
+        if isinstance(func, (SlashApplicationSubcommand, BaseApplicationCommand)):
             func.application_command_before_invoke(coro)
         else:
             func.__application_command_before_invoke__ = coro
@@ -804,9 +804,9 @@ def application_command_after_invoke(coro) -> Callable[[T], T]:
     """
 
     def decorator(
-        func: Union[ApplicationSubcommand, "CoroFunc"]
-    ) -> Union[ApplicationSubcommand, "CoroFunc"]:
-        if isinstance(func, ApplicationSubcommand):
+            func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
+    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]:
+        if isinstance(func, (SlashApplicationSubcommand, BaseApplicationCommand)):
             func.application_command_after_invoke(coro)
         else:
             func.__application_command_after_invoke__ = coro
