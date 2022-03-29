@@ -23,6 +23,7 @@ The way it works is by using the :meth:`~nextcord.ext.commands.Bot.slash_command
 
 ``guild_ids`` is used to limit the guilds that the slash command is available to. This is useful for testing as global slash commands can take up to an hour to register.
 
+The names of slash commands and their command options must only contain lowercase letters, numbers, hyphens, and underscores and be between 1 and 32 characters long.
 
 Slash Command Options
 ---------------------
