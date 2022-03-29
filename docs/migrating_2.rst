@@ -29,7 +29,7 @@ Overview
 - ``missing_perms`` attributes and arguments are renamed to ``missing_permissions``.
 - Many method arguments now reject ``None``.
 - Many arguments are now specified as positional-only or keyword-only; e.g. :func:`oauth_url` now takes keyword-only arguments, and methods starting with ``get_`` or ``fetch_`` take positional-only arguments.
-
+- ``StoreChannel`` has been removed as it has been deprecated by Discord, see `here <https://support-dev.discord.com/hc/en-us/articles/4414590563479>`_ for more info.
 Changes
 -----------------------
 
@@ -344,6 +344,10 @@ Due to the introduction of :class:`GuildSticker`, ``Sticker.tags`` is removed fr
 MessageType.application_command
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This was renamed to :attr:`MessageType.chat_input_command` due to Discord adding context menu commands.
+
+StoreChannel has been removed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``StoreChannel`` has been removed as it has been deprecated by Discord, see `here <https://support-dev.discord.com/hc/en-us/articles/4414590563479>`_ for more info.
 
 
 Meta Change
