@@ -341,11 +341,6 @@ Sticker.tags
 ^^^^^^^^^^^^^^^^^^^^^^^
 Due to the introduction of :class:`GuildSticker`, ``Sticker.tags`` is removed from the parent class :class:`Sticker` and moved to :attr:`StandardSticker.tags`.
 
-MessageType.application_command
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This was renamed to :attr:`MessageType.chat_input_command` due to Discord adding context menu commands.
-
-
 Meta Change
 -----------------------
 
