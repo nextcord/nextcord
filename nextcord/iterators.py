@@ -446,7 +446,6 @@ class BanIterator(_AsyncIterator['BanEntry']):
         self.get_bans = self.state.http.get_bans
         self.bans = asyncio.Queue()
 
-        self._retrieve_bans = self._retrieve_bans_before_strategy  # type: ignore
         if self.after and self.after != OLDEST_OBJECT:
             self._filter = lambda b: int(b['user']['id']) > self.after.id
 
@@ -466,7 +465,7 @@ class BanIterator(_AsyncIterator['BanEntry']):
         else:
             retrieve = limit
         self.retrieve = retrieve
-        return retrieve > 0
+        return not retrieve or retrieve > 0
 
     async def fill_bans(self):
         from .user import User
@@ -483,27 +482,15 @@ class BanIterator(_AsyncIterator['BanEntry']):
                 await self.bans.put(BanEntry(user=User(state=self.guild._state, data=element['user']), reason=element['reason']))
 
     async def _retrieve_bans(self, retrieve: Optional[int]) -> List[BanEntry]:
-        """Retrieve bans and update next parameters."""
-        raise NotImplementedError
-
-    async def _retrieve_bans_before_strategy(self, retrieve: Optional[int]) -> List[BanEntry]:
         """Retrieve bans using before parameter."""
+        if retrieve == 0:
+            return []
         before = self.before.id if self.before else None
         data: List[BanPayload] = await self.get_bans(self.guild.id, retrieve, before=before)
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
             self.before = Object(id=int(data[-1]['user']['id']))
-        return data
-
-    async def _retrieve_bans_after_strategy(self, retrieve: Optional[int]) -> List[BanEntry]:
-        """Retrieve bans using after parameter."""
-        after = self.after.id if self.after else None
-        data: List[BanPayload] = await self.get_bans(self.guild.id, retrieve, after=after)
-        if len(data):
-            if self.limit is not None:
-                self.limit -= retrieve
-            self.after = Object(id=int(data[0]['user']['id']))
         return data
 
 

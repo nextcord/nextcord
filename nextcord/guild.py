@@ -1908,11 +1908,11 @@ class Guild(Hashable):
         limit: Optional[:class:`int`]
             The number of bans to retrieve (up to maximum 1000). Defaults to 1000.
         before: Optional[Union[:class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
-            Retrieve bans before this date or user id.
+            Retrieve bans before this date or user (by id).
             If a datetime is provided, it is recommended to use a UTC aware datetime.
             If the datetime is naive, it is assumed to be local time.
         after: Optional[Union[:class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
-            Retrieve bans after this date or user id.
+            Retrieve bans after this date or user (by id).
             If a datetime is provided, it is recommended to use a UTC aware datetime.
             If the datetime is naive, it is assumed to be local time.
 
