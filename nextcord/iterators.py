@@ -440,7 +440,7 @@ class BanIterator(_AsyncIterator['BanEntry']):
         self.before = before
         self.after = after or OLDEST_OBJECT
 
-        self._filter = None  # ban dict -> bool
+        self._filter: Optional[Callable[[BanPayload], bool]] = None
 
         self.state = self.guild._state
         self.get_bans = self.state.http.get_bans
@@ -458,14 +458,9 @@ class BanIterator(_AsyncIterator['BanEntry']):
         except asyncio.QueueEmpty:
             raise NoMoreItems()
 
-    def _get_retrieve(self):
-        limit = self.limit
-        if limit is not None and limit > 1000:
-            retrieve = 1000
-        else:
-            retrieve = limit
-        self.retrieve = retrieve
-        return not retrieve or retrieve > 0
+    def _get_retrieve(self) -> bool:
+        self.retrieve = min(self.limit, 1000) if self.limit is not None else None
+        return self.retrieve is None or self.retrieve > 0
 
     async def fill_bans(self):
         from .user import User
