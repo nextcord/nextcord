@@ -1878,11 +1878,9 @@ class Guild(Hashable):
 
     def bans(self,
         *,
-        limit: Optional[int] = 1000,
+        limit: Optional[int] = None,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
-        around: Optional[SnowflakeTime] = None,
-        oldest_first: Optional[bool] = None,
     ) -> BanIterator:
         """Returns an :class:`~nextcord.AsyncIterator` that enables receiving the destination's bans.
 
@@ -1907,8 +1905,8 @@ class Guild(Hashable):
 
         Parameters
         -----------
-        limit: :class:`int`
-            The number of bans to retrieve (up to maximum 1000).
+        limit: Optional[:class:`int`]
+            The number of bans to retrieve (up to maximum 1000). Defaults to 1000.
         before: Optional[Union[:class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
             Retrieve bans before this date or user id.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
@@ -1917,15 +1915,6 @@ class Guild(Hashable):
             Retrieve bans after this date or user id.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
             If the datetime is naive, it is assumed to be local time.
-        around: Optional[Union[:class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
-            Retrieve bans around this date or user id.
-            If a datetime is provided, it is recommended to use a UTC aware datetime.
-            If the datetime is naive, it is assumed to be local time.
-            When using this argument, the maximum limit is 101. Note that if the limit is an
-            even number then this will return at most limit + 1 bans.
-        oldest_first: Optional[:class:`bool`]
-            If set to ``True``, return bans in oldest->newest order. Defaults to ``True`` if
-            ``after`` is specified, otherwise ``False``.
 
         Raises
         ------
@@ -1940,7 +1929,7 @@ class Guild(Hashable):
             The ban with the ban data parsed.
         """
 
-        return BanIterator(self, limit=limit, before=before, after=after, around=around, oldest_first=oldest_first)
+        return BanIterator(self, limit=limit, before=before, after=after)
 
     async def prune_members(
         self,
