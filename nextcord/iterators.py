@@ -507,6 +507,8 @@ class BanIterator(_AsyncIterator['BanEntry']):
         return r > 0
 
     async def fill_bans(self):
+        from .user import User
+        
         if self._get_retrieve():
             data = await self._retrieve_bans(self.retrieve)
             if len(data) < 1000:
