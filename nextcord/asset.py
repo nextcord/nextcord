@@ -131,6 +131,10 @@ class AssetMixin:
 
         Raises
         ------
+        DiscordException
+            The asset does not have an associated state.
+        TypeError
+            The asset is a sticker with lottie type.
         HTTPException
             Downloading the asset failed.
         Forbidden
@@ -146,7 +150,7 @@ class AssetMixin:
 
         data = await self.read()
         url = yarl.URL(self.url)
-        filename = url.path.split('/')[-1]
+        _, _, filename = url.path.rpartition('/')
         return File(io.BytesIO(data), filename=filename, spoiler=spoiler)
 
 
