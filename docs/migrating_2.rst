@@ -29,6 +29,7 @@ Overview
 - ``missing_perms`` attributes and arguments are renamed to ``missing_permissions``.
 - Many method arguments now reject ``None``.
 - Many arguments are now specified as positional-only or keyword-only; e.g. :func:`oauth_url` now takes keyword-only arguments, and methods starting with ``get_`` or ``fetch_`` take positional-only arguments.
+- :meth:`Guild.bans` is no longer a coroutine and returns an :class:`~nextcord.AsyncIterator` instead of a :class:`list`.
 
 Changes
 -----------------------
@@ -258,6 +259,19 @@ on_socket_raw_receive behavior
 Guild.get_member taking positional only argument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Guild.get_member` method's first argument is now positional only.
+
+Guild.bans now returns an AsyncIterator
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Guild.bans` returns an :class:`~nextcord.AsyncIterator` instead of a :class:`list`.
+
+.. code-block:: python3
+
+    # before
+    bans = await guild.bans()
+
+    # now
+    bans = await guild.bans().flatten()
 
 Removals
 -----------------------
