@@ -1018,6 +1018,7 @@ class Message(Hashable):
             MessageType.default,
             MessageType.reply,
             MessageType.chat_input_command,
+            MessageType.context_menu_command,
             MessageType.thread_starter_message,
         )
 
