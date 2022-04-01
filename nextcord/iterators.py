@@ -476,7 +476,7 @@ class BanIterator(_AsyncIterator['BanEntry']):
             for element in data:
                 await self.bans.put(BanEntry(user=User(state=self.guild._state, data=element['user']), reason=element['reason']))
 
-    async def _retrieve_bans(self, retrieve: Optional[int]) -> List[BanEntry]:
+    async def _retrieve_bans(self, retrieve: Optional[int]) -> List[BanPayload]:
         """Retrieve bans using before parameter."""
         if retrieve == 0:
             return []
