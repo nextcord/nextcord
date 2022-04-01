@@ -1878,13 +1878,16 @@ class Guild(Hashable):
 
     def bans(self,
         *,
-        limit: Optional[int] = None,
-        before: Optional[SnowflakeTime] = None,
-        after: Optional[SnowflakeTime] = None,
+        limit: Optional[int] = 1000,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
     ) -> BanIterator:
         """Returns an :class:`~nextcord.AsyncIterator` that enables receiving the destination's bans.
 
         You must have the :attr:`~Permissions.ban_members` permission to get this information.
+
+        .. versionchanged:: 2.0
+            Due to a breaking change in Discord's API, this now returns an :class:`~nextcord.AsyncIterator` instead of a :class:`list`.
 
         Examples
         ---------
@@ -1906,15 +1909,14 @@ class Guild(Hashable):
         Parameters
         -----------
         limit: Optional[:class:`int`]
-            The number of bans to retrieve (up to maximum 1000). Defaults to 1000.
-        before: Optional[Union[:class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
-            Retrieve bans before this date or user (by id).
-            If a datetime is provided, it is recommended to use a UTC aware datetime.
-            If the datetime is naive, it is assumed to be local time.
-        after: Optional[Union[:class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
-            Retrieve bans after this date or user (by id).
-            If a datetime is provided, it is recommended to use a UTC aware datetime.
-            If the datetime is naive, it is assumed to be local time.
+            The number of bans to retrieve.
+            If ``None``, it retrieves every ban in the guild. Note, however,
+            that this would make a slow operation.
+            Defaults to 1000.
+        before: Optional[:class:`~nextcord.abc.Snowflake`]
+            Retrieve bans before this user.
+        after: Optional[:class:`~nextcord.abc.Snowflake`]
+            Retrieve bans after this user.
 
         Raises
         ------
