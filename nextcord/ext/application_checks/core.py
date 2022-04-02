@@ -32,6 +32,7 @@ from typing import Callable, Union, TypeVar, TYPE_CHECKING
 import nextcord
 from nextcord.application_command import ApplicationSubcommand, Interaction
 from .errors import (
+    ApplicationCheckAllFailure
     ApplicationCheckAnyFailure,
     ApplicationCheckFailure,
     ApplicationNoPrivateMessage,
@@ -242,6 +243,77 @@ def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
 
     return check(predicate)
 
+def check_all(*checks: "ApplicationCheck") -> Callable[[T], T]:
+    r"""A :func:`check` that will pass if any of the given checks pass, 
+    i.e. using logical OR.
+
+    If all checks fail then :exc:`.ApplicationCheckAllFailure` is raised to signal 
+    the failure. It inherits from :exc:`.ApplicationCheckFailure`.
+
+    .. note::
+
+        The ``predicate`` attribute for this function **is** a coroutine.
+
+    Parameters
+    ------------
+    \*checks: Callable[[:class:`~.Interaction`], :class:`bool`]
+        An argument list of checks that have been decorated with
+        the :func:`check` decorator.
+
+    Raises
+    -------
+    TypeError
+        A check passed has not been decorated with the :func:`check`
+        decorator.
+
+    Examples
+    ---------
+
+    Creating a basic check to see if it's the bot owner AND
+    the server owner:
+
+    .. code-block:: python3
+
+        def is_guild_owner():
+            def predicate(interaction: Interaction):
+                return (
+                    interaction.guild is not None
+                    and interaction.guild.owner_id == interaction.user.id
+                )
+            return application_checks.check(predicate)
+
+        @bot.slash_command()
+        @application_checks.check_all(applications_checks.is_owner(), is_guild_owner())
+        async def only_for_owners(interaction: Interaction):
+            await interaction.response.send_message('Hello mister owner and bot owner!')
+    """
+
+    unwrapped = []
+    for wrapped in checks:
+        try:
+            pred = wrapped.predicate
+        except AttributeError:
+            raise TypeError(
+                f"{wrapped!r} must be wrapped by application_checks.check decorator"
+            ) from None
+        else:
+            unwrapped.append(pred)
+
+    async def predicate(interaction: Interaction) -> bool:
+        for func in unwrapped:
+            try:
+                value = await func(interaction)
+            except ApplicationCheckFailure as e:
+                raise ApplicationCheckAllFailure(
+                    f"The checks for every check in check_all failed"
+                ) from None
+            else:
+                if value:
+                    return True
+        # if we're here, all checks failed
+        raise ApplicationCheckAllFailure(unwrapped, errors)
+
+    return check(predicate)
 
 def has_role(item: Union[int, str]) -> Callable[[T], T]:
     """A :func:`.check` that is added that checks if the member invoking the
