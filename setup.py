@@ -53,6 +53,7 @@ packages = [
     'nextcord.types',
     'nextcord.ui',
     'nextcord.webhook',
+    'nextcord.ext.application_checks',
     'nextcord.ext.commands',
     'nextcord.ext.tasks',
     

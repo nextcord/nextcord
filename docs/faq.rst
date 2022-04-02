@@ -244,8 +244,8 @@ this together we can do the following: ::
         fut = asyncio.run_coroutine_threadsafe(coro, client.loop)
         try:
             fut.result()
-        except:
-            # an error happened sending the message
+        except nextcord.Forbidden:
+            # Missing permissions to send message to that channel
             pass
 
     voice.play(nextcord.FFmpegPCMAudio(url), after=my_after)
@@ -410,3 +410,19 @@ Example: ::
         await ctx.send(f'Pushing to {remote} {branch}')
 
 This could then be used as ``?git push origin master``.
+
+How do I make my setup function a coroutine and load it?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a new coroutine when you load the cog.
+
+Example: ::
+
+    import asyncio
+
+    async def main():
+        bot.load_extension('cog_name')
+        await bot.start("token")
+    
+    asyncio.run(main())
+

@@ -25,7 +25,8 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable
+from datetime import datetime, timedelta
 import asyncio
 
 from . import utils
@@ -45,6 +46,7 @@ from .member import Member
 from .message import Message, Attachment
 from .object import Object
 from .permissions import Permissions
+from .utils import snowflake_time
 from .webhook.async_ import async_context, Webhook, handle_message_parameters, WebhookMessage
 
 __all__ = (
@@ -63,9 +65,11 @@ if TYPE_CHECKING:
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
     from .ui.view import View
+    from .ui.modal import Modal
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
     from .client import Client
+    from .application_command import ApplicationSubcommand, ApplicationCommand
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
@@ -73,6 +77,36 @@ if TYPE_CHECKING:
 
 MISSING: Any = utils.MISSING
 
+class InteractionAttached(dict):
+    """Represents the attached data of an interaction.
+
+    This is used to store information about an :class:`Interaction`. This is useful if you want to save some data from a :meth:`ApplicationCommand.application_command_before_invoke` to use later in the callback.
+
+    Example
+    ---------
+
+    .. code-block:: python3
+
+        async def attach_db(interaction: Interaction):
+            interaction.attached.db = some_real_database()
+
+        async def release_db(interaction: Interaction):
+            interaction.attached.db.close()
+
+        @bot.slash_command()
+        @application_checks.before_invoke(attach_db)
+        @application_checks.after_invoke(release_db)
+        async def who(interaction: Interaction): # Output: <User> used who at <Time>
+            data = interaction.attached.db.get_data(interaction.user.id)
+            await interaction.response.send_message(data)
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.__dict__ = self
+
+    def __repr__(self):
+        return f'<InteractionAttached {super().__repr__()}>'
 
 class Interaction:
     """Represents a Discord interaction.
@@ -107,6 +141,10 @@ class Interaction:
         for 15 minutes.
     data: :class:`dict`
         The raw interaction data.
+    attached: :class:`InteractionAttached`
+        The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
+    application_command: Optional[:class:`ApplicationCommand`]
+        The application command that handled the interaction.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -122,6 +160,8 @@ class Interaction:
         'guild_locale',
         'token',
         'version',
+        'application_command',
+        'attached',
         '_permissions',
         '_state',
         '_session',
@@ -135,6 +175,8 @@ class Interaction:
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session
         self._original_message: Optional[InteractionMessage] = None
+        self.attached = InteractionAttached()
+        self.application_command: Optional[ApplicationCommand] = None
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
@@ -183,6 +225,26 @@ class Interaction:
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state and self._state._get_guild(self.guild_id)
+    
+    @property
+    def created_at(self) -> datetime:
+        """:class:`datetime.datetime`: An aware datetime in UTC representing the creation time of the interaction."""
+        return snowflake_time(self.id)
+    
+    @property
+    def expires_at(self) -> datetime:
+        """:class:`datetime.datetime`: An aware datetime in UTC representing the time when the interaction will expire."""
+        if self.response.is_done():
+            return self.created_at + timedelta(minutes=15)
+        else:
+            return self.created_at + timedelta(seconds=3)
+        
+    def is_expired(self) -> bool:
+        """:class:`bool` A boolean whether the interaction token is invalid or not."""
+        return utils.utcnow() > self.expires_at
+
+    def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
+        self.application_command = app_cmd
 
     @utils.cached_slot_property('_cs_channel')
     def channel(self) -> Optional[InteractionChannel]:
@@ -278,6 +340,7 @@ class Interaction:
         embed: Optional[Embed] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
+        attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> InteractionMessage:
@@ -305,6 +368,10 @@ class Interaction:
         files: List[:class:`File`]
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
+        attachments: List[:class:`Attachment`]
+            A list of attachments to keep in the message. To keep existing attachments,
+            you must fetch the message with :meth:`original_message` and pass
+            ``message.attachments`` to this parameter.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -334,6 +401,7 @@ class Interaction:
             content=content,
             file=file,
             files=files,
+            attachments=attachments,
             embed=embed,
             embeds=embeds,
             view=view,
@@ -408,7 +476,7 @@ class Interaction:
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-    ) -> Optional[Union[Message, WebhookMessage]]:
+    ) -> Optional[WebhookMessage]:
         """|coro|
 
         This is a shorthand function for helping in sending messages in
@@ -418,9 +486,12 @@ class Interaction:
 
         Returns
         -------
-        Optional[:class:`Message`, :class:`WebhookMessage`]
-            The :class:`Message` that was sent, a :class:`WebhookMessage` if the
-            interaction has been responded to before.
+        Optional[:class:`WebhookMessage`]
+            If the interaction has not been responded to, returns None. To access the
+            :class:`InteractionMessage` that was sent, the methods: :meth:`Interaction.original_message()`,
+            :meth:`Interaction.edit_original_message()`, and :meth:`Interaction.delete_original_message()`
+            should be used.
+            If the interaction has been responded to, returns the :class:`WebhookMessage`.
         """
 
         if not self.response.is_done():
@@ -539,7 +610,7 @@ class InteractionResponse:
             defer_type = InteractionResponseType.deferred_channel_message.value
             if ephemeral:
                 data = {'flags': 64}
-        elif parent.type is InteractionType.component:
+        elif parent.type is InteractionType.component or parent.type is InteractionType.modal_submit:
             defer_type = InteractionResponseType.deferred_message_update.value
 
         if defer_type:
@@ -744,6 +815,41 @@ class InteractionResponse:
 
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
+    
+    async def send_modal(self, modal: Modal) -> None:
+        """|coro|
+        
+        Respond to this interaction by sending a modal.
+        
+        Parameters
+        ----------
+        modal: :class:`nextcord.ui.Modal`
+            The modal to be sent in response to the interaction and which will
+            be displayed on the user's screen.
+        
+        Raises
+        -------
+        HTTPException
+            Sending the modal failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+        """
+        if self._responded:
+            raise InteractionResponded(self._parent)
+        
+        parent = self._parent
+        adapter = async_context.get()
+        await adapter.create_interaction_response(
+            parent.id,
+            parent.token,
+            session=parent._session,
+            type=InteractionResponseType.modal.value,
+            data=modal.to_dict(),
+        )
+        
+        self._responded = True
+        
+        self._parent._state.store_modal(modal, self._parent.user.id)
 
     async def edit_message(
         self,
@@ -777,8 +883,8 @@ class InteractionResponse:
             A list of files to upload. Maximum of 10. This cannot be mixed with
             the ``file`` parameter.
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep all existing attachments,
+            pass ``interaction.message.attachments``.
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
@@ -793,8 +899,7 @@ class InteractionResponse:
         HTTPException
             Editing the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
-            or ``attachments`` and ``file/files``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         InteractionResponded
             This interaction has already been responded to before.
         """
@@ -805,8 +910,6 @@ class InteractionResponse:
         msg = parent.message
         state = parent._state
         message_id = msg.id if msg else None
-        if parent.type is not InteractionType.component:
-            return
 
         payload = {}
         if content is not MISSING:
@@ -837,8 +940,6 @@ class InteractionResponse:
             raise TypeError('Files parameter must be a list of type File')
 
         if attachments is not MISSING:
-            if file is not MISSING or files is not MISSING:
-                raise TypeError('Cannot mix attachments and file/files keyword arguments')
             payload['attachments'] = [a.to_dict() for a in attachments]
 
         if view is not MISSING:
@@ -920,6 +1021,7 @@ class InteractionMessage(Message):
         embed: Optional[Embed] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
+        attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         delete_after: Optional[float] = None,
@@ -942,6 +1044,10 @@ class InteractionMessage(Message):
         files: List[:class:`File`]
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
+        attachments: List[:class:`Attachment`]
+            A list of attachments to keep in the message. To keep existing attachments,
+            you must fetch the message with :meth:`original_message` and pass
+            ``message.attachments`` to this parameter.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -975,6 +1081,7 @@ class InteractionMessage(Message):
             embed=embed,
             file=file,
             files=files,
+            attachments=attachments,
             view=view,
             allowed_mentions=allowed_mentions,
         )

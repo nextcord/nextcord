@@ -360,7 +360,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         elif isinstance(cooldown, CooldownMapping):
             buckets = cooldown
         else:
-            raise TypeError("Cooldown must be a an instance of CooldownMapping or None.")
+            raise TypeError("Cooldown must be an instance of CooldownMapping or None.")
         self._buckets: CooldownMapping = buckets
 
         try:
@@ -1754,7 +1754,7 @@ def check(predicate: Check) -> Callable[[T], T]:
 
         return func
 
-    if inspect.iscoroutinefunction(predicate):
+    if asyncio.iscoroutinefunction(predicate):
         decorator.predicate = predicate
     else:
         @functools.wraps(predicate)

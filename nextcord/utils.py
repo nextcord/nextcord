@@ -26,6 +26,7 @@ from __future__ import annotations
 import array
 import asyncio
 import collections.abc
+import inspect
 from typing import (
     Any,
     AsyncIterator,
@@ -384,6 +385,20 @@ def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
     return None
 
 
+def _key_fmt(key: str) -> str:
+    # Private helper for `nextcord.utils.get`. Formats the attribute
+    # names in a content aware manner. When special variables are
+    # provided, double trailing and leading underscores are ignored.
+    # ex. "__class______name__" -> "__class__.__name__"
+    # In case of underscore conflicts, it will assume trailing underscores.
+    # ex. "_privateattr___subattr" -> "_privateattr_.subattr"
+
+    if key.startswith("__") and key.endswith("__"):
+        return re.sub(r"_{6}", "__.__", key)
+    else:
+        return re.sub(r"__(?!_)", ".", key)
+
+
 def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     r"""A helper that returns the first element in the iterable that meets
     all the traits passed in ``attrs``. This is an alternative for
@@ -435,13 +450,13 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     # Special case the single element call
     if len(attrs) == 1:
         k, v = attrs.popitem()
-        pred = attrget(k.replace('__', '.'))
+        pred = attrget(_key_fmt(k))
         for elem in iterable:
             if pred(elem) == v:
                 return elem
         return None
 
-    converted = [(attrget(attr.replace('__', '.')), value) for attr, value in attrs.items()]
+    converted = [(attrget(_key_fmt(attr)), value) for attr, value in attrs.items()]
 
     for elem in iterable:
         if _all(pred(elem) == value for pred, value in converted):
@@ -1014,6 +1029,106 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
     :class:`str`
         The formatted string.
     """
+    if not isinstance(dt, datetime.datetime):
+        raise InvalidArgument("'dt' must be of type 'datetime.datetime'")
     if style is None:
         return f'<t:{int(dt.timestamp())}>'
     return f'<t:{int(dt.timestamp())}:{style}>'
+
+
+_FUNCTION_DESCRIPTION_REGEX = re.compile(r"\A(?:.|\n)+?(?=\Z|\r?\n\r?\n)", re.MULTILINE)
+
+_ARG_NAME_SUBREGEX = r"(\\?\*)*(?P<name>[^\s:]+)"
+
+_ARG_DESCRIPTION_SUBREGEX = r"(?P<description>(.|\n)+?(\Z|\r?\n(?=[\S\r\n])))"
+
+_ARG_TYPE_SUBREGEX = r"(?P<type>.+)"
+
+_GOOGLE_DOCSTRING_ARG_REGEX = re.compile(
+    rf"^{_ARG_NAME_SUBREGEX}[ \t]*(?:\({_ARG_TYPE_SUBREGEX}\))?[ \t]*:[ \t]*{_ARG_DESCRIPTION_SUBREGEX}",
+    re.MULTILINE
+)
+
+_SPHINX_DOCSTRING_ARG_REGEX = re.compile(
+    rf"^:param {_ARG_NAME_SUBREGEX}:[ \t]+{_ARG_DESCRIPTION_SUBREGEX}[ \t]*(?::type [^\s:]+:[ \t]+{_ARG_TYPE_SUBREGEX})?",
+    re.MULTILINE
+)
+
+_NUMPY_DOCSTRING_ARG_REGEX = re.compile(
+    rf"^{_ARG_NAME_SUBREGEX}(?:[ \t]*:)?(?:[ \t]+{_ARG_TYPE_SUBREGEX})?[ \t]*\r?\n[ \t]*{_ARG_DESCRIPTION_SUBREGEX}",
+    re.MULTILINE
+)
+
+def _trim_text(text: str, max_chars: int) -> str:
+    """Trims a string and adds an ellpsis if it exceeds the maximum length.
+
+    Parameters
+    -----------
+    text: :class:`str`
+        The string to trim.
+    max_chars: :class:`int`
+        The maximum number of characters to allow.
+
+    Returns
+    --------
+    :class:`str`
+        The trimmed string.
+    """
+    if len(text) > max_chars:
+        # \u2026 = ellipsis
+        return text[:max_chars - 1] + "\u2026"
+    return text
+
+
+def parse_docstring(func: Callable, max_chars: int = MISSING) -> Dict[str, Any]:
+    """Parses the docstring of a function into a dictionary.
+
+    Parameters
+    ------------
+    func: :class:`Callable`
+        The function to parse the docstring of.
+    max_chars: :class:`int`
+        The maximum number of characters to allow in the descriptions.
+        If MISSING, then there is no maximum.
+
+    Returns
+    --------
+    :class:`Dict[str, Any]`
+        The parsed docstring including the function description and
+        descriptions of arguments.
+    """
+    description = ""
+    args = {}
+
+    if docstring := inspect.cleandoc(inspect.getdoc(func) or "").strip():
+        # Extract the function description
+        description_match = _FUNCTION_DESCRIPTION_REGEX.search(docstring)
+        if description_match:
+            description = re.sub(r"\n\s*", " ", description_match.group(0)).strip()
+        if max_chars is not MISSING:
+            description = _trim_text(description, max_chars)
+
+        # Extract the arguments
+        # For Google-style, look only at the lines that are indented
+        section_lines = inspect.cleandoc("\n".join(line for line in docstring.splitlines() if line.startswith(("\t", "  "))))
+        docstring_styles = [
+            _GOOGLE_DOCSTRING_ARG_REGEX.finditer(section_lines),
+            _SPHINX_DOCSTRING_ARG_REGEX.finditer(docstring),
+            _NUMPY_DOCSTRING_ARG_REGEX.finditer(docstring),
+        ]
+
+        # choose the style with the largest number of arguments matched
+        matched_args = []
+        actual_args = inspect.signature(func).parameters.keys()
+        for matches in docstring_styles:
+            style_matched_args = [match for match in matches if match.group("name") in actual_args]
+            if len(style_matched_args) > len(matched_args):
+                matched_args = style_matched_args
+
+        for arg in matched_args:
+            arg_description = re.sub(r"\n\s*", " ", arg.group("description")).strip()
+            if max_chars is not MISSING:
+                arg_description = _trim_text(arg_description, max_chars)
+            args[arg.group("name")] = arg_description
+
+    return {"description": description, "args": args}

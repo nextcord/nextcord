@@ -39,6 +39,7 @@ from ..components import (
     _component_factory,
     Button as ButtonComponent,
     SelectMenu as SelectComponent,
+    TextInput as TextComponent,
 )
 
 __all__ = (
@@ -70,6 +71,10 @@ def _component_to_item(component: Component) -> Item:
         from .select import Select
 
         return Select.from_component(component)
+    if isinstance(component, TextComponent):
+        from .text_input import TextInput
+        
+        return TextInput.from_component(component)
     return Item.from_component(component)
 
 
@@ -127,6 +132,10 @@ class View:
     timeout: Optional[:class:`float`]
         Timeout in seconds from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
+    auto_defer: :class:`bool` = True
+        Whether or not to automatically defer the component interaction when the callback
+        completes without responding to the interaction. Set this to ``False`` if you want to
+        handle view interactions outside of the callback.
 
     Attributes
     ------------
@@ -152,8 +161,9 @@ class View:
 
         cls.__view_children_items__ = children
 
-    def __init__(self, *, timeout: Optional[float] = 180.0):
+    def __init__(self, *, timeout: Optional[float] = 180.0, auto_defer: bool = True):
         self.timeout = timeout
+        self.auto_defer = auto_defer
         self.children: List[Item] = []
         for func in self.__view_children_items__:
             item: Item = func.__discord_ui_model_type__(**func.__discord_ui_model_kwargs__)
@@ -239,9 +249,16 @@ class View:
 
     @property
     def _expires_at(self) -> Optional[float]:
-        if self.timeout:
-            return time.monotonic() + self.timeout
-        return None
+        """The monotonic time this view times out at.
+
+        Returns
+        -------
+        Optional[float]
+            When this view times out.
+
+            None if no timeout is set.
+        """
+        return self.__timeout_expiry
 
     def add_item(self, item: Item) -> None:
         """Adds an item to the view.
@@ -357,7 +374,11 @@ class View:
                 return
 
             await item.callback(interaction)
-            if not interaction.response._responded:
+            if (
+                not interaction.response._responded
+                and not interaction.is_expired()
+                and self.auto_defer
+            ):
                 await interaction.response.defer()
         except Exception as e:
             return await self.on_error(e, item, interaction)

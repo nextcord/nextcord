@@ -266,7 +266,7 @@ class HTTPClient:
                         f.reset(seek=tries)
 
                 if form:
-                    form_data = aiohttp.FormData()
+                    form_data = aiohttp.FormData(quote_fields=False)
                     for params in form:
                         form_data.add_field(**params)
                     kwargs['data'] = form_data
@@ -479,28 +479,35 @@ class HTTPClient:
     ) -> Response[message.Message]:
         form = []
 
-        payload: Dict[str, Any] = {'tts': tts}
-        if content:
-            payload['content'] = content
-        if embed:
-            payload['embeds'] = [embed]
-        if embeds:
-            payload['embeds'] = embeds
-        if nonce:
-            payload['nonce'] = nonce
-        if allowed_mentions:
-            payload['allowed_mentions'] = allowed_mentions
-        if message_reference:
-            payload['message_reference'] = message_reference
-        if components:
-            payload['components'] = components
-        if stickers:
-            payload['sticker_ids'] = stickers
-        if attachments:
-            payload["attachments"] = [{"filename": files[attachment["id"]].filename, **attachment} for attachment in attachments]
+        payload: Dict[str, Any] = {
+            'tts': tts,
+            'attachments': attachments or [],
+        }
 
-        form.append({'name': 'payload_json', 'value': utils._to_json(payload)})
+        if content is not None:
+            payload['content'] = content
+        if embed is not None:
+            payload['embeds'] = [embed]
+        if embeds is not None:
+            payload['embeds'] = embeds
+        if nonce is not None:
+            payload['nonce'] = nonce
+        if allowed_mentions is not None:
+            payload['allowed_mentions'] = allowed_mentions
+        if message_reference is not None:
+            payload['message_reference'] = message_reference
+        if components is not None:
+            payload['components'] = components
+        if stickers is not None:
+            payload['sticker_ids'] = stickers
+
+        form.append({'name': 'payload_json'})
         for index, file in enumerate(files):
+            payload['attachments'].append({
+                'id': index,
+                'filename': file.filename,
+                'description': file.description,
+            })
             form.append(
                 {
                     'name': f'files[{index}]',
@@ -509,6 +516,7 @@ class HTTPClient:
                     'content_type': 'application/octet-stream',
                 }
             )
+        form[0]['value'] = utils._to_json(payload)
 
         return self.request(route, form=form, files=files)
 
@@ -561,13 +569,6 @@ class HTTPClient:
     def edit_message(self, channel_id: Snowflake, message_id: Snowflake, **fields: Any) -> Response[message.Message]:
         r = Route('PATCH', '/channels/{channel_id}/messages/{message_id}', channel_id=channel_id, message_id=message_id)
         if "files" in fields:
-            fields["tts"] = None
-            fields["nonce"] = None
-            fields["message_reference"] = None
-            fields["stickers"] = None
-            attachments = fields.pop("attachments", None)
-            if attachments is not None:
-                fields["attachments"] = attachments
             return self.send_multipart_helper(r, **fields)
         return self.request(r, json=fields)
 
@@ -1042,8 +1043,13 @@ class HTTPClient:
     def leave_guild(self, guild_id: Snowflake) -> Response[None]:
         return self.request(Route('DELETE', '/users/@me/guilds/{guild_id}', guild_id=guild_id))
 
-    def get_guild(self, guild_id: Snowflake) -> Response[guild.Guild]:
-        return self.request(Route('GET', '/guilds/{guild_id}', guild_id=guild_id))
+    def get_guild(
+        self, guild_id: Snowflake, *, with_counts: bool = True
+    ) -> Response[guild.Guild]:
+        params = {"with_counts": int(with_counts)}
+        return self.request(
+            Route("GET", "/guilds/{guild_id}", guild_id=guild_id), params=params
+        )
 
     def delete_guild(self, guild_id: Snowflake) -> Response[None]:
         return self.request(Route('DELETE', '/guilds/{guild_id}', guild_id=guild_id))
@@ -1956,7 +1962,8 @@ class HTTPClient:
             'scheduled_start_time',
             'scheduled_end_time',
             'description',
-            'entity_type'
+            'entity_type',
+            "image",
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(

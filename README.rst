@@ -1,4 +1,4 @@
-.. image:: assets/repo-banner.svg
+.. image:: https://raw.githubusercontent.com/nextcord/nextcord/master/assets/repo-banner.svg
    :alt: Nextcord
 
 .. image:: https://img.shields.io/discord/881118111967883295?color=blue&label=discord
@@ -22,11 +22,6 @@ Nextcord
    
 A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord written in Python.
 
-Fork notice
---------------------------
-
-This is a fork of discord.py, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ on 28th August 2021.
-Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py users a stable API wrapper for their bots.   
 
 Key Features
 -------------
@@ -110,9 +105,9 @@ Quick Example
     bot.run('token')
 
 
-You can find more examples in the examples directory.
+You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 
-**NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/master/examples/secure_token_storage.py/>`_.
+**NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/stable/examples/secure_token_storage.py/>`_.
 
 Links
 ------
