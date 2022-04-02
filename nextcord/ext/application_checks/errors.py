@@ -38,6 +38,7 @@ from nextcord.threads import Thread
 
 __all__ = (
     "ApplicationCheckAnyFailure",
+    "ApplicationCheckAllFailure",
     "ApplicationNoPrivateMessage",
     "ApplicationMissingRole",
     "ApplicationMissingAnyRole",
@@ -49,9 +50,8 @@ __all__ = (
     "ApplicationNotOwner",
     "ApplicationNSFWChannelRequired",
     "ApplicationCheckForBotOnly",
-)
-
-
+)       
+        
 class ApplicationCheckAnyFailure(ApplicationCheckFailure):
     """Exception raised when all predicates in :func:`check_any` fail.
 
@@ -73,7 +73,17 @@ class ApplicationCheckAnyFailure(ApplicationCheckFailure):
         self.checks: List[ApplicationCheckFailure] = checks
         self.errors: List[Callable[[Interaction], bool]] = errors
         super().__init__("You do not have permission to run this command.")
+        
+class ApplicationCheckAllFailure(ApplicationCheckFailure):
+    """Exception raised when at least 1 predicate in :func:`check_all` fails.
 
+    This inherits from :exc:`~.ApplicationCheckFailure`.
+    """
+
+    def __init__(
+        self,
+    ) -> None:
+        super().__init__("You do not have permission to run this command.")
 
 class ApplicationNoPrivateMessage(ApplicationCheckFailure):
     """Exception raised when an operation does not work in private message
