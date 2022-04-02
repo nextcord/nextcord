@@ -296,22 +296,17 @@ def check_all(*checks: "ApplicationCheck") -> Callable[[T], T]:
             raise TypeError(
                 f"{wrapped!r} must be wrapped by application_checks.check decorator"
             ) from None
-        else:
-            unwrapped.append(pred)
+
+        unwrapped.append(pred)
 
     async def predicate(interaction: Interaction) -> bool:
         for func in unwrapped:
             try:
                 value = await func(interaction)
-            except ApplicationCheckFailure as e:
-                raise ApplicationCheckAllFailure(
-                    f"The checks for every check in check_all failed"
-                ) from None
-            else:
-                if value:
-                    return True
-        # if we're here, all checks failed
-        raise ApplicationCheckAllFailure(unwrapped, errors)
+            except:
+                raise
+            if value:
+                return True
 
     return check(predicate)
 
