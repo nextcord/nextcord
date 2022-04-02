@@ -303,8 +303,8 @@ def check_all(*checks: "ApplicationCheck") -> Callable[[T], T]:
         for func in unwrapped:
             try:
                 value = await func(interaction)
-            except:
-                raise
+            except ApplicationCheckFailure:
+                raise ApplicationCheckAllFailure from ApplicationCheckFailure
             if value:
                 return True
 
