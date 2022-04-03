@@ -271,7 +271,8 @@ Guild.bans now returns an AsyncIterator
     bans = await guild.bans()
 
     # now
-    bans = await guild.bans().flatten()
+    bans = await guild.bans().flatten()  # get a list of the first 1000 bans
+    bans = await guild.bans(limit=None).flatten()  # get a list of all bans
 
 Removals
 -----------------------
