@@ -6,7 +6,7 @@ __all__ = ("incompatible_libraries", )
 class DistributionWarning(RuntimeWarning):
     ...
 
-incompatible_libraries = ["discord.py", "discord", "pyfork", "enhanced-dpy"]
+incompatible_libraries = ["discord.py", "discord", "pyfork", "enhanced-dpy", "py-cord"]
 
 for library in incompatible_libraries:
     try:
