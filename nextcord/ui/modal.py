@@ -156,9 +156,16 @@ class Modal:
 
     @property
     def _expires_at(self) -> Optional[float]:
-        if self.timeout:
-            return time.monotonic() + self.timeout
-        return None
+        """The monotonic time this modal times out at.
+
+        Returns
+        -------
+        Optional[float]
+            When this modal times out.
+
+            None if no timeout is set.
+        """
+        return self.__timeout_expiry
 
     def add_item(self, item: Item) -> Modal:
         """Adds an item to the modal.
@@ -259,7 +266,11 @@ class Modal:
                 self.__timeout_expiry = time.monotonic() + self.timeout
 
             await self.callback(interaction)
-            if not interaction.response._responded and self.auto_defer:
+            if (
+                not interaction.response._responded
+                and not interaction.is_expired()
+                and self.auto_defer
+            ):
                 await interaction.response.defer()
         except Exception as e:
             return await self.on_error(e, interaction)

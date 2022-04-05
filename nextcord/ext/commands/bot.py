@@ -694,7 +694,17 @@ class BotBase(GroupMixin):
 
         extras = extras or {}
         try:
-            setup(self, **extras)
+            if asyncio.iscoroutinefunction(setup):
+                try:
+                    asyncio.create_task(setup(self, **extras))
+                except RuntimeError:
+                    raise RuntimeError(f"""
+                    Looks like you are attempting to load an asynchronous setup function incorrectly.
+                    Please read our FAQ here:
+                    https://nextcord.readthedocs.io/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
+                    """)
+            else:
+                setup(self, **extras)
         except Exception as e:
             del sys.modules[key]
             self._remove_module_references(lib.__name__)

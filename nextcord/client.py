@@ -670,6 +670,8 @@ class Client:
 
         self._closed = True
 
+        self.dispatch("close")
+
         for voice in self.voice_clients:
             try:
                 await voice.disconnect(force=True)

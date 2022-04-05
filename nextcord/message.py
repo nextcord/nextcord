@@ -1018,6 +1018,7 @@ class Message(Hashable):
             MessageType.default,
             MessageType.reply,
             MessageType.chat_input_command,
+            MessageType.context_menu_command,
             MessageType.thread_starter_message,
         )
 
@@ -1804,6 +1805,11 @@ class PartialMessage(Hashable):
         embed: Optional[:class:`Embed`]
             The new embed to replace the original with.
             Could be ``None`` to remove the embed.
+        embeds: List[:class:`Embed`]
+            The new embeds to replace the original with. Must be a maximum of 10.
+            To remove all embeds ``[]`` should be passed.
+
+            .. versionadded:: 2.0
         suppress: :class:`bool`
             Whether to suppress embeds for the message. This removes
             all the embeds if set to ``True``. If set to ``False``
@@ -1835,6 +1841,8 @@ class PartialMessage(Hashable):
         Forbidden
             Tried to suppress a message without permissions or
             edited a message's content or embed that isn't yours.
+        ~nextcord.InvalidArgument
+            You specified both ``embed`` and ``embeds``
 
         Returns
         ---------
@@ -1850,13 +1858,15 @@ class PartialMessage(Hashable):
             if content is not None:
                 fields['content'] = str(content)
 
-        try:
-            embed = fields['embed']
-        except KeyError:
-            pass
-        else:
-            if embed is not None:
-                fields['embed'] = embed.to_dict()
+        if 'embed' in fields and 'embeds' in fields:
+            raise InvalidArgument('Cannot pass both embed and embeds parameter to edit()')
+
+        if 'embed' in fields:
+            embed = fields.pop('embed')
+            fields['embeds'] = [embed.to_dict()] if embed is not None else []
+
+        elif 'embeds' in fields:
+            fields['embeds'] = [embed.to_dict() for embed in fields['embeds']]
 
         try:
             suppress: bool = fields.pop('suppress')

@@ -1038,9 +1038,9 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
 
 _FUNCTION_DESCRIPTION_REGEX = re.compile(r"\A(?:.|\n)+?(?=\Z|\r?\n\r?\n)", re.MULTILINE)
 
-_ARG_NAME_SUBREGEX = r"(\\?\*)*(?P<name>[^\s:]+)"
+_ARG_NAME_SUBREGEX = r"(?:\\?\*)*(?P<name>[^\s:\-]+)"
 
-_ARG_DESCRIPTION_SUBREGEX = r"(?P<description>(.|\n)+?(\Z|\r?\n(?=[\S\r\n])))"
+_ARG_DESCRIPTION_SUBREGEX = r"(?P<description>(?:.|\n)+?(?:\Z|\r?\n(?=[\S\r\n])))"
 
 _ARG_TYPE_SUBREGEX = r"(?P<type>.+)"
 
@@ -1055,7 +1055,7 @@ _SPHINX_DOCSTRING_ARG_REGEX = re.compile(
 )
 
 _NUMPY_DOCSTRING_ARG_REGEX = re.compile(
-    rf"^{_ARG_NAME_SUBREGEX}(?:[ \t]*:)?(?:[ \t]+{_ARG_TYPE_SUBREGEX})?[ \t]*\r?\n[ \t]*{_ARG_DESCRIPTION_SUBREGEX}",
+    rf"^{_ARG_NAME_SUBREGEX}(?:[ \t]*:)?(?:[ \t]+{_ARG_TYPE_SUBREGEX})?[ \t]*\r?\n[ \t]+{_ARG_DESCRIPTION_SUBREGEX}",
     re.MULTILINE
 )
 

@@ -806,6 +806,9 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
     autocomplete: :class:`bool`
         If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
         if an autocomplete function for it is found.
+    autocomplete_function: Optional[:class:`Callable`]
+        The function that will be used to autocomplete this parameter. If not specified, it will be looked for
+        using the :meth:`~ApplicationSubcommand.on_autocomplete` decorator.
     default: Any
         When required is not True and the user doesn't provide a value for this Option, this value is given instead.
     verify: :class:`bool`
@@ -816,14 +819,16 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
             name: str = MISSING,
             description: str = MISSING,
             required: bool = MISSING,
-            choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]] = MISSING,
+            choices: Union[
+                Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]
+            ] = MISSING,
             channel_types: List[ChannelType] = MISSING,
             min_value: Union[int, float] = MISSING,
             max_value: Union[int, float] = MISSING,
             autocomplete: bool = MISSING,
             autocomplete_callback: Callable = MISSING,
             default: Any = MISSING,
-            verify: bool = True
+            verify: bool = True,
     ):
         super().__init__(name=name, description=description, required=required, choices=choices,
                          channel_types=channel_types, min_value=min_value, max_value=max_value,
@@ -927,6 +932,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         else:
             self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
+
 
         if self.converter:
             self.converter.modify(self)

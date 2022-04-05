@@ -145,10 +145,6 @@ class Interaction:
         The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
     application_command: Optional[:class:`ApplicationCommand`]
         The application command that handled the interaction.
-    client: :class:`Client`
-        The client that handled the interaction. Can be a subclass of :class:`Client`.
-    bot: :class:`Client`:
-        An alias for ``client``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -166,7 +162,6 @@ class Interaction:
         'version',
         'application_command',
         'attached',
-        '_client',
         '_permissions',
         '_state',
         '_session',
