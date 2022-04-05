@@ -900,6 +900,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         self.max_value = cmd_arg.max_value
         self.autocomplete = cmd_arg.autocomplete
         self.autocomplete_callback = cmd_arg.autocomplete_callback
+        if self.autocomplete_callback and self.autocomplete is MISSING:
+            self.autocomplete = True
+
         if self.autocomplete_callback:
             if not asyncio.iscoroutinefunction(self.autocomplete_callback):
                 raise TypeError(f"Given autocomplete callback for kwarg {self.functional_name} isn't a coroutine.")
@@ -1334,6 +1337,9 @@ class BaseApplicationCommand(CallbackMixin, AppCmdWrapperMixin):
     ):
         super().from_callback(callback=callback, option_class=option_class)
 
+    async def call_from_interaction(self, interaction: Interaction):
+        await self.call(self._state, interaction)
+
     async def call(self, state: ConnectionState, interaction: Interaction):
         raise NotImplementedError
 
@@ -1382,7 +1388,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ap
 
     def from_callback(
             self,
-            callback: Callable,
+            callback: Optional[Callable] = None,
             option_class: Type[SlashCommandOption] = SlashCommandOption,
             call_children: bool = True
     ):
@@ -1459,12 +1465,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         else:
             await self.call_slash(state, interaction, option_data)
 
-    async def call_from_interaction(self, interaction: Interaction):
-        await self.call(self._state, interaction)
-
     def from_callback(
             self,
-            callback: Callable,
+            callback: Optional[Callable] = None,
             option_class: Type[SlashCommandOption] = SlashCommandOption,
             call_children: bool = True
     ):
@@ -1506,16 +1509,13 @@ class UserApplicationCommand(BaseApplicationCommand):
                          cmd_type=ApplicationCommandType.user, guild_ids=guild_ids,
                          default_permission=default_permission, parent_cog=parent_cog, force_global=force_global)
 
-    async def call_from_interaction(self, interaction: Interaction):
-        await self.call(self._state, interaction)
-
     async def call(self, state: ConnectionState, interaction: Interaction):
         # await self.invoke_callback(interaction, get_users_from_interaction(self._state, interaction)[0])
         await self.invoke_callback_with_hooks(state, interaction, get_users_from_interaction(state, interaction)[0])
 
     def from_callback(
             self,
-            callback: Callable,
+            callback: Optional[Callable] = None,
             option_class: Optional[Type[BaseCommandOption]] = None):
         super().from_callback(callback, option_class=option_class)
 
@@ -1534,20 +1534,15 @@ class MessageApplicationCommand(BaseApplicationCommand):
                          cmd_type=ApplicationCommandType.message, guild_ids=guild_ids,
                          default_permission=default_permission, parent_cog=parent_cog, force_global=force_global)
 
-    async def call_from_interaction(self, interaction: Interaction):
-        await self.call(self._state, interaction)
-
     async def call(self, state: ConnectionState, interaction: Interaction):
         # await self.invoke_callback(interaction, get_messages_from_interaction(state, interaction)[0])
         await self.invoke_callback_with_hooks(state, interaction, get_messages_from_interaction(state, interaction)[0])
 
     def from_callback(
             self,
-            callback: Callable,
+            callback: Optional[Callable] = None,
             option_class: Optional[Type[BaseCommandOption]] = None):
         super().from_callback(callback, option_class=option_class)
-
-
 
 
 # # Extends Any so that type checkers won't complain that it's a default for a parameter of a different type
