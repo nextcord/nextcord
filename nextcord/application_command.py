@@ -24,14 +24,14 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 import asyncio
-import typing
 import inspect
+import logging
 import warnings
-from abc import abstractmethod, ABCMeta
 from inspect import signature, Parameter
 from typing import (
     Any,
     Callable,
+    Coroutine,
     Dict,
     Iterable,
     List,
@@ -48,7 +48,7 @@ import typing
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
 from .errors import (
-    InvalidCommandType,
+    InvalidCommandType,  # TODO: Look into what to do with this.
     ApplicationCheckFailure,
     ApplicationError,
     ApplicationInvokeError,
@@ -75,7 +75,7 @@ else:
     _CustomTypingMetaBase = object
 
 __all__ = (
-    "AppCmdCallbackWrapper",
+    "CallbackWrapper",
     # "AppCmdWrapperMixin",
     "ApplicationCommandOption",
     "BaseCommandOption",
@@ -98,6 +98,8 @@ __all__ = (
     "Mentionable",
 )
 
+_log = logging.getLogger(__name__)
+
 # Maximum allowed length of a command or option description
 _MAX_COMMAND_DESCRIPTION_LENGTH = 100
 
@@ -113,15 +115,14 @@ def _cog_special_method(func: FuncT) -> FuncT:
 DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 
-class AppCmdCallbackWrapper:
+class CallbackWrapper:
     def __new__(
             cls,
-            callback: Union[Callable, AppCmdCallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand],
+            callback: Union[Callable, CallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand],
             *args,
             **kwargs,
     ):
-        # wrapper = cls(callback)
-        wrapper = super(AppCmdCallbackWrapper, cls).__new__(cls)
+        wrapper = super(CallbackWrapper, cls).__new__(cls)
         wrapper.__init__(callback, *args, **kwargs)
         if isinstance(callback, (BaseApplicationCommand, SlashApplicationSubcommand)):
             callback.modify_callbacks += wrapper.modify_callbacks
@@ -129,11 +130,19 @@ class AppCmdCallbackWrapper:
         else:
             return wrapper
 
-    def __init__(self, callback: Union[Callable, AppCmdCallbackWrapper]):
+    def __init__(self, callback: Union[Callable, CallbackWrapper]):
+        """A class used to wrap a callback in a sane way to modify aspects of application commands.
+
+
+
+        Parameters
+        ----------
+        callback: Union[Callable, :class:`CallbackWrapper`]
+        """
         # noinspection PyTypeChecker
         self.callback: Callable = None
         self.modify_callbacks: List[Callable] = [self.modify]
-        if isinstance(callback, AppCmdCallbackWrapper):
+        if isinstance(callback, CallbackWrapper):
             self.callback = callback.callback
             self.modify_callbacks += callback.modify_callbacks
         else:
@@ -144,9 +153,9 @@ class AppCmdCallbackWrapper:
 
 
 class AppCmdWrapperMixin:
-    def __init__(self, callback: Union[Callable, AppCmdCallbackWrapper]):
+    def __init__(self, callback: Union[Callable, CallbackWrapper]):
         self.modify_callbacks: List[Callable] = []
-        if isinstance(callback, AppCmdCallbackWrapper):
+        if isinstance(callback, CallbackWrapper):
             self.modify_callbacks += callback.modify_callbacks
 
 
@@ -391,7 +400,7 @@ class CallbackMixin:
         self.error_callback: Optional[Callable] = None
         self.checks: List[ApplicationCheck] = []
         if self.callback:
-            if isinstance(callback, AppCmdCallbackWrapper):
+            if isinstance(callback, CallbackWrapper):
                 self.callback = callback.callback
             if not asyncio.iscoroutinefunction(self.callback):
                 raise TypeError(f"{self.error_name} Callback must be a coroutine")
@@ -432,7 +441,7 @@ class CallbackMixin:
 
     def from_callback(
             self,
-            callback: Callable,
+            callback: Optional[Callable] = None,
             option_class: Optional[Type[BaseCommandOption]] = BaseCommandOption
     ):
         """Creates objects of type `option_class` with the parameters of the function, and stores them in
@@ -440,7 +449,7 @@ class CallbackMixin:
 
         Parameters
         ----------
-        callback: Callable
+        callback: Optional[Callable]
             Callback to create options from. Must be a coroutine function.
         option_class: Optional[Type[:class:`BaseCommandOption`]]
             Class to create the options using. Should either be or subclass :class:`BaseCommandOption`. Defaults
@@ -452,33 +461,38 @@ class CallbackMixin:
             Self for possible chaining.
 
         """
-        self.callback = callback
-        if not asyncio.iscoroutinefunction(self.callback):
-            raise TypeError("Callback must be a coroutine")
+        if callback is not None:
+            self.callback = callback
         if self.name is MISSING:
             self.name = self.callback.__name__
-        # While this arguably is Slash Commands only, we could do some neat stuff in the future with it in other
-        #  commands. While Discord doesn't support anything else having Options, we might be able to do something here.
-        if option_class:
-            first_arg = True
-            typehints = typing.get_type_hints(self.callback)
-            # self_skip = inspect.ismethod(self.callback)  # Getting the callback as a method was problematic. Look
-            #  into this in the future, it's better than just checking if self.parent_cog exists.
-            self_skip = True if self.parent_cog else False
-            for name, param in signature(self.callback).parameters.items():
-                # self_skip = name == "self"  # If self.parent_cog isn't reliable enough for some reason, use this.
+        try:
+            if not asyncio.iscoroutinefunction(self.callback):
+                raise TypeError("Callback must be a coroutine")
+            # While this arguably is Slash Commands only, we could do some neat stuff in the future with it in other
+            #  commands. While Discord doesn't support anything else having Options, we might be able to do something here.
+            if option_class:
+                first_arg = True
+                typehints = typing.get_type_hints(self.callback)
+                # self_skip = inspect.ismethod(self.callback)  # Getting the callback as a method was problematic. Look
+                #  into this in the future, it's better than just checking if self.parent_cog exists.
+                self_skip = True if self.parent_cog else False
+                for name, param in signature(self.callback).parameters.items():
+                    # self_skip = name == "self"  # If self.parent_cog isn't reliable enough for some reason, use this.
 
-                if first_arg:
-                    if not self_skip:
-                        first_arg = False
+                    if first_arg:
+                        if not self_skip:
+                            first_arg = False
+                        else:
+                            self_skip = False
                     else:
-                        self_skip = False
-                else:
-                    if isinstance(param.annotation, str):
-                        # Thank you Disnake for the guidance to use this.
-                        param = param.replace(annotation=typehints.get(name, param.empty))
-                    arg = option_class(param, self, parent_cog=self.parent_cog)
-                    self.options[arg.name] = arg
+                        if isinstance(param.annotation, str):
+                            # Thank you Disnake for the guidance to use this.
+                            param = param.replace(annotation=typehints.get(name, param.empty))
+                        arg = option_class(param, self, parent_cog=self.parent_cog)
+                        self.options[arg.name] = arg
+        except Exception as e:
+            _log.error(f"Error creating from callback {self.error_name}: {e}")
+            raise e
 
     async def can_run(self, interaction: Interaction):
         """|coro|
@@ -547,20 +561,22 @@ class CallbackMixin:
         return True
 
     async def invoke_callback_with_hooks(self, state: ConnectionState, interaction: Interaction, *args, **kwargs):
+        self_hook_args = [self.parent_cog, interaction] if self.parent_cog else [interaction]
         interaction._set_application_command(self)
         try:
             can_run = await self.can_run(interaction)
         except Exception as error:
             state.dispatch("application_command_error", interaction, error)
-            await self.invoke_error(interaction, error)
+            await self.invoke_error(*self_hook_args, error)
             return
 
         if can_run:
+
             if self._callback_before_invoke is not None:
-                await self._callback_before_invoke(interaction)
+                await self._callback_before_invoke(*self_hook_args)
 
             if (before_invoke := self.cog_before_invoke) is not None:
-                await before_invoke(interaction)
+                await before_invoke(*self_hook_args)
             if (before_invoke := state._application_command_before_invoke) is not None:
                 await before_invoke(interaction)
 
@@ -572,13 +588,13 @@ class CallbackMixin:
                     interaction,
                     ApplicationInvokeError(error),
                 )
-                await self.invoke_error(interaction, error)
+                await self.invoke_error(*self_hook_args, error)
             finally:
                 if self._callback_after_invoke is not None:
-                    await self._callback_after_invoke(interaction)
+                    await self._callback_after_invoke(*self_hook_args)
 
                 if (after_invoke := self.cog_after_invoke) is not None:
-                    await after_invoke(interaction)
+                    await after_invoke(*self_hook_args)
 
                 if (after_invoke := state._application_command_after_invoke) is not None:
                     await after_invoke(interaction)
@@ -610,6 +626,14 @@ class CallbackMixin:
 
         self.error_callback = callback
         return callback
+
+    def callback_before_invoke(self, coro: Callable[[Interaction], Coroutine]) -> Callable[[Interaction], Coroutine]:
+        self._callback_before_invoke = coro
+        return coro
+
+    def callback_after_invoke(self, coro: Callable[[Interaction], Coroutine]) -> Callable[[Interaction], Coroutine]:
+        self._callback_after_invoke = coro
+        return coro
 
 
 class AutocompleteOptionMixin:
@@ -1006,7 +1030,11 @@ class SlashCommandMixin(CallbackMixin):
         else:
             return DEFAULT_SLASH_DESCRIPTION
 
-    def from_callback(self, callback: Callable, option_class: Optional[Type[BaseCommandOption]] = SlashCommandOption):
+    def from_callback(
+            self,
+            callback: Optional[Callable] = None,
+            option_class: Optional[Type[SlashCommandOption]] = SlashCommandOption
+    ):
         CallbackMixin.from_callback(self, callback=callback, option_class=option_class)
         # Right now, only slash commands can have descriptions. If User/Message commands gain descriptions, move
         #  this to CallbackMixin.
@@ -1295,7 +1323,7 @@ class BaseApplicationCommand(CallbackMixin, AppCmdWrapperMixin):
 
     def from_callback(
             self,
-            callback: Callable,
+            callback: Optional[Callable] = None,
             option_class: Optional[Type[BaseCommandOption]] = BaseCommandOption
     ):
         super().from_callback(callback=callback, option_class=option_class)
@@ -1366,7 +1394,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ap
             name: str = MISSING,
             description: str = MISSING
     ) -> Callable[[Callable], SlashApplicationSubcommand]:
-        def decorator(func: Callable):
+        def decorator(func: Callable) -> SlashApplicationSubcommand:
             ret = SlashApplicationSubcommand(
                 name=name, description=description, callback=func, parent_cmd=self,
                 cmd_type=ApplicationCommandOptionType.sub_command, parent_cog=self.parent_cog

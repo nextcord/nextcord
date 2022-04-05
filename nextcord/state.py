@@ -543,7 +543,11 @@ class ConnectionState:
         return ret
 
     def add_application_command(
-            self, command: BaseApplicationCommand, overwrite: bool = False, use_rollout: bool = False
+            self,
+            command: BaseApplicationCommand,
+            overwrite: bool = False,
+            use_rollout: bool = False,
+            pre_remove: bool = True,
     ) -> None:
         """Adds the command to the state and updates the state with any changes made to the command.
         Removes all existing references, then adds them.
@@ -557,8 +561,12 @@ class ConnectionState:
             If the library will let you add a command that overlaps with an existing command. Default `False`
         use_rollout: :class:`bool`
             If the command should be added to the state with its rollout guild IDs.
+        pre_remove: :class:`bool`
+            If the command should be removed before adding it. This will clear all signatures from storage, including
+            rollout ones.
         """
-        self.remove_application_command(command)
+        if pre_remove:
+            self.remove_application_command(command)
         signature_set = command.get_rollout_signatures() if use_rollout else command.get_signatures()
         for signature in signature_set:
             if not overwrite and (found_command := self._application_command_signatures.get(signature, None)):
@@ -700,7 +708,9 @@ class ConnectionState:
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
             Defaults to `True`
+
         """
+        _log.debug(f"Syncing commands to {guild_id}")
         if not data:
             if guild_id:
                 data = await self.http.get_guild_commands(self.application_id, guild_id)
@@ -712,6 +722,7 @@ class ConnectionState:
         )
         if register_new:
             await self.register_new_application_commands(data=data, guild_id=guild_id)
+        _log.debug(f"Command sync with {guild_id} finished.")
 
     async def discover_application_commands(
             self,
@@ -765,7 +776,7 @@ class ConnectionState:
                         _log.debug(f"nextcord.ConnectionState: Command with signature {response_signature} associated "
                                    f"with added command.")
                         app_cmd.parse_discord_response(self, raw_response)
-                        self.add_application_command(app_cmd)
+                        self.add_application_command(app_cmd, use_rollout=True)
                 elif update_known:
                     _log.debug(f"nextcord.ConnectionState: Command with signature {response_signature} found but "
                                f"failed deep check, updating.")
@@ -891,15 +902,19 @@ class ConnectionState:
             ID of the guild to register the application commands to. If set to `None`, the commands will be registered
             as global commands instead. Defaults to `None`.
         """
-        payload = command.get_guild_payload(guild_id) if guild_id else command.global_payload
+        payload = command.get_payload(guild_id)
         _log.info(f"nextcord.ConnectionState: Registering command with signature {command.get_signature(guild_id)}")
-        if guild_id:
-            raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
-        else:
-            raw_response = await self.http.upsert_global_command(self.application_id, payload)
+        try:
+            if guild_id:
+                raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
+            else:
+                raw_response = await self.http.upsert_global_command(self.application_id, payload)
+        except Exception as e:
+            _log.error(f"Error registering command {command.error_name}: {e}")
+            raise e
         # response_id = int(raw_response["id"])
         command.parse_discord_response(self, raw_response)
-        self.add_application_command(command)
+        self.add_application_command(command, pre_remove=False)
 
     async def delete_application_command(self, command: BaseApplicationCommand, guild_id: Optional[int] = None) -> None:
         """|coro|

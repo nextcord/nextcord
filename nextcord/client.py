@@ -2192,11 +2192,11 @@ class Client:
     async def on_guild_available(self, guild: Guild) -> None:
         try:
             if self._rollout_all_guilds or self._connection.get_guild_application_commands(guild.id, rollout=True):
-                _log.debug(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
-                await guild.rollout_application_commands(
-                    associate_known=self._rollout_associate_known,
+                await self.sync_application_commands(
+                    guild_id=guild.id, associate_known=self._rollout_associate_known,
                     delete_unknown=self._rollout_delete_unknown,
-                    update_known=self._rollout_update_known
+                    update_known=self._rollout_update_known,
+                    register_new=self._rollout_register_new,
                 )
             else:
                 _log.debug(f"nextcord.Client: No locally added commands explicitly registered for "

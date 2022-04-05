@@ -30,7 +30,7 @@ import functools
 from typing import Callable, Type, TypeVar, TYPE_CHECKING, Union
 
 import nextcord
-from nextcord.application_command import SlashApplicationSubcommand, Interaction, AppCmdCallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand
+from nextcord.application_command import SlashApplicationSubcommand, Interaction, CallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand
 from .errors import (
     ApplicationCheckAnyFailure,
     ApplicationCheckFailure,
@@ -73,8 +73,8 @@ __all__ = (
 T = TypeVar("T")
 
 
-class CheckWrapper(AppCmdCallbackWrapper):
-    def __init__(self, callback: Union[Callable, AppCmdCallbackWrapper], predicate):
+class CheckWrapper(CallbackWrapper):
+    def __init__(self, callback: Union[Callable, CallbackWrapper], predicate):
         super().__init__(callback)
 
         if not asyncio.iscoroutinefunction(predicate):
@@ -168,7 +168,7 @@ def check(predicate: "ApplicationCheck") -> Type[CheckWrapper]:
     #         return predicate(ctx)
     #     predicate = async_wrapper
 
-    # class CheckWrapper(AppCmdCallbackWrapper):
+    # class CheckWrapper(CallbackWrapper):
     #     def modify(self, app_cmd: BaseApplicationCommand):
     #         app_cmd.checks.insert(0, predicate)
 
@@ -784,14 +784,14 @@ def application_command_before_invoke(coro) -> Callable[[T], T]:
         bot.add_cog(What())
     """
 
+    class BeforeInvokeModifier(CallbackWrapper):
+        def modify(self, app_cmd: BaseApplicationCommand):
+            app_cmd._callback_before_invoke = coro
+
     def decorator(
         func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
-    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]:
-        if isinstance(func, (SlashApplicationSubcommand, BaseApplicationCommand)):
-            func.application_command_before_invoke(coro)
-        else:
-            func.__application_command_before_invoke__ = coro
-        return func
+    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, BeforeInvokeModifier]:
+        return BeforeInvokeModifier(func)
 
     return decorator  # type: ignore
 
@@ -802,14 +802,13 @@ def application_command_after_invoke(coro) -> Callable[[T], T]:
     This allows you to refer to one after invoke hook for several commands that
     do not have to be within the same cog.
     """
+    class AfterInvokeModifier(CallbackWrapper):
+        def modify(self, app_cmd: BaseApplicationCommand):
+            app_cmd._callback_after_invoke = coro
 
     def decorator(
             func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
-    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]:
-        if isinstance(func, (SlashApplicationSubcommand, BaseApplicationCommand)):
-            func.application_command_after_invoke(coro)
-        else:
-            func.__application_command_after_invoke__ = coro
-        return func
+    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, AfterInvokeModifier]:
+        return AfterInvokeModifier(func)
 
-    return decorator  # type: ignore
+    return decorator
