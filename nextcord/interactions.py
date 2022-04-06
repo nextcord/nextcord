@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
 from datetime import datetime, timedelta
 import asyncio
 
@@ -53,6 +53,7 @@ __all__ = (
     'Interaction',
     'InteractionMessage',
     'InteractionResponse',
+    'PartialInteractionMessage',
 )
 
 if TYPE_CHECKING:
@@ -476,7 +477,7 @@ class Interaction:
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-    ) -> Optional[WebhookMessage]:
+    ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
         This is a shorthand function for helping in sending messages in
@@ -486,11 +487,11 @@ class Interaction:
 
         Returns
         -------
-        Optional[:class:`WebhookMessage`]
-            If the interaction has not been responded to, returns None. To access the
-            :class:`InteractionMessage` that was sent, the methods: :meth:`Interaction.original_message()`,
-            :meth:`Interaction.edit_original_message()`, and :meth:`Interaction.delete_original_message()`
-            should be used.
+        Union[:class:`PartialInteractionMessage`, :class:`WebhookMessage`]
+            If the interaction has not been responded to, returns a :class:`PartialInteractionMessage`
+            supporting only the :meth:`~PartialInteractionMessage.edit` and :meth:`~PartialInteractionMessage.delete`
+            operations. To fetch the :class:`InteractionMessage` you may use :meth:`~PartialInteractionMessage.fetch`
+            or :meth:`Interaction.original_message`.
             If the interaction has been responded to, returns the :class:`WebhookMessage`.
         """
 
@@ -699,7 +700,7 @@ class InteractionResponse:
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-    ) -> None:
+    ) -> PartialInteractionMessage:
         """|coro|
 
         Responds to this interaction by sending a message.
@@ -745,6 +746,13 @@ class InteractionResponse:
             The length of ``embeds`` was invalid.
         InteractionResponded
             This interaction has already been responded to before.
+
+        Returns
+        --------
+        :class:`PartialInteractionMessage`
+            An object supporting only the :meth:`~PartialInteractionMessage.edit` and :meth:`~PartialInteractionMessage.delete`
+            operations. To fetch the :class:`InteractionMessage` you may use :meth:`PartialInteractionMessage.fetch`
+            or :meth:`Interaction.original_message`.
         """
         if self._responded:
             raise InteractionResponded(self._parent)
@@ -815,6 +823,9 @@ class InteractionResponse:
 
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
+
+        state = _InteractionMessageState(self._parent, self._parent._state)
+        return PartialInteractionMessage(state)
     
     async def send_modal(self, modal: Modal) -> None:
         """|coro|
@@ -999,18 +1010,7 @@ class _InteractionMessageState:
         return getattr(self._parent, attr)
 
 
-class InteractionMessage(Message):
-    """Represents the original interaction response message.
-
-    This allows you to edit or delete the message associated with
-    the interaction response. To retrieve this object see :meth:`Interaction.original_message`.
-
-    This inherits from :class:`nextcord.Message` with changes to
-    :meth:`edit` and :meth:`delete` to work.
-
-    .. versionadded:: 2.0
-    """
-
+class _InteractionMessageBase:
     __slots__ = ()
     _state: _InteractionMessageState
 
@@ -1113,3 +1113,56 @@ class InteractionMessage(Message):
         """
 
         await self._state._interaction.delete_original_message(delay=delay)
+
+
+class PartialInteractionMessage(_InteractionMessageBase):
+    """Represents the original interaction response message when only the
+    application state and interaction token are available.
+
+    This allows you to edit or delete the message associated with
+    the interaction response. This object is returned when responding to
+    an interaction with :meth:`InteractionResponse.send_message`.
+
+    This does not support have most attributes and methods of :class:`nextcord.Message`.
+    The method :meth:`~PartialInteractionMessage.fetch` can be used to
+    retrieve the full :class:`InteractionMessage` object.
+
+    .. versionadded:: 2.0
+    """
+
+    def __init__(self, state: _InteractionMessageState):
+        self._state = state
+
+    async def fetch(self) -> InteractionMessage:
+        """|coro|
+
+        Fetches the message.
+
+        Raises
+        -------
+        HTTPException
+            Retrieving the message failed.
+        Forbidden
+            The message is not yours.
+        NotFound
+            The message was deleted.
+
+        Returns
+        --------
+        :class:`InteractionMessage`
+            The message.
+        """
+        return await self._state._interaction.original_message()
+
+
+class InteractionMessage(_InteractionMessageBase, Message):
+    """Represents the original interaction response message.
+
+    This allows you to edit or delete the message associated with
+    the interaction response. To retrieve this object see :meth:`Interaction.original_message`.
+
+    This inherits from :class:`nextcord.Message` with changes to
+    :meth:`edit` and :meth:`delete`.
+
+    .. versionadded:: 2.0
+    """
