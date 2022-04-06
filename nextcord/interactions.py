@@ -1174,6 +1174,9 @@ class PartialInteractionMessage(_InteractionMessageBase):
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state._interaction.guild
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
+
 
 class InteractionMessage(_InteractionMessageBase, Message):
     """Represents the original interaction response message.
@@ -1182,7 +1185,7 @@ class InteractionMessage(_InteractionMessageBase, Message):
     or :meth:`Interaction.original_message`.
 
     This inherits from :class:`nextcord.Message` with changes to
-    :meth:`edit` and :meth:`delete`.
+    :meth:`edit` and :meth:`delete` to work with the interaction response.
 
     .. versionadded:: 2.0
     """
