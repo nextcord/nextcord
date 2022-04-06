@@ -1011,7 +1011,7 @@ class _InteractionMessageState:
         return getattr(self._parent, attr)
 
 
-class _InteractionMessageBase(Hashable):
+class _InteractionMessageMixin:
     __slots__ = ()
     _state: _InteractionMessageState
 
@@ -1116,7 +1116,7 @@ class _InteractionMessageBase(Hashable):
         await self._state._interaction.delete_original_message(delay=delay)
 
 
-class PartialInteractionMessage(_InteractionMessageBase):
+class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
     """Represents the original interaction response message when only the
     application state and interaction token are available.
 
@@ -1178,7 +1178,7 @@ class PartialInteractionMessage(_InteractionMessageBase):
         return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
 
 
-class InteractionMessage(_InteractionMessageBase, Message):
+class InteractionMessage(_InteractionMessageMixin, Message):
     """Represents the original interaction response message.
 
     To retrieve this object see :meth:`PartialInteractionMessage.fetch`
@@ -1189,3 +1189,4 @@ class InteractionMessage(_InteractionMessageBase, Message):
 
     .. versionadded:: 2.0
     """
+    pass
