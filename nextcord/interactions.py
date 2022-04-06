@@ -1156,6 +1156,11 @@ class PartialInteractionMessage(_InteractionMessageBase):
         return await self._state._interaction.original_message()
 
     @property
+    def author(self) -> Optional[ClientUser]:
+        """Optional[:class:`ClientUser`]: The client user that responded to the interaction."""
+        return self._state._interaction.client.user
+
+    @property
     def channel(self) -> Optional[InteractionChannel]:
         """Optional[Union[:class:`abc.GuildChannel`, :class:`PartialMessageable`, :class:`Thread`]]: The channel the interaction was sent from.
 
@@ -1163,11 +1168,6 @@ class PartialInteractionMessage(_InteractionMessageBase):
         no data to complete them. These are :class:`PartialMessageable` instead.
         """
         return self._state._interaction.channel
-
-    @property
-    def author(self) -> Optional[ClientUser]:
-        """Optional[:class:`ClientUser`]: The client user that responded to the interaction."""
-        return self._state._interaction.client.user
 
     @property
     def guild(self) -> Optional[Guild]:
