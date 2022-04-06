@@ -1156,9 +1156,13 @@ class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
         return await self._state._interaction.original_message()
 
     @property
-    def author(self) -> Optional[ClientUser]:
-        """Optional[:class:`ClientUser`]: The client user that responded to the interaction."""
-        return self._state._interaction.client.user
+    def author(self) -> Optional[Union[Member, ClientUser]]:
+        """Optional[Union[:class:`Member`, :class:`ClientUser`]]: The client that responded to the interaction.
+        
+        If the interaction was in a guild, this is a :class:`Member` representing the client.
+        Otherwise, this is a :class:`ClientUser`.
+        """
+        return self.guild.me if self.guild else self._state._interaction.client.user
 
     @property
     def channel(self) -> Optional[InteractionChannel]:
