@@ -1137,21 +1137,21 @@ class PartialInteractionMessage(_InteractionMessageBase):
     async def fetch(self) -> InteractionMessage:
         """|coro|
 
-        Fetches the message.
+        Fetches the original interaction response message associated with the interaction.
+
+        Repeated calls to this will return a cached value.
 
         Raises
         -------
         HTTPException
-            Retrieving the message failed.
-        Forbidden
-            The message is not yours.
-        NotFound
-            The message was deleted.
+            Fetching the original response message failed.
+        ClientException
+            The channel for the message could not be resolved.
 
         Returns
         --------
-        :class:`InteractionMessage`
-            The message.
+        InteractionMessage
+            The original interaction response message.
         """
         return await self._state._interaction.original_message()
 
