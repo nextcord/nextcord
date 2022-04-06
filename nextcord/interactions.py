@@ -1165,11 +1165,6 @@ class PartialInteractionMessage(_InteractionMessageBase):
         return self._state._interaction.channel
 
     @property
-    def channel_id(self) -> Optional[int]:
-        """Optional[:class:`int`]: The ID of the channel the interaction was sent from."""
-        return self._state._interaction.channel_id
-
-    @property
     def author(self) -> Optional[ClientUser]:
         """Optional[:class:`ClientUser`]: The client user that responded to the interaction."""
         return self._state._interaction.client.user
@@ -1178,11 +1173,6 @@ class PartialInteractionMessage(_InteractionMessageBase):
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state._interaction.guild
-
-    @property
-    def guild_id(self) -> Optional[int]:
-        """Optional[:class:`int`]: The ID of the guild the interaction was sent from."""
-        return self._state._interaction.guild_id
 
 
 class InteractionMessage(_InteractionMessageBase, Message):
