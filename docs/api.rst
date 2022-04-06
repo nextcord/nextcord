@@ -3703,6 +3703,7 @@ PartialInteractionMessage
 
 .. autoclass:: PartialInteractionMessage()
     :members:
+    :inherited-members:
 
 Member
 ~~~~~~

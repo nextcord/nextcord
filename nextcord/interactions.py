@@ -1125,7 +1125,7 @@ class PartialInteractionMessage(_InteractionMessageBase):
     an interaction with :meth:`InteractionResponse.send_message`.
 
     This does not support have most attributes and methods of :class:`nextcord.Message`.
-    The method :meth:`~PartialInteractionMessage.fetch` can be used to
+    The :meth:`~PartialInteractionMessage.fetch` method can be used to
     retrieve the full :class:`InteractionMessage` object.
 
     .. versionadded:: 2.0
@@ -1159,8 +1159,8 @@ class PartialInteractionMessage(_InteractionMessageBase):
 class InteractionMessage(_InteractionMessageBase, Message):
     """Represents the original interaction response message.
 
-    This allows you to edit or delete the message associated with
-    the interaction response. To retrieve this object see :meth:`Interaction.original_message`.
+    To retrieve this object see :meth:`PartialInteractionMessage.fetch`
+    or :meth:`Interaction.original_message`.
 
     This inherits from :class:`nextcord.Message` with changes to
     :meth:`edit` and :meth:`delete`.
