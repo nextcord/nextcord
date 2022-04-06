@@ -3696,9 +3696,9 @@ InteractionMessage
 .. autoclass:: InteractionMessage()
     :members:
 
-    .. automethod:: InteractionMessage.edit
-
     .. automethod:: InteractionMessage.delete
+
+    .. automethod:: InteractionMessage.edit
 
 PartialInteractionMessage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
