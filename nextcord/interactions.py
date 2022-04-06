@@ -41,7 +41,7 @@ from .channel import PartialMessageable, ChannelType
 
 from .file import File
 from .embeds import Embed
-from .user import User
+from .user import ClientUser, User
 from .mixins import Hashable
 from .member import Member
 from .message import Message, Attachment
@@ -1154,6 +1154,35 @@ class PartialInteractionMessage(_InteractionMessageBase):
             The message.
         """
         return await self._state._interaction.original_message()
+
+    @property
+    def channel(self) -> Optional[InteractionChannel]:
+        """Optional[Union[:class:`abc.GuildChannel`, :class:`PartialMessageable`, :class:`Thread`]]: The channel the interaction was sent from.
+
+        Note that due to a Discord limitation, DM channels are not resolved since there is
+        no data to complete them. These are :class:`PartialMessageable` instead.
+        """
+        return self._state._interaction.channel
+
+    @property
+    def channel_id(self) -> Optional[int]:
+        """Optional[:class:`int`]: The ID of the channel the interaction was sent from."""
+        return self._state._interaction.channel_id
+
+    @property
+    def author(self) -> Optional[ClientUser]:
+        """Optional[:class:`ClientUser`]: The client user that responded to the interaction."""
+        return self._state._interaction.client.user
+
+    @property
+    def guild(self) -> Optional[Guild]:
+        """Optional[:class:`Guild`]: The guild the interaction was sent from."""
+        return self._state._interaction.guild
+
+    @property
+    def guild_id(self) -> Optional[int]:
+        """Optional[:class:`int`]: The ID of the guild the interaction was sent from."""
+        return self._state._interaction.guild_id
 
 
 class InteractionMessage(_InteractionMessageBase, Message):
