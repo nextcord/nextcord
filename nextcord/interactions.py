@@ -1124,7 +1124,7 @@ class PartialInteractionMessage(_InteractionMessageBase):
     the interaction response. This object is returned when responding to
     an interaction with :meth:`InteractionResponse.send_message`.
 
-    This does not support have most attributes and methods of :class:`nextcord.Message`.
+    This does not support most attributes and methods of :class:`nextcord.Message`.
     The :meth:`~PartialInteractionMessage.fetch` method can be used to
     retrieve the full :class:`InteractionMessage` object.
 
