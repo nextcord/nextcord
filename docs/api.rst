@@ -3696,6 +3696,14 @@ InteractionMessage
 .. autoclass:: InteractionMessage()
     :members:
 
+PartialInteractionMessage
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: PartialInteractionMessage
+
+.. autoclass:: PartialInteractionMessage()
+    :members:
+
 Member
 ~~~~~~
 

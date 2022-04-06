@@ -42,6 +42,7 @@ from .channel import PartialMessageable, ChannelType
 from .file import File
 from .embeds import Embed
 from .user import User
+from .mixins import Hashable
 from .member import Member
 from .message import Message, Attachment
 from .object import Object
@@ -1010,7 +1011,7 @@ class _InteractionMessageState:
         return getattr(self._parent, attr)
 
 
-class _InteractionMessageBase:
+class _InteractionMessageBase(Hashable):
     __slots__ = ()
     _state: _InteractionMessageState
 
