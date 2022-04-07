@@ -14,7 +14,7 @@
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI supported Python versions
 .. image:: https://img.shields.io/readthedocs/nextcord
-   :target: https://nextcord.readthedocs.io/en/stable
+   :target: https://docs.nextcord.dev/
    :alt: Nextcord documentation
    
 Nextcord
@@ -112,6 +112,6 @@ You can find more examples in the `examples directory <https://github.com/nextco
 Links
 ------
 
-- `Documentation <https://nextcord.readthedocs.io/en/stable/>`_
+- `Documentation <https://docs.nextcord.dev/>`_
 - `Official Discord Server <https://discord.gg/ZebatWssCB>`_
 - `Discord API <https://discord.gg/discord-api>`_
