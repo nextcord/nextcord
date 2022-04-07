@@ -30,6 +30,10 @@ Overview
 - Many method arguments now reject ``None``.
 - Many arguments are now specified as positional-only or keyword-only; e.g. :func:`oauth_url` now takes keyword-only arguments, and methods starting with ``get_`` or ``fetch_`` take positional-only arguments.
 - :meth:`Guild.bans` is no longer a coroutine and returns an :class:`~nextcord.AsyncIterator` instead of a :class:`list`.
+- ``StoreChannel`` is removed as it is deprecated by Discord, see `here <https://support-dev.discord.com/hc/en-us/articles/4414590563479>`_ for more info.
+- ``ChannelType.store`` is removed.
+- ``AppInfo.summary``, ``AppInfo.guild_id``, ``AppInfo.primary_sku_id`` and ``AppInfo.slug`` are removed.
+- ``PartialAppInfo.summary`` is removed.
 
 Changes
 -----------------------
@@ -355,6 +359,14 @@ Sticker.image
 Sticker.tags
 ^^^^^^^^^^^^^^^^^^^^^^^
 Due to the introduction of :class:`GuildSticker`, ``Sticker.tags`` is removed from the parent class :class:`Sticker` and moved to :attr:`StandardSticker.tags`.
+
+MessageType.application_command
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This was renamed to :attr:`MessageType.chat_input_command` due to Discord adding context menu commands.
+
+StoreChannel has been removed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``StoreChannel`` has been removed as it has been deprecated by Discord, see `here <https://support-dev.discord.com/hc/en-us/articles/4414590563479>`_ for more info.
 
 Meta Change
 -----------------------

@@ -30,7 +30,6 @@ from . import utils
 from .asset import Asset
 
 if TYPE_CHECKING:
-    from .guild import Guild
     from .types.appinfo import (
         AppInfo as AppInfoPayload,
         PartialAppInfo as PartialAppInfoPayload,
@@ -72,34 +71,10 @@ class AppInfo:
         grant flow to join.
     rpc_origins: Optional[List[:class:`str`]]
         A list of RPC origin URLs, if RPC is enabled.
-    summary: :class:`str`
-        If this application is a game sold on Discord,
-        this field will be the summary field for the store page of its primary SKU.
-
-        .. versionadded:: 1.3
 
     verify_key: :class:`str`
         The hex encoded key for verification in interactions and the
         GameSDK's `GetTicket <https://discord.com/developers/docs/game-sdk/applications#getticket>`_.
-
-        .. versionadded:: 1.3
-
-    guild_id: Optional[:class:`int`]
-        If this application is a game sold on Discord,
-        this field will be the guild to which it has been linked to.
-
-        .. versionadded:: 1.3
-
-    primary_sku_id: Optional[:class:`int`]
-        If this application is a game sold on Discord,
-        this field will be the id of the "Game SKU" that is created,
-        if it exists.
-
-        .. versionadded:: 1.3
-
-    slug: Optional[:class:`str`]
-        If this application is a game sold on Discord,
-        this field will be the URL slug that links to the store page.
 
         .. versionadded:: 1.3
 
@@ -124,13 +99,8 @@ class AppInfo:
         'bot_require_code_grant',
         'owner',
         '_icon',
-        'summary',
         'verify_key',
         'team',
-        'guild_id',
-        'primary_sku_id',
-        'slug',
-        '_cover_image',
         'terms_of_service_url',
         'privacy_policy_url',
     )
@@ -151,14 +121,8 @@ class AppInfo:
         team: Optional[TeamPayload] = data.get('team')
         self.team: Optional[Team] = Team(state, team) if team else None
 
-        self.summary: str = data['summary']
         self.verify_key: str = data['verify_key']
 
-        self.guild_id: Optional[int] = utils._get_as_snowflake(data, 'guild_id')
-
-        self.primary_sku_id: Optional[int] = utils._get_as_snowflake(data, 'primary_sku_id')
-        self.slug: Optional[str] = data.get('slug')
-        self._cover_image: Optional[str] = data.get('cover_image')
         self.terms_of_service_url: Optional[str] = data.get('terms_of_service_url')
         self.privacy_policy_url: Optional[str] = data.get('privacy_policy_url')
 
@@ -176,24 +140,6 @@ class AppInfo:
             return None
         return Asset._from_icon(self._state, self.id, self._icon, path='app')
 
-    @property
-    def cover_image(self) -> Optional[Asset]:
-        """Optional[:class:`.Asset`]: Retrieves the cover image on a store embed, if any.
-
-        This is only available if the application is a game sold on Discord.
-        """
-        if self._cover_image is None:
-            return None
-        return Asset._from_cover_image(self._state, self.id, self._cover_image)
-
-    @property
-    def guild(self) -> Optional[Guild]:
-        """Optional[:class:`Guild`]: If this application is a game sold on Discord,
-        this field will be the guild to which it has been linked
-
-        .. versionadded:: 1.3
-        """
-        return self._state._get_guild(self.guild_id)
 
 class PartialAppInfo:
     """Represents a partial AppInfo given by :func:`~nextcord.abc.GuildChannel.create_invite`
@@ -210,9 +156,6 @@ class PartialAppInfo:
         The application description.
     rpc_origins: Optional[List[:class:`str`]]
         A list of RPC origin URLs, if RPC is enabled.
-    summary: :class:`str`
-        If this application is a game sold on Discord,
-        this field will be the summary field for the store page of its primary SKU.
     verify_key: :class:`str`
         The hex encoded key for verification in interactions and the
         GameSDK's `GetTicket <https://discord.com/developers/docs/game-sdk/applications#getticket>`_.
@@ -222,7 +165,7 @@ class PartialAppInfo:
         The application's privacy policy URL, if set.
     """
 
-    __slots__ = ('_state', 'id', 'name', 'description', 'rpc_origins', 'summary', 'verify_key', 'terms_of_service_url', 'privacy_policy_url', '_icon')
+    __slots__ = ('_state', 'id', 'name', 'description', 'rpc_origins', 'verify_key', 'terms_of_service_url', 'privacy_policy_url', '_icon')
 
     def __init__(self, *, state: ConnectionState, data: PartialAppInfoPayload):
         self._state: ConnectionState = state
@@ -231,7 +174,6 @@ class PartialAppInfo:
         self._icon: Optional[str] = data.get('icon')
         self.description: str = data['description']
         self.rpc_origins: Optional[List[str]] = data.get('rpc_origins')
-        self.summary: str = data['summary']
         self.verify_key: str = data['verify_key']
         self.terms_of_service_url: Optional[str] = data.get('terms_of_service_url')
         self.privacy_policy_url: Optional[str] = data.get('privacy_policy_url')

@@ -93,7 +93,6 @@ if TYPE_CHECKING:
     from .channel import (
         CategoryChannel,
         StageChannel,
-        StoreChannel,
         TextChannel,
         VoiceChannel,
     )
@@ -115,7 +114,7 @@ if TYPE_CHECKING:
     from .webhook import Webhook
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
-    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel]
+    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel]
     ByCategoryItem = Tuple[Optional[CategoryChannel], List[GuildChannel]]
 
 
@@ -208,7 +207,6 @@ class Guild(Hashable):
 
         - ``ANIMATED_ICON``: Guild can upload an animated icon.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
-        - ``COMMERCE``: Guild can sell things using store channels.
         - ``COMMUNITY``: Guild is a community server.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
         - ``FEATURABLE``: Guild is able to be featured in Server Discovery.
