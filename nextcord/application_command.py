@@ -1413,7 +1413,7 @@ class ApplicationCommand(ApplicationSubcommand):
         If no docstring is found for the command callback, it defaults to "No description provided".
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-    default_permission: :class:`bool`
+    default_permission: Optional[:class:`bool`]
         If users should be able to use this command by default or not. Defaults to Discords default.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
@@ -1427,7 +1427,7 @@ class ApplicationCommand(ApplicationSubcommand):
         name: str = MISSING,
         description: str = MISSING,
         guild_ids: Iterable[int] = MISSING,
-        default_permission: bool = MISSING,
+        default_permission: Optional[bool] = None,
         force_global: bool = False,
         inherit_hooks: bool = False,
     ):
@@ -1436,7 +1436,7 @@ class ApplicationCommand(ApplicationSubcommand):
         )
         self._state: Optional[ConnectionState] = None
         self.force_global: bool = force_global
-        self.default_permission: bool = default_permission or True
+        self.default_permission: Optional[bool] = default_permission
         self._guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
         self._guild_ids: Set[int] = set()
         # Guild ID is key (None is global), command ID is value.
@@ -1969,7 +1969,7 @@ def slash_command(
     name: str = MISSING,
     description: str = MISSING,
     guild_ids: Iterable[int] = MISSING,
-    default_permission: bool = MISSING,
+    default_permission: Optional[bool] = None,
     force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
@@ -1984,7 +1984,7 @@ def slash_command(
         If no docstring is found for the command callback, it defaults to "No description provided".
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-    default_permission: :class:`bool`
+    default_permission: Optional[:class:`bool`]
         If users should be able to use this command by default or not. Defaults to Discords default, `True`.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
@@ -2011,7 +2011,7 @@ def slash_command(
 def message_command(
     name: str = MISSING,
     guild_ids: Iterable[int] = MISSING,
-    default_permission: bool = MISSING,
+    default_permission: Optional[bool] = None,
     force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
@@ -2023,7 +2023,7 @@ def message_command(
         Name of the command that users will see. If not set, it defaults to the name of the callback.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-    default_permission: :class:`bool`
+    default_permission: Optional[:class:`bool`]
         If users should be able to use this command by default or not. Defaults to Discords default, `True`.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
@@ -2049,7 +2049,7 @@ def message_command(
 def user_command(
     name: str = MISSING,
     guild_ids: Iterable[int] = MISSING,
-    default_permission: bool = MISSING,
+    default_permission: Optional[bool] = None,
     force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
@@ -2060,7 +2060,7 @@ def user_command(
         Name of the command that users will see. If not set, it defaults to the name of the callback.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-    default_permission: :class:`bool`
+    default_permission: Optional[:class:`bool`]
         If users should be able to use this command by default or not. Defaults to Discord's default, `True`.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
