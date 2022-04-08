@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
 from datetime import datetime, timedelta
 import asyncio
 
@@ -41,7 +41,8 @@ from .channel import PartialMessageable, ChannelType
 
 from .file import File
 from .embeds import Embed
-from .user import User
+from .user import ClientUser, User
+from .mixins import Hashable
 from .member import Member
 from .message import Message, Attachment
 from .object import Object
@@ -53,6 +54,7 @@ __all__ = (
     'Interaction',
     'InteractionMessage',
     'InteractionResponse',
+    'PartialInteractionMessage',
 )
 
 if TYPE_CHECKING:
@@ -476,7 +478,7 @@ class Interaction:
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-    ) -> Optional[WebhookMessage]:
+    ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
         This is a shorthand function for helping in sending messages in
@@ -486,11 +488,11 @@ class Interaction:
 
         Returns
         -------
-        Optional[:class:`WebhookMessage`]
-            If the interaction has not been responded to, returns None. To access the
-            :class:`InteractionMessage` that was sent, the methods: :meth:`Interaction.original_message()`,
-            :meth:`Interaction.edit_original_message()`, and :meth:`Interaction.delete_original_message()`
-            should be used.
+        Union[:class:`PartialInteractionMessage`, :class:`WebhookMessage`]
+            If the interaction has not been responded to, returns a :class:`PartialInteractionMessage`
+            supporting only the :meth:`~PartialInteractionMessage.edit` and :meth:`~PartialInteractionMessage.delete`
+            operations. To fetch the :class:`InteractionMessage` you may use :meth:`~PartialInteractionMessage.fetch`
+            or :meth:`Interaction.original_message`.
             If the interaction has been responded to, returns the :class:`WebhookMessage`.
         """
 
@@ -699,7 +701,7 @@ class InteractionResponse:
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-    ) -> None:
+    ) -> PartialInteractionMessage:
         """|coro|
 
         Responds to this interaction by sending a message.
@@ -745,6 +747,13 @@ class InteractionResponse:
             The length of ``embeds`` was invalid.
         InteractionResponded
             This interaction has already been responded to before.
+
+        Returns
+        --------
+        :class:`PartialInteractionMessage`
+            An object supporting only the :meth:`~PartialInteractionMessage.edit` and :meth:`~PartialInteractionMessage.delete`
+            operations. To fetch the :class:`InteractionMessage` you may use :meth:`PartialInteractionMessage.fetch`
+            or :meth:`Interaction.original_message`.
         """
         if self._responded:
             raise InteractionResponded(self._parent)
@@ -815,6 +824,9 @@ class InteractionResponse:
 
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
+
+        state = _InteractionMessageState(self._parent, self._parent._state)
+        return PartialInteractionMessage(state)
     
     async def send_modal(self, modal: Modal) -> None:
         """|coro|
@@ -999,18 +1011,7 @@ class _InteractionMessageState:
         return getattr(self._parent, attr)
 
 
-class InteractionMessage(Message):
-    """Represents the original interaction response message.
-
-    This allows you to edit or delete the message associated with
-    the interaction response. To retrieve this object see :meth:`Interaction.original_message`.
-
-    This inherits from :class:`nextcord.Message` with changes to
-    :meth:`edit` and :meth:`delete` to work.
-
-    .. versionadded:: 2.0
-    """
-
+class _InteractionMessageMixin:
     __slots__ = ()
     _state: _InteractionMessageState
 
@@ -1113,3 +1114,83 @@ class InteractionMessage(Message):
         """
 
         await self._state._interaction.delete_original_message(delay=delay)
+
+
+class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
+    """Represents the original interaction response message when only the
+    application state and interaction token are available.
+
+    This allows you to edit or delete the message associated with
+    the interaction response. This object is returned when responding to
+    an interaction with :meth:`InteractionResponse.send_message`.
+
+    This does not support most attributes and methods of :class:`nextcord.Message`.
+    The :meth:`~PartialInteractionMessage.fetch` method can be used to
+    retrieve the full :class:`InteractionMessage` object.
+
+    .. versionadded:: 2.0
+    """
+
+    def __init__(self, state: _InteractionMessageState):
+        self._state = state
+
+    async def fetch(self) -> InteractionMessage:
+        """|coro|
+
+        Fetches the original interaction response message associated with the interaction.
+
+        Repeated calls to this will return a cached value.
+
+        Raises
+        -------
+        HTTPException
+            Fetching the original response message failed.
+        ClientException
+            The channel for the message could not be resolved.
+
+        Returns
+        --------
+        InteractionMessage
+            The original interaction response message.
+        """
+        return await self._state._interaction.original_message()
+
+    @property
+    def author(self) -> Optional[Union[Member, ClientUser]]:
+        """Optional[Union[:class:`Member`, :class:`ClientUser`]]: The client that responded to the interaction.
+        
+        If the interaction was in a guild, this is a :class:`Member` representing the client.
+        Otherwise, this is a :class:`ClientUser`.
+        """
+        return self.guild.me if self.guild else self._state._interaction.client.user
+
+    @property
+    def channel(self) -> Optional[InteractionChannel]:
+        """Optional[Union[:class:`abc.GuildChannel`, :class:`PartialMessageable`, :class:`Thread`]]: The channel the interaction was sent from.
+
+        Note that due to a Discord limitation, DM channels are not resolved since there is
+        no data to complete them. These are :class:`PartialMessageable` instead.
+        """
+        return self._state._interaction.channel
+
+    @property
+    def guild(self) -> Optional[Guild]:
+        """Optional[:class:`Guild`]: The guild the interaction was sent from."""
+        return self._state._interaction.guild
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
+
+
+class InteractionMessage(_InteractionMessageMixin, Message):
+    """Represents the original interaction response message.
+
+    To retrieve this object see :meth:`PartialInteractionMessage.fetch`
+    or :meth:`Interaction.original_message`.
+
+    This inherits from :class:`nextcord.Message` with changes to
+    :meth:`edit` and :meth:`delete` to work with the interaction response.
+
+    .. versionadded:: 2.0
+    """
+    pass

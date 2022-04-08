@@ -3691,6 +3691,16 @@ InteractionMessage
 
 .. autoclass:: InteractionMessage()
     :members:
+    :inherited-members:
+
+PartialInteractionMessage
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: PartialInteractionMessage
+
+.. autoclass:: PartialInteractionMessage()
+    :members:
+    :inherited-members:
 
 Member
 ~~~~~~
