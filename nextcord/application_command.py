@@ -809,7 +809,7 @@ class ApplicationCommand(ApplicationSubcommand):
         super().__init__(callback=callback, cmd_type=cmd_type, name=name, description=description)
         self._state: Optional[ConnectionState] = None
         self.force_global: bool = force_global
-        self.default_permission: Optional[bool] = default_permission if default_permission is not None else True
+        self.default_permission: Optional[bool] = default_permission
         self._guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
         self._guild_ids: Set[int] = set()
         self._command_ids: Dict[Optional[int], int] = {}  # Guild ID is key (None is global), command ID is value.
