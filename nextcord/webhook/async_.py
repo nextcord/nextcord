@@ -37,7 +37,7 @@ import aiohttp
 
 from .. import utils
 from ..errors import InvalidArgument, HTTPException, Forbidden, NotFound, DiscordServerError
-from ..message import Message
+from ..message import Attachment, Message
 from ..enums import try_enum, WebhookType
 from ..user import BaseUser, User
 from ..asset import Asset
@@ -141,7 +141,7 @@ class AsyncWebhookAdapter:
                     file.reset(seek=attempt)
 
                 if multipart:
-                    form_data = aiohttp.FormData()
+                    form_data = aiohttp.FormData(quote_fields=False)
                     for p in multipart:
                         form_data.add_field(**p)
                     to_send = form_data
@@ -361,13 +361,17 @@ class AsyncWebhookAdapter:
         multipart = []
 
         if files:
+            if 'data' not in payload:
+                payload['data'] = {}
+            if 'attachments' not in payload['data']:
+                payload['data']['attachments'] = []
             multipart.append({'name': 'payload_json'})
-            payload['attachments'] = []
             for index, file in enumerate(files):
-                payload['attachments'].append(
+                payload['data']['attachments'].append(
                     {
                         'id': index,
                         'filename': file.filename,
+                        'description': file.description,
                     }
                 )
                 multipart.append(
@@ -454,6 +458,7 @@ def handle_message_parameters(
     ephemeral: bool = False,
     file: File = MISSING,
     files: List[File] = MISSING,
+    attachments: List[Attachment] = MISSING,
     embed: Optional[Embed] = MISSING,
     embeds: List[Embed] = MISSING,
     view: Optional[View] = MISSING,
@@ -465,7 +470,14 @@ def handle_message_parameters(
     if embeds is not MISSING and embed is not MISSING:
         raise TypeError('Cannot mix embed and embeds keyword arguments.')
 
-    payload = {}
+    payload: Dict[str, Any] = {}
+
+    if file is not MISSING or files is not MISSING:
+        payload['attachments'] = []
+
+    if attachments is not MISSING:
+        payload['attachments'] = [a.to_dict() for a in attachments]
+
     if embeds is not MISSING:
         payload['embeds'] = [e.to_dict() for e in embeds]
 
@@ -508,28 +520,23 @@ def handle_message_parameters(
         files = [file]
 
     if files:
-        multipart.append({'name': 'payload_json', 'value': utils._to_json(payload)})
-        payload = None
-        if len(files) == 1:
-            file = files[0]
+        multipart.append({'name': 'payload_json'})
+        for index, file in enumerate(files):
+            payload['attachments'].append({
+                'id': index,
+                'filename': file.filename,
+                'description': file.description,
+            })
             multipart.append(
                 {
-                    'name': 'file',
+                    'name': f'files[{index}]',
                     'value': file.fp,
                     'filename': file.filename,
                     'content_type': 'application/octet-stream',
                 }
             )
-        else:
-            for index, file in enumerate(files):
-                multipart.append(
-                    {
-                        'name': f'file{index}',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
+        multipart[0]['value'] = utils._to_json(payload)
+        payload = None
 
     return ExecuteWebhookParameters(payload=payload, multipart=multipart, files=files)
 
@@ -667,8 +674,10 @@ class WebhookMessage(Message):
         embed: Optional[Embed] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
+        attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        delete_after: Optional[bool] = None,
     ) -> WebhookMessage:
         """|coro|
 
@@ -697,12 +706,23 @@ class WebhookMessage(Message):
             ``file`` parameter.
 
             .. versionadded:: 2.0
+        attachments: List[:class:`Attachment`]
+            A list of attachments to keep in the message. To keep all existing attachments,
+            pass ``message.attachments``.
+
+            .. versionadded:: 2.0
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
+
+            .. versionadded:: 2.0
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just edited. If the deletion fails,
+            then it is silently ignored.
 
             .. versionadded:: 2.0
 
@@ -724,16 +744,22 @@ class WebhookMessage(Message):
         :class:`WebhookMessage`
             The newly edited message.
         """
-        return await self._state._webhook.edit_message(
+        message = await self._state._webhook.edit_message(
             self.id,
             content=content,
             embeds=embeds,
             embed=embed,
             file=file,
             files=files,
+            attachments=attachments,
             view=view,
             allowed_mentions=allowed_mentions,
         )
+
+        if delete_after is not None:
+            await self.delete(delay=delete_after)
+
+        return message
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
@@ -1239,6 +1265,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[True],
+        delete_after: Optional[bool] = None,
     ) -> WebhookMessage:
         ...
 
@@ -1259,6 +1286,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[False] = ...,
+        delete_after: Optional[bool] = None,
     ) -> None:
         ...
 
@@ -1278,6 +1306,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: bool = False,
+        delete_after: Optional[bool] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1315,6 +1344,10 @@ class Webhook(BaseWebhook):
             This is only available to :attr:`WebhookType.application` webhooks.
             If a view is sent with an ephemeral message and it has no timeout set
             then the timeout is set to 15 minutes.
+        delete_after: Optional[:class:`float`]
+            If provided, the number of seconds to wait in the background
+            before deleting the message we just sent. If the deletion fails,
+            then it is silently ignored.
 
             .. versionadded:: 2.0
         file: :class:`File`
@@ -1425,6 +1458,9 @@ class Webhook(BaseWebhook):
             message_id = None if msg is None else msg.id
             self._state.store_view(view, message_id)
 
+        if delete_after is not None:
+            await msg.delete(delay=delete_after)
+
         return msg
 
     async def fetch_message(self, id: int) -> WebhookMessage:
@@ -1477,6 +1513,7 @@ class Webhook(BaseWebhook):
         embed: Optional[Embed] = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
+        attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> WebhookMessage:
@@ -1510,6 +1547,10 @@ class Webhook(BaseWebhook):
         files: List[:class:`File`]
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
+
+            .. versionadded:: 2.0
+        attachments: List[:class:`Attachment`]
+            A list of attachments to keep in the message.
 
             .. versionadded:: 2.0
         allowed_mentions: :class:`AllowedMentions`
@@ -1556,6 +1597,7 @@ class Webhook(BaseWebhook):
             content=content,
             file=file,
             files=files,
+            attachments=attachments,
             embed=embed,
             embeds=embeds,
             view=view,

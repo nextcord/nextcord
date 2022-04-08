@@ -40,9 +40,6 @@ class BaseAppInfo(TypedDict):
 
 class _AppInfoOptional(TypedDict, total=False):
     team: Team
-    guild_id: Snowflake
-    primary_sku_id: Snowflake
-    slug: str
     terms_of_service_url: str
     privacy_policy_url: str
     hook: bool

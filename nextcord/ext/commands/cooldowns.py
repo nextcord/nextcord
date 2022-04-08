@@ -234,11 +234,15 @@ class CooldownMapping:
         for k in dead_keys:
             del self._cache[k]
 
+    def _is_default(self) -> bool:
+        # This method can be overridden in subclasses
+        return self._type is BucketType.default
+
     def create_bucket(self, message: Message) -> Cooldown:
         return self._cooldown.copy()  # type: ignore
 
     def get_bucket(self, message: Message, current: Optional[float] = None) -> Cooldown:
-        if self._type is BucketType.default:
+        if self._is_default():
             return self._cooldown  # type: ignore
 
         self._verify_cache_integrity(current)
@@ -274,6 +278,10 @@ class DynamicCooldownMapping(CooldownMapping):
     @property
     def valid(self) -> bool:
         return True
+
+    def _is_default(self) -> bool:
+        # In dynamic mappings even default bucket types may have custom behavior
+        return False
 
     def create_bucket(self, message: Message) -> Cooldown:
         return self._factory(message)

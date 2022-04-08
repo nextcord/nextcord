@@ -1,4 +1,4 @@
-# Your bot token should not be made public with your code. Otherwise anyone can sign in as your bot and mess with its servers.
+# Your bot token should not be made public with your code. Otherwise, anyone can sign in as your bot and mess with its servers.
 # You should load the token as an environment variable, then access it like this:
 
 import os

@@ -98,6 +98,7 @@ if TYPE_CHECKING:
         ActivityAssets,
         ActivityButton,
     )
+    from .state import ConnectionState
 
 
 class BaseActivity:
@@ -186,7 +187,7 @@ class Activity(BaseActivity):
         - ``id``: A string representing the party ID.
         - ``size``: A list of up to two integer elements denoting (current_size, maximum_size).
     buttons: List[:class:`dict`]
-        An list of dictionaries representing custom buttons shown in a rich presence.
+        A list of dictionaries representing custom buttons shown in a rich presence.
         Each dictionary contains the following keys:
 
         - ``label``: A string representing the text shown on the button.
@@ -738,10 +739,11 @@ class CustomActivity(BaseActivity):
         The emoji to pass to the activity, if any.
     """
 
-    __slots__ = ('name', 'emoji', 'state')
+    __slots__ = ('name', 'emoji', 'state', "_state")
 
-    def __init__(self, name: Optional[str], *, emoji: Optional[PartialEmoji] = None, **extra: Any):
+    def __init__(self, name: Optional[str], *, _connection_state: Optional[ConnectionState] = None, emoji: Optional[PartialEmoji] = None, **extra: Any):
         super().__init__(**extra)
+        self._state = _connection_state
         self.name: Optional[str] = name
         self.state: Optional[str] = extra.pop('state', None)
         if self.name == 'Custom Status':
@@ -758,6 +760,9 @@ class CustomActivity(BaseActivity):
             self.emoji = emoji
         else:
             raise TypeError(f'Expected str, PartialEmoji, or None, received {type(emoji)!r} instead.')
+
+        if self.emoji is not None:
+            self.emoji._state = self._state
 
     @property
     def type(self) -> ActivityType:
@@ -815,7 +820,7 @@ def create_activity(data: ActivityPayload) -> ActivityTypes:
 def create_activity(data: None) -> None:
     ...
 
-def create_activity(data: Optional[ActivityPayload]) -> Optional[ActivityTypes]:
+def create_activity(state: ConnectionState, data: Optional[ActivityPayload]) -> Optional[ActivityTypes]:
     if not data:
         return None
 
@@ -831,10 +836,10 @@ def create_activity(data: Optional[ActivityPayload]) -> Optional[ActivityTypes]:
             return Activity(**data)
         else:
             # we removed the name key from data already
-            return CustomActivity(name=name, **data) # type: ignore
+            return CustomActivity(name=name, _connection_state=state, **data) # type: ignore
     elif game_type is ActivityType.streaming:
         if 'url' in data:
-            # the url won't be None here
+            # the URL won't be None here
             return Streaming(**data) # type: ignore
         return Activity(**data)
     elif game_type is ActivityType.listening and 'sync_id' in data and 'session_id' in data:

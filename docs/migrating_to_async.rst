@@ -12,7 +12,7 @@ fundamental changes in how the library operates.
 
 The biggest major change is that the library has dropped support to all versions prior to
 Python 3.4.2. This was made to support :mod:`asyncio`, in which more detail can be seen
-:issue:`in the corresponding issue <50>`. To reiterate this, the implication is that
+:dpyissue:`in the corresponding issue <50>`. To reiterate this, the implication is that
 **python version 2.7 and 3.3 are no longer supported**.
 
 Below are all the other major changes from v0.9.0 to v0.10.0.

@@ -46,7 +46,7 @@ import traceback
 
 from collections.abc import Sequence
 from nextcord.backoff import ExponentialBackoff
-from nextcord.utils import MISSING
+from nextcord.utils import MISSING, utcnow
 
 __all__ = (
     'loop',
@@ -131,7 +131,7 @@ class Loop(Generic[LF]):
         self._last_iteration: datetime.datetime = MISSING
         self._next_iteration = None
 
-        if not inspect.iscoroutinefunction(self.coro):
+        if not asyncio.iscoroutinefunction(self.coro):
             raise TypeError(f'Expected coroutine function, not {type(self.coro).__name__!r}.')
 
     async def _call_loop_function(self, name: str, *args: Any, **kwargs: Any) -> None:
@@ -157,7 +157,7 @@ class Loop(Generic[LF]):
             self._prepare_time_index()
             self._next_iteration = self._get_next_sleep_time()
         else:
-            self._next_iteration = datetime.datetime.now(datetime.timezone.utc)
+            self._next_iteration = utcnow()
         try:
             await self._try_sleep_until(self._next_iteration)
             while True:
@@ -178,7 +178,7 @@ class Loop(Generic[LF]):
                     if self._stop_next_iteration:
                         return
 
-                    now = datetime.datetime.now(datetime.timezone.utc)
+                    now = utcnow()
                     if now > self._next_iteration:
                         self._next_iteration = now
                         if self._time is not MISSING:
@@ -488,7 +488,7 @@ class Loop(Generic[LF]):
             The function was not a coroutine.
         """
 
-        if not inspect.iscoroutinefunction(coro):
+        if not asyncio.iscoroutinefunction(coro):
             raise TypeError(f'Expected coroutine function, received {coro.__class__.__name__!r}.')
 
         self._before_loop = coro
@@ -516,7 +516,7 @@ class Loop(Generic[LF]):
             The function was not a coroutine.
         """
 
-        if not inspect.iscoroutinefunction(coro):
+        if not asyncio.iscoroutinefunction(coro):
             raise TypeError(f'Expected coroutine function, received {coro.__class__.__name__!r}.')
 
         self._after_loop = coro
@@ -542,7 +542,7 @@ class Loop(Generic[LF]):
         TypeError
             The function was not a coroutine.
         """
-        if not inspect.iscoroutinefunction(coro):
+        if not asyncio.iscoroutinefunction(coro):
             raise TypeError(f'Expected coroutine function, received {coro.__class__.__name__!r}.')
 
         self._error = coro  # type: ignore
@@ -556,20 +556,18 @@ class Loop(Generic[LF]):
             self._time_index = 0
             if self._current_loop == 0:
                 # if we're at the last index on the first iteration, we need to sleep until tomorrow
-                return datetime.datetime.combine(
-                    datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1), self._time[0]
-                )
+                return datetime.datetime.combine(utcnow() + datetime.timedelta(days=1), self._time[0])
 
         next_time = self._time[self._time_index]
 
         if self._current_loop == 0:
             self._time_index += 1
-            if next_time > datetime.datetime.now(datetime.timezone.utc).timetz():
-                return datetime.datetime.combine(datetime.datetime.now(datetime.timezone.utc), next_time)
+            if next_time > utcnow().timetz():
+                return datetime.datetime.combine(utcnow(), next_time)
             else:
-                return datetime.datetime.combine(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1), next_time)
+                return datetime.datetime.combine(utcnow() + datetime.timedelta(days=1), next_time)
 
-        next_date = cast(datetime.datetime, self._last_iteration)
+        next_date = self._last_iteration
         if next_time < next_date.timetz():
             next_date += datetime.timedelta(days=1)
 
@@ -581,9 +579,7 @@ class Loop(Generic[LF]):
         # to calculate the next time index from
 
         # pre-condition: self._time is set
-        time_now = (
-            now if now is not MISSING else datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
-        ).timetz()
+        time_now = (now if now is not MISSING else utcnow().replace(microsecond=0)).timetz()
         for idx, time in enumerate(self._time):
             if time >= time_now:
                 self._time_index = idx
@@ -599,6 +595,8 @@ class Loop(Generic[LF]):
         utc: datetime.timezone = datetime.timezone.utc,
     ) -> List[datetime.time]:
         if isinstance(time, dt):
+            if time.tzinfo is not None and time.tzinfo.utcoffset(None) is None:
+                raise TypeError("Incompatible timezone module used. Please use datetime.timezone instead.")
             inner = time if time.tzinfo is not None else time.replace(tzinfo=utc)
             return [inner]
         if not isinstance(time, Sequence):
@@ -721,6 +719,11 @@ def loop(
 
             Duplicate times will be ignored, and only run once.
 
+        .. warning::
+
+            "Semi-aware" timezones cannot be used.
+            Using :func:`pytz.timezone` to pass ``tzinfo`` will raise an exception.
+
         .. versionadded:: 2.0
 
     count: Optional[:class:`int`]
@@ -740,7 +743,8 @@ def loop(
         An invalid value was given.
     TypeError
         The function was not a coroutine, an invalid value for the ``time`` parameter was passed,
-        or ``time`` parameter was passed in conjunction with relative time parameters.
+        ``time`` parameter was passed in conjunction with relative time parameters,
+        or an incompatible timezone module was used for the ``tzinfo`` parameter of ``time``.
     """
 
     def decorator(func: LF) -> Loop[LF]:

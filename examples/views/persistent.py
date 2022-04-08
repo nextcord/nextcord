@@ -4,7 +4,7 @@ from nextcord.ext import commands
 
 
 # Define a simple View that persists between bot restarts
-# In order a view to persist between restarts it needs to meet the following conditions:
+# In order for a view to persist between restarts it needs to meet the following conditions:
 # 1) The timeout of the View has to be set to None
 # 2) Every item in the View has to have a custom_id set
 # It is recommended that the custom_id be sufficiently unique to
@@ -37,14 +37,13 @@ class Bot(commands.Bot):
         if not self.persistent_views_added:
             # Register the persistent view for listening here.
             # Note that this does not send the view to any message.
-            # In order to do this you need to first send a message with the View, which is shown below.
+            # To do that, you need to send a message with the View as shown below.
             # If you have the message_id you can also pass it as a keyword argument, but for this example
             # we don't have one.
             self.add_view(PersistentView())
             self.persistent_views_added = True
 
         print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
 
 
 bot = Bot(command_prefix='$')

@@ -55,6 +55,8 @@ if TYPE_CHECKING:
     from .role import Role
     from .permissions import Permissions
     from .state import ConnectionState
+    from datetime import datetime
+
 
 
 class Thread(Messageable, Hashable):
@@ -121,6 +123,11 @@ class Thread(Messageable, Hashable):
         Usually a value of 60, 1440, 4320 and 10080.
     archive_timestamp: :class:`datetime.datetime`
         An aware timestamp of when the thread's archived status was last updated in UTC.
+    create_timestamp: Optional[:class:`datetime.datetime`]
+        Returns the threads's creation time in UTC.
+        This is ``None`` if the thread was created before January 9th, 2021.
+
+        .. versionadded:: 2.0
     """
 
     __slots__ = (
@@ -143,6 +150,7 @@ class Thread(Messageable, Hashable):
         'archiver_id',
         'auto_archive_duration',
         'archive_timestamp',
+        'create_timestamp',
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload):
@@ -189,6 +197,7 @@ class Thread(Messageable, Hashable):
         self.archive_timestamp = parse_time(data['archive_timestamp'])
         self.locked = data.get('locked', False)
         self.invitable = data.get('invitable', True)
+        self.create_timestamp = parse_time(data.get('create_timestamp'))
 
     def _update(self, data):
         try:
@@ -202,6 +211,15 @@ class Thread(Messageable, Hashable):
             self._unroll_metadata(data['thread_metadata'])
         except KeyError:
             pass
+
+    @property
+    def created_at(self) -> Optional[datetime]:
+        """Optional[:class:`datetime.datetime`]: Returns the threads's creation time in UTC.
+        This is ``None`` if the thread was created before January 9th, 2021.
+
+        .. versionadded:: 2.0
+        """
+        return self.create_timestamp
 
     @property
     def type(self) -> ChannelType:
@@ -273,7 +291,7 @@ class Thread(Messageable, Hashable):
         if parent is None:
             raise ClientException('Parent channel not found')
         return parent.category
-    
+
     @property
     def category_id(self) -> Optional[int]:
         """The category channel ID the parent channel belongs to, if applicable.
@@ -293,6 +311,14 @@ class Thread(Messageable, Hashable):
         if parent is None:
             raise ClientException('Parent channel not found')
         return parent.category_id
+
+    @property
+    def jump_url(self) -> str:
+        """:class:`str`: Returns a URL that allows the client to jump to this channel.
+
+        .. versionadded:: 2.0
+        """
+        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
 
     def is_private(self) -> bool:
         """:class:`bool`: Whether the thread is a private thread.

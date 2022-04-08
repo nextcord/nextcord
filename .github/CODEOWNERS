@@ -10,3 +10,4 @@
 /nextcord/ext/tasks/ @veni-vidi-code 
 /nextcord/scheduled_events.py @ooliver1
 /nextcord/types/scheduled_events.py @ooliver1
+/nextcord/application_command.py @alentoghostflame

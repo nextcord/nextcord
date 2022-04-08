@@ -30,8 +30,8 @@ from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
 from .types.snowflake import Snowflake
-from .utils import MISSING, parse_time
-
+from .utils import MISSING, parse_time, _bytes_to_base64_data
+from .asset import Asset
 __all__: Tuple[str] = (
     'EntityMetadata',
     'ScheduledEventUser',
@@ -204,8 +204,10 @@ class ScheduledEvent(Hashable):
         The scheduled start time for the event.
     user_count: :class:`int`
         An approximate count of the 'interested' users.
+    image: :class:`Asset`
+        The event cover image.
     """
-    __slots__: Tuple[str] = (
+    __slots__: Tuple[str, ...] = (
         'channel',
         'channel_id',
         'creator',
@@ -220,6 +222,7 @@ class ScheduledEvent(Hashable):
         'user_count',
         '_state',
         '_users',
+        'image',
     )
 
     def __init__(
@@ -250,6 +253,11 @@ class ScheduledEvent(Hashable):
         self.channel_id: Optional[int] = data.get('channel_id')
         self._users: Dict[int, ScheduledEventUser] = {}
         self._update_users(data.get('users', []))
+        
+        if image := data.get("image"):
+            self.image: Optional[Asset] = Asset._from_scheduled_event_image(self._state, self.id, image)
+        else:
+            self.image: Optional[Asset] = None
 
     def _update_users(self, data: List[ScheduledEventUserPayload]) -> None:
         for user in data:
@@ -323,7 +331,8 @@ class ScheduledEvent(Hashable):
         description: str = MISSING,
         type: Optional[ScheduledEventEntityType] = MISSING,
         status: Optional[ScheduledEventStatus] = MISSING,
-        reason: Optional[str] = None
+        reason: Optional[str] = None,
+        image: Optional[bytes] = MISSING
     ) -> ScheduledEvent:
         """|coro|
 
@@ -350,6 +359,16 @@ class ScheduledEvent(Hashable):
         status: :class:`ScheduledEventStatus`
             The new status for the event.
 
+            .. note::
+
+                Only the following edits to an event's status are permitted:
+                scheduled -> active ;
+                active -> completed ;
+                scheduled -> canceled
+        image: Optional[:class:`bytes`]
+            A :term:`py:bytes-like object` representing the cover image.
+            Could be ``None`` to denote removal of the cover image.
+
         Returns
         -------
         :class:`ScheduledEvent`
@@ -374,6 +393,12 @@ class ScheduledEvent(Hashable):
             payload['type'] = type.value
         if status is not MISSING:
             payload['status'] = status.value
+        if image is not MISSING:
+            if image is None:
+                payload['image'] = image
+            else:
+                payload['image'] = _bytes_to_base64_data(image)
+
         if not payload:
             return self
         data = await self._state.http.edit_event(self.guild.id, self.id, reason=reason, **payload)

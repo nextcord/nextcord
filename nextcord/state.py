@@ -28,7 +28,6 @@ from __future__ import annotations
 import asyncio
 from collections import deque, OrderedDict
 import copy
-import datetime
 import itertools
 import logging
 from typing import Dict, Optional, TYPE_CHECKING, Union, Callable, Any, List, TypeVar, Coroutine, Sequence, Tuple, \
@@ -57,6 +56,7 @@ from .invite import Invite
 from .integrations import _integration_factory
 from .interactions import Interaction
 from .ui.view import ViewStore, View
+from .ui.modal import ModalStore, Modal
 from .stage_instance import StageInstance
 from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
@@ -80,6 +80,7 @@ if TYPE_CHECKING:
     from .types.sticker import GuildSticker as GuildStickerPayload
     from .types.guild import Guild as GuildPayload
     from .types.message import Message as MessagePayload
+    from .types.checks import ApplicationCheck, ApplicationHook
 
     T = TypeVar('T')
     CS = TypeVar('CS', bound='ConnectionState')
@@ -245,9 +246,14 @@ class ConnectionState:
             if attr.startswith('parse_'):
                 parsers[attr[6:].upper()] = func
 
+        # Global application command checks
+        self._application_command_checks: List[ApplicationCheck] = []
+        self._application_command_before_invoke: ApplicationHook = None
+        self._application_command_after_invoke: ApplicationHook = None
+
         self.clear()
 
-    def clear(self, *, views: bool = True) -> None:
+    def clear(self, *, views: bool = True, modals: bool = True) -> None:
         self.user: Optional[ClientUser] = None
         # Originally, this code used WeakValueDictionary to maintain references to the
         # global user mapping.
@@ -271,6 +277,8 @@ class ConnectionState:
         self._application_command_ids = {}
         if views:
             self._view_store: ViewStore = ViewStore(self)
+        if modals:
+            self._modal_store: ModalStore = ModalStore(self)
 
         self._voice_clients: Dict[int, VoiceProtocol] = {}
 
@@ -377,6 +385,9 @@ class ConnectionState:
 
     def store_view(self, view: View, message_id: Optional[int] = None) -> None:
         self._view_store.add_view(view, message_id)
+    
+    def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
+        self._modal_store.add_modal(modal, user_id)
 
     def prevent_view_updates_for(self, message_id: int) -> Optional[View]:
         return self._view_store.remove_message_tracking(message_id)
@@ -1025,6 +1036,9 @@ class ConnectionState:
             custom_id = interaction.data['custom_id']  # type: ignore
             component_type = interaction.data['component_type']  # type: ignore
             self._view_store.dispatch(component_type, custom_id, interaction)
+        if data['type'] == 5: # modal submit
+            custom_id = interaction.data['custom_id']
+            self._modal_store.dispatch(custom_id, interaction)
 
         self.dispatch('interaction', interaction)
 
@@ -1375,7 +1389,8 @@ class ConnectionState:
         return guild.id not in self._guilds
 
     async def chunk_guild(self, guild, *, wait=True, cache=None):
-        cache = cache or self.member_cache_flags.joined
+        if cache is None:
+            cache = self.member_cache_flags.joined
         request = self._chunk_requests.get(guild.id)
         if request is None:
             self._chunk_requests[guild.id] = request = ChunkRequest(guild.id, self.loop, self._get_guild, cache=cache)
@@ -1631,6 +1646,7 @@ class ConnectionState:
                     asyncio.create_task(logging_coroutine(coro, info='Voice Protocol voice state update handler'))
 
             member, before, after = guild._update_voice_state(data, channel_id)  # type: ignore
+            after = copy.copy(after)
             if member is not None:
                 if flags.voice:
                     if channel_id is None and flags._voice_only and member.id != self_id:

@@ -40,9 +40,18 @@ Client
 
 .. autoclass:: Client
     :members:
-    :exclude-members: fetch_guilds, event
+    :exclude-members: fetch_guilds, event, slash_command, user_command, message_command
 
     .. automethod:: Client.event()
+        :decorator:
+
+    .. automethod:: Client.slash_command
+        :decorator:
+    
+    .. automethod:: Client.user_command
+        :decorator:
+        
+    .. automethod:: Client.message_command
         :decorator:
 
     .. automethod:: Client.fetch_guilds
@@ -298,6 +307,10 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param kwargs: The keyword arguments for the event that raised the
         exception.
 
+.. function:: on_close()
+
+    Called when the client is exiting the event loop and shutting down.
+
 .. function:: on_socket_event_type(event_type)
 
     Called whenever a websocket event is received from the WebSocket.
@@ -371,7 +384,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
 .. function:: on_raw_typing(payload)
 
-    Called when someone begins typing a message. Unlike :func:`on_typing`, this is 
+    Called when someone begins typing a message. Unlike :func:`on_typing`, this is
     called regardless if the user can be found in the bot's cache or not.
 
     If the typing event is occuring in a guild,
@@ -1145,7 +1158,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 .. function:: on_guild_scheduled_event_user_add(event, user)
               on_guild_scheduled_event_user_remove(event, user)
 
-    Called when a :class:`ScheduledEventUser` is interested in a 
+    Called when a :class:`ScheduledEventUser` is interested in a
     :class:`ScheduledEvent`.
 
     :param event: The event that the user is interested in.
@@ -1217,10 +1230,6 @@ of :class:`enum.Enum`.
     .. attribute:: news
 
         A guild news channel.
-
-    .. attribute:: store
-
-        A guild store channel.
 
     .. attribute:: stage_voice
 
@@ -1350,9 +1359,15 @@ of :class:`enum.Enum`.
         The system message denoting that the author is replying to a message.
 
         .. versionadded:: 2.0
-    .. attribute:: application_command
+    .. attribute:: chat_input_command
 
-        The system message denoting that an application (or "slash") command was executed.
+        The system message denoting that a slash command was executed.
+
+        .. versionadded:: 2.0
+    .. attribute:: thread_starter_message
+
+        The system message denoting the message in the thread that is the one that started the
+        thread's conversation topic.
 
         .. versionadded:: 2.0
     .. attribute:: guild_invite_reminder
@@ -1360,10 +1375,9 @@ of :class:`enum.Enum`.
         The system message sent as a reminder to invite people to the guild.
 
         .. versionadded:: 2.0
-    .. attribute:: thread_starter_message
+    .. attribute:: context_menu_command
 
-        The system message denoting the message in the thread that is the one that started the
-        thread's conversation topic.
+        The system message denoting that a context menu command was executed.
 
         .. versionadded:: 2.0
 
@@ -1561,6 +1575,17 @@ of :class:`enum.Enum`.
     .. attribute:: url
 
         An alias for :attr:`link`.
+
+.. class:: TextInputStyle
+
+    Represent the style of a text input component.
+
+    .. attribute:: short
+
+        Represent a single line input
+    .. attribute:: paragraph
+
+        Represent a multi line input
 
 .. class:: VoiceRegion
 
@@ -2697,9 +2722,13 @@ of :class:`enum.Enum`.
 
         The event has finished.
 
+    .. attribute:: canceled
+
+        The event was canceled.
+
     .. attribute:: cancelled
 
-        The event was cancelled.
+        An alias for :attr:`canceled`.
 
 Async Iterator
 ----------------
@@ -3778,15 +3807,6 @@ ThreadMember
 .. autoclass:: ThreadMember()
     :members:
 
-StoreChannel
-~~~~~~~~~~~~~
-
-.. attributetable:: StoreChannel
-
-.. autoclass:: StoreChannel()
-    :members:
-    :inherited-members:
-
 VoiceChannel
 ~~~~~~~~~~~~~
 
@@ -4255,6 +4275,14 @@ View
 .. autoclass:: nextcord.ui.View
     :members:
 
+Modal
+~~~~~~~
+
+.. attributetable:: nextcord.ui.Modal
+
+.. autoclass:: nextcord.ui.Modal
+    :members:
+
 Item
 ~~~~~~~
 
@@ -4274,6 +4302,15 @@ Button
 
 .. autofunction:: nextcord.ui.button
 
+TextInput
+~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.TextInput
+
+.. autoclass:: nextcord.ui.TextInput
+    :members:
+    :inherited-members:
+
 Select
 ~~~~~~~
 
@@ -4285,6 +4322,47 @@ Select
 
 .. autofunction:: nextcord.ui.select
 
+
+Application Commands
+--------------------
+
+.. attributetable:: ApplicationCommand
+
+.. autoclass:: ApplicationCommand
+    :members:
+
+.. attributetable:: ApplicationSubcommand
+
+.. autoclass:: ApplicationSubcommand
+    :members:
+
+Options
+~~~~~~~
+
+.. attributetable:: CommandOption
+
+.. autoclass:: CommandOption
+    :members:
+
+.. attributetable:: SlashOption
+
+.. autoclass:: SlashOption
+    :members:
+
+Cogs
+~~~~
+
+.. autoclass:: ClientCog
+    :members:
+
+Decorators
+~~~~~~~~~~
+
+.. autoclass:: message_command
+
+.. autoclass:: slash_command
+
+.. autoclass:: user_command
 
 Exceptions
 ------------
@@ -4324,6 +4402,12 @@ The following exceptions are thrown by the library.
 
 .. autoexception:: nextcord.opus.OpusNotLoaded
 
+.. autoexception:: ApplicationError
+
+.. autoexception:: ApplicationInvokeError
+
+.. autoexception:: ApplicationCheckFailure
+
 Exception Hierarchy
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -4345,3 +4429,6 @@ Exception Hierarchy
                 - :exc:`Forbidden`
                 - :exc:`NotFound`
                 - :exc:`DiscordServerError`
+        - :exc:`ApplicationError`
+            - :exc:`ApplicationInvokeError`
+            - :exc:`ApplicationCheckFailure`

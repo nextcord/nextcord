@@ -403,6 +403,8 @@ class Role(Hashable):
         position: :class:`int`
             The new role's position. This must be below your top role's
             position or it will fail.
+        icon: Union[:class:`str`, :class:`bytes`, :class:`File`]
+            The role's icon image
         reason: Optional[:class:`str`]
             The reason for editing this role. Shows up on the audit log.
 

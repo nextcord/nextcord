@@ -25,11 +25,12 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
-import inspect
+import asyncio
 import itertools
 import sys
 from operator import attrgetter
 from typing import Any, Dict, List, Literal, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union, overload
+from functools import partial
 
 from . import abc
 
@@ -177,7 +178,7 @@ def flatten_user(cls):
             # probably a member function by now
             def generate_function(x):
                 # We want sphinx to properly show coroutine functions as coroutines
-                if inspect.iscoroutinefunction(value):
+                if asyncio.iscoroutinefunction(value):
 
                     async def general(self, *args, **kwargs):  # type: ignore
                         return await getattr(self._user, x)(*args, **kwargs)
@@ -238,7 +239,7 @@ class Member(abc.Messageable, _UserTag):
 
             Due to a Discord API limitation, a user's Spotify activity may not appear
             if they are listening to a song with a title longer
-            than 128 characters. See :issue:`1738` for more information.
+            than 128 characters. See :dpyissue:`1738` for more information.
 
     guild: :class:`Guild`
         The guild that the member belongs to.
@@ -388,7 +389,7 @@ class Member(abc.Messageable, _UserTag):
         self._timeout = utils.parse_time(data.get('communication_disabled_until'))
 
     def _presence_update(self, data: PartialPresenceUpdate, user: UserPayload) -> Optional[Tuple[User, User]]:
-        self.activities = tuple(map(create_activity, data['activities']))
+        self.activities = tuple(map(lambda x: create_activity(self._state, x), data['activities']))
         self._client_status = {
             sys.intern(key): sys.intern(value) for key, value in data.get('client_status', {}).items()  # type: ignore
         }
@@ -542,7 +543,7 @@ class Member(abc.Messageable, _UserTag):
 
             Due to a Discord API limitation, this may be ``None`` if
             the user is listening to a song on Spotify with a title longer
-            than 128 characters. See :issue:`1738` for more information.
+            than 128 characters. See :dpyissue:`1738` for more information.
 
         .. note::
 
@@ -616,8 +617,8 @@ class Member(abc.Messageable, _UserTag):
         return self.guild._voice_state_for(self._user.id)
 
     @property
-    def timeout(self) -> Optional[datetime.datetime]:
-        """Optional[:class:`datetime.datetime`]: A datetime object that represents 
+    def communication_disabled_until(self) -> Optional[datetime.datetime]:
+        """Optional[:class:`datetime.datetime`]: A datetime object that represents
         the time in which the member will be able to interact again.
 
         .. note::
@@ -655,6 +656,33 @@ class Member(abc.Messageable, _UserTag):
         Kicks this member. Equivalent to :meth:`Guild.kick`.
         """
         await self.guild.kick(self, reason=reason)
+        
+    async def timeout(
+        self,
+        timeout: Union[datetime.datetime, datetime.timedelta],
+        *,
+        reason: Optional[str] = None,
+    ) -> None:
+        """|coro|
+
+        Times out this member.
+
+        .. note::
+
+            This is a more direct method of timing out a member.
+            You can also time out members using :meth:`Member.edit`.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        -----------
+        timeout: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]]
+            The time until the member should not be timed out.
+            Set this to None to disable their timeout.
+        reason: Optional[:class:`str`]
+            The reason for editing this member. Shows up on the audit log.
+        """
+        await self.edit(timeout=timeout, reason=reason)
 
     async def edit(
         self,
