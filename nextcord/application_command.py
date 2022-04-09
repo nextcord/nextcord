@@ -231,7 +231,7 @@ class BaseCommandOption(ApplicationCommandOption):
     def __init__(
             self,
             parameter: Parameter,
-            command: Union[BaseApplicationCommand],
+            command: BaseApplicationCommand,
             parent_cog: Optional[ClientCog] = MISSING
     ):
         """Represents an application command option, but takes a Parameter and ClientCog as an argument.
@@ -263,7 +263,7 @@ class OptionConverter(_CustomTypingMetaBase):
         """
         self.type: Union[type, ApplicationCommandOptionType] = option_type
 
-    async def convert(self, state: ConnectionState, interaction: Interaction, value: Any) -> Any:
+    async def convert(self, interaction: Interaction, value: Any) -> Any:
         raise NotImplementedError
 
     def modify(self, option: BaseCommandOption) -> None:
@@ -305,7 +305,6 @@ class ClientCog:
                     value.from_callback(value.callback)
                     self.__cog_application_commands__.append(value)
                 # elif isinstance(value, ApplicationSubcommand):
-
 
     @property
     def __cog_to_register__(self) -> List[BaseApplicationCommand]:
@@ -561,22 +560,22 @@ class CallbackMixin:
         return True
 
     async def invoke_callback_with_hooks(self, state: ConnectionState, interaction: Interaction, *args, **kwargs):
-        self_hook_args = [self.parent_cog, interaction] if self.parent_cog else [interaction]
+        # self_hook_args = [self.parent_cog, interaction] if self.parent_cog else [interaction]
         interaction._set_application_command(self)
         try:
             can_run = await self.can_run(interaction)
         except Exception as error:
             state.dispatch("application_command_error", interaction, error)
-            await self.invoke_error(*self_hook_args, error)
+            await self.invoke_error(interaction, error)
             return
 
         if can_run:
 
             if self._callback_before_invoke is not None:
-                await self._callback_before_invoke(*self_hook_args)
+                await self._callback_before_invoke(interaction)
 
             if (before_invoke := self.cog_before_invoke) is not None:
-                await before_invoke(*self_hook_args)
+                await before_invoke(interaction)
             if (before_invoke := state._application_command_before_invoke) is not None:
                 await before_invoke(interaction)
 
@@ -588,13 +587,13 @@ class CallbackMixin:
                     interaction,
                     ApplicationInvokeError(error),
                 )
-                await self.invoke_error(*self_hook_args, error)
+                await self.invoke_error(interaction, error)
             finally:
                 if self._callback_after_invoke is not None:
-                    await self._callback_after_invoke(*self_hook_args)
+                    await self._callback_after_invoke(interaction)
 
                 if (after_invoke := self.cog_after_invoke) is not None:
-                    await after_invoke(*self_hook_args)
+                    await after_invoke(interaction)
 
                 if (after_invoke := state._application_command_after_invoke) is not None:
                     await after_invoke(interaction)
@@ -1014,7 +1013,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             value = mentionables[int(value)]
 
         if self.converter:
-            return await self.converter.convert(state, interaction, value)
+            return await self.converter.convert(interaction, value)
         if value is MISSING:
             return None
         else:
@@ -3455,7 +3454,7 @@ class Mentionable(OptionConverter):
     def __init__(self):
         super().__init__(ApplicationCommandOptionType.mentionable)
 
-    async def convert(self, state: ConnectionState, interaction: Interaction, value: Any) -> Any:
+    async def convert(self, interaction: Interaction, value: Any) -> Any:
         return value
 
 

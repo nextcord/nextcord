@@ -30,7 +30,12 @@ import functools
 from typing import Callable, Type, TypeVar, TYPE_CHECKING, Union
 
 import nextcord
-from nextcord.application_command import SlashApplicationSubcommand, Interaction, CallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand
+from nextcord.application_command import (
+    CallbackWrapper,
+    BaseApplicationCommand,
+    SlashApplicationSubcommand
+)
+from nextcord.interactions import Interaction
 from .errors import (
     ApplicationCheckAnyFailure,
     ApplicationCheckFailure,
@@ -85,12 +90,15 @@ class CheckWrapper(CallbackWrapper):
         else:
             self.predicate = predicate
 
+    def __call__(self, *args, **kwargs):
+        return self.predicate(*args, **kwargs)
+
     def modify(self, app_cmd: BaseApplicationCommand):
         app_cmd.checks.append(self.predicate)
 
 
 # def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
-def check(predicate: "ApplicationCheck") -> Type[CheckWrapper]:
+def check(predicate: "ApplicationCheck") -> Callable[[Callable], CheckWrapper]:
     r"""A decorator that adds a check to the :class:`.BaseApplicationCommand` or its
     subclasses. These checks are accessible via :attr:`.BaseApplicationCommand.checks`.
 
@@ -161,56 +169,14 @@ def check(predicate: "ApplicationCheck") -> Type[CheckWrapper]:
     predicate: Callable[[:class:`~.Interaction`], :class:`bool`]
         The predicate to check if the command should be invoked.
     """
-    # print("Base check called.")
-    # if not asyncio.iscoroutinefunction(predicate):
-    #     @functools.wraps(predicate)
-    #     async def async_wrapper(ctx):
-    #         return predicate(ctx)
-    #     predicate = async_wrapper
-
-    # class CheckWrapper(CallbackWrapper):
-    #     def modify(self, app_cmd: BaseApplicationCommand):
-    #         app_cmd.checks.insert(0, predicate)
-
-    # def decorator(
-    #     func: Union[ApplicationSubcommand, "CoroFunc"]
-    # ) -> Union[ApplicationSubcommand, "CoroFunc"]:
-    #     if isinstance(func, ApplicationSubcommand):
-    #         func.checks.insert(0, predicate)
-    #     else:
-    #         if not hasattr(func, "__slash_command_checks__"):
-    #             func.__slash_command_checks__ = []
-    #
-    #         func.__slash_command_checks__.append(predicate)
-    #
-    #     return func
-    # def wrapper(func):
-    #     print("Check wrapper called, returning it!")
-    #     return CheckWrapper(func)
-
-
     def wrapper(func):
         return CheckWrapper(func, predicate)
+    wrapper.predicate = predicate
     return wrapper
 
 
-
-    # if asyncio.iscoroutinefunction(predicate):
-    #     decorator.predicate = predicate
-    # else:
-    #     @functools.wraps(predicate)
-    #     async def async_wrapper(ctx):
-    #         return predicate(ctx)
-    #
-    #     decorator.predicate = async_wrapper
-
-    # return decorator
-    # return wrapper
-
-
-
 def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
-    r"""A :func:`check` that will pass if any of the given checks pass, 
+    r"""A :func:`check` that will pass if any of the given checks pass,
     i.e. using logical OR.
 
     If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal 

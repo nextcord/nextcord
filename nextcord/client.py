@@ -57,7 +57,7 @@ from .application_command import (
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .enums import ChannelType, InteractionType, Status, VoiceRegion
+from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
@@ -300,18 +300,12 @@ class Client:
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
         self._lazy_load_commands: bool = lazy_load_commands
-        # self._lazy_load_commands: bool = options.pop('lazy_load_commands', True)
         self._client_cogs: Set[ClientCog] = set()
         self._rollout_associate_known: bool = rollout_associate_known
         self._rollout_delete_unknown: bool = rollout_delete_unknown
         self._rollout_register_new: bool = rollout_register_new
         self._rollout_update_known: bool = rollout_update_known
         self._rollout_all_guilds: bool = rollout_all_guilds
-        # self._rollout_associate_known: bool = options.pop("rollout_associate_known", True)
-        # self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
-        # self._rollout_register_new: bool = options.pop("rollout_register_new", True)
-        # self._rollout_update_known: bool = options.pop("rollout_update_known", True)
-        # self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
 
         if VoiceClient.warn_nacl:
@@ -1888,6 +1882,34 @@ class Client:
 
     def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
         return self._connection.get_application_command(command_id)
+
+    def get_application_command_from_signature(
+            self,
+            name: str,
+            cmd_type: Union[int, ApplicationCommandType],
+            guild_id: Optional[int]
+    ) -> Optional[BaseApplicationCommand]:
+        """Gets a locally stored application command object that matches the given signature.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of the application command. Capital sensitive.
+        cmd_type: Union[:class:`int`, :class:`ApplicationCommandType`]
+            Type of application command.
+        guild_id: Optional[:class:`int`]
+            Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
+
+        Returns
+        -------
+        command: Optional[:class:`BaseApplicationCommand`]
+            Application Command with the given signature. If no command with that signature is
+            found, returns ``None`` instead.
+
+        """
+        if isinstance(cmd_type, ApplicationCommandType):
+            cmd_type = cmd_type.value
+        return self._connection.get_application_command_from_signature(name=name, cmd_type=cmd_type, guild_id=guild_id)
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
         """Returns a copied set of all added :class:`BaseApplicationCommand` objects."""
