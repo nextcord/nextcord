@@ -248,6 +248,10 @@ class Client:
         Warning: While enabling this will prevent "ghost" commands on guilds with removed code references, rolling out
         to ALL guilds with anything other than a very small bot will likely cause it to get rate limited.
 
+    default_guild_ids: List[:class:`int`]
+        Allow user to set a global scope of guild ids instead of filling in `guild_ids` parameter for each application
+        command decorator. Defaults to ``[]``
+
 
     Attributes
     -----------
@@ -297,6 +301,7 @@ class Client:
         self._rollout_register_new: bool = options.pop("rollout_register_new", True)
         self._rollout_update_known: bool = options.pop("rollout_update_known", True)
         self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
+        self._default_guild_ids: List[int] = options.pop("default_guild_ids", [])
         self._application_commands_to_add: Set[ApplicationCommand] = set()
 
         if VoiceClient.warn_nacl:
@@ -1945,6 +1950,10 @@ class Client:
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
+            # we inject the rollout guild ids in the decorated commands
+            if not command.force_global and not command.guild_ids_to_rollout:
+                for i in self._default_guild_ids:
+                    command.add_guild_rollout(i)
             self.add_application_command(command, use_rollout=True)
 
     def add_all_cog_commands(self) -> None:
@@ -1952,6 +1961,10 @@ class Client:
         for cog in self._client_cogs:
             if to_register := cog.to_register:
                 for cmd in to_register:
+                    # we inject the rollout guild ids in the cogs commands
+                    if not cmd.force_global and not cmd.guild_ids_to_rollout:
+                        for i in self._default_guild_ids:
+                            cmd.add_guild_rollout(i)
                     self.add_application_command(cmd, use_rollout=True)
 
     def add_cog(self, cog: ClientCog) -> None:
@@ -1981,7 +1994,8 @@ class Client:
         description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+            IDs of :class:`Guild`'s to add this command to. If unset, ``rollout_guild_ids`` set on the
+            :class:`~.ext.commands.Bot` or :class:`Client` will be used. If neither are present, this will be a global command.
         default_permission: :class:`bool`
             If users should be able to use this command by default or not. Defaults to Discords default, `True`.
         force_global: :class:`bool`
@@ -2013,7 +2027,8 @@ class Client:
         description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+            IDs of :class:`Guild`'s to add this command to. If unset, ``rollout_guild_ids`` set on the
+            :class:`~.ext.commands.Bot` or :class:`Client` will be used. If neither are present, this will be a global command.
         default_permission: :class:`bool`
             If users should be able to use this command by default or not. Defaults to Discords default, `True`.
         force_global: :class:`bool`
@@ -2045,7 +2060,8 @@ class Client:
         description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+            IDs of :class:`Guild`'s to add this command to. If unset, ``rollout_guild_ids`` set on the
+            :class:`~.ext.commands.Bot` or :class:`Client` will be used. If neither are present, this will be a global command.
         default_permission: :class:`bool`
             If users should be able to use this command by default or not. Defaults to Discords default, `True`.
         force_global: :class:`bool`
