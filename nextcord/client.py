@@ -1994,7 +1994,7 @@ class Client:
         description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, ``rollout_guild_ids`` set on the
+            IDs of :class:`Guild`'s to add this command to. If unset, ``default_guild_ids`` set on the
             :class:`~.ext.commands.Bot` or :class:`Client` will be used. If neither are present, this will be a global command.
         default_permission: :class:`bool`
             If users should be able to use this command by default or not. Defaults to Discords default, `True`.
@@ -2027,7 +2027,7 @@ class Client:
         description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, ``rollout_guild_ids`` set on the
+            IDs of :class:`Guild`'s to add this command to. If unset, ``default_guild_ids`` set on the
             :class:`~.ext.commands.Bot` or :class:`Client` will be used. If neither are present, this will be a global command.
         default_permission: :class:`bool`
             If users should be able to use this command by default or not. Defaults to Discords default, `True`.
@@ -2060,7 +2060,7 @@ class Client:
         description: :class:`str`
             Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, ``rollout_guild_ids`` set on the
+            IDs of :class:`Guild`'s to add this command to. If unset, ``default_guild_ids`` set on the
             :class:`~.ext.commands.Bot` or :class:`Client` will be used. If neither are present, this will be a global command.
         default_permission: :class:`bool`
             If users should be able to use this command by default or not. Defaults to Discords default, `True`.
