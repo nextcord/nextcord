@@ -1087,7 +1087,7 @@ class BaseApplicationCommand(CallbackMixin, AppCmdWrapperMixin):
             callback: Callable = MISSING,
             cmd_type: ApplicationCommandType = MISSING,
             guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            default_permission: Optional[bool] = None,
             parent_cog: Optional[ClientCog] = None,
             force_global: bool = False
     ):
@@ -1180,7 +1180,7 @@ class BaseApplicationCommand(CallbackMixin, AppCmdWrapperMixin):
             "name": str(self.name),  # Might as well stringify the name, will come in handy if people try using numbers.
             "description": self.description,
         }
-        if self.default_permission is not MISSING:
+        if self.default_permission not in (MISSING, None):
             ret["default_permission"] = self.default_permission
         else:
             ret["default_permission"] = True
