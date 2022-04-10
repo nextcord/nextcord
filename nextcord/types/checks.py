@@ -28,11 +28,16 @@ if TYPE_CHECKING:
     from ..interactions import Interaction
     from nextcord.errors import ApplicationError
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 Coro = Coroutine[Any, Any, T]
 MaybeCoro = Union[T, Coro[T]]
 CoroFunc = Callable[..., Coro[Any]]
 ApplicationCheck = Callable[[Interaction], MaybeCoro[bool]]
-ApplicationHook = Union[Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]]
-ApplicationErrorCallback = Union[Callable[[ClientCog, Interaction, ApplicationError], Coro[Any]], Callable[[Interaction, ApplicationError], Coro[Any]]]
+ApplicationHook = Union[
+    Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
+]
+ApplicationErrorCallback = Union[
+    Callable[[ClientCog, Interaction, ApplicationError], Coro[Any]],
+    Callable[[Interaction, ApplicationError], Coro[Any]],
+]

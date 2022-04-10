@@ -27,9 +27,7 @@ from typing import Any, TYPE_CHECKING, Union, Optional
 
 from .iterators import ReactionIterator
 
-__all__ = (
-    'Reaction',
-)
+__all__ = ("Reaction",)
 
 if TYPE_CHECKING:
     from .types.message import Reaction as ReactionPayload
@@ -37,6 +35,7 @@ if TYPE_CHECKING:
     from .partial_emoji import PartialEmoji
     from .emoji import Emoji
     from .abc import Snowflake
+
 
 class Reaction:
     """Represents a reaction to a message.
@@ -75,13 +74,22 @@ class Reaction:
     message: :class:`Message`
         Message this reaction is for.
     """
-    __slots__ = ('message', 'count', 'emoji', 'me')
 
-    def __init__(self, *, message: Message, data: ReactionPayload, emoji: Optional[Union[PartialEmoji, Emoji, str]] = None):
+    __slots__ = ("message", "count", "emoji", "me")
+
+    def __init__(
+        self,
+        *,
+        message: Message,
+        data: ReactionPayload,
+        emoji: Optional[Union[PartialEmoji, Emoji, str]] = None,
+    ):
         self.message: Message = message
-        self.emoji: Union[PartialEmoji, Emoji, str] = emoji or message._state.get_reaction_emoji(data['emoji'])
-        self.count: int = data.get('count', 1)
-        self.me: bool = data.get('me')
+        self.emoji: Union[
+            PartialEmoji, Emoji, str
+        ] = emoji or message._state.get_reaction_emoji(data["emoji"])
+        self.count: int = data.get("count", 1)
+        self.me: bool = data.get("me")
 
     # TODO: typeguard
     def is_custom_emoji(self) -> bool:
@@ -92,9 +100,7 @@ class Reaction:
         return isinstance(other, self.__class__) and other.emoji == self.emoji
 
     def __ne__(self, other: Any) -> bool:
-        if isinstance(other, self.__class__):
-            return other.emoji != self.emoji
-        return True
+        return other.emoji != self.emoji if isinstance(other, self.__class__) else True
 
     def __hash__(self) -> int:
         return hash(self.emoji)
@@ -103,7 +109,7 @@ class Reaction:
         return str(self.emoji)
 
     def __repr__(self) -> str:
-        return f'<Reaction emoji={self.emoji!r} me={self.me} count={self.count}>'
+        return f"<Reaction emoji={self.emoji!r} me={self.me} count={self.count}>"
 
     async def remove(self, user: Snowflake) -> None:
         """|coro|
@@ -155,7 +161,9 @@ class Reaction:
         """
         await self.message.clear_reaction(self.emoji)
 
-    def users(self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None) -> ReactionIterator:
+    def users(
+        self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
+    ) -> ReactionIterator:
         """Returns an :class:`AsyncIterator` representing the users that have reacted to the message.
 
         The ``after`` parameter must represent a member
@@ -200,10 +208,11 @@ class Reaction:
             if the member has left the guild.
         """
 
-        if not isinstance(self.emoji, str):
-            emoji = f'{self.emoji.name}:{self.emoji.id}'
-        else:
-            emoji = self.emoji
+        emoji = (
+            self.emoji
+            if isinstance(self.emoji, str)
+            else f"{self.emoji.name}:{self.emoji.id}"
+        )
 
         if limit is None:
             limit = self.count

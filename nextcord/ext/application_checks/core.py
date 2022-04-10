@@ -78,8 +78,8 @@ def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
     subclasses. These checks are accessible via :attr:`.ApplicationCommand.checks`.
 
     These checks should be predicates that take in a single parameter taking
-    a :class:`.Interaction`. If the check returns a ``False``\-like value, 
-    an ApplicationCheckFailure is raised during invocation and sent to the 
+    a :class:`.Interaction`. If the check returns a ``False``\-like value,
+    an ApplicationCheckFailure is raised during invocation and sent to the
     :func:`.on_application_command_error` event.
 
     If an exception should be thrown in the predicate then it should be a
@@ -172,10 +172,10 @@ def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
 
 
 def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
-    r"""A :func:`check` that will pass if any of the given checks pass, 
+    r"""A :func:`check` that will pass if any of the given checks pass,
     i.e. using logical OR.
 
-    If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal 
+    If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal
     the failure. It inherits from :exc:`.ApplicationCheckFailure`.
 
     .. note::
@@ -340,11 +340,11 @@ def bot_has_role(item: int) -> Callable[[T], T]:
     """Similar to :func:`.has_role` except checks if the bot itself has the
     role.
 
-    This check raises one of two special exceptions, 
-    :exc:`.ApplicationBotMissingRole` if the bot is missing the role, 
+    This check raises one of two special exceptions,
+    :exc:`.ApplicationBotMissingRole` if the bot is missing the role,
     or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
-    
+
     Parameters
     -----------
     item: Union[:class:`int`, :class:`str`]
@@ -381,8 +381,8 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
     """Similar to :func:`.has_any_role` except checks if the bot itself has
     any of the roles listed.
 
-    This check raises one of two special exceptions, 
-    :exc:`.ApplicationBotMissingAnyRole` if the bot is missing all roles, 
+    This check raises one of two special exceptions,
+    :exc:`.ApplicationBotMissingAnyRole` if the bot is missing all roles,
     or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
@@ -654,7 +654,7 @@ def is_owner() -> Callable[[T], T]:
     .. code-block:: python3
 
         bot = commands.Bot(owner_id=297045071457681409)
-    
+
         @bot.slash_command()
         @application_checks.is_owner()
         async def ownercmd(interaction: Interaction):
@@ -682,7 +682,7 @@ def is_nsfw() -> Callable[[T], T]:
     --------
 
     .. code-block:: python3
-    
+
         @bot.slash_command()
         @application_checks.is_nsfw()
         async def ownercmd(interaction: Interaction):

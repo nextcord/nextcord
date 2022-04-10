@@ -219,7 +219,10 @@ def get_flags(
                 # typing.Union
                 if flag.max_args is MISSING:
                     flag.max_args = 1
-                if annotation.__args__[-1] is type(None) and flag.default is MISSING:
+                if (
+                    isinstance(annotation.__args__[-1], type(None))
+                    and flag.default is MISSING
+                ):
                     # typing.Optional
                     flag.default = None
             elif origin is tuple:
@@ -456,7 +459,7 @@ async def convert_flag(ctx, argument: str, flag: Flag, annotation: Any = None) -
             # typing.List[x]
             annotation = annotation.__args__[0]
             return await convert_flag(ctx, argument, flag, annotation)
-        elif origin is Union and annotation.__args__[-1] is type(None):
+        elif origin is Union and isinstance(annotation.__args__[-1], type(None)):
             # typing.Optional[x]
             annotation = Union[annotation.__args__[:-1]]
             return await run_converters(ctx, annotation, argument, param)

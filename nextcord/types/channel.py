@@ -124,7 +124,9 @@ class ThreadChannel(_BaseChannel, _ThreadChannelOptional):
     thread_metadata: ThreadMetadata
 
 
-GuildChannel = Union[TextChannel, NewsChannel, VoiceChannel, CategoryChannel, StageChannel, ThreadChannel]
+GuildChannel = Union[
+    TextChannel, NewsChannel, VoiceChannel, CategoryChannel, StageChannel, ThreadChannel
+]
 
 
 class DMChannel(_BaseChannel):

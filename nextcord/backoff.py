@@ -29,11 +29,10 @@ import time
 import random
 from typing import Callable, Generic, Literal, TypeVar, overload, Union
 
-T = TypeVar('T', bool, Literal[True], Literal[False])
+T = TypeVar("T", bool, Literal[True], Literal[False])
 
-__all__ = (
-    'ExponentialBackoff',
-)
+__all__ = ("ExponentialBackoff",)
+
 
 class ExponentialBackoff(Generic[T]):
     """An implementation of the exponential backoff algorithm
@@ -69,7 +68,7 @@ class ExponentialBackoff(Generic[T]):
         rand = random.Random()
         rand.seed()
 
-        self._randfunc: Callable[..., Union[int, float]] = rand.randrange if integral else rand.uniform   # type: ignore
+        self._randfunc: Callable[..., Union[int, float]] = rand.randrange if integral else rand.uniform  # type: ignore
 
     @overload
     def delay(self: ExponentialBackoff[Literal[False]]) -> float:

@@ -22,8 +22,10 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+
 from __future__ import annotations
 import asyncio
+import contextlib
 import typing
 from inspect import signature, Parameter
 from typing import (
@@ -348,7 +350,6 @@ class CommandOption(SlashOption):
             return docstring
         else:
             return "No description provided"
-            
 
     @description.setter
     def description(self, value: str):
@@ -379,7 +380,8 @@ class CommandOption(SlashOption):
             type(None) in typing.get_args(param_typing)
             and (
                 inner_type := find(
-                    lambda t: t is not type(None), typing.get_args(param_typing)
+                    lambda t: not isinstance(t, type(None)),
+                    typing.get_args(param_typing),
                 )
             )
             and (valid_type := self.option_types.get(inner_type, None))
@@ -426,45 +428,37 @@ class CommandOption(SlashOption):
             )
             if ret:
                 return ret
-            else:
                 # Return a Member object if the required data is available, otherwise fallback to User.
-                if "members" in interaction.data["resolved"] and (
-                    interaction.guild,
-                    interaction.guild_id,
-                ):
-                    resolved_members_payload = interaction.data["resolved"]["members"]
-                    resolved_members: Dict[int, Member] = {}
-                    guild = interaction.guild or state._get_guild(interaction.guild_id)
-                    # Because we modify the payload further down,
-                    # a copy is made to avoid affecting methods that read the interaction data ahead of this function.
-                    for (
-                        member_id,
-                        member_payload,
-                    ) in resolved_members_payload.copy().items():
-                        member = guild.get_member(int(member_id))
-                        # Can't find the member in cache, let's construct one.
-                        if not member:
-                            user_payload = interaction.data["resolved"]["users"][
-                                member_id
-                            ]
-                            # This is required to construct the Member.
-                            member_payload["user"] = user_payload
-                            member = Member(
-                                data=member_payload, guild=guild, state=state
-                            )
-                            guild._add_member(member)
+            if "members" in interaction.data["resolved"]:
+                resolved_members_payload = interaction.data["resolved"]["members"]
+                resolved_members: Dict[int, Member] = {}
+                guild = interaction.guild or state._get_guild(interaction.guild_id)
+                # Because we modify the payload further down,
+                # a copy is made to avoid affecting methods that read the interaction data ahead of this function.
+                for (
+                    member_id,
+                    member_payload,
+                ) in resolved_members_payload.copy().items():
+                    member = guild.get_member(int(member_id))
+                    # Can't find the member in cache, let's construct one.
+                    if not member:
+                        user_payload = interaction.data["resolved"]["users"][member_id]
+                        # This is required to construct the Member.
+                        member_payload["user"] = user_payload
+                        member = Member(data=member_payload, guild=guild, state=state)
+                        guild._add_member(member)
 
-                        resolved_members[member.id] = member
+                    resolved_members[member.id] = member
 
-                    return resolved_members[user_id]
-                else:
-                    # The interaction data gives a dictionary of resolved users, best to use it if cache isn't available.
-                    resolved_users_payload = interaction.data["resolved"]["users"]
-                    resolved_users = {
-                        int(raw_id): state.store_user(user_payload)
-                        for raw_id, user_payload in resolved_users_payload.items()
-                    }
-                    return resolved_users[user_id]
+                return resolved_members[user_id]
+            else:
+                # The interaction data gives a dictionary of resolved users, best to use it if cache isn't available.
+                resolved_users_payload = interaction.data["resolved"]["users"]
+                resolved_users = {
+                    int(raw_id): state.store_user(user_payload)
+                    for raw_id, user_payload in resolved_users_payload.items()
+                }
+                return resolved_users[user_id]
 
         elif self.type is ApplicationCommandOptionType.role:
             return interaction.guild.get_role(int(argument))
@@ -472,7 +466,9 @@ class CommandOption(SlashOption):
             return int(argument)
         elif self.type is ApplicationCommandOptionType.number:
             return float(argument)
-        elif self.type is Message:  # TODO: This is mostly a workaround for Message commands, switch to handles below.
+        elif (
+            self.type is Message
+        ):  # TODO: This is mostly a workaround for Message commands, switch to handles below.
             return state._get_message(int(argument))
         elif self.type is ApplicationCommandOptionType.attachment:
             resolved_attachment_data: dict = interaction.data["resolved"][
@@ -695,9 +691,8 @@ class ApplicationSubcommand:
         ``one two three``.
         """
 
-        parent = self.full_parent_name
-        if parent:
-            return parent + " " + self.name
+        if parent := self.full_parent_name:
+            return f"{parent} {self.name}"
         else:
             return self.name
 
@@ -746,11 +741,8 @@ class ApplicationSubcommand:
             The function to remove from the checks.
         """
 
-        try:
+        with contextlib.suppress(ValueError):
             self.checks.remove(func)
-        except ValueError:
-            pass
-
         return self
 
     def verify_content(self):
@@ -785,12 +777,11 @@ class ApplicationSubcommand:
                 f"deep."
             )
         for option in self.options.values():
-            if option.autocomplete:
-                if not option.autocomplete_function:
-                    raise ValueError(
-                        f"{self.error_name} Kwarg {option.functional_name} has autocomplete enabled, but "
-                        f"no on_autocomplete assigned."
-                    )
+            if option.autocomplete and not option.autocomplete_function:
+                raise ValueError(
+                    f"{self.error_name} Kwarg {option.functional_name} has autocomplete enabled, but "
+                    f"no on_autocomplete assigned."
+                )
                 # While we could check if it has autocomplete disabled but an on_autocomplete function, why should we
                 # bother people who are likely reworking their code? It also doesn't break anything.
 
@@ -806,16 +797,18 @@ class ApplicationSubcommand:
         # TODO: Add kwarg support.
         # ret = ApplicationSubcommand()
         self.set_callback(callback)
-        self._parsed_docstring = parse_docstring(callback, _MAX_COMMAND_DESCRIPTION_LENGTH)
+        self._parsed_docstring = parse_docstring(
+            callback, _MAX_COMMAND_DESCRIPTION_LENGTH
+        )
         if not self.name:
             self.name = self.callback.__name__
         first_arg = True
 
         typehints = typing.get_type_hints(callback)
         for name, param in signature(self.callback).parameters.items():
-            # TODO: What kind of hardcoding is this, figure out a better way for self!
-            self_skip = name == "self"
             if first_arg:
+                # TODO: What kind of hardcoding is this, figure out a better way for self!
+                self_skip = name == "self"
                 if not self_skip:
                     first_arg = False
             else:
@@ -853,21 +846,23 @@ class ApplicationSubcommand:
     @property
     def cog_application_command_before_invoke(self) -> Optional[ApplicationHook]:
         """Returns the cog_application_command_before_invoke method for the cog that this command is in. Returns ``None`` if not the method is not found."""
-        if not self._self_argument:
-            return None
-
-        return ClientCog._get_overridden_method(
-            self._self_argument.cog_application_command_before_invoke
+        return (
+            ClientCog._get_overridden_method(
+                self._self_argument.cog_application_command_before_invoke
+            )
+            if self._self_argument
+            else None
         )
 
     @property
     def cog_application_command_after_invoke(self) -> Optional[ApplicationHook]:
         """Returns the cog_application_command_after_invoke method for the cog that this command is in. Returns ``None`` if not the method is not found."""
-        if not self._self_argument:
-            return None
-
-        return ClientCog._get_overridden_method(
-            self._self_argument.cog_application_command_after_invoke
+        return (
+            ClientCog._get_overridden_method(
+                self._self_argument.cog_application_command_after_invoke
+            )
+            if self._self_argument
+            else None
         )
 
     # Methods that can end up running the callback.

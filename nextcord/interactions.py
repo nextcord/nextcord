@@ -24,7 +24,9 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+
 from __future__ import annotations
+import contextlib
 from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
 from datetime import datetime, timedelta
 import asyncio
@@ -35,7 +37,7 @@ from .errors import (
     InteractionResponded,
     HTTPException,
     ClientException,
-    InvalidArgument
+    InvalidArgument,
 )
 from .channel import PartialMessageable, ChannelType
 
@@ -48,13 +50,18 @@ from .message import Message, Attachment
 from .object import Object
 from .permissions import Permissions
 from .utils import snowflake_time
-from .webhook.async_ import async_context, Webhook, handle_message_parameters, WebhookMessage
+from .webhook.async_ import (
+    async_context,
+    Webhook,
+    handle_message_parameters,
+    WebhookMessage,
+)
 
 __all__ = (
-    'Interaction',
-    'InteractionMessage',
-    'InteractionResponse',
-    'PartialInteractionMessage',
+    "Interaction",
+    "InteractionMessage",
+    "InteractionResponse",
+    "PartialInteractionMessage",
 )
 
 if TYPE_CHECKING:
@@ -68,16 +75,28 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from .ui.view import View
     from .ui.modal import Modal
-    from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, PartialMessageable
+    from .channel import (
+        VoiceChannel,
+        StageChannel,
+        TextChannel,
+        CategoryChannel,
+        PartialMessageable,
+    )
     from .threads import Thread
     from .client import Client
     from .application_command import ApplicationSubcommand, ApplicationCommand
 
     InteractionChannel = Union[
-        VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
+        VoiceChannel,
+        StageChannel,
+        TextChannel,
+        CategoryChannel,
+        Thread,
+        PartialMessageable,
     ]
 
 MISSING: Any = utils.MISSING
+
 
 class InteractionAttached(dict):
     """Represents the attached data of an interaction.
@@ -108,7 +127,8 @@ class InteractionAttached(dict):
         self.__dict__ = self
 
     def __repr__(self):
-        return f'<InteractionAttached {super().__repr__()}>'
+        return f"<InteractionAttached {super().__repr__()}>"
+
 
 class Interaction:
     """Represents a Discord interaction.
@@ -150,27 +170,27 @@ class Interaction:
     """
 
     __slots__: Tuple[str, ...] = (
-        'id',
-        'type',
-        'guild_id',
-        'channel_id',
-        'data',
-        'application_id',
-        'message',
-        'user',
-        'locale',
-        'guild_locale',
-        'token',
-        'version',
-        'application_command',
-        'attached',
-        '_permissions',
-        '_state',
-        '_session',
-        '_original_message',
-        '_cs_response',
-        '_cs_followup',
-        '_cs_channel',
+        "id",
+        "type",
+        "guild_id",
+        "channel_id",
+        "data",
+        "application_id",
+        "message",
+        "user",
+        "locale",
+        "guild_locale",
+        "token",
+        "version",
+        "application_command",
+        "attached",
+        "_permissions",
+        "_state",
+        "_session",
+        "_original_message",
+        "_cs_response",
+        "_cs_followup",
+        "_cs_channel",
     )
 
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
@@ -182,20 +202,20 @@ class Interaction:
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
-        self.id: int = int(data['id'])
-        self.type: InteractionType = try_enum(InteractionType, data['type'])
-        self.data: Optional[InteractionData] = data.get('data')
-        self.token: str = data['token']
-        self.version: int = data['version']
-        self.channel_id: Optional[int] = utils._get_as_snowflake(data, 'channel_id')
-        self.guild_id: Optional[int] = utils._get_as_snowflake(data, 'guild_id')
-        self.application_id: int = int(data['application_id'])
-        self.locale: Optional[str] = data.get('locale')
-        self.guild_locale: Optional[str] = data.get('guild_locale')
+        self.id: int = int(data["id"])
+        self.type: InteractionType = try_enum(InteractionType, data["type"])
+        self.data: Optional[InteractionData] = data.get("data")
+        self.token: str = data["token"]
+        self.version: int = data["version"]
+        self.channel_id: Optional[int] = utils._get_as_snowflake(data, "channel_id")
+        self.guild_id: Optional[int] = utils._get_as_snowflake(data, "guild_id")
+        self.application_id: int = int(data["application_id"])
+        self.locale: Optional[str] = data.get("locale")
+        self.guild_locale: Optional[str] = data.get("guild_locale")
 
         self.message: Optional[Message]
         try:
-            self.message = Message(state=self._state, channel=self.channel, data=data['message'])  # type: ignore
+            self.message = Message(state=self._state, channel=self.channel, data=data["message"])  # type: ignore
         except KeyError:
             self.message = None
 
@@ -206,17 +226,15 @@ class Interaction:
         if self.guild_id:
             guild = self.guild or Object(id=self.guild_id)
             try:
-                member = data['member']  # type: ignore
+                member = data["member"]  # type: ignore
             except KeyError:
                 pass
             else:
                 self.user = Member(state=self._state, guild=guild, data=member)  # type: ignore
-                self._permissions = int(member.get('permissions', 0))
+                self._permissions = int(member.get("permissions", 0))
         else:
-            try:
-                self.user = User(state=self._state, data=data['user'])
-            except KeyError:
-                pass
+            with contextlib.suppress(KeyError):
+                self.user = User(state=self._state, data=data["user"])
 
     @property
     def client(self) -> Client:
@@ -227,12 +245,12 @@ class Interaction:
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state and self._state._get_guild(self.guild_id)
-    
+
     @property
     def created_at(self) -> datetime:
         """:class:`datetime.datetime`: An aware datetime in UTC representing the creation time of the interaction."""
         return snowflake_time(self.id)
-    
+
     @property
     def expires_at(self) -> datetime:
         """:class:`datetime.datetime`: An aware datetime in UTC representing the time when the interaction will expire."""
@@ -240,15 +258,17 @@ class Interaction:
             return self.created_at + timedelta(minutes=15)
         else:
             return self.created_at + timedelta(seconds=3)
-        
+
     def is_expired(self) -> bool:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
         return utils.utcnow() > self.expires_at
 
-    def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
+    def _set_application_command(
+        self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]
+    ):
         self.application_command = app_cmd
 
-    @utils.cached_slot_property('_cs_channel')
+    @utils.cached_slot_property("_cs_channel")
     def channel(self) -> Optional[InteractionChannel]:
         """Optional[Union[:class:`abc.GuildChannel`, :class:`PartialMessageable`, :class:`Thread`]]: The channel the interaction was sent from.
 
@@ -259,8 +279,14 @@ class Interaction:
         channel = guild and guild._resolve_channel(self.channel_id)
         if channel is None:
             if self.channel_id is not None:
-                type = ChannelType.text if self.guild_id is not None else ChannelType.private
-                return PartialMessageable(state=self._state, id=self.channel_id, type=type)
+                type = (
+                    ChannelType.text
+                    if self.guild_id is not None
+                    else ChannelType.private
+                )
+                return PartialMessageable(
+                    state=self._state, id=self.channel_id, type=type
+                )
             return None
         return channel
 
@@ -272,7 +298,7 @@ class Interaction:
         """
         return Permissions(self._permissions)
 
-    @utils.cached_slot_property('_cs_response')
+    @utils.cached_slot_property("_cs_response")
     def response(self) -> InteractionResponse:
         """:class:`InteractionResponse`: Returns an object responsible for handling responding to the interaction.
 
@@ -281,13 +307,13 @@ class Interaction:
         """
         return InteractionResponse(self)
 
-    @utils.cached_slot_property('_cs_followup')
+    @utils.cached_slot_property("_cs_followup")
     def followup(self) -> Webhook:
         """:class:`Webhook`: Returns the follow up webhook for follow up interactions."""
         payload = {
-            'id': self.application_id,
-            'type': 3,
-            'token': self.token,
+            "id": self.application_id,
+            "type": 3,
+            "token": self.token,
         }
         return Webhook.from_state(data=payload, state=self._state)
 
@@ -321,7 +347,7 @@ class Interaction:
         # TODO: fix later to not raise?
         channel = self.channel
         if channel is None:
-            raise ClientException('Channel for message could not be resolved')
+            raise ClientException("Channel for message could not be resolved")
 
         adapter = async_context.get()
         data = await adapter.get_original_interaction_response(
@@ -455,12 +481,14 @@ class Interaction:
         )
 
         if delay is not None:
+
             async def inner_call(delay: float = delay):
                 await asyncio.sleep(delay)
                 try:
                     await delete_func
                 except HTTPException:
                     pass
+
             asyncio.create_task(inner_call())
         else:
             await delete_func
@@ -560,8 +588,8 @@ class InteractionResponse:
     """
 
     __slots__: Tuple[str, ...] = (
-        '_responded',
-        '_parent',
+        "_responded",
+        "_parent",
     )
 
     def __init__(self, parent: Interaction):
@@ -575,7 +603,9 @@ class InteractionResponse:
         """
         return self._responded
 
-    async def defer(self, *, ephemeral: bool = False, with_message: bool = False) -> None:
+    async def defer(
+        self, *, ephemeral: bool = False, with_message: bool = False
+    ) -> None:
         """|coro|
 
         Defers the interaction response.
@@ -592,7 +622,7 @@ class InteractionResponse:
             Indicates whether the response will be a message with thinking state (bot is thinking...).
             This is always True for interactions of type :attr:`InteractionType.application_command`.
             For interactions of type :attr:`InteractionType.component` this defaults to False.
-            
+
             .. versionadded:: 2.0
 
         Raises
@@ -611,14 +641,21 @@ class InteractionResponse:
         if parent.type is InteractionType.application_command or with_message:
             defer_type = InteractionResponseType.deferred_channel_message.value
             if ephemeral:
-                data = {'flags': 64}
-        elif parent.type is InteractionType.component or parent.type is InteractionType.modal_submit:
+                data = {"flags": 64}
+        elif (
+            parent.type is InteractionType.component
+            or parent.type is InteractionType.modal_submit
+        ):
             defer_type = InteractionResponseType.deferred_message_update.value
 
         if defer_type:
             adapter = async_context.get()
             await adapter.create_interaction_response(
-                parent.id, parent.token, session=parent._session, type=defer_type, data=data
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=defer_type,
+                data=data,
             )
             self._responded = True
 
@@ -643,7 +680,10 @@ class InteractionResponse:
         if parent.type is InteractionType.ping:
             adapter = async_context.get()
             await adapter.create_interaction_response(
-                parent.id, parent.token, session=parent._session, type=InteractionResponseType.pong.value
+                parent.id,
+                parent.token,
+                session=parent._session,
+                type=InteractionResponseType.pong.value,
             )
             self._responded = True
 
@@ -673,7 +713,9 @@ class InteractionResponse:
         if not isinstance(choices, dict):
             choice_list = [{"name": choice, "value": choice} for choice in choices]
         else:
-            choice_list = [{"name": key, "value": value} for key, value in choices.items()]
+            choice_list = [
+                {"name": key, "value": value} for key, value in choices.items()
+            ]
 
         payload = {"choices": choice_list}
 
@@ -683,10 +725,9 @@ class InteractionResponse:
             self._parent.token,
             session=self._parent._session,
             type=InteractionResponseType.application_command_autocomplete_result.value,
-            data=payload
+            data=payload,
         )
         self._responded = True
-
 
     async def send_message(
         self,
@@ -759,44 +800,50 @@ class InteractionResponse:
             raise InteractionResponded(self._parent)
 
         payload: Dict[str, Any] = {
-            'tts': tts,
+            "tts": tts,
         }
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('Cannot mix embed and embeds keyword arguments')
+            raise TypeError("Cannot mix embed and embeds keyword arguments")
 
         if embed is not MISSING:
             embeds = [embed]
 
         if embeds:
-            payload['embeds'] = [e.to_dict() for e in embeds]
+            payload["embeds"] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
-            raise TypeError('Cannot mix file and files keyword arguments')
+            raise TypeError("Cannot mix file and files keyword arguments")
 
         if file is not MISSING:
             files = [file]
 
         if files and not all(isinstance(f, File) for f in files):
-            raise TypeError('Files parameter must be a list of type File')
+            raise TypeError("Files parameter must be a list of type File")
 
         if content is not None:
-            payload['content'] = str(content)
+            payload["content"] = str(content)
 
         if ephemeral:
-            payload['flags'] = 64
+            payload["flags"] = 64
 
         if view is not MISSING:
-            payload['components'] = view.to_components()
+            payload["components"] = view.to_components()
 
         if allowed_mentions is MISSING or allowed_mentions is None:
             if self._parent._state.allowed_mentions is not None:
-                payload['allowed_mentions'] = self._parent._state.allowed_mentions.to_dict()
+                payload[
+                    "allowed_mentions"
+                ] = self._parent._state.allowed_mentions.to_dict()
         else:
             if self._parent._state.allowed_mentions is not None:
-                payload['allowed_mentions'] = self._parent._state.allowed_mentions.merge(allowed_mentions).to_dict()
+                payload[
+                    "allowed_mentions"
+                ] = self._parent._state.allowed_mentions.merge(
+                    allowed_mentions
+                ).to_dict()
             else:
-                payload['allowed_mentions'] = allowed_mentions.to_dict()
+                payload["allowed_mentions"] = allowed_mentions.to_dict()
 
         parent = self._parent
         adapter = async_context.get()
@@ -827,18 +874,18 @@ class InteractionResponse:
 
         state = _InteractionMessageState(self._parent, self._parent._state)
         return PartialInteractionMessage(state)
-    
+
     async def send_modal(self, modal: Modal) -> None:
         """|coro|
-        
+
         Respond to this interaction by sending a modal.
-        
+
         Parameters
         ----------
         modal: :class:`nextcord.ui.Modal`
             The modal to be sent in response to the interaction and which will
             be displayed on the user's screen.
-        
+
         Raises
         -------
         HTTPException
@@ -848,7 +895,7 @@ class InteractionResponse:
         """
         if self._responded:
             raise InteractionResponded(self._parent)
-        
+
         parent = self._parent
         adapter = async_context.get()
         await adapter.create_interaction_response(
@@ -858,9 +905,9 @@ class InteractionResponse:
             type=InteractionResponseType.modal.value,
             data=modal.to_dict(),
         )
-        
+
         self._responded = True
-        
+
         self._parent._state.store_modal(modal, self._parent.user.id)
 
     async def edit_message(
@@ -904,7 +951,7 @@ class InteractionResponse:
             If provided, the number of seconds to wait in the background
             before deleting the message we just sent. If the deletion fails,
             then it is silently ignored.
-        
+
 
         Raises
         -------
@@ -926,12 +973,12 @@ class InteractionResponse:
         payload = {}
         if content is not MISSING:
             if content is None:
-                payload['content'] = None
+                payload["content"] = None
             else:
-                payload['content'] = str(content)
+                payload["content"] = str(content)
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('cannot mix both embed and embeds keyword arguments')
+            raise TypeError("cannot mix both embed and embeds keyword arguments")
 
         if embed is not MISSING:
             if embed is None:
@@ -940,26 +987,26 @@ class InteractionResponse:
                 embeds = [embed]
 
         if embeds is not MISSING:
-            payload['embeds'] = [e.to_dict() for e in embeds]
+            payload["embeds"] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
-            raise TypeError('Cannot mix file and files keyword arguments')
+            raise TypeError("Cannot mix file and files keyword arguments")
 
         if file is not MISSING:
             files = [file]
 
         if files and not all(isinstance(f, File) for f in files):
-            raise TypeError('Files parameter must be a list of type File')
+            raise TypeError("Files parameter must be a list of type File")
 
         if attachments is not MISSING:
-            payload['attachments'] = [a.to_dict() for a in attachments]
+            payload["attachments"] = [a.to_dict() for a in attachments]
 
         if view is not MISSING:
             state.prevent_view_updates_for(message_id)
             if view is None:
-                payload['components'] = []
+                payload["components"] = []
             else:
-                payload['components'] = view.to_components()
+                payload["components"] = view.to_components()
 
         adapter = async_context.get()
         try:
@@ -984,11 +1031,9 @@ class InteractionResponse:
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
 
-        
-
 
 class _InteractionMessageState:
-    __slots__ = ('_parent', '_interaction')
+    __slots__ = ("_parent", "_interaction")
 
     def __init__(self, interaction: Interaction, parent: ConnectionState):
         self._interaction: Interaction = interaction
@@ -1158,7 +1203,7 @@ class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
     @property
     def author(self) -> Optional[Union[Member, ClientUser]]:
         """Optional[Union[:class:`Member`, :class:`ClientUser`]]: The client that responded to the interaction.
-        
+
         If the interaction was in a guild, this is a :class:`Member` representing the client.
         Otherwise, this is a :class:`ClientUser`.
         """
@@ -1193,4 +1238,5 @@ class InteractionMessage(_InteractionMessageMixin, Message):
 
     .. versionadded:: 2.0
     """
+
     pass

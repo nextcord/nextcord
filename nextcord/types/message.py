@@ -129,7 +129,7 @@ class Message(_MessageOptional):
     type: MessageType
 
 
-AllowedMentionType = Literal['roles', 'users', 'everyone']
+AllowedMentionType = Literal["roles", "users", "everyone"]
 
 
 class AllowedMentions(TypedDict):

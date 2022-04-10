@@ -23,9 +23,11 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import signal
 import sys
@@ -46,7 +48,6 @@ from typing import (
     TypeVar,
     Union,
 )
-import collections
 
 import aiohttp
 
@@ -81,7 +82,6 @@ from .threads import Thread
 from .ui.view import View
 from .ui.modal import Modal
 from .user import ClientUser, User
-from .utils import MISSING, maybe_coroutine
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
@@ -89,7 +89,7 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
-    from .application_command import ApplicationCommand, ClientCog, ApplicationSubcommand
+    from .application_command import ApplicationCommand, ClientCog
     from .channel import DMChannel
     from .member import Member
     from .message import Message
@@ -97,11 +97,9 @@ if TYPE_CHECKING:
     from .scheduled_events import ScheduledEvent
 
 
-__all__ = (
-    'Client',
-)
+__all__ = ("Client",)
 
-Coro = TypeVar('Coro', bound=Callable[..., Coroutine[Any, Any, Any]])
+Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
 
 _log = logging.getLogger(__name__)
@@ -113,30 +111,34 @@ def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
     if not tasks:
         return
 
-    _log.info('Cleaning up after %d tasks.', len(tasks))
+    _log.info("Cleaning up after %d tasks.", len(tasks))
     for task in tasks:
         task.cancel()
 
     loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=True))
-    _log.info('All tasks finished cancelling.')
+    _log.info("All tasks finished cancelling.")
 
     for task in tasks:
         if task.cancelled():
             continue
         if task.exception() is not None:
-            loop.call_exception_handler({
-                'message': 'Unhandled exception during Client.run shutdown.',
-                'exception': task.exception(),
-                'task': task
-            })
+            loop.call_exception_handler(
+                {
+                    "message": "Unhandled exception during Client.run shutdown.",
+                    "exception": task.exception(),
+                    "task": task,
+                }
+            )
+
 
 def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
     try:
         _cancel_tasks(loop)
         loop.run_until_complete(loop.shutdown_asyncgens())
     finally:
-        _log.info('Closing the event loop.')
+        _log.info("Closing the event loop.")
         loop.close()
+
 
 class Client:
     r"""Represents a client connection that connects to Discord.
@@ -259,6 +261,7 @@ class Client:
     loop: :class:`asyncio.AbstractEventLoop`
         The event loop that the client uses for asynchronous operations.
     """
+
     def __init__(
         self,
         *,
@@ -267,35 +270,45 @@ class Client:
     ):
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
-        self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
-        self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
-        self.shard_id: Optional[int] = options.get('shard_id')
-        self.shard_count: Optional[int] = options.get('shard_count')
+        self.loop: asyncio.AbstractEventLoop = (
+            asyncio.get_event_loop() if loop is None else loop
+        )
+        self._listeners: Dict[
+            str, List[Tuple[asyncio.Future, Callable[..., bool]]]
+        ] = {}
+        self.shard_id: Optional[int] = options.get("shard_id")
+        self.shard_count: Optional[int] = options.get("shard_count")
 
-        connector: Optional[aiohttp.BaseConnector] = options.pop('connector', None)
-        proxy: Optional[str] = options.pop('proxy', None)
-        proxy_auth: Optional[aiohttp.BasicAuth] = options.pop('proxy_auth', None)
-        unsync_clock: bool = options.pop('assume_unsync_clock', True)
-        self.http: HTTPClient = HTTPClient(connector, proxy=proxy, proxy_auth=proxy_auth, unsync_clock=unsync_clock, loop=self.loop)
+        connector: Optional[aiohttp.BaseConnector] = options.pop("connector", None)
+        proxy: Optional[str] = options.pop("proxy", None)
+        proxy_auth: Optional[aiohttp.BasicAuth] = options.pop("proxy_auth", None)
+        unsync_clock: bool = options.pop("assume_unsync_clock", True)
+        self.http: HTTPClient = HTTPClient(
+            connector,
+            proxy=proxy,
+            proxy_auth=proxy_auth,
+            unsync_clock=unsync_clock,
+            loop=self.loop,
+        )
 
-        self._handlers: Dict[str, Callable] = {
-            'ready': self._handle_ready
-        }
+        self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}
 
         self._hooks: Dict[str, Callable] = {
-            'before_identify': self._call_before_identify_hook
+            "before_identify": self._call_before_identify_hook
         }
 
-        self._enable_debug_events: bool = options.pop('enable_debug_events', False)
+        self._enable_debug_events: bool = options.pop("enable_debug_events", False)
         self._connection: ConnectionState = self._get_state(**options)
         self._connection.shard_count = self.shard_count
         self._closed: bool = False
         self._ready: asyncio.Event = asyncio.Event()
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
-        self._lazy_load_commands: bool = options.pop('lazy_load_commands', True)
+        self._lazy_load_commands: bool = options.pop("lazy_load_commands", True)
         self._client_cogs: Set[ClientCog] = set()
-        self._rollout_associate_known: bool = options.pop("rollout_associate_known", True)
+        self._rollout_associate_known: bool = options.pop(
+            "rollout_associate_known", True
+        )
         self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
         self._rollout_register_new: bool = options.pop("rollout_register_new", True)
         self._rollout_update_known: bool = options.pop("rollout_update_known", True)
@@ -308,12 +321,20 @@ class Client:
 
     # internals
 
-    def _get_websocket(self, guild_id: Optional[int] = None, *, shard_id: Optional[int] = None) -> DiscordWebSocket:
+    def _get_websocket(
+        self, guild_id: Optional[int] = None, *, shard_id: Optional[int] = None
+    ) -> DiscordWebSocket:
         return self.ws
 
     def _get_state(self, **options: Any) -> ConnectionState:
-        return ConnectionState(dispatch=self.dispatch, handlers=self._handlers,
-                               hooks=self._hooks, http=self.http, loop=self.loop, **options)
+        return ConnectionState(
+            dispatch=self.dispatch,
+            handlers=self._handlers,
+            hooks=self._hooks,
+            http=self.http,
+            loop=self.loop,
+            **options,
+        )
 
     def _handle_ready(self) -> None:
         self._ready.set()
@@ -325,7 +346,7 @@ class Client:
         This could be referred to as the Discord WebSocket protocol latency.
         """
         ws = self.ws
-        return float('nan') if not ws else ws.latency
+        return ws.latency if ws else float("nan")
 
     def is_ws_ratelimited(self) -> bool:
         """:class:`bool`: Whether the websocket is currently rate limited.
@@ -413,25 +434,35 @@ class Client:
         """:class:`bool`: Specifies if the client's internal cache is ready for use."""
         return self._ready.is_set()
 
-    async def _run_event(self, coro: Callable[..., Coroutine[Any, Any, Any]], event_name: str, *args: Any, **kwargs: Any) -> None:
+    async def _run_event(
+        self,
+        coro: Callable[..., Coroutine[Any, Any, Any]],
+        event_name: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         try:
             await coro(*args, **kwargs)
         except asyncio.CancelledError:
             pass
         except Exception:
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.on_error(event_name, *args, **kwargs)
-            except asyncio.CancelledError:
-                pass
 
-    def _schedule_event(self, coro: Callable[..., Coroutine[Any, Any, Any]], event_name: str, *args: Any, **kwargs: Any) -> asyncio.Task:
+    def _schedule_event(
+        self,
+        coro: Callable[..., Coroutine[Any, Any, Any]],
+        event_name: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> asyncio.Task:
         wrapped = self._run_event(coro, event_name, *args, **kwargs)
         # Schedules the task
-        return asyncio.create_task(wrapped, name=f'nextcord: {event_name}')
+        return asyncio.create_task(wrapped, name=f"nextcord: {event_name}")
 
     def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
-        _log.debug('Dispatching event %s', event)
-        method = 'on_' + event
+        _log.debug("Dispatching event %s", event)
+        method = f"on_{event}"
 
         listeners = self._listeners.get(event)
         if listeners:
@@ -478,10 +509,12 @@ class Client:
         overridden to have a different implementation.
         Check :func:`~nextcord.on_error` for more details.
         """
-        print(f'Ignoring exception in {event_method}', file=sys.stderr)
+        print(f"Ignoring exception in {event_method}", file=sys.stderr)
         traceback.print_exc()
 
-    async def on_application_command_error(self, interaction: Interaction, exception: ApplicationError) -> None:
+    async def on_application_command_error(
+        self, interaction: Interaction, exception: ApplicationError
+    ) -> None:
         """|coro|
 
         The default application command error handler provided by the bot.
@@ -491,26 +524,38 @@ class Client:
 
         This only fires if you do not specify any listeners for command error.
         """
-        if interaction.application_command and interaction.application_command.has_error_handler():
+        if (
+            interaction.application_command
+            and interaction.application_command.has_error_handler()
+        ):
             return
 
         # TODO implement cog error handling
         # cog = context.cog
         # if cog and cog.has_error_handler():
         #     return
-        
-        print(f'Ignoring exception in command {interaction.application_command}:', file=sys.stderr)
-        traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
+
+        print(
+            f"Ignoring exception in command {interaction.application_command}:",
+            file=sys.stderr,
+        )
+        traceback.print_exception(
+            type(exception), exception, exception.__traceback__, file=sys.stderr
+        )
 
     # hooks
 
-    async def _call_before_identify_hook(self, shard_id: Optional[int], *, initial: bool = False) -> None:
+    async def _call_before_identify_hook(
+        self, shard_id: Optional[int], *, initial: bool = False
+    ) -> None:
         # This hook is an internal hook that actually calls the public one.
         # It allows the library to have its own hook without stepping on the
         # toes of those who need to override their own hook.
         await self.before_identify_hook(shard_id, initial=initial)
 
-    async def before_identify_hook(self, shard_id: Optional[int], *, initial: bool = False) -> None:
+    async def before_identify_hook(
+        self, shard_id: Optional[int], *, initial: bool = False
+    ) -> None:
         """|coro|
 
         A hook that is called before IDENTIFYing a session. This is useful
@@ -556,10 +601,12 @@ class Client:
             passing status code.
         """
 
-        _log.info('logging in using static token')
+        _log.info("logging in using static token")
 
         if not isinstance(token, str):
-            raise TypeError(f"The token provided was of type {type(token)} but was expected to be str")
+            raise TypeError(
+                f"The token provided was of type {type(token)} but was expected to be str"
+            )
 
         data = await self.http.static_login(token.strip())
         self._connection.user = ClientUser(state=self._connection, data=data)
@@ -591,29 +638,35 @@ class Client:
 
         backoff = ExponentialBackoff()
         ws_params = {
-            'initial': True,
-            'shard_id': self.shard_id,
+            "initial": True,
+            "shard_id": self.shard_id,
         }
         while not self.is_closed():
             try:
                 coro = DiscordWebSocket.from_client(self, **ws_params)
                 self.ws = await asyncio.wait_for(coro, timeout=60.0)
-                ws_params['initial'] = False
+                ws_params["initial"] = False
                 while True:
                     await self.ws.poll_event()
             except ReconnectWebSocket as e:
-                _log.info('Got a request to %s the websocket.', e.op)
-                self.dispatch('disconnect')
-                ws_params.update(sequence=self.ws.sequence, resume=e.resume, session=self.ws.session_id)
+                _log.info("Got a request to %s the websocket.", e.op)
+                self.dispatch("disconnect")
+                ws_params.update(
+                    sequence=self.ws.sequence,
+                    resume=e.resume,
+                    session=self.ws.session_id,
+                )
                 continue
-            except (OSError,
-                    HTTPException,
-                    GatewayNotFound,
-                    ConnectionClosed,
-                    aiohttp.ClientError,
-                    asyncio.TimeoutError) as exc:
+            except (
+                OSError,
+                HTTPException,
+                GatewayNotFound,
+                ConnectionClosed,
+                aiohttp.ClientError,
+                asyncio.TimeoutError,
+            ) as exc:
 
-                self.dispatch('disconnect')
+                self.dispatch("disconnect")
                 if not reconnect:
                     await self.close()
                     if isinstance(exc, ConnectionClosed) and exc.code == 1000:
@@ -626,7 +679,12 @@ class Client:
 
                 # If we get connection reset by peer then try to RESUME
                 if isinstance(exc, OSError) and exc.errno in (54, 10054):
-                    ws_params.update(sequence=self.ws.sequence, initial=False, resume=True, session=self.ws.session_id)
+                    ws_params.update(
+                        sequence=self.ws.sequence,
+                        initial=False,
+                        resume=True,
+                        session=self.ws.session_id,
+                    )
                     continue
 
                 # We should only get this when an unhandled close code happens,
@@ -646,7 +704,9 @@ class Client:
                 # Always try to RESUME the connection
                 # If the connection is not RESUME-able then the gateway will invalidate the session.
                 # This is apparently what the official Discord client does.
-                ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
+                ws_params.update(
+                    sequence=self.ws.sequence, resume=True, session=self.ws.session_id
+                )
 
     async def close(self) -> None:
         """|coro|
@@ -745,10 +805,10 @@ class Client:
         try:
             loop.run_forever()
         except KeyboardInterrupt:
-            _log.info('Received signal to terminate bot and event loop.')
+            _log.info("Received signal to terminate bot and event loop.")
         finally:
             future.remove_done_callback(stop_loop_on_completion)
-            _log.info('Cleaning up tasks.')
+            _log.info("Cleaning up tasks.")
             _cleanup_loop(loop)
 
         if not future.cancelled():
@@ -777,9 +837,9 @@ class Client:
             self._connection._activity = None
         elif isinstance(value, BaseActivity):
             # ConnectionState._activity is typehinted as ActivityPayload, we're passing Dict[str, Any]
-            self._connection._activity = value.to_dict() # type: ignore
+            self._connection._activity = value.to_dict()  # type: ignore
         else:
-            raise TypeError('activity must derive from BaseActivity.')
+            raise TypeError("activity must derive from BaseActivity.")
 
     @property
     def status(self):
@@ -795,11 +855,11 @@ class Client:
     @status.setter
     def status(self, value):
         if value is Status.offline:
-            self._connection._status = 'invisible'
+            self._connection._status = "invisible"
         elif isinstance(value, Status):
             self._connection._status = str(value)
         else:
-            raise TypeError('status must derive from Status.')
+            raise TypeError("status must derive from Status.")
 
     @property
     def allowed_mentions(self) -> Optional[AllowedMentions]:
@@ -814,7 +874,9 @@ class Client:
         if value is None or isinstance(value, AllowedMentions):
             self._connection.allowed_mentions = value
         else:
-            raise TypeError(f'allowed_mentions must be AllowedMentions not {value.__class__!r}')
+            raise TypeError(
+                f"allowed_mentions must be AllowedMentions not {value.__class__!r}"
+            )
 
     @property
     def intents(self) -> Intents:
@@ -831,7 +893,9 @@ class Client:
         """List[:class:`~nextcord.User`]: Returns a list of all the users the bot can see."""
         return list(self._connection._users.values())
 
-    def get_channel(self, id: int, /) -> Optional[Union[GuildChannel, Thread, PrivateChannel]]:
+    def get_channel(
+        self, id: int, /
+    ) -> Optional[Union[GuildChannel, Thread, PrivateChannel]]:
         """Returns a channel or thread with the given ID.
 
         Parameters
@@ -846,7 +910,9 @@ class Client:
         """
         return self._connection.get_channel(id)
 
-    def get_partial_messageable(self, id: int, *, type: Optional[ChannelType] = None) -> PartialMessageable:
+    def get_partial_messageable(
+        self, id: int, *, type: Optional[ChannelType] = None
+    ) -> PartialMessageable:
         """Returns a partial messageable with the given channel ID.
 
         This is useful if you have a channel_id but don't want to do an API call
@@ -1109,8 +1175,10 @@ class Client:
 
         future = self.loop.create_future()
         if check is None:
+
             def _check(*args):
                 return True
+
             check = _check
 
         ev = event.lower()
@@ -1148,10 +1216,10 @@ class Client:
         """
 
         if not asyncio.iscoroutinefunction(coro):
-            raise TypeError('event registered must be a coroutine function')
+            raise TypeError("event registered must be a coroutine function")
 
         setattr(self, coro.__name__, coro)
-        _log.debug('%s has successfully been registered as an event', coro.__name__)
+        _log.debug("%s has successfully been registered as an event", coro.__name__)
         return coro
 
     async def change_presence(
@@ -1190,10 +1258,10 @@ class Client:
         """
 
         if status is None:
-            status_str = 'online'
+            status_str = "online"
             status = Status.online
         elif status is Status.offline:
-            status_str = 'invisible'
+            status_str = "invisible"
             status = Status.offline
         else:
             status_str = str(status)
@@ -1205,11 +1273,7 @@ class Client:
             if me is None:
                 continue
 
-            if activity is not None:
-                me.activities = (activity,)
-            else:
-                me.activities = ()
-
+            me.activities = (activity,) if activity is not None else ()
             me.status = status
 
     # Guild stuff
@@ -1219,7 +1283,7 @@ class Client:
         *,
         limit: Optional[int] = 100,
         before: SnowflakeTime = None,
-        after: SnowflakeTime = None
+        after: SnowflakeTime = None,
     ) -> GuildIterator:
         """Retrieves an :class:`.AsyncIterator` that enables receiving your guilds.
 
@@ -1299,7 +1363,7 @@ class Client:
         """
         code = utils.resolve_template(code)
         data = await self.http.get_template(code)
-        return Template(data=data, state=self._connection) # type: ignore
+        return Template(data=data, state=self._connection)  # type: ignore
 
     async def fetch_guild(
         self, guild_id: int, /, *, with_counts: Optional[bool] = True
@@ -1394,7 +1458,9 @@ class Client:
         region_value = str(region)
 
         if code:
-            data = await self.http.create_from_template(code, name, region_value, icon_base64)
+            data = await self.http.create_from_template(
+                code, name, region_value, icon_base64
+            )
         else:
             data = await self.http.create_guild(name, region_value, icon_base64)
         return Guild(data=data, state=self._connection)
@@ -1424,12 +1490,18 @@ class Client:
             The stage instance from the stage channel ID.
         """
         data = await self.http.get_stage_instance(channel_id)
-        guild = self.get_guild(int(data['guild_id']))
+        guild = self.get_guild(int(data["guild_id"]))
         return StageInstance(guild=guild, state=self._connection, data=data)  # type: ignore
 
     # Invite management
 
-    async def fetch_invite(self, url: Union[Invite, str], *, with_counts: bool = True, with_expiration: bool = True) -> Invite:
+    async def fetch_invite(
+        self,
+        url: Union[Invite, str],
+        *,
+        with_counts: bool = True,
+        with_expiration: bool = True,
+    ) -> Invite:
         """|coro|
 
         Gets an :class:`.Invite` from a discord.gg URL or ID.
@@ -1468,7 +1540,9 @@ class Client:
         """
 
         invite_id = utils.resolve_invite(url)
-        data = await self.http.get_invite(invite_id, with_counts=with_counts, with_expiration=with_expiration)
+        data = await self.http.get_invite(
+            invite_id, with_counts=with_counts, with_expiration=with_expiration
+        )
         return Invite.from_incomplete(state=self._connection, data=data)
 
     async def delete_invite(self, invite: Union[Invite, str]) -> None:
@@ -1545,8 +1619,8 @@ class Client:
             The bot's application information.
         """
         data = await self.http.application_info()
-        if 'rpc_origins' not in data:
-            data['rpc_origins'] = None
+        if "rpc_origins" not in data:
+            data["rpc_origins"] = None
         return AppInfo(self._connection, data)
 
     async def fetch_user(self, user_id: int, /) -> User:
@@ -1580,7 +1654,9 @@ class Client:
         data = await self.http.get_user(user_id)
         return User(state=self._connection, data=data)
 
-    async def fetch_channel(self, channel_id: int, /) -> Union[GuildChannel, PrivateChannel, Thread]:
+    async def fetch_channel(
+        self, channel_id: int, /
+    ) -> Union[GuildChannel, PrivateChannel, Thread]:
         """|coro|
 
         Retrieves a :class:`.abc.GuildChannel`, :class:`.abc.PrivateChannel`, or :class:`.Thread` with the specified ID.
@@ -1609,21 +1685,20 @@ class Client:
         """
         data = await self.http.get_channel(channel_id)
 
-        factory, ch_type = _threaded_channel_factory(data['type'])
+        factory, ch_type = _threaded_channel_factory(data["type"])
         if factory is None:
-            raise InvalidData('Unknown channel type {type} for channel ID {id}.'.format_map(data))
+            raise InvalidData(
+                "Unknown channel type {type} for channel ID {id}.".format_map(data)
+            )
 
         if ch_type in (ChannelType.group, ChannelType.private):
             # the factory will be a DMChannel or GroupChannel here
-            channel = factory(me=self.user, data=data, state=self._connection) # type: ignore
-        else:
-            # the factory can't be a DMChannel or GroupChannel here
-            guild_id = int(data['guild_id']) # type: ignore
-            guild = self.get_guild(guild_id) or Object(id=guild_id)
-            # GuildChannels expect a Guild, we may be passing an Object
-            channel = factory(guild=guild, state=self._connection, data=data) # type: ignore
-
-        return channel
+            return factory(me=self.user, data=data, state=self._connection)
+        # the factory can't be a DMChannel or GroupChannel here
+        guild_id = int(data["guild_id"])  # type: ignore
+        guild = self.get_guild(guild_id) or Object(id=guild_id)
+        # GuildChannels expect a Guild, we may be passing an Object
+        return factory(guild=guild, state=self._connection, data=data)
 
     async def fetch_webhook(self, webhook_id: int, /) -> Webhook:
         """|coro|
@@ -1647,7 +1722,9 @@ class Client:
         data = await self.http.get_webhook(webhook_id)
         return Webhook.from_state(data, state=self._connection)
 
-    async def fetch_sticker(self, sticker_id: int, /) -> Union[StandardSticker, GuildSticker]:
+    async def fetch_sticker(
+        self, sticker_id: int, /
+    ) -> Union[StandardSticker, GuildSticker]:
         """|coro|
 
         Retrieves a :class:`.Sticker` with the specified ID.
@@ -1667,8 +1744,8 @@ class Client:
             The sticker you requested.
         """
         data = await self.http.get_sticker(sticker_id)
-        cls, _ = _sticker_factory(data['type'])  # type: ignore
-        return cls(state=self._connection, data=data) # type: ignore
+        cls, _ = _sticker_factory(data["type"])  # type: ignore
+        return cls(state=self._connection, data=data)  # type: ignore
 
     async def fetch_premium_sticker_packs(self) -> List[StickerPack]:
         """|coro|
@@ -1688,7 +1765,10 @@ class Client:
             All available premium sticker packs.
         """
         data = await self.http.list_premium_sticker_packs()
-        return [StickerPack(state=self._connection, data=pack) for pack in data['sticker_packs']]
+        return [
+            StickerPack(state=self._connection, data=pack)
+            for pack in data["sticker_packs"]
+        ]
 
     async def create_dm(self, user: Snowflake) -> DMChannel:
         """|coro|
@@ -1745,16 +1825,18 @@ class Client:
         """
 
         if not isinstance(view, View):
-            raise TypeError(f'expected an instance of View not {view.__class__!r}')
+            raise TypeError(f"expected an instance of View not {view.__class__!r}")
 
         if not view.is_persistent():
-            raise ValueError('View is not persistent. Items need to have a custom_id set and View must have no timeout')
+            raise ValueError(
+                "View is not persistent. Items need to have a custom_id set and View must have no timeout"
+            )
 
         self._connection.store_view(view, message_id)
-    
+
     def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
         """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
-        
+
         This method can be called for modals whose lifetime must be eventually
         superior to the one of the program or for modals whose call does not
         depend on particular criteria.
@@ -1777,10 +1859,12 @@ class Client:
             and a timeout set to None.
         """
         if not isinstance(modal, Modal):
-            raise TypeError(f'expected an instance of Modal not {modal.__class__!r}')
+            raise TypeError(f"expected an instance of Modal not {modal.__class__!r}")
 
         if not modal.is_persistent():
-            raise ValueError('Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set')
+            raise ValueError(
+                "Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set"
+            )
 
         self._connection.store_modal(modal, user_id)
 
@@ -1798,10 +1882,7 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return [
-            event for guild in self.guilds
-            for event in guild.scheduled_events
-        ]
+        return [event for guild in self.guilds for event in guild.scheduled_events]
 
     async def on_interaction(self, interaction: Interaction):
         await self.process_application_commands(interaction)
@@ -1819,25 +1900,41 @@ class Client:
         if interaction.type is InteractionType.application_command:
             _log.info("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
+                _log.info(
+                    f"nextcord.Client: Calling your application command now {app_cmd.name}"
+                )
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
-                _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
+                _log.info(
+                    "nextcord.Client: Interaction command not found, attempting to lazy load."
+                )
                 _log.debug(f"nextcord.Client: {interaction.data}")
-                response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
+                response_signature = (
+                    interaction.data["name"],
+                    int(interaction.data["type"]),
+                    interaction.guild_id,
+                )
                 _log.debug(f"nextcord.Client: {response_signature}")
                 do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
-                        interaction.data["name"],
-                        int(interaction.data['type']),
-                        interaction.guild_id
+                    interaction.data["name"],
+                    int(interaction.data["type"]),
+                    interaction.guild_id,
                 ):
-                    _log.info("nextcord.Client: Basic signature matches, checking against raw payload.")
+                    _log.info(
+                        "nextcord.Client: Basic signature matches, checking against raw payload."
+                    )
                     # TODO: Lazy load is completely broken. Figure out how to fix it.
-                    if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
-                    # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
-                        _log.info("nextcord.Client: New interaction command found, Assigning id now")
-                        app_cmd.parse_discord_response(self._connection, interaction.data)
+                    if app_cmd.reverse_check_against_raw_payload(
+                        interaction.data, interaction.guild_id
+                    ):
+                        # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
+                        _log.info(
+                            "nextcord.Client: New interaction command found, Assigning id now"
+                        )
+                        app_cmd.parse_discord_response(
+                            self._connection, interaction.data
+                        )
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
                     else:
@@ -1849,13 +1946,13 @@ class Client:
                         await interaction.guild.deploy_application_commands(
                             associate_known=self._rollout_associate_known,
                             delete_unknown=self._rollout_delete_unknown,
-                            update_known=self._rollout_update_known
+                            update_known=self._rollout_update_known,
                         )
                     else:
                         await self.deploy_application_commands(
                             associate_known=self._rollout_associate_known,
                             delete_unknown=self._rollout_delete_unknown,
-                            update_known=self._rollout_update_known
+                            update_known=self._rollout_update_known,
                         )
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
@@ -1865,8 +1962,10 @@ class Client:
                 _log.info(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
                 await app_cmd.call_autocomplete_from_interaction(interaction)
             else:
-                raise ValueError(f"Received autocomplete interaction for {interaction.data['name']} but command isn't "
-                                 f"found/associated!")
+                raise ValueError(
+                    f"Received autocomplete interaction for {interaction.data['name']} but command isn't "
+                    f"found/associated!"
+                )
 
     def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
         return self._connection.get_application_command(command_id)
@@ -1875,7 +1974,9 @@ class Client:
         """Returns a copied set of all added :class:`ApplicationCommand` objects."""
         return self._connection.application_commands
 
-    def get_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+    def get_application_commands(
+        self, rollout: bool = False
+    ) -> List[ApplicationCommand]:
         """Gets registered global commands.
 
         Parameters
@@ -1891,10 +1992,10 @@ class Client:
         return self._connection.get_global_application_commands(rollout=rollout)
 
     def add_application_command(
-            self,
-            command: ApplicationCommand,
-            overwrite: bool = False,
-            use_rollout: bool = False
+        self,
+        command: ApplicationCommand,
+        overwrite: bool = False,
+        use_rollout: bool = False,
     ) -> None:
         """Adds an ApplicationCommand object to the client for use.
 
@@ -1907,39 +2008,60 @@ class Client:
         use_rollout: :class:`bool`
             If to apply the rollout signatures instead of existing ones. Defaults to ``False``
         """
-        self._connection.add_application_command(command, overwrite=overwrite, use_rollout=use_rollout)
+        self._connection.add_application_command(
+            command, overwrite=overwrite, use_rollout=use_rollout
+        )
 
     async def deploy_application_commands(
-            self,
-            data: Optional[List[dict]] = None,
-            associate_known: bool = True,
-            delete_unknown: bool = True,
-            update_known: bool = True
+        self,
+        data: Optional[List[dict]] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
     ) -> None:
 
         """Updates and associates recognizable global application commands, and deletes unknown ones."""
         # TODO: Look, I need to get this out of the door. Properish documentation of this is in ConnectionState, and
         #  this could be an easy "I want to contribute to Nextcord in a meaningful way" PR.
-        await self._connection.deploy_application_commands(data=data, guild_id=None, associate_known=associate_known,
-                                                           delete_unknown=delete_unknown, update_known=update_known)
+        await self._connection.deploy_application_commands(
+            data=data,
+            guild_id=None,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+        )
 
-    async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def delete_unknown_application_commands(
+        self, data: Optional[List[dict]] = None
+    ) -> None:
         """Deletes unknown global commands."""
-        await self._connection.delete_unknown_application_commands(data=data, guild_id=None)
+        await self._connection.delete_unknown_application_commands(
+            data=data, guild_id=None
+        )
 
-    async def associate_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def associate_application_commands(
+        self, data: Optional[List[dict]] = None
+    ) -> None:
         """Associates global commands registered with Discord with locally added commands."""
         await self._connection.associate_application_commands(data=data, guild_id=None)
 
-    async def update_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def update_application_commands(
+        self, data: Optional[List[dict]] = None
+    ) -> None:
         """Updates global commands that have slightly changed with Discord."""
         await self._connection.update_application_commands(data=data, guild_id=None)
 
-    async def register_new_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def register_new_application_commands(
+        self, data: Optional[List[dict]] = None
+    ) -> None:
         """Registers global commands that were added locally, but aren't in Discord yet."""
-        await self._connection.register_new_application_commands(data=data, guild_id=None)
+        await self._connection.register_new_application_commands(
+            data=data, guild_id=None
+        )
 
-    async def register_application_commands(self, *commands: ApplicationCommand) -> None:
+    async def register_application_commands(
+        self, *commands: ApplicationCommand
+    ) -> None:
         """Registers the given global application commands with Discord."""
         for command in commands:
             await self._connection.register_application_command(command, guild_id=None)
@@ -1981,19 +2103,30 @@ class Client:
 
     async def on_guild_available(self, guild: Guild) -> None:
         try:
-            if self._rollout_all_guilds or self._connection.get_guild_application_commands(guild.id, rollout=True):
-                _log.info(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
+            if (
+                self._rollout_all_guilds
+                or self._connection.get_guild_application_commands(
+                    guild.id, rollout=True
+                )
+            ):
+                _log.info(
+                    f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}"
+                )
                 await guild.rollout_application_commands(
                     associate_known=self._rollout_associate_known,
                     delete_unknown=self._rollout_delete_unknown,
-                    update_known=self._rollout_update_known
+                    update_known=self._rollout_update_known,
                 )
             else:
-                _log.debug(f"nextcord.Client: No locally added commands explicitly registered for "
-                          f"{guild.name}|{guild.id}, not checking.")
+                _log.debug(
+                    f"nextcord.Client: No locally added commands explicitly registered for "
+                    f"{guild.name}|{guild.id}, not checking."
+                )
         except Forbidden as e:
-            _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
-                         f"enabled? {e}")
+            _log.warning(
+                f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
+                f"enabled? {e}"
+            )
 
     async def rollout_application_commands(self) -> None:
         """|coro|
@@ -2004,7 +2137,7 @@ class Client:
             data=global_payload,
             associate_known=self._rollout_associate_known,
             delete_unknown=self._rollout_delete_unknown,
-            update_known=self._rollout_update_known
+            update_known=self._rollout_update_known,
         )
         if self._rollout_register_new:
             await self.register_new_application_commands(data=global_payload)
@@ -2031,11 +2164,11 @@ class Client:
         self._client_cogs.discard(cog)
 
     def user_command(
-            self,
-            name: str = MISSING,
-            guild_ids: Iterable[int] = MISSING,
-            default_permission: Optional[bool] = None,
-            force_global: bool = False
+        self,
+        name: str = MISSING,
+        guild_ids: Iterable[int] = MISSING,
+        default_permission: Optional[bool] = None,
+        force_global: bool = False,
     ):
         """Creates a User context command from the decorated function.
 
@@ -2051,20 +2184,25 @@ class Client:
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
+
         def decorator(func: Callable):
-            result = user_command(name=name, guild_ids=guild_ids,
-                                  default_permission=default_permission, force_global=force_global)(func)
+            result = user_command(
+                name=name,
+                guild_ids=guild_ids,
+                default_permission=default_permission,
+                force_global=force_global,
+            )(func)
             self._application_commands_to_add.add(result)
             return result
 
         return decorator
 
     def message_command(
-            self,
-            name: str = MISSING,
-            guild_ids: Iterable[int] = MISSING,
-            default_permission: Optional[bool] = None,
-            force_global: bool = False
+        self,
+        name: str = MISSING,
+        guild_ids: Iterable[int] = MISSING,
+        default_permission: Optional[bool] = None,
+        force_global: bool = False,
     ):
         """Creates a Message context command from the decorated function.
 
@@ -2080,21 +2218,26 @@ class Client:
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
+
         def decorator(func: Callable):
-            result = message_command(name=name, guild_ids=guild_ids,
-                                     default_permission=default_permission, force_global=force_global)(func)
+            result = message_command(
+                name=name,
+                guild_ids=guild_ids,
+                default_permission=default_permission,
+                force_global=force_global,
+            )(func)
             self._application_commands_to_add.add(result)
             return result
 
         return decorator
 
     def slash_command(
-            self,
-            name: str = MISSING,
-            description: str = MISSING,
-            guild_ids: Iterable[int] = MISSING,
-            default_permission: Optional[bool] = None,
-            force_global: bool = False
+        self,
+        name: str = MISSING,
+        description: str = MISSING,
+        guild_ids: Iterable[int] = MISSING,
+        default_permission: Optional[bool] = None,
+        force_global: bool = False,
     ):
         """Creates a Slash application command from the decorated function.
 
@@ -2113,9 +2256,15 @@ class Client:
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
+
         def decorator(func: Callable):
-            result = slash_command(name=name, description=description, guild_ids=guild_ids,
-                                   default_permission=default_permission, force_global=force_global)(func)
+            result = slash_command(
+                name=name,
+                description=description,
+                guild_ids=guild_ids,
+                default_permission=default_permission,
+                force_global=force_global,
+            )(func)
             self._application_commands_to_add.add(result)
             return result
 
