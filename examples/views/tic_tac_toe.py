@@ -4,15 +4,17 @@ from typing import List
 from nextcord.ext import commands
 
 # Defines a custom button that contains the logic of the game.
-# The ['TicTacToe'] bit is for type hinting purposes to tell your IDE or linter
+# The ["TicTacToe"] bit is for type hinting purposes to tell your IDE or linter
 # what the type of `self.view` is. It is not required.
-class TicTacToeButton(nextcord.ui.Button['TicTacToe']):
+
+
+class TicTacToeButton(nextcord.ui.Button["TicTacToe"]):
     def __init__(self, x: int, y: int):
         # A label is required, but we don't need one so a zero-width space is used
         # The row parameter tells the View which row to place the button under.
         # A View can only contain up to 5 rows -- each row can only have 5 buttons.
         # Since a Tic Tac Toe grid is 3x3 that means we have 3 rows and 3 columns.
-        super().__init__(style=nextcord.ButtonStyle.secondary, label='\u200b', row=y)
+        super().__init__(style=nextcord.ButtonStyle.secondary, label="\u200b", row=y)
         self.x = x
         self.y = y
 
@@ -27,25 +29,25 @@ class TicTacToeButton(nextcord.ui.Button['TicTacToe']):
 
         if view.current_player == view.X:
             self.style = nextcord.ButtonStyle.danger
-            self.label = 'X'
-            self.disabled = True
+            self.label = "X"
             view.board[self.y][self.x] = view.X
             view.current_player = view.O
             content = "It is now O's turn"
         else:
             self.style = nextcord.ButtonStyle.success
-            self.label = 'O'
-            self.disabled = True
+            self.label = "O"
             view.board[self.y][self.x] = view.O
             view.current_player = view.X
             content = "It is now X's turn"
 
+        self.disabled = True
+
         winner = view.check_board_winner()
         if winner is not None:
             if winner == view.X:
-                content = 'X won!'
+                content = "X won!"
             elif winner == view.O:
-                content = 'O won!'
+                content = "O won!"
             else:
                 content = "It's a tie!"
 
@@ -119,13 +121,13 @@ class TicTacToe(nextcord.ui.View):
         return None
 
 
-bot = commands.Bot(command_prefix='$')
+bot = commands.Bot(command_prefix="$")
 
 
 @bot.command()
 async def tic(ctx):
     """Starts a tic-tac-toe game with yourself."""
-    await ctx.send('Tic Tac Toe: X goes first', view=TicTacToe())
+    await ctx.send("Tic Tac Toe: X goes first", view=TicTacToe())
 
 
-bot.run('token')
+bot.run("token")

@@ -12,7 +12,9 @@ async def member_info(interaction: nextcord.Interaction, member: nextcord.Member
 
 
 @bot.message_command(guild_ids=[TESTING_GUILD_ID])
-async def my_message_command(interaction: nextcord.Interaction, message: nextcord.Message):
+async def my_message_command(
+    interaction: nextcord.Interaction, message: nextcord.Message
+):
     await interaction.response.send_message(f"Message: {message}")
 
 

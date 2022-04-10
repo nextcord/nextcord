@@ -15,17 +15,27 @@ class PersistentView(nextcord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @nextcord.ui.button(label='Green', style=nextcord.ButtonStyle.green, custom_id='persistent_view:green')
-    async def green(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
-        await interaction.response.send_message('This is green.', ephemeral=True)
+    @nextcord.ui.button(
+        label="Green",
+        style=nextcord.ButtonStyle.green,
+        custom_id="persistent_view:green",
+    )
+    async def green(
+        self, button: nextcord.ui.Button, interaction: nextcord.Interaction
+    ):
+        await interaction.response.send_message("This is green.", ephemeral=True)
 
-    @nextcord.ui.button(label='Red', style=nextcord.ButtonStyle.red, custom_id='persistent_view:red')
+    @nextcord.ui.button(
+        label="Red", style=nextcord.ButtonStyle.red, custom_id="persistent_view:red"
+    )
     async def red(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
-        await interaction.response.send_message('This is red.', ephemeral=True)
+        await interaction.response.send_message("This is red.", ephemeral=True)
 
-    @nextcord.ui.button(label='Grey', style=nextcord.ButtonStyle.grey, custom_id='persistent_view:grey')
+    @nextcord.ui.button(
+        label="Grey", style=nextcord.ButtonStyle.grey, custom_id="persistent_view:grey"
+    )
     async def grey(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
-        await interaction.response.send_message('This is grey.', ephemeral=True)
+        await interaction.response.send_message("This is grey.", ephemeral=True)
 
 
 class Bot(commands.Bot):
@@ -43,10 +53,10 @@ class Bot(commands.Bot):
             self.add_view(PersistentView())
             self.persistent_views_added = True
 
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
+        print(f"Logged in as {self.user} (ID: {self.user.id})")
 
 
-bot = Bot(command_prefix='$')
+bot = Bot(command_prefix="$")
 
 
 @bot.command()
@@ -60,4 +70,4 @@ async def prepare(ctx):
     await ctx.send("What's your favourite colour?", view=PersistentView())
 
 
-bot.run('token')
+bot.run("token")
