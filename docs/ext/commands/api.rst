@@ -386,9 +386,6 @@ Converters
 .. autoclass:: nextcord.ext.commands.VoiceChannelConverter
     :members:
 
-.. autoclass:: nextcord.ext.commands.StoreChannelConverter
-    :members:
-
 .. autoclass:: nextcord.ext.commands.StageChannelConverter
     :members:
 

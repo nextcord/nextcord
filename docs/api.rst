@@ -1231,10 +1231,6 @@ of :class:`enum.Enum`.
 
         A guild news channel.
 
-    .. attribute:: store
-
-        A guild store channel.
-
     .. attribute:: stage_voice
 
         A guild stage voice channel.
@@ -3695,6 +3691,16 @@ InteractionMessage
 
 .. autoclass:: InteractionMessage()
     :members:
+    :inherited-members:
+
+PartialInteractionMessage
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: PartialInteractionMessage
+
+.. autoclass:: PartialInteractionMessage()
+    :members:
+    :inherited-members:
 
 Member
 ~~~~~~
@@ -3810,15 +3816,6 @@ ThreadMember
 
 .. autoclass:: ThreadMember()
     :members:
-
-StoreChannel
-~~~~~~~~~~~~~
-
-.. attributetable:: StoreChannel
-
-.. autoclass:: StoreChannel()
-    :members:
-    :inherited-members:
 
 VoiceChannel
 ~~~~~~~~~~~~~

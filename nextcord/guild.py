@@ -45,6 +45,7 @@ from typing import (
 
 from . import abc, utils
 from .asset import Asset
+from .bans import BanEntry
 from .channel import *
 from .channel import _guild_channel_factory, _threaded_guild_channel_factory
 from .colour import Colour
@@ -67,7 +68,7 @@ from .file import File
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
-from .iterators import AuditLogIterator, MemberIterator, ScheduledEventIterator
+from .iterators import AuditLogIterator, MemberIterator, BanIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
 from .permissions import PermissionOverwrite
@@ -92,7 +93,6 @@ if TYPE_CHECKING:
     from .channel import (
         CategoryChannel,
         StageChannel,
-        StoreChannel,
         TextChannel,
         VoiceChannel,
     )
@@ -114,13 +114,8 @@ if TYPE_CHECKING:
     from .webhook import Webhook
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
-    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel]
+    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel]
     ByCategoryItem = Tuple[Optional[CategoryChannel], List[GuildChannel]]
-
-
-class BanEntry(NamedTuple):
-    reason: Optional[str]
-    user: User
 
 
 class _GuildLimit(NamedTuple):
@@ -212,7 +207,6 @@ class Guild(Hashable):
 
         - ``ANIMATED_ICON``: Guild can upload an animated icon.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
-        - ``COMMERCE``: Guild can sell things using store channels.
         - ``COMMUNITY``: Guild is a community server.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
         - ``FEATURABLE``: Guild is able to be featured in Server Discovery.
@@ -1880,29 +1874,62 @@ class Guild(Hashable):
         channel: GuildChannel = factory(guild=self, state=self._state, data=data)  # type: ignore
         return channel
 
-    async def bans(self) -> List[BanEntry]:
-        """|coro|
+    def bans(self,
+        *,
+        limit: Optional[int] = 1000,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
+    ) -> BanIterator:
+        """Returns an :class:`~nextcord.AsyncIterator` that enables receiving the destination's bans.
 
-        Retrieves all the users that are banned from the guild as a :class:`list` of :class:`BanEntry`.
+        You must have the :attr:`~Permissions.ban_members` permission to get this information.
 
-        You must have the :attr:`~Permissions.ban_members` permission
-        to get this information.
+        .. versionchanged:: 2.0
+            Due to a breaking change in Discord's API, this now returns an :class:`~nextcord.AsyncIterator` instead of a :class:`list`.
+
+        Examples
+        ---------
+
+        Usage ::
+
+            counter = 0
+            async for ban in guild.bans(limit=200):
+                if not ban.user.bot:
+                    counter += 1
+
+        Flattening into a list: ::
+
+            bans = await guild.bans(limit=123).flatten()
+            # bans is now a list of BanEntry...
+
+        All parameters are optional.
+
+        Parameters
+        -----------
+        limit: Optional[:class:`int`]
+            The number of bans to retrieve.
+            If ``None``, it retrieves every ban in the guild. Note, however,
+            that this would make a slow operation.
+            Defaults to 1000.
+        before: Optional[:class:`~nextcord.abc.Snowflake`]
+            Retrieve bans before this user.
+        after: Optional[:class:`~nextcord.abc.Snowflake`]
+            Retrieve bans after this user.
 
         Raises
-        -------
-        Forbidden
-            You do not have proper permissions to get the information.
-        HTTPException
-            An error occurred while fetching the information.
+        ------
+        ~nextcord.Forbidden
+            You do not have permissions to get the bans.
+        ~nextcord.HTTPException
+            An error occurred while fetching the bans.
 
-        Returns
-        --------
-        List[:class:`BanEntry`]
-            A list of :class:`BanEntry` objects.
+        Yields
+        -------
+        :class:`~nextcord.BanEntry`
+            The ban with the ban data parsed.
         """
 
-        data: List[BanPayload] = await self._state.http.get_bans(self.id)
-        return [BanEntry(user=User(state=self._state, data=e['user']), reason=e['reason']) for e in data]
+        return BanIterator(self, limit=limit, before=before, after=after)
 
     async def prune_members(
         self,
