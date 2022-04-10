@@ -1048,11 +1048,15 @@ class SlashCommandMixin(CallbackMixin):
         #  this to CallbackMixin.
         self._parsed_docstring = parse_docstring(callback, _MAX_COMMAND_DESCRIPTION_LENGTH)
 
-    async def call_slash(self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]] = None):
+    async def call_slash(
+            self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]] = None
+    ):
         if option_data is None:
             option_data = interaction.data.get("options", {})
         if self.children:
-            await self.children[option_data[0]["name"]].call_slash(state, interaction, option_data[0].get("options", {}))
+            await self.children[option_data[0]["name"]].call_slash(
+                state, interaction, option_data[0].get("options", {})
+            )
         else:
             kwargs = {}
             uncalled_args = self.options.copy()
@@ -1195,6 +1199,17 @@ class BaseApplicationCommand(CallbackMixin, AppCmdWrapperMixin):
         return self.get_payload(None)
 
     def parse_discord_response(self, state: ConnectionState, data: dict):
+        """
+
+        Parameters
+        ----------
+        state
+        data
+
+        Returns
+        -------
+
+        """
         self._state = state
         command_id = int(data["id"])
         if guild_id := data.get("guild_id", None):
@@ -1205,15 +1220,25 @@ class BaseApplicationCommand(CallbackMixin, AppCmdWrapperMixin):
         else:
             self.command_ids[None] = command_id
 
-    def check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int] = None) -> bool:
-        warnings.warn(
-            ".check_against_raw_payload() is deprecated, please use .is_payload_valid instead.",
-            stacklevel=2,
-            category=FutureWarning
-        )
-        return self.is_payload_valid(raw_payload, guild_id)
-
     def is_payload_valid(self, raw_payload: dict, guild_id: Optional[int] = None) -> bool:
+        """Checks if the given raw application command interaction payload from Discord is possibly valid for
+        this command.
+        Note that while this may return ``True`` for a given payload, that doesn't mean that the payload is fully
+        correct for this command. Discord doesn't send data for parameters that are optional and aren't supplied by
+        the user.
+
+        Parameters
+        ----------
+        raw_payload: :class:`dict`
+            Application command interaction payload from Discord.
+        guild_id: Optional[:class:`int`]
+            Guild ID that the payload is from. If it's from a global command, this should be ``None``
+
+        Returns
+        -------
+        :class:`bool`
+            ``True`` if the given payload is possibly valid for this command. ``False`` otherwise.
+        """
         cmd_payload = self.get_payload(guild_id)
         if cmd_payload.get("guild_id", 0) != int(raw_payload.get("guild_id", 0)):
             return False
@@ -1341,6 +1366,14 @@ class BaseApplicationCommand(CallbackMixin, AppCmdWrapperMixin):
 
     async def call(self, state: ConnectionState, interaction: Interaction):
         raise NotImplementedError
+
+    def check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int] = None) -> bool:
+        warnings.warn(
+            ".check_against_raw_payload() is deprecated, please use .is_payload_valid instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
+        return self.is_payload_valid(raw_payload, guild_id)
 
 
 class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, AppCmdWrapperMixin):
