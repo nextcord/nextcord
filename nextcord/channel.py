@@ -64,6 +64,7 @@ __all__ = (
     'CategoryChannel',
     'GroupChannel',
     'PartialMessageable',
+    'ForumChannel'
 )
 
 if TYPE_CHECKING:
@@ -83,6 +84,7 @@ if TYPE_CHECKING:
         DMChannel as DMChannelPayload,
         CategoryChannel as CategoryChannelPayload,
         GroupDMChannel as GroupChannelPayload,
+        ForumChannel as ForumChannelPayload
     )
     from .types.snowflake import SnowflakeList
 
@@ -1531,6 +1533,11 @@ class CategoryChannel(abc.GuildChannel, Hashable):
             The channel that was just created.
         """
         return await self.guild.create_stage_channel(name, category=self, **options)
+
+
+# TODO: implement guild channel.
+class ForumChannel(abc.GuildChannel, Hashable):
+    def __init__(self, *, state: ConnectionState, )
 
 
 DMC = TypeVar('DMC', bound='DMChannel')

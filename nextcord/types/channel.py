@@ -38,7 +38,7 @@ class PermissionOverwrite(TypedDict):
     deny: str
 
 
-ChannelType = Literal[0, 1, 2, 3, 4, 5, 6, 10, 11, 12, 13]
+ChannelType = Literal[0, 1, 2, 3, 4, 5, 6, 10, 11, 12, 13, 15]
 
 
 class _BaseChannel(TypedDict):
@@ -72,6 +72,10 @@ class TextChannel(_BaseGuildChannel, _TextChannelOptional):
 
 class NewsChannel(_BaseGuildChannel, _TextChannelOptional):
     type: Literal[5]
+
+
+class ForumChannel(_BaseGuildChannel, _TextChannelOptional):
+    type: Literal[15]
 
 
 VideoQualityMode = Literal[1, 2]
