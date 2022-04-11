@@ -46,7 +46,6 @@ pythonVersion = "3.8"
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 reportInvalidStringEscapeSequence = false
 reportPropertyTypeMismatch = true
-reportUnusedImport = true
 reportDuplicateImport = true
 reportUntypedFunctionDecorator = true
 reportUntypedClassDecorator = true
