@@ -1,15 +1,15 @@
-## Contributing to nextcord
+# Contributing to nextcord
 
 First off, thanks for taking the time to contribute. It makes the library substantially better. :+1:
 
 The following is a set of guidelines for contributing to the repository. These are guidelines, not hard rules.
 
-## This is too much to read! I want to ask a question!
+## This is too much to read! I want to ask a question
 
 Generally speaking questions are better suited in our resources below.
 
-- The official support server: https://discord.gg/ZebatWssCB
-- The Discord API server under #python_discord-py: https://discord.gg/discord-api
+- The official support server: <https://discord.gg/ZebatWssCB>
+- The Discord API server under #python_discord-py: <https://discord.gg/discord-api>
 - [The FAQ in the documentation](https://nextcord.readthedocs.io/en/latest/faq.html)
 - [StackOverflow's `nextcord` tag](https://stackoverflow.com/questions/tagged/nextcord)
 - [StackOverflow's `discord.py` tag](https://stackoverflow.com/questions/tagged/discord.py)
