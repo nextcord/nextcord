@@ -64,7 +64,7 @@ __all__ = (
     'CategoryChannel',
     'GroupChannel',
     'PartialMessageable',
-    'ForumChannel'
+    'ForumChannel',
 )
 
 if TYPE_CHECKING:
@@ -1536,7 +1536,6 @@ class CategoryChannel(abc.GuildChannel, Hashable):
 
 
 # TODO: implement guild channel.
-
 
 DMC = TypeVar('DMC', bound='DMChannel')
 
