@@ -1536,8 +1536,6 @@ class CategoryChannel(abc.GuildChannel, Hashable):
 
 
 # TODO: implement guild channel.
-class ForumChannel(abc.GuildChannel, Hashable):
-    def __init__(self, *, state: ConnectionState, )
 
 
 DMC = TypeVar('DMC', bound='DMChannel')
