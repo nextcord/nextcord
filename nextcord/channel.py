@@ -172,21 +172,25 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         self._type: int = data['type']
         self._update(guild, data)
     
+    def _update(self, guild: Guild, data: Union[TextChannelPayload, VoiceChannelPayload]):
+        self.guild: Guild = guild
+        self.name: str = data['name']
+        self.category_id: Optional[int] = utils._get_as_snowflake(data, 'parent_id')
+        self.topic: Optional[str] = data.get('topic')
+        self.position: int = data['position']
+        self.nsfw: bool = data.get('nsfw', False)
+        # Does this need coercion into `int`? No idea yet.
+        self.slowmode_delay: int = data.get('rate_limit_per_user', 0)
+        self.default_auto_archive_duration: ThreadArchiveDuration = data.get('default_auto_archive_duration', 1440)
+        self._type: int = data.get('type', self._type)
+        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
+        self._fill_overwrites(data)
+    
     async def _get_channel(self):
         return self
 
-    @property
-    def _sorting_bucket(self) -> int:
-        return ChannelType.text.value
-
-    @utils.copy_doc(abc.GuildChannel.permissions_for)
-    def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
-        base = super().permissions_for(obj)
-
-        # text channels do not have voice related permissions
-        denied = Permissions.voice()
-        base.value &= ~denied.value
-        return base
+    
+    
 
     @property
     def members(self) -> List[Member]:
@@ -623,22 +627,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         return PartialMessage(channel=self, id=message_id)
 
-    def get_thread(self, thread_id: int, /) -> Optional[Thread]:
-        """Returns a thread with the given ID.
-
-        .. versionadded:: 2.0
-
-        Parameters
-        -----------
-        thread_id: :class:`int`
-            The ID to search for.
-
-        Returns
-        --------
-        Optional[:class:`Thread`]
-            The returned thread or ``None`` if not found.
-        """
-        return self.guild.get_thread(thread_id)
+    
 
     async def create_thread(
         self,
@@ -771,20 +760,6 @@ class ThreadableChannel(abc.GuildChannel, Hashable):
         ]
         joined = ' '.join('%s=%r' % t for t in attrs)
         return f'<{self.__class__.__name__} {joined}>'
-
-    def _update(self, guild: Guild, data: Union[TextChannelPayload, VoiceChannelPayload]):
-        self.guild: Guild = guild
-        self.name: str = data['name']
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, 'parent_id')
-        self.topic: Optional[str] = data.get('topic')
-        self.position: int = data['position']
-        self.nsfw: bool = data.get('nsfw', False)
-        # Does this need coercion into `int`? No idea yet.
-        self.slowmode_delay: int = data.get('rate_limit_per_user', 0)
-        self.default_auto_archive_duration: ThreadArchiveDuration = data.get('default_auto_archive_duration', 1440)
-        self._type: int = data.get('type', self._type)
-        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
-        self._fill_overwrites(data)
     
     @property
     def type(self) -> ChannelType:
@@ -794,6 +769,18 @@ class ThreadableChannel(abc.GuildChannel, Hashable):
     @property
     def _sorting_bucket(self) -> int:
         return ChannelType.text.value
+    
+    def get_thread(self, thread_id: int, /) -> Optional[Thread]:
+        return self.guild.get_thread(thread_id)
+    
+    @utils.copy_doc(abc.GuildChannel.permissions_for)
+    def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
+        base = super().permissions_for(obj)
+
+        # text channels do not have voice related permissions
+        denied = Permissions.voice()
+        base.value &= ~denied.value
+        return base
     
 
 
