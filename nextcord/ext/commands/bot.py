@@ -903,7 +903,54 @@ class BotBase(GroupMixin):
             sys.modules.update(modules)
             raise
     
-    def load_extensions(self, folder_name: str) -> List[str]:
+    def load_extensions(
+            self, 
+            names: List[str], 
+            *, 
+            package: Optional[str] = None,
+    ) -> List[str]:
+        """Loads all extensions provided in a list.
+        
+        Parameters
+        ----------
+        names: :type:`List[str]`
+            The names of all of the extensions to load.
+        package: :type:`Optional[str]`
+            The package name to resolve relative imports with.
+            This is required when loading an extension using a relative path, e.g ``.foo.test``.
+            Defaults to ``None``.
+
+        Returns
+        --------
+        A :type:`List[str]` that contains the names of all of the extensions
+        that loaded successfully.
+
+        Raises
+        --------
+        ExtensionNotFound
+            An extension could not be imported.
+        ExtensionAlreadyLoaded
+            An extension is already loaded.
+        NoEntryPointError
+            An extension does not have a setup function.
+        ExtensionFailed
+            An extension or its setup function had an execution error.
+        """
+        # TODO: Extra arguments
+
+        loaded_extensions: List[str] = []
+
+        for i_extension in range(len(names)):
+            try:
+                self.load_extension(names[i_extension], package=package)
+            except Exception:
+                raise
+            else:
+                loaded_extensions.append(names[i_extension])
+
+        return loaded_extensions
+
+    def find_load_extensions(self, folder_name: str) -> List[str]:
         """Loads all extensions found in a folder.
 
         Once an extension found in a folder has been loaded and did not throw
@@ -931,19 +978,10 @@ class BotBase(GroupMixin):
         ExtensionFailed
             An extension or its setup function had an execution error.
         """
-        extensions: List[str] = []
-        files = os.listdir(folder_name)
+        # TODO: Extra arguments
 
-        for file in files:
-            # possible extension detected
-            if file.endswith(".py"):
-                try:
-                    # TODO: Extra arguments
-                    self.load_extension(file[:-3], package=folder_name)
-                except Exception:
-                    raise
-                else:
-                    extensions.append(file[:-3])
+        files: List[str] = [f[:-3] for f in os.listdir(folder_name) if f.endswith(".py")]
+        extensions: List[str] = self.load_extension(files, package=folder_name)
 
         return extensions
 
