@@ -82,6 +82,7 @@ from .threads import Thread
 from .ui.view import View
 from .ui.modal import Modal
 from .user import ClientUser, User
+from .utils import MISSING
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
