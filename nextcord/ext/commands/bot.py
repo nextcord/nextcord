@@ -33,6 +33,7 @@ import importlib.util
 import sys
 import traceback
 import types
+import os
 from typing import Any, Callable, Mapping, List, Dict, TYPE_CHECKING, Optional, TypeVar, Type, Union
 
 import nextcord
@@ -901,6 +902,50 @@ class BotBase(GroupMixin):
             # revert sys.modules back to normal and raise back to caller
             sys.modules.update(modules)
             raise
+    
+    def load_extensions(self, folder_name: str) -> List[str]:
+        """Loads all extensions found in a folder.
+
+        Once an extension found in a folder has been loaded and did not throw
+        any exceptions, it will be added to a list of extension names that
+        will be returned.
+
+        Parameters
+        ----------
+        folder_name: :class:`str`
+            The name (or path) of the folder to look through.
+
+        Returns
+        --------
+        A :type:`List[str]` that contains the names of all of the extensions
+        that loaded successfully.
+
+        Raises
+        --------
+        ExtensionNotFound
+            An extension could not be imported.
+        ExtensionAlreadyLoaded
+            An extension is already loaded.
+        NoEntryPointError
+            An extension does not have a setup function.
+        ExtensionFailed
+            An extension or its setup function had an execution error.
+        """
+        extensions: List[str] = []
+        files = os.listdir(folder_name)
+
+        for file in files:
+            # possible extension detected
+            if file.endswith(".py"):
+                try:
+                    # TODO: Extra arguments
+                    self.load_extension(file[:-3], package=folder_name)
+                except Exception:
+                    raise
+                else:
+                    extensions.append(file[:-3])
+
+        return extensions
 
     @property
     def extensions(self) -> Mapping[str, types.ModuleType]:
