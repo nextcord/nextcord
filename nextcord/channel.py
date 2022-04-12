@@ -172,39 +172,13 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         self._type: int = data['type']
         self._update(guild, data)
 
-    def __repr__(self) -> str:
-        attrs = [
-            ('id', self.id),
-            ('name', self.name),
-            ('position', self.position),
-            ('nsfw', self.nsfw),
-            ('news', self.is_news()),
-            ('category_id', self.category_id),
-        ]
-        joined = ' '.join('%s=%r' % t for t in attrs)
-        return f'<{self.__class__.__name__} {joined}>'
+    
 
-    def _update(self, guild: Guild, data: TextChannelPayload) -> None:
-        self.guild: Guild = guild
-        self.name: str = data['name']
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, 'parent_id')
-        self.topic: Optional[str] = data.get('topic')
-        self.position: int = data['position']
-        self.nsfw: bool = data.get('nsfw', False)
-        # Does this need coercion into `int`? No idea yet.
-        self.slowmode_delay: int = data.get('rate_limit_per_user', 0)
-        self.default_auto_archive_duration: ThreadArchiveDuration = data.get('default_auto_archive_duration', 1440)
-        self._type: int = data.get('type', self._type)
-        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
-        self._fill_overwrites(data)
+    
 
-    async def _get_channel(self):
-        return self
+    
 
-    @property
-    def type(self) -> ChannelType:
-        """:class:`ChannelType`: The channel's Discord type."""
-        return try_enum(ChannelType, self._type)
+    
 
     @property
     def _sorting_bucket(self) -> int:
@@ -584,6 +558,9 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar, reason=reason)
         return Webhook.from_state(data, state=self._state)
+    
+    async def _get_channel(self):
+        return self
 
     async def follow(self, *, destination: TextChannel, reason: Optional[str] = None) -> Webhook:
         """
@@ -785,6 +762,48 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         """
         return ArchivedThreadIterator(self.id, self.guild, limit=limit, joined=joined, private=private, before=before)
 
+class ThreadableChannel(abc.GuildChannel, Hashable):
+    def __init__(self, *, state: ConnectionState, guild: Guild, data: Union[TextChannelPayload, VoiceChannelPayload]):
+        self._state = state
+        self.id = int(data['id'])
+        self._update(guild, data)
+    
+    def __repr__(self) -> str:
+        attrs = [
+            ('id', self.id),
+            ('name', self.name),
+            ('position', self.position),
+            ('nsfw', self.nsfw),
+            ('news', self.is_news()),
+            ('category_id', self.category_id),
+        ]
+        joined = ' '.join('%s=%r' % t for t in attrs)
+        return f'<{self.__class__.__name__} {joined}>'
+
+    def _update(self, guild: Guild, data: Union[TextChannelPayload, VoiceChannelPayload]):
+        self.guild: Guild = guild
+        self.name: str = data['name']
+        self.category_id: Optional[int] = utils._get_as_snowflake(data, 'parent_id')
+        self.topic: Optional[str] = data.get('topic')
+        self.position: int = data['position']
+        self.nsfw: bool = data.get('nsfw', False)
+        # Does this need coercion into `int`? No idea yet.
+        self.slowmode_delay: int = data.get('rate_limit_per_user', 0)
+        self.default_auto_archive_duration: ThreadArchiveDuration = data.get('default_auto_archive_duration', 1440)
+        self._type: int = data.get('type', self._type)
+        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
+        self._fill_overwrites(data)
+    
+    @property
+    def type(self) -> ChannelType:
+        """:class:`ChannelType`: The channel's Discord type."""
+        return try_enum(ChannelType, self._type)
+    
+    @property
+    def _sorting_bucket(self) -> int:
+        return ChannelType.text.value
+    
+    
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
     __slots__ = (
@@ -1536,6 +1555,9 @@ class CategoryChannel(abc.GuildChannel, Hashable):
 
 
 # TODO: implement guild channel.
+
+
+
 
 DMC = TypeVar('DMC', bound='DMChannel')
 

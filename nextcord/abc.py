@@ -1162,7 +1162,7 @@ class Messageable:
     __slots__ = ()
     _state: ConnectionState
 
-    async def _get_channel(self) -> MessageableChannel:
+    async def _get_channel(self) -> MessageableChannel:  # TODO: make this return ThreadableChannel when i implement this.
         raise NotImplementedError
 
     @overload
