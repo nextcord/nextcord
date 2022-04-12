@@ -189,9 +189,6 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
     async def _get_channel(self):
         return self
 
-    
-    
-
     @property
     def members(self) -> List[Member]:
         """List[:class:`Member`]: Returns all members that can see this channel."""
