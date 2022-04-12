@@ -171,14 +171,9 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         self.id: int = int(data['id'])
         self._type: int = data['type']
         self._update(guild, data)
-
     
-
-    
-
-    
-
-    
+    async def _get_channel(self):
+        return self
 
     @property
     def _sorting_bucket(self) -> int:
@@ -558,9 +553,6 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar, reason=reason)
         return Webhook.from_state(data, state=self._state)
-    
-    async def _get_channel(self):
-        return self
 
     async def follow(self, *, destination: TextChannel, reason: Optional[str] = None) -> Webhook:
         """
@@ -803,7 +795,7 @@ class ThreadableChannel(abc.GuildChannel, Hashable):
     def _sorting_bucket(self) -> int:
         return ChannelType.text.value
     
-    
+
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
     __slots__ = (
