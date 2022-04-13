@@ -194,17 +194,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         """List[:class:`Member`]: Returns all members that can see this channel."""
         return [m for m in self.guild.members if self.permissions_for(m).read_messages]
 
-    @property
-    def threads(self) -> List[Thread]:
-        """List[:class:`Thread`]: Returns all the threads that you can see.
-
-        .. versionadded:: 2.0
-        """
-        return [thread for thread in self.guild._threads.values() if thread.parent_id == self.id]
-
-    def is_nsfw(self) -> bool:
-        """:class:`bool`: Checks if the channel is NSFW."""
-        return self.nsfw
+    
 
     def is_news(self) -> bool:
         """:class:`bool`: Checks if the channel is a news channel."""
@@ -767,7 +757,26 @@ class ThreadableChannel(abc.GuildChannel, Hashable):
     def _sorting_bucket(self) -> int:
         return ChannelType.text.value
     
+    def is_nsfw(self) -> bool:
+        """:class:`bool`: Checks if the channel is NSFW."""
+        return self.nsfw
+    
+    
     def get_thread(self, thread_id: int, /) -> Optional[Thread]:
+        """Returns a thread with the given ID.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        -----------
+        thread_id: :class:`int`
+            The ID to search for.
+        
+        Returns
+        --------
+        Optional[:class:`Thread`]
+            The returned thread or ``None`` if not found.
+        """
         return self.guild.get_thread(thread_id)
     
     @utils.copy_doc(abc.GuildChannel.permissions_for)
@@ -778,7 +787,16 @@ class ThreadableChannel(abc.GuildChannel, Hashable):
         denied = Permissions.voice()
         base.value &= ~denied.value
         return base
+
+    @property
+    def threads(self) -> List[Thread]:
+        """List[:class:`Thread`]: Returns all the threads that you can see.
+
+        .. versionadded:: 2.0
+        """
+        return [thread for thread in self.guild._threads.values() if thread.parent_id == self.id]
     
+    333
 
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
