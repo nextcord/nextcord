@@ -48,7 +48,6 @@ import typing
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
 from .errors import (
-    InvalidCommandType,  # TODO: Look into what to do with this.
     ApplicationCheckFailure,
     ApplicationError,
     ApplicationInvokeError,
@@ -155,8 +154,7 @@ class CallbackWrapper:
 
 class CallbackWrapperMixin:
     def __init__(self, callback: Union[Callable, CallbackWrapper]):
-        """
-        Used to add very basic callback wrapper support.
+        """Adds very basic callback wrapper support.
 
         If you are a normal user, you shouldn't be using this.
 
@@ -173,15 +171,15 @@ class CallbackWrapperMixin:
 class ApplicationCommandOption:
     def __init__(
             self,
-            cmd_type: ApplicationCommandOptionType = MISSING,
-            name: str = MISSING,
-            description: str = MISSING,
-            required: bool = MISSING,
-            choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]] = MISSING,
-            channel_types: List[ChannelType] = MISSING,
-            min_value: Union[int, float] = MISSING,
-            max_value: Union[int, float] = MISSING,
-            autocomplete: bool = MISSING,
+            cmd_type: ApplicationCommandOptionType = None,
+            name: str = None,
+            description: str = None,
+            required: bool = None,
+            choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]] = None,
+            channel_types: List[ChannelType] = None,
+            min_value: Union[int, float] = None,
+            max_value: Union[int, float] = None,
+            autocomplete: bool = None,
     ):
         """This represents the `Application Command Option Structure
         <https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure>`_
@@ -197,11 +195,18 @@ class ApplicationCommandOption:
             Description of the option. Must be 1-100 characters.
         required: :class:`bool`
             If the option is required or optional.
-        choices
+        choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]],
+                 Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
+            Either a dictionary of display name: value pairs, or an iterable list of values that will have identical
+            display names and values.
         channel_types: List[:class:`ChannelType`]
+            A list of ChannelType enums to allow the user to pick. Should only be set if this is a Channel option.
         min_value: Union[:class:`int`, :class:`float`]
+            Minimum value the user can input. Should only be set if this is an integer or number option.
         max_value: Union[:class:`int`, :class:`float`]
+            Minimum value the user can input. Should only be set if this is an integer or number option.
         autocomplete: :class:`bool`
+            If the command option should have autocomplete enabled.
         """
         self.type: Optional[ApplicationCommandOptionType] = cmd_type
         self.name: Optional[str] = name
@@ -215,10 +220,10 @@ class ApplicationCommandOption:
 
     @property
     def payload(self) -> dict:
-        """Returns a dict payload made of the attributes of the option to be sent to Discord."""
+        """:class:`dict`: Returns a dict payload made of the attributes of the option to be sent to Discord."""
         # noinspection PyUnresolvedReferences
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
-        if self.required:
+        if self.required:  # We don't check if it's None because if it's False, we don't want to send it.
             ret["required"] = self.required
         if self.choices:
             # Discord returns the names as strings, might as well do it here so payload comparison is easy.
@@ -229,9 +234,9 @@ class ApplicationCommandOption:
         if self.channel_types:
             # noinspection PyUnresolvedReferences
             ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
-        if self.min_value is not MISSING:
+        if self.min_value is not None:
             ret["min_value"] = self.min_value
-        if self.max_value is not MISSING:
+        if self.max_value is not None:
             ret["max_value"] = self.max_value
         if self.autocomplete:
             ret["autocomplete"] = self.autocomplete
@@ -243,7 +248,7 @@ class BaseCommandOption(ApplicationCommandOption):
             self,
             parameter: Parameter,
             command: BaseApplicationCommand,
-            parent_cog: Optional[ClientCog] = MISSING
+            parent_cog: Optional[ClientCog] = None
     ):
         """Represents an application command option, but takes a Parameter and ClientCog as an argument.
 
@@ -251,10 +256,12 @@ class BaseCommandOption(ApplicationCommandOption):
         ----------
         parameter: :class:`Parameter`
             Function parameter to construct the command option with.
+        command: :class:`BaseApplicationCommand`
+            Application Command this option is for.
         parent_cog: :class:`ClientCog`
             Class that the function the option is for resides in.
         """
-        ApplicationCommandOption.__init__(self)
+        super().__init__()
         self.parameter: Parameter = parameter
         self.command: BaseApplicationCommand = command
         self.functional_name: str = parameter.name
@@ -308,11 +315,20 @@ class OptionConverter(_CustomTypingMetaBase):
         pass
 
 
+class Mentionable(OptionConverter):
+    """When a parameter is typehinted with this, it allows users to select both roles and members."""
+    def __init__(self):
+        super().__init__(ApplicationCommandOptionType.mentionable)
+
+    async def convert(self, interaction: Interaction, value: Any) -> Any:
+        return value
+
+
 class ClientCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
     # __cog_application_commands__: List[ApplicationCommand]
     # __cog_to_register__: List[ApplicationCommand]
-    _cog_application_commands__: List[BaseApplicationCommand]
+    __cog_application_commands__: List[BaseApplicationCommand]
 
     def __new__(cls, *args: Any, **kwargs: Any):
         new_cls = super(ClientCog, cls).__new__(cls)
@@ -404,13 +420,6 @@ class ClientCog:
         pass
 
     @property
-    def __cog_to_register__(self) -> List[BaseApplicationCommand]:
-        warnings.warn(".__cog_to_register__ is deprecated, please use .__cog_application_commands__ instead.",
-                      stacklevel=2, category=FutureWarning)
-        # TODO: Remove at later date.
-        return self.__cog_application_commands__
-
-    @property
     def to_register(self) -> List[BaseApplicationCommand]:
         warnings.warn(".to_register is deprecated, please use .application_commands instead.", stacklevel=2,
                       category=FutureWarning)
@@ -422,7 +431,7 @@ class CallbackMixin:
     name: str
     options: Dict[str, BaseCommandOption]
 
-    def __init__(self, callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = MISSING):
+    def __init__(self, callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = None):
         """Contains code specific for adding callback support to a command class.
 
         If you are a normal user, you shouldn't be using this.
@@ -446,15 +455,29 @@ class CallbackMixin:
                 raise TypeError(f"{self.error_name} Callback must be a coroutine")
         self.parent_cog = parent_cog
 
+    def __call__(self, interaction: Interaction, *args, **kwargs):
+        return self.invoke_callback(interaction, *args, **kwargs)
+
     @property
     def error_name(self) -> str:
-        """Returns a string containing the class name, command name, and the callback to use in raising exceptions."""
+        """Returns a string containing the class name, command name, and the callback to use in raising exceptions.
+
+        Returns
+        -------
+        :class:`str`
+            String containing the class name, command name, and callback object.
+        """
         return f"{self.__class__.__name__} {self.name} {self.callback}"
 
     @property
     def cog_before_invoke(self) -> Optional[ApplicationHook]:
         """Returns the cog_application_command_before_invoke method for the cog that this command is in.
         Returns ``None`` if not the method is not found.
+
+        Returns
+        -------
+        Optional[:class:`ApplicationHook`]
+            ``before_invoke`` method from the parent cog. ``None`` if not the method is not found.
         """
         if not self.parent_cog:
             return None
@@ -466,7 +489,11 @@ class CallbackMixin:
     @property
     def cog_after_invoke(self) -> Optional[ApplicationHook]:
         """Returns the cog_application_command_after_invoke method for the cog that this command is in.
-        Returns ``None`` if not the method is not found.
+
+        Returns
+        -------
+        Optional[:class:`ApplicationHook`]
+            ``after_invoke`` method from the parent cog. ``None`` if not the method is not found.
         """
         if not self.parent_cog:
             return None
@@ -503,7 +530,7 @@ class CallbackMixin:
         """
         if callback is not None:
             self.callback = callback
-        if self.name is MISSING:
+        if self.name is None:
             self.name = self.callback.__name__
         try:
             if not asyncio.iscoroutinefunction(self.callback):
@@ -531,7 +558,7 @@ class CallbackMixin:
                         arg = option_class(param, self, parent_cog=self.parent_cog)
                         self.options[arg.name] = arg
         except Exception as e:
-            _log.error(f"Error creating from callback {self.error_name}: {e}")
+            _log.error(f"Error creating from callback %s: %s", self.error_name, e)
             raise e
 
     async def can_run(self, interaction: Interaction) -> bool:
@@ -567,7 +594,7 @@ class CallbackMixin:
             else:
                 if not check_result:
                     error = ApplicationCheckFailure(
-                        f"The global check functions for application command {self.qualified_name} failed."
+                        f"The global check functions for application command {self.error_name} failed."
                     )
                     raise error
 
@@ -580,7 +607,7 @@ class CallbackMixin:
                     cog_check, interaction
             ):
                 raise ApplicationCheckFailure(
-                    f"The cog check functions for application command {self.qualified_name} failed."
+                    f"The cog check functions for application command {self.error_name} failed."
                 )
 
         # Command checks
@@ -594,7 +621,7 @@ class CallbackMixin:
             else:
                 if not check_result:
                     error = ApplicationCheckFailure(
-                        f"The check functions for application command {self.qualified_name} failed."
+                        f"The check functions for application command {self.error_name} failed."
                     )
                     raise error
 
@@ -678,18 +705,40 @@ class CallbackMixin:
         return callback
 
     def callback_before_invoke(self, coro: Callable[[Interaction], Coroutine]) -> Callable[[Interaction], Coroutine]:
-        """Sets the callback that should be run before the command callback is invoked."""
+        """Sets the callback that should be run before the command callback is invoked.
+
+        Parameters
+        ----------
+        coro: Callable[[:class:`Interaction`], Coroutine]
+            Coroutine to set as the before_invoke hook.
+
+        Returns
+        -------
+        Callable[[:class:`Interaction`], Coroutine]
+            The coroutine to allow multiple commands to share the function.
+        """
         self._callback_before_invoke = coro
         return coro
 
     def callback_after_invoke(self, coro: Callable[[Interaction], Coroutine]) -> Callable[[Interaction], Coroutine]:
-        """Sets the callback that should be run after the command callback is invoked."""
+        """Sets the callback that should be run after the command callback is invoked.
+
+        Parameters
+        ----------
+        coro: Callable[[:class:`Interaction`], Coroutine]
+            Coroutine to set as the after_invoke hook.
+
+        Returns
+        -------
+        Callable[[:class:`Interaction`], Coroutine]
+            The coroutine to allow multiple commands to share the function.
+        """
         self._callback_after_invoke = coro
         return coro
 
 
 class AutocompleteOptionMixin:
-    def __init__(self, autocomplete_callback: Callable = MISSING, parent_cog: ClientCog = MISSING):
+    def __init__(self, autocomplete_callback: Callable = None, parent_cog: ClientCog = None):
         """Contains code for providing autocomplete support, specifically for options.
 
         If you are a normal user, you shouldn't be using this.
@@ -793,7 +842,7 @@ class AutocompleteCommandMixin:
             if not focused_option_name:
                 raise ValueError("There's supposed to be a focused option, but it's not found?")
             focused_option = self.options[focused_option_name]
-            if focused_option.autocomplete_callback is MISSING:
+            if focused_option.autocomplete_callback is None:
                 raise ValueError(f"{self.error_name} Autocomplete called for option {focused_option.functional_name} "
                                  f"but it doesn't have an autocomplete function?")
 
@@ -824,7 +873,7 @@ class AutocompleteCommandMixin:
             found = False
             for name, option in self.options.items():
                 if option.functional_name == arg_name:
-                    if option.autocomplete is MISSING:
+                    if option.autocomplete is None:
                         # If autocomplete isn't set, enable it for them.
                         option.autocomplete = True
                     if option.autocomplete:
@@ -880,9 +929,9 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
     autocomplete: :class:`bool`
         If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
         if an autocomplete function for it is found.
-    autocomplete_function: Optional[:class:`Callable`]
+    autocomplete_callback: Optional[:class:`Callable`]
         The function that will be used to autocomplete this parameter. If not specified, it will be looked for
-        using the :meth:`~ApplicationSubcommand.on_autocomplete` decorator.
+        using the :meth:`~SlashApplicationSubcommand.on_autocomplete` decorator.
     default: Any
         When required is not True and the user doesn't provide a value for this Option, this value is given instead.
     verify: :class:`bool`
@@ -890,17 +939,17 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
     """
     def __init__(
             self,
-            name: str = MISSING,
-            description: str = MISSING,
-            required: bool = MISSING,
+            name: str = None,
+            description: str = None,
+            required: bool = None,
             choices: Union[
                 Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]
-            ] = MISSING,
-            channel_types: List[ChannelType] = MISSING,
-            min_value: Union[int, float] = MISSING,
-            max_value: Union[int, float] = MISSING,
-            autocomplete: bool = MISSING,
-            autocomplete_callback: Callable = MISSING,
+            ] = None,
+            channel_types: List[ChannelType] = None,
+            min_value: Union[int, float] = None,
+            max_value: Union[int, float] = None,
+            autocomplete: bool = None,
+            autocomplete_callback: Callable = None,
             default: Any = MISSING,
             verify: bool = True,
     ):
@@ -930,8 +979,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         Member: ApplicationCommandOptionType.user,
         GuildChannel: ApplicationCommandOptionType.channel,
         Role: ApplicationCommandOptionType.role,
-        # TODO: Is this in the library at all currently? This includes Users and Roles.
-        # Mentionable: CommandOptionType.mentionable
+        Mentionable: ApplicationCommandOptionType.mentionable,
         float: ApplicationCommandOptionType.number,
         Attachment: ApplicationCommandOptionType.attachment,
     }
@@ -958,7 +1006,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         self.name = cmd_arg.name or parameter.name
         self._description = cmd_arg.description
-        if cmd_arg.required is not MISSING:  # If the user manually set it...
+        if cmd_arg.required is not None:  # If the user manually set it...
             self.required = cmd_arg.required
         elif type(None) in typing.get_args(parameter.annotation):  # If it's typed as Optional/None...
             self.required = False
@@ -974,7 +1022,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         self.max_value = cmd_arg.max_value
         self.autocomplete = cmd_arg.autocomplete
         self.autocomplete_callback = cmd_arg.autocomplete_callback
-        if self.autocomplete_callback and self.autocomplete is MISSING:
+        if self.autocomplete_callback and self.autocomplete is None:
             self.autocomplete = True
 
         if self.autocomplete_callback:
@@ -985,12 +1033,12 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # If we weren't given a SlashOption, but we were given something else, set the default to that.
             self.default = parameter.default
         else:
-            # Else, just set the default to whatever cmd_arg is set to. Either MISSING, or something set by the user.
+            # Else, just set the default to whatever cmd_arg is set to. Either None, or something set by the user.
             self.default = cmd_arg.default
         if self.default is MISSING:
             self.default = None
 
-        self.converter: Optional[OptionConverter] = MISSING
+        self.converter: Optional[OptionConverter] = None
 
         if isinstance(parameter.annotation, OptionConverter):  # If annotated with an instantiated OptionConverter...
             self.converter = parameter.annotation
@@ -1019,9 +1067,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
     @property
     def description(self) -> str:
-        """If no description is set, it returns "No description provided" """
+        """:class:`str`: If no description is set, it returns "No description provided" """
         # noinspection PyProtectedMember
-        if self._description is not MISSING:
+        if self._description is not None:
             return self._description
         elif docstring := self.command._parsed_docstring["args"].get(self.functional_name):
             return docstring
@@ -1057,11 +1105,11 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         super().verify()
         if self.channel_types and self.type is not ApplicationCommandOptionType.channel:
             raise ValueError("channel_types can only be given when the var is typed as nextcord.abc.GuildChannel")
-        if self.min_value is not MISSING and type(self.min_value) not in (int, float):
+        if self.min_value is not None and type(self.min_value) not in (int, float):
             raise ValueError("min_value must be an int or float.")
-        if self.max_value is not MISSING and type(self.max_value) not in (int, float):
+        if self.max_value is not None and type(self.max_value) not in (int, float):
             raise ValueError("max_value must be an int or float.")
-        if (self.min_value is not MISSING or self.max_value is not MISSING) and self.type not in (
+        if (self.min_value is not None or self.max_value is not None) and self.type not in (
                 ApplicationCommandOptionType.integer, ApplicationCommandOptionType.number):
             raise ValueError("min_value or max_value can only be set if the type is integer or number.")
 
@@ -1089,8 +1137,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         if self.converter:
             return await self.converter.convert(interaction, value)
-        if value is MISSING:
-            return None
+        # if value is MISSING:
+        #     return None
         else:
             return value
 
@@ -1106,7 +1154,7 @@ class SlashCommandMixin(CallbackMixin):
 
     @property
     def description(self) -> str:
-        if self._description is not MISSING:
+        if self._description is not None:
             return self._description
         elif docstring := self._parsed_docstring["description"]:
             return docstring
@@ -1157,11 +1205,11 @@ class SlashCommandMixin(CallbackMixin):
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     def __init__(
             self,
-            name: str = MISSING,
-            description: str = MISSING,
-            callback: Callable = MISSING,
-            cmd_type: ApplicationCommandType = MISSING,
-            guild_ids: Iterable[int] = MISSING,
+            name: str = None,
+            description: str = None,
+            callback: Callable = None,
+            cmd_type: ApplicationCommandType = None,
+            guild_ids: Iterable[int] = None,
             default_permission: Optional[bool] = None,
             parent_cog: Optional[ClientCog] = None,
             force_global: bool = False
@@ -1192,11 +1240,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         CallbackWrapperMixin.__init__(self, callback)
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
         self._state: Optional[ConnectionState] = None
-        self.type: ApplicationCommandType = cmd_type
-        self.name: str = name
-        self._description: str = description
+        self.type: Optional[ApplicationCommandType] = cmd_type
+        self.name: Optional[str] = name
+        self._description: Optional[str] = description
         self.guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
-        self.default_permission: bool = default_permission
+        self.default_permission: Optional[bool] = default_permission
         self.force_global: bool = force_global
 
         self.command_ids: Dict[Optional[int], int] = {}  # {Guild ID (None for global): command ID}
@@ -1259,7 +1307,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         Returns
         -------
-        Tuple[:class:`str`, :class:`int`, Optional[:class:`int`]
+        Tuple[:class:`str`, :class:`int`, Optional[:class:`int`]]
             A tuple that acts as a signature made up of the name, type, and guild ID.
         """
         # noinspection PyUnresolvedReferences
@@ -1320,7 +1368,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             "name": str(self.name),  # Might as well stringify the name, will come in handy if people try using numbers.
             "description": self.description,
         }
-        if self.default_permission not in (MISSING, None):
+        if self.default_permission is not None:
             ret["default_permission"] = self.default_permission
         else:
             ret["default_permission"] = True
@@ -1472,11 +1520,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                             all_our_options_copy.pop(our_opt_name)
                             all_inter_options_copy.pop(our_opt_name)
                         else:
-                            print("Required option don't match name and/or type.")
+                            _log.debug("%s Required option don't match name and/or type.", self.error_name)
                             return False  # Options don't match name and/or type.
 
                     else:
-                        print("Inter missing required option.")
+                        _log.debug("%s Inter missing required option.", self.error_name)
                         return False  # Required option wasn't found.
                 # Begin checking optional arguments.
                 for inter_opt_name, inter_opt in all_inter_options_copy:  # Should only contain optionals now.
@@ -1484,18 +1532,21 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                         if inter_opt["name"] == our_opt["name"] and inter_opt["type"] == our_opt["type"]:
                             pass
                         else:
-                            print("Optional option don't match name and/or type.")
+                            _log.debug("%s Optional option don't match name and/or type.", self.error_name)
                             return False  # Options don't match name and/or type.
                     else:
-                        print("Inter has option that we don't.")
+                        _log.debug("%s Inter has option that we don't.", self.error_name)
                         return False  # They have an option name that we don't.
             else:
-                print(f"We have less options than them: {all_our_options} vs {all_inter_options}")
+                _log.debug(
+                    "%s We have less options than them: %s vs %s",
+                    self.error_name, all_our_options, all_inter_options
+                )
                 return False  # Interaction has more options than we do.
             return True  # No checks failed.
 
         if not check_dictionary_values(our_payload, data, "name", "guild_id", "type"):
-            print("Failed basic dictionary check.")
+            _log.debug("%s Failed basic dictionary check.", self.error_name)
             return False
         else:
             data_options = data.get("options")
@@ -1505,7 +1556,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             elif data_options is None and payload_options is None:
                 return True  # User and Message commands don't have options.
             else:
-                print(f"Mismatch between data and payload options: {data_options} {payload_options}")
+                _log.debug(
+                    "%s Mismatch between data and payload options: %s vs %s",
+                    self.error_name, data_options, payload_options
+                )
                 # There is a mismatch between the two, fail it.
                 return False
 
@@ -1564,11 +1618,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, CallbackWrapperMixin):
     def __init__(
             self,
-            name: str = MISSING,
-            description: str = MISSING,
-            callback: Callable = MISSING,
-            parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand] = MISSING,
-            cmd_type: ApplicationCommandOptionType = MISSING,
+            name: str = None,
+            description: str = None,
+            callback: Callable = None,
+            parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand] = None,
+            cmd_type: ApplicationCommandOptionType = None,
             parent_cog: Optional[ClientCog] = None,
     ):
         """Slash Application Subcommand, supporting additional subcommands and autocomplete.
@@ -1654,8 +1708,8 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
     def subcommand(
             self,
-            name: str = MISSING,
-            description: str = MISSING
+            name: str = None,
+            description: str = None
     ) -> Callable[[Callable], SlashApplicationSubcommand]:
         """Takes a decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
 
@@ -1682,11 +1736,11 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
     def __init__(
             self,
-            name: str = MISSING,
-            description: str = MISSING,
-            callback: Callable = MISSING,
-            guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            name: str = None,
+            description: str = None,
+            callback: Callable = None,
+            guild_ids: Iterable[int] = None,
+            default_permission: bool = None,
             parent_cog: Optional[ClientCog] = None,
             force_global: bool = False
     ):
@@ -1754,8 +1808,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
     def subcommand(
             self,
-            name: str = MISSING,
-            description: str = MISSING
+            name: str = None,
+            description: str = None
     ) -> Callable[[Callable], SlashApplicationSubcommand]:
         """Takes a decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
 
@@ -1779,10 +1833,10 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 class UserApplicationCommand(BaseApplicationCommand):
     def __init__(
             self,
-            name: str = MISSING,
-            callback: Callable = MISSING,
-            guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            name: str = None,
+            callback: Callable = None,
+            guild_ids: Iterable[int] = None,
+            default_permission: bool = None,
             parent_cog: Optional[ClientCog] = None,
             force_global: bool = False
     ):
@@ -1822,10 +1876,10 @@ class UserApplicationCommand(BaseApplicationCommand):
 class MessageApplicationCommand(BaseApplicationCommand):
     def __init__(
             self,
-            name: str = MISSING,
-            callback: Callable = MISSING,
-            guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            name: str = None,
+            callback: Callable = None,
+            guild_ids: Iterable[int] = None,
+            default_permission: bool = None,
             parent_cog: Optional[ClientCog] = None,
             force_global: bool = False
     ):
@@ -1863,9 +1917,9 @@ class MessageApplicationCommand(BaseApplicationCommand):
 
 
 def slash_command(
-    name: str = MISSING,
-    description: str = MISSING,
-    guild_ids: Iterable[int] = MISSING,
+    name: str = None,
+    description: str = None,
+    guild_ids: Iterable[int] = None,
     default_permission: Optional[bool] = None,
     force_global: bool = False,
 ):
@@ -1891,12 +1945,6 @@ def slash_command(
     def decorator(func: Callable) -> SlashApplicationCommand:
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
-
-        # async def inner_deco(self, *args, **kwargs):
-        #     await func(self, *args, **kwargs)
-        #
-        # inner_deco.__name__ = func.__name__
-
         app_cmd = SlashApplicationCommand(
             callback=func,
             name=name,
@@ -1911,8 +1959,8 @@ def slash_command(
 
 
 def message_command(
-    name: str = MISSING,
-    guild_ids: Iterable[int] = MISSING,
+    name: str = None,
+    guild_ids: Iterable[int] = None,
     default_permission: Optional[bool] = None,
     force_global: bool = False,
 ):
@@ -1935,15 +1983,6 @@ def message_command(
     def decorator(func: Callable) -> MessageApplicationCommand:
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
-        # app_cmd = ApplicationCommand(
-        #     callback=func,
-        #     cmd_type=ApplicationCommandType.message,
-        #     name=name,
-        #     description=description,
-        #     guild_ids=guild_ids,
-        #     default_permission=default_permission,
-        #     force_global=force_global
-        # )
         app_cmd = MessageApplicationCommand(
             callback=func,
             name=name,
@@ -1957,8 +1996,8 @@ def message_command(
 
 
 def user_command(
-    name: str = MISSING,
-    guild_ids: Iterable[int] = MISSING,
+    name: str = None,
+    guild_ids: Iterable[int] = None,
     default_permission: Optional[bool] = None,
     force_global: bool = False,
 ):
@@ -1990,15 +2029,6 @@ def user_command(
         return app_cmd
 
     return decorator
-
-
-class Mentionable(OptionConverter):
-    """When a parameter is typehinted with this, it allows users to select both roles and members."""
-    def __init__(self):
-        super().__init__(ApplicationCommandOptionType.mentionable)
-
-    async def convert(self, interaction: Interaction, value: Any) -> Any:
-        return value
 
 
 def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:

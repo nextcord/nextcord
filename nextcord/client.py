@@ -2275,8 +2275,8 @@ class Client:
 
     def user_command(
             self,
-            name: str = MISSING,
-            guild_ids: Iterable[int] = MISSING,
+            name: str = None,
+            guild_ids: Iterable[int] = None,
             default_permission: Optional[bool] = None,
             force_global: bool = False
     ):
@@ -2304,8 +2304,8 @@ class Client:
 
     def message_command(
             self,
-            name: str = MISSING,
-            guild_ids: Iterable[int] = MISSING,
+            name: str = None,
+            guild_ids: Iterable[int] = None,
             default_permission: Optional[bool] = None,
             force_global: bool = False
     ):
@@ -2333,9 +2333,9 @@ class Client:
 
     def slash_command(
             self,
-            name: str = MISSING,
-            description: str = MISSING,
-            guild_ids: Iterable[int] = MISSING,
+            name: str = None,
+            description: str = None,
+            guild_ids: Iterable[int] = None,
             default_permission: Optional[bool] = None,
             force_global: bool = False
     ):

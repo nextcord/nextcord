@@ -39,7 +39,6 @@ if TYPE_CHECKING:
 
 __all__ = (
     "DiscordException",
-    "InvalidCommandType",
     "ClientException",
     "NoMoreItems",
     "GatewayNotFound",
@@ -73,12 +72,6 @@ class ClientException(DiscordException):
 
     These are usually for exceptions that happened due to user input.
     """
-
-    pass
-
-
-class InvalidCommandType(ClientException):
-    """Raised when an unhandled Application Command type is encountered."""
 
     pass
 

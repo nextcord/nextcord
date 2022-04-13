@@ -4378,6 +4378,7 @@ Options
 
 .. autoclass:: SlashOption
     :members:
+    :exclude-members: verify
 
 Cogs
 ~~~~
