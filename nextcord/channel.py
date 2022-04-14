@@ -92,6 +92,15 @@ async def _single_delete_strategy(messages: Iterable[Message]):
         await m.delete()
 
 
+class ForumChannel(abc.GuildChannel, Hashable):
+    __slots__ = (
+
+    )
+    def __init__(self, *, state: ConnectionState, guild: Guild, payload: ...):
+        ...
+        # TODO: insert payload here.
+
+
 class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
     """Represents a Discord guild text channel.
 

@@ -1097,3 +1097,38 @@ class ApplicationFlags(BaseFlags):
     def embedded(self):
         """:class:`bool`: Returns ``True`` if the application is embedded within the Discord client."""
         return 1 << 17
+
+
+@fill_with_flags()
+class ChannelFlags(BaseFlags):
+    """Wraps up the Discord guild channel flags.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two ChannelFlags are equal.
+        .. describe:: x != y
+
+            Checks if two ChannelFlags are not equal.
+        .. describe:: hash(x)
+
+            Return the flag's hash.
+        .. describe:: iter(x)
+
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
+
+    .. versionadded:: 2.0
+
+    Attributes
+    -----------
+    value: :class:`int`
+        The raw value. You should query flags via the properties
+        rather than using this raw value.
+    """
+
+    @flag_value
+    def pinned(self):
+        return 1 << 1

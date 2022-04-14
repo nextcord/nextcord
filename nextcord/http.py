@@ -2072,3 +2072,51 @@ class HTTPClient:
             event_id=event_id
         )
         return self.request(r, params=params)
+    
+    def create_forum_threads(
+        self,
+        channel_id: Snowflake, 
+        *,
+        name: str,
+        auto_archive_duration: Optional[int] = None,
+        rate_limit_per_user: Optional[int] = None,
+        content: Optional[str],
+        embed: Optional[embed.Embed] = None,
+        embeds: Optional[List[embed.Embed]] = None,
+        allowed_mentions: Optional[message.AllowedMentions] = None,
+        stickers: Optional[List[sticker.StickerItem]] = None,
+        components: Optional[List[components.Component]] = None,
+
+    ):
+        payload = {}
+        if content: 
+            payload['content'] = content
+        
+        if name:
+            payload['name'] = name
+        
+        if auto_archive_duration:
+            payload['auto_archive_duration'] = auto_archive_duration
+        
+        if rate_limit_per_user:
+            payload['rate_limit_per_user'] = rate_limit_per_user
+        
+        if embed:
+            payload['embeds'] = [embed]
+        
+        if embeds:
+            payload['embeds'] = embeds
+        
+        if allowed_mentions:
+            payload['allowed_mentions'] = allowed_mentions
+        
+        if stickers:
+            payload['stickers'] = stickers
+        
+        if components:
+            payload['components'] = components
+        
+        return self.request(Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id), json=payload)
+        
+
+
