@@ -100,6 +100,53 @@ class ForumChannel(abc.GuildChannel, Hashable):
     def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload):
         self._state: ConnectionState = state
         self.id = int(data['id'])
+        self._type: int = data['type']
+        self._update(guild, data)
+    
+    async def _get_channel(self):
+        return self
+    
+    def _update(self, guild: Guild, data: TextChannelPayload) -> None:
+        self.guild: Guild = guild
+        self.name: str = data['name']
+        self.category_id: Optional[int] = utils._get_as_snowflake(data, 'parent_id')
+        self.topic: Optional[str] = data.get('topic')
+        self.position: int = data['position']
+        self.nsfw: bool = data.get('nsfw', False)
+        # Does this need coercion into `int`? No idea yet.
+        self.slowmode_delay: int = data.get('rate_limit_per_user', 0)
+        self.default_auto_archive_duration: ThreadArchiveDuration = data.get('default_auto_archive_duration', 1440)
+        self._type: int = data.get('type', self._type)
+        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
+        self._fill_overwrites(data)
+    
+    @property
+    def type(self) -> ChannelType:
+        """:class:`ChannelType`: The channel's Discord type."""
+        return try_enum(ChannelType, self._type)
+
+    @property
+    def threads(self) -> List[Thread]:
+        """List[:class:`Thread`]: Returns all the threads that you can see.
+
+        .. versionadded:: 2.0
+        """
+        return [thread for thread in self.guild._threads.values() if thread.parent_id == self.id]
+    
+    @utils.copy_doc(abc.GuildChannel.permissions_for)
+    def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
+        base = super().permissions_for(obj)
+
+        # text channels do not have voice related permissions
+        denied = Permissions.voice()
+        base.value &= ~denied.value
+        return base
+    
+    @property
+    def _sorting_bucket(self) -> int:
+        return ChannelType.text.value
+    
+
 
 
 class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
