@@ -456,7 +456,11 @@ class CallbackMixin:
         self.parent_cog = parent_cog
 
     def __call__(self, interaction: Interaction, *args, **kwargs):
-        return self.invoke_callback(interaction, *args, **kwargs)
+        """Invokes the callback, injecting ``self`` if available."""
+        if self.parent_cog:
+            return self.callback(self.parent_cog, interaction, *args, **kwargs)
+        else:
+            return self.callback(interaction, *args, **kwargs)
 
     @property
     def error_name(self) -> str:
@@ -652,7 +656,8 @@ class CallbackMixin:
                 await before_invoke(interaction)
 
             try:
-                await self.invoke_callback(interaction, *args, **kwargs)
+                # await self.invoke_callback(interaction, *args, **kwargs)
+                await self(interaction, *args, **kwargs)
             except Exception as error:
                 state.dispatch(
                     "application_command_error",
@@ -671,13 +676,10 @@ class CallbackMixin:
                     await after_invoke(interaction)
 
     async def invoke_callback(self, interaction: Interaction, *args, **kwargs) -> None:
-        """|coro
+        """|coro|
         Invokes the callback, injecting ``self`` if available.
         """
-        if self.parent_cog:
-            await self.callback(self.parent_cog, interaction, *args, **kwargs)
-        else:
-            await self.callback(interaction, *args, **kwargs)
+        await self(interaction, *args, **kwargs)
 
     async def invoke_error(self, interaction: Interaction, error: ApplicationError) -> None:
         """|coro|
@@ -2003,6 +2005,7 @@ def user_command(
 ):
     """Creates a User context command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
+
     Parameters
     ----------
     name: :class:`str`
