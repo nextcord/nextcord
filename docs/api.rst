@@ -4361,6 +4361,11 @@ Application Commands
 .. autoclass:: SlashApplicationSubcommand
     :members:
 
+.. attributetable:: Mentionable
+
+.. autoclass:: Mentionable
+    :members:
+
 Options
 ~~~~~~~
 
