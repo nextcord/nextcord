@@ -83,6 +83,7 @@ if TYPE_CHECKING:
         DMChannel as DMChannelPayload,
         CategoryChannel as CategoryChannelPayload,
         GroupDMChannel as GroupChannelPayload,
+        ForumChannel as ForumChannelPayload,
     )
     from .types.snowflake import SnowflakeList
 
@@ -96,9 +97,9 @@ class ForumChannel(abc.GuildChannel, Hashable):
     __slots__ = (
 
     )
-    def __init__(self, *, state: ConnectionState, guild: Guild, payload: ...):
-        ...
-        # TODO: insert payload here.
+    def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload):
+        self._state: ConnectionState = state
+        self.id = int(data['id'])
 
 
 class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
