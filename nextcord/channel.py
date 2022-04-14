@@ -106,7 +106,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     async def _get_channel(self):
         return self
     
-    def _update(self, guild: Guild, data: TextChannelPayload) -> None:
+    def _update(self, guild: Guild, data: ForumChannelPayload) -> None:
         self.guild: Guild = guild
         self.name: str = data['name']
         self.category_id: Optional[int] = utils._get_as_snowflake(data, 'parent_id')
