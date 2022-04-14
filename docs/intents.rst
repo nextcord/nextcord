@@ -167,7 +167,7 @@ Some common issues relating to the mandatory intent change.
 Where'd my members go?
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Due to an :ref:`API change <intents_member_cache>` Discord is now forcing developers who want member caching to explicitly opt-in to it. This is a Discord mandated change and there is no way to bypass it. To get members back, you have to explicitly enable the :ref:`members privileged intent <privileged_intents>` and change the :attr:`Intents.members` attribute to true.
+Due to an :ref:`API change <intents_member_cache>` Discord is now forcing developers who want member caching to explicitly opt in to it. This is a Discord mandated change and there is no way to bypass it. To get members back, you have to explicitly enable the :ref:`members privileged intent <privileged_intents>` and change the :attr:`Intents.members` attribute to true.
 
 For example:
 
@@ -177,6 +177,29 @@ For example:
     import nextcord
     intents = nextcord.Intents.default()
     intents.members = True
+
+    # Somewhere else:
+    # client = nextcord.Client(intents=intents)
+    # or
+    # from nextcord.ext import commands
+    # bot = commands.Bot(command_prefix='!', intents=intents)
+
+What happened to my message commands?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Due to an :ref:`API change <need_message_content_intent>`, to read message content in most messages,
+you have to explicitly opt in to it. This is a Discord mandated change and there is no way to bypass it.
+To get message content back, you have to explicitly enable the :ref:`message content privileged intent <privileged_intents>`
+and change the :attr:`Intents.message_content` attribute to true.
+
+For example:
+
+.. code-block:: python3
+   :emphasize-lines: 3,6,8,9
+
+    import nextcord
+    intents = nextcord.Intents.default()
+    intents.message_content = True
 
     # Somewhere else:
     # client = nextcord.Client(intents=intents)
