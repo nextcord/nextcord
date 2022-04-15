@@ -34,6 +34,7 @@ import sys
 import traceback
 import types
 import os
+from pathlib import Path
 from typing import Any, Callable, Mapping, List, Dict, TYPE_CHECKING, Optional, TypeVar, Type, Union
 
 import nextcord
@@ -908,6 +909,7 @@ class BotBase(GroupMixin):
             names: List[str], 
             *, 
             package: Optional[str] = None,
+            packages: Optional[List[str]] = None
     ) -> List[str]:
         """Loads all extensions provided in a list.
         
@@ -919,6 +921,10 @@ class BotBase(GroupMixin):
             The package name to resolve relative imports with.
             This is required when loading an extension using a relative path, e.g ``.foo.test``.
             Defaults to ``None``.
+        packages: :type:`Optional[List[str]]`
+            A list of packages to resolve relative imports with.
+            This is required when loading an extension using a relative path, e.g ``.foo.test``.
+            Defaults to ``None``.
 
         Returns
         --------
@@ -927,6 +933,9 @@ class BotBase(GroupMixin):
 
         Raises
         --------
+        ValueError
+            If the ``package`` and ``packages`` parameters are both provided and if
+            the length of ``packages`` is not equal to the length of ``names``.
         ExtensionNotFound
             An extension could not be imported.
         ExtensionAlreadyLoaded
@@ -938,15 +947,32 @@ class BotBase(GroupMixin):
         """
         # TODO: Extra arguments
 
+        if package and packages:
+            raise ValueError("Cannot provide both package and packages.")
+
+        if packages:
+            if len(packages) != len(names):
+                raise ValueError("The number of packages must match the number of extensions.")
+
         loaded_extensions: List[str] = []
 
-        for i_extension in range(len(names)):
+        if packages:
+            packages_itr = iter(packages)
+
+        for extension in names:
+            if packages:
+                # this shouldn't give any errors since we already checked the length
+                cur_package = next(packages_itr)
+
             try:
-                self.load_extension(names[i_extension], package=package)
+                if package:
+                    self.load_extension(extension, package=package)
+                elif packages:
+                    self.load_extension(extension, package=cur_package)
             except Exception:
                 raise
             else:
-                loaded_extensions.append(names[i_extension])
+                loaded_extensions.append(extension)
 
         return loaded_extensions
 
@@ -980,8 +1006,12 @@ class BotBase(GroupMixin):
         """
         # TODO: Extra arguments
 
-        files: List[str] = [f[:-3] for f in os.listdir(folder_name) if f.endswith(".py")]
-        extensions: List[str] = self.load_extension(files, package=folder_name)
+        path = Path(folder_name)
+        _raw_files: List[Path] = list(path.glob("**/*.py"))
+
+        packages: List[str] = [str(p.parent).replace(os.sep, ".") for p in _raw_files]
+        modules: List[str] = [str(p.stem) for p in _raw_files]
+        extensions: List[str] = self.load_extensions(modules, packages=packages)
 
         return extensions
 
