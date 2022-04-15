@@ -1173,6 +1173,30 @@ class SlashCommandMixin(CallbackMixin):
         #  this to CallbackMixin.
         self._parsed_docstring = parse_docstring(callback, _MAX_COMMAND_DESCRIPTION_LENGTH)
 
+    async def get_slash_kwargs(
+            self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        if option_data is None:
+            option_data = interaction.data.get("options", {})
+        kwargs = {}
+        uncalled_args = self.options.copy()
+        for arg_data in option_data:
+            if arg_data["name"] in uncalled_args:
+                uncalled_args.pop(arg_data["name"])
+                kwargs[self.options[arg_data["name"]].functional_name] = \
+                    await self.options[arg_data["name"]].handle_value(state, arg_data["value"],
+                                                                      interaction)
+            else:
+                # TODO: Handle this better.
+                raise NotImplementedError(
+                    f"An argument was provided that wasn't already in the function, did you"
+                    f"recently change it?\nRegistered Options: {self.options}, Discord-sent"
+                    f"args: {interaction.data['options']}, broke on {arg_data}"
+                )
+        for uncalled_arg in uncalled_args.values():
+            kwargs[uncalled_arg.functional_name] = uncalled_arg.default
+        return kwargs
+
     async def call_slash(
             self, state: ConnectionState, interaction: Interaction, option_data: List[Dict[str, Any]] = None
     ):
@@ -1183,24 +1207,7 @@ class SlashCommandMixin(CallbackMixin):
                 state, interaction, option_data[0].get("options", {})
             )
         else:
-            kwargs = {}
-            uncalled_args = self.options.copy()
-            for arg_data in option_data:
-                if arg_data["name"] in uncalled_args:
-                    uncalled_args.pop(arg_data["name"])
-                    kwargs[self.options[arg_data["name"]].functional_name] = \
-                        await self.options[arg_data["name"]].handle_value(state, arg_data["value"],
-                                                                          interaction)
-                else:
-                    # TODO: Handle this better.
-                    raise NotImplementedError(
-                        f"An argument was provided that wasn't already in the function, did you"
-                        f"recently change it?\nRegistered Options: {self.options}, Discord-sent"
-                        f"args: {interaction.data['options']}, broke on {arg_data}"
-                    )
-            for uncalled_arg in uncalled_args.values():
-                kwargs[uncalled_arg.functional_name] = uncalled_arg.default
-            # await self.invoke_callback(interaction, **kwargs)
+            kwargs = await self.get_slash_kwargs(state, interaction, option_data)
             await self.invoke_callback_with_hooks(state, interaction, **kwargs)
 
 

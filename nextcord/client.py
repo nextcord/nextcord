@@ -131,6 +131,7 @@ def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
                 'task': task
             })
 
+
 def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
     try:
         _cancel_tasks(loop)
@@ -138,6 +139,7 @@ def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
     finally:
         _log.info('Closing the event loop.')
         loop.close()
+
 
 class Client:
     r"""Represents a client connection that connects to Discord.
@@ -1882,6 +1884,19 @@ class Client:
                                  f"found/associated!")
 
     def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
+        """Gets an application command from the cache that has the given command ID.
+
+        Parameters
+        ----------
+        command_id: :class:`int`
+            Command ID corresponding to an application command.
+
+        Returns
+        -------
+        Optional[:class:`BaseApplicationCommand`]
+            Returns the application command corresponding to the ID. If no command is
+            found, ``None`` is returned instead.
+        """
         return self._connection.get_application_command(command_id)
 
     def get_application_command_from_signature(
