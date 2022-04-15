@@ -1626,6 +1626,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand] = None,
             cmd_type: ApplicationCommandOptionType = None,
             parent_cog: Optional[ClientCog] = None,
+            inherit_hooks: bool = False,
     ):
         """Slash Application Subcommand, supporting additional subcommands and autocomplete.
 
@@ -1646,6 +1647,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             ``ApplicationCommandOptionType.sub_command_group``
         parent_cog: Optional[:class:`ClientCog`]
             Parent cog for the callback, if it exists. If provided, it will be given to the callback as ``self``.
+        inherit_hooks: :class:`bool`
+            If this subcommand should inherit the parent (sub)commands ``before_invoke`` and ``after_invoke`` callbacks.
+            Defaults to ``False``..
         """
         SlashCommandMixin.__init__(self, callback=callback, parent_cog=parent_cog)
         AutocompleteCommandMixin.__init__(self, parent_cog)
@@ -1655,6 +1659,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self._description: str = description
         self.type: ApplicationCommandOptionType = cmd_type
         self.parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand] = parent_cmd
+        self._inherit_hooks: bool = inherit_hooks
 
         self.options: Dict[str, SlashCommandOption] = {}
         self.children: Dict[str, SlashApplicationSubcommand] = {}
@@ -1704,14 +1709,18 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             if self.children:
                 for child in self.children.values():
                     child.from_callback(callback=child.callback, option_class=option_class, call_children=call_children)
+        if self._inherit_hooks and self.parent_cmd:
+            self._callback_before_invoke = self.parent_cmd._callback_before_invoke
+            self._callback_after_invoke = self.parent_cmd._callback_after_invoke
+        super().from_autocomplete()
         for modify_callback in self.modify_callbacks:
             modify_callback(self)
-        super().from_autocomplete()
 
     def subcommand(
             self,
             name: str = None,
-            description: str = None
+            description: str = None,
+            inherit_hooks: bool = False,
     ) -> Callable[[Callable], SlashApplicationSubcommand]:
         """Takes a decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
 
@@ -1721,11 +1730,15 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             Name of the slash subcommand. No capital letters, no spaces.
         description: :class:`str`
             Description of the slash subcommand. Must be 1-100 characters. If not provided, a default will be given.
+        inherit_hooks: :class:`bool`
+            If the subcommand should inherit the parent subcommands ``before_invoke`` and ``after_invoke`` callbacks.
+            Defaults to ``False``.
         """
         def decorator(func: Callable) -> SlashApplicationSubcommand:
             ret = SlashApplicationSubcommand(
                 name=name, description=description, callback=func, parent_cmd=self,
-                cmd_type=ApplicationCommandOptionType.sub_command, parent_cog=self.parent_cog
+                cmd_type=ApplicationCommandOptionType.sub_command, parent_cog=self.parent_cog,
+                inherit_hooks=inherit_hooks
             )
             self.children[ret.name] = ret
             return ret
@@ -1811,7 +1824,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
     def subcommand(
             self,
             name: str = None,
-            description: str = None
+            description: str = None,
+            inherit_hooks: bool = False,
     ) -> Callable[[Callable], SlashApplicationSubcommand]:
         """Takes a decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
 
@@ -1821,11 +1835,15 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             Name of the slash subcommand. No capital letters, no spaces.
         description: :class:`str`
             Description of the slash subcommand. Must be 1-100 characters. If not provided, a default will be given.
+        inherit_hooks: :class:`bool`
+            If the subcommand should inherit the parent commands ``before_invoke`` and ``after_invoke`` callbacks.
+            Defaults to ``False``.
         """
         def decorator(func: Callable) -> SlashApplicationSubcommand:
             ret = SlashApplicationSubcommand(
                 name=name, description=description, callback=func, parent_cmd=self,
-                cmd_type=ApplicationCommandOptionType.sub_command, parent_cog=self.parent_cog
+                cmd_type=ApplicationCommandOptionType.sub_command, parent_cog=self.parent_cog,
+                inherit_hooks=inherit_hooks
             )
             self.children[ret.name] = ret
             return ret
