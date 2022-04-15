@@ -144,7 +144,7 @@ class AssetMixin:
         ------
         DiscordException
             The asset does not have an associated state.
-        ValueError
+        InvalidArgument
             The asset is a unicode emoji.
         TypeError
             The asset is a sticker with lottie type.
