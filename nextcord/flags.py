@@ -898,7 +898,7 @@ class Intents(BaseFlags):
 
         .. note::
 
-            As of April 30, 2022, this requires opting in explicitly via the developer portal as well.
+            As of September 1, 2022, this requires opting in explicitly via the developer portal as well.
             Bots in over 100 guilds will need to apply to Discord for verification.
         """
         return 1 << 15

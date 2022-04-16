@@ -78,7 +78,7 @@ class AppInfo:
 
         .. warning::
 
-            This attribute now returns an empty string and will be removed in API v11.       
+            This attribute now returns an empty string and will be removed in API v11.
 
         .. versionadded:: 1.3
 
@@ -219,8 +219,8 @@ class PartialAppInfo:
         this field will be the summary field for the store page of its primary SKU.
 
         .. warning::
-            
-            This attribute now returns an empty string and will be removed in API v11. 
+
+            This attribute now returns an empty string and will be removed in API v11.
     verify_key: :class:`str`
         The hex encoded key for verification in interactions and the
         GameSDK's `GetTicket <https://discord.com/developers/docs/game-sdk/applications#getticket>`_.
