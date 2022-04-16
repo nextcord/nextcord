@@ -1,15 +1,15 @@
-## Contributing to nextcord
+# Contributing to nextcord
 
 First off, thanks for taking the time to contribute. It makes the library substantially better. :+1:
 
 The following is a set of guidelines for contributing to the repository. These are guidelines, not hard rules.
 
-## This is too much to read! I want to ask a question!
+## This is too much to read! I want to ask a question
 
 Generally speaking questions are better suited in our resources below.
 
-- The official support server: https://discord.gg/ZebatWssCB
-- The Discord API server under #python_discord-py: https://discord.gg/discord-api
+- The official support server: <https://discord.gg/ZebatWssCB>
+- The Discord API server under #python_discord-py: <https://discord.gg/discord-api>
 - [The FAQ in the documentation](https://nextcord.readthedocs.io/en/latest/faq.html)
 - [StackOverflow's `nextcord` tag](https://stackoverflow.com/questions/tagged/nextcord)
 - [StackOverflow's `discord.py` tag](https://stackoverflow.com/questions/tagged/discord.py)
@@ -34,7 +34,15 @@ If the bug report is missing this information then it'll take us longer to fix t
 
 ## Submitting a Pull Request
 
-Submitting a pull request is fairly simple, just make sure it focuses on a single aspect and doesn't manage to have scope creep and it's probably good to go. It would be incredibly lovely if the style is consistent to that found in the project. This project follows PEP-8 guidelines (mostly) with a column limit of 125.
+Submitting a pull request is fairly simple, just make sure it focuses on a single aspect and doesn't manage to have scope creep and it's probably good to go. It would be incredibly lovely if the style is consistent to that found in the project. This project follows PEP-8 guidelines (mostly) with a column limit of 100.
+
+It would be nice if the code is formatted with no type-checking issues before submitting a PR. To make sure, install the tools using `pip install -r requirements-dev.txt` (or poetry etc), and follow these steps:
+
+- To format the code, run `pre-commit run` once your files are staged, or `task lint` to fix all files.
+Alternatively, run `task precommit` to install hooks to run all checks when you commit (see the [pre-commit docs](https://pre-commit.com/#quick-start)).
+**Note:** If the code is formatted incorrectly, `pre-commit` will fix and exit without committing - just stage and commit again.
+- For type-checks, run `task pyright` (or `task pyright -w` to check every file edit)
+**Note:** If you're using VSCode and pylance, it will use the same settings, which generally means that you don't have to run pyright. However, there can be version conflicts which may give different results when ran in CI on GitHub.
 
 ### Git Commit Guidelines
 
