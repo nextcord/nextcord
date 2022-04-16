@@ -909,7 +909,8 @@ class BotBase(GroupMixin):
             names: List[str], 
             *, 
             package: Optional[str] = None,
-            packages: Optional[List[str]] = None
+            packages: Optional[List[str]] = None,
+            extras: Optional[List[Dict[str, Any]]] = None
     ) -> List[str]:
         """Loads all extensions provided in a list.
         
@@ -925,6 +926,8 @@ class BotBase(GroupMixin):
             A list of packages to resolve relative imports with.
             This is required when loading an extension using a relative path, e.g ``.foo.test``.
             Defaults to ``None``.
+        extras: :type:`Optional[List[Dict[str, Any]]]`
+            A list of extra arguments to pass to the extension's setup function.
 
         Returns
         --------
@@ -934,8 +937,9 @@ class BotBase(GroupMixin):
         Raises
         --------
         ValueError
-            If the ``package`` and ``packages`` parameters are both provided and if
-            the length of ``packages`` is not equal to the length of ``names``.
+            If the ``package`` and ``packages`` parameters are both provided or if
+            the length of ``packages`` or the length of ``extras`` is not equal to 
+            the length of ``names``.
         ExtensionNotFound
             An extension could not be imported.
         ExtensionAlreadyLoaded
@@ -945,30 +949,35 @@ class BotBase(GroupMixin):
         ExtensionFailed
             An extension or its setup function had an execution error.
         """
-        # TODO: Extra arguments
-
         if package and packages:
             raise ValueError("Cannot provide both package and packages.")
 
         if packages:
             if len(packages) != len(names):
-                raise ValueError("The number of packages must match the number of extensions.")
+                raise ValueError("The length of packages must match the length of extensions.")
+            packages_itr = iter(packages)
+
+        if extras:
+            if len(extras) != len(names):
+                raise ValueError("The length of extra parameters must match the length of extensions.")
+            extras_itr = iter(extras)
 
         loaded_extensions: List[str] = []
-
-        if packages:
-            packages_itr = iter(packages)
 
         for extension in names:
             if packages:
                 # this shouldn't give any errors since we already checked the length
                 cur_package = next(packages_itr)
 
+            if extras:
+                # this shouldn't give any errors since we already checked the length
+                cur_extra = next(extras_itr)
+
             try:
                 if package:
-                    self.load_extension(extension, package=package)
+                    self.load_extension(extension, package=package, extras=cur_extra)
                 elif packages:
-                    self.load_extension(extension, package=cur_package)
+                    self.load_extension(extension, package=cur_package, extras=cur_extra)
             except Exception:
                 raise
             else:
@@ -976,7 +985,7 @@ class BotBase(GroupMixin):
 
         return loaded_extensions
 
-    def find_load_extensions(self, folder_name: str) -> List[str]:
+    def find_load_extensions(self, folder_name: str, filter: str = "*.py") -> List[str]:
         """Loads all extensions found in a folder.
 
         Once an extension found in a folder has been loaded and did not throw
@@ -987,6 +996,8 @@ class BotBase(GroupMixin):
         ----------
         folder_name: :class:`str`
             The name (or path) of the folder to look through.
+        filter: :class:`str`
+            The filter to use when looking for extensions.
 
         Returns
         --------
@@ -1004,15 +1015,42 @@ class BotBase(GroupMixin):
         ExtensionFailed
             An extension or its setup function had an execution error.
         """
-        # TODO: Extra arguments
-
         path = Path(folder_name)
-        _raw_files: List[Path] = list(path.glob("**/*.py"))
+        _raw_files: List[Path] = list(path.rglob(filter))
 
         packages: List[str] = [str(p.parent).replace(os.sep, ".") for p in _raw_files]
         modules: List[str] = [str(p.stem) for p in _raw_files]
         extensions: List[str] = self.load_extensions(modules, packages=packages)
 
+        return extensions
+
+    def find_load_module_extensions(self, folder_name: str, suffix: str = ".py") -> List[str]:
+        """Similar to :meth:`find_load_extensions` except it filters out any files that aren't module init files.
+
+        Parameters
+        ----------
+        folder_name: :class:`str`
+            The name (or path) of the folder to look through.
+        suffix: :class:`str`
+            The suffix to use to filter the files.
+
+        Returns
+        --------
+        A :type:`List[str]` that contains the names of all of the extensions
+        that loaded successfully.
+
+        Raises
+        --------
+        ExtensionNotFound
+            An extension could not be imported.
+        ExtensionAlreadyLoaded
+            An extension is already loaded.
+        NoEntryPointError
+            An extension does not have a setup function.
+        ExtensionFailed
+            An extension or its setup function had an execution error.
+        """
+        extensions = self.find_load_extensions(folder_name, "__init__" + suffix)
         return extensions
 
     @property
