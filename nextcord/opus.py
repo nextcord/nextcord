@@ -66,7 +66,7 @@ c_int_ptr   = ctypes.POINTER(ctypes.c_int)
 c_int16_ptr = ctypes.POINTER(ctypes.c_int16)
 c_float_ptr = ctypes.POINTER(ctypes.c_float)
 
-_lib = None
+_lib: Any = None
 
 class EncoderStruct(ctypes.Structure):
     pass
@@ -205,7 +205,7 @@ def libopus_loader(name: str) -> Any:
 
 def _load_default() -> bool:
     global _lib
-    _lib: Any
+
     try:
         if sys.platform == 'win32':
             _basedir = os.path.dirname(os.path.abspath(__file__))
