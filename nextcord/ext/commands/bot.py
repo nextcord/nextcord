@@ -992,12 +992,18 @@ class BotBase(GroupMixin):
         any exceptions, it will be added to a list of extension names that
         will be returned.
 
+        This function only works with cog setups where the entire cog is placed 
+        into one file. If you have a different setup for your cogs, then you will 
+        need to manually load them.
+
         Parameters
         ----------
         folder_name: :class:`str`
             The name (or path) of the folder to look through.
         filter: :class:`str`
-            The filter to use when looking for extensions.
+            The filter to use when looking for extensions. Defaults to ``*.py``.
+            To learn more about the syntax of the filter, check out the Python Docs
+            (https://docs.python.org/3/library/fnmatch.html#module-fnmatch).
 
         Returns
         --------
@@ -1022,35 +1028,6 @@ class BotBase(GroupMixin):
         modules: List[str] = [str(p.stem) for p in _raw_files]
         extensions: List[str] = self.load_extensions(modules, packages=packages)
 
-        return extensions
-
-    def find_load_module_extensions(self, folder_name: str, suffix: str = ".py") -> List[str]:
-        """Similar to :meth:`find_load_extensions` except it filters out any files that aren't module init files.
-
-        Parameters
-        ----------
-        folder_name: :class:`str`
-            The name (or path) of the folder to look through.
-        suffix: :class:`str`
-            The suffix to use to filter the files.
-
-        Returns
-        --------
-        A :type:`List[str]` that contains the names of all of the extensions
-        that loaded successfully.
-
-        Raises
-        --------
-        ExtensionNotFound
-            An extension could not be imported.
-        ExtensionAlreadyLoaded
-            An extension is already loaded.
-        NoEntryPointError
-            An extension does not have a setup function.
-        ExtensionFailed
-            An extension or its setup function had an execution error.
-        """
-        extensions = self.find_load_extensions(folder_name, "__init__" + suffix)
         return extensions
 
     @property
