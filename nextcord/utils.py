@@ -65,7 +65,7 @@ import warnings
 from .errors import InvalidArgument
 
 try:
-    import orjson
+    import orjson  # type: ignore for people w/o orjson in env
 except ModuleNotFoundError:
     HAS_ORJSON = False
 else:
@@ -188,7 +188,7 @@ def cached_slot_property(name: str) -> Callable[[Callable[[T], T_co]], CachedSlo
     return decorator
 
 
-class SequenceProxy(Generic[T_co], collections.abc.Sequence):
+class SequenceProxy(collections.abc.Sequence, Generic[T_co]):
     """Read-only proxy of a Sequence."""
 
     def __init__(self, proxied: Sequence[T_co]):
@@ -246,8 +246,8 @@ def copy_doc(original: Callable) -> Callable[[T], T]:
     return decorator
 
 
-def deprecated(instead: Optional[str] = None) -> Callable[[Callable[[P], T]], Callable[[P], T]]:
-    def actual_decorator(func: Callable[[P], T]) -> Callable[[P], T]:
+def deprecated(instead: Optional[str] = None) -> Callable[[Callable[[P], T]], Callable[[P], T]]:  # type: ignore
+    def actual_decorator(func: Callable[[P], T]) -> Callable[[P], T]:  # type: ignore
         @functools.wraps(func)
         def decorated(*args: P.args, **kwargs: P.kwargs) -> T:
             warnings.simplefilter('always', DeprecationWarning)  # turn off filter
@@ -260,7 +260,7 @@ def deprecated(instead: Optional[str] = None) -> Callable[[Callable[[P], T]], Ca
             warnings.simplefilter('default', DeprecationWarning)  # reset filter
             return func(*args, **kwargs)
 
-        return decorated
+        return decorated  # type: ignore
 
     return actual_decorator
 
@@ -499,7 +499,7 @@ def _bytes_to_base64_data(data: bytes) -> str:
 
 if HAS_ORJSON:
 
-    def _to_json(obj: Any) -> str:  # type: ignore
+    def _to_json(obj: Any) -> str:
         return orjson.dumps(obj).decode('utf-8')
 
     _from_json = orjson.loads  # type: ignore
@@ -553,7 +553,7 @@ async def sane_wait_for(futures, *, timeout):
 def get_slots(cls: Type[Any]) -> Iterator[str]:
     for mro in reversed(cls.__mro__):
         try:
-            yield from mro.__slots__
+            yield from mro.__slots__  # type: ignore handled below?
         except AttributeError:
             continue
 

@@ -85,6 +85,7 @@ if TYPE_CHECKING:
         GroupDMChannel as GroupChannelPayload,
     )
     from .types.snowflake import SnowflakeList
+    from .types.user import PartialUser
 
 
 async def _single_delete_strategy(messages: Iterable[Message]):
@@ -1573,7 +1574,7 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable):
 
     def __init__(self, *, me: ClientUser, state: ConnectionState, data: DMChannelPayload):
         self._state: ConnectionState = state
-        self.recipient: Optional[User] = state.store_user(data['recipients'][0])
+        self.recipient: Optional[User] = state.store_user(data['recipients'][0])  # type: ignore
         self.me: ClientUser = me
         self.id: int = int(data['id'])
 

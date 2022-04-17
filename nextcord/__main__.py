@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+from __future__ import annotations
 
 import argparse
 import sys
@@ -155,7 +156,7 @@ _cog_extras = '''
 # certain file names and directory names are forbidden
 # see: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
 # although some of this doesn't apply to Linux, we might as well be consistent
-_base_table = {
+_base_table: dict[str, str | None] = {
     '<': '-',
     '>': '-',
     ':': '-',

@@ -53,7 +53,8 @@ class _InviteMetadata(TypedDict, total=False):
 
 
 class VanityInvite(_InviteMetadata):
-    code: Optional[str]
+    code: str
+    revoked: Optional[bool]
 
 
 class IncompleteInvite(_InviteMetadata):

@@ -370,7 +370,7 @@ class Modal:
 class ModalStore:
     def __init__(self, state: ConnectionState):
         # (user_id, custom_id): Modal
-        self._modals: Dict[Tuple[int, str], Modal] = {}
+        self._modals: Dict[Tuple[int | None, str], Modal] = {}
         self._state: ConnectionState = state
 
     @property
@@ -385,7 +385,7 @@ class ModalStore:
         return list(modals.values())
 
     def __verify_integrity(self):
-        to_remove: List[Tuple[int, Optional[int], str]] = []
+        to_remove: List[Tuple[int | None, str]] = []
         for (k, modal) in self._modals.items():
             if modal.is_finished():
                 to_remove.append(k)
@@ -408,7 +408,7 @@ class ModalStore:
     def dispatch(self, custom_id: str, interaction: Interaction):
         self.__verify_integrity()
 
-        key = (interaction.user.id, custom_id)
+        key = (interaction.user.id, custom_id)  # type: ignore
         # Fallback to None user_id searches in case a persistent modal
         # was added without an associated message_id
         modal = self._modals.get(key) or self._modals.get((None, custom_id))

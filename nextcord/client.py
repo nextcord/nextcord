@@ -407,7 +407,7 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return self._connection.application_flags  # type: ignore
+        return self._connection.application_flags
 
     def is_ready(self) -> bool:
         """:class:`bool`: Specifies if the client's internal cache is ready for use."""
@@ -831,7 +831,7 @@ class Client:
         """List[:class:`~nextcord.User`]: Returns a list of all the users the bot can see."""
         return list(self._connection._users.values())
 
-    def get_channel(self, id: int, /) -> Optional[Union[GuildChannel, Thread, PrivateChannel]]:
+    def get_channel(self, id: int, /) -> Optional[Union[GuildChannel, Thread, PrivateChannel, PartialMessageable]]:
         """Returns a channel or thread with the given ID.
 
         Parameters
@@ -1206,7 +1206,7 @@ class Client:
                 continue
 
             if activity is not None:
-                me.activities = (activity,)
+                me.activities = (activity,)  # type: ignore
             else:
                 me.activities = ()
 
@@ -1218,8 +1218,8 @@ class Client:
         self,
         *,
         limit: Optional[int] = 100,
-        before: SnowflakeTime = None,
-        after: SnowflakeTime = None
+        before: Optional[SnowflakeTime] = None,
+        after: Optional[SnowflakeTime] = None
     ) -> GuildIterator:
         """Retrieves an :class:`.AsyncIterator` that enables receiving your guilds.
 
@@ -1299,10 +1299,10 @@ class Client:
         """
         code = utils.resolve_template(code)
         data = await self.http.get_template(code)
-        return Template(data=data, state=self._connection) # type: ignore
+        return Template(data=data, state=self._connection)
 
     async def fetch_guild(
-        self, guild_id: int, /, *, with_counts: Optional[bool] = True
+        self, guild_id: int, /, *, with_counts: bool = True
     ) -> Guild:
         """|coro|
 

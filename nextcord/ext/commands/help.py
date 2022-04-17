@@ -22,13 +22,14 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import annotations
+
 import itertools
 import copy
 import functools
-import inspect
 import re
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import nextcord.utils
 
@@ -36,6 +37,8 @@ from .core import Group, Command
 from .errors import CommandError
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Optional
+
     from .context import Context
 
 __all__ = (
@@ -316,8 +319,8 @@ class HelpCommand:
         # The keys can be safely copied as-is since they're 99.99% certain of being
         # string keys
         deepcopy = copy.deepcopy
-        self.__original_kwargs__ = {k: deepcopy(v) for k, v in kwargs.items()}
-        self.__original_args__ = deepcopy(args)
+        self.__original_kwargs__ = {k: deepcopy(v) for k, v in kwargs.items()}  # type: ignore
+        self.__original_args__ = deepcopy(args)  # type: ignore
         return self
 
     def __init__(self, **options):
@@ -330,7 +333,7 @@ class HelpCommand:
         self._command_impl = _HelpCommandImpl(self, **self.command_attrs)
 
     def copy(self):
-        obj = self.__class__(*self.__original_args__, **self.__original_kwargs__)
+        obj = self.__class__(*self.__original_args__, **self.__original_kwargs__)  # type: ignore
         obj._command_impl = self._command_impl
         return obj
 
@@ -530,7 +533,7 @@ class HelpCommand:
             return f'Command "{command.qualified_name}" has no subcommand named {string}'
         return f'Command "{command.qualified_name}" has no subcommands.'
 
-    async def filter_commands(self, commands, *, sort=False, key=None):
+    async def filter_commands(self, commands, *, sort=False, key: Optional[Callable[[Command[Any, Any, Any]], str]] = None):
         """|coro|
 
         Returns a filtered list of commands and optionally sorts them.
@@ -558,16 +561,18 @@ class HelpCommand:
         if sort and key is None:
             key = lambda c: c.name
 
-        iterator = commands if self.show_hidden else filter(lambda c: not c.hidden, commands)
+        _filter: Callable[[Command[Any, Any, Any]], bool] = lambda c: not c.hidden
+
+        iterator = commands if self.show_hidden else filter(_filter, commands)
 
         if self.verify_checks is False:
             # if we do not need to verify the checks then we can just
             # run it straight through normally without using await.
-            return sorted(iterator, key=key) if sort else list(iterator)
+            return sorted(iterator, key=key) if sort else list(iterator)  # type: ignore
 
         if self.verify_checks is None and not self.context.guild:
             # if verify_checks is None and we're in a DM, don't verify
-            return sorted(iterator, key=key) if sort else list(iterator)
+            return sorted(iterator, key=key) if sort else list(iterator)  # type: ignore
 
         # if we're here then we need to check every command if it can run
         async def predicate(cmd):
@@ -914,10 +919,9 @@ class DefaultHelpCommand(HelpCommand):
         self.dm_help_threshold = options.pop('dm_help_threshold', 1000)
         self.commands_heading = options.pop('commands_heading', "Commands:")
         self.no_category = options.pop('no_category', 'No Category')
-        self.paginator = options.pop('paginator', None)
+        paginator = options.pop('paginator', None)
 
-        if self.paginator is None:
-            self.paginator = Paginator()
+        self.paginator = paginator or Paginator()
 
         super().__init__(**options)
 
@@ -985,6 +989,7 @@ class DefaultHelpCommand(HelpCommand):
         command: :class:`Command`
             The command to format.
         """
+
 
         if command.description:
             self.paginator.add_line(command.description, empty=True)
@@ -1116,10 +1121,9 @@ class MinimalHelpCommand(HelpCommand):
         self.dm_help_threshold = options.pop('dm_help_threshold', 1000)
         self.aliases_heading = options.pop('aliases_heading', "Aliases:")
         self.no_category = options.pop('no_category', 'No Category')
-        self.paginator = options.pop('paginator', None)
+        paginator = options.pop('paginator', None)
 
-        if self.paginator is None:
-            self.paginator = Paginator(suffix=None, prefix=None)
+        self.paginator = paginator or Paginator(suffix=None, prefix=None)
 
         super().__init__(**options)
 

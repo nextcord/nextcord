@@ -813,11 +813,11 @@ class CustomActivity(BaseActivity):
 ActivityTypes = Union[Activity, Game, CustomActivity, Streaming, Spotify]
 
 @overload
-def create_activity(data: ActivityPayload) -> ActivityTypes:
+def create_activity(state: ConnectionState, data: ActivityPayload) -> ActivityTypes:
     ...
 
 @overload
-def create_activity(data: None) -> None:
+def create_activity(state: ConnectionState, data: None) -> None:
     ...
 
 def create_activity(state: ConnectionState, data: Optional[ActivityPayload]) -> Optional[ActivityTypes]:

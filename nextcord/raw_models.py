@@ -60,7 +60,7 @@ __all__ = (
 
 class _RawReprMixin:
     def __repr__(self) -> str:
-        value = ' '.join(f'{attr}={getattr(self, attr)!r}' for attr in self.__slots__)
+        value = ' '.join(f'{attr}={getattr(self, attr)!r}' for attr in self.__slots__)  # type: ignore
         return f'<{self.__class__.__name__} {value}>'
 
 
@@ -319,17 +319,17 @@ class RawTypingEvent(_RawReprMixin):
 
 class RawMemberRemoveEvent(_RawReprMixin):
     """Represents the payload for a :func:`on_raw_member_remove` event.
+
     .. versionadded:: 2.0
+
     Attributes
     -----------
     guild_id: :class:`int`
         The guild ID where the member left from.
-    user: :class:`User`
-        The user who left the guild.
     """
 
     __slots__ = ("guild_id", "user")
 
     def __init__(self, data: MemberRemoveEvent) -> None:
         self.guild_id: int = int(data["guild_id"])
-        self.user: User = None
+        # FIXME: practically no data

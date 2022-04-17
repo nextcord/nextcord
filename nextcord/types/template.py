@@ -30,7 +30,10 @@ from .user import User
 from .guild import Guild
 
 
-class CreateTemplate(TypedDict):
+class _CreateTemplateOptional(TypedDict, total=False):
+    description: str
+
+class CreateTemplate(_CreateTemplateOptional):
     name: str
     icon: Optional[bytes]
 

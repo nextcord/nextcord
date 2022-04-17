@@ -148,7 +148,7 @@ class BotBase(GroupMixin):
         if help_command is _default:
             self.help_command = DefaultHelpCommand()
         else:
-            self.help_command = help_command
+            self.help_command = help_command  # type: ignore [why not use MISSING?]
 
     # internal helpers
 
@@ -552,7 +552,7 @@ class BotBase(GroupMixin):
         cog = cog._inject(self)
         self.__cogs[cog_name] = cog
         # TODO: This blind call to nextcord.Client is dumb.
-        super().add_cog(cog)
+        super().add_cog(cog)  # type: ignore
         # Info: To add the ability to use ApplicationCommands in Cogs, the Client has to be aware of cogs. For minimal
         # editing, BotBase must call Client's add_cog function. While it all works out in the end because Bot and
         # AutoShardedBot both end up subclassing Client, this is BotBase and BotBase does not subclass Client, hence
@@ -608,7 +608,7 @@ class BotBase(GroupMixin):
         cog._eject(self)
 
         # TODO: This blind call to nextcord.Client is dumb.
-        super().remove_cog(cog)
+        super().remove_cog(cog)  # type: ignore
         # See Bot.add_cog() for the reason why.
 
         return cog
@@ -895,7 +895,7 @@ class BotBase(GroupMixin):
             # if the load failed, the remnants should have been
             # cleaned from the load_extension function call
             # so let's load it from our old compiled library.
-            lib.setup(self)  # type: ignore
+            lib.setup(self)
             self.__extensions[name] = lib
 
             # revert sys.modules back to normal and raise back to caller
@@ -996,7 +996,8 @@ class BotBase(GroupMixin):
         """
 
         view = StringView(message.content)
-        ctx = cls(prefix=None, view=view, bot=self, message=message)
+        ctx: CXT = cls(prefix=None, view=view, bot=self, message=message)  # type: ignore
+        # pyright/lance has no idea how typevars work for some reason
 
         if message.author.id == self.user.id:  # type: ignore
             return ctx
@@ -1109,7 +1110,7 @@ class BotBase(GroupMixin):
             The function that was used as a global application check.
         """
 
-        self._connection._application_command_checks.append(func)
+        self._connection._application_command_checks.append(func)  # type: ignore
 
     def remove_application_command_check(self, func: ApplicationCheck) -> None:
         """Removes a global check from the bot.
@@ -1124,7 +1125,7 @@ class BotBase(GroupMixin):
         """
 
         try:
-            self._connection._application_command_checks.remove(func)
+            self._connection._application_command_checks.remove(func)  # type: ignore
         except ValueError:
             pass
 
@@ -1153,7 +1154,7 @@ class BotBase(GroupMixin):
                 return interaction.application_command.qualified_name in allowed_commands
 
         """
-        return self.add_application_command_check(func)
+        return self.add_application_command_check(func)  # type: ignore
 
     def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
         """A decorator that registers a coroutine as a pre-invoke hook.
@@ -1177,7 +1178,7 @@ class BotBase(GroupMixin):
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError('The pre-invoke hook must be a coroutine.')
 
-        self._connection._application_command_before_invoke = coro
+        self._connection._application_command_before_invoke = coro  # type: ignore
         return coro
 
     def application_command_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
@@ -1210,7 +1211,7 @@ class BotBase(GroupMixin):
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError('The post-invoke hook must be a coroutine.')
 
-        self._connection._application_command_after_invoke = coro
+        self._connection._application_command_after_invoke = coro  # type: ignore
         return coro
 
 

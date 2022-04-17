@@ -200,7 +200,7 @@ class BaseUser(_UserTag):
         """
         if self._accent_colour is None:
             return None
-        return Colour(self._accent_colour)
+        return Colour(int(self._accent_colour))
 
     @property
     def accent_color(self) -> Optional[Colour]:

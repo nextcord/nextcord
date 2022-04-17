@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
-from typing import Any, Dict, Final, List, Mapping, Protocol, TYPE_CHECKING, Type, TypeVar, Union
+from typing import Any, Dict, Final, List, Mapping, Optional, Protocol, TYPE_CHECKING, Type, TypeVar, Union
 
 from . import utils
 from .colour import Colour
@@ -184,7 +184,7 @@ class Embed:
         type: EmbedType = 'rich',
         url: MaybeEmpty[Any] = EmptyEmbed,
         description: MaybeEmpty[Any] = EmptyEmbed,
-        timestamp: datetime.datetime = None,
+        timestamp: Optional[datetime.datetime] = None,
     ):
 
         self.colour = colour if colour is not EmptyEmbed else color

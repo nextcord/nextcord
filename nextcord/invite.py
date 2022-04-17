@@ -41,6 +41,7 @@ __all__ = (
 if TYPE_CHECKING:
     from .types.invite import (
         Invite as InvitePayload,
+        VanityInvite as VanityInvitePayload,
         InviteGuild as InviteGuildPayload,
         GatewayInvite as GatewayInvitePayload,
     )
@@ -332,7 +333,7 @@ class Invite(Hashable):
         self,
         *,
         state: ConnectionState,
-        data: InvitePayload,
+        data: InvitePayload | VanityInvitePayload,
         guild: Optional[Union[PartialInviteGuild, Guild]] = None,
         channel: Optional[Union[PartialInviteChannel, GuildChannel]] = None,
     ):
@@ -396,7 +397,7 @@ class Invite(Hashable):
         guild: Optional[Union[Guild, Object]] = state._get_guild(guild_id)
         channel_id = int(data['channel_id'])
         if guild is not None:
-            channel = guild.get_channel(channel_id) or Object(id=channel_id)  # type: ignore
+            channel = guild.get_channel(channel_id) or Object(id=channel_id)
         else:
             guild = Object(id=guild_id) if guild_id is not None else None
             channel = Object(id=channel_id)

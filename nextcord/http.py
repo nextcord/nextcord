@@ -1218,7 +1218,7 @@ class HTTPClient:
         )
 
     def create_guild_sticker(
-        self, guild_id: Snowflake, payload: sticker.CreateGuildSticker, file: File, reason: str
+        self, guild_id: Snowflake, payload: sticker.CreateGuildSticker, file: File, reason: Optional[str]
     ) -> Response[sticker.GuildSticker]:
         initial_bytes = file.fp.read(16)
 
@@ -1278,7 +1278,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         name: str,
-        image: bytes,
+        image: bytes | str,
         *,
         roles: Optional[SnowflakeList] = None,
         reason: Optional[str] = None,
@@ -1510,7 +1510,7 @@ class HTTPClient:
         return self.request(r, json=payload, reason=reason)
 
     def delete_channel_permissions(
-        self, channel_id: Snowflake, target: channel.OverwriteType, *, reason: Optional[str] = None
+        self, channel_id: Snowflake, target: Snowflake, *, reason: Optional[str] = None
     ) -> Response[None]:
         r = Route('DELETE', '/channels/{channel_id}/permissions/{target}', channel_id=channel_id, target=target)
         return self.request(r, reason=reason)

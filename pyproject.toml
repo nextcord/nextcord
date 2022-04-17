@@ -35,9 +35,8 @@ exclude-modules = '''
 
 [tool.pyright]
 typeCheckingMode = "basic"
-include = [
+include = [  # TODO: add examples back once app cmd is fixed
     "nextcord",
-    "examples",
     "docs",
     "*.py",
 ]

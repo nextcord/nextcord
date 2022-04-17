@@ -71,7 +71,7 @@ if TYPE_CHECKING:
 has_nacl: bool
 
 try:
-    import nacl.secret  # type: ignore
+    import nacl.secret
     has_nacl = True
 except ImportError:
     has_nacl = False
@@ -225,7 +225,8 @@ class VoiceClient(VoiceProtocol):
     voice_port: int
     secret_key: List[int]
     ssrc: int
-
+    ip: str
+    port: int
 
     def __init__(self, client: Client, channel: abc.Connectable):
         if not has_nacl:
@@ -271,7 +272,7 @@ class VoiceClient(VoiceProtocol):
     @property
     def user(self) -> ClientUser:
         """:class:`ClientUser`: The user connected to voice (i.e. ourselves)."""
-        return self._state.user
+        return self._state.user  # type: ignore [should exist]
 
     def checked_add(self, attr, value, limit):
         val = getattr(self, attr)
@@ -332,11 +333,11 @@ class VoiceClient(VoiceProtocol):
         self._voice_server_complete.set()
 
     async def voice_connect(self) -> None:
-        await self.channel.guild.change_voice_state(channel=self.channel)
+        await self.channel.guild.change_voice_state(channel=self.channel)  # type: ignore FIXME: protocol should be fixed for guild
 
     async def voice_disconnect(self) -> None:
-        _log.info('The voice handshake is being terminated for Channel ID %s (Guild ID %s)', self.channel.id, self.guild.id)
-        await self.channel.guild.change_voice_state(channel=None)
+        _log.info('The voice handshake is being terminated for Channel ID %s (Guild ID %s)', self.channel.id, self.guild.id)  # type: ignore
+        await self.channel.guild.change_voice_state(channel=None)  # type: ignore
 
     def prepare_handshake(self) -> None:
         self._voice_state_complete.clear()
@@ -513,7 +514,7 @@ class VoiceClient(VoiceProtocol):
         channel: :class:`abc.Snowflake`
             The channel to move to. Must be a voice channel.
         """
-        await self.channel.guild.change_voice_state(channel=channel)
+        await self.channel.guild.change_voice_state(channel=channel)  # type: ignore still protocol issue
 
     def is_connected(self) -> bool:
         """Indicates if the voice client is connected to voice."""
@@ -543,7 +544,7 @@ class VoiceClient(VoiceProtocol):
 
     def _encrypt_xsalsa20_poly1305_suffix(self, header: bytes, data) -> bytes:
         box = nacl.secret.SecretBox(bytes(self.secret_key))
-        nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
+        nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)  # type: ignore
 
         return header + box.encrypt(bytes(data), nonce).ciphertext + nonce
 
@@ -556,7 +557,7 @@ class VoiceClient(VoiceProtocol):
 
         return header + box.encrypt(bytes(data), bytes(nonce)).ciphertext + nonce[:4]
 
-    def play(self, source: AudioSource, *, after: Callable[[Optional[Exception]], Any]=None) -> None:
+    def play(self, source: AudioSource, *, after: Optional[Callable[[Optional[Exception]], Any]] = None) -> None:
         """Plays an :class:`AudioSource`.
 
         The finalizer, ``after`` is called after the source has been exhausted

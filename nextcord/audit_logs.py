@@ -61,6 +61,21 @@ if TYPE_CHECKING:
     from .sticker import GuildSticker
     from .threads import Thread
 
+    AuditTarget = Union[
+        Guild,
+        abc.GuildChannel,
+        Member,
+        User,
+        Role,
+        Invite,
+        Emoji,
+        StageInstance,
+        GuildSticker,
+        Thread,
+        Object,
+        None
+    ]
+
 
 def _transform_permissions(entry: AuditLogEntry, data: str) -> Permissions:
     return Permissions(int(data))
@@ -88,7 +103,7 @@ def _transform_member_id(entry: AuditLogEntry, data: Optional[Snowflake]) -> Uni
 def _transform_guild_id(entry: AuditLogEntry, data: Optional[Snowflake]) -> Optional[Guild]:
     if data is None:
         return None
-    return entry._state._get_guild(data)
+    return entry._state._get_guild(int(data))
 
 
 def _transform_overwrites(
@@ -103,9 +118,9 @@ def _transform_overwrites(
         ow_type = elem['type']
         ow_id = int(elem['id'])
         target = None
-        if ow_type == '0':
+        if str(ow_type) == '0':
             target = entry.guild.get_role(ow_id)
-        elif ow_type == '1':
+        elif str(ow_type) == '1':
             target = entry._get_member(ow_id)
 
         if target is None:
@@ -274,7 +289,7 @@ class AuditLogChanges:
             setattr(first, 'roles', [])
 
         data = []
-        g: Guild = entry.guild  # type: ignore
+        g: Guild = entry.guild
 
         for e in elem:
             role_id = int(e['id'])
@@ -354,6 +369,15 @@ class AuditLogEntry(Hashable):
         contains extra information. See :class:`AuditLogAction` for
         which actions have this field filled out.
     """
+    extra: Union[
+        _AuditLogProxyMemberPrune,
+        _AuditLogProxyMemberMoveOrMessageDelete,
+        _AuditLogProxyMemberDisconnect,
+        _AuditLogProxyPinAction,
+        _AuditLogProxyStageInstanceAction,
+        Member, User, None,
+        Role,
+    ]
 
     def __init__(self, *, users: Dict[int, User], data: AuditLogEntryPayload, guild: Guild):
         self._state = guild._state
@@ -367,13 +391,16 @@ class AuditLogEntry(Hashable):
 
         # this key is technically not usually present
         self.reason = data.get('reason')
-        self.extra = data.get('options')
+        self.extra = data.get('options')  # type: ignore
+        # I gave up trying to fix this
 
         if isinstance(self.action, enums.AuditLogAction) and self.extra:
             if self.action is enums.AuditLogAction.member_prune:
                 # member prune has two keys with useful information
-                self.extra: _AuditLogProxyMemberPrune = type(
-                    '_AuditLogProxy', (), {k: int(v) for k, v in self.extra.items()}
+                self.extra = type(  # type: ignore
+                    '_AuditLogProxy',
+                    (),
+                    {k: int(v) for k, v in self.extra.items()}  # type: ignore
                 )()
             elif self.action is enums.AuditLogAction.member_move or self.action is enums.AuditLogAction.message_delete:
                 channel_id = int(self.extra['channel_id'])
@@ -381,13 +408,13 @@ class AuditLogEntry(Hashable):
                     'count': int(self.extra['count']),
                     'channel': self.guild.get_channel(channel_id) or Object(id=channel_id),
                 }
-                self.extra: _AuditLogProxyMemberMoveOrMessageDelete = type('_AuditLogProxy', (), elems)()
+                self.extra = type('_AuditLogProxy', (), elems)()  # type: ignore
             elif self.action is enums.AuditLogAction.member_disconnect:
                 # The member disconnect action has a dict with some information
                 elems = {
                     'count': int(self.extra['count']),
                 }
-                self.extra: _AuditLogProxyMemberDisconnect = type('_AuditLogProxy', (), elems)()
+                self.extra = type('_AuditLogProxy', (), elems)()  # type: ignore
             elif self.action.name.endswith('pin'):
                 # the pin actions have a dict with some information
                 channel_id = int(self.extra['channel_id'])
@@ -395,7 +422,7 @@ class AuditLogEntry(Hashable):
                     'channel': self.guild.get_channel(channel_id) or Object(id=channel_id),
                     'message_id': int(self.extra['message_id']),
                 }
-                self.extra: _AuditLogProxyPinAction = type('_AuditLogProxy', (), elems)()
+                self.extra = type('_AuditLogProxy', (), elems)()  # type: ignore
             elif self.action.name.startswith('overwrite_'):
                 # the overwrite_ actions have a dict with some information
                 instance_id = int(self.extra['id'])
@@ -407,23 +434,11 @@ class AuditLogEntry(Hashable):
                     if role is None:
                         role = Object(id=instance_id)
                         role.name = self.extra.get('role_name')  # type: ignore
-                    self.extra: Role = role
+                    self.extra = role  # type: ignore
             elif self.action.name.startswith('stage_instance'):
                 channel_id = int(self.extra['channel_id'])
                 elems = {'channel': self.guild.get_channel(channel_id) or Object(id=channel_id)}
-                self.extra: _AuditLogProxyStageInstanceAction = type('_AuditLogProxy', (), elems)()
-
-        # fmt: off
-        self.extra: Union[
-            _AuditLogProxyMemberPrune,
-            _AuditLogProxyMemberMoveOrMessageDelete,
-            _AuditLogProxyMemberDisconnect,
-            _AuditLogProxyPinAction,
-            _AuditLogProxyStageInstanceAction,
-            Member, User, None,
-            Role,
-        ]
-        # fmt: on
+                self.extra = type('_AuditLogProxy', (), elems)()  # type: ignore
 
         # this key is not present when the above is present, typically.
         # It's a list of { new_value: a, old_value: b, key: c }
@@ -447,16 +462,19 @@ class AuditLogEntry(Hashable):
         return utils.snowflake_time(self.id)
 
     @utils.cached_property
-    def target(self) -> Union[Guild, abc.GuildChannel, Member, User, Role, Invite, Emoji, StageInstance, GuildSticker, Thread, Object, None]:
+    def target(self) -> AuditTarget:
         try:
-            converter = getattr(self, '_convert_target_' + self.action.target_type)
+            converter = getattr(self, '_convert_target_' + str(self.action.target_type))
         except AttributeError:
+            if self._target_id is None:
+                return None
+
             return Object(id=self._target_id)
         else:
             return converter(self._target_id)
 
     @utils.cached_property
-    def category(self) -> enums.AuditLogActionCategory:
+    def category(self) -> Optional[enums.AuditLogActionCategory]:
         """Optional[:class:`AuditLogActionCategory`]: The category of the action, if applicable."""
         return self.action.category
 

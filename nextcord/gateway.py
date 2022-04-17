@@ -22,6 +22,9 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 import asyncio
 from collections import namedtuple, deque
 import concurrent.futures
@@ -39,6 +42,17 @@ from . import utils
 from .activity import BaseActivity
 from .enums import SpeakingState
 from .errors import ConnectionClosed, InvalidArgument
+
+if TYPE_CHECKING:
+    from typing import Any, Protocol
+
+    from .client import Client
+    from .state import ConnectionState
+    from .voice_client import VoiceClient
+
+    class VariadicArgNone(Protocol):
+        def __call__(self, *args: Any) -> None:
+            ...
 
 _log = logging.getLogger(__name__)
 
@@ -61,7 +75,7 @@ class WebSocketClosure(Exception):
     """An exception to make up for the fact that aiohttp doesn't signal closure."""
     pass
 
-EventListener = namedtuple('EventListener', 'predicate event result future')
+EventListener = namedtuple('EventListener', 'predicate event result future')  # type: ignore
 
 class GatewayRatelimiter:
     def __init__(self, count=110, per=60.0):
@@ -107,7 +121,7 @@ class GatewayRatelimiter:
 
 class KeepAliveHandler(threading.Thread):
     def __init__(self, *args, **kwargs):
-        ws = kwargs.pop('ws', None)
+        ws = kwargs.pop('ws')  # will fail at `_main_thread_id` anyway
         interval = kwargs.pop('interval', None)
         shard_id = kwargs.pop('shard_id', None)
         threading.Thread.__init__(self, *args, **kwargs)
@@ -266,12 +280,24 @@ class DiscordWebSocket:
     HEARTBEAT_ACK      = 11
     GUILD_SYNC         = 12
 
+    if TYPE_CHECKING:
+        # AAA 'dynamic attributes', come on
+        token: str
+        _connection: ConnectionState
+        _discord_parsers: dict[Any, Any]
+        gateway: Any
+        call_hooks: Any
+        _initial_identify: bool
+        shard_id: int | None
+        shard_count: int | None
+        _max_heartbeat_timeout: float
+
     def __init__(self, socket, *, loop):
         self.socket = socket
         self.loop = loop
 
         # an empty dispatcher to prevent crashes
-        self._dispatch = lambda *args: None
+        self._dispatch: VariadicArgNone = lambda *args: None
         # generic event listeners
         self._dispatch_listeners = []
         # the keep alive
@@ -300,7 +326,7 @@ class DiscordWebSocket:
         pass
 
     @classmethod
-    async def from_client(cls, client, *, initial=False, gateway=None, shard_id=None, session=None, sequence=None, resume=False):
+    async def from_client(cls, client: Client, *, initial=False, gateway=None, shard_id=None, session=None, sequence=None, resume=False):
         """Creates a main websocket for Discord from a :class:`Client`.
 
         This is for internal use only.
@@ -310,7 +336,7 @@ class DiscordWebSocket:
         ws = cls(socket, loop=client.loop)
 
         # dynamically add attributes needed
-        ws.token = client.http.token
+        ws.token = client.http.token  # type: ignore
         ws._connection = client._connection
         ws._discord_parsers = client._connection.parsers
         ws._dispatch = client.dispatch
@@ -677,6 +703,11 @@ class DiscordWebSocket:
         self._close_code = code
         await self.socket.close(code=code)
 
+
+async def _hook(self, *args):
+    pass
+
+
 class DiscordVoiceWebSocket:
     """Implements the websocket protocol for handling voice connections.
 
@@ -721,17 +752,19 @@ class DiscordVoiceWebSocket:
     CLIENT_CONNECT      = 12
     CLIENT_DISCONNECT   = 13
 
+    if TYPE_CHECKING:
+        _connection: VoiceClient
+        gateway: str
+        _max_heartbeat_timeout: float
+        thread_id: int
+
     def __init__(self, socket, loop, *, hook=None):
         self.ws = socket
         self.loop = loop
-        self._keep_alive = None
+        self._keep_alive: Any = None
         self._close_code = None
         self.secret_key = None
-        if hook:
-            self._hook = hook
-
-    async def _hook(self, *args):
-        pass
+        self._hook = hook or _hook
 
     async def send_as_json(self, data):
         _log.debug('Sending voice websocket frame: %s.', data)
@@ -889,7 +922,7 @@ class DiscordVoiceWebSocket:
         _log.info('received secret key for voice connection')
         self.secret_key = self._connection.secret_key = data.get('secret_key')
         await self.speak()
-        await self.speak(False)
+        await self.speak(SpeakingState.none)
 
     async def poll_event(self):
         # This exception is handled up the chain
