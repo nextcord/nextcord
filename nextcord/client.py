@@ -1832,9 +1832,9 @@ class Client:
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
                 _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
-                # _log.debug(f"nextcord.Client: {interaction.data}")
+                # _log.debug(f"nextcord.Client: %s", interaction.data)
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
-                _log.debug(f"nextcord.Client: {response_signature}")
+                _log.debug(f"nextcord.Client: %s", response_signature)
                 do_deploy = False
                 # from testing import data_to_nice_str
                 # await interaction.send(
@@ -1851,14 +1851,16 @@ class Client:
                     # if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
                     # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
                     if app_cmd.is_interaction_valid(interaction):
-                        _log.info("nextcord.Client: New interaction command found, Assigning id now")
+                        _log.info("nextcord.Client: New interaction command found, assigning id now")
                         app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
                     else:
                         do_deploy = True
+
                 else:
                     do_deploy = True
+
                 if do_deploy:
                     if interaction.guild:
                         await interaction.guild.deploy_application_commands(
@@ -1872,6 +1874,7 @@ class Client:
                             delete_unknown=self._rollout_delete_unknown,
                             update_known=self._rollout_update_known
                         )
+
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
             _log.info("nextcord.Client: Autocomplete interaction received.")
@@ -1921,10 +1924,10 @@ class Client:
         command: Optional[:class:`BaseApplicationCommand`]
             Application Command with the given signature. If no command with that signature is
             found, returns ``None`` instead.
-
         """
         if isinstance(cmd_type, ApplicationCommandType):
             cmd_type = cmd_type.value
+
         return self._connection.get_application_command_from_signature(name=name, cmd_type=cmd_type, guild_id=guild_id)
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
@@ -1968,6 +1971,7 @@ class Client:
     async def sync_all_application_commands(
             self,
             data: Optional[Dict[Optional[int], List[dict]]] = None,
+            *,
             use_rollout: bool = True,
             associate_known: bool = True,
             delete_unknown: bool = True,
@@ -2018,6 +2022,7 @@ class Client:
     async def sync_application_commands(
             self,
             data: Optional[List[dict]] = None,
+            *,
             guild_id: Optional[int] = None,
             associate_known: bool = True,
             delete_unknown: bool = True,
@@ -2058,6 +2063,7 @@ class Client:
     async def discover_application_commands(
             self,
             data: Optional[List[dict]] = None,
+            *,
             guild_id: Optional[int] = None,
             associate_known: bool = True,
             delete_unknown: bool = True,
@@ -2192,6 +2198,7 @@ class Client:
         for command in self._connection._application_commands:
             if command.is_global:
                 ret.add(command)
+
         return ret
 
     def _get_guild_rollout_commands(self) -> Dict[int, Set[BaseApplicationCommand]]:
@@ -2201,7 +2208,9 @@ class Client:
                 for guild_id in command.guild_ids_to_rollout:
                     if guild_id not in ret:
                         ret[guild_id] = set()
+
                     ret[guild_id].add(command)
+
         return ret
 
     async def on_connect(self) -> None:
@@ -2239,8 +2248,13 @@ class Client:
                     register_new=self._rollout_register_new,
                 )
             else:
-                _log.debug(f"nextcord.Client: No locally added commands explicitly registered for "
-                           f"{guild.name}|{guild.id}, not checking.")
+                # _log.debug(f"nextcord.Client: No locally added commands explicitly registered for "
+                #            f"{guild.name}|{guild.id}, not checking.")
+                _log.debug(
+                    "nextcord.Client: No locally added commands explicitely registered "
+                    "for Guild(id=%s, name=%s), not checking.", guild.id, guild.name
+                )
+
         except Forbidden as e:
             _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
                          f"enabled? {e}")
@@ -2281,11 +2295,13 @@ class Client:
         # cog.process_app_cmds()
         for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
+
         self._client_cogs.add(cog)
 
     def remove_cog(self, cog: ClientCog) -> None:
         for app_cmd in cog.application_commands:
             self._connection.remove_application_command(app_cmd)
+
         self._client_cogs.discard(cog)
 
     def user_command(
@@ -2310,8 +2326,9 @@ class Client:
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
-            result = user_command(name=name, guild_ids=guild_ids,
-                                  default_permission=default_permission, force_global=force_global)(func)
+            result = user_command(
+                name=name, guild_ids=guild_ids, default_permission=default_permission, force_global=force_global
+            )(func)
             self._application_commands_to_add.add(result)
             return result
 
@@ -2339,8 +2356,9 @@ class Client:
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
-            result = message_command(name=name, guild_ids=guild_ids,
-                                     default_permission=default_permission, force_global=force_global)(func)
+            result = message_command(
+                name=name, guild_ids=guild_ids, default_permission=default_permission, force_global=force_global
+            )(func)
             self._application_commands_to_add.add(result)
             return result
 
@@ -2372,8 +2390,10 @@ class Client:
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
-            result = slash_command(name=name, description=description, guild_ids=guild_ids,
-                                   default_permission=default_permission, force_global=force_global)(func)
+            result = slash_command(
+                name=name, description=description, guild_ids=guild_ids, default_permission=default_permission,
+                force_global=force_global
+            )(func)
             self._application_commands_to_add.add(result)
             return result
 

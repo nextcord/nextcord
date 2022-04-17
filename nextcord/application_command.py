@@ -225,21 +225,27 @@ class ApplicationCommandOption:
         ret = {"type": self.type.value, "name": self.name, "description": self.description}
         if self.required:  # We don't check if it's None because if it's False, we don't want to send it.
             ret["required"] = self.required
+
         if self.choices:
             # Discord returns the names as strings, might as well do it here so payload comparison is easy.
             if isinstance(self.choices, dict):
                 ret["choices"] = [{"name": str(key), "value": value} for key, value in self.choices.items()]
             else:
                 ret["choices"] = [{"name": str(value), "value": value} for value in self.choices]
+
         if self.channel_types:
             # noinspection PyUnresolvedReferences
             ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
+
         if self.min_value is not None:
             ret["min_value"] = self.min_value
+
         if self.max_value is not None:
             ret["max_value"] = self.max_value
+
         if self.autocomplete:
             ret["autocomplete"] = self.autocomplete
+
         return ret
 
 
@@ -345,7 +351,7 @@ class ClientCog:
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
                     value = value.__func__
-                # if isinstance(value, ApplicationCommand):
+
                 if isinstance(value, SlashApplicationCommand):
                     value.parent_cog = self
                     value.from_callback(value.callback, call_children=False)
@@ -451,8 +457,10 @@ class CallbackMixin:
         if self.callback:
             if isinstance(callback, CallbackWrapper):
                 self.callback = callback.callback
+
             if not asyncio.iscoroutinefunction(self.callback):
                 raise TypeError(f"{self.error_name} Callback must be a coroutine")
+
         self.parent_cog = parent_cog
 
     def __call__(self, interaction: Interaction, *args, **kwargs):
@@ -534,13 +542,16 @@ class CallbackMixin:
         """
         if callback is not None:
             self.callback = callback
+
         if self.name is None:
             self.name = self.callback.__name__
+
         try:
             if not asyncio.iscoroutinefunction(self.callback):
                 raise TypeError("Callback must be a coroutine")
             # While this arguably is Slash Commands only, we could do some neat stuff in the future with it in other
-            #  commands. While Discord doesn't support anything else having Options, we might be able to do something here.
+            #  commands. While Discord doesn't support anything else having Options, we
+            #  might be able to do something here.
             if option_class:
                 first_arg = True
                 typehints = typing.get_type_hints(self.callback)
@@ -549,18 +560,20 @@ class CallbackMixin:
                 self_skip = True if self.parent_cog else False
                 for name, param in signature(self.callback).parameters.items():
                     # self_skip = name == "self"  # If self.parent_cog isn't reliable enough for some reason, use this.
-
                     if first_arg:
                         if not self_skip:
                             first_arg = False
                         else:
                             self_skip = False
+
                     else:
                         if isinstance(param.annotation, str):
                             # Thank you Disnake for the guidance to use this.
                             param = param.replace(annotation=typehints.get(name, param.empty))
+
                         arg = option_class(param, self, parent_cog=self.parent_cog)
                         self.options[arg.name] = arg
+
         except Exception as e:
             _log.error(f"Error creating from callback %s: %s", self.error_name, e)
             raise e
@@ -646,12 +659,12 @@ class CallbackMixin:
             return
 
         if can_run:
-
             if self._callback_before_invoke is not None:
                 await self._callback_before_invoke(interaction)
 
             if (before_invoke := self.cog_before_invoke) is not None:
                 await before_invoke(interaction)
+
             if (before_invoke := state._application_command_before_invoke) is not None:
                 await before_invoke(interaction)
 
@@ -762,16 +775,19 @@ class AutocompleteOptionMixin:
         self.autocomplete_callback = callback
         if not asyncio.iscoroutinefunction(self.autocomplete_callback):
             raise TypeError("Callback must be a coroutine")
+
         skip_count = 2  # We skip the first and second args, they are always the Interaction and
         #  the primary autocomplete value.
         if self.parent_cog:
             # If there's a parent cog, there should be a self. Skip it too.
             skip_count += 1
+
         for name, param in signature(self.autocomplete_callback).parameters.items():
             if skip_count:
                 skip_count -= 1
             else:
                 self.autocomplete_options.add(name)
+
         return self
 
     async def invoke_autocomplete_callback(
@@ -829,6 +845,7 @@ class AutocompleteCommandMixin:
         """
         if not option_data:
             option_data = interaction.data.get("options", {})
+
         if self.children:
             await self.children[option_data[0]["name"]].call_autocomplete(
                 state, interaction, option_data[0].get("options", {})
@@ -839,10 +856,12 @@ class AutocompleteCommandMixin:
                 if arg.get("focused", None) is True:
                     if focused_option_name:
                         raise ValueError("Multiple options are focused, is that supposed to be possible?")
+
                     focused_option_name = arg["name"]
 
             if not focused_option_name:
                 raise ValueError("There's supposed to be a focused option, but it's not found?")
+
             focused_option = self.options[focused_option_name]
             if focused_option.autocomplete_callback is None:
                 raise ValueError(f"{self.error_name} Autocomplete called for option {focused_option.functional_name} "
@@ -858,8 +877,10 @@ class AutocompleteCommandMixin:
                     kwargs[option.functional_name] = await option.handle_value(state, arg_data["value"], interaction)
                 elif arg_data["name"] == focused_option.name:
                     focused_option_value = await focused_option.handle_value(state, arg_data["value"], interaction)
+
             for option_name in uncalled_options:
                 kwargs[option_name] = None
+
             value = await focused_option.invoke_autocomplete_callback(interaction, focused_option_value, **kwargs)
             if value and not interaction.response.is_done():
                 await interaction.response.send_autocomplete(value)
@@ -878,10 +899,11 @@ class AutocompleteCommandMixin:
                     if option.autocomplete is None:
                         # If autocomplete isn't set, enable it for them.
                         option.autocomplete = True
+
                     if option.autocomplete:
-                        # option.autocomplete_callback = callback
                         option.from_autocomplete_callback(callback)
                         found = True
+
             if found:
                 continue
             # If it hasn't returned yet, it didn't find a valid kwarg. Raise it.
@@ -968,6 +990,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         """Checks if the given values conflict with one another or are invalid."""
         if self.choices and self.autocomplete:  # Incompatible according to Discord Docs.
             raise ValueError("Autocomplete may not be set to true if choices are present.")
+
         return True
 
 
@@ -1019,6 +1042,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             self.required = False
         else:  # Parameters in Python, by default, are required. While Discord defaults to not-required, this is Python.
             self.required = True
+
         self.choices = cmd_arg.choices
         self.min_value = cmd_arg.min_value
         self.max_value = cmd_arg.max_value
@@ -1037,6 +1061,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         else:
             # Else, just set the default to whatever cmd_arg is set to. Either None, or something set by the user.
             self.default = cmd_arg.default
+
         if self.default is MISSING:
             self.default = None
 
@@ -1056,10 +1081,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         if self.converter:
             self.type: ApplicationCommandOptionType = self.get_type(self.converter)
-
         else:
             self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
-
 
         if self.converter:
             self.converter.modify(self)
@@ -1100,17 +1123,22 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         ):
             return valid_type
         else:
-            raise NotImplementedError(f'{self.command.error_name} Type "{param_typing}" isn\'t a supported typing for Application Commands.')
+            raise NotImplementedError(
+                f'{self.command.error_name} Type "{param_typing}" isn\'t a supported typing for Application Commands.'
+            )
 
     def verify(self) -> None:
         """This should run through :class:`SlashOption` variables and raise errors when conflicting data is given."""
         super().verify()
         if self.channel_types and self.type is not ApplicationCommandOptionType.channel:
             raise ValueError("channel_types can only be given when the var is typed as nextcord.abc.GuildChannel")
+
         if self.min_value is not None and type(self.min_value) not in (int, float):
             raise ValueError("min_value must be an int or float.")
+
         if self.max_value is not None and type(self.max_value) not in (int, float):
             raise ValueError("max_value must be an int or float.")
+
         if (self.min_value is not None or self.max_value is not None) and self.type not in (
                 ApplicationCommandOptionType.integer, ApplicationCommandOptionType.number):
             raise ValueError("min_value or max_value can only be set if the type is integer or number.")
@@ -1139,8 +1167,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         if self.converter:
             return await self.converter.convert(interaction, value)
-        # if value is MISSING:
-        #     return None
         else:
             return value
 
@@ -1178,14 +1204,14 @@ class SlashCommandMixin(CallbackMixin):
     ) -> Dict[str, Any]:
         if option_data is None:
             option_data = interaction.data.get("options", {})
+
         kwargs = {}
         uncalled_args = self.options.copy()
         for arg_data in option_data:
             if arg_data["name"] in uncalled_args:
                 uncalled_args.pop(arg_data["name"])
                 kwargs[self.options[arg_data["name"]].functional_name] = \
-                    await self.options[arg_data["name"]].handle_value(state, arg_data["value"],
-                                                                      interaction)
+                    await self.options[arg_data["name"]].handle_value(state, arg_data["value"], interaction)
             else:
                 # TODO: Handle this better.
                 raise NotImplementedError(
@@ -1193,8 +1219,10 @@ class SlashCommandMixin(CallbackMixin):
                     f"recently change it?\nRegistered Options: {self.options}, Discord-sent"
                     f"args: {interaction.data['options']}, broke on {arg_data}"
                 )
+
         for uncalled_arg in uncalled_args.values():
             kwargs[uncalled_arg.functional_name] = uncalled_arg.default
+
         return kwargs
 
     async def call_slash(
@@ -1202,6 +1230,7 @@ class SlashCommandMixin(CallbackMixin):
     ):
         if option_data is None:
             option_data = interaction.data.get("options", {})
+
         if self.children:
             await self.children[option_data[0]["name"]].call_slash(
                 state, interaction, option_data[0].get("options", {})
@@ -1299,6 +1328,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             guild_id = guild.id
         else:
             guild_id = guild
+
         self.guild_ids_to_rollout.add(guild_id)
 
     @property
@@ -1335,8 +1365,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         ret = set()
         if self.is_global:
             ret.add(self.get_signature(None))
+
         for guild_id in self.guild_ids_to_rollout:
             ret.add(self.get_signature(guild_id))
+
         return ret
 
     def get_signatures(self) -> Set[Tuple[str, int, Optional[int]]]:
@@ -1352,9 +1384,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         ret = set()
         if self.is_global:
             ret.add(self.get_signature(None))
+
         if self.is_guild:
             for guild_id in self.guild_ids:
                 ret.add(self.get_signature(guild_id))
+
         return ret
 
     def get_payload(self, guild_id: Optional[int]) -> dict:
@@ -1381,8 +1415,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             ret["default_permission"] = self.default_permission
         else:
             ret["default_permission"] = True
+
         if guild_id:
             ret["guild_id"] = guild_id
+
         return ret
 
     def parse_discord_response(self, state: ConnectionState, data: dict) -> None:
@@ -1426,10 +1462,13 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         cmd_payload = self.get_payload(guild_id)
         if cmd_payload.get("guild_id", 0) != int(raw_payload.get("guild_id", 0)):
             return False
+
         if not check_dictionary_values(cmd_payload, raw_payload, "default_permission", "description", "type", "name"):
             return False
+
         if len(cmd_payload.get("options", [])) != len(raw_payload.get("options", [])):
             return False
+
         for cmd_option in cmd_payload.get("options", []):
             # I absolutely do not trust Discord or us ordering things nicely, so check through both.
             found_correct_value = False
@@ -1441,9 +1480,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                     # check_dictionary_values.
                     if not deep_dictionary_check(cmd_option, raw_option):
                         return False
+
                     break
+
             if not found_correct_value:
                 return False
+
         return True
 
     def is_interaction_valid(self, interaction: Interaction) -> bool:
@@ -1543,9 +1585,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                         else:
                             _log.debug("%s Optional option don't match name and/or type.", self.error_name)
                             return False  # Options don't match name and/or type.
+
                     else:
                         _log.debug("%s Inter has option that we don't.", self.error_name)
                         return False  # They have an option name that we don't.
+
             else:
                 _log.debug(
                     "%s We have less options than them: %s vs %s",
@@ -1703,6 +1747,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             ret["options"] = [child.payload for child in self.children.values()]
         elif self.options:
             ret["options"] = [parameter.payload for parameter in self.options.values()]
+
         return ret
 
     def from_callback(
@@ -1716,9 +1761,11 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             if self.children:
                 for child in self.children.values():
                     child.from_callback(callback=child.callback, option_class=option_class, call_children=call_children)
+
         if self._inherit_hooks and self.parent_cmd:
             self._callback_before_invoke = self.parent_cmd._callback_before_invoke
             self._callback_after_invoke = self.parent_cmd._callback_after_invoke
+
         super().from_autocomplete()
         for modify_callback in self.modify_callbacks:
             modify_callback(self)
@@ -1749,8 +1796,10 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             )
             self.children[ret.name] = ret
             return ret
+
         if isinstance(self.parent_cmd, SlashApplicationSubcommand):  # Discord limitation, no groups in groups.
             raise TypeError(f"{self.error_name} Subcommand groups cannot be nested inside subcommand groups.")
+
         self.type = ApplicationCommandOptionType.sub_command_group
         return decorator
 
@@ -1825,6 +1874,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         if call_children and self.children:
             for child in self.children.values():
                 child.from_callback(callback=child.callback, option_class=option_class, call_children=call_children)
+
         for modify_callback in self.modify_callbacks:
             modify_callback(self)
 
@@ -1972,6 +2022,7 @@ def slash_command(
     def decorator(func: Callable) -> SlashApplicationCommand:
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
+
         app_cmd = SlashApplicationCommand(
             callback=func,
             name=name,
@@ -2010,6 +2061,7 @@ def message_command(
     def decorator(func: Callable) -> MessageApplicationCommand:
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
+
         app_cmd = MessageApplicationCommand(
             callback=func,
             name=name,
@@ -2047,6 +2099,7 @@ def user_command(
     def decorator(func: Callable) -> UserApplicationCommand:
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
+
         app_cmd = UserApplicationCommand(
             callback=func,
             name=name,
@@ -2083,6 +2136,7 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
     for keyword in keywords:
         if dict1.get(keyword, None) != dict2.get(keyword, None):
             return False
+
     return True
 
 
@@ -2090,6 +2144,7 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
     """Used to check if all keys and values between two dicts are equal, and recurses if it encounters a nested dict."""
     if dict1.keys() != dict2.keys():
         return False
+
     for key in dict1:
         if isinstance(dict1[key], dict) and not deep_dictionary_check(
             dict1[key], dict2[key]
@@ -2097,6 +2152,7 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
             return False
         elif dict1[key] != dict2[key]:
             return False
+
     return True
 
 
@@ -2132,12 +2188,15 @@ def get_users_from_interaction(state: ConnectionState, interaction: Interaction)
                 member_payload["user"] = user_payload
                 member = Member(data=member_payload, guild=interaction.guild, state=state)
                 interaction.guild._add_member(member)
+
             ret.append(member)
+
     elif "users" in data["resolved"]:
         resolved_users_payload = interaction.data["resolved"]["users"]
         ret = [state.store_user(user_payload) for user_payload in resolved_users_payload.values()]
     else:
         pass  # Do nothing, we can't get users or members from this interaction.
+
     return ret
 
 
@@ -2160,11 +2219,12 @@ def get_messages_from_interaction(state: ConnectionState, interaction: Interacti
     ret = []
     if "messages" in data["resolved"]:
         message_payloads = data["resolved"]["messages"]
-
         for msg_id, msg_payload in message_payloads.items():
             if not (message := state._get_message(msg_id)):
                 message = Message(channel=interaction.channel, data=msg_payload, state=state)
+
             ret.append(message)
+
     return ret
 
 
@@ -2191,5 +2251,7 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
             # if True:  # Use this for testing payload -> Role
             if not (role := interaction.guild.get_role(role_id)):
                 role = Role(guild=interaction.guild, state=state, data=role_payload)
+
             ret.append(role)
+
     return ret

@@ -23,8 +23,9 @@ DEALINGS IN THE SOFTWARE.
 """
 
 
-from nextcord.application_command import SlashApplicationCommand, SlashApplicationSubcommand, CallbackWrapper
 from typing import Union
+
+from nextcord.application_command import CallbackWrapper, SlashApplicationCommand, SlashApplicationSubcommand
 
 
 def describe(**kwargs: str) -> Union[SlashApplicationCommand, SlashApplicationSubcommand, "DescribeWrapper"]:
@@ -35,7 +36,6 @@ def describe(**kwargs: str) -> Union[SlashApplicationCommand, SlashApplicationSu
                 if option := option_names.get(given_name):
                     option.description = kwargs[given_name]
                 else:
-                    print(f"{app_cmd.options}")
                     raise ValueError(f"{app_cmd.error_name} Could not find option \"{given_name}\" to describe.")
 
     def wrapper(func):

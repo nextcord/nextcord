@@ -545,6 +545,7 @@ class ConnectionState:
     def add_application_command(
             self,
             command: BaseApplicationCommand,
+            *,
             overwrite: bool = False,
             use_rollout: bool = False,
             pre_remove: bool = True,
@@ -612,6 +613,7 @@ class ConnectionState:
     async def sync_all_application_commands(
             self,
             data: Optional[Dict[Optional[int], List[dict]]] = None,
+            *,
             use_rollout: bool = True,
             associate_known: bool = True,
             delete_unknown: bool = True,
@@ -658,19 +660,22 @@ class ConnectionState:
             data = {}
         else:
             data = data.copy()
+
         for app_cmd in self.application_commands:
             self.add_application_command(command=app_cmd, use_rollout=use_rollout)
+
             if app_cmd.is_global and None not in data:
                 data[None] = self.http.get_global_commands(self.application_id)
                 _log.debug("Fetched global application command data.")
+
             if app_cmd.is_guild:
                 for guild_id in (app_cmd.guild_ids_to_rollout if use_rollout else app_cmd.guild_ids):
                     if guild_id not in data:
                         data[guild_id] = await self.http.get_guild_commands(self.application_id, guild_id)
-                        _log.debug(f"Fetched guild application command data for guild ID {guild_id}")
+                        _log.debug("Fetched guild application command data for guild ID %s", guild_id)
 
         for guild_id in data:
-            _log.debug(f"Running sync for {'global' if guild_id is None else 'Guild {}'.format(guild_id)}")
+            _log.debug("Running sync for %s", 'global' if guild_id is None else 'Guild {}'.format(guild_id))
             await self.sync_application_commands(
                 data=data[guild_id], guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
                 update_known=update_known, register_new=register_new,
@@ -710,19 +715,21 @@ class ConnectionState:
             Defaults to `True`
 
         """
-        _log.debug(f"Syncing commands to {guild_id}")
+        _log.debug("Syncing commands to %s", guild_id)
         if not data:
             if guild_id:
                 data = await self.http.get_guild_commands(self.application_id, guild_id)
             else:
                 data = await self.http.get_global_commands(self.application_id)
+
         await self.discover_application_commands(
             data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
             update_known=update_known
         )
         if register_new:
             await self.register_new_application_commands(data=data, guild_id=guild_id)
-        _log.debug(f"Command sync with {guild_id} finished.")
+
+        _log.debug("Command sync with %s finished.", guild_id)
 
     async def discover_application_commands(
             self,
@@ -763,6 +770,7 @@ class ConnectionState:
                 data = await self.http.get_guild_commands(self.application_id, guild_id)
             else:
                 data = await self.http.get_global_commands(self.application_id)
+
         for raw_response in data:
             fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else temp
             response_signature = (
@@ -773,22 +781,32 @@ class ConnectionState:
             if app_cmd := self.get_application_command_from_signature(*response_signature):
                 if app_cmd.is_payload_valid(raw_response, guild_id):
                     if associate_known:
-                        _log.debug(f"nextcord.ConnectionState: Command with signature {response_signature} associated "
-                                   f"with added command.")
+                        _log.debug(
+                            "nextcord.ConnectionState: Command with signature %s associated with added command.",
+                            response_signature
+                        )
                         app_cmd.parse_discord_response(self, raw_response)
                         self.add_application_command(app_cmd, use_rollout=True)
+
                 elif update_known:
-                    _log.debug(f"nextcord.ConnectionState: Command with signature {response_signature} found but "
-                               f"failed deep check, updating.")
+                    _log.debug(
+                        "nextcord.ConnectionState: Command with signature %s found but failed deep check, updating.",
+                        response_signature
+                    )
                     await self.register_application_command(app_cmd, guild_id)
                 elif delete_unknown:
-                    _log.debug(f"nextcord.ConnectionState: Command with signature {response_signature} found but "
-                               f"failed deep check, removing.")
+                    _log.debug(
+                        "nextcord.ConnectionState: Command with signature %s found but failed deep check, removing.",
+                        response_signature
+                    )
                     # TODO: Re-examine how worthwhile this is.
                     await self.delete_application_command(app_cmd, guild_id)
+
             elif delete_unknown:
-                _log.debug(f"nextcord.ConnectionState: Unknown command with signature {response_signature} failed "
-                           f"signature check, removing.")
+                _log.debug(
+                    "nextcord.ConnectionState: Command with signature %s found but failed deep check, removing.",
+                    response_signature
+                )
                 if guild_id:
                     await self.http.delete_guild_command(self.application_id, guild_id, raw_response["id"])
                 else:
@@ -877,6 +895,7 @@ class ConnectionState:
                 data = await self.http.get_guild_commands(self.application_id, guild_id)
             else:
                 data = await self.http.get_global_commands(self.application_id)
+
         data_signatures = [
             (raw_response["name"],
              int(raw_response["type"]),
@@ -903,14 +922,15 @@ class ConnectionState:
             as global commands instead. Defaults to `None`.
         """
         payload = command.get_payload(guild_id)
-        _log.info(f"nextcord.ConnectionState: Registering command with signature {command.get_signature(guild_id)}")
+        _log.info(f"nextcord.ConnectionState: Registering command with signature %s", command.get_signature(guild_id))
         try:
             if guild_id:
                 raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
             else:
                 raw_response = await self.http.upsert_global_command(self.application_id, payload)
+
         except Exception as e:
-            _log.error(f"Error registering command {command.error_name}: {e}")
+            _log.error("Error registering command %s: %s", command.error_name, e)
             raise e
         # response_id = int(raw_response["id"])
         command.parse_discord_response(self, raw_response)
@@ -932,6 +952,7 @@ class ConnectionState:
             await self.http.delete_guild_command(self.application_id, guild_id, command.command_ids[guild_id])
         else:
             await self.http.delete_global_command(self.application_id, command.command_ids[guild_id])
+
         self._application_command_ids.pop(command.command_ids[guild_id], None)
         self._application_command_signatures.pop(command.get_signature(guild_id))
 
