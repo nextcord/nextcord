@@ -202,7 +202,6 @@ class Activity(BaseActivity):
     __slots__ = (
         'state',
         'details',
-        '_created_at',
         'timestamps',
         'assets',
         'party',

@@ -147,8 +147,8 @@ class WidgetMember(BaseUser):
     connected_channel: Optional[:class:`WidgetChannel`]
         Which channel the member is connected to.
     """
-    __slots__ = ('name', 'status', 'nick', 'avatar', 'discriminator',
-                 'id', 'bot', 'activity', 'deafened', 'suppress', 'muted',
+    __slots__ = ('status', 'nick', 'avatar'
+                 'id', 'activity', 'deafened', 'suppress', 'muted',
                  'connected_channel')
 
     if TYPE_CHECKING:
@@ -175,7 +175,7 @@ class WidgetMember(BaseUser):
         else:
             activity = create_activity(state, game)
 
-        self.activity: Optional[Union[BaseActivity, Spotify]] = activity
+        self.activity = activity
 
         self.connected_channel: Optional[WidgetChannel] = connected_channel
 
