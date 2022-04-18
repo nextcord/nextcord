@@ -71,7 +71,7 @@ if TYPE_CHECKING:
     from .role import Role
     from .member import Member, VoiceState
     from .abc import Snowflake, SnowflakeTime
-    from .message import Message, PartialMessage
+    from .message import Message, PartialMessage, Attachment
     from .webhook import Webhook
     from .state import ConnectionState
     from .user import ClientUser, User, BaseUser
@@ -546,7 +546,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
             self,
             *,
             name: str,
-            avatar: Optional[Asset] = None,
+            avatar: Optional[Union[bytes, Asset, Attachment]] = None,
             reason: Optional[str] = None
     ) -> Webhook:
         """|coro|
@@ -562,7 +562,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         -------------
         name: :class:`str`
             The webhook's name.
-        avatar: Optional[:class:`Asset`]
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
             A :term:`py:bytes-like object` representing the webhook's default avatar.
             This operates similarly to :meth:`~ClientUser.edit`.
         reason: Optional[:class:`str`]
@@ -584,7 +584,9 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         from .webhook import Webhook
 
         if avatar is not None:
-            avatar = utils._bytes_to_base64_data((await avatar.read()))  # type: ignore
+            if not isinstance(avatar, bytes):
+                avatar = await avatar.read()
+            avatar = utils._bytes_to_base64_data(avatar)  # type: ignore
 
         data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar, reason=reason)
         return Webhook.from_state(data, state=self._state)
