@@ -542,7 +542,13 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         data = await self._state.http.channel_webhooks(self.id)
         return [Webhook.from_state(d, state=self._state) for d in data]
 
-    async def create_webhook(self, *, name: str, avatar: Optional[bytes] = None, reason: Optional[str] = None) -> Webhook:
+    async def create_webhook(
+            self,
+            *,
+            name: str,
+            avatar: Optional[Asset] = None,
+            reason: Optional[str] = None
+    ) -> Webhook:
         """|coro|
 
         Creates a webhook for this channel.
@@ -556,7 +562,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         -------------
         name: :class:`str`
             The webhook's name.
-        avatar: Optional[:class:`bytes`]
+        avatar: Optional[:class:`Asset`]
             A :term:`py:bytes-like object` representing the webhook's default avatar.
             This operates similarly to :meth:`~ClientUser.edit`.
         reason: Optional[:class:`str`]
@@ -578,7 +584,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         from .webhook import Webhook
 
         if avatar is not None:
-            avatar = utils._bytes_to_base64_data(avatar)  # type: ignore
+            avatar = utils._bytes_to_base64_data((await avatar.read()))  # type: ignore
 
         data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar, reason=reason)
         return Webhook.from_state(data, state=self._state)
