@@ -359,6 +359,8 @@ class ScheduledEvent(Hashable):
             The new type for the event.
         status: :class:`ScheduledEventStatus`
             The new status for the event.
+        reason: Optional[:class:`str`]
+            The reason for editing this scheduled_event. Shows up in the audit logs.
 
             .. note::
 
@@ -375,7 +377,7 @@ class ScheduledEvent(Hashable):
         :class:`ScheduledEvent`
             The updated event object.
         """
-        payload: dict = {}
+        payload: Dict[str, Any] = {}
         if channel is not MISSING:
             payload['channel_id'] = channel.id
         if metadata is not MISSING:

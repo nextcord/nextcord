@@ -46,7 +46,6 @@ from typing import (
     TypeVar,
     Union,
 )
-import collections
 
 import aiohttp
 
@@ -81,7 +80,7 @@ from .threads import Thread
 from .ui.view import View
 from .ui.modal import Modal
 from .user import ClientUser, User
-from .utils import MISSING, maybe_coroutine
+from .utils import MISSING
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
@@ -90,7 +89,7 @@ from .widget import Widget
 if TYPE_CHECKING:
     from . import Asset
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
-    from .application_command import ApplicationCommand, ClientCog, ApplicationSubcommand
+    from .application_command import ApplicationCommand, ClientCog
     from .channel import DMChannel
     from .member import Member
     from .message import Message, Attachment

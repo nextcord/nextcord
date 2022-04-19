@@ -39,8 +39,7 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    Union,
-    overload,
+    Union
 )
 
 from . import abc, utils
@@ -2504,34 +2503,6 @@ class Guild(Hashable):
 
         return roles
 
-    @overload
-    async def create_role(
-        self,
-        *,
-        reason: Optional[str] = ...,
-        name: str = ...,
-        permissions: Permissions = ...,
-        colour: Union[Colour, int] = ...,
-        hoist: bool = ...,
-        mentionable: bool = ...,
-        icon: Optional[Union[str, bytes, File]] = ...,
-    ) -> Role:
-        ...
-
-    @overload
-    async def create_role(
-        self,
-        *,
-        reason: Optional[str] = ...,
-        name: str = ...,
-        permissions: Permissions = ...,
-        color: Union[Colour, int] = ...,
-        hoist: bool = ...,
-        mentionable: bool = ...,
-        icon: Optional[Union[str, bytes, File]] = ...,
-    ) -> Role:
-        ...
-
     async def create_role(
         self,
         *,
@@ -2562,6 +2533,8 @@ class Guild(Hashable):
             The role name. Defaults to 'new role'.
         permissions: :class:`Permissions`
             The permissions to have. Defaults to no permissions.
+        color: Union[:class:`Colour`, :class:`int`]
+            There is an alias for this named :attr:`colour`
         colour: Union[:class:`Colour`, :class:`int`]
             The colour for the role. Defaults to :meth:`Colour.default`.
             This is aliased to ``color`` as well.
@@ -3222,16 +3195,19 @@ class Guild(Hashable):
             The type of event
         image: Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]
             A :term:`py:bytes-like object` representing the cover image.
-            
+        reason: Optional[:class:`str`]
+            The reason for creating this scheduled_event. Shows up in the audit logs.
+
         Returns
         -------
         :class:`ScheduledEvent`
             The created event object.
         """
-        payload: Dict[str, Any] = {}
-        payload['name'] = name
-        payload['entity_type'] = entity_type.value
-        payload['scheduled_start_time'] = start_time.isoformat()
+        payload: Dict[str, Any] = {
+            'name': name,
+            'entity_type': entity_type.value,
+            'scheduled_start_time': start_time.isoformat()
+        }
         if channel is not MISSING:
             payload['channel_id'] = channel.id
         if metadata is not MISSING:
