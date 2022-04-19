@@ -834,6 +834,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         'last_message_id',
         '_state',
         '_type',
+        '_overwrites',
     )
     
     def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload):
@@ -1143,7 +1144,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
                 data = await state.http.start_thread_in_forum_channel_with_files(
                     self.id,
                     name=name,
-                    auto_archive_duration=auto_archive_duration,
+                    auto_archive_duration=auto_archive_duration or self.default_auto_archive_duration,
                     rate_limit_per_user=slowmode_delay,
                     files=files,
                     content=content,
@@ -1185,7 +1186,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
             data = await state.http.start_thread_in_forum_channel(
                 self.id,
                 name=name,
-                auto_archive_duration=auto_archive_duration,
+                auto_archive_duration=auto_archive_duration or self.default_auto_archive_duration,
                 rate_limit_per_user=slowmode_delay,
                 content=content,
                 embed=embed,
