@@ -411,10 +411,9 @@ class HTTPClient:
         }
 
         return self.request(Route('POST', '/users/@me/channels'), json=payload)
-
-    def send_message(
+    
+    def get_message_payload(
         self,
-        channel_id: Snowflake,
         content: Optional[str],
         *,
         tts: bool = False,
@@ -425,10 +424,9 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[sticker.StickerItem]] = None,
         components: Optional[List[components.Component]] = None,
-    ) -> Response[message.Message]:
-        r = Route('POST', '/channels/{channel_id}/messages', channel_id=channel_id)
-        payload = {}
-
+    ) -> Dict[str, Any]:
+        payload = {}  
+        
         if content:
             payload['content'] = content
 
@@ -455,19 +453,48 @@ class HTTPClient:
 
         if stickers:
             payload['sticker_ids'] = stickers
+            
+        return payload
+
+    def send_message(
+        self,
+        channel_id: Snowflake,
+        content: Optional[str],
+        *,
+        tts: bool = False,
+        embed: Optional[embed.Embed] = None,
+        embeds: Optional[List[embed.Embed]] = None,
+        nonce: Optional[str] = None,
+        allowed_mentions: Optional[message.AllowedMentions] = None,
+        message_reference: Optional[message.MessageReference] = None,
+        stickers: Optional[List[sticker.StickerItem]] = None,
+        components: Optional[List[components.Component]] = None,
+    ) -> Response[message.Message]:
+        r = Route('POST', '/channels/{channel_id}/messages', channel_id=channel_id)
+        payload = self.get_message_payload(
+            content,
+            tts=tts,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            message_reference=message_reference,
+            stickers=stickers,
+            components=components,
+        )
 
         return self.request(r, json=payload)
 
     def send_typing(self, channel_id: Snowflake) -> Response[None]:
         return self.request(Route('POST', '/channels/{channel_id}/typing', channel_id=channel_id))
-
-    def send_multipart_helper(
+    
+    # basic method to get the multipart form without requesting to send a message
+    def get_message_multipart_form(
         self,
-        route: Route,
+        payload: Dict[str, Any],
         *,
         files: Sequence[File],
         content: Optional[str] = None,
-        tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[Iterable[Optional[embed.Embed]]] = None,
         nonce: Optional[str] = None,
@@ -476,13 +503,10 @@ class HTTPClient:
         stickers: Optional[List[sticker.StickerItem]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[dict]] = None
-    ) -> Response[message.Message]:
+    ):
         form = []
-
-        payload: Dict[str, Any] = {
-            'tts': tts,
-            'attachments': attachments or [],
-        }
+        
+        payload['attachments'] = attachments or []
 
         if content is not None:
             payload['content'] = content
@@ -517,7 +541,41 @@ class HTTPClient:
                 }
             )
         form[0]['value'] = utils._to_json(payload)
+        return form
 
+    def send_multipart_helper(
+        self,
+        route: Route,
+        *,
+        files: Sequence[File],
+        content: Optional[str] = None,
+        tts: bool = False,
+        embed: Optional[embed.Embed] = None,
+        embeds: Optional[Iterable[Optional[embed.Embed]]] = None,
+        nonce: Optional[str] = None,
+        allowed_mentions: Optional[message.AllowedMentions] = None,
+        message_reference: Optional[message.MessageReference] = None,
+        stickers: Optional[List[sticker.StickerItem]] = None,
+        components: Optional[List[components.Component]] = None,
+        attachments: Optional[List[dict]] = None
+    ) -> Response[message.Message]:
+        payload: Dict[str, Any] = {
+            'tts': tts,
+            'attachments': attachments or [],
+        }
+        form = self.get_message_form(
+            payload,
+            files=files,
+            content=content,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            message_reference=message_reference,
+            stickers=stickers,
+            components=components,
+            attachments=attachments,
+        )
         return self.request(route, form=form, files=files)
 
     def send_files(
@@ -924,6 +982,79 @@ class HTTPClient:
 
         route = Route('POST', '/channels/{channel_id}/threads', channel_id=channel_id)
         return self.request(route, json=payload, reason=reason)
+    
+    def start_thread_in_forum_channel(
+        self,
+        channel_id: Snowflake,
+        *,
+        name: str,
+        auto_archive_duration: threads.ThreadArchiveDuration,
+        rate_limit_per_user: int,
+        content: Optional[str] = None,
+        embed: Optional[embed.Embed] = None,
+        embeds: Optional[List[embed.Embed]] = None,
+        nonce: Optional[str] = None,
+        allowed_mentions: Optional[message.AllowedMentions] = None,
+        stickers: Optional[List[sticker.StickerItem]] = None,
+        components: Optional[List[components.Component]] = None,
+        reason: Optional[str] = None,
+    ):
+        payload = {
+            'name': name,
+            'auto_archive_duration': auto_archive_duration,
+            'rate_limit_per_user': rate_limit_per_user,
+        }
+        msg_payload = self.get_message_payload(
+            content=content,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            stickers=stickers,
+            components=components,
+        )
+        payload.update(msg_payload)
+        route = Route('POST', '/channels/{channel_id}/threads', channel_id=channel_id)
+        return self.request(route, json=payload, reason=reason)
+    
+    def start_thread_in_forum_channel_with_files(
+        self,
+        channel_id: Snowflake,
+        *,
+        name: str,
+        auto_archive_duration: threads.ThreadArchiveDuration,
+        rate_limit_per_user: int,
+        files: Sequence[File],
+        content: Optional[str] = None,
+        embed: Optional[embed.Embed] = None,
+        embeds: Optional[Iterable[Optional[embed.Embed]]] = None,
+        nonce: Optional[str] = None,
+        allowed_mentions: Optional[message.AllowedMentions] = None,
+        stickers: Optional[List[sticker.StickerItem]] = None,
+        components: Optional[List[components.Component]] = None,
+        attachments: Optional[List[dict]] = None,
+        reason: Optional[str] = None,
+    ) -> Response[threads.Thread]:
+        payload = {
+            'name': name,
+            'auto_archive_duration': auto_archive_duration,
+            'rate_limit_per_user': rate_limit_per_user,
+            'attachments': attachments or [],
+        }
+        form = self.get_message_form(
+            payload,
+            files=files,
+            content=content,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            stickers=stickers,
+            components=components,
+            attachments=attachments,
+        )
+        route = Route('POST', '/channels/{channel_id}/threads', channel_id=channel_id)
+        return self.request(route, form=form, files=files, reason=reason)
 
     def join_thread(self, channel_id: Snowflake) -> Response[None]:
         return self.request(Route('POST', '/channels/{channel_id}/thread-members/@me', channel_id=channel_id))
