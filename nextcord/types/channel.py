@@ -68,7 +68,15 @@ class _TextChannelOptional(TypedDict, total=False):
 
 class TextChannel(_BaseGuildChannel, _TextChannelOptional):
     type: Literal[0]
+    
+class _ForumChannelOptional(TypedDict, total=False):
+    topic: str
+    last_message_id: Optional[Snowflake]
+    rate_limit_per_user: int
+    default_auto_archive_duration: ThreadArchiveDuration
 
+class ForumChannel(_BaseGuildChannel, _ForumChannelOptional):
+    type: Literal[15]
 
 class NewsChannel(_BaseGuildChannel, _TextChannelOptional):
     type: Literal[5]
@@ -124,7 +132,7 @@ class ThreadChannel(_BaseChannel, _ThreadChannelOptional):
     thread_metadata: ThreadMetadata
 
 
-GuildChannel = Union[TextChannel, NewsChannel, VoiceChannel, CategoryChannel, StageChannel, ThreadChannel]
+GuildChannel = Union[TextChannel, ForumChannel, NewsChannel, VoiceChannel, CategoryChannel, StageChannel, ThreadChannel]
 
 
 class DMChannel(_BaseChannel):

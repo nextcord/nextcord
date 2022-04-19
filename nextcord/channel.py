@@ -90,6 +90,7 @@ if TYPE_CHECKING:
     # TODO: implement forum payload
     from .types.channel import (
         TextChannel as TextChannelPayload,
+        ForumChannel as ForumChannelPayload,
         VoiceChannel as VoiceChannelPayload,
         StageChannel as StageChannelPayload,
         DMChannel as DMChannelPayload,
@@ -798,6 +799,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
     
     
 class ForumChannel(abc.GuildChannel, Hashable):
+    # TODO: docstring
     """Represents a Discord guild forum channel.
 
     .. container:: operations
@@ -830,16 +832,19 @@ class ForumChannel(abc.GuildChannel, Hashable):
         'slowmode_delay',
         'default_auto_archive_duration',
         'last_message_id',
+        '_state',
+        '_type',
     )
     
-    def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload):
+    def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload):
         self._state: ConnectionState = state
         self.id: int = int(data['id'])
+        self._type: int = data['type']
         self._update(guild, data)
         
-    def _update(self, guild: Guild, data: Dict[str, Any]) -> None:
+    def _update(self, guild: Guild, data: ForumChannelPayload) -> None:
         self.guild = guild
-        self.name = data.get('name')
+        self.name = data['name']
         self.category_id: Optional[int] = utils._get_as_snowflake(data, 'parent_id')
         self.topic: Optional[str] = data.get('topic')
         self.position: int = data['position']
@@ -923,14 +928,14 @@ class ForumChannel(abc.GuildChannel, Hashable):
         slowmode_delay: int = ...,
         default_auto_archive_duration: ThreadArchiveDuration = ...,
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
-    ) -> Optional[TextChannel]:
+    ) -> Optional[ForumChannel]:
         ...
 
     @overload
-    async def edit(self) -> Optional[TextChannel]:
+    async def edit(self) -> Optional[ForumChannel]:
         ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason=None, **options) -> Optional[ForumChannel]:
         """|coro|
 
         Edits the channel.
@@ -1018,8 +1023,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         self,
         *,
         name: str,
-        auto_archive_duration: int,
-        slowmode_delay: int,
+        auto_archive_duration: ThreadArchiveDuration = MISSING,
+        slowmode_delay: int=0,
         content=None,
         embed=None,
         embeds=None,
@@ -1161,7 +1166,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
                 data = await state.http.start_thread_in_forum_channel_with_files(
                     self.id,
                     name=name,
-                    auto_archive_duration=auto_archive_duration,
+                    auto_archive_duration=auto_archive_duration or self.default_auto_archive_duration,
                     rate_limit_per_user=slowmode_delay,
                     files=files,
                     content=content,
