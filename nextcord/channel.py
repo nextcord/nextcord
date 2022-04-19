@@ -819,10 +819,22 @@ class ForumChannel(abc.GuildChannel, Hashable):
             Returns the channel's name.
     """
     
+    __slots__ = (
+        'id',
+        'guild',
+        'name',
+        'category_id',
+        'position',
+        'topic',
+        'nsfw',
+        'slowmode_delay',
+        'default_auto_archive_duration',
+        'last_message_id',
+    )
+    
     def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload):
         self._state: ConnectionState = state
         self.id: int = int(data['id'])
-        self._type: int = data['type']
         self._update(guild, data)
         
     def _update(self, guild: Guild, data: Dict[str, Any]) -> None:
@@ -835,7 +847,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
         # Does this need coercion into `int`? No idea yet. 
         self.slowmode_delay: int = data.get('rate_limit_per_user', 0)
         self.default_auto_archive_duration: ThreadArchiveDuration = data.get('default_auto_archive_duration', 1440)
-        self._type: int = data.get('type', self._type)
         self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
         self._fill_overwrites(data)
         
@@ -1008,7 +1019,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         *,
         name: str,
         auto_archive_duration: int,
-        rate_limit_per_user: int,
+        slowmode_delay: int,
         content=None,
         embed=None,
         embeds=None,
@@ -1128,7 +1139,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
                     self.id,
                     name=name,
                     auto_archive_duration=auto_archive_duration,
-                    rate_limit_per_user=rate_limit_per_user,
+                    rate_limit_per_user=slowmode_delay,
                     files=files,
                     content=content,
                     embed=embed,
@@ -1151,7 +1162,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
                     self.id,
                     name=name,
                     auto_archive_duration=auto_archive_duration,
-                    rate_limit_per_user=rate_limit_per_user,
+                    rate_limit_per_user=slowmode_delay,
                     files=files,
                     content=content,
                     embed=embed,
@@ -1170,7 +1181,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
                 self.id,
                 name=name,
                 auto_archive_duration=auto_archive_duration,
-                rate_limit_per_user=rate_limit_per_user,
+                rate_limit_per_user=slowmode_delay,
                 content=content,
                 embed=embed,
                 embeds=embeds,
