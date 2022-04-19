@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, Union
 
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     from .guild import Guild
     from .member import Member
     from .state import ConnectionState
+    from .message import Attachment
     from .types.scheduled_events import (
         ScheduledEvent as ScheduledEventPayload,
         ScheduledEventUser as ScheduledEventUserPayload
@@ -332,7 +333,7 @@ class ScheduledEvent(Hashable):
         type: Optional[ScheduledEventEntityType] = MISSING,
         status: Optional[ScheduledEventStatus] = MISSING,
         reason: Optional[str] = None,
-        image: Optional[bytes] = MISSING
+        image: Optional[Union[bytes, Asset, Attachment]] = MISSING
     ) -> ScheduledEvent:
         """|coro|
 
@@ -365,7 +366,7 @@ class ScheduledEvent(Hashable):
                 scheduled -> active ;
                 active -> completed ;
                 scheduled -> canceled
-        image: Optional[:class:`bytes`]
+        image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
             A :term:`py:bytes-like object` representing the cover image.
             Could be ``None`` to denote removal of the cover image.
 
@@ -394,10 +395,8 @@ class ScheduledEvent(Hashable):
         if status is not MISSING:
             payload['status'] = status.value
         if image is not MISSING:
-            if image is None:
-                payload['image'] = image
-            else:
-                payload['image'] = _bytes_to_base64_data(image)
+            payload['image'] = image if image is None else _bytes_to_base64_data(
+                    image if isinstance(image, bytes) else await image.read())
 
         if not payload:
             return self

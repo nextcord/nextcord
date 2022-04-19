@@ -88,11 +88,12 @@ from .widget import Widget
 
 
 if TYPE_CHECKING:
+    from . import Asset
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
     from .application_command import ApplicationCommand, ClientCog, ApplicationSubcommand
     from .channel import DMChannel
     from .member import Member
-    from .message import Message
+    from .message import Message, Attachment
     from .voice_client import VoiceProtocol
     from .scheduled_events import ScheduledEvent
 
@@ -1349,7 +1350,7 @@ class Client:
         *,
         name: str,
         region: Union[VoiceRegion, str] = VoiceRegion.us_west,
-        icon: bytes = MISSING,
+        icon: Optional[Union[bytes, Asset, Attachment]] = None,
         code: str = MISSING,
     ) -> Guild:
         """|coro|
@@ -1365,7 +1366,7 @@ class Client:
         region: :class:`.VoiceRegion`
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
-        icon: Optional[:class:`bytes`]
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
             The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
             for more details on what is expected.
         code: :class:`str`
@@ -1386,10 +1387,8 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is not MISSING:
-            icon_base64 = utils._bytes_to_base64_data(icon)
-        else:
-            icon_base64 = None
+        icon_base64 = icon if icon is None else utils._bytes_to_base64_data(
+            icon if isinstance(icon, bytes) else await icon.read())
 
         region_value = str(region)
 

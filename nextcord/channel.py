@@ -583,10 +583,8 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         from .webhook import Webhook
 
-        if avatar is not None:
-            if not isinstance(avatar, bytes):
-                avatar = await avatar.read()
-            avatar = utils._bytes_to_base64_data(avatar)  # type: ignore
+        avatar = avatar if avatar is None else utils._bytes_to_base64_data(
+            avatar if isinstance(avatar, bytes) else await avatar.read())
 
         data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar, reason=reason)
         return Webhook.from_state(data, state=self._state)
