@@ -1762,7 +1762,11 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 for child in self.children.values():
                     child.from_callback(callback=child.callback, option_class=option_class, call_children=call_children)
 
+        if self.error_callback is None:
+            self.error_callback = self.parent_cmd.error_callback
+
         if self._inherit_hooks and self.parent_cmd:
+            self.checks.extend(self.parent_cmd.checks)
             self._callback_before_invoke = self.parent_cmd._callback_before_invoke
             self._callback_after_invoke = self.parent_cmd._callback_after_invoke
 
