@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2022 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -34,6 +35,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Sequence,
     TYPE_CHECKING,
     Tuple,
     Type,
@@ -55,9 +57,11 @@ from .errors import ClientException, InvalidArgument
 from .stage_instance import StageInstance
 from .threads import Thread
 from .iterators import ArchivedThreadIterator
+from .mentions import AllowedMentions
 
 __all__ = (
     'TextChannel',
+    'ForumChannel',
     'VoiceChannel',
     'StageChannel',
     'DMChannel',
@@ -67,15 +71,23 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from . import (
+        embeds,
+        message,
+        sticker,
+    )
     from .types.threads import ThreadArchiveDuration
     from .role import Role
     from .member import Member, VoiceState
     from .abc import Snowflake, SnowflakeTime
+    from .embeds import Embed
+    from .file import File
     from .message import Message, PartialMessage
     from .webhook import Webhook
     from .state import ConnectionState
     from .user import ClientUser, User, BaseUser
     from .guild import Guild, GuildChannel as GuildChannelType
+    # TODO: implement forum payload
     from .types.channel import (
         TextChannel as TextChannelPayload,
         VoiceChannel as VoiceChannelPayload,
@@ -85,6 +97,7 @@ if TYPE_CHECKING:
         GroupDMChannel as GroupChannelPayload,
     )
     from .types.snowflake import SnowflakeList
+    from .ui import View
 
 
 async def _single_delete_strategy(messages: Iterable[Message]):
@@ -782,7 +795,439 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
             The archived threads.
         """
         return ArchivedThreadIterator(self.id, self.guild, limit=limit, joined=joined, private=private, before=before)
+    
+    
+class ForumChannel(abc.GuildChannel, Hashable):
+    """Represents a Discord guild forum channel.
 
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two channels are equal.
+            
+        .. describe:: x != y
+
+            Checks if two channels are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the channel's hash.
+
+        .. describe:: str(x)
+
+            Returns the channel's name.
+    """
+    
+    def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload):
+        self._state: ConnectionState = state
+        self.id: int = int(data['id'])
+        self._type: int = data['type']
+        self._update(guild, data)
+        
+    def _update(self, guild: Guild, data: Dict[str, Any]) -> None:
+        self.guild = guild
+        self.name = data.get('name')
+        self.category_id: Optional[int] = utils._get_as_snowflake(data, 'parent_id')
+        self.topic: Optional[str] = data.get('topic')
+        self.position: int = data['position']
+        self.nsfw: bool = data.get('nsfw', False)
+        # Does this need coercion into `int`? No idea yet. 
+        self.slowmode_delay: int = data.get('rate_limit_per_user', 0)
+        self.default_auto_archive_duration: ThreadArchiveDuration = data.get('default_auto_archive_duration', 1440)
+        self._type: int = data.get('type', self._type)
+        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
+        self._fill_overwrites(data)
+        
+    async def _get_channel(self):
+        return self
+
+    @property
+    def type(self) -> ChannelType:
+        """:class:`ChannelType`: The channel's Discord type."""
+        return try_enum(ChannelType, self._type)
+
+    @property
+    def _sorting_bucket(self) -> int:
+        return ChannelType.text.value
+
+    @utils.copy_doc(abc.GuildChannel.permissions_for)
+    def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
+        base = super().permissions_for(obj)
+
+        # text channels do not have voice related permissions
+        denied = Permissions.voice()
+        base.value &= ~denied.value
+        return base
+
+    @property
+    def members(self) -> List[Member]:
+        """List[:class:`Member`]: Returns all members that can see this channel."""
+        return [m for m in self.guild.members if self.permissions_for(m).read_messages]
+
+    @property
+    def threads(self) -> List[Thread]:
+        """List[:class:`Thread`]: Returns all the threads that you can see.
+
+        .. versionadded:: 2.0
+        """
+        return [thread for thread in self.guild._threads.values() if thread.parent_id == self.id]
+
+    def is_nsfw(self) -> bool:
+        """:class:`bool`: Checks if the channel is NSFW."""
+        return self.nsfw
+    
+    @property
+    def last_message(self) -> Optional[Message]:
+        """Fetches the last message from this channel in cache.
+
+        The message might not be valid or point to an existing message.
+
+        .. admonition:: Reliable Fetching
+            :class: helpful
+
+            For a slightly more reliable method of fetching the
+            last message, consider using either :meth:`history`
+            or :meth:`fetch_message` with the :attr:`last_message_id`
+            attribute.
+
+        Returns
+        ---------
+        Optional[:class:`Message`]
+            The last message in this channel or ``None`` if not found.
+        """
+        return self._state._get_message(self.last_message_id) if self.last_message_id else None
+    
+    @overload
+    async def edit(
+        self,
+        *,
+        reason: Optional[str] = ...,
+        name: str = ...,
+        topic: str = ...,
+        position: int = ...,
+        nsfw: bool = ...,
+        sync_permissions: bool = ...,
+        category: Optional[CategoryChannel] = ...,
+        slowmode_delay: int = ...,
+        default_auto_archive_duration: ThreadArchiveDuration = ...,
+        overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
+    ) -> Optional[TextChannel]:
+        ...
+
+    @overload
+    async def edit(self) -> Optional[TextChannel]:
+        ...
+
+    async def edit(self, *, reason=None, **options):
+        """|coro|
+
+        Edits the channel.
+
+        You must have the :attr:`~Permissions.manage_channels` permission to
+        use this.
+
+        .. versionchanged:: 1.3
+            The ``overwrites`` keyword-only parameter was added.
+
+        .. versionchanged:: 1.4
+            The ``type`` keyword-only parameter was added.
+            
+        .. versionchanged:: 2.0
+            Edits are no longer in-place, the newly edited channel is returned instead.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The new channel name.
+        topic: :class:`str`
+            The new channel's topic.
+        position: :class:`int`
+            The new channel's position.
+        nsfw: :class:`bool`
+            To mark the channel as NSFW or not.
+        sync_permissions: :class:`bool`
+            Whether to sync permissions with the channel's new or pre-existing
+            category. Defaults to ``False``.
+        category: Optional[:class:`CategoryChannel`]
+            The new category for this channel. Can be ``None`` to remove the
+            category.
+        slowmode_delay: :class:`int`
+            Specifies the slowmode rate limit for user in this channel, in seconds.
+            A value of `0` disables slowmode. The maximum value possible is `21600`.
+        reason: Optional[:class:`str`]
+            The reason for editing this channel. Shows up on the audit log.
+        overwrites: :class:`Mapping`
+            A :class:`Mapping` of target (either a role or a member) to
+            :class:`PermissionOverwrite` to apply to the channel.
+        default_auto_archive_duration: :class:`int`
+            The new default auto archive duration in minutes for threads created in this channel.
+            Must be one of ``60``, ``1440``, ``4320``, or ``10080``.
+
+        Raises
+        ------
+        InvalidArgument
+            If position is less than 0 or greater than the number of channels, or if
+            the permission overwrite information is not in proper form.
+        Forbidden
+            You do not have permissions to edit the channel.
+        HTTPException
+            Editing the channel failed.
+
+        Returns
+        --------
+        Optional[:class:`.TextChannel`]
+            The newly edited text channel. If the edit was only positional
+            then ``None`` is returned instead.
+        """
+
+        payload = await self._edit(options, reason=reason)
+        if payload is not None:
+            # the payload will always be the proper channel payload
+            return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+    
+    def get_thread(self, thread_id: int, /) -> Optional[Thread]:
+        """Returns a thread with the given ID.
+
+        .. versionadded:: 2.0
+        
+        Parameters
+        -----------
+        thread_id: :class:`int`
+            The ID to search for.
+
+        Returns
+        --------
+        Optional[:class:`Thread`]
+            The returned thread or ``None`` if not found.
+        """
+        return self.guild.get_thread(thread_id)
+
+    async def create_thread(
+        self,
+        *,
+        name: str,
+        auto_archive_duration: int,
+        rate_limit_per_user: int,
+        content=None,
+        embed=None,
+        embeds=None,
+        file=None,
+        files=None,
+        stickers=None,
+        nonce=None,
+        allowed_mentions=None,
+        reference=None,
+        mention_author=None,
+        view=None,
+        reason: Optional[str] = None,
+    ) -> Thread:
+        """|coro|
+
+        Creates a thread in this forum channel.
+
+        To create a public thread, you must have :attr:`~nextcord.Permissions.create_public_threads`.
+        For a private thread, :attr:`~nextcord.Permissions.create_private_threads` is needed instead.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        -----------
+        name: :class:`str`
+            The name of the thread.
+        auto_archive_duration: :class:`int`
+            The duration in minutes before a thread is automatically archived for inactivity.
+            If not provided, the channel's default auto archive duration is used.
+        reason: :class:`str`
+            The reason for creating a new thread. Shows up on the audit log.
+        content: Optional[:class:`str`]
+            The content of the message to send.
+        embed: :class:`~nextcord.Embed`
+            The rich embed for the content.
+        embeds: List[:class:`~nextcord.Embed`]
+            A list of rich embeds for the content.
+        file: :class:`~nextcord.File`
+            The file to upload.
+        files: List[:class:`~nextcord.File`]
+            A list of files to upload. Must be a maximum of 10.
+        nonce: :class:`int`
+            The nonce to use for sending this message. If the message was successfully sent,
+            then the message will have a nonce with this value.
+        allowed_mentions: :class:`~nextcord.AllowedMentions`
+            Controls the mentions being processed in this message. If this is
+            passed, then the object is merged with :attr:`~nextcord.Client.allowed_mentions`.
+            The merging behaviour only overrides attributes that have been explicitly passed
+            to the object, otherwise it uses the attributes set in :attr:`~nextcord.Client.allowed_mentions`.
+            If no object is passed at all then the defaults given by :attr:`~nextcord.Client.allowed_mentions`
+            are used instead.
+
+            .. versionadded:: 1.4
+
+        Raises
+        -------
+        Forbidden
+            You do not have permissions to create a thread.
+        HTTPException
+            Starting the thread failed.
+
+        Returns
+        --------
+        :class:`Thread`
+            The created thread
+        """
+        state = self._state
+        content = str(content) if content is not None else None
+
+        if embed is not None and embeds is not None:
+            raise InvalidArgument('cannot pass both embed and embeds parameter to create_thread()')
+
+        if embed is not None:
+            embed = embed.to_dict()
+
+        elif embeds is not None:
+            embeds = [embed.to_dict() for embed in embeds]
+
+        if stickers is not None:
+            stickers = [sticker.id for sticker in stickers]
+
+        if allowed_mentions is not None:
+            if state.allowed_mentions is not None:
+                allowed_mentions = state.allowed_mentions.merge(allowed_mentions).to_dict()
+            else:
+                allowed_mentions = allowed_mentions.to_dict()
+        else:
+            allowed_mentions = state.allowed_mentions and state.allowed_mentions.to_dict()
+
+        if mention_author is not None:
+            allowed_mentions = allowed_mentions or AllowedMentions().to_dict()
+            allowed_mentions['replied_user'] = bool(mention_author)
+
+        if reference is not None:
+            try:
+                reference = reference.to_message_reference_dict()
+            except AttributeError:
+                raise InvalidArgument('reference parameter must be Message, MessageReference, or PartialMessage') from None
+
+        if view:
+            if not hasattr(view, '__discord_ui_view__'):
+                raise InvalidArgument(f'view parameter must be View not {view.__class__!r}')
+
+            components = view.to_components()
+        else:
+            components = None
+
+        if file is not None and files is not None:
+            raise InvalidArgument('cannot pass both file and files parameter to send()')
+
+        if file is not None:
+            if not isinstance(file, File):
+                raise InvalidArgument('file parameter must be File')
+
+            try:
+                data = await state.http.start_thread_in_forum_channel_with_files(
+                    self.id,
+                    name=name,
+                    auto_archive_duration=auto_archive_duration,
+                    rate_limit_per_user=rate_limit_per_user,
+                    files=files,
+                    content=content,
+                    embed=embed,
+                    embeds=embeds,
+                    nonce=nonce,
+                    allowed_mentions=allowed_mentions,
+                    stickers=stickers,
+                    components=components,
+                    reason=reason,
+                )
+            finally:
+                file.close()
+
+        elif files is not None:
+            if not all(isinstance(file, File) for file in files):
+                raise TypeError('Files parameter must be a list of type File')
+
+            try:
+                data = await state.http.start_thread_in_forum_channel_with_files(
+                    self.id,
+                    name=name,
+                    auto_archive_duration=auto_archive_duration,
+                    rate_limit_per_user=rate_limit_per_user,
+                    files=files,
+                    content=content,
+                    embed=embed,
+                    embeds=embeds,
+                    nonce=nonce,
+                    allowed_mentions=allowed_mentions,
+                    stickers=stickers,
+                    components=components,
+                    reason=reason,
+                )
+            finally:
+                for f in files:
+                    f.close()
+        else:
+            data = await state.http.start_thread_in_forum_channel(
+                self.id,
+                name=name,
+                auto_archive_duration=auto_archive_duration,
+                rate_limit_per_user=rate_limit_per_user,
+                content=content,
+                embed=embed,
+                embeds=embeds,
+                nonce=nonce,
+                allowed_mentions=allowed_mentions,
+                stickers=stickers,
+                components=components,
+                reason=reason,
+            )
+            
+        if view:
+            state.store_view(view, data.get('id'))
+
+        return Thread(guild=self.guild, state=self._state, data=data)
+
+    def archived_threads(
+        self,
+        *,
+        private: bool = False,
+        joined: bool = False,
+        limit: Optional[int] = 50,
+        before: Optional[Union[Snowflake, datetime.datetime]] = None,
+    ) -> ArchivedThreadIterator:
+        """Returns an :class:`~nextcord.AsyncIterator` that iterates over all archived threads in the guild.
+
+        You must have :attr:`~Permissions.read_message_history` to use this. If iterating over private threads
+        then :attr:`~Permissions.manage_threads` is also required.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        -----------
+        limit: Optional[:class:`bool`]
+            The number of threads to retrieve.
+            If ``None``, retrieves every archived thread in the channel. Note, however,
+            that this would make it a slow operation.
+        before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Retrieve archived channels before the given date or ID.
+        private: :class:`bool`
+            Whether to retrieve private archived threads.
+        joined: :class:`bool`
+            Whether to retrieve private archived threads that you've joined.
+            You cannot set ``joined`` to ``True`` and ``private`` to ``False``.
+
+        Raises
+        ------
+        Forbidden
+            You do not have permissions to get archived threads.
+        HTTPException
+            The request to get the archived threads failed.
+
+        Yields
+        -------
+        :class:`Thread`
+            The archived threads.
+        """
+        return ArchivedThreadIterator(self.id, self.guild, limit=limit, joined=joined, private=private, before=before)
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
     __slots__ = (
