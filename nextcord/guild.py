@@ -46,8 +46,7 @@ from typing import (
 from . import abc, utils
 from .asset import Asset
 from .bans import BanEntry
-from .channel import *
-from .channel import _guild_channel_factory, _threaded_guild_channel_factory
+from .channel import _guild_channel_factory, _threaded_guild_channel_factory, TextChannel
 from .colour import Colour
 from .emoji import Emoji
 from .enums import (
@@ -93,7 +92,6 @@ if TYPE_CHECKING:
     from .channel import (
         CategoryChannel,
         StageChannel,
-        TextChannel,
         VoiceChannel,
     )
     from .application_command import ApplicationCommand
