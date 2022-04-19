@@ -2022,7 +2022,8 @@ class HTTPClient:
             'scheduled_end_time',
             'description',
             'entity_type',
-            'status'
+            'status',
+            'image'
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(
