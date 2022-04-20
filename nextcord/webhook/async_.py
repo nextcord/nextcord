@@ -1211,13 +1211,17 @@ class Webhook(BaseWebhook):
         if self.token is None and self.auth_token is None:
             raise InvalidArgument('This webhook does not have a token associated with it')
 
-        payload = {}
+        payload: Dict[str, Any] = {}
         if name is not MISSING:
             payload['name'] = str(name) if name is not None else None
 
         if avatar is not MISSING:
-            payload['avatar'] = avatar if avatar is None else utils._bytes_to_base64_data(
-                avatar if isinstance(avatar, bytes) else await avatar.read())
+            if avatar is None:
+                payload['avatar'] = avatar
+            elif isinstance(avatar, bytes):
+                payload['avatar'] = utils._bytes_to_base64_data(avatar)
+            else:
+                payload['avatar'] = utils._bytes_to_base64_data(await avatar.read())
 
         adapter = async_context.get()
 

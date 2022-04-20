@@ -391,10 +391,13 @@ class ClientUser(BaseUser):
         payload: Dict[str, Any] = {}
         if username is not MISSING:
             payload['username'] = username
-
         if avatar is not MISSING:
-            payload['avatar'] = avatar if avatar is None else _bytes_to_base64_data(
-                avatar if isinstance(avatar, bytes) else await avatar.read())
+            if avatar is None:
+                payload['avatar'] = avatar
+            elif isinstance(avatar, bytes):
+                payload['avatar'] = _bytes_to_base64_data(avatar)
+            else:
+                payload['avatar'] = _bytes_to_base64_data(await avatar.read())
 
         data: UserPayload = await self._state.http.edit_profile(payload)
         return ClientUser(state=self._state, data=data)

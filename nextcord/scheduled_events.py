@@ -397,8 +397,12 @@ class ScheduledEvent(Hashable):
         if status is not MISSING:
             payload['status'] = status.value
         if image is not MISSING:
-            payload['image'] = image if image is None else _bytes_to_base64_data(
-                    image if isinstance(image, bytes) else await image.read())
+            if image is None:
+                payload['image'] = image
+            elif isinstance(image, bytes):
+                payload['image'] = _bytes_to_base64_data(image)
+            else:
+                payload['image'] = _bytes_to_base64_data(await image.read())
 
         if not payload:
             return self

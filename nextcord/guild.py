@@ -39,7 +39,7 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    Union
+    Union, overload
 )
 
 from . import abc, utils
@@ -1560,16 +1560,28 @@ class Guild(Hashable):
                 icon if isinstance(icon, bytes) else await icon.read()) if icon is not None else None
 
         if banner is not MISSING:
-            fields['banner'] = banner if banner is None else utils._bytes_to_base64_data(
-                banner if isinstance(banner, bytes) else await banner.read())
+            if banner is None:
+                fields['banner'] = banner
+            elif isinstance(banner, bytes):
+                fields['banner'] = utils._bytes_to_base64_data(banner)
+            else:
+                fields['banner'] = utils._bytes_to_base64_data(await banner.read())
 
         if splash is not MISSING:
-            fields['splash'] = splash if splash is None else utils._bytes_to_base64_data(
-                splash if isinstance(splash, bytes) else await splash.read())
+            if splash is None:
+                fields['splash'] = splash
+            elif isinstance(splash, bytes):
+                fields['splash'] = utils._bytes_to_base64_data(splash)
+            else:
+                fields['splash'] = utils._bytes_to_base64_data(await splash.read())
 
         if discovery_splash is not MISSING:
-            fields['discovery_splash'] = discovery_splash if discovery_splash is None else utils._bytes_to_base64_data(
-                    discovery_splash if isinstance(discovery_splash, bytes) else await discovery_splash.read())
+            if discovery_splash is None:
+                fields['discovery_splash'] = discovery_splash
+            elif isinstance(discovery_splash, bytes):
+                fields['discovery_splash'] = utils._bytes_to_base64_data(discovery_splash)
+            else:
+                fields['discovery_splash'] = utils._bytes_to_base64_data(await discovery_splash.read())
 
         if default_notifications is not MISSING:
             if not isinstance(default_notifications, NotificationLevel):
@@ -2503,6 +2515,34 @@ class Guild(Hashable):
 
         return roles
 
+    @overload
+    async def create_role(
+        self,
+        *,
+        reason: Optional[str] = ...,
+        name: str = ...,
+        permissions: Permissions = ...,
+        colour: Union[Colour, int] = ...,
+        hoist: bool = ...,
+        mentionable: bool = ...,
+        icon: Optional[Union[str, bytes, File, Asset, Attachment]] = ...,
+    ) -> Role:
+        ...
+
+    @overload
+    async def create_role(
+        self,
+        *,
+        reason: Optional[str] = ...,
+        name: str = ...,
+        permissions: Permissions = ...,
+        color: Union[Colour, int] = ...,
+        hoist: bool = ...,
+        mentionable: bool = ...,
+        icon: Optional[Union[str, bytes, File, Asset, Attachment]] = ...,
+    ) -> Role:
+        ...
+
     async def create_role(
         self,
         *,
@@ -3168,7 +3208,7 @@ class Guild(Hashable):
         privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
-        image: Union[bytes, Asset, Attachment] = MISSING,
+        image: Union[bytes, Asset, Attachment] = None,
         reason: Optional[str] = None
     ) -> ScheduledEvent:
         """|coro|
@@ -3218,8 +3258,12 @@ class Guild(Hashable):
             payload['scheduled_end_time'] = end_time.isoformat()
         if description is not MISSING:
             payload['description'] = description
-        if image is not MISSING:
-            payload['image'] = utils._bytes_to_base64_data(image if isinstance(image, bytes) else await image.read())
+        if image is not None:
+            if isinstance(image, bytes):
+                payload['image'] = utils._bytes_to_base64_data(image)
+            else:
+                payload['image'] = utils._bytes_to_base64_data(await image.read())
+
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)
 
