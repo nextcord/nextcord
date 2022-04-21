@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -45,6 +46,7 @@ from typing import (
     TypeVar,
     Union,
 )
+import collections
 
 import aiohttp
 
@@ -77,8 +79,9 @@ from .sticker import (
 from .template import Template
 from .threads import Thread
 from .ui.view import View
+from .ui.modal import Modal
 from .user import ClientUser, User
-from .utils import MISSING
+from .utils import MISSING, maybe_coroutine
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
@@ -86,7 +89,7 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
-    from .application_command import ApplicationCommand, ClientCog
+    from .application_command import ApplicationCommand, ClientCog, ApplicationSubcommand
     from .channel import DMChannel
     from .member import Member
     from .message import Message
@@ -393,7 +396,7 @@ class Client:
         If this is not passed via ``__init__`` then this is retrieved
         through the gateway when an event contains the data. Usually
         after :func:`~nextcord.on_connect` is called.
-        
+
         .. versionadded:: 2.0
         """
         return self._connection.application_id
@@ -478,6 +481,27 @@ class Client:
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
 
+    async def on_application_command_error(self, interaction: Interaction, exception: ApplicationError) -> None:
+        """|coro|
+
+        The default application command error handler provided by the bot.
+
+        By default this prints to :data:`sys.stderr` however it could be
+        overridden to have a different implementation.
+
+        This only fires if you do not specify any listeners for command error.
+        """
+        if interaction.application_command and interaction.application_command.has_error_handler():
+            return
+
+        # TODO implement cog error handling
+        # cog = context.cog
+        # if cog and cog.has_error_handler():
+        #     return
+        
+        print(f'Ignoring exception in command {interaction.application_command}:', file=sys.stderr)
+        traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
+
     # hooks
 
     async def _call_before_identify_hook(self, shard_id: Optional[int], *, initial: bool = False) -> None:
@@ -533,7 +557,7 @@ class Client:
         """
 
         _log.info('logging in using static token')
-        
+
         if not isinstance(token, str):
             raise TypeError(f"The token provided was of type {type(token)} but was expected to be str")
 
@@ -633,6 +657,8 @@ class Client:
             return
 
         self._closed = True
+
+        self.dispatch("close")
 
         for voice in self.voice_clients:
             try:
@@ -743,7 +769,7 @@ class Client:
         """Optional[:class:`.BaseActivity`]: The activity being used upon
         logging in.
         """
-        return create_activity(self._connection._activity)
+        return create_activity(self._connection, self._connection._activity)
 
     @activity.setter
     def activity(self, value: Optional[ActivityTypes]) -> None:
@@ -754,7 +780,7 @@ class Client:
             self._connection._activity = value.to_dict() # type: ignore
         else:
             raise TypeError('activity must derive from BaseActivity.')
-    
+
     @property
     def status(self):
         """:class:`.Status`:
@@ -825,7 +851,7 @@ class Client:
 
         This is useful if you have a channel_id but don't want to do an API call
         to send messages to it.
-        
+
         .. versionadded:: 2.0
 
         Parameters
@@ -1275,7 +1301,9 @@ class Client:
         data = await self.http.get_template(code)
         return Template(data=data, state=self._connection) # type: ignore
 
-    async def fetch_guild(self, guild_id: int, /) -> Guild:
+    async def fetch_guild(
+        self, guild_id: int, /, *, with_counts: Optional[bool] = True
+    ) -> Guild:
         """|coro|
 
         Retrieves a :class:`.Guild` from an ID.
@@ -1294,6 +1322,13 @@ class Client:
         guild_id: :class:`int`
             The guild's ID to fetch from.
 
+        with_counts: Optional[:class:`bool`]
+            Whether to include count information in the guild. This fills the
+            :attr:`.Guild.approximate_member_count` and :attr:`.Guild.approximate_presence_count`
+            attributes without needing any privileged intents. Defaults to ``True``.
+
+            .. versionadded:: 2.0
+
         Raises
         ------
         :exc:`.Forbidden`
@@ -1306,7 +1341,7 @@ class Client:
         :class:`.Guild`
             The guild from the ID.
         """
-        data = await self.http.get_guild(guild_id)
+        data = await self.http.get_guild(guild_id, with_counts=with_counts)
         return Guild(data=data, state=self._connection)
 
     async def create_guild(
@@ -1688,7 +1723,7 @@ class Client:
 
         This method should be used for when a view is comprised of components
         that last longer than the lifecycle of the program.
-        
+
         .. versionadded:: 2.0
 
         Parameters
@@ -1716,15 +1751,46 @@ class Client:
             raise ValueError('View is not persistent. Items need to have a custom_id set and View must have no timeout')
 
         self._connection.store_view(view, message_id)
+    
+    def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
+        """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
+        
+        This method can be called for modals whose lifetime must be eventually
+        superior to the one of the program or for modals whose call does not
+        depend on particular criteria.
+
+        Parameters
+        ------------
+        modal: :class:`nextcord.ui.Modal`
+            The view to register for dispatching.
+        user_id: Optional[:class:`int`]
+            The user ID that the view is attached to. This is used to filter
+            the modal calls based on the users.
+
+        Raises
+        -------
+        TypeError
+            A modal was not passed.
+        ValueError
+            The modal is not persistent. A persistent modal has a set
+            custom_id and all their components with a set custom_id
+            and a timeout set to None.
+        """
+        if not isinstance(modal, Modal):
+            raise TypeError(f'expected an instance of Modal not {modal.__class__!r}')
+
+        if not modal.is_persistent():
+            raise ValueError('Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set')
+
+        self._connection.store_modal(modal, user_id)
 
     @property
     def persistent_views(self) -> Sequence[View]:
         """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
-        
+
         .. versionadded:: 2.0
         """
         return self._connection.persistent_views
-
 
     @property
     def scheduled_events(self) -> List[ScheduledEvent]:
@@ -1805,6 +1871,25 @@ class Client:
     def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
         return self._connection.get_application_command(command_id)
 
+    def get_all_application_commands(self) -> Set[ApplicationCommand]:
+        """Returns a copied set of all added :class:`ApplicationCommand` objects."""
+        return self._connection.application_commands
+
+    def get_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+        """Gets registered global commands.
+
+        Parameters
+        ----------
+        rollout: :class:`bool`
+            Whether unregistered/unassociated commands should be returned as well. Defaults to ``False``
+
+        Returns
+        -------
+        List[:class:`ApplicationCommand`]
+            List of :class:`ApplicationCommand` objects that are global.
+        """
+        return self._connection.get_global_application_commands(rollout=rollout)
+
     def add_application_command(
             self,
             command: ApplicationCommand,
@@ -1881,14 +1966,6 @@ class Client:
                     ret[guild_id].add(command)
         return ret
 
-    async def register_bulk_application_commands(self) -> None:
-        # TODO: Using Bulk upsert seems to delete all commands
-        # It might be good to keep this around as a reminder for future work. Bulk upsert seem to delete everything
-        # that isn't part of that bulk upsert, for both global and guild commands. While useful, this will
-        # update/overwrite existing commands, which may (needs testing) wipe out all permissions associated with those
-        # commands. Look for an opportunity to use bulk upsert.
-        raise NotImplementedError
-
     async def on_connect(self) -> None:
         self.add_startup_application_commands()
         await self.rollout_application_commands()
@@ -1904,14 +1981,16 @@ class Client:
 
     async def on_guild_available(self, guild: Guild) -> None:
         try:
-            if (await guild.rollout_application_commands(
+            if self._rollout_all_guilds or self._connection.get_guild_application_commands(guild.id, rollout=True):
+                _log.info(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
+                await guild.rollout_application_commands(
                     associate_known=self._rollout_associate_known,
                     delete_unknown=self._rollout_delete_unknown,
                     update_known=self._rollout_update_known
-            )):
-                pass
+                )
             else:
-                _log.info(f"No locally added commands explicitly registered for {guild.name}|{guild.id}, not checking.")
+                _log.debug(f"nextcord.Client: No locally added commands explicitly registered for "
+                          f"{guild.name}|{guild.id}, not checking.")
         except Forbidden as e:
             _log.warning(f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
                          f"enabled? {e}")
@@ -1954,9 +2033,8 @@ class Client:
     def user_command(
             self,
             name: str = MISSING,
-            description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            default_permission: Optional[bool] = None,
             force_global: bool = False
     ):
         """Creates a User context command from the decorated function.
@@ -1965,8 +2043,6 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
         default_permission: :class:`bool`
@@ -1976,7 +2052,7 @@ class Client:
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
-            result = user_command(name=name, description=description, guild_ids=guild_ids,
+            result = user_command(name=name, guild_ids=guild_ids,
                                   default_permission=default_permission, force_global=force_global)(func)
             self._application_commands_to_add.add(result)
             return result
@@ -1986,9 +2062,8 @@ class Client:
     def message_command(
             self,
             name: str = MISSING,
-            description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            default_permission: Optional[bool] = None,
             force_global: bool = False
     ):
         """Creates a Message context command from the decorated function.
@@ -1997,8 +2072,6 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
         default_permission: :class:`bool`
@@ -2008,7 +2081,7 @@ class Client:
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
-            result = message_command(name=name, description=description, guild_ids=guild_ids,
+            result = message_command(name=name, guild_ids=guild_ids,
                                      default_permission=default_permission, force_global=force_global)(func)
             self._application_commands_to_add.add(result)
             return result
@@ -2020,7 +2093,7 @@ class Client:
             name: str = MISSING,
             description: str = MISSING,
             guild_ids: Iterable[int] = MISSING,
-            default_permission: bool = MISSING,
+            default_permission: Optional[bool] = None,
             force_global: bool = False
     ):
         """Creates a Slash application command from the decorated function.
@@ -2029,8 +2102,9 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        description: :class:'str'
-            Description of the command that users will see. If not set, it defaults to the bare minimum Discord allows.
+        description: :class:`str`
+            Description of the command that users will see. If not set, the docstring will be used.
+            If no docstring is found for the command callback, it defaults to "No description provided".
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
         default_permission: :class:`bool`
@@ -2046,4 +2120,3 @@ class Client:
             return result
 
         return decorator
-

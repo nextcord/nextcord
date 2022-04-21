@@ -574,6 +574,7 @@ class VoiceClient(VoiceProtocol):
             The finalizer that is called after the stream is exhausted.
             This function must have a single parameter, ``error``, that
             denotes an optional exception that was raised during playing.
+            If the function is a coroutine, it will be awaited when called.
 
         Raises
         -------

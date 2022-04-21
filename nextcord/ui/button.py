@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import Callable, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
-import inspect
+import asyncio
 import os
 
 
@@ -272,7 +272,7 @@ def button(
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
-        if not inspect.iscoroutinefunction(func):
+        if not asyncio.iscoroutinefunction(func):
             raise TypeError('button function must be a coroutine function')
 
         func.__discord_ui_model_type__ = Button

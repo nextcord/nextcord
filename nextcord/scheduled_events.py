@@ -30,8 +30,8 @@ from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
 from .types.snowflake import Snowflake
-from .utils import MISSING, parse_time
-
+from .utils import MISSING, parse_time, _bytes_to_base64_data
+from .asset import Asset
 __all__: Tuple[str] = (
     'EntityMetadata',
     'ScheduledEventUser',
@@ -79,7 +79,7 @@ class ScheduledEventUser(Hashable):
     user: Optional[:class:`User`]
         The related user object. Blank if no member intents
     member: Optional[:class:`Member`]
-        The related member object, if requested with 
+        The related member object, if requested with
         :meth:`ScheduledEvent.fetch_users`.
     user_id: int
         The id of the interested user
@@ -204,8 +204,10 @@ class ScheduledEvent(Hashable):
         The scheduled start time for the event.
     user_count: :class:`int`
         An approximate count of the 'interested' users.
+    image: :class:`Asset`
+        The event cover image.
     """
-    __slots__: Tuple[str] = (
+    __slots__: Tuple[str, ...] = (
         'channel',
         'channel_id',
         'creator',
@@ -220,6 +222,7 @@ class ScheduledEvent(Hashable):
         'user_count',
         '_state',
         '_users',
+        'image',
     )
 
     def __init__(
@@ -250,6 +253,11 @@ class ScheduledEvent(Hashable):
         self.channel_id: Optional[int] = data.get('channel_id')
         self._users: Dict[int, ScheduledEventUser] = {}
         self._update_users(data.get('users', []))
+        
+        if image := data.get("image"):
+            self.image: Optional[Asset] = Asset._from_scheduled_event_image(self._state, self.id, image)
+        else:
+            self.image: Optional[Asset] = None
 
     def _update_users(self, data: List[ScheduledEventUserPayload]) -> None:
         for user in data:
@@ -267,7 +275,7 @@ class ScheduledEvent(Hashable):
         return user
 
     def _remove_user(self, user_id: int) -> None:
-        if  self._users.pop(user_id, None):
+        if self._users.pop(user_id, None):
             self.user_count -= 1
 
     def __str__(self) -> str:
@@ -299,11 +307,11 @@ class ScheduledEvent(Hashable):
         """List[:class:`ScheduledEventUser`]: The users who are interested in the event.
 
         .. note::
-            This may not be accurate or populated until 
+            This may not be accurate or populated until
             :meth:`~.ScheduledEvent.fetch_users` is called
         """
         return list(self._users.values())
- 
+
     async def delete(self) -> None:
         """|coro|
 
@@ -323,7 +331,8 @@ class ScheduledEvent(Hashable):
         description: str = MISSING,
         type: Optional[ScheduledEventEntityType] = MISSING,
         status: Optional[ScheduledEventStatus] = MISSING,
-        reason: Optional[str] = None
+        reason: Optional[str] = None,
+        image: Optional[bytes] = MISSING
     ) -> ScheduledEvent:
         """|coro|
 
@@ -350,6 +359,16 @@ class ScheduledEvent(Hashable):
         status: :class:`ScheduledEventStatus`
             The new status for the event.
 
+            .. note::
+
+                Only the following edits to an event's status are permitted:
+                scheduled -> active ;
+                active -> completed ;
+                scheduled -> canceled
+        image: Optional[:class:`bytes`]
+            A :term:`py:bytes-like object` representing the cover image.
+            Could be ``None`` to denote removal of the cover image.
+
         Returns
         -------
         :class:`ScheduledEvent`
@@ -374,9 +393,15 @@ class ScheduledEvent(Hashable):
             payload['type'] = type.value
         if status is not MISSING:
             payload['status'] = status.value
+        if image is not MISSING:
+            if image is None:
+                payload['image'] = image
+            else:
+                payload['image'] = _bytes_to_base64_data(image)
+
         if not payload:
             return self
-        data = await self._state.http.edit_event(reason=reason, **payload)
+        data = await self._state.http.edit_event(self.guild.id, self.id, reason=reason, **payload)
         return ScheduledEvent(guild=self.guild, state=self._state, data=data)
 
     def get_user(self, user_id: int) -> Optional[ScheduledEventUser]:
@@ -384,7 +409,7 @@ class ScheduledEvent(Hashable):
 
         .. note::
 
-            This may not be accurate or populated until 
+            This may not be accurate or populated until
             :meth:`ScheduledEvent.fetch_users` is called.
 
         Parameters

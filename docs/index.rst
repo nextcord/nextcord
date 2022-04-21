@@ -51,6 +51,7 @@ These extensions help you during development when it comes to common tasks.
 
   ext/commands/index.rst
   ext/tasks/index.rst
+  ext/application_checks/index.rst
 
 Manuals
 ---------
@@ -63,6 +64,7 @@ These pages go into great detail about everything the API can do.
   api
   nextcord.ext.commands API Reference <ext/commands/api.rst>
   nextcord.ext.tasks API Reference <ext/tasks/index.rst>
+  nextcord.ext.application_checks API Reference <ext/application_checks/index.rst>
 
 Meta
 ------
@@ -74,6 +76,7 @@ If you're looking for something related to the project itself, it's here.
 
   whats_new
   version_guarantees
+  interactions
   migrating
   migrating_2
   migrating_to_nextcord

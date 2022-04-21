@@ -33,10 +33,12 @@ from .errors import NoMoreItems
 from .utils import snowflake_time, time_snowflake, maybe_coroutine
 from .object import Object
 from .audit_logs import AuditLogEntry
+from .bans import BanEntry
 
 __all__ = (
     'ReactionIterator',
     'HistoryIterator',
+    'BanIterator',
     'AuditLogIterator',
     'GuildIterator',
     'MemberIterator',
@@ -50,6 +52,7 @@ if TYPE_CHECKING:
     )
     from .types.guild import (
         Guild as GuildPayload,
+        Ban as BanPayload,
     )
     from .types.message import (
         Message as MessagePayload,
@@ -392,6 +395,98 @@ class HistoryIterator(_AsyncIterator['Message']):
             self.around = None
             return data
         return []
+
+
+class BanIterator(_AsyncIterator['BanEntry']):
+    """Iterator for receiving a guild's bans.
+
+    The bans endpoint has two behaviours we care about here:
+    If ``before`` is specified, the bans endpoint returns the ``limit``
+    bans with user ids before ``before``, sorted with smallest first. For filling over
+    1000 bans, update the ``before`` parameter to the largest user id received.
+    If ``after`` is specified, it returns the ``limit`` bans with user ids after
+    ``after``, sorted with smallest first. For filling over 1000 bans, update the
+    ``after`` parameter to the smallest user id received.
+
+    A note that if both ``before`` and ``after`` are specified, ``after`` is ignored by the
+    bans endpoint.
+
+    Parameters
+    -----------
+    guild: :class:`~nextcord.Guild`
+        The guild to get bans from.
+    limit: Optional[:class:`int`]
+        Maximum number of bans to retrieve.
+    before: Optional[:class:`abc.Snowflake`]
+        Date or user id before which all bans must be.
+    after: Optional[:class:`abc.Snowflake`]
+        Date or user id after which all bans must be.
+    """
+
+    def __init__(
+        self,
+        guild: Guild,
+        limit: Optional[int] = None,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
+    ):
+        self.guild = guild
+        self.limit = limit
+        self.before = before
+        self.after = after or OLDEST_OBJECT
+
+        self.state = self.guild._state
+        self.get_bans = self.state.http.get_bans
+        self.bans = asyncio.Queue()
+
+        if self.before:
+            self._retrieve_bans = self._retrieve_bans_before_strategy
+        else:
+            self._retrieve_bans = self._retrieve_bans_after_strategy
+
+    async def next(self) -> BanEntry:
+        if self.bans.empty():
+            await self.fill_bans()
+
+        try:
+            return self.bans.get_nowait()
+        except asyncio.QueueEmpty:
+            raise NoMoreItems()
+
+    def _get_retrieve(self) -> bool:
+        self.retrieve = min(self.limit, 1000) if self.limit is not None else 1000
+        return self.retrieve > 0
+
+    async def fill_bans(self):
+        from .user import User
+
+        if self._get_retrieve():
+            data = await self._retrieve_bans(self.retrieve)
+            if len(data) < 1000:
+                self.limit = 0  # terminate the infinite loop
+
+            for element in data:
+                await self.bans.put(BanEntry(user=User(state=self.guild._state, data=element['user']), reason=element['reason']))
+
+    async def _retrieve_bans_before_strategy(self, retrieve: int) -> List[BanPayload]:
+        """Retrieve bans using before parameter."""
+        before = self.before.id if self.before else None
+        data: List[BanPayload] = await self.get_bans(self.guild.id, retrieve, before=before)
+        if len(data):
+            if self.limit is not None:
+                self.limit -= len(data)
+            self.before = Object(id=int(data[0]['user']['id']))
+        return data
+
+    async def _retrieve_bans_after_strategy(self, retrieve: int) -> List[BanPayload]:
+        """Retrieve bans using after parameter."""
+        after = self.after.id if self.after else None
+        data: List[BanPayload] = await self.get_bans(self.guild.id, retrieve, after=after)
+        if len(data):
+            if self.limit is not None:
+                self.limit -= len(data)
+            self.after = Object(id=int(data[-1]['user']['id']))
+        return data
 
 
 class AuditLogIterator(_AsyncIterator['AuditLogEntry']):

@@ -275,12 +275,12 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         .. note::
             This object may be copied by the library.
 
-
         .. versionadded:: 2.0
 
-    inherit_hooks: :class:`bool`, default=False
+    inherit_hooks: :class:`bool`
         If ``True`` and this command has a parent :class:`Group` then this command
         will inherit all checks, pre_invoke and after_invoke's defined on the the :class:`Group`
+        This defaults to ``False``
 
         .. note::
             Any ``pre_invoke`` or ``after_invoke``'s defined on this will override parent ones.
@@ -360,7 +360,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         elif isinstance(cooldown, CooldownMapping):
             buckets = cooldown
         else:
-            raise TypeError("Cooldown must be a an instance of CooldownMapping or None.")
+            raise TypeError("Cooldown must be an instance of CooldownMapping or None.")
         self._buckets: CooldownMapping = buckets
 
         try:
@@ -1754,7 +1754,7 @@ def check(predicate: Check) -> Callable[[T], T]:
 
         return func
 
-    if inspect.iscoroutinefunction(predicate):
+    if asyncio.iscoroutinefunction(predicate):
         decorator.predicate = predicate
     else:
         @functools.wraps(predicate)

@@ -53,6 +53,7 @@ class ScheduledEvent(TypedDict, total=False):
     entity_metadata: EntityMetadata
     creator: User
     user_count: int
+    image: str
 
 class ScheduledEventUser(TypedDict, total=False):
     guild_scheduled_event_id: Snowflake

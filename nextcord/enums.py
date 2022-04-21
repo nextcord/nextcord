@@ -52,6 +52,7 @@ __all__ = (
     'VideoQualityMode',
     'ComponentType',
     'ButtonStyle',
+    'TextInputStyle',
     'StagePrivacyLevel',
     'InteractionType',
     'InteractionResponseType',
@@ -184,7 +185,6 @@ class ChannelType(Enum):
     group = 3
     category = 4
     news = 5
-    store = 6
     news_thread = 10
     public_thread = 11
     private_thread = 12
@@ -215,9 +215,10 @@ class MessageType(Enum):
     guild_discovery_grace_period_final_warning = 17
     thread_created = 18
     reply = 19
-    application_command = 20
+    chat_input_command = 20
     thread_starter_message = 21
     guild_invite_reminder = 22
+    context_menu_command = 23
 
 
 class VoiceRegion(Enum):
@@ -544,6 +545,7 @@ class InteractionType(Enum):
     application_command = 2
     component = 3
     application_command_autocomplete = 4
+    modal_submit = 5
 
 
 class InteractionResponseType(Enum):
@@ -555,6 +557,7 @@ class InteractionResponseType(Enum):
     deferred_message_update = 6  # for components
     message_update = 7  # for components
     application_command_autocomplete_result = 8
+    modal = 9
 
 
 class ApplicationCommandType(Enum):
@@ -574,6 +577,7 @@ class ApplicationCommandOptionType(Enum):
     role = 8
     mentionable = 9
     number = 10  # A double, AKA floating point.
+    attachment = 11
 
 
 class VideoQualityMode(Enum):
@@ -588,6 +592,7 @@ class ComponentType(Enum):
     action_row = 1
     button = 2
     select = 3
+    text_input = 4
 
     def __int__(self):
         return self.value
@@ -611,6 +616,10 @@ class ButtonStyle(Enum):
     def __int__(self):
         return self.value
 
+class TextInputStyle(Enum):
+    short = 1
+    paragraph = 2
+
 
 class StagePrivacyLevel(Enum):
     public = 1
@@ -626,7 +635,7 @@ class NSFWLevel(Enum, comparable=True):
 
 
 class ScheduledEventEntityType(Enum):
-    stage_instance =  1
+    stage_instance = 1
     voice = 2
     external = 3
 
@@ -640,6 +649,7 @@ class ScheduledEventStatus(Enum):
     active = 2
     completed = 3
     canceled = 4
+    cancelled = 4
 
 
 T = TypeVar('T')

@@ -53,6 +53,7 @@ packages = [
     'nextcord.types',
     'nextcord.ui',
     'nextcord.webhook',
+    'nextcord.ext.application_checks',
     'nextcord.ext.commands',
     'nextcord.ext.tasks',
     
@@ -69,7 +70,7 @@ setup(name='nextcord',
       author='tag-epic & Rapptz',
       url='https://github.com/nextcord/nextcord',
       project_urls={
-        "Documentation": "https://nextcord.readthedocs.io/en/latest/",
+        "Documentation": "https://docs.nextcord.dev/",
         "Issue tracker": "https://github.com/nextcord/nextcord/issues",
       },
       version=version,

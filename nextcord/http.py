@@ -266,7 +266,7 @@ class HTTPClient:
                         f.reset(seek=tries)
 
                 if form:
-                    form_data = aiohttp.FormData()
+                    form_data = aiohttp.FormData(quote_fields=False)
                     for params in form:
                         form_data.add_field(**params)
                     kwargs['data'] = form_data
@@ -475,48 +475,48 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[sticker.StickerItem]] = None,
         components: Optional[List[components.Component]] = None,
+        attachments: Optional[List[dict]] = None
     ) -> Response[message.Message]:
         form = []
 
-        payload: Dict[str, Any] = {'tts': tts}
-        if content:
+        payload: Dict[str, Any] = {
+            'tts': tts,
+            'attachments': attachments or [],
+        }
+
+        if content is not None:
             payload['content'] = content
-        if embed:
+        if embed is not None:
             payload['embeds'] = [embed]
-        if embeds:
+        if embeds is not None:
             payload['embeds'] = embeds
-        if nonce:
+        if nonce is not None:
             payload['nonce'] = nonce
-        if allowed_mentions:
+        if allowed_mentions is not None:
             payload['allowed_mentions'] = allowed_mentions
-        if message_reference:
+        if message_reference is not None:
             payload['message_reference'] = message_reference
-        if components:
+        if components is not None:
             payload['components'] = components
-        if stickers:
+        if stickers is not None:
             payload['sticker_ids'] = stickers
 
-        form.append({'name': 'payload_json', 'value': utils._to_json(payload)})
-        if len(files) == 1:
-            file = files[0]
+        form.append({'name': 'payload_json'})
+        for index, file in enumerate(files):
+            payload['attachments'].append({
+                'id': index,
+                'filename': file.filename,
+                'description': file.description,
+            })
             form.append(
                 {
-                    'name': 'file',
+                    'name': f'files[{index}]',
                     'value': file.fp,
                     'filename': file.filename,
                     'content_type': 'application/octet-stream',
                 }
             )
-        else:
-            for index, file in enumerate(files):
-                form.append(
-                    {
-                        'name': f'file{index}',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
+        form[0]['value'] = utils._to_json(payload)
 
         return self.request(route, form=form, files=files)
 
@@ -568,6 +568,8 @@ class HTTPClient:
 
     def edit_message(self, channel_id: Snowflake, message_id: Snowflake, **fields: Any) -> Response[message.Message]:
         r = Route('PATCH', '/channels/{channel_id}/messages/{message_id}', channel_id=channel_id, message_id=message_id)
+        if "files" in fields:
+            return self.send_multipart_helper(r, **fields)
         return self.request(r, json=fields)
 
     def add_reaction(self, channel_id: Snowflake, message_id: Snowflake, emoji: str) -> Response[None]:
@@ -1041,8 +1043,13 @@ class HTTPClient:
     def leave_guild(self, guild_id: Snowflake) -> Response[None]:
         return self.request(Route('DELETE', '/users/@me/guilds/{guild_id}', guild_id=guild_id))
 
-    def get_guild(self, guild_id: Snowflake) -> Response[guild.Guild]:
-        return self.request(Route('GET', '/guilds/{guild_id}', guild_id=guild_id))
+    def get_guild(
+        self, guild_id: Snowflake, *, with_counts: bool = True
+    ) -> Response[guild.Guild]:
+        params = {"with_counts": int(with_counts)}
+        return self.request(
+            Route("GET", "/guilds/{guild_id}", guild_id=guild_id), params=params
+        )
 
     def delete_guild(self, guild_id: Snowflake) -> Response[None]:
         return self.request(Route('DELETE', '/guilds/{guild_id}', guild_id=guild_id))
@@ -1118,8 +1125,23 @@ class HTTPClient:
             payload['icon'] = icon
         return self.request(Route('POST', '/guilds/templates/{code}', code=code), json=payload)
 
-    def get_bans(self, guild_id: Snowflake) -> Response[List[guild.Ban]]:
-        return self.request(Route('GET', '/guilds/{guild_id}/bans', guild_id=guild_id))
+    def get_bans(
+        self,
+        guild_id: Snowflake,
+        limit: Optional[int] = None,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
+    ) -> Response[List[guild.Ban]]:
+        params: Dict[str, Any] = {}
+
+        if limit is not None:
+            params['limit'] = limit
+        if before is not None:
+            params['before'] = before
+        if after is not None:
+            params['after'] = after
+
+        return self.request(Route("GET", "/guilds/{guild_id}/bans", guild_id=guild_id), params=params)
 
     def get_ban(self, user_id: Snowflake, guild_id: Snowflake) -> Response[guild.Ban]:
         return self.request(Route('GET', '/guilds/{guild_id}/bans/{user_id}', guild_id=guild_id, user_id=user_id))
@@ -1955,7 +1977,8 @@ class HTTPClient:
             'scheduled_start_time',
             'scheduled_end_time',
             'description',
-            'entity_type'
+            'entity_type',
+            "image",
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(
@@ -1998,7 +2021,8 @@ class HTTPClient:
             'scheduled_start_time',
             'scheduled_end_time',
             'description',
-            'entity_type'
+            'entity_type',
+            'status'
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(
