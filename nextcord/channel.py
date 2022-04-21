@@ -583,13 +583,14 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         from .webhook import Webhook
 
-        if avatar is not None:
-            if isinstance(avatar, bytes):
-                avatar = utils._bytes_to_base64_data(avatar)
-            else:
-                avatar = utils._bytes_to_base64_data(await avatar.read())
+        if avatar is None:
+            avatar_base64 = None
+        elif isinstance(avatar, bytes):
+            avatar_base64 = utils._bytes_to_base64_data(avatar)
+        else:
+            avatar_base64 = utils._bytes_to_base64_data(await avatar.read())
 
-        data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar, reason=reason)
+        data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar_base64, reason=reason)
         return Webhook.from_state(data, state=self._state)
 
     async def follow(self, *, destination: TextChannel, reason: Optional[str] = None) -> Webhook:

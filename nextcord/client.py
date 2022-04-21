@@ -1386,19 +1386,20 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is not None:
-            if isinstance(icon, bytes):
-                icon = utils._bytes_to_base64_data(icon)
-            else:
-                icon = utils._bytes_to_base64_data(await icon.read())
+        if icon is None:
+            icon_base64 = None
+        elif isinstance(icon, bytes):
+            icon_base64 = utils._bytes_to_base64_data(icon)
+        else:
+            icon_base64 = utils._bytes_to_base64_data(await icon.read())
 
         if isinstance(region, VoiceRegion):
             region = str(region)
 
         if code:
-            data = await self.http.create_from_template(code, name, region, icon)
+            data = await self.http.create_from_template(code, name, region, icon_base64)
         else:
-            data = await self.http.create_guild(name, region, icon)
+            data = await self.http.create_guild(name, region, icon_base64)
         return Guild(data=data, state=self._connection)
 
     async def fetch_stage_instance(self, channel_id: int, /) -> StageInstance:

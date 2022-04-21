@@ -608,12 +608,14 @@ class ButtonStyle(Enum):
     # Aliases
     blurple = 1
     grey = 2
+    gray = 2
     green = 3
     red = 4
     url = 5
 
     def __int__(self):
         return self.value
+
 
 class TextInputStyle(Enum):
     short = 1
