@@ -187,6 +187,14 @@ class PrivateChannel(Snowflake, Protocol):
 
     me: ClientUser
 
+    @property
+    def jump_url(self) -> str:
+        """:class:`str`: Returns a URL that allows the client to jump to the referenced messageable.
+
+        .. versionadded:: 2.0
+        """
+        return f'https://discord.com/channels/@me/{self.id}'
+
 
 class _Overwrites:
     __slots__ = ('id', 'allow', 'deny', 'type')
@@ -522,6 +530,14 @@ class GuildChannel:
 
         category = self.guild.get_channel(self.category_id)
         return bool(category and category.overwrites == self.overwrites)
+
+    @property
+    def jump_url(self) -> str:
+        """:class:`str`: Returns a URL that allows the client to jump to this channel.
+
+        .. versionadded:: 2.0
+        """
+        return f'https://discord.com/channels/{self.guild.id}/{self.id}'
 
     def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
         """Handles permission resolution for the :class:`~nextcord.Member`
@@ -1243,8 +1259,8 @@ class Messageable:
         Sends a message to the destination with the content given.
 
         The content must be a type that can convert to a string through ``str(content)``.
-        If the content is set to ``None`` (the default), then the ``embed`` parameter must
-        be provided.
+        If the content is set to ``None`` (the default), then the ``embed`` or ``embeds``
+        parameter must be provided.
 
         To upload a single file, the ``file`` parameter should be used with a
         single :class:`~nextcord.File` object. To upload multiple files, the ``files``

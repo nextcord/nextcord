@@ -45,6 +45,7 @@ from typing import (
 
 from . import abc, utils
 from .asset import Asset
+from .bans import BanEntry
 from .channel import *
 from .channel import _guild_channel_factory, _threaded_guild_channel_factory
 from .colour import Colour
@@ -67,7 +68,7 @@ from .file import File
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
-from .iterators import AuditLogIterator, MemberIterator, ScheduledEventIterator
+from .iterators import AuditLogIterator, MemberIterator, BanIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
 from .permissions import PermissionOverwrite
@@ -92,7 +93,6 @@ if TYPE_CHECKING:
     from .channel import (
         CategoryChannel,
         StageChannel,
-        StoreChannel,
         TextChannel,
         VoiceChannel,
     )
@@ -114,13 +114,8 @@ if TYPE_CHECKING:
     from .webhook import Webhook
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
-    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel]
+    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel]
     ByCategoryItem = Tuple[Optional[CategoryChannel], List[GuildChannel]]
-
-
-class BanEntry(NamedTuple):
-    reason: Optional[str]
-    user: User
 
 
 class _GuildLimit(NamedTuple):
@@ -212,7 +207,6 @@ class Guild(Hashable):
 
         - ``ANIMATED_ICON``: Guild can upload an animated icon.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
-        - ``COMMERCE``: Guild can sell things using store channels.
         - ``COMMUNITY``: Guild is a community server.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
         - ``FEATURABLE``: Guild is able to be featured in Server Discovery.
@@ -245,50 +239,66 @@ class Guild(Hashable):
         The guild's NSFW level.
 
         .. versionadded:: 2.0
+
+    approximate_member_count: Optional[:class:`int`]
+        The approximate number of members in the guild. This is ``None`` unless the guild is obtained
+        using :meth:`Client.fetch_guild` with ``with_counts=True``.
+
+        .. versionadded:: 2.0
+
+    approximate_presence_count: Optional[:class:`int`]
+        The approximate number of members currently active in the guild.
+        This includes idle, dnd, online, and invisible members. Offline members are excluded.
+        This is ``None`` unless the guild is obtained using :meth:`Client.fetch_guild`
+        with ``with_counts=True``.
+
+        .. versionadded:: 2.0
     """
 
     __slots__ = (
-        'afk_timeout',
-        'afk_channel',
-        'name',
-        'id',
-        'unavailable',
-        'region',
-        'owner_id',
-        'mfa_level',
-        'emojis',
-        'stickers',
-        'features',
-        'verification_level',
-        'explicit_content_filter',
-        'default_notifications',
-        'description',
-        'max_presences',
-        'max_members',
-        'max_video_channel_users',
-        'premium_tier',
-        'premium_subscription_count',
-        'preferred_locale',
-        'nsfw_level',
-        '_application_commands',
-        '_members',
-        '_channels',
-        '_icon',
-        '_banner',
-        '_state',
-        '_roles',
-        '_member_count',
-        '_large',
-        '_splash',
-        '_voice_states',
-        '_system_channel_id',
-        '_system_channel_flags',
-        '_discovery_splash',
-        '_rules_channel_id',
-        '_public_updates_channel_id',
-        '_stage_instances',
-        '_threads',
-        '_scheduled_events',
+        "afk_timeout",
+        "afk_channel",
+        "name",
+        "id",
+        "unavailable",
+        "region",
+        "owner_id",
+        "mfa_level",
+        "emojis",
+        "stickers",
+        "features",
+        "verification_level",
+        "explicit_content_filter",
+        "default_notifications",
+        "description",
+        "max_presences",
+        "max_members",
+        "max_video_channel_users",
+        "premium_tier",
+        "premium_subscription_count",
+        "preferred_locale",
+        "nsfw_level",
+        "_application_commands",
+        "_members",
+        "_channels",
+        "_icon",
+        "_banner",
+        "_state",
+        "_roles",
+        "_member_count",
+        "_large",
+        "_splash",
+        "_voice_states",
+        "_system_channel_id",
+        "_system_channel_flags",
+        "_discovery_splash",
+        "_rules_channel_id",
+        "_public_updates_channel_id",
+        "_stage_instances",
+        "_threads",
+        "_scheduled_events",
+        "approximate_member_count",
+        "approximate_presence_count",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -454,21 +464,33 @@ class Guild(Hashable):
         self.stickers: Tuple[GuildSticker, ...] = tuple(
             map(lambda d: state.store_sticker(self, d), guild.get('stickers', []))
         )
-        self.features: List[GuildFeature] = guild.get('features', [])
-        self._splash: Optional[str] = guild.get('splash')
-        self._system_channel_id: Optional[int] = utils._get_as_snowflake(guild, 'system_channel_id')
-        self.description: Optional[str] = guild.get('description')
-        self.max_presences: Optional[int] = guild.get('max_presences')
-        self.max_members: Optional[int] = guild.get('max_members')
-        self.max_video_channel_users: Optional[int] = guild.get('max_video_channel_users')
-        self.premium_tier: int = guild.get('premium_tier', 0)
-        self.premium_subscription_count: int = guild.get('premium_subscription_count') or 0
-        self._system_channel_flags: int = guild.get('system_channel_flags', 0)
-        self.preferred_locale: Optional[str] = guild.get('preferred_locale')
-        self._discovery_splash: Optional[str] = guild.get('discovery_splash')
-        self._rules_channel_id: Optional[int] = utils._get_as_snowflake(guild, 'rules_channel_id')
-        self._public_updates_channel_id: Optional[int] = utils._get_as_snowflake(guild, 'public_updates_channel_id')
-        self.nsfw_level: NSFWLevel = try_enum(NSFWLevel, guild.get('nsfw_level', 0))
+        self.features: List[GuildFeature] = guild.get("features", [])
+        self._splash: Optional[str] = guild.get("splash")
+        self._system_channel_id: Optional[int] = utils._get_as_snowflake(
+            guild, "system_channel_id"
+        )
+        self.description: Optional[str] = guild.get("description")
+        self.max_presences: Optional[int] = guild.get("max_presences")
+        self.max_members: Optional[int] = guild.get("max_members")
+        self.max_video_channel_users: Optional[int] = guild.get(
+            "max_video_channel_users"
+        )
+        self.premium_tier: int = guild.get("premium_tier", 0)
+        self.premium_subscription_count: int = (
+            guild.get("premium_subscription_count") or 0
+        )
+        self._system_channel_flags: int = guild.get("system_channel_flags", 0)
+        self.preferred_locale: Optional[str] = guild.get("preferred_locale")
+        self._discovery_splash: Optional[str] = guild.get("discovery_splash")
+        self._rules_channel_id: Optional[int] = utils._get_as_snowflake(
+            guild, "rules_channel_id"
+        )
+        self._public_updates_channel_id: Optional[int] = utils._get_as_snowflake(
+            guild, "public_updates_channel_id"
+        )
+        self.nsfw_level: NSFWLevel = try_enum(NSFWLevel, guild.get("nsfw_level", 0))
+        self.approximate_presence_count = guild.get("approximate_presence_count")
+        self.approximate_member_count = guild.get("approximate_member_count")
 
         self._stage_instances: Dict[int, StageInstance] = {}
         for s in guild.get('stage_instances', []):
@@ -1852,29 +1874,62 @@ class Guild(Hashable):
         channel: GuildChannel = factory(guild=self, state=self._state, data=data)  # type: ignore
         return channel
 
-    async def bans(self) -> List[BanEntry]:
-        """|coro|
+    def bans(self,
+        *,
+        limit: Optional[int] = 1000,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
+    ) -> BanIterator:
+        """Returns an :class:`~nextcord.AsyncIterator` that enables receiving the destination's bans.
 
-        Retrieves all the users that are banned from the guild as a :class:`list` of :class:`BanEntry`.
+        You must have the :attr:`~Permissions.ban_members` permission to get this information.
 
-        You must have the :attr:`~Permissions.ban_members` permission
-        to get this information.
+        .. versionchanged:: 2.0
+            Due to a breaking change in Discord's API, this now returns an :class:`~nextcord.AsyncIterator` instead of a :class:`list`.
+
+        Examples
+        ---------
+
+        Usage ::
+
+            counter = 0
+            async for ban in guild.bans(limit=200):
+                if not ban.user.bot:
+                    counter += 1
+
+        Flattening into a list: ::
+
+            bans = await guild.bans(limit=123).flatten()
+            # bans is now a list of BanEntry...
+
+        All parameters are optional.
+
+        Parameters
+        -----------
+        limit: Optional[:class:`int`]
+            The number of bans to retrieve.
+            If ``None``, it retrieves every ban in the guild. Note, however,
+            that this would make a slow operation.
+            Defaults to 1000.
+        before: Optional[:class:`~nextcord.abc.Snowflake`]
+            Retrieve bans before this user.
+        after: Optional[:class:`~nextcord.abc.Snowflake`]
+            Retrieve bans after this user.
 
         Raises
-        -------
-        Forbidden
-            You do not have proper permissions to get the information.
-        HTTPException
-            An error occurred while fetching the information.
+        ------
+        ~nextcord.Forbidden
+            You do not have permissions to get the bans.
+        ~nextcord.HTTPException
+            An error occurred while fetching the bans.
 
-        Returns
-        --------
-        List[:class:`BanEntry`]
-            A list of :class:`BanEntry` objects.
+        Yields
+        -------
+        :class:`~nextcord.BanEntry`
+            The ban with the ban data parsed.
         """
 
-        data: List[BanPayload] = await self._state.http.get_bans(self.id)
-        return [BanEntry(user=User(state=self._state, data=e['user']), reason=e['reason']) for e in data]
+        return BanIterator(self, limit=limit, before=before, after=after)
 
     async def prune_members(
         self,

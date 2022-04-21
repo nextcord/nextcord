@@ -398,7 +398,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, '_image', {}))  # type: ignore
 
-    def set_image(self: E, *, url: MaybeEmpty[Any]) -> E:
+    def set_image(self: E, url: MaybeEmpty[Any]) -> E:
         """Sets the image for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -440,7 +440,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, '_thumbnail', {}))  # type: ignore
 
-    def set_thumbnail(self: E, *, url: MaybeEmpty[Any]) -> E:
+    def set_thumbnail(self: E, url: MaybeEmpty[Any]) -> E:
         """Sets the thumbnail for the embed content.
 
         This function returns the class instance to allow for fluent-style

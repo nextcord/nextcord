@@ -52,6 +52,7 @@ __all__ = (
     'VideoQualityMode',
     'ComponentType',
     'ButtonStyle',
+    'TextInputStyle',
     'StagePrivacyLevel',
     'InteractionType',
     'InteractionResponseType',
@@ -184,7 +185,6 @@ class ChannelType(Enum):
     group = 3
     category = 4
     news = 5
-    store = 6
     news_thread = 10
     public_thread = 11
     private_thread = 12
@@ -545,6 +545,7 @@ class InteractionType(Enum):
     application_command = 2
     component = 3
     application_command_autocomplete = 4
+    modal_submit = 5
 
 
 class InteractionResponseType(Enum):
@@ -556,6 +557,7 @@ class InteractionResponseType(Enum):
     deferred_message_update = 6  # for components
     message_update = 7  # for components
     application_command_autocomplete_result = 8
+    modal = 9
 
 
 class ApplicationCommandType(Enum):
@@ -590,6 +592,7 @@ class ComponentType(Enum):
     action_row = 1
     button = 2
     select = 3
+    text_input = 4
 
     def __int__(self):
         return self.value
@@ -612,6 +615,10 @@ class ButtonStyle(Enum):
 
     def __int__(self):
         return self.value
+
+class TextInputStyle(Enum):
+    short = 1
+    paragraph = 2
 
 
 class StagePrivacyLevel(Enum):

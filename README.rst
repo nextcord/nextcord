@@ -14,7 +14,7 @@
    :target: https://pypi.python.org/pypi/nextcord
    :alt: PyPI supported Python versions
 .. image:: https://img.shields.io/readthedocs/nextcord
-   :target: https://nextcord.readthedocs.io/en/stable
+   :target: https://docs.nextcord.dev/
    :alt: Nextcord documentation
    
 Nextcord
@@ -22,11 +22,6 @@ Nextcord
    
 A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord written in Python.
 
-Fork notice
---------------------------
-
-This is a fork of discord.py, which unfortunately has been `officially discontinued <https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1/>`_ on 28th August 2021.
-Nextcord will try to replace discord.py, with **continued support and features**, to still offer former discord.py users a stable API wrapper for their bots.   
 
 Key Features
 -------------
@@ -117,6 +112,6 @@ You can find more examples in the `examples directory <https://github.com/nextco
 Links
 ------
 
-- `Documentation <https://nextcord.readthedocs.io/en/stable/>`_
+- `Documentation <https://docs.nextcord.dev/>`_
 - `Official Discord Server <https://discord.gg/ZebatWssCB>`_
 - `Discord API <https://discord.gg/discord-api>`_

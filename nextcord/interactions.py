@@ -25,7 +25,8 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union, Iterable
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
+from datetime import datetime, timedelta
 import asyncio
 
 from . import utils
@@ -40,17 +41,20 @@ from .channel import PartialMessageable, ChannelType
 
 from .file import File
 from .embeds import Embed
-from .user import User
+from .user import ClientUser, User
+from .mixins import Hashable
 from .member import Member
 from .message import Message, Attachment
 from .object import Object
 from .permissions import Permissions
+from .utils import snowflake_time
 from .webhook.async_ import async_context, Webhook, handle_message_parameters, WebhookMessage
 
 __all__ = (
     'Interaction',
     'InteractionMessage',
     'InteractionResponse',
+    'PartialInteractionMessage',
 )
 
 if TYPE_CHECKING:
@@ -63,13 +67,14 @@ if TYPE_CHECKING:
     from .mentions import AllowedMentions
     from aiohttp import ClientSession
     from .ui.view import View
-    from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
+    from .ui.modal import Modal
+    from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, PartialMessageable
     from .threads import Thread
     from .client import Client
     from .application_command import ApplicationSubcommand, ApplicationCommand
 
     InteractionChannel = Union[
-        VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, Thread, PartialMessageable
+        VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
     ]
 
 MISSING: Any = utils.MISSING
@@ -142,10 +147,6 @@ class Interaction:
         The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
     application_command: Optional[:class:`ApplicationCommand`]
         The application command that handled the interaction.
-    client: :class:`Client`
-        The client that handled the interaction. Can be a subclass of :class:`Client`.
-    bot: :class:`Client`:
-        An alias for ``client``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -163,7 +164,6 @@ class Interaction:
         'version',
         'application_command',
         'attached',
-        '_client',
         '_permissions',
         '_state',
         '_session',
@@ -227,6 +227,23 @@ class Interaction:
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state and self._state._get_guild(self.guild_id)
+    
+    @property
+    def created_at(self) -> datetime:
+        """:class:`datetime.datetime`: An aware datetime in UTC representing the creation time of the interaction."""
+        return snowflake_time(self.id)
+    
+    @property
+    def expires_at(self) -> datetime:
+        """:class:`datetime.datetime`: An aware datetime in UTC representing the time when the interaction will expire."""
+        if self.response.is_done():
+            return self.created_at + timedelta(minutes=15)
+        else:
+            return self.created_at + timedelta(seconds=3)
+        
+    def is_expired(self) -> bool:
+        """:class:`bool` A boolean whether the interaction token is invalid or not."""
+        return utils.utcnow() > self.expires_at
 
     def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
         self.application_command = app_cmd
@@ -354,8 +371,9 @@ class Interaction:
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep existing attachments,
+            you must fetch the message with :meth:`original_message` and pass
+            ``message.attachments`` to this parameter.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -460,7 +478,7 @@ class Interaction:
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-    ) -> Optional[Union[Message, WebhookMessage]]:
+    ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
         This is a shorthand function for helping in sending messages in
@@ -470,9 +488,12 @@ class Interaction:
 
         Returns
         -------
-        Optional[:class:`Message`, :class:`WebhookMessage`]
-            The :class:`Message` that was sent, a :class:`WebhookMessage` if the
-            interaction has been responded to before.
+        Union[:class:`PartialInteractionMessage`, :class:`WebhookMessage`]
+            If the interaction has not been responded to, returns a :class:`PartialInteractionMessage`
+            supporting only the :meth:`~PartialInteractionMessage.edit` and :meth:`~PartialInteractionMessage.delete`
+            operations. To fetch the :class:`InteractionMessage` you may use :meth:`~PartialInteractionMessage.fetch`
+            or :meth:`Interaction.original_message`.
+            If the interaction has been responded to, returns the :class:`WebhookMessage`.
         """
 
         if not self.response.is_done():
@@ -591,7 +612,7 @@ class InteractionResponse:
             defer_type = InteractionResponseType.deferred_channel_message.value
             if ephemeral:
                 data = {'flags': 64}
-        elif parent.type is InteractionType.component:
+        elif parent.type is InteractionType.component or parent.type is InteractionType.modal_submit:
             defer_type = InteractionResponseType.deferred_message_update.value
 
         if defer_type:
@@ -680,7 +701,7 @@ class InteractionResponse:
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
-    ) -> None:
+    ) -> PartialInteractionMessage:
         """|coro|
 
         Responds to this interaction by sending a message.
@@ -726,6 +747,13 @@ class InteractionResponse:
             The length of ``embeds`` was invalid.
         InteractionResponded
             This interaction has already been responded to before.
+
+        Returns
+        --------
+        :class:`PartialInteractionMessage`
+            An object supporting only the :meth:`~PartialInteractionMessage.edit` and :meth:`~PartialInteractionMessage.delete`
+            operations. To fetch the :class:`InteractionMessage` you may use :meth:`PartialInteractionMessage.fetch`
+            or :meth:`Interaction.original_message`.
         """
         if self._responded:
             raise InteractionResponded(self._parent)
@@ -797,6 +825,44 @@ class InteractionResponse:
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
 
+        state = _InteractionMessageState(self._parent, self._parent._state)
+        return PartialInteractionMessage(state)
+    
+    async def send_modal(self, modal: Modal) -> None:
+        """|coro|
+        
+        Respond to this interaction by sending a modal.
+        
+        Parameters
+        ----------
+        modal: :class:`nextcord.ui.Modal`
+            The modal to be sent in response to the interaction and which will
+            be displayed on the user's screen.
+        
+        Raises
+        -------
+        HTTPException
+            Sending the modal failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+        """
+        if self._responded:
+            raise InteractionResponded(self._parent)
+        
+        parent = self._parent
+        adapter = async_context.get()
+        await adapter.create_interaction_response(
+            parent.id,
+            parent.token,
+            session=parent._session,
+            type=InteractionResponseType.modal.value,
+            data=modal.to_dict(),
+        )
+        
+        self._responded = True
+        
+        self._parent._state.store_modal(modal, self._parent.user.id)
+
     async def edit_message(
         self,
         *,
@@ -829,8 +895,8 @@ class InteractionResponse:
             A list of files to upload. Maximum of 10. This cannot be mixed with
             the ``file`` parameter.
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep all existing attachments,
+            pass ``interaction.message.attachments``.
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
@@ -856,8 +922,6 @@ class InteractionResponse:
         msg = parent.message
         state = parent._state
         message_id = msg.id if msg else None
-        if parent.type is not InteractionType.component:
-            return
 
         payload = {}
         if content is not MISSING:
@@ -947,18 +1011,7 @@ class _InteractionMessageState:
         return getattr(self._parent, attr)
 
 
-class InteractionMessage(Message):
-    """Represents the original interaction response message.
-
-    This allows you to edit or delete the message associated with
-    the interaction response. To retrieve this object see :meth:`Interaction.original_message`.
-
-    This inherits from :class:`nextcord.Message` with changes to
-    :meth:`edit` and :meth:`delete` to work.
-
-    .. versionadded:: 2.0
-    """
-
+class _InteractionMessageMixin:
     __slots__ = ()
     _state: _InteractionMessageState
 
@@ -993,8 +1046,9 @@ class InteractionMessage(Message):
             A list of files to send with the content. This cannot be mixed with the
             ``file`` parameter.
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep existing attachments,
+            you must fetch the message with :meth:`original_message` and pass
+            ``message.attachments`` to this parameter.
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
@@ -1060,3 +1114,83 @@ class InteractionMessage(Message):
         """
 
         await self._state._interaction.delete_original_message(delay=delay)
+
+
+class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
+    """Represents the original interaction response message when only the
+    application state and interaction token are available.
+
+    This allows you to edit or delete the message associated with
+    the interaction response. This object is returned when responding to
+    an interaction with :meth:`InteractionResponse.send_message`.
+
+    This does not support most attributes and methods of :class:`nextcord.Message`.
+    The :meth:`~PartialInteractionMessage.fetch` method can be used to
+    retrieve the full :class:`InteractionMessage` object.
+
+    .. versionadded:: 2.0
+    """
+
+    def __init__(self, state: _InteractionMessageState):
+        self._state = state
+
+    async def fetch(self) -> InteractionMessage:
+        """|coro|
+
+        Fetches the original interaction response message associated with the interaction.
+
+        Repeated calls to this will return a cached value.
+
+        Raises
+        -------
+        HTTPException
+            Fetching the original response message failed.
+        ClientException
+            The channel for the message could not be resolved.
+
+        Returns
+        --------
+        InteractionMessage
+            The original interaction response message.
+        """
+        return await self._state._interaction.original_message()
+
+    @property
+    def author(self) -> Optional[Union[Member, ClientUser]]:
+        """Optional[Union[:class:`Member`, :class:`ClientUser`]]: The client that responded to the interaction.
+        
+        If the interaction was in a guild, this is a :class:`Member` representing the client.
+        Otherwise, this is a :class:`ClientUser`.
+        """
+        return self.guild.me if self.guild else self._state._interaction.client.user
+
+    @property
+    def channel(self) -> Optional[InteractionChannel]:
+        """Optional[Union[:class:`abc.GuildChannel`, :class:`PartialMessageable`, :class:`Thread`]]: The channel the interaction was sent from.
+
+        Note that due to a Discord limitation, DM channels are not resolved since there is
+        no data to complete them. These are :class:`PartialMessageable` instead.
+        """
+        return self._state._interaction.channel
+
+    @property
+    def guild(self) -> Optional[Guild]:
+        """Optional[:class:`Guild`]: The guild the interaction was sent from."""
+        return self._state._interaction.guild
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
+
+
+class InteractionMessage(_InteractionMessageMixin, Message):
+    """Represents the original interaction response message.
+
+    To retrieve this object see :meth:`PartialInteractionMessage.fetch`
+    or :meth:`Interaction.original_message`.
+
+    This inherits from :class:`nextcord.Message` with changes to
+    :meth:`edit` and :meth:`delete` to work with the interaction response.
+
+    .. versionadded:: 2.0
+    """
+    pass

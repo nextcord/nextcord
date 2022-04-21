@@ -141,7 +141,7 @@ class AsyncWebhookAdapter:
                     file.reset(seek=attempt)
 
                 if multipart:
-                    form_data = aiohttp.FormData()
+                    form_data = aiohttp.FormData(quote_fields=False)
                     for p in multipart:
                         form_data.add_field(**p)
                     to_send = form_data
@@ -361,13 +361,17 @@ class AsyncWebhookAdapter:
         multipart = []
 
         if files:
+            if 'data' not in payload:
+                payload['data'] = {}
+            if 'attachments' not in payload['data']:
+                payload['data']['attachments'] = []
             multipart.append({'name': 'payload_json'})
-            payload['attachments'] = []
             for index, file in enumerate(files):
-                payload['attachments'].append(
+                payload['data']['attachments'].append(
                     {
                         'id': index,
                         'filename': file.filename,
+                        'description': file.description,
                     }
                 )
                 multipart.append(
@@ -466,7 +470,10 @@ def handle_message_parameters(
     if embeds is not MISSING and embed is not MISSING:
         raise TypeError('Cannot mix embed and embeds keyword arguments.')
 
-    payload = {}
+    payload: Dict[str, Any] = {}
+
+    if file is not MISSING or files is not MISSING:
+        payload['attachments'] = []
 
     if attachments is not MISSING:
         payload['attachments'] = [a.to_dict() for a in attachments]
@@ -513,28 +520,23 @@ def handle_message_parameters(
         files = [file]
 
     if files:
-        multipart.append({'name': 'payload_json', 'value': utils._to_json(payload)})
-        payload = None
-        if len(files) == 1:
-            file = files[0]
+        multipart.append({'name': 'payload_json'})
+        for index, file in enumerate(files):
+            payload['attachments'].append({
+                'id': index,
+                'filename': file.filename,
+                'description': file.description,
+            })
             multipart.append(
                 {
-                    'name': 'file',
+                    'name': f'files[{index}]',
                     'value': file.fp,
                     'filename': file.filename,
                     'content_type': 'application/octet-stream',
                 }
             )
-        else:
-            for index, file in enumerate(files):
-                multipart.append(
-                    {
-                        'name': f'file{index}',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
+        multipart[0]['value'] = utils._to_json(payload)
+        payload = None
 
     return ExecuteWebhookParameters(payload=payload, multipart=multipart, files=files)
 
@@ -705,8 +707,8 @@ class WebhookMessage(Message):
 
             .. versionadded:: 2.0
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep all existing attachments,
+            pass ``message.attachments``.
 
             .. versionadded:: 2.0
         allowed_mentions: :class:`AllowedMentions`
@@ -1548,8 +1550,7 @@ class Webhook(BaseWebhook):
 
             .. versionadded:: 2.0
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message.
 
             .. versionadded:: 2.0
         allowed_mentions: :class:`AllowedMentions`

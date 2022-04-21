@@ -3,6 +3,7 @@ from sphinx.locale import _
 from docutils import nodes
 from sphinx import addnodes
 
+import asyncio
 from collections import OrderedDict, namedtuple
 import importlib
 import inspect
@@ -193,7 +194,7 @@ def get_class_results(lookup, modulename, name, fullname):
 
         if value is not None:
             doc = value.__doc__ or ''
-            if inspect.iscoroutinefunction(value) or doc.startswith('|coro|'):
+            if asyncio.iscoroutinefunction(value) or doc.startswith('|coro|'):
                 key = _('Methods')
                 badge = attributetablebadge('async', 'async')
                 badge['badge-type'] = _('coroutine')

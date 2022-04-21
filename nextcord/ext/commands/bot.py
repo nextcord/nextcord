@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -694,7 +695,17 @@ class BotBase(GroupMixin):
 
         extras = extras or {}
         try:
-            setup(self, **extras)
+            if asyncio.iscoroutinefunction(setup):
+                try:
+                    asyncio.create_task(setup(self, **extras))
+                except RuntimeError:
+                    raise RuntimeError(f"""
+                    Looks like you are attempting to load an asynchronous setup function incorrectly.
+                    Please read our FAQ here:
+                    https://docs.nextcord.dev/en/stable/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
+                    """)
+            else:
+                setup(self, **extras)
         except Exception as e:
             del sys.modules[key]
             self._remove_module_references(lib.__name__)

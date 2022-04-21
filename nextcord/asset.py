@@ -29,6 +29,7 @@ import os
 from typing import Any, Literal, Optional, TYPE_CHECKING, Tuple, Union
 from .errors import DiscordException
 from .errors import InvalidArgument
+from .file import File
 from . import utils
 
 import yarl
@@ -83,7 +84,7 @@ class AssetMixin:
         Parameters
         ----------
         fp: Union[:class:`io.BufferedIOBase`, :class:`os.PathLike`]
-            The file-like object to save this attachment to or the filename
+            The file-like object to save this asset to or the filename
             to use. If a filename is passed then a file is created with that
             filename and used instead.
         seek_begin: :class:`bool`
@@ -114,6 +115,53 @@ class AssetMixin:
         else:
             with open(fp, 'wb') as f:
                 return f.write(data)
+
+    async def to_file(
+        self,
+        *,
+        filename: Optional[str] = MISSING,
+        description: Optional[str] = None,
+        spoiler: bool = False,
+    ) -> File:
+        """|coro|
+
+        Converts the asset into a :class:`File` suitable for sending via
+        :meth:`abc.Messageable.send`.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        -----------
+        filename: Optional[:class:`str`]
+            The filename of the file. If not provided, then the filename from
+            the asset's URL is used.
+        description: Optional[:class:`str`]
+            The description for the file.
+        spoiler: :class:`bool`
+            Whether the file is a spoiler.
+
+        Raises
+        ------
+        DiscordException
+            The asset does not have an associated state.
+        InvalidArgument
+            The asset is a unicode emoji.
+        TypeError
+            The asset is a sticker with lottie type.
+        HTTPException
+            Downloading the asset failed.
+        NotFound
+            The asset was deleted.
+
+        Returns
+        -------
+        :class:`File`
+            The asset as a file suitable for sending.
+        """
+
+        data = await self.read()
+        file_filename = filename if filename is not MISSING else yarl.URL(self.url).name
+        return File(io.BytesIO(data), filename=file_filename, description=description, spoiler=spoiler)
 
 
 class Asset(AssetMixin):

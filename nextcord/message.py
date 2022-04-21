@@ -152,9 +152,13 @@ class Attachment(Hashable):
         The attachment's `media type <https://en.wikipedia.org/wiki/Media_type>`_
 
         .. versionadded:: 1.7
+    description: Optional[:class:`str`]
+        The attachment's description. This is used for alternative text in the Discord client.
+
+        .. versionadded:: 2.0
     """
 
-    __slots__ = ('id', 'size', 'height', 'width', 'filename', 'url', 'proxy_url', '_http', 'content_type')
+    __slots__ = ('id', 'size', 'height', 'width', 'filename', 'url', 'proxy_url', '_http', 'content_type', 'description')
 
     def __init__(self, *, data: AttachmentPayload, state: ConnectionState):
         self.id: int = int(data['id'])
@@ -166,6 +170,7 @@ class Attachment(Hashable):
         self.proxy_url: str = data.get('proxy_url')
         self._http = state.http
         self.content_type: Optional[str] = data.get('content_type')
+        self.description: Optional[str] = data.get('description')
 
     def is_spoiler(self) -> bool:
         """:class:`bool`: Whether this attachment contains a spoiler."""
@@ -179,7 +184,7 @@ class Attachment(Hashable):
 
     async def save(
         self,
-        fp: Union[io.BufferedIOBase, PathLike],
+        fp: Union[io.BufferedIOBase, PathLike, str],
         *,
         seek_begin: bool = True,
         use_cached: bool = False,
@@ -190,7 +195,7 @@ class Attachment(Hashable):
 
         Parameters
         -----------
-        fp: Union[:class:`io.BufferedIOBase`, :class:`os.PathLike`]
+        fp: Union[:class:`io.BufferedIOBase`, :class:`os.PathLike`, :class:`str`]
             The file-like object to save this attachment to or the filename
             to use. If a filename is passed then a file is created with that
             filename and used instead.
@@ -262,7 +267,14 @@ class Attachment(Hashable):
         data = await self._http.get_from_cdn(url)
         return data
 
-    async def to_file(self, *, use_cached: bool = False, spoiler: bool = False) -> File:
+    async def to_file(
+        self,
+        *,
+        filename: Optional[str] = MISSING,
+        description: Optional[str] = MISSING,
+        use_cached: bool = False,
+        spoiler: bool = False,
+    ) -> File:
         """|coro|
 
         Converts the attachment into a :class:`File` suitable for sending via
@@ -272,6 +284,16 @@ class Attachment(Hashable):
 
         Parameters
         -----------
+        filename: Optional[:class:`str`]
+            The filename to use for the file. If not specified then the filename
+            of the attachment is used instead.
+
+            .. versionadded:: 2.0
+        description: Optional[:class:`str`]
+            The description to use for the file. If not specified then the
+            description of the attachment is used instead.
+
+            .. versionadded:: 2.0
         use_cached: :class:`bool`
             Whether to use :attr:`proxy_url` rather than :attr:`url` when downloading
             the attachment. This will allow attachments to be saved after deletion
@@ -302,7 +324,9 @@ class Attachment(Hashable):
         """
 
         data = await self.read(use_cached=use_cached)
-        return File(io.BytesIO(data), filename=self.filename, spoiler=spoiler)
+        file_filename = filename if filename is not MISSING else self.filename
+        file_description = description if description is not MISSING else self.description
+        return File(io.BytesIO(data), filename=file_filename, description=file_description, spoiler=spoiler)
 
     def to_dict(self) -> AttachmentPayload:
         result: AttachmentPayload = {
@@ -319,6 +343,8 @@ class Attachment(Hashable):
             result['width'] = self.width
         if self.content_type:
             result['content_type'] = self.content_type
+        if self.description:
+            result['description'] = self.description
         return result
 
 
@@ -1011,6 +1037,7 @@ class Message(Hashable):
             MessageType.default,
             MessageType.reply,
             MessageType.chat_input_command,
+            MessageType.context_menu_command,
             MessageType.thread_starter_message,
         )
 
@@ -1178,6 +1205,7 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
+        file: Optional[File] = ...,
     ) -> Message:
         ...
 
@@ -1192,6 +1220,37 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
+        file: Optional[File] = ...,
+    ) -> Message:
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        content: Optional[str] = ...,
+        embed: Optional[Embed] = ...,
+        attachments: List[Attachment] = ...,
+        suppress: bool = ...,
+        delete_after: Optional[float] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        view: Optional[View] = ...,
+        files: Optional[List[File]] = ...,
+    ) -> Message:
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        content: Optional[str] = ...,
+        embeds: List[Embed] = ...,
+        attachments: List[Attachment] = ...,
+        suppress: bool = ...,
+        delete_after: Optional[float] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        view: Optional[View] = ...,
+        files: Optional[List[File]] = ...,
     ) -> Message:
         ...
 
@@ -1207,7 +1266,6 @@ class Message(Hashable):
         view: Optional[View] = MISSING,
         file: Optional[File] = MISSING,
         files: Optional[List[File]] = MISSING,
-        append_files: Optional[bool] = MISSING
     ) -> Message:
         """|coro|
 
@@ -1232,8 +1290,8 @@ class Message(Hashable):
 
             .. versionadded:: 2.0
         attachments: List[:class:`Attachment`]
-            A list of attachments to keep in the message. If ``[]`` is passed
-            then all attachments are removed.
+            A list of attachments to keep in the message. To keep all existing attachments,
+            pass ``message.attachments``.
         suppress: :class:`bool`
             Whether to suppress embeds for the message. This removes
             all the embeds if set to ``True``. If set to ``False``
@@ -1263,12 +1321,6 @@ class Message(Hashable):
             If provided, a list of new files to add to the message.
 
             .. versionadded:: 2.0
-        append_files: Optional[:class:`bool`]
-            Whether to append files to the message.
-            If set to True (default), files will be appended to the message.
-            If set to False, files will override the current files on the message.
-
-            .. versionadded:: 2.0
 
         Raises
         -------
@@ -1279,6 +1331,7 @@ class Message(Hashable):
             edited a message's content or embed that isn't yours.
         ~nextcord.InvalidArgument
             You specified both ``embed`` and ``embeds``
+            or ``file`` and ``files``.
         """
 
         payload: Dict[str, Any] = {}
@@ -1292,10 +1345,6 @@ class Message(Hashable):
             raise InvalidArgument('cannot pass both embed and embeds parameter to edit()')
         if file is not MISSING and files is not MISSING:
             raise InvalidArgument('cannot pass both file and files parameter to edit()')
-        if file is not MISSING and attachments is not MISSING:
-            raise InvalidArgument('cannot pass both file and attachments parameter to edit()')
-        if files is not MISSING and attachments is not MISSING:
-            raise InvalidArgument('cannot pass both files and fileattachments parameter to edit()')
 
         if embed is not MISSING:
             if embed is None:
@@ -1334,9 +1383,6 @@ class Message(Hashable):
             payload["files"] = [file]
         elif files is not MISSING:
             payload["files"] = files
-
-        if "files" in payload and append_files is not MISSING and not append_files:
-            payload["attachments"] = [{"id": i} for i in range(len(payload["files"]))]
 
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)
@@ -1778,6 +1824,11 @@ class PartialMessage(Hashable):
         embed: Optional[:class:`Embed`]
             The new embed to replace the original with.
             Could be ``None`` to remove the embed.
+        embeds: List[:class:`Embed`]
+            The new embeds to replace the original with. Must be a maximum of 10.
+            To remove all embeds ``[]`` should be passed.
+
+            .. versionadded:: 2.0
         suppress: :class:`bool`
             Whether to suppress embeds for the message. This removes
             all the embeds if set to ``True``. If set to ``False``
@@ -1809,6 +1860,8 @@ class PartialMessage(Hashable):
         Forbidden
             Tried to suppress a message without permissions or
             edited a message's content or embed that isn't yours.
+        ~nextcord.InvalidArgument
+            You specified both ``embed`` and ``embeds``
 
         Returns
         ---------
@@ -1824,13 +1877,15 @@ class PartialMessage(Hashable):
             if content is not None:
                 fields['content'] = str(content)
 
-        try:
-            embed = fields['embed']
-        except KeyError:
-            pass
-        else:
-            if embed is not None:
-                fields['embed'] = embed.to_dict()
+        if 'embed' in fields and 'embeds' in fields:
+            raise InvalidArgument('Cannot pass both embed and embeds parameter to edit()')
+
+        if 'embed' in fields:
+            embed = fields.pop('embed')
+            fields['embeds'] = [embed.to_dict()] if embed is not None else []
+
+        elif 'embeds' in fields:
+            fields['embeds'] = [embed.to_dict() for embed in fields['embeds']]
 
         try:
             suppress: bool = fields.pop('suppress')

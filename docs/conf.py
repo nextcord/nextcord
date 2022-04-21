@@ -50,6 +50,7 @@ autodoc_typehints = 'none'
 
 extlinks = {
     'issue': ('https://github.com/nextcord/nextcord/issues/%s', 'GH-'),
+    'dpyissue': ('https://github.com/Rapptz/discord.py/issues/%s', 'GH-'),
 }
 
 # Links used for cross-referencing stuff in other documentation
