@@ -39,7 +39,8 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    Union, overload
+    Union,
+    overload,
 )
 
 from . import abc, utils
@@ -1556,8 +1557,12 @@ class Guild(Hashable):
             fields['afk_timeout'] = afk_timeout
 
         if icon is not MISSING:
-            fields['icon'] = utils._bytes_to_base64_data(
-                icon if isinstance(icon, bytes) else await icon.read()) if icon is not None else None
+            if icon is None:
+                fields['icon'] = icon
+            elif isinstance(icon, bytes):
+                fields['icon'] = utils._bytes_to_base64_data(icon)
+            else:
+                fields['icon'] = utils._bytes_to_base64_data(await icon.read())
 
         if banner is not MISSING:
             if banner is None:
@@ -2552,7 +2557,7 @@ class Guild(Hashable):
         colour: Union[Colour, int] = MISSING,
         hoist: bool = MISSING,
         mentionable: bool = MISSING,
-        icon: Union[str, bytes, File, Asset, Attachment] = MISSING,
+        icon: Optional[Union[str, bytes, File, Asset, Attachment]] = MISSING,
         reason: Optional[str] = None
     ) -> Role:
         """|coro|
@@ -3208,8 +3213,8 @@ class Guild(Hashable):
         privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
-        image: Union[bytes, Asset, Attachment] = None,
-        reason: Optional[str] = None
+        image: Optional[Union[bytes, Asset, Attachment]] = None,
+        reason: Optional[str] = None,
     ) -> ScheduledEvent:
         """|coro|
 
@@ -3233,7 +3238,7 @@ class Guild(Hashable):
             The description for the event
         entity_type: :class:`ScheduledEventEntityType`
             The type of event
-        image: Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]
+        image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
             A :term:`py:bytes-like object` representing the cover image.
         reason: Optional[:class:`str`]
             The reason for creating this scheduled_event. Shows up in the audit logs.
