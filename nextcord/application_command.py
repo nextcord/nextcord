@@ -518,6 +518,35 @@ class CallbackMixin:
         """:class:`bool`: Checks whether the command has an error handler registered."""
         return self.error_callback is not None
 
+    def add_check(self, func: ApplicationCheck) -> CallbackMixin:
+        """Adds a check to the application command. Returns the application command for method chaining.
+
+        Parameters
+        ----------
+        func
+            The function that will be used as a check.
+        """
+        self.checks.append(func)
+        return self
+
+    def remove_check(self, func: ApplicationCheck) -> CallbackMixin:
+        """Removes a check from the ApplicationCommand. Returns the application command for method chaining.
+
+        This function is idempotent and will not raise an exception
+        if the function is not in the command's checks.
+        
+        Parameters
+        ----------
+        func
+            The function to remove from the checks.
+        """
+        try:
+            self.checks.remove(func)
+        except ValueError:
+            pass
+
+        return self
+
     def from_callback(
             self,
             callback: Optional[Callable] = None,
@@ -719,7 +748,7 @@ class CallbackMixin:
         self.error_callback = callback
         return callback
 
-    def callback_before_invoke(self, coro: Callable[[Interaction], Coroutine]) -> Callable[[Interaction], Coroutine]:
+    def before_invoke(self, coro: Callable[[Interaction], Coroutine]) -> Callable[[Interaction], Coroutine]:
         """Sets the callback that should be run before the command callback is invoked.
 
         Parameters
@@ -735,7 +764,7 @@ class CallbackMixin:
         self._callback_before_invoke = coro
         return coro
 
-    def callback_after_invoke(self, coro: Callable[[Interaction], Coroutine]) -> Callable[[Interaction], Coroutine]:
+    def after_invoke(self, coro: Callable[[Interaction], Coroutine]) -> Callable[[Interaction], Coroutine]:
         """Sets the callback that should be run after the command callback is invoked.
 
         Parameters
