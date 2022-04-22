@@ -2630,7 +2630,7 @@ class Guild(Hashable):
             fields['name'] = name
 
         if icon is not MISSING:
-            if isinstance(icon, str):
+            if icon is None or isinstance(icon, str):
                 fields['unicode_emoji'] = icon
             elif isinstance(icon, bytes):
                 fields['icon'] = utils._bytes_to_base64_data(icon)
