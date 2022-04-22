@@ -412,7 +412,7 @@ class Member(abc.Messageable, _UserTag):
 
     @property
     def status(self) -> Status:
-        """:class:`Status`: The member's overall status. If the value is unknown, then it will be a :class:`str` instead."""
+        """Union[:class:`Status`:, :class:`str`] The member's overall status. If the value is unknown, then it will be a :class:`str` instead."""
         return try_enum(Status, self._client_status[None])
 
     @property
