@@ -46,7 +46,14 @@ from typing import (
 from . import abc, utils
 from .asset import Asset
 from .bans import BanEntry
-from .channel import _guild_channel_factory, _threaded_guild_channel_factory, TextChannel
+from .channel import (
+    _guild_channel_factory,
+    _threaded_guild_channel_factory,
+    TextChannel,
+    CategoryChannel,
+    StageChannel,
+    VoiceChannel,
+)
 from .colour import Colour
 from .emoji import Emoji
 from .enums import (
@@ -89,11 +96,6 @@ if TYPE_CHECKING:
     import datetime
 
     from .abc import Snowflake, SnowflakeTime
-    from .channel import (
-        CategoryChannel,
-        StageChannel,
-        VoiceChannel,
-    )
     from .application_command import ApplicationCommand
     from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
     from .types.threads import (
