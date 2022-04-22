@@ -87,7 +87,7 @@ from .widget import Widget
 
 
 if TYPE_CHECKING:
-    from . import Asset
+    from .asset import Asset
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
     from .application_command import ApplicationCommand, ClientCog
     from .channel import DMChannel
