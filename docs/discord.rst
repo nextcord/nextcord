@@ -35,7 +35,7 @@ Creating a Bot account is a pretty straightforward process.
     .. image:: /images/discord_bot_user_options.png
         :alt: How the Bot User options should look like for most people.
 
-7. Generate the token using the "Reset Token" button. You might have to confirm and enter your current 2FA Code.
+7. Generate the token using the "Reset Token" button. You will have to confirm and enter your current 2FA Code. 2FA is a requirement for making Bot Accounts.
 
     - **This is not the Client Secret at the General Information page.**
 
