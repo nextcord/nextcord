@@ -1041,10 +1041,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
     def __init__(
             self,
             parameter: Parameter,
-            commmand: Union[SlashApplicationCommand, SlashApplicationSubcommand],
+            command: Union[SlashApplicationCommand, SlashApplicationSubcommand],
             parent_cog: Optional[ClientCog] = None
     ):
-        BaseCommandOption.__init__(self, parameter, commmand, parent_cog)
+        BaseCommandOption.__init__(self, parameter, command, parent_cog)
         SlashOption.__init__(self)  # We subclassed SlashOption because we must handle all attributes it has.
         AutocompleteOptionMixin.__init__(self, parent_cog=parent_cog)
         # self.functional_name = parameter.name
@@ -1073,6 +1073,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             self.required = True
 
         self.choices = cmd_arg.choices
+        self.channel_types = cmd_arg.channel_types
         self.min_value = cmd_arg.min_value
         self.max_value = cmd_arg.max_value
         self.autocomplete = cmd_arg.autocomplete
