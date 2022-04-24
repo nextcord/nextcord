@@ -23,7 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TypeVar, Union, overload, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TypeVar, Union, TYPE_CHECKING
 
 from .asset import Asset
 from .utils import _bytes_to_base64_data
@@ -32,7 +32,6 @@ from .errors import InvalidArgument
 from .colour import Colour
 from .mixins import Hashable
 from .utils import snowflake_time, _get_as_snowflake, MISSING
-from .file import File
 
 __all__ = (
     'RoleTags',
