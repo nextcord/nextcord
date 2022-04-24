@@ -433,6 +433,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         -------
         dict
             A dictionary of the required permissions for this command.
+
+        Notes
+        -----
+        This relates to :func:`.has_permissions`
         """
         return getattr(self.callback, "required_permissions", {})
 
@@ -446,6 +450,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         -------
         dict
             A dictionary of the required permissions for this command.
+
+        Notes
+        -----
+        This relates to :func:`.bot_has_permissions`
         """
         return getattr(self.callback, "required_bot_permissions", {})
 
@@ -459,6 +467,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         -------
         dict
             A dictionary of the required permissions for this command.
+
+        Notes
+        -----
+        This relates to :func:`.has_guild_permissions`
         """
         return getattr(self.callback, "required_guild_permissions", {})
 
@@ -472,6 +484,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         -------
         dict
             A dictionary of the required permissions for this command.
+
+        Notes
+        -----
+        This relates to :func:`.bot_has_guild_permissions`
         """
         return getattr(self.callback, "required_bot_guild_permissions", {})
 
