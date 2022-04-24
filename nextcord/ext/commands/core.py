@@ -423,6 +423,57 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         self.checks.extend(self.parent.checks)  # type: ignore
 
+    # Issue #511
+    @property
+    def required_permissions(self) -> Dict[str, bool]:
+        """
+        Returns the permissions required to run this command.
+
+        Returns
+        -------
+        dict
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "required_permissions", {})
+
+    @property
+    def required_bot_permissions(self) -> Dict[str, bool]:
+        """
+        Returns the permissions the bot
+        needs to run this command.
+
+        Returns
+        -------
+        dict
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "required_bot_permissions", {})
+
+    @property
+    def required_guild_permissions(self) -> Dict[str, bool]:
+        """
+        Returns the guild permissions
+        needed to run this command.
+
+        Returns
+        -------
+        dict
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "required_guild_permissions", {})
+
+    @property
+    def required_bot_guild_permissions(self) -> Dict[str, bool]:
+        """
+        Returns the permissions the bot needs
+        to have in this guild in order to run this command.
+
+        Returns
+        -------
+        dict
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "required_bot_guild_permissions", {})
 
     @property
     def callback(self) -> Union[
@@ -2004,6 +2055,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
         raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
 
     def predicate(ctx: Context) -> bool:
+        setattr(ctx.command.callback, "required_permissions", perms)
         ch = ctx.channel
         permissions = ch.permissions_for(ctx.author)  # type: ignore
 
@@ -2015,6 +2067,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
         raise MissingPermissions(missing)
 
     return check(predicate)
+
 
 def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
     """Similar to :func:`.has_permissions` except checks if the bot itself has
@@ -2029,6 +2082,7 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
         raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
 
     def predicate(ctx: Context) -> bool:
+        setattr(ctx.command.callback, "required_bot_permissions", perms)
         guild = ctx.guild
         me = guild.me if guild is not None else ctx.bot.user
         permissions = ctx.channel.permissions_for(me)  # type: ignore
@@ -2060,6 +2114,7 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
         if not ctx.guild:
             raise NoPrivateMessage
 
+        setattr(ctx.command.callback, "required_guild_permissions", perms)
         permissions = ctx.author.guild_permissions  # type: ignore
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
@@ -2085,6 +2140,7 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
         if not ctx.guild:
             raise NoPrivateMessage
 
+        setattr(ctx.command.callback, "required_bot_guild_permissions", perms)
         permissions = ctx.me.guild_permissions  # type: ignore
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
