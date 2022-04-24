@@ -2532,7 +2532,7 @@ class Guild(Hashable):
         colour: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
-        icon: Optional[Union[str, bytes, File, Asset, Attachment]] = ...,
+        icon: Optional[Union[str, bytes, Asset, Attachment]] = ...,
     ) -> Role:
         ...
 
@@ -2546,7 +2546,7 @@ class Guild(Hashable):
         color: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
-        icon: Optional[Union[str, bytes, File, Asset, Attachment]] = ...,
+        icon: Optional[Union[str, bytes, Asset, Attachment]] = ...,
     ) -> Role:
         ...
 
@@ -2559,7 +2559,7 @@ class Guild(Hashable):
         colour: Union[Colour, int] = MISSING,
         hoist: bool = MISSING,
         mentionable: bool = MISSING,
-        icon: Optional[Union[str, bytes, File, Asset, Attachment]] = MISSING,
+        icon: Optional[Union[str, bytes, Asset, Attachment]] = MISSING,
         reason: Optional[str] = None
     ) -> Role:
         """|coro|
@@ -2634,8 +2634,6 @@ class Guild(Hashable):
                 fields['unicode_emoji'] = icon
             elif isinstance(icon, bytes):
                 fields['icon'] = utils._bytes_to_base64_data(icon)
-            elif isinstance(icon, File):
-                fields['icon'] = utils._bytes_to_base64_data(icon.fp.read())
             else:
                 fields['icon'] = utils._bytes_to_base64_data(await icon.read())
 
