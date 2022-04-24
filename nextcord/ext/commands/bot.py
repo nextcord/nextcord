@@ -952,40 +952,33 @@ class BotBase(GroupMixin):
         if package and packages:
             raise ValueError("Cannot provide both package and packages.")
 
-        if packages:
-            if len(packages) != len(names):
-                raise ValueError("The length of packages must match the length of extensions.")
-            packages_itr = iter(packages)
+        packages_itr, extras_itr = None
 
-        if extras:
-            if len(extras) != len(names):
-                raise ValueError("The length of extra parameters must match the length of extensions.")
-            extras_itr = iter(extras)
+        if packages is not None and len(packages) != len(names):
+            raise ValueError("The length of packages must match the length of extensions.")
+        packages_itr = iter(packages)
+
+        if extras is not None and len(extras) != len(names):
+            raise ValueError("The length of extra parameters must match the length of extensions.")
+        extras_itr = iter(extras)
 
         loaded_extensions: List[str] = []
 
         for extension in names:
-            if packages:
-                # this shouldn't give any errors since we already checked the length
-                cur_package = next(packages_itr)
-
-            if extras:
-                # this shouldn't give any errors since we already checked the length
-                cur_extra = next(extras_itr)
+            cur_extra = next(extras_itr) if extras_itr is not None else None
+            package = next(packages_itr) if packages_itr is not None else None
 
             try:
-                if package:
-                    self.load_extension(extension, package=package, extras=cur_extra)
-                elif packages:
-                    self.load_extension(extension, package=cur_package, extras=cur_extra)
-            except Exception:
-                raise
+                self.load_extension(extension, package=package, extras=cur_extra)
+            except Exception as e:
+                # we print the exception instead of raising it because we want to continue loading extensions
+                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
             else:
                 loaded_extensions.append(extension)
 
         return loaded_extensions
 
-    def find_load_extensions(self, folder_name: str, filter: str = "*.py") -> List[str]:
+    def find_load_extensions(self, folder_name: str, filter: str = "*.py", ignore: Optional[List[str]] = None) -> List[str]:
         """Loads all extensions found in a folder.
 
         Once an extension found in a folder has been loaded and did not throw
@@ -999,7 +992,8 @@ class BotBase(GroupMixin):
         Parameters
         ----------
         folder_name: :class:`str`
-            The name (or path) of the folder to look through.
+            The name (or path) of the folder to look through. This folder path is a 
+            relative path based on the current folder.
         filter: :class:`str`
             The filter to use when looking for extensions. Defaults to ``*.py``.
             To learn more about the syntax of the filter, check out the Python Docs
@@ -1012,6 +1006,8 @@ class BotBase(GroupMixin):
 
         Raises
         --------
+        ValueError
+            :param:`folder_name` is an absolute path, not a relative path.
         ExtensionNotFound
             An extension could not be imported.
         ExtensionAlreadyLoaded
@@ -1022,7 +1018,14 @@ class BotBase(GroupMixin):
             An extension or its setup function had an execution error.
         """
         path = Path(folder_name)
+        if path.is_absolute():
+            raise ValueError("folder_name must be a relative path based on the current working directory, not an absolute path")
+
         _raw_files: List[Path] = list(path.rglob(filter))
+        if ignore:
+            for f in _raw_files:
+                if f.name in ignore:
+                    _raw_files.remove(f)
 
         packages: List[str] = [str(p.parent).replace(os.sep, ".") for p in _raw_files]
         modules: List[str] = [str(p.stem) for p in _raw_files]
