@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, Union
 from .utils import parse_time, _get_as_snowflake, _bytes_to_base64_data, MISSING
 from .enums import VoiceRegion
 from .guild import Guild
@@ -35,6 +35,8 @@ __all__ = (
 
 if TYPE_CHECKING:
     import datetime
+    from .asset import Asset
+    from .message import Attachment
     from .types.template import Template as TemplatePayload
     from .state import ConnectionState
     from .user import User
@@ -166,7 +168,12 @@ class Template:
             f' creator={self.creator!r} source_guild={self.source_guild!r} is_dirty={self.is_dirty}>'
         )
 
-    async def create_guild(self, name: str, region: Optional[VoiceRegion] = None, icon: Any = None) -> Guild:
+    async def create_guild(
+        self,
+        name: str,
+        region: Union[VoiceRegion, str] = VoiceRegion.us_west,
+        icon: Optional[Union[bytes, Asset, Attachment]] = None,
+    ) -> Guild:
         """|coro|
 
         Creates a :class:`.Guild` using the template.
@@ -180,7 +187,7 @@ class Template:
         region: :class:`.VoiceRegion`
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
-        icon: :class:`bytes`
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
             The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
             for more details on what is expected.
 
@@ -197,13 +204,17 @@ class Template:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is not None:
-            icon = _bytes_to_base64_data(icon)
+        if icon is None:
+            icon_base64 = None
+        elif isinstance(icon, bytes):
+            icon_base64 = _bytes_to_base64_data(icon)
+        else:
+            icon_base64 = _bytes_to_base64_data(await icon.read())
 
-        region = region or VoiceRegion.us_west
-        region_value = region.value
+        if isinstance(region, VoiceRegion):
+            region = str(region)
 
-        data = await self._state.http.create_from_template(self.code, name, region_value, icon)
+        data = await self._state.http.create_from_template(self.code, name, region, icon_base64)
         return Guild(data=data, state=self._state)
 
     async def sync(self) -> Template:

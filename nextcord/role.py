@@ -46,6 +46,7 @@ if TYPE_CHECKING:
         RoleTags as RoleTagPayload,
     )
     from .types.guild import RolePositionUpdate
+    from .message import Attachment
     from .guild import Guild
     from .member import Member
     from .state import ConnectionState
@@ -371,7 +372,7 @@ class Role(Hashable):
         mentionable: bool = MISSING,
         position: int = MISSING,
         reason: Optional[str] = MISSING,
-        icon: Optional[Union[str, bytes, File]] = MISSING,
+        icon: Optional[Union[str, bytes, Asset, Attachment]] = MISSING,
     ) -> Optional[Role]:
         """|coro|
 
@@ -403,7 +404,7 @@ class Role(Hashable):
         position: :class:`int`
             The new role's position. This must be below your top role's
             position or it will fail.
-        icon: Union[:class:`str`, :class:`bytes`, :class:`File`]
+        icon: Optional[Union[:class:`str`, :class:`bytes`, :class:`Asset`, :class:`Attachment`]]
             The role's icon image
         reason: Optional[:class:`str`]
             The reason for editing this role. Shows up on the audit log.
@@ -454,10 +455,10 @@ class Role(Hashable):
             elif isinstance(icon, str):
                 payload['unicode_emoji'] = icon
                 payload['icon'] = None
-            elif isinstance(icon, File):
-                payload['icon'] = _bytes_to_base64_data(icon.fp.read())
-            else:
+            elif isinstance(icon, bytes):
                 payload['icon'] = _bytes_to_base64_data(icon)
+            else:
+                payload['icon'] = _bytes_to_base64_data(await icon.read())
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         return Role(guild=self.guild, data=data, state=self._state)
