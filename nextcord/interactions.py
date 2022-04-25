@@ -552,8 +552,8 @@ class Interaction:
         HTTPException
             Editing the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
-            or ``file`` or ``files`` contained objects that are not of type :class:`File`.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``,
+            or an object of type :class:`File` was passed to ``file`` or ``files``.
         HTTPException
             Editing the message failed.
         InvalidArgument
@@ -773,8 +773,8 @@ class InteractionResponse:
             :attr:`Interaction.followup` should be used if the interaction will take
             a while to respond.
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
-            or ``file`` or ``files`` contained objects that are not of type :class:`File`.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``,
+            or an object of type :class:`File` was passed to ``file`` or ``files``.
         ValueError
             The length of ``embeds`` was invalid.
         InteractionResponded
@@ -943,8 +943,8 @@ class InteractionResponse:
         HTTPException
             Editing the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
-            or ``file`` or ``files`` contained objects that are not of type :class:`File`.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``,
+            or an object of type :class:`File` was passed to ``file`` or ``files``.
         InteractionResponded
             This interaction has already been responded to before.
 
