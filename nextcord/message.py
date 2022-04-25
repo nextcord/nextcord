@@ -686,8 +686,9 @@ class Message(Hashable):
         self.id: int = int(data['id'])
         self.webhook_id: Optional[int] = utils._get_as_snowflake(data, 'webhook_id')
         self.reactions: List[Reaction] = [Reaction(message=self, data=d) for d in data.get('reactions', [])]
-        self.attachments: List[Attachment] = \
-            [Attachment(data=a, state=self._state) for a in data.get('attachments', [])]
+        self.attachments: List[Attachment] = [
+            Attachment(data=a, state=self._state) for a in data.get('attachments', [])
+        ]
         self.embeds: List[Embed] = [Embed.from_dict(a) for a in data.get('embeds', [])]
         self.application: Optional[MessageApplicationPayload] = data.get('application')
         self.activity: Optional[MessageActivityPayload] = data.get('activity')
