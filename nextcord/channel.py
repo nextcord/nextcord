@@ -836,6 +836,11 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
                 if member is not None:
                     ret.append(member)
         return ret
+    
+    @property
+    def members_count(self) -> int:
+        """:class:`int`: Returns how many members that are currently inside this channel."""
+        return len(self.members)
 
     @property
     def voice_states(self) -> Dict[int, VoiceState]:
