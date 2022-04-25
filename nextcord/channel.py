@@ -71,23 +71,16 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from . import (
-        embeds,
-        message,
-        sticker,
-    )
     from .types.threads import ThreadArchiveDuration
     from .role import Role
     from .member import Member, VoiceState
     from .abc import Snowflake, SnowflakeTime
-    from .embeds import Embed
     from .file import File
     from .message import Message, PartialMessage
     from .webhook import Webhook
     from .state import ConnectionState
     from .user import ClientUser, User, BaseUser
     from .guild import Guild, GuildChannel as GuildChannelType
-    # TODO: implement forum payload
     from .types.channel import (
         TextChannel as TextChannelPayload,
         ForumChannel as ForumChannelPayload,

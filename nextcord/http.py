@@ -503,7 +503,7 @@ class HTTPClient:
         stickers: Optional[List[sticker.StickerItem]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[dict]] = None
-    ):
+    ) -> list[dict]:
         form = []
         
         payload['attachments'] = attachments or []
@@ -998,7 +998,7 @@ class HTTPClient:
         stickers: Optional[List[sticker.StickerItem]] = None,
         components: Optional[List[components.Component]] = None,
         reason: Optional[str] = None,
-    ):
+    ) -> Response[threads.Thread]:
         payload = {
             'name': name,
             'auto_archive_duration': auto_archive_duration,
