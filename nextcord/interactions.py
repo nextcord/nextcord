@@ -482,9 +482,24 @@ class Interaction:
         """|coro|
 
         This is a shorthand function for helping in sending messages in
-        response to an interaction. If the response
-        :meth:`InteractionResponse.is_done()` then the message is sent
-        via :attr:`Interaction.followup` instead.
+        response to an interaction. If the interaction has not been responded to,
+        :meth:InteractionResponse.send_message` is used. If the response
+        :meth:`~InteractionResponse.is_done` then the message is sent
+        via :attr:`Interaction.followup` using :class:`Webhook.send` instead.
+
+        Raises
+        --------
+        HTTPException
+            Sending the message failed.
+        NotFound
+            The interaction has expired or the interaction has been responded to
+            but the followup webhook is expired.
+        Forbidden
+            The authorization token for the webhook is incorrect.
+        TypeError
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
+        ValueError
+            The length of ``embeds`` was invalid.
 
         Returns
         -------
@@ -558,7 +573,8 @@ class Interaction:
         if self.message is not None:
             return await self.message.edit(*args, **kwargs)
         raise InvalidArgument(
-            "Interaction.message is None, this method is only for views"
+            "Interaction.message is None, this method can only be used in "
+            "response to a component or modal submit interaction."
         )
 
 
@@ -752,8 +768,13 @@ class InteractionResponse:
         -------
         HTTPException
             Sending the message failed.
+        NotFound
+            The interaction has expired. :meth:`InteractionResponse.defer` and
+            :attr:`Interaction.followup` should be used if the interaction will take
+            a while to respond.
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            or ``file`` or ``files`` contained objects that are not of type :class:`File`.
         ValueError
             The length of ``embeds`` was invalid.
         InteractionResponded
@@ -888,8 +909,8 @@ class InteractionResponse:
     ) -> Optional[Message]:
         """|coro|
 
-        Responds to this interaction by editing the original message of
-        a component interaction.
+        Responds to this interaction by editing the message that the
+        component or modal submit interaction originated from.
 
         Parameters
         -----------
@@ -922,7 +943,8 @@ class InteractionResponse:
         HTTPException
             Editing the message failed.
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            or ``file`` or ``files`` contained objects that are not of type :class:`File`.
         InteractionResponded
             This interaction has already been responded to before.
 
@@ -972,7 +994,8 @@ class InteractionResponse:
             payload['attachments'] = [a.to_dict() for a in attachments]
 
         if view is not MISSING:
-            state.prevent_view_updates_for(message_id)
+            if message_id is not None:
+                state.prevent_view_updates_for(message_id)
             if view is None:
                 payload['components'] = []
             else:
@@ -993,13 +1016,13 @@ class InteractionResponse:
                 for file in files:
                     file.close()
 
-        if view and not view.is_finished():
+        if view and not view.is_finished() and message_id is not None:
             state.store_view(view, message_id)
 
         self._responded = True
 
         if delete_after is not None:
-            await self._parent.delete_original_message(delay=delete_after)
+            await parent.delete_original_message(delay=delete_after)
 
         return state._get_message(message_id)
 

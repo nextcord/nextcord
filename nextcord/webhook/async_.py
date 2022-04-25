@@ -1382,7 +1382,7 @@ class Webhook(BaseWebhook):
         HTTPException
             Sending the message failed.
         NotFound
-            This webhook was not found.
+            This webhook was not found or has expired.
         Forbidden
             The authorization token for the webhook is incorrect.
         TypeError
