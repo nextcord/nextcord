@@ -526,21 +526,32 @@ class Interaction:
         """|coro|
 
         This is a shorthand function for helping in editing messages in
-        response to an interaction. If the response
-        :meth:`InteractionResponse.is_done()` then the message is edited
-        via the :attr:`Interaction.message` instead.
+        response to a component or modal submit interaction. If the
+        interaction has not been responded to, :meth:InteractionResponse.edit_message`
+        is used. If the response :meth:`~InteractionResponse.is_done` then
+        the message is edited via the :attr:`Interaction.message` using
+        :meth:`Message.edit` instead.
+
+        Raises
+        ------
+        HTTPException
+            Editing the message failed.
+        TypeError
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            or ``file`` or ``files`` contained objects that are not of type :class:`File`.
+        HTTPException
+            Editing the message failed.
+        InvalidArgument
+            :attr:`Interaction.message` was ``None``, this may occur in a :class:`Thread`
+            or when the interaction is not a component or modal submit interaction.
 
         Returns
         -------
         Optional[:class:`Message`]
-            Message if the interaction has been responded to and the
-            interaction's message was edited w/o using response. Else ``None``
-
-        Raises
-        ------
-        InvalidArgument
-            :attr:`Interaction.message` was ``None``,
-            this may occur in threads.
+            The edited message. If the interaction has not yet been responded to,
+            :meth:`InteractionResponse.edit_message` is used which returns
+            a :class:`Message` or ``None`` corresponding to :attr:`Interaction.message`.
+            Otherwise, the :class:`Message` is returned via :meth:`Message.edit`.
         """
         if not self.response.is_done():
             return await self.response.edit_message(*args, **kwargs)
@@ -874,7 +885,7 @@ class InteractionResponse:
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         delete_after: Optional[float] = None,
-    ) -> None:
+    ) -> Optional[Message]:
         """|coro|
 
         Responds to this interaction by editing the original message of
@@ -914,6 +925,12 @@ class InteractionResponse:
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         InteractionResponded
             This interaction has already been responded to before.
+
+        Returns
+        --------
+        Optional[:class:`Message`]
+            The message that was edited, or None if the :attr:`Interaction.message` is not found
+            (this may happen if the interaction occurred in a :class:`Thread`).
         """
         if self._responded:
             raise InteractionResponded(self._parent)
@@ -984,7 +1001,7 @@ class InteractionResponse:
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
 
-        
+        return state._get_message(message_id)
 
 
 class _InteractionMessageState:

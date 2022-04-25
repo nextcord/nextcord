@@ -1329,9 +1329,13 @@ class Message(Hashable):
         Forbidden
             Tried to suppress a message without permissions or
             edited a message's content or embed that isn't yours.
-        ~nextcord.InvalidArgument
-            You specified both ``embed`` and ``embeds``
-            or ``file`` and ``files``.
+        TypeError
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
+
+        Returns
+        --------
+        :class:`Message`
+            The edited message.
         """
 
         payload: Dict[str, Any] = {}
@@ -1342,9 +1346,9 @@ class Message(Hashable):
                 payload['content'] = None
 
         if embed is not MISSING and embeds is not MISSING:
-            raise InvalidArgument('cannot pass both embed and embeds parameter to edit()')
+            raise TypeError('cannot pass both embed and embeds parameter to edit()')
         if file is not MISSING and files is not MISSING:
-            raise InvalidArgument('cannot pass both file and files parameter to edit()')
+            raise TypeError('cannot pass both file and files parameter to edit()')
 
         if embed is not MISSING:
             if embed is None:
