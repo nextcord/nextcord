@@ -42,6 +42,7 @@ __all__ = (
 if TYPE_CHECKING:
     from .view import View
     from ..emoji import Emoji
+    from ..types.components import ButtonComponent as ButtonComponentPayload
 
 B = TypeVar('B', bound='Button')
 V = TypeVar('V', bound='View', covariant=True)
@@ -211,7 +212,7 @@ class Button(Item[V]):
     def type(self) -> ComponentType:
         return self._underlying.type
 
-    def to_component_dict(self):
+    def to_component_dict(self) -> ButtonComponentPayload:
         return self._underlying.to_dict()
 
     def is_dispatchable(self) -> bool:
