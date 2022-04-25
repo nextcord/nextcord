@@ -483,7 +483,7 @@ class Interaction:
 
         This is a shorthand function for helping in sending messages in
         response to an interaction. If the interaction has not been responded to,
-        :meth:InteractionResponse.send_message` is used. If the response
+        :meth:`InteractionResponse.send_message` is used. If the response
         :meth:`~InteractionResponse.is_done` then the message is sent
         via :attr:`Interaction.followup` using :class:`Webhook.send` instead.
 
@@ -542,7 +542,7 @@ class Interaction:
 
         This is a shorthand function for helping in editing messages in
         response to a component or modal submit interaction. If the
-        interaction has not been responded to, :meth:InteractionResponse.edit_message`
+        interaction has not been responded to, :meth:`InteractionResponse.edit_message`
         is used. If the response :meth:`~InteractionResponse.is_done` then
         the message is edited via the :attr:`Interaction.message` using
         :meth:`Message.edit` instead.
