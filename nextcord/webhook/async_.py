@@ -466,9 +466,9 @@ def handle_message_parameters(
     previous_allowed_mentions: Optional[AllowedMentions] = None,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
-        raise TypeError('Cannot mix file and files keyword arguments.')
+        raise InvalidArgument('Cannot mix file and files keyword arguments.')
     if embeds is not MISSING and embed is not MISSING:
-        raise TypeError('Cannot mix embed and embeds keyword arguments.')
+        raise InvalidArgument('Cannot mix embed and embeds keyword arguments.')
 
     payload: Dict[str, Any] = {}
 
@@ -732,7 +732,7 @@ class WebhookMessage(Message):
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         ValueError
             The length of ``embeds`` was invalid
@@ -1385,7 +1385,7 @@ class Webhook(BaseWebhook):
             This webhook was not found or has expired.
         Forbidden
             The authorization token for the webhook is incorrect.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
@@ -1569,7 +1569,7 @@ class Webhook(BaseWebhook):
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         ValueError
             The length of ``embeds`` was invalid

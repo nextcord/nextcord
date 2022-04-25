@@ -387,7 +387,7 @@ class Interaction:
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         ValueError
             The length of ``embeds`` was invalid.
@@ -496,7 +496,7 @@ class Interaction:
             but the followup webhook is expired.
         Forbidden
             The authorization token for the webhook is incorrect.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
@@ -551,9 +551,10 @@ class Interaction:
         ------
         HTTPException
             Editing the message failed.
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``,
-            or an object of type :class:`File` was passed to ``file`` or ``files``.
+            An object of type :class:`File` was passed to ``file`` or ``files``.
         HTTPException
             Editing the message failed.
         InvalidArgument
@@ -772,9 +773,10 @@ class InteractionResponse:
             The interaction has expired. :meth:`InteractionResponse.defer` and
             :attr:`Interaction.followup` should be used if the interaction will take
             a while to respond.
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``,
-            or an object of type :class:`File` was passed to ``file`` or ``files``.
+            An object of type :class:`File` was passed to ``file`` or ``files``.
         ValueError
             The length of ``embeds`` was invalid.
         InteractionResponded
@@ -795,7 +797,7 @@ class InteractionResponse:
         }
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('Cannot mix embed and embeds keyword arguments')
+            raise InvalidArgument('Cannot mix embed and embeds keyword arguments')
 
         if embed is not MISSING:
             embeds = [embed]
@@ -804,7 +806,7 @@ class InteractionResponse:
             payload['embeds'] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
-            raise TypeError('Cannot mix file and files keyword arguments')
+            raise InvalidArgument('Cannot mix file and files keyword arguments')
 
         if file is not MISSING:
             files = [file]
@@ -942,9 +944,10 @@ class InteractionResponse:
         -------
         HTTPException
             Editing the message failed.
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``,
-            or an object of type :class:`File` was passed to ``file`` or ``files``.
+            An object of type :class:`File` was passed to ``file`` or ``files``.
         InteractionResponded
             This interaction has already been responded to before.
 
@@ -970,7 +973,7 @@ class InteractionResponse:
                 payload['content'] = str(content)
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('cannot mix both embed and embeds keyword arguments')
+            raise InvalidArgument('cannot mix both embed and embeds keyword arguments')
 
         if embed is not MISSING:
             if embed is None:
@@ -982,7 +985,7 @@ class InteractionResponse:
             payload['embeds'] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
-            raise TypeError('Cannot mix file and files keyword arguments')
+            raise InvalidArgument('Cannot mix file and files keyword arguments')
 
         if file is not MISSING:
             files = [file]
@@ -1106,7 +1109,7 @@ class _InteractionMessageMixin:
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         ValueError
             The length of ``embeds`` was invalid.

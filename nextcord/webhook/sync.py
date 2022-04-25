@@ -414,7 +414,7 @@ class SyncWebhookMessage(Message):
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         ValueError
             The length of ``embeds`` was invalid
@@ -874,7 +874,7 @@ class SyncWebhook(BaseWebhook):
             This webhook was not found.
         Forbidden
             The authorization token for the webhook is incorrect.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         ValueError
             The length of ``embeds`` was invalid
@@ -1010,7 +1010,7 @@ class SyncWebhook(BaseWebhook):
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         ValueError
             The length of ``embeds`` was invalid
