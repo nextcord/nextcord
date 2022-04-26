@@ -791,7 +791,7 @@ class Member(abc.Messageable, _UserTag):
             if self.voice is None:
                 raise TypeError("You can only suppress members which are connected to a voice channel")
             voice_state_payload = {
-                'channel_id': self.voice.channel.id,
+                'channel_id': self.voice.channel.id,  # type: ignore id should exist
                 'suppress': suppress,
             }
 
@@ -853,7 +853,7 @@ class Member(abc.Messageable, _UserTag):
             The operation failed.
         """
         payload = {
-            'channel_id': self.voice.channel.id,
+            'channel_id': self.voice.channel.id,  # type: ignore should exist
             'request_to_speak_timestamp': datetime.datetime.utcnow().isoformat(),
         }
 
@@ -916,7 +916,7 @@ class Member(abc.Messageable, _UserTag):
         """
 
         if not atomic:
-            new_roles = utils._unique(Object(id=r.id) for s in (self.roles[1:], roles) for r in s)
+            new_roles: list[Snowflake] = utils._unique(Object(id=r.id) for s in (self.roles[1:], roles) for r in s)
             await self.edit(roles=new_roles, reason=reason)
         else:
             req = self._state.http.add_role
@@ -955,7 +955,7 @@ class Member(abc.Messageable, _UserTag):
         """
 
         if not atomic:
-            new_roles = [Object(id=r.id) for r in self.roles[1:]]  # remove @everyone
+            new_roles: list[Snowflake] = [Object(id=r.id) for r in self.roles[1:]]  # remove @everyone
             for role in roles:
                 try:
                     new_roles.remove(Object(id=role.id))

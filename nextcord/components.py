@@ -436,7 +436,7 @@ def _component_factory(data: ComponentPayload) -> Component:
     elif component_type == 3:
         return SelectMenu(data)  # type: ignore
     elif component_type == 4:
-        return TextInput(data)
+        return TextInput(data)  # type: ignore
     else:
         as_enum = try_enum(ComponentType, component_type)
         return Component._raw_construct(type=as_enum)

@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-from nextcord.application_command import _cog_special_method
+from nextcord.application_command import _cog_special_method, ClientCog
 from nextcord.interactions import Interaction
 import nextcord.utils
 
@@ -174,7 +174,7 @@ class CogMeta(type):
         return cls.__cog_name__
 
 
-class Cog(nextcord.ClientCog, metaclass=CogMeta):
+class Cog(ClientCog, metaclass=CogMeta):
     """The base class that all cogs must inherit from.
 
     A cog is a collection of commands, listeners, and optional state to
@@ -202,11 +202,12 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
 
         lookup = {
             cmd.qualified_name: cmd
-            for cmd in self.__cog_commands__
+            for cmd in self.__cog_commands__  # type: ignore
+            # pyright cannot read class annotations i guess
         }
 
         # Update the Command instances dynamically as well
-        for command in self.__cog_commands__:
+        for command in self.__cog_commands__:  # type: ignore
             setattr(self, command.callback.__name__, command)
             parent = command.parent
             if parent is not None:
@@ -217,7 +218,7 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
                 parent.remove_command(command.name)  # type: ignore
                 parent.add_command(command)  # type: ignore
 
-        return self
+        return self  # type: ignore
 
     def get_commands(self) -> List[Command]:
         r"""

@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from asyncio import Future
 import copy
 import unicodedata
 from typing import (
@@ -111,6 +112,11 @@ if TYPE_CHECKING:
     from .types.threads import Thread as ThreadPayload
     from .types.voice import GuildVoiceState
     from .voice_client import VoiceProtocol
+    from .types.template import CreateTemplate
+    from .types.integration import IntegrationType
+    from .types.sticker import CreateGuildSticker
+    from .types.snowflake import SnowflakeList
+    from .types.guild import RolePositionUpdate
     from .webhook import Webhook
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
@@ -362,7 +368,7 @@ class Guild(Hashable):
     def _add_scheduled_event(self, event: ScheduledEvent) -> None:
         self._scheduled_events[event.id] = event
 
-    def _remove_scheduled_event(self, event: Snowflake) -> None:
+    def _remove_scheduled_event(self, event: int) -> None:
         self._scheduled_events.pop(event, None)
 
     def _store_scheduled_event(self, payload: ScheduledEventPayload) -> ScheduledEvent:
@@ -395,11 +401,11 @@ class Guild(Hashable):
                 after = self._voice_states[user_id]
 
             before = copy.copy(after)
-            after._update(data, channel)
+            after._update(data, channel)  # type: ignore
         except KeyError:
             # if we're here then we're getting added into the cache
-            after = VoiceState(data=data, channel=channel)
-            before = VoiceState(data=data, channel=None)
+            after = VoiceState(data=data, channel=channel)  # type: ignore
+            before = VoiceState(data=data, channel=None)  # type: ignore
             self._voice_states[user_id] = after
 
         member = self.get_member(user_id)
@@ -500,7 +506,7 @@ class Guild(Hashable):
         cache_joined = self._state.member_cache_flags.joined
         self_id = self._state.self_id
         for mdata in guild.get('members', []):
-            member = Member(data=mdata, guild=self, state=state)
+            member = Member(data=mdata, guild=self, state=state)  # type: ignore
             if cache_joined or member.id == self_id:
                 self._add_member(member)
 
@@ -513,7 +519,7 @@ class Guild(Hashable):
         for obj in guild.get('voice_states', []):
             self._update_voice_state(obj, int(obj['channel_id']))
 
-        for event in guild.get('guild_scheduled_events', []):
+        for event in (guild.get('guild_scheduled_events') or []):
             self._store_scheduled_event(event)
 
     # TODO: refactor/remove?
@@ -533,7 +539,7 @@ class Guild(Hashable):
         if 'channels' in data:
             channels = data['channels']
             for c in channels:
-                factory, ch_type = _guild_channel_factory(c['type'])
+                factory, _ = _guild_channel_factory(c['type'])
                 if factory:
                     self._add_channel(factory(guild=self, data=c, state=self._state))  # type: ignore
 
@@ -596,7 +602,7 @@ class Guild(Hashable):
         """:class:`Member`: Similar to :attr:`Client.user` except an instance of :class:`Member`.
         This is essentially used to get the member version of yourself.
         """
-        self_id = self._state.user.id
+        self_id = self._state.user.id  # type: ignore
         # The self member is *always* cached
         return self.get_member(self_id)  # type: ignore
 
@@ -1179,7 +1185,8 @@ class Guild(Hashable):
         data = await self._create_channel(
             name, overwrites=overwrites, channel_type=ChannelType.text, category=category, reason=reason, **options
         )
-        channel = TextChannel(state=self._state, guild=self, data=data)
+        channel = TextChannel(state=self._state, guild=self, data=data)  # type: ignore
+        # payload *should* contain all text channel info
 
         # temporarily add to the cache
         self._channels[channel.id] = channel
@@ -1266,7 +1273,8 @@ class Guild(Hashable):
         data = await self._create_channel(
             name, overwrites=overwrites, channel_type=ChannelType.voice, category=category, reason=reason, **options
         )
-        channel = VoiceChannel(state=self._state, guild=self, data=data)
+        channel = VoiceChannel(state=self._state, guild=self, data=data)  # type: ignore
+        # payload *should* contain all voice channel info
 
         # temporarily add to the cache
         self._channels[channel.id] = channel
@@ -1332,7 +1340,8 @@ class Guild(Hashable):
         data = await self._create_channel(
             name, overwrites=overwrites, channel_type=ChannelType.stage_voice, category=category, reason=reason, **options
         )
-        channel = StageChannel(state=self._state, guild=self, data=data)
+        channel = StageChannel(state=self._state, guild=self, data=data)  # type: ignore
+        # payload *should* contain all stage channel info
 
         # temporarily add to the cache
         self._channels[channel.id] = channel
@@ -1376,7 +1385,8 @@ class Guild(Hashable):
         data = await self._create_channel(
             name, overwrites=overwrites, channel_type=ChannelType.category, reason=reason, **options
         )
-        channel = CategoryChannel(state=self._state, guild=self, data=data)
+        channel = CategoryChannel(state=self._state, guild=self, data=data)  # type: ignore
+        # payload *should* contain all category channel info
 
         # temporarily add to the cache
         self._channels[channel.id] = channel
@@ -1678,7 +1688,7 @@ class Guild(Hashable):
         data = await self._state.http.get_all_guild_channels(self.id)
 
         def convert(d):
-            factory, ch_type = _guild_channel_factory(d['type'])
+            factory, _ = _guild_channel_factory(d['type'])
             if factory is None:
                 raise InvalidData('Unknown channel type {type} for channel ID {id}.'.format_map(d))
 
@@ -1867,7 +1877,7 @@ class Guild(Hashable):
         if ch_type in (ChannelType.group, ChannelType.private):
             raise InvalidData('Channel ID resolved to a private channel')
 
-        guild_id = int(data['guild_id'])
+        guild_id = int(data.get('guild_id'))
         if self.id != guild_id:
             raise InvalidData('Guild ID resolved to a different guild')
 
@@ -2048,7 +2058,7 @@ class Guild(Hashable):
         data = await self._state.http.guild_webhooks(self.id)
         return [Webhook.from_state(d, state=self._state) for d in data]
 
-    async def estimate_pruned_members(self, *, days: int, roles: List[Snowflake] = MISSING) -> int:
+    async def estimate_pruned_members(self, *, days: int, roles: List[Snowflake] = MISSING) -> Optional[int]:
         """|coro|
 
         Similar to :meth:`prune_members` except instead of actually
@@ -2139,7 +2149,7 @@ class Guild(Hashable):
         """
         from .template import Template
 
-        payload = {'name': name}
+        payload: CreateTemplate = {'name': name, 'icon': None}
 
         if description:
             payload['description'] = description
@@ -2148,7 +2158,7 @@ class Guild(Hashable):
 
         return Template(state=self._state, data=data)
 
-    async def create_integration(self, *, type: str, id: int) -> None:
+    async def create_integration(self, *, type: IntegrationType, id: int) -> None:
         """|coro|
 
         Attaches an integration to the guild.
@@ -2307,10 +2317,6 @@ class Guild(Hashable):
         """
         if description is None:
             description = ''
-        payload = {
-            'name': name,
-            'description': description,
-        }
 
         try:
             emoji = unicodedata.name(emoji)
@@ -2318,8 +2324,11 @@ class Guild(Hashable):
             pass
         else:
             emoji = emoji.replace(' ', '_')
-
-        payload['tags'] = emoji
+        payload: CreateGuildSticker = {
+            'name': name,
+            'description': description,
+            'tags': emoji,
+        }
 
         data = await self._state.http.create_guild_sticker(self.id, payload, file, reason)
         return self._state.store_sticker(self, data)
@@ -2446,6 +2455,8 @@ class Guild(Hashable):
         """
 
         img = utils._bytes_to_base64_data(image)
+
+        role_ids: SnowflakeList
         if roles:
             role_ids = [role.id for role in roles]
         else:
@@ -2683,10 +2694,10 @@ class Guild(Hashable):
         if not isinstance(positions, dict):
             raise InvalidArgument('positions parameter expects a dict.')
 
-        role_positions: List[Dict[str, Any]] = []
+        role_positions: List[RolePositionUpdate] = []
         for role, position in positions.items():
 
-            payload = {'id': role.id, 'position': position}
+            payload: RolePositionUpdate = {'id': role.id, 'position': position}
 
             role_positions.append(payload)
 
@@ -2835,8 +2846,8 @@ class Guild(Hashable):
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
         oldest_first: Optional[bool] = None,
-        user: Snowflake = None,
-        action: AuditLogAction = None,
+        user: Optional[Snowflake] = None,
+        action: Optional[AuditLogAction] = None,
     ) -> AuditLogIterator:
         """Returns an :class:`AsyncIterator` that enables receiving the guild's audit logs.
 
@@ -2991,7 +3002,11 @@ class Guild(Hashable):
             raise ClientException('Intents.members must be enabled to use this.')
 
         if not self._state.is_guild_evicted(self):
-            return await self._state.chunk_guild(self, cache=cache)
+            members = await self._state.chunk_guild(self, cache=cache)
+            if isinstance(members, Future):
+                members = await members
+
+            return members
 
     async def query_members(
         self,
@@ -3051,7 +3066,7 @@ class Guild(Hashable):
         if presences and not self._state._intents.presences:
             raise ClientException('Intents.presences must be enabled to use this.')
 
-        if query is None:
+        if not query:
             if query == '':
                 raise ValueError('Cannot pass empty query string.')
 

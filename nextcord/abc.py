@@ -262,7 +262,7 @@ class GuildChannel:
 
     if TYPE_CHECKING:
 
-        def __init__(self, *, state: ConnectionState, guild: Guild, data: Dict[str, Any]):
+        def __init__(self, *, state: ConnectionState, guild: Guild, data: GuildChannelPayload):
             ...
 
     def __str__(self) -> str:
@@ -458,6 +458,7 @@ class GuildChannel:
         :class:`~nextcord.PermissionOverwrite`
             The permission overwrites for this object.
         """
+        predicate: Callable[[_Overwrites], bool]
 
         if isinstance(obj, User):
             predicate = lambda p: p.is_member()

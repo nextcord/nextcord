@@ -63,6 +63,8 @@ from .sticker import GuildSticker
 from .scheduled_events import ScheduledEvent, ScheduledEventUser
 
 if TYPE_CHECKING:
+    from asyncio import Future
+
     from .abc import PrivateChannel
     from .application_command import ApplicationCommand
     from .message import MessageableChannel
@@ -248,8 +250,8 @@ class ConnectionState:
 
         # Global application command checks
         self._application_command_checks: List[ApplicationCheck] = []
-        self._application_command_before_invoke: ApplicationHook = None
-        self._application_command_after_invoke: ApplicationHook = None
+        self._application_command_before_invoke: Optional[ApplicationHook] = None
+        self._application_command_after_invoke: Optional[ApplicationHook] = None
 
         self.clear()
 
@@ -389,8 +391,8 @@ class ConnectionState:
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)
 
-    def prevent_view_updates_for(self, message_id: int) -> Optional[View]:
-        return self._view_store.remove_message_tracking(message_id)
+    def prevent_view_updates_for(self, message_id: Optional[int]) -> Optional[View]:
+        return self._view_store.remove_message_tracking(message_id)  # type: ignore
 
     @property
     def persistent_views(self) -> Sequence[View]:
@@ -812,7 +814,7 @@ class ConnectionState:
         ws = self._get_websocket(guild_id)  # This is ignored upstream
         await ws.request_chunks(guild_id, query=query, limit=limit, presences=presences, nonce=nonce)
 
-    async def query_members(self, guild: Guild, query: str, limit: int, user_ids: List[int], cache: bool, presences: bool):
+    async def query_members(self, guild: Guild, query: Optional[str], limit: int, user_ids: Optional[List[int]], cache: bool, presences: bool):
         guild_id = guild.id
         ws = self._get_websocket(guild_id)
         if ws is None:
@@ -894,7 +896,7 @@ class ConnectionState:
             else:
                 self.application_id = utils._get_as_snowflake(application, 'id')
                 # flags will always be present here
-                self.application_flags = ApplicationFlags._from_value(application['flags'])  # type: ignore
+                self.application_flags = ApplicationFlags._from_value(application['flags'])
 
         for guild_data in data['guilds']:
             self._add_guild_from_data(guild_data)
@@ -1037,7 +1039,8 @@ class ConnectionState:
             component_type = interaction.data['component_type']  # type: ignore
             self._view_store.dispatch(component_type, custom_id, interaction)
         if data['type'] == 5: # modal submit
-            custom_id = interaction.data['custom_id']
+            custom_id = interaction.data['custom_id']  # type: ignore
+            # key exists if type is 5 etc
             self._modal_store.dispatch(custom_id, interaction)
 
         self.dispatch('interaction', interaction)
@@ -1114,7 +1117,7 @@ class ConnectionState:
             _log.debug('CHANNEL_UPDATE referencing an unknown guild ID: %s. Discarding.', guild_id)
 
     def parse_channel_create(self, data) -> None:
-        factory, ch_type = _channel_factory(data['type'])
+        factory, _ = _channel_factory(data['type'])
         if factory is None:
             _log.debug('CHANNEL_CREATE referencing an unknown channel type %s. Discarding.', data['type'])
             return
@@ -1192,7 +1195,7 @@ class ConnectionState:
         thread_id = int(data['id'])
         thread = guild.get_thread(thread_id)
         if thread is not None:
-            guild._remove_thread(thread)  # type: ignore
+            guild._remove_thread(thread)
             self.dispatch('thread_delete', thread)
 
     def parse_thread_list_sync(self, data) -> None:
@@ -1312,7 +1315,7 @@ class ConnectionState:
             user_id = int(data['user']['id'])
             member = guild.get_member(user_id)
             if member is not None:
-                guild._remove_member(member)  # type: ignore
+                guild._remove_member(member)
                 self.dispatch('member_remove', member)
         else:
             _log.debug('GUILD_MEMBER_REMOVE referencing an unknown guild ID: %s. Discarding.', data['guild_id'])
@@ -1652,7 +1655,7 @@ class ConnectionState:
                     if channel_id is None and flags._voice_only and member.id != self_id:
                         # Only remove from cache if we only have the voice flag enabled
                         # Member doesn't meet the Snowflake protocol currently
-                        guild._remove_member(member)  # type: ignore
+                        guild._remove_member(member)
                     elif channel_id is not None:
                         guild._add_member(member)
 
@@ -1687,7 +1690,8 @@ class ConnectionState:
 
         channel, guild = self._get_guild_channel(data)
         if channel is not None:
-            user = raw.member or self._get_typing_user(channel, raw.user_id)
+            user = raw.member or self._get_typing_user(channel, raw.user_id)  # type: ignore
+            # will be messageable channel if we get here
 
             if user is not None:
                 self.dispatch('typing', channel, user, raw.when)
@@ -1697,7 +1701,7 @@ class ConnectionState:
             return channel.recipient or self.get_user(user_id)
 
         elif isinstance(channel, (Thread, TextChannel)) and channel.guild is not None:
-            return channel.guild.get_member(user_id)  # type: ignore
+            return channel.guild.get_member(user_id)
 
         elif isinstance(channel, GroupChannel):
             return utils.find(lambda x: x.id == user_id, channel.recipients)
@@ -1898,8 +1902,10 @@ class AutoShardedConnectionState(ConnectionState):
 
                 processed.append((guild, future))
 
-        guilds = sorted(processed, key=lambda g: g[0].shard_id)
-        for shard_id, info in itertools.groupby(guilds, key=lambda g: g[0].shard_id):
+        processed: list[tuple[Guild, Future]]
+        key: Callable[[tuple[Guild, Future[list[Member]]]], int] = lambda g: g[0].shard_id
+        guilds = sorted(processed, key=key)
+        for shard_id, info in itertools.groupby(guilds, key=key):
             children, futures = zip(*info)
             # 110 reqs/minute w/ 1 req/guild plus some buffer
             timeout = 61 * (len(children) / 110)
@@ -1910,7 +1916,7 @@ class AutoShardedConnectionState(ConnectionState):
                     'Shard ID %s failed to wait for chunks (timeout=%.2f) for %d guilds', shard_id, timeout, len(guilds)
                 )
             for guild in children:
-                if guild.unavailable is False:
+                if guild.unavailable is False:  # type: ignore pylance this is a guild :)
                     self.dispatch('guild_available', guild)
                 else:
                     self.dispatch('guild_join', guild)

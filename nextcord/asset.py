@@ -51,6 +51,7 @@ MISSING = utils.MISSING
 class AssetMixin:
     url: str
     _state: Optional[Any]
+    __slots__: tuple[str, ...] = ()
 
     async def read(self) -> bytes:
         """|coro|

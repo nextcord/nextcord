@@ -175,10 +175,11 @@ class Interaction:
 
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         self._state: ConnectionState = state
-        self._session: ClientSession = state.http._HTTPClient__session
+        self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
+        # TODO: this is so janky, accessing a hidden double attribute
         self._original_message: Optional[InteractionMessage] = None
         self.attached = InteractionAttached()
-        self.application_command: Optional[ApplicationCommand] = None
+        self.application_command: Optional[ApplicationCommand | ApplicationSubcommand] = None
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
@@ -206,7 +207,7 @@ class Interaction:
         if self.guild_id:
             guild = self.guild or Object(id=self.guild_id)
             try:
-                member = data['member']  # type: ignore
+                member = data['member']
             except KeyError:
                 pass
             else:
@@ -477,7 +478,7 @@ class Interaction:
         tts: bool = False,
         ephemeral: bool = False,
         delete_after: Optional[float] = None,
-        allowed_mentions: Optional[AllowedMentions] = MISSING,
+        allowed_mentions: AllowedMentions = MISSING,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -848,7 +849,7 @@ class InteractionResponse:
         """
         if self._responded:
             raise InteractionResponded(self._parent)
-        
+
         parent = self._parent
         adapter = async_context.get()
         await adapter.create_interaction_response(
@@ -858,10 +859,10 @@ class InteractionResponse:
             type=InteractionResponseType.modal.value,
             data=modal.to_dict(),
         )
-        
+
         self._responded = True
-        
-        self._parent._state.store_modal(modal, self._parent.user.id)
+
+        self._parent._state.store_modal(modal, self._parent.user.id)  # type: ignore
 
     async def edit_message(
         self,

@@ -47,8 +47,12 @@ import nextcord
 from .errors import *
 
 if TYPE_CHECKING:
+    from typing import Callable
+
     from .context import Context
     from nextcord.message import PartialMessageableChannel
+    from nextcord.member import Member
+    from nextcord.user import User
 
 
 __all__ = (
@@ -190,7 +194,7 @@ class MemberConverter(IDConverter[nextcord.Member]):
         optionally caching the result if :attr:`.MemberCacheFlags.joined` is enabled.
     """
 
-    async def query_member_named(self, guild, argument):
+    async def query_member_named(self, guild, argument: str):
         cache = guild._state.member_cache_flags.joined
         if len(argument) > 5 and argument[-5] == '#':
             username, _, discriminator = argument.rpartition('#')
@@ -198,7 +202,8 @@ class MemberConverter(IDConverter[nextcord.Member]):
             return nextcord.utils.get(members, name=username, discriminator=discriminator)
         else:
             members = await guild.query_members(argument, limit=100, cache=cache)
-            return nextcord.utils.find(lambda m: m.name == argument or m.nick == argument, members)
+            finder: Callable[[Member], bool] = lambda m: m.name == argument or m.nick == argument
+            return nextcord.utils.find(finder, members)
 
     async def query_member_by_id(self, bot, guild, user_id):
         ws = bot._get_websocket(shard_id=guild.shard_id)
@@ -302,7 +307,7 @@ class UserConverter(IDConverter[nextcord.User]):
         if len(arg) > 5 and arg[-5] == '#':
             discrim = arg[-4:]
             name = arg[:-5]
-            predicate = lambda u: u.name == name and u.discriminator == discrim
+            predicate: Callable[[User], bool] = lambda u: u.name == name and u.discriminator == discrim
             result = nextcord.utils.find(predicate, state._users.values())
             if result is not None:
                 return result
@@ -358,7 +363,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
         if guild_id is not None:
             guild = ctx.bot.get_guild(guild_id)
             if guild is not None and channel_id is not None:
-                return guild._resolve_channel(channel_id)  # type: ignore
+                return guild._resolve_channel(channel_id)
             else:
                 return None
         else:
@@ -368,7 +373,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
         guild_id, message_id, channel_id = self._get_id_matches(ctx, argument)
         channel = self._resolve_channel(ctx, guild_id, channel_id)
         if not channel:
-            raise ChannelNotFound(channel_id)
+            raise ChannelNotFound(str(channel_id))
         return nextcord.PartialMessage(channel=channel, id=message_id)
 
 
@@ -394,13 +399,13 @@ class MessageConverter(IDConverter[nextcord.Message]):
             return message
         channel = PartialMessageConverter._resolve_channel(ctx, guild_id, channel_id)
         if not channel:
-            raise ChannelNotFound(channel_id)
+            raise ChannelNotFound(str(channel_id))
         try:
             return await channel.fetch_message(message_id)
         except nextcord.NotFound:
             raise MessageNotFound(argument)
         except nextcord.Forbidden:
-            raise ChannelNotReadable(channel)
+            raise ChannelNotReadable(channel)  # type: ignore weird type conflict
 
 
 class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
@@ -443,7 +448,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         else:
             channel_id = int(match.group(1))
             if guild:
-                result = guild.get_channel(channel_id)
+                result = guild.get_channel(channel_id)  # type: ignore
             else:
                 result = _get_from_guilds(bot, 'get_channel', channel_id)
 
@@ -454,8 +459,6 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
 
     @staticmethod
     def _resolve_thread(ctx: Context, argument: str, attribute: str, type: Type[TT]) -> TT:
-        bot = ctx.bot
-
         match = IDConverter._get_id_match(argument) or re.match(r'<#([0-9]{15,20})>$', argument)
         result = None
         guild = ctx.guild
@@ -468,7 +471,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         else:
             thread_id = int(match.group(1))
             if guild:
-                result = guild.get_thread(thread_id)
+                result = guild.get_thread(thread_id)  # type: ignore handled below
 
         if not result or not isinstance(result, type):
             raise ThreadNotFound(argument)
@@ -901,6 +904,10 @@ class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
                 result = bot.get_scheduled_event(event_id)
             else:
                 match = _EVENT_API_RE.match(argument)
+
+                if not match:
+                    raise ScheduledEventNotFound(argument)
+
                 guild_id = int(match.group(2))
                 guild = bot.get_guild(guild_id)
                 if guild is not None:
@@ -953,11 +960,12 @@ class clean_content(Converter[str]):
         if ctx.guild:
 
             def resolve_member(id: int) -> str:
-                m = _utils_get(msg.mentions, id=id) or ctx.guild.get_member(id)
+                m = _utils_get(msg.mentions, id=id) or ctx.guild.get_member(id)  # type: ignore
+                # [in a guild if we are here]
                 return f'@{m.display_name if self.use_nicknames else m.name}' if m else '@deleted-user'
 
             def resolve_role(id: int) -> str:
-                r = _utils_get(msg.role_mentions, id=id) or ctx.guild.get_role(id)
+                r = _utils_get(msg.role_mentions, id=id) or ctx.guild.get_role(id)  # type: ignore
                 return f'@{r.name}' if r else '@deleted-role'
 
         else:
@@ -972,7 +980,7 @@ class clean_content(Converter[str]):
         if self.fix_channel_mentions and ctx.guild:
 
             def resolve_channel(id: int) -> str:
-                c = ctx.guild.get_channel(id)
+                c = ctx.guild.get_channel(id)  # type: ignore
                 return f'#{c.name}' if c else '#deleted-channel'
 
         else:
@@ -1048,7 +1056,7 @@ class Greedy(List[T]):
             raise TypeError('Greedy[...] expects a type or a Converter instance.')
 
         if converter in (str, type(None)) or origin is Greedy:
-            raise TypeError(f'Greedy[{converter.__name__}] is invalid.')
+            raise TypeError(f'Greedy[{converter.__class__.__name__}] is invalid.')
 
         if origin is Union and type(None) in args:
             raise TypeError(f'Greedy[{converter!r}] is invalid.')
@@ -1080,7 +1088,7 @@ _GenericAlias = type(List[T])
 
 
 def is_generic_type(tp: Any, *, _GenericAlias: Type = _GenericAlias) -> bool:
-    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)  # type: ignore
+    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)
 
 
 CONVERTER_MAPPING: Dict[Type[Any], Any] = {
@@ -1124,9 +1132,9 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
             if inspect.ismethod(converter.convert):
                 return await converter.convert(ctx, argument)
             else:
-                return await converter().convert(ctx, argument)
+                return await converter().convert(ctx, argument)  # type: ignore
         elif isinstance(converter, Converter):
-            return await converter.convert(ctx, argument)
+            return await converter.convert(ctx, argument)  # type: ignore
     except CommandError:
         raise
     except Exception as exc:
@@ -1140,7 +1148,7 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
         try:
             name = converter.__name__
         except AttributeError:
-            name = converter.__class__.__name__
+            name = converter.__class__.__name__  # type: ignore
 
         raise BadArgument(f'Converting to "{name}" failed for parameter "{param.name}".') from exc
 

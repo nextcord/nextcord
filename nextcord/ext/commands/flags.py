@@ -400,7 +400,7 @@ async def tuple_convert_flag(ctx: Context, argument: str, flag: Flag, converters
 
 
 async def convert_flag(ctx, argument: str, flag: Flag, annotation: Any = None) -> Any:
-    param: inspect.Parameter = ctx.current_parameter  # type: ignore
+    param: inspect.Parameter = ctx.current_parameter
     annotation = annotation or flag.annotation
     try:
         origin = annotation.__origin__
@@ -418,7 +418,7 @@ async def convert_flag(ctx, argument: str, flag: Flag, annotation: Any = None) -
             return await convert_flag(ctx, argument, flag, annotation)
         elif origin is Union and annotation.__args__[-1] is type(None):
             # typing.Optional[x]
-            annotation = Union[annotation.__args__[:-1]]
+            annotation = Union[annotation.__args__[:-1]]  # type: ignore
             return await run_converters(ctx, annotation, argument, param)
         elif origin is dict:
             # typing.Dict[K, V] -> typing.Tuple[K, V]
@@ -611,7 +611,7 @@ class FlagConverter(metaclass=FlagsMeta):
             values = [await convert_flag(ctx, value, flag) for value in values]
 
             if flag.cast_to_dict:
-                values = dict(values)  # type: ignore
+                values = dict(values)
 
             setattr(self, flag.attribute, values)
 

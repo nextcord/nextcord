@@ -614,7 +614,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         view.previous = previous
 
         # type-checker fails to narrow argument
-        return await run_converters(ctx, converter, argument, param)  # type: ignore
+        return await run_converters(ctx, converter, argument, param)
 
     async def _transform_greedy_pos(self, ctx: Context, param: inspect.Parameter, required: bool, converter: Any) -> Any:
         view = ctx.view
@@ -1347,7 +1347,7 @@ class GroupMixin(Generic[CogT]):
         cls: Type[CommandT] = ...,
         *args: Any,
         **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[ContextT, P], Coro[Any]]], CommandT]:
+    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], CommandT]:
         ...
 
     def command(
@@ -1356,7 +1356,7 @@ class GroupMixin(Generic[CogT]):
         cls: Type[CommandT] = MISSING,
         *args: Any,
         **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[ContextT, P], Coro[Any]]], CommandT]:
+    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], CommandT]:
         """A shortcut decorator that invokes :func:`.command` and adds it to
         the internal command list via :meth:`~.GroupMixin.add_command`.
 
@@ -1369,7 +1369,8 @@ class GroupMixin(Generic[CogT]):
             kwargs.setdefault('parent', self)
             result = command(name=name, cls=cls, *args, **kwargs)(func)
             self.add_command(result)
-            return result
+            return result  # type: ignore
+            # pyright really doesnt know what typevars are
 
         return decorator
 
@@ -1395,7 +1396,7 @@ class GroupMixin(Generic[CogT]):
         cls: Type[GroupT] = ...,
         *args: Any,
         **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[ContextT, P], Coro[Any]]], GroupT]:
+    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], GroupT]:
         ...
 
     def group(
@@ -1404,7 +1405,7 @@ class GroupMixin(Generic[CogT]):
         cls: Type[GroupT] = MISSING,
         *args: Any,
         **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[ContextT, P], Coro[Any]]], GroupT]:
+    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], GroupT]:
         """A shortcut decorator that invokes :func:`.group` and adds it to
         the internal command list via :meth:`~.GroupMixin.add_command`.
 
@@ -1417,7 +1418,7 @@ class GroupMixin(Generic[CogT]):
             kwargs.setdefault('parent', self)
             result = group(name=name, cls=cls, *args, **kwargs)(func)
             self.add_command(result)
-            return result
+            return result  # type: ignore
 
         return decorator
 
@@ -1458,7 +1459,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
         ret = super().copy()
         for cmd in self.commands:
             ret.add_command(cmd.copy())
-        return ret  # type: ignore
+        return ret 
 
     async def invoke(self, ctx: Context) -> None:
         ctx.invoked_subcommand = None
@@ -1556,7 +1557,7 @@ def command(
 ) -> Callable[
     [
         Union[
-            Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
+            Callable[Concatenate[Cog, ContextT, P], Coro[Any]],
             Callable[Concatenate[ContextT, P], Coro[Any]],
         ]
     ]
@@ -1613,7 +1614,8 @@ def command(
         ]) -> CommandT:
         if isinstance(func, Command):
             raise TypeError('Callback is already a command.')
-        return cls(func, name=name, **attrs)
+        return cls(func, name=name, **attrs)  # type: ignore
+        # huge error i cannot comprehend
 
     return decorator
 
@@ -1641,7 +1643,7 @@ def group(
 ) -> Callable[
     [
         Union[
-            Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
+            Callable[Concatenate[Cog, ContextT, P], Coro[Any]],
             Callable[Concatenate[ContextT, P], Coro[Any]],
         ]
     ]
@@ -1910,7 +1912,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
             raise NoPrivateMessage()
 
         # ctx.guild is None doesn't narrow ctx.author to Member
-        getter = functools.partial(nextcord.utils.get, ctx.author.roles)  # type: ignore
+        getter = functools.partial(nextcord.utils.get, ctx.author.roles)
         if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in items):
             return True
         raise MissingAnyRole(list(items))

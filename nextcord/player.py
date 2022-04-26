@@ -50,6 +50,7 @@ from typing import (
     Union,
 )
 
+from .enums import SpeakingState
 from .errors import ClientException
 from .opus import Encoder as OpusEncoder
 from .oggparse import OggStream
@@ -163,7 +164,7 @@ class FFmpegAudio(AudioSource):
 
         self._process: subprocess.Popen = self._spawn_process(args, **kwargs)
         self._stdout: IO[bytes] = self._process.stdout  # type: ignore
-        self._stdin: Optional[IO[Bytes]] = None
+        self._stdin: Optional[IO[bytes]] = None
         self._pipe_thread: Optional[threading.Thread] = None
 
         if piping:
@@ -212,7 +213,7 @@ class FFmpegAudio(AudioSource):
                 self._process.terminate()
                 return
             try:
-                self._stdin.write(data)
+                self._stdin.write(data)  # type: ignore
             except Exception:
                 _log.debug('Write error for %s, this is probably not a problem', self, exc_info=True)
                 # at this point the source data is either exhausted or the process is fubar
@@ -518,7 +519,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         codec = bitrate = None
         loop = asyncio.get_event_loop()
         try:
-            codec, bitrate = await loop.run_in_executor(None, lambda: probefunc(source, executable))  # type: ignore
+            codec, bitrate = await loop.run_in_executor(None, lambda: probefunc(source, executable))
         except Exception:
             if not fallback:
                 _log.exception("Probe '%s' using '%s' failed", method, executable)
@@ -526,7 +527,7 @@ class FFmpegOpusAudio(FFmpegAudio):
 
             _log.exception("Probe '%s' using '%s' failed, trying fallback", method, executable)
             try:
-                codec, bitrate = await loop.run_in_executor(None, lambda: fallback(source, executable))  # type: ignore
+                codec, bitrate = await loop.run_in_executor(None, lambda: fallback(source, executable))
             except Exception:
                 _log.exception("Fallback probe using '%s' failed", executable)
             else:
@@ -743,6 +744,6 @@ class AudioPlayer(threading.Thread):
 
     def _speak(self, speaking: bool) -> None:
         try:
-            asyncio.run_coroutine_threadsafe(self.client.ws.speak(speaking), self.client.loop)
+            asyncio.run_coroutine_threadsafe(self.client.ws.speak(SpeakingState(int(speaking))), self.client.loop)
         except Exception as e:
             _log.info("Speaking call in player failed: %s", e)

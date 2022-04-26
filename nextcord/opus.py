@@ -66,7 +66,7 @@ c_int_ptr   = ctypes.POINTER(ctypes.c_int)
 c_int16_ptr = ctypes.POINTER(ctypes.c_int16)
 c_float_ptr = ctypes.POINTER(ctypes.c_float)
 
-_lib = None
+_lib: Any = None
 
 class EncoderStruct(ctypes.Structure):
     pass
@@ -205,6 +205,7 @@ def libopus_loader(name: str) -> Any:
 
 def _load_default() -> bool:
     global _lib
+
     try:
         if sys.platform == 'win32':
             _basedir = os.path.dirname(os.path.abspath(__file__))
@@ -213,7 +214,7 @@ def _load_default() -> bool:
             _filename = os.path.join(_basedir, 'bin', f'libopus-0.{_target}.dll')
             _lib = libopus_loader(_filename)
         else:
-            _lib = libopus_loader(ctypes.util.find_library('opus'))
+            _lib = libopus_loader(ctypes.util.find_library('opus'))  # type: ignore error if no opus, FIXME: better error
     except Exception:
         _lib = None
 
@@ -352,7 +353,7 @@ class Encoder(_OpusStruct):
         _lib.opus_encoder_ctl(self._state, CTL_SET_FEC, 1 if enabled else 0)
 
     def set_expected_packet_loss_percent(self, percentage: float) -> None:
-        _lib.opus_encoder_ctl(self._state, CTL_SET_PLP, min(100, max(0, int(percentage * 100)))) # type: ignore
+        _lib.opus_encoder_ctl(self._state, CTL_SET_PLP, min(100, max(0, int(percentage * 100))))
 
     def encode(self, pcm: bytes, frame_size: int) -> bytes:
         max_data_bytes = len(pcm)
@@ -363,7 +364,7 @@ class Encoder(_OpusStruct):
         ret = _lib.opus_encode(self._state, pcm_ptr, frame_size, data, max_data_bytes)
 
         # array can be initialized with bytes but mypy doesn't know
-        return array.array('b', data[:ret]).tobytes() # type: ignore
+        return array.array('b', data[:ret]).tobytes()
 
 class Decoder(_OpusStruct):
     def __init__(self):

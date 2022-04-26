@@ -351,7 +351,7 @@ class AsyncWebhookAdapter:
         data: Optional[Dict[str, Any]] = None,
         files: Optional[List[File]] = None,
     ) -> Response[None]:
-        payload: Dict[str, Any] = {
+        payload: Dict[str, Any] | None = {
             'type': type,
         }
 
@@ -470,7 +470,7 @@ def handle_message_parameters(
     if embeds is not MISSING and embed is not MISSING:
         raise TypeError('Cannot mix embed and embeds keyword arguments.')
 
-    payload: Dict[str, Any] = {}
+    payload: Dict[str, Any] | None = {}
 
     if file is not MISSING or files is not MISSING:
         payload['attachments'] = []
@@ -526,7 +526,7 @@ def handle_message_parameters(
                 'id': index,
                 'filename': file.filename,
                 'description': file.description,
-            })
+            })  # type: ignore
             multipart.append(
                 {
                     'name': f'files[{index}]',
@@ -677,7 +677,7 @@ class WebhookMessage(Message):
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
-        delete_after: Optional[bool] = None,
+        delete_after: Optional[float] = None,
     ) -> WebhookMessage:
         """|coro|
 
@@ -1265,7 +1265,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[True],
-        delete_after: Optional[bool] = None,
+        delete_after: Optional[float] = None,
     ) -> WebhookMessage:
         ...
 
@@ -1286,7 +1286,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[False] = ...,
-        delete_after: Optional[bool] = None,
+        delete_after: Optional[float] = None,
     ) -> None:
         ...
 
@@ -1306,7 +1306,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: bool = False,
-        delete_after: Optional[bool] = None,
+        delete_after: Optional[float] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1458,7 +1458,7 @@ class Webhook(BaseWebhook):
             message_id = None if msg is None else msg.id
             self._state.store_view(view, message_id)
 
-        if delete_after is not None:
+        if delete_after is not None and msg is not None:
             await msg.delete(delay=delete_after)
 
         return msg

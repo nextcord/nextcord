@@ -29,7 +29,7 @@ import datetime
 import re
 import io
 from os import PathLike
-from typing import Dict, TYPE_CHECKING, Union, List, Optional, Any, Callable, Tuple, ClassVar, Optional, overload, TypeVar, Type
+from typing import Dict, TYPE_CHECKING, Union, List, Optional, Any, Callable, Tuple, ClassVar, overload, TypeVar, Type
 
 from . import utils
 from .reaction import Reaction
@@ -690,7 +690,7 @@ class Message(Hashable):
             if channel.type is not ChannelType.private and channel.type is not ChannelType.group:
                 self.guild = state._get_guild(utils._get_as_snowflake(data, 'guild_id'))
             else:
-                self.guild = None  # type: ignore
+                self.guild = None
 
         if thread_data := data.get('thread'):
             if not self.thread and self.guild:
@@ -742,8 +742,9 @@ class Message(Hashable):
             else:
                 setattr(self, key, transform(value))
 
-    def _add_reaction(self, data, emoji, user_id) -> Reaction:
-        reaction = utils.find(lambda r: r.emoji == emoji, self.reactions)
+    def _add_reaction(self, data, emoji: Emoji | PartialEmoji | str, user_id) -> Reaction:
+        finder: Callable[[Reaction], bool] = lambda r: r.emoji == emoji
+        reaction = utils.find(finder, self.reactions)
         is_me = data['me'] = user_id == self._state.self_id
 
         if reaction is None:
@@ -895,7 +896,7 @@ class Message(Hashable):
 
     def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
         if thread:
-            self.guild._store_thread(thread)
+            self.guild._store_thread(thread)  # type: ignore
 
     def _rebind_cached_references(self, new_guild: Guild, new_channel: Union[TextChannel, Thread]) -> None:
         self.guild = new_guild

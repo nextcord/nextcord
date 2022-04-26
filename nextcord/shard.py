@@ -429,7 +429,7 @@ class AutoShardedClient(Client):
                 if isinstance(item.error, ConnectionClosed):
                     if item.error.code != 1000:
                         raise item.error
-                    if item.error.code == 4014:
+                    if item.error.code == 4014:  # type: ignore "false always"
                         raise PrivilegedIntentsRequired(item.shard.id) from None
                 return
             elif item.type in (EventType.identify, EventType.resume):
@@ -470,7 +470,7 @@ class AutoShardedClient(Client):
         *,
         activity: Optional[BaseActivity] = None,
         status: Optional[Status] = None,
-        shard_id: int = None,
+        shard_id: Optional[int] = None,
     ) -> None:
         """|coro|
 

@@ -38,7 +38,7 @@ class EntityMetadata(TypedDict, total=False):
     location: str
 
 
-class ScheduledEvent(TypedDict, total=False):
+class ScheduledEvent(TypedDict):
     id: Snowflake
     guild_id: Snowflake
     channel_id: Snowflake
@@ -55,7 +55,7 @@ class ScheduledEvent(TypedDict, total=False):
     user_count: int
     image: str
 
-class ScheduledEventUser(TypedDict, total=False):
+class ScheduledEventUser(TypedDict):
     guild_scheduled_event_id: Snowflake
     user: User
     member: Member
