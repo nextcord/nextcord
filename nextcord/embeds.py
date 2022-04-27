@@ -623,6 +623,8 @@ class Embed:
         except AttributeError:
             self._fields = []
 
+        return self
+
     def remove_field(self, index: int) -> None:
         """Removes a field at a specified index.
 
