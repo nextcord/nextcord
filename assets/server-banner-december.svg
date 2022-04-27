@@ -26,7 +26,7 @@
 	</defs>
 	<style>
 		tspan { white-space:pre }
-		.shp0 { fill: #001235 } 
+		.shp0 { fill: #001235 }
 	</style>
 	<path id="Shape 1" class="shp0" d="M0 0L1919 0L1919 1079L0 1079L0 0Z" />
 	<use id="snow" href="#img1" x="0" y="927" />

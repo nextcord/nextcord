@@ -24,39 +24,39 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING, Type, TypeVar, Tuple
 import os
+from typing import TYPE_CHECKING, Optional, Tuple, Type, TypeVar
 
-from .item import Item
-from ..enums import TextInputStyle, ComponentType
 from ..components import TextInput as TextInputComponent
-from ..utils import MISSING
+from ..enums import ComponentType, TextInputStyle
 from ..interactions import Interaction
+from ..utils import MISSING
+from .item import Item
 
-__all__ = ('TextInput',)
+__all__ = ("TextInput",)
 
 if TYPE_CHECKING:
-    from .view import View
     from ..types.interactions import ComponentInteractionData
+    from .view import View
 
 
-T = TypeVar('T', bound='TextInput')
-V = TypeVar('V', bound='View', covariant=True)
+T = TypeVar("T", bound="TextInput")
+V = TypeVar("V", bound="View", covariant=True)
 
 
 def _walk_all_components(components):
     for item in components:
-        if item['type'] == 1:
-            yield from item['components']
+        if item["type"] == 1:
+            yield from item["components"]
         else:
             yield item
 
 
 class TextInput(Item[V]):
     """Represent a UI text input.
-    
+
     .. versionadded:: 2.0
-    
+
     Parameters
     ----------
     label: :class:`str`
@@ -86,17 +86,17 @@ class TextInput(Item[V]):
     placeholder: Optional[:class:`str`]
         The text shown to the user when the text input is empty.
     """
-    
+
     __item_repr_attributes__: Tuple[str, ...] = (
-        'custom_id',
-        'label',
-        'style',
-        'min_length',
-        'max_length',
-        'required',
-        'default_value',
-        'value',
-        'placeholder',
+        "custom_id",
+        "label",
+        "style",
+        "min_length",
+        "max_length",
+        "required",
+        "default_value",
+        "value",
+        "placeholder",
     )
 
     def __init__(
@@ -145,7 +145,7 @@ class TextInput(Item[V]):
     @custom_id.setter
     def custom_id(self, value: Optional[str]):
         if value is not None and not isinstance(value, str):
-            raise TypeError('custom_id must be None or str')
+            raise TypeError("custom_id must be None or str")
 
         self._underlying.custom_id = value  # type: ignore
 
@@ -157,7 +157,7 @@ class TextInput(Item[V]):
     @label.setter
     def label(self, value: str):
         if value is None:
-            raise TypeError('label must cannot be None')
+            raise TypeError("label must cannot be None")
         self._underlying.label = str(value)
 
     @property
@@ -189,7 +189,7 @@ class TextInput(Item[V]):
     @required.setter
     def required(self, value: bool):
         if value is not None and not isinstance(value, bool):
-            raise TypeError('required must be None or bool')
+            raise TypeError("required must be None or bool")
 
         self._underlying.required = value
 
@@ -201,7 +201,7 @@ class TextInput(Item[V]):
     @default_value.setter
     def default_value(self, value: Optional[str]):
         if value is not None and not isinstance(value, str):
-            raise TypeError('default_value must be None or str')
+            raise TypeError("default_value must be None or str")
         self._underlying.value = value
 
     @property
@@ -220,7 +220,7 @@ class TextInput(Item[V]):
     @placeholder.setter
     def placeholder(self, value: str):
         if value is not None and not isinstance(value, str):
-            raise TypeError('placeholder must be None or str')
+            raise TypeError("placeholder must be None or str")
 
         self._underlying.placeholder = value
 
@@ -257,7 +257,7 @@ class TextInput(Item[V]):
 
     def refresh_state(self, interaction: Interaction) -> None:
         data: ComponentInteractionData = interaction.data  # type: ignore
-        for component_data in _walk_all_components(data['components']):  # type: ignore
-            if component_data['custom_id'] == self.custom_id:
-                self._inputed_value = component_data['value']
+        for component_data in _walk_all_components(data["components"]):  # type: ignore
+            if component_data["custom_id"] == self.custom_id:
+                self._inputed_value = component_data["value"]
                 return

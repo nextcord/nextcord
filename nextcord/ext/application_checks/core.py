@@ -27,24 +27,25 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import Callable, Union, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, TypeVar, Union
 
 import nextcord
 from nextcord.application_command import ApplicationSubcommand, Interaction
+
 from .errors import (
+    ApplicationBotMissingAnyRole,
+    ApplicationBotMissingPermissions,
+    ApplicationBotMissingRole,
     ApplicationCheckAnyFailure,
     ApplicationCheckFailure,
-    ApplicationNoPrivateMessage,
-    ApplicationMissingRole,
+    ApplicationCheckForBotOnly,
     ApplicationMissingAnyRole,
-    ApplicationBotMissingRole,
-    ApplicationBotMissingAnyRole,
     ApplicationMissingPermissions,
-    ApplicationBotMissingPermissions,
-    ApplicationPrivateMessageOnly,
+    ApplicationMissingRole,
+    ApplicationNoPrivateMessage,
     ApplicationNotOwner,
     ApplicationNSFWChannelRequired,
-    ApplicationCheckForBotOnly,
+    ApplicationPrivateMessageOnly,
 )
 
 if TYPE_CHECKING:
@@ -80,8 +81,8 @@ def check(predicate: "ApplicationCheck") -> Callable[[AC], AC]:
     subclasses. These checks are accessible via :attr:`.ApplicationCommand.checks`.
 
     These checks should be predicates that take in a single parameter taking
-    a :class:`.Interaction`. If the check returns a ``False``\-like value, 
-    an ApplicationCheckFailure is raised during invocation and sent to the 
+    a :class:`.Interaction`. If the check returns a ``False``\-like value,
+    an ApplicationCheckFailure is raised during invocation and sent to the
     :func:`.on_application_command_error` event.
 
     If an exception should be thrown in the predicate then it should be a
@@ -172,10 +173,10 @@ def check(predicate: "ApplicationCheck") -> Callable[[AC], AC]:
 
 
 def check_any(*checks: "ApplicationCheck") -> Callable[[AC], AC]:
-    r"""A :func:`check` that will pass if any of the given checks pass, 
+    r"""A :func:`check` that will pass if any of the given checks pass,
     i.e. using logical OR.
 
-    If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal 
+    If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal
     the failure. It inherits from :exc:`.ApplicationCheckFailure`.
 
     .. note::
@@ -325,9 +326,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[AC], AC]:
         # interaction.guild is None doesn't narrow interaction.user to Member
         getter = functools.partial(nextcord.utils.get, interaction.user.roles)  # type: ignore
         if any(
-            getter(id=item) is not None
-            if isinstance(item, int)
-            else getter(name=item) is not None
+            getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None
             for item in items
         ):
             return True
@@ -340,11 +339,11 @@ def bot_has_role(item: int) -> Callable[[AC], AC]:
     """Similar to :func:`.has_role` except checks if the bot itself has the
     role.
 
-    This check raises one of two special exceptions, 
-    :exc:`.ApplicationBotMissingRole` if the bot is missing the role, 
+    This check raises one of two special exceptions,
+    :exc:`.ApplicationBotMissingRole` if the bot is missing the role,
     or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
-    
+
     Parameters
     -----------
     item: Union[:class:`int`, :class:`str`]
@@ -381,8 +380,8 @@ def bot_has_any_role(*items: int) -> Callable[[AC], AC]:
     """Similar to :func:`.has_any_role` except checks if the bot itself has
     any of the roles listed.
 
-    This check raises one of two special exceptions, 
-    :exc:`.ApplicationBotMissingAnyRole` if the bot is missing all roles, 
+    This check raises one of two special exceptions,
+    :exc:`.ApplicationBotMissingAnyRole` if the bot is missing all roles,
     or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
@@ -409,9 +408,7 @@ def bot_has_any_role(*items: int) -> Callable[[AC], AC]:
         me = interaction.guild.me or interaction.client.user
         getter = functools.partial(nextcord.utils.get, me.roles)
         if any(
-            getter(id=item) is not None
-            if isinstance(item, int)
-            else getter(name=item) is not None
+            getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None
             for item in items
         ):
             return True
@@ -464,9 +461,7 @@ def has_permissions(**perms: bool) -> Callable[[AC], AC]:
         except AttributeError:
             raise ApplicationNoPrivateMessage()
 
-        missing = [
-            perm for perm, value in perms.items() if getattr(permissions, perm) != value
-        ]
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:
             return True
@@ -500,9 +495,7 @@ def bot_has_permissions(**perms: bool) -> Callable[[AC], AC]:
         except AttributeError:
             raise ApplicationNoPrivateMessage()
 
-        missing = [
-            perm for perm, value in perms.items() if getattr(permissions, perm) != value
-        ]
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:
             return True
@@ -544,9 +537,7 @@ def has_guild_permissions(**perms: bool) -> Callable[[AC], AC]:
             raise ApplicationNoPrivateMessage
 
         permissions = interaction.user.guild_permissions  # type: ignore
-        missing = [
-            perm for perm, value in perms.items() if getattr(permissions, perm) != value
-        ]
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:
             return True
@@ -570,9 +561,7 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[AC], AC]:
             raise ApplicationNoPrivateMessage
 
         permissions = interaction.guild.me.guild_permissions
-        missing = [
-            perm for perm, value in perms.items() if getattr(permissions, perm) != value
-        ]
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:
             return True
@@ -654,7 +643,7 @@ def is_owner() -> Callable[[AC], AC]:
     .. code-block:: python3
 
         bot = commands.Bot(owner_id=297045071457681409)
-    
+
         @bot.slash_command()
         @application_checks.is_owner()
         async def ownercmd(interaction: Interaction):
@@ -682,7 +671,7 @@ def is_nsfw() -> Callable[[AC], AC]:
     --------
 
     .. code-block:: python3
-    
+
         @bot.slash_command()
         @application_checks.is_nsfw()
         async def ownercmd(interaction: Interaction):

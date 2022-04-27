@@ -13,4 +13,4 @@ body:
       description: The Link to the original issue
     validations:
       required: true
-      
+

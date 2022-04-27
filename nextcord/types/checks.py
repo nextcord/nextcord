@@ -21,18 +21,24 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import Any, Callable, Union, Coroutine, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
 
 if TYPE_CHECKING:
     from nextcord.application_command import ClientCog
-    from ..interactions import Interaction
     from nextcord.errors import ApplicationError
 
-T = TypeVar('T')
+    from ..interactions import Interaction
+
+T = TypeVar("T")
 
 Coro = Coroutine[Any, Any, T]
 MaybeCoro = Union[T, Coro[T]]
 CoroFunc = Callable[..., Coro[Any]]
 ApplicationCheck = Callable[[Interaction], MaybeCoro[bool]]
-ApplicationHook = Union[Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]]
-ApplicationErrorCallback = Union[Callable[[ClientCog, Interaction, ApplicationError], Coro[Any]], Callable[[Interaction, ApplicationError], Coro[Any]]]
+ApplicationHook = Union[
+    Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
+]
+ApplicationErrorCallback = Union[
+    Callable[[ClientCog, Interaction, ApplicationError], Coro[Any]],
+    Callable[[Interaction, ApplicationError], Coro[Any]],
+]

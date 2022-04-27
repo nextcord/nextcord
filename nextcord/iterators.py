@@ -46,14 +46,14 @@ from .object import Object
 from .utils import maybe_coroutine, snowflake_time, time_snowflake
 
 __all__ = (
-    'ReactionIterator',
-    'HistoryIterator',
-    'BanIterator',
-    'AuditLogIterator',
-    'GuildIterator',
-    'MemberIterator',
-    'ScheduledEventIterator',
-    'ScheduledEventUserIterator',
+    "ReactionIterator",
+    "HistoryIterator",
+    "BanIterator",
+    "AuditLogIterator",
+    "GuildIterator",
+    "MemberIterator",
+    "ScheduledEventIterator",
+    "ScheduledEventUserIterator",
 )
 
 if TYPE_CHECKING:
@@ -71,8 +71,8 @@ if TYPE_CHECKING:
     from .types.user import PartialUser as PartialUserPayload
     from .user import User
 
-T = TypeVar('T')
-OT = TypeVar('OT')
+T = TypeVar("T")
+OT = TypeVar("OT")
 _Func = Callable[[T], Union[OT, Awaitable[OT]]]
 
 OLDEST_OBJECT = Object(id=0)
@@ -87,7 +87,7 @@ class _AsyncIterator(AsyncIterator[T]):
     def get(self, **attrs: Any) -> Awaitable[Optional[T]]:
         def predicate(elem: T):
             for attr, val in attrs.items():
-                nested = attr.split('__')
+                nested = attr.split("__")
                 obj = elem
                 for attribute in nested:
                     obj = getattr(obj, attribute)
@@ -111,7 +111,7 @@ class _AsyncIterator(AsyncIterator[T]):
 
     def chunk(self, max_size: int) -> _ChunkedAsyncIterator[T]:
         if max_size <= 0:
-            raise ValueError('async iterator chunk sizes must be greater than 0.')
+            raise ValueError("async iterator chunk sizes must be greater than 0.")
         return _ChunkedAsyncIterator(self, max_size)
 
     def map(self, func: _Func[T, OT]) -> _MappedAsyncIterator[OT]:
@@ -186,7 +186,7 @@ class _FilteredAsyncIterator(_AsyncIterator[T]):
                 return item
 
 
-class ReactionIterator(_AsyncIterator[Union['User', 'Member']]):
+class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
     def __init__(self, message, emoji, limit=100, after=None):
         self.message = message
         self.limit = limit
@@ -222,14 +222,14 @@ class ReactionIterator(_AsyncIterator[Union['User', 'Member']]):
 
             if data:
                 self.limit -= retrieve
-                self.after = Object(id=int(data[-1]['id']))
+                self.after = Object(id=int(data[-1]["id"]))
 
             if self.guild is None or isinstance(self.guild, Object):
                 for element in reversed(data):
                     await self.users.put(User(state=self.state, data=element))  # type: ignore
             else:
                 for element in reversed(data):
-                    member_id = int(element['id'])
+                    member_id = int(element["id"])
                     member = self.guild.get_member(member_id)
                     if member is not None:
                         await self.users.put(member)
@@ -237,7 +237,7 @@ class ReactionIterator(_AsyncIterator[Union['User', 'Member']]):
                         await self.users.put(User(state=self.state, data=element))  # type: ignore
 
 
-class HistoryIterator(_AsyncIterator['Message']):
+class HistoryIterator(_AsyncIterator["Message"]):
     """Iterator for receiving a channel's message history.
 
     The messages endpoint has two behaviours we care about here:
@@ -299,7 +299,7 @@ class HistoryIterator(_AsyncIterator['Message']):
 
         if self.around:
             if self.limit is None:
-                raise ValueError('history does not support around with limit=None')
+                raise ValueError("history does not support around with limit=None")
             if self.limit > 101:
                 raise ValueError("history max limit 101 when specifying around parameter")
             elif self.limit == 101:
@@ -308,20 +308,20 @@ class HistoryIterator(_AsyncIterator['Message']):
             self._retrieve_messages = self._retrieve_messages_around_strategy  # type: ignore
             if self.before and self.after:
                 # lambda type ignores are as before/after/around are optional but exist here
-                self._filter = lambda m: self.after.id < int(m['id']) < self.before.id  # type: ignore
+                self._filter = lambda m: self.after.id < int(m["id"]) < self.before.id  # type: ignore
             elif self.before:
-                self._filter = lambda m: int(m['id']) < self.before.id  # type: ignore
+                self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
             elif self.after:
-                self._filter = lambda m: self.after.id < int(m['id'])  # type: ignore
+                self._filter = lambda m: self.after.id < int(m["id"])  # type: ignore
         else:
             if self.reverse:
                 self._retrieve_messages = self._retrieve_messages_after_strategy  # type: ignore
                 if self.before:
-                    self._filter = lambda m: int(m['id']) < self.before.id  # type: ignore
+                    self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
             else:
                 self._retrieve_messages = self._retrieve_messages_before_strategy  # type: ignore
                 if self.after and self.after != OLDEST_OBJECT:
-                    self._filter = lambda m: int(m['id']) > self.after.id  # type: ignore
+                    self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
 
     async def next(self) -> Message:
         if self.messages.empty():
@@ -342,7 +342,7 @@ class HistoryIterator(_AsyncIterator['Message']):
         return r > 0
 
     async def fill_messages(self):
-        if not hasattr(self, 'channel'):
+        if not hasattr(self, "channel"):
             # do the required set up
             channel = await self.messageable._get_channel()
             self.channel = channel
@@ -372,7 +372,7 @@ class HistoryIterator(_AsyncIterator['Message']):
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.before = Object(id=int(data[-1]['id']))
+            self.before = Object(id=int(data[-1]["id"]))
         return data
 
     async def _retrieve_messages_after_strategy(self, retrieve):
@@ -382,20 +382,22 @@ class HistoryIterator(_AsyncIterator['Message']):
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.after = Object(id=int(data[0]['id']))
+            self.after = Object(id=int(data[0]["id"]))
         return data
 
     async def _retrieve_messages_around_strategy(self, retrieve):
         """Retrieve messages using around parameter."""
         if self.around:
             around = self.around.id if self.around else None
-            data: List[MessagePayload] = await self.logs_from(self.channel.id, retrieve, around=around)
+            data: List[MessagePayload] = await self.logs_from(
+                self.channel.id, retrieve, around=around
+            )
             self.around = None
             return data
         return []
 
 
-class BanIterator(_AsyncIterator['BanEntry']):
+class BanIterator(_AsyncIterator["BanEntry"]):
     """Iterator for receiving a guild's bans.
 
     The bans endpoint has two behaviours we care about here:
@@ -464,7 +466,12 @@ class BanIterator(_AsyncIterator['BanEntry']):
                 self.limit = 0  # terminate the infinite loop
 
             for element in data:
-                await self.bans.put(BanEntry(user=User(state=self.guild._state, data=element['user']), reason=element['reason']))
+                await self.bans.put(
+                    BanEntry(
+                        user=User(state=self.guild._state, data=element["user"]),
+                        reason=element["reason"],
+                    )
+                )
 
     async def _retrieve_bans_before_strategy(self, retrieve: int) -> List[BanPayload]:
         """Retrieve bans using before parameter."""
@@ -473,7 +480,7 @@ class BanIterator(_AsyncIterator['BanEntry']):
         if len(data):
             if self.limit is not None:
                 self.limit -= len(data)
-            self.before = Object(id=int(data[0]['user']['id']))
+            self.before = Object(id=int(data[0]["user"]["id"]))
         return data
 
     async def _retrieve_bans_after_strategy(self, retrieve: int) -> List[BanPayload]:
@@ -483,12 +490,21 @@ class BanIterator(_AsyncIterator['BanEntry']):
         if len(data):
             if self.limit is not None:
                 self.limit -= len(data)
-            self.after = Object(id=int(data[-1]['user']['id']))
+            self.after = Object(id=int(data[-1]["user"]["id"]))
         return data
 
 
-class AuditLogIterator(_AsyncIterator['AuditLogEntry']):
-    def __init__(self, guild, limit=None, before=None, after=None, oldest_first=None, user_id=None, action_type=None):
+class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
+    def __init__(
+        self,
+        guild,
+        limit=None,
+        before=None,
+        after=None,
+        oldest_first=None,
+        user_id=None,
+        action_type=None,
+    ):
         if isinstance(before, datetime.datetime):
             before = Object(id=time_snowflake(before, high=False))
         if isinstance(after, datetime.datetime):
@@ -517,36 +533,44 @@ class AuditLogIterator(_AsyncIterator['AuditLogEntry']):
         if self.reverse:
             self._strategy = self._after_strategy
             if self.before:
-                self._filter = lambda m: int(m['id']) < self.before.id  # type: ignore
+                self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
         else:
             self._strategy = self._before_strategy
             if self.after and self.after != OLDEST_OBJECT:
-                self._filter = lambda m: int(m['id']) > self.after.id  # type: ignore
+                self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
 
     async def _before_strategy(self, retrieve):
         before = self.before.id if self.before else None
         data: AuditLogPayload = await self.request(
-            self.guild.id, limit=retrieve, user_id=self.user_id, action_type=self.action_type, before=before
+            self.guild.id,
+            limit=retrieve,
+            user_id=self.user_id,
+            action_type=self.action_type,
+            before=before,
         )
 
-        entries = data.get('audit_log_entries', [])
+        entries = data.get("audit_log_entries", [])
         if len(data) and entries:
             if self.limit is not None:
                 self.limit -= retrieve
-            self.before = Object(id=int(entries[-1]['id']))
-        return data.get('users', []), entries
+            self.before = Object(id=int(entries[-1]["id"]))
+        return data.get("users", []), entries
 
     async def _after_strategy(self, retrieve):
         after = self.after.id if self.after else None
         data: AuditLogPayload = await self.request(
-            self.guild.id, limit=retrieve, user_id=self.user_id, action_type=self.action_type, after=after
+            self.guild.id,
+            limit=retrieve,
+            user_id=self.user_id,
+            action_type=self.action_type,
+            after=after,
         )
-        entries = data.get('audit_log_entries', [])
+        entries = data.get("audit_log_entries", [])
         if len(data) and entries:
             if self.limit is not None:
                 self.limit -= retrieve
-            self.after = Object(id=int(entries[0]['id']))
-        return data.get('users', []), entries
+            self.after = Object(id=int(entries[0]["id"]))
+        return data.get("users", []), entries
 
     async def next(self) -> AuditLogEntry:
         if self.entries.empty():
@@ -585,13 +609,15 @@ class AuditLogIterator(_AsyncIterator['AuditLogEntry']):
 
             for element in data:
                 # TODO: remove this if statement later
-                if element['action_type'] is None:
+                if element["action_type"] is None:
                     continue
 
-                await self.entries.put(AuditLogEntry(data=element, users=self._users, guild=self.guild))
+                await self.entries.put(
+                    AuditLogEntry(data=element, users=self._users, guild=self.guild)
+                )
 
 
-class GuildIterator(_AsyncIterator['Guild']):
+class GuildIterator(_AsyncIterator["Guild"]):
     """Iterator for receiving the client's guilds.
 
     The guilds endpoint has the same two behaviours as described
@@ -640,7 +666,7 @@ class GuildIterator(_AsyncIterator['Guild']):
 
         if self.before and self.after:
             self._retrieve_guilds = self._retrieve_guilds_before_strategy  # type: ignore
-            self._filter = lambda m: int(m['id']) > self.after.id  # type: ignore
+            self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
         elif self.after:
             self._retrieve_guilds = self._retrieve_guilds_after_strategy  # type: ignore
         else:
@@ -692,7 +718,7 @@ class GuildIterator(_AsyncIterator['Guild']):
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.before = Object(id=int(data[-1]['id']))
+            self.before = Object(id=int(data[-1]["id"]))
         return data
 
     async def _retrieve_guilds_after_strategy(self, retrieve):
@@ -702,11 +728,11 @@ class GuildIterator(_AsyncIterator['Guild']):
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.after = Object(id=int(data[0]['id']))
+            self.after = Object(id=int(data[0]["id"]))
         return data
 
 
-class MemberIterator(_AsyncIterator['Member']):
+class MemberIterator(_AsyncIterator["Member"]):
     def __init__(self, guild, limit=1000, after=None):
 
         if isinstance(after, datetime.datetime):
@@ -749,7 +775,7 @@ class MemberIterator(_AsyncIterator['Member']):
             if len(data) < 1000:
                 self.limit = 0  # terminate loop
 
-            self.after = Object(id=int(data[-1]['user']['id']))
+            self.after = Object(id=int(data[-1]["user"]["id"]))
 
             for element in reversed(data):
                 await self.members.put(self.create_member(element))
@@ -760,7 +786,7 @@ class MemberIterator(_AsyncIterator['Member']):
         return Member(data=data, guild=self.guild, state=self.state)
 
 
-class ArchivedThreadIterator(_AsyncIterator['Thread']):
+class ArchivedThreadIterator(_AsyncIterator["Thread"]):
     def __init__(
         self,
         channel_id: int,
@@ -778,7 +804,7 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
         self.http = guild._state.http
 
         if joined and not private:
-            raise ValueError('Cannot iterate over joined public archived threads')
+            raise ValueError("Cannot iterate over joined public archived threads")
 
         self.before: Optional[str]
         if before is None:
@@ -818,11 +844,11 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
 
     @staticmethod
     def get_archive_timestamp(data: ThreadPayload) -> str:
-        return data['thread_metadata']['archive_timestamp']
+        return data["thread_metadata"]["archive_timestamp"]
 
     @staticmethod
     def get_thread_id(data: ThreadPayload) -> str:
-        return data['id']  # type: ignore
+        return data["id"]  # type: ignore
 
     async def fill_queue(self) -> None:
         if not self.has_more:
@@ -832,11 +858,11 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
         data = await self.endpoint(self.channel_id, before=self.before, limit=limit)
 
         # This stuff is obviously WIP because 'members' is always empty
-        threads: List[ThreadPayload] = data.get('threads', [])
+        threads: List[ThreadPayload] = data.get("threads", [])
         for d in reversed(threads):
             self.queue.put_nowait(self.create_thread(d))
 
-        self.has_more = data.get('has_more', False)
+        self.has_more = data.get("has_more", False)
         if self.limit is not None:
             self.limit -= len(threads)
             if self.limit <= 0:
@@ -847,10 +873,11 @@ class ArchivedThreadIterator(_AsyncIterator['Thread']):
 
     def create_thread(self, data: ThreadPayload) -> Thread:
         from .threads import Thread
+
         return Thread(guild=self.guild, state=self.guild._state, data=data)
 
 
-class ScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
+class ScheduledEventIterator(_AsyncIterator["ScheduledEvent"]):
     def __init__(self, guild: Guild, with_users: bool = False):
         self.guild = guild
         self.with_users = with_users
@@ -875,13 +902,13 @@ class ScheduledEventIterator(_AsyncIterator['ScheduledEvent']):
             return
 
         for element in reversed(data):
-             await self.queue.put(self.create_event(element))
+            await self.queue.put(self.create_event(element))
 
     def create_event(self, data):
         return self.guild._store_scheduled_event(data)
 
 
-class ScheduledEventUserIterator(_AsyncIterator['ScheduledEventUser']):
+class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
     def __init__(
         self,
         guild: Guild,
@@ -889,7 +916,7 @@ class ScheduledEventUserIterator(_AsyncIterator['ScheduledEventUser']):
         limit: int = 100,
         with_member: bool = False,
         before: Optional[Snowflake] = None,
-        after: Optional[Snowflake] = None
+        after: Optional[Snowflake] = None,
     ):
         self.guild = guild
         self.event = event
