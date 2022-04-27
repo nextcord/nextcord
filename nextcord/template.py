@@ -36,6 +36,7 @@ __all__ = (
 if TYPE_CHECKING:
     import datetime
     from .asset import Asset
+    from .file import File
     from .message import Attachment
     from .types.template import Template as TemplatePayload
     from .state import ConnectionState
@@ -172,7 +173,7 @@ class Template:
         self,
         name: str,
         region: Union[VoiceRegion, str] = VoiceRegion.us_west,
-        icon: Optional[Union[bytes, Asset, Attachment]] = None,
+        icon: Optional[Union[bytes, Asset, Attachment, File]] = None,
     ) -> Guild:
         """|coro|
 
@@ -187,7 +188,7 @@ class Template:
         region: :class:`.VoiceRegion`
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
-        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
             for more details on what is expected.
 
@@ -208,6 +209,8 @@ class Template:
             icon_base64 = None
         elif isinstance(icon, bytes):
             icon_base64 = _bytes_to_base64_data(icon)
+        elif isinstance(icon, File):
+            icon_base64 = _bytes_to_base64_data(icon.fp.read())
         else:
             icon_base64 = _bytes_to_base64_data(await icon.read())
 

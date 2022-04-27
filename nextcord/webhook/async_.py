@@ -1170,7 +1170,7 @@ class Webhook(BaseWebhook):
         *,
         reason: Optional[str] = None,
         name: Optional[str] = MISSING,
-        avatar: Optional[Union[bytes, Asset, Attachment]] = MISSING,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
         channel: Optional[Snowflake] = None,
         prefer_auth: bool = True,
     ) -> Webhook:
@@ -1182,7 +1182,7 @@ class Webhook(BaseWebhook):
         ------------
         name: Optional[:class:`str`]
             The webhook's new default name.
-        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             A :term:`py:bytes-like object` representing the webhook's new default avatar.
         channel: Optional[:class:`abc.Snowflake`]
             The webhook's new channel. This requires an authenticated webhook.
@@ -1220,6 +1220,8 @@ class Webhook(BaseWebhook):
                 payload['avatar'] = avatar
             elif isinstance(avatar, bytes):
                 payload['avatar'] = utils._bytes_to_base64_data(avatar)
+            elif isinstance(avatar, File):
+                payload['avatar'] = utils._bytes_to_base64_data(avatar.fp.read())
             else:
                 payload['avatar'] = utils._bytes_to_base64_data(await avatar.read())
 

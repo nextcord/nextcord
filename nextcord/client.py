@@ -92,6 +92,7 @@ if TYPE_CHECKING:
     from .application_command import ApplicationCommand, ClientCog
     from .channel import DMChannel
     from .member import Member
+    from .file import File
     from .message import Message, Attachment
     from .voice_client import VoiceProtocol
     from .scheduled_events import ScheduledEvent
@@ -1349,7 +1350,7 @@ class Client:
         *,
         name: str,
         region: Union[VoiceRegion, str] = VoiceRegion.us_west,
-        icon: Optional[Union[bytes, Asset, Attachment]] = None,
+        icon: Optional[Union[bytes, Asset, Attachment, File]] = None,
         code: str = MISSING,
     ) -> Guild:
         """|coro|
@@ -1388,6 +1389,8 @@ class Client:
         """
         if icon is None:
             icon_base64 = None
+        elif isinstance(icon, File):
+            icon_base64 = utils._bytes_to_base64_data(icon.fp.read())
         elif isinstance(icon, bytes):
             icon_base64 = utils._bytes_to_base64_data(icon)
         else:

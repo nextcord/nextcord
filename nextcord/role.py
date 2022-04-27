@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     )
     from .types.guild import RolePositionUpdate
     from .message import Attachment
+    from .file import File
     from .guild import Guild
     from .member import Member
     from .state import ConnectionState
@@ -371,7 +372,7 @@ class Role(Hashable):
         mentionable: bool = MISSING,
         position: int = MISSING,
         reason: Optional[str] = MISSING,
-        icon: Optional[Union[str, bytes, Asset, Attachment]] = MISSING,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = MISSING,
     ) -> Optional[Role]:
         """|coro|
 
@@ -403,7 +404,7 @@ class Role(Hashable):
         position: :class:`int`
             The new role's position. This must be below your top role's
             position or it will fail.
-        icon: Optional[Union[:class:`str`, :class:`bytes`, :class:`Asset`, :class:`Attachment`]]
+        icon: Optional[Union[:class:`str`, :class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             The role's icon image
         reason: Optional[:class:`str`]
             The reason for editing this role. Shows up on the audit log.
@@ -454,6 +455,8 @@ class Role(Hashable):
             elif isinstance(icon, str):
                 payload['unicode_emoji'] = icon
                 payload['icon'] = None
+            elif isinstance(icon, File):
+                payload['icon'] = _bytes_to_base64_data(icon.fp.read())
             elif isinstance(icon, bytes):
                 payload['icon'] = _bytes_to_base64_data(icon)
             else:

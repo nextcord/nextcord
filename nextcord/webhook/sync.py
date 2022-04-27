@@ -694,7 +694,7 @@ class SyncWebhook(BaseWebhook):
         *,
         reason: Optional[str] = None,
         name: Optional[str] = MISSING,
-        avatar: Optional[bytes] = MISSING,
+        avatar: Optional[bytes, File] = MISSING,
         channel: Optional[Snowflake] = None,
         prefer_auth: bool = True,
     ) -> SyncWebhook:
@@ -704,7 +704,7 @@ class SyncWebhook(BaseWebhook):
         ------------
         name: Optional[:class:`str`]
             The webhook's new default name.
-        avatar: Optional[:class:`bytes`]
+        avatar: Optional[:class:`bytes`, :class:`File`]
             A :term:`py:bytes-like object` representing the webhook's new default avatar.
         channel: Optional[:class:`abc.Snowflake`]
             The webhook's new channel. This requires an authenticated webhook.
@@ -739,7 +739,12 @@ class SyncWebhook(BaseWebhook):
             payload['name'] = str(name) if name is not None else None
 
         if avatar is not MISSING:
-            payload['avatar'] = utils._bytes_to_base64_data(avatar) if avatar is not None else None
+            if avatar is None:
+                payload['avatar'] = avatar
+            elif isinstance(avatar, bytes):
+                payload['avatar'] = utils._bytes_to_base64_data(avatar)
+            else:
+                payload['avatar'] = utils._bytes_to_base64_data(avatar.fp.read())
 
         adapter: WebhookAdapter = _get_webhook_adapter()
 

@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from .channel import DMChannel
     from .guild import Guild
     from .message import Message, Attachment
+    from .file import File
     from .state import ConnectionState
     from .types.channel import DMChannel as DMChannelPayload
     from .types.user import User as UserPayload
@@ -350,7 +351,7 @@ class ClientUser(BaseUser):
             self,
             *,
             username: str = MISSING,
-            avatar: Optional[Union[bytes, Asset, Attachment]] = MISSING
+            avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING
     ) -> ClientUser:
         """|coro|
 
@@ -372,7 +373,7 @@ class ClientUser(BaseUser):
         -----------
         username: :class:`str`
             The new username you wish to change to.
-        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             A :term:`py:bytes-like object` representing the image to upload.
             Could be ``None`` to denote no avatar.
 
@@ -396,6 +397,8 @@ class ClientUser(BaseUser):
                 payload['avatar'] = avatar
             elif isinstance(avatar, bytes):
                 payload['avatar'] = _bytes_to_base64_data(avatar)
+            elif isinstance(avatar, File):
+                payload['avatar'] = _bytes_to_base64_data(avatar.fp.read())
             else:
                 payload['avatar'] = _bytes_to_base64_data(await avatar.read())
 

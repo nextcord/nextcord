@@ -47,6 +47,7 @@ if TYPE_CHECKING:
     from .member import Member
     from .state import ConnectionState
     from .message import Attachment
+    from .file import File
     from .types.scheduled_events import (
         ScheduledEvent as ScheduledEventPayload,
         ScheduledEventUser as ScheduledEventUserPayload
@@ -333,7 +334,7 @@ class ScheduledEvent(Hashable):
         type: Optional[ScheduledEventEntityType] = MISSING,
         status: Optional[ScheduledEventStatus] = MISSING,
         reason: Optional[str] = None,
-        image: Optional[Union[bytes, Asset, Attachment]] = MISSING
+        image: Optional[Union[bytes, Asset, Attachment, File]] = MISSING
     ) -> ScheduledEvent:
         """|coro|
 
@@ -368,7 +369,7 @@ class ScheduledEvent(Hashable):
                 scheduled -> active ;
                 active -> completed ;
                 scheduled -> canceled
-        image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
+        image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             A :term:`py:bytes-like object` representing the cover image.
             Could be ``None`` to denote removal of the cover image.
 
@@ -401,6 +402,8 @@ class ScheduledEvent(Hashable):
                 payload['image'] = image
             elif isinstance(image, bytes):
                 payload['image'] = _bytes_to_base64_data(image)
+            elif isinstance(image, File):
+                payload['image'] = _bytes_to_base64_data(image.fp.read())
             else:
                 payload['image'] = _bytes_to_base64_data(await image.read())
 

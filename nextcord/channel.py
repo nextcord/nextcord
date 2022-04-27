@@ -72,6 +72,7 @@ if TYPE_CHECKING:
     from .member import Member, VoiceState
     from .abc import Snowflake, SnowflakeTime
     from .message import Message, PartialMessage, Attachment
+    from .file import File
     from .webhook import Webhook
     from .state import ConnectionState
     from .user import ClientUser, User, BaseUser
@@ -546,7 +547,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
             self,
             *,
             name: str,
-            avatar: Optional[Union[bytes, Asset, Attachment]] = None,
+            avatar: Optional[Union[bytes, Asset, Attachment, File]] = None,
             reason: Optional[str] = None
     ) -> Webhook:
         """|coro|
@@ -562,7 +563,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         -------------
         name: :class:`str`
             The webhook's name.
-        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             A :term:`py:bytes-like object` representing the webhook's default avatar.
             This operates similarly to :meth:`~ClientUser.edit`.
         reason: Optional[:class:`str`]
@@ -585,6 +586,8 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         if avatar is None:
             avatar_base64 = None
+        elif isinstance(avatar, File):
+            avatar_base64 = utils._bytes_to_base64_data(avatar.fp.read())
         elif isinstance(avatar, bytes):
             avatar_base64 = utils._bytes_to_base64_data(avatar)
         else:
