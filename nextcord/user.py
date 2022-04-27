@@ -160,7 +160,11 @@ class BaseUser(_UserTag):
 
     @property
     def default_avatar(self) -> Asset:
-        """:class:`Asset`: Returns the default avatar for a given user. This is calculated by the user's discriminator."""
+        """
+        :class:`Asset`: Returns the default avatar for a given user.
+
+        This is calculated by the user's discriminator.
+        """
         return Asset._from_default_avatar(self._state, int(self.discriminator) % len(DefaultAvatar))
 
     @property
@@ -201,7 +205,7 @@ class BaseUser(_UserTag):
         """
         if self._accent_colour is None:
             return None
-        return Colour(self._accent_colour)
+        return Colour(int(self._accent_colour))
 
     @property
     def accent_color(self) -> Optional[Colour]:

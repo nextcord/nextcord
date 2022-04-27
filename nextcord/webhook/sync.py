@@ -734,7 +734,7 @@ class SyncWebhook(BaseWebhook):
         if self.token is None and self.auth_token is None:
             raise InvalidArgument('This webhook does not have a token associated with it')
 
-        payload = {}
+        payload: Dict[str, Any] = {}
         if name is not MISSING:
             payload['name'] = str(name) if name is not None else None
 

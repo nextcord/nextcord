@@ -1278,7 +1278,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         name: str,
-        image: bytes,
+        image: str,
         *,
         roles: Optional[SnowflakeList] = None,
         reason: Optional[str] = None,

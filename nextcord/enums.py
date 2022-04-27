@@ -76,6 +76,7 @@ def _create_value_cls(name, comparable):
         cls.__gt__ = lambda self, other: isinstance(other, self.__class__) and self.value > other.value
     return cls
 
+
 def _is_descriptor(obj):
     return hasattr(obj, '__get__') or hasattr(obj, '__set__') or hasattr(obj, '__delete__')
 
@@ -87,7 +88,7 @@ class EnumMeta(type):
         _enum_member_map_: ClassVar[Dict[str, Any]]
         _enum_value_map_: ClassVar[Dict[Any, Any]]
 
-    def __new__(cls, name, bases, attrs, *, comparable: bool = False):
+    def __new__(mcs, name, bases, attrs, *, comparable: bool = False):
         value_mapping = {}
         member_mapping = {}
         member_names = []
@@ -110,7 +111,7 @@ class EnumMeta(type):
             try:
                 new_value = value_mapping[value]
             except KeyError:
-                new_value = value_cls(name=key, value=value)
+                new_value = value_cls(name=key, value=value)  # type: ignore
                 value_mapping[value] = new_value
                 member_names.append(key)
 
@@ -121,7 +122,7 @@ class EnumMeta(type):
         attrs['_enum_member_map_'] = member_mapping
         attrs['_enum_member_names_'] = member_names
         attrs['_enum_value_cls_'] = value_cls
-        actual_cls = super().__new__(cls, name, bases, attrs)
+        actual_cls = super().__new__(mcs, name, bases, attrs)
         value_cls._actual_enum_cls_ = actual_cls  # type: ignore
         return actual_cls
 
@@ -176,6 +177,16 @@ else:
                 return cls._enum_value_map_[value]
             except (KeyError, TypeError):
                 return value
+
+        @property
+        def name(self):
+            """The name of the Enum member."""
+            return self.name
+
+        @property
+        def value(self):
+            """The value of the Enum member."""
+            return self.value
 
 
 class ChannelType(Enum):
