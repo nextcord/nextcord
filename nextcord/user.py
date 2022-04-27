@@ -160,8 +160,7 @@ class BaseUser(_UserTag):
 
     @property
     def default_avatar(self) -> Asset:
-        """
-        :class:`Asset`: Returns the default avatar for a given user.
+        """:class:`Asset`: Returns the default avatar for a given user.
 
         This is calculated by the user's discriminator.
         """
