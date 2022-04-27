@@ -3111,7 +3111,7 @@ class Guild(Hashable):
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
-    async def fetch_scheduled_events(
+    def fetch_scheduled_events(
         self,
         *,
         with_users: bool = False
