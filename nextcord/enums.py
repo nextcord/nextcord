@@ -88,7 +88,7 @@ class EnumMeta(type):
         _enum_member_map_: ClassVar[Dict[str, Any]]
         _enum_value_map_: ClassVar[Dict[Any, Any]]
 
-    def __new__(mcs, name, bases, attrs, *, comparable: bool = False):
+    def __new__(cls, name, bases, attrs, *, comparable: bool = False):
         value_mapping = {}
         member_mapping = {}
         member_names = []
@@ -122,7 +122,7 @@ class EnumMeta(type):
         attrs['_enum_member_map_'] = member_mapping
         attrs['_enum_member_names_'] = member_names
         attrs['_enum_value_cls_'] = value_cls
-        actual_cls = super().__new__(mcs, name, bases, attrs)
+        actual_cls = super().__new__(cls, name, bases, attrs)
         value_cls._actual_enum_cls_ = actual_cls  # type: ignore
         return actual_cls
 
