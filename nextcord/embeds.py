@@ -616,8 +616,12 @@ class Embed:
 
         return self
 
-    def clear_fields(self) -> None:
-        """Removes all fields from this embed."""
+    def clear_fields(self) -> Embed:
+        """Removes all fields from this embed.
+        
+        Returns
+        --------
+        :class:`Embed`"""
         try:
             self._fields.clear()
         except AttributeError:
