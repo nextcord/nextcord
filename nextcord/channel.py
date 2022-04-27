@@ -54,6 +54,7 @@ from .asset import Asset
 from .errors import ClientException, InvalidArgument
 from .stage_instance import StageInstance
 from .threads import Thread
+from .file import File
 from .iterators import ArchivedThreadIterator
 
 __all__ = (
@@ -72,7 +73,6 @@ if TYPE_CHECKING:
     from .member import Member, VoiceState
     from .abc import Snowflake, SnowflakeTime
     from .message import Message, PartialMessage, Attachment
-    from .file import File
     from .webhook import Webhook
     from .state import ConnectionState
     from .user import ClientUser, User, BaseUser

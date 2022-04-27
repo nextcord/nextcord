@@ -31,6 +31,7 @@ from .asset import Asset
 from .colour import Colour
 from .enums import DefaultAvatar
 from .flags import PublicUserFlags
+from .file import File
 from .utils import snowflake_time, _bytes_to_base64_data, MISSING
 
 if TYPE_CHECKING:
@@ -39,7 +40,6 @@ if TYPE_CHECKING:
     from .channel import DMChannel
     from .guild import Guild
     from .message import Message, Attachment
-    from .file import File
     from .state import ConnectionState
     from .types.channel import DMChannel as DMChannelPayload
     from .types.user import User as UserPayload

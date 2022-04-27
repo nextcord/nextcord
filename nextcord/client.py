@@ -84,6 +84,7 @@ from .utils import MISSING
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
+from .file import File
 
 
 if TYPE_CHECKING:
@@ -92,7 +93,6 @@ if TYPE_CHECKING:
     from .application_command import ApplicationCommand, ClientCog
     from .channel import DMChannel
     from .member import Member
-    from .file import File
     from .message import Message, Attachment
     from .voice_client import VoiceProtocol
     from .scheduled_events import ScheduledEvent

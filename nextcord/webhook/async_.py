@@ -44,6 +44,7 @@ from ..asset import Asset
 from ..http import Route
 from ..mixins import Hashable
 from ..channel import PartialMessageable
+from ..file import File
 
 __all__ = (
     'Webhook',
@@ -55,7 +56,6 @@ __all__ = (
 _log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from ..file import File
     from ..embeds import Embed
     from ..mentions import AllowedMentions
     from ..state import ConnectionState
