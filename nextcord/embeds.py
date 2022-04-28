@@ -616,7 +616,7 @@ class Embed:
 
         return self
 
-    def clear_fields(self) -> Embed:
+    def clear_fields(self: E) -> E:
         """Removes all fields from this embed.
 
         This function returns the class instance to allow for fluent-style
