@@ -618,10 +618,12 @@ class Embed:
 
     def clear_fields(self) -> Embed:
         """Removes all fields from this embed.
-        
-        Returns
-        --------
-        :class:`Embed`"""
+
+        This function returns the class instance to allow for fluent-style
+        chaining.
+
+        .. versionchanged:: 2.0
+            This method returns ``self``
         try:
             self._fields.clear()
         except AttributeError:
