@@ -621,6 +621,7 @@ class Embed:
 
         This function returns the class instance to allow for fluent-style
         chaining.
+        """
         try:
             self._fields.clear()
         except AttributeError:
