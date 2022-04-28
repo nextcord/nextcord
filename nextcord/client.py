@@ -1387,14 +1387,7 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is None:
-            icon_base64 = None
-        elif isinstance(icon, File):
-            icon_base64 = utils._bytes_to_base64_data(icon.fp.read())
-        elif isinstance(icon, bytes):
-            icon_base64 = utils._bytes_to_base64_data(icon)
-        else:
-            icon_base64 = utils._bytes_to_base64_data(await icon.read())
+        icon_base64 = await utils._obj_to_base64_data(icon)
 
         if isinstance(region, VoiceRegion):
             region = str(region)

@@ -584,14 +584,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         from .webhook import Webhook
 
-        if avatar is None:
-            avatar_base64 = None
-        elif isinstance(avatar, File):
-            avatar_base64 = utils._bytes_to_base64_data(avatar.fp.read())
-        elif isinstance(avatar, bytes):
-            avatar_base64 = utils._bytes_to_base64_data(avatar)
-        else:
-            avatar_base64 = utils._bytes_to_base64_data(await avatar.read())
+        avatar_base64 = await utils._obj_to_base64_data(avatar)
 
         data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar_base64, reason=reason)
         return Webhook.from_state(data, state=self._state)

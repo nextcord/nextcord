@@ -1560,43 +1560,16 @@ class Guild(Hashable):
 
         if icon is not MISSING:
             if icon is None:
-                fields['icon'] = icon
-            elif isinstance(icon, File):
-                fields['icon'] = utils._bytes_to_base64_data(icon.fp.read())
-            elif isinstance(icon, bytes):
-                fields['icon'] = utils._bytes_to_base64_data(icon)
-            else:
-                fields['icon'] = utils._bytes_to_base64_data(await icon.read())
+                fields['icon'] = await utils._obj_to_base64_data(icon)
 
         if banner is not MISSING:
-            if banner is None:
-                fields['banner'] = banner
-            elif isinstance(banner, File):
-                fields['banner'] = utils._bytes_to_base64_data(banner.fp.read())
-            elif isinstance(banner, bytes):
-                fields['banner'] = utils._bytes_to_base64_data(banner)
-            else:
-                fields['banner'] = utils._bytes_to_base64_data(await banner.read())
+            fields['banner'] = await utils._obj_to_base64_data(banner)
 
         if splash is not MISSING:
-            if splash is None:
-                fields['splash'] = splash
-            elif isinstance(splash, File):
-                fields['splash'] = utils._bytes_to_base64_data(splash.fp.read())
-            elif isinstance(splash, bytes):
-                fields['splash'] = utils._bytes_to_base64_data(splash)
-            else:
-                fields['splash'] = utils._bytes_to_base64_data(await splash.read())
+            fields['splash'] = await utils._obj_to_base64_data(splash)
 
         if discovery_splash is not MISSING:
-            if discovery_splash is None:
-                fields['discovery_splash'] = discovery_splash
-            elif isinstance(discovery_splash, File):
-                fields['discovery_splash'] = utils._bytes_to_base64_data(discovery_splash.fp.read())
-            elif isinstance(discovery_splash, bytes):
-                fields['discovery_splash'] = utils._bytes_to_base64_data(discovery_splash)
-            else:
-                fields['discovery_splash'] = utils._bytes_to_base64_data(await discovery_splash.read())
+            fields['discovery_splash'] = await utils._obj_to_base64_data(discovery_splash)
 
         if default_notifications is not MISSING:
             if not isinstance(default_notifications, NotificationLevel):
@@ -2461,12 +2434,7 @@ class Guild(Hashable):
         :class:`Emoji`
             The created emoji.
         """
-        if isinstance(image, bytes):
-            img_base64 = utils._bytes_to_base64_data(image)
-        elif isinstance(image, File):
-            img_base64 = utils._bytes_to_base64_data(image.fp.read())
-        else:
-            img_base64 = utils._bytes_to_base64_data(await image.read())
+        img_base64 = await utils._obj_to_base64_data(image)
         if roles:
             role_ids = [role.id for role in roles]
         else:
@@ -2644,12 +2612,7 @@ class Guild(Hashable):
         if icon is not MISSING:
             if icon is None or isinstance(icon, str):
                 fields['unicode_emoji'] = icon
-            elif isinstance(icon, File):
-                fields['icon'] = utils._bytes_to_base64_data(icon.fp.read())
-            elif isinstance(icon, bytes):
-                fields['icon'] = utils._bytes_to_base64_data(icon)
-            else:
-                fields['icon'] = utils._bytes_to_base64_data(await icon.read())
+            fields['icon'] = await utils._obj_to_base64_data(icon)
 
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
         role = Role(guild=self, data=data, state=self._state)
@@ -3275,12 +3238,7 @@ class Guild(Hashable):
         if description is not MISSING:
             payload['description'] = description
         if image is not None:
-            if isinstance(image, bytes):
-                payload['image'] = utils._bytes_to_base64_data(image)
-            elif isinstance(image, File):
-                payload['image'] = utils._bytes_to_base64_data(image.fp.read())
-            else:
-                payload['image'] = utils._bytes_to_base64_data(await image.read())
+            payload['image'] = await utils._obj_to_base64_data(image)
 
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)

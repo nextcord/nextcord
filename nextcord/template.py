@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import Any, Optional, TYPE_CHECKING, Union
-from .utils import parse_time, _bytes_to_base64_data, MISSING
+from .utils import parse_time, _obj_to_base64_data, MISSING
 from .enums import VoiceRegion
 from .guild import Guild
 from .file import File
@@ -205,14 +205,7 @@ class Template:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is None:
-            icon_base64 = None
-        elif isinstance(icon, bytes):
-            icon_base64 = _bytes_to_base64_data(icon)
-        elif isinstance(icon, File):
-            icon_base64 = _bytes_to_base64_data(icon.fp.read())
-        else:
-            icon_base64 = _bytes_to_base64_data(await icon.read())
+        icon_base64 = await _obj_to_base64_data(icon)
 
         if isinstance(region, VoiceRegion):
             region = str(region)

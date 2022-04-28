@@ -1216,14 +1216,7 @@ class Webhook(BaseWebhook):
             payload['name'] = str(name) if name is not None else None
 
         if avatar is not MISSING:
-            if avatar is None:
-                payload['avatar'] = avatar
-            elif isinstance(avatar, bytes):
-                payload['avatar'] = utils._bytes_to_base64_data(avatar)
-            elif isinstance(avatar, File):
-                payload['avatar'] = utils._bytes_to_base64_data(avatar.fp.read())
-            else:
-                payload['avatar'] = utils._bytes_to_base64_data(await avatar.read())
+            payload['avatar'] = await utils._obj_to_base64_data(avatar)
 
         adapter = async_context.get()
 

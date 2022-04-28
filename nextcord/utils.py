@@ -62,6 +62,7 @@ import sys
 import types
 import warnings
 
+from . import File
 from .errors import InvalidArgument
 
 try:
@@ -124,6 +125,8 @@ if TYPE_CHECKING:
 
     from typing_extensions import ParamSpec
 
+    from .message import Attachment
+    from .asset import Asset
     from .permissions import Permissions
     from .abc import Snowflake
     from .invite import Invite
@@ -495,6 +498,17 @@ def _bytes_to_base64_data(data: bytes) -> str:
     mime = _get_mime_type_for_image(data)
     b64 = b64encode(data).decode('ascii')
     return fmt.format(mime=mime, data=b64)
+
+
+async def _obj_to_base64_data(obj: Optional[Union[bytes, Attachment, Asset, File]]) -> Optional[str]:
+    if obj is None:
+        return obj
+    if isinstance(obj, bytes):
+        return _bytes_to_base64_data(obj)
+    elif isinstance(obj, File):
+        return _bytes_to_base64_data(obj.fp.read())
+    else:
+        return _bytes_to_base64_data(await obj.read())
 
 
 if HAS_ORJSON:

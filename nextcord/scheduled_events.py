@@ -30,7 +30,7 @@ from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
 from .types.snowflake import Snowflake
-from .utils import MISSING, parse_time, _bytes_to_base64_data
+from .utils import MISSING, parse_time, _obj_to_base64_data
 from .asset import Asset
 from .file import File
 __all__: Tuple[str] = (
@@ -398,14 +398,7 @@ class ScheduledEvent(Hashable):
         if status is not MISSING:
             payload['status'] = status.value
         if image is not MISSING:
-            if image is None:
-                payload['image'] = image
-            elif isinstance(image, bytes):
-                payload['image'] = _bytes_to_base64_data(image)
-            elif isinstance(image, File):
-                payload['image'] = _bytes_to_base64_data(image.fp.read())
-            else:
-                payload['image'] = _bytes_to_base64_data(await image.read())
+            payload['image'] = await _obj_to_base64_data(image)
 
         if not payload:
             return self

@@ -32,7 +32,7 @@ from .colour import Colour
 from .enums import DefaultAvatar
 from .flags import PublicUserFlags
 from .file import File
-from .utils import snowflake_time, _bytes_to_base64_data, MISSING
+from .utils import snowflake_time, _obj_to_base64_data, MISSING
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -396,14 +396,7 @@ class ClientUser(BaseUser):
         if username is not MISSING:
             payload['username'] = username
         if avatar is not MISSING:
-            if avatar is None:
-                payload['avatar'] = avatar
-            elif isinstance(avatar, bytes):
-                payload['avatar'] = _bytes_to_base64_data(avatar)
-            elif isinstance(avatar, File):
-                payload['avatar'] = _bytes_to_base64_data(avatar.fp.read())
-            else:
-                payload['avatar'] = _bytes_to_base64_data(await avatar.read())
+            payload['avatar'] = await _obj_to_base64_data(avatar)
 
         data: UserPayload = await self._state.http.edit_profile(payload)
         return ClientUser(state=self._state, data=data)
