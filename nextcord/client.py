@@ -1826,9 +1826,9 @@ class Client:
             Interaction from Discord to read data from.
         """
         if interaction.type is InteractionType.application_command:
-            _log.info("nextcord.Client: Found an interaction command.")
+            _log.debug("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
+                _log.debug(f"nextcord.Client: Calling your application command now {app_cmd.name}")
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
                 _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")

@@ -1036,7 +1036,9 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
     def __init__(
             self,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            description_localizations: Dict[Union[Locale, str], str] = None,
             required: bool = None,
             choices: Union[
                 Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]
@@ -1049,9 +1051,12 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
             default: Any = MISSING,
             verify: bool = True,
     ):
-        super().__init__(name=name, description=description, required=required, choices=choices,
-                         channel_types=channel_types, min_value=min_value, max_value=max_value,
-                         autocomplete=autocomplete)
+        super().__init__(
+            name=name, name_localizations=name_localizations, description=description,
+            description_localizations=description_localizations, required=required, choices=choices,
+            channel_types=channel_types, min_value=min_value, max_value=max_value, autocomplete=autocomplete
+        )
+
         self.autocomplete_callback: Callable = autocomplete_callback
         self.default: Any = default
         self._verify: bool = verify
@@ -1102,7 +1107,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             cmd_arg_given = False
 
         self.name = cmd_arg.name or parameter.name
+        self.name_localizations = cmd_arg.name_localizations
         self._description = cmd_arg.description
+        self.description_localizations = cmd_arg.description_localizations
         if cmd_arg.required is not None:  # If the user manually set it...
             self.required = cmd_arg.required
         elif type(None) in typing.get_args(parameter.annotation):  # If it's typed as Optional/None...
@@ -2318,7 +2325,7 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
         return False
 
     for key in dict1:
-        if isinstance(dict1[key], dict) and not deep_dictionary_check(
+        if isinstance(dict1[key], dict) and isinstance(dict2[key], dict) and not deep_dictionary_check(
             dict1[key], dict2[key]
         ):
             return False
