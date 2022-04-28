@@ -56,6 +56,7 @@ from .interactions import Interaction
 from .guild import Guild
 from .member import Member
 from .message import Attachment, Message
+from .permissions import Permissions
 from .role import Role
 from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
@@ -272,9 +273,13 @@ class ApplicationCommandOption:
         if self.choices:
             # Discord returns the names as strings, might as well do it here so payload comparison is easy.
             if isinstance(self.choices, dict):
-                ret["choices"] = [{"name": str(key), "value": value} for key, value in self.choices.items()]
+                ret["choices"] = [{
+                    "name": str(key), "value": value, "name_localizations": None,
+                } for key, value in self.choices.items()]
             else:
-                ret["choices"] = [{"name": str(value), "value": value} for value in self.choices]
+                ret["choices"] = [{
+                    "name": str(value), "value": value, "name_localizations": None,
+                } for value in self.choices]
 
         if self.channel_types:
             # noinspection PyUnresolvedReferences
@@ -1331,7 +1336,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             callback: Callable = None,
             cmd_type: ApplicationCommandType = None,
             guild_ids: Iterable[int] = None,
-            default_permission: Optional[bool] = None,
+            dm_permission: bool = None,
+            default_member_permissions: Optional[Union[Permissions, int]] = None,
             parent_cog: Optional[ClientCog] = None,
             force_global: bool = False
     ):
@@ -1356,9 +1362,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Type of application command. This should be set by subclasses.
         guild_ids: Iterable[:class:`int`]
             An iterable list/set/whatever of guild ID's that the application command should register to.
-        default_permission: Optional[:class:`bool`]
-            # TODO: See Discord documentation.
-            See Discord documentation.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
+            Only for guild commands, but will not error on global.
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -1373,7 +1384,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self._description: Optional[str] = description
         self.description_localizations: Optional[Dict[Union[str, Locale], str]] = description_localizations
         self.guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
-        self.default_permission: Optional[bool] = default_permission
+        self.dm_permission: Optional[bool] = dm_permission
+        self.default_member_permissions: Optional[Union[Permissions, int]] = default_member_permissions
+
         self.force_global: bool = force_global
 
         self.command_ids: Dict[Optional[int], int] = {}  # {Guild ID (None for global): command ID}
@@ -1508,6 +1521,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         else:
             return None
 
+    def get_default_member_permissions_value(self) -> Optional[int]:
+        if isinstance(self.default_member_permissions, int) or self.default_member_permissions is None:
+            return self.default_member_permissions
+        else:
+            return self.default_member_permissions.value
+
     def get_payload(self, guild_id: Optional[int]) -> dict:
         """Makes an Application Command payload for this command to upsert to Discord with the given Guild ID.
 
@@ -1531,13 +1550,20 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             "description_localizations": self.get_description_localization_payload()
         }
 
-        if self.default_permission is not None:
-            ret["default_permission"] = self.default_permission
-        else:
-            ret["default_permission"] = True
+        if self.default_member_permissions is not None:
+            # While Discord accepts it as an int, they will respond back with the permissions value as a string because
+            #  the permissions bitfield can get too big for them. Stringify it for easy payload-comparison.
+            ret["default_member_permissions"] = str(self.get_default_member_permissions_value())
 
-        if guild_id:
+        if guild_id:  # Guild-command specific payload options.
             ret["guild_id"] = guild_id
+        else:  # Global command specific payload options.
+            if self.dm_permission is not None:
+                # While Discord defaults to True, they only send back the DM permission if we set it, so this is fairly
+                #  safe it seems? Going from True to None will cause a command update, but that's not too bad at all.
+                #  They might change this behavior though, so we might need to do a:
+                # if self.dm_permission not in (None, True):
+                ret["dm_permission"] = self.dm_permission
 
         return ret
 
@@ -1585,8 +1611,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             return False
 
         if not check_dictionary_values(
-                cmd_payload, raw_payload, "default_permission", "description", "type", "name", "name_localizations",
-                "description_localizations",
+                cmd_payload, raw_payload, "default_member_permissions", "description", "type", "name",
+                "name_localizations", "description_localizations", "dm_permission",
         ):
             _log.debug("Failed check dictionary values, not valid payload.")
             return False
@@ -1983,7 +2009,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             description: str = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
-            default_permission: bool = None,
+            # default_permission: bool = None,
+            dm_permission: bool = None,
+            default_member_permissions: Optional[Union[Permissions, int]] = None,
             parent_cog: Optional[ClientCog] = None,
             force_global: bool = False
     ):
@@ -2000,6 +2028,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands.
         default_permission: Optional[:class:`bool`]
             # TODO: See Discord documentation.
             See Discord documentation.
@@ -2011,8 +2042,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         BaseApplicationCommand.__init__(self, name=name, name_localizations=name_localizations,
                                         description=description, callback=callback,
                                         cmd_type=ApplicationCommandType.chat_input, guild_ids=guild_ids,
-                                        default_permission=default_permission, parent_cog=parent_cog,
-                                        force_global=force_global)
+                                        default_member_permissions=default_member_permissions,
+                                        dm_permission=dm_permission, parent_cog=parent_cog, force_global=force_global
+                                        )
         AutocompleteCommandMixin.__init__(self, parent_cog=parent_cog)
         SlashCommandMixin.__init__(self, callback=callback, parent_cog=parent_cog)
 
@@ -2086,7 +2118,8 @@ class UserApplicationCommand(BaseApplicationCommand):
             name: str = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
-            default_permission: bool = None,
+            dm_permission: bool = None,
+            default_member_permissions: Optional[Union[Permissions, int]] = None,
             parent_cog: Optional[ClientCog] = None,
             force_global: bool = False
     ):
@@ -2101,17 +2134,24 @@ class UserApplicationCommand(BaseApplicationCommand):
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
-        default_permission: Optional[:class:`bool`]
-            # TODO: See Discord documentation.
-            See Discord documentation.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
+            Only for guild commands, but will not error on global.
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
             If this command should be registered as a global command, ALONG WITH all guild IDs set.
         """
-        super().__init__(name=name, description="", callback=callback,
-                         cmd_type=ApplicationCommandType.user, guild_ids=guild_ids,
-                         default_permission=default_permission, parent_cog=parent_cog, force_global=force_global)
+        super().__init__(
+            name=name, description="", callback=callback, cmd_type=ApplicationCommandType.user,
+            guild_ids=guild_ids, dm_permission=dm_permission, default_member_permissions=default_member_permissions,
+            parent_cog=parent_cog, force_global=force_global
+        )
 
     async def call(self, state: ConnectionState, interaction: Interaction):
         await self.invoke_callback_with_hooks(state, interaction, get_users_from_interaction(state, interaction)[0])
@@ -2129,7 +2169,8 @@ class MessageApplicationCommand(BaseApplicationCommand):
             name: str = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
-            default_permission: bool = None,
+            dm_permission: bool = None,
+            default_member_permissions: Optional[Union[Permissions, int]] = None,
             parent_cog: Optional[ClientCog] = None,
             force_global: bool = False
     ):
@@ -2144,17 +2185,24 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
-        default_permission: Optional[:class:`bool`]
-            # TODO: See Discord documentation.
-            See Discord documentation.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
+            Only for guild commands, but will not error on global.
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
             If this command should be registered as a global command, ALONG WITH all guild IDs set.
         """
-        super().__init__(name=name, description="", callback=callback,
-                         cmd_type=ApplicationCommandType.message, guild_ids=guild_ids,
-                         default_permission=default_permission, parent_cog=parent_cog, force_global=force_global)
+        super().__init__(
+            name=name, description="", callback=callback, cmd_type=ApplicationCommandType.message,
+            guild_ids=guild_ids, dm_permission=dm_permission, default_member_permissions=default_member_permissions,
+            parent_cog=parent_cog, force_global=force_global
+        )
 
     async def call(self, state: ConnectionState, interaction: Interaction):
         await self.invoke_callback_with_hooks(state, interaction, get_messages_from_interaction(state, interaction)[0])
@@ -2171,7 +2219,8 @@ def slash_command(
     name_localizations: Dict[Union[Locale, str], str] = None,
     description: str = None,
     guild_ids: Iterable[int] = None,
-    default_permission: Optional[bool] = None,
+    dm_permission: bool = None,
+    default_member_permissions: Optional[Union[Permissions, int]] = None,
     force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
@@ -2186,8 +2235,14 @@ def slash_command(
         If no docstring is found for the command callback, it defaults to "No description provided".
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-    default_permission: Optional[:class:`bool`]
-        If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+    dm_permission: :class:`bool`
+        If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+        usable in DMs. Only for global commands, but will not error on guild.
+    default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+        Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+        example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+        default. Server owners CAN override the permission requirements.
+        Only for guild commands, but will not error on global.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2203,7 +2258,8 @@ def slash_command(
             name_localizations=name_localizations,
             description=description,
             guild_ids=guild_ids,
-            default_permission=default_permission,
+            dm_permission=dm_permission,
+            default_member_permissions=default_member_permissions,
             force_global=force_global,
         )
         return app_cmd
@@ -2214,7 +2270,8 @@ def slash_command(
 def message_command(
     name: str = None,
     guild_ids: Iterable[int] = None,
-    default_permission: Optional[bool] = None,
+    dm_permission: bool = None,
+    default_member_permissions: Optional[Union[Permissions, int]] = None,
     force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
@@ -2226,8 +2283,14 @@ def message_command(
         Name of the command that users will see. If not set, it defaults to the name of the callback.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-    default_permission: Optional[:class:`bool`]
-        If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+    dm_permission: :class:`bool`
+        If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+        usable in DMs. Only for global commands, but will not error on guild.
+    default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+        Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+        example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+        default. Server owners CAN override the permission requirements.
+        Only for guild commands, but will not error on global.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2241,7 +2304,8 @@ def message_command(
             callback=func,
             name=name,
             guild_ids=guild_ids,
-            default_permission=default_permission,
+            dm_permission=dm_permission,
+            default_member_permissions=default_member_permissions,
             force_global=force_global,
         )
         return app_cmd
@@ -2252,7 +2316,8 @@ def message_command(
 def user_command(
     name: str = None,
     guild_ids: Iterable[int] = None,
-    default_permission: Optional[bool] = None,
+    dm_permission: bool = None,
+    default_member_permissions: Optional[Union[Permissions, int]] = None,
     force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
@@ -2264,8 +2329,14 @@ def user_command(
         Name of the command that users will see. If not set, it defaults to the name of the callback.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-    default_permission: Optional[:class:`bool`]
-        If users should be able to use this command by default or not. Defaults to Discord's default, `True`.
+    dm_permission: :class:`bool`
+        If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+        usable in DMs. Only for global commands, but will not error on guild.
+    default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+        Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+        example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+        default. Server owners CAN override the permission requirements.
+        Only for guild commands, but will not error on global.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2279,7 +2350,8 @@ def user_command(
             callback=func,
             name=name,
             guild_ids=guild_ids,
-            default_permission=default_permission,
+            dm_permission=dm_permission,
+            default_member_permissions=default_member_permissions,
             force_global=force_global,
         )
         return app_cmd
