@@ -46,7 +46,7 @@ from typing import (
 import typing
 
 from .abc import GuildChannel
-from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
+from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType, Locale
 from .errors import (
     ApplicationCheckFailure,
     ApplicationError,
@@ -173,7 +173,9 @@ class ApplicationCommandOption:
             self,
             cmd_type: ApplicationCommandOptionType = None,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            description_localizations: Dict[Union[Locale, str], str] = None,
             required: bool = None,
             choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]] = None,
             channel_types: List[ChannelType] = None,
@@ -191,8 +193,14 @@ class ApplicationCommandOption:
             Type of option the command should have.
         name: :class:`str`
             Display name of the option. Must be lowercase with no spaces, 1-32 characters.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+            localized name as the value
         description: :class:`str`
             Description of the option. Must be 1-100 characters.
+        description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+            localized description as the value.
         required: :class:`bool`
             If the option is required or optional.
         choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]],
@@ -210,7 +218,9 @@ class ApplicationCommandOption:
         """
         self.type: Optional[ApplicationCommandOptionType] = cmd_type
         self.name: Optional[str] = name
+        self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self.description: Optional[str] = description
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = description_localizations
         self.required: Optional[bool] = required
         self.choices: Optional[Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]]] = choices
         self.channel_types: Optional[List[ChannelType]] = channel_types
@@ -218,11 +228,44 @@ class ApplicationCommandOption:
         self.max_value: Optional[Union[int, float]] = max_value
         self.autocomplete: Optional[bool] = autocomplete
 
+    def get_name_localization_payload(self) -> Optional[dict]:
+        if self.name_localizations:
+            ret = {}
+            for locale, name in self.name_localizations.items():
+                if isinstance(locale, Locale):
+                    # noinspection PyUnresolvedReferences
+                    ret[locale.value] = name
+                else:
+                    ret[locale] = name
+            return ret
+        else:
+            return None
+
+    def get_description_localization_payload(self) -> Optional[dict]:
+        if self.description_localizations:
+            ret = {}
+            for locale, description in self.description_localizations.items():
+                if isinstance(locale, Locale):
+                    # noinspection PyUnresolvedReferences
+                    ret[locale.value] = description
+                else:
+                    ret[locale] = description
+            return ret
+        else:
+            return None
+
     @property
     def payload(self) -> dict:
         """:class:`dict`: Returns a dict payload made of the attributes of the option to be sent to Discord."""
         # noinspection PyUnresolvedReferences
-        ret = {"type": self.type.value, "name": self.name, "description": self.description}
+        ret = {
+            "type": self.type.value,
+            "name": self.name,
+            "description": self.description,
+            "name_localizations": self.get_name_localization_payload(),
+            "description_localizations": self.get_description_localization_payload(),
+        }
+
         if self.required:  # We don't check if it's None because if it's False, we don't want to send it.
             ret["required"] = self.required
 
@@ -1273,8 +1316,11 @@ class SlashCommandMixin(CallbackMixin):
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     def __init__(
             self,
+            *,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            description_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
             cmd_type: ApplicationCommandType = None,
             guild_ids: Iterable[int] = None,
@@ -1289,8 +1335,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         ----------
         name: :class:`str`
             Name of the command.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value.
         description: :class:`str`
             Description of the command.
+        description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Description(s) of the command for users of specific locales. The locale code should be the key, with the
+            localized description as the value.
         callback: Callable
             Callback to make the application command from, and to run when the application command is called.
         cmd_type: :class:`ApplicationCommandType`
@@ -1310,7 +1362,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self._state: Optional[ConnectionState] = None
         self.type: Optional[ApplicationCommandType] = cmd_type
         self.name: Optional[str] = name
+        self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self._description: Optional[str] = description
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = description_localizations
         self.guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
         self.default_permission: Optional[bool] = default_permission
         self.force_global: bool = force_global
@@ -1421,6 +1475,32 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         return ret
 
+    def get_name_localization_payload(self) -> Optional[dict]:
+        if self.name_localizations:
+            ret = {}
+            for locale, name in self.name_localizations.items():
+                if isinstance(locale, Locale):
+                    # noinspection PyUnresolvedReferences
+                    ret[locale.value] = name
+                else:
+                    ret[locale] = name
+            return ret
+        else:
+            return None
+
+    def get_description_localization_payload(self) -> Optional[dict]:
+        if self.description_localizations:
+            ret = {}
+            for locale, description in self.description_localizations.items():
+                if isinstance(locale, Locale):
+                    # noinspection PyUnresolvedReferences
+                    ret[locale.value] = description
+                else:
+                    ret[locale] = description
+            return ret
+        else:
+            return None
+
     def get_payload(self, guild_id: Optional[int]) -> dict:
         """Makes an Application Command payload for this command to upsert to Discord with the given Guild ID.
 
@@ -1440,7 +1520,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             "type": self.type.value,
             "name": str(self.name),  # Might as well stringify the name, will come in handy if people try using numbers.
             "description": self.description,
+            "name_localizations": self.get_name_localization_payload(),
+            "description_localizations": self.get_description_localization_payload()
         }
+
         if self.default_permission is not None:
             ret["default_permission"] = self.default_permission
         else:
@@ -1491,12 +1574,18 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """
         cmd_payload = self.get_payload(guild_id)
         if cmd_payload.get("guild_id", 0) != int(raw_payload.get("guild_id", 0)):
+            _log.debug("Guild ID doesn't match raw payload, not valid payload.")
             return False
 
-        if not check_dictionary_values(cmd_payload, raw_payload, "default_permission", "description", "type", "name"):
+        if not check_dictionary_values(
+                cmd_payload, raw_payload, "default_permission", "description", "type", "name", "name_localizations",
+                "description_localizations",
+        ):
+            _log.debug("Failed check dictionary values, not valid payload.")
             return False
 
         if len(cmd_payload.get("options", [])) != len(raw_payload.get("options", [])):
+            _log.debug("Option amount between commands not equal, not valid payload.")
             return False
 
         for cmd_option in cmd_payload.get("options", []):
@@ -1509,11 +1598,13 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                     # payloads from Discord. If that were to change, switch from a recursive setup and manually
                     # check_dictionary_values.
                     if not deep_dictionary_check(cmd_option, raw_option):
+                        _log.debug("Options failed deep dictionary checks, not valid payload.")
                         return False
 
                     break
 
             if not found_correct_value:
+                _log.debug("Discord is missing an option we have, not valid payload.")
                 return False
 
         return True
@@ -1702,7 +1793,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
     def __init__(
             self,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            description_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
             parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand] = None,
             cmd_type: ApplicationCommandOptionType = None,
@@ -1715,9 +1808,15 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         ----------
         name: :class:`str`
             Name of the subcommand (group). No capital letters or spaces. Defaults to the name of the callback.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+            localized name as the value.
         description: :class:`str`
             Description of the subcommand (group). Must be between 1-100 characters. If not provided, a default value
             will be given.
+        description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+            localized description as the value.
         callback: :class:`str`
             Callback to create the command from, and run when the command is called. If provided, it
             must be a coroutine. If this subcommand has subcommands, the callback will never be called.
@@ -1736,8 +1835,10 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         AutocompleteCommandMixin.__init__(self, parent_cog)
         CallbackWrapperMixin.__init__(self, callback)
 
-        self.name: str = name
-        self._description: str = description
+        self.name: Optional[str] = name
+        self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
+        self._description: Optional[str] = description
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = description_localizations
         self.type: ApplicationCommandOptionType = cmd_type
         self.parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand] = parent_cmd
         self._inherit_hooks: bool = inherit_hooks
@@ -1764,6 +1865,32 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         else:
             await self.call_slash(state, interaction, option_data)
 
+    def get_name_localization_payload(self) -> Optional[dict]:
+        if self.name_localizations:
+            ret = {}
+            for locale, name in self.name_localizations.items():
+                if isinstance(locale, Locale):
+                    # noinspection PyUnresolvedReferences
+                    ret[locale.value] = name
+                else:
+                    ret[locale] = name
+            return ret
+        else:
+            return None
+
+    def get_description_localization_payload(self) -> Optional[dict]:
+        if self.description_localizations:
+            ret = {}
+            for locale, description in self.description_localizations.items():
+                if isinstance(locale, Locale):
+                    # noinspection PyUnresolvedReferences
+                    ret[locale.value] = description
+                else:
+                    ret[locale] = description
+            return ret
+        else:
+            return None
+
     @property
     def payload(self) -> dict:
         """Returns a dict payload made of the attributes of the subcommand (group) to be sent to Discord."""
@@ -1772,7 +1899,10 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             "type": self.type.value,
             "name": str(self.name),  # Might as well stringify the name, will come in handy if people try using numbers.
             "description": self.description,
+            "name_localizations": self.get_name_localization_payload(),
+            "description_localizations": self.get_description_localization_payload(),
         }
+
         if self.children:
             ret["options"] = [child.payload for child in self.children.values()]
         elif self.options:
@@ -1842,6 +1972,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
     def __init__(
             self,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
@@ -1870,7 +2001,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         force_global: :class:`bool`
             If this command should be registered as a global command, ALONG WITH all guild IDs set.
         """
-        BaseApplicationCommand.__init__(self, name=name, description=description, callback=callback,
+        BaseApplicationCommand.__init__(self, name=name, name_localizations=name_localizations,
+                                        description=description, callback=callback,
                                         cmd_type=ApplicationCommandType.chat_input, guild_ids=guild_ids,
                                         default_permission=default_permission, parent_cog=parent_cog,
                                         force_global=force_global)
@@ -2029,6 +2161,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
 
 def slash_command(
     name: str = None,
+    name_localizations: Dict[Union[Locale, str], str] = None,
     description: str = None,
     guild_ids: Iterable[int] = None,
     default_permission: Optional[bool] = None,
@@ -2060,6 +2193,7 @@ def slash_command(
         app_cmd = SlashApplicationCommand(
             callback=func,
             name=name,
+            name_localizations=name_localizations,
             description=description,
             guild_ids=guild_ids,
             default_permission=default_permission,
@@ -2169,6 +2303,9 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
     """
     for keyword in keywords:
         if dict1.get(keyword, None) != dict2.get(keyword, None):
+            _log.debug(
+                "Failed basic dictionary value check:\n %s vs %s", dict1.get(keyword, None), dict2.get(keyword, None)
+            )
             return False
 
     return True
@@ -2177,6 +2314,7 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
 def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
     """Used to check if all keys and values between two dicts are equal, and recurses if it encounters a nested dict."""
     if dict1.keys() != dict2.keys():
+        _log.debug("Dict1 and Dict2 keys are not equal, not valid payload.\n %s vs %s", dict1.keys(), dict2.keys())
         return False
 
     for key in dict1:
@@ -2185,6 +2323,10 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
         ):
             return False
         elif dict1[key] != dict2[key]:
+            _log.debug(
+                "Dict1 and Dict2 values are not equal, not valid payload.\n Key: %s, values %s vs %s",
+                key, dict1[key], dict2[key]
+            )
             return False
 
     return True
