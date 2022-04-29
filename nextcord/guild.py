@@ -2613,7 +2613,7 @@ class Guild(Hashable):
             if isinstance(icon, str):
                 fields['unicode_emoji'] = icon
             else:
-                fields['icon'] = await _obj_to_base64_data(icon)
+                fields['icon'] = await utils._obj_to_base64_data(icon)
 
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
         role = Role(guild=self, data=data, state=self._state)
