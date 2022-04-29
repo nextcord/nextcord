@@ -92,8 +92,10 @@ if TYPE_CHECKING:
     from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
     from .application_command import BaseApplicationCommand, ClientCog
     from .channel import DMChannel
+    from .enums import Locale
     from .member import Member
     from .message import Message
+    from .permissions import Permissions
     from .voice_client import VoiceProtocol
     from .scheduled_events import ScheduledEvent
 
@@ -2307,8 +2309,10 @@ class Client:
     def user_command(
             self,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             guild_ids: Iterable[int] = None,
-            default_permission: Optional[bool] = None,
+            dm_permission: bool = None,
+            default_member_permissions: Optional[Union[Permissions, int]] = None,
             force_global: bool = False
     ):
         """Creates a User context command from the decorated function.
@@ -2317,17 +2321,30 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
             result = user_command(
-                name=name, guild_ids=guild_ids, default_permission=default_permission, force_global=force_global
+                name=name,
+                name_localizations=name_localizations,
+                guild_ids=guild_ids,
+                dm_permission=dm_permission,
+                default_member_permissions=default_member_permissions,
+                force_global=force_global
             )(func)
             self._application_commands_to_add.add(result)
             return result
@@ -2337,8 +2354,10 @@ class Client:
     def message_command(
             self,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             guild_ids: Iterable[int] = None,
-            default_permission: Optional[bool] = None,
+            dm_permission: bool = None,
+            default_member_permissions: Optional[Union[Permissions, int]] = None,
             force_global: bool = False
     ):
         """Creates a Message context command from the decorated function.
@@ -2347,17 +2366,30 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
             result = message_command(
-                name=name, guild_ids=guild_ids, default_permission=default_permission, force_global=force_global
+                name=name,
+                name_localizations=name_localizations,
+                guild_ids=guild_ids,
+                dm_permission=dm_permission,
+                default_member_permissions=default_member_permissions,
+                force_global=force_global
             )(func)
             self._application_commands_to_add.add(result)
             return result
@@ -2367,9 +2399,12 @@ class Client:
     def slash_command(
             self,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            description_localizations: Dict[Union[Locale, str], str] = None,
             guild_ids: Iterable[int] = None,
-            default_permission: Optional[bool] = None,
+            dm_permission: bool = None,
+            default_member_permissions: Optional[Union[Permissions, int]] = None,
             force_global: bool = False
     ):
         """Creates a Slash application command from the decorated function.
@@ -2378,20 +2413,37 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value.
         description: :class:`str`
             Description of the command that users will see. If not set, the docstring will be used.
             If no docstring is found for the command callback, it defaults to "No description provided".
+        description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Description(s) of the command for users of specific locales. The locale code should be the key, with the
+            localized description as the value.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
         """
         def decorator(func: Callable):
             result = slash_command(
-                name=name, description=description, guild_ids=guild_ids, default_permission=default_permission,
+                name=name,
+                name_localizations=name_localizations,
+                description=description,
+                description_localizations=description_localizations,
+                guild_ids=guild_ids,
+                dm_permission=dm_permission,
+                default_member_permissions=default_member_permissions,
                 force_global=force_global
             )(func)
             self._application_commands_to_add.add(result)

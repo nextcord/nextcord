@@ -2006,9 +2006,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             name: str = None,
             name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            description_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
-            # default_permission: bool = None,
             dm_permission: bool = None,
             default_member_permissions: Optional[Union[Permissions, int]] = None,
             parent_cog: Optional[ClientCog] = None,
@@ -2021,8 +2021,14 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         ----------
         name: :class:`str`
             Name of the command. Must be lowercase with no spaces.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+            localized name as the value.
         description: :class:`str`
-            Description of the command. Must be between 1 to 100 characters, or defaults
+            Description of the command. Must be between 1 to 100 characters, or defaults to a set string.
+        description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+            localized description as the value.
         callback: Callable
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
@@ -2030,20 +2036,29 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands.
-        default_permission: Optional[:class:`bool`]
-            # TODO: See Discord documentation.
-            See Discord documentation.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
             If this command should be registered as a global command, ALONG WITH all guild IDs set.
         """
-        BaseApplicationCommand.__init__(self, name=name, name_localizations=name_localizations,
-                                        description=description, callback=callback,
-                                        cmd_type=ApplicationCommandType.chat_input, guild_ids=guild_ids,
-                                        default_member_permissions=default_member_permissions,
-                                        dm_permission=dm_permission, parent_cog=parent_cog, force_global=force_global
-                                        )
+        BaseApplicationCommand.__init__(
+            self,
+            name=name,
+            name_localizations=name_localizations,
+            description=description,
+            description_localizations=description_localizations,
+            callback=callback,
+            cmd_type=ApplicationCommandType.chat_input,
+            guild_ids=guild_ids,
+            default_member_permissions=default_member_permissions,
+            dm_permission=dm_permission,
+            parent_cog=parent_cog,
+            force_global=force_global,
+        )
         AutocompleteCommandMixin.__init__(self, parent_cog=parent_cog)
         SlashCommandMixin.__init__(self, callback=callback, parent_cog=parent_cog)
 
@@ -2115,6 +2130,7 @@ class UserApplicationCommand(BaseApplicationCommand):
     def __init__(
             self,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
             dm_permission: bool = None,
@@ -2129,6 +2145,9 @@ class UserApplicationCommand(BaseApplicationCommand):
         ----------
         name: :class:`str`
             Name of the command. Can be uppercase with spaces.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+            localized name as the value.
         callback: Callable
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
@@ -2146,9 +2165,16 @@ class UserApplicationCommand(BaseApplicationCommand):
             If this command should be registered as a global command, ALONG WITH all guild IDs set.
         """
         super().__init__(
-            name=name, description="", callback=callback, cmd_type=ApplicationCommandType.user,
-            guild_ids=guild_ids, dm_permission=dm_permission, default_member_permissions=default_member_permissions,
-            parent_cog=parent_cog, force_global=force_global
+            name=name,
+            name_localizations=name_localizations,
+            description="",
+            callback=callback,
+            cmd_type=ApplicationCommandType.user,
+            guild_ids=guild_ids,
+            dm_permission=dm_permission,
+            default_member_permissions=default_member_permissions,
+            parent_cog=parent_cog,
+            force_global=force_global,
         )
 
     async def call(self, state: ConnectionState, interaction: Interaction):
@@ -2165,6 +2191,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
     def __init__(
             self,
             name: str = None,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
             dm_permission: bool = None,
@@ -2179,6 +2206,9 @@ class MessageApplicationCommand(BaseApplicationCommand):
         ----------
         name: :class:`str`
             Name of the command. Can be uppercase with spaces.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+            localized name as the value.
         callback: Callable
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
@@ -2196,9 +2226,16 @@ class MessageApplicationCommand(BaseApplicationCommand):
             If this command should be registered as a global command, ALONG WITH all guild IDs set.
         """
         super().__init__(
-            name=name, description="", callback=callback, cmd_type=ApplicationCommandType.message,
-            guild_ids=guild_ids, dm_permission=dm_permission, default_member_permissions=default_member_permissions,
-            parent_cog=parent_cog, force_global=force_global
+            name=name,
+            name_localizations=name_localizations,
+            description="",
+            callback=callback,
+            cmd_type=ApplicationCommandType.message,
+            guild_ids=guild_ids,
+            dm_permission=dm_permission,
+            default_member_permissions=default_member_permissions,
+            parent_cog=parent_cog,
+            force_global=force_global,
         )
 
     async def call(self, state: ConnectionState, interaction: Interaction):
@@ -2215,6 +2252,7 @@ def slash_command(
     name: str = None,
     name_localizations: Dict[Union[Locale, str], str] = None,
     description: str = None,
+    description_localizations: Dict[Union[Locale, str], str] = None,
     guild_ids: Iterable[int] = None,
     dm_permission: bool = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
@@ -2227,9 +2265,15 @@ def slash_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
+    name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+        Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+        name as the value.
     description: :class:`str`
         Description of the command that users will see. If not specified, the docstring will be used.
         If no docstring is found for the command callback, it defaults to "No description provided".
+    description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+        Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+        localized description as the value.
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     dm_permission: :class:`bool`
@@ -2253,6 +2297,7 @@ def slash_command(
             name=name,
             name_localizations=name_localizations,
             description=description,
+            description_localizations=description_localizations,
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
@@ -2265,6 +2310,7 @@ def slash_command(
 
 def message_command(
     name: str = None,
+    name_localizations: Dict[Union[Locale, str], str] = None,
     guild_ids: Iterable[int] = None,
     dm_permission: bool = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
@@ -2277,6 +2323,9 @@ def message_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
+    name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+        Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+        name as the value
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     dm_permission: :class:`bool`
@@ -2298,6 +2347,7 @@ def message_command(
         app_cmd = MessageApplicationCommand(
             callback=func,
             name=name,
+            name_localizations=name_localizations,
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
@@ -2310,6 +2360,7 @@ def message_command(
 
 def user_command(
     name: str = None,
+    name_localizations: Dict[Union[Locale, str], str] = None,
     guild_ids: Iterable[int] = None,
     dm_permission: bool = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
@@ -2322,6 +2373,9 @@ def user_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
+    name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+        Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+        name as the value
     guild_ids: Iterable[:class:`int`]
         IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
     dm_permission: :class:`bool`
@@ -2343,6 +2397,7 @@ def user_command(
         app_cmd = UserApplicationCommand(
             callback=func,
             name=name,
+            name_localizations=name_localizations,
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
