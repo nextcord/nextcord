@@ -84,7 +84,6 @@ from .utils import MISSING
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
-from .file import File
 
 
 if TYPE_CHECKING:
@@ -94,6 +93,7 @@ if TYPE_CHECKING:
     from .channel import DMChannel
     from .member import Member
     from .message import Message, Attachment
+    from .file import File
     from .voice_client import VoiceProtocol
     from .scheduled_events import ScheduledEvent
 
@@ -1366,7 +1366,7 @@ class Client:
         region: :class:`.VoiceRegion`
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
-        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`]]
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
             for more details on what is expected.
         code: :class:`str`

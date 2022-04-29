@@ -70,7 +70,6 @@ from .enums import (
     try_enum,
 )
 from .errors import ClientException, InvalidArgument, InvalidData
-from .file import File
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
@@ -105,6 +104,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .template import Template
     from .message import Attachment
+    from .file import File
     from .types.guild import Ban as BanPayload
     from .types.guild import Guild as GuildPayload
     from .types.guild import GuildFeature, MFALevel
@@ -2610,7 +2610,7 @@ class Guild(Hashable):
             fields['name'] = name
 
         if icon is not MISSING:
-            if icon is None or isinstance(icon, str):
+            if isinstance(icon, str):
                 fields['unicode_emoji'] = icon
             fields['icon'] = await utils._obj_to_base64_data(icon)
 

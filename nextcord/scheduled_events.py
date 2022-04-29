@@ -32,7 +32,6 @@ from .mixins import Hashable
 from .types.snowflake import Snowflake
 from .utils import MISSING, parse_time, _obj_to_base64_data
 from .asset import Asset
-from .file import File
 __all__: Tuple[str] = (
     'EntityMetadata',
     'ScheduledEventUser',
@@ -48,6 +47,7 @@ if TYPE_CHECKING:
     from .member import Member
     from .state import ConnectionState
     from .message import Attachment
+    from .file import File
     from .types.scheduled_events import (
         ScheduledEvent as ScheduledEventPayload,
         ScheduledEventUser as ScheduledEventUserPayload

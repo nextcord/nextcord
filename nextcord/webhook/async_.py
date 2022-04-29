@@ -44,7 +44,6 @@ from ..asset import Asset
 from ..http import Route
 from ..mixins import Hashable
 from ..channel import PartialMessageable
-from ..file import File
 
 __all__ = (
     'Webhook',
@@ -70,6 +69,7 @@ if TYPE_CHECKING:
     from ..channel import TextChannel
     from ..abc import Snowflake
     from ..ui.view import View
+    from ..file import File
     import datetime
 
 MISSING = utils.MISSING

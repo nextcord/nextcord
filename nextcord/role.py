@@ -31,7 +31,6 @@ from .permissions import Permissions
 from .errors import InvalidArgument
 from .colour import Colour
 from .mixins import Hashable
-from .file import File
 from .utils import snowflake_time, _get_as_snowflake, MISSING
 
 __all__ = (
@@ -47,6 +46,7 @@ if TYPE_CHECKING:
     )
     from .types.guild import RolePositionUpdate
     from .message import Attachment
+    from .file import File
     from .guild import Guild
     from .member import Member
     from .state import ConnectionState
@@ -450,7 +450,7 @@ class Role(Hashable):
             payload['mentionable'] = mentionable
 
         if icon is not MISSING:
-            if icon is None or isinstance(icon, str):
+            if isinstance(icon, str):
                 payload['unicode_emoji'] = icon
             payload['icon'] = await _obj_to_base64_data(icon)
 

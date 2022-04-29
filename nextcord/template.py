@@ -28,7 +28,6 @@ from typing import Any, Optional, TYPE_CHECKING, Union
 from .utils import parse_time, _obj_to_base64_data, MISSING
 from .enums import VoiceRegion
 from .guild import Guild
-from .file import File
 
 __all__ = (
     'Template',
@@ -38,6 +37,7 @@ if TYPE_CHECKING:
     import datetime
     from .asset import Asset
     from .message import Attachment
+    from .file import File
     from .types.template import Template as TemplatePayload
     from .state import ConnectionState
     from .user import User
