@@ -554,7 +554,7 @@ class Interaction:
         InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         TypeError
-            An object of type :class:`File` was passed to ``file`` or ``files``.
+            An object not of type :class:`File` was passed to ``file`` or ``files``.
         HTTPException
             Editing the message failed.
         InvalidArgument
@@ -776,7 +776,7 @@ class InteractionResponse:
         InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
         TypeError
-            An object of type :class:`File` was passed to ``file`` or ``files``.
+            An object not of type :class:`File` was passed to ``file`` or ``files``.
         ValueError
             The length of ``embeds`` was invalid.
         InteractionResponded
@@ -947,7 +947,7 @@ class InteractionResponse:
         InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         TypeError
-            An object of type :class:`File` was passed to ``file`` or ``files``.
+            An object not of type :class:`File` was passed to ``file`` or ``files``.
         InteractionResponded
             This interaction has already been responded to before.
 
