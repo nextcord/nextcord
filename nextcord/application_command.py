@@ -1369,7 +1369,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
-            Only for guild commands, but will not error on global.
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -1390,7 +1389,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self.force_global: bool = force_global
 
         self.command_ids: Dict[Optional[int], int] = {}  # {Guild ID (None for global): command ID}
-        self.options: Dict[str, SlashOption] = {}
+        self.options: Dict[str, ApplicationCommandOption] = {}
 
     # Simple-ish getter + setter methods.
 
@@ -2141,7 +2140,6 @@ class UserApplicationCommand(BaseApplicationCommand):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
-            Only for guild commands, but will not error on global.
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2192,7 +2190,6 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
-            Only for guild commands, but will not error on global.
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2242,7 +2239,6 @@ def slash_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
-        Only for guild commands, but will not error on global.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2290,7 +2286,6 @@ def message_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
-        Only for guild commands, but will not error on global.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2336,7 +2331,6 @@ def user_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
-        Only for guild commands, but will not error on global.
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.

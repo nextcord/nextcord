@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 from typing import Union
 
-from nextcord.application_command import CallbackWrapper, SlashApplicationCommand, SlashApplicationSubcommand
+from nextcord import CallbackWrapper, SlashApplicationCommand, SlashApplicationSubcommand
 
 
 def describe(**kwargs: str) -> Union[SlashApplicationCommand, SlashApplicationSubcommand, "DescribeWrapper"]:
