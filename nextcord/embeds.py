@@ -616,12 +616,18 @@ class Embed:
 
         return self
 
-    def clear_fields(self) -> None:
-        """Removes all fields from this embed."""
+    def clear_fields(self: E) -> E:
+        """Removes all fields from this embed.
+
+        This function returns the class instance to allow for fluent-style
+        chaining.
+        """
         try:
             self._fields.clear()
         except AttributeError:
             self._fields = []
+
+        return self
 
     def remove_field(self, index: int) -> None:
         """Removes a field at a specified index.
