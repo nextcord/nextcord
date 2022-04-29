@@ -1559,8 +1559,7 @@ class Guild(Hashable):
             fields['afk_timeout'] = afk_timeout
 
         if icon is not MISSING:
-            if icon is None:
-                fields['icon'] = await utils._obj_to_base64_data(icon)
+            fields['icon'] = await utils._obj_to_base64_data(icon)
 
         if banner is not MISSING:
             fields['banner'] = await utils._obj_to_base64_data(banner)
