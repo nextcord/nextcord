@@ -38,6 +38,7 @@ __all__ = ('TextInput',)
 if TYPE_CHECKING:
     from .view import View
     from ..types.interactions import ComponentInteractionData
+    from ..types.components import TextInputComponent as TextInputComponentPayload
 
 
 T = TypeVar('T', bound='TextInput')
@@ -244,7 +245,7 @@ class TextInput(Item[V]):
     def type(self) -> ComponentType:
         return self._underlying.type
 
-    def to_component_dict(self):
+    def to_component_dict(self) -> TextInputComponentPayload:
         return self._underlying.to_dict()
 
     def is_dispatchable(self) -> bool:
