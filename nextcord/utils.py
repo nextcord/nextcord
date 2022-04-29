@@ -62,7 +62,7 @@ import sys
 import types
 import warnings
 
-from . import File
+from .file import File
 from .errors import InvalidArgument
 
 try:

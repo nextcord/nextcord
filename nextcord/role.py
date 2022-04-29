@@ -452,7 +452,8 @@ class Role(Hashable):
         if icon is not MISSING:
             if isinstance(icon, str):
                 payload['unicode_emoji'] = icon
-            payload['icon'] = await _obj_to_base64_data(icon)
+            else:
+                payload['icon'] = await _obj_to_base64_data(icon)
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         return Role(guild=self.guild, data=data, state=self._state)
