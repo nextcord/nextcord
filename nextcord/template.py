@@ -172,7 +172,7 @@ class Template:
     async def create_guild(
         self,
         name: str,
-        region: Union[VoiceRegion, str] = VoiceRegion.us_west,
+        region: Optional[VoiceRegion] = None,
         icon: Optional[Union[bytes, Asset, Attachment, File]] = None,
     ) -> Guild:
         """|coro|
@@ -207,10 +207,10 @@ class Template:
         """
         icon_base64 = await _obj_to_base64_data(icon)
 
-        if isinstance(region, VoiceRegion):
-            region = str(region)
+        region = region or VoiceRegion.us_west
+        region_value = region.value
 
-        data = await self._state.http.create_from_template(self.code, name, region, icon_base64)
+        data = await self._state.http.create_from_template(self.code, name, region_value, icon_base64)
         return Guild(data=data, state=self._state)
 
     async def sync(self) -> Template:
