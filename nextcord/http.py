@@ -563,7 +563,7 @@ class HTTPClient:
             'tts': tts,
             'attachments': attachments or [],
         }
-        form = self.get_message_form(
+        form = self.get_message_multipart_form(
             payload,
             files=files,
             content=content,
@@ -1041,7 +1041,7 @@ class HTTPClient:
             'rate_limit_per_user': rate_limit_per_user,
             'attachments': attachments or [],
         }
-        form = self.get_message_form(
+        form = self.get_message_multipart_form(
             payload,
             files=files,
             content=content,
