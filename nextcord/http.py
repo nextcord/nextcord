@@ -1058,7 +1058,7 @@ class HTTPClient:
         )
         params = {"use_nested_fields": "true"}
         route = Route('POST', '/channels/{channel_id}/threads', channel_id=channel_id)
-        return self.request(route, json=payload, form=form, files=files, reason=reason, params=params)
+        return self.request(route, form=form, files=files, reason=reason, params=params)
 
     def join_thread(self, channel_id: Snowflake) -> Response[None]:
         return self.request(Route('POST', '/channels/{channel_id}/thread-members/@me', channel_id=channel_id))
