@@ -50,6 +50,7 @@ import weakref
 import aiohttp
 
 from .errors import HTTPException, Forbidden, NotFound, LoginFailure, DiscordServerError, GatewayNotFound, InvalidArgument
+from .file import File
 from .gateway import DiscordClientWebSocketResponse
 from . import __version__, utils
 from .utils import MISSING
@@ -57,7 +58,6 @@ from .utils import MISSING
 _log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from .file import File
     from .enums import (
         AuditLogAction,
         InteractionResponseType,
@@ -491,7 +491,7 @@ class HTTPClient:
     # basic method to get the multipart form without requesting to send a message
     def get_message_multipart_form(
         self,
-        payload: Dict[str, Any],
+        payload: Dict[str, Any]={},
         *,
         files: Sequence[File],
         content: Optional[str] = None,
@@ -1013,9 +1013,11 @@ class HTTPClient:
             stickers=stickers,
             components=components,
         )
-        payload.update(msg_payload)
+        if msg_payload != {}:
+            payload["message"] = msg_payload
+        params = {"use_nested_fields": "true"}
         route = Route('POST', '/channels/{channel_id}/threads', channel_id=channel_id)
-        return self.request(route, json=payload, reason=reason)
+        return self.request(route, json=payload, reason=reason, params=params)
     
     def start_thread_in_forum_channel_with_files(
         self,
@@ -1042,7 +1044,6 @@ class HTTPClient:
             'attachments': attachments or [],
         }
         form = self.get_message_multipart_form(
-            payload,
             files=files,
             content=content,
             embed=embed,
@@ -1053,8 +1054,15 @@ class HTTPClient:
             components=components,
             attachments=attachments,
         )
+        if form != [{}]:
+            form_data = aiohttp.FormData(quote_fields=False)
+            for params in form:
+                form_data.add_field(**params)
+            payload['message'] = form_data
+        payload['use_nested_fields'] = 'true'
+        params = {"use_nested_fields": "true"}
         route = Route('POST', '/channels/{channel_id}/threads', channel_id=channel_id)
-        return self.request(route, form=form, files=files, reason=reason)
+        return self.request(route, json=payload, files=files, reason=reason, params=params)
 
     def join_thread(self, channel_id: Snowflake) -> Response[None]:
         return self.request(Route('POST', '/channels/{channel_id}/thread-members/@me', channel_id=channel_id))
