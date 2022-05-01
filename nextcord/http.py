@@ -492,6 +492,7 @@ class HTTPClient:
     def get_message_multipart_form(
         self,
         payload: Dict[str, Any]={},
+        message_key: str = None,
         *,
         files: Sequence[File],
         content: Optional[str] = None,
@@ -507,23 +508,22 @@ class HTTPClient:
         form = []
         
         payload['attachments'] = attachments or []
-
-        if content is not None:
-            payload['content'] = content
-        if embed is not None:
-            payload['embeds'] = [embed]
-        if embeds is not None:
-            payload['embeds'] = embeds
-        if nonce is not None:
-            payload['nonce'] = nonce
-        if allowed_mentions is not None:
-            payload['allowed_mentions'] = allowed_mentions
-        if message_reference is not None:
-            payload['message_reference'] = message_reference
-        if components is not None:
-            payload['components'] = components
-        if stickers is not None:
-            payload['sticker_ids'] = stickers
+        
+        msg_payload = self.get_message_payload(
+            content,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            message_reference=message_reference,
+            stickers=stickers,
+            components=components,
+        )
+            
+        if message_key:
+            payload[message_key] = msg_payload
+        else:
+            payload.update(msg_payload)
 
         form.append({'name': 'payload_json'})
         for index, file in enumerate(files):
@@ -1044,6 +1044,8 @@ class HTTPClient:
             'attachments': attachments or [],
         }
         form = self.get_message_multipart_form(
+            payload=payload,
+            message_key='message',
             files=files,
             content=content,
             embed=embed,
@@ -1054,15 +1056,9 @@ class HTTPClient:
             components=components,
             attachments=attachments,
         )
-        if form != [{}]:
-            form_data = aiohttp.FormData(quote_fields=False)
-            for params in form:
-                form_data.add_field(**params)
-            payload['message'] = form_data
-        payload['use_nested_fields'] = 'true'
         params = {"use_nested_fields": "true"}
         route = Route('POST', '/channels/{channel_id}/threads', channel_id=channel_id)
-        return self.request(route, json=payload, files=files, reason=reason, params=params)
+        return self.request(route, json=payload, form=form, files=files, reason=reason, params=params)
 
     def join_thread(self, channel_id: Snowflake) -> Response[None]:
         return self.request(Route('POST', '/channels/{channel_id}/thread-members/@me', channel_id=channel_id))
