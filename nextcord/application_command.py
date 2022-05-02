@@ -1269,7 +1269,7 @@ class SlashCommandMixin(CallbackMixin):
     def description(self) -> str:
         if self._description is not None:
             return self._description
-        elif docstring := self._parsed_docstring["description"]:
+        elif self._parsed_docstring and (docstring := self._parsed_docstring["description"]):
             return docstring
         else:
             return DEFAULT_SLASH_DESCRIPTION
