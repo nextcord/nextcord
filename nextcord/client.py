@@ -1865,16 +1865,18 @@ class Client:
 
                 if do_deploy:
                     if interaction.guild:
-                        await interaction.guild.deploy_application_commands(
+                        await self.discover_application_commands(
+                            guild_id=interaction.guild.id,
                             associate_known=self._rollout_associate_known,
                             delete_unknown=self._rollout_delete_unknown,
-                            update_known=self._rollout_update_known
+                            update_known=self._rollout_update_known,
                         )
                     else:
-                        await self.deploy_application_commands(
+                        await self.discover_application_commands(
+                            guild_id=None,
                             associate_known=self._rollout_associate_known,
                             delete_unknown=self._rollout_delete_unknown,
-                            update_known=self._rollout_update_known
+                            update_known=self._rollout_update_known,
                         )
 
         elif interaction.type is InteractionType.application_command_autocomplete:
@@ -2216,7 +2218,7 @@ class Client:
         return ret
 
     async def on_connect(self) -> None:
-        self.add_startup_application_commands()
+        self.add_all_application_commands()
         # await self.rollout_application_commands()
         await self.sync_application_commands(
             guild_id=None, associate_known=self._rollout_associate_known, delete_unknown=self._rollout_delete_unknown,
