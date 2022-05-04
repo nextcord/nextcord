@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -434,8 +435,8 @@ class Member(abc.Messageable, _UserTag):
             return to_return, u
 
     @property
-    def status(self) -> Status:
-        """:class:`Status`: The member's overall status. If the value is unknown, then it will be a :class:`str` instead."""
+    def status(self) -> Union[Status, str]:
+        """Union[:class:`Status`, :class:`str`]: The member's overall status. If the value is unknown, then it will be a :class:`str` instead."""
         return try_enum(Status, self._client_status[None])
 
     @property

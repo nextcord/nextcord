@@ -3157,7 +3157,11 @@ class Guild(Hashable):
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
-    async def fetch_scheduled_events(self, *, with_users: bool = False) -> ScheduledEventIterator:
+    def fetch_scheduled_events(
+        self,
+        *,
+        with_users: bool = False
+    ) -> ScheduledEventIterator:
         """Retrieves an :class:`.AsyncIterator` that enables receiving scheduled
         events on this guild
 
