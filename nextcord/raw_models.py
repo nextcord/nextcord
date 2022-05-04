@@ -42,7 +42,6 @@ if TYPE_CHECKING:
         ReactionClearEvent,
         TypingEvent,
     )
-    from .user import User
 
 
 __all__ = (

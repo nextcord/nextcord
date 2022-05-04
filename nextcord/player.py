@@ -39,7 +39,6 @@ from typing import (
     IO,
     TYPE_CHECKING,
     Any,
-    Awaitable,
     Callable,
     Generic,
     Optional,

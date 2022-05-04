@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, overload
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type
 
 from .enums import ExpireBehaviour, try_enum
 from .errors import InvalidArgument

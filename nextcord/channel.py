@@ -82,7 +82,6 @@ if TYPE_CHECKING:
     )
     from .types.snowflake import SnowflakeList
     from .types.threads import ThreadArchiveDuration
-    from .types.user import PartialUser
     from .user import BaseUser, ClientUser, User
     from .webhook import Webhook
 

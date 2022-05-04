@@ -30,7 +30,6 @@ from typing import (
     Callable,
     ClassVar,
     Dict,
-    Generic,
     Iterator,
     List,
     Optional,

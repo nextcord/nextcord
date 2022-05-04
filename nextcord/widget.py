@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Optional, Union
 
-from .activity import Activity, BaseActivity, Spotify, create_activity
+from .activity import BaseActivity, Spotify, create_activity
 from .enums import Status, try_enum
 from .invite import Invite
 from .user import BaseUser

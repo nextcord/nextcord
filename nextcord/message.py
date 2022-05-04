@@ -55,7 +55,6 @@ from .flags import MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
-from .object import Object
 from .partial_emoji import PartialEmoji
 from .reaction import Reaction
 from .sticker import StickerItem
@@ -64,7 +63,7 @@ from .utils import MISSING, escape_mentions
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
-    from .channel import DMChannel, GroupChannel, PartialMessageable, TextChannel
+    from .channel import TextChannel
     from .components import Component
     from .mentions import AllowedMentions
     from .role import Role

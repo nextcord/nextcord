@@ -83,7 +83,7 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import ApplicationCommand, ApplicationSubcommand, ClientCog
+    from .application_command import ApplicationCommand, ClientCog
     from .channel import DMChannel
     from .member import Member
     from .message import Message

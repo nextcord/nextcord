@@ -42,7 +42,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    overload,
 )
 
 from . import abc, utils
