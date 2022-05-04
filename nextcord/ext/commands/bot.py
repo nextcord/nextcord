@@ -752,7 +752,7 @@ class BotBase(GroupMixin):
             .. versionadded:: 1.7
         extras: Optional[:class:`dict`]
             A mapping of kwargs to values to be passed to your
-            cog's ``__init__`` method as key word arguments.
+            cog's ``__init__`` method as keyword arguments.
 
             Usage ::
 

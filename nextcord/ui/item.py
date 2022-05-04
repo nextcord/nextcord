@@ -24,18 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Coroutine,
-    Dict,
-    Generic,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from typing import Any, Callable, Coroutine, Generic, Optional, TYPE_CHECKING, Tuple, Type, TypeVar
 
 from ..interactions import Interaction
 
@@ -45,6 +34,8 @@ if TYPE_CHECKING:
     from ..components import Component
     from ..enums import ComponentType
     from .view import View
+    from ..components import Component
+    from ..types.components import Component as ComponentPayload
 
 I = TypeVar("I", bound="Item")
 V = TypeVar("V", bound="View", covariant=True)
@@ -76,7 +67,7 @@ class Item(Generic[V]):
         # only called upon edit and we're mainly interested during initial creation time.
         self._provided_custom_id: bool = False
 
-    def to_component_dict(self) -> Dict[str, Any]:
+    def to_component_dict(self) -> ComponentPayload:
         raise NotImplementedError
 
     def refresh_component(self, component: Component) -> None:

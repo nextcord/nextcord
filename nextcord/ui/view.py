@@ -23,6 +23,9 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
+from typing import Callable, ClassVar, Dict, Iterator, List, Optional, Sequence, TYPE_CHECKING, Tuple
+from functools import partial
+from itertools import groupby
 
 import asyncio
 import os
@@ -60,6 +63,7 @@ __all__ = ("View",)
 if TYPE_CHECKING:
     from ..interactions import Interaction
     from ..message import Message
+    from ..types.components import Component as ComponentPayload, ActionRow as ActionRowPayload
     from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
 
@@ -208,12 +212,12 @@ class View:
             # Wait N seconds to see if timeout data has been refreshed
             await asyncio.sleep(self.__timeout_expiry - now)
 
-    def to_components(self) -> List[Dict[str, Any]]:
+    def to_components(self) -> List[ActionRowPayload]:
         def key(item: Item) -> int:
             return item._rendered_row or 0
 
         children = sorted(self.children, key=key)
-        components: List[Dict[str, Any]] = []
+        components: List[ActionRowPayload] = []
         for _, group in groupby(children, key=key):
             children = [item.to_component_dict() for item in group]
             if not children:

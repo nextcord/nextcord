@@ -1003,7 +1003,6 @@ class ApplicationSubcommand:
             if state._application_command_before_invoke is not None:
                 await state._application_command_before_invoke(interaction)
 
-            invoke_error = None
             try:
                 await callback(*args)
             except Exception as error:
@@ -1365,7 +1364,6 @@ class ApplicationCommand(ApplicationSubcommand):
         guild_ids: Iterable[int] = MISSING,
         default_permission: Optional[bool] = None,
         force_global: bool = False,
-        inherit_hooks: bool = False,
     ):
         super().__init__(callback=callback, cmd_type=cmd_type, name=name, description=description)
         self._state: Optional[ConnectionState] = None
