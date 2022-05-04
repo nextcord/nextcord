@@ -629,11 +629,14 @@ class Embed:
 
         return self
 
-    def remove_field(self, index: int) -> None:
+    def remove_field(self: E, index: int) -> E:
         """Removes a field at a specified index.
 
         If the index is invalid or out of bounds then the error is
         silently swallowed.
+
+        This function returns the class instance to allow for fluent-style
+        chaining.
 
         .. note::
 
@@ -649,6 +652,8 @@ class Embed:
             del self._fields[index]
         except (AttributeError, IndexError):
             pass
+
+        return self
 
     def set_field_at(self: E, index: int, *, name: Any, value: Any, inline: bool = True) -> E:
         """Modifies a field to the embed object.
