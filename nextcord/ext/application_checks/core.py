@@ -73,8 +73,6 @@ __all__ = (
     "application_command_after_invoke",
 )
 
-T = TypeVar("T")
-
 
 def check(predicate: "ApplicationCheck") -> Callable[[AC], AC]:
     r"""A decorator that adds a check to the :class:`.ApplicationCommand` or its

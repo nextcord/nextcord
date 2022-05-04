@@ -50,11 +50,11 @@ class _InviteMetadata(TypedDict, total=False):
     temporary: bool
     created_at: str
     expires_at: Optional[str]
+    revoked: Optional[bool]
 
 
 class VanityInvite(_InviteMetadata):
-    code: str
-    revoked: Optional[bool]
+    code: Optional[str]
 
 
 class IncompleteInvite(_InviteMetadata):

@@ -2912,22 +2912,22 @@ class Guild(Hashable):
 
         Parameters
         -----------
-        limit: Optional[:class:`int`]
+        limit: :class:`int`
             The number of entries to retrieve. If ``None`` retrieve all entries.
-        before: Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]
+        before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
             Retrieve entries before this date or entry.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
             If the datetime is naive, it is assumed to be local time.
-        after: Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]
+        after: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
             Retrieve entries after this date or entry.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
             If the datetime is naive, it is assumed to be local time.
-        oldest_first: :class:`bool`
+        oldest_first: Optional[:class:`bool`]
             If set to ``True``, return entries in oldest->newest order. Defaults to ``True`` if
             ``after`` is specified, otherwise ``False``.
-        user: :class:`abc.Snowflake`
+        user: Optional[:class:`abc.Snowflake`]
             The moderator to filter entries from.
-        action: :class:`AuditLogAction`
+        action: Optional[:class:`AuditLogAction`]
             The action to filter with.
 
         Raises

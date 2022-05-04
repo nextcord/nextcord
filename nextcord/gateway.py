@@ -727,7 +727,7 @@ class DiscordWebSocket:
         await self.socket.close(code=code)
 
 
-async def _hook(self, *args):
+async def _hook(*args):
     pass
 
 

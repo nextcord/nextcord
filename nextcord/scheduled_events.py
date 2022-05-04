@@ -31,7 +31,7 @@ from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
-from .utils import _bytes_to_base64_data, parse_time
+from .utils import MISSING, _bytes_to_base64_data, parse_time
 
 __all__: Tuple[str, ...] = (
     "EntityMetadata",
@@ -324,17 +324,17 @@ class ScheduledEvent(Hashable):
     async def edit(
         self,
         *,
-        channel: Optional[GuildChannel] = None,
-        metadata: Optional[EntityMetadata] = None,
-        name: Optional[str] = None,
-        privacy_level: Optional[ScheduledEventPrivacyLevel] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        description: Optional[str] = None,
-        type: Optional[ScheduledEventEntityType] = None,
-        status: Optional[ScheduledEventStatus] = None,
-        reason: Optional[str] = None,
-        image: Optional[bytes] = None,
+        channel: GuildChannel = MISSING,
+        metadata: EntityMetadata = MISSING,
+        name: str = MISSING,
+        privacy_level: ScheduledEventPrivacyLevel = MISSING,
+        start_time: datetime = MISSING,
+        end_time: datetime = MISSING,
+        description: str = MISSING,
+        type: ScheduledEventEntityType = MISSING,
+        status: ScheduledEventStatus = MISSING,
+        reason: str = MISSING,
+        image: Optional[bytes] = MISSING,
     ) -> ScheduledEvent:
         """|coro|
 
@@ -377,34 +377,34 @@ class ScheduledEvent(Hashable):
             The updated event object.
         """
         payload: dict = {}
-        if channel is not None:
+        if channel is not MISSING:
             payload["channel_id"] = channel.id
 
-        if metadata is not None:
+        if metadata is not MISSING:
             payload["entity_metadata"] = metadata.__dict__
 
-        if name is not None:
+        if name is not MISSING:
             payload["name"] = name
 
-        if privacy_level is not None:
+        if privacy_level is not MISSING:
             payload["privacy_level"] = privacy_level.value
 
-        if start_time is not None:
+        if start_time is not MISSING:
             payload["scheduled_start_time"] = start_time.isoformat()
 
-        if end_time is not None:
+        if end_time is not MISSING:
             payload["scheduled_end_time"] = end_time.isoformat()
 
-        if description is not None:
+        if description is not MISSING:
             payload["description"] = description
 
-        if type is not None:
+        if type is not MISSING:
             payload["type"] = type.value
 
-        if status is not None:
+        if status is not MISSING:
             payload["status"] = status.value
 
-        if image is not None:
+        if image is not MISSING:
             if image is None:
                 payload["image"] = image
             else:
@@ -452,9 +452,9 @@ class ScheduledEvent(Hashable):
             Amount of users to fetch, by default 100
         with_member: :class:`bool`
             If the user objects should contain members too, by default False
-        before: :class:`int`
+        before: Optional[:class:`int`]
             A snowflake id to start with, useful for chunks of users, by default None
-        after: :class:`int`
+        after: Optional[:class:`int`]
             A snowflake id to end with, useful for chunks of usersby default None
 
         Yields

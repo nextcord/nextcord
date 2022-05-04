@@ -179,15 +179,12 @@ class TextInput(Item[V]):
         self._underlying.max_length = value
 
     @property
-    def required(self) -> bool:
+    def required(self) -> Optional[bool]:
         """:class:`bool`: Whether this component is required to be filled"""
-        if self._underlying.required is not None:
-            return self._underlying.required
-        else:
-            return False
+        return self._underlying.required
 
     @required.setter
-    def required(self, value: bool):
+    def required(self, value: Optional[bool]):
         if value is not None and not isinstance(value, bool):
             raise TypeError("required must be None or bool")
 
@@ -213,12 +210,12 @@ class TextInput(Item[V]):
         return self._inputed_value
 
     @property
-    def placeholder(self) -> str:
+    def placeholder(self) -> Optional[str]:
         """Optional[:class:`str`]: The text shown to the user when the text input is empty."""
-        return self._underlying.placeholder or ""
+        return self._underlying.placeholder
 
     @placeholder.setter
-    def placeholder(self, value: str):
+    def placeholder(self, value: Optional[str]):
         if value is not None and not isinstance(value, str):
             raise TypeError("placeholder must be None or str")
 
