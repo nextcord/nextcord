@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Coroutine, Generic, Optional, TYPE_CHECKING, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, Type, TypeVar
 
 from ..interactions import Interaction
 
@@ -33,9 +33,8 @@ __all__ = ("Item",)
 if TYPE_CHECKING:
     from ..components import Component
     from ..enums import ComponentType
-    from .view import View
-    from ..components import Component
     from ..types.components import Component as ComponentPayload
+    from .view import View
 
 I = TypeVar("I", bound="Item")
 V = TypeVar("V", bound="View", covariant=True)

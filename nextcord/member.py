@@ -31,18 +31,7 @@ import itertools
 import sys
 from functools import partial
 from operator import attrgetter
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
 
 from . import abc, utils
 from .activity import ActivityTypes, create_activity

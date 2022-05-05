@@ -36,8 +36,8 @@ from .item import Item
 __all__ = ("TextInput",)
 
 if TYPE_CHECKING:
-    from ..types.interactions import ComponentInteractionData
     from ..types.components import TextInputComponent as TextInputComponentPayload
+    from ..types.interactions import ComponentInteractionData
     from .view import View
 
 

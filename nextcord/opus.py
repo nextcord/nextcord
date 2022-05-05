@@ -256,7 +256,7 @@ def _load_default() -> bool:
             _lib = libopus_loader(_filename)
         else:
             opus = ctypes.util.find_library("opus")
-            
+
             if opus is None:
                 _lib = None
             else:

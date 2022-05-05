@@ -3,7 +3,7 @@ import importlib
 import inspect
 import re
 from collections import OrderedDict
-from typing import NamedTuple, Callable, Optional
+from typing import Callable, NamedTuple, Optional
 
 from docutils import nodes
 from sphinx import addnodes
@@ -170,7 +170,6 @@ def build_lookup_table(env):
             result[classname] = [child]
 
     return result
-
 
 
 class TableElement(NamedTuple):

@@ -163,7 +163,9 @@ class AssetMixin:
 
         data = await self.read()
         file_filename = filename if filename is not MISSING else yarl.URL(self.url).name
-        return File(io.BytesIO(data), filename=file_filename, description=description, spoiler=spoiler)
+        return File(
+            io.BytesIO(data), filename=file_filename, description=description, spoiler=spoiler
+        )
 
 
 class Asset(AssetMixin):

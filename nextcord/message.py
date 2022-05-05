@@ -346,7 +346,9 @@ class Attachment(Hashable):
         data = await self.read(use_cached=use_cached)
         file_filename = filename if filename is not MISSING else self.filename
         file_description = description if description is not MISSING else self.description
-        return File(io.BytesIO(data), filename=file_filename, description=file_description, spoiler=spoiler)
+        return File(
+            io.BytesIO(data), filename=file_filename, description=file_description, spoiler=spoiler
+        )
 
     def to_dict(self) -> AttachmentPayload:
         result: AttachmentPayload = {

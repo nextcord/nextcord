@@ -35,18 +35,7 @@ import sys
 import threading
 import time
 import traceback
-from typing import (
-    IO,
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generic,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import IO, TYPE_CHECKING, Any, Callable, Generic, Optional, Tuple, Type, TypeVar, Union
 
 from .enums import SpeakingState
 from .errors import ClientException

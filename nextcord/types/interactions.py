@@ -35,7 +35,7 @@ from .snowflake import Snowflake
 from .user import User
 
 if TYPE_CHECKING:
-    from .message import Attachment, AllowedMentions, Message
+    from .message import AllowedMentions, Attachment, Message
 
 
 ApplicationCommandType = Literal[1, 2, 3]

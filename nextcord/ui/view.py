@@ -23,9 +23,6 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Callable, ClassVar, Dict, Iterator, List, Optional, Sequence, TYPE_CHECKING, Tuple
-from functools import partial
-from itertools import groupby
 
 import asyncio
 import os
@@ -63,9 +60,8 @@ __all__ = ("View",)
 if TYPE_CHECKING:
     from ..interactions import Interaction
     from ..message import Message
-    from ..types.components import Component as ComponentPayload, ActionRow as ActionRowPayload
     from ..state import ConnectionState
-    from ..types.components import Component as ComponentPayload
+    from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
 
 
 def _walk_all_components(components: List[Component]) -> Iterator[Component]:

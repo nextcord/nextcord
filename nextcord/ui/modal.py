@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
 
+
 class Modal:
     """Represents a Discord modal popup.
 

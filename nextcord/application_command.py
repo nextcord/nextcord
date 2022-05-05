@@ -31,7 +31,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    cast,
     Dict,
     Iterable,
     List,
@@ -40,24 +39,21 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    cast,
 )
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType
-from .errors import (
-    ApplicationCheckFailure,
-    ApplicationInvokeError,
-    InvalidCommandType,
-)
+from .errors import ApplicationCheckFailure, ApplicationInvokeError, InvalidCommandType
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
 from .message import Attachment, Message
 from .role import Role
-from .user import User
-from .utils import MISSING, find, maybe_coroutine, parse_docstring
 from .types.interactions import ApplicationCommandInteractionData
 from .types.member import MemberWithUser
+from .user import User
+from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
     from .state import ConnectionState
@@ -329,7 +325,9 @@ class CommandOption(SlashOption):
         """
         if self._description is not MISSING:
             return self._description
-        elif self.command._parsed_docstring and (docstring := self.command._parsed_docstring["args"].get(self.name)):
+        elif self.command._parsed_docstring and (
+            docstring := self.command._parsed_docstring["args"].get(self.name)
+        ):
             return docstring
         else:
             return "No description provided"
@@ -591,7 +589,11 @@ class ApplicationSubcommand:
         self.children: Dict[str, ApplicationSubcommand] = {}
 
         self.on_error: Optional[ApplicationErrorCallback] = None
-        if parent_command is not MISSING and parent_command is not None and getattr(parent_command, "on_error", False):
+        if (
+            parent_command is not MISSING
+            and parent_command is not None
+            and getattr(parent_command, "on_error", False)
+        ):
             self.on_error = parent_command.on_error
 
         # self._on_autocomplete: Dict[str, Callable] = {}  # TODO: Maybe move the callbacks into the CommandOptions?
@@ -1896,7 +1898,7 @@ class ApplicationCommand(ApplicationSubcommand):
         guild = interaction.guild or self._state._get_guild(interaction.guild_id)
         user = self._handle_resolved_user(interaction.data["resolved"], guild)  # type: ignore
         # we dont care about the loss os specificity here
-        
+
         if user is None:
             raise ValueError("Could not resolve the given user")
 
