@@ -65,7 +65,7 @@ from typing import (
 from .errors import InvalidArgument
 
 try:
-    import orjson  # type: ignore for people w/o orjson in env
+    import orjson
 except ModuleNotFoundError:
     HAS_ORJSON = False
 else:

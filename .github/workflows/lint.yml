@@ -55,7 +55,7 @@ jobs:
         run: echo "PYRIGHT_VERSION=$(python -c 'import pyright; print(pyright.__pyright_version__)')" >> $GITHUB_ENV
 
       - name: Run pyright (Linux)
-        uses: jakebailey/pyright-action@v1.0.3
+        uses: jakebailey/pyright-action@v1.2.0
         with:
           version: ${{ env.PYRIGHT_VERSION }}
           python-version: ${{ matrix.python-version }}
