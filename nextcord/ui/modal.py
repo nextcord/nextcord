@@ -300,7 +300,7 @@ class Modal:
         # This is pretty hacky at the moment
         # fmt: off
         old_state: Dict[Tuple[int, str], Item] = {
-            (item.type.value, item.custom_id): item  # type: ignore
+            (item.type.value, item.custom_id): item
             for item in self.children
             if item.is_dispatchable()
         }

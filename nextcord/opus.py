@@ -255,7 +255,12 @@ def _load_default() -> bool:
             _filename = os.path.join(_basedir, "bin", f"libopus-0.{_target}.dll")
             _lib = libopus_loader(_filename)
         else:
-            _lib = libopus_loader(ctypes.util.find_library("opus"))  # type: ignore error if no opus, FIXME: better error
+            opus = ctypes.util.find_library("opus")
+            
+            if opus is None:
+                _lib = None
+            else:
+                _lib = libopus_loader(opus)
     except Exception:
         _lib = None
 
