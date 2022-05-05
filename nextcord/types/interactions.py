@@ -30,13 +30,12 @@ from .channel import ChannelType
 from .components import Component, ComponentType
 from .embed import Embed
 from .member import Member
-from .message import Attachment
 from .role import Role
 from .snowflake import Snowflake
 from .user import User
 
 if TYPE_CHECKING:
-    from .message import AllowedMentions, Message
+    from .message import Attachment, AllowedMentions, Message
 
 
 ApplicationCommandType = Literal[1, 2, 3]
