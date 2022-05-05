@@ -3371,17 +3371,21 @@ class Guild(Hashable):
         update_known
         register_new
         """
+        if self._state.application_id is None:
+            raise NotImplementedError("Could not get the current application id")
+
         guild_payload = await self._state.http.get_guild_commands(
             self._state.application_id, self.id
         )
+        # we do not care about typeddict specificity
         await self.deploy_application_commands(
-            data=guild_payload,
+            data=guild_payload,  # type: ignore
             associate_known=associate_known,
             delete_unknown=delete_unknown,
             update_known=update_known,
         )
         if register_new:
-            await self.register_new_application_commands(data=guild_payload)
+            await self.register_new_application_commands(data=guild_payload)  # type: ignore
 
     async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
         await self._state.delete_unknown_application_commands(data=data, guild_id=self.id)

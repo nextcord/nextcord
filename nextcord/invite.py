@@ -350,7 +350,7 @@ class Invite(Hashable):
     ):
         self._state: ConnectionState = state
         self.max_age: Optional[int] = data.get("max_age")
-        self.code: str = data["code"]
+        self.code: Optional[str] = data.get("code")
         self.guild: Optional[InviteGuildType] = self._resolve_guild(data.get("guild"), guild)
         self.revoked: Optional[bool] = data.get("revoked")
         self.created_at: Optional[datetime.datetime] = parse_time(data.get("created_at"))
@@ -464,14 +464,24 @@ class Invite(Hashable):
         return hash(self.code)
 
     @property
-    def id(self) -> str:
-        """:class:`str`: Returns the proper code portion of the invite."""
+    def id(self) -> Optional[str]:
+        """Optional[:class:`str`]: Returns the proper code portion of the invite.
+
+        .. note::
+
+            This may be ``None`` if it is the vanity invite the code is not set.
+        """
         return self.code
 
     @property
     def url(self) -> str:
-        """:class:`str`: A property that retrieves the invite URL."""
-        return self.BASE + "/" + self.code
+        """:class:`str`: A property that retrieves the invite URL.
+
+        .. note::
+
+            This may be an empty string if it is the vanity URL and the code is not set
+        """
+        return self.BASE + "/" + self.code if self.code else ""
 
     async def delete(self, *, reason: Optional[str] = None):
         """|coro|
@@ -494,5 +504,8 @@ class Invite(Hashable):
         HTTPException
             Revoking the invite failed.
         """
+
+        if not self.code:
+            return
 
         await self._state.http.delete_invite(self.code, reason=reason)

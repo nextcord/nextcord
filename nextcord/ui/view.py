@@ -159,7 +159,7 @@ class View:
     """
 
     __discord_ui_view__: ClassVar[bool] = True
-    __view_children_items__: ClassVar[List[ItemCallbackType]] = []  # type: ignore
+    __view_children_items__: ClassVar[List[ItemCallbackType]] = []
 
     def __init_subclass__(cls) -> None:
         children: List[ItemCallbackType] = []

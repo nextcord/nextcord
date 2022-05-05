@@ -8,7 +8,11 @@ with open("requirements.txt") as f:
 
 version = ""
 with open("nextcord/__init__.py") as f:
-    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
+    match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE)
+    if match is None or match.group(1) is None:
+        raise RuntimeError("version is not set")
+
+    version = match.group(1)
 
 if not version:
     raise RuntimeError("version is not set")
@@ -37,13 +41,12 @@ readme = ""
 with open("README.rst") as f:
     readme = f.read()
 
+with open("docs/requirements.txt") as f:
+    docs_requirements = f.read().splitlines()
+
 extras_require = {
     "voice": ["PyNaCl>=1.3.0,<1.5"],
-    "docs": [
-        "sphinx==4.0.2",
-        "sphinxcontrib_trio==1.1.2",
-        "sphinxcontrib-websupport",
-    ],
+    "docs": docs_requirements,
     "speed": ["orjson>=3.5.4", "aiodns>=1.1", "Brotli", "cchardet"],
 }
 

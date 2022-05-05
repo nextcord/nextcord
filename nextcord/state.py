@@ -649,11 +649,19 @@ class ConnectionState:
             # If everything is disabled, there is no point in doing anything.
             return
 
+        if self.application_id is None:
+            raise NotImplementedError("Could not get the current application id")
+
         if not data:
             if guild_id:
-                data = await self.http.get_guild_commands(self.application_id, guild_id)
+                # we do not care about typeddict specificity here
+                data = await self.http.get_guild_commands(self.application_id, guild_id)  # type: ignore
             else:
-                data = await self.http.get_global_commands(self.application_id)
+                data = await self.http.get_global_commands(self.application_id)  # type: ignore
+
+        if not data:
+            raise NotImplementedError("Could not get application commands from Discord.")
+
         for raw_response in data:
             fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else temp
             response_signature = (raw_response["name"], int(raw_response["type"]), fixed_guild_id)
@@ -784,9 +792,14 @@ class ConnectionState:
         """
         if not data:
             if guild_id:
-                data = await self.http.get_guild_commands(self.application_id, guild_id)
+                # type ignore as we do not care about typeddict specificity
+                data = await self.http.get_guild_commands(self.application_id, guild_id)  # type: ignore
             else:
-                data = await self.http.get_global_commands(self.application_id)
+                data = await self.http.get_global_commands(self.application_id)  # type: ignore
+
+        if not data:
+            raise NotImplementedError("Could not get application commands from Discord.")
+
         data_signatures = [
             (
                 raw_response["name"],
@@ -820,14 +833,19 @@ class ConnectionState:
         _log.info(
             f"nextcord.ConnectionState: Registering command with signature {command.get_signature(guild_id)}"
         )
+
+        if self.application_id is None:
+            raise NotImplementedError("Could not get the current application id")
+
+        # type ignores, more typeddict specificity issues
         if guild_id:
             raw_response = await self.http.upsert_guild_command(
-                self.application_id, guild_id, payload
+                self.application_id, guild_id, payload  # type: ignore
             )
         else:
             raw_response = await self.http.upsert_global_command(self.application_id, payload)
         # response_id = int(raw_response["id"])
-        command.parse_discord_response(self, raw_response)
+        command.parse_discord_response(self, raw_response)  # type: ignore
         self.add_application_command(command)
 
     async def delete_application_command(
@@ -844,6 +862,9 @@ class ConnectionState:
         guild_id: Optional[:class:`int`]
             Guild ID to delete the application commands from. If `None`, the command is deleted from global.
         """
+        if self.application_id is None:
+            raise NotImplementedError("Could not get the current application id")
+
         if guild_id:
             await self.http.delete_guild_command(
                 self.application_id, guild_id, command.command_ids[guild_id]

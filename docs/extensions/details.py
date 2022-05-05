@@ -1,5 +1,5 @@
 from docutils import nodes
-from docutils.parsers.rst import Directive, directives, states
+from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.roles import set_classes
 
 

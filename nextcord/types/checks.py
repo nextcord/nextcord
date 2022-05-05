@@ -39,6 +39,6 @@ ApplicationHook = Union[
     Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
 ]
 ApplicationErrorCallback = Union[
-    Callable[[ClientCog, Interaction, ApplicationError], Coro[Any]],
-    Callable[[Interaction, ApplicationError], Coro[Any]],
+    Callable[[ClientCog, Interaction, Exception], Coro[Any]],
+    Callable[[Interaction, Exception], Coro[Any]],
 ]

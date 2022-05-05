@@ -1,4 +1,4 @@
-# credit to https://github.com/nextcordDev/nextcord/blob/master/pyproject.toml for config
+# credit to https://github.com/disnakeDev/disnake/blob/master/pyproject.toml for config
 [tool.black]
 line-length = 100
 target-version = ["py38", "py39", "py310"]

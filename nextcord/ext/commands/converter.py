@@ -1166,7 +1166,7 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
         try:
             name = converter.__name__
         except AttributeError:
-            name = converter.__class__.__name__  # type: ignore
+            name = converter.__class__.__name__
 
         raise BadArgument(f'Converting to "{name}" failed for parameter "{param.name}".') from exc
 

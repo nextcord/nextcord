@@ -1,9 +1,9 @@
 import asyncio
 import importlib
 import inspect
-import os
 import re
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
+from typing import NamedTuple, Callable, Optional
 
 from docutils import nodes
 from sphinx import addnodes
@@ -91,7 +91,11 @@ class PyAttributeTable(SphinxDirective):
     option_spec = {}
 
     def parse_name(self, content):
-        path, name = _name_parser_regex.match(content).groups()
+        match = _name_parser_regex.match(content)
+        if match is None:
+            raise RuntimeError("could not find module name somehow")
+
+        path, name = match.groups()
         if path:
             modulename = path.rstrip(".")
         else:
@@ -155,7 +159,7 @@ def build_lookup_table(env):
         "class",
     }
 
-    for (fullname, _, objtype, docname, _, _) in domain.get_objects():
+    for (fullname, _, objtype, _, _, _) in domain.get_objects():
         if objtype in ignored:
             continue
 
@@ -168,7 +172,11 @@ def build_lookup_table(env):
     return result
 
 
-TableElement = namedtuple("TableElement", "fullname label badge")
+
+class TableElement(NamedTuple):
+    fullname: str
+    label: str
+    badge: Optional[attributetablebadge]
 
 
 def process_attributetable(app, doctree, fromdocname):
@@ -186,7 +194,9 @@ def process_attributetable(app, doctree, fromdocname):
         for label, subitems in groups.items():
             if not subitems:
                 continue
-            table.append(class_results_to_node(label, sorted(subitems, key=lambda c: c.label)))
+
+            key: Callable[[TableElement], str] = lambda c: c.label
+            table.append(class_results_to_node(label, sorted(subitems, key=key)))
 
         table["python-class"] = fullname
 

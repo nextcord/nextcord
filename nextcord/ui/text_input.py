@@ -38,6 +38,7 @@ __all__ = ("TextInput",)
 if TYPE_CHECKING:
     from ..types.interactions import ComponentInteractionData
     from ..types.components import TextInputComponent as TextInputComponentPayload
+    from .view import View
 
 
 T = TypeVar("T", bound="TextInput")

@@ -672,6 +672,9 @@ def resolve_invite(invite: Union[Invite, str]) -> str:
     from .invite import Invite  # circular import
 
     if isinstance(invite, Invite):
+        if not invite.code:
+            raise NotImplementedError("Can not resolve the invite if the code is `None`")
+
         return invite.code
     else:
         rx = r"(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)"

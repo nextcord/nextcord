@@ -35,6 +35,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    cast,
     Coroutine,
     Dict,
     Generator,
@@ -76,10 +77,11 @@ from .threads import Thread
 from .ui.modal import Modal
 from .ui.view import View
 from .user import ClientUser, User
-from .utils import MISSING, maybe_coroutine
+from .utils import MISSING
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
+from .types.interactions import ApplicationCommandInteractionData
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
@@ -1859,8 +1861,14 @@ class Client:
         interaction: :class:`Interaction`
             Interaction from Discord to read data from.
         """
+        interaction.data = cast(ApplicationCommandInteractionData, interaction.data)
+
+        if not interaction.data or "resolved" not in interaction.data:
+            raise TypeError("Discord did not provide us resolved data")
+
         if interaction.type is InteractionType.application_command:
             _log.info("nextcord.Client: Found an interaction command.")
+
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
                 _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
                 await app_cmd.call_from_interaction(interaction)
@@ -1884,13 +1892,13 @@ class Client:
                     )
                     # TODO: Lazy load is completely broken. Figure out how to fix it.
                     if app_cmd.reverse_check_against_raw_payload(
-                        interaction.data, interaction.guild_id
+                        interaction.data, interaction.guild_id  # type: ignore
                     ):
                         # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
                         _log.info(
                             "nextcord.Client: New interaction command found, Assigning id now"
                         )
-                        app_cmd.parse_discord_response(self._connection, interaction.data)
+                        app_cmd.parse_discord_response(self._connection, interaction.data)  # type: ignore
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
                     else:
@@ -2064,15 +2072,19 @@ class Client:
         """|coro|
         Deploys global application commands and registers new ones if enabled.
         """
+        if self.application_id is None:
+            raise NotImplementedError("Could not get the current application id")
+
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(
-            data=global_payload,
+            data=global_payload,  # type: ignore
             associate_known=self._rollout_associate_known,
             delete_unknown=self._rollout_delete_unknown,
             update_known=self._rollout_update_known,
         )
+        # type ignore as we do not care about typeddict specificity
         if self._rollout_register_new:
-            await self.register_new_application_commands(data=global_payload)
+            await self.register_new_application_commands(data=global_payload)  # type: ignore
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:

@@ -567,9 +567,10 @@ def handle_message_parameters(
                 {
                     "id": index,
                     "filename": file.filename,
-                    "description": file.description,
+                    "description": file.description,  # type: ignore
+                    # ignore complaints about assigning to an Attachment
                 }
-            )  # type: ignore
+            )
             multipart.append(
                 {
                     "name": f"files[{index}]",

@@ -151,7 +151,7 @@ class BotBase(GroupMixin):
         if help_command is _default:
             self.help_command = DefaultHelpCommand()
         else:
-            self.help_command = help_command  # type: ignore [why not use MISSING?]
+            self.help_command = help_command
 
     # internal helpers
 
