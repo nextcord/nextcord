@@ -643,6 +643,9 @@ class Locale(Enum):
     ko = "ko"
     """Korean | 한국어"""
 
+    def __str__(self):
+        return self.value
+
 
 class VideoQualityMode(Enum):
     auto = 1
