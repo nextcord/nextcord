@@ -70,7 +70,7 @@ Nextcord's implementation of slash commands has fields and is very simple. in th
     @bot.slash_command()
     async def choose_a_number(
         interaction: Interaction,
-        number: str = SlashOption(name="settings", description="Configure Your Settings", choices={"1": 1, "2": 2,"3": 3})
+        number: int = SlashOption(name="settings", description="Configure Your Settings", choices={"1": 1, "2": 2,"3": 3})
     ):
         await interaction.response.send_message(f"You chose {number}")
 
