@@ -426,12 +426,11 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     # Issue #511
     @property
     def required_permissions(self) -> Dict[str, bool]:
-        """
-        Returns the permissions required to run this command.
+        """Returns the permissions required to run this command.
 
         Returns
         -------
-        dict
+        Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
 
         Notes
@@ -442,13 +441,11 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
     @property
     def required_bot_permissions(self) -> Dict[str, bool]:
-        """
-        Returns the permissions the bot
-        needs to run this command.
+        """Returns the permissions the bot needs to run this command.
 
         Returns
         -------
-        dict
+        Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
 
         Notes
@@ -459,13 +456,12 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
     @property
     def required_guild_permissions(self) -> Dict[str, bool]:
-        """
-        Returns the guild permissions
+        """Returns the guild permissions
         needed to run this command.
 
         Returns
         -------
-        dict
+        Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
 
         Notes
@@ -476,13 +472,12 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
     @property
     def required_bot_guild_permissions(self) -> Dict[str, bool]:
-        """
-        Returns the permissions the bot needs
+        """Returns the permissions the bot needs
         to have in this guild in order to run this command.
 
         Returns
         -------
-        dict
+        Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
 
         Notes
