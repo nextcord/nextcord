@@ -23,8 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import Any, TYPE_CHECKING, Union, Optional
 
 from .iterators import ReactionIterator
 
@@ -33,11 +32,11 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from .abc import Snowflake
-    from .emoji import Emoji
+    from .types.message import Reaction as ReactionPayload
     from .message import Message
     from .partial_emoji import PartialEmoji
-    from .types.message import Reaction as ReactionPayload
+    from .emoji import Emoji
+    from .abc import Snowflake
 
 class Reaction:
     """Represents a reaction to a message.

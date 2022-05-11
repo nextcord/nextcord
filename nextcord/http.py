@@ -29,31 +29,67 @@ import asyncio
 import json
 import logging
 import sys
-import weakref
-from typing import (TYPE_CHECKING, Any, ClassVar, Coroutine, Dict, Iterable,
-                    List, Optional, Sequence, Tuple, Type, TypeVar, Union)
+from typing import (
+    Any,
+    ClassVar,
+    Coroutine,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 from urllib.parse import quote as _uriquote
+import weakref
 
 import aiohttp
 
-from . import __version__, utils
-from .errors import (DiscordServerError, Forbidden, GatewayNotFound,
-                     HTTPException, InvalidArgument, LoginFailure, NotFound)
+from .errors import HTTPException, Forbidden, NotFound, LoginFailure, DiscordServerError, GatewayNotFound, InvalidArgument
 from .gateway import DiscordClientWebSocketResponse
+from . import __version__, utils
 from .utils import MISSING
 
 _log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from types import TracebackType
-
-    from .enums import AuditLogAction, InteractionResponseType
     from .file import File
-    from .types import (appinfo, audit_log, channel, components, embed, emoji,
-                        guild, integration, interactions, invite, member,
-                        message, role, scheduled_events, sticker, template,
-                        threads, user, voice, webhook, widget)
+    from .enums import (
+        AuditLogAction,
+        InteractionResponseType,
+    )
+
+    from .types import (
+        appinfo,
+        audit_log,
+        channel,
+        components,
+        emoji,
+        embed,
+        guild,
+        integration,
+        interactions,
+        invite,
+        member,
+        message,
+        template,
+        role,
+        user,
+        webhook,
+        channel,
+        widget,
+        threads,
+        voice,
+        sticker,
+        scheduled_events
+    )
     from .types.snowflake import Snowflake, SnowflakeList
+
+    from types import TracebackType
 
     T = TypeVar('T')
     BE = TypeVar('BE', bound=BaseException)

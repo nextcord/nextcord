@@ -24,21 +24,20 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from typing import Any, Dict, Optional, TYPE_CHECKING, Type, TypeVar, Union
 import re
-from typing import TYPE_CHECKING, Any, Dict, Optional, Type, TypeVar, Union
 
-from . import utils
 from .asset import Asset, AssetMixin
 from .errors import InvalidArgument
+from . import utils
 
 __all__ = (
     'PartialEmoji',
 )
 
 if TYPE_CHECKING:
-    from datetime import datetime
-
     from .state import ConnectionState
+    from datetime import datetime
     from .types.message import PartialEmoji as PartialEmojiPayload
 
 class _EmojiTag:

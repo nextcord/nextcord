@@ -40,31 +40,38 @@ Some documentation to refer to:
 from __future__ import annotations
 
 import asyncio
-import logging
 import socket
+import logging
 import struct
 import threading
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, TYPE_CHECKING, Tuple
 
 from . import opus, utils
 from .backoff import ExponentialBackoff
+from .gateway import (
+    DiscordWebSocket,
+    KeepAliveHandler,
+    VoiceKeepAliveHandler,
+    DiscordVoiceWebSocket,
+    ReconnectWebSocket,
+)
 from .errors import ClientException, ConnectionClosed
-from .gateway import (DiscordVoiceWebSocket, DiscordWebSocket,
-                      KeepAliveHandler, ReconnectWebSocket,
-                      VoiceKeepAliveHandler)
 from .player import AudioPlayer, AudioSource
 from .utils import MISSING
 
 if TYPE_CHECKING:
-    from . import abc
     from .client import Client
     from .guild import Guild
-    from .opus import Encoder
     from .state import ConnectionState
-    from .types.voice import GuildVoiceState as GuildVoiceStatePayload
-    from .types.voice import SupportedModes
-    from .types.voice import VoiceServerUpdate as VoiceServerUpdatePayload
     from .user import ClientUser
+    from .opus import Encoder
+    from . import abc
+
+    from .types.voice import (
+        GuildVoiceState as GuildVoiceStatePayload,
+        VoiceServerUpdate as VoiceServerUpdatePayload,
+        SupportedModes,
+    )
     
 
 has_nacl: bool

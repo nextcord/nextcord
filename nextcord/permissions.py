@@ -25,10 +25,8 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import (TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterator,
-                    Optional, Set, Tuple, Type, TypeVar)
-
-from .flags import BaseFlags, alias_flag_value, fill_with_flags, flag_value
+from typing import Callable, Any, ClassVar, Dict, Iterator, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Optional
+from .flags import BaseFlags, flag_value, fill_with_flags, alias_flag_value
 
 __all__ = (
     'Permissions',

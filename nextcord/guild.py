@@ -27,30 +27,58 @@ from __future__ import annotations
 
 import copy
 import unicodedata
-from typing import (TYPE_CHECKING, Any, ClassVar, Dict, List, Literal,
-                    NamedTuple, Optional, Sequence, Set, Tuple, Union,
-                    overload)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Literal,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+    overload,
+)
 
 from . import abc, utils
 from .asset import Asset
 from .bans import BanEntry
-from .channel import (CategoryChannel, DMChannel, GroupChannel,
-                      PartialMessageable, StageChannel, TextChannel,
-                      VoiceChannel, _guild_channel_factory,
-                      _threaded_guild_channel_factory)
+from .channel import (
+    TextChannel,
+    VoiceChannel,
+    StageChannel,
+    DMChannel,
+    CategoryChannel,
+    GroupChannel,
+    PartialMessageable,
+    _guild_channel_factory,
+    _threaded_guild_channel_factory,
+)
+from .channel import _guild_channel_factory, _threaded_guild_channel_factory
 from .colour import Colour
 from .emoji import Emoji
-from .enums import (AuditLogAction, ChannelType, ContentFilter,
-                    NotificationLevel, NSFWLevel, ScheduledEventEntityType,
-                    ScheduledEventPrivacyLevel, VerificationLevel,
-                    VideoQualityMode, VoiceRegion, try_enum)
+from .enums import (
+    AuditLogAction,
+    ChannelType,
+    ContentFilter,
+    NotificationLevel,
+    NSFWLevel,
+    ScheduledEventEntityType,
+    ScheduledEventPrivacyLevel,
+    VerificationLevel,
+    VideoQualityMode,
+    VoiceRegion,
+    try_enum,
+)
 from .errors import ClientException, InvalidArgument, InvalidData
 from .file import File
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
-from .iterators import (AuditLogIterator, BanIterator, MemberIterator,
-                        ScheduledEventIterator)
+from .iterators import AuditLogIterator, MemberIterator, BanIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
 from .permissions import PermissionOverwrite
@@ -72,9 +100,17 @@ if TYPE_CHECKING:
     import datetime
 
     from .abc import Snowflake, SnowflakeTime
+    from .channel import (
+        CategoryChannel,
+        StageChannel,
+        TextChannel,
+        VoiceChannel,
+    )
     from .application_command import ApplicationCommand
-    from .channel import (CategoryChannel, StageChannel, TextChannel,
-                          VoiceChannel)
+    from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
+    from .types.threads import (
+        Thread as ThreadPayload,
+    )
     from .permissions import Permissions
     from .state import ConnectionState
     from .template import Template

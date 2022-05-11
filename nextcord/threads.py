@@ -24,16 +24,15 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-import asyncio
+from typing import Callable, Dict, Iterable, List, Optional, Union, TYPE_CHECKING
 import time
-from typing import (TYPE_CHECKING, Callable, Dict, Iterable, List, Optional,
-                    Union)
+import asyncio
 
+from .mixins import Hashable
 from .abc import Messageable
 from .enums import ChannelType, try_enum
 from .errors import ClientException
-from .mixins import Hashable
-from .utils import MISSING, _get_as_snowflake, parse_time
+from .utils import MISSING, parse_time, _get_as_snowflake
 
 __all__ = (
     'Thread',
@@ -41,21 +40,22 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from datetime import datetime
-
-    from .abc import Snowflake, SnowflakeTime
-    from .channel import CategoryChannel, TextChannel
+    from .types.threads import (
+        Thread as ThreadPayload,
+        ThreadMember as ThreadMemberPayload,
+        ThreadMetadata,
+        ThreadArchiveDuration,
+    )
+    from .types.snowflake import SnowflakeList
     from .guild import Guild
+    from .channel import TextChannel, CategoryChannel
     from .member import Member
     from .message import Message, PartialMessage
-    from .permissions import Permissions
+    from .abc import Snowflake, SnowflakeTime
     from .role import Role
+    from .permissions import Permissions
     from .state import ConnectionState
-    from .types.snowflake import SnowflakeList
-    from .types.threads import Thread as ThreadPayload
-    from .types.threads import ThreadArchiveDuration
-    from .types.threads import ThreadMember as ThreadMemberPayload
-    from .types.threads import ThreadMetadata
+    from datetime import datetime
 
 
 

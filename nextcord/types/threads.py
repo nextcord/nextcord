@@ -23,7 +23,6 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-
 from typing import List, Literal, Optional, TypedDict
 
 from .snowflake import Snowflake

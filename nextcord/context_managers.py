@@ -25,12 +25,12 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, TypeVar, Optional, Type
 
 if TYPE_CHECKING:
-    from types import TracebackType
-
     from .abc import Messageable
+
+    from types import TracebackType
 
     TypingT = TypeVar('TypingT', bound='Typing')
 

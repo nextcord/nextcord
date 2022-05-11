@@ -1,5 +1,5 @@
-from nextcord import Interaction
 from nextcord.ext import commands
+from nextcord import Interaction
 
 TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 

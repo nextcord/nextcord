@@ -1,8 +1,7 @@
 import asyncio
-
+import nextcord
 import youtube_dl
 
-import nextcord
 from nextcord.ext import commands
 
 # Suppress noise about console usage from errors

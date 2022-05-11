@@ -23,24 +23,36 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
-import asyncio
-import audioop
-import io
-import json
-import logging
-import re
-import shlex
-import subprocess
-import sys
 import threading
-import time
 import traceback
-from typing import (IO, TYPE_CHECKING, Any, Awaitable, Callable, Generic,
-                    Optional, Tuple, Type, TypeVar, Union)
+import subprocess
+import audioop
+import asyncio
+import logging
+import shlex
+import time
+import json
+import sys
+import re
+import io
+
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Generic,
+    IO,
+    Optional,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from .errors import ClientException
-from .oggparse import OggStream
 from .opus import Encoder as OpusEncoder
+from .oggparse import OggStream
 from .utils import MISSING
 
 if TYPE_CHECKING:

@@ -24,14 +24,13 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Type, TypeVar, Union
-
-from .appinfo import PartialAppInfo
+from typing import List, Optional, Type, TypeVar, Union, TYPE_CHECKING
 from .asset import Asset
-from .enums import ChannelType, InviteTarget, VerificationLevel, try_enum
-from .mixins import Hashable
+from .utils import parse_time, snowflake_time, _get_as_snowflake
 from .object import Object
-from .utils import _get_as_snowflake, parse_time, snowflake_time
+from .mixins import Hashable
+from .enums import ChannelType, VerificationLevel, InviteTarget, try_enum
+from .appinfo import PartialAppInfo
 
 __all__ = (
     'PartialInviteChannel',
@@ -40,13 +39,17 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from .abc import GuildChannel
-    from .guild import Guild
+    from .types.invite import (
+        Invite as InvitePayload,
+        InviteGuild as InviteGuildPayload,
+        GatewayInvite as GatewayInvitePayload,
+    )
+    from .types.channel import (
+        PartialChannel as InviteChannelPayload,
+    )
     from .state import ConnectionState
-    from .types.channel import PartialChannel as InviteChannelPayload
-    from .types.invite import GatewayInvite as GatewayInvitePayload
-    from .types.invite import Invite as InvitePayload
-    from .types.invite import InviteGuild as InviteGuildPayload
+    from .guild import Guild
+    from .abc import GuildChannel
     from .user import User
 
     InviteGuildType = Union[Guild, 'PartialInviteGuild', Object]

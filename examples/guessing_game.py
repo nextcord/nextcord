@@ -1,7 +1,8 @@
-import asyncio
 import random
+import asyncio
 
 from nextcord.ext import commands
+
 
 bot = commands.Bot(command_prefix='$')
 

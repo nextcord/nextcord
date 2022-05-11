@@ -24,7 +24,6 @@ DEALINGS IN THE SOFTWARE.
 
 from typing import List, Literal, TypedDict
 
-
 class _EmbedFooterOptional(TypedDict, total=False):
     icon_url: str
     proxy_icon_url: str

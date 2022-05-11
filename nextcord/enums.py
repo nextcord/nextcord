@@ -25,8 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 import types
 from collections import namedtuple
-from typing import (TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type,
-                    TypeVar)
+from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Type, TypeVar
 
 __all__ = (
     'Enum',

@@ -1,6 +1,5 @@
+from pkg_resources import get_distribution, DistributionNotFound
 from warnings import warn
-
-from pkg_resources import DistributionNotFound, get_distribution
 
 __all__ = ("incompatible_libraries", )
 

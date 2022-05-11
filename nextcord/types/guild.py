@@ -23,18 +23,17 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from typing import List, Literal, Optional, TypedDict
-
-from .activity import PartialPresenceUpdate
-from .channel import GuildChannel
-from .emoji import Emoji
-from .member import Member
-from .role import Role
-from .scheduled_events import ScheduledEvent
 from .snowflake import Snowflake
-from .threads import Thread
-from .user import User
+from .channel import GuildChannel
+from .scheduled_events import ScheduledEvent
 from .voice import GuildVoiceState
 from .welcome_screen import WelcomeScreen
+from .activity import PartialPresenceUpdate
+from .role import Role
+from .member import Member
+from .emoji import Emoji
+from .user import User
+from .threads import Thread
 
 
 class Ban(TypedDict):

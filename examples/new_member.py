@@ -1,7 +1,7 @@
 # This example requires the 'members' privileged intent
 import nextcord
-from nextcord.ext import commands
 
+from nextcord.ext import commands
 
 class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):

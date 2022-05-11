@@ -25,11 +25,12 @@ from __future__ import annotations
 
 import inspect
 import re
-from typing import (TYPE_CHECKING, Any, Dict, Generic, List, Optional, TypeVar,
-                    Union)
+
+from typing import Any, Dict, Generic, List, Optional, TYPE_CHECKING, TypeVar, Union
 
 import nextcord.abc
 import nextcord.utils
+
 from nextcord.message import Message
 
 if TYPE_CHECKING:
@@ -42,7 +43,7 @@ if TYPE_CHECKING:
     from nextcord.user import ClientUser, User
     from nextcord.voice_client import VoiceProtocol
 
-    from .bot import AutoShardedBot, Bot
+    from .bot import Bot, AutoShardedBot
     from .cog import Cog
     from .core import Command
     from .help import HelpCommand
@@ -343,7 +344,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         Any
             The result of the help command, if any.
         """
-        from .core import Command, Group, wrap_callback
+        from .core import Group, Command, wrap_callback
         from .errors import CommandError
 
         bot = self.bot

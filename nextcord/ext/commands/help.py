@@ -22,16 +22,17 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+import itertools
 import copy
 import functools
 import inspect
-import itertools
 import re
-from typing import TYPE_CHECKING, Optional
+
+from typing import Optional, TYPE_CHECKING
 
 import nextcord.utils
 
-from .core import Command, Group
+from .core import Group, Command
 from .errors import CommandError
 
 if TYPE_CHECKING:

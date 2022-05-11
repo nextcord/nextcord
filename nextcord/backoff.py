@@ -24,9 +24,10 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-import random
+
 import time
-from typing import Callable, Generic, Literal, TypeVar, Union, overload
+import random
+from typing import Callable, Generic, Literal, TypeVar, overload, Union
 
 T = TypeVar('T', bool, Literal[True], Literal[False])
 

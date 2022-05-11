@@ -24,12 +24,11 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import List, Optional, TypedDict
+from typing import TypedDict, List, Optional
 
-from .snowflake import Snowflake
-from .team import Team
 from .user import User
-
+from .team import Team
+from .snowflake import Snowflake
 
 class BaseAppInfo(TypedDict):
     id: Snowflake

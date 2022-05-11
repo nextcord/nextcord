@@ -24,22 +24,21 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from typing import Optional, TYPE_CHECKING, Type, TypeVar, Tuple
 import os
-from typing import TYPE_CHECKING, Optional, Tuple, Type, TypeVar
 
-from ..components import TextInput as TextInputComponent
-from ..enums import ComponentType, TextInputStyle
-from ..interactions import Interaction
-from ..utils import MISSING
 from .item import Item
+from ..enums import TextInputStyle, ComponentType
+from ..components import TextInput as TextInputComponent
+from ..utils import MISSING
+from ..interactions import Interaction
 
 __all__ = ('TextInput',)
 
 if TYPE_CHECKING:
-    from ..types.components import \
-        TextInputComponent as TextInputComponentPayload
-    from ..types.interactions import ComponentInteractionData
     from .view import View
+    from ..types.interactions import ComponentInteractionData
+    from ..types.components import TextInputComponent as TextInputComponentPayload
 
 
 T = TypeVar('T', bound='TextInput')

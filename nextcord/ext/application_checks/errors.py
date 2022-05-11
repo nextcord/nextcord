@@ -21,13 +21,20 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
-
-from nextcord.abc import GuildChannel
 from nextcord.errors import ApplicationCheckFailure
 from nextcord.interactions import Interaction
-from nextcord.threads import Thread
+from typing import (
+    Any,
+    Callable,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Union,
+)
+
 from nextcord.types.snowflake import Snowflake, SnowflakeList
+from nextcord.abc import GuildChannel
+from nextcord.threads import Thread
 
 __all__ = (
     "ApplicationCheckAnyFailure",

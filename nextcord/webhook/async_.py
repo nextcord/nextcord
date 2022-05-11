@@ -24,27 +24,26 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+import logging
 import asyncio
 import json
-import logging
 import re
-from contextvars import ContextVar
-from typing import (TYPE_CHECKING, Any, Dict, List, Literal, NamedTuple,
-                    Optional, Tuple, Union, overload)
+
 from urllib.parse import quote as urlquote
+from typing import Any, Dict, List, Literal, NamedTuple, Optional, TYPE_CHECKING, Tuple, Union, overload
+from contextvars import ContextVar
 
 import aiohttp
 
 from .. import utils
-from ..asset import Asset
-from ..channel import PartialMessageable
-from ..enums import WebhookType, try_enum
-from ..errors import (DiscordServerError, Forbidden, HTTPException,
-                      InvalidArgument, NotFound)
-from ..http import Route
+from ..errors import InvalidArgument, HTTPException, Forbidden, NotFound, DiscordServerError
 from ..message import Attachment, Message
-from ..mixins import Hashable
+from ..enums import try_enum, WebhookType
 from ..user import BaseUser, User
+from ..asset import Asset
+from ..http import Route
+from ..mixins import Hashable
+from ..channel import PartialMessageable
 
 __all__ = (
     'Webhook',
@@ -56,19 +55,22 @@ __all__ = (
 _log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    import datetime
-
-    from ..abc import Snowflake
-    from ..channel import TextChannel
-    from ..embeds import Embed
     from ..file import File
-    from ..guild import Guild
-    from ..http import Response
+    from ..embeds import Embed
     from ..mentions import AllowedMentions
     from ..state import ConnectionState
-    from ..types.message import Message as MessagePayload
-    from ..types.webhook import Webhook as WebhookPayload
+    from ..http import Response
+    from ..types.webhook import (
+        Webhook as WebhookPayload,
+    )
+    from ..types.message import (
+        Message as MessagePayload,
+    )
+    from ..guild import Guild
+    from ..channel import TextChannel
+    from ..abc import Snowflake
     from ..ui.view import View
+    import datetime
 
 MISSING = utils.MISSING
 

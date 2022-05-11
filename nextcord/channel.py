@@ -24,24 +24,37 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-import asyncio
-import datetime
 import time
-from typing import (TYPE_CHECKING, Any, Callable, Dict, Iterable, List,
-                    Mapping, Optional, Tuple, Type, TypeVar, Union, overload)
+import asyncio
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    overload,
+)
+import datetime
 
-from . import abc, utils
-from .asset import Asset
-from .enums import (ChannelType, StagePrivacyLevel, VideoQualityMode,
-                    VoiceRegion, try_enum)
-from .errors import ClientException, InvalidArgument
-from .iterators import ArchivedThreadIterator
+from . import abc
+from .permissions import PermissionOverwrite, Permissions
+from .enums import ChannelType, StagePrivacyLevel, try_enum, VoiceRegion, VideoQualityMode
 from .mixins import Hashable
 from .object import Object
-from .permissions import PermissionOverwrite, Permissions
+from . import utils
+from .utils import MISSING
+from .asset import Asset
+from .errors import ClientException, InvalidArgument
 from .stage_instance import StageInstance
 from .threads import Thread
-from .utils import MISSING
+from .iterators import ArchivedThreadIterator
 
 __all__ = (
     'TextChannel',
@@ -54,23 +67,24 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from .abc import Snowflake, SnowflakeTime
-    from .guild import Guild
-    from .guild import GuildChannel as GuildChannelType
-    from .member import Member, VoiceState
-    from .message import Message, PartialMessage
-    from .role import Role
-    from .state import ConnectionState
-    from .types.channel import CategoryChannel as CategoryChannelPayload
-    from .types.channel import DMChannel as DMChannelPayload
-    from .types.channel import GroupDMChannel as GroupChannelPayload
-    from .types.channel import StageChannel as StageChannelPayload
-    from .types.channel import TextChannel as TextChannelPayload
-    from .types.channel import VoiceChannel as VoiceChannelPayload
-    from .types.snowflake import SnowflakeList
     from .types.threads import ThreadArchiveDuration
-    from .user import BaseUser, ClientUser, User
+    from .role import Role
+    from .member import Member, VoiceState
+    from .abc import Snowflake, SnowflakeTime
+    from .message import Message, PartialMessage
     from .webhook import Webhook
+    from .state import ConnectionState
+    from .user import ClientUser, User, BaseUser
+    from .guild import Guild, GuildChannel as GuildChannelType
+    from .types.channel import (
+        TextChannel as TextChannelPayload,
+        VoiceChannel as VoiceChannelPayload,
+        StageChannel as StageChannelPayload,
+        DMChannel as DMChannelPayload,
+        CategoryChannel as CategoryChannelPayload,
+        GroupDMChannel as GroupChannelPayload,
+    )
+    from .types.snowflake import SnowflakeList
 
 
 async def _single_delete_strategy(messages: Iterable[Message]):

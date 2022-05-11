@@ -25,33 +25,36 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+
 import asyncio
 import collections
 import collections.abc
-import importlib.util
 import inspect
+import importlib.util
 import sys
 import traceback
 import types
-from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Mapping,
-                    Optional, Type, TypeVar, Union)
+from typing import Any, Callable, Mapping, List, Dict, TYPE_CHECKING, Optional, TypeVar, Type, Union
 
 import nextcord
 
-from . import errors
-from .cog import Cog
-from .context import Context
 from .core import GroupMixin
-from .help import DefaultHelpCommand, HelpCommand
 from .view import StringView
+from .context import Context
+from . import errors
+from .help import HelpCommand, DefaultHelpCommand
+from .cog import Cog
+
 
 if TYPE_CHECKING:
     import importlib.machinery
 
     from nextcord.message import Message
+    from ._types import (
+        Check,
+        CoroFunc,
+    )
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
-
-    from ._types import Check, CoroFunc
 
 __all__ = (
     'when_mentioned',

@@ -25,12 +25,11 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, overload
-
-from .enums import ExpireBehaviour, try_enum
-from .errors import InvalidArgument
+from typing import Any, Dict, Optional, TYPE_CHECKING, overload, Type, Tuple
+from .utils import _get_as_snowflake, parse_time, MISSING
 from .user import User
-from .utils import MISSING, _get_as_snowflake, parse_time
+from .errors import InvalidArgument
+from .enums import try_enum, ExpireBehaviour
 
 __all__ = (
     'IntegrationAccount',
@@ -41,17 +40,16 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from .types.integration import (
+        IntegrationAccount as IntegrationAccountPayload,
+        Integration as IntegrationPayload,
+        StreamIntegration as StreamIntegrationPayload,
+        BotIntegration as BotIntegrationPayload,
+        IntegrationType,
+        IntegrationApplication as IntegrationApplicationPayload,
+    )
     from .guild import Guild
     from .role import Role
-    from .types.integration import BotIntegration as BotIntegrationPayload
-    from .types.integration import Integration as IntegrationPayload
-    from .types.integration import \
-        IntegrationAccount as IntegrationAccountPayload
-    from .types.integration import \
-        IntegrationApplication as IntegrationApplicationPayload
-    from .types.integration import IntegrationType
-    from .types.integration import \
-        StreamIntegration as StreamIntegrationPayload
 
 
 class IntegrationAccount:

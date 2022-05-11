@@ -9,9 +9,9 @@ Bot UI Kit helper for the Discord API
 
 """
 
-from .button import Button, button
-from .item import Item
+from .view import View
 from .modal import Modal, ModalStore
+from .item import Item
+from .button import Button, button
 from .select import Select, select
 from .text_input import TextInput
-from .view import View

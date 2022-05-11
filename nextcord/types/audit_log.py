@@ -27,13 +27,17 @@ from __future__ import annotations
 
 from typing import List, Literal, Optional, TypedDict, Union
 
-from .channel import ChannelType, PermissionOverwrite, VideoQualityMode
-from .guild import (DefaultMessageNotificationLevel,
-                    ExplicitContentFilterLevel, MFALevel, VerificationLevel)
+from .channel import ChannelType, VideoQualityMode, PermissionOverwrite
+from .guild import (
+    MFALevel,
+    VerificationLevel,
+    ExplicitContentFilterLevel,
+    DefaultMessageNotificationLevel
+)
 from .integration import IntegrationExpireBehavior, PartialIntegration
+from .snowflake import Snowflake
 from .role import Role
 from .scheduled_events import ScheduledEventEntityType
-from .snowflake import Snowflake
 from .threads import Thread
 from .user import User
 from .webhook import Webhook

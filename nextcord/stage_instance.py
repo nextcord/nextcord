@@ -24,22 +24,22 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import Optional, TYPE_CHECKING
 
-from .enums import StagePrivacyLevel, try_enum
-from .errors import InvalidArgument
-from .mixins import Hashable
 from .utils import MISSING, cached_slot_property
+from .mixins import Hashable
+from .errors import InvalidArgument
+from .enums import StagePrivacyLevel, try_enum
 
 __all__ = (
     'StageInstance',
 )
 
 if TYPE_CHECKING:
+    from .types.channel import StageInstance as StageInstancePayload
+    from .state import ConnectionState
     from .channel import StageChannel
     from .guild import Guild
-    from .state import ConnectionState
-    from .types.channel import StageInstance as StageInstancePayload
 
 
 class StageInstance(Hashable):

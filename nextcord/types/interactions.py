@@ -24,15 +24,13 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import (TYPE_CHECKING, Dict, List, Literal, Optional, TypedDict,
-                    Union)
-
-from .channel import ChannelType
+from typing import Optional, TYPE_CHECKING, Dict, TypedDict, Union, List, Literal
+from .snowflake import Snowflake
 from .components import Component, ComponentType
 from .embed import Embed
+from .channel import ChannelType
 from .member import Member
 from .role import Role
-from .snowflake import Snowflake
 from .user import User
 
 if TYPE_CHECKING:

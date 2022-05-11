@@ -23,10 +23,10 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
+from typing import Optional, TYPE_CHECKING, Union
 
-import io
 import os
-from typing import TYPE_CHECKING, Optional, Union
+import io
 
 __all__ = (
     'File',
