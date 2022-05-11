@@ -1830,30 +1830,25 @@ class Client:
         if interaction.type is InteractionType.application_command:
             _log.debug("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.debug(f"nextcord.Client: Calling your application command now {app_cmd.name}")
+                _log.debug("nextcord.Client: Calling your application command now %s", app_cmd.error_name)
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
-                _log.info(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
+                _log.debug(f"nextcord.Client: Interaction command not found, attempting to lazy load.")
                 # _log.debug(f"nextcord.Client: %s", interaction.data)
                 response_signature = (interaction.data["name"], int(interaction.data['type']), interaction.guild_id)
                 _log.debug(f"nextcord.Client: %s", response_signature)
                 do_deploy = False
-                # from testing import data_to_nice_str
-                # await interaction.send(
-                #     f"Attempt to lazy load failed: ```py\n{data_to_nice_str(interaction.data)}\n```", ephemeral=True
-                # )
-                # _log.debug(f"{self._connection._application_command_signatures}")
                 if app_cmd := self._connection.get_application_command_from_signature(
                         interaction.data["name"],
                         int(interaction.data['type']),
                         int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None
                 ):
-                    _log.info("nextcord.Client: Basic signature matches, checking against raw payload.")
-
-                    # if app_cmd.reverse_check_against_raw_payload(interaction.data, interaction.guild_id):
-                    # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
+                    _log.debug("nextcord.Client: Basic signature matches, checking against raw payload.")
                     if app_cmd.is_interaction_valid(interaction):
-                        _log.info("nextcord.Client: New interaction command found, assigning id now")
+                        _log.info(
+                            f"nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
+                            app_cmd.error_name
+                        )
                         app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
@@ -1881,10 +1876,9 @@ class Client:
 
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
-            _log.info("nextcord.Client: Autocomplete interaction received.")
-            _log.debug(f"nextcord.Client: {interaction.data}")
+            _log.debug("nextcord.Client: Autocomplete interaction received.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.info(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
+                _log.debug(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
                 await app_cmd.call_autocomplete_from_interaction(interaction)
             else:
                 raise ValueError(f"Received autocomplete interaction for {interaction.data['name']} but command isn't "
