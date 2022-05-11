@@ -58,9 +58,34 @@ from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, InteractionType, Status, VoiceRegion
-from .errors import *
+from .errors import (
+    DiscordException,
+    InvalidCommandType,
+    ClientException,
+    NoMoreItems,
+    GatewayNotFound,
+    HTTPException,
+    Forbidden,
+    NotFound,
+    DiscordServerError,
+    InvalidData,
+    InvalidArgument,
+    LoginFailure,
+    ConnectionClosed,
+    PrivilegedIntentsRequired,
+    InteractionResponded,
+    ApplicationError,
+    ApplicationInvokeError,
+    ApplicationCheckFailure,
+)
 from .flags import ApplicationFlags, Intents
-from .gateway import *
+from .gateway import (
+    DiscordWebSocket,
+    KeepAliveHandler,
+    VoiceKeepAliveHandler,
+    DiscordVoiceWebSocket,
+    ReconnectWebSocket,
+)
 from .guild import Guild
 from .http import HTTPClient
 from .interactions import Interaction

@@ -20,4 +20,10 @@ DEALINGS IN THE SOFTWARE.
 Module to allow for backwards compatibility for existing code and extensions
 """
 
-from nextcord.ext.commands.cooldowns import *
+from nextcord.ext.commands.cooldowns import (
+    BucketType,
+    Cooldown,
+    CooldownMapping,
+    DynamicCooldownMapping,
+    MaxConcurrency,
+)

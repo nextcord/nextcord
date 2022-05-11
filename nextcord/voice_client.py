@@ -48,7 +48,13 @@ from typing import Any, Callable, List, Optional, TYPE_CHECKING, Tuple
 
 from . import opus, utils
 from .backoff import ExponentialBackoff
-from .gateway import *
+from .gateway import (
+    DiscordWebSocket,
+    KeepAliveHandler,
+    VoiceKeepAliveHandler,
+    DiscordVoiceWebSocket,
+    ReconnectWebSocket,
+)
 from .errors import ClientException, ConnectionClosed
 from .player import AudioPlayer, AudioSource
 from .utils import MISSING

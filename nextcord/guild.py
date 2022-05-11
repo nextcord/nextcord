@@ -46,7 +46,17 @@ from typing import (
 from . import abc, utils
 from .asset import Asset
 from .bans import BanEntry
-from .channel import *
+from .channel import (
+    TextChannel,
+    VoiceChannel,
+    StageChannel,
+    DMChannel,
+    CategoryChannel,
+    GroupChannel,
+    PartialMessageable,
+    _guild_channel_factory,
+    _threaded_guild_channel_factory,
+)
 from .channel import _guild_channel_factory, _threaded_guild_channel_factory
 from .colour import Colour
 from .emoji import Emoji

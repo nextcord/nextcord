@@ -32,7 +32,13 @@ import aiohttp
 from .state import AutoShardedConnectionState
 from .client import Client
 from .backoff import ExponentialBackoff
-from .gateway import *
+from .gateway import (
+    DiscordWebSocket,
+    KeepAliveHandler,
+    VoiceKeepAliveHandler,
+    DiscordVoiceWebSocket,
+    ReconnectWebSocket,
+)
 from .errors import (
     ClientException,
     HTTPException,
