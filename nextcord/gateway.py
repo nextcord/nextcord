@@ -727,10 +727,6 @@ class DiscordWebSocket:
         await self.socket.close(code=code)
 
 
-async def _hook(*args):
-    pass
-
-
 class DiscordVoiceWebSocket:
     """Implements the websocket protocol for handling voice connections.
 
@@ -787,7 +783,10 @@ class DiscordVoiceWebSocket:
         self._keep_alive: Any = None
         self._close_code = None
         self.secret_key = None
-        self._hook = hook or _hook
+        self._hook = hook or getattr(self, "_hook", None) or getattr(self, "_default_hook", None)
+
+    def _default_hook(self, *args):
+        ...
 
     async def send_as_json(self, data):
         _log.debug("Sending voice websocket frame: %s.", data)
