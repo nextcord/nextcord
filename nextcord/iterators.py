@@ -27,13 +27,14 @@ from __future__ import annotations
 
 import asyncio
 import datetime
-from typing import Awaitable, TYPE_CHECKING, TypeVar, Optional, Any, Callable, Union, List, AsyncIterator
+from typing import (TYPE_CHECKING, Any, AsyncIterator, Awaitable, Callable,
+                    List, Optional, TypeVar, Union)
 
-from .errors import NoMoreItems
-from .utils import snowflake_time, time_snowflake, maybe_coroutine
-from .object import Object
 from .audit_logs import AuditLogEntry
 from .bans import BanEntry
+from .errors import NoMoreItems
+from .object import Object
+from .utils import maybe_coroutine, snowflake_time, time_snowflake
 
 __all__ = (
     'ReactionIterator',
@@ -47,32 +48,20 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from .types.audit_log import (
-        AuditLog as AuditLogPayload,
-    )
-    from .types.guild import (
-        Guild as GuildPayload,
-        Ban as BanPayload,
-    )
-    from .types.message import (
-        Message as MessagePayload,
-    )
-    from .types.user import (
-        PartialUser as PartialUserPayload,
-    )
-
-    from .types.threads import (
-        Thread as ThreadPayload,
-    )
-
-    from .scheduled_events import ScheduledEvent, ScheduledEventUser
-    from .member import Member
-    from .user import User
-    from .message import Message
+    from .abc import Snowflake
     from .audit_logs import AuditLogEntry
     from .guild import Guild
+    from .member import Member
+    from .message import Message
+    from .scheduled_events import ScheduledEvent, ScheduledEventUser
     from .threads import Thread
-    from .abc import Snowflake
+    from .types.audit_log import AuditLog as AuditLogPayload
+    from .types.guild import Ban as BanPayload
+    from .types.guild import Guild as GuildPayload
+    from .types.message import Message as MessagePayload
+    from .types.threads import Thread as ThreadPayload
+    from .types.user import PartialUser as PartialUserPayload
+    from .user import User
 
 T = TypeVar('T')
 OT = TypeVar('OT')

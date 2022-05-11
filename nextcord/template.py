@@ -24,10 +24,12 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING
-from .utils import parse_time, _get_as_snowflake, _bytes_to_base64_data, MISSING
+from typing import TYPE_CHECKING, Any, Optional
+
 from .enums import VoiceRegion
 from .guild import Guild
+from .utils import (MISSING, _bytes_to_base64_data, _get_as_snowflake,
+                    parse_time)
 
 __all__ = (
     'Template',
@@ -35,8 +37,9 @@ __all__ = (
 
 if TYPE_CHECKING:
     import datetime
-    from .types.template import Template as TemplatePayload
+
     from .state import ConnectionState
+    from .types.template import Template as TemplatePayload
     from .user import User
 
 

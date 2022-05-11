@@ -26,25 +26,16 @@ from __future__ import annotations
 
 import asyncio
 import datetime
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Generic,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
-
-import aiohttp
-import nextcord
 import inspect
 import sys
 import traceback
-
 from collections.abc import Sequence
+from typing import (Any, Awaitable, Callable, Generic, List, Optional, Type,
+                    TypeVar, Union)
+
+import aiohttp
+
+import nextcord
 from nextcord.backoff import ExponentialBackoff
 from nextcord.utils import MISSING, utcnow
 

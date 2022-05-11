@@ -24,39 +24,19 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from .errors import (
-    BadFlagArgument,
-    CommandError,
-    MissingFlagArgument,
-    TooManyFlags,
-    MissingRequiredFlag,
-)
-
-from nextcord.utils import resolve_annotation
-from .view import StringView
-from .converter import run_converters
-
-from nextcord.utils import maybe_coroutine, MISSING
-from dataclasses import dataclass, field
-from typing import (
-    Dict,
-    Iterator,
-    Literal,
-    Optional,
-    Pattern,
-    Set,
-    TYPE_CHECKING,
-    Tuple,
-    List,
-    Any,
-    Type,
-    TypeVar,
-    Union,
-)
-
 import inspect
-import sys
 import re
+import sys
+from dataclasses import dataclass, field
+from typing import (TYPE_CHECKING, Any, Dict, Iterator, List, Literal,
+                    Optional, Pattern, Set, Tuple, Type, TypeVar, Union)
+
+from nextcord.utils import MISSING, maybe_coroutine, resolve_annotation
+
+from .converter import run_converters
+from .errors import (BadFlagArgument, CommandError, MissingFlagArgument,
+                     MissingRequiredFlag, TooManyFlags)
+from .view import StringView
 
 __all__ = (
     'Flag',

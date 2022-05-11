@@ -23,34 +23,20 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
+
 import asyncio
 import typing
-from inspect import signature, Parameter
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    TYPE_CHECKING,
-    Tuple,
-    Union,
-    TypeVar,
-)
-import typing
+from inspect import Parameter, signature
+from typing import (TYPE_CHECKING, Any, Callable, Dict, Iterable, List,
+                    Optional, Set, Tuple, TypeVar, Union)
 
 from .abc import GuildChannel
-from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType
-from .errors import (
-    InvalidCommandType,
-    ApplicationCheckFailure,
-    ApplicationError,
-    ApplicationInvokeError,
-)
-from .interactions import Interaction
+from .enums import (ApplicationCommandOptionType, ApplicationCommandType,
+                    ChannelType)
+from .errors import (ApplicationCheckFailure, ApplicationError,
+                     ApplicationInvokeError, InvalidCommandType)
 from .guild import Guild
+from .interactions import Interaction
 from .member import Member
 from .message import Attachment, Message
 from .role import Role
@@ -59,11 +45,8 @@ from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
     from .state import ConnectionState
-    from .types.checks import (
-        ApplicationErrorCallback,
-        ApplicationHook,
-        ApplicationCheck,
-    )
+    from .types.checks import (ApplicationCheck, ApplicationErrorCallback,
+                               ApplicationHook)
 
     _SlashOptionMetaBase = Any
 else:

@@ -23,24 +23,20 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, List, Callable, Dict, Any, Tuple
-from functools import partial
-from itertools import groupby
 
-import sys
+import asyncio
 import os
+import sys
 import time
 import traceback
-import asyncio
+from functools import partial
+from itertools import groupby
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
-from ..utils import MISSING
-from .view import (
-    _ViewWeights,
-    _walk_all_components,
-    _component_to_item,
-)
-from .item import Item
 from ..components import Component
+from ..utils import MISSING
+from .item import Item
+from .view import _component_to_item, _ViewWeights, _walk_all_components
 
 __all__ = (
     'Modal',

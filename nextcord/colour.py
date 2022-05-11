@@ -24,15 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 import colorsys
 import random
-
-from typing import (
-    Any,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Optional, Tuple, Type, TypeVar, Union
 
 __all__ = (
     'Colour',

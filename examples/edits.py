@@ -1,6 +1,6 @@
-import nextcord
 import asyncio
 
+import nextcord
 from nextcord.ext import commands
 
 

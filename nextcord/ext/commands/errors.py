@@ -24,20 +24,22 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Optional, Any, TYPE_CHECKING, List, Callable, Type, Tuple, Union
+from typing import (TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Type,
+                    Union)
 
 from nextcord.errors import ClientException, DiscordException
 
 if TYPE_CHECKING:
     from inspect import Parameter
 
-    from .converter import Converter
-    from .context import Context
-    from .cooldowns import Cooldown, BucketType
-    from .flags import Flag
     from nextcord.abc import GuildChannel
     from nextcord.threads import Thread
     from nextcord.types.snowflake import Snowflake, SnowflakeList
+
+    from .context import Context
+    from .converter import Converter
+    from .cooldowns import BucketType, Cooldown
+    from .flags import Flag
 
 
 __all__ = (

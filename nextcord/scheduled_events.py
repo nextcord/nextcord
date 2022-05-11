@@ -24,14 +24,15 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
+from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
 from .types.snowflake import Snowflake
-from .utils import MISSING, parse_time, _bytes_to_base64_data
-from .asset import Asset
+from .utils import MISSING, _bytes_to_base64_data, parse_time
+
 __all__: Tuple[str] = (
     'EntityMetadata',
     'ScheduledEventUser',
@@ -42,14 +43,13 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from .abc import GuildChannel
-    from .enums import ScheduledEventStatus, ScheduledEventEntityType
+    from .enums import ScheduledEventEntityType, ScheduledEventStatus
     from .guild import Guild
     from .member import Member
     from .state import ConnectionState
-    from .types.scheduled_events import (
-        ScheduledEvent as ScheduledEventPayload,
+    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
+    from .types.scheduled_events import \
         ScheduledEventUser as ScheduledEventUserPayload
-    )
     from .user import User
 
 

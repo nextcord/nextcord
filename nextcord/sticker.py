@@ -23,14 +23,15 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Literal, TYPE_CHECKING, List, Optional, Tuple, Type, Union
-import unicodedata
 
-from .mixins import Hashable
+import unicodedata
+from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Type, Union
+
 from .asset import Asset, AssetMixin
-from .utils import cached_slot_property, find, snowflake_time, get, MISSING
+from .enums import StickerFormatType, StickerType, try_enum
 from .errors import InvalidData
-from .enums import StickerType, StickerFormatType, try_enum
+from .mixins import Hashable
+from .utils import MISSING, cached_slot_property, find, get, snowflake_time
 
 __all__ = (
     'StickerPack',
@@ -42,18 +43,18 @@ __all__ = (
 
 if TYPE_CHECKING:
     import datetime
-    from .state import ConnectionState
-    from .user import User
+
     from .guild import Guild
-    from .types.sticker import (
-        StickerPack as StickerPackPayload,
-        StickerItem as StickerItemPayload,
-        Sticker as StickerPayload,
-        StandardSticker as StandardStickerPayload,
-        GuildSticker as GuildStickerPayload,
-        ListPremiumStickerPacks as ListPremiumStickerPacksPayload,
-        EditGuildSticker,
-    )
+    from .state import ConnectionState
+    from .types.sticker import EditGuildSticker
+    from .types.sticker import GuildSticker as GuildStickerPayload
+    from .types.sticker import \
+        ListPremiumStickerPacks as ListPremiumStickerPacksPayload
+    from .types.sticker import StandardSticker as StandardStickerPayload
+    from .types.sticker import Sticker as StickerPayload
+    from .types.sticker import StickerItem as StickerItemPayload
+    from .types.sticker import StickerPack as StickerPackPayload
+    from .user import User
 
 
 class StickerPack(Hashable):

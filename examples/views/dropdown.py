@@ -1,6 +1,6 @@
 import nextcord
-
 from nextcord.ext import commands
+
 
 # Defines a custom Select containing colour options
 # that the user can choose. The callback function

@@ -24,7 +24,8 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator, List, Optional, Tuple, Type, TypeVar, Union
+from typing import (TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator,
+                    List, Optional, Tuple, Type, TypeVar, Union)
 
 from . import enums, utils
 from .asset import Asset
@@ -49,17 +50,16 @@ if TYPE_CHECKING:
     from .guild import Guild
     from .member import Member
     from .role import Role
-    from .types.audit_log import (
-        AuditLogChange as AuditLogChangePayload,
-        AuditLogEntry as AuditLogEntryPayload,
-    )
-    from .types.channel import PermissionOverwrite as PermissionOverwritePayload
-    from .types.role import Role as RolePayload
-    from .types.snowflake import Snowflake
-    from .user import User
     from .stage_instance import StageInstance
     from .sticker import GuildSticker
     from .threads import Thread
+    from .types.audit_log import AuditLogChange as AuditLogChangePayload
+    from .types.audit_log import AuditLogEntry as AuditLogEntryPayload
+    from .types.channel import \
+        PermissionOverwrite as PermissionOverwritePayload
+    from .types.role import Role as RolePayload
+    from .types.snowflake import Snowflake
+    from .user import User
 
 
 def _transform_permissions(entry: AuditLogEntry, data: str) -> Permissions:

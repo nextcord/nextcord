@@ -25,30 +25,27 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
-from datetime import datetime, timedelta
+
 import asyncio
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from . import utils
-from .enums import try_enum, InteractionType, InteractionResponseType
-from .errors import (
-    InteractionResponded,
-    HTTPException,
-    ClientException,
-    InvalidArgument
-)
-from .channel import PartialMessageable, ChannelType
-
-from .file import File
+from .channel import ChannelType, PartialMessageable
 from .embeds import Embed
-from .user import ClientUser, User
-from .mixins import Hashable
+from .enums import InteractionResponseType, InteractionType, try_enum
+from .errors import (ClientException, HTTPException, InteractionResponded,
+                     InvalidArgument)
+from .file import File
 from .member import Member
-from .message import Message, Attachment
+from .message import Attachment, Message
+from .mixins import Hashable
 from .object import Object
 from .permissions import Permissions
+from .user import ClientUser, User
 from .utils import snowflake_time
-from .webhook.async_ import async_context, Webhook, handle_message_parameters, WebhookMessage
+from .webhook.async_ import (Webhook, WebhookMessage, async_context,
+                             handle_message_parameters)
 
 __all__ = (
     'Interaction',
@@ -58,20 +55,20 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from .types.interactions import (
-        Interaction as InteractionPayload,
-        InteractionData,
-    )
-    from .guild import Guild
-    from .state import ConnectionState
-    from .mentions import AllowedMentions
     from aiohttp import ClientSession
-    from .ui.view import View
-    from .ui.modal import Modal
-    from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, PartialMessageable
-    from .threads import Thread
+
+    from .application_command import ApplicationCommand, ApplicationSubcommand
+    from .channel import (CategoryChannel, PartialMessageable, StageChannel,
+                          TextChannel, VoiceChannel)
     from .client import Client
-    from .application_command import ApplicationSubcommand, ApplicationCommand
+    from .guild import Guild
+    from .mentions import AllowedMentions
+    from .state import ConnectionState
+    from .threads import Thread
+    from .types.interactions import Interaction as InteractionPayload
+    from .types.interactions import InteractionData
+    from .ui.modal import Modal
+    from .ui.view import View
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable

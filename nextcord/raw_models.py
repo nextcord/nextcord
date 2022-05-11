@@ -25,23 +25,18 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Optional, Set, List
+from typing import TYPE_CHECKING, List, Optional, Set
 
 if TYPE_CHECKING:
-    from .types.raw_models import (
-        MessageDeleteEvent,
-        BulkMessageDeleteEvent,
-        ReactionActionEvent,
-        MessageUpdateEvent,
-        ReactionClearEvent,
-        ReactionClearEmojiEvent,
-        IntegrationDeleteEvent,
-        TypingEvent,
-        MemberRemoveEvent,
-    )
+    from .member import Member
     from .message import Message
     from .partial_emoji import PartialEmoji
-    from .member import Member
+    from .types.raw_models import (BulkMessageDeleteEvent,
+                                   IntegrationDeleteEvent, MemberRemoveEvent,
+                                   MessageDeleteEvent, MessageUpdateEvent,
+                                   ReactionActionEvent,
+                                   ReactionClearEmojiEvent, ReactionClearEvent,
+                                   TypingEvent)
     from .user import User
 
 

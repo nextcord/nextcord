@@ -28,7 +28,6 @@ from .member import Member
 from .snowflake import Snowflake
 from .user import User
 
-
 ScheduledEventEntityType = Literal[1, 2, 3]
 ScheduledEventPrivacyLevel = Literal[2]
 ScheduledEventStatus = Literal[1, 2, 3, 4]

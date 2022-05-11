@@ -1,7 +1,7 @@
 # This example requires the 'members' privileged intent to use the Member converter.
 import typing
-import nextcord
 
+import nextcord
 from nextcord.ext import commands
 
 intents = nextcord.Intents.default()

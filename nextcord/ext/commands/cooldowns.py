@@ -24,12 +24,13 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-
-from typing import Any, Callable, Deque, Dict, Optional, Type, TypeVar, TYPE_CHECKING
-from nextcord.enums import Enum
-import time
 import asyncio
+import time
 from collections import deque
+from typing import (TYPE_CHECKING, Any, Callable, Deque, Dict, Optional, Type,
+                    TypeVar)
+
+from nextcord.enums import Enum
 
 from ...abc import PrivateChannel
 from .errors import MaxConcurrencyReached

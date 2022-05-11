@@ -25,11 +25,12 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+from typing import (TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator,
+                    List, Optional, Tuple, Type, TypeVar)
+
+import nextcord.utils
 from nextcord.application_command import _cog_special_method
 from nextcord.interactions import Interaction
-import nextcord.utils
-
-from typing import Any, Callable, ClassVar, Dict, Generator, List, Optional, TYPE_CHECKING, Tuple, TypeVar, Type
 
 from ._types import _BaseCommand
 

@@ -23,24 +23,26 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Iterator, List, Optional, TYPE_CHECKING, Tuple
+
+from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Tuple
 
 from .asset import Asset, AssetMixin
-from .utils import SnowflakeList, snowflake_time, MISSING
-from .partial_emoji import _EmojiTag, PartialEmoji
+from .partial_emoji import PartialEmoji, _EmojiTag
 from .user import User
+from .utils import MISSING, SnowflakeList, snowflake_time
 
 __all__ = (
     'Emoji',
 )
 
 if TYPE_CHECKING:
-    from .types.emoji import Emoji as EmojiPayload
-    from .guild import Guild
-    from .state import ConnectionState
-    from .abc import Snowflake
-    from .role import Role
     from datetime import datetime
+
+    from .abc import Snowflake
+    from .guild import Guild
+    from .role import Role
+    from .state import ConnectionState
+    from .types.emoji import Emoji as EmojiPayload
 
 
 class Emoji(_EmojiTag, AssetMixin):

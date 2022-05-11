@@ -23,15 +23,16 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Type, TypeVar, Union, List, TYPE_CHECKING, Any, Union
+
+from typing import TYPE_CHECKING, Any, List, Type, TypeVar, Union
 
 __all__ = (
     'AllowedMentions',
 )
 
 if TYPE_CHECKING:
-    from .types.message import AllowedMentions as AllowedMentionsPayload
     from .abc import Snowflake
+    from .types.message import AllowedMentions as AllowedMentionsPayload
 
 
 class _FakeBool:

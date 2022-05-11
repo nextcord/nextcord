@@ -23,8 +23,8 @@ DEALINGS IN THE SOFTWARE.
 """
 
 
-from pathlib import Path
 from importlib import import_module
+from pathlib import Path
 from shutil import copyfile
 
 with open(".aliasignorerc") as f:

@@ -26,79 +26,64 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from collections import deque, OrderedDict
 import copy
+import inspect
 import itertools
 import logging
-from typing import Dict, Optional, TYPE_CHECKING, Union, Callable, Any, List, TypeVar, Coroutine, Sequence, Tuple, \
-    Deque, Set
-import inspect
-
 import os
+from collections import OrderedDict, deque
+from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Deque, Dict, List,
+                    Optional, Sequence, Set, Tuple, TypeVar, Union)
 
-from .guild import Guild
-from .activity import BaseActivity
-from .user import User, ClientUser
-from .emoji import Emoji
-from .mentions import AllowedMentions
-from .partial_emoji import PartialEmoji
-from .message import Message
-from .channel import (
-    TextChannel,
-    VoiceChannel,
-    StageChannel,
-    DMChannel,
-    CategoryChannel,
-    GroupChannel,
-    PartialMessageable,
-    _channel_factory,
-)
-from .raw_models import (
-    RawMessageDeleteEvent,
-    RawBulkMessageDeleteEvent,
-    RawMessageUpdateEvent,
-    RawReactionActionEvent,
-    RawReactionClearEvent,
-    RawReactionClearEmojiEvent,
-    RawIntegrationDeleteEvent,
-    RawTypingEvent,
-    RawMemberRemoveEvent,
-)
-from .member import Member
-from .role import Role
-from .enums import ChannelType, try_enum, Status
 from . import utils
+from .activity import BaseActivity
+from .channel import (CategoryChannel, DMChannel, GroupChannel,
+                      PartialMessageable, StageChannel, TextChannel,
+                      VoiceChannel, _channel_factory)
+from .emoji import Emoji
+from .enums import ChannelType, Status, try_enum
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
-from .object import Object
-from .invite import Invite
+from .guild import Guild
 from .integrations import _integration_factory
 from .interactions import Interaction
-from .ui.view import ViewStore, View
-from .ui.modal import ModalStore, Modal
-from .stage_instance import StageInstance
-from .threads import Thread, ThreadMember
-from .sticker import GuildSticker
+from .invite import Invite
+from .member import Member
+from .mentions import AllowedMentions
+from .message import Message
+from .object import Object
+from .partial_emoji import PartialEmoji
+from .raw_models import (RawBulkMessageDeleteEvent, RawIntegrationDeleteEvent,
+                         RawMemberRemoveEvent, RawMessageDeleteEvent,
+                         RawMessageUpdateEvent, RawReactionActionEvent,
+                         RawReactionClearEmojiEvent, RawReactionClearEvent,
+                         RawTypingEvent)
+from .role import Role
 from .scheduled_events import ScheduledEvent, ScheduledEventUser
+from .stage_instance import StageInstance
+from .sticker import GuildSticker
+from .threads import Thread, ThreadMember
+from .ui.modal import Modal, ModalStore
+from .ui.view import View, ViewStore
+from .user import ClientUser, User
 
 if TYPE_CHECKING:
     from .abc import PrivateChannel
     from .application_command import ApplicationCommand
-    from .message import MessageableChannel
-    from .guild import GuildChannel, VocalGuildChannel
-    from .http import HTTPClient
-    from .voice_client import VoiceProtocol
     from .client import Client
     from .gateway import DiscordWebSocket
-
+    from .guild import GuildChannel, VocalGuildChannel
+    from .http import HTTPClient
+    from .message import MessageableChannel
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
-    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
-    from .types.user import User as UserPayload
+    from .types.checks import ApplicationCheck, ApplicationHook
     from .types.emoji import Emoji as EmojiPayload
-    from .types.sticker import GuildSticker as GuildStickerPayload
     from .types.guild import Guild as GuildPayload
     from .types.message import Message as MessagePayload
-    from .types.checks import ApplicationCheck, ApplicationHook
+    from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
+    from .types.sticker import GuildSticker as GuildStickerPayload
+    from .types.user import User as UserPayload
+    from .voice_client import VoiceProtocol
 
     T = TypeVar('T')
     CS = TypeVar('CS', bound='ConnectionState')

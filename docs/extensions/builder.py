@@ -2,6 +2,7 @@ from sphinx.builders.html import StandaloneHTMLBuilder
 from sphinx.environment.adapters.indexentries import IndexEntries
 from sphinx.writers.html5 import HTML5Translator
 
+
 class DPYHTML5Translator(HTML5Translator):
     def visit_section(self, node):
         self.section_level += 1
