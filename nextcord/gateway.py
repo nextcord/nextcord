@@ -783,7 +783,7 @@ class DiscordVoiceWebSocket:
         self._keep_alive: Any = None
         self._close_code = None
         self.secret_key = None
-        self._hook = hook or getattr(self, "_hook", None) or getattr(self, "_default_hook", None)
+        self._hook = hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
 
     def _default_hook(self, *args):
         ...
