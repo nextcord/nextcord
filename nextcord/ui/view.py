@@ -97,7 +97,7 @@ class _ViewWeights:
             if weight + item.width <= 5:
                 return index
 
-        raise ValueError('could not find open space for item')
+        raise ValueError('Could not find open space for item')
 
     def add_item(self, item: Item) -> None:
         if item.row is not None:
@@ -278,10 +278,10 @@ class View:
         """
 
         if len(self.children) > 25:
-            raise ValueError('maximum number of children exceeded')
+            raise ValueError('Maximum number of children exceeded')
 
         if not isinstance(item, Item):
-            raise TypeError(f'expected Item not {item.__class__!r}')
+            raise TypeError(f'Expected Item not {item.__class__!r}')
 
         self.__weights.add_item(item)
 

@@ -733,9 +733,9 @@ class WebhookMessage(Message):
         Forbidden
             Edited a message that is not yours.
         InvalidArgument
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
-            The length of ``embeds`` was invalid
+            The length of ``embeds`` was invalid.
         InvalidArgument
             There was no token associated with this webhook.
 
@@ -1570,9 +1570,9 @@ class Webhook(BaseWebhook):
         Forbidden
             Edited a message that is not yours.
         InvalidArgument
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
-            The length of ``embeds`` was invalid
+            The length of ``embeds`` was invalid.
         InvalidArgument
             There was no token associated with this webhook or the webhook had
             no state.

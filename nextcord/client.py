@@ -1745,7 +1745,7 @@ class Client:
         """
 
         if not isinstance(view, View):
-            raise TypeError(f'expected an instance of View not {view.__class__!r}')
+            raise TypeError(f'Expected an instance of View not {view.__class__!r}')
 
         if not view.is_persistent():
             raise ValueError('View is not persistent. Items need to have a custom_id set and View must have no timeout')
@@ -1777,7 +1777,7 @@ class Client:
             and a timeout set to None.
         """
         if not isinstance(modal, Modal):
-            raise TypeError(f'expected an instance of Modal not {modal.__class__!r}')
+            raise TypeError(f'Expected an instance of Modal not {modal.__class__!r}')
 
         if not modal.is_persistent():
             raise ValueError('Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set')

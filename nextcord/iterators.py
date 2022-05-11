@@ -114,7 +114,7 @@ class _AsyncIterator(AsyncIterator[T]):
 
     def chunk(self, max_size: int) -> _ChunkedAsyncIterator[T]:
         if max_size <= 0:
-            raise ValueError('async iterator chunk sizes must be greater than 0.')
+            raise ValueError('Async iterator chunk sizes must be greater than 0')
         return _ChunkedAsyncIterator(self, max_size)
 
     def map(self, func: _Func[T, OT]) -> _MappedAsyncIterator[OT]:

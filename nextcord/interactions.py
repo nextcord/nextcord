@@ -388,7 +388,7 @@ class Interaction:
         Forbidden
             Edited a message that is not yours.
         InvalidArgument
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
 
@@ -552,7 +552,7 @@ class Interaction:
         HTTPException
             Editing the message failed.
         InvalidArgument
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         TypeError
             An object not of type :class:`File` was passed to ``file`` or ``files``.
         HTTPException
@@ -774,7 +774,7 @@ class InteractionResponse:
             :attr:`Interaction.followup` should be used if the interaction will take
             a while to respond.
         InvalidArgument
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         TypeError
             An object not of type :class:`File` was passed to ``file`` or ``files``.
         ValueError
@@ -973,7 +973,7 @@ class InteractionResponse:
                 payload['content'] = str(content)
 
         if embed is not MISSING and embeds is not MISSING:
-            raise InvalidArgument('cannot mix both embed and embeds keyword arguments')
+            raise InvalidArgument('Cannot mix both embed and embeds keyword arguments')
 
         if embed is not MISSING:
             if embed is None:
@@ -1110,7 +1110,7 @@ class _InteractionMessageMixin:
         Forbidden
             Edited a message that is not yours.
         InvalidArgument
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
 
