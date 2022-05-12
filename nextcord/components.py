@@ -320,7 +320,7 @@ class SelectOption:
             elif isinstance(emoji, _EmojiTag):
                 emoji = emoji._to_partial()
             else:
-                raise TypeError(f'expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}')
+                raise TypeError(f'Expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}')
 
         self.emoji = emoji
         self.default = default

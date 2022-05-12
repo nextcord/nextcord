@@ -387,8 +387,8 @@ class Interaction:
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
 
@@ -482,9 +482,24 @@ class Interaction:
         """|coro|
 
         This is a shorthand function for helping in sending messages in
-        response to an interaction. If the response
-        :meth:`InteractionResponse.is_done()` then the message is sent
-        via :attr:`Interaction.followup` instead.
+        response to an interaction. If the interaction has not been responded to,
+        :meth:`InteractionResponse.send_message` is used. If the response
+        :meth:`~InteractionResponse.is_done` then the message is sent
+        via :attr:`Interaction.followup` using :class:`Webhook.send` instead.
+
+        Raises
+        --------
+        HTTPException
+            Sending the message failed.
+        NotFound
+            The interaction has expired or the interaction has been responded to
+            but the followup webhook is expired.
+        Forbidden
+            The authorization token for the webhook is incorrect.
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
+        ValueError
+            The length of ``embeds`` was invalid.
 
         Returns
         -------
@@ -526,28 +541,41 @@ class Interaction:
         """|coro|
 
         This is a shorthand function for helping in editing messages in
-        response to an interaction. If the response
-        :meth:`InteractionResponse.is_done()` then the message is edited
-        via the :attr:`Interaction.message` instead.
+        response to a component or modal submit interaction. If the
+        interaction has not been responded to, :meth:`InteractionResponse.edit_message`
+        is used. If the response :meth:`~InteractionResponse.is_done` then
+        the message is edited via the :attr:`Interaction.message` using
+        :meth:`Message.edit` instead.
+
+        Raises
+        ------
+        HTTPException
+            Editing the message failed.
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
+        TypeError
+            An object not of type :class:`File` was passed to ``file`` or ``files``.
+        HTTPException
+            Editing the message failed.
+        InvalidArgument
+            :attr:`Interaction.message` was ``None``, this may occur in a :class:`Thread`
+            or when the interaction is not a component or modal submit interaction.
 
         Returns
         -------
         Optional[:class:`Message`]
-            Message if the interaction has been responded to and the
-            interaction's message was edited w/o using response. Else ``None``
-
-        Raises
-        ------
-        InvalidArgument
-            :attr:`Interaction.message` was ``None``,
-            this may occur in threads.
+            The edited message. If the interaction has not yet been responded to,
+            :meth:`InteractionResponse.edit_message` is used which returns
+            a :class:`Message` or ``None`` corresponding to :attr:`Interaction.message`.
+            Otherwise, the :class:`Message` is returned via :meth:`Message.edit`.
         """
         if not self.response.is_done():
             return await self.response.edit_message(*args, **kwargs)
         if self.message is not None:
             return await self.message.edit(*args, **kwargs)
         raise InvalidArgument(
-            "Interaction.message is None, this method is only for views"
+            "Interaction.message is None, this method can only be used in "
+            "response to a component or modal submit interaction."
         )
 
 
@@ -741,8 +769,14 @@ class InteractionResponse:
         -------
         HTTPException
             Sending the message failed.
-        TypeError
+        NotFound
+            The interaction has expired. :meth:`InteractionResponse.defer` and
+            :attr:`Interaction.followup` should be used if the interaction will take
+            a while to respond.
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
+        TypeError
+            An object not of type :class:`File` was passed to ``file`` or ``files``.
         ValueError
             The length of ``embeds`` was invalid.
         InteractionResponded
@@ -763,7 +797,7 @@ class InteractionResponse:
         }
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('Cannot mix embed and embeds keyword arguments')
+            raise InvalidArgument('Cannot mix embed and embeds keyword arguments')
 
         if embed is not MISSING:
             embeds = [embed]
@@ -772,7 +806,7 @@ class InteractionResponse:
             payload['embeds'] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
-            raise TypeError('Cannot mix file and files keyword arguments')
+            raise InvalidArgument('Cannot mix file and files keyword arguments')
 
         if file is not MISSING:
             files = [file]
@@ -874,11 +908,11 @@ class InteractionResponse:
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         delete_after: Optional[float] = None,
-    ) -> None:
+    ) -> Optional[Message]:
         """|coro|
 
-        Responds to this interaction by editing the original message of
-        a component interaction.
+        Responds to this interaction by editing the message that the
+        component or modal submit interaction originated from.
 
         Parameters
         -----------
@@ -910,10 +944,18 @@ class InteractionResponse:
         -------
         HTTPException
             Editing the message failed.
-        TypeError
+        InvalidArgument
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
+        TypeError
+            An object not of type :class:`File` was passed to ``file`` or ``files``.
         InteractionResponded
             This interaction has already been responded to before.
+
+        Returns
+        --------
+        Optional[:class:`Message`]
+            The message that was edited, or None if the :attr:`Interaction.message` is not found
+            (this may happen if the interaction occurred in a :class:`Thread`).
         """
         if self._responded:
             raise InteractionResponded(self._parent)
@@ -931,7 +973,7 @@ class InteractionResponse:
                 payload['content'] = str(content)
 
         if embed is not MISSING and embeds is not MISSING:
-            raise TypeError('cannot mix both embed and embeds keyword arguments')
+            raise InvalidArgument('Cannot mix both embed and embeds keyword arguments')
 
         if embed is not MISSING:
             if embed is None:
@@ -943,7 +985,7 @@ class InteractionResponse:
             payload['embeds'] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
-            raise TypeError('Cannot mix file and files keyword arguments')
+            raise InvalidArgument('Cannot mix file and files keyword arguments')
 
         if file is not MISSING:
             files = [file]
@@ -955,7 +997,8 @@ class InteractionResponse:
             payload['attachments'] = [a.to_dict() for a in attachments]
 
         if view is not MISSING:
-            state.prevent_view_updates_for(message_id)
+            if message_id is not None:
+                state.prevent_view_updates_for(message_id)
             if view is None:
                 payload['components'] = []
             else:
@@ -976,15 +1019,15 @@ class InteractionResponse:
                 for file in files:
                     file.close()
 
-        if view and not view.is_finished():
+        if view and not view.is_finished() and message_id is not None:
             state.store_view(view, message_id)
 
         self._responded = True
 
         if delete_after is not None:
-            await self._parent.delete_original_message(delay=delete_after)
+            await parent.delete_original_message(delay=delete_after)
 
-        
+        return state._get_message(message_id)
 
 
 class _InteractionMessageState:
@@ -1066,8 +1109,8 @@ class _InteractionMessageMixin:
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
             The length of ``embeds`` was invalid.
 

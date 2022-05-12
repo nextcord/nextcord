@@ -184,7 +184,7 @@ class Modal:
         """
 
         if not isinstance(item, Item):
-            raise TypeError(f'expected Item not {item.__class__!r}')
+            raise TypeError(f'Expected Item not {item.__class__!r}')
 
         self.__weights.add_item(item)
 
