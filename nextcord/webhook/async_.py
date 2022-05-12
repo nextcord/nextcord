@@ -677,7 +677,7 @@ class WebhookMessage(Message):
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
-        delete_after: Optional[bool] = None,
+        delete_after: Optional[float] = None,
     ) -> WebhookMessage:
         """|coro|
 
@@ -1265,7 +1265,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[True],
-        delete_after: Optional[bool] = None,
+        delete_after: Optional[float] = None,
     ) -> WebhookMessage:
         ...
 
@@ -1286,7 +1286,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: Literal[False] = ...,
-        delete_after: Optional[bool] = None,
+        delete_after: Optional[float] = None,
     ) -> None:
         ...
 
@@ -1306,7 +1306,7 @@ class Webhook(BaseWebhook):
         view: View = MISSING,
         thread: Snowflake = MISSING,
         wait: bool = False,
-        delete_after: Optional[bool] = None,
+        delete_after: Optional[float] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
