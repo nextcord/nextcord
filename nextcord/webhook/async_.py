@@ -505,9 +505,9 @@ def handle_message_parameters(
     previous_allowed_mentions: Optional[AllowedMentions] = None,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
-        raise InvalidArgument('Cannot mix file and files keyword arguments.')
+        raise InvalidArgument("Cannot mix file and files keyword arguments.")
     if embeds is not MISSING and embed is not MISSING:
-        raise InvalidArgument('Cannot mix embed and embeds keyword arguments.')
+        raise InvalidArgument("Cannot mix embed and embeds keyword arguments.")
 
     payload: Dict[str, Any] | None = {}
 

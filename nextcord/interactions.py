@@ -805,7 +805,7 @@ class InteractionResponse:
         }
 
         if embed is not MISSING and embeds is not MISSING:
-            raise InvalidArgument('Cannot mix embed and embeds keyword arguments')
+            raise InvalidArgument("Cannot mix embed and embeds keyword arguments")
 
         if embed is not MISSING:
             embeds = [embed]
@@ -814,7 +814,7 @@ class InteractionResponse:
             payload["embeds"] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
-            raise InvalidArgument('Cannot mix file and files keyword arguments')
+            raise InvalidArgument("Cannot mix file and files keyword arguments")
 
         if file is not MISSING:
             files = [file]
@@ -983,7 +983,7 @@ class InteractionResponse:
                 payload["content"] = str(content)
 
         if embed is not MISSING and embeds is not MISSING:
-            raise InvalidArgument('Cannot mix both embed and embeds keyword arguments')
+            raise InvalidArgument("Cannot mix both embed and embeds keyword arguments")
 
         if embed is not MISSING:
             if embed is None:
@@ -995,7 +995,7 @@ class InteractionResponse:
             payload["embeds"] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
-            raise InvalidArgument('Cannot mix file and files keyword arguments')
+            raise InvalidArgument("Cannot mix file and files keyword arguments")
 
         if file is not MISSING:
             files = [file]

@@ -34,7 +34,7 @@ If the bug report is missing this information then it'll take us longer to fix t
 
 ## Submitting a Pull Request
 
-Submitting a pull request is fairly simple, just make sure it focuses on a single aspect and doesn't manage to have scope creep and it's probably good to go. It would be incredibly lovely if the style is consistent to that found in the project. This project follows PEP-8 guidelines (mostly) with a column limit of 100.
+Submitting a pull request is fairly simple, just make sure it focuses on a single aspect and doesn't manage to have scope creep and it's probably good to go. It would be incredibly lovely if the style is consistent to that found in the project. This project follows PEP-8 guidelines (mostly) with a column limit of 100. `black` will use the `pyproject.toml` located in the root of the project to determine the style settings.
 
 It would be nice if the code is formatted with no type-checking issues before submitting a PR. To make sure, install the tools using `pip install -r requirements-dev.txt` (or poetry etc), and follow these steps:
 

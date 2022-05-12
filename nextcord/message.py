@@ -1390,9 +1390,9 @@ class Message(Hashable):
                 payload["content"] = None
 
         if embed is not MISSING and embeds is not MISSING:
-            raise InvalidArgument('Cannot pass both embed and embeds parameter to edit()')
+            raise InvalidArgument("Cannot pass both embed and embeds parameter to edit()")
         if file is not MISSING and files is not MISSING:
-            raise InvalidArgument('Cannot pass both file and files parameter to edit()')
+            raise InvalidArgument("Cannot pass both file and files parameter to edit()")
 
         if embed is not MISSING:
             if embed is None:

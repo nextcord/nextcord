@@ -1364,7 +1364,7 @@ class Messageable:
         content = str(content) if content is not None else None
 
         if embed is not None and embeds is not None:
-            raise InvalidArgument('Cannot pass both embed and embeds parameter to send()')
+            raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
         if embed is not None:
             embed = embed.to_dict()
@@ -1404,7 +1404,7 @@ class Messageable:
             components = None
 
         if file is not None and files is not None:
-            raise InvalidArgument('Cannot pass both file and files parameter to send()')
+            raise InvalidArgument("Cannot pass both file and files parameter to send()")
 
         if file is not None:
             if not isinstance(file, File):

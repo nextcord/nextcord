@@ -171,7 +171,7 @@ class Select(Item[V]):
         if not isinstance(value, list):
             raise TypeError("options must be a list of SelectOption")
         if not all(isinstance(obj, SelectOption) for obj in value):
-            raise TypeError('All list items must subclass SelectOption')
+            raise TypeError("All list items must subclass SelectOption")
 
         self._underlying.options = value
 
@@ -335,7 +335,7 @@ def select(
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
         if not asyncio.iscoroutinefunction(func):
-            raise TypeError('Select function must be a coroutine function')
+            raise TypeError("Select function must be a coroutine function")
 
         func.__discord_ui_model_type__ = Select
         func.__discord_ui_model_kwargs__ = {
