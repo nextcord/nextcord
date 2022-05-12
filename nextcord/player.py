@@ -657,7 +657,7 @@ class PCMVolumeTransformer(AudioSource, Generic[AT]):
 
     def __init__(self, original: AT, volume: float = 1.0):
         if not isinstance(original, AudioSource):
-            raise TypeError(f"expected AudioSource not {original.__class__.__name__}.")
+            raise TypeError(f'Expected AudioSource not {original.__class__.__name__}.')
 
         if original.is_opus():
             raise ClientException("AudioSource must not be Opus encoded.")

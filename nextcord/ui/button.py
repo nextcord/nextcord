@@ -98,7 +98,7 @@ class Button(Item[V]):
     ):
         super().__init__()
         if custom_id is not None and url is not None:
-            raise TypeError("cannot mix both url and custom_id with Button")
+            raise TypeError('Cannot mix both url and custom_id with Button')
 
         self._provided_custom_id = custom_id is not None
         if url is None and custom_id is None:
@@ -113,9 +113,7 @@ class Button(Item[V]):
             elif isinstance(emoji, _EmojiTag):
                 emoji = emoji._to_partial()
             else:
-                raise TypeError(
-                    f"expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}"
-                )
+                raise TypeError(f'Expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}')
 
         self._underlying = ButtonComponent._raw_construct(
             type=ComponentType.button,
@@ -194,9 +192,7 @@ class Button(Item[V]):
             elif isinstance(value, _EmojiTag):
                 self._underlying.emoji = value._to_partial()
             else:
-                raise TypeError(
-                    f"expected str, Emoji, or PartialEmoji, received {value.__class__} instead"
-                )
+                raise TypeError(f'Expected str, Emoji, or PartialEmoji, received {value.__class__} instead')
         else:
             self._underlying.emoji = None
 
@@ -278,7 +274,7 @@ def button(
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
         if not asyncio.iscoroutinefunction(func):
-            raise TypeError("button function must be a coroutine function")
+            raise TypeError('Button function must be a coroutine function')
 
         func.__discord_ui_model_type__ = Button
         func.__discord_ui_model_kwargs__ = {

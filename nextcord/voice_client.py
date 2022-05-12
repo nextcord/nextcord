@@ -644,7 +644,7 @@ class VoiceClient(VoiceProtocol):
     @source.setter
     def source(self, value: AudioSource) -> None:
         if not isinstance(value, AudioSource):
-            raise TypeError(f"expected AudioSource not {value.__class__.__name__}.")
+            raise TypeError(f'Expected AudioSource not {value.__class__.__name__}.')
 
         if self._player is None:
             raise ValueError("Not playing anything.")

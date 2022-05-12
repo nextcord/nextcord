@@ -205,7 +205,7 @@ class Role(Hashable):
             return NotImplemented
 
         if self.guild != other.guild:
-            raise RuntimeError("cannot compare roles from two different guilds.")
+            raise RuntimeError('Cannot compare roles from two different guilds.')
 
         # the @everyone role is always the lowest role in hierarchy
         guild_id = self.guild.id

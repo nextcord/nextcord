@@ -450,10 +450,10 @@ class SyncWebhookMessage(Message):
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
-            The length of ``embeds`` was invalid
+            The length of ``embeds`` was invalid.
         InvalidArgument
             There was no token associated with this webhook.
 
@@ -605,7 +605,7 @@ class SyncWebhook(BaseWebhook):
 
         if session is not MISSING:
             if not isinstance(session, requests.Session):
-                raise TypeError(f"expected requests.Session not {session.__class__!r}")
+                raise TypeError(f'Expected requests.Session not {session.__class__!r}')
         else:
             session = requests  # type: ignore
         return cls(data, session, token=bot_token)
@@ -653,7 +653,7 @@ class SyncWebhook(BaseWebhook):
 
         if session is not MISSING:
             if not isinstance(session, requests.Session):
-                raise TypeError(f"expected requests.Session not {session.__class__!r}")
+                raise TypeError(f'Expected requests.Session not {session.__class__!r}')
         else:
             session = requests  # type: ignore
         return cls(data, session, token=bot_token)  # type: ignore
@@ -931,10 +931,10 @@ class SyncWebhook(BaseWebhook):
             This webhook was not found.
         Forbidden
             The authorization token for the webhook is incorrect.
-        TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
-            The length of ``embeds`` was invalid
+            The length of ``embeds`` was invalid.
         InvalidArgument
             There was no token associated with this webhook.
 
@@ -1069,10 +1069,10 @@ class SyncWebhook(BaseWebhook):
             Editing the message failed.
         Forbidden
             Edited a message that is not yours.
-        TypeError
-            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``
+        InvalidArgument
+            You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
         ValueError
-            The length of ``embeds`` was invalid
+            The length of ``embeds`` was invalid.
         InvalidArgument
             There was no token associated with this webhook.
         """

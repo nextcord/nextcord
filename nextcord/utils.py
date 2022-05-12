@@ -177,7 +177,7 @@ class classproperty(Generic[T_co]):
         return self.fget(owner)
 
     def __set__(self, instance, value) -> None:
-        raise AttributeError("cannot set attribute")
+        raise AttributeError('Cannot set attribute')
 
 
 def cached_slot_property(name: str) -> Callable[[Callable[[T], T_co]], CachedSlotProperty[T, T_co]]:
