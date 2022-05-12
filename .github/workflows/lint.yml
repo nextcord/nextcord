@@ -50,7 +50,6 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements-dev.txt .[voice,docs,speed]
 
-      # unfortunately this breaks oneliner rules, sorry epic - ooliver
       - name: Set up pyright
         run: echo "PYRIGHT_VERSION=$(python -c 'import pyright; print(pyright.__pyright_version__)')" >> $GITHUB_ENV
 
