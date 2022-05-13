@@ -6,12 +6,13 @@ from nextcord.ext import commands
 
 bot = commands.Bot(command_prefix='$')
 
+
 @bot.command()
 async def guess(ctx):
     await ctx.send('Guess a number between 1 and 10.')
 
-    def is_correct(m):
-        return m.author == ctx.author and m.content.isdigit()
+    def is_correct(message):
+        return message.author == ctx.author and message.content.isdigit()
 
     answer = random.randint(1, 10)
 

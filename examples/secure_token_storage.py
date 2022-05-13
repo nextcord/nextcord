@@ -5,7 +5,7 @@ import os
 from nextcord.ext import commands
 
 # There are other ways to load environment variables but this is one
-from dotenv import load_dotenv # https://pypi.org/project/python-dotenv/
+from dotenv import load_dotenv  # https://pypi.org/project/python-dotenv/
 
 # load_dotenv reads from a file called .env in the same directory as the python files which should roughly look like BOT_TOKEN="1234567890"
 load_dotenv()

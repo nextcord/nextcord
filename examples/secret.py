@@ -5,15 +5,17 @@ from nextcord.ext import commands
 
 bot = commands.Bot(command_prefix='$', description="Nothing to see here!")
 
-# the `hidden` keyword argument hides it from the help command. 
+
+# the `hidden` keyword argument hides it from the help command.
 @bot.group(hidden=True)
 async def secret(ctx):
     """What is this "secret" you speak of?"""
     if ctx.invoked_subcommand is None:
         await ctx.send('Shh!', delete_after=5)
 
+
 def create_overwrites(ctx, *objects):
-    """This is just a helper function that creates the overwrites for the 
+    """This is just a helper function that creates the overwrites for the
     voice/text channels.
 
     A `nextcord.PermissionOverwrite` allows you to determine the permissions
@@ -40,15 +42,16 @@ def create_overwrites(ctx, *objects):
 
     return overwrites
 
+
 # since these commands rely on guild related features,
 # it is best to lock it to be guild-only.
 @secret.command()
 @commands.guild_only()
 async def text(ctx, name: str, *objects: typing.Union[nextcord.Role, nextcord.Member]):
-    """This makes a text channel with a specified name 
+    """This makes a text channel with a specified name
     that is only visible to roles or members that are specified.
     """
-    
+
     overwrites = create_overwrites(ctx, *objects)
 
     await ctx.guild.create_text_channel(
@@ -57,6 +60,7 @@ async def text(ctx, name: str, *objects: typing.Union[nextcord.Role, nextcord.Me
         topic='Top secret text channel. Any leakage of this channel may result in serious trouble.',
         reason='Very secret business.',
     )
+
 
 @secret.command()
 @commands.guild_only()
@@ -72,6 +76,7 @@ async def voice(ctx, name: str, *objects: typing.Union[nextcord.Role, nextcord.M
         overwrites=overwrites,
         reason='Very secret business.'
     )
+
 
 @secret.command()
 @commands.guild_only()

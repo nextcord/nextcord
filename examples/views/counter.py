@@ -13,7 +13,7 @@ class Counter(nextcord.ui.View):
     @nextcord.ui.button(label='0', style=nextcord.ButtonStyle.red)
     async def count(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         number = int(button.label) if button.label else 0
-        if number + 1 >= 5:
+        if number >= 4:
             button.style = nextcord.ButtonStyle.green
             button.disabled = True
         button.label = str(number + 1)
