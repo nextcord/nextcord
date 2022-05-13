@@ -67,14 +67,10 @@ __all__ = (
 
 if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
-    from .message import Message, PartialMessage, Attachment
     from .file import File
-    from .webhook import Webhook
-    from .state import ConnectionState
-    from .user import ClientUser, User, BaseUser
     from .guild import Guild, GuildChannel as GuildChannelType
     from .member import Member, VoiceState
-    from .message import Message, PartialMessage
+    from .message import Attachment, Message, PartialMessage
     from .role import Role
     from .state import ConnectionState
     from .types.channel import (
@@ -555,11 +551,11 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         return [Webhook.from_state(d, state=self._state) for d in data]
 
     async def create_webhook(
-            self,
-            *,
-            name: str,
-            avatar: Optional[Union[bytes, Asset, Attachment, File]] = None,
-            reason: Optional[str] = None
+        self,
+        *,
+        name: str,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = None,
+        reason: Optional[str] = None,
     ) -> Webhook:
         """|coro|
 
@@ -597,7 +593,9 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
         avatar_base64 = await utils._obj_to_base64_data(avatar)
 
-        data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar_base64, reason=reason)
+        data = await self._state.http.create_webhook(
+            self.id, name=str(name), avatar=avatar_base64, reason=reason
+        )
         return Webhook.from_state(data, state=self._state)
 
     async def follow(self, *, destination: TextChannel, reason: Optional[str] = None) -> Webhook:

@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .abc import Snowflake
 from .asset import Asset
@@ -32,24 +32,20 @@ from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
 from .types.snowflake import Snowflake
-from .utils import MISSING, parse_time, _obj_to_base64_data
-from .asset import Asset
-__all__: Tuple[str] = (
-    'EntityMetadata',
-    'ScheduledEventUser',
-    'ScheduledEvent'
-)
+from .utils import MISSING, _obj_to_base64_data, parse_time
+
+__all__: Tuple[str] = ("EntityMetadata", "ScheduledEventUser", "ScheduledEvent")
 
 if TYPE_CHECKING:
     from datetime import datetime
 
     from .abc import GuildChannel
     from .enums import ScheduledEventEntityType, ScheduledEventStatus
+    from .file import File
     from .guild import Guild
     from .member import Member
-    from .state import ConnectionState
     from .message import Attachment
-    from .file import File
+    from .state import ConnectionState
     from .types.scheduled_events import (
         ScheduledEvent as ScheduledEventPayload,
         ScheduledEventUser as ScheduledEventUserPayload,
@@ -337,7 +333,7 @@ class ScheduledEvent(Hashable):
         type: Optional[ScheduledEventEntityType] = MISSING,
         status: Optional[ScheduledEventStatus] = MISSING,
         reason: Optional[str] = None,
-        image: Optional[Union[bytes, Asset, Attachment, File]] = MISSING
+        image: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
     ) -> ScheduledEvent:
         """|coro|
 
@@ -410,7 +406,7 @@ class ScheduledEvent(Hashable):
             payload["status"] = status.value
 
         if image is not MISSING:
-            payload['image'] = await _obj_to_base64_data(image)
+            payload["image"] = await _obj_to_base64_data(image)
 
         if not payload:
             return self

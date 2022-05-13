@@ -24,22 +24,22 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Type, TypeVar, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union
 
 from . import abc
 from .asset import Asset
 from .colour import Colour
 from .enums import DefaultAvatar
 from .flags import PublicUserFlags
-from .utils import snowflake_time, _obj_to_base64_data, MISSING
+from .utils import MISSING, _obj_to_base64_data, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
 
     from .channel import DMChannel
-    from .guild import Guild
-    from .message import Message, Attachment
     from .file import File
+    from .guild import Guild
+    from .message import Attachment, Message
     from .state import ConnectionState
     from .types.channel import DMChannel as DMChannelPayload
     from .types.user import User as UserPayload
@@ -351,10 +351,10 @@ class ClientUser(BaseUser):
         self.mfa_enabled = data.get("mfa_enabled", False)
 
     async def edit(
-            self,
-            *,
-            username: str = MISSING,
-            avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING
+        self,
+        *,
+        username: str = MISSING,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
     ) -> ClientUser:
         """|coro|
 
@@ -394,9 +394,9 @@ class ClientUser(BaseUser):
         """
         payload: Dict[str, Any] = {}
         if username is not MISSING:
-            payload['username'] = username
+            payload["username"] = username
         if avatar is not MISSING:
-            payload['avatar'] = await _obj_to_base64_data(avatar)
+            payload["avatar"] = await _obj_to_base64_data(avatar)
 
         data: UserPayload = await self._state.http.edit_profile(payload)
         return ClientUser(state=self._state, data=data)

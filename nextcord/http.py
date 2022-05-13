@@ -2230,15 +2230,15 @@ class HTTPClient:
         self, guild_id: Snowflake, *, reason: Optional[str] = None, **payload: Any
     ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
-            'channel_id',
-            'entity_metadata',
-            'name',
-            'privacy_level',
-            'scheduled_start_time',
-            'scheduled_end_time',
-            'description',
-            'entity_type',
-            'image',
+            "channel_id",
+            "entity_metadata",
+            "name",
+            "privacy_level",
+            "scheduled_start_time",
+            "scheduled_end_time",
+            "description",
+            "entity_type",
+            "image",
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route("POST", "/guilds/{guild_id}/scheduled-events", guild_id=guild_id)
@@ -2265,16 +2265,16 @@ class HTTPClient:
         **payload: Any,
     ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
-            'channel_id',
-            'event_metadata',
-            'name',
-            'privacy_level',
-            'scheduled_start_time',
-            'scheduled_end_time',
-            'description',
-            'entity_type',
-            'status',
-            'image'
+            "channel_id",
+            "event_metadata",
+            "name",
+            "privacy_level",
+            "scheduled_start_time",
+            "scheduled_end_time",
+            "description",
+            "entity_type",
+            "status",
+            "image",
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(

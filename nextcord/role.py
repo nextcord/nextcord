@@ -23,15 +23,15 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TypeVar, Union, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypeVar, Union
 
 from .asset import Asset
-from .utils import _obj_to_base64_data
-from .permissions import Permissions
-from .errors import InvalidArgument
 from .colour import Colour
+from .errors import InvalidArgument
 from .mixins import Hashable
-from .utils import snowflake_time, _get_as_snowflake, MISSING
+from .permissions import Permissions
+from .utils import MISSING, _get_as_snowflake, _obj_to_base64_data, snowflake_time
 
 __all__ = (
     "RoleTags",
@@ -40,15 +40,11 @@ __all__ = (
 
 if TYPE_CHECKING:
     import datetime
-    from .types.role import (
-        Role as RolePayload,
-        RoleTags as RoleTagPayload,
-    )
-    from .types.guild import RolePositionUpdate
-    from .message import Attachment
+
     from .file import File
     from .guild import Guild
     from .member import Member
+    from .message import Attachment
     from .state import ConnectionState
     from .types.guild import RolePositionUpdate
     from .types.role import Role as RolePayload, RoleTags as RoleTagPayload
@@ -461,9 +457,9 @@ class Role(Hashable):
 
         if icon is not MISSING:
             if isinstance(icon, str):
-                payload['unicode_emoji'] = icon
+                payload["unicode_emoji"] = icon
             else:
-                payload['icon'] = await _obj_to_base64_data(icon)
+                payload["icon"] = await _obj_to_base64_data(icon)
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         return Role(guild=self.guild, data=data, state=self._state)

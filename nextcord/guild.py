@@ -48,12 +48,12 @@ from . import abc, utils
 from .asset import Asset
 from .bans import BanEntry
 from .channel import (
-    _guild_channel_factory,
-    _threaded_guild_channel_factory,
-    TextChannel,
     CategoryChannel,
     StageChannel,
+    TextChannel,
     VoiceChannel,
+    _guild_channel_factory,
+    _threaded_guild_channel_factory,
 )
 from .colour import Colour
 from .emoji import Emoji
@@ -96,14 +96,12 @@ if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
     from .application_command import ApplicationCommand
     from .channel import CategoryChannel, StageChannel, TextChannel, VoiceChannel
+    from .file import File
+    from .message import Attachment
     from .permissions import Permissions
     from .state import ConnectionState
     from .template import Template
-    from .message import Attachment
-    from .file import File
-    from .types.guild import Ban as BanPayload
-    from .types.guild import Guild as GuildPayload
-    from .types.guild import GuildFeature, MFALevel
+    from .types.guild import Ban as BanPayload, Guild as GuildPayload, GuildFeature, MFALevel
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.snowflake import SnowflakeList
     from .types.sticker import CreateGuildSticker
@@ -1590,16 +1588,16 @@ class Guild(Hashable):
             fields["afk_timeout"] = afk_timeout
 
         if icon is not MISSING:
-            fields['icon'] = await utils._obj_to_base64_data(icon)
+            fields["icon"] = await utils._obj_to_base64_data(icon)
 
         if banner is not MISSING:
-            fields['banner'] = await utils._obj_to_base64_data(banner)
+            fields["banner"] = await utils._obj_to_base64_data(banner)
 
         if splash is not MISSING:
-            fields['splash'] = await utils._obj_to_base64_data(splash)
+            fields["splash"] = await utils._obj_to_base64_data(splash)
 
         if discovery_splash is not MISSING:
-            fields['discovery_splash'] = await utils._obj_to_base64_data(discovery_splash)
+            fields["discovery_splash"] = await utils._obj_to_base64_data(discovery_splash)
 
         if default_notifications is not MISSING:
             if not isinstance(default_notifications, NotificationLevel):
@@ -2484,7 +2482,9 @@ class Guild(Hashable):
         else:
             role_ids = []
 
-        data = await self._state.http.create_custom_emoji(self.id, name, img_base64, roles=role_ids, reason=reason)
+        data = await self._state.http.create_custom_emoji(
+            self.id, name, img_base64, roles=role_ids, reason=reason
+        )
         return self._state.store_emoji(self, data)
 
     async def delete_emoji(self, emoji: Snowflake, *, reason: Optional[str] = None) -> None:
@@ -2584,7 +2584,7 @@ class Guild(Hashable):
         hoist: bool = MISSING,
         mentionable: bool = MISSING,
         icon: Optional[Union[str, bytes, Asset, Attachment, File]] = MISSING,
-        reason: Optional[str] = None
+        reason: Optional[str] = None,
     ) -> Role:
         """|coro|
 
@@ -2655,9 +2655,9 @@ class Guild(Hashable):
 
         if icon is not MISSING:
             if isinstance(icon, str):
-                fields['unicode_emoji'] = icon
+                fields["unicode_emoji"] = icon
             else:
-                fields['icon'] = await utils._obj_to_base64_data(icon)
+                fields["icon"] = await utils._obj_to_base64_data(icon)
 
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
         role = Role(guild=self, data=data, state=self._state)
@@ -3277,9 +3277,9 @@ class Guild(Hashable):
             The created event object.
         """
         payload: Dict[str, Any] = {
-            'name': name,
-            'entity_type': entity_type.value,
-            'scheduled_start_time': start_time.isoformat()
+            "name": name,
+            "entity_type": entity_type.value,
+            "scheduled_start_time": start_time.isoformat(),
         }
         if channel is not MISSING:
             payload["channel_id"] = channel.id
@@ -3290,9 +3290,9 @@ class Guild(Hashable):
         if end_time is not MISSING:
             payload["scheduled_end_time"] = end_time.isoformat()
         if description is not MISSING:
-            payload['description'] = description
+            payload["description"] = description
         if image is not None:
-            payload['image'] = await utils._obj_to_base64_data(image)
+            payload["image"] = await utils._obj_to_base64_data(image)
 
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)

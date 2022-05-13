@@ -62,8 +62,8 @@ from typing import (
     overload,
 )
 
-from .file import File
 from .errors import InvalidArgument
+from .file import File
 
 try:
     import orjson
@@ -125,11 +125,10 @@ if TYPE_CHECKING:
 
     from typing_extensions import ParamSpec
 
-    from .message import Attachment
-    from .asset import Asset
-    from .permissions import Permissions
     from .abc import Snowflake
+    from .asset import Asset
     from .invite import Invite
+    from .message import Attachment
     from .permissions import Permissions
     from .template import Template
 
@@ -500,7 +499,9 @@ def _bytes_to_base64_data(data: bytes) -> str:
     return fmt.format(mime=mime, data=b64)
 
 
-async def _obj_to_base64_data(obj: Optional[Union[bytes, Attachment, Asset, File]]) -> Optional[str]:
+async def _obj_to_base64_data(
+    obj: Optional[Union[bytes, Attachment, Asset, File]]
+) -> Optional[str]:
     if obj is None:
         return obj
     if isinstance(obj, bytes):

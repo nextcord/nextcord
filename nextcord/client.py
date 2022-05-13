@@ -84,14 +84,13 @@ from .webhook import Webhook
 from .widget import Widget
 
 if TYPE_CHECKING:
-    from .asset import Asset
-    from .abc import SnowflakeTime, PrivateChannel, GuildChannel, Snowflake
+    from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
     from .application_command import ApplicationCommand, ClientCog
+    from .asset import Asset
     from .channel import DMChannel
-    from .member import Member
-    from .message import Message, Attachment
     from .file import File
-    from .voice_client import VoiceProtocol
+    from .member import Member
+    from .message import Attachment, Message
     from .scheduled_events import ScheduledEvent
     from .voice_client import VoiceProtocol
 

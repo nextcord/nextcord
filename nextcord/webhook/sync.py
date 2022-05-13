@@ -789,11 +789,11 @@ class SyncWebhook(BaseWebhook):
 
         if avatar is not MISSING:
             if avatar is None:
-                payload['avatar'] = avatar
+                payload["avatar"] = avatar
             elif isinstance(avatar, bytes):
-                payload['avatar'] = utils._bytes_to_base64_data(avatar)
+                payload["avatar"] = utils._bytes_to_base64_data(avatar)
             else:
-                payload['avatar'] = utils._bytes_to_base64_data(avatar.fp.read())
+                payload["avatar"] = utils._bytes_to_base64_data(avatar.fp.read())
 
         adapter: WebhookAdapter = _get_webhook_adapter()
 

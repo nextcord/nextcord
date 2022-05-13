@@ -65,6 +65,8 @@ __all__ = (
 _log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    import datetime
+
     from ..embeds import Embed
     from ..file import File
     from ..guild import Guild
@@ -74,8 +76,6 @@ if TYPE_CHECKING:
     from ..types.message import Message as MessagePayload
     from ..types.webhook import Webhook as WebhookPayload
     from ..ui.view import View
-    from ..file import File
-    import datetime
 
 MISSING = utils.MISSING
 
@@ -1289,7 +1289,7 @@ class Webhook(BaseWebhook):
             payload["name"] = str(name) if name is not None else None
 
         if avatar is not MISSING:
-            payload['avatar'] = await utils._obj_to_base64_data(avatar)
+            payload["avatar"] = await utils._obj_to_base64_data(avatar)
 
         adapter = async_context.get()
 

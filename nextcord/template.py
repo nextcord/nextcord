@@ -24,20 +24,20 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING, Union
-from .utils import parse_time, _obj_to_base64_data, MISSING
+from typing import TYPE_CHECKING, Any, Optional, Union
+
 from .enums import VoiceRegion
 from .guild import Guild
-from .utils import MISSING, _bytes_to_base64_data, parse_time
+from .utils import MISSING, _bytes_to_base64_data, _obj_to_base64_data, parse_time
 
 __all__ = ("Template",)
 
 if TYPE_CHECKING:
     import datetime
+
     from .asset import Asset
-    from .message import Attachment
     from .file import File
-    from .types.template import Template as TemplatePayload
+    from .message import Attachment
     from .state import ConnectionState
     from .types.template import Template as TemplatePayload
     from .user import User
@@ -212,7 +212,9 @@ class Template:
         region = region or VoiceRegion.us_west
         region_value = region.value
 
-        data = await self._state.http.create_from_template(self.code, name, region_value, icon_base64)
+        data = await self._state.http.create_from_template(
+            self.code, name, region_value, icon_base64
+        )
         return Guild(data=data, state=self._state)
 
     async def sync(self) -> Template:
