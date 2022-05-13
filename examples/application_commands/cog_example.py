@@ -17,7 +17,9 @@ class ApplicationCommandCog(commands.Cog):
         await interaction.response.send_message(f"Hello, {member}!")
 
     @nextcord.message_command(guild_ids=[TESTING_GUILD_ID])
-    async def my_message_command(self, interaction: nextcord.Interaction, message: nextcord.Message):
+    async def my_message_command(
+        self, interaction: nextcord.Interaction, message: nextcord.Message
+    ):
         await interaction.response.send_message(f"{message}")
 
 

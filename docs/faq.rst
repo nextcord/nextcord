@@ -423,6 +423,5 @@ Example: ::
     async def main():
         bot.load_extension('cog_name')
         await bot.start("token")
-    
-    asyncio.run(main())
 
+    asyncio.run(main())
