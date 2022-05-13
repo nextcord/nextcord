@@ -49,9 +49,13 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple
 from . import opus, utils
 from .backoff import ExponentialBackoff
 from .errors import ClientException, ConnectionClosed
-from .gateway import (DiscordVoiceWebSocket, DiscordWebSocket,
-                      KeepAliveHandler, ReconnectWebSocket,
-                      VoiceKeepAliveHandler)
+from .gateway import (
+    DiscordVoiceWebSocket,
+    DiscordWebSocket,
+    KeepAliveHandler,
+    ReconnectWebSocket,
+    VoiceKeepAliveHandler,
+)
 from .player import AudioPlayer, AudioSource
 from .utils import MISSING
 
@@ -61,11 +65,13 @@ if TYPE_CHECKING:
     from .guild import Guild
     from .opus import Encoder
     from .state import ConnectionState
-    from .types.voice import GuildVoiceState as GuildVoiceStatePayload
-    from .types.voice import SupportedModes
-    from .types.voice import VoiceServerUpdate as VoiceServerUpdatePayload
+    from .types.voice import (
+        GuildVoiceState as GuildVoiceStatePayload,
+        SupportedModes,
+        VoiceServerUpdate as VoiceServerUpdatePayload,
+    )
     from .user import ClientUser
-    
+
 
 has_nacl: bool
 

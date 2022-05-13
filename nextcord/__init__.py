@@ -22,82 +22,160 @@ import logging
 from typing import Literal, NamedTuple
 
 from . import abc, opus, ui, utils
-from .activity import (Activity, BaseActivity, CustomActivity, Game, Spotify,
-                       Streaming)
+from .activity import Activity, BaseActivity, CustomActivity, Game, Spotify, Streaming
 from .appinfo import AppInfo, PartialAppInfo
-from .application_command import (ApplicationCommand, ApplicationSubcommand,
-                                  ClientCog, CommandOption, SlashOption,
-                                  message_command, slash_command, user_command)
+from .application_command import (
+    ApplicationCommand,
+    ApplicationSubcommand,
+    ClientCog,
+    CommandOption,
+    SlashOption,
+    message_command,
+    slash_command,
+    user_command,
+)
 from .asset import Asset
 from .audit_logs import AuditLogChanges, AuditLogDiff, AuditLogEntry
 from .bans import BanEntry
-from .channel import (CategoryChannel, DMChannel, GroupChannel,
-                      PartialMessageable, StageChannel, TextChannel,
-                      VoiceChannel)
+from .channel import (
+    CategoryChannel,
+    DMChannel,
+    GroupChannel,
+    PartialMessageable,
+    StageChannel,
+    TextChannel,
+    VoiceChannel,
+)
 from .client import Client
 from .colour import Color, Colour
-from .components import (ActionRow, Button, Component, SelectMenu,
-                         SelectOption, TextInput)
+from .components import ActionRow, Button, Component, SelectMenu, SelectOption, TextInput
 from .embeds import Embed
 from .emoji import Emoji
-from .enums import (ActivityType, ApplicationCommandOptionType,
-                    ApplicationCommandType, AuditLogAction,
-                    AuditLogActionCategory, ButtonStyle, ChannelType,
-                    ComponentType, ContentFilter, DefaultAvatar, Enum,
-                    ExpireBehavior, ExpireBehaviour, InteractionResponseType,
-                    InteractionType, InviteTarget, MessageType,
-                    NotificationLevel, NSFWLevel, ScheduledEventEntityType,
-                    ScheduledEventPrivacyLevel, ScheduledEventStatus,
-                    SpeakingState, StagePrivacyLevel, Status,
-                    StickerFormatType, StickerType, TeamMembershipState,
-                    TextInputStyle, UserFlags, VerificationLevel,
-                    VideoQualityMode, VoiceRegion, WebhookType)
-from .errors import (ApplicationCheckFailure, ApplicationError,
-                     ApplicationInvokeError, ClientException, ConnectionClosed,
-                     DiscordException, DiscordServerError, Forbidden,
-                     GatewayNotFound, HTTPException, InteractionResponded,
-                     InvalidArgument, InvalidCommandType, InvalidData,
-                     LoginFailure, NoMoreItems, NotFound,
-                     PrivilegedIntentsRequired)
+from .enums import (
+    ActivityType,
+    ApplicationCommandOptionType,
+    ApplicationCommandType,
+    AuditLogAction,
+    AuditLogActionCategory,
+    ButtonStyle,
+    ChannelType,
+    ComponentType,
+    ContentFilter,
+    DefaultAvatar,
+    Enum,
+    ExpireBehavior,
+    ExpireBehaviour,
+    InteractionResponseType,
+    InteractionType,
+    InviteTarget,
+    MessageType,
+    NotificationLevel,
+    NSFWLevel,
+    ScheduledEventEntityType,
+    ScheduledEventPrivacyLevel,
+    ScheduledEventStatus,
+    SpeakingState,
+    StagePrivacyLevel,
+    Status,
+    StickerFormatType,
+    StickerType,
+    TeamMembershipState,
+    TextInputStyle,
+    UserFlags,
+    VerificationLevel,
+    VideoQualityMode,
+    VoiceRegion,
+    WebhookType,
+)
+from .errors import (
+    ApplicationCheckFailure,
+    ApplicationError,
+    ApplicationInvokeError,
+    ClientException,
+    ConnectionClosed,
+    DiscordException,
+    DiscordServerError,
+    Forbidden,
+    GatewayNotFound,
+    HTTPException,
+    InteractionResponded,
+    InvalidArgument,
+    InvalidCommandType,
+    InvalidData,
+    LoginFailure,
+    NoMoreItems,
+    NotFound,
+    PrivilegedIntentsRequired,
+)
 from .file import File
-from .flags import (ApplicationFlags, Intents, MemberCacheFlags, MessageFlags,
-                    PublicUserFlags, SystemChannelFlags)
+from .flags import (
+    ApplicationFlags,
+    Intents,
+    MemberCacheFlags,
+    MessageFlags,
+    PublicUserFlags,
+    SystemChannelFlags,
+)
 from .guild import Guild
 from .health_check import incompatible_libraries
-from .integrations import (BotIntegration, Integration, IntegrationAccount,
-                           IntegrationApplication, StreamIntegration)
-from .interactions import (Interaction, InteractionMessage,
-                           InteractionResponse, PartialInteractionMessage)
+from .integrations import (
+    BotIntegration,
+    Integration,
+    IntegrationAccount,
+    IntegrationApplication,
+    StreamIntegration,
+)
+from .interactions import (
+    Interaction,
+    InteractionMessage,
+    InteractionResponse,
+    PartialInteractionMessage,
+)
 from .invite import Invite, PartialInviteChannel, PartialInviteGuild
 from .member import Member, VoiceState
 from .mentions import AllowedMentions
-from .message import (Attachment, DeletedReferencedMessage, Message,
-                      MessageReference, PartialMessage)
+from .message import Attachment, DeletedReferencedMessage, Message, MessageReference, PartialMessage
 from .object import Object
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
-from .player import (AudioSource, FFmpegAudio, FFmpegOpusAudio, FFmpegPCMAudio,
-                     PCMAudio, PCMVolumeTransformer)
-from .raw_models import (RawBulkMessageDeleteEvent, RawIntegrationDeleteEvent,
-                         RawMemberRemoveEvent, RawMessageDeleteEvent,
-                         RawMessageUpdateEvent, RawReactionActionEvent,
-                         RawReactionClearEmojiEvent, RawReactionClearEvent,
-                         RawTypingEvent)
+from .player import (
+    AudioSource,
+    FFmpegAudio,
+    FFmpegOpusAudio,
+    FFmpegPCMAudio,
+    PCMAudio,
+    PCMVolumeTransformer,
+)
+from .raw_models import (
+    RawBulkMessageDeleteEvent,
+    RawIntegrationDeleteEvent,
+    RawMemberRemoveEvent,
+    RawMessageDeleteEvent,
+    RawMessageUpdateEvent,
+    RawReactionActionEvent,
+    RawReactionClearEmojiEvent,
+    RawReactionClearEvent,
+    RawTypingEvent,
+)
 from .reaction import Reaction
 from .role import Role, RoleTags
-from .scheduled_events import (EntityMetadata, ScheduledEvent,
-                               ScheduledEventUser)
+from .scheduled_events import EntityMetadata, ScheduledEvent, ScheduledEventUser
 from .shard import AutoShardedClient, ShardInfo
 from .stage_instance import StageInstance
-from .sticker import (GuildSticker, StandardSticker, Sticker, StickerItem,
-                      StickerPack)
+from .sticker import GuildSticker, StandardSticker, Sticker, StickerItem, StickerPack
 from .team import Team, TeamMember
 from .template import Template
 from .threads import Thread, ThreadMember
 from .user import ClientUser, User
 from .voice_client import VoiceClient, VoiceProtocol
-from .webhook import (PartialWebhookChannel, PartialWebhookGuild, SyncWebhook,
-                      SyncWebhookMessage, Webhook, WebhookMessage)
+from .webhook import (
+    PartialWebhookChannel,
+    PartialWebhookGuild,
+    SyncWebhook,
+    SyncWebhookMessage,
+    Webhook,
+    WebhookMessage,
+)
 from .widget import Widget, WidgetChannel, WidgetMember
 
 

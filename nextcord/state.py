@@ -32,14 +32,34 @@ import itertools
 import logging
 import os
 from collections import OrderedDict, deque
-from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Deque, Dict, List,
-                    Optional, Sequence, Set, Tuple, TypeVar, Union)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Coroutine,
+    Deque,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from . import utils
 from .activity import BaseActivity
-from .channel import (CategoryChannel, DMChannel, GroupChannel,
-                      PartialMessageable, StageChannel, TextChannel,
-                      VoiceChannel, _channel_factory)
+from .channel import (
+    CategoryChannel,
+    DMChannel,
+    GroupChannel,
+    PartialMessageable,
+    StageChannel,
+    TextChannel,
+    VoiceChannel,
+    _channel_factory,
+)
 from .emoji import Emoji
 from .enums import ChannelType, Status, try_enum
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
@@ -52,11 +72,17 @@ from .mentions import AllowedMentions
 from .message import Message
 from .object import Object
 from .partial_emoji import PartialEmoji
-from .raw_models import (RawBulkMessageDeleteEvent, RawIntegrationDeleteEvent,
-                         RawMemberRemoveEvent, RawMessageDeleteEvent,
-                         RawMessageUpdateEvent, RawReactionActionEvent,
-                         RawReactionClearEmojiEvent, RawReactionClearEvent,
-                         RawTypingEvent)
+from .raw_models import (
+    RawBulkMessageDeleteEvent,
+    RawIntegrationDeleteEvent,
+    RawMemberRemoveEvent,
+    RawMessageDeleteEvent,
+    RawMessageUpdateEvent,
+    RawReactionActionEvent,
+    RawReactionClearEmojiEvent,
+    RawReactionClearEvent,
+    RawTypingEvent,
+)
 from .role import Role
 from .scheduled_events import ScheduledEvent, ScheduledEventUser
 from .stage_instance import StageInstance

@@ -27,30 +27,57 @@ from __future__ import annotations
 
 import copy
 import unicodedata
-from typing import (TYPE_CHECKING, Any, ClassVar, Dict, List, Literal,
-                    NamedTuple, Optional, Sequence, Set, Tuple, Union,
-                    overload)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Literal,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+    overload,
+)
 
 from . import abc, utils
 from .asset import Asset
 from .bans import BanEntry
-from .channel import (CategoryChannel, DMChannel, GroupChannel,
-                      PartialMessageable, StageChannel, TextChannel,
-                      VoiceChannel, _guild_channel_factory,
-                      _threaded_guild_channel_factory)
+from .channel import (
+    CategoryChannel,
+    DMChannel,
+    GroupChannel,
+    PartialMessageable,
+    StageChannel,
+    TextChannel,
+    VoiceChannel,
+    _guild_channel_factory,
+    _threaded_guild_channel_factory,
+)
 from .colour import Colour
 from .emoji import Emoji
-from .enums import (AuditLogAction, ChannelType, ContentFilter,
-                    NotificationLevel, NSFWLevel, ScheduledEventEntityType,
-                    ScheduledEventPrivacyLevel, VerificationLevel,
-                    VideoQualityMode, VoiceRegion, try_enum)
+from .enums import (
+    AuditLogAction,
+    ChannelType,
+    ContentFilter,
+    NotificationLevel,
+    NSFWLevel,
+    ScheduledEventEntityType,
+    ScheduledEventPrivacyLevel,
+    VerificationLevel,
+    VideoQualityMode,
+    VoiceRegion,
+    try_enum,
+)
 from .errors import ClientException, InvalidArgument, InvalidData
 from .file import File
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
-from .iterators import (AuditLogIterator, BanIterator, MemberIterator,
-                        ScheduledEventIterator)
+from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
 from .permissions import PermissionOverwrite
@@ -71,8 +98,7 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import ApplicationCommand
-    from .channel import (CategoryChannel, StageChannel, TextChannel,
-                          VoiceChannel)
+    from .channel import CategoryChannel, StageChannel, TextChannel, VoiceChannel
     from .permissions import Permissions
     from .state import ConnectionState
     from .template import Template

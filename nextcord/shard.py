@@ -26,19 +26,27 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple,
-                    Type, TypeVar)
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
 import aiohttp
 
 from .backoff import ExponentialBackoff
 from .client import Client
 from .enums import Status
-from .errors import (ClientException, ConnectionClosed, GatewayNotFound,
-                     HTTPException, PrivilegedIntentsRequired)
-from .gateway import (DiscordVoiceWebSocket, DiscordWebSocket,
-                      KeepAliveHandler, ReconnectWebSocket,
-                      VoiceKeepAliveHandler)
+from .errors import (
+    ClientException,
+    ConnectionClosed,
+    GatewayNotFound,
+    HTTPException,
+    PrivilegedIntentsRequired,
+)
+from .gateway import (
+    DiscordVoiceWebSocket,
+    DiscordWebSocket,
+    KeepAliveHandler,
+    ReconnectWebSocket,
+    VoiceKeepAliveHandler,
+)
 from .state import AutoShardedConnectionState
 
 if TYPE_CHECKING:

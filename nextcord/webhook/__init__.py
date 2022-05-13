@@ -9,6 +9,5 @@ Webhook support
 
 """
 
-from .async_ import (PartialWebhookChannel, PartialWebhookGuild, Webhook,
-                     WebhookMessage)
+from .async_ import PartialWebhookChannel, PartialWebhookGuild, Webhook, WebhookMessage
 from .sync import SyncWebhook, SyncWebhookMessage

@@ -31,9 +31,22 @@ import logging
 import signal
 import sys
 import traceback
-from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Dict, Generator,
-                    Iterable, List, Optional, Sequence, Set, Tuple, TypeVar,
-                    Union)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Coroutine,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import aiohttp
 
@@ -45,17 +58,34 @@ from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, InteractionType, Status, VoiceRegion
-from .errors import (ApplicationCheckFailure, ApplicationError,
-                     ApplicationInvokeError, ClientException, ConnectionClosed,
-                     DiscordException, DiscordServerError, Forbidden,
-                     GatewayNotFound, HTTPException, InteractionResponded,
-                     InvalidArgument, InvalidCommandType, InvalidData,
-                     LoginFailure, NoMoreItems, NotFound,
-                     PrivilegedIntentsRequired)
+from .errors import (
+    ApplicationCheckFailure,
+    ApplicationError,
+    ApplicationInvokeError,
+    ClientException,
+    ConnectionClosed,
+    DiscordException,
+    DiscordServerError,
+    Forbidden,
+    GatewayNotFound,
+    HTTPException,
+    InteractionResponded,
+    InvalidArgument,
+    InvalidCommandType,
+    InvalidData,
+    LoginFailure,
+    NoMoreItems,
+    NotFound,
+    PrivilegedIntentsRequired,
+)
 from .flags import ApplicationFlags, Intents
-from .gateway import (DiscordVoiceWebSocket, DiscordWebSocket,
-                      KeepAliveHandler, ReconnectWebSocket,
-                      VoiceKeepAliveHandler)
+from .gateway import (
+    DiscordVoiceWebSocket,
+    DiscordWebSocket,
+    KeepAliveHandler,
+    ReconnectWebSocket,
+    VoiceKeepAliveHandler,
+)
 from .guild import Guild
 from .http import HTTPClient
 from .interactions import Interaction
@@ -65,8 +95,7 @@ from .mentions import AllowedMentions
 from .object import Object
 from .stage_instance import StageInstance
 from .state import ConnectionState
-from .sticker import (GuildSticker, StandardSticker, StickerPack,
-                      _sticker_factory)
+from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factory
 from .template import Template
 from .threads import Thread
 from .ui.modal import Modal
@@ -79,8 +108,7 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import (ApplicationCommand,
-                                      ApplicationSubcommand, ClientCog)
+    from .application_command import ApplicationCommand, ApplicationSubcommand, ClientCog
     from .channel import DMChannel
     from .member import Member
     from .message import Message
