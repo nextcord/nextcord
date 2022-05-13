@@ -1917,13 +1917,13 @@ class Client:
                     )
                     # TODO: Lazy load is completely broken. Figure out how to fix it.
                     if app_cmd.reverse_check_against_raw_payload(
-                        interaction.data, interaction.guild_id
+                        interaction.data, interaction.guild_id  # type: ignore
                     ):
                         # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
                         _log.info(
                             "nextcord.Client: New interaction command found, Assigning id now"
                         )
-                        app_cmd.parse_discord_response(self._connection, interaction.data)
+                        app_cmd.parse_discord_response(self._connection, interaction.data)  # type: ignore
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
                     else:
