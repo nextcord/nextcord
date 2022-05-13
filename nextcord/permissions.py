@@ -61,7 +61,7 @@ def make_permission_alias(alias: str) -> Callable[[Callable[[Any], int]], permis
     return decorator
 
 
-P = TypeVar('P', bound='Permissions')
+P = TypeVar("P", bound="Permissions")
 
 
 @fill_with_flags()

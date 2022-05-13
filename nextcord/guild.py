@@ -89,17 +89,8 @@ if TYPE_CHECKING:
     import datetime
 
     from .abc import Snowflake, SnowflakeTime
-    from .channel import (
-        CategoryChannel,
-        StageChannel,
-        TextChannel,
-        VoiceChannel,
-    )
     from .application_command import BaseApplicationCommand
-    from .types.guild import Ban as BanPayload, Guild as GuildPayload, MFALevel, GuildFeature
-    from .types.threads import (
-        Thread as ThreadPayload,
-    )
+    from .channel import CategoryChannel, StageChannel, TextChannel, VoiceChannel
     from .permissions import Permissions
     from .state import ConnectionState
     from .template import Template
@@ -3336,10 +3327,7 @@ class Guild(Hashable):
         return self._state.get_guild_application_commands(guild_id=self.id, rollout=rollout)
 
     def add_application_command(
-            self,
-            app_cmd: BaseApplicationCommand,
-            overwrite: bool = False,
-            use_rollout: bool = False
+        self, app_cmd: BaseApplicationCommand, overwrite: bool = False, use_rollout: bool = False
     ) -> None:
         app_cmd.add_guild_rollout(self.id)
         self._state.add_application_command(app_cmd, overwrite=overwrite, use_rollout=use_rollout)

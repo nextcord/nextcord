@@ -1812,13 +1812,15 @@ class HTTPClient:
 
     # Application commands (global)
 
-    def get_global_commands(self, application_id: Snowflake, with_localizations: bool = True
+    def get_global_commands(
+        self, application_id: Snowflake, with_localizations: bool = True
     ) -> Response[List[interactions.ApplicationCommand]]:
         params = {}
         if with_localizations:
             params["with_localizations"] = "true"
         return self.request(
-            Route('GET', '/applications/{application_id}/commands', application_id=application_id), params=params
+            Route("GET", "/applications/{application_id}/commands", application_id=application_id),
+            params=params,
         )
 
     def get_global_command(

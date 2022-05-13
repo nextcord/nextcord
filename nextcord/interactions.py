@@ -55,7 +55,12 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
-    from .application_command import ApplicationCommand, ApplicationSubcommand
+    from .application_command import (
+        ApplicationCommand,
+        ApplicationSubcommand,
+        BaseApplicationCommand,
+        SlashApplicationSubcommand,
+    )
     from .channel import (
         CategoryChannel,
         PartialMessageable,
@@ -64,7 +69,6 @@ if TYPE_CHECKING:
         VoiceChannel,
     )
     from .client import Client
-    from .application_command import SlashApplicationSubcommand, BaseApplicationCommand
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
@@ -241,7 +245,9 @@ class Interaction:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
         return utils.utcnow() > self.expires_at
 
-    def _set_application_command(self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]):
+    def _set_application_command(
+        self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
+    ):
         self.application_command = app_cmd
 
     @utils.cached_slot_property("_cs_channel")

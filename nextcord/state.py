@@ -30,12 +30,8 @@ import copy
 import inspect
 import itertools
 import logging
-from typing import Dict, Optional, TYPE_CHECKING, Union, Callable, Any, List, TypeVar, Coroutine, Sequence, Tuple, \
-    Deque, Set
-import inspect
-import warnings
-
 import os
+import warnings
 from collections import OrderedDict, deque
 from typing import (
     TYPE_CHECKING,
@@ -84,10 +80,6 @@ if TYPE_CHECKING:
 
     from .abc import PrivateChannel
     from .application_command import BaseApplicationCommand
-    from .message import MessageableChannel
-    from .guild import GuildChannel, VocalGuildChannel
-    from .http import HTTPClient
-    from .voice_client import VoiceProtocol
     from .client import Client
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
@@ -257,7 +249,9 @@ class ConnectionState:
         self._application_commands: Set[BaseApplicationCommand] = set()
         # A dictionary of all available unique command signatures. Compiled at runtime because needing to iterate
         # through all application commands would take far more time. If memory is problematic, perhaps this can go?
-        self._application_command_signatures: Dict[Tuple[str, int, Optional[int]], BaseApplicationCommand] = {}
+        self._application_command_signatures: Dict[
+            Tuple[str, int, Optional[int]], BaseApplicationCommand
+        ] = {}
         # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
         self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
 
@@ -549,14 +543,13 @@ class ConnectionState:
     def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
         return self._application_command_ids.get(command_id, None)
 
-    def get_application_command_from_signature(self, name: str, cmd_type: int,
-                                               guild_id: Optional[int]) -> Optional[BaseApplicationCommand]:
+    def get_application_command_from_signature(
+        self, name: str, cmd_type: int, guild_id: Optional[int]
+    ) -> Optional[BaseApplicationCommand]:
         return self._application_command_signatures.get((name, cmd_type, guild_id), None)
 
     def get_guild_application_commands(
-            self,
-            guild_id: Optional[int] = None,
-            rollout: bool = False
+        self, guild_id: Optional[int] = None, rollout: bool = False
     ) -> List[BaseApplicationCommand]:
         """Gets all commands that have the given guild ID. If guild_id is None, all guild commands are returned. if
         rollout is True, guild_ids_to_rollout is used.
@@ -571,7 +564,9 @@ class ConnectionState:
                 ret.append(app_cmd)
         return ret
 
-    def get_global_application_commands(self, rollout: bool = False) -> List[BaseApplicationCommand]:
+    def get_global_application_commands(
+        self, rollout: bool = False
+    ) -> List[BaseApplicationCommand]:
         """Gets all commands that are registered globally. If rollout is True, is_global is used."""
         ret = []
         for app_cmd in self.application_commands:
@@ -580,12 +575,12 @@ class ConnectionState:
         return ret
 
     def add_application_command(
-            self,
-            command: BaseApplicationCommand,
-            *,
-            overwrite: bool = False,
-            use_rollout: bool = False,
-            pre_remove: bool = True,
+        self,
+        command: BaseApplicationCommand,
+        *,
+        overwrite: bool = False,
+        use_rollout: bool = False,
+        pre_remove: bool = True,
     ) -> None:
         """Adds the command to the state and updates the state with any changes made to the command.
         Removes all existing references, then adds them.
@@ -605,7 +600,9 @@ class ConnectionState:
         """
         if pre_remove:
             self.remove_application_command(command)
-        signature_set = command.get_rollout_signatures() if use_rollout else command.get_signatures()
+        signature_set = (
+            command.get_rollout_signatures() if use_rollout else command.get_signatures()
+        )
         for signature in signature_set:
             if not overwrite and (
                 found_command := self._application_command_signatures.get(signature, None)
@@ -621,10 +618,14 @@ class ConnectionState:
         for command_id in command.command_ids.values():
             # Seriously PyCharm, found_command will ALWAYS be set by the time it's used, this is an AND statement.
             # noinspection PyUnboundLocalVariable
-            if not overwrite and (
-                    found_command := self._application_command_ids.get(command_id, None)
-            ) and found_command is not command:
-                raise ValueError(f"{command.error_name} You cannot add application commands with duplicate IDs.")
+            if (
+                not overwrite
+                and (found_command := self._application_command_ids.get(command_id, None))
+                and found_command is not command
+            ):
+                raise ValueError(
+                    f"{command.error_name} You cannot add application commands with duplicate IDs."
+                )
             else:
                 self._application_command_ids[command_id] = command
         # TODO: Add the command to guilds. Should it? Check if it does in the Guild add.
@@ -652,14 +653,14 @@ class ConnectionState:
             self.add_application_command(command, use_rollout=True)
 
     async def sync_all_application_commands(
-            self,
-            data: Optional[Dict[Optional[int], List[dict]]] = None,
-            *,
-            use_rollout: bool = True,
-            associate_known: bool = True,
-            delete_unknown: bool = True,
-            update_known: bool = True,
-            register_new: bool = True,
+        self,
+        data: Optional[Dict[Optional[int], List[dict]]] = None,
+        *,
+        use_rollout: bool = True,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
     ):
         """|coro|
 
@@ -710,26 +711,36 @@ class ConnectionState:
                 _log.debug("Fetched global application command data.")
 
             if app_cmd.is_guild:
-                for guild_id in (app_cmd.guild_ids_to_rollout if use_rollout else app_cmd.guild_ids):
+                for guild_id in app_cmd.guild_ids_to_rollout if use_rollout else app_cmd.guild_ids:
                     if guild_id not in data:
-                        data[guild_id] = await self.http.get_guild_commands(self.application_id, guild_id)
-                        _log.debug("Fetched guild application command data for guild ID %s", guild_id)
+                        data[guild_id] = await self.http.get_guild_commands(
+                            self.application_id, guild_id
+                        )
+                        _log.debug(
+                            "Fetched guild application command data for guild ID %s", guild_id
+                        )
 
         for guild_id in data:
-            _log.debug("Running sync for %s", 'global' if guild_id is None else 'Guild {}'.format(guild_id))
+            _log.debug(
+                "Running sync for %s", "global" if guild_id is None else "Guild {}".format(guild_id)
+            )
             await self.sync_application_commands(
-                data=data[guild_id], guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
-                update_known=update_known, register_new=register_new,
+                data=data[guild_id],
+                guild_id=guild_id,
+                associate_known=associate_known,
+                delete_unknown=delete_unknown,
+                update_known=update_known,
+                register_new=register_new,
             )
 
     async def sync_application_commands(
-            self,
-            data: Optional[List[dict]] = None,
-            guild_id: Optional[int] = None,
-            associate_known: bool = True,
-            delete_unknown: bool = True,
-            update_known: bool = True,
-            register_new: bool = True,
+        self,
+        data: Optional[List[dict]] = None,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
     ) -> None:
         """|coro|
         Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
@@ -764,8 +775,11 @@ class ConnectionState:
                 data = await self.http.get_global_commands(self.application_id)
 
         await self.discover_application_commands(
-            data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
-            update_known=update_known
+            data=data,
+            guild_id=guild_id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
         )
         if register_new:
             await self.register_new_application_commands(data=data, guild_id=guild_id)
@@ -773,12 +787,12 @@ class ConnectionState:
         _log.debug("Command sync with %s finished.", guild_id)
 
     async def discover_application_commands(
-            self,
-            data: Optional[List[dict]] = None,
-            guild_id: Optional[int] = None,
-            associate_known: bool = True,
-            delete_unknown: bool = True,
-            update_known: bool = True
+        self,
+        data: Optional[List[dict]] = None,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
     ) -> None:
         """|coro|
         Associates existing, deletes unknown, and updates modified commands for either global commands or a specific
@@ -824,7 +838,7 @@ class ConnectionState:
                     if associate_known:
                         _log.debug(
                             "nextcord.ConnectionState: Command with signature %s associated with added command.",
-                            response_signature
+                            response_signature,
                         )
                         app_cmd.parse_discord_response(self, raw_response)
                         self.add_application_command(app_cmd, use_rollout=True)
@@ -832,13 +846,13 @@ class ConnectionState:
                 elif update_known:
                     _log.debug(
                         "nextcord.ConnectionState: Command with signature %s found but failed deep check, updating.",
-                        response_signature
+                        response_signature,
                     )
                     await self.register_application_command(app_cmd, guild_id)
                 elif delete_unknown:
                     _log.debug(
                         "nextcord.ConnectionState: Command with signature %s found but failed deep check, removing.",
-                        response_signature
+                        response_signature,
                     )
                     # TODO: Re-examine how worthwhile this is.
                     await self.delete_application_command(app_cmd, guild_id)
@@ -846,7 +860,7 @@ class ConnectionState:
             elif delete_unknown:
                 _log.debug(
                     "nextcord.ConnectionState: Command with signature %s found but failed deep check, removing.",
-                    response_signature
+                    response_signature,
                 )
                 if guild_id:
                     await self.http.delete_guild_command(
@@ -856,25 +870,35 @@ class ConnectionState:
                     await self.http.delete_global_command(self.application_id, raw_response["id"])
 
     async def deploy_application_commands(
-            self,
-            data: Optional[List[dict]] = None,
-            guild_id: Optional[int] = None,
-            associate_known: bool = True,
-            delete_unknown: bool = True,
-            update_known: bool = True
+        self,
+        data: Optional[List[dict]] = None,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
     ) -> None:
-        warnings.warn(".deploy_application_commands is deprecated, use .discover_application_commands instead.",
-                      stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".deploy_application_commands is deprecated, use .discover_application_commands instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self.discover_application_commands(
-            data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
-            update_known=update_known
+            data=data,
+            guild_id=guild_id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
         )
 
     async def associate_application_commands(
         self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
     ) -> None:
-        warnings.warn(".associate_application_commands is deprecated, use .deploy_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".associate_application_commands is deprecated, use .deploy_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self.deploy_application_commands(
             data=data,
             guild_id=guild_id,
@@ -886,8 +910,12 @@ class ConnectionState:
     async def delete_unknown_application_commands(
         self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
     ):
-        warnings.warn(".delete_unknown_application_commands is deprecated, use .deploy_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".delete_unknown_application_commands is deprecated, use .deploy_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self.deploy_application_commands(
             data=data,
             guild_id=guild_id,
@@ -899,8 +927,12 @@ class ConnectionState:
     async def update_application_commands(
         self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
     ) -> None:
-        warnings.warn(".update_application_commands is deprecated, use .deploy_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".update_application_commands is deprecated, use .deploy_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self.deploy_application_commands(
             data=data,
             guild_id=guild_id,
@@ -949,7 +981,7 @@ class ConnectionState:
                 await self.register_application_command(app_cmd, guild_id)
 
     async def register_application_command(
-            self, command: BaseApplicationCommand, guild_id: Optional[int] = None
+        self, command: BaseApplicationCommand, guild_id: Optional[int] = None
     ) -> None:
         """|coro|
         Registers the given application command either for a specific guild or globally and adds the command to the bot.
@@ -963,10 +995,15 @@ class ConnectionState:
             as global commands instead. Defaults to `None`.
         """
         payload = command.get_payload(guild_id)
-        _log.info(f"nextcord.ConnectionState: Registering command with signature %s", command.get_signature(guild_id))
+        _log.info(
+            f"nextcord.ConnectionState: Registering command with signature %s",
+            command.get_signature(guild_id),
+        )
         try:
             if guild_id:
-                raw_response = await self.http.upsert_guild_command(self.application_id, guild_id, payload)
+                raw_response = await self.http.upsert_guild_command(
+                    self.application_id, guild_id, payload
+                )
             else:
                 raw_response = await self.http.upsert_global_command(self.application_id, payload)
 
@@ -977,7 +1014,9 @@ class ConnectionState:
         command.parse_discord_response(self, raw_response)
         self.add_application_command(command, pre_remove=False)
 
-    async def delete_application_command(self, command: BaseApplicationCommand, guild_id: Optional[int] = None) -> None:
+    async def delete_application_command(
+        self, command: BaseApplicationCommand, guild_id: Optional[int] = None
+    ) -> None:
         """|coro|
         Deletes the given application from Discord for the given guild ID or globally, then removes the signature and
         command ID from the cache if possible.
@@ -997,7 +1036,9 @@ class ConnectionState:
                 self.application_id, guild_id, command.command_ids[guild_id]
             )
         else:
-            await self.http.delete_global_command(self.application_id, command.command_ids[guild_id])
+            await self.http.delete_global_command(
+                self.application_id, command.command_ids[guild_id]
+            )
 
         self._application_command_ids.pop(command.command_ids[guild_id], None)
         self._application_command_signatures.pop(command.get_signature(guild_id))

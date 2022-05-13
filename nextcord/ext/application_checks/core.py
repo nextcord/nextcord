@@ -27,15 +27,16 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import Callable, Type, TypeVar, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Callable, Type, TypeVar, Union
 
 import nextcord
 from nextcord.application_command import (
-    CallbackWrapper,
     BaseApplicationCommand,
-    SlashApplicationSubcommand
+    CallbackWrapper,
+    SlashApplicationSubcommand,
 )
 from nextcord.interactions import Interaction
+
 from .errors import (
     ApplicationBotMissingAnyRole,
     ApplicationBotMissingPermissions,
@@ -78,15 +79,16 @@ __all__ = (
 )
 
 
-
 class CheckWrapper(CallbackWrapper):
     def __init__(self, callback: Union[Callable, CallbackWrapper], predicate):
         super().__init__(callback)
 
         if not asyncio.iscoroutinefunction(predicate):
+
             @functools.wraps(predicate)
             async def async_wrapper(ctx):
                 return predicate(ctx)
+
             self.predicate = async_wrapper
         else:
             self.predicate = predicate
@@ -170,8 +172,10 @@ def check(predicate: "ApplicationCheck") -> Callable[[Callable], CheckWrapper]:
     predicate: Callable[[:class:`~.Interaction`], :class:`bool`]
         The predicate to check if the command should be invoked.
     """
+
     def wrapper(func):
         return CheckWrapper(func, predicate)
+
     wrapper.predicate = predicate
     return wrapper
 
@@ -757,12 +761,13 @@ def application_command_after_invoke(coro) -> Callable[[AC], AC]:
     This allows you to refer to one after invoke hook for several commands that
     do not have to be within the same cog.
     """
+
     class AfterInvokeModifier(CallbackWrapper):
         def modify(self, app_cmd: BaseApplicationCommand):
             app_cmd._callback_after_invoke = coro
 
     def decorator(
-            func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
+        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
     ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, AfterInvokeModifier]:
         return AfterInvokeModifier(func)
 
