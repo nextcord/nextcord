@@ -25,12 +25,17 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import Optional, TypedDict
+
+from .guild import Guild
 from .snowflake import Snowflake
 from .user import User
-from .guild import Guild
 
 
-class CreateTemplate(TypedDict):
+class _CreateTemplateOptional(TypedDict, total=False):
+    description: str
+
+
+class CreateTemplate(_CreateTemplateOptional):
     name: str
     icon: Optional[bytes]
 

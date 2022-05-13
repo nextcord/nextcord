@@ -24,9 +24,7 @@ async def hi(
     interaction: Interaction,
     member: nextcord.Member = SlashOption(name="user", description="User to say hi to"),
 ):
-    await interaction.response.send_message(
-        f"{interaction.user} just said hi to {member.mention}"
-    )
+    await interaction.response.send_message(f"{interaction.user} just said hi to {member.mention}")
 
 
 bot.run("token")
