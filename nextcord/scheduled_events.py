@@ -24,31 +24,32 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
+from .abc import Snowflake
+from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
-from .types.snowflake import Snowflake
-from .utils import MISSING, parse_time
-from .asset import Asset
-__all__: Tuple[str] = (
-    'EntityMetadata',
-    'ScheduledEventUser',
-    'ScheduledEvent'
+from .utils import MISSING, _bytes_to_base64_data, parse_time
+
+__all__: Tuple[str, ...] = (
+    "EntityMetadata",
+    "ScheduledEventUser",
+    "ScheduledEvent",
 )
 
 if TYPE_CHECKING:
     from datetime import datetime
 
     from .abc import GuildChannel
-    from .enums import ScheduledEventStatus, ScheduledEventEntityType
+    from .enums import ScheduledEventEntityType, ScheduledEventStatus
     from .guild import Guild
     from .member import Member
     from .state import ConnectionState
     from .types.scheduled_events import (
         ScheduledEvent as ScheduledEventPayload,
-        ScheduledEventUser as ScheduledEventUserPayload
+        ScheduledEventUser as ScheduledEventUserPayload,
     )
     from .user import User
 
@@ -90,12 +91,13 @@ class ScheduledEventUser(Hashable):
         user or member may be ``None``, this may occur if you don't have
         :attr:`Intents.members` enabled.
     """
-    __slots__: Tuple[str] = (
-        '_state',
-        'event',
-        'user',
-        'member',
-        'user_id'
+
+    __slots__: Tuple[str, ...] = (
+        "_state",
+        "event",
+        "user",
+        "member",
+        "user_id",
     )
 
     def __init__(
@@ -104,31 +106,27 @@ class ScheduledEventUser(Hashable):
         update: bool = True,
         event: ScheduledEvent,
         state: ConnectionState,
-        data: ScheduledEventUserPayload = None
+        data: Optional[ScheduledEventUserPayload] = None,
     ) -> None:
         self.event: ScheduledEvent = event
         self._state = state
 
-        if update:
+        if update and data:
             self._update(data)
 
     def __repr__(self) -> str:
         attrs: List[Tuple[str, Any]] = [
-            ('user_id', self.user_id),
-            ('event', str(self.event)),
-            ('user', str(self.user)),
-            ('member', str(self.member)),
+            ("user_id", self.user_id),
+            ("event", str(self.event)),
+            ("user", str(self.user)),
+            ("member", str(self.member)),
         ]
-        joined = ' '.join('%s=%r' % t for t in attrs)
-        return f'<{self.__class__.__name__} {joined}>'
+        joined = " ".join("%s=%r" % t for t in attrs)
+        return f"<{self.__class__.__name__} {joined}>"
 
     @classmethod
     def from_id(
-        cls,
-        *,
-        event: ScheduledEvent,
-        state: ConnectionState,
-        user_id: int
+        cls, *, event: ScheduledEvent, state: ConnectionState, user_id: int
     ) -> ScheduledEventUser:
         obj = cls(event=event, state=state, update=False)
         obj.user_id = user_id
@@ -137,19 +135,19 @@ class ScheduledEventUser(Hashable):
         return obj
 
     def _update(self, data: ScheduledEventUserPayload) -> None:
-        self.user: User = self._state.store_user(data['user'])
-        self.user_id: int = data['user']['id']
-        if member := data.get('member'):
+        self.user: Optional[User] = self._state.store_user(data["user"])
+        self.user_id: int = int(data["user"]["id"])
+        if member := data.get("member"):
             if not self._state.member_cache_flags._empty:
                 try:
                     self.member: Optional[Member] = self.event.guild.get_member(
-                        member['id']
+                        member["id"]  # type: ignore (handled below)
                     )
                 except KeyError:
-                    m = Member(data=member, guild=self.event.guild, state=self._state)
+                    m = Member(data=member, guild=self.event.guild, state=self._state)  # type: ignore
                     self.member: Optional[Member] = m
             else:
-                m = Member(data=member, guild=self.event.guild, state=self._state)
+                m = Member(data=member, guild=self.event.guild, state=self._state)  # type: ignore
                 self.member: Optional[Member] = m
         else:
             self.member: Optional[Member] = None
@@ -207,22 +205,23 @@ class ScheduledEvent(Hashable):
     image: :class:`Asset`
         The event cover image.
     """
+
     __slots__: Tuple[str, ...] = (
-        'channel',
-        'channel_id',
-        'creator',
-        'description',
-        'end_time',
-        'guild',
-        'id',
-        'metadata',
-        'name',
-        'privacy_level',
-        'start_time',
-        'user_count',
-        '_state',
-        '_users',
-        'image',
+        "channel",
+        "channel_id",
+        "creator",
+        "description",
+        "end_time",
+        "guild",
+        "id",
+        "metadata",
+        "name",
+        "privacy_level",
+        "start_time",
+        "user_count",
+        "_state",
+        "_users",
+        "image",
     )
 
     def __init__(
@@ -233,40 +232,43 @@ class ScheduledEvent(Hashable):
         self._update(data)
 
     def _update(self, data: ScheduledEventPayload) -> None:
-        self.id: int = int(data['id'])
-        if creator := data.get('creator'):
+        self.id: int = int(data["id"])
+        if creator := data.get("creator"):
             self.creator: Optional[User] = self._state.store_user(creator)
         else:
             self.creator: Optional[User] = None
-        self.name: str = data['name']
-        self.description: str = data.get('description', '')
-        self.start_time: datetime = parse_time(data['scheduled_start_time'])
-        self.end_time: Optional[datetime] = parse_time(data.get('scheduled_end_time'))
+        self.name: str = data["name"]
+        self.description: str = data.get("description", "")
+        self.start_time: datetime = parse_time(data["scheduled_start_time"])
+        self.end_time: Optional[datetime] = parse_time(data.get("scheduled_end_time"))
         self.privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel(
-            data['privacy_level']
+            data["privacy_level"]
         )
-        self.metadata: EntityMetadata = EntityMetadata(**data.get('metadata', {}))
-        self.user_count: int = data.get('user_count', 0)
-        self.channel: Optional[GuildChannel] = self._state.get_channel(
-            int(data.get('channel_id') or 0)
+        self.metadata: EntityMetadata = EntityMetadata(**data.get("metadata", {}))
+        self.user_count: int = data.get("user_count", 0)
+        self.channel: Optional[GuildChannel] = self._state.get_channel(  # type: ignore who knows
+            int(data.get("channel_id") or 0)
         )
-        self.channel_id: Optional[int] = data.get('channel_id')
+        channel_id = data.get("channel_id")
+        self.channel_id: Optional[int] = int(channel_id) if channel_id else None
         self._users: Dict[int, ScheduledEventUser] = {}
-        self._update_users(data.get('users', []))
-        
+        self._update_users(data.get("users", []))
+
         if image := data.get("image"):
-            self.image: Optional[Asset] = Asset._from_scheduled_event_image(self._state, self.id, image)
+            self.image: Optional[Asset] = Asset._from_scheduled_event_image(
+                self._state, self.id, image
+            )
         else:
             self.image: Optional[Asset] = None
 
     def _update_users(self, data: List[ScheduledEventUserPayload]) -> None:
         for user in data:
-            self._users[user['user']['id']] = ScheduledEventUser(
+            self._users[int(user["user"]["id"])] = ScheduledEventUser(
                 event=self, state=self._state, data=user
             )
 
     def _update_user(self, data: ScheduledEventUserPayload) -> ScheduledEventUser:
-        if user := self._users.get(data['user']['id']):
+        if user := self._users.get(int(data["user"]["id"])):
             user._update(data)
         else:
             user = ScheduledEventUser(event=self, state=self._state, data=data)
@@ -287,15 +289,15 @@ class ScheduledEvent(Hashable):
 
     def __repr__(self) -> str:
         attrs: List[Tuple[str, Any]] = [
-            ('id', self.id),
-            ('name', self.name),
-            ('guild_id', self.guild.id),
-            ('description', self.description),
-            ('start_time', str(self.start_time)),
-            ('end_time', str(self.end_time)),
+            ("id", self.id),
+            ("name", self.name),
+            ("guild_id", self.guild.id),
+            ("description", self.description),
+            ("start_time", str(self.start_time)),
+            ("end_time", str(self.end_time)),
         ]
-        joined = ' '.join('%s=%r' % t for t in attrs)
-        return f'<{self.__class__.__name__} {joined}>'
+        joined = " ".join("%s=%r" % t for t in attrs)
+        return f"<{self.__class__.__name__} {joined}>"
 
     @property
     def location(self) -> Optional[str]:
@@ -322,16 +324,17 @@ class ScheduledEvent(Hashable):
     async def edit(
         self,
         *,
-        channel: Optional[GuildChannel] = MISSING,
-        metadata: Optional[EntityMetadata] = MISSING,
+        channel: GuildChannel = MISSING,
+        metadata: EntityMetadata = MISSING,
         name: str = MISSING,
-        privacy_level: Optional[ScheduledEventPrivacyLevel] = MISSING,
-        start_time: Optional[datetime] = MISSING,
-        end_time: Optional[datetime] = MISSING,
+        privacy_level: ScheduledEventPrivacyLevel = MISSING,
+        start_time: datetime = MISSING,
+        end_time: datetime = MISSING,
         description: str = MISSING,
-        type: Optional[ScheduledEventEntityType] = MISSING,
-        status: Optional[ScheduledEventStatus] = MISSING,
-        reason: Optional[str] = None
+        type: ScheduledEventEntityType = MISSING,
+        status: ScheduledEventStatus = MISSING,
+        reason: str = MISSING,
+        image: Optional[bytes] = MISSING,
     ) -> ScheduledEvent:
         """|coro|
 
@@ -364,6 +367,9 @@ class ScheduledEvent(Hashable):
                 scheduled -> active ;
                 active -> completed ;
                 scheduled -> canceled
+        image: Optional[:class:`bytes`]
+            A :term:`py:bytes-like object` representing the cover image.
+            Could be ``None`` to denote removal of the cover image.
 
         Returns
         -------
@@ -372,25 +378,41 @@ class ScheduledEvent(Hashable):
         """
         payload: dict = {}
         if channel is not MISSING:
-            payload['channel_id'] = channel.id
+            payload["channel_id"] = channel.id
+
         if metadata is not MISSING:
-            payload['entity_metadata'] = metadata.__dict__
+            payload["entity_metadata"] = metadata.__dict__
+
         if name is not MISSING:
-            payload['name'] = name
+            payload["name"] = name
+
         if privacy_level is not MISSING:
-            payload['privacy_level'] = privacy_level.value
+            payload["privacy_level"] = privacy_level.value
+
         if start_time is not MISSING:
-            payload['scheduled_start_time'] = start_time.isoformat()
+            payload["scheduled_start_time"] = start_time.isoformat()
+
         if end_time is not MISSING:
-            payload['scheduled_end_time'] = end_time.isoformat()
+            payload["scheduled_end_time"] = end_time.isoformat()
+
         if description is not MISSING:
-            payload['description'] = description
+            payload["description"] = description
+
         if type is not MISSING:
-            payload['type'] = type.value
+            payload["type"] = type.value
+
         if status is not MISSING:
-            payload['status'] = status.value
+            payload["status"] = status.value
+
+        if image is not MISSING:
+            if image is None:
+                payload["image"] = image
+            else:
+                payload["image"] = _bytes_to_base64_data(image)
+
         if not payload:
             return self
+
         data = await self._state.http.edit_event(self.guild.id, self.id, reason=reason, **payload)
         return ScheduledEvent(guild=self.guild, state=self._state, data=data)
 
@@ -419,8 +441,8 @@ class ScheduledEvent(Hashable):
         *,
         limit: int = 100,
         with_member: bool = False,
-        before: Snowflake = None,
-        after: Snowflake = None
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
     ) -> ScheduledEventUserIterator:
         """Fetch the users that are interested, returns an asyc iterator.
 
@@ -430,9 +452,9 @@ class ScheduledEvent(Hashable):
             Amount of users to fetch, by default 100
         with_member: :class:`bool`
             If the user objects should contain members too, by default False
-        before: :class:`int`
+        before: Optional[:class:`int`]
             A snowflake id to start with, useful for chunks of users, by default None
-        after: :class:`int`
+        after: Optional[:class:`int`]
             A snowflake id to end with, useful for chunks of usersby default None
 
         Yields
@@ -441,10 +463,5 @@ class ScheduledEvent(Hashable):
             A full event user object
         """
         return ScheduledEventUserIterator(
-            self.guild,
-            self,
-            limit=limit,
-            with_member=with_member,
-            before=before,
-            after=after
+            self.guild, self, limit=limit, with_member=with_member, before=before, after=after
         )

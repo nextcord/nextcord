@@ -35,7 +35,7 @@ Creating a Bot account is a pretty straightforward process.
     .. image:: /images/discord_bot_user_options.png
         :alt: How the Bot User options should look like for most people.
 
-7. Copy the token using the "Copy" button.
+7. Generate the token using the "Reset Token" button. You will have to confirm and enter your current 2FA Code. 2FA is a requirement for making Bot Accounts.
 
     - **This is not the Client Secret at the General Information page.**
 
@@ -48,9 +48,14 @@ Creating a Bot account is a pretty straightforward process.
 
         The possibilities are endless, so **do not share this token.**
 
-        If you accidentally leaked your token, click the "Regenerate" button as soon
+        If you accidentally leaked your token, click the "Reset Token" button as soon
         as possible. This revokes your old token and re-generates a new one.
         Now you need to use the new token to log in.
+
+8. After that click the "Copy" button to copy your token.
+
+    .. image:: /images/discord_bot_copy_token.png
+        :alt: The revealed token and the new "Copy" button.
 
 And that's it. You now have a bot account and you can log in with that token.
 
@@ -71,10 +76,10 @@ If you want to invite your bot you must create an invite URL for it.
     .. image:: /images/discord_oauth2.png
         :alt: How the OAuth2 page should look like.
 
-5. Tick the "bot" checkbox under "scopes".
+5. Tick the "bot" checkbox under "scopes". If you make use of Application Commands (Slash, Message and User Commands) also tick "applications.commands".
 
     .. image:: /images/discord_oauth2_scope.png
-        :alt: The scopes checkbox with "bot" ticked.
+        :alt: The scopes checkbox with "bot" and "applications.commands" ticked.
 
 6. Tick the permissions required for your bot to function under "Bot Permissions".
 

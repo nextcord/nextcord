@@ -23,14 +23,12 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING, Union
 
-import os
 import io
+import os
+from typing import TYPE_CHECKING, Optional, Union
 
-__all__ = (
-    'File',
-)
+__all__ = ("File",)
 
 
 class File:
@@ -42,9 +40,10 @@ class File:
         File objects are single use and are not meant to be reused in
         multiple :meth:`abc.Messageable.send`\s.
 
-    Attributes
+    Parameters
     -----------
-    fp: Union[:class:`os.PathLike`, :class:`io.BufferedIOBase`]
+
+    fp: Union[str, bytes, os.PathLike, io.BufferedIOBase]
         A file-like object opened in binary mode and read mode
         or a filename representing a file in the hard drive to
         open.
@@ -55,20 +54,38 @@ class File:
             modes 'rb' should be used.
 
             To pass binary data, consider usage of ``io.BytesIO``.
-
     filename: Optional[:class:`str`]
         The filename to display when uploading to Discord.
         If this is not given then it defaults to ``fp.name`` or if ``fp`` is
         a string then the ``filename`` will default to the string given.
+    description: Optional[:class:`str`]
+        The description for the file. This is used to display alternative text
+        in the Discord client.
+    spoiler: :class:`bool`
+        Whether the attachment is a spoiler.
+
+    Attributes
+    -----------
+    fp: Union[:class:`io.BufferedReader`, :class:`io.BufferedIOBase`]
+        A file-like object opened in binary mode and read mode.
+        This will be a :class:`io.BufferedIOBase` if an
+        object of type :class:`io.IOBase` was passed, or a
+        :class:`io.BufferedReader` if a filename was passed.
+    filename: Optional[:class:`str`]
+        The filename to display when uploading to Discord.
+    description: Optional[:class:`str`]
+        The description for the file. This is used to display alternative text
+        in the Discord client.
     spoiler: :class:`bool`
         Whether the attachment is a spoiler.
     """
 
-    __slots__ = ('fp', 'filename', 'spoiler', '_original_pos', '_owner', '_closer')
+    __slots__ = ("fp", "filename", "spoiler", "_original_pos", "_owner", "_closer", "description")
 
     if TYPE_CHECKING:
-        fp: io.BufferedIOBase
+        fp: Union[io.BufferedReader, io.BufferedIOBase]
         filename: Optional[str]
+        description: Optional[str]
         spoiler: bool
 
     def __init__(
@@ -76,16 +93,17 @@ class File:
         fp: Union[str, bytes, os.PathLike, io.BufferedIOBase],
         filename: Optional[str] = None,
         *,
+        description: Optional[str] = None,
         spoiler: bool = False,
     ):
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
-                raise ValueError(f'File buffer {fp!r} must be seekable and readable')
+                raise ValueError(f"File buffer {fp!r} must be seekable and readable")
             self.fp = fp
             self._original_pos = fp.tell()
             self._owner = False
         else:
-            self.fp = open(fp, 'rb')
+            self.fp = open(fp, "rb")
             self._original_pos = 0
             self._owner = True
 
@@ -100,14 +118,18 @@ class File:
             if isinstance(fp, str):
                 _, self.filename = os.path.split(fp)
             else:
-                self.filename = getattr(fp, 'name', None)
+                self.filename = getattr(fp, "name", None)
         else:
             self.filename = filename
 
-        if spoiler and self.filename is not None and not self.filename.startswith('SPOILER_'):
-            self.filename = 'SPOILER_' + self.filename
+        self.description = description
 
-        self.spoiler = spoiler or (self.filename is not None and self.filename.startswith('SPOILER_'))
+        if spoiler and self.filename is not None and not self.filename.startswith("SPOILER_"):
+            self.filename = "SPOILER_" + self.filename
+
+        self.spoiler = spoiler or (
+            self.filename is not None and self.filename.startswith("SPOILER_")
+        )
 
     def reset(self, *, seek: Union[int, bool] = True) -> None:
         # The `seek` parameter is needed because

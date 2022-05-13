@@ -47,10 +47,10 @@ Client
 
     .. automethod:: Client.slash_command
         :decorator:
-    
+
     .. automethod:: Client.user_command
         :decorator:
-        
+
     .. automethod:: Client.message_command
         :decorator:
 
@@ -306,6 +306,10 @@ to handle it, which defaults to print a traceback and ignoring the exception.
         exception.
     :param kwargs: The keyword arguments for the event that raised the
         exception.
+
+.. function:: on_close()
+
+    Called when the client is exiting the event loop and shutting down.
 
 .. function:: on_socket_event_type(event_type)
 
@@ -1227,10 +1231,6 @@ of :class:`enum.Enum`.
 
         A guild news channel.
 
-    .. attribute:: store
-
-        A guild store channel.
-
     .. attribute:: stage_voice
 
         A guild stage voice channel.
@@ -1359,9 +1359,15 @@ of :class:`enum.Enum`.
         The system message denoting that the author is replying to a message.
 
         .. versionadded:: 2.0
-    .. attribute:: application_command
+    .. attribute:: chat_input_command
 
-        The system message denoting that an application (or "slash") command was executed.
+        The system message denoting that a slash command was executed.
+
+        .. versionadded:: 2.0
+    .. attribute:: thread_starter_message
+
+        The system message denoting the message in the thread that is the one that started the
+        thread's conversation topic.
 
         .. versionadded:: 2.0
     .. attribute:: guild_invite_reminder
@@ -1369,10 +1375,9 @@ of :class:`enum.Enum`.
         The system message sent as a reminder to invite people to the guild.
 
         .. versionadded:: 2.0
-    .. attribute:: thread_starter_message
+    .. attribute:: context_menu_command
 
-        The system message denoting the message in the thread that is the one that started the
-        thread's conversation topic.
+        The system message denoting that a context menu command was executed.
 
         .. versionadded:: 2.0
 
@@ -1570,6 +1575,17 @@ of :class:`enum.Enum`.
     .. attribute:: url
 
         An alias for :attr:`link`.
+
+.. class:: TextInputStyle
+
+    Represent the style of a text input component.
+
+    .. attribute:: short
+
+        Represent a single line input
+    .. attribute:: paragraph
+
+        Represent a multi line input
 
 .. class:: VoiceRegion
 
@@ -3675,6 +3691,16 @@ InteractionMessage
 
 .. autoclass:: InteractionMessage()
     :members:
+    :inherited-members:
+
+PartialInteractionMessage
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: PartialInteractionMessage
+
+.. autoclass:: PartialInteractionMessage()
+    :members:
+    :inherited-members:
 
 Member
 ~~~~~~
@@ -3790,15 +3816,6 @@ ThreadMember
 
 .. autoclass:: ThreadMember()
     :members:
-
-StoreChannel
-~~~~~~~~~~~~~
-
-.. attributetable:: StoreChannel
-
-.. autoclass:: StoreChannel()
-    :members:
-    :inherited-members:
 
 VoiceChannel
 ~~~~~~~~~~~~~
@@ -4268,6 +4285,14 @@ View
 .. autoclass:: nextcord.ui.View
     :members:
 
+Modal
+~~~~~~~
+
+.. attributetable:: nextcord.ui.Modal
+
+.. autoclass:: nextcord.ui.Modal
+    :members:
+
 Item
 ~~~~~~~
 
@@ -4286,6 +4311,15 @@ Button
     :inherited-members:
 
 .. autofunction:: nextcord.ui.button
+
+TextInput
+~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.TextInput
+
+.. autoclass:: nextcord.ui.TextInput
+    :members:
+    :inherited-members:
 
 Select
 ~~~~~~~
@@ -4330,6 +4364,7 @@ Cogs
 
 .. autoclass:: ClientCog
     :members:
+
 Decorators
 ~~~~~~~~~~
 
@@ -4377,6 +4412,12 @@ The following exceptions are thrown by the library.
 
 .. autoexception:: nextcord.opus.OpusNotLoaded
 
+.. autoexception:: ApplicationError
+
+.. autoexception:: ApplicationInvokeError
+
+.. autoexception:: ApplicationCheckFailure
+
 Exception Hierarchy
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -4398,3 +4439,6 @@ Exception Hierarchy
                 - :exc:`Forbidden`
                 - :exc:`NotFound`
                 - :exc:`DiscordServerError`
+        - :exc:`ApplicationError`
+            - :exc:`ApplicationInvokeError`
+            - :exc:`ApplicationCheckFailure`

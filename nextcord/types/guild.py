@@ -23,17 +23,18 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from typing import List, Literal, Optional, TypedDict
-from .snowflake import Snowflake
+
+from .activity import PartialPresenceUpdate
 from .channel import GuildChannel
+from .emoji import Emoji
+from .member import Member
+from .role import Role
 from .scheduled_events import ScheduledEvent
+from .snowflake import Snowflake
+from .threads import Thread
+from .user import User
 from .voice import GuildVoiceState
 from .welcome_screen import WelcomeScreen
-from .activity import PartialPresenceUpdate
-from .role import Role
-from .member import Member
-from .emoji import Emoji
-from .user import User
-from .threads import Thread
 
 
 class Ban(TypedDict):
@@ -76,28 +77,27 @@ VerificationLevel = Literal[0, 1, 2, 3, 4]
 NSFWLevel = Literal[0, 1, 2, 3]
 PremiumTier = Literal[0, 1, 2, 3]
 GuildFeature = Literal[
-    'ANIMATED_ICON',
-    'BANNER',
-    'COMMERCE',
-    'COMMUNITY',
-    'DISCOVERABLE',
-    'FEATURABLE',
-    'INVITE_SPLASH',
-    'MEMBER_VERIFICATION_GATE_ENABLED',
-    'MONETIZATION_ENABLED',
-    'MORE_EMOJI',
-    'MORE_STICKERS',
-    'NEWS',
-    'PARTNERED',
-    'PREVIEW_ENABLED',
-    'PRIVATE_THREADS',
-    'SEVEN_DAY_THREAD_ARCHIVE',
-    'THREE_DAY_THREAD_ARCHIVE',
-    'TICKETED_EVENTS_ENABLED',
-    'VANITY_URL',
-    'VERIFIED',
-    'VIP_REGIONS',
-    'WELCOME_SCREEN_ENABLED',
+    "ANIMATED_ICON",
+    "BANNER",
+    "COMMUNITY",
+    "DISCOVERABLE",
+    "FEATURABLE",
+    "INVITE_SPLASH",
+    "MEMBER_VERIFICATION_GATE_ENABLED",
+    "MONETIZATION_ENABLED",
+    "MORE_EMOJI",
+    "MORE_STICKERS",
+    "NEWS",
+    "PARTNERED",
+    "PREVIEW_ENABLED",
+    "PRIVATE_THREADS",
+    "SEVEN_DAY_THREAD_ARCHIVE",
+    "THREE_DAY_THREAD_ARCHIVE",
+    "TICKETED_EVENTS_ENABLED",
+    "VANITY_URL",
+    "VERIFIED",
+    "VIP_REGIONS",
+    "WELCOME_SCREEN_ENABLED",
 ]
 
 

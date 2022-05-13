@@ -4,79 +4,254 @@
 
 .. _interactions:
 
-Slash Commands
-==============
+Application Commands
+====================
 
-How To Make A Simple Slash Command
-----------------------------------
+Simple Slash Command Example
+----------------------------
 
-The following example is a simple ping/pong command using Nextcord's slash commands:
+The following example is a simple ping command using slash commands:
 
 .. code-block:: python3
 
-    @client.slash_command()
-    async def ping(interaction):
+    @bot.slash_command(guild_ids=[TESTING_GUILD_ID])
+    async def ping(interaction: nextcord.Interaction):
+        """Simple command that responds with Pong!"""
         await interaction.response.send_message("Pong!")
 
-The way it works is by using :meth:`~Client.slash_command` decorator to add a slash command for the bot to register with Discord.
+The way it works is by using the :meth:`~nextcord.ext.commands.Bot.slash_command` decorator to add a slash command for the bot to register with Discord.
 
 ``guild_ids`` is used to limit the guilds that the slash command is available to. This is useful for testing as global slash commands can take up to an hour to register.
 
-Example:
+The names of slash commands and their command options must only contain lowercase letters, numbers, hyphens, and underscores and be between 1 and 32 characters long.
+
+Slash Command Options
+---------------------
+
+Slash options are used to allow the user to specify additional information for the command.
+
+Below is an example that takes a single argument, ``arg``, and repeats it back to the user:
 
 .. code-block:: python3
 
-    @client.slash_command(guild_ids=[id1, id2])
+    @bot.slash_command(guild_ids=[TESTING_GUILD_ID])
+    async def echo(interaction: nextcord.Interaction, arg: str):
+        """Repeats your message that you send as an argument
 
-How To Use Sub-Commands
------------------------
+        Parameters
+        ----------
+        interaction: Interaction
+            The interaction object
+        arg: str
+            The message to repeat. This is a required argument.
+        """
+        await interaction.response.send_message(f"You said: {arg}")
 
-The way sub-commands work is that you make a normal slash command that will never be called, and then make the sub-commands and have them do the work of real slash commands. There is no difference with slash commands and sub-commands. The only thing you will need to change is functions.
+The option can be type-hinted with :class:`int`, :class:`float`, or :class:`bool` to change the type of the argument.
 
-As shown in the demonstration below you make a main slash command or a dummy slash command and build sub-commands off it.
-
-.. code-block:: python3
-
-        @client.slash_command(guild_ids=[...])  # Making the command and limiting the guilds
-        async def my_main_command(interaction: Interaction):  
-            ...
-
-
-        @my_main_command.subcommand()  # Identifying The Sub-Command
-        async def subcommand_one(
-            interaction: Interaction
-        ):  # Making The Sub Command Name And Passing Through Interaction
-        await interaction.response.send_message(
-            "This is subcommand 1!"
-        )  # Sending A Response
-
-
-        # Identifying The Sub-Command And Adding A Descripton
-        @my_main_command.subcommand(description="Aha! Another subcommand")  
-        async def subcommand_two(interaction: Interaction):  # Passing in interaction
-
-        await interaction.response.send_message(
-            "This is subcommand 2!"
-        )  # Responding with a message
-
-Fields And Requirements
------------------------
-Fields are meant to facilitate an easier way to fill info, letting people using your slash command get a different response for each answer.
-
-Nextcord's implementation of slash commands has fields and is very simple. in the example below is a field.
+You can also set ``required=False`` in a :class:`~nextcord.SlashOption` or set a default value to make the argument optional.
 
 .. code-block:: python3
 
-    @client.slash_command()
-    async def choose_a_number(
-        interaction: Interaction,
-        number: str = SlashOption(name="settings", description="Configure Your Settings", choices={"1": 1, "2": 2,"3": 3})
+    from typing import Optional
+
+    @bot.slash_command(guild_ids=[TESTING_GUILD_ID])
+    async def echo_number(
+        interaction: nextcord.Interaction,
+        number: Optional[int] = SlashOption(required=False)
     ):
-        await interaction.response.send_message(f"You chose {number}")
+        """Repeats your number that you send as an argument
+
+        Parameters
+        ----------
+        interaction: Interaction
+            The interaction object
+        arg: Optional[int]
+            The number to repeat. This is an optional argument.
+        """
+        if number is None:
+            await interaction.response.send_message("You didn't specify a number!")
+        else:
+            await interaction.response.send_message(f"You said: {number}")
+
+Choices
+~~~~~~~
+
+You can also use choices to make fields that only accept certain values.
+
+The choices can be specified using ``choices`` in a :class:`~nextcord.SlashOption` which can be a list of choices or a mapping of choices to their values.
+
+.. code-block:: python3
+
+    @bot.slash_command(guild_ids=[TESTING_GUILD_ID])
+    async def choose_a_number(
+        interaction: nextcord.Interaction,
+        number: int = SlashOption(
+            name="picker",
+            choices={"one": 1, "two": 2, "three": 3},
+        ),
+    ):
+        """Repeats your number that you choose from a list
+
+        Parameters
+        ----------
+        interaction: Interaction
+            The interaction object
+        number: int
+            The chosen number.
+        """
+        await interaction.response.send_message(f"You chose {number}!")
+
+You can also specify a type annotation such as :class:`nextcord.Member`, :class:`nextcord.abc.GuildChannel`, or :class:`nextcord.Role`
+to make the command display a list of those types of objects.
+
+.. code-block:: python3
+
+    @bot.slash_command(guild_ids=[TESTING_GUILD_ID])
+    async def hi(interaction: nextcord.Interaction, user: nextcord.Member):
+        """Say hi to a user
+
+        Parameters
+        ----------
+        interaction: Interaction
+            The interaction object
+        user: nextcord.Member
+            The user to say hi to.
+        """
+        await interaction.response.send_message(
+            f"{interaction.user} just said hi to {user.mention}"
+        )
 
 
-How To Make Slash Commands In Cogs
-----------------------------------
+Subcommands
+-----------
+
+To make a subcommand, you must first make a base slash command that will not be called and then make the subcommands on it.
+
+Subcommands of a base command can also have subcommands, but the subcommands of a subcommand cannot. See the diagram below for an illustration.
+
+.. code-block::
+
+    command
+    ├── subcommand-group
+    │   └── subcommand
+    └── subcommand
+
+As shown in the demonstration below you make a main slash command and build subcommands using the :meth:`~nextcord.ApplicationCommand.subcommand` decorator on it.
+
+.. code-block:: python3
+
+    @bot.slash_command(guild_ids=[TESTING_GUILD_ID])
+    async def main(interaction: nextcord.Interaction):
+        """
+        This is the main slash command that will be the prefix of all commands below.
+        This will never get called since it has subcommands.
+        """
+        pass
+
+
+    @main.subcommand(description="Subcommand 1")
+    async def sub1(interaction: nextcord.Interaction):
+        """
+        This is a subcommand of the '/main' slash command.
+        It will appear in the menu as '/main sub1'.
+        """
+        await interaction.response.send_message("This is subcommand 1!")
+
+
+    @main.subcommand(description="Subcommand 2")
+    async def sub2(interaction: nextcord.Interaction):
+        """
+        This is another subcommand of the '/main' slash command.
+        It will appear in the menu as '/main sub2'.
+        """
+        await interaction.response.send_message("This is subcommand 2!")
+
+
+    @main.subcommand()
+    async def main_group(interaction: nextcord.Interaction):
+        """
+        This is a subcommand group of the '/main' slash command.
+        All subcommands of this group will be prefixed with '/main main_group'.
+        This will never get called since it has subcommands.
+        """
+        pass
+
+
+    @main_group.subcommand(description="Subcommand group subcommand 1")
+    async def subsub1(interaction: nextcord.Interaction):
+        """
+        This is a subcommand of the '/main main_group' subcommand group.
+        It will appear in the menu as '/main main_group subsub1'.
+        """
+        await interaction.response.send_message("This is a subcommand group's subcommand!")
+
+
+    @main_group.subcommand(description="Subcommand group subcommand 2")
+    async def subsub2(interaction: nextcord.Interaction):
+        """
+        This is another subcommand of the '/main main_group' subcommand group.
+        It will appear in the menu as '/main main_group subsub2'.
+        """
+        await interaction.response.send_message("This is subcommand group subcommand 2!")
+
+
+Context Menu Commands
+---------------------
+
+Context menu commands display commands in the Apps section of the right-click menu of a user or message.
+
+User Commands
+~~~~~~~~~~~~~~
+
+Here is an example of a command that will say hi to a user that was right-clicked on.
+
+.. code-block:: python3
+
+    @bot.user_command(guild_ids=[TESTING_GUILD_ID])
+    async def hello(interaction: nextcord.Interaction, member: nextcord.Member):
+        """Says hi to a user that was right-clicked on"""
+        await interaction.response.send_message(f"Hello {member}!")
+
+Message Commands
+~~~~~~~~~~~~~~~~~
+
+Here is an example of a message command which sends the content of the right-clicked message as an ephemeral response to the user who invoked it.
+
+.. code-block:: python3
+
+    @bot.message_command(guild_ids=[TESTING_GUILD_ID])
+    async def say(interaction: nextcord.Interaction, message: nextcord.Message):
+        """Sends the content of the right-clicked message as an ephemeral response"""
+        await interaction.response.send_message(message.content, ephemeral=True)
+
+
+Deferred Response
+-----------------
+
+Discord expects you to respond in 3 seconds, you can extend that by deferring and then sending followup in the next 15 minutes.
+
+Responding to the interaction with :meth:`~nextcord.InteractionResponse.defer` will show the "bot is thinking" message to the user
+until the followup response is sent.
+
+Note: by default the message will be public, but you can make it visible only to the user by setting the ``ephemeral`` parameter to ``True``.
+
+.. code-block:: python3
+
+    @bot.slash_command(guild_ids=[TESTING_GUILD_ID])
+    async def hi(interaction: nextcord.Interaction):
+        """Say hi to a user"""
+        # defer the response, so we can take a long time to respond
+        await interaction.response.defer()
+        # do something that takes a long time
+        await asyncio.sleep(5)
+        # followup must be used after defer since a response is already sent
+        await interaction.followup.send(f"Hi {interaction.user}! Thanks for waiting!")
+
+
+Application Commands in Cogs
+----------------------------
+
 Shown below is an example of a simple command running in a cog:
 
 .. code-block:: python3
@@ -85,33 +260,9 @@ Shown below is an example of a simple command running in a cog:
         def __init__(self):
             self.count = 0
 
-        @nextcord.slash_command()
-        async def slash_command_cog(self, interaction: Interaction):
+        @nextcord.slash_command(guild_ids=[TESTING_GUILD_ID])
+        async def slash_command_cog(self, interaction: nextcord.Interaction):
+            """This is a slash command in a cog"""
             await interaction.response.send_message("Hello I am a slash command in a cog!")
 
-The example shown above responds to a user when they do a slash command. Its function is the same as a slash command on the client, adjusted to work in a class, only its decorator is different.
-
-How To Make Context Menu Commands
----------------------------------
-Context Menu commands display commands on the right-click menu of a message/user.
-
-User Commands
-~~~~~~~~~~~~~~
-The following code simply prints out the name of the member it was performed on, but can be used for more complex actions too:
-
-.. code-block:: python3
-
-    @client.user_command()
-    async def hello(interaction: Interaction, member: Member):
-        await interaction.response.send_message(f"Hello! {member}")
-
-Message Commands
-~~~~~~~~~~~~~~~~~
-The following is a simple example of a message command which sends the content of the target message as an ephemeral response to the user who invoked it.
-
-.. code-block:: python3
-
-    @client.message_command()
-    async def say(interaction: Interaction, message: Message):
-        await interaction.response.send_message(message.content, ephemeral=True)
-
+Context menu commands can also be made in cogs using the :meth:`nextcord.user_command` or :meth:`nextcord.message_command` decorators.

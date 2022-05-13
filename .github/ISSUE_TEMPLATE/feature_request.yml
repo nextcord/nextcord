@@ -15,8 +15,10 @@ body:
       label: What is the feature request for?
       options:
         - The core library
+        - Application commands
         - nextcord.ext.commands
         - nextcord.ext.tasks
+        - nextcord.ext.application_checks
         - The documentation
     validations:
       required: true
