@@ -108,6 +108,9 @@ from .errors import (
 )
 
 if TYPE_CHECKING:
+    from typing import Callable
+
+    from nextcord.member import Member
     from nextcord.message import PartialMessageableChannel
     from nextcord.user import User
 
