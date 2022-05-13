@@ -35,7 +35,7 @@ import sys
 import traceback
 import types
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Mapping, Optional, Type, TypeVar, Union
 
 import nextcord
 
@@ -955,21 +955,22 @@ class BotBase(GroupMixin):
         if package and packages:
             raise ValueError("Cannot provide both package and packages.")
 
-        packages_itr, extras_itr = None
-
         if packages is not None and len(packages) != len(names):
             raise ValueError("The length of packages must match the length of extensions.")
-        packages_itr = iter(packages)
 
         if extras is not None and len(extras) != len(names):
             raise ValueError("The length of extra parameters must match the length of extensions.")
-        extras_itr = iter(extras)
+
+        packages_itr: Optional[Iterator] = iter(packages) if packages is not None else None
+        extras_itr: Optional[Iterator] = iter(extras) if extras is not None else None
 
         loaded_extensions: List[str] = []
 
         for extension in names:
             cur_extra = next(extras_itr) if extras_itr is not None else None
-            package = next(packages_itr) if packages_itr is not None else None
+
+            if package is None:
+                package = next(packages_itr) if packages_itr is not None else None
 
             try:
                 self.load_extension(extension, package=package, extras=cur_extra)
@@ -981,7 +982,7 @@ class BotBase(GroupMixin):
 
         return loaded_extensions
 
-    def find_load_extensions(
+    def load_extensions_from_folder(
         self, folder_name: str, filter: str = "*.py", ignore: Optional[List[str]] = None
     ) -> List[str]:
         """Loads all extensions found in a folder.
