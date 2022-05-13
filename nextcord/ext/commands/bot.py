@@ -30,13 +30,12 @@ import collections
 import collections.abc
 import importlib.util
 import inspect
+import os
 import sys
 import traceback
 import types
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Type, TypeVar, Union
-
 
 import nextcord
 
@@ -907,17 +906,17 @@ class BotBase(GroupMixin):
             # revert sys.modules back to normal and raise back to caller
             sys.modules.update(modules)
             raise
-    
+
     def load_extensions(
-            self, 
-            names: List[str], 
-            *, 
-            package: Optional[str] = None,
-            packages: Optional[List[str]] = None,
-            extras: Optional[List[Dict[str, Any]]] = None
+        self,
+        names: List[str],
+        *,
+        package: Optional[str] = None,
+        packages: Optional[List[str]] = None,
+        extras: Optional[List[Dict[str, Any]]] = None,
     ) -> List[str]:
         """Loads all extensions provided in a list.
-        
+
         Parameters
         ----------
         names: :type:`List[str]`
@@ -942,7 +941,7 @@ class BotBase(GroupMixin):
         --------
         ValueError
             If the ``package`` and ``packages`` parameters are both provided or if
-            the length of ``packages`` or the length of ``extras`` is not equal to 
+            the length of ``packages`` or the length of ``extras`` is not equal to
             the length of ``names``.
         ExtensionNotFound
             An extension could not be imported.
@@ -982,21 +981,23 @@ class BotBase(GroupMixin):
 
         return loaded_extensions
 
-    def find_load_extensions(self, folder_name: str, filter: str = "*.py", ignore: Optional[List[str]] = None) -> List[str]:
+    def find_load_extensions(
+        self, folder_name: str, filter: str = "*.py", ignore: Optional[List[str]] = None
+    ) -> List[str]:
         """Loads all extensions found in a folder.
 
         Once an extension found in a folder has been loaded and did not throw
         any exceptions, it will be added to a list of extension names that
         will be returned.
 
-        This function only works with cog setups where the entire cog is placed 
-        into one file. If you have a different setup for your cogs, then you will 
+        This function only works with cog setups where the entire cog is placed
+        into one file. If you have a different setup for your cogs, then you will
         need to manually load them.
 
         Parameters
         ----------
         folder_name: :class:`str`
-            The name (or path) of the folder to look through. This folder path is a 
+            The name (or path) of the folder to look through. This folder path is a
             relative path based on the current folder.
         filter: :class:`str`
             The filter to use when looking for extensions. Defaults to ``*.py``.
@@ -1023,7 +1024,9 @@ class BotBase(GroupMixin):
         """
         path = Path(folder_name)
         if path.is_absolute():
-            raise ValueError("folder_name must be a relative path based on the current working directory, not an absolute path")
+            raise ValueError(
+                "folder_name must be a relative path based on the current working directory, not an absolute path"
+            )
 
         _raw_files: List[Path] = list(path.rglob(filter))
         if ignore:
