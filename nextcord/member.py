@@ -916,7 +916,9 @@ class Member(abc.Messageable, _UserTag):
         """
         await self.edit(voice_channel=None, reason=reason)
 
-    async def add_roles(self, *roles: Snowflake, reason: Optional[str] = None, atomic: bool = True) -> None:
+    async def add_roles(
+        self, *roles: Snowflake, reason: Optional[str] = None, atomic: bool = True
+    ) -> None:
         r"""|coro|
 
         Gives the member a number of :class:`Role`\s.
