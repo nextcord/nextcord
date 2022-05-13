@@ -21,20 +21,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
+
+from nextcord.abc import GuildChannel
 from nextcord.errors import ApplicationCheckFailure
 from nextcord.interactions import Interaction
-from typing import (
-    Any,
-    Callable,
-    List,
-    Optional,
-    TYPE_CHECKING,
-    Union,
-)
-
-from nextcord.types.snowflake import Snowflake, SnowflakeList
-from nextcord.abc import GuildChannel
 from nextcord.threads import Thread
+from nextcord.types.snowflake import Snowflake, SnowflakeList
 
 __all__ = (
     "ApplicationCheckAnyFailure",
@@ -247,9 +240,7 @@ class ApplicationPrivateMessageOnly(ApplicationCheckFailure):
     """
 
     def __init__(self, message: Optional[str] = None) -> None:
-        super().__init__(
-            message or "This command can only be used in private messages."
-        )
+        super().__init__(message or "This command can only be used in private messages.")
 
 
 class ApplicationNotOwner(ApplicationCheckFailure):
@@ -274,9 +265,7 @@ class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
 
     def __init__(self, channel: Union[GuildChannel, Thread]) -> None:
         self.channel: Union[GuildChannel, Thread] = channel
-        super().__init__(
-            f"Channel '{channel}' needs to be NSFW for this command to work."
-        )
+        super().__init__(f"Channel '{channel}' needs to be NSFW for this command to work.")
 
 
 class ApplicationCheckForBotOnly(ApplicationCheckFailure):
@@ -286,6 +275,4 @@ class ApplicationCheckForBotOnly(ApplicationCheckFailure):
     """
 
     def __init__(self) -> None:
-        super().__init__(
-            "This application check can only be used for ext.commands.Bot."
-        )
+        super().__init__("This application check can only be used for ext.commands.Bot.")

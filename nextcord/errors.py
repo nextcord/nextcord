@@ -23,7 +23,8 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Dict, List, Optional, TYPE_CHECKING, Any, Tuple, Union
+
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from aiohttp import ClientResponse, ClientWebSocketResponse
@@ -126,9 +127,7 @@ class HTTPException(DiscordException):
         The Discord specific error code for the failure.
     """
 
-    def __init__(
-        self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]
-    ):
+    def __init__(self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]):
         self.response: _ResponseType = response
         self.status: int = response.status  # type: ignore
         self.code: int
@@ -301,9 +300,7 @@ class ApplicationError(DiscordException):
     def __init__(self, message: Optional[str] = None, *args: Any) -> None:
         if message is not None:
             # clean-up @everyone and @here mentions
-            m = message.replace("@everyone", "@\u200beveryone").replace(
-                "@here", "@\u200bhere"
-            )
+            m = message.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
             super().__init__(m, *args)
         else:
             super().__init__(*args)

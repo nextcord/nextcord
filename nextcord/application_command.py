@@ -23,12 +23,14 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
+
 import asyncio
 import inspect
 import logging
 import warnings
 from inspect import signature, Parameter
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Coroutine,
@@ -40,10 +42,10 @@ from typing import (
     Type,
     TYPE_CHECKING,
     Tuple,
-    Union,
     TypeVar,
+    Union,
+    cast,
 )
-import typing
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandType, ApplicationCommandOptionType, ChannelType, Locale
@@ -54,20 +56,20 @@ from .errors import (
 )
 from .interactions import Interaction
 from .guild import Guild
+from .interactions import Interaction
 from .member import Member
 from .message import Attachment, Message
 from .permissions import Permissions
 from .role import Role
+from .types.interactions import ApplicationCommandInteractionData
+from .types.member import MemberWithUser
 from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
     from .state import ConnectionState
-    from .types.checks import (
-        ApplicationErrorCallback,
-        ApplicationHook,
-        ApplicationCheck,
-    )
+    from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
+    from .types.message import Message as MessagePayload
 
     _SlashOptionMetaBase = Any
     _CustomTypingMetaBase = Any
