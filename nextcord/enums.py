@@ -25,60 +25,61 @@ DEALINGS IN THE SOFTWARE.
 
 import types
 from collections import namedtuple
-from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Type, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type, TypeVar
 
 __all__ = (
-    'Enum',
-    'ChannelType',
-    'MessageType',
-    'VoiceRegion',
-    'SpeakingState',
-    'VerificationLevel',
-    'ContentFilter',
-    'Status',
-    'DefaultAvatar',
-    'AuditLogAction',
-    'AuditLogActionCategory',
-    'UserFlags',
-    'ActivityType',
-    'NotificationLevel',
-    'TeamMembershipState',
-    'WebhookType',
-    'ExpireBehaviour',
-    'ExpireBehavior',
-    'StickerType',
-    'StickerFormatType',
-    'InviteTarget',
-    'VideoQualityMode',
-    'ComponentType',
-    'ButtonStyle',
-    'TextInputStyle',
-    'StagePrivacyLevel',
-    'InteractionType',
-    'InteractionResponseType',
-    'ApplicationCommandType',
-    'ApplicationCommandOptionType',
-    'NSFWLevel',
-    'ScheduledEventEntityType',
-    'ScheduledEventPrivacyLevel',
-    'ScheduledEventStatus',
+    "Enum",
+    "ChannelType",
+    "MessageType",
+    "VoiceRegion",
+    "SpeakingState",
+    "VerificationLevel",
+    "ContentFilter",
+    "Status",
+    "DefaultAvatar",
+    "AuditLogAction",
+    "AuditLogActionCategory",
+    "UserFlags",
+    "ActivityType",
+    "NotificationLevel",
+    "TeamMembershipState",
+    "WebhookType",
+    "ExpireBehaviour",
+    "ExpireBehavior",
+    "StickerType",
+    "StickerFormatType",
+    "InviteTarget",
+    "VideoQualityMode",
+    "ComponentType",
+    "ButtonStyle",
+    "TextInputStyle",
+    "StagePrivacyLevel",
+    "InteractionType",
+    "InteractionResponseType",
+    "ApplicationCommandType",
+    "ApplicationCommandOptionType",
+    "NSFWLevel",
+    "ScheduledEventEntityType",
+    "ScheduledEventPrivacyLevel",
+    "ScheduledEventStatus",
 )
 
 
 def _create_value_cls(name, comparable):
-    cls = namedtuple('_EnumValue_' + name, 'name value')
-    cls.__repr__ = lambda self: f'<{name}.{self.name}: {self.value!r}>'
-    cls.__str__ = lambda self: f'{name}.{self.name}'
+    # TODO: rework this, type checkers hate it
+    cls = namedtuple("_EnumValue_" + name, "name value")  # type: ignore
+    cls.__repr__ = lambda self: f"<{name}.{self.name}: {self.value!r}>"  # type: ignore
+    cls.__str__ = lambda self: f"{name}.{self.name}"  # type: ignore
     if comparable:
-        cls.__le__ = lambda self, other: isinstance(other, self.__class__) and self.value <= other.value
-        cls.__ge__ = lambda self, other: isinstance(other, self.__class__) and self.value >= other.value
-        cls.__lt__ = lambda self, other: isinstance(other, self.__class__) and self.value < other.value
-        cls.__gt__ = lambda self, other: isinstance(other, self.__class__) and self.value > other.value
+        cls.__le__ = lambda self, other: isinstance(other, self.__class__) and self.value <= other.value  # type: ignore
+        cls.__ge__ = lambda self, other: isinstance(other, self.__class__) and self.value >= other.value  # type: ignore
+        cls.__lt__ = lambda self, other: isinstance(other, self.__class__) and self.value < other.value  # type: ignore
+        cls.__gt__ = lambda self, other: isinstance(other, self.__class__) and self.value > other.value  # type: ignore
     return cls
 
 
 def _is_descriptor(obj):
-    return hasattr(obj, '__get__') or hasattr(obj, '__set__') or hasattr(obj, '__delete__')
+    return hasattr(obj, "__get__") or hasattr(obj, "__set__") or hasattr(obj, "__delete__")
 
 
 class EnumMeta(type):
@@ -96,7 +97,7 @@ class EnumMeta(type):
         value_cls = _create_value_cls(name, comparable)
         for key, value in list(attrs.items()):
             is_descriptor = _is_descriptor(value)
-            if key[0] == '_' and not is_descriptor:
+            if key[0] == "_" and not is_descriptor:
                 continue
 
             # Special case classmethod to just pass through
@@ -118,10 +119,10 @@ class EnumMeta(type):
             member_mapping[key] = new_value
             attrs[key] = new_value
 
-        attrs['_enum_value_map_'] = value_mapping
-        attrs['_enum_member_map_'] = member_mapping
-        attrs['_enum_member_names_'] = member_names
-        attrs['_enum_value_cls_'] = value_cls
+        attrs["_enum_value_map_"] = value_mapping
+        attrs["_enum_member_map_"] = member_mapping
+        attrs["_enum_member_names_"] = member_names
+        attrs["_enum_value_cls_"] = value_cls
         actual_cls = super().__new__(cls, name, bases, attrs)
         value_cls._actual_enum_cls_ = actual_cls  # type: ignore
         return actual_cls
@@ -136,7 +137,7 @@ class EnumMeta(type):
         return len(cls._enum_member_names_)
 
     def __repr__(cls):
-        return f'<enum {cls.__name__}>'
+        return f"<enum {cls.__name__}>"
 
     @property
     def __members__(cls):
@@ -152,10 +153,10 @@ class EnumMeta(type):
         return cls._enum_member_map_[key]
 
     def __setattr__(cls, name, value):
-        raise TypeError('Enums are immutable.')
+        raise TypeError("Enums are immutable.")
 
     def __delattr__(cls, attr):
-        raise TypeError('Enums are immutable')
+        raise TypeError("Enums are immutable")
 
     def __instancecheck__(self, instance):
         # isinstance(x, Y)
@@ -233,29 +234,29 @@ class MessageType(Enum):
 
 
 class VoiceRegion(Enum):
-    us_west = 'us-west'
-    us_east = 'us-east'
-    us_south = 'us-south'
-    us_central = 'us-central'
-    eu_west = 'eu-west'
-    eu_central = 'eu-central'
-    singapore = 'singapore'
-    london = 'london'
-    sydney = 'sydney'
-    amsterdam = 'amsterdam'
-    frankfurt = 'frankfurt'
-    brazil = 'brazil'
-    hongkong = 'hongkong'
-    russia = 'russia'
-    japan = 'japan'
-    southafrica = 'southafrica'
-    south_korea = 'south-korea'
-    india = 'india'
-    europe = 'europe'
-    dubai = 'dubai'
-    vip_us_east = 'vip-us-east'
-    vip_us_west = 'vip-us-west'
-    vip_amsterdam = 'vip-amsterdam'
+    us_west = "us-west"
+    us_east = "us-east"
+    us_south = "us-south"
+    us_central = "us-central"
+    eu_west = "eu-west"
+    eu_central = "eu-central"
+    singapore = "singapore"
+    london = "london"
+    sydney = "sydney"
+    amsterdam = "amsterdam"
+    frankfurt = "frankfurt"
+    brazil = "brazil"
+    hongkong = "hongkong"
+    russia = "russia"
+    japan = "japan"
+    southafrica = "southafrica"
+    south_korea = "south-korea"
+    india = "india"
+    europe = "europe"
+    dubai = "dubai"
+    vip_us_east = "vip-us-east"
+    vip_us_west = "vip-us-west"
+    vip_amsterdam = "vip-amsterdam"
 
     def __str__(self):
         return self.value
@@ -295,12 +296,12 @@ class ContentFilter(Enum, comparable=True):
 
 
 class Status(Enum):
-    online = 'online'
-    offline = 'offline'
-    idle = 'idle'
-    dnd = 'dnd'
-    do_not_disturb = 'dnd'
-    invisible = 'invisible'
+    online = "online"
+    offline = "offline"
+    idle = "idle"
+    dnd = "dnd"
+    do_not_disturb = "dnd"
+    invisible = "invisible"
 
     def __str__(self):
         return self.value
@@ -439,35 +440,35 @@ class AuditLogAction(Enum):
     def target_type(self) -> Optional[str]:
         v = self.value
         if v == -1:
-            return 'all'
+            return "all"
         elif v < 10:
-            return 'guild'
+            return "guild"
         elif v < 20:
-            return 'channel'
+            return "channel"
         elif v < 30:
-            return 'user'
+            return "user"
         elif v < 40:
-            return 'role'
+            return "role"
         elif v < 50:
-            return 'invite'
+            return "invite"
         elif v < 60:
-            return 'webhook'
+            return "webhook"
         elif v < 70:
-            return 'emoji'
+            return "emoji"
         elif v == 73:
-            return 'channel'
+            return "channel"
         elif v < 80:
-            return 'message'
+            return "message"
         elif v < 83:
-            return 'integration'
+            return "integration"
         elif v < 90:
-            return 'stage_instance'
+            return "stage_instance"
         elif v < 93:
-            return 'sticker'
+            return "sticker"
         elif v < 103:
-            return 'event'
+            return "event"
         elif v < 113:
-            return 'thread'
+            return "thread"
 
 
 class UserFlags(Enum):
@@ -664,12 +665,12 @@ class ScheduledEventStatus(Enum):
     cancelled = 4
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def create_unknown_value(cls: Type[T], val: Any) -> T:
     value_cls = cls._enum_value_cls_  # type: ignore
-    name = f'unknown_{val}'
+    name = f"unknown_{val}"
     return value_cls(name=name, value=val)
 
 

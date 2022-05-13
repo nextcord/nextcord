@@ -24,7 +24,7 @@ In order to port a bot using discord.py to nextcord, follow these steps:
         # Windows
         py -3 -m pip uninstall discord.py
 
-2. Install nextcord: 
+2. Install nextcord:
 
     .. code:: sh
 
@@ -47,6 +47,6 @@ In order to port a bot using discord.py to nextcord, follow these steps:
 
 .. toctree::
     :maxdepth: 1
-    
+
     migrating
     migrating_2
