@@ -8,11 +8,11 @@
 		#middle-circle, #left-circle {
     		filter: drop-shadow(8px 4px 4px rgb(0 0 0 / 0.4));
 		}
-		#middle-circle { fill: #16222f } 
-		#left-circle { fill: #0d1620 } 
-		.nc-shp0 { fill: #366d9e } 
-		.nc-shp1 { fill: #fbd143 } 
-		.nc-shp2 { fill: #faca3b } 
+		#middle-circle { fill: #16222f }
+		#left-circle { fill: #0d1620 }
+		.nc-shp0 { fill: #366d9e }
+		.nc-shp1 { fill: #fbd143 }
+		.nc-shp2 { fill: #faca3b }
 		tspan { white-space:pre }
 	</style>
 	<rect id="background" width="1715" height="322" style="fill: #192839;" />
