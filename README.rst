@@ -16,10 +16,10 @@
 .. image:: https://img.shields.io/readthedocs/nextcord
    :target: https://docs.nextcord.dev/
    :alt: Nextcord documentation
-   
+
 Nextcord
 --------
-   
+
 A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord written in Python.
 
 

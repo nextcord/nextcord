@@ -59,7 +59,7 @@ adapter arguments of :meth:`Webhook.partial` and :meth:`Webhook.from_url` are re
                 session=session
             )
         await webhook.send("Hello from nextcord!")
-        
+
 
 Asset changes
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -387,4 +387,3 @@ Meta Change
 
 - The public API should be completely type-hinted
 - Almost all ``edit`` methods now return their updated counterpart rather than doing an in-place edit
-
