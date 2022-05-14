@@ -1863,9 +1863,6 @@ class Client:
         """
         interaction.data = cast(ApplicationCommandInteractionData, interaction.data)
 
-        if not interaction.data or "resolved" not in interaction.data:
-            raise TypeError("Discord did not provide us resolved data")
-
         if interaction.type is InteractionType.application_command:
             _log.info("nextcord.Client: Found an interaction command.")
 
