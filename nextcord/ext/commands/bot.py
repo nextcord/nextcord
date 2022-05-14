@@ -1043,9 +1043,7 @@ class BotBase(GroupMixin):
 
         _raw_files: List[Path] = list(path.rglob(filter))
         if ignore:
-            for f in _raw_files:
-                if f.name in ignore:
-                    _raw_files.remove(f)
+            _raw_files = [f for f in _raw_files if f.name not in ignore]
 
         packages: List[str] = [str(p.parent).replace(os.sep, ".") for p in _raw_files]
         modules: List[str] = [str(p.stem) for p in _raw_files]
