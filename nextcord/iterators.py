@@ -942,7 +942,9 @@ class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
         if not self.has_more:
             raise NoMoreItems()
 
-        data = await self.get_event_users(self.guild.id, self.event.id, with_member=self.with_member)
+        data = await self.get_event_users(
+            self.guild.id, self.event.id, with_member=self.with_member
+        )
         self.has_more = False
         if not data:
             # no data, terminate
