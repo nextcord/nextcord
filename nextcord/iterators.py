@@ -885,6 +885,7 @@ class ScheduledEventIterator(_AsyncIterator["ScheduledEvent"]):
         self.state = self.guild._state
         self.get_guild_events = self.state.http.get_guild_events
         self.queue = asyncio.Queue()
+        self.has_more = True
 
     async def next(self) -> Member:
         if self.queue.empty():
@@ -896,7 +897,11 @@ class ScheduledEventIterator(_AsyncIterator["ScheduledEvent"]):
             raise NoMoreItems()
 
     async def fill_queue(self):
+        if not self.has_more:
+            raise NoMoreItems()
+
         data = await self.get_guild_events(self.guild.id, self.with_users)
+        self.has_more = False
         if not data:
             # no data, terminate
             return
@@ -913,21 +918,16 @@ class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
         self,
         guild: Guild,
         event: ScheduledEvent,
-        limit: int = 100,
         with_member: bool = False,
-        before: Optional[Snowflake] = None,
-        after: Optional[Snowflake] = None,
     ):
         self.guild = guild
         self.event = event
-        self.limit = limit
         self.with_member = with_member
-        self.before = before
-        self.after = after
 
         self.state = self.guild._state
         self.get_event_users = self.state.http.get_event_users
         self.queue = asyncio.Queue()
+        self.has_more = True
 
     async def next(self) -> Member:
         if self.queue.empty():
@@ -939,7 +939,11 @@ class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
             raise NoMoreItems()
 
     async def fill_queue(self):
-        data = await self.get_event_users(self.guild.id, self.event.id)
+        if not self.has_more:
+            raise NoMoreItems()
+
+        data = await self.get_event_users(self.guild.id, self.event.id, with_member=self.with_member)
+        self.has_more = False
         if not data:
             # no data, terminate
             return
