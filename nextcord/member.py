@@ -899,6 +899,23 @@ class Member(abc.Messageable, _UserTag):
         """
         await self.edit(voice_channel=channel, reason=reason)
 
+    async def disconnect(self, *, reason: Optional[str] = None) -> None:
+        """|coro|
+
+        Disconnects a member from the voice channel they are connected to.
+
+        You must have the :attr:`~Permissions.move_members` permission to
+        use this.
+
+        This raises the same exceptions as :meth:`edit`.
+
+        Parameters
+        -----------
+        reason: Optional[:class:`str`]
+            The reason for doing this action. Shows up on the audit log.
+        """
+        await self.edit(voice_channel=None, reason=reason)
+
     async def add_roles(
         self, *roles: Snowflake, reason: Optional[str] = None, atomic: bool = True
     ) -> None:
