@@ -659,7 +659,7 @@ class ConnectionState:
             else:
                 data = await self.http.get_global_commands(self.application_id)  # type: ignore
 
-        if not data:
+        if data is None:
             raise NotImplementedError("Could not get application commands from Discord.")
 
         for raw_response in data:
