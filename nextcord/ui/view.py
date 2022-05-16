@@ -23,34 +23,45 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, Callable, ClassVar, Dict, Iterator, List, Optional, Sequence, TYPE_CHECKING, Tuple
-from functools import partial
-from itertools import groupby
 
-import traceback
 import asyncio
+import os
 import sys
 import time
-import os
-from .item import Item, ItemCallbackType
-from ..components import (
-    Component,
-    ActionRow as ActionRowComponent,
-    _component_factory,
-    Button as ButtonComponent,
-    SelectMenu as SelectComponent,
+import traceback
+from functools import partial
+from itertools import groupby
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
 )
 
-__all__ = (
-    'View',
+from ..components import (
+    ActionRow as ActionRowComponent,
+    Button as ButtonComponent,
+    Component,
+    SelectMenu as SelectComponent,
+    TextInput as TextComponent,
+    _component_factory,
 )
+from .item import Item, ItemCallbackType
+
+__all__ = ("View",)
 
 
 if TYPE_CHECKING:
     from ..interactions import Interaction
     from ..message import Message
-    from ..types.components import Component as ComponentPayload
     from ..state import ConnectionState
+    from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
 
 
 def _walk_all_components(components: List[Component]) -> Iterator[Component]:
@@ -70,20 +81,22 @@ def _component_to_item(component: Component) -> Item:
         from .select import Select
 
         return Select.from_component(component)
+    if isinstance(component, TextComponent):
+        from .text_input import TextInput
+
+        return TextInput.from_component(component)
     return Item.from_component(component)
 
 
 class _ViewWeights:
-    __slots__ = (
-        'weights',
-    )
+    __slots__ = ("weights",)
 
     def __init__(self, children: List[Item]):
         self.weights: List[int] = [0, 0, 0, 0, 0]
 
-        key = lambda i: sys.maxsize if i.row is None else i.row
+        key: Callable[[Item[Any]], int] = lambda i: sys.maxsize if i.row is None else i.row
         children = sorted(children, key=key)
-        for row, group in groupby(children, key=key):
+        for _, group in groupby(children, key=key):
             for item in group:
                 self.add_item(item)
 
@@ -92,13 +105,13 @@ class _ViewWeights:
             if weight + item.width <= 5:
                 return index
 
-        raise ValueError('could not find open space for item')
+        raise ValueError("Could not find open space for item")
 
     def add_item(self, item: Item) -> None:
         if item.row is not None:
             total = self.weights[item.row] + item.width
             if total > 5:
-                raise ValueError(f'item would not fit at row {item.row} ({total} > 5 width)')
+                raise ValueError(f"item would not fit at row {item.row} ({total} > 5 width)")
             self.weights[item.row] = total
             item._rendered_row = item.row
         else:
@@ -127,6 +140,10 @@ class View:
     timeout: Optional[:class:`float`]
         Timeout in seconds from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
+    auto_defer: :class:`bool` = True
+        Whether or not to automatically defer the component interaction when the callback
+        completes without responding to the interaction. Set this to ``False`` if you want to
+        handle view interactions outside of the callback.
 
     Attributes
     ------------
@@ -144,20 +161,21 @@ class View:
         children: List[ItemCallbackType] = []
         for base in reversed(cls.__mro__):
             for member in base.__dict__.values():
-                if hasattr(member, '__discord_ui_model_type__'):
+                if hasattr(member, "__discord_ui_model_type__"):
                     children.append(member)
 
         if len(children) > 25:
-            raise TypeError('View cannot have more than 25 children')
+            raise TypeError("View cannot have more than 25 children")
 
         cls.__view_children_items__ = children
 
-    def __init__(self, *, timeout: Optional[float] = 180.0):
+    def __init__(self, *, timeout: Optional[float] = 180.0, auto_defer: bool = True):
         self.timeout = timeout
+        self.auto_defer = auto_defer
         self.children: List[Item] = []
         for func in self.__view_children_items__:
             item: Item = func.__discord_ui_model_type__(**func.__discord_ui_model_kwargs__)
-            item.callback = partial(func, self, item)
+            item.callback = partial(func, self, item)  # type: ignore
             item._view = self
             setattr(self, func.__name__, item)
             self.children.append(item)
@@ -171,7 +189,7 @@ class View:
         self.__stopped: asyncio.Future[bool] = loop.create_future()
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} timeout={self.timeout} children={len(self.children)}>'
+        return f"<{self.__class__.__name__} timeout={self.timeout} children={len(self.children)}>"
 
     async def __timeout_task_impl(self) -> None:
         while True:
@@ -190,12 +208,12 @@ class View:
             # Wait N seconds to see if timeout data has been refreshed
             await asyncio.sleep(self.__timeout_expiry - now)
 
-    def to_components(self) -> List[Dict[str, Any]]:
+    def to_components(self) -> List[ActionRowPayload]:
         def key(item: Item) -> int:
             return item._rendered_row or 0
 
         children = sorted(self.children, key=key)
-        components: List[Dict[str, Any]] = []
+        components: List[ActionRowPayload] = []
         for _, group in groupby(children, key=key):
             children = [item.to_component_dict() for item in group]
             if not children:
@@ -203,8 +221,8 @@ class View:
 
             components.append(
                 {
-                    'type': 1,
-                    'components': children,
+                    "type": 1,
+                    "components": children,
                 }
             )
 
@@ -239,9 +257,16 @@ class View:
 
     @property
     def _expires_at(self) -> Optional[float]:
-        if self.timeout:
-            return time.monotonic() + self.timeout
-        return None
+        """The monotonic time this view times out at.
+
+        Returns
+        -------
+        Optional[float]
+            When this view times out.
+
+            None if no timeout is set.
+        """
+        return self.__timeout_expiry
 
     def add_item(self, item: Item) -> None:
         """Adds an item to the view.
@@ -261,10 +286,10 @@ class View:
         """
 
         if len(self.children) > 25:
-            raise ValueError('maximum number of children exceeded')
+            raise ValueError("Maximum number of children exceeded")
 
         if not isinstance(item, Item):
-            raise TypeError(f'expected Item not {item.__class__!r}')
+            raise TypeError(f"Expected Item not {item.__class__!r}")
 
         self.__weights.add_item(item)
 
@@ -344,7 +369,7 @@ class View:
         interaction: :class:`~nextcord.Interaction`
             The interaction that led to the failure.
         """
-        print(f'Ignoring exception in view {self} for item {item}:', file=sys.stderr)
+        print(f"Ignoring exception in view {self} for item {item}:", file=sys.stderr)
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
     async def _scheduled_task(self, item: Item, interaction: Interaction):
@@ -357,7 +382,11 @@ class View:
                 return
 
             await item.callback(interaction)
-            if not interaction.response._responded:
+            if (
+                not interaction.response._responded
+                and not interaction.is_expired()
+                and self.auto_defer
+            ):
                 await interaction.response.defer()
         except Exception as e:
             return await self.on_error(e, item, interaction)
@@ -377,13 +406,15 @@ class View:
             return
 
         self.__stopped.set_result(True)
-        asyncio.create_task(self.on_timeout(), name=f'discord-ui-view-timeout-{self.id}')
+        asyncio.create_task(self.on_timeout(), name=f"discord-ui-view-timeout-{self.id}")
 
     def _dispatch_item(self, item: Item, interaction: Interaction):
         if self.__stopped.done():
             return
 
-        asyncio.create_task(self._scheduled_task(item, interaction), name=f'discord-ui-view-dispatch-{self.id}')
+        asyncio.create_task(
+            self._scheduled_task(item, interaction), name=f"discord-ui-view-dispatch-{self.id}"
+        )
 
     def refresh(self, components: List[Component]):
         # This is pretty hacky at the moment

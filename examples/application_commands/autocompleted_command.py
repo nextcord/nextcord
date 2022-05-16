@@ -1,9 +1,9 @@
-import nextcord
 from nextcord import Interaction, SlashOption
+from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 
-client = nextcord.Client()
+bot = commands.Bot(command_prefix="$")
 
 list_of_dog_breeds = [
     "German Shepard",
@@ -13,7 +13,7 @@ list_of_dog_breeds = [
 ]
 
 
-@client.slash_command(guild_ids=[TESTING_GUILD_ID])
+@bot.slash_command(guild_ids=[TESTING_GUILD_ID])
 async def your_favorite_dog(
     interaction: Interaction,
     dog: str = SlashOption(
@@ -32,10 +32,8 @@ async def favorite_dog(interaction: Interaction, dog: str):
         await interaction.response.send_autocomplete(list_of_dog_breeds)
         return
     # send a list of nearest matches from the list of dog breeds
-    get_near_dog = [
-        breed for breed in list_of_dog_breeds if breed.lower().startswith(dog.lower())
-    ]
+    get_near_dog = [breed for breed in list_of_dog_breeds if breed.lower().startswith(dog.lower())]
     await interaction.response.send_autocomplete(get_near_dog)
 
 
-client.run("token")
+bot.run("token")

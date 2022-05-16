@@ -24,14 +24,10 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, SupportsInt, Union
+
 from . import utils
 from .mixins import Hashable
-
-from typing import (
-    SupportsInt,
-    TYPE_CHECKING,
-    Union,
-)
 
 if TYPE_CHECKING:
     import datetime
@@ -51,7 +47,7 @@ class Object(Hashable):
     objects (if any) actually inherit from this class.
 
     There are also some cases where some websocket events are received
-    in :issue:`strange order <21>` and when such events happened you would
+    in :dpyissue:`strange order <21>` and when such events happened you would
     receive this class rather than the actual data class. These cases are
     extremely rare.
 
@@ -79,7 +75,9 @@ class Object(Hashable):
         try:
             id = int(id)
         except ValueError:
-            raise TypeError(f"id parameter must be convertable to int not {id.__class__!r}") from None
+            raise TypeError(
+                f"id parameter must be convertable to int not {id.__class__!r}"
+            ) from None
         else:
             self.id = id
 

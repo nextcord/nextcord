@@ -34,7 +34,7 @@ Bot
 
     .. automethod:: Bot.command(*args, **kwargs)
         :decorator:
-    
+
     .. automethod:: Bot.event()
         :decorator:
 
@@ -386,9 +386,6 @@ Converters
 .. autoclass:: nextcord.ext.commands.VoiceChannelConverter
     :members:
 
-.. autoclass:: nextcord.ext.commands.StoreChannelConverter
-    :members:
-
 .. autoclass:: nextcord.ext.commands.StageChannelConverter
     :members:
 
@@ -643,7 +640,7 @@ Exception Hierarchy
                     - :exc:`~.commands.PartialEmojiConversionFailure`
                     - :exc:`~.commands.BadBoolArgument`
                     - :exc:`~.commands.ThreadNotFound`
-                    ~ :exc:`~.commands.ScheduledEventNotFound`
+                    - :exc:`~.commands.ScheduledEventNotFound`
                     - :exc:`~.commands.FlagError`
                         - :exc:`~.commands.BadFlagArgument`
                         - :exc:`~.commands.MissingFlagArgument`
