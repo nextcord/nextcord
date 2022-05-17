@@ -829,7 +829,10 @@ class ConnectionState:
                 # we do not care about typeddict specificity here
                 data = await self.http.get_guild_commands(self.application_id, guild_id)  # type: ignore
             else:
-                data = await self.http.get_global_commands(self.application_id)
+                data = await self.http.get_global_commands(self.application_id)  # type: ignore
+
+        if data is None:
+            raise NotImplementedError("Could not get application commands from Discord.")
 
         for raw_response in data:
             fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else temp
@@ -964,7 +967,10 @@ class ConnectionState:
                 # type ignore as we do not care about typeddict specificity
                 data = await self.http.get_guild_commands(self.application_id, guild_id)  # type: ignore
             else:
-                data = await self.http.get_global_commands(self.application_id)
+                data = await self.http.get_global_commands(self.application_id)  # type: ignore
+
+        if data is None:
+            raise NotImplementedError("Could not get application commands from Discord.")
 
         data_signatures = [
             (
