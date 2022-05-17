@@ -51,6 +51,7 @@ from .errors import (
     ApplicationCheckFailure,
     ApplicationError,
     ApplicationInvokeError,
+    ApplicationCommandOptionMissing,
 )
 from .interactions import Interaction
 from .guild import Guild
@@ -76,17 +77,13 @@ else:
 
 __all__ = (
     "CallbackWrapper",
-    # "CallbackWrapperMixin",
     "ApplicationCommandOption",
     "BaseCommandOption",
     "OptionConverter",
     "ClientCog",
     "CallbackMixin",
-    # "AutocompleteOptionMixin",
-    # "AutocompleteCommandMixin",
     "SlashOption",
     "SlashCommandOption",
-    # "SlashCommandMixin",
     "BaseApplicationCommand",
     "SlashApplicationSubcommand",
     "SlashApplicationCommand",
@@ -125,14 +122,19 @@ class CallbackWrapper:
         wrapper = super(CallbackWrapper, cls).__new__(cls)
         wrapper.__init__(callback, *args, **kwargs)
         if isinstance(callback, (BaseApplicationCommand, SlashApplicationSubcommand)):
-            callback.modify_callbacks += wrapper.modify_callbacks
+            callback.modify_callbacks.extend(wrapper.modify_callbacks)
             return callback
         else:
             return wrapper
 
     def __init__(self, callback: Union[Callable, CallbackWrapper]):
-        """A class used to wrap a callback in a sane way to modify aspects of application commands. The
-        ``modify`` method must be overridden.
+        """A class used to wrap a callback in a sane way to modify aspects of application commands.
+
+        By creating a decorator that makes this class wrap a function or an application command, you can easily modify
+        attributes of the command regardless if this wraps the callback or the application command, and without needing
+        to make the application command object interpret arbitrarily set function attributes.
+
+        The ``modify`` method must be overridden.
 
         This handles both multiple layers of wrappers, or if it wraps around a :class:`BaseApplicationCommand`
 
@@ -141,7 +143,7 @@ class CallbackWrapper:
         callback: Union[Callable, :class:`CallbackWrapper`]
         """
         # noinspection PyTypeChecker
-        self.callback: Callable = None
+        self.callback: Optional[Callable] = None
         self.modify_callbacks: List[Callable] = [self.modify]
         if isinstance(callback, CallbackWrapper):
             self.callback = callback.callback
@@ -170,14 +172,50 @@ class CallbackWrapperMixin:
 
 
 class ApplicationCommandOption:
+    """This represents the `Application Command Option Structure
+    <https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure>`_
+    with no frills added.
+
+    Parameters
+    ----------
+    cmd_type: :class:`ApplicationCommandOptionType`
+        Type of option the command should have.
+    name: :class:`str`
+        Display name of the option. Must be lowercase with no spaces, 1-32 characters.
+    description: :class:`str`
+        Description of the option. Must be 1-100 characters.
+    required: :class:`bool`
+        If the option is required or optional.
+    name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+        Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+        localized name as the value
+    description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+        Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+        localized description as the value.
+    choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]],
+             Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
+        Either a dictionary of display name: value pairs, or an iterable list of values that will have identical
+        display names and values.
+    choice_localizations: Dict[:class:`str`, Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]]
+        A dictionary of choice display names as the keys, and dictionaries of locale: localized name as the values.
+    channel_types: List[:class:`ChannelType`]
+        A list of ChannelType enums to allow the user to pick. Should only be set if this is a Channel option.
+    min_value: Union[:class:`int`, :class:`float`]
+        Minimum value the user can input. Should only be set if this is an integer or number option.
+    max_value: Union[:class:`int`, :class:`float`]
+        Minimum value the user can input. Should only be set if this is an integer or number option.
+    autocomplete: :class:`bool`
+        If the command option should have autocomplete enabled.
+    """
     def __init__(
             self,
             cmd_type: ApplicationCommandOptionType = None,
             name: str = None,
-            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
-            description_localizations: Dict[Union[Locale, str], str] = None,
             required: bool = None,
+            *,
+            name_localizations: Dict[Union[Locale, str], str] = None,
+            description_localizations: Dict[Union[Locale, str], str] = None,
             choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]] = None,
             choice_localizations: Dict[str, Dict[Union[Locale, str], str]] = None,
             channel_types: List[ChannelType] = None,
@@ -185,47 +223,12 @@ class ApplicationCommandOption:
             max_value: Union[int, float] = None,
             autocomplete: bool = None,
     ):
-        """This represents the `Application Command Option Structure
-        <https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure>`_
-        with no frills added.
-
-        Parameters
-        ----------
-        cmd_type: :class:`ApplicationCommandOptionType`
-            Type of option the command should have.
-        name: :class:`str`
-            Display name of the option. Must be lowercase with no spaces, 1-32 characters.
-        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
-            Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
-            localized name as the value
-        description: :class:`str`
-            Description of the option. Must be 1-100 characters.
-        description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
-            Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
-            localized description as the value.
-        required: :class:`bool`
-            If the option is required or optional.
-        choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]],
-                 Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
-            Either a dictionary of display name: value pairs, or an iterable list of values that will have identical
-            display names and values.
-        choice_localizations: Dict[:class:`str`, Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]]
-            A dictionary of choice display names as the keys, and dictionaries of locale: localized name as the values.
-        channel_types: List[:class:`ChannelType`]
-            A list of ChannelType enums to allow the user to pick. Should only be set if this is a Channel option.
-        min_value: Union[:class:`int`, :class:`float`]
-            Minimum value the user can input. Should only be set if this is an integer or number option.
-        max_value: Union[:class:`int`, :class:`float`]
-            Minimum value the user can input. Should only be set if this is an integer or number option.
-        autocomplete: :class:`bool`
-            If the command option should have autocomplete enabled.
-        """
         self.type: Optional[ApplicationCommandOptionType] = cmd_type
         self.name: Optional[str] = name
-        self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self.description: Optional[str] = description
-        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = description_localizations
         self.required: Optional[bool] = required
+        self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = description_localizations
         self.choices: Optional[Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]]] = choices
         self.choice_localizations: Optional[Dict[str, Dict[Union[Locale, str], str]]] = choice_localizations
         self.channel_types: Optional[List[ChannelType]] = channel_types
@@ -234,24 +237,26 @@ class ApplicationCommandOption:
         self.autocomplete: Optional[bool] = autocomplete
 
     def get_name_localization_payload(self) -> Optional[dict]:
-        if self.name_localizations:
-            return {str(locale): name for locale, name in self.name_localizations.items()}
-        else:
+        if not self.name_localizations:
             return None
+
+        return {str(locale): name for locale, name in self.name_localizations.items()}
 
     def get_description_localization_payload(self) -> Optional[dict]:
-        if self.description_localizations:
-            return {str(locale): description for locale, description in self.description_localizations.items()}
-        else:
+        if not self.description_localizations:
             return None
 
+        return {str(locale): description for locale, description in self.description_localizations.items()}
+
     def get_choices_localized_payload(self) -> List[Dict[str, Union[str, int, float, dict, None]]]:
-        if isinstance(self.choices, dict):
+        if self.choices is None:
+            return []
+        elif isinstance(self.choices, dict):
             choices = self.choices
         else:
             choices = {value: value for value in self.choices}
 
-        ret: List[Dict[str, Union[str, int, float, dict]]] = []
+        ret: List[Dict[str, Union[str, int, float, dict, None]]] = []
         for display_name, value in choices.items():
             # Discord returns the names as strings, might as well do it here so payload comparison is easy.
             temp: Dict[str, Union[str, int, float, dict, None]] = {"name": str(display_name), "value": value}
@@ -267,6 +272,9 @@ class ApplicationCommandOption:
     @property
     def payload(self) -> dict:
         """:class:`dict`: Returns a dict payload made of the attributes of the option to be sent to Discord."""
+        if self.type is None:
+            raise ValueError(f"The option type must be set before obtaining the payload.")
+
         # noinspection PyUnresolvedReferences
         ret = {
             "type": self.type.value,
@@ -280,15 +288,6 @@ class ApplicationCommandOption:
             ret["required"] = self.required
 
         if self.choices:
-            # Discord returns the names as strings, might as well do it here so payload comparison is easy.
-            # if isinstance(self.choices, dict):
-            #     ret["choices"] = [{
-            #         "name": str(key), "value": value, "name_localizations": None,
-            #     } for key, value in self.choices.items()]
-            # else:
-            #     ret["choices"] = [{
-            #         "name": str(value), "value": value, "name_localizations": None,
-            #     } for value in self.choices]
             ret["choices"] = self.get_choices_localized_payload()
 
         if self.channel_types:
@@ -308,23 +307,24 @@ class ApplicationCommandOption:
 
 
 class BaseCommandOption(ApplicationCommandOption):
+    """Represents an application command option, but takes a :class:`Parameter` and :class:`ClientCog` as
+    an argument.
+
+    Parameters
+    ----------
+    parameter: :class:`Parameter`
+        Function parameter to construct the command option with.
+    command: :class:`BaseApplicationCommand`
+        Application Command this option is for.
+    parent_cog: :class:`ClientCog`
+        Class that the function the option is for resides in.
+    """
     def __init__(
             self,
             parameter: Parameter,
             command: BaseApplicationCommand,
             parent_cog: Optional[ClientCog] = None
     ):
-        """Represents an application command option, but takes a Parameter and ClientCog as an argument.
-
-        Parameters
-        ----------
-        parameter: :class:`Parameter`
-            Function parameter to construct the command option with.
-        command: :class:`BaseApplicationCommand`
-            Application Command this option is for.
-        parent_cog: :class:`ClientCog`
-            Class that the function the option is for resides in.
-        """
         super().__init__()
         self.parameter: Parameter = parameter
         self.command: BaseApplicationCommand = command
@@ -485,8 +485,11 @@ class ClientCog:
 
     @property
     def to_register(self) -> List[BaseApplicationCommand]:
-        warnings.warn(".to_register is deprecated, please use .application_commands instead.", stacklevel=2,
-                      category=FutureWarning)
+        warnings.warn(
+            ".to_register is deprecated, please use .application_commands instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         # TODO: Remove at later date.
         return self.__cog_application_commands__
 
@@ -531,6 +534,12 @@ class CallbackMixin:
     @property
     def error_name(self) -> str:
         """Returns a string containing the class name, command name, and the callback to use in raising exceptions.
+
+        Examples
+        --------
+        >>> print(app_cmd.error_name)
+        SlashApplicationCommand reloadme <function TinyTest.reloadme at 0x7f4b3b563e20>
+
 
         Returns
         -------
@@ -581,7 +590,7 @@ class CallbackMixin:
 
         Parameters
         ----------
-        func
+        func: :class:`ApplicationCheck`
             The function that will be used as a check.
         """
         self.checks.append(func)
@@ -595,7 +604,7 @@ class CallbackMixin:
         
         Parameters
         ----------
-        func
+        func: :class:`ApplicationCheck`
             The function to remove from the checks.
         """
         try:
@@ -697,10 +706,9 @@ class CallbackMixin:
             # If the check returns False, the command can't be run.
             else:
                 if not check_result:
-                    error = ApplicationCheckFailure(
+                    raise ApplicationCheckFailure(
                         f"The global check functions for application command {self.error_name} failed."
                     )
-                    raise error
 
         # Cog check
         if self.parent_cog:
@@ -724,10 +732,9 @@ class CallbackMixin:
             # If the check returns False, the command can't be run.
             else:
                 if not check_result:
-                    error = ApplicationCheckFailure(
+                    raise ApplicationCheckFailure(
                         f"The check functions for application command {self.error_name} failed."
                     )
-                    raise error
 
         return True
 
@@ -886,6 +893,9 @@ class AutocompleteOptionMixin:
         """|coro|
         Invokes the autocomplete callback, injecting ``self`` if available.
         """
+        if self.autocomplete_callback is None:
+            raise ValueError("Autocomplete hasn't been set for this function.")
+
         if self.parent_cog:
             return await self.autocomplete_callback(self.parent_cog, interaction, option_value, **kwargs)
         else:
@@ -951,8 +961,10 @@ class AutocompleteCommandMixin:
 
             focused_option = self.options[focused_option_name]
             if focused_option.autocomplete_callback is None:
-                raise ValueError(f"{self.error_name} Autocomplete called for option {focused_option.functional_name} "
-                                 f"but it doesn't have an autocomplete function?")
+                raise ValueError(
+                    f"{self.error_name} Autocomplete called for option {focused_option.functional_name} but it doesn't "
+                    f"have an autocomplete function?"
+                )
 
             kwargs = {}
             uncalled_options = focused_option.autocomplete_options.copy()
@@ -973,12 +985,16 @@ class AutocompleteCommandMixin:
                 await interaction.response.send_autocomplete(value)
 
     def from_autocomplete(self) -> None:
-        """
+        """Processes the found autocomplete callbacks and associates them to their corresponding options.
 
-        Returns
-        -------
+        Raises
+        ------
+        :class:`ValueError`
+            If a found arg name doesn't correspond to an autocomplete function.
 
         """
+        # TODO: You should probably add the ability to provide a dict/kwargs of callbacks to override whatever was set
+        #  earlier, right?
         for arg_name, callback in self._temp_autocomplete_callbacks.items():
             found = False
             for name, option in self.options.items():
@@ -1010,13 +1026,55 @@ class AutocompleteCommandMixin:
 
 # Extends Any so that type checkers won't complain that it's a default for a parameter of a different type
 class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
+    """Provides Discord with information about an option in a command.
+
+    When this class is set as the default argument of a parameter in an Application Command, additional information
+    about the parameter is sent to Discord for the user to see.
+
+    Parameters
+    ----------
+    name: :class:`str`
+        The name of the Option on Discords side. If left as None, it defaults to the parameter name.
+    description: :class:`str`
+        The description of the Option on Discords side. If left as None, it defaults to "".
+    required: :class:`bool`
+        If a user is required to provide this argument before sending the command.
+    choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]],
+             Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
+        A list of choices that a user must choose.
+        If a :class:`dict` is given, the keys are what the users are able to see, the values are what is sent back
+        to the bot.
+        Otherwise, it is treated as an `Iterable` where what the user sees and is sent back to the bot are the same.
+    choice_localizations: Dict[:class:`str`, Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]]
+        A dictionary of choice display names as the keys, and dictionaries of locale: localized name as the values.
+    channel_types: List[:class:`ChannelType`]
+        List of `ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
+        typed as :class:`GuildChannel` for this to function.
+    min_value: Union[:class:`int`, :class:`float`]
+        Minimum integer or floating point value the user is allowed to input. The parameter must be typed as an
+        :class:`int` or :class:`float` for this to function.
+    max_value: Union[:class:`int`, :class:`float`]
+        Maximum integer or floating point value the user is allowed to input. The parameter must be typed as an
+        :class:`int` or :class:`float` for this to function.
+    autocomplete: :class:`bool`
+        If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
+        if an autocomplete function for it is found.
+    autocomplete_callback: Optional[:class:`Callable`]
+        The function that will be used to autocomplete this parameter. If not specified, it will be looked for
+        using the :meth:`~SlashApplicationSubcommand.on_autocomplete` decorator.
+    default: Any
+        When required is not True and the user doesn't provide a value for this Option, this value is given instead.
+    verify: :class:`bool`
+        If True, the given values will be checked to ensure that the payload to Discord is valid.
+    """
     def __init__(
             self,
             name: str = None,
-            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
-            description_localizations: Dict[Union[Locale, str], str] = None,
             required: bool = None,
+            *,
+            name_localizations: Dict[Union[Locale, str], str] = None,
+            description_localizations: Dict[Union[Locale, str], str] = None,
             choices: Union[
                 Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]
             ] = None,
@@ -1029,47 +1087,6 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
             default: Any = MISSING,
             verify: bool = True,
     ):
-        """Provides Discord with information about an option in a command.
-
-        When this class is set as the default argument of a parameter in an Application Command, additional information
-        about the parameter is sent to Discord for the user to see.
-
-        Parameters
-        ----------
-        name: :class:`str`
-            The name of the Option on Discords side. If left as None, it defaults to the parameter name.
-        description: :class:`str`
-            The description of the Option on Discords side. If left as None, it defaults to "".
-        required: :class:`bool`
-            If a user is required to provide this argument before sending the command.
-        choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]],
-                 Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
-            A list of choices that a user must choose.
-            If a :class:`dict` is given, the keys are what the users are able to see, the values are what is sent back
-            to the bot.
-            Otherwise, it is treated as an `Iterable` where what the user sees and is sent back to the bot are the same.
-        choice_localizations: Dict[:class:`str`, Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]]
-            A dictionary of choice display names as the keys, and dictionaries of locale: localized name as the values.
-        channel_types: List[:class:`ChannelType`]
-            List of `ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
-            typed as :class:`GuildChannel` for this to function.
-        min_value: Union[:class:`int`, :class:`float`]
-            Minimum integer or floating point value the user is allowed to input. The parameter must be typed as an
-            :class:`int` or :class:`float` for this to function.
-        max_value: Union[:class:`int`, :class:`float`]
-            Maximum integer or floating point value the user is allowed to input. The parameter must be typed as an
-            :class:`int` or :class:`float` for this to function.
-        autocomplete: :class:`bool`
-            If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
-            if an autocomplete function for it is found.
-        autocomplete_callback: Optional[:class:`Callable`]
-            The function that will be used to autocomplete this parameter. If not specified, it will be looked for
-            using the :meth:`~SlashApplicationSubcommand.on_autocomplete` decorator.
-        default: Any
-            When required is not True and the user doesn't provide a value for this Option, this value is given instead.
-        verify: :class:`bool`
-            If True, the given values will be checked to ensure that the payload to Discord is valid.
-        """
         super().__init__(
             name=name, name_localizations=name_localizations, description=description,
             description_localizations=description_localizations, required=required, choices=choices,
@@ -1077,7 +1094,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
             max_value=max_value, autocomplete=autocomplete
         )
 
-        self.autocomplete_callback: Callable = autocomplete_callback
+        self.autocomplete_callback: Optional[Callable] = autocomplete_callback
         self.default: Any = default
         self._verify: bool = verify
         if self._verify:
@@ -1183,7 +1200,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         if self.converter:
             self.type: ApplicationCommandOptionType = self.get_type(self.converter)
         else:
-            self.type: ApplicationCommandOptionType = self.get_type(parameter.annotation)
+            self.type = self.get_type(parameter.annotation)
 
         if self.converter:
             self.converter.modify(self)
@@ -1197,7 +1214,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         # noinspection PyProtectedMember
         if self._description is not None:
             return self._description
-        elif docstring := self.command._parsed_docstring["args"].get(self.functional_name):
+        elif self.command._parsed_docstring and (
+                docstring := self.command._parsed_docstring["args"].get(self.functional_name)
+        ):
             return docstring
         else:
             return DEFAULT_SLASH_DESCRIPTION
@@ -1212,6 +1231,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 param_typing = param_typing.type
             else:
                 return param_typing.type
+
         # noinspection PyTypeChecker,PyUnboundLocalVariable
         if param_typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
@@ -1224,11 +1244,11 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         ):
             return valid_type
         else:
-            raise NotImplementedError(
-                f'{self.command.error_name} Type "{param_typing}" isn\'t a supported typing for Application Commands.'
+            raise ValueError(
+                f"{self.command.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
             )
 
-    def verify(self) -> None:
+    def verify(self) -> bool:
         """This should run through :class:`SlashOption` variables and raise errors when conflicting data is given."""
         super().verify()
         if self.channel_types and self.type is not ApplicationCommandOptionType.channel:
@@ -1243,6 +1263,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         if (self.min_value is not None or self.max_value is not None) and self.type not in (
                 ApplicationCommandOptionType.integer, ApplicationCommandOptionType.number):
             raise ValueError("min_value or max_value can only be set if the type is integer or number.")
+        return True
 
     async def handle_value(self, state: ConnectionState, value: Any, interaction: Interaction) -> Any:
         if self.type is ApplicationCommandOptionType.channel:
@@ -1315,10 +1336,10 @@ class SlashCommandMixin(CallbackMixin):
                     await self.options[arg_data["name"]].handle_value(state, arg_data["value"], interaction)
             else:
                 # TODO: Handle this better.
-                raise NotImplementedError(
-                    f"An argument was provided that wasn't already in the function, did you"
-                    f"recently change it?\nRegistered Options: {self.options}, Discord-sent"
-                    f"args: {interaction.data['options']}, broke on {arg_data}"
+                raise ApplicationCommandOptionMissing(
+                    f"An argument was provided that wasn't already in the function, did you recently change it and "
+                    f"did not resync?\nRegistered Options: {self.options}, "
+                    f"Discord-sent args: {interaction.data['options']}, broke on {arg_data}"
                 )
 
         for uncalled_arg in uncalled_args.values():
@@ -1344,13 +1365,13 @@ class SlashCommandMixin(CallbackMixin):
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     def __init__(
             self,
-            *,
+            cmd_type: ApplicationCommandType = None,
             name: str = None,
-            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            *,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
-            cmd_type: ApplicationCommandType = None,
             guild_ids: Iterable[int] = None,
             dm_permission: bool = None,
             default_member_permissions: Optional[Union[Permissions, int]] = None,
@@ -1362,20 +1383,20 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         Parameters
         ----------
+        cmd_type: :class:`ApplicationCommandType`
+            Type of application command. This should be set by subclasses.
         name: :class:`str`
             Name of the command.
+        description: :class:`str`
+            Description of the command.
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
             name as the value.
-        description: :class:`str`
-            Description of the command.
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
         callback: Callable
             Callback to make the application command from, and to run when the application command is called.
-        cmd_type: :class:`ApplicationCommandType`
-            Type of application command. This should be set by subclasses.
         guild_ids: Iterable[:class:`int`]
             An iterable list/set/whatever of guild ID's that the application command should register to.
         dm_permission: :class:`bool`
@@ -1432,7 +1453,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         # TODO Is this worthwhile?
         guild_only_ids = set(self.command_ids.keys())
         guild_only_ids.discard(None)
-        return guild_only_ids
+        # ignore explanation: Mypy says that guild_only_ids can contain None due to self.command_ids.keys() having
+        #  None being typehinted, but we remove None before returning it.
+        return guild_only_ids  # type: ignore
+
 
     def add_guild_rollout(self, guild: Union[int, Guild]) -> None:
         """Adds a Guild to the command to be rolled out to when the rollout is run.
@@ -1442,7 +1466,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         guild: Union[:class:`int`, :class:`Guild`]
             Guild or Guild ID to add this command to roll out to.
         """
-        # TODO: Is this worth doing? People can just do guild_ids_to_rollout.add(guild.id)
         if isinstance(guild, Guild):
             # I don't like doing `guild = guild.id` and this keeps it extendable.
             guild_id = guild.id
@@ -1561,7 +1584,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         ret = {
             "type": self.type.value,
             "name": str(self.name),  # Might as well stringify the name, will come in handy if people try using numbers.
-            "description": self.description,
+            "description": str(self.description),  # Might as well do the same with the description.
             "name_localizations": self.get_name_localization_payload(),
             "description_localizations": self.get_description_localization_payload()
         }
@@ -1833,8 +1856,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
     @property
     def global_payload(self) -> dict:
-        warnings.warn(".global_payload is deprecated, use .get_payload(None) instead.", stacklevel=2,
-                      category=FutureWarning)
+        warnings.warn(
+            ".global_payload is deprecated, use .get_payload(None) instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         return self.get_payload(None)
 
 
@@ -1842,8 +1868,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
     def __init__(
             self,
             name: str = None,
-            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            *,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
             parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand] = None,
@@ -1947,7 +1974,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         ret = {
             "type": self.type.value,
             "name": str(self.name),  # Might as well stringify the name, will come in handy if people try using numbers.
-            "description": self.description,
+            "description": str(self.description),  # Might as well do the same with the description.
             "name_localizations": self.get_name_localization_payload(),
             "description_localizations": self.get_description_localization_payload(),
         }
@@ -1986,23 +2013,24 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
     def subcommand(
             self,
             name: str = None,
-            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            *,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description_localizations: Dict[Union[Locale, str], str] = None,
             inherit_hooks: bool = False,
     ) -> Callable[[Callable], SlashApplicationSubcommand]:
-        """Takes a decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
+        """Takes the decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
 
         Parameters
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
-            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
-            name as the value.
         description: :class:`str`
             Description of the command that users will see. If not specified, the docstring will be used.
             If no docstring is found for the command callback, it defaults to "No description provided".
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value.
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized description as the value.
@@ -2031,8 +2059,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
     def __init__(
             self,
             name: str = None,
-            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            *,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
@@ -2048,11 +2077,11 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         ----------
         name: :class:`str`
             Name of the command. Must be lowercase with no spaces.
+        description: :class:`str`
+            Description of the command. Must be between 1 to 100 characters, or defaults to a set string.
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized name as the value.
-        description: :class:`str`
-            Description of the command. Must be between 1 to 100 characters, or defaults to a set string.
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized description as the value.
@@ -2127,23 +2156,24 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
     def subcommand(
             self,
             name: str = None,
-            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            *,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description_localizations: Dict[Union[Locale, str], str] = None,
             inherit_hooks: bool = False,
     ) -> Callable[[Callable], SlashApplicationSubcommand]:
-        """Takes a decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
+        """Takes the decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
 
         Parameters
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
-            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
-            name as the value.
         description: :class:`str`
             Description of the command that users will see. If not specified, the docstring will be used.
             If no docstring is found for the command callback, it defaults to "No description provided".
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value.
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized description as the value.
@@ -2167,6 +2197,7 @@ class UserApplicationCommand(BaseApplicationCommand):
     def __init__(
             self,
             name: str = None,
+            *,
             name_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
@@ -2228,6 +2259,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
     def __init__(
             self,
             name: str = None,
+            *,
             name_localizations: Dict[Union[Locale, str], str] = None,
             callback: Callable = None,
             guild_ids: Iterable[int] = None,
@@ -2286,14 +2318,15 @@ class MessageApplicationCommand(BaseApplicationCommand):
 
 
 def slash_command(
-    name: str = None,
-    name_localizations: Dict[Union[Locale, str], str] = None,
-    description: str = None,
-    description_localizations: Dict[Union[Locale, str], str] = None,
-    guild_ids: Iterable[int] = None,
-    dm_permission: bool = None,
-    default_member_permissions: Optional[Union[Permissions, int]] = None,
-    force_global: bool = False,
+        name: str = None,
+        description: str = None,
+        *,
+        name_localizations: Dict[Union[Locale, str], str] = None,
+        description_localizations: Dict[Union[Locale, str], str] = None,
+        guild_ids: Iterable[int] = None,
+        dm_permission: bool = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
+        force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
@@ -2302,12 +2335,12 @@ def slash_command(
     ----------
     name: :class:`str`
         Name of the command that users will see. If not set, it defaults to the name of the callback.
-    name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
-        Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
-        name as the value.
     description: :class:`str`
         Description of the command that users will see. If not specified, the docstring will be used.
         If no docstring is found for the command callback, it defaults to "No description provided".
+    name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+        Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+        name as the value.
     description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
         Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
         localized description as the value.
@@ -2346,12 +2379,13 @@ def slash_command(
 
 
 def message_command(
-    name: str = None,
-    name_localizations: Dict[Union[Locale, str], str] = None,
-    guild_ids: Iterable[int] = None,
-    dm_permission: bool = None,
-    default_member_permissions: Optional[Union[Permissions, int]] = None,
-    force_global: bool = False,
+        name: str = None,
+        *,
+        name_localizations: Dict[Union[Locale, str], str] = None,
+        guild_ids: Iterable[int] = None,
+        dm_permission: bool = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
+        force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
@@ -2396,12 +2430,13 @@ def message_command(
 
 
 def user_command(
-    name: str = None,
-    name_localizations: Dict[Union[Locale, str], str] = None,
-    guild_ids: Iterable[int] = None,
-    dm_permission: bool = None,
-    default_member_permissions: Optional[Union[Permissions, int]] = None,
-    force_global: bool = False,
+        name: str = None,
+        *,
+        name_localizations: Dict[Union[Locale, str], str] = None,
+        guild_ids: Iterable[int] = None,
+        dm_permission: bool = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
+        force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
@@ -2535,8 +2570,6 @@ def get_users_from_interaction(state: ConnectionState, interaction: Interaction)
     elif "users" in data["resolved"]:
         resolved_users_payload = interaction.data["resolved"]["users"]
         ret = [state.store_user(user_payload) for user_payload in resolved_users_payload.values()]
-    else:
-        pass  # Do nothing, we can't get users or members from this interaction.
 
     return ret
 

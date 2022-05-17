@@ -1563,6 +1563,7 @@ class HTTPClient:
         params = {}
         if with_localizations:
             params["with_localizations"] = "true"
+
         return self.request(
             Route('GET', '/applications/{application_id}/commands', application_id=application_id), params=params
         )

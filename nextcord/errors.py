@@ -334,3 +334,8 @@ class ApplicationCheckFailure(ApplicationError):
     """
 
     pass
+
+
+class ApplicationCommandOptionMissing(ApplicationError):
+    """Raised when an option that's supposed to be part of an application command is missing on our end."""
+    pass

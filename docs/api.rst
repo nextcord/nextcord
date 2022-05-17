@@ -4334,32 +4334,37 @@ Select
 
 
 Application Commands
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: BaseApplicationCommand
 
 .. autoclass:: BaseApplicationCommand
     :members:
+    :inherited-members:
 
 .. attributetable:: SlashApplicationCommand
 
 .. autoclass:: SlashApplicationCommand
     :members:
+    :inherited-members:
 
 .. attributetable:: UserApplicationCommand
 
 .. autoclass:: UserApplicationCommand
     :members:
+    :inherited-members:
 
 .. attributetable:: MessageApplicationCommand
 
 .. autoclass:: MessageApplicationCommand
     :members:
+    :inherited-members:
 
 .. attributetable:: SlashApplicationSubcommand
 
 .. autoclass:: SlashApplicationSubcommand
     :members:
+    :inherited-members:
 
 .. attributetable:: Mentionable
 
@@ -4378,11 +4383,13 @@ Options
 
 .. autoclass:: SlashCommandOption
     :members:
+    :inherited-members:
 
 .. attributetable:: SlashOption
 
 .. autoclass:: SlashOption
     :members:
+    :inherited-members:
     :exclude-members: verify
 
 Cogs

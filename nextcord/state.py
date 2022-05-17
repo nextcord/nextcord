@@ -578,7 +578,8 @@ class ConnectionState:
             else:
                 self._application_command_signatures[signature] = command
         for command_id in command.command_ids.values():
-            # Seriously PyCharm, found_command will ALWAYS be set by the time it's used, this is an AND statement.
+            # PyCharm flags found_command as it "might be referenced before assignment", but that can't happen due to it
+            #  being in an AND statement.
             # noinspection PyUnboundLocalVariable
             if not overwrite and (
                     found_command := self._application_command_ids.get(command_id, None)
@@ -675,7 +676,7 @@ class ConnectionState:
                         _log.debug("Fetched guild application command data for guild ID %s", guild_id)
 
         for guild_id in data:
-            _log.debug("Running sync for %s", 'global' if guild_id is None else 'Guild {}'.format(guild_id))
+            _log.debug("Running sync for %s", 'global' if guild_id is None else f'Guild {guild_id}')
             await self.sync_application_commands(
                 data=data[guild_id], guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
                 update_known=update_known, register_new=register_new,
@@ -729,7 +730,7 @@ class ConnectionState:
         if register_new:
             await self.register_new_application_commands(data=data, guild_id=guild_id)
 
-        _log.debug("Command sync with %s finished.", guild_id)
+        _log.debug("Command sync with Guild %s finished.", guild_id)
 
     async def discover_application_commands(
             self,
@@ -815,13 +816,17 @@ class ConnectionState:
     async def deploy_application_commands(
             self,
             data: Optional[List[dict]] = None,
+            *,
             guild_id: Optional[int] = None,
             associate_known: bool = True,
             delete_unknown: bool = True,
             update_known: bool = True
     ) -> None:
-        warnings.warn(".deploy_application_commands is deprecated, use .discover_application_commands instead.",
-                      stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".deploy_application_commands is deprecated, use .discover_application_commands instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         await self.discover_application_commands(
             data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
             update_known=update_known
@@ -832,8 +837,12 @@ class ConnectionState:
             data: Optional[List[dict]] = None,
             guild_id: Optional[int] = None
     ) -> None:
-        warnings.warn(".associate_application_commands is deprecated, use .deploy_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".associate_application_commands is deprecated, use .deploy_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         await self.deploy_application_commands(
             data=data,
             guild_id=guild_id,
@@ -847,8 +856,12 @@ class ConnectionState:
             data: Optional[List[dict]] = None,
             guild_id: Optional[int] = None
     ):
-        warnings.warn(".delete_unknown_application_commands is deprecated, use .deploy_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".delete_unknown_application_commands is deprecated, use .deploy_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         await self.deploy_application_commands(
             data=data,
             guild_id=guild_id,
@@ -862,8 +875,12 @@ class ConnectionState:
             data: Optional[List[dict]] = None,
             guild_id: Optional[int] = None
     ) -> None:
-        warnings.warn(".update_application_commands is deprecated, use .deploy_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".update_application_commands is deprecated, use .deploy_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         await self.deploy_application_commands(
             data=data,
             guild_id=guild_id,

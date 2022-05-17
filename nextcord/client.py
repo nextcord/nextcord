@@ -1845,7 +1845,7 @@ class Client:
                 ):
                     _log.debug("nextcord.Client: Basic signature matches, checking against raw payload.")
                     if app_cmd.is_interaction_valid(interaction):
-                        _log.info(
+                        _log.debug(
                             f"nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
                             app_cmd.error_name
                         )
@@ -1878,11 +1878,12 @@ class Client:
             # TODO: Is it really worth trying to lazy load with this?
             _log.debug("nextcord.Client: Autocomplete interaction received.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.debug(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
+                _log.debug(f"nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
                 await app_cmd.call_autocomplete_from_interaction(interaction)
             else:
-                raise ValueError(f"Received autocomplete interaction for {interaction.data['name']} but command isn't "
-                                 f"found/associated!")
+                raise ValueError(
+                    f"Received autocomplete interaction for {interaction.data['name']} but command "
+                    f"isn't found/associated!")
 
     def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
         """Gets an application command from the cache that has the given command ID.
@@ -2099,13 +2100,17 @@ class Client:
     async def deploy_application_commands(
             self,
             data: Optional[List[dict]] = None,
+            *,
             guild_id: Optional[int] = None,
             associate_known: bool = True,
             delete_unknown: bool = True,
             update_known: bool = True
     ) -> None:
-        warnings.warn(".deploy_application_commands is deprecated, use .discover_application_commands instead.",
-                      stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".deploy_application_commands is deprecated, use .discover_application_commands instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         await self.discover_application_commands(
             data=data, guild_id=guild_id, associate_known=associate_known, delete_unknown=delete_unknown,
             update_known=update_known
@@ -2113,20 +2118,32 @@ class Client:
 
     async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
         """Deletes unknown global commands."""
-        warnings.warn(".delete_unknown_application_commands is deprecated, use .sync_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".delete_unknown_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         await self._connection.delete_unknown_application_commands(data=data, guild_id=None)
 
     async def associate_application_commands(self, data: Optional[List[dict]] = None) -> None:
         """Associates global commands registered with Discord with locally added commands."""
-        warnings.warn(".associate_application_commands is deprecated, use .sync_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".associate_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         await self._connection.associate_application_commands(data=data, guild_id=None)
 
     async def update_application_commands(self, data: Optional[List[dict]] = None) -> None:
         """Updates global commands that have slightly changed with Discord."""
-        warnings.warn(".update_application_commands is deprecated, use .sync_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".update_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         await self._connection.update_application_commands(data=data, guild_id=None)
 
     async def register_new_application_commands(
@@ -2213,7 +2230,6 @@ class Client:
 
     async def on_connect(self) -> None:
         self.add_all_application_commands()
-        # await self.rollout_application_commands()
         await self.sync_application_commands(
             guild_id=None, associate_known=self._rollout_associate_known, delete_unknown=self._rollout_delete_unknown,
             update_known=self._rollout_update_known, register_new=self._rollout_register_new
@@ -2246,10 +2262,8 @@ class Client:
                     register_new=self._rollout_register_new,
                 )
             else:
-                # _log.debug(f"nextcord.Client: No locally added commands explicitly registered for "
-                #            f"{guild.name}|{guild.id}, not checking.")
                 _log.debug(
-                    "nextcord.Client: No locally added commands explicitely registered "
+                    "nextcord.Client: No locally added commands explicitly registered "
                     "for Guild(id=%s, name=%s), not checking.", guild.id, guild.name
                 )
 
@@ -2261,8 +2275,12 @@ class Client:
         """|coro|
         Deploys global application commands and registers new ones if enabled.
         """
-        warnings.warn(".rollout_application_commands is deprecated, use .sync_application_commands and set "
-                      "kwargs in it instead.", stacklevel=2, category=FutureWarning)
+        warnings.warn(
+            ".rollout_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(
             data=global_payload,
@@ -2305,6 +2323,7 @@ class Client:
     def user_command(
             self,
             name: str = None,
+            *,
             name_localizations: Dict[Union[Locale, str], str] = None,
             guild_ids: Iterable[int] = None,
             dm_permission: bool = None,
@@ -2350,6 +2369,7 @@ class Client:
     def message_command(
             self,
             name: str = None,
+            *,
             name_localizations: Dict[Union[Locale, str], str] = None,
             guild_ids: Iterable[int] = None,
             dm_permission: bool = None,
@@ -2395,8 +2415,9 @@ class Client:
     def slash_command(
             self,
             name: str = None,
-            name_localizations: Dict[Union[Locale, str], str] = None,
             description: str = None,
+            *,
+            name_localizations: Dict[Union[Locale, str], str] = None,
             description_localizations: Dict[Union[Locale, str], str] = None,
             guild_ids: Iterable[int] = None,
             dm_permission: bool = None,
@@ -2409,12 +2430,12 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
-            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
-            name as the value.
         description: :class:`str`
             Description of the command that users will see. If not set, the docstring will be used.
             If no docstring is found for the command callback, it defaults to "No description provided".
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value.
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
