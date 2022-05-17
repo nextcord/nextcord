@@ -684,8 +684,8 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
     def _get_retrieve(self):
         l = self.limit
-        if l is None or l > 100:
-            r = 100
+        if l is None or l > 200:
+            r = 200
         else:
             r = l
         self.retrieve = r
@@ -699,7 +699,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
     async def fill_guilds(self):
         if self._get_retrieve():
             data = await self._retrieve_guilds(self.retrieve)
-            if len(data) < 100:
+            if len(data) < 200:
                 self.limit = 0
 
             if self.reverse:
