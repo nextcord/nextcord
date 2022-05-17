@@ -722,9 +722,7 @@ class ConnectionState:
                         )
 
         for guild_id in data:
-            _log.debug(
-                "Running sync for %s", "global" if guild_id is None else f'Guild {guild_id}'
-            )
+            _log.debug("Running sync for %s", "global" if guild_id is None else f"Guild {guild_id}")
             await self.sync_application_commands(
                 data=data[guild_id],
                 guild_id=guild_id,
@@ -874,13 +872,13 @@ class ConnectionState:
                     await self.http.delete_global_command(self.application_id, raw_response["id"])
 
     async def deploy_application_commands(
-            self,
-            data: Optional[List[dict]] = None,
-            *,
-            guild_id: Optional[int] = None,
-            associate_known: bool = True,
-            delete_unknown: bool = True,
-            update_known: bool = True
+        self,
+        data: Optional[List[dict]] = None,
+        *,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
     ) -> None:
         warnings.warn(
             ".deploy_application_commands is deprecated, use .discover_application_commands instead.",

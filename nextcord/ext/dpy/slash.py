@@ -22,8 +22,9 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from nextcord import CallbackWrapper, SlashApplicationCommand, SlashApplicationSubcommand
 from typing import Union
+
+from nextcord import CallbackWrapper, SlashApplicationCommand, SlashApplicationSubcommand
 
 
 def describe(

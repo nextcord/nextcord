@@ -2169,13 +2169,13 @@ class Client:
         )
 
     async def deploy_application_commands(
-            self,
-            data: Optional[List[dict]] = None,
-            *,
-            guild_id: Optional[int] = None,
-            associate_known: bool = True,
-            delete_unknown: bool = True,
-            update_known: bool = True,
+        self,
+        data: Optional[List[dict]] = None,
+        *,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
     ) -> None:
         warnings.warn(
             ".deploy_application_commands is deprecated, use .discover_application_commands instead.",
@@ -2401,14 +2401,14 @@ class Client:
         self._client_cogs.discard(cog)
 
     def user_command(
-            self,
-            name: str = None,
-            *,
-            name_localizations: Dict[Union[Locale, str], str] = None,
-            guild_ids: Iterable[int] = None,
-            dm_permission: bool = None,
-            default_member_permissions: Optional[Union[Permissions, int]] = None,
-            force_global: bool = False,
+        self,
+        name: str = None,
+        *,
+        name_localizations: Dict[Union[Locale, str], str] = None,
+        guild_ids: Iterable[int] = None,
+        dm_permission: bool = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
+        force_global: bool = False,
     ):
         """Creates a User context command from the decorated function.
 
@@ -2448,14 +2448,14 @@ class Client:
         return decorator
 
     def message_command(
-            self,
-            name: str = None,
-            *,
-            name_localizations: Dict[Union[Locale, str], str] = None,
-            guild_ids: Iterable[int] = None,
-            dm_permission: bool = None,
-            default_member_permissions: Optional[Union[Permissions, int]] = None,
-            force_global: bool = False,
+        self,
+        name: str = None,
+        *,
+        name_localizations: Dict[Union[Locale, str], str] = None,
+        guild_ids: Iterable[int] = None,
+        dm_permission: bool = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
+        force_global: bool = False,
     ):
         """Creates a Message context command from the decorated function.
 
@@ -2495,16 +2495,16 @@ class Client:
         return decorator
 
     def slash_command(
-            self,
-            name: str = None,
-            description: str = None,
-            *,
-            name_localizations: Dict[Union[Locale, str], str] = None,
-            description_localizations: Dict[Union[Locale, str], str] = None,
-            guild_ids: Iterable[int] = None,
-            dm_permission: bool = None,
-            default_member_permissions: Optional[Union[Permissions, int]] = None,
-            force_global: bool = False,
+        self,
+        name: str = None,
+        description: str = None,
+        *,
+        name_localizations: Dict[Union[Locale, str], str] = None,
+        description_localizations: Dict[Union[Locale, str], str] = None,
+        guild_ids: Iterable[int] = None,
+        dm_permission: bool = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
+        force_global: bool = False,
     ):
         """Creates a Slash application command from the decorated function.
 
