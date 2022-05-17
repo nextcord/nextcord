@@ -47,10 +47,10 @@ Client
 
     .. automethod:: Client.slash_command
         :decorator:
-    
+
     .. automethod:: Client.user_command
         :decorator:
-        
+
     .. automethod:: Client.message_command
         :decorator:
 

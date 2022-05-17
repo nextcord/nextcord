@@ -23,28 +23,24 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, List, Callable, Dict, Any, Tuple
-from functools import partial
-from itertools import groupby
 
-import sys
+import asyncio
 import os
+import sys
 import time
 import traceback
-import asyncio
+from functools import partial
+from itertools import groupby
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
-from ..utils import MISSING
-from .view import (
-    _ViewWeights,
-    _walk_all_components,
-    _component_to_item,
-)
-from .item import Item
 from ..components import Component
+from ..utils import MISSING
+from .item import Item
+from .view import _component_to_item, _ViewWeights, _walk_all_components
 
 __all__ = (
-    'Modal',
-    'ModalStore',
+    "Modal",
+    "ModalStore",
 )
 
 
@@ -52,6 +48,7 @@ if TYPE_CHECKING:
     from ..interactions import Interaction
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
+
 
 class Modal:
     """Represents a Discord modal popup.
@@ -139,8 +136,8 @@ class Modal:
 
             components.append(
                 {
-                    'type': 1,
-                    'components': children,
+                    "type": 1,
+                    "components": children,
                 }
             )
 
@@ -148,9 +145,9 @@ class Modal:
 
     def to_dict(self) -> Dict[str, Any]:
         payload = {
-            'title': self.title,
-            'custom_id': self.custom_id,
-            'components': self.to_components(),
+            "title": self.title,
+            "custom_id": self.custom_id,
+            "components": self.to_components(),
         }
         return payload
 
@@ -184,7 +181,7 @@ class Modal:
         """
 
         if not isinstance(item, Item):
-            raise TypeError(f'expected Item not {item.__class__!r}')
+            raise TypeError(f"Expected Item not {item.__class__!r}")
 
         self.__weights.add_item(item)
 
@@ -255,7 +252,7 @@ class Modal:
         interaction: :class:`~nextcord.Interaction`
             The interaction that led to the failure.
         """
-        print(f'Ignoring exception in modal {self}:', file=sys.stderr)
+        print(f"Ignoring exception in modal {self}:", file=sys.stderr)
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
     async def _scheduled_task(self, interaction: Interaction):
@@ -290,19 +287,21 @@ class Modal:
             return
 
         self.__stopped.set_result(True)
-        asyncio.create_task(self.on_timeout(), name=f'discord-ui-modal-timeout-{self.id}')
+        asyncio.create_task(self.on_timeout(), name=f"discord-ui-modal-timeout-{self.id}")
 
     def _dispatch(self, interaction: Interaction):
         if self.__stopped.done():
             return
 
-        asyncio.create_task(self._scheduled_task(interaction), name=f'discord-ui-modal-dispatch-{self.id}')
+        asyncio.create_task(
+            self._scheduled_task(interaction), name=f"discord-ui-modal-dispatch-{self.id}"
+        )
 
     def refresh(self, components: List[Component]):
         # This is pretty hacky at the moment
         # fmt: off
         old_state: Dict[Tuple[int, str], Item] = {
-            (item.type.value, item.custom_id): item  # type: ignore
+            (item.type.value, item.custom_id): item
             for item in self.children
             if item.is_dispatchable()
         }
@@ -350,7 +349,11 @@ class Modal:
         A persistent modal has a set ``custom_id`` and all their components with a set ``custom_id`` and
         a :attr:`timeout` set to ``None``.
         """
-        return self._provided_custom_id and self.timeout is None and all(item.is_persistent() for item in self.children)
+        return (
+            self._provided_custom_id
+            and self.timeout is None
+            and all(item.is_persistent() for item in self.children)
+        )
 
     async def wait(self) -> bool:
         """Waits until the modal has finished interacting.
@@ -370,7 +373,7 @@ class Modal:
 class ModalStore:
     def __init__(self, state: ConnectionState):
         # (user_id, custom_id): Modal
-        self._modals: Dict[Tuple[int, str], Modal] = {}
+        self._modals: Dict[Tuple[int | None, str], Modal] = {}
         self._state: ConnectionState = state
 
     @property
@@ -385,7 +388,7 @@ class ModalStore:
         return list(modals.values())
 
     def __verify_integrity(self):
-        to_remove: List[Tuple[int, Optional[int], str]] = []
+        to_remove: List[Tuple[int | None, str]] = []
         for (k, modal) in self._modals.items():
             if modal.is_finished():
                 to_remove.append(k)
@@ -408,7 +411,7 @@ class ModalStore:
     def dispatch(self, custom_id: str, interaction: Interaction):
         self.__verify_integrity()
 
-        key = (interaction.user.id, custom_id)
+        key = (interaction.user.id, custom_id)  # type: ignore
         # Fallback to None user_id searches in case a persistent modal
         # was added without an associated message_id
         modal = self._modals.get(key) or self._modals.get((None, custom_id))

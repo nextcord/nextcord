@@ -101,7 +101,7 @@ The choices can be specified using ``choices`` in a :class:`~nextcord.SlashOptio
             The chosen number.
         """
         await interaction.response.send_message(f"You chose {number}!")
-    
+
 You can also specify a type annotation such as :class:`nextcord.Member`, :class:`nextcord.abc.GuildChannel`, or :class:`nextcord.Role`
 to make the command display a list of those types of objects.
 
@@ -148,8 +148,8 @@ As shown in the demonstration below you make a main slash command and build subc
         This will never get called since it has subcommands.
         """
         pass
-    
-    
+
+
     @main.subcommand(description="Subcommand 1")
     async def sub1(interaction: nextcord.Interaction):
         """
@@ -157,8 +157,8 @@ As shown in the demonstration below you make a main slash command and build subc
         It will appear in the menu as '/main sub1'.
         """
         await interaction.response.send_message("This is subcommand 1!")
-    
-    
+
+
     @main.subcommand(description="Subcommand 2")
     async def sub2(interaction: nextcord.Interaction):
         """
@@ -166,8 +166,8 @@ As shown in the demonstration below you make a main slash command and build subc
         It will appear in the menu as '/main sub2'.
         """
         await interaction.response.send_message("This is subcommand 2!")
-    
-    
+
+
     @main.subcommand()
     async def main_group(interaction: nextcord.Interaction):
         """
@@ -176,8 +176,8 @@ As shown in the demonstration below you make a main slash command and build subc
         This will never get called since it has subcommands.
         """
         pass
-    
-    
+
+
     @main_group.subcommand(description="Subcommand group subcommand 1")
     async def subsub1(interaction: nextcord.Interaction):
         """
@@ -185,8 +185,8 @@ As shown in the demonstration below you make a main slash command and build subc
         It will appear in the menu as '/main main_group subsub1'.
         """
         await interaction.response.send_message("This is a subcommand group's subcommand!")
-    
-    
+
+
     @main_group.subcommand(description="Subcommand group subcommand 2")
     async def subsub2(interaction: nextcord.Interaction):
         """

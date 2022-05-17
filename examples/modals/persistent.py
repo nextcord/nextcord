@@ -69,7 +69,7 @@ class Bot(commands.Bot):
             self.add_modal(FeedbackModal())
             self.persistent_modals_added = True
 
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
+        print(f"Logged in as {self.user} (ID: {self.user.id})")
 
 
 bot = Bot(command_prefix="$")
