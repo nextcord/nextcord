@@ -747,10 +747,7 @@ class Message(Hashable):
             # if the channel doesn't have a guild attribute, we handle that
             self.guild = channel.guild  # type: ignore
         except AttributeError:
-            if channel.type is not ChannelType.private and channel.type is not ChannelType.group:
-                self.guild = state._get_guild(utils._get_as_snowflake(data, "guild_id"))
-            else:
-                self.guild = None
+            self.guild = state._get_guild(utils._get_as_snowflake(data, "guild_id"))
 
         if thread_data := data.get("thread"):
             if not self.thread and self.guild:
