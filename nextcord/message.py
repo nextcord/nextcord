@@ -747,7 +747,7 @@ class Message(Hashable):
             # if the channel doesn't have a guild attribute, we handle that
             self.guild = channel.guild  # type: ignore
         except AttributeError:
-            if getattr(channel, "type", None) in (ChannelType.group, ChannelType.private):
+            if getattr(channel, "type", None) not in (ChannelType.group, ChannelType.private):
                 self.guild = state._get_guild(utils._get_as_snowflake(data, "guild_id"))
             else:
                 self.guild = None
