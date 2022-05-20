@@ -46,6 +46,7 @@ from .iterators import HistoryIterator
 from .context_managers import Typing
 from .enums import ChannelType
 from .errors import InvalidArgument, ClientException
+from .flags import ChannelFlags
 from .mentions import AllowedMentions
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
@@ -257,6 +258,7 @@ class GuildChannel:
     type: ChannelType
     position: int
     category_id: Optional[int]
+    flags: ChannelFlags
     _state: ConnectionState
     _overwrites: List[_Overwrites]
 

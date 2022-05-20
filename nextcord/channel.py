@@ -45,6 +45,8 @@ from typing import (
 )
 import datetime
 
+from nextcord.flags import ChannelFlags
+
 from . import abc
 from .permissions import PermissionOverwrite, Permissions
 from .enums import ChannelType, StagePrivacyLevel, try_enum, VoiceRegion, VideoQualityMode
@@ -143,6 +145,10 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         in this channel. A value of `0` denotes that it is disabled.
         Bots and users with :attr:`~Permissions.manage_channels` or
         :attr:`~Permissions.manage_messages` bypass slowmode.
+    flags: :class:`ChannelFlags`
+        Extra features of the channel.
+        
+        ..versionadded:: 2.0
     nsfw: :class:`bool`
         If the channel is marked as "not safe for work".
 
@@ -169,6 +175,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         '_type',
         'last_message_id',
         'default_auto_archive_duration',
+        'flags',
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload):
@@ -199,6 +206,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         # Does this need coercion into `int`? No idea yet.
         self.slowmode_delay: int = data.get('rate_limit_per_user', 0)
         self.default_auto_archive_duration: ThreadArchiveDuration = data.get('default_auto_archive_duration', 1440)
+        self.flags: ChannelFlags = ChannelFlags(data.get('flags', 0))
         self._type: int = data.get('type', self._type)
         self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
         self._fill_overwrites(data)
@@ -281,6 +289,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         default_auto_archive_duration: ThreadArchiveDuration = ...,
         type: ChannelType = ...,
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
+        flags: ChannelFlags = ...,
     ) -> Optional[TextChannel]:
         ...
 
@@ -822,6 +831,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         'position',
         'topic',
         'nsfw',
+        'flags',
         'slowmode_delay',
         'default_auto_archive_duration',
         'last_message_id',
@@ -845,6 +855,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         self.nsfw: bool = data.get('nsfw', False)
         # Does this need coercion into `int`? No idea yet. 
         self.slowmode_delay: int = data.get('rate_limit_per_user', 0)
+        self.flags: ChannelFlags = ChannelFlags(data.get('flags', 0))
         self.default_auto_archive_duration: ThreadArchiveDuration = data.get('default_auto_archive_duration', 1440)
         self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
         self._fill_overwrites(data)
@@ -912,7 +923,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
     async def edit(
         self,
         *,
-        reason: Optional[str] = ...,
         name: str = ...,
         topic: str = ...,
         position: int = ...,
@@ -922,6 +932,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         slowmode_delay: int = ...,
         default_auto_archive_duration: ThreadArchiveDuration = ...,
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
+        flags: ChannelFlags = ...,
+        reason: Optional[str] = ...,
     ) -> Optional[ForumChannel]:
         ...
 
@@ -936,15 +948,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
         You must have the :attr:`~Permissions.manage_channels` permission to
         use this.
-
-        .. versionchanged:: 1.3
-            The ``overwrites`` keyword-only parameter was added.
-
-        .. versionchanged:: 1.4
-            The ``type`` keyword-only parameter was added.
-            
-        .. versionchanged:: 2.0
-            Edits are no longer in-place, the newly edited channel is returned instead.
 
         Parameters
         ----------
@@ -1071,8 +1074,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
             If no object is passed at all then the defaults given by :attr:`~nextcord.Client.allowed_mentions`
             are used instead.
 
-            .. versionadded:: 1.4
-
         Raises
         -------
         Forbidden
@@ -1192,7 +1193,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
             )
             
         if view:
-            state.store_view(view, data.get('id'))
+            msg_id = data.get('id')
+            state.store_view(view, int(msg_id) if msg_id else None)
 
         return Thread(guild=self.guild, state=self._state, data=data)
 
@@ -1250,6 +1252,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         'position',
         '_overwrites',
         'category_id',
+        'flags',
         'rtc_region',
         'video_quality_mode',
     )
@@ -1275,6 +1278,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         self.position: int = data['position']
         self.bitrate: int = data.get('bitrate')
         self.user_limit: int = data.get('user_limit')
+        self.flags: ChannelFlags = ChannelFlags(data.get('flags', 0))
         self._fill_overwrites(data)
 
     @property
@@ -1376,6 +1380,10 @@ class VoiceChannel(VocalGuildChannel):
         The camera video quality for the voice channel's participants.
 
         .. versionadded:: 2.0
+    flags: :class:`ChannelFlags`
+        Extra features of the channel.
+        
+        ..versionadded:: 2.0
     """
 
     __slots__ = ()
@@ -1416,6 +1424,7 @@ class VoiceChannel(VocalGuildChannel):
         overwrites: Mapping[Union[Role, Member], PermissionOverwrite] = ...,
         rtc_region: Optional[VoiceRegion] = ...,
         video_quality_mode: VideoQualityMode = ...,
+        flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
     ) -> Optional[VoiceChannel]:
         ...
@@ -1540,6 +1549,10 @@ class StageChannel(VocalGuildChannel):
         The camera video quality for the stage channel's participants.
 
         .. versionadded:: 2.0
+    flags: :class:`ChannelFlags`
+        Extra features of the channel.
+        
+        ..versionadded:: 2.0
     """
 
     __slots__ = ('topic',)
@@ -1695,6 +1708,7 @@ class StageChannel(VocalGuildChannel):
         overwrites: Mapping[Union[Role, Member], PermissionOverwrite] = ...,
         rtc_region: Optional[VoiceRegion] = ...,
         video_quality_mode: VideoQualityMode = ...,
+        flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
     ) -> Optional[StageChannel]:
         ...
@@ -1804,6 +1818,10 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         .. note::
 
             To check if the channel or the guild of that channel are marked as NSFW, consider :meth:`is_nsfw` instead.
+    flags: :class:`ChannelFlags`
+        Extra features of the channel.
+        
+        ..versionadded:: 2.0
     """
 
     __slots__ = ('name', 'id', 'guild', 'nsfw', '_state', 'position', '_overwrites', 'category_id')
@@ -1822,6 +1840,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         self.category_id: Optional[int] = utils._get_as_snowflake(data, 'parent_id')
         self.nsfw: bool = data.get('nsfw', False)
         self.position: int = data['position']
+        self.flags: ChannelFlags = ChannelFlags(data.get('flags', 0))
         self._fill_overwrites(data)
 
     @property
@@ -1849,6 +1868,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         position: int = ...,
         nsfw: bool = ...,
         overwrites: Mapping[Union[Role, Member], PermissionOverwrite] = ...,
+        flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
     ) -> Optional[CategoryChannel]:
         ...

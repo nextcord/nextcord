@@ -227,6 +227,49 @@ class SystemChannelFlags(BaseFlags):
 
 
 @fill_with_flags()
+class ChannelFlags(BaseFlags):
+    r"""Wraps up a Discord channel flag value.
+
+    Similar to :class:`Permissions`\, the properties provided are two way.
+    You can set and retrieve individual bits using the properties as if they
+    were regular bools. This allows you to edit the channel flags easily.
+
+    To construct an object you can pass keyword arguments denoting the flags
+    to enable or disable.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two flags are equal.
+        .. describe:: x != y
+
+            Checks if two flags are not equal.
+        .. describe:: hash(x)
+
+               Return the flag's hash.
+        .. describe:: iter(x)
+
+               Returns an iterator of ``(name, value)`` pairs. This allows it
+               to be, for example, constructed as a dict or a list of pairs.
+
+    Attributes
+    -----------
+    value: :class:`int`
+        The raw value. This value is a bit array field of a 53-bit integer
+        representing the currently available flags. You should query
+        flags via the properties rather than using this raw value.
+    """
+
+    __slots__ = ()
+
+    @flag_value
+    def pinned(self):
+        """:class:`bool`: Returns ``True`` if the channel is pinned."""
+        return 1
+
+
+@fill_with_flags()
 class MessageFlags(BaseFlags):
     r"""Wraps up a Discord Message flag value.
 
