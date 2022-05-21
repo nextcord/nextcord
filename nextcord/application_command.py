@@ -49,7 +49,12 @@ from typing import (
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
-from .errors import ApplicationCheckFailure, ApplicationError, ApplicationInvokeError, ApplicationCommandOptionMissing
+from .errors import (
+    ApplicationCheckFailure,
+    ApplicationCommandOptionMissing,
+    ApplicationError,
+    ApplicationInvokeError,
+)
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
@@ -146,6 +151,7 @@ class CallbackWrapper:
         async def test(interaction):
             await interaction.send("The description of this command should be in all uppercase!")
     """
+
     def __new__(
         cls,
         callback: Union[

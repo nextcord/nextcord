@@ -56,7 +56,7 @@ __all__ = (
     "ApplicationError",
     "ApplicationInvokeError",
     "ApplicationCheckFailure",
-    "ApplicationCommandOptionMissing"
+    "ApplicationCommandOptionMissing",
 )
 
 
