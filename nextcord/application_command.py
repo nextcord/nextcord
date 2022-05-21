@@ -244,7 +244,9 @@ class ApplicationCommandOption:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]], None] = None,
+        choices: Union[
+            Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]], None
+        ] = None,
         choice_localizations: Optional[Dict[str, Dict[Union[Locale, str], str]]] = None,
         channel_types: Optional[List[ChannelType]] = None,
         min_value: Union[int, float, None] = None,
@@ -895,7 +897,11 @@ class CallbackMixin:
 
 
 class AutocompleteOptionMixin:
-    def __init__(self, autocomplete_callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = None):
+    def __init__(
+        self,
+        autocomplete_callback: Optional[Callable] = None,
+        parent_cog: Optional[ClientCog] = None,
+    ):
         """Contains code for providing autocomplete support, specifically for options.
 
         If you are a normal user, you shouldn't be using this.
@@ -1134,7 +1140,9 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]], None] = None,
+        choices: Union[
+            Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]], None
+        ] = None,
         choice_localizations: Optional[Dict[str, Dict[Union[Locale, str], str]]] = None,
         channel_types: Optional[List[ChannelType]] = None,
         min_value: Union[int, float, None] = None,
