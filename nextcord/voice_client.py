@@ -273,7 +273,7 @@ class VoiceClient(VoiceProtocol):
     @property
     def user(self) -> ClientUser:
         """:class:`ClientUser`: The user connected to voice (i.e. ourselves)."""
-        return self._state.user  # type: ignore [should exist]
+        return self._state.user  # type: ignore # [should exist]
 
     def checked_add(self, attr, value, limit):
         val = getattr(self, attr)
@@ -336,7 +336,7 @@ class VoiceClient(VoiceProtocol):
         self._voice_server_complete.set()
 
     async def voice_connect(self) -> None:
-        await self.channel.guild.change_voice_state(channel=self.channel)  # type: ignore FIXME: protocol should be fixed for guild
+        await self.channel.guild.change_voice_state(channel=self.channel)  # type: ignore # FIXME: protocol should be fixed for guild
 
     async def voice_disconnect(self) -> None:
         _log.info("The voice handshake is being terminated for Channel ID %s (Guild ID %s)", self.channel.id, self.guild.id)  # type: ignore
@@ -519,7 +519,7 @@ class VoiceClient(VoiceProtocol):
         channel: :class:`abc.Snowflake`
             The channel to move to. Must be a voice channel.
         """
-        await self.channel.guild.change_voice_state(channel=channel)  # type: ignore still protocol issue
+        await self.channel.guild.change_voice_state(channel=channel)  # type: ignore # still protocol issue
 
     def is_connected(self) -> bool:
         """Indicates if the voice client is connected to voice."""

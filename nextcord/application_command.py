@@ -49,7 +49,7 @@ from typing import (
 
 from .abc import GuildChannel
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
-from .errors import ApplicationCheckFailure, ApplicationError, ApplicationInvokeError
+from .errors import ApplicationCheckFailure, ApplicationError, ApplicationInvokeError, ApplicationCommandOptionMissing
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
@@ -109,6 +109,43 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 
 class CallbackWrapper:
+    """A class used to wrap a callback in a sane way to modify aspects of application commands.
+
+    By creating a decorator that makes this class wrap a function or an application command, you can easily modify
+    attributes of the command regardless if this wraps the callback or the application command, and without needing
+    to make the application command object interpret arbitrarily set function attributes.
+
+    The ``modify`` method must be overridden.
+
+    This handles both multiple layers of wrappers, or if it wraps around a :class:`BaseApplicationCommand`
+
+    Parameters
+    ----------
+    callback: Union[Callable, :class:`CallbackWrapper`, :class:`BaseApplicationCommand`]
+        Callback, other callback wrapper, or application command to wrap and/or modify.
+
+    Examples
+    --------
+    Creating a decorator that makes the description of the command uppercase, and offers an "override" argument: ::
+
+        def upper_description(description_override: str = None):
+            class UpperDescription(CallbackWrapper):
+                def modify(self, app_cmd):
+                    if description_override is not None:
+                        app_cmd.description = description_override.upper()
+                    elif app_cmd.description:
+                        app_cmd.description = app_cmd.description.upper()
+
+            def wrapper(func):
+                return UpperDescription(func)
+
+            return wrapper
+
+        @client.slash_command(description="This will be made uppercase.")
+        @upper_description()
+        async def test(interaction):
+            await interaction.send("The description of this command should be in all uppercase!")
+    """
     def __new__(
         cls,
         callback: Union[
@@ -116,7 +153,7 @@ class CallbackWrapper:
         ],
         *args,
         **kwargs,
-    ):
+    ) -> Union[CallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand]:
         wrapper = super(CallbackWrapper, cls).__new__(cls)
         wrapper.__init__(callback, *args, **kwargs)
         if isinstance(callback, (BaseApplicationCommand, SlashApplicationSubcommand)):
@@ -125,21 +162,7 @@ class CallbackWrapper:
         else:
             return wrapper
 
-    def __init__(self, callback: Union[Callable, CallbackWrapper]):
-        """A class used to wrap a callback in a sane way to modify aspects of application commands.
-
-        By creating a decorator that makes this class wrap a function or an application command, you can easily modify
-        attributes of the command regardless if this wraps the callback or the application command, and without needing
-        to make the application command object interpret arbitrarily set function attributes.
-
-        The ``modify`` method must be overridden.
-
-        This handles both multiple layers of wrappers, or if it wraps around a :class:`BaseApplicationCommand`
-
-        Parameters
-        ----------
-        callback: Union[Callable, :class:`CallbackWrapper`]
-        """
+    def __init__(self, callback: Union[Callable, CallbackWrapper], *args, **kwargs) -> None:
         # noinspection PyTypeChecker
         self.callback: Optional[Callable] = None
         self.modify_callbacks: List[Callable] = [self.modify]
@@ -291,7 +314,7 @@ class ApplicationCommandOption:
             raise ValueError(f"The option type must be set before obtaining the payload.")
 
         # noinspection PyUnresolvedReferences
-        ret = {
+        ret: Dict[str, Any] = {
             "type": self.type.value,
             "name": self.name,
             "description": self.description,
@@ -525,7 +548,7 @@ class CallbackMixin:
         parent_cog: Optional[:class:`ClientCog`]
             Class that the callback resides on. Will be passed into the callback if provided.
         """
-        self.callback: Callable = callback
+        self.callback: Optional[Callable] = callback
         self._callback_before_invoke: Optional[ApplicationHook] = None
         self._callback_after_invoke: Optional[ApplicationHook] = None
         self.error_callback: Optional[Callable] = None
@@ -541,7 +564,9 @@ class CallbackMixin:
 
     def __call__(self, interaction: Interaction, *args, **kwargs):
         """Invokes the callback, injecting ``self`` if available."""
-        if self.parent_cog:
+        if self.callback is None:
+            raise ValueError("Cannot call callback when it is not set.")
+        elif self.parent_cog:
             return self.callback(self.parent_cog, interaction, *args, **kwargs)
         else:
             return self.callback(interaction, *args, **kwargs)
@@ -2255,6 +2280,10 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
     def description(self) -> str:
         return super().description  # Required to grab the correct description function.
 
+    @description.setter
+    def description(self, new_desc: str):
+        self._description = new_desc
+
     def get_payload(self, guild_id: Optional[int]):
         ret = super().get_payload(guild_id)
         if self.children:
@@ -2654,7 +2683,8 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
     for keyword in keywords:
         if dict1.get(keyword, None) != dict2.get(keyword, None):
             _log.debug(
-                "Failed basic dictionary value check:\n %s vs %s",
+                "Failed basic dictionary value check for key %s:\n %s vs %s",
+                keyword,
                 dict1.get(keyword, None),
                 dict2.get(keyword, None),
             )

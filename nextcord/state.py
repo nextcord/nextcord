@@ -2313,7 +2313,7 @@ class AutoShardedConnectionState(ConnectionState):
                     len(guilds),
                 )
             for guild in children:
-                if guild.unavailable is False:  # type: ignore pylance this is a guild :)
+                if guild.unavailable is False:  # type: ignore # pylance this is a guild :)
                     self.dispatch("guild_available", guild)
                 else:
                     self.dispatch("guild_join", guild)

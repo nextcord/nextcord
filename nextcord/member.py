@@ -802,7 +802,7 @@ class Member(abc.Messageable, _UserTag):
                     "You can only suppress members which are connected to a voice channel"
                 )
             voice_state_payload = {
-                "channel_id": self.voice.channel.id,  # type: ignore id should exist
+                "channel_id": self.voice.channel.id,  # type: ignore # id should exist
                 "suppress": suppress,
             }
 
@@ -864,7 +864,7 @@ class Member(abc.Messageable, _UserTag):
             The operation failed.
         """
         payload = {
-            "channel_id": self.voice.channel.id,  # type: ignore should exist
+            "channel_id": self.voice.channel.id,  # type: ignore # should exist
             "request_to_speak_timestamp": datetime.datetime.utcnow().isoformat(),
         }
 

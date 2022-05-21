@@ -4332,66 +4332,6 @@ Select
 
 .. autofunction:: nextcord.ui.select
 
-
-Application Commands
-~~~~~~~~~~~~~~~~~~~~
-
-.. attributetable:: BaseApplicationCommand
-
-.. autoclass:: BaseApplicationCommand
-    :members:
-    :inherited-members:
-
-.. attributetable:: SlashApplicationCommand
-
-.. autoclass:: SlashApplicationCommand
-    :members:
-    :inherited-members:
-
-.. attributetable:: UserApplicationCommand
-
-.. autoclass:: UserApplicationCommand
-    :members:
-    :inherited-members:
-
-.. attributetable:: MessageApplicationCommand
-
-.. autoclass:: MessageApplicationCommand
-    :members:
-    :inherited-members:
-
-.. attributetable:: SlashApplicationSubcommand
-
-.. autoclass:: SlashApplicationSubcommand
-    :members:
-    :inherited-members:
-
-.. attributetable:: Mentionable
-
-.. autoclass:: Mentionable
-    :members:
-
-Options
-~~~~~~~
-
-.. attributetable:: BaseCommandOption
-
-.. autoclass:: BaseCommandOption
-    :members:
-
-.. attributetable:: SlashCommandOption
-
-.. autoclass:: SlashCommandOption
-    :members:
-    :inherited-members:
-
-.. attributetable:: SlashOption
-
-.. autoclass:: SlashOption
-    :members:
-    :inherited-members:
-    :exclude-members: verify
-
 Cogs
 ~~~~
 
@@ -4406,6 +4346,92 @@ Decorators
 .. autoclass:: slash_command
 
 .. autoclass:: user_command
+
+Application Commands
+--------------------
+
+The library has helpers to easily create and manipulate application commands.
+
+Base Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: BaseApplicationCommand
+
+.. autoclass:: BaseApplicationCommand
+    :members:
+    :inherited-members:
+
+.. attributetable:: BaseCommandOption
+
+.. autoclass:: BaseCommandOption
+    :members:
+
+Slash Commands
+~~~~~~~~~~~~~~
+
+.. attributetable:: SlashApplicationCommand
+
+.. autoclass:: SlashApplicationCommand
+    :members:
+    :inherited-members:
+
+.. attributetable:: SlashApplicationSubcommand
+
+.. autoclass:: SlashApplicationSubcommand
+    :members:
+    :inherited-members:
+
+Slash Options
+~~~~~~~~~~~~~
+
+.. attributetable:: SlashOption
+
+.. autoclass:: SlashOption
+    :members:
+    :inherited-members:
+    :exclude-members: verify
+
+.. attributetable:: SlashCommandOption
+
+.. autoclass:: SlashCommandOption
+    :members:
+    :inherited-members:
+
+User Commands
+~~~~~~~~~~~~~
+
+.. attributetable:: UserApplicationCommand
+
+.. autoclass:: UserApplicationCommand
+    :members:
+    :inherited-members:
+
+Message Commands
+~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageApplicationCommand
+
+.. autoclass:: MessageApplicationCommand
+    :members:
+    :inherited-members:
+
+Command Helpers
+~~~~~~~~~~~~~~~
+
+.. attributetable:: CallbackWrapper
+
+.. autoclass:: CallbackWrapper
+    :members:
+
+.. attributetable:: OptionConverter
+
+.. autoclass:: OptionConverter
+    :members:
+
+.. attributetable:: Mentionable
+
+.. autoclass:: Mentionable
+    :members:
 
 Exceptions
 ------------
