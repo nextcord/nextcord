@@ -237,19 +237,19 @@ class ApplicationCommandOption:
 
     def __init__(
         self,
-        cmd_type: ApplicationCommandOptionType = None,
-        name: str = None,
-        description: str = None,
-        required: bool = None,
+        cmd_type: Optional[ApplicationCommandOptionType] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        required: Optional[bool] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        description_localizations: Dict[Union[Locale, str], str] = None,
-        choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]] = None,
-        choice_localizations: Dict[str, Dict[Union[Locale, str], str]] = None,
-        channel_types: List[ChannelType] = None,
-        min_value: Union[int, float] = None,
-        max_value: Union[int, float] = None,
-        autocomplete: bool = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]], None] = None,
+        choice_localizations: Optional[Dict[str, Dict[Union[Locale, str], str]]] = None,
+        channel_types: Optional[List[ChannelType]] = None,
+        min_value: Union[int, float, None] = None,
+        max_value: Union[int, float, None] = None,
+        autocomplete: Optional[bool] = None,
     ):
         self.type: Optional[ApplicationCommandOptionType] = cmd_type
         self.name: Optional[str] = name
@@ -539,7 +539,7 @@ class ClientCog:
 
 
 class CallbackMixin:
-    name: str
+    name: Optional[str]
     options: Dict[str, BaseCommandOption]
 
     def __init__(self, callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = None):
@@ -895,7 +895,7 @@ class CallbackMixin:
 
 
 class AutocompleteOptionMixin:
-    def __init__(self, autocomplete_callback: Callable = None, parent_cog: ClientCog = None):
+    def __init__(self, autocomplete_callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = None):
         """Contains code for providing autocomplete support, specifically for options.
 
         If you are a normal user, you shouldn't be using this.
@@ -1128,19 +1128,19 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
 
     def __init__(
         self,
-        name: str = None,
-        description: str = None,
-        required: bool = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        required: Optional[bool] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        description_localizations: Dict[Union[Locale, str], str] = None,
-        choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]] = None,
-        choice_localizations: Dict[str, Dict[Union[Locale, str], str]] = None,
-        channel_types: List[ChannelType] = None,
-        min_value: Union[int, float] = None,
-        max_value: Union[int, float] = None,
-        autocomplete: bool = None,
-        autocomplete_callback: Callable = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        choices: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]], None] = None,
+        choice_localizations: Optional[Dict[str, Dict[Union[Locale, str], str]]] = None,
+        channel_types: Optional[List[ChannelType]] = None,
+        min_value: Union[int, float, None] = None,
+        max_value: Union[int, float, None] = None,
+        autocomplete: Optional[bool] = None,
+        autocomplete_callback: Optional[Callable] = None,
         default: Any = MISSING,
         verify: bool = True,
     ):
@@ -1411,7 +1411,7 @@ class SlashCommandMixin(CallbackMixin):
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: List[Dict[str, Any]] = None,
+        option_data: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         if option_data is None:
             option_data = interaction.data.get("options", {})
@@ -1441,7 +1441,7 @@ class SlashCommandMixin(CallbackMixin):
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: List[Dict[str, Any]] = None,
+        option_data: Optional[List[Dict[str, Any]]] = None,
     ):
         if option_data is None:
             option_data = interaction.data.get("options", {})
@@ -1458,15 +1458,15 @@ class SlashCommandMixin(CallbackMixin):
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     def __init__(
         self,
-        cmd_type: ApplicationCommandType = None,
-        name: str = None,
-        description: str = None,
+        cmd_type: Optional[ApplicationCommandType] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        description_localizations: Dict[Union[Locale, str], str] = None,
-        callback: Callable = None,
-        guild_ids: Iterable[int] = None,
-        dm_permission: bool = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        callback: Optional[Callable] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
@@ -2009,14 +2009,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, CallbackWrapperMixin):
     def __init__(
         self,
-        name: str = None,
-        description: str = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        description_localizations: Dict[Union[Locale, str], str] = None,
-        callback: Callable = None,
-        parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand] = None,
-        cmd_type: ApplicationCommandOptionType = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        callback: Optional[Callable] = None,
+        parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand, None] = None,
+        cmd_type: Optional[ApplicationCommandOptionType] = None,
         parent_cog: Optional[ClientCog] = None,
         inherit_hooks: bool = False,
     ):
@@ -2166,11 +2166,11 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
     def subcommand(
         self,
-        name: str = None,
-        description: str = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        description_localizations: Dict[Union[Locale, str], str] = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         inherit_hooks: bool = False,
     ) -> Callable[[Callable], SlashApplicationSubcommand]:
         """Takes the decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
@@ -2222,14 +2222,14 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
     def __init__(
         self,
-        name: str = None,
-        description: str = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        description_localizations: Dict[Union[Locale, str], str] = None,
-        callback: Callable = None,
-        guild_ids: Iterable[int] = None,
-        dm_permission: bool = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        callback: Optional[Callable] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
@@ -2327,11 +2327,11 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
     def subcommand(
         self,
-        name: str = None,
-        description: str = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        description_localizations: Dict[Union[Locale, str], str] = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         inherit_hooks: bool = False,
     ) -> Callable[[Callable], SlashApplicationSubcommand]:
         """Takes the decorated callback and turns it into a :class:`SlashApplicationSubcommand` added as a subcommand.
@@ -2375,12 +2375,12 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 class UserApplicationCommand(BaseApplicationCommand):
     def __init__(
         self,
-        name: str = None,
+        name: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        callback: Callable = None,
-        guild_ids: Iterable[int] = None,
-        dm_permission: bool = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        callback: Optional[Callable] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
@@ -2440,12 +2440,12 @@ class UserApplicationCommand(BaseApplicationCommand):
 class MessageApplicationCommand(BaseApplicationCommand):
     def __init__(
         self,
-        name: str = None,
+        name: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        callback: Callable = None,
-        guild_ids: Iterable[int] = None,
-        dm_permission: bool = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        callback: Optional[Callable] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
@@ -2503,13 +2503,13 @@ class MessageApplicationCommand(BaseApplicationCommand):
 
 
 def slash_command(
-    name: str = None,
-    description: str = None,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
     *,
-    name_localizations: Dict[Union[Locale, str], str] = None,
-    description_localizations: Dict[Union[Locale, str], str] = None,
-    guild_ids: Iterable[int] = None,
-    dm_permission: bool = None,
+    name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+    description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+    guild_ids: Optional[Iterable[int]] = None,
+    dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     force_global: bool = False,
 ):
@@ -2564,11 +2564,11 @@ def slash_command(
 
 
 def message_command(
-    name: str = None,
+    name: Optional[str] = None,
     *,
-    name_localizations: Dict[Union[Locale, str], str] = None,
-    guild_ids: Iterable[int] = None,
-    dm_permission: bool = None,
+    name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+    guild_ids: Optional[Iterable[int]] = None,
+    dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     force_global: bool = False,
 ):
@@ -2615,11 +2615,11 @@ def message_command(
 
 
 def user_command(
-    name: str = None,
+    name: Optional[str] = None,
     *,
-    name_localizations: Dict[Union[Locale, str], str] = None,
-    guild_ids: Iterable[int] = None,
-    dm_permission: bool = None,
+    name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+    guild_ids: Optional[Iterable[int]] = None,
+    dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     force_global: bool = False,
 ):
