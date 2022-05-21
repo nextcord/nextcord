@@ -2402,11 +2402,11 @@ class Client:
 
     def user_command(
         self,
-        name: str = None,
+        name: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        guild_ids: Iterable[int] = None,
-        dm_permission: bool = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
     ):
@@ -2449,11 +2449,11 @@ class Client:
 
     def message_command(
         self,
-        name: str = None,
+        name: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        guild_ids: Iterable[int] = None,
-        dm_permission: bool = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
     ):
@@ -2496,13 +2496,13 @@ class Client:
 
     def slash_command(
         self,
-        name: str = None,
-        description: str = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
         *,
-        name_localizations: Dict[Union[Locale, str], str] = None,
-        description_localizations: Dict[Union[Locale, str], str] = None,
-        guild_ids: Iterable[int] = None,
-        dm_permission: bool = None,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
     ):
