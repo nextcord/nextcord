@@ -55,12 +55,7 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
-    from .application_command import (
-        ApplicationCommand,
-        ApplicationSubcommand,
-        BaseApplicationCommand,
-        SlashApplicationSubcommand,
-    )
+    from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import (
         CategoryChannel,
         PartialMessageable,
@@ -69,6 +64,13 @@ if TYPE_CHECKING:
         VoiceChannel,
     )
     from .client import Client
+    from .guild import Guild
+    from .message import AllowedMentions
+    from .state import ConnectionState
+    from .threads import Thread
+    from .types.interactions import Interaction as InteractionPayload, InteractionData
+    from .ui.modal import Modal
+    from .ui.view import View
 
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
@@ -178,7 +180,9 @@ class Interaction:
         # TODO: this is so janky, accessing a hidden double attribute
         self._original_message: Optional[InteractionMessage] = None
         self.attached = InteractionAttached()
-        self.application_command: Optional[BaseApplicationCommand] = None
+        self.application_command: Optional[
+            Union[SlashApplicationSubcommand, BaseApplicationCommand]
+        ] = None
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
