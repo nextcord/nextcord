@@ -317,6 +317,3 @@ event loop then doing so is quite straightforward:
         loop.run_until_complete(client.logout())
     finally:
         loop.close()
-
-
-

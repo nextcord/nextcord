@@ -23,8 +23,8 @@ DEALINGS IN THE SOFTWARE.
 """
 
 
-from pathlib import Path
 from importlib import import_module
+from pathlib import Path
 from shutil import copyfile
 
 with open(".aliasignorerc") as f:
@@ -40,7 +40,7 @@ alias_folder = Path("discord")
 
 def scan_dir(folder):
     for file in folder.glob("*"):
-        unprefixed = str(file)[len("nextcord") + 1:]
+        unprefixed = str(file)[len("nextcord") + 1 :]
         should_ignore = False
         for ignore in ignores:
             if ignore.startswith("^"):
@@ -79,7 +79,7 @@ def scan_dir(folder):
                 # __all__
                 module_all = getattr(module, "__all__", None)
                 if module_all is not None:
-                    module_all_quotes = ", ".join([f"\"{item}\"" for item in module_all])
+                    module_all_quotes = ", ".join([f'"{item}"' for item in module_all])
                     module_all_out = f"__all__ = ({module_all_quotes})"
 
                     alias_file += module_all_out
@@ -89,7 +89,7 @@ def scan_dir(folder):
             else:
                 print(f"Copied {file}")
                 copyfile(str(file), str(alias_folder / unprefixed))
-                
+
         else:
             scan_dir(file)
 
