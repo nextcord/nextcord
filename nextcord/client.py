@@ -2030,7 +2030,7 @@ class Client:
 
     async def sync_all_application_commands(
         self,
-        data: Optional[Dict[Optional[int], List[dict]]] = None,
+        data: Optional[Dict[Optional[int], List[ApplicationCommandPayload]]] = None,
         *,
         use_rollout: bool = True,
         associate_known: bool = True,
@@ -2085,7 +2085,7 @@ class Client:
 
     async def sync_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[List[ApplicationCommandPayload]] = None,
         *,
         guild_id: Optional[int] = None,
         associate_known: bool = True,
@@ -2171,7 +2171,7 @@ class Client:
 
     async def deploy_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[List[ApplicationCommandPayload]] = None,
         *,
         guild_id: Optional[int] = None,
         associate_known: bool = True,

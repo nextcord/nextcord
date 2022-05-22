@@ -833,7 +833,7 @@ class ConnectionState:
         if not data:
             if guild_id:
                 # we do not care about typeddict specificity here
-                data = await self.http.get_guild_commands(self.application_id, guild_id)  # type: ignore
+                data = await self.http.get_guild_commands(self.application_id, guild_id)
             else:
                 data = await self.http.get_global_commands(self.application_id)
 

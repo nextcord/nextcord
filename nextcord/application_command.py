@@ -69,7 +69,7 @@ from .utils import MISSING, find, maybe_coroutine, parse_docstring
 if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
-    from .types.message import Message as MessagePayload
+    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
 
     _SlashOptionMetaBase = Any
     _CustomTypingMetaBase = Any
@@ -925,7 +925,7 @@ class AutocompleteOptionMixin:
         self.autocomplete_options: Set[str] = set()
         self.parent_cog: Optional[ClientCog] = parent_cog
 
-    def from_autocomplete_callback(self, callback: Callable) -> SlashCommandOption:
+    def from_autocomplete_callback(self, callback: Callable) -> AutocompleteOptionMixin:
         """Parses a callback meant to be the autocomplete function."""
         self.autocomplete_callback = callback
         if not asyncio.iscoroutinefunction(self.autocomplete_callback):
@@ -1593,7 +1593,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """:class:`bool`: Returns ``True`` if this command is or should be registered to any guilds."""
         guild_only_ids = set(self.command_ids.keys())
         guild_only_ids.discard(None)
-        return True if (self.guild_ids_to_rollout or guild_only_ids) else None
+        return True if (self.guild_ids_to_rollout or guild_only_ids) else False
 
     @property
     def guild_ids(self) -> Set[int]:
@@ -1779,7 +1779,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         else:
             self.command_ids[None] = command_id
 
-    def is_payload_valid(self, raw_payload: dict, guild_id: Optional[int] = None) -> bool:
+    def is_payload_valid(
+        self, raw_payload: ApplicationCommandPayload, guild_id: Optional[int] = None
+    ) -> bool:
         """Checks if the given raw application command interaction payload from Discord is possibly valid for
         this command.
         Note that while this may return ``True`` for a given payload, that doesn't mean that the payload is fully
@@ -2369,7 +2371,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
         if self.children:
             await self.children[option_data[0]["name"]].call(
-                state, interaction, option_data[0].get("options", {})
+                state, interaction, option_data[0].get("options", [{}])
             )
         else:
             await self.call_slash(state, interaction, option_data)

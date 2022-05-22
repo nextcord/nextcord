@@ -3376,7 +3376,7 @@ class Guild(Hashable):
         )
         # we do not care about typeddict specificity
         await self.deploy_application_commands(
-            data=guild_payload,  # type: ignore
+            data=guild_payload,
             associate_known=associate_known,
             delete_unknown=delete_unknown,
             update_known=update_known,
