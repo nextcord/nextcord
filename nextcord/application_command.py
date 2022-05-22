@@ -455,7 +455,7 @@ class ClientCog:
         """
         self.__cog_application_commands__ = []
         for base in reversed(self.__class__.__mro__):
-            for elem, value in base.__dict__.items():
+            for _, value in base.__dict__.items():
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
                     value = value.__func__
@@ -773,7 +773,7 @@ class CallbackMixin:
             try:
                 check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
-            except ApplicationCheckFailure as error:
+            except ApplicationCheckFailure:
                 raise
             # If the check returns False, the command can't be run.
             else:
@@ -930,7 +930,7 @@ class AutocompleteOptionMixin:
             # If there's a parent cog, there should be a self. Skip it too.
             skip_count += 1
 
-        for name, param in signature(self.autocomplete_callback).parameters.items():
+        for name, _ in signature(self.autocomplete_callback).parameters.items():
             if skip_count:
                 skip_count -= 1
             else:
