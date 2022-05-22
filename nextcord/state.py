@@ -90,6 +90,7 @@ if TYPE_CHECKING:
     from .types.checks import ApplicationCheck, ApplicationHook
     from .types.emoji import Emoji as EmojiPayload
     from .types.guild import Guild as GuildPayload
+    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.message import Message as MessagePayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
@@ -655,7 +656,7 @@ class ConnectionState:
 
     async def sync_all_application_commands(
         self,
-        data: Optional[Dict[Optional[int], List[dict]]] = None,
+        data: Optional[Dict[Optional[int], List[ApplicationCommandPayload]]] = None,
         *,
         use_rollout: bool = True,
         associate_known: bool = True,
@@ -704,11 +705,14 @@ class ConnectionState:
         else:
             data = data.copy()
 
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
         for app_cmd in self.application_commands:
             self.add_application_command(command=app_cmd, use_rollout=use_rollout)
 
             if app_cmd.is_global and None not in data:
-                data[None] = self.http.get_global_commands(self.application_id)
+                data[None] = await self.http.get_global_commands(self.application_id)
                 _log.debug("Fetched global application command data.")
 
             if app_cmd.is_guild:
@@ -734,7 +738,7 @@ class ConnectionState:
 
     async def sync_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[List[ApplicationCommandPayload]] = None,
         guild_id: Optional[int] = None,
         associate_known: bool = True,
         delete_unknown: bool = True,
@@ -767,6 +771,10 @@ class ConnectionState:
 
         """
         _log.debug("Syncing commands to %s", guild_id)
+
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
         if not data:
             if guild_id:
                 data = await self.http.get_guild_commands(self.application_id, guild_id)
@@ -787,7 +795,7 @@ class ConnectionState:
 
     async def discover_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[List[ApplicationCommandPayload]] = None,
         guild_id: Optional[int] = None,
         associate_known: bool = True,
         delete_unknown: bool = True,
@@ -827,7 +835,7 @@ class ConnectionState:
                 # we do not care about typeddict specificity here
                 data = await self.http.get_guild_commands(self.application_id, guild_id)  # type: ignore
             else:
-                data = await self.http.get_global_commands(self.application_id)  # type: ignore
+                data = await self.http.get_global_commands(self.application_id)
 
         if data is None:
             raise NotImplementedError("Could not get application commands from Discord.")
@@ -1005,6 +1013,10 @@ class ConnectionState:
             f"nextcord.ConnectionState: Registering command with signature %s",
             command.get_signature(guild_id),
         )
+
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
         try:
             if guild_id:
                 raw_response = await self.http.upsert_guild_command(

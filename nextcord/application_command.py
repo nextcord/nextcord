@@ -183,7 +183,7 @@ class CallbackWrapper:
 
 
 class CallbackWrapperMixin:
-    def __init__(self, callback: Union[Callable, CallbackWrapper]):
+    def __init__(self, callback: Optional[Union[Callable, CallbackWrapper]]):
         """Adds very basic callback wrapper support.
 
         If you are a normal user, you shouldn't be using this.
@@ -687,6 +687,9 @@ class CallbackMixin:
         if callback is not None:
             self.callback = callback
 
+        if not self.callback:
+            raise ValueError("Unable to get name and options from a callback if it is None")
+
         if self.name is None:
             self.name = self.callback.__name__
 
@@ -716,6 +719,10 @@ class CallbackMixin:
                             param = param.replace(annotation=typehints.get(name, param.empty))
 
                         arg = option_class(param, self, parent_cog=self.parent_cog)
+
+                        if not arg.name:
+                            raise ValueError("Cannot store an argument's type if the name is None")
+
                         self.options[arg.name] = arg
 
         except Exception as e:
@@ -838,7 +845,7 @@ class CallbackMixin:
         """|coro|
         Invokes the error handler if available.
         """
-        if self.has_error_handler():
+        if self.has_error_handler() and self.error_callback is not None:
             if self.parent_cog:
                 await self.error_callback(self.parent_cog, interaction, error)
             else:
@@ -994,7 +1001,14 @@ class AutocompleteCommandMixin:
         Calls the autocomplete callback with the given interaction and option data.
         """
         if not option_data:
-            option_data = interaction.data.get("options", {})
+            if interaction.data is None:
+                raise ValueError("Discord did not provide us interaction data")
+
+            # pyright does not want to lose typeddict specificity but we do not care here
+            option_data = interaction.data.get("options", {})  # type: ignore
+
+            if not option_data:
+                raise ValueError("Discord did not provide us option data")
 
         if self.children:
             await self.children[option_data[0]["name"]].call_autocomplete(
@@ -1023,7 +1037,10 @@ class AutocompleteCommandMixin:
 
             kwargs = {}
             uncalled_options = focused_option.autocomplete_options.copy()
-            uncalled_options.discard(focused_option.name)
+
+            if focused_option.name is not None:
+                uncalled_options.discard(focused_option.name)
+
             focused_option_value = None
             for arg_data in option_data:
                 if (
@@ -1060,7 +1077,7 @@ class AutocompleteCommandMixin:
         #  earlier, right?
         for arg_name, callback in self._temp_autocomplete_callbacks.items():
             found = False
-            for name, option in self.options.items():
+            for _, option in self.options.items():
                 if option.functional_name == arg_name:
                     if option.autocomplete is None:
                         # If autocomplete isn't set, enable it for them.
@@ -1354,6 +1371,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             raise ValueError(
                 "min_value or max_value can only be set if the type is integer or number."
             )
+
         return True
 
     async def handle_value(
@@ -1366,13 +1384,22 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             user_dict = {user.id: user for user in get_users_from_interaction(state, interaction)}
             value = user_dict[user_id]
         elif self.type is ApplicationCommandOptionType.role:
+            if interaction.guild is None:
+                raise TypeError("Unable to handle a Role type when guild is None")
+
             value = interaction.guild.get_role(int(value))
         elif self.type is ApplicationCommandOptionType.integer:
             value = int(value) if value != "" else None
         elif self.type is ApplicationCommandOptionType.number:
             value = float(value)
         elif self.type is ApplicationCommandOptionType.attachment:
-            resolved_attachment_data: dict = interaction.data["resolved"]["attachments"][value]
+            try:
+                # this looks messy but is too much effort to handle
+                # feel free to use typing.cast and if statements and raises
+                resolved_attachment_data: dict = interaction.data["resolved"]["attachments"][value]  # type: ignore
+            except (AttributeError, ValueError, IndexError):
+                raise ValueError("Discord did not provide us interaction data for the attachment")
+
             value = Attachment(data=resolved_attachment_data, state=state)
         elif self.type is ApplicationCommandOptionType.mentionable:
             user_role_list = get_users_from_interaction(
@@ -1413,6 +1440,9 @@ class SlashCommandMixin(CallbackMixin):
         CallbackMixin.from_callback(self, callback=callback, option_class=option_class)
         # Right now, only slash commands can have descriptions. If User/Message commands gain descriptions, move
         #  this to CallbackMixin.
+        if callback is None:
+            raise TypeError("Cannot parse docstring of a callback that is None")
+
         self._parsed_docstring = parse_docstring(callback, _MAX_COMMAND_DESCRIPTION_LENGTH)
 
     async def get_slash_kwargs(
@@ -1421,8 +1451,14 @@ class SlashCommandMixin(CallbackMixin):
         interaction: Interaction,
         option_data: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
+        # interaction.data = cast(, interaction.data)
+
         if option_data is None:
-            option_data = interaction.data.get("options", {})
+            # pyright does not want to lose typeddict specificity but we do not care here
+            option_data = interaction.data.get("options", {})  # type: ignore
+
+            if not option_data:
+                raise ValueError("Discord did not provide us any options data")
 
         kwargs = {}
         uncalled_args = self.options.copy()
@@ -1452,7 +1488,14 @@ class SlashCommandMixin(CallbackMixin):
         option_data: Optional[List[Dict[str, Any]]] = None,
     ):
         if option_data is None:
-            option_data = interaction.data.get("options", {})
+            if interaction.data is None:
+                raise ValueError("Discord did not provide us interaction data")
+
+            # pyright does not want to lose typeddict specificity but we do not care here
+            option_data = interaction.data.get("options", {})  # type: ignore
+
+            if not option_data:
+                raise ValueError("Discord did not provide us any options data")
 
         if self.children:
             await self.children[option_data[0]["name"]].call_slash(
@@ -1815,6 +1858,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             ``True`` If the interaction could possibly be for this command, ``False`` otherwise.
         """
         data = interaction.data
+
+        if data is None:
+            raise ValueError("Discord did not provide us with interaction data")
+
         our_payload = self.get_payload(data.get("guild_id", None))
 
         def _recursive_subcommand_check(inter_pos: dict, cmd_pos: dict) -> bool:
@@ -1833,7 +1880,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 ``True`` if the payloads match, ``False`` otherwise.
             """
             inter_options = inter_pos.get("options")
-            cmd_options = cmd_pos.get("options")
+            cmd_options = cmd_pos.get("options", {})
+
+            if inter_options is None:
+                raise ValueError("Interaction options was not provided")
+
             our_options = {opt["name"]: opt for opt in cmd_options}
             if (
                 len(inter_options) == 1
@@ -2307,7 +2358,15 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         return ret
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
+        if interaction.data is None:
+            raise ValueError("Discord did not provide us interaction data")
+
+        # pyright does not want to lose typeddict specificity but we do not care here
         option_data = interaction.data.get("options", {})
+
+        if not option_data:
+            raise ValueError("Discord did not provide us any options data")
+
         if self.children:
             await self.children[option_data[0]["name"]].call(
                 state, interaction, option_data[0].get("options", {})
@@ -2757,6 +2816,10 @@ def get_users_from_interaction(
     """
     data = interaction.data
     ret = []
+
+    if data is None:
+        raise ValueError("Discord did not provide us with interaction data")
+
     # Return a Member object if the required data is available, otherwise fall back to User.
     if "members" in data["resolved"]:
         member_payloads = data["resolved"]["members"]
@@ -2799,6 +2862,10 @@ def get_messages_from_interaction(
     """
     data = interaction.data
     ret = []
+
+    if data is None:
+        raise ValueError("Discord did not provide us with interaction data")
+
     if "messages" in data["resolved"]:
         message_payloads = data["resolved"]["messages"]
         for msg_id, msg_payload in message_payloads.items():
@@ -2827,6 +2894,10 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     """
     data = interaction.data
     ret = []
+
+    if data is None:
+        raise ValueError("Discord did not provide us with interaction data")
+
     if "roles" in data["resolved"]:
         role_payloads = data["resolved"]["roles"]
         for role_id, role_payload in role_payloads.items():

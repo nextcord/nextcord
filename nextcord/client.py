@@ -99,6 +99,7 @@ if TYPE_CHECKING:
     from .message import Message
     from .permissions import Permissions
     from .scheduled_events import ScheduledEvent
+    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .voice_client import VoiceProtocol
 
 
@@ -2129,7 +2130,7 @@ class Client:
 
     async def discover_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[List[ApplicationCommandPayload]] = None,
         *,
         guild_id: Optional[int] = None,
         associate_known: bool = True,
@@ -2360,6 +2361,10 @@ class Client:
             stacklevel=2,
             category=FutureWarning,
         )
+
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(
             data=global_payload,  # type: ignore

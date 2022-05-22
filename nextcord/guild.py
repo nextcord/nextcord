@@ -102,6 +102,7 @@ if TYPE_CHECKING:
         RolePositionUpdate,
     )
     from .types.integration import IntegrationType
+    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.snowflake import SnowflakeList
     from .types.sticker import CreateGuildSticker
@@ -3334,7 +3335,7 @@ class Guild(Hashable):
 
     async def deploy_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[List[ApplicationCommandPayload]] = None,
         associate_known: bool = True,
         delete_unknown: bool = True,
         update_known: bool = True,
