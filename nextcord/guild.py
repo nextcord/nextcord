@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import copy
 import unicodedata
+import warnings
 from asyncio import Future
 from typing import (
     TYPE_CHECKING,
@@ -3348,6 +3349,46 @@ class Guild(Hashable):
             update_known=update_known,
         )
 
+    async def sync_application_commands(
+            self,
+            data: Optional[List[ApplicationCommandPayload]] = None,
+            *,
+            associate_known: bool = True,
+            delete_unknown: bool = True,
+            update_known: bool = True,
+            register_new: bool = True,
+    ) -> None:
+        """|coro|
+        Syncs the locally added application commands with this Guild.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`.
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to `True`
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to `True`
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to `True`
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._state.sync_application_commands(
+            data=data,
+            guild_id=self.id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+            register_new=register_new,
+        )
+
     async def rollout_application_commands(
         self,
         associate_known: bool = True,
@@ -3368,6 +3409,12 @@ class Guild(Hashable):
         update_known
         register_new
         """
+        warnings.warn(
+            ".rollout_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         if self._state.application_id is None:
             raise NotImplementedError("Could not get the current application id")
 
