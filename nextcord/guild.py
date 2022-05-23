@@ -3350,13 +3350,13 @@ class Guild(Hashable):
         )
 
     async def sync_application_commands(
-            self,
-            data: Optional[List[ApplicationCommandPayload]] = None,
-            *,
-            associate_known: bool = True,
-            delete_unknown: bool = True,
-            update_known: bool = True,
-            register_new: bool = True,
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        *,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
     ) -> None:
         """|coro|
         Syncs the locally added application commands with this Guild.
