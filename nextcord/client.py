@@ -2191,7 +2191,9 @@ class Client:
             update_known=update_known,
         )
 
-    async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def delete_unknown_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         """Deletes unknown global commands."""
         warnings.warn(
             ".delete_unknown_application_commands is deprecated, use .sync_application_commands and set "
@@ -2201,7 +2203,9 @@ class Client:
         )
         await self._connection.delete_unknown_application_commands(data=data, guild_id=None)
 
-    async def associate_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def associate_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         """Associates global commands registered with Discord with locally added commands."""
         warnings.warn(
             ".associate_application_commands is deprecated, use .sync_application_commands and set "
@@ -2211,7 +2215,9 @@ class Client:
         )
         await self._connection.associate_application_commands(data=data, guild_id=None)
 
-    async def update_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def update_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         """Updates global commands that have slightly changed with Discord."""
         warnings.warn(
             ".update_application_commands is deprecated, use .sync_application_commands and set "
@@ -2222,7 +2228,7 @@ class Client:
         await self._connection.update_application_commands(data=data, guild_id=None)
 
     async def register_new_application_commands(
-        self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
     ) -> None:
         """|coro|
         Registers locally added application commands that don't match a signature that Discord has registered for
@@ -2367,14 +2373,13 @@ class Client:
 
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(
-            data=global_payload,  # type: ignore
+            data=global_payload,
             associate_known=self._rollout_associate_known,
             delete_unknown=self._rollout_delete_unknown,
             update_known=self._rollout_update_known,
         )
-        # type ignore as we do not care about typeddict specificity
         if self._rollout_register_new:
-            await self.register_new_application_commands(data=global_payload)  # type: ignore
+            await self.register_new_application_commands(data=global_payload)
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:

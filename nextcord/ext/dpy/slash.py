@@ -22,14 +22,16 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import Union
+from typing import Callable, Union
 
 from nextcord import CallbackWrapper, SlashApplicationCommand, SlashApplicationSubcommand
 
 
 def describe(
     **kwargs: str,
-) -> Union[SlashApplicationCommand, SlashApplicationSubcommand, "DescribeWrapper"]:
+) -> Callable[
+    [Callable], Union[SlashApplicationCommand, SlashApplicationSubcommand, CallbackWrapper]
+]:
     class DescribeWrapper(CallbackWrapper):
         def modify(self, app_cmd: SlashApplicationCommand):
             option_names = {option.functional_name: option for option in app_cmd.options.values()}

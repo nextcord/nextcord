@@ -3374,7 +3374,6 @@ class Guild(Hashable):
         guild_payload = await self._state.http.get_guild_commands(
             self._state.application_id, self.id
         )
-        # we do not care about typeddict specificity
         await self.deploy_application_commands(
             data=guild_payload,
             associate_known=associate_known,
@@ -3382,18 +3381,26 @@ class Guild(Hashable):
             update_known=update_known,
         )
         if register_new:
-            await self.register_new_application_commands(data=guild_payload)  # type: ignore
+            await self.register_new_application_commands(data=guild_payload)
 
-    async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def delete_unknown_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         await self._state.delete_unknown_application_commands(data=data, guild_id=self.id)
 
-    async def associate_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def associate_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         await self._state.associate_application_commands(data=data, guild_id=self.id)
 
-    async def update_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def update_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         await self._state.update_application_commands(data=data, guild_id=self.id)
 
-    async def register_new_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def register_new_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         await self._state.register_new_application_commands(data=data, guild_id=self.id)
 
     async def register_application_commands(self, *commands: BaseApplicationCommand) -> None:

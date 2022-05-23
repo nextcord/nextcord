@@ -881,7 +881,7 @@ class ConnectionState:
 
     async def deploy_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[List[ApplicationCommandPayload]] = None,
         *,
         guild_id: Optional[int] = None,
         associate_known: bool = True,
@@ -902,7 +902,7 @@ class ConnectionState:
         )
 
     async def associate_application_commands(
-        self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
     ) -> None:
         warnings.warn(
             ".associate_application_commands is deprecated, use .deploy_application_commands and set "
@@ -919,7 +919,7 @@ class ConnectionState:
         )
 
     async def delete_unknown_application_commands(
-        self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
     ):
         warnings.warn(
             ".delete_unknown_application_commands is deprecated, use .deploy_application_commands and set "
@@ -936,7 +936,7 @@ class ConnectionState:
         )
 
     async def update_application_commands(
-        self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
     ) -> None:
         warnings.warn(
             ".update_application_commands is deprecated, use .deploy_application_commands and set "
@@ -953,7 +953,7 @@ class ConnectionState:
         )
 
     async def register_new_application_commands(
-        self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
     ) -> None:
         """|coro|
         Registers locally added application commands that don't match a signature that Discord has registered for
@@ -969,11 +969,13 @@ class ConnectionState:
             Defaults to `None`.
         """
         if not data:
+            if self.application_id is None:
+                raise TypeError("Could not get the current application id")
+
             if guild_id:
-                # type ignore as we do not care about typeddict specificity
-                data = await self.http.get_guild_commands(self.application_id, guild_id)  # type: ignore
+                data = await self.http.get_guild_commands(self.application_id, guild_id)
             else:
-                data = await self.http.get_global_commands(self.application_id)  # type: ignore
+                data = await self.http.get_global_commands(self.application_id)
 
         if data is None:
             raise NotImplementedError("Could not get application commands from Discord.")

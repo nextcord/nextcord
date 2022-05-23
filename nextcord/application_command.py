@@ -237,11 +237,11 @@ class ApplicationCommandOption:
 
     def __init__(
         self,
-        cmd_type: Optional[ApplicationCommandOptionType] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
         required: Optional[bool] = None,
         *,
+        cmd_type: ApplicationCommandOptionType,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         choices: Union[
@@ -304,7 +304,7 @@ class ApplicationCommandOption:
             }
             # The annotation prevents PyCharm from flipping the table and putting orange underlines under all of this.
             if self.choice_localizations and (
-                locales := self.choice_localizations.get(display_name, None)
+                locales := self.choice_localizations.get(str(display_name), None)
             ):
                 temp["name_localizations"] = {
                     str(locale): description for locale, description in locales.items()
@@ -807,13 +807,13 @@ class CallbackMixin:
 
         if can_run:
             if self._callback_before_invoke is not None:
-                await self._callback_before_invoke(interaction)
+                await self._callback_before_invoke(interaction)  # type: ignore
 
             if (before_invoke := self.cog_before_invoke) is not None:
-                await before_invoke(interaction)
+                await before_invoke(interaction)  # type: ignore
 
             if (before_invoke := state._application_command_before_invoke) is not None:
-                await before_invoke(interaction)
+                await before_invoke(interaction)  # type: ignore
 
             try:
                 # await self.invoke_callback(interaction, *args, **kwargs)
@@ -827,13 +827,13 @@ class CallbackMixin:
                 await self.invoke_error(interaction, error)
             finally:
                 if self._callback_after_invoke is not None:
-                    await self._callback_after_invoke(interaction)
+                    await self._callback_after_invoke(interaction)  # type: ignore
 
                 if (after_invoke := self.cog_after_invoke) is not None:
-                    await after_invoke(interaction)
+                    await after_invoke(interaction)  # type: ignore
 
                 if (after_invoke := state._application_command_after_invoke) is not None:
-                    await after_invoke(interaction)
+                    await after_invoke(interaction)  # type: ignore
 
     async def invoke_callback(self, interaction: Interaction, *args, **kwargs) -> None:
         """|coro|
@@ -841,7 +841,7 @@ class CallbackMixin:
         """
         await self(interaction, *args, **kwargs)
 
-    async def invoke_error(self, interaction: Interaction, error: ApplicationError) -> None:
+    async def invoke_error(self, interaction: Interaction, error: Exception) -> None:
         """|coro|
         Invokes the error handler if available.
         """
@@ -1337,7 +1337,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         # noinspection PyTypeChecker,PyUnboundLocalVariable
         if param_typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
-        elif valid_type := self.option_types.get(param_typing, None):
+        elif valid_type := self.option_types.get(param_typing, None):  # type: ignore
             return valid_type
         elif (
             type(None) in typing.get_args(param_typing)
@@ -1509,10 +1509,10 @@ class SlashCommandMixin(CallbackMixin):
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     def __init__(
         self,
-        cmd_type: Optional[ApplicationCommandType] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
         *,
+        cmd_type: ApplicationCommandType,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
@@ -2041,7 +2041,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """
         raise NotImplementedError
 
-    def check_against_raw_payload(self, raw_payload: dict, guild_id: Optional[int] = None) -> bool:
+    def check_against_raw_payload(
+        self, raw_payload: ApplicationCommandPayload, guild_id: Optional[int] = None
+    ) -> bool:
         warnings.warn(
             ".check_against_raw_payload() is deprecated, please use .is_payload_valid instead.",
             stacklevel=2,
@@ -2073,11 +2075,11 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         name: Optional[str] = None,
         description: Optional[str] = None,
         *,
+        cmd_type: ApplicationCommandOptionType,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
         parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand, None] = None,
-        cmd_type: Optional[ApplicationCommandOptionType] = None,
         parent_cog: Optional[ClientCog] = None,
         inherit_hooks: bool = False,
     ):
@@ -2120,8 +2122,8 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self.description_localizations: Optional[
             Dict[Union[str, Locale], str]
         ] = description_localizations
-        self.type: ApplicationCommandOptionType = cmd_type
-        self.parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand] = parent_cmd
+        self.type = cmd_type
+        self.parent_cmd = parent_cmd
         self._inherit_hooks: bool = inherit_hooks
 
         self.options: Dict[str, SlashCommandOption] = {}
@@ -2214,7 +2216,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                     )
 
         if self.error_callback is None:
-            self.error_callback = self.parent_cmd.error_callback
+            self.error_callback = self.parent_cmd.error_callback if self.parent_cmd else None
 
         if self._inherit_hooks and self.parent_cmd:
             self.checks.extend(self.parent_cmd.checks)
@@ -2266,7 +2268,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 parent_cog=self.parent_cog,
                 inherit_hooks=inherit_hooks,
             )
-            self.children[ret.name] = ret
+            self.children[ret.name or func.__name__] = ret
             return ret
 
         if isinstance(
@@ -2435,7 +2437,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
                 parent_cog=self.parent_cog,
                 inherit_hooks=inherit_hooks,
             )
-            self.children[ret.name] = ret
+            self.children[ret.name or func.__name__] = ret
             return ret
 
         return decorator
@@ -2817,7 +2819,7 @@ def get_users_from_interaction(
         List of resolved users, or members if possible
     """
     data = interaction.data
-    ret = []
+    ret: List[Union[User, Member]] = []
 
     if data is None:
         raise ValueError("Discord did not provide us with interaction data")
@@ -2872,7 +2874,7 @@ def get_messages_from_interaction(
         message_payloads = data["resolved"]["messages"]
         for msg_id, msg_payload in message_payloads.items():
             if not (message := state._get_message(msg_id)):
-                message = Message(channel=interaction.channel, data=msg_payload, state=state)
+                message = Message(channel=interaction.channel, data=msg_payload, state=state)  # type: ignore  # interaction.channel can be VoiceChannel somehow
 
             ret.append(message)
 

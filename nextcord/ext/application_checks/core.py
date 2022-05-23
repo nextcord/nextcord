@@ -418,9 +418,7 @@ def bot_has_any_role(*items: int) -> AC:
         if interaction.guild is None:
             raise ApplicationNoPrivateMessage()
 
-        me = cast(nextcord.Member, interaction.guild.me or interaction.client.user)
-
-        getter = functools.partial(nextcord.utils.get, me.roles)
+        getter = functools.partial(nextcord.utils.get, interaction.guild.me.roles)
         if any(
             getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None
             for item in items
