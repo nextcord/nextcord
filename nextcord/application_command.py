@@ -374,12 +374,7 @@ class BaseCommandOption(ApplicationCommandOption):
         command: Union[BaseApplicationCommand, SlashApplicationSubcommand],
         parent_cog: Optional[ClientCog] = None,
     ):
-        # super().__init__(cmd_type=command.type.value if command.type else 1)
-        # TODO: I had this as super(), and Python decided that the super was SlashOption??? Figure out how
-        #  that happened.
-        ApplicationCommandOption.__init__(
-            self, cmd_type=command.type if command.type else ApplicationCommandOptionType.string
-        )
+        ApplicationCommandOption.__init__(self)
         self.parameter: Parameter = parameter
         self.command: Union[BaseApplicationCommand, SlashApplicationSubcommand] = command
         self.functional_name: str = parameter.name
