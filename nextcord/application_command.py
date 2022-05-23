@@ -241,7 +241,7 @@ class ApplicationCommandOption:
         description: Optional[str] = None,
         required: Optional[bool] = None,
         *,
-        cmd_type: ApplicationCommandOptionType,
+        cmd_type: Optional[ApplicationCommandOptionType] = None,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         choices: Union[
@@ -362,7 +362,7 @@ class BaseCommandOption(ApplicationCommandOption):
     ----------
     parameter: :class:`Parameter`
         Function parameter to construct the command option with.
-    command: :class:`BaseApplicationCommand`
+    command: Union[:class:`BaseApplicationCommand`, :class:`SlashApplicationSubcommand`]
         Application Command this option is for.
     parent_cog: :class:`ClientCog`
         Class that the function the option is for resides in.
@@ -371,12 +371,12 @@ class BaseCommandOption(ApplicationCommandOption):
     def __init__(
         self,
         parameter: Parameter,
-        command: BaseApplicationCommand,
+        command: Union[BaseApplicationCommand, SlashApplicationSubcommand],
         parent_cog: Optional[ClientCog] = None,
     ):
-        super().__init__()
+        super().__init__(cmd_type=command.type.value if command.type else 1)
         self.parameter: Parameter = parameter
-        self.command: BaseApplicationCommand = command
+        self.command = command
         self.functional_name: str = parameter.name
         """Name of the kwarg in the function/method"""
         self.parent_cog: Optional[ClientCog] = parent_cog
@@ -718,7 +718,8 @@ class CallbackMixin:
                             # Thank you Disnake for the guidance to use this.
                             param = param.replace(annotation=typehints.get(name, param.empty))
 
-                        arg = option_class(param, self, parent_cog=self.parent_cog)
+                        arg = option_class(param, self, parent_cog=self.parent_cog)  # type: ignore
+                        # this is a mixin, so `self` would be odd here
 
                         if not arg.name:
                             raise ValueError("Cannot store an argument's type if the name is None")
@@ -797,7 +798,7 @@ class CallbackMixin:
         """|coro|
         Invokes the callback with all hooks and checks.
         """
-        interaction._set_application_command(self)
+        interaction._set_application_command(self)  # type: ignore
         try:
             can_run = await self.can_run(interaction)
         except Exception as error:
@@ -1396,15 +1397,19 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             try:
                 # this looks messy but is too much effort to handle
                 # feel free to use typing.cast and if statements and raises
-                resolved_attachment_data: dict = interaction.data["resolved"]["attachments"][value]  # type: ignore
+                resolved_attachment_data = interaction.data["resolved"]["attachments"][value]  # type: ignore
             except (AttributeError, ValueError, IndexError):
                 raise ValueError("Discord did not provide us interaction data for the attachment")
 
             value = Attachment(data=resolved_attachment_data, state=state)
         elif self.type is ApplicationCommandOptionType.mentionable:
-            user_role_list = get_users_from_interaction(
+            user_role_list: List[Union[User, Member, Role]] = get_users_from_interaction(
                 state, interaction
-            ) + get_roles_from_interaction(state, interaction)
+            ) + get_roles_from_interaction(
+                state, interaction
+            )  # pyright: ignore
+            # pyright is so sure that you cant add role + user | member
+            # when the resulting type is right
             mentionables = {mentionable.id: mentionable for mentionable in user_role_list}
             value = mentionables[int(value)]
 
@@ -1473,7 +1478,7 @@ class SlashCommandMixin(CallbackMixin):
                 raise ApplicationCommandOptionMissing(
                     f"An argument was provided that wasn't already in the function, did you recently change it and "
                     f"did not resync?\nRegistered Options: {self.options}, "
-                    f"Discord-sent args: {interaction.data['options']}, broke on {arg_data}"
+                    f"Discord-sent args: {interaction.data['options']}, broke on {arg_data}"  # type: ignore
                 )
 
         for uncalled_arg in uncalled_args.values():
@@ -1558,7 +1563,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         CallbackWrapperMixin.__init__(self, callback)
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
         self._state: Optional[ConnectionState] = None
-        self.type: Optional[ApplicationCommandType] = cmd_type
+        self.type = cmd_type or ApplicationCommandType(1)
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self._description: Optional[str] = description
@@ -1582,7 +1587,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     @property
     def description(self) -> str:
         """The description the command should have in Discord. Should be 1-100 characters long."""
-        return self._description
+        return self._description or DEFAULT_SLASH_DESCRIPTION
 
     @description.setter
     def description(self, new_description: str):
@@ -1628,7 +1633,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             True if (self.force_global or not self.is_guild or None in self.command_ids) else False
         )
 
-    def get_signature(self, guild_id: Optional[int] = None) -> Tuple[str, int, Optional[int]]:
+    def get_signature(
+        self, guild_id: Optional[int] = None
+    ) -> Tuple[Optional[str], int, Optional[int]]:
         """Returns a command signature with the given guild ID.
 
         Parameters
@@ -1760,14 +1767,18 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         return ret
 
-    def parse_discord_response(self, state: ConnectionState, data: dict) -> None:
+    def parse_discord_response(
+        self,
+        state: ConnectionState,
+        data: Union[ApplicationCommandInteractionData, ApplicationCommandPayload],
+    ) -> None:
         """Parses the application command creation/update response from Discord.
 
         Parameters
         ----------
         state: :class:`ConnectionState`
             Connection state to use internally in the command.
-        data: :class:`dict`
+        data: Union[:class:`ApplicationCommandInteractionData`, :class:`ApplicationCommand`]
             Raw dictionary data from Discord.
         """
         self._state = state
@@ -1807,7 +1818,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         if not check_dictionary_values(
             cmd_payload,
-            raw_payload,
+            raw_payload,  # type: ignore  # specificity of typeddicts doesnt matter in validation
             "default_member_permissions",
             "description",
             "type",
@@ -1832,7 +1843,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                     # At this time, ApplicationCommand options are identical between locally-generated payloads and
                     # payloads from Discord. If that were to change, switch from a recursive setup and manually
                     # check_dictionary_values.
-                    if not deep_dictionary_check(cmd_option, raw_option):
+                    if not deep_dictionary_check(cmd_option, raw_option):  # type: ignore
+                        # its a dict check so typeddicts do not matter
                         _log.debug("Options failed deep dictionary checks, not valid payload.")
                         return False
 
@@ -1988,14 +2000,15 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 return False  # Interaction has more options than we do.
             return True  # No checks failed.
 
-        if not check_dictionary_values(our_payload, data, "name", "guild_id", "type"):
+        # caring  about typeddict specificity will cause issues down the line
+        if not check_dictionary_values(our_payload, data, "name", "guild_id", "type"):  # type: ignore
             _log.debug("%s Failed basic dictionary check.", self.error_name)
             return False
         else:
             data_options = data.get("options")
             payload_options = our_payload.get("options")
             if data_options and payload_options:
-                return _recursive_subcommand_check(data, our_payload)
+                return _recursive_subcommand_check(data, our_payload)  # type: ignore
             elif data_options is None and payload_options is None:
                 return True  # User and Message commands don't have options.
             else:
@@ -2025,7 +2038,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         interaction: :class:`Interaction`
             Interaction corresponding to the use of the command.
         """
-        await self.call(self._state, interaction)
+        await self.call(self._state, interaction)  # type: ignore
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
         """|coro|
@@ -2821,27 +2834,36 @@ def get_users_from_interaction(
     data = interaction.data
     ret: List[Union[User, Member]] = []
 
+    data = cast(ApplicationCommandInteractionData, data)
+
     if data is None:
         raise ValueError("Discord did not provide us with interaction data")
 
     # Return a Member object if the required data is available, otherwise fall back to User.
-    if "members" in data["resolved"]:
+    if "resolved" in data and "members" in data["resolved"]:
         member_payloads = data["resolved"]["members"]
         # Because the payload is modified further down, a copy is made to avoid affecting methods or
         #  users that read from interaction.data further down the line.
         for member_id, member_payload in member_payloads.copy().items():
+            if interaction.guild is None:
+                raise TypeError("Cannot resolve members if Interaction.guild is None")
+
             # If a member isn't in the cache, construct a new one.
-            if not (member := interaction.guild.get_member(int(member_id))):
-                user_payload = interaction.data["resolved"]["users"][member_id]
+            if (
+                not (member := interaction.guild.get_member(int(member_id)))
+                and "users" in data["resolved"]
+            ):
+                user_payload = data["resolved"]["users"][member_id]
                 # This is required to construct the Member.
                 member_payload["user"] = user_payload
-                member = Member(data=member_payload, guild=interaction.guild, state=state)
+                member = Member(data=member_payload, guild=interaction.guild, state=state)  # type: ignore
                 interaction.guild._add_member(member)
 
-            ret.append(member)
+            if member is not None:
+                ret.append(member)
 
-    elif "users" in data["resolved"]:
-        resolved_users_payload = interaction.data["resolved"]["users"]
+    elif "resolved" in data and "users" in data["resolved"]:
+        resolved_users_payload = data["resolved"]["users"]
         ret = [state.store_user(user_payload) for user_payload in resolved_users_payload.values()]
 
     return ret
@@ -2867,13 +2889,15 @@ def get_messages_from_interaction(
     data = interaction.data
     ret = []
 
+    data = cast(ApplicationCommandInteractionData, data)
+
     if data is None:
         raise ValueError("Discord did not provide us with interaction data")
 
-    if "messages" in data["resolved"]:
+    if "resolved" in data and "messages" in data["resolved"]:
         message_payloads = data["resolved"]["messages"]
         for msg_id, msg_payload in message_payloads.items():
-            if not (message := state._get_message(msg_id)):
+            if not (message := state._get_message(int(msg_id))):
                 message = Message(channel=interaction.channel, data=msg_payload, state=state)  # type: ignore  # interaction.channel can be VoiceChannel somehow
 
             ret.append(message)
@@ -2902,11 +2926,16 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     if data is None:
         raise ValueError("Discord did not provide us with interaction data")
 
-    if "roles" in data["resolved"]:
+    data = cast(ApplicationCommandInteractionData, data)
+
+    if "resolved" in data and "roles" in data["resolved"]:
         role_payloads = data["resolved"]["roles"]
         for role_id, role_payload in role_payloads.items():
             # if True:  # Use this for testing payload -> Role
-            if not (role := interaction.guild.get_role(role_id)):
+            if interaction.guild is None:
+                raise TypeError("Interaction.guild is None when resolving a Role")
+
+            if not (role := interaction.guild.get_role(int(role_id))):
                 role = Role(guild=interaction.guild, state=state, data=role_payload)
 
             ret.append(role)

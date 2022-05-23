@@ -1941,7 +1941,7 @@ class Client:
             _log.debug("nextcord.Client: Autocomplete interaction received.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
                 _log.debug(f"nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
-                await app_cmd.call_autocomplete_from_interaction(interaction)
+                await app_cmd.call_autocomplete_from_interaction(interaction)  # type: ignore
             else:
                 raise ValueError(
                     f"Received autocomplete interaction for {interaction.data['name']} but command isn't "
@@ -1985,10 +1985,12 @@ class Client:
             found, returns ``None`` instead.
         """
         if isinstance(cmd_type, ApplicationCommandType):
-            cmd_type = cmd_type.value
+            actual_type = cmd_type.value
+        else:
+            actual_type = cmd_type
 
         return self._connection.get_application_command_from_signature(
-            name=name, cmd_type=cmd_type, guild_id=guild_id
+            name=name, cmd_type=actual_type, guild_id=guild_id
         )
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:

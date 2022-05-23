@@ -251,7 +251,7 @@ class ConnectionState:
         # A dictionary of all available unique command signatures. Compiled at runtime because needing to iterate
         # through all application commands would take far more time. If memory is problematic, perhaps this can go?
         self._application_command_signatures: Dict[
-            Tuple[str, int, Optional[int]], BaseApplicationCommand
+            Tuple[Optional[str], int, Optional[int]], BaseApplicationCommand
         ] = {}
         # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
         self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
@@ -545,7 +545,7 @@ class ConnectionState:
         return self._application_command_ids.get(command_id, None)
 
     def get_application_command_from_signature(
-        self, name: str, cmd_type: int, guild_id: Optional[int]
+        self, name: Optional[str], cmd_type: int, guild_id: Optional[int]
     ) -> Optional[BaseApplicationCommand]:
         return self._application_command_signatures.get((name, cmd_type, guild_id), None)
 
@@ -841,8 +841,10 @@ class ConnectionState:
             raise NotImplementedError("Could not get application commands from Discord.")
 
         for raw_response in data:
-            fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else temp
-            response_signature = (raw_response["name"], int(raw_response["type"]), fixed_guild_id)
+            fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else None
+            payload_type = raw_response["type"] if "type" in raw_response else 1
+
+            response_signature = (raw_response["name"], int(payload_type), fixed_guild_id)
             if app_cmd := self.get_application_command_from_signature(*response_signature):
                 if app_cmd.is_payload_valid(raw_response, guild_id):
                     if associate_known:
@@ -983,7 +985,7 @@ class ConnectionState:
         data_signatures = [
             (
                 raw_response["name"],
-                int(raw_response["type"]),
+                int(raw_response["type"] if "type" in raw_response else 1),
                 int(temp) if (temp := raw_response.get("guild_id", None)) else temp,
             )
             for raw_response in data
@@ -1010,7 +1012,7 @@ class ConnectionState:
             ID of the guild to register the application commands to. If set to `None`, the commands will be registered
             as global commands instead. Defaults to `None`.
         """
-        payload = command.get_payload(guild_id)
+        payload: EditApplicationCommand = command.get_payload(guild_id)  # type: ignore
         _log.info(
             f"nextcord.ConnectionState: Registering command with signature %s",
             command.get_signature(guild_id),
@@ -1061,7 +1063,7 @@ class ConnectionState:
             )
 
         self._application_command_ids.pop(command.command_ids[guild_id], None)
-        self._application_command_signatures.pop(command.get_signature(guild_id))
+        self._application_command_signatures.pop(command.get_signature(guild_id), None)
 
     # async def register_bulk_application_commands(self) -> None:
     #     # TODO: Using Bulk upsert seems to delete all commands

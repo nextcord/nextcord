@@ -557,7 +557,7 @@ class BotBase(GroupMixin):
         cog = cog._inject(self)
         self.__cogs[cog_name] = cog
         # TODO: This blind call to nextcord.Client is dumb.
-        super().add_cog(cog)
+        super().add_cog(cog)  # type: ignore
         # Info: To add the ability to use BaseApplicationCommands in Cogs, the Client has to be aware of cogs. For
         # minimal editing, BotBase must call Client's add_cog function. While it all works out in the end because Bot
         # and AutoShardedBot both end up subclassing Client, this is BotBase and BotBase does not subclass Client, hence
