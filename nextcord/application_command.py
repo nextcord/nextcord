@@ -374,9 +374,14 @@ class BaseCommandOption(ApplicationCommandOption):
         command: Union[BaseApplicationCommand, SlashApplicationSubcommand],
         parent_cog: Optional[ClientCog] = None,
     ):
-        super().__init__(cmd_type=command.type.value if command.type else 1)
+        # super().__init__(cmd_type=command.type.value if command.type else 1)
+        # TODO: I had this as super(), and Python decided that the super was SlashOption??? Figure out how
+        #  that happened.
+        ApplicationCommandOption.__init__(
+            self, cmd_type=command.type if command.type else ApplicationCommandOptionType.string
+        )
         self.parameter: Parameter = parameter
-        self.command = command
+        self.command: Union[BaseApplicationCommand, SlashApplicationSubcommand] = command
         self.functional_name: str = parameter.name
         """Name of the kwarg in the function/method"""
         self.parent_cog: Optional[ClientCog] = parent_cog
@@ -2508,6 +2513,14 @@ class UserApplicationCommand(BaseApplicationCommand):
             force_global=force_global,
         )
 
+    @property
+    def description(self) -> str:
+        return ""
+
+    @description.setter
+    def description(self, new_desc: str):
+        raise ValueError("UserApplicationCommands cannot have a description set.")
+
     async def call(self, state: ConnectionState, interaction: Interaction):
         await self.invoke_callback_with_hooks(
             state, interaction, get_users_from_interaction(state, interaction)[0]
@@ -2572,6 +2585,14 @@ class MessageApplicationCommand(BaseApplicationCommand):
             parent_cog=parent_cog,
             force_global=force_global,
         )
+
+    @property
+    def description(self) -> str:
+        return ""
+
+    @description.setter
+    def description(self, new_desc: str):
+        raise ValueError("MessageApplicationCommands cannot have a description set.")
 
     async def call(self, state: ConnectionState, interaction: Interaction):
         await self.invoke_callback_with_hooks(
