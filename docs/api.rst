@@ -4384,6 +4384,47 @@ Slash Commands
 Slash Options
 ~~~~~~~~~~~~~
 
+.. list-table:: Accepted Default Option Types
+    :widths: 25 25 50
+    :header-rows: 1
+
+    * - Typehint
+      - Discord Type
+      - Notes
+    * - <blank>
+      - String
+      - When no typehint is given, it defaults to string.
+    * - :class:`str`
+      - String
+      -
+    * - :class:`int`
+      - Integer
+      - Any integer between -2^53 and 2^53
+    * - :class:`bool`
+      - Boolean
+      -
+    * - :class:`User`
+      - User
+      -
+    * - :class:`Member`
+      - User
+      - Identical to typehinting with :class:`User`
+    * - :class:`abc.GuildChannel`
+      - Channel
+      - Includes all channel types + categories. Use :class:`SlashOption` to configure which channel types to allow.
+    * - :class:`Role`
+      - Role
+      -
+    * - :class:`Mentionable`
+      - Mentionable
+      - Includes Users and Roles.
+    * - :class:`float`
+      - Number
+      - Any double between -2^53 and 2^53
+    * - :class:`Attachment`
+      - Attachment
+      - 
+
 .. attributetable:: SlashOption
 
 .. autoclass:: SlashOption
@@ -4396,6 +4437,7 @@ Slash Options
 .. autoclass:: SlashCommandOption
     :members:
     :inherited-members:
+    :exclude-members: option_types
 
 User Commands
 ~~~~~~~~~~~~~
