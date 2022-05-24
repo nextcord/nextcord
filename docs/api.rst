@@ -2730,6 +2730,9 @@ of :class:`enum.Enum`.
 
         An alias for :attr:`canceled`.
 
+.. autoclass:: Locale
+    :members:
+
 Async Iterator
 ----------------
 
@@ -4338,22 +4341,13 @@ Cogs
 .. autoclass:: ClientCog
     :members:
 
-Decorators
-~~~~~~~~~~
-
-.. autoclass:: message_command
-
-.. autoclass:: slash_command
-
-.. autoclass:: user_command
-
 Application Commands
 --------------------
 
 The library has helpers to easily create and manipulate application commands.
 
 Base Commands
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. attributetable:: BaseApplicationCommand
 
@@ -4475,6 +4469,15 @@ Command Helpers
 .. autoclass:: Mentionable
     :members:
 
+Decorators
+~~~~~~~~~~
+
+.. autoclass:: message_command
+
+.. autoclass:: slash_command
+
+.. autoclass:: user_command
+
 Exceptions
 ------------
 
@@ -4519,6 +4522,8 @@ The following exceptions are thrown by the library.
 
 .. autoexception:: ApplicationCheckFailure
 
+.. autoexception:: ApplicationCommandOptionMissing
+
 Exception Hierarchy
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -4543,3 +4548,4 @@ Exception Hierarchy
         - :exc:`ApplicationError`
             - :exc:`ApplicationInvokeError`
             - :exc:`ApplicationCheckFailure`
+            - :exc:`ApplicationCommandOptionMissing`

@@ -71,7 +71,6 @@ if TYPE_CHECKING:
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
 
-    _SlashOptionMetaBase = Any
     _CustomTypingMetaBase = Any
 else:
     _CustomTypingMetaBase = object
@@ -100,6 +99,8 @@ _log = logging.getLogger(__name__)
 
 # Maximum allowed length of a command or option description
 _MAX_COMMAND_DESCRIPTION_LENGTH = 100
+# Description to use for slash commands when the user doesn't provide one.
+DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
@@ -108,9 +109,6 @@ FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
     return func
-
-
-DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 
 class CallbackWrapper:
@@ -272,13 +270,13 @@ class ApplicationCommandOption:
         self.max_value: Optional[Union[int, float]] = max_value
         self.autocomplete: Optional[bool] = autocomplete
 
-    def get_name_localization_payload(self) -> Optional[dict]:
+    def get_name_localization_payload(self) -> Optional[Dict[str, str]]:
         if not self.name_localizations:
             return None
 
         return {str(locale): name for locale, name in self.name_localizations.items()}
 
-    def get_description_localization_payload(self) -> Optional[dict]:
+    def get_description_localization_payload(self) -> Optional[Dict[str, str]]:
         if not self.description_localizations:
             return None
 
@@ -329,10 +327,10 @@ class ApplicationCommandOption:
             "name_localizations": self.get_name_localization_payload(),
             "description_localizations": self.get_description_localization_payload(),
         }
-
+        # We don't check if it's None because if it's False, we don't want to send it.
         if (
             self.required
-        ):  # We don't check if it's None because if it's False, we don't want to send it.
+        ):
             ret["required"] = self.required
 
         if self.choices:
@@ -395,7 +393,7 @@ class OptionConverter(_CustomTypingMetaBase):
         option_type: Union[:class:`type`, :class:`ApplicationCommandOptionType`]
             Option type to forward to Discord.
         """
-        self.type: Union[type, ApplicationCommandOptionType] = option_type
+        self.type = option_type
 
     async def convert(self, interaction: Interaction, value: Any) -> Any:
         """|coro|
@@ -477,9 +475,11 @@ class ClientCog:
 
     @property
     def application_commands(self) -> List[BaseApplicationCommand]:
+        """Provides the list of application commands in this cog. Subcommands are not included."""
         return self.__cog_application_commands__
 
     def process_app_cmds(self) -> None:
+        """Formats all added application commands with their callback."""
         # TODO: Find better name, check conflicts with actual cogs.
         for app_cmd in self.application_commands:
             app_cmd.from_callback(app_cmd.callback)
@@ -980,11 +980,9 @@ class AutocompleteCommandMixin:
         """
         self.parent_cog = parent_cog
         self._temp_autocomplete_callbacks: Dict[str, Callable] = {}
-        """
-        Why does this exist, and why is it "temp", you may ask? :class:`SlashCommandOption`'s are only available after
-        the callback is fully parsed when the :class:`Client` or :class:`ClientCog` runs the from_callback method, thus
-        we have to hold the decorated autocomplete callbacks temporarily until then.
-        """
+        # Why does this exist, and why is it "temp", you may ask? :class:`SlashCommandOption`'s are only available
+        # after the callback is fully parsed when the :class:`Client` or :class:`ClientCog` runs the from_callback
+        # method, thus we have to hold the decorated autocomplete callbacks temporarily until then.
 
     async def call_autocomplete_from_interaction(self, interaction: Interaction) -> None:
         """|coro|
@@ -1072,7 +1070,6 @@ class AutocompleteCommandMixin:
         ------
         :class:`ValueError`
             If a found arg name doesn't correspond to an autocomplete function.
-
         """
         # TODO: You should probably add the ability to provide a dict/kwargs of callbacks to override whatever was set
         #  earlier, right?
@@ -1121,6 +1118,12 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         The description of the Option on Discords side. If left as None, it defaults to "".
     required: :class:`bool`
         If a user is required to provide this argument before sending the command.
+    name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+        Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+        localized name as the value
+    description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+        Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
+        localized description as the value
     choices: Union[Dict[:class:`str`, Union[:class:`str`, :class:`int`, :class:`float`]],
              Iterable[Union[:class:`str`, :class:`int`, :class:`float`]]]
         A list of choices that a user must choose.
@@ -1223,9 +1226,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         BaseCommandOption.__init__(self, parameter, command, parent_cog)
         SlashOption.__init__(
             self
-        )  # We subclassed SlashOption because we must handle all attributes it has.
+        )
+        # We subclassed SlashOption because we must handle all attributes it has.
         AutocompleteOptionMixin.__init__(self, parent_cog=parent_cog)
-        # self.functional_name = parameter.name
 
         if isinstance(parameter.default, SlashOption):
             # Remember: Values that the user provided in SlashOption should override any logic.
@@ -1295,9 +1298,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             for t in typing.get_args(parameter.annotation):
                 if issubclass(t, OptionConverter):
                     # If annotated with OptionConverter inside of Optional...
-                    self.converter = (
-                        t()
-                    )  # Optional cannot have instantiated objects in it apparently?
+                    # Optional cannot have instantiated objects in it apparently?
+                    self.converter = t()
                     break
 
         if self.converter:
@@ -1578,8 +1580,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         self.force_global: bool = force_global
 
-        self.command_ids: Dict[Optional[int], int] = {}  # {Guild ID (None for global): command ID}
-        """Command IDs that this application command currently has. Schema: {Guild ID (None for global): command ID}"""
+        self.command_ids: Dict[Optional[int], int] = {}
+        """
+        Dict[Optional[:class:`int`], :class:`int`]: 
+            Command IDs that this application command currently has. Schema: {Guild ID (None for global): command ID}
+        """
         self.options: Dict[str, ApplicationCommandOption] = {}
 
     # Simple-ish getter + setter methods.
@@ -1690,7 +1695,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         return ret
 
-    def get_name_localization_payload(self) -> Optional[dict]:
+    def get_name_localization_payload(self) -> Optional[Dict[str, str]]:
         if self.name_localizations:
             ret = {}
             for locale, name in self.name_localizations.items():
@@ -1975,12 +1980,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                     inter_opt,
                 ) in all_inter_options_copy:  # Should only contain optionals now.
                     if our_opt := all_our_options_copy.get(inter_opt_name):
-                        if (
+                        if not (
                             inter_opt["name"] == our_opt["name"]
                             and inter_opt["type"] == our_opt["type"]
                         ):
-                            pass
-                        else:
                             _log.debug(
                                 "%s Optional option don't match name and/or type.", self.error_name
                             )
@@ -2220,13 +2223,12 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
     ) -> None:
         SlashCommandMixin.from_callback(self, callback=callback, option_class=option_class)
         if call_children:
-            if self.children:
-                for child in self.children.values():
-                    child.from_callback(
-                        callback=child.callback,
-                        option_class=option_class,
-                        call_children=call_children,
-                    )
+            for child in self.children.values():
+                child.from_callback(
+                    callback=child.callback,
+                    option_class=option_class,
+                    call_children=call_children,
+                )
 
         if self.error_callback is None:
             self.error_callback = self.parent_cmd.error_callback if self.parent_cmd else None
