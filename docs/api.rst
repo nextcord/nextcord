@@ -4423,7 +4423,7 @@ Slash Options
       - Any double between -2^53 and 2^53
     * - :class:`Attachment`
       - Attachment
-      - 
+      -
 
 .. attributetable:: SlashOption
 
