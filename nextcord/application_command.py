@@ -328,9 +328,7 @@ class ApplicationCommandOption:
             "description_localizations": self.get_description_localization_payload(),
         }
         # We don't check if it's None because if it's False, we don't want to send it.
-        if (
-            self.required
-        ):
+        if self.required:
             ret["required"] = self.required
 
         if self.choices:
@@ -1224,9 +1222,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         parent_cog: Optional[ClientCog] = None,
     ):
         BaseCommandOption.__init__(self, parameter, command, parent_cog)
-        SlashOption.__init__(
-            self
-        )
+        SlashOption.__init__(self)
         # We subclassed SlashOption because we must handle all attributes it has.
         AutocompleteOptionMixin.__init__(self, parent_cog=parent_cog)
 
@@ -1582,7 +1578,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         self.command_ids: Dict[Optional[int], int] = {}
         """
-        Dict[Optional[:class:`int`], :class:`int`]: 
+        Dict[Optional[:class:`int`], :class:`int`]:
             Command IDs that this application command currently has. Schema: {Guild ID (None for global): command ID}
         """
         self.options: Dict[str, ApplicationCommandOption] = {}
