@@ -4335,12 +4335,6 @@ Select
 
 .. autofunction:: nextcord.ui.select
 
-Cogs
-~~~~
-
-.. autoclass:: ClientCog
-    :members:
-
 Application Commands
 --------------------
 
@@ -4477,6 +4471,12 @@ Decorators
 .. autoclass:: slash_command
 
 .. autoclass:: user_command
+
+Cogs
+~~~~
+
+.. autoclass:: ClientCog
+    :members:
 
 Exceptions
 ------------
