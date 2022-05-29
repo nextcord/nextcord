@@ -700,8 +700,6 @@ class CallbackMixin:
             if option_class:
                 first_arg = True
                 typehints = typing.get_type_hints(self.callback)
-                # self_skip = inspect.ismethod(self.callback)  # Getting the callback as a method was problematic. Look
-                #  into this in the future, it's better than just checking if self.parent_cog exists.
                 # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
                 #  decorator going into effect before the class is instantiated, thus being a function at the time.
                 #  Try to look into fixing that in the future?
