@@ -978,10 +978,10 @@ class AutocompleteCommandMixin:
             Class that the callback resides on. Will be passed into the callback if provided.
         """
         self.parent_cog = parent_cog
-        self._temp_autocomplete_callbacks: Dict[str, Callable] = {}
         # Why does this exist, and why is it "temp", you may ask? :class:`SlashCommandOption`'s are only available
         # after the callback is fully parsed when the :class:`Client` or :class:`ClientCog` runs the from_callback
         # method, thus we have to hold the decorated autocomplete callbacks temporarily until then.
+        self._temp_autocomplete_callbacks: Dict[str, Callable] = {}
 
     async def call_autocomplete_from_interaction(self, interaction: Interaction) -> None:
         """|coro|
