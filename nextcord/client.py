@@ -31,6 +31,7 @@ import logging
 import signal
 import sys
 import traceback
+import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -54,11 +55,17 @@ import aiohttp
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import message_command, slash_command, user_command
+from .application_command import (
+    SlashApplicationCommand,
+    SlashApplicationSubcommand,
+    message_command,
+    slash_command,
+    user_command,
+)
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .enums import ChannelType, InteractionType, Status, VoiceRegion
+from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
@@ -85,11 +92,14 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import ApplicationCommand, ClientCog
+    from .application_command import BaseApplicationCommand, ClientCog
     from .channel import DMChannel
+    from .enums import Locale
     from .member import Member
     from .message import Message
+    from .permissions import Permissions
     from .scheduled_events import ScheduledEvent
+    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .voice_client import VoiceProtocol
 
 
@@ -262,6 +272,12 @@ class Client:
         self,
         *,
         loop: Optional[asyncio.AbstractEventLoop] = None,
+        lazy_load_commands: bool = True,
+        rollout_associate_known: bool = True,
+        rollout_delete_unknown: bool = True,
+        rollout_register_new: bool = True,
+        rollout_update_known: bool = True,
+        rollout_all_guilds: bool = False,
         **options: Any,
     ):
         # self.ws is set in the connect method
@@ -290,14 +306,14 @@ class Client:
         self._ready: asyncio.Event = asyncio.Event()
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
-        self._lazy_load_commands: bool = options.pop("lazy_load_commands", True)
+        self._lazy_load_commands: bool = lazy_load_commands
         self._client_cogs: Set[ClientCog] = set()
-        self._rollout_associate_known: bool = options.pop("rollout_associate_known", True)
-        self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
-        self._rollout_register_new: bool = options.pop("rollout_register_new", True)
-        self._rollout_update_known: bool = options.pop("rollout_update_known", True)
-        self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
-        self._application_commands_to_add: Set[ApplicationCommand] = set()
+        self._rollout_associate_known: bool = rollout_associate_known
+        self._rollout_delete_unknown: bool = rollout_delete_unknown
+        self._rollout_register_new: bool = rollout_register_new
+        self._rollout_update_known: bool = rollout_update_known
+        self._rollout_all_guilds: bool = rollout_all_guilds
+        self._application_commands_to_add: Set[BaseApplicationCommand] = set()
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -1864,78 +1880,124 @@ class Client:
         interaction.data = cast(ApplicationCommandInteractionData, interaction.data)
 
         if interaction.type is InteractionType.application_command:
-            _log.info("nextcord.Client: Found an interaction command.")
-
+            _log.debug("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
+                _log.debug(
+                    "nextcord.Client: Calling your application command now %s", app_cmd.error_name
+                )
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
-                _log.info(
+                _log.debug(
                     f"nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
-                _log.debug(f"nextcord.Client: {interaction.data}")
+                # _log.debug(f"nextcord.Client: %s", interaction.data)
                 response_signature = (
                     interaction.data["name"],
                     int(interaction.data["type"]),
                     interaction.guild_id,
                 )
-                _log.debug(f"nextcord.Client: {response_signature}")
+                _log.debug(f"nextcord.Client: %s", response_signature)
                 do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
-                    interaction.data["name"], int(interaction.data["type"]), interaction.guild_id
+                    interaction.data["name"],
+                    int(interaction.data["type"]),
+                    int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None,
                 ):
-                    _log.info(
+                    _log.debug(
                         "nextcord.Client: Basic signature matches, checking against raw payload."
                     )
-                    # TODO: Lazy load is completely broken. Figure out how to fix it.
-                    if app_cmd.reverse_check_against_raw_payload(
-                        interaction.data, interaction.guild_id  # type: ignore
-                    ):
-                        # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
-                        _log.info(
-                            "nextcord.Client: New interaction command found, Assigning id now"
+                    if app_cmd.is_interaction_valid(interaction):
+                        _log.debug(
+                            f"nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
+                            app_cmd.error_name,
                         )
-                        app_cmd.parse_discord_response(self._connection, interaction.data)  # type: ignore
+                        app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
                     else:
                         do_deploy = True
+
                 else:
                     do_deploy = True
+
                 if do_deploy:
                     if interaction.guild:
-                        await interaction.guild.deploy_application_commands(
+                        await self.discover_application_commands(
+                            guild_id=interaction.guild.id,
                             associate_known=self._rollout_associate_known,
                             delete_unknown=self._rollout_delete_unknown,
                             update_known=self._rollout_update_known,
                         )
                     else:
-                        await self.deploy_application_commands(
+                        await self.discover_application_commands(
+                            guild_id=None,
                             associate_known=self._rollout_associate_known,
                             delete_unknown=self._rollout_delete_unknown,
                             update_known=self._rollout_update_known,
                         )
+
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
-            _log.info("nextcord.Client: Autocomplete interaction received.")
-            _log.debug(f"nextcord.Client: {interaction.data}")
+            _log.debug("nextcord.Client: Autocomplete interaction received.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.info(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
-                await app_cmd.call_autocomplete_from_interaction(interaction)
+                _log.debug(f"nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
+                await app_cmd.call_autocomplete_from_interaction(interaction)  # type: ignore
             else:
                 raise ValueError(
                     f"Received autocomplete interaction for {interaction.data['name']} but command isn't "
                     f"found/associated!"
                 )
 
-    def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
+    def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
+        """Gets an application command from the cache that has the given command ID.
+
+        Parameters
+        ----------
+        command_id: :class:`int`
+            Command ID corresponding to an application command.
+
+        Returns
+        -------
+        Optional[:class:`BaseApplicationCommand`]
+            Returns the application command corresponding to the ID. If no command is
+            found, ``None`` is returned instead.
+        """
         return self._connection.get_application_command(command_id)
 
-    def get_all_application_commands(self) -> Set[ApplicationCommand]:
-        """Returns a copied set of all added :class:`ApplicationCommand` objects."""
+    def get_application_command_from_signature(
+        self, name: str, cmd_type: Union[int, ApplicationCommandType], guild_id: Optional[int]
+    ) -> Optional[BaseApplicationCommand]:
+        """Gets a locally stored application command object that matches the given signature.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of the application command. Capital sensitive.
+        cmd_type: Union[:class:`int`, :class:`ApplicationCommandType`]
+            Type of application command.
+        guild_id: Optional[:class:`int`]
+            Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
+
+        Returns
+        -------
+        command: Optional[:class:`BaseApplicationCommand`]
+            Application Command with the given signature. If no command with that signature is
+            found, returns ``None`` instead.
+        """
+        if isinstance(cmd_type, ApplicationCommandType):
+            actual_type = cmd_type.value
+        else:
+            actual_type = cmd_type
+
+        return self._connection.get_application_command_from_signature(
+            name=name, cmd_type=actual_type, guild_id=guild_id
+        )
+
+    def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
+        """Returns a copied set of all added :class:`BaseApplicationCommand` objects."""
         return self._connection.application_commands
 
-    def get_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+    def get_application_commands(self, rollout: bool = False) -> List[BaseApplicationCommand]:
         """Gets registered global commands.
 
         Parameters
@@ -1945,15 +2007,15 @@ class Client:
 
         Returns
         -------
-        List[:class:`ApplicationCommand`]
-            List of :class:`ApplicationCommand` objects that are global.
+        List[:class:`BaseApplicationCommand`]
+            List of :class:`BaseApplicationCommand` objects that are global.
         """
         return self._connection.get_global_application_commands(rollout=rollout)
 
     def add_application_command(
-        self, command: ApplicationCommand, overwrite: bool = False, use_rollout: bool = False
+        self, command: BaseApplicationCommand, overwrite: bool = False, use_rollout: bool = False
     ) -> None:
-        """Adds an ApplicationCommand object to the client for use.
+        """Adds a BaseApplicationCommand object to the client for use.
 
         Parameters
         ----------
@@ -1968,78 +2030,306 @@ class Client:
             command, overwrite=overwrite, use_rollout=use_rollout
         )
 
-    async def deploy_application_commands(
+    async def sync_all_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[Dict[Optional[int], List[ApplicationCommandPayload]]] = None,
+        *,
+        use_rollout: bool = True,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
+    ) -> None:
+        """|coro|
+
+        Syncs all application commands with Discord. Will sync global commands if any commands added are global, and
+        syncs with all guilds that have an application command targeting them.
+
+        This may call Discord many times depending on how different guilds you have local commands for, and how many
+        commands Discord needs to be updated or added, which may cause your bot to be rate limited or even Cloudflare
+        banned in VERY extreme cases.
+
+        This may incur high CPU usage depending on how many commands you have and how complex they are, which may cause
+        your bot to halt while it checks local commands against the existing commands that Discord has.
+
+        For a more targeted version of this method, see :func:`Client.sync_application_commands`
+
+        Parameters
+        ----------
+        data: Optional[Dict[Optional[:class:`int`], List[:class:`dict`]]]
+            Data to use when comparing local application commands to what Discord has. The key should be the
+            :class:`int` guild ID (`None` for global) corresponding to the value list of application command payloads
+            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to `None`
+        use_rollout: :class:`bool`
+            If the rollout guild IDs of commands should be used. Defaults to `True`
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to `True`
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to `True`
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to `True`
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._connection.sync_all_application_commands(
+            data=data,
+            use_rollout=use_rollout,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+            register_new=register_new,
+        )
+
+    async def sync_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        *,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
+    ) -> None:
+        """|coro|
+        Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
+        global commands if the guild_id is `None`.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
+            Defaults to `None`.
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to `True`
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to `True`
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to `True`
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._connection.sync_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+            register_new=register_new,
+        )
+
+    async def discover_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        *,
+        guild_id: Optional[int] = None,
         associate_known: bool = True,
         delete_unknown: bool = True,
         update_known: bool = True,
     ) -> None:
+        """|coro|
+        Associates existing, deletes unknown, and updates modified commands for either global commands or a specific
+        guild. This does a deep check on found commands, which may be expensive CPU-wise.
 
-        """Updates and associates recognizable global application commands, and deletes unknown ones."""
-        # TODO: Look, I need to get this out of the door. Properish documentation of this is in ConnectionState, and
-        #  this could be an easy "I want to contribute to Nextcord in a meaningful way" PR.
-        await self._connection.deploy_application_commands(
+        Running this for global or the same guild multiple times at once may cause unexpected or unstable behavior.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict]]
+            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
+            the payload will be retrieved from Discord.
+        guild_id: Optional[:class:`int`]
+            Guild ID to deploy application commands to. If `None`, global commands are deployed to.
+        associate_known: :class:`bool`
+            If True, commands on Discord that pass a signature check and a deep check will be associated with locally
+            added ApplicationCommand objects.
+        delete_unknown: :class:`bool`
+            If `True`, commands on Discord that fail a signature check will be removed. If `update_known` is False,
+            commands that pass the signature check but fail the deep check will also be removed.
+        update_known: :class:`bool`
+            If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._connection.discover_application_commands(
             data=data,
-            guild_id=None,
+            guild_id=guild_id,
             associate_known=associate_known,
             delete_unknown=delete_unknown,
             update_known=update_known,
         )
 
-    async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def deploy_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        *,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+    ) -> None:
+        warnings.warn(
+            ".deploy_application_commands is deprecated, use .discover_application_commands instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+        await self.discover_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+        )
+
+    async def delete_unknown_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         """Deletes unknown global commands."""
+        warnings.warn(
+            ".delete_unknown_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self._connection.delete_unknown_application_commands(data=data, guild_id=None)
 
-    async def associate_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def associate_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         """Associates global commands registered with Discord with locally added commands."""
+        warnings.warn(
+            ".associate_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self._connection.associate_application_commands(data=data, guild_id=None)
 
-    async def update_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def update_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         """Updates global commands that have slightly changed with Discord."""
+        warnings.warn(
+            ".update_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self._connection.update_application_commands(data=data, guild_id=None)
 
-    async def register_new_application_commands(self, data: Optional[List[dict]] = None) -> None:
-        """Registers global commands that were added locally, but aren't in Discord yet."""
-        await self._connection.register_new_application_commands(data=data, guild_id=None)
+    async def register_new_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Registers locally added application commands that don't match a signature that Discord has registered for
+        either global commands or a specific guild.
 
-    async def register_application_commands(self, *commands: ApplicationCommand) -> None:
-        """Registers the given global application commands with Discord."""
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`
+        guild_id: Optional[:class:`int`]
+            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
+            Defaults to `None`.
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._connection.register_new_application_commands(data=data, guild_id=guild_id)
+
+    async def register_application_commands(
+        self, *commands: BaseApplicationCommand, guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Registers the given application commands either for a specific guild or globally, and adds the commands to
+        the bot.
+
+        Parameters
+        ----------
+        commands: :class:`BaseApplicationCommand`
+            Application command to register. Multiple args are accepted.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to register the application commands to. If set to `None`, the commands will be registered
+            as global commands instead. Defaults to `None`.
+        """
         for command in commands:
-            await self._connection.register_application_command(command, guild_id=None)
+            await self._connection.register_application_command(command, guild_id=guild_id)
 
-    async def delete_application_commands(self, *commands: ApplicationCommand) -> None:
-        """Deletes the given global application commands from Discord."""
+    async def delete_application_commands(
+        self, *commands: BaseApplicationCommand, guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Deletes the given application commands either from a specific guild or globally, and removes the command IDs +
+        signatures from the bot.
+
+        Parameters
+        ----------
+        commands: :class:`BaseApplicationCommand`
+            Application command to delete. Multiple args are accepted.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to delete the application commands from. If set to `None`, the commands will be deleted
+            from global commands instead. Defaults to `None`.
+        """
         for command in commands:
             await self._connection.delete_application_command(command, guild_id=None)
 
-    def _get_global_commands(self) -> Set[ApplicationCommand]:
+    def _get_global_commands(self) -> Set[BaseApplicationCommand]:
         ret = set()
         for command in self._connection._application_commands:
             if command.is_global:
                 ret.add(command)
+
         return ret
 
-    def _get_guild_rollout_commands(self) -> Dict[int, Set[ApplicationCommand]]:
+    def _get_guild_rollout_commands(self) -> Dict[int, Set[BaseApplicationCommand]]:
         ret = {}
         for command in self._connection._application_commands:
             if command.is_guild:
                 for guild_id in command.guild_ids_to_rollout:
                     if guild_id not in ret:
                         ret[guild_id] = set()
+
                     ret[guild_id].add(command)
+
         return ret
 
     async def on_connect(self) -> None:
-        self.add_startup_application_commands()
-        await self.rollout_application_commands()
+        self.add_all_application_commands()
+        await self.sync_application_commands(
+            guild_id=None,
+            associate_known=self._rollout_associate_known,
+            delete_unknown=self._rollout_delete_unknown,
+            update_known=self._rollout_update_known,
+            register_new=self._rollout_register_new,
+        )
+
+    def add_all_application_commands(self) -> None:
+        """Adds application commands that are either decorated by the Client or added via a cog to the state.
+        This does not register commands with Discord. If you want that, use
+        :meth:`~Client.sync_all_application_commands` instead.
+
+        """
+        self._add_decorated_application_commands()
+        self.add_all_cog_commands()
 
     def add_startup_application_commands(self) -> None:
-        """Adds application commands for use on startup.
-
-        This is a workaround for the cache (ConnectionState) clearing on startup. This will add all commands that were
-        decorated directly by the bot, and all commands inside added cogs, to the cache.
-        """
+        warnings.warn(
+            ".add_startup_application_commands is deprecated, use .add_all_application_commands instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         self._add_decorated_application_commands()
         self.add_all_cog_commands()
 
@@ -2048,17 +2338,21 @@ class Client:
             if self._rollout_all_guilds or self._connection.get_guild_application_commands(
                 guild.id, rollout=True
             ):
-                _log.info(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
-                await guild.rollout_application_commands(
+                await self.sync_application_commands(
+                    guild_id=guild.id,
                     associate_known=self._rollout_associate_known,
                     delete_unknown=self._rollout_delete_unknown,
                     update_known=self._rollout_update_known,
+                    register_new=self._rollout_register_new,
                 )
             else:
                 _log.debug(
-                    f"nextcord.Client: No locally added commands explicitly registered for "
-                    f"{guild.name}|{guild.id}, not checking."
+                    "nextcord.Client: No locally added commands explicitly registered "
+                    "for Guild(id=%s, name=%s), not checking.",
+                    guild.id,
+                    guild.name,
                 )
+
         except Forbidden as e:
             _log.warning(
                 f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
@@ -2069,46 +2363,63 @@ class Client:
         """|coro|
         Deploys global application commands and registers new ones if enabled.
         """
+        warnings.warn(
+            ".rollout_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+
         if self.application_id is None:
-            raise NotImplementedError("Could not get the current application id")
+            raise TypeError("Could not get the current application's id")
 
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(
-            data=global_payload,  # type: ignore
+            data=global_payload,
             associate_known=self._rollout_associate_known,
             delete_unknown=self._rollout_delete_unknown,
             update_known=self._rollout_update_known,
         )
-        # type ignore as we do not care about typeddict specificity
         if self._rollout_register_new:
-            await self.register_new_application_commands(data=global_payload)  # type: ignore
+            await self.register_new_application_commands(data=global_payload)
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
+            if isinstance(command, (SlashApplicationCommand, SlashApplicationSubcommand)):
+                command.from_callback(command.callback, call_children=False)
+            else:
+                command.from_callback(command.callback)
+
             self.add_application_command(command, use_rollout=True)
 
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
         for cog in self._client_cogs:
-            if to_register := cog.to_register:
+            if to_register := cog.application_commands:
                 for cmd in to_register:
                     self.add_application_command(cmd, use_rollout=True)
 
     def add_cog(self, cog: ClientCog) -> None:
-        for app_cmd in cog.to_register:
+        # cog.process_app_cmds()
+        for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
+
         self._client_cogs.add(cog)
 
     def remove_cog(self, cog: ClientCog) -> None:
-        for app_cmd in cog.to_register:
+        for app_cmd in cog.application_commands:
             self._connection.remove_application_command(app_cmd)
+
         self._client_cogs.discard(cog)
 
     def user_command(
         self,
-        name: str = MISSING,
-        guild_ids: Iterable[int] = MISSING,
-        default_permission: Optional[bool] = None,
+        name: Optional[str] = None,
+        *,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
     ):
         """Creates a User context command from the decorated function.
@@ -2117,10 +2428,18 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2129,8 +2448,10 @@ class Client:
         def decorator(func: Callable):
             result = user_command(
                 name=name,
+                name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                default_permission=default_permission,
+                dm_permission=dm_permission,
+                default_member_permissions=default_member_permissions,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2140,9 +2461,12 @@ class Client:
 
     def message_command(
         self,
-        name: str = MISSING,
-        guild_ids: Iterable[int] = MISSING,
-        default_permission: Optional[bool] = None,
+        name: Optional[str] = None,
+        *,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
     ):
         """Creates a Message context command from the decorated function.
@@ -2151,10 +2475,18 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2163,8 +2495,10 @@ class Client:
         def decorator(func: Callable):
             result = message_command(
                 name=name,
+                name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                default_permission=default_permission,
+                dm_permission=dm_permission,
+                default_member_permissions=default_member_permissions,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2174,10 +2508,14 @@ class Client:
 
     def slash_command(
         self,
-        name: str = MISSING,
-        description: str = MISSING,
-        guild_ids: Iterable[int] = MISSING,
-        default_permission: Optional[bool] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        *,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        guild_ids: Optional[Iterable[int]] = None,
+        dm_permission: Optional[bool] = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
     ):
         """Creates a Slash application command from the decorated function.
@@ -2189,10 +2527,21 @@ class Client:
         description: :class:`str`
             Description of the command that users will see. If not set, the docstring will be used.
             If no docstring is found for the command callback, it defaults to "No description provided".
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value.
+        description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Description(s) of the command for users of specific locales. The locale code should be the key, with the
+            localized description as the value.
         guild_ids: Iterable[:class:`int`]
             IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2201,9 +2550,12 @@ class Client:
         def decorator(func: Callable):
             result = slash_command(
                 name=name,
+                name_localizations=name_localizations,
                 description=description,
+                description_localizations=description_localizations,
                 guild_ids=guild_ids,
-                default_permission=default_permission,
+                dm_permission=dm_permission,
+                default_member_permissions=default_member_permissions,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)

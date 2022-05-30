@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import copy
 import unicodedata
+import warnings
 from asyncio import Future
 from typing import (
     TYPE_CHECKING,
@@ -89,7 +90,7 @@ if TYPE_CHECKING:
     import datetime
 
     from .abc import Snowflake, SnowflakeTime
-    from .application_command import ApplicationCommand
+    from .application_command import BaseApplicationCommand
     from .channel import CategoryChannel, StageChannel, TextChannel, VoiceChannel
     from .permissions import Permissions
     from .state import ConnectionState
@@ -102,6 +103,7 @@ if TYPE_CHECKING:
         RolePositionUpdate,
     )
     from .types.integration import IntegrationType
+    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.snowflake import SnowflakeList
     from .types.sticker import CreateGuildSticker
@@ -313,7 +315,7 @@ class Guild(Hashable):
         self._scheduled_events: Dict[int, ScheduledEvent] = {}
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
-        self._application_commands: Dict[int, ApplicationCommand] = {}
+        self._application_commands: Dict[int, BaseApplicationCommand] = {}
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -3327,24 +3329,64 @@ class Guild(Hashable):
         return self._state.get_guild_application_commands(guild_id=self.id, rollout=rollout)
 
     def add_application_command(
-        self, app_cmd: ApplicationCommand, overwrite: bool = False, use_rollout: bool = False
+        self, app_cmd: BaseApplicationCommand, overwrite: bool = False, use_rollout: bool = False
     ) -> None:
         app_cmd.add_guild_rollout(self.id)
         self._state.add_application_command(app_cmd, overwrite=overwrite, use_rollout=use_rollout)
 
     async def deploy_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[List[ApplicationCommandPayload]] = None,
         associate_known: bool = True,
         delete_unknown: bool = True,
         update_known: bool = True,
     ) -> None:
-        await self._state.deploy_application_commands(
+        await self._state.discover_application_commands(
             data=data,
             guild_id=self.id,
             associate_known=associate_known,
             delete_unknown=delete_unknown,
             update_known=update_known,
+        )
+
+    async def sync_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        *,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
+    ) -> None:
+        """|coro|
+        Syncs the locally added application commands with this Guild.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`.
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to `True`
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to `True`
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to `True`
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._state.sync_application_commands(
+            data=data,
+            guild_id=self.id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+            register_new=register_new,
         )
 
     async def rollout_application_commands(
@@ -3367,38 +3409,51 @@ class Guild(Hashable):
         update_known
         register_new
         """
+        warnings.warn(
+            ".rollout_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         if self._state.application_id is None:
             raise NotImplementedError("Could not get the current application id")
 
         guild_payload = await self._state.http.get_guild_commands(
             self._state.application_id, self.id
         )
-        # we do not care about typeddict specificity
         await self.deploy_application_commands(
-            data=guild_payload,  # type: ignore
+            data=guild_payload,
             associate_known=associate_known,
             delete_unknown=delete_unknown,
             update_known=update_known,
         )
         if register_new:
-            await self.register_new_application_commands(data=guild_payload)  # type: ignore
+            await self.register_new_application_commands(data=guild_payload)
 
-    async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def delete_unknown_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         await self._state.delete_unknown_application_commands(data=data, guild_id=self.id)
 
-    async def associate_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def associate_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         await self._state.associate_application_commands(data=data, guild_id=self.id)
 
-    async def update_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def update_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         await self._state.update_application_commands(data=data, guild_id=self.id)
 
-    async def register_new_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def register_new_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         await self._state.register_new_application_commands(data=data, guild_id=self.id)
 
-    async def register_application_commands(self, *commands: ApplicationCommand) -> None:
+    async def register_application_commands(self, *commands: BaseApplicationCommand) -> None:
         for command in commands:
             await self._state.register_application_command(command, guild_id=self.id)
 
-    async def delete_application_commands(self, *commands: ApplicationCommand) -> None:
+    async def delete_application_commands(self, *commands: BaseApplicationCommand) -> None:
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)

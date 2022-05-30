@@ -64,7 +64,6 @@ from nextcord.application_command import (
     Union,
     User,
     _cog_special_method,
-    _SlashOptionMetaBase,
     annotations,
     asyncio,
     check_dictionary_values,
