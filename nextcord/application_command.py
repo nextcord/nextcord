@@ -2378,14 +2378,14 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             raise ValueError("Discord did not provide us interaction data")
 
         # pyright does not want to lose typeddict specificity but we do not care here
-        option_data = interaction.data.get("options", {})
-
-        if not option_data:
-            raise ValueError("Discord did not provide us any options data")
+        option_data = interaction.data.get("options", [])
 
         if self.children:
+            if not option_data:
+                raise ValueError("Discord did not provide us any options data")
+
             await self.children[option_data[0]["name"]].call(
-                state, interaction, option_data[0].get("options", [{}])
+                state, interaction, option_data[0].get("options", [])
             )
         else:
             await self.call_slash(state, interaction, option_data)
