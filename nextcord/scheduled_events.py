@@ -140,7 +140,7 @@ class ScheduledEventUser(Hashable):
             if not self._state.member_cache_flags._empty:
                 try:
                     self.member: Optional[Member] = self.event.guild.get_member(
-                        member["id"]  # type: ignore (handled below)
+                        member["id"]  # type: ignore # (handled below)
                     )
                 except KeyError:
                     m = Member(data=member, guild=self.event.guild, state=self._state)  # type: ignore
@@ -245,7 +245,7 @@ class ScheduledEvent(Hashable):
         )
         self.metadata: EntityMetadata = EntityMetadata(**data.get("metadata", {}))
         self.user_count: int = data.get("user_count", 0)
-        self.channel: Optional[GuildChannel] = self._state.get_channel(  # type: ignore who knows
+        self.channel: Optional[GuildChannel] = self._state.get_channel(  # type: ignore # who knows
             int(data.get("channel_id") or 0)
         )
         channel_id = data.get("channel_id")
