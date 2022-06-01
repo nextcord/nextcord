@@ -371,8 +371,8 @@ class Embed:
         self: E,
         *,
         text: MaybeEmpty[Any] = EmptyEmbed,
-        icon_file: Optional[File] = EmptyEmbed,
         icon_url: MaybeEmpty[Any] = EmptyEmbed,
+        icon_file: MaybeEmpty[File] = EmptyEmbed,
     ) -> E:
         """Sets the footer for the embed content.
 
@@ -442,7 +442,7 @@ class Embed:
         self: E,
         url: MaybeEmpty[Any] = EmptyEmbed,
         *,
-        file: Optional[File] = EmptyEmbed,
+        file: MaybeEmpty[File] = EmptyEmbed,
     ) -> E:
         """Sets the image for the embed content.
 
@@ -492,8 +492,8 @@ class Embed:
         *,
         name: Any,
         url: MaybeEmpty[Any] = EmptyEmbed,
-        icon_file: Optional[File] = EmptyEmbed,
         icon_url: MaybeEmpty[Any] = EmptyEmbed,
+        icon_file: MaybeEmpty[File] = EmptyEmbed,
     ) -> E:
         """Sets the author for the embed content.
 
@@ -551,7 +551,7 @@ class Embed:
         self: E,
         url: MaybeEmpty[Any] = EmptyEmbed,
         *,
-        file: Optional[File] = EmptyEmbed,
+        file: MaybeEmpty[File] = EmptyEmbed,
     ) -> E:
         """Sets the thumbnail for the embed content.
 
