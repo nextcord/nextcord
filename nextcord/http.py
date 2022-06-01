@@ -113,7 +113,7 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
 
 
 class Route:
-    BASE: ClassVar[str] = "https://discord.com/api/v9"
+    BASE: ClassVar[str] = "https://discord.com/api/v10"
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
@@ -777,11 +777,7 @@ class HTTPClient:
         r = Route(
             "DELETE", "/guilds/{guild_id}/members/{user_id}", guild_id=guild_id, user_id=user_id
         )
-        if reason:
-            # thanks aiohttp
-            r.url = f"{r.url}?reason={_uriquote(reason)}"
-
-        return self.request(r)
+        return self.request(r, reason=reason)
 
     def ban(
         self,
@@ -2197,9 +2193,9 @@ class HTTPClient:
         except HTTPException as exc:
             raise GatewayNotFound() from exc
         if zlib:
-            value = "{0}?encoding={1}&v=9&compress=zlib-stream"
+            value = "{0}?encoding={1}&v=10&compress=zlib-stream"
         else:
-            value = "{0}?encoding={1}&v=9"
+            value = "{0}?encoding={1}&v=10"
         return value.format(data["url"], encoding)
 
     async def get_bot_gateway(
@@ -2211,9 +2207,9 @@ class HTTPClient:
             raise GatewayNotFound() from exc
 
         if zlib:
-            value = "{0}?encoding={1}&v=9&compress=zlib-stream"
+            value = "{0}?encoding={1}&v=10&compress=zlib-stream"
         else:
-            value = "{0}?encoding={1}&v=9"
+            value = "{0}?encoding={1}&v=10"
         return data["shards"], value.format(data["url"], encoding)
 
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
