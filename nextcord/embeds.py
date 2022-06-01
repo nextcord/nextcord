@@ -463,11 +463,13 @@ class Embed:
         """
         from . import InvalidArgument
 
-        if url is EmptyEmbed and file is EmptyEmbed:
+        if url is EmptyEmbed:
             try:
                 del self._image
             except AttributeError:
                 pass
+
+        if file is EmptyEmbed:
             try:
                 del self._local_files["image"]
             except:
@@ -570,11 +572,13 @@ class Embed:
         """
         from . import InvalidArgument
 
-        if url is EmptyEmbed and not file:
+        if url is EmptyEmbed:
             try:
                 del self._thumbnail
             except AttributeError:
                 pass
+
+        if file is EmptyEmbed:
             try:
                 del self._local_files["thumbnail"]
             except:
