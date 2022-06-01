@@ -370,7 +370,7 @@ class Embed:
     def set_footer(
         self: E,
         *,
-        file: Optional[File] = None,
+        file: Optional[File] = EmptyEmbed,
         text: MaybeEmpty[Any] = EmptyEmbed,
         icon_url: MaybeEmpty[Any] = EmptyEmbed,
     ) -> E:
@@ -396,13 +396,13 @@ class Embed:
         if text is not EmptyEmbed:
             self._footer["text"] = str(text)
 
-        if icon_url and file:
+        if icon_url is not EmptyEmbed and file is not EmptyEmbed:
             raise InvalidArgument("Can't pass both icon_url and file.")
 
         if icon_url is not EmptyEmbed:
             self._footer["icon_url"] = str(icon_url)
 
-        if file:
+        if file is not EmptyEmbed:
             self._local_files["footer"] = file
             self._footer["icon_url"] = f"attachment://{file.filename}"
 
