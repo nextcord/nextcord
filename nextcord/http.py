@@ -38,6 +38,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Optional,
     Sequence,
     Tuple,
@@ -110,6 +111,19 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
         pass
 
     return text
+
+
+_API_VERSION: Literal[9, 10] = 10
+
+
+def _modify_api_version(version: Literal[9, 10]):
+    if version not in (9, 10):
+        raise ValueError("Version must be an integer of `9` or `10`")
+
+    global _API_VERSION
+    _API_VERSION = version
+
+    Route.BASE = f"https://discord.com/api/v{version}"
 
 
 class Route:
@@ -2193,10 +2207,10 @@ class HTTPClient:
         except HTTPException as exc:
             raise GatewayNotFound() from exc
         if zlib:
-            value = "{0}?encoding={1}&v=10&compress=zlib-stream"
+            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
         else:
-            value = "{0}?encoding={1}&v=10"
-        return value.format(data["url"], encoding)
+            value = "{url}?encoding={encoding}&v={version}"
+        return value.format(url=data["url"], encoding=encoding, version=_API_VERSION)
 
     async def get_bot_gateway(
         self, *, encoding: str = "json", zlib: bool = True
@@ -2207,10 +2221,12 @@ class HTTPClient:
             raise GatewayNotFound() from exc
 
         if zlib:
-            value = "{0}?encoding={1}&v=10&compress=zlib-stream"
+            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
         else:
-            value = "{0}?encoding={1}&v=10"
-        return data["shards"], value.format(data["url"], encoding)
+            value = "{url}?encoding={encoding}&v={version}"
+        return data["shards"], value.format(
+            url=data["url"], encoding=encoding, version=_API_VERSION
+        )
 
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
         return self.request(Route("GET", "/users/{user_id}", user_id=user_id))
