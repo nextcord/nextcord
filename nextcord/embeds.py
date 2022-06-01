@@ -370,8 +370,8 @@ class Embed:
     def set_footer(
         self: E,
         *,
-        file: Optional[File] = EmptyEmbed,
         text: MaybeEmpty[Any] = EmptyEmbed,
+        icon_file: Optional[File] = EmptyEmbed,
         icon_url: MaybeEmpty[Any] = EmptyEmbed,
     ) -> E:
         """Sets the footer for the embed content.
@@ -385,7 +385,7 @@ class Embed:
             The footer text.
         icon_url: :class:`str`
             The URL of the footer icon. Only HTTP(S) is supported.
-        file: Optional[File]
+        icon_file: Optional[File]
             A file to use for the image.
 
             .. versionadded:: 2.0
@@ -396,15 +396,15 @@ class Embed:
         if text is not EmptyEmbed:
             self._footer["text"] = str(text)
 
-        if icon_url is not EmptyEmbed and file is not EmptyEmbed:
+        if icon_url is not EmptyEmbed and icon_file is not EmptyEmbed:
             raise InvalidArgument("Can't pass both icon_url and file.")
 
         if icon_url is not EmptyEmbed:
             self._footer["icon_url"] = str(icon_url)
 
-        if file is not EmptyEmbed:
-            self._local_files["footer"] = file
-            self._footer["icon_url"] = f"attachment://{file.filename}"
+        if icon_file is not EmptyEmbed:
+            self._local_files["footer"] = icon_file
+            self._footer["icon_url"] = f"attachment://{icon_file.filename}"
 
         return self
 
@@ -491,8 +491,8 @@ class Embed:
         self: E,
         *,
         name: Any,
-        file: Optional[File] = EmptyEmbed,
         url: MaybeEmpty[Any] = EmptyEmbed,
+        icon_file: Optional[File] = EmptyEmbed,
         icon_url: MaybeEmpty[Any] = EmptyEmbed,
     ) -> E:
         """Sets the author for the embed content.
@@ -508,7 +508,7 @@ class Embed:
             The URL for the author.
         icon_url: :class:`str`
             The URL of the author icon. Only HTTP(S) is supported.
-        file: Optional[File]
+        icon_file: Optional[File]
             A file to use for the image.
 
             .. versionadded:: 2.0
@@ -517,15 +517,15 @@ class Embed:
 
         self._author = {"name": str(name)}
 
-        if icon_url is not EmptyEmbed and file is not EmptyEmbed:
+        if icon_url is not EmptyEmbed and icon_file is not EmptyEmbed:
             raise InvalidArgument("Can't pass both icon_url and file.")
 
         if url is not EmptyEmbed:
             self._author["url"] = str(url)
 
-        if file is not EmptyEmbed:
-            self._local_files["author"] = file
-            self._author["icon_url"] = f"attachment://{file.filename}"
+        if icon_file is not EmptyEmbed:
+            self._local_files["author"] = icon_file
+            self._author["icon_url"] = f"attachment://{icon_file.filename}"
 
         if icon_url is not EmptyEmbed:
             self._author["icon_url"] = str(icon_url)
