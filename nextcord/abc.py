@@ -1368,18 +1368,12 @@ class Messageable:
 
         local_embed_files = []
         if embed is not None:
-            if embed._local_image:
-                local_embed_files.append(embed._local_image)
-            if embed._local_thumbnail:
-                local_embed_files.append(embed._local_thumbnail)
-
+            local_embed_files = list(embed._local_files.values())
             embed = embed.to_dict()
 
         elif embeds is not None:
-            local_embed_files.extend([e._local_image for e in embeds if bool(e._local_image)])
-            local_embed_files.extend(
-                [e._local_thumbnail for e in embeds if bool(e._local_thumbnail)]
-            )
+            for embed in embeds:
+                local_embed_files.extend(list(embed._local_files.values()))
             embeds = [embed.to_dict() for embed in embeds]
 
         if stickers is not None:
@@ -1416,35 +1410,15 @@ class Messageable:
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
 
-        if local_embed_files and file:
-            local_embed_files.append(file)
-            files = local_embed_files
-            file = None
+        if file:
+            files = [file]
+
+        if local_embed_files and files:
+            files.extend(local_embed_files)
         elif local_embed_files:
             files = local_embed_files
 
-        if file is not None:
-            if not isinstance(file, File):
-                raise InvalidArgument("file parameter must be File")
-
-            try:
-                data = await state.http.send_files(
-                    channel.id,
-                    files=[file],
-                    allowed_mentions=allowed_mentions,
-                    content=content,
-                    tts=tts,
-                    embed=embed,
-                    embeds=embeds,
-                    nonce=nonce,
-                    message_reference=reference,
-                    stickers=stickers,
-                    components=components,
-                )
-            finally:
-                file.close()
-
-        elif files is not None:
+        if files is not None:
             if not all(isinstance(file, File) for file in files):
                 raise TypeError("Files parameter must be a list of type File")
 

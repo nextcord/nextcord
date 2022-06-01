@@ -816,10 +816,8 @@ class InteractionResponse:
 
         local_embed_files = []
         if embeds:
-            local_embed_files.extend([e._local_image for e in embeds if bool(e._local_image)])
-            local_embed_files.extend(
-                [e._local_thumbnail for e in embeds if bool(e._local_thumbnail)]
-            )
+            for embed in embeds:
+                local_embed_files.extend(list(embed._local_files.values()))
             payload["embeds"] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
