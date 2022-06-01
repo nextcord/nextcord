@@ -814,7 +814,12 @@ class InteractionResponse:
         if embed is not MISSING:
             embeds = [embed]
 
+        local_embed_files = []
         if embeds:
+            local_embed_files.extend([e._local_image for e in embeds if bool(e._local_image)])
+            local_embed_files.extend(
+                [e._local_thumbnail for e in embeds if bool(e._local_thumbnail)]
+            )
             payload["embeds"] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
@@ -822,6 +827,11 @@ class InteractionResponse:
 
         if file is not MISSING:
             files = [file]
+
+        if files and local_embed_files:
+            files.extend(local_embed_files)
+        elif local_embed_files:
+            files = local_embed_files
 
         if files and not all(isinstance(f, File) for f in files):
             raise TypeError("Files parameter must be a list of type File")

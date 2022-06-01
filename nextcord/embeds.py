@@ -25,6 +25,8 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
+import io
+import os
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -41,6 +43,9 @@ from typing import (
 
 from . import utils
 from .colour import Colour
+
+if TYPE_CHECKING:
+    from . import File
 
 __all__ = ("Embed",)
 
@@ -181,6 +186,8 @@ class Embed:
         "_author",
         "_fields",
         "description",
+        "_local_image",
+        "_local_thumbnail",
     )
 
     Empty: Final = EmptyEmbed
@@ -214,6 +221,9 @@ class Embed:
 
         if timestamp:
             self.timestamp = timestamp
+
+        self._local_image: Optional[File] = None
+        self._local_thumbnail: Optional[File] = None
 
     @classmethod
     def from_dict(cls: Type[E], data: Mapping[str, Any]) -> E:
@@ -434,11 +444,45 @@ class Embed:
                 del self._image
             except AttributeError:
                 pass
+            finally:
+                self._local_image = None
         else:
             self._image = {
                 "url": str(url),
             }
 
+        return self
+
+    def set_local_image(
+        self: E,
+        image_path: Union[str, bytes, os.PathLike, io.BufferedIOBase],
+        *,
+        image_name: Optional[str] = None,
+    ) -> E:
+        """
+        Set the embed image to a local file on your system.
+
+        This function returns the class instance to allow for fluent-style
+        chaining.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        ----------
+        image_path: Union[str, bytes, os.PathLike, io.BufferedIOBase]
+            A file-like object on your local system.
+
+            See `fp` on :class:`~nextcord.File`
+        image_name: Optional[str]
+            The name to display when uploading to discord.
+
+            Defaults to the same as :class:`~nextcord.File`
+
+        """
+        from . import File
+
+        self._local_image: File = File(image_path, filename=image_name)
+        self.set_image(url=f"attachment://{self._local_image.filename}")
         return self
 
     @property
@@ -476,11 +520,45 @@ class Embed:
                 del self._thumbnail
             except AttributeError:
                 pass
+            finally:
+                self._local_thumbnail = None
         else:
             self._thumbnail = {
                 "url": str(url),
             }
 
+        return self
+
+    def set_local_thumbnail(
+        self: E,
+        image_path: Union[str, bytes, os.PathLike, io.BufferedIOBase],
+        *,
+        image_name: Optional[str] = None,
+    ) -> E:
+        """
+        Set the embed thumbnail to a local file on your system.
+
+        This function returns the class instance to allow for fluent-style
+        chaining.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        ----------
+        image_path: Union[str, bytes, os.PathLike, io.BufferedIOBase]
+            A file-like object on your local system.
+
+            See `fp` on :class:`~nextcord.File`
+        image_name: Optional[str]
+            The name to display when uploading to discord.
+
+            Defaults to the same as :class:`~nextcord.File`
+
+        """
+        from . import File
+
+        self._local_thumbnail: File = File(image_path, filename=image_name)
+        self.set_thumbnail(url=f"attachment://{self._local_thumbnail.filename}")
         return self
 
     @property
@@ -716,13 +794,13 @@ class Embed:
         """Converts this embed object into a dict."""
 
         # add in the raw data into the dict
-        # fmt: off
         result = {
             key[1:]: getattr(self, key)
             for key in self.__slots__
-            if key[0] == '_' and hasattr(self, key)
+            if key[0] == "_"
+            and hasattr(self, key)
+            and key not in ("_local_image", "_local_thumbnail")
         }
-        # fmt: on
 
         # deal with basic convenience wrappers
 

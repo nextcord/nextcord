@@ -1366,10 +1366,20 @@ class Messageable:
         if embed is not None and embeds is not None:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
+        local_embed_files = []
         if embed is not None:
+            if embed._local_image:
+                local_embed_files.append(embed._local_image)
+            if embed._local_thumbnail:
+                local_embed_files.append(embed._local_thumbnail)
+
             embed = embed.to_dict()
 
         elif embeds is not None:
+            local_embed_files.extend([e._local_image for e in embeds if bool(e._local_image)])
+            local_embed_files.extend(
+                [e._local_thumbnail for e in embeds if bool(e._local_thumbnail)]
+            )
             embeds = [embed.to_dict() for embed in embeds]
 
         if stickers is not None:
@@ -1405,6 +1415,13 @@ class Messageable:
 
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
+
+        if local_embed_files and file:
+            local_embed_files.append(file)
+            files = local_embed_files
+            file = None
+        elif local_embed_files:
+            files = local_embed_files
 
         if file is not None:
             if not isinstance(file, File):
