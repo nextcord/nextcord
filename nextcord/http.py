@@ -116,6 +116,7 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
 _API_VERSION: Literal[9, 10] = 10
 
 
+# TODO: remove once message content is enforced on all versions (31 aug)
 def _modify_api_version(version: Literal[9, 10]):
     if version not in (9, 10):
         raise ValueError("Version must be an integer of `9` or `10`")
