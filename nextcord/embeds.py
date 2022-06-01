@@ -459,8 +459,7 @@ class Embed:
         *,
         image_name: Optional[str] = None,
     ) -> E:
-        """
-        Set the embed image to a local file on your system.
+        """Set the embed image to a local file on your system.
 
         This function returns the class instance to allow for fluent-style
         chaining.
@@ -472,7 +471,7 @@ class Embed:
         image_path: Union[str, bytes, os.PathLike, io.BufferedIOBase]
             A file-like object on your local system.
 
-            See `fp` on :class:`~nextcord.File`
+            See :attr:`File.fp`
         image_name: Optional[str]
             The name to display when uploading to discord.
 
@@ -481,7 +480,7 @@ class Embed:
         """
         from . import File
 
-        self._local_image: File = File(image_path, filename=image_name)
+        self._local_image = File(image_path, filename=image_name)
         self.set_image(url=f"attachment://{self._local_image.filename}")
         return self
 
@@ -535,8 +534,7 @@ class Embed:
         *,
         image_name: Optional[str] = None,
     ) -> E:
-        """
-        Set the embed thumbnail to a local file on your system.
+        """Set the embed thumbnail to a local file on your system.
 
         This function returns the class instance to allow for fluent-style
         chaining.
@@ -548,7 +546,7 @@ class Embed:
         image_path: Union[str, bytes, os.PathLike, io.BufferedIOBase]
             A file-like object on your local system.
 
-            See `fp` on :class:`~nextcord.File`
+            See :attr:`File.fp`
         image_name: Optional[str]
             The name to display when uploading to discord.
 
@@ -557,7 +555,7 @@ class Embed:
         """
         from . import File
 
-        self._local_thumbnail: File = File(image_path, filename=image_name)
+        self._local_thumbnail = File(image_path, filename=image_name)
         self.set_thumbnail(url=f"attachment://{self._local_thumbnail.filename}")
         return self
 
