@@ -67,6 +67,8 @@ _log = logging.getLogger(__name__)
 if TYPE_CHECKING:
     import datetime
 
+    from ..abc import Snowflake
+    from ..channel import TextChannel
     from ..embeds import Embed
     from ..file import File
     from ..guild import Guild

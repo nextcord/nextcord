@@ -31,10 +31,9 @@ from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
-from .types.snowflake import Snowflake
 from .utils import MISSING, _obj_to_base64_data, parse_time
 
-__all__: Tuple[str] = ("EntityMetadata", "ScheduledEventUser", "ScheduledEvent")
+__all__: Tuple[str, ...] = ("EntityMetadata", "ScheduledEventUser", "ScheduledEvent")
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -330,8 +329,8 @@ class ScheduledEvent(Hashable):
         start_time: datetime = MISSING,
         end_time: datetime = MISSING,
         description: str = MISSING,
-        type: Optional[ScheduledEventEntityType] = MISSING,
-        status: Optional[ScheduledEventStatus] = MISSING,
+        type: ScheduledEventEntityType = MISSING,
+        status: ScheduledEventStatus = MISSING,
         reason: Optional[str] = None,
         image: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
     ) -> ScheduledEvent:

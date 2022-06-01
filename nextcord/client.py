@@ -92,7 +92,7 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import ApplicationCommand, ClientCog
+    from .application_command import BaseApplicationCommand, ClientCog
     from .asset import Asset
     from .channel import DMChannel
     from .enums import Locale
