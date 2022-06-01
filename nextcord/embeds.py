@@ -440,8 +440,9 @@ class Embed:
 
     def set_image(
         self: E,
-        url: MaybeEmpty[Any] = None,
-        file: Optional[File] = None,
+        url: MaybeEmpty[Any] = EmptyEmbed,
+        *,
+        file: Optional[File] = EmptyEmbed,
     ) -> E:
         """Sets the image for the embed content.
 
@@ -462,7 +463,7 @@ class Embed:
         """
         from . import InvalidArgument
 
-        if url is EmptyEmbed and not file:
+        if url is EmptyEmbed and file is EmptyEmbed:
             try:
                 del self._image
             except AttributeError:
@@ -472,10 +473,10 @@ class Embed:
             except:
                 pass
 
-        elif url and file:
+        elif url is not EmptyEmbed and file is not EmptyEmbed:
             raise InvalidArgument("Can't pass both url and file.")
 
-        elif file:
+        elif file is not EmptyEmbed:
             self._local_files["image"] = file
             self._image = {"url": f"attachment://{file.filename}"}
 
@@ -488,7 +489,7 @@ class Embed:
         self: E,
         *,
         name: Any,
-        file: Optional[File] = None,
+        file: Optional[File] = EmptyEmbed,
         url: MaybeEmpty[Any] = EmptyEmbed,
         icon_url: MaybeEmpty[Any] = EmptyEmbed,
     ) -> E:
@@ -512,17 +513,15 @@ class Embed:
         """
         from . import InvalidArgument
 
-        self._author = {
-            "name": str(name),
-        }
+        self._author = {"name": str(name)}
 
-        if icon_url and file:
+        if icon_url is not EmptyEmbed and file is not EmptyEmbed:
             raise InvalidArgument("Can't pass both icon_url and file.")
 
         if url is not EmptyEmbed:
             self._author["url"] = str(url)
 
-        if file:
+        if file is not EmptyEmbed:
             self._local_files["author"] = file
             self._author["icon_url"] = f"attachment://{file.filename}"
 
@@ -550,7 +549,7 @@ class Embed:
         self: E,
         url: MaybeEmpty[Any] = EmptyEmbed,
         *,
-        file: Optional[File] = None,
+        file: Optional[File] = EmptyEmbed,
     ) -> E:
         """Sets the thumbnail for the embed content.
 
