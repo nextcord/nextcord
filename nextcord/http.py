@@ -2308,17 +2308,17 @@ class HTTPClient:
         *,
         limit: int = MISSING,
         with_member: bool = MISSING,
-        before: Snowflake = MISSING,
-        after: Snowflake = MISSING,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
     ) -> Response[List[scheduled_events.ScheduledEventUser]]:
         params: Dict[str, Any] = {}
         if limit is not MISSING:
             params["limit"] = limit
         if with_member is not MISSING:
             params["with_member"] = str(with_member)
-        if before is not MISSING:
+        if before is not None:
             params["before"] = before
-        if after is not MISSING:
+        if after is not None:
             params["after"] = after
         r = Route(
             "GET",
