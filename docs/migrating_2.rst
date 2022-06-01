@@ -278,6 +278,13 @@ You can do this by using :meth:`Intents.all` or by setting :attr:`~Intents.messa
 
 For more information go to the :ref:`message content intent documentation <need_message_content_intent>`.
 
+If you are unable to get the message content intent and would like some time to migrate to application commands:
+This will only be effective until Discord's current deadline of the 31st of August 2022.
+
+.. code-block:: python3
+
+    nextcord.http._modify_api_version(9)
+
 Guild.bans now returns an AsyncIterator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
