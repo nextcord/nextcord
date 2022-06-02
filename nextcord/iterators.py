@@ -665,13 +665,14 @@ class GuildIterator(_AsyncIterator["Guild"]):
         self.get_guilds = self.bot.http.get_guilds
         self.guilds = asyncio.Queue()
 
-        if self.before and self.after:
+        if self.before:
+            self.reverse = True
             self._retrieve_guilds = self._retrieve_guilds_before_strategy  # type: ignore
-            self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
-        elif self.after:
-            self._retrieve_guilds = self._retrieve_guilds_after_strategy  # type: ignore
+            if self.after:
+                self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
         else:
-            self._retrieve_guilds = self._retrieve_guilds_before_strategy  # type: ignore
+            self.reverse = False
+            self._retrieve_guilds = self._retrieve_guilds_after_strategy  # type: ignore
 
     async def next(self) -> Guild:
         if self.guilds.empty():
@@ -684,8 +685,8 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
     def _get_retrieve(self):
         l = self.limit
-        if l is None or l > 100:
-            r = 100
+        if l is None or l > 200:
+            r = 200
         else:
             r = l
         self.retrieve = r
@@ -699,9 +700,11 @@ class GuildIterator(_AsyncIterator["Guild"]):
     async def fill_guilds(self):
         if self._get_retrieve():
             data = await self._retrieve_guilds(self.retrieve)
-            if self.limit is None or len(data) < 100:
+            if len(data) < 200:
                 self.limit = 0
 
+            if self.reverse:
+                data = reversed(data)
             if self._filter:
                 data = filter(self._filter, data)
 
@@ -719,7 +722,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.before = Object(id=int(data[-1]["id"]))
+            self.before = Object(id=int(data[0]["id"]))
         return data
 
     async def _retrieve_guilds_after_strategy(self, retrieve):
@@ -729,7 +732,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.after = Object(id=int(data[0]["id"]))
+            self.after = Object(id=int(data[-1]["id"]))
         return data
 
 
