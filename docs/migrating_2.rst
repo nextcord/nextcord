@@ -29,6 +29,7 @@ Overview
 - ``missing_perms`` attributes and arguments are renamed to ``missing_permissions``.
 - Many method arguments now reject ``None``.
 - Many arguments are now specified as positional-only or keyword-only; e.g. :func:`oauth_url` now takes keyword-only arguments, and methods starting with ``get_`` or ``fetch_`` take positional-only arguments.
+- You must explicitly enable the :attr:`~Intents.message_content` intent to receive message :attr:`~Message.content`, :attr:`~Message.embeds`, :attr:`~Message.attachments`, and :attr:`~Message.components` in most messages.
 - :meth:`Guild.bans` is no longer a coroutine and returns an :class:`~nextcord.AsyncIterator` instead of a :class:`list`.
 - ``StoreChannel`` is removed as it is deprecated by Discord, see `here <https://support-dev.discord.com/hc/en-us/articles/4414590563479>`_ for more info.
 - ``ChannelType.store`` is removed.
@@ -263,6 +264,29 @@ on_socket_raw_receive behavior
 Guild.get_member taking positional only argument
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :meth:`Guild.get_member` method's first argument is now positional only.
+
+Intents.message_content must be enabled to receive message content
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In order to receive message content in most messages, you must have :attr:`Intents.message_content` enabled.
+
+You can do this by using :meth:`Intents.all` or by setting :attr:`~Intents.message_content` to ``True``:
+
+.. code-block:: python3
+
+    intents = nextcord.Intents.default()
+    intents.message_content = True
+
+For more information go to the :ref:`message content intent documentation <need_message_content_intent>`.
+
+If you are unable to get the message content intent and would like some time to migrate to application commands you can downgrade the API back to version 9 as shown below.
+
+.. code-block:: python3
+
+    nextcord.http._modify_api_version(9)
+
+.. note::
+
+    This will only be effective until Discord's current deadline of the 31st of August 2022.
 
 Guild.bans now returns an AsyncIterator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

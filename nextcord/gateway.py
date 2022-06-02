@@ -238,7 +238,7 @@ class DiscordClientWebSocketResponse(aiohttp.ClientWebSocketResponse):
 
 
 class DiscordWebSocket:
-    """Implements a WebSocket for Discord's gateway v6.
+    """Implements a WebSocket for Discord's gateway.
 
     Attributes
     -----------
@@ -429,7 +429,6 @@ class DiscordWebSocket:
                 },
                 "compress": True,
                 "large_threshold": 250,
-                "v": 3,
             },
         }
 
