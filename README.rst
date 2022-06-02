@@ -97,12 +97,12 @@ Quick Example (with commands.Bot)
 
 
     bot = commands.Bot(command_prefix='$')
-    
-    
+
+
     @bot.command()
     async def ping(ctx):
         await ctx.reply('Pong!')
-    
+
     @bot.command()
     async def say(ctx, *, arg):
          await ctx.message.delete()
