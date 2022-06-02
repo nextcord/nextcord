@@ -88,7 +88,7 @@ Please note that on Linux installing voice you must install the following packag
 * python-dev (e.g. ``python3.8-dev`` for Python 3.8)
 
 
-Quick Example
+Quick Example (with commands.Bot)
 ~~~~~~~~~~~~~
 
 .. code:: py
@@ -97,13 +97,21 @@ Quick Example
 
 
     bot = commands.Bot(command_prefix='$')
-
+    
+    
     @bot.command()
     async def ping(ctx):
         await ctx.reply('Pong!')
+    
+    @bot.command()
+    async def say(ctx, *, arg):
+         await ctx.message.delete()
+         await ctx.send(f"{ctx.author.mention}'s message: {arg}")
 
     bot.run('token')
 
+
+It is recommended that you use commands.Bot version, as although both client (nextcord.Client) and commands.Bot have the same stuff, commands.Bot is easy to use rather than the client version of nextcord. Make sure to not use both versions though as it can can be confusing and conflicts with your code upon using both in your code.
 
 You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 
@@ -115,3 +123,4 @@ Links
 - `Documentation <https://docs.nextcord.dev/>`_
 - `Official Discord Server <https://discord.gg/ZebatWssCB>`_
 - `Discord API <https://discord.gg/discord-api>`_
+- `Nextcord's Github <https://www.github.com/nextcrd/nextcord>`_
