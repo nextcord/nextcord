@@ -99,14 +99,14 @@ Quick Example (with ``commands.Bot``)
     bot = commands.Bot(command_prefix='$')
 
 
-    @bot.command()
-    async def ping(ctx):
-        await ctx.reply('Pong!')
-
-    @bot.command()
-    async def say(ctx, *, arg):
-         await ctx.message.delete()
-         await ctx.send(f"{ctx.author.mention}'s message: {arg}")
+    @bot.slash_command(description="Replies with pong!")
+    async def ping(interaction : nextcord.Interaction):
+        await interaction.send('Pong!', ephemeral=True)
+        
+    
+    @bot.slash_command(description="Test with ephemeral!")
+    async def epehemeral(interaction : nextcord.Interaction):
+        await interaction.send("Ephemeral message!", ephemeral=True)
 
     bot.run('token')
 
