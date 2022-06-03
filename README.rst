@@ -123,4 +123,3 @@ Links
 - `Documentation <https://docs.nextcord.dev/>`_
 - `Official Discord Server <https://discord.gg/ZebatWssCB>`_
 - `Discord API <https://discord.gg/discord-api>`_
-- `The Github repository <https://www.github.com/nextcord/nextcord>`_
