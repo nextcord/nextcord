@@ -36,7 +36,7 @@ For example, if you want a bot that functions without spammy events like presenc
 
 Note that this doesn't enable :attr:`Intents.members` since it's a privileged intent.
 
-Another example that shows a bot that only deals with messages and guild information:
+Another example showing a bot that only deals with messages and guild information:
 
 .. code-block:: python3
    :emphasize-lines: 7,9,10
@@ -63,7 +63,7 @@ A privileged intent is an intent that requires you to go to the developer portal
 
 1. Make sure you're logged on to the `Discord website <https://discord.com>`_.
 2. Navigate to the `Application page <https://discord.com/developers/applications>`_.
-3. Click on the bot you want to enable the privileged intents for.
+3. Click on the bot you want to enable privileged intents for.
 4. Navigate to the bot tab on the left side of the screen.
 
     .. image:: /images/discord_bot_tab.png
@@ -184,7 +184,7 @@ For example:
     # from nextcord.ext import commands
     # bot = commands.Bot(command_prefix='!', intents=intents)
 
-What happened to my text commands?
+What happened to my prefix commands?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Due to an :ref:`API change <need_message_content_intent>`, to read message content in most messages,

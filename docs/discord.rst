@@ -29,7 +29,7 @@ Creating a Bot account is a pretty straight forward process.
         :alt: The Add Bot button.
 6. Make sure that **Public Bot** is ticked if you want other users to invite your bot.
 
-    - You should also make sure that **Require OAuth2 Code Grant** is unchecked, unless you
+    - You should also make sure that **Require OAuth2 Code Grant** is unchecked unless you
       are developing a service that needs it. If you're unsure, then **leave it unchecked**.
 
     .. image:: /images/discord_bot_user_options.png
@@ -41,9 +41,9 @@ Creating a Bot account is a pretty straight forward process.
 
     .. warning::
 
-        It should be worth nothing that your bot's token is essentially your bot's
+        It should be worth noting that your bot's token is essentially your bot's
         password. You should **never** share this with anyone else. In doing so,
-        someone can log into your bot and do malicious things, such as leaving
+        someone can log in to your bot and do malicious things, such as leaving
         servers, banning all members inside a server, or mentioning everyone maliciously.
 
         The possibilities are endless, so **do not share this token.**
@@ -57,7 +57,7 @@ Creating a Bot account is a pretty straight forward process.
     .. image:: /images/discord_bot_copy_token.png
         :alt: The revealed token and the new "Copy" button.
 
-And that's it. You now have a bot account and you can log onto with that token.
+And that's it. You now have a bot account and you can log in with that token.
 
 .. _discord_invite_bot:
 
@@ -68,7 +68,7 @@ So you've made a Bot User but it's not actually in any server.
 
 If you want to invite your bot, you must create an invite URL for it.
 
-1. Make sure you're logged onto the `Discord website <https://discord.com>`_.
+1. Make sure you're logged in to the `Discord website <https://discord.com>`_.
 2. Navigate to the `Application page <https://discord.com/developers/applications>`_
 3. Click on your bot's page.
 4. Go to the "OAuth2" tab.
@@ -76,7 +76,7 @@ If you want to invite your bot, you must create an invite URL for it.
     .. image:: /images/discord_oauth2.png
         :alt: How the OAuth2 page should look like.
 
-5. Tick the "bot" checkbox under "scopes". If you make use of Application Commands (Slash, Message and User Commands) then you should also tick the "applications.commands" scope.
+5. Tick the "bot" checkbox under "scopes". If you make use of Application Commands (Slash, Message and User Commands), also tick the "applications.commands" scope.
 
     .. image:: /images/discord_oauth2_scope.png
         :alt: The scopes checkbox with "bot" and "applications.commands" ticked.

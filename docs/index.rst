@@ -35,8 +35,8 @@ Getting help
 
 If you're having trouble with something, these resources might help.
 
-- Try the :doc:`FAQs` first, it's got answers to all common questions.
-- Ask and hang out with us in our :resource:`Discord <discord>` server.
+- Try the :doc:`FAQs <faq>` first, it's got answers to all common questions.
+- Ask questions and hang out with us in our :resource:`Discord <discord>` server.
 - If you're looking for something specific, try the :ref:`index <genindex>` or :ref:`searching <search>`.
 - Report bugs in the :resource:`issue tracker <issues>`.
 - Ask in our :resource:`GitHub discussions page <discussions>`.
