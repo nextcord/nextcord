@@ -102,8 +102,8 @@ Quick Example (with ``commands.Bot``)
     @bot.slash_command(description="Replies with pong!")
     async def ping(interaction : nextcord.Interaction):
         await interaction.send('Pong!', ephemeral=True)
-        
-    
+
+
     @bot.slash_command(description="Test with ephemeral!")
     async def epehemeral(interaction : nextcord.Interaction):
         await interaction.send("Ephemeral message!", ephemeral=True)
