@@ -2043,6 +2043,7 @@ class Client:
         delete_unknown: bool = True,
         update_known: bool = True,
         register_new: bool = True,
+        ignore_forbidden: bool = True,
     ) -> None:
         """|coro|
 
@@ -2077,6 +2078,9 @@ class Client:
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
             Defaults to `True`
+        ignore_forbidden: :class:`bool`
+            If this command should raise an :class:`errors.Forbidden` exception when the bot encounters a guild where
+            it doesn't have permissions to view application commands.
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
         # there, and vice versa.
@@ -2087,6 +2091,7 @@ class Client:
             delete_unknown=delete_unknown,
             update_known=update_known,
             register_new=register_new,
+            ignore_forbidden=ignore_forbidden,
         )
 
     async def sync_application_commands(

@@ -55,6 +55,7 @@ from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, Status, try_enum
+from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
@@ -663,6 +664,7 @@ class ConnectionState:
         delete_unknown: bool = True,
         update_known: bool = True,
         register_new: bool = True,
+        ignore_forbidden: bool = True,
     ):
         """|coro|
 
@@ -697,6 +699,9 @@ class ConnectionState:
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
             Defaults to `True`
+        ignore_forbidden: :class:`bool`
+            If this command should raise an :class:`errors.Forbidden` exception when the bot encounters a guild where
+            it doesn't have permissions to view application commands.
         """
         _log.debug("Beginning sync of all application commands.")
         self._get_client().add_all_application_commands()
@@ -718,12 +723,21 @@ class ConnectionState:
             if app_cmd.is_guild:
                 for guild_id in app_cmd.guild_ids_to_rollout if use_rollout else app_cmd.guild_ids:
                     if guild_id not in data:
-                        data[guild_id] = await self.http.get_guild_commands(
-                            self.application_id, guild_id
-                        )
-                        _log.debug(
-                            "Fetched guild application command data for guild ID %s", guild_id
-                        )
+                        try:
+                            data[guild_id] = await self.http.get_guild_commands(
+                                self.application_id, guild_id
+                            )
+                            _log.debug(
+                                "Fetched guild application command data for guild ID %s", guild_id
+                            )
+                        except Forbidden as e:
+                            if ignore_forbidden:
+                                _log.warning(
+                                    f"nextcord.Client: Forbidden error for {guild_id}, is the commands Oauth scope "
+                                    f"enabled? {e}"
+                                )
+                            else:
+                                raise e
 
         for guild_id in data:
             _log.debug("Running sync for %s", "global" if guild_id is None else f"Guild {guild_id}")
