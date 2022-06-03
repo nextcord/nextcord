@@ -685,23 +685,24 @@ class ConnectionState:
         data: Optional[Dict[Optional[:class:`int`], List[:class:`dict`]]]
             Data to use when comparing local application commands to what Discord has. The key should be the
             :class:`int` guild ID (`None` for global) corresponding to the value list of application command payloads
-            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to `None`
+            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to ``None``
         use_rollout: :class:`bool`
-            If the rollout guild IDs of commands should be used. Defaults to `True`
+            If the rollout guild IDs of commands should be used. Defaults to ``True``
         associate_known: :class:`bool`
             If local commands that match a command already on Discord should be associated with each other.
-            Defaults to `True`
+            Defaults to ``True``
         delete_unknown: :class:`bool`
             If commands on Discord that don't match a local command should be deleted. Defaults to `True`
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
-            Defaults to `True`
+            Defaults to ``True``
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
-            Defaults to `True`
+            Defaults to ``True``
         ignore_forbidden: :class:`bool`
             If this command should raise an :class:`errors.Forbidden` exception when the bot encounters a guild where
             it doesn't have permissions to view application commands.
+            Defaults to ``True``
         """
         _log.debug("Beginning sync of all application commands.")
         self._get_client().add_all_application_commands()
@@ -733,8 +734,10 @@ class ConnectionState:
                         except Forbidden as e:
                             if ignore_forbidden:
                                 _log.warning(
-                                    f"nextcord.Client: Forbidden error for {guild_id}, is the commands Oauth scope "
-                                    f"enabled? {e}"
+                                    f"nextcord.Client: Forbidden error for %s, is the applications.commands "
+                                    f"Oauth scope enabled? %s",
+                                    guild_id,
+                                    e
                                 )
                             else:
                                 raise e
