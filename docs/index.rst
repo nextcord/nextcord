@@ -59,7 +59,7 @@ Manuals
 These pages go into great detail about everything the API can do.
 
 .. toctree::
-  :maxdepth: 1  
+  :maxdepth: 1
 
   api
   nextcord.ext.commands API Reference <ext/commands/api.rst>
