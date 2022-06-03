@@ -737,7 +737,7 @@ class ConnectionState:
                                     f"nextcord.Client: Forbidden error for %s, is the applications.commands "
                                     f"Oauth scope enabled? %s",
                                     guild_id,
-                                    e
+                                    e,
                                 )
                             else:
                                 raise e
