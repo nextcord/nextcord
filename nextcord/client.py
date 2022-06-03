@@ -2079,8 +2079,8 @@ class Client:
             If a local command that doesn't have a basic match on Discord should be added to Discord.
             Defaults to ``True``
         ignore_forbidden: :class:`bool`
-            If this command should raise an :class:`errors.Forbidden` exception when the bot encounters a guild where
-            it doesn't have permissions to view application commands.
+            If this command should suppress a :class:`errors.Forbidden` exception when the bot encounters a guild
+            where it doesn't have permissions to view application commands.
             Defaults to ``True``
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
