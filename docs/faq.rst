@@ -6,7 +6,7 @@
 Frequently Asked Questions
 ===========================
 
-This is a list of Frequently Asked Questions regarding using ``nextcord`` and its extension modules. Feel free to suggest a
+This is a list of Frequently Asked Questions regarding the use of ``nextcord`` and its extension modules. Feel free to suggest a
 new question or submit one via pull requests.
 
 .. contents:: Questions
@@ -35,13 +35,13 @@ You can only use ``await`` inside ``async def`` functions and nowhere else.
 What does "blocking" mean?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In asynchronous programming, a blocking call is essentially all the parts of the function that are not ``await``. Do not
+In asynchronous programming, a blocking call is essentially all the parts of the function that are not using ``await``. Do not
 despair, however, because not all forms of blocking are bad! Using blocking calls is inevitable, but you must work to make
 sure that you don't excessively block functions. Remember, if you block for too long then your bot will freeze since it has
 not stopped the function's execution at that point to do other things.
 
 If logging is enabled, this library will attempt to warn you that blocking is occurring with the message:
-``Heartbeat blocked for more than N seconds.``
+``Heartbeat blocked for more than {n} seconds.``
 See :ref:`logging_setup` for details on enabling logging.
 
 A common source of blocking for too long is something like :func:`time.sleep`. Don't do that. Use :func:`asyncio.sleep`

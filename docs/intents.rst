@@ -36,7 +36,7 @@ For example, if you want a bot that functions without spammy events like presenc
 
 Note that this doesn't enable :attr:`Intents.members` since it's a privileged intent.
 
-Another example showing a bot that only deals with messages and guild information:
+Another example that shows a bot that only deals with messages and guild information:
 
 .. code-block:: python3
    :emphasize-lines: 7,9,10
@@ -62,14 +62,14 @@ With the API change requiring bot authors to specify intents, some intents were 
 A privileged intent is an intent that requires you to go to the developer portal and manually enable it. To enable privileged intents, do the following:
 
 1. Make sure you're logged on to the `Discord website <https://discord.com>`_.
-2. Navigate to the `application page <https://discord.com/developers/applications>`_.
-3. Click on the bot you want to enable privileged intents for.
+2. Navigate to the `Application page <https://discord.com/developers/applications>`_.
+3. Click on the bot you want to enable the privileged intents for.
 4. Navigate to the bot tab on the left side of the screen.
 
     .. image:: /images/discord_bot_tab.png
         :alt: The bot tab in the application page.
 
-5. Scroll down to the "Privileged Gateway Intents" section and enable the ones you want.
+5. Scroll down to the "Privileged Gateway Intents" section and enable the intents you need.
 
     .. image:: /images/discord_privileged_intents.png
         :alt: The privileged gateway intents selector.
@@ -164,7 +164,7 @@ Troubleshooting
 
 Some common issues relating to the mandatory intent change.
 
-Where'd my members go?
+Where did my members go?
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Due to an :ref:`API change <intents_member_cache>` Discord is now forcing developers who want member caching to explicitly opt in to it. This is a Discord mandated change and there is no way to bypass it. To get members back, you have to explicitly enable the :ref:`members privileged intent <privileged_intents>` and change the :attr:`Intents.members` attribute to true.
@@ -184,7 +184,7 @@ For example:
     # from nextcord.ext import commands
     # bot = commands.Bot(command_prefix='!', intents=intents)
 
-What happened to my message commands?
+What happened to my text commands?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Due to an :ref:`API change <need_message_content_intent>`, to read message content in most messages,
@@ -218,7 +218,7 @@ The first solution is to request the privileged presences intent along with the 
 
 The second solution is to disable member chunking by setting ``chunk_guilds_at_startup`` to ``False`` when constructing a client. Then, when chunking for a guild is necessary you can use the various techniques to :ref:`retrieve members <retrieving_members>`.
 
-To illustrate the slowdown caused by the API change, take a bot who is in 840 guilds and 95 of these guilds are "large" (over 250 members).
+To illustrate the slowdown caused by the API change, take a bot that is in 840 guilds and 95 of these guilds are "large" (over 250 members).
 
 Under the original system, this would result in 2 requests to fetch the member list (75 guilds, 20 guilds) roughly taking 60 seconds. With :attr:`Intents.members` but not :attr:`Intents.presences` this requires 840 requests, with a rate limit of 120 requests per 60 seconds means that due to waiting for the rate limit it totals to around 7 minutes of waiting for the rate limit to fetch all the members. With both :attr:`Intents.members` and :attr:`Intents.presences` we mostly get the old behaviour so we're only required to request for the 95 large guilds, this is slightly less than our rate limit so it's close to the original timing to fetch the member list.
 

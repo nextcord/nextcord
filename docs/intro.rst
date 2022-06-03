@@ -26,7 +26,7 @@ You can get the library directly from PyPI: ::
 
     python3 -m pip install -U nextcord
 
-If you are using Windows, then the following should be used instead: ::
+If you are using Windows and have not installed Python to PATH, then the following should be used instead: ::
 
     py -3 -m pip install -U nextcord
 
