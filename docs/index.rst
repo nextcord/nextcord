@@ -9,13 +9,13 @@ Welcome to nextcord
 .. image:: /images/snake.svg
 .. image:: /images/snake_dark.svg
 
-Nextcord is a modern, easy to use, feature-rich, and async ready API wrapper
+Nextcord is a modern, easy-to-use, feature-rich, and async-ready API wrapper
 for Discord, forked from discord.py.
 
 **Features:**
 
 - Modern Pythonic API using ``async``\/``await`` syntax
-- Sane rate limit handling that prevents 429s
+- Sane rate limit handling that prevents 429 errors
 - Command extension to aid with bot creation
 - Easy to use with an object-oriented design
 - Optimised for both speed and memory
@@ -35,8 +35,8 @@ Getting help
 
 If you're having trouble with something, these resources might help.
 
-- Try the :doc:`faq` first, it's got answers to all common questions.
-- Ask us and hang out with us in our :resource:`Discord <discord>` server.
+- Try the :doc:`FAQs` first, it's got answers to all common questions.
+- Ask and hang out with us in our :resource:`Discord <discord>` server.
 - If you're looking for something specific, try the :ref:`index <genindex>` or :ref:`searching <search>`.
 - Report bugs in the :resource:`issue tracker <issues>`.
 - Ask in our :resource:`GitHub discussions page <discussions>`.
@@ -59,7 +59,7 @@ Manuals
 These pages go into great detail about everything the API can do.
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 1  
 
   api
   nextcord.ext.commands API Reference <ext/commands/api.rst>
