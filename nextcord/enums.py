@@ -113,7 +113,7 @@ class EnumMeta(type):
             try:
                 new_value = value_mapping[value]
             except KeyError:
-                new_value = value_cls(name=key, value=value)  # type: ignore
+                new_value = value_cls(name=key, value=value)
                 value_mapping[value] = new_value
                 member_names.append(key)
 
