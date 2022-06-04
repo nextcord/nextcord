@@ -7,7 +7,7 @@ Creating a Bot Account
 
 To work with the library and the Discord API in general, we must first create a Discord Bot account.
 
-Creating a Bot account is a pretty straight forward process.
+Creating a Bot account is a pretty straightforward process.
 
 1. Make sure you're logged on to the `Discord website <https://discord.com>`_.
 2. Navigate to the `Applications page <https://discord.com/developers/applications>`_.
@@ -95,7 +95,7 @@ If you want to invite your bot, you must create an invite URL for it.
 
 .. note::
 
-    The person adding the bot requires the "Manage Server" permission to do so.
+    The person adding the bot needs the "Manage Server" permission to do so.
 
 If you want to generate this URL dynamically at run-time inside your bot and using the
 :class:`nextcord.Permissions` interface, you can use :func:`nextcord.utils.oauth_url`.
