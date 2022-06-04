@@ -5,7 +5,7 @@
 .. _intents_primer:
 
 A Primer to Gateway Intents
-=============================
+===========================
 
 In version 1.5 comes the introduction of :class:`Intents`. This is a radical change in how bots are written. Put simply, an intent allows a bot to subscribe to specific buckets of events. The events that correspond to each intent are documented in the individual attribute of the :class:`Intents` documentation.
 
@@ -14,7 +14,7 @@ These intents are passed to the constructor of :class:`Client` or its subclasses
 If intents are not passed, then the library defaults to every intent being enabled except the privileged intents, currently :attr:`Intents.members`, :attr:`Intents.presences`, and :attr:`Intents.message_content`.
 
 What intents are needed?
---------------------------
+------------------------
 
 The intents that are necessary for your bot can only be dictated by yourself. Each attribute in the :class:`Intents` class documents what :ref:`events <discord-api-events>` it corresponds to and what kind of cache it enables.
 
@@ -55,7 +55,7 @@ Another example showing a bot that only deals with messages and guild informatio
 .. _privileged_intents:
 
 Privileged Intents
----------------------
+------------------
 
 With the API change requiring bot authors to specify intents, some intents were restricted further and require more manual steps. These intents are called **privileged intents**.
 
@@ -84,14 +84,14 @@ A privileged intent is an intent that requires you to go to the developer portal
     through code as well.
 
 Do I need privileged intents?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is a quick checklist to see if you need specific privileged intents.
 
 .. _need_presence_intent:
 
 Presence Intent
-+++++++++++++++++
++++++++++++++++
 
 - Whether you use :attr:`Member.status` at all to track member statuses.
 - Whether you use :attr:`Member.activity` or :attr:`Member.activities` to check member's activities.
@@ -99,7 +99,7 @@ Presence Intent
 .. _need_members_intent:
 
 Member Intent
-+++++++++++++++
++++++++++++++
 
 - Whether you track member joins or member leaves, corresponds to :func:`on_member_join` and :func:`on_member_remove` events.
 - Whether you want to track member updates such as nickname or role changes.
@@ -110,7 +110,7 @@ Member Intent
 .. _need_message_content_intent:
 
 Message Content
-+++++++++++++++++
++++++++++++++++
 
 - Whether you want to read :attr:`Message.content`, :attr:`Message.embeds`, :attr:`Message.attachments`, or :attr:`Message.components` in most messages.
 
@@ -122,7 +122,7 @@ Message Content
 .. _intents_member_cache:
 
 Member Cache
--------------
+------------
 
 Along with intents, Discord now further restricts the ability to cache members and expects bot authors to cache as little as is necessary. However, to properly maintain a cache the :attr:`Intents.members` intent is required to track the members who left and properly evict them.
 
@@ -142,7 +142,7 @@ Other events that take a :class:`Member` will require the use of the member cach
 .. _retrieving_members:
 
 Retrieving Members
---------------------
+------------------
 
 If the cache is disabled or you disable chunking guilds at startup, we might still need a way to load members. The library offers a few ways to do this:
 
@@ -160,7 +160,7 @@ If the cache is disabled or you disable chunking guilds at startup, we might sti
 It should be noted that the gateway has a strict rate limit of 120 requests per 60 seconds.
 
 Troubleshooting
-------------------
+---------------
 
 Some common issues relating to the mandatory intent change.
 
@@ -208,7 +208,7 @@ For example:
     # bot = commands.Bot(command_prefix='!', intents=intents)
 
 Why does ``on_ready`` take so long to fire?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As part of the API change regarding intents, Discord also changed how members are loaded in the beginning. Originally the library could request 75 guilds at once and only request members from guilds that have the :attr:`Guild.large` attribute set to ``True``. With the new intent changes, Discord mandates that we can only send 1 guild per request. This causes a 75x slowdown which is further compounded by the fact that *all* guilds, not just large guilds are being requested.
 
