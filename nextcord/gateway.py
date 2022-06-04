@@ -784,7 +784,7 @@ class DiscordVoiceWebSocket:
         self.secret_key = None
         self._hook = hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
 
-    def _default_hook(self, *args):
+    async def _default_hook(self, *args):
         ...
 
     async def send_as_json(self, data):
