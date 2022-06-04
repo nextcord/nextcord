@@ -11,7 +11,7 @@ In version 1.5 comes the introduction of :class:`Intents`. This is a radical cha
 
 These intents are passed to the constructor of :class:`Client` or its subclasses (:class:`AutoShardedClient`, :class:`~.AutoShardedBot`, :class:`~.Bot`) with the ``intents`` argument.
 
-If intents are not passed, then the library defaults to every intent being enabled except the privileged intents, currently :attr:`Intents.members` and :attr:`Intents.presences`.
+If intents are not passed, then the library defaults to every intent being enabled except the privileged intents, currently :attr:`Intents.members`, :attr:`Intents.presences`, and :attr:`Intents.message_content`.
 
 What intents are needed?
 --------------------------
@@ -107,6 +107,18 @@ Member Intent
 - Whether you want to request the guild member list through :meth:`Guild.chunk` or :meth:`Guild.fetch_members`.
 - Whether you want high accuracy member cache under :attr:`Guild.members`.
 
+.. _need_message_content_intent:
+
+Message Content
++++++++++++++++++
+
+- Whether you want to read :attr:`Message.content`, :attr:`Message.embeds`, :attr:`Message.attachments`, or :attr:`Message.components` in most messages.
+
+.. note::
+
+    Without this intent, the attributes above will appear empty (either an empty string or empty array depending on the data type) in most messages.
+    The bot will always be able to get these attributes from messages the bot sends, messages the bot receives in DMs, and messages in which the bot is mentioned.
+
 .. _intents_member_cache:
 
 Member Cache
@@ -155,7 +167,7 @@ Some common issues relating to the mandatory intent change.
 Where'd my members go?
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Due to an :ref:`API change <intents_member_cache>` Discord is now forcing developers who want member caching to explicitly opt-in to it. This is a Discord mandated change and there is no way to bypass it. To get members back, you have to explicitly enable the :ref:`members privileged intent <privileged_intents>` and change the :attr:`Intents.members` attribute to true.
+Due to an :ref:`API change <intents_member_cache>` Discord is now forcing developers who want member caching to explicitly opt in to it. This is a Discord mandated change and there is no way to bypass it. To get members back, you have to explicitly enable the :ref:`members privileged intent <privileged_intents>` and change the :attr:`Intents.members` attribute to true.
 
 For example:
 
@@ -165,6 +177,29 @@ For example:
     import nextcord
     intents = nextcord.Intents.default()
     intents.members = True
+
+    # Somewhere else:
+    # client = nextcord.Client(intents=intents)
+    # or
+    # from nextcord.ext import commands
+    # bot = commands.Bot(command_prefix='!', intents=intents)
+
+What happened to my message commands?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Due to an :ref:`API change <need_message_content_intent>`, to read message content in most messages,
+you have to explicitly opt in to it. This is a Discord mandated change and there is no way to bypass it.
+To get message content back, you have to explicitly enable the :ref:`message content privileged intent <privileged_intents>`
+and change the :attr:`Intents.message_content` attribute to true.
+
+For example:
+
+.. code-block:: python3
+   :emphasize-lines: 3,6,8,9
+
+    import nextcord
+    intents = nextcord.Intents.default()
+    intents.message_content = True
 
     # Somewhere else:
     # client = nextcord.Client(intents=intents)

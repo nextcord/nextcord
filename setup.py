@@ -41,12 +41,13 @@ readme = ""
 with open("README.rst") as f:
     readme = f.read()
 
-with open("docs/requirements.txt") as f:
-    docs_requirements = f.read().splitlines()
-
 extras_require = {
     "voice": ["PyNaCl>=1.3.0,<1.5"],
-    "docs": docs_requirements,
+    "docs": [
+        "sphinx==4.0.2",
+        "sphinxcontrib_trio==1.1.2",
+        "sphinxcontrib-websupport",
+    ],
     "speed": ["orjson>=3.5.4", "aiodns>=1.1", "Brotli", "cchardet"],
 }
 

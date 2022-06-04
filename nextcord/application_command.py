@@ -2280,7 +2280,10 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 parent_cog=self.parent_cog,
                 inherit_hooks=inherit_hooks,
             )
-            self.children[ret.name or func.__name__] = ret
+            self.children[
+                ret.name
+                or (func.callback.__name__ if isinstance(func, CallbackWrapper) else func.__name__)
+            ] = ret
             return ret
 
         if isinstance(
@@ -2449,7 +2452,10 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
                 parent_cog=self.parent_cog,
                 inherit_hooks=inherit_hooks,
             )
-            self.children[ret.name or func.__name__] = ret
+            self.children[
+                ret.name
+                or (func.callback.__name__ if isinstance(func, CallbackWrapper) else func.__name__)
+            ] = ret
             return ret
 
         return decorator
