@@ -37,7 +37,7 @@ Creating a Bot account is a pretty straightforward process.
 
 7. Get a generated token using the "Reset Token" button. You will have to confirm and enter a 2FA Code. 2FA is a requirement for making Bot Accounts.
 
-    - **This is not the Client Secret on the General Information page.**
+    - **This is not the Client Secret from the General Information page.**
 
     .. warning::
 
