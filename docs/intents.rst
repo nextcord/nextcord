@@ -185,7 +185,7 @@ For example:
     # bot = commands.Bot(command_prefix='!', intents=intents)
 
 What happened to my prefix commands?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Due to an :ref:`API change <need_message_content_intent>`, to read message content in most messages,
 you have to explicitly opt in to it. This is a Discord mandated change and there is no way to bypass it.
