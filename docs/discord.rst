@@ -90,7 +90,7 @@ If you want to invite your bot, you must create an invite URL for it.
     .. image:: /images/discord_oauth2_perms.png
         :alt: The permission checkboxes with some permissions checked.
 
-7. Now the resulting URL can be used to add your bot to a server. Copy and paste the URL into your browser or Discord client, choose a server to invite the bot to, and click "Authorize".
+7. Now the resulting URL can be used to add your bot to a server. Copy and paste the URL into your browser, choose a server to invite the bot to, and click "Authorize".
 
 
 .. note::
