@@ -99,7 +99,14 @@ class CheckWrapper(CallbackWrapper):
 
 
 AC = Callable[
-    [Union[Callable[[Interaction], bool], BaseApplicationCommand, SlashApplicationSubcommand]],
+    [
+        Union[
+            CoroFunc,
+            Callable[[Interaction], bool],
+            BaseApplicationCommand,
+            SlashApplicationSubcommand,
+        ]
+    ],
     CheckWrapper,
 ]
 
