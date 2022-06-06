@@ -1761,11 +1761,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             ret["guild_id"] = guild_id
         else:  # Global command specific payload options.
             if self.dm_permission is not None:
-                # While Discord defaults to True, they only send back the DM permission if we set it, so this is fairly
-                #  safe it seems? Going from True to None will cause a command update, but that's not too bad at all.
-                #  They might change this behavior though, so we might need to do a:
-                # if self.dm_permission not in (None, True):
                 ret["dm_permission"] = self.dm_permission
+            else:
+                # Discord seems to send back the DM permission as True regardless if we sent it or not, so we send as
+                #  the default (True) to ensure payload parity for comparisons.
+                ret["dm_permission"] = True
 
         return ret
 

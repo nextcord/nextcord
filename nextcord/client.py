@@ -2395,10 +2395,7 @@ class Client:
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
-            if isinstance(command, (SlashApplicationCommand, SlashApplicationSubcommand)):
-                command.from_callback(command.callback, call_children=False)
-            else:
-                command.from_callback(command.callback)
+            command.from_callback(command.callback)
 
             self.add_application_command(command, use_rollout=True)
 
