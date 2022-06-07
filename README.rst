@@ -105,7 +105,7 @@ Quick Example (with ``commands.Bot``)
 
 
     @bot.slash_command(description="Test with ephemeral!")
-    async def epehemeral(interaction: nextcord.Interaction):
+    async def ephemeral(interaction: nextcord.Interaction):
         await interaction.send("Ephemeral message!", ephemeral=True)
 
     bot.run('token')
