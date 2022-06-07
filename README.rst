@@ -88,8 +88,8 @@ Please note that on Linux installing voice you must install the following packag
 * python-dev (e.g. ``python3.8-dev`` for Python 3.8)
 
 
-Quick Example (with ``commands.Bot``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Quick Example
+~~~~~~~~~~~~~
 
 .. code:: py
 
