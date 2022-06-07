@@ -111,7 +111,7 @@ Quick Example (with ``commands.Bot``)
     bot.run('token')
 
 
-It is recommended that you use ``commands.Bot``, as although both client (``nextcord.Client``) and ``commands.Bot`` allow you to interface with discord, ``commands.Bot`` provides an easier way to make commands with a framework. Make sure to not use both versions though as only one of them will actually be connected to discord.
+It is recommended that you use ``commands.Bot``, as although both ``nextcord.Client`` and ``commands.Bot`` allow you to interface with Discord, ``commands.Bot`` provides an easier way to make commands with a framework. Make sure to not use both versions, though, as only one of them will actually be connected to Discord.
 
 You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 
