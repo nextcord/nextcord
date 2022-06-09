@@ -31,10 +31,10 @@ import time
 import traceback
 from functools import partial
 from itertools import groupby
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from ..components import Component
-from ..utils import MISSING
+from ..utils import MISSING, find
 from .item import Item
 from .view import _component_to_item, _ViewWeights, _walk_all_components
 
@@ -48,6 +48,21 @@ if TYPE_CHECKING:
     from ..interactions import Interaction
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
+    from ..types.interactions import (
+        ModalSubmitInteractionData,
+        ModalSubmitComponentInteractionData,
+        ComponentInteractionData,
+    )
+
+
+def _walk_component_interaction_data(
+    components: List[ModalSubmitComponentInteractionData],
+) -> Iterator[ComponentInteractionData]:
+    for item in components:
+        if "components" in item:
+            yield from item["components"]  # type: ignore
+        else:
+            yield item
 
 
 class Modal:
@@ -256,8 +271,16 @@ class Modal:
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
     async def _scheduled_task(self, interaction: Interaction):
-        for children in self.children:
-            children.refresh_state(interaction)
+        data: ModalSubmitInteractionData = interaction.data  # type: ignore
+        for child in self.children:
+            find_component: Callable[[ComponentInteractionData, Item[Any]], bool] = (
+                lambda c, child=child: c["custom_id"] == child.custom_id  # type: ignore
+            )
+            component_data: Optional[ComponentInteractionData] = find(
+                find_component, _walk_component_interaction_data(data["components"])
+            )
+            if component_data is not None:
+                child.refresh_state(component_data)
         try:
             if self.timeout:
                 self.__timeout_expiry = time.monotonic() + self.timeout

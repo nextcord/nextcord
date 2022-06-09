@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from ..components import Component
     from ..enums import ComponentType
     from ..types.components import Component as ComponentPayload
+    from ..types.interactions import ComponentInteractionData
     from .view import View
 
 I = TypeVar("I", bound="Item")
@@ -72,7 +73,7 @@ class Item(Generic[V]):
     def refresh_component(self, component: Component) -> None:
         return None
 
-    def refresh_state(self, interaction: Interaction) -> None:
+    def refresh_state(self, data: ComponentInteractionData) -> None:
         return None
 
     @classmethod

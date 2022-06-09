@@ -45,14 +45,6 @@ T = TypeVar("T", bound="TextInput")
 V = TypeVar("V", bound="View", covariant=True)
 
 
-def _walk_all_components(components):
-    for item in components:
-        if item["type"] == 1:
-            yield from item["components"]
-        else:
-            yield item
-
-
 class TextInput(Item[V]):
     """Represent a UI text input.
 
@@ -253,9 +245,5 @@ class TextInput(Item[V]):
     def refresh_component(self, text_input: TextInputComponent) -> None:
         self._underlying = text_input
 
-    def refresh_state(self, interaction: Interaction) -> None:
-        data: ComponentInteractionData = interaction.data  # type: ignore
-        for component_data in _walk_all_components(data["components"]):  # type: ignore
-            if component_data["custom_id"] == self.custom_id:
-                self._inputed_value = component_data["value"]
-                return
+    def refresh_state(self, data: ComponentInteractionData) -> None:
+        self._inputed_value = data.get("value", "")
