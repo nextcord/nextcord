@@ -49,9 +49,9 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
     from ..types.interactions import (
-        ModalSubmitInteractionData,
-        ModalSubmitComponentInteractionData,
         ComponentInteractionData,
+        ModalSubmitComponentInteractionData,
+        ModalSubmitInteractionData,
     )
 
 
