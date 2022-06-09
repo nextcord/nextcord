@@ -31,7 +31,6 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar
 from ..components import SelectMenu, SelectOption
 from ..emoji import Emoji
 from ..enums import ComponentType
-from ..interactions import Interaction
 from ..partial_emoji import PartialEmoji
 from ..utils import MISSING
 from .item import Item, ItemCallbackType

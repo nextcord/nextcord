@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING, Optional, Tuple, Type, TypeVar
 
 from ..components import TextInput as TextInputComponent
 from ..enums import ComponentType, TextInputStyle
-from ..interactions import Interaction
 from ..utils import MISSING
 from .item import Item
 
