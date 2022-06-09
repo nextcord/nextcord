@@ -34,7 +34,7 @@ from itertools import groupby
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from ..components import Component
-from ..utils import MISSING, find
+from ..utils import MISSING
 from .item import Item
 from .view import _component_to_item, _ViewWeights, _walk_all_components
 
@@ -273,14 +273,10 @@ class Modal:
     async def _scheduled_task(self, interaction: Interaction):
         data: ModalSubmitInteractionData = interaction.data  # type: ignore
         for child in self.children:
-            find_component: Callable[[ComponentInteractionData, Item[Any]], bool] = (
-                lambda c, child=child: c["custom_id"] == child.custom_id  # type: ignore
-            )
-            component_data: Optional[ComponentInteractionData] = find(
-                find_component, _walk_component_interaction_data(data["components"])
-            )
-            if component_data is not None:
-                child.refresh_state(component_data)
+            for component_data in _walk_component_interaction_data(data["components"]):
+                if component_data["custom_id"] == child.custom_id:  # type: ignore
+                    child.refresh_state(component_data)
+                    break
         try:
             if self.timeout:
                 self.__timeout_expiry = time.monotonic() + self.timeout

@@ -122,7 +122,7 @@ class TextInput(Item[V]):
 
     @property
     def style(self) -> TextInputStyle:
-        """:class:`nextcord.TextInputStyle`: The style of the button."""
+        """:class:`nextcord.TextInputStyle`: The style of the text input."""
         return self._underlying.style
 
     @style.setter
@@ -131,7 +131,7 @@ class TextInput(Item[V]):
 
     @property
     def custom_id(self) -> Optional[str]:
-        """Optional[:class:`str`]: The ID of the button that gets received during an interaction."""
+        """Optional[:class:`str`]: The ID of the text input that gets received during an interaction."""
         return self._underlying.custom_id
 
     @custom_id.setter
