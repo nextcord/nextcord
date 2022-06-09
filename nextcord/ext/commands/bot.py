@@ -33,7 +33,20 @@ import inspect
 import sys
 import traceback
 import types
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Type, TypeVar, Union
+import warnings
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import nextcord
 
@@ -50,13 +63,16 @@ if TYPE_CHECKING:
     from nextcord.message import Message
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
-    from ._types import Check, CoroFunc
+    from ._types import Check, CoroFunc, MaybeCoro
+
+    PrefixType = Union[str, Iterable[str], Callable[..., MaybeCoro[Union[str, Iterable[str]]]]]
 
 __all__ = (
     "when_mentioned",
     "when_mentioned_or",
     "Bot",
     "AutoShardedBot",
+    "MissingMessageContentIntentWarning",
 )
 
 MISSING: Any = nextcord.utils.MISSING
@@ -125,10 +141,14 @@ class _DefaultRepr:
 _default = _DefaultRepr()
 
 
+class MissingMessageContentIntentWarning(UserWarning):
+    ...
+
+
 class BotBase(GroupMixin):
     def __init__(self, command_prefix=MISSING, help_command=_default, description=None, **options):
         super().__init__(**options)
-        self.command_prefix = command_prefix if command_prefix is not MISSING else tuple()
+        self.command_prefix: PrefixType = command_prefix if command_prefix is not MISSING else []
         self.extra_events: Dict[str, List[CoroFunc]] = {}
         self.__cogs: Dict[str, Cog] = {}
         self.__extensions: Dict[str, types.ModuleType] = {}
@@ -147,6 +167,27 @@ class BotBase(GroupMixin):
 
         if self.owner_ids and not isinstance(self.owner_ids, collections.abc.Collection):
             raise TypeError(f"owner_ids must be a collection not {self.owner_ids.__class__!r}")
+
+        # if command prefix is a callable, string, or non-empty iterable and message content intent
+        # is disabled, warn the user that prefix commands might not work
+        if (
+            (
+                callable(self.command_prefix)
+                or isinstance(self.command_prefix, str)
+                or len(self.command_prefix) > 0  # type: ignore
+            )
+            and self.command_prefix is not when_mentioned
+            and hasattr(self, "intents")
+            and not self.intents.message_content  # type: ignore
+        ):
+            warnings.warn(
+                "Message content intent is not enabled. "
+                "Prefix commands may not work as expected unless you enable this. "
+                "See https://docs.nextcord.dev/en/stable/intents.html#what-happened-to-my-prefix-commands "
+                "for more information.",
+                category=MissingMessageContentIntentWarning,
+                stacklevel=0,
+            )
 
         if help_command is _default:
             self.help_command = DefaultHelpCommand()
@@ -950,9 +991,9 @@ class BotBase(GroupMixin):
             A list of prefixes or a single prefix that the bot is
             listening for.
         """
-        prefix = ret = self.command_prefix
-        if callable(prefix):
-            ret = await nextcord.utils.maybe_coroutine(prefix, self, message)
+        ret = self.command_prefix
+        if callable(ret):
+            ret = await nextcord.utils.maybe_coroutine(ret, self, message)
 
         if not isinstance(ret, str):
             try:
@@ -1236,7 +1277,7 @@ class Bot(BotBase, nextcord.Client):
 
     Attributes
     -----------
-    command_prefix
+    command_prefix: Union[:class:`str`, Iterable[:class:`str`], Callable[..., MaybeCoro[Union[:class:`str`, Iterable[:class:`str`]]]]]
         The command prefix is what the message content must contain initially
         to have a command invoked. This prefix could either be a string to
         indicate what the prefix should be, or a callable that takes in the bot
