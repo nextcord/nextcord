@@ -103,7 +103,7 @@ Quick Example
     async def ping(interaction: nextcord.Interaction):
         await interaction.send("Pong!", ephemeral=True)
 
-    bot.run('token')
+    bot.run("token")
 
 
 It is recommended that you use ``commands.Bot``, as although both ``nextcord.Client`` and ``commands.Bot`` allow you to interface with Discord, ``commands.Bot`` provides an easier way to make commands with a framework. Make sure to not use both versions, though, as only one of them will actually be connected to Discord.
