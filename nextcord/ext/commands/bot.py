@@ -128,7 +128,24 @@ _default = _DefaultRepr()
 
 
 class MissingMessageContentIntentWarning(UserWarning):
-    ...
+    """Warning category raised when instantiating a :class:`~nextcord.ext.commands.Bot` with a
+    :attr:`~nextcord.ext.commands.Bot.command_prefix` but without the :attr:`~nextcord.Intents.message_content`
+    intent enabled.
+
+    This warning is not raised when the :attr:`~nextcord.ext.commands.Bot.command_prefix`
+    is set to an empty iterable or :func:`when_mentioned <nextcord.ext.commands.when_mentioned>`.
+
+    This warning can be silenced using :func:`warnings.simplefilter`.
+
+    .. code-block:: python3
+
+        import warnings
+        from nextcord.ext import commands
+
+        warnings.simplefilter('ignore', commands.MissingMessageContentIntentWarning)
+    """
+
+    pass
 
 
 class BotBase(GroupMixin):

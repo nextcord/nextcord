@@ -439,6 +439,12 @@ Flag Converter
 
 .. _ext_commands_api_errors:
 
+Warnings
+---------
+
+.. autoclass:: nextcord.ext.commands.MissingMessageContentIntentWarning
+    :members:
+
 Exceptions
 -----------
 
