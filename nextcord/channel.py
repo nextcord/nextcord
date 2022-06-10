@@ -948,9 +948,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         .. versionadded:: 2.0
     """
 
-    __slots__ = (
-        "last_message_id",
-    )
+    __slots__ = ("last_message_id",)
 
     def __repr__(self) -> str:
         attrs = [
