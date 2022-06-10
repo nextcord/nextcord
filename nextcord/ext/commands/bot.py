@@ -160,7 +160,7 @@ class BotBase(GroupMixin):
             (
                 callable(self.command_prefix)
                 or isinstance(self.command_prefix, str)
-                or len(self.command_prefix) > 0  # type: ignore
+                or len(self.command_prefix) > 0
             )
             and self.command_prefix is not when_mentioned
             and hasattr(self, "intents")
