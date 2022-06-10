@@ -142,7 +142,7 @@ class MissingMessageContentIntentWarning(UserWarning):
         import warnings
         from nextcord.ext import commands
 
-        warnings.simplefilter('ignore', commands.MissingMessageContentIntentWarning)
+        warnings.simplefilter("ignore", commands.MissingMessageContentIntentWarning)
     """
 
     pass
