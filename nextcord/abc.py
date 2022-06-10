@@ -1167,6 +1167,7 @@ class Messageable:
     The following implement this ABC:
 
     - :class:`~nextcord.TextChannel`
+    - :class:`~nextcord.VoiceChannel`
     - :class:`~nextcord.DMChannel`
     - :class:`~nextcord.GroupChannel`
     - :class:`~nextcord.User`
