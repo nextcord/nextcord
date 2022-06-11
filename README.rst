@@ -7,7 +7,7 @@
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
    :target: https://pypi.org/project/nextcord/
    :alt: PyPI version info
-.. image:: 	https://img.shields.io/pypi/dm/nextcord?color=informational&label=pypi%20downloads
+.. image:: https://img.shields.io/pypi/dm/nextcord?color=informational&label=pypi%20downloads
    :target: https://pypi.org/project/nextcord/
    :alt: PyPI version info
 .. image:: https://img.shields.io/pypi/pyversions/nextcord.svg
@@ -113,5 +113,5 @@ Links
 ------
 
 - `Documentation <https://docs.nextcord.dev/>`_
-- `Official Discord Server <https://discord.gg/ZebatWssCB>`_
+- `Official Discord Server <https://discord.gg/nextcord>`_
 - `Discord API <https://discord.gg/discord-api>`_
