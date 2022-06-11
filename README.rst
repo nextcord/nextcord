@@ -2,16 +2,16 @@
    :alt: Nextcord
 
 .. image:: https://img.shields.io/discord/881118111967883295?color=blue&label=discord
-   :target: https://discord.gg/ZebatWssCB
+   :target: https://discord.gg/nextcord
    :alt: Discord server invite
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
-   :target: https://pypi.python.org/pypi/nextcord
+   :target: https://pypi.org/project/nextcord/
    :alt: PyPI version info
 .. image:: 	https://img.shields.io/pypi/dm/nextcord?color=informational&label=pypi%20downloads
-   :target: https://pypi.python.org/pypi/nextcord
+   :target: https://pypi.org/project/nextcord/
    :alt: PyPI version info
 .. image:: https://img.shields.io/pypi/pyversions/nextcord.svg
-   :target: https://pypi.python.org/pypi/nextcord
+   :target: https://pypi.org/project/nextcord/
    :alt: PyPI supported Python versions
 .. image:: https://img.shields.io/readthedocs/nextcord
    :target: https://docs.nextcord.dev/
@@ -96,13 +96,13 @@ Quick Example
     from nextcord.ext import commands
 
 
-    bot = commands.Bot(command_prefix='$')
+    bot = commands.Bot(command_prefix="$")
 
     @bot.command()
     async def ping(ctx):
-        await ctx.reply('Pong!')
+        await ctx.reply("Pong!")
 
-    bot.run('token')
+    bot.run("token")
 
 
 You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
