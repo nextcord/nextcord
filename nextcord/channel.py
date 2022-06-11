@@ -91,7 +91,7 @@ async def _single_delete_strategy(messages: Iterable[Message]):
         await m.delete()
 
 
-class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
+class TextChannel(abc.MessageablePins, abc.GuildChannel, Hashable):
     """Represents a Discord guild text channel.
 
     .. container:: operations
@@ -946,6 +946,11 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         The camera video quality for the voice channel's participants.
 
         .. versionadded:: 2.0
+    last_message_id: Optional[:class:`int`]
+        The last message ID of the message sent to this channel. It may
+        *not* point to an existing or valid message.
+
+        .. versionadded:: 2.0
     """
 
     __slots__ = (
@@ -1788,7 +1793,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
 DMC = TypeVar("DMC", bound="DMChannel")
 
 
-class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable):
+class DMChannel(abc.MessageablePins, abc.PrivateChannel, Hashable):
     """Represents a Discord direct message channel.
 
     .. container:: operations
@@ -1914,7 +1919,7 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable):
         return PartialMessage(channel=self, id=message_id)
 
 
-class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable):
+class GroupChannel(abc.MessageablePins, abc.PrivateChannel, Hashable):
     """Represents a Discord group channel.
 
     .. container:: operations

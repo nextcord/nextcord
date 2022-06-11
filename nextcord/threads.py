@@ -28,7 +28,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Union
 
-from .abc import Messageable
+from .abc import MessageablePins
 from .enums import ChannelType, try_enum
 from .errors import ClientException
 from .mixins import Hashable
@@ -59,7 +59,7 @@ if TYPE_CHECKING:
     )
 
 
-class Thread(Messageable, Hashable):
+class Thread(MessageablePins, Hashable):
     """Represents a Discord thread.
 
     .. container:: operations
