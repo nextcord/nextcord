@@ -951,9 +951,17 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         *not* point to an existing or valid message.
 
         .. versionadded:: 2.0
+    nsfw: :class:`bool`
+        If the channel is marked as "not safe for work".
+
+        .. note::
+
+            To check if the channel or the guild of that channel are marked as NSFW, consider :meth:`is_nsfw` instead.
+
+        .. versionadded:: 2.0
     """
 
-    __slots__ = ("last_message_id",)
+    __slots__ = ("last_message_id", "nsfw",)
 
     def __repr__(self) -> str:
         attrs = [
@@ -972,6 +980,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     def _update(self, guild: Guild, data: VoiceChannelPayload) -> None:
         VocalGuildChannel._update(self, guild, data)
         self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
+        self.nsfw: bool = data.get("nsfw", False)
 
     async def _get_channel(self):
         return self
@@ -980,6 +989,10 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     def type(self) -> ChannelType:
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.voice
+
+    def is_nsfw(self) -> bool:
+        """:class:`bool`: Checks if the channel is NSFW."""
+        return self.nsfw
 
     @property
     def last_message(self) -> Optional[Message]:
