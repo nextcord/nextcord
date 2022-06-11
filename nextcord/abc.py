@@ -1601,9 +1601,9 @@ class Messageable:
 
 class MessageablePins(Messageable):
     """An ABC that implements everything from Messageable along with pinned messages.
-    
+
     The following implement this ABC:
-    
+
     - :class:`~nextcord.TextChannel`
     - :class:`~nextcord.DMChannel`
     - :class:`~nextcord.GroupChannel`
