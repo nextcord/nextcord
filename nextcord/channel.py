@@ -48,7 +48,7 @@ from .asset import Asset
 from .enums import ChannelType, StagePrivacyLevel, VideoQualityMode, VoiceRegion, try_enum
 from .errors import ClientException, InvalidArgument
 from .iterators import ArchivedThreadIterator
-from .mixins import Hashable
+from .mixins import Hashable, PinsMixin
 from .object import Object
 from .permissions import PermissionOverwrite, Permissions
 from .stage_instance import StageInstance
@@ -91,7 +91,7 @@ async def _single_delete_strategy(messages: Iterable[Message]):
         await m.delete()
 
 
-class TextChannel(abc.MessageablePins, abc.GuildChannel, Hashable):
+class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
     """Represents a Discord guild text channel.
 
     .. container:: operations
@@ -1807,7 +1807,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
 DMC = TypeVar("DMC", bound="DMChannel")
 
 
-class DMChannel(abc.MessageablePins, abc.PrivateChannel, Hashable):
+class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
     """Represents a Discord direct message channel.
 
     .. container:: operations
@@ -1933,7 +1933,7 @@ class DMChannel(abc.MessageablePins, abc.PrivateChannel, Hashable):
         return PartialMessage(channel=self, id=message_id)
 
 
-class GroupChannel(abc.MessageablePins, abc.PrivateChannel, Hashable):
+class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
     """Represents a Discord group channel.
 
     .. container:: operations

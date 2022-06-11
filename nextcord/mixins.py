@@ -22,6 +22,16 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from typing import Any, List, Union, overload, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .channel import DMChannel, GroupChannel, PartialMessageable, TextChannel
+    from .message import Message
+    from .state import ConnectionState
+    from .threads import Thread
+
+    MessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable, GroupChannel]
+
 __all__ = (
     "EqualityComparable",
     "Hashable",
@@ -47,3 +57,44 @@ class Hashable(EqualityComparable):
 
     def __hash__(self) -> int:
         return self.id >> 22
+
+class PinsMixin:
+    __slots__ = ()
+    _state: Any
+
+    if TYPE_CHECKING:
+        _state: ConnectionState 
+
+        @overload
+        async def pins(self) -> List[Message]:
+            ...
+
+    async def _get_channel(self):
+        raise NotImplementedError
+
+    async def pins(self) -> List[Any]:
+        """|coro|
+
+        Retrieves all messages that are currently pinned in the channel.
+
+        .. note::
+
+            Due to a limitation with the Discord API, the :class:`.Message`
+            objects returned by this method do not contain complete
+            :attr:`.Message.reactions` data.
+
+        Raises
+        -------
+        ~nextcord.HTTPException
+            Retrieving the pinned messages failed.
+
+        Returns
+        --------
+        List[:class:`~nextcord.Message`]
+            The messages that are currently pinned.
+        """
+
+        channel = await self._get_channel()
+        state = self._state
+        data = await state.http.pins_from(channel.id)
+        return [state.create_message(channel=channel, data=m) for m in data]
