@@ -22,7 +22,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import Any, List, Union, overload, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, List, Union, overload
 
 if TYPE_CHECKING:
     from .channel import DMChannel, GroupChannel, PartialMessageable, TextChannel
@@ -58,12 +58,13 @@ class Hashable(EqualityComparable):
     def __hash__(self) -> int:
         return self.id >> 22
 
+
 class PinsMixin:
     __slots__ = ()
     _state: Any
 
     if TYPE_CHECKING:
-        _state: ConnectionState 
+        _state: ConnectionState
 
         @overload
         async def pins(self) -> List[Message]:
