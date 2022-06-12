@@ -32,12 +32,14 @@ import warnings
 from inspect import Parameter, signature
 from typing import (
     TYPE_CHECKING,
+    Annotated,
     Any,
     Callable,
     Coroutine,
     Dict,
     Iterable,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
@@ -48,6 +50,14 @@ from typing import (
 )
 
 from .abc import GuildChannel
+from .channel import (
+    CategoryChannel,
+    DMChannel,
+    GroupChannel,
+    StageChannel,
+    TextChannel,
+    VoiceChannel,
+)
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import (
     ApplicationCheckFailure,
@@ -61,6 +71,7 @@ from .member import Member
 from .message import Attachment, Message
 from .permissions import Permissions
 from .role import Role
+from .threads import Thread
 from .types.interactions import ApplicationCommandInteractionData
 from .types.member import MemberWithUser
 from .user import User
@@ -376,6 +387,10 @@ class BaseCommandOption(ApplicationCommandOption):
         self.functional_name: str = parameter.name
         """Name of the kwarg in the function/method"""
         self.parent_cog: Optional[ClientCog] = parent_cog
+
+    @property
+    def error_name(self) -> str:
+        return f"{self.__class__.__name__} {self.name} of command {self.command.error_name}"
 
 
 class OptionConverter(_CustomTypingMetaBase):
@@ -698,20 +713,19 @@ class CallbackMixin:
             #  commands. While Discord doesn't support anything else having Options, we
             #  might be able to do something here.
             if option_class:
-                first_arg = True
+                # first_arg = True
+                skip_counter = 1
                 typehints = typing.get_type_hints(self.callback)
                 # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
                 #  decorator going into effect before the class is instantiated, thus being a function at the time.
                 #  Try to look into fixing that in the future?
                 #  If self.parent_cog isn't reliable enough, we can possibly check if the first parameter name is `self`
-                self_skip = bool(self.parent_cog)
-                for name, param in signature(self.callback).parameters.items():
-                    if first_arg:
-                        if not self_skip:
-                            first_arg = False
-                        else:
-                            self_skip = False
+                if self.parent_cog:
+                    skip_counter += 1
 
+                for name, param in signature(self.callback).parameters.items():
+                    if skip_counter:
+                        skip_counter -= 1
                     else:
                         if isinstance(param.annotation, str):
                             # Thank you Disnake for the guidance to use this.
@@ -1209,6 +1223,13 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         User: ApplicationCommandOptionType.user,
         Member: ApplicationCommandOptionType.user,
         GuildChannel: ApplicationCommandOptionType.channel,
+        CategoryChannel: ApplicationCommandOptionType.channel,
+        DMChannel: ApplicationCommandOptionType.channel,
+        GroupChannel: ApplicationCommandOptionType.channel,
+        StageChannel: ApplicationCommandOptionType.channel,
+        TextChannel: ApplicationCommandOptionType.channel,
+        VoiceChannel: ApplicationCommandOptionType.channel,
+        Thread: ApplicationCommandOptionType.channel,
         Role: ApplicationCommandOptionType.role,
         Mentionable: ApplicationCommandOptionType.mentionable,
         float: ApplicationCommandOptionType.number,
@@ -1236,76 +1257,202 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             cmd_arg = SlashOption()
             cmd_arg_given = False
 
-        self.name = cmd_arg.name or parameter.name
+        self.name = cmd_arg.name or parameter.name  # Use the given name, or default to the parameter name.
+
+        typehint_origin = typing.get_origin(parameter.annotation)
+
+        annotation_type: ApplicationCommandOptionType = MISSING
+        annotation_required = True
+        annotation_choices: List[Union[str, int, float]] = []
+        annotation_channel_types: List[ChannelType] = []
+        annotation_converters: List[OptionConverter] = []
+
+        if typehint_origin is Literal:
+            found_type = MISSING
+            found_choices = []
+
+            for lit in typing.get_args(parameter.annotation):
+                lit = unpack_annotation(lit, list(self.option_types.keys()))
+                if isinstance(lit, (int, str, float)):
+                    if lit is None:
+                        annotation_required = False
+                    elif found_type is MISSING:
+                        found_type = self.get_type(lit)
+                    elif self.get_type(lit) is not found_type:
+                        raise ValueError(f"{self.error_name} You cannot mix choice types {type(lit)} and {found_type}")
+                    else:
+                        found_choices.append(lit)
+
+                else:
+                    raise ValueError(f"{self.error_name} Invalid type for choices: {type(lit)}")
+
+            if found_type is MISSING:
+                # ??? Why are they using Literal???
+                found_type = ApplicationCommandOptionType.string
+
+            annotation_type = found_type
+            annotation_choices = found_choices
+        elif typehint_origin in (Union, Optional, None):
+            found_type = MISSING
+            found_channel_types = []
+
+            if typehint_origin is None:
+                unpacked_annotations: List[type] = [parameter.annotation, ]
+                literals: List[object] = []
+            else:
+                unpacked_annotations, literals = unpack_annotation(parameter.annotation, list(self.option_types.keys()))
+
+            # print(f"THINGY IN {self.name}: {unpacked_annotations + literals}")
+            for anno in unpacked_annotations + literals:
+
+                if isinstance(anno, OptionConverter):
+                    annotation_converters.append(anno)
+                    anno = anno.type
+                elif issubclass(anno, OptionConverter):
+                    made_converter = anno()
+                    annotation_converters.append(made_converter)
+                    anno = made_converter.type
+
+                if anno is None or anno == type(None):
+                    annotation_required = False
+                    # print(f"Setting annotation_required to False in thingy {self.name}")
+                else:
+                    if found_type is MISSING:
+                        found_type = self.get_type(anno)
+                    elif self.get_type(anno) is not found_type:
+                        raise ValueError(f"{self.error_name} You cannot mix type {anno} with {found_type}")
+
+                    if anno is CategoryChannel:
+                        found_channel_types.append(ChannelType.category)
+                    elif anno is DMChannel:
+                        found_channel_types.append(ChannelType.private)
+                    elif anno is GroupChannel:
+                        found_channel_types.append(ChannelType.group)
+                    elif anno is StageChannel:
+                        found_channel_types.append(ChannelType.stage_voice)
+                    elif anno is TextChannel:
+                        found_channel_types.append(ChannelType.text)
+                        found_channel_types.append(ChannelType.news)
+                    elif anno is VoiceChannel:
+                        found_channel_types.append(ChannelType.voice)
+                    elif anno is Thread:
+                        found_channel_types.append(ChannelType.news_thread)
+                        found_channel_types.append(ChannelType.public_thread)
+                        found_channel_types.append(ChannelType.private_thread)
+
+            for lit in literals:
+                if not isinstance(lit, OptionConverter):
+                    raise ValueError(
+                        f"{self.error_name} You cannot use non-OptionConverter literals when the base annotation is "
+                        f"not a literal."
+                    )
+
+            annotation_type = found_type
+
+        else:
+            raise ValueError(f"{self.error_name} Invalid annotation origin: {typehint_origin}")
+
+
         self.name_localizations = cmd_arg.name_localizations
         self._description = cmd_arg.description
         self.description_localizations = cmd_arg.description_localizations
-        if cmd_arg.required is not None:  # If the user manually set it...
-            self.required = cmd_arg.required
-        elif type(None) in typing.get_args(
-            parameter.annotation
-        ):  # If it's typed as Optional/None...
-            self.required = False
-        elif cmd_arg.default is not MISSING:  # If the SlashOption has a default...
-            self.required = False
-        elif parameter.default is not parameter.empty and not cmd_arg_given:
-            # If a default was given AND it's not SlashOption...
-            self.required = False
-        else:  # Parameters in Python, by default, are required. While Discord defaults to not-required, this is Python.
-            self.required = True
-
-        self.choices = cmd_arg.choices
         self.choice_localizations = cmd_arg.choice_localizations
-        self.channel_types = cmd_arg.channel_types
+
         self.min_value = cmd_arg.min_value
         self.max_value = cmd_arg.max_value
         self.autocomplete = cmd_arg.autocomplete
         self.autocomplete_callback = cmd_arg.autocomplete_callback
         if self.autocomplete_callback and self.autocomplete is None:
+            # If they didn't explicitly enable autocomplete but did add an autocomplete callback...
             self.autocomplete = True
-
         if self.autocomplete_callback:
             if not asyncio.iscoroutinefunction(self.autocomplete_callback):
                 raise TypeError(
                     f"Given autocomplete callback for kwarg {self.functional_name} isn't a coroutine."
                 )
 
+        if cmd_arg.required is not None:
+            # If the user manually set if it's required...
+            self.required = cmd_arg.required
+            # print(self.error_name, "Required specifically set to false.")
+        elif annotation_required is False:
+            # If the user annotated it as Optional or None...
+            self.required = False
+            # print(self.error_name, "Annotated as Optional or None")
+        elif cmd_arg.default is not MISSING:
+            # If the user provided a default in the SlashOption...
+            self.required = False
+            # print(self.error_name, "Default provided in SlashOption")
+        elif parameter.default is not parameter.empty and not cmd_arg_given:
+            # If the default isn't SlashOption, but was provided...
+            self.required = False
+            # print(self.error_name, "Default provided.")
+        else:
+            # Unlike Discord, parameters in Python are required by default. With this being a Python library, we should
+            # remain intuitive by following that standard.
+            self.required = True
+            # print(self.error_name, "Setting required to True.")
+
+        self.type = annotation_type
+        self.choices = cmd_arg.choices or annotation_choices or None
+        self.channel_types = cmd_arg.channel_types or annotation_channel_types or None
+        self.converters: List[OptionConverter] = annotation_converters
+        #
+        # if self.choices is None and given_literals:
+        #     self.choices = given_literals
+        # else:
+        #     self.choices = cmd_arg.choices
+        #
+        # if cmd_arg_given is False and parameter.default is not parameter.empty:
+        #     # If we weren't given a SlashOption, but we were given something else, set the default to that.
+        #     self.default = parameter.default
+        # else:
+        #     # Else, just set the default to whatever cmd_arg is set to. Either None, or something set by the user.
+        #     self.default = cmd_arg.default
+        #
+
         if cmd_arg_given is False and parameter.default is not parameter.empty:
-            # If we weren't given a SlashOption, but we were given something else, set the default to that.
             self.default = parameter.default
         else:
-            # Else, just set the default to whatever cmd_arg is set to. Either None, or something set by the user.
-            self.default = cmd_arg.default
+            self.default = None if cmd_arg.default is MISSING else cmd_arg.default
+        # if self.default is MISSING:
+        #     self.default = None
 
-        if self.default is MISSING:
-            self.default = None
+        # self.converter: Optional[OptionConverter] = None
+        # found_converters = []
+        # for anno in given_literals:
+        #     if isinstance(anno, OptionConverter):
+        #         found_converters.append(anno)
+        #
+        #
+        # if isinstance(
+        #     parameter.annotation, OptionConverter
+        # ):  # If annotated with an instantiated OptionConverter...
+        #     self.converter = parameter.annotation
+        # elif inspect.isclass(parameter.annotation) and issubclass(
+        #     parameter.annotation, OptionConverter
+        # ):
+        #     # If annotated with OptionConverter...
+        #     self.converter = parameter.annotation()
+        # else:
+        #     for t in typing.get_args(parameter.annotation):
+        #         if issubclass(t, OptionConverter):
+        #             # If annotated with OptionConverter inside of Optional...
+        #             # Optional cannot have instantiated objects in it apparently?
+        #             self.converter = t()
+        #             break
+        #
+        # if self.converter:
+        #     self.type: ApplicationCommandOptionType = self.get_type(self.converter)
+        # else:
+        #     self.type = self.get_type(parameter.annotation)
+        #
+        # if self.converter:
+        #     self.converter.modify(self)
 
-        self.converter: Optional[OptionConverter] = None
+        for converter in self.converters:
+            converter.modify(self)
 
-        if isinstance(
-            parameter.annotation, OptionConverter
-        ):  # If annotated with an instantiated OptionConverter...
-            self.converter = parameter.annotation
-        elif inspect.isclass(parameter.annotation) and issubclass(
-            parameter.annotation, OptionConverter
-        ):
-            # If annotated with OptionConverter...
-            self.converter = parameter.annotation()
-        else:
-            for t in typing.get_args(parameter.annotation):
-                if issubclass(t, OptionConverter):
-                    # If annotated with OptionConverter inside of Optional...
-                    # Optional cannot have instantiated objects in it apparently?
-                    self.converter = t()
-                    break
-
-        if self.converter:
-            self.type: ApplicationCommandOptionType = self.get_type(self.converter)
-        else:
-            self.type = self.get_type(parameter.annotation)
-
-        if self.converter:
-            self.converter.modify(self)
         # noinspection PyProtectedMember
         if cmd_arg._verify:
             self.verify()
@@ -1327,12 +1474,17 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
     def description(self, value: str):
         self._description = value
 
-    def get_type(self, param_typing: Union[type, OptionConverter]) -> ApplicationCommandOptionType:
+    def get_type(
+            self,
+            param_typing: Union[type, OptionConverter, ApplicationCommandOptionType],
+    ) -> ApplicationCommandOptionType:
         if isinstance(param_typing, OptionConverter):
             if isinstance(param_typing.type, type):
                 param_typing = param_typing.type
             else:
                 return param_typing.type
+        elif isinstance(param_typing, ApplicationCommandOptionType):
+            return param_typing
 
         # noinspection PyTypeChecker,PyUnboundLocalVariable
         if param_typing is self.parameter.empty:
@@ -1347,7 +1499,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             return valid_type
         else:
             raise ValueError(
-                f"{self.command.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
+                f"{self.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
             )
 
     def verify(self) -> bool:
@@ -1412,8 +1564,11 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             mentionables = {mentionable.id: mentionable for mentionable in user_role_list}
             value = mentionables[int(value)]
 
-        if self.converter:
-            return await self.converter.convert(interaction, value)
+        if self.converters:
+            ret = value
+            for converter in self.converters:
+                ret = await converter.convert(interaction, ret)
+            return ret
         else:
             return value
 
@@ -2962,3 +3117,79 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
             ret.append(role)
 
     return ret
+
+
+def unpack_annotated(given_anno, resolve_list: list = []) -> type:
+    origin = typing.get_origin(given_anno)
+    if origin is Annotated:
+        located_annotation = MISSING
+        arg_list = typing.get_args(given_anno)
+        for i in range(1, len(arg_list)):
+            if arg_list[i] in resolve_list:
+                located_annotation = arg_list[i]
+                break
+
+        if located_annotation is MISSING:
+            located_annotation = arg_list[-1]
+
+        return located_annotation
+    else:
+        return given_anno
+
+
+def unpack_annotation(
+        given_anno: Any,
+        annotated_list: List[type] = []
+) -> Tuple[List[type], list]:
+    """Unpacks the given parameter annotation into its components.
+
+    Parameters
+    ----------
+    given_anno: Any
+        Given annotation to unpack. Should be from ``parameter.annotation``
+    annotated_list: List[:class:`type`]
+        List that the ``Annotated`` annotation should attempt to resolve to, from the 2nd arg to the right.
+
+    Returns
+    -------
+    Tuple[List[:class:`type`], :class:`list`]
+        A list of unpacked type annotations,
+        and a list of unpacked literal arguments.
+
+    """
+    type_ret = []
+    literal_ret = []
+    origin = typing.get_origin(given_anno)
+    if origin is None:
+        # It doesn't have a fancy origin, just a normal type/object.
+        if isinstance(given_anno, type):
+            type_ret.append(given_anno)
+        else:
+            # If it's not a type and the origin is None, it's probably a literal.
+            literal_ret.append(given_anno)
+
+    elif origin is Annotated:
+        # We want to treat it like the last annotation given.
+        located_annotation = MISSING
+        arg_list = typing.get_args(given_anno)
+        for i in range(1, len(arg_list)):
+            if arg_list[i] in annotated_list:
+                located_annotation = arg_list[i]
+                break
+
+        if located_annotation is MISSING:
+            located_annotation = arg_list[-1]
+
+        unpacked_type, unpacked_literal = unpack_annotation(located_annotation, annotated_list)
+        type_ret.extend(unpacked_type)
+        literal_ret.extend(unpacked_literal)
+    elif origin in (Union, Optional, Literal):
+        for anno in typing.get_args(given_anno):
+            unpacked_type, unpacked_literal = unpack_annotation(anno, annotated_list)
+            type_ret.extend(unpacked_type)
+            literal_ret.extend(unpacked_literal)
+
+    else:
+        raise ValueError(f"Given Anno {given_anno} has an unhandled origin: {origin}")
+
+    return type_ret, literal_ret
