@@ -1257,7 +1257,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             cmd_arg = SlashOption()
             cmd_arg_given = False
 
-        self.name = cmd_arg.name or parameter.name  # Use the given name, or default to the parameter name.
+        self.name = (
+            cmd_arg.name or parameter.name
+        )  # Use the given name, or default to the parameter name.
 
         typehint_origin = typing.get_origin(parameter.annotation)
 
@@ -1290,7 +1292,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                         found_choices.append(lit)
 
                 else:
-                    raise ValueError(f"{self.error_name} Invalid type for choices: {type(lit)}: {lit}")
+                    raise ValueError(
+                        f"{self.error_name} Invalid type for choices: {type(lit)}: {lit}"
+                    )
 
             if found_type is MISSING:
                 # ??? Why are they using Literal???
@@ -1304,10 +1308,14 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             found_channel_types = []
 
             if typehint_origin is None:
-                unpacked_annotations: List[type] = [parameter.annotation, ]
+                unpacked_annotations: List[type] = [
+                    parameter.annotation,
+                ]
                 literals: List[object] = []
             else:
-                unpacked_annotations, literals = unpack_annotation(parameter.annotation, list(self.option_types.keys()))
+                unpacked_annotations, literals = unpack_annotation(
+                    parameter.annotation, list(self.option_types.keys())
+                )
 
             # The only literals in this should be OptionConverters. Anything else should rightfully break.
             for anno in unpacked_annotations + literals:
@@ -1330,7 +1338,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                         # If we haven't set the type of the annotation, set it.
                         found_type = self.get_type(anno)
                     elif self.get_type(anno) is not found_type:
-                        raise ValueError(f"{self.error_name} | Annotation {anno} is incompatible with {found_type}")
+                        raise ValueError(
+                            f"{self.error_name} | Annotation {anno} is incompatible with {found_type}"
+                        )
 
                     # Annotation specific changes.
                     if anno is CategoryChannel:
@@ -1487,8 +1497,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         self._description = value
 
     def get_type(
-            self,
-            param_typing: Union[type, OptionConverter, ApplicationCommandOptionType],
+        self,
+        param_typing: Union[type, OptionConverter, ApplicationCommandOptionType],
     ) -> ApplicationCommandOptionType:
         if isinstance(param_typing, OptionConverter):
             if isinstance(param_typing.type, type):
@@ -3149,10 +3159,7 @@ def unpack_annotated(given_anno, resolve_list: list = []) -> type:
         return given_anno
 
 
-def unpack_annotation(
-        given_anno: Any,
-        annotated_list: List[type] = []
-) -> Tuple[List[type], list]:
+def unpack_annotation(given_anno: Any, annotated_list: List[type] = []) -> Tuple[List[type], list]:
     """Unpacks the given parameter annotation into its components.
 
     Parameters
