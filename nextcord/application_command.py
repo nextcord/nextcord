@@ -1268,23 +1268,29 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         annotation_converters: List[OptionConverter] = []
 
         if typehint_origin is Literal:
+            # If they use the Literal typehint as their base. This currently should only support int, float, str, and
+            #  technically None for setting it to be optional.
             found_type = MISSING
             found_choices = []
-
             for lit in typing.get_args(parameter.annotation):
-                lit = unpack_annotation(lit, list(self.option_types.keys()))
-                if isinstance(lit, (int, str, float)):
+                lit = unpack_annotated(lit, list(self.option_types.keys()))
+                lit_type = type(lit)
+                if lit_type in (int, str, float, type(None)):
                     if lit is None:
+                        # If None is included, they want it to be optional. But we don't want None added to the choices.
                         annotation_required = False
-                    elif found_type is MISSING:
-                        found_type = self.get_type(lit)
-                    elif self.get_type(lit) is not found_type:
-                        raise ValueError(f"{self.error_name} You cannot mix choice types {type(lit)} and {found_type}")
                     else:
+                        if found_type is MISSING:
+                            # If we haven't set the type of the annotation, set it.
+                            found_type = self.get_type(lit_type)
+                        elif self.get_type(lit_type) is not found_type:
+                            raise ValueError(
+                                f"{self.error_name} | Literal {lit} is incompatible with {found_type}"
+                            )
                         found_choices.append(lit)
 
                 else:
-                    raise ValueError(f"{self.error_name} Invalid type for choices: {type(lit)}")
+                    raise ValueError(f"{self.error_name} Invalid type for choices: {type(lit)}: {lit}")
 
             if found_type is MISSING:
                 # ??? Why are they using Literal???
@@ -1293,6 +1299,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             annotation_type = found_type
             annotation_choices = found_choices
         elif typehint_origin in (Union, Optional, None):
+            # If the typehint base is Union, Optional, or not any grouping...
             found_type = MISSING
             found_channel_types = []
 
@@ -1302,26 +1309,30 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             else:
                 unpacked_annotations, literals = unpack_annotation(parameter.annotation, list(self.option_types.keys()))
 
-            # print(f"THINGY IN {self.name}: {unpacked_annotations + literals}")
+            # The only literals in this should be OptionConverters. Anything else should rightfully break.
             for anno in unpacked_annotations + literals:
-
                 if isinstance(anno, OptionConverter):
+                    # If the annotation is instantiated, add it to the converters and set the anno to the type it has.
                     annotation_converters.append(anno)
                     anno = anno.type
                 elif issubclass(anno, OptionConverter):
+                    # If the annotation is NOT instantiated, instantiate it and do the above.
                     made_converter = anno()
                     annotation_converters.append(made_converter)
                     anno = made_converter.type
 
                 if anno is None or anno == type(None):
+                    # Ignore whatever your IDE tells you about the `==`, using `is` makes it not work.
+                    # If None is included, they want it to be optional. But we don't want None processed fully as anno.
                     annotation_required = False
-                    # print(f"Setting annotation_required to False in thingy {self.name}")
                 else:
                     if found_type is MISSING:
+                        # If we haven't set the type of the annotation, set it.
                         found_type = self.get_type(anno)
                     elif self.get_type(anno) is not found_type:
-                        raise ValueError(f"{self.error_name} You cannot mix type {anno} with {found_type}")
+                        raise ValueError(f"{self.error_name} | Annotation {anno} is incompatible with {found_type}")
 
+                    # Annotation specific changes.
                     if anno is CategoryChannel:
                         found_channel_types.append(ChannelType.category)
                     elif anno is DMChannel:
@@ -1348,10 +1359,11 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                     )
 
             annotation_type = found_type
+            if found_channel_types:
+                annotation_channel_types = found_channel_types
 
         else:
             raise ValueError(f"{self.error_name} Invalid annotation origin: {typehint_origin}")
-
 
         self.name_localizations = cmd_arg.name_localizations
         self._description = cmd_arg.description
