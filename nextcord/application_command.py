@@ -47,6 +47,7 @@ from typing import (
     Union,
     cast,
 )
+
 from typing_extensions import Annotated
 
 from .abc import GuildChannel
