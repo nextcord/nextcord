@@ -32,7 +32,6 @@ import warnings
 from inspect import Parameter, signature
 from typing import (
     TYPE_CHECKING,
-    Annotated,
     Any,
     Callable,
     Coroutine,
@@ -48,6 +47,7 @@ from typing import (
     Union,
     cast,
 )
+from typing_extensions import Annotated
 
 from .abc import GuildChannel
 from .channel import (
