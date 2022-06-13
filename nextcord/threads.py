@@ -830,3 +830,8 @@ class ThreadMember(Hashable):
     def thread(self) -> Thread:
         """:class:`Thread`: The thread this member belongs to."""
         return self.parent
+    
+    @property
+    def member(self) -> Member:
+        """:class:`Member`: The member object of itself."""
+        return self.parent.guild.get_member(self.id)
