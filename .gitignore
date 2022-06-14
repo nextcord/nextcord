@@ -21,9 +21,6 @@ dist/
 .python-version
 __pycache__
 
-# this is temporary
-test.py
-
 # Exception for images in assets folder
 !assets/*
 build/
