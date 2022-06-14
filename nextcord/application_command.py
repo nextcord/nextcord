@@ -1329,7 +1329,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = unpacked_annotations + \
             #                                                                              literals
             grouped_annotations: List[
-                Union[type, Annotated[Optional[OptionConverter], object]]
+                Union[type, Annotated[Optional[OptionConverter], object], type(None)]
             ] = []
             grouped_annotations.extend(unpacked_annotations)
             grouped_annotations.extend(literals)
