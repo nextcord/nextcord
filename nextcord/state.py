@@ -79,7 +79,7 @@ from .user import ClientUser, User
 if TYPE_CHECKING:
     from asyncio import Future
 
-    from .abc import PrivateChannel, MessageableChannel
+    from .abc import MessageableChannel, PrivateChannel
     from .application_command import BaseApplicationCommand
     from .client import Client
     from .gateway import DiscordWebSocket

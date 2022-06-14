@@ -70,13 +70,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from .asset import Asset
-    from .channel import (
-        CategoryChannel,
-        DMChannel,
-        GroupChannel,
-        PartialMessageable,
-        TextChannel,
-    )
+    from .channel import CategoryChannel, DMChannel, GroupChannel, PartialMessageable, TextChannel
     from .client import Client
     from .embeds import Embed
     from .enums import InviteTarget
