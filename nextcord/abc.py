@@ -76,7 +76,6 @@ if TYPE_CHECKING:
         GroupChannel,
         PartialMessageable,
         TextChannel,
-        VoiceChannel,
     )
     from .client import Client
     from .embeds import Embed
@@ -95,9 +94,7 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .user import ClientUser
 
-    PartialMessageableChannel = Union[
-        TextChannel, VoiceChannel, Thread, DMChannel, PartialMessageable
-    ]
+    PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
 

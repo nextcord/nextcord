@@ -79,7 +79,7 @@ from .user import ClientUser, User
 if TYPE_CHECKING:
     from asyncio import Future
 
-    from .abc import PrivateChannel
+    from .abc import PrivateChannel, MessageableChannel
     from .application_command import BaseApplicationCommand
     from .client import Client
     from .gateway import DiscordWebSocket
@@ -2157,7 +2157,7 @@ class ConnectionState:
     def create_message(
         self,
         *,
-        channel: Union[TextChannel, Thread, DMChannel, GroupChannel, PartialMessageable],
+        channel: MessageableChannel,
         data: MessagePayload,
     ) -> Message:
         return Message(state=self, channel=channel, data=data)
