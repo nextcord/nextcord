@@ -1317,9 +1317,22 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 unpacked_annotations, literals = unpack_annotation(
                     parameter.annotation, list(self.option_types.keys())
                 )
+            # Make sure that all literals are only OptionConverters and nothing else.
+            for lit in literals:
+                if not isinstance(lit, OptionConverter):
+                    raise ValueError(
+                        f"{self.error_name} You cannot use non-OptionConverter literals when the base annotation is "
+                        f"not Literal."
+                    )
 
-            # The only literals in this should be OptionConverters. Anything else should rightfully break.
-            for anno in unpacked_annotations + literals:
+            # Pyright gets upset at appending these lists together, but not upset when .extend is used?
+            # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = unpacked_annotations + \
+            #                                                                              literals
+            grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = []
+            grouped_annotations.extend(unpacked_annotations)
+            grouped_annotations.extend(literals)
+            # The only literals in this should be OptionConverters. Anything else should have triggered the ValueError.
+            for anno in grouped_annotations:
                 if isinstance(anno, OptionConverter):
                     # If the annotation is instantiated, add it to the converters and set the anno to the type it has.
                     annotation_converters.append(anno)
@@ -1361,13 +1374,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                         found_channel_types.append(ChannelType.news_thread)
                         found_channel_types.append(ChannelType.public_thread)
                         found_channel_types.append(ChannelType.private_thread)
-
-            for lit in literals:
-                if not isinstance(lit, OptionConverter):
-                    raise ValueError(
-                        f"{self.error_name} You cannot use non-OptionConverter literals when the base annotation is "
-                        f"not a literal."
-                    )
 
             annotation_type = found_type
             if found_channel_types:
