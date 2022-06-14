@@ -26,12 +26,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, List, Union, overload
 
 if TYPE_CHECKING:
-    from .channel import DMChannel, GroupChannel, PartialMessageable, TextChannel
+    from .channel import DMChannel, GroupChannel, PartialMessageable, TextChannel, VoiceChannel
     from .message import Message
     from .state import ConnectionState
     from .threads import Thread
 
-    MessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable, GroupChannel]
+    MessageableChannel = Union[TextChannel, VoiceChannel, Thread, DMChannel, PartialMessageable, GroupChannel]
 
 __all__ = (
     "EqualityComparable",
