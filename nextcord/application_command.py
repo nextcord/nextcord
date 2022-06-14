@@ -1328,7 +1328,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # Pyright gets upset at appending these lists together, but not upset when .extend is used?
             # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = unpacked_annotations + \
             #                                                                              literals
-            grouped_annotations: List[Union[type, Annotated[Optional[OptionConverter], object]]] = []
+            grouped_annotations: List[
+                Union[type, Annotated[Optional[OptionConverter], object]]
+            ] = []
             grouped_annotations.extend(unpacked_annotations)
             grouped_annotations.extend(literals)
             # The only literals in this should be OptionConverters. Anything else should have triggered the ValueError.
