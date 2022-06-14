@@ -23,15 +23,12 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Union, overload
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
-    from .channel import DMChannel, GroupChannel, PartialMessageable, TextChannel, VoiceChannel
+    from .abc import MessageableChannel
     from .message import Message
     from .state import ConnectionState
-    from .threads import Thread
-
-    MessageableChannel = Union[TextChannel, VoiceChannel, Thread, DMChannel, PartialMessageable, GroupChannel]
 
 __all__ = (
     "EqualityComparable",
@@ -65,7 +62,7 @@ class PinsMixin:
     __slots__ = ()
     _state: ConnectionState
 
-    async def _get_channel(self):
+    async def _get_channel(self) -> MessageableChannel:
         raise NotImplementedError
 
     async def pins(self) -> List[Message]:
