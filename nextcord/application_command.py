@@ -1312,7 +1312,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 unpacked_annotations: List[type] = [
                     parameter.annotation,
                 ]
-                literals: List[object] = []
+                literals: List[Annotated[OptionConverter, object]] = []
             else:
                 unpacked_annotations, literals = unpack_annotation(
                     parameter.annotation, list(self.option_types.keys())
@@ -1328,16 +1328,16 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # Pyright gets upset at appending these lists together, but not upset when .extend is used?
             # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = unpacked_annotations + \
             #                                                                              literals
-            grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = []
+            grouped_annotations: List[Union[type, Annotated[OptionConverter, object]]] = []
             grouped_annotations.extend(unpacked_annotations)
             grouped_annotations.extend(literals)
             # The only literals in this should be OptionConverters. Anything else should have triggered the ValueError.
             for anno in grouped_annotations:
-                if isinstance(anno, OptionConverter):
+                if isinstance(anno, object) and isinstance(anno, OptionConverter):
                     # If the annotation is instantiated, add it to the converters and set the anno to the type it has.
                     annotation_converters.append(anno)
                     anno = anno.type
-                elif issubclass(anno, OptionConverter):
+                elif isinstance(anno, type) and issubclass(anno, OptionConverter):
                     # If the annotation is NOT instantiated, instantiate it and do the above.
                     made_converter = anno()
                     annotation_converters.append(made_converter)
@@ -1403,81 +1403,29 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         if cmd_arg.required is not None:
             # If the user manually set if it's required...
             self.required = cmd_arg.required
-            # print(self.error_name, "Required specifically set to false.")
         elif annotation_required is False:
             # If the user annotated it as Optional or None...
             self.required = False
-            # print(self.error_name, "Annotated as Optional or None")
         elif cmd_arg.default is not MISSING:
             # If the user provided a default in the SlashOption...
             self.required = False
-            # print(self.error_name, "Default provided in SlashOption")
         elif parameter.default is not parameter.empty and not cmd_arg_given:
             # If the default isn't SlashOption, but was provided...
             self.required = False
-            # print(self.error_name, "Default provided.")
         else:
             # Unlike Discord, parameters in Python are required by default. With this being a Python library, we should
             # remain intuitive by following that standard.
             self.required = True
-            # print(self.error_name, "Setting required to True.")
 
         self.type = annotation_type
         self.choices = cmd_arg.choices or annotation_choices or None
         self.channel_types = cmd_arg.channel_types or annotation_channel_types or None
         self.converters: List[OptionConverter] = annotation_converters
-        #
-        # if self.choices is None and given_literals:
-        #     self.choices = given_literals
-        # else:
-        #     self.choices = cmd_arg.choices
-        #
-        # if cmd_arg_given is False and parameter.default is not parameter.empty:
-        #     # If we weren't given a SlashOption, but we were given something else, set the default to that.
-        #     self.default = parameter.default
-        # else:
-        #     # Else, just set the default to whatever cmd_arg is set to. Either None, or something set by the user.
-        #     self.default = cmd_arg.default
-        #
 
         if cmd_arg_given is False and parameter.default is not parameter.empty:
             self.default = parameter.default
         else:
             self.default = None if cmd_arg.default is MISSING else cmd_arg.default
-        # if self.default is MISSING:
-        #     self.default = None
-
-        # self.converter: Optional[OptionConverter] = None
-        # found_converters = []
-        # for anno in given_literals:
-        #     if isinstance(anno, OptionConverter):
-        #         found_converters.append(anno)
-        #
-        #
-        # if isinstance(
-        #     parameter.annotation, OptionConverter
-        # ):  # If annotated with an instantiated OptionConverter...
-        #     self.converter = parameter.annotation
-        # elif inspect.isclass(parameter.annotation) and issubclass(
-        #     parameter.annotation, OptionConverter
-        # ):
-        #     # If annotated with OptionConverter...
-        #     self.converter = parameter.annotation()
-        # else:
-        #     for t in typing.get_args(parameter.annotation):
-        #         if issubclass(t, OptionConverter):
-        #             # If annotated with OptionConverter inside of Optional...
-        #             # Optional cannot have instantiated objects in it apparently?
-        #             self.converter = t()
-        #             break
-        #
-        # if self.converter:
-        #     self.type: ApplicationCommandOptionType = self.get_type(self.converter)
-        # else:
-        #     self.type = self.get_type(parameter.annotation)
-        #
-        # if self.converter:
-        #     self.converter.modify(self)
 
         for converter in self.converters:
             converter.modify(self)
