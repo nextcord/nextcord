@@ -1319,7 +1319,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 )
             # Make sure that all literals are only OptionConverters and nothing else.
             for lit in literals:
-                if not isinstance(lit, OptionConverter):
+                if not isinstance(lit, OptionConverter) or lit is not None:
                     raise ValueError(
                         f"{self.error_name} You cannot use non-OptionConverter literals when the base annotation is "
                         f"not Literal."
@@ -1328,7 +1328,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # Pyright gets upset at appending these lists together, but not upset when .extend is used?
             # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = unpacked_annotations + \
             #                                                                              literals
-            grouped_annotations: List[Union[type, Annotated[OptionConverter, object]]] = []
+            grouped_annotations: List[Union[type, Annotated[Optional[OptionConverter], object]]] = []
             grouped_annotations.extend(unpacked_annotations)
             grouped_annotations.extend(literals)
             # The only literals in this should be OptionConverters. Anything else should have triggered the ValueError.
