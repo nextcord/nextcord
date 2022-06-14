@@ -35,7 +35,7 @@ Overview
 - ``ChannelType.store`` is removed.
 - ``AppInfo.summary``, ``AppInfo.guild_id``, ``AppInfo.primary_sku_id`` and ``AppInfo.slug`` are removed.
 - ``PartialAppInfo.summary`` is removed.
-- :meth:`Messageable.pins` has been extracted out from :class:`Messageable` and moved to :class:`PinsMixin`
+- :meth:`abc.Messageable.pins` has been extracted out from :class:`abc.Messageable` and moved to :class:`PinsMixin`
 - :class:`VoiceChannel` now inherits from :class:`Messageable`
 
 Changes
