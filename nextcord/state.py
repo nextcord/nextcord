@@ -533,11 +533,7 @@ class ConnectionState:
             if channel is None:
                 channel = DMChannel._from_message(self, channel_id)
 
-            if hasattr(channel, "guild"):
-                # channel.guild does exist, it is checked above
-                guild = channel.guild  # type: ignore
-            else:
-                guild = None
+            guild = getattr(channel, "guild", None)
         else:
             channel = guild and guild._resolve_channel(channel_id)
 
