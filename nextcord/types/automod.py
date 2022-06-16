@@ -7,7 +7,7 @@ class ActionMetadata(TypedDict):
 
 class TriggerMetadata(TypedDict):
     keyword_filter: List[str]
-    presets = List[int]
+    presets: List[int]
 
 class _AutoModerationActionOptional(TypedDict, total=False):
     metadata: ActionMetadata
