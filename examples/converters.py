@@ -31,14 +31,12 @@ async def userinfo(ctx, user: nextcord.User):
     await ctx.send(f"User found: {user_id} -- {username}\n{avatar}")
 
 
-
 @userinfo.error
 async def userinfo_error(ctx, error: commands.CommandError):
     # if the conversion above fails for any reason, it will raise `commands.BadArgument`
     # so we handle this in this error handler:
     if isinstance(error, commands.BadArgument):
         return await ctx.send("Couldn't find that user.")
-
 
 
 # Custom Converter here
@@ -86,7 +84,6 @@ async def notify(ctx, target: ChannelOrMemberConverter):
     await target.send(f"Hello, {target.name}!")
 
 
-
 @bot.command()
 async def ignore(ctx, target: typing.Union[nextcord.Member, nextcord.TextChannel]):
     # This command signature utilises the `typing.Union` typehint.
@@ -99,9 +96,11 @@ async def ignore(ctx, target: typing.Union[nextcord.Member, nextcord.TextChannel
 
     # To check the resulting type, `isinstance` is used
     if isinstance(target, nextcord.Member):
-        await ctx.send(f'Member found: {target.mention}, adding them to the ignore list.')
-    elif isinstance(target, nextcord.TextChannel):  # this could be an `else` but for completeness' sake.
-        await ctx.send(f'Channel found: {target.mention}, adding it to the ignore list.')
+        await ctx.send(f"Member found: {target.mention}, adding them to the ignore list.")
+    elif isinstance(
+        target, nextcord.TextChannel
+    ):  # this could be an `else` but for completeness' sake.
+        await ctx.send(f"Channel found: {target.mention}, adding it to the ignore list.")
 
 
 # Built-in type converters.

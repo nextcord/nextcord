@@ -11,7 +11,9 @@ class Bot(commands.Bot):
         self.emoji_to_role = {
             nextcord.PartialEmoji(name="🔴"): 0,  # ID of the role associated with unicode emoji '🔴'.
             nextcord.PartialEmoji(name="🟡"): 0,  # ID of the role associated with unicode emoji '🟡'.
-            nextcord.PartialEmoji(name='green', id=0): 0,  # ID of the role associated with a partial emoji's ID.
+            nextcord.PartialEmoji(
+                name="green", id=0
+            ): 0,  # ID of the role associated with a partial emoji's ID.
         }
 
     async def on_raw_reaction_add(self, payload: nextcord.RawReactionActionEvent):

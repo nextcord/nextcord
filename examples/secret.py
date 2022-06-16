@@ -14,7 +14,6 @@ async def secret(ctx):
         await ctx.send("Shh!", delete_after=5)
 
 
-
 def create_overwrites(ctx, *objects):
     """This is just a helper function that creates the overwrites for the
     voice/text channels.

@@ -1,6 +1,5 @@
 # This example requires the 'members' privileged intents
 import random
-import nextcord
 
 import nextcord
 from nextcord.ext import commands
@@ -16,11 +15,9 @@ intents.members = True
 bot = commands.Bot(command_prefix="$", description=description, intents=intents)
 
 
-
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
-
 
 
 @bot.command()
@@ -33,16 +30,16 @@ async def add(ctx, left: int, right: int):
 async def roll(ctx, dice: str):
     """Rolls a dice in NdN format."""
     try:
-        rolls, limit = map(int, dice.split('d'))
+        rolls, limit = map(int, dice.split("d"))
     except ValueError:
-        await ctx.send('Format has to be in NdN!')
+        await ctx.send("Format has to be in NdN!")
         return
 
-    result = ', '.join(str(random.randint(1, limit)) for _ in range(rolls))
+    result = ", ".join(str(random.randint(1, limit)) for _ in range(rolls))
     await ctx.send(result)
 
 
-@bot.command(description='For when you wanna settle the score some other way')
+@bot.command(description="For when you wanna settle the score some other way")
 async def choose(ctx, *choices: str):
     """Chooses between multiple choices."""
     await ctx.send(random.choice(choices))
@@ -61,7 +58,6 @@ async def joined(ctx, member: nextcord.Member):
     await ctx.send(f"{member.name} joined in {member.joined_at}")
 
 
-
 @bot.group()
 async def cool(ctx):
     """Says if a user is cool.
@@ -78,4 +74,4 @@ async def _bot(ctx):
     await ctx.send("Yes, the bot is cool.")
 
 
-bot.run('token')
+bot.run("token")
