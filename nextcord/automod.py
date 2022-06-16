@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     )
     from .state import ConnectionState
     from .guild import Guild
-    from typing import List
+    from typing import List, Optional
 
 class AutoModerationRule(Hashable):
     """
@@ -59,7 +59,7 @@ class AutoModerationRule(Hashable):
         self.enabled: bool = data['enabled']
         self.exempt_roles_ids: List[int] = [int(exempt_role) for exempt_role in data['exempt_roles']]
         self.exempt_channels_ids: List[int] = [int(exempt_channel) for exempt_channel in data['exempt_channels']]
-        self.notify_channel_ids: int = None
+        self.notify_channel_id: Optional[int] = None
         self.filter = None
         self.timeout_seconds = 0
         
