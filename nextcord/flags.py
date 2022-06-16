@@ -25,21 +25,33 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Callable, ClassVar, Dict, Generic, Iterator, List, Optional, Tuple, Type, TypeVar, overload
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    overload,
+)
 
 from .enums import UserFlags
 
 __all__ = (
-    'SystemChannelFlags',
-    'MessageFlags',
-    'PublicUserFlags',
-    'Intents',
-    'MemberCacheFlags',
-    'ApplicationFlags',
+    "SystemChannelFlags",
+    "MessageFlags",
+    "PublicUserFlags",
+    "Intents",
+    "MemberCacheFlags",
+    "ApplicationFlags",
 )
 
-FV = TypeVar('FV', bound='flag_value')
-BF = TypeVar('BF', bound='BaseFlags')
+FV = TypeVar("FV", bound="flag_value")
+BF = TypeVar("BF", bound="BaseFlags")
 
 
 class flag_value:
@@ -60,11 +72,11 @@ class flag_value:
             return self
         return instance._has_flag(self.flag)
 
-    def __set__(self, instance: BF, value: bool) -> None:
+    def __set__(self, instance: BaseFlags, value: bool) -> None:
         instance._set_flag(self.flag, value)
 
     def __repr__(self):
-        return f'<flag_value flag={self.flag!r}>'
+        return f"<flag_value flag={self.flag!r}>"
 
 
 class alias_flag_value(flag_value):
@@ -83,7 +95,7 @@ def fill_with_flags(*, inverted: bool = False):
 
         if inverted:
             max_bits = max(cls.VALID_FLAGS.values()).bit_length()
-            cls.DEFAULT_VALUE = -1 + (2 ** max_bits)
+            cls.DEFAULT_VALUE = -1 + (2**max_bits)
         else:
             cls.DEFAULT_VALUE = 0
 
@@ -99,13 +111,13 @@ class BaseFlags:
 
     value: int
 
-    __slots__ = ('value',)
+    __slots__ = ("value",)
 
     def __init__(self, **kwargs: bool):
         self.value = self.DEFAULT_VALUE
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
-                raise TypeError(f'{key!r} is not a valid flag name.')
+                raise TypeError(f"{key!r} is not a valid flag name.")
             setattr(self, key, value)
 
     @classmethod
@@ -124,7 +136,7 @@ class BaseFlags:
         return hash(self.value)
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} value={self.value}>'
+        return f"<{self.__class__.__name__} value={self.value}>"
 
     def __iter__(self) -> Iterator[Tuple[str, bool]]:
         for name, value in self.__class__.__dict__.items():
@@ -143,7 +155,7 @@ class BaseFlags:
         elif toggle is False:
             self.value &= ~o
         else:
-            raise TypeError(f'Value to set for {self.__class__.__name__} must be a bool.')
+            raise TypeError(f"Value to set for {self.__class__.__name__} must be a bool.")
 
 
 @fill_with_flags(inverted=True)
@@ -197,7 +209,7 @@ class SystemChannelFlags(BaseFlags):
         elif toggle is False:
             self.value |= o
         else:
-            raise TypeError('Value to set for SystemChannelFlags must be a bool.')
+            raise TypeError("Value to set for SystemChannelFlags must be a bool.")
 
     @flag_value
     def join_notifications(self):
@@ -216,7 +228,7 @@ class SystemChannelFlags(BaseFlags):
         .. versionadded:: 2.0
         """
         return 4
-    
+
     @flag_value
     def join_notification_replies(self):
         """:class:`bool`: Returns ``True`` if the button to reply with a sticker to member join notifications is shown.
@@ -478,7 +490,7 @@ class Intents(BaseFlags):
         self.value = self.DEFAULT_VALUE
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
-                raise TypeError(f'{key!r} is not a valid flag name.')
+                raise TypeError(f"{key!r} is not a valid flag name.")
             setattr(self, key, value)
 
     @classmethod
@@ -500,11 +512,12 @@ class Intents(BaseFlags):
     @classmethod
     def default(cls: Type[Intents]) -> Intents:
         """A factory method that creates a :class:`Intents` with everything enabled
-        except :attr:`presences` and :attr:`members`.
+        except :attr:`presences`, :attr:`members`, and :attr:`message_content`.
         """
         self = cls.all()
         self.presences = False
         self.members = False
+        self.message_content = False
         return self
 
     @flag_value
@@ -884,6 +897,33 @@ class Intents(BaseFlags):
         return 1 << 14
 
     @flag_value
+    def message_content(self):
+        """:class:`bool`: Whether most message content can be accessed.
+
+        Without this intent, the following attributes may appear empty - either an
+        empty string or empty array depending on the data type:
+
+        - :attr:`Message.content`
+        - :attr:`Message.embeds`
+        - :attr:`Message.attachments`
+        - :attr:`Message.components`
+
+        A bot will always be able to get these attributes from:
+
+        - Messages the bot sends
+        - Messages the bot receives in DMs
+        - Messages in which the bot is mentioned
+
+        For more information go to the :ref:`message content intent documentation <need_message_content_intent>`.
+
+        .. note::
+
+            As of September 1, 2022, this requires opting in explicitly via the developer portal as well.
+            Bots in over 100 guilds will need to apply to Discord for verification.
+        """
+        return 1 << 15
+
+    @flag_value
     def scheduled_events(self):
         """:class:`bool`: Whether scheduled events related events are enabled.
 
@@ -948,7 +988,7 @@ class MemberCacheFlags(BaseFlags):
         self.value = (1 << bits) - 1
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
-                raise TypeError(f'{key!r} is not a valid flag name.')
+                raise TypeError(f"{key!r} is not a valid flag name.")
             setattr(self, key, value)
 
     @classmethod
@@ -1018,10 +1058,10 @@ class MemberCacheFlags(BaseFlags):
 
     def _verify_intents(self, intents: Intents):
         if self.voice and not intents.voice_states:
-            raise ValueError('MemberCacheFlags.voice requires Intents.voice_states')
+            raise ValueError("MemberCacheFlags.voice requires Intents.voice_states")
 
         if self.joined and not intents.members:
-            raise ValueError('MemberCacheFlags.joined requires Intents.members')
+            raise ValueError("MemberCacheFlags.joined requires Intents.members")
 
     @property
     def _voice_only(self):
@@ -1097,3 +1137,17 @@ class ApplicationFlags(BaseFlags):
     def embedded(self):
         """:class:`bool`: Returns ``True`` if the application is embedded within the Discord client."""
         return 1 << 17
+
+    @flag_value
+    def gateway_message_content(self):
+        """:class:`bool`: Returns ``True`` if the application is allowed to receive message content
+        over the gateway.
+        """
+        return 1 << 18
+
+    @flag_value
+    def gateway_message_content_limited(self):
+        """:class:`bool`: Returns ``True`` if the application is allowed to receive limited
+        message content over the gateway.
+        """
+        return 1 << 19

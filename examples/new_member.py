@@ -1,6 +1,5 @@
 # This example requires the 'members' privileged intent
 import nextcord
-
 from nextcord.ext import commands
 
 
@@ -11,12 +10,12 @@ class Bot(commands.Bot):
     async def on_member_join(self, member):
         guild = member.guild
         if guild.system_channel is not None:
-            to_send = f'Welcome {member.mention} to {guild.name}!'
+            to_send = f"Welcome {member.mention} to {guild.name}!"
             await guild.system_channel.send(to_send)
 
 
 intents = nextcord.Intents.default()
 intents.members = True
 
-bot = Bot(command_prefix='$', intents=intents)
-bot.run('token')
+bot = Bot(command_prefix="$", intents=intents)
+bot.run("token")

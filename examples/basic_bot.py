@@ -2,22 +2,25 @@
 import random
 import nextcord
 
+import nextcord
 from nextcord.ext import commands
 
-description = '''An example bot to showcase the nextcord.ext.commands extension
+description = """An example bot to showcase the nextcord.ext.commands extension
 module.
 
-There are a number of utility commands being showcased here.'''
+There are a number of utility commands being showcased here."""
 
 intents = nextcord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix='$', description=description, intents=intents)
+bot = commands.Bot(command_prefix="$", description=description, intents=intents)
+
 
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
+
 
 
 @bot.command()
@@ -46,7 +49,7 @@ async def choose(ctx, *choices: str):
 
 
 @bot.command()
-async def repeat(ctx, times: int, content='repeating...'):
+async def repeat(ctx, times: int, content="repeating..."):
     """Repeats a message multiple times."""
     for _ in range(times):
         await ctx.send(content)
@@ -55,7 +58,8 @@ async def repeat(ctx, times: int, content='repeating...'):
 @bot.command()
 async def joined(ctx, member: nextcord.Member):
     """Says when a member joined."""
-    await ctx.send(f'{member.name} joined in {member.joined_at}')
+    await ctx.send(f"{member.name} joined in {member.joined_at}")
+
 
 
 @bot.group()
@@ -65,13 +69,13 @@ async def cool(ctx):
     In reality this just checks if a subcommand is being invoked.
     """
     if ctx.invoked_subcommand is None:
-        await ctx.send(f'No, {ctx.subcommand_passed} is not cool')
+        await ctx.send(f"No, {ctx.subcommand_passed} is not cool")
 
 
-@cool.command(name='bot')
+@cool.command(name="bot")
 async def _bot(ctx):
     """Is the bot cool?"""
-    await ctx.send('Yes, the bot is cool.')
+    await ctx.send("Yes, the bot is cool.")
 
 
 bot.run('token')

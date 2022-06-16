@@ -1,13 +1,13 @@
 # This example requires the 'members' privileged intent to use the Member converter.
 import typing
-import nextcord
 
+import nextcord
 from nextcord.ext import commands
 
 intents = nextcord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix='$', intents=intents)
+bot = commands.Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()
@@ -28,7 +28,8 @@ async def userinfo(ctx, user: nextcord.User):
     user_id = user.id
     username = user.name
     avatar = user.avatar.url
-    await ctx.send(f'User found: {user_id} -- {username}\n{avatar}')
+    await ctx.send(f"User found: {user_id} -- {username}\n{avatar}")
+
 
 
 @userinfo.error
@@ -36,7 +37,8 @@ async def userinfo_error(ctx, error: commands.CommandError):
     # if the conversion above fails for any reason, it will raise `commands.BadArgument`
     # so we handle this in this error handler:
     if isinstance(error, commands.BadArgument):
-        return await ctx.send('Couldn\'t find that user.')
+        return await ctx.send("Couldn't find that user.")
+
 
 
 # Custom Converter here
@@ -81,7 +83,8 @@ async def notify(ctx, target: ChannelOrMemberConverter):
     # the `argument` parameter of the `ChannelOrMemberConverter.convert` method and
     # the conversion will go through the process defined there.
 
-    await target.send(f'Hello, {target.name}!')
+    await target.send(f"Hello, {target.name}!")
+
 
 
 @bot.command()
@@ -111,4 +114,5 @@ async def multiply(ctx, number: int, maybe: bool):
         return await ctx.send(number * 2)
     await ctx.send(number * 5)
 
-bot.run('token')
+
+bot.run("token")

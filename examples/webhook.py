@@ -2,6 +2,7 @@
 # You can use this to send messages to a channel without using the bot.
 
 import asyncio
+
 import aiohttp
 import nextcord
 
@@ -11,5 +12,6 @@ async def send_to_webhook(url, content):
     async with aiohttp.ClientSession() as session:
         webhook = nextcord.Webhook.from_url(url, session=session)
         await webhook.send(content)
+
 
 asyncio.run(send_to_webhook("url", "Hello, world!"))

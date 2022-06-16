@@ -5,13 +5,13 @@
 .. currentmodule:: nextcord
 
 Quickstart
-============
+==========
 
 This page gives a brief introduction to the library. It assumes you have the library installed,
 if you don't check the :ref:`installing` portion.
 
 A Minimal Bot
----------------
+-------------
 
 Let's make a bot that responds to a slash command and walk you through it.
 
@@ -29,7 +29,7 @@ It looks something like this:
     @bot.event
     async def on_ready():
         print(f'We have logged in as {bot.user}')
-    
+
     @bot.slash_command(description="My first slash command", guild_ids=[TESTING_GUILD_ID])
     async def hello(interaction: nextcord.Interaction):
         await interaction.send("Hello!")
@@ -49,7 +49,7 @@ A lot is going on here, so let's walk you through it step by step.
    we want to use. This will allow us to test the command immediately in our server. Without this, we would have
    to wait up to an hour for the global command to register.
 4. Next, we create an instance of a :class:`~nextcord.ext.commands.Bot`. This bot is our connection to Discord.
-5. We then use the :meth:`bot.event <nextcord.ext.commands.Bot.event>` decorator to register an event. This library has many 
+5. We then use the :meth:`bot.event <nextcord.ext.commands.Bot.event>` decorator to register an event. This library has many
    :ref:`events <discord-api-events>`. Since this library is asynchronous, we do things in a "callback" style manner.
 
    A callback is essentially a function that is called when something happens. In our case,

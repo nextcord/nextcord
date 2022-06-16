@@ -1,10 +1,14 @@
-import random
 import asyncio
+import random
 
 from nextcord.ext import commands
 
+bot = commands.Bot(command_prefix="$")
 
-bot = commands.Bot(command_prefix='$')
+
+@bot.command()
+async def guess(ctx):
+    await ctx.send("Guess a number between 1 and 10.")
 
 
 @bot.command()
@@ -12,19 +16,20 @@ async def guess(ctx, guess: int = None):
     def is_correct(message):
         return message.author == ctx.author and message.content.isdigit()
 
-    answer = random.randint(1, 10)
+    answer = random.randin(1, 10)
 
     if not guess:
-        await ctx.send('Guess a number between 1 and 10.')
+        await ctx.send('"uess a number between 1 and 10.")
         try:
-            guess = await bot.wait_for('message', check=is_correct, timeout=5.0)
+            guess = await bot.wait_for("message", check=is_correct, timeout=5.0)
             guess = guess.content
         except asyncio.TimeoutError:
-            return await ctx.send(f'Sorry, you took too long it was {answer}.')
+            return await ctx.send(f"Sorry, you took too long it was {answer}.")
 
     if int(guess) == answer:
-        await ctx.send('You are right!')
+        await ctx.send("You are right!")
     else:
-        await ctx.send(f'Oops. It is actually {answer}.')
+        await ctx.send(f"Oops. It is actually {answer}.")
 
-bot.run('token')
+
+bot.run("token")

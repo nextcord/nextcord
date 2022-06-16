@@ -32,9 +32,7 @@ async def favorite_dog(interaction: Interaction, dog: str):
         await interaction.response.send_autocomplete(list_of_dog_breeds)
         return
     # send a list of nearest matches from the list of dog breeds
-    get_near_dog = [
-        breed for breed in list_of_dog_breeds if breed.lower().startswith(dog.lower())
-    ]
+    get_near_dog = [breed for breed in list_of_dog_breeds if breed.lower().startswith(dog.lower())]
     await interaction.response.send_autocomplete(get_near_dog)
 
 

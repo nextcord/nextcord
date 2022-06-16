@@ -1,0 +1,44 @@
+## Pre-commit setup
+
+ci:
+  autofix_commit_msg: |
+    style: auto fixes from pre-commit hooks
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        name: Running black in all files.
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--extend-skip", "examples"]
+        name: Running isort in all files.
+      - id: isort
+        args: ["--profile", "black", "--thirdparty", "nextcord"]
+        name: Running isort in examples.
+        files: ^examples/
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: check-ast
+        name: Check if python files are valid syntax for the ast parser
+      - id: check-case-conflict
+        name: Check for case conflict on file names for case insensitive systems.
+      - id: check-merge-conflict
+        name: Check for merge conflict syntax.
+      - id: check-toml
+        name: Check TOML files for valid syntax.
+      - id: check-yaml
+        name: Check YAML files for valid syntax.
+      - id: debug-statements
+        name: Check for debug statements.
+      - id: end-of-file-fixer
+        name: Check for only one newline character at EOL.
+      - id: trailing-whitespace
+        name: Check for trailing whitespace.
+        args: [--markdown-linebreak-ext=md]

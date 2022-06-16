@@ -47,10 +47,10 @@ Client
 
     .. automethod:: Client.slash_command
         :decorator:
-    
+
     .. automethod:: Client.user_command
         :decorator:
-        
+
     .. automethod:: Client.message_command
         :decorator:
 
@@ -2730,6 +2730,9 @@ of :class:`enum.Enum`.
 
         An alias for :attr:`canceled`.
 
+.. autoclass:: Locale
+    :members:
+
 Async Iterator
 ----------------
 
@@ -4332,37 +4335,132 @@ Select
 
 .. autofunction:: nextcord.ui.select
 
-
 Application Commands
 --------------------
 
-.. attributetable:: ApplicationCommand
+The library has helpers to easily create and manipulate application commands.
 
-.. autoclass:: ApplicationCommand
+Base Commands
+~~~~~~~~~~~~~
+
+.. attributetable:: BaseApplicationCommand
+
+.. autoclass:: BaseApplicationCommand
+    :members:
+    :inherited-members:
+
+.. attributetable:: BaseCommandOption
+
+.. autoclass:: BaseCommandOption
     :members:
 
-.. attributetable:: ApplicationSubcommand
+Slash Commands
+~~~~~~~~~~~~~~
 
-.. autoclass:: ApplicationSubcommand
+.. attributetable:: SlashApplicationCommand
+
+.. autoclass:: SlashApplicationCommand
     :members:
+    :inherited-members:
 
-Options
-~~~~~~~
+.. attributetable:: SlashApplicationSubcommand
 
-.. attributetable:: CommandOption
-
-.. autoclass:: CommandOption
+.. autoclass:: SlashApplicationSubcommand
     :members:
+    :inherited-members:
+
+Slash Options
+~~~~~~~~~~~~~
+
+.. list-table:: Accepted Default Option Types
+    :widths: 25 25 50
+    :header-rows: 1
+
+    * - Typehint
+      - Discord Type
+      - Notes
+    * - <blank>
+      - String
+      - When no typehint is given, it defaults to string.
+    * - :class:`str`
+      - String
+      -
+    * - :class:`int`
+      - Integer
+      - Any integer between -2^53 and 2^53
+    * - :class:`bool`
+      - Boolean
+      -
+    * - :class:`User`
+      - User
+      -
+    * - :class:`Member`
+      - User
+      - Identical to typehinting with :class:`User`
+    * - :class:`abc.GuildChannel`
+      - Channel
+      - Includes all channel types + categories. Use :class:`SlashOption` to configure which channel types to allow.
+    * - :class:`Role`
+      - Role
+      -
+    * - :class:`Mentionable`
+      - Mentionable
+      - Includes Users and Roles.
+    * - :class:`float`
+      - Number
+      - Any double between -2^53 and 2^53
+    * - :class:`Attachment`
+      - Attachment
+      -
 
 .. attributetable:: SlashOption
 
 .. autoclass:: SlashOption
     :members:
+    :inherited-members:
+    :exclude-members: verify
 
-Cogs
-~~~~
+.. attributetable:: SlashCommandOption
 
-.. autoclass:: ClientCog
+.. autoclass:: SlashCommandOption
+    :members:
+    :inherited-members:
+    :exclude-members: option_types
+
+User Commands
+~~~~~~~~~~~~~
+
+.. attributetable:: UserApplicationCommand
+
+.. autoclass:: UserApplicationCommand
+    :members:
+    :inherited-members:
+
+Message Commands
+~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageApplicationCommand
+
+.. autoclass:: MessageApplicationCommand
+    :members:
+    :inherited-members:
+
+Command Helpers
+~~~~~~~~~~~~~~~
+
+.. attributetable:: CallbackWrapper
+
+.. autoclass:: CallbackWrapper
+    :members:
+
+.. attributetable:: OptionConverter
+
+.. autoclass:: OptionConverter
+    :members:
+
+.. attributetable:: Mentionable
+
+.. autoclass:: Mentionable
     :members:
 
 Decorators
@@ -4373,6 +4471,12 @@ Decorators
 .. autoclass:: slash_command
 
 .. autoclass:: user_command
+
+Cogs
+~~~~
+
+.. autoclass:: ClientCog
+    :members:
 
 Exceptions
 ------------
@@ -4418,6 +4522,8 @@ The following exceptions are thrown by the library.
 
 .. autoexception:: ApplicationCheckFailure
 
+.. autoexception:: ApplicationCommandOptionMissing
+
 Exception Hierarchy
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -4442,3 +4548,4 @@ Exception Hierarchy
         - :exc:`ApplicationError`
             - :exc:`ApplicationInvokeError`
             - :exc:`ApplicationCheckFailure`
+            - :exc:`ApplicationCommandOptionMissing`
