@@ -22,17 +22,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import (
-    List,
-    TypedDict,
-    Optional
-)
+from typing import List, Optional, TypedDict
 
+from .automod import AutoModerationAction, TriggerType
 from .emoji import PartialEmoji
 from .member import Member
 from .snowflake import Snowflake
 from .user import User
-from .automod import AutoModerationAction, TriggerType
 
 
 class _MessageEventOptional(TypedDict, total=False):
@@ -109,10 +105,12 @@ class MemberRemoveEvent(TypedDict):
     guild_id: Snowflake
     user: User
 
+
 class _AutoModerationRuleExecutedEventOptional(TypedDict, total=False):
     channel_id: Snowflake
     message_id: Snowflake
     alert_system_message_id: Snowflake
+
 
 class AutoModerationRuleExecutedEvent(_AutoModerationRuleExecutedEventOptional):
     guild_id: Snowflake
@@ -123,5 +121,3 @@ class AutoModerationRuleExecutedEvent(_AutoModerationRuleExecutedEventOptional):
     content: str
     matched_keyword: Optional[str]
     matched_content: Optional[str]
-
-
