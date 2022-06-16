@@ -98,10 +98,18 @@ class CheckWrapper(CallbackWrapper):
         app_cmd.checks.append(self.predicate)
 
 
-AC = Callable[
-    [Union[Callable[[Interaction], bool], BaseApplicationCommand, SlashApplicationSubcommand]],
-    CheckWrapper,
-]
+if TYPE_CHECKING:
+    AC = Callable[
+        [
+            Union[
+                CoroFunc,
+                Callable[[Interaction], bool],
+                BaseApplicationCommand,
+                SlashApplicationSubcommand,
+            ]
+        ],
+        CheckWrapper,
+    ]
 
 
 def check(predicate: "ApplicationCheck") -> AC:
