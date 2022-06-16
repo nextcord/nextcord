@@ -20,7 +20,6 @@ async def guess(ctx, guess: int = None):
 
     if not guess:
         await ctx.send("Guess a number between 1 and 10.")
-```#my bad
         try:
             guess = await bot.wait_for("message", check=is_correct, timeout=5.0)
             guess = guess.content
