@@ -81,7 +81,7 @@ class AutoModerationRule(Hashable):
         if action_metadata.get("channel_id") is not None:
             self.notify_channel_id = int(action_metadata.get("channel_id"))
         if action_metadata.get("duration_seconds") is not None:
-            self.timeout_seconds: int = action_metadata.get("duration_seconds")
+            self.timeout_seconds: int = action_metadata.get("duration_seconds")  # type: ignore -- it was already fixed 
 
     async def delete(self):
         await self._state.http.delete_automod_rule(guild_id=self.guild.id, rule_id=self.id)
