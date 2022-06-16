@@ -39,7 +39,7 @@ class AutoModerationRule(Hashable):
     event_type :class:`EventType`
         The type of the event that the rule should execute when this event is called.
     trigger_type :class:`TriggerType`
-        The type of the
+        The trigger type of this auto moderation rule.
     """
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
