@@ -1,6 +1,6 @@
-from typing import TypedDict, List, Literal
-from .snowflake import Snowflake
+from typing import List, Literal, TypedDict
 
+from .snowflake import Snowflake
 
 EventType = Literal[1]
 TriggerType = Literal[1, 2, 3, 4]
@@ -12,12 +12,15 @@ class ActionMetadata(TypedDict):
     channel_id: Snowflake
     duration_seconds: int
 
+
 class TriggerMetadata(TypedDict):
     keyword_filter: List[str]
     presets: List[KeywordPresetType]
 
+
 class _AutoModerationActionOptional(TypedDict, total=False):
     metadata: ActionMetadata
+
 
 class AutoModerationAction(_AutoModerationActionOptional):
     type: ActionType

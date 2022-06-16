@@ -65,7 +65,7 @@ __all__ = (
     "ScheduledEventStatus",
     "KeywordPresetType",
     "EventType",
-    "TriggerType"
+    "TriggerType",
 )
 
 
@@ -730,14 +730,17 @@ class KeywordPresetType(Enum):
     sexual_content = 2
     slurs = 3
 
+
 class EventType(Enum):
     message_send = 1
+
 
 class TriggerType(Enum):
     keyword = 1
     harmful_link = 2
     spam = 3
     keyword_preset = 4
+
 
 class ActionType(Enum):
     block = 1

@@ -945,8 +945,6 @@ class Intents(BaseFlags):
     def automod_execution(self):
         # TODO: remind me about adding docstirng
         return 1 << 21
-    
-
 
 
 @fill_with_flags()
