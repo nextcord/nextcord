@@ -68,7 +68,7 @@ class AutoModerationRule(Hashable):
 
         for action in data['actions']:
             if action.get("metadata") is not None:
-                self._unpack_action_metadata(action['metadata'])
+                self._unpack_action_metadata(action['metadata'])  # type: ignore -- last line already fixed it
 
         
         
