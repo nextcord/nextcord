@@ -8,10 +8,14 @@ KeywordPresetType = Literal[1, 2, 3]
 ActionType = Literal[1, 2, 3]
 
 
-class ActionMetadata(TypedDict):
+class _ActionMetadataAlertMessage(TypedDict, total=False):
     channel_id: Snowflake
+
+class _ActionMetadataTimeout(TypedDict, total=False):
     duration_seconds: int
 
+class ActionMetadata(_ActionMetadataAlertMessage, _ActionMetadataTimeout):
+    pass
 
 class TriggerMetadata(TypedDict):
     keyword_filter: List[str]
@@ -36,5 +40,5 @@ class AutoModerationRule(TypedDict):
     trigger_metadata: TriggerMetadata
     actions: List[AutoModerationAction]
     enabled: bool
-    exempt_role: List[Snowflake]
-    exempt_channel: List[Snowflake]
+    exempt_roles: List[Snowflake]
+    exempt_channels: List[Snowflake]
