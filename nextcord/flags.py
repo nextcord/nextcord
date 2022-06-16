@@ -936,11 +936,17 @@ class Intents(BaseFlags):
         This does not correspond to any attributes or classes in the library in terms of cache.
         """
         return 1 << 16
+
+    @flag_value
+    async def automod_configuration(self):
+        return 1 << 20
     
     @flag_value
-    async def automod(self):
+    async def automod_execution(self):
         # TODO: remind me about adding docstirng
         return 1 << 21
+    
+
 
 
 @fill_with_flags()
