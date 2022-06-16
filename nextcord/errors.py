@@ -40,7 +40,6 @@ if TYPE_CHECKING:
 
 __all__ = (
     "DiscordException",
-    "InvalidCommandType",
     "ClientException",
     "NoMoreItems",
     "GatewayNotFound",
@@ -57,6 +56,7 @@ __all__ = (
     "ApplicationError",
     "ApplicationInvokeError",
     "ApplicationCheckFailure",
+    "ApplicationCommandOptionMissing",
 )
 
 
@@ -74,12 +74,6 @@ class ClientException(DiscordException):
 
     These are usually for exceptions that happened due to user input.
     """
-
-    pass
-
-
-class InvalidCommandType(ClientException):
-    """Raised when an unhandled Application Command type is encountered."""
 
     pass
 
@@ -332,9 +326,15 @@ class ApplicationInvokeError(ApplicationError):
 
 
 class ApplicationCheckFailure(ApplicationError):
-    """Exception raised when the predicates in :attr:`.ApplicationCommand.checks` have failed.
+    """Exception raised when the predicates in :attr:`.BaseApplicationCommand.checks` have failed.
 
     This inherits from :exc:`ApplicationError`
     """
+
+    pass
+
+
+class ApplicationCommandOptionMissing(ApplicationError):
+    """Raised when an option that's supposed to be part of an application command is missing on our end."""
 
     pass

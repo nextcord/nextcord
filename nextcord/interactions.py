@@ -55,7 +55,7 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
-    from .application_command import ApplicationCommand, ApplicationSubcommand
+    from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import (
         CategoryChannel,
         PartialMessageable,
@@ -65,7 +65,7 @@ if TYPE_CHECKING:
     )
     from .client import Client
     from .guild import Guild
-    from .mentions import AllowedMentions
+    from .message import AllowedMentions
     from .state import ConnectionState
     from .threads import Thread
     from .types.interactions import Interaction as InteractionPayload, InteractionData
@@ -180,7 +180,9 @@ class Interaction:
         # TODO: this is so janky, accessing a hidden double attribute
         self._original_message: Optional[InteractionMessage] = None
         self.attached = InteractionAttached()
-        self.application_command: Optional[ApplicationCommand | ApplicationSubcommand] = None
+        self.application_command: Optional[
+            Union[SlashApplicationSubcommand, BaseApplicationCommand]
+        ] = None
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
@@ -247,7 +249,9 @@ class Interaction:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
         return utils.utcnow() > self.expires_at
 
-    def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
+    def _set_application_command(
+        self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
+    ):
         self.application_command = app_cmd
 
     @utils.cached_slot_property("_cs_channel")

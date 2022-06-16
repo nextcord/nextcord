@@ -451,7 +451,7 @@ class AutoShardedClient(Client):
                 if isinstance(item.error, ConnectionClosed):
                     if item.error.code != 1000:
                         raise item.error
-                    if item.error.code == 4014:  # type: ignore "false always"
+                    if item.error.code == 4014:  # type: ignore # "false always"
                         raise PrivilegedIntentsRequired(item.shard.id) from None
                 return
             elif item.type in (EventType.identify, EventType.resume):
