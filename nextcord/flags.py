@@ -938,11 +938,11 @@ class Intents(BaseFlags):
         return 1 << 16
 
     @flag_value
-    async def automod_configuration(self):
+    def automod_configuration(self):
         return 1 << 20
-    
+
     @flag_value
-    async def automod_execution(self):
+    def automod_execution(self):
         # TODO: remind me about adding docstirng
         return 1 << 21
     
