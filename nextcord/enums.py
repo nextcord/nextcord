@@ -739,6 +739,11 @@ class TriggerType(Enum):
     spam = 3
     keyword_preset = 4
 
+class ActionType(Enum):
+    block = 1
+    send_alert = 2
+    timeout = 3
+
 
 T = TypeVar("T")
 

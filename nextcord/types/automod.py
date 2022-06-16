@@ -1,5 +1,12 @@
-from typing import TypedDict, List
+from typing import TypedDict, List, Literal
 from .snowflake import Snowflake
+
+
+EventType = Literal[1]
+TriggerType = Literal[1, 2, 3, 4]
+KeywordPresetType = Literal[1, 2, 3]
+ActionType = Literal[1, 2, 3]
+
 
 class ActionMetadata(TypedDict):
     channel_id: Snowflake
@@ -7,13 +14,13 @@ class ActionMetadata(TypedDict):
 
 class TriggerMetadata(TypedDict):
     keyword_filter: List[str]
-    presets: List[int]
+    presets: List[KeywordPresetType]
 
 class _AutoModerationActionOptional(TypedDict, total=False):
     metadata: ActionMetadata
 
 class AutoModerationAction(_AutoModerationActionOptional):
-    type: int
+    type: ActionType
 
 
 class AutoModerationRule(TypedDict):
@@ -21,8 +28,8 @@ class AutoModerationRule(TypedDict):
     guild_id: Snowflake
     name: str
     creator_id: Snowflake
-    event_type: int
-    trigger_type: int
+    event_type: EventType
+    trigger_type: TriggerType
     trigger_metadata: TriggerMetadata
     actions: List[AutoModerationAction]
     enabled: bool

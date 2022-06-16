@@ -68,7 +68,12 @@ _log = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from types import TracebackType
 
-    from .enums import AuditLogAction, InteractionResponseType
+    from .enums import (
+        AuditLogAction,
+        InteractionResponseType,
+        TriggerType,
+        EventType
+    )
     from .file import File
     from .types import (
         appinfo,
@@ -92,6 +97,7 @@ if TYPE_CHECKING:
         voice,
         webhook,
         widget,
+        automod,
     )
     from .types.snowflake import Snowflake, SnowflakeList
 
@@ -2340,3 +2346,113 @@ class HTTPClient:
             event_id=event_id,
         )
         return self.request(r, params=params)
+    
+    def list_guild_automod_rules(self, guild_id: Snowflake) -> Response[List[automod.AutoModerationRule]]:
+        r = Route(
+            "GET",
+            "guilds/{guild_id}/auto-moderation/rules",
+            guild_id=guild_id
+        )
+        return self.request(r)
+    
+    def get_automod_rule(self, guild_id: Snowflake, rule_id: Snowflake) -> Response[automod.AutoModerationRule]:
+        r = Route(
+            "GET",
+            "guilds/{guild_id}/auto-moderation/rules/{rule_id}",
+            guild_id=guild_id,
+            rule_id=rule_id
+        )
+        return self.request(r)
+    
+    def create_automod_rule(
+        self,
+        guild_id: Snowflake,
+        *,
+        name: str,
+        event_type: EventType,
+        trigger_type: TriggerType,
+        trigger_metadata: automod.TriggerMetadata = MISSING,
+        actions: List[automod.AutoModerationAction],
+        enabled: bool = MISSING,
+        exempt_role: List[Snowflake] = MISSING,
+        exempt_channel: List[Snowflake] = MISSING
+    ) -> Response[automod.AutoModerationRule]:
+        params = {
+            name: name,
+            event_type: event_type,
+            trigger_type: trigger_type,
+            actions: actions
+        } 
+        if trigger_metadata is not MISSING:
+            params['trigger_metadata'] = trigger_metadata
+        
+        if enabled is not MISSING:
+            params['enabled'] = enabled
+        
+        if exempt_role is not MISSING:
+            params['exempt_role'] = exempt_role
+        
+        if exempt_channel is not MISSING:
+            params['exempt_channel'] = exempt_channel
+        
+        r = Route(
+            "POST",
+            "guilds/{guild_id}/auto-moderation/rules",
+            guild_id=guild_id
+        )
+        return self.request(r, json=params)
+    
+    def modify_automod_rule(
+        self,
+        guild_id: Snowflake,
+        rule_id: Snowflake,
+        *,
+        name: str = MISSING,
+        event_type: EventType = MISSING,
+        trigger_metadata: automod.TriggerMetadata = MISSING,
+        actions: List[automod.AutoModerationAction] = MISSING,
+        enabled: bool = MISSING,
+        exempt_role: List[Snowflake] = MISSING,
+        exempt_channel: List[Snowflake] = MISSING
+    ):
+        params = {}
+        if name is not MISSING:
+            params['name'] = name
+        
+        if event_type is not MISSING:
+            params['event_type'] = event_type
+        
+        if trigger_metadata is not MISSING:
+            params['trigger_metadata'] = trigger_metadata
+        
+        if actions is not MISSING:
+            params['actions'] = actions
+        
+        if enabled is not MISSING:
+            params['enabled'] = enabled
+        
+        if exempt_role is not MISSING:
+            params['exempt_role'] = exempt_role
+        
+        if exempt_channel is not MISSING:
+            params['exempt_channel'] = exempt_channel
+        
+        r = Route(
+            "PATCH",
+            "guilds/{guild_id}/auto-moderation/rules/{rule_id}",
+            guild_id=guild_id,
+            rule_id=rule_id
+        )
+        return self.request(r, json=params)
+    
+    def delete_automod_rule(
+        self, guild_id: Snowflake, rule_id: Snowflake,
+    ):
+        r = Route(
+            "DELETE",
+            "guilds/{guild_id}/auto-moderation/rules/{rule_id}",
+            guild_id=guild_id,
+            rule_id=rule_id
+        )
+        return self.request(r)
+        
