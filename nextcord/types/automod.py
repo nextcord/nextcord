@@ -1,4 +1,9 @@
-from typing import List, Literal, TypedDict
+from typing import (
+    List,
+    Literal,
+    TypedDict,
+    Union
+)
 
 from .snowflake import Snowflake
 
@@ -8,18 +13,21 @@ KeywordPresetType = Literal[1, 2, 3]
 ActionType = Literal[1, 2, 3]
 
 
-class _ActionMetadataAlertMessage(TypedDict, total=False):
+class ActionMetadataAlertMessage(TypedDict):
     channel_id: Snowflake
 
-class _ActionMetadataTimeout(TypedDict, total=False):
+class ActionMetadataTimeout(TypedDict):
     duration_seconds: int
 
-class ActionMetadata(_ActionMetadataAlertMessage, _ActionMetadataTimeout):
-    pass
+ActionMetadata = Union[ActionMetadataAlertMessage, ActionMetadataTimeout]
 
-class TriggerMetadata(TypedDict):
+class TriggerMetadataKeywordFilter(TypedDict):
     keyword_filter: List[str]
+
+class TriggerMetadataKeywordPreset(TypedDict):
     presets: List[KeywordPresetType]
+
+TriggerMetadata = Union[TriggerMetadataKeywordFilter, TriggerMetadataKeywordPreset]
 
 
 class _AutoModerationActionOptional(TypedDict, total=False):

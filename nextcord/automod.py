@@ -5,16 +5,43 @@ from typing import TYPE_CHECKING
 from .enums import (
     EventType,
     TriggerType,
+    KeywordPresetType,
     try_enum,
 )
 
 if TYPE_CHECKING:
-    from .types.automod import AutoModerationRule as AutoModerationRulePayload
+    from .types.automod import(
+        AutoModerationRule as AutoModerationRulePayload,
+        TriggerMetadata as TriggerMetadataPayload,
+        ActionMetadata as ActionMetadataPayload
+    )
     from .state import ConnectionState
     from .guild import Guild
     from typing import List
 
 class AutoModerationRule(Hashable):
+    """
+    Represent an auto moderation rule.
+    
+    .. container:: operations
+        .. describe:: x == y
+            Check if two auto moderation rule are equal.
+        .. describe:: x != y
+            Check if two auto moderation rule are not equal.
+    
+    Attributes
+    -----------
+    id :class:`int`
+        The auto moderation rule's ID.
+    guild :class:`Guild`
+        The guild that this auto moderation rule active in.
+    name :class:`str`
+        The name of this auto moderation rule.
+    event_type :class:`EventType`
+        The type of the event that the rule should execute when this event is called.
+    trigger_type :class:`TriggerType`
+        The type of the 
+    """
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
         self.id = int(data['id'])
         self.guild: Guild = guild
@@ -32,10 +59,36 @@ class AutoModerationRule(Hashable):
         self.enabled: bool = data['enabled']
         self.exempt_roles_id: List[int] = [int(exempt_role) for exempt_role in data['exempt_roles']]
         self.exempt_channels_id: List[int] = [int(exempt_channel) for exempt_channel in data['exempt_channels']]
-        # TODO: unpack trigger + action metadatas
+        self.notify_channel_ids: List[int] = []
+        self.filter = None
+        self.timeout_seconds = 0
+        
+
+        self._unpack_trigger_metadata(data['trigger_metadata'])
+
+        for action in data['actions']:
+            if action.get("metadata") is not None:
+                self._unpack_action_metadata(action['metadata'])
+
+        
+        
+    def _unpack_trigger_metadata(self, trigger_metadata: TriggerMetadataPayload):
+        self.filter = trigger_metadata.get("keyword_filter")  
+        self.preset_type = try_enum(KeywordPresetType, trigger_metadata.get("presets"))  
+    
+    def _unpack_action_metadata(self, action_metadata: ActionMetadataPayload):
+        if action_metadata.get("channel_id") is not None:
+            self.notify_channel_ids.append(int(action_metadata.get("channel_id")))  # type: ignore -- # TODO: ill come back to this.
+        if action_metadata.get("duration_seconds") is not None:
+            self.timeout_seconds: int = action_metadata.get("duration_seconds")  # type: ignore -- # TODO: same
+
     
     async def delete(self):
         await self._state.http.delete_automod_rule(guild_id=self.guild.id, rule_id=self.id)
     
+    @property
+    def creator(self):
+        """Optional[:class:`Member`] The member that created this rule."""
+        return self.guild.get_member(self.creator_id)
 
-    
+
