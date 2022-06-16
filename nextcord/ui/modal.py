@@ -74,6 +74,8 @@ class Modal:
 
     Attributes
     ------------
+    title: :class:`str`
+        The title of the modal.
     timeout: Optional[:class:`float`]
         Timeout from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
@@ -81,6 +83,10 @@ class Modal:
         The list of children attached to this modal.
     custom_id: :class:`str`
         The ID of the modal that gets received during an interaction.
+    auto_defer: :class:`bool` = True
+        Whether or not to automatically defer the modal when the callback completes
+        without responding to the interaction. Set this to ``False`` if you want to
+        handle the modal interaction outside of the callback.
     """
 
     def __init__(
