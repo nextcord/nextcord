@@ -939,6 +939,7 @@ class Intents(BaseFlags):
     
     @flag_value
     async def automod(self):
+        # TODO: remind me about adding docstirng
         return 1 << 21
 
 

@@ -63,6 +63,9 @@ __all__ = (
     "ScheduledEventEntityType",
     "ScheduledEventPrivacyLevel",
     "ScheduledEventStatus",
+    "KeywordPresetType",
+    "EventType",
+    "TriggerType"
 )
 
 
@@ -720,6 +723,21 @@ class ScheduledEventStatus(Enum):
     completed = 3
     canceled = 4
     cancelled = 4
+
+
+class KeywordPresetType(Enum):
+    profanity = 1
+    sexual_content = 2
+    slurs = 3
+
+class EventType(Enum):
+    message_send = 1
+
+class TriggerType(Enum):
+    keyword = 1
+    harmful_link = 2
+    spam = 3
+    keyword_preset = 4
 
 
 T = TypeVar("T")
