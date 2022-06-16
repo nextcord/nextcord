@@ -57,9 +57,9 @@ class AutoModerationRule(Hashable):
         self.event_type = try_enum(EventType, data['event_type'])  # left becuz idk what does it return so h
         self.trigger_type = try_enum(TriggerType, data['trigger_type'])  # same
         self.enabled: bool = data['enabled']
-        self.exempt_roles_id: List[int] = [int(exempt_role) for exempt_role in data['exempt_roles']]
-        self.exempt_channels_id: List[int] = [int(exempt_channel) for exempt_channel in data['exempt_channels']]
-        self.notify_channel_ids: List[int] = []
+        self.exempt_roles_ids: List[int] = [int(exempt_role) for exempt_role in data['exempt_roles']]
+        self.exempt_channels_ids: List[int] = [int(exempt_channel) for exempt_channel in data['exempt_channels']]
+        self.notify_channel_ids: int = None
         self.filter = None
         self.timeout_seconds = 0
         
@@ -78,7 +78,7 @@ class AutoModerationRule(Hashable):
     
     def _unpack_action_metadata(self, action_metadata: ActionMetadataPayload):
         if action_metadata.get("channel_id") is not None:
-            self.notify_channel_ids.append(int(action_metadata.get("channel_id")))  # type: ignore -- # TODO: ill come back to this.
+            self.notify_channel_id = int(action_metadata.get("channel_id"))  # type: ignore -- # TODO: ill come back to this.
         if action_metadata.get("duration_seconds") is not None:
             self.timeout_seconds: int = action_metadata.get("duration_seconds")  # type: ignore -- # TODO: same
 
