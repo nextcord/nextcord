@@ -66,6 +66,7 @@ __all__ = (
     "KeywordPresetType",
     "EventType",
     "TriggerType",
+    "ActionType",
 )
 
 
