@@ -168,7 +168,8 @@ def get_flags(
     for name, annotation in annotations.items():
         flag = namespace.pop(name, MISSING)
         if isinstance(flag, Flag):
-            flag.annotation = annotation
+            if flag.annotation is MISSING:
+                flag.annotation = annotation
         else:
             flag = Flag(name=name, annotation=annotation, default=flag)
 
