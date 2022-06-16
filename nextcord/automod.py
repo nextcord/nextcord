@@ -79,7 +79,7 @@ class AutoModerationRule(Hashable):
 
     def _unpack_action_metadata(self, action_metadata: ActionMetadataPayload):
         if action_metadata.get("channel_id") is not None:
-            self.notify_channel_id = int(action_metadata.get("channel_id"))  # type: ignore -- # TODO: ill come back
+            self.notify_channel_id = int(action_metadata.get("channel_id"))
         if action_metadata.get("duration_seconds") is not None:
             self.timeout_seconds: int = action_metadata.get("duration_seconds")
 
