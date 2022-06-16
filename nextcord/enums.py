@@ -225,6 +225,7 @@ class MessageType(Enum):
     thread_starter_message = 21
     guild_invite_reminder = 22
     context_menu_command = 23
+    automod_action = 24
 
 
 class VoiceRegion(Enum):
@@ -373,6 +374,10 @@ class AuditLogAction(Enum):
     thread_create            = 110
     thread_update            = 111
     thread_delete            = 112
+    automod_rule_create      = 140
+    automod_rule_update      = 141
+    automod_rule_delete      = 142
+    automod_block_message    = 143
     # fmt: on
 
     @property
@@ -426,6 +431,10 @@ class AuditLogAction(Enum):
             AuditLogAction.thread_create:          AuditLogActionCategory.create,
             AuditLogAction.thread_update:          AuditLogActionCategory.update,
             AuditLogAction.thread_delete:          AuditLogActionCategory.delete,
+            AuditLogAction.automod_rule_create:    AuditLogActionCategory.create,
+            AuditLogAction.automod_rule_update:    AuditLogActionCategory.update,
+            AuditLogAction.automod_rule_delete:    AuditLogActionCategory.delete,
+            AuditLogAction.automod_block_message:  None,
         }
         # fmt: on
         return lookup[self]

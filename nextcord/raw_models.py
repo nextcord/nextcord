@@ -335,3 +335,5 @@ class RawMemberRemoveEvent(_RawReprMixin):
     def __init__(self, data: MemberRemoveEvent) -> None:
         self.guild_id: int = int(data["guild_id"])
         # FIXME: practically no data
+
+
