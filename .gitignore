@@ -24,3 +24,6 @@ __pycache__
 # Exception for images in assets folder
 !assets/*
 build/
+
+# Testing
+tests/
