@@ -1186,8 +1186,9 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 ctx.command = original
                 return True
 
+            result = await nextcord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
             ctx.command = original
-            return await nextcord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+            return result
         finally:
             ctx.command = original
 
