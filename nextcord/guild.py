@@ -46,6 +46,7 @@ from typing import (
 )
 
 from . import abc, utils
+from .automod import AutoModerationRule
 from .asset import Asset
 from .bans import BanEntry
 from .channel import *
@@ -3457,3 +3458,15 @@ class Guild(Hashable):
     async def delete_application_commands(self, *commands: BaseApplicationCommand) -> None:
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)
+    
+    async def get_automod_rules(self):
+        """"""
+        # TODO: docstring
+        return [
+            AutoModerationRule(guild=self, state=self._state, data=rule)
+            for rule in await self._state.http.list_guild_automod_rules(guild_id=self.id)
+        ]
+    
+    async def get_automod_rule(self, rule_id: int):
+        rule = await self._state.http.get_automod_rule(guild_id=self.id, rule_id=rule_id)
+        return AutoModerationRule(guild=self, state=self._state, data=rule)
