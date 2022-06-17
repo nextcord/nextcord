@@ -78,7 +78,7 @@ class AutoModerationAction:
         if action_metadata.get("channel_id") is not None:
             self.notify_channel_id: Optional[int] = int(action_metadata.get("channel_id"))
         if action_metadata.get("duration_seconds") is not None:
-            self.timeout_seconds: Optional[int] = action_metadata.get("duration_seconds")  # type: ignore -- it was already fixed
+            self.timeout_seconds: Optional[int] = action_metadata.get("duration_seconds") 
 
 
 class AutoModerationRule(Hashable):
