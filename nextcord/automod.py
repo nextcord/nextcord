@@ -1,4 +1,26 @@
-# TODO: add license
+"""
+The MIT License (MIT)
+
+Copyright (c) 2022-present tag-epic
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,6 +33,8 @@ if TYPE_CHECKING:
 
     from .guild import Guild
     from .state import ConnectionState
+    from .role import Role
+    from .abc import MessageableChannel
     from .types.automod import (
         ActionMetadata as ActionMetadataPayload,
         AutoModerationRule as AutoModerationRulePayload,
@@ -52,20 +76,21 @@ class AutoModerationRule(Hashable):
         self.guild_id: int = int(data["guild_id"])
         self.name: str = data["name"]
         self.creator_id: int = int(data["creator_id"])
-        self.event_type = try_enum(
+        self.event_type: EventType = try_enum(
             EventType, data["event_type"]
-        )  # left becuz idk what does it return so h
-        self.trigger_type = try_enum(TriggerType, data["trigger_type"])  # same
+        )
+        self.trigger_type: TriggerType = try_enum(TriggerType, data["trigger_type"])  # same
         self.enabled: bool = data["enabled"]
-        self.exempt_roles_ids: List[int] = [
+        self.exempt_role_ids: List[int] = [
             int(exempt_role) for exempt_role in data["exempt_roles"]
         ]
-        self.exempt_channels_ids: List[int] = [
+        self.exempt_channel_ids: List[int] = [
             int(exempt_channel) for exempt_channel in data["exempt_channels"]
         ]
         self.notify_channel_id: Optional[int] = None
-        self.filter = None
-        self.timeout_seconds = 0
+        self.filter: Optional[List[str]] = None
+        self.timeout_seconds: int = 0
+        self.preset_type: Optional[KeywordPresetType] = None
 
         self._unpack_trigger_metadata(data["trigger_metadata"])
 
@@ -90,3 +115,12 @@ class AutoModerationRule(Hashable):
     def creator(self):
         """Optional[:class:`Member`] The member that created this rule."""
         return self.guild.get_member(self.creator_id)
+    
+    @property
+    def exempt_roles(self) -> List[Role]:
+        return [self.guild.get_role(exempt_role_id) for exempt_role_id in self.exempt_role_ids]  # type: ignore -- they can't be None.
+    
+    @property
+    def exempt_channels(self) -> List[MessageableChannel]:
+        return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore -- same
+
