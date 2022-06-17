@@ -35,13 +35,13 @@ if TYPE_CHECKING:
     from .guild import Guild
     from .role import Role
     from .state import ConnectionState
-    from .utils import MISSING
     from .types.automod import (
         ActionMetadata as ActionMetadataPayload,
         AutoModerationAction as AutoModerationActionPayload,
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
+    from .utils import MISSING
 
 
 class AutoModerationAction:
@@ -138,8 +138,8 @@ class AutoModerationRule(Hashable):
             self.actions.append(AutoModerationAction(action))
 
     def _unpack_trigger_metadata(self, trigger_metadata: TriggerMetadataPayload):
-        self.filter = trigger_metadata.get("keyword_filter")  
-        self.preset_types = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata['presets']]  # type: ignore -- pylint messed up somehow
+        self.filter = trigger_metadata.get("keyword_filter")
+        self.preset_types = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore -- pylint messed up somehow
 
     async def delete(self):
         await self._state.http.delete_automod_rule(guild_id=self.guild.id, rule_id=self.id)
@@ -164,4 +164,3 @@ class AutoModerationRule(Hashable):
     def exempt_channels(self) -> List[MessageableChannel]:
         """List[:class:`MessageableChannel`]: A list of channels that will not be affected by this rule. `[]` if not set."""
         return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore -- same
-    
