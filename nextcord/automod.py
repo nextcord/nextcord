@@ -63,22 +63,22 @@ class AutoModerationAction:
         self.timeout_seconds: Optional[int] = None
         if data.get("metadata"):
             self._unpack_metadata(data["metadata"])  # type: ignore
-        
+
     def __repr__(self):
         attrs = (
             ("type", self.type),
             ("notify_channel_id", self.notify_channel_id),
-            ("timeout_seconds", self.timeout_seconds)
+            ("timeout_seconds", self.timeout_seconds),
         )
         inner = " ".join("%s=%r" % t for t in attrs)
         return f"<AutoModerationAction {inner}>"
 
     def _unpack_metadata(self, action_metadata: ActionMetadataPayload):
-        
+
         if action_metadata.get("channel_id") is not None:
             self.notify_channel_id: Optional[int] = int(action_metadata.get("channel_id"))
         if action_metadata.get("duration_seconds") is not None:
-            self.timeout_seconds: Optional[int] = action_metadata.get("duration_seconds") 
+            self.timeout_seconds: Optional[int] = action_metadata.get("duration_seconds")
 
 
 class AutoModerationRule(Hashable):
@@ -128,10 +128,10 @@ class AutoModerationRule(Hashable):
         self.guild: Guild = guild
         self._state: ConnectionState = state
         self._from_payload(data)
-    
+
     def __int__(self):
         return self.id
-    
+
     def __repr__(self):
         attrs = (
             ("id", self.id),
@@ -150,7 +150,6 @@ class AutoModerationRule(Hashable):
         )
         inner = " ".join("%s=%r" % t for t in attrs)
         return f"<AutoModerationRule {inner}>"
-                
 
     def _from_payload(self, data: AutoModerationRulePayload):
         self.guild_id: int = int(data["guild_id"])
