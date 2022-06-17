@@ -421,11 +421,11 @@ class DiscordWebSocket:
             "d": {
                 "token": self.token,
                 "properties": {
-                    "$os": sys.platform,
-                    "$browser": "nextcord",
-                    "$device": "nextcord",
-                    "$referrer": "",
-                    "$referring_domain": "",
+                    "os": sys.platform,
+                    "browser": "nextcord",
+                    "device": "nextcord",
+                    "referrer": "",
+                    "referring_domain": "",
                 },
                 "compress": True,
                 "large_threshold": 250,
