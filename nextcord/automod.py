@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .enums import EventType, KeywordPresetType, TriggerType, try_enum
+from .enums import EventType, KeywordPresetType, TriggerType, ActionType, try_enum
 from .mixins import Hashable
 
 if TYPE_CHECKING:
@@ -36,10 +36,37 @@ if TYPE_CHECKING:
     from .role import Role
     from .abc import MessageableChannel
     from .types.automod import (
+        AutoModerationAction as AutoModerationActionPayload,
         ActionMetadata as ActionMetadataPayload,
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
+
+class AutoModerationAction:
+    """
+    Represent an auto moderation action.
+    
+    Attributes
+    -----------
+    type: :class:`ActionType`
+        The action type of this action.
+    notify_channel_id: Optional[:class:`int`]
+        The ID of the channel that this action will notify in.
+    timeout_seconds: Optional[:class:`int`]
+        The number of seconds this rule should timeout when someone breaks."""
+    
+    def __init__(self, data: AutoModerationActionPayload):
+        self.type: ActionType = try_enum(ActionType, data['type'])
+        if data.get("metadata"):
+            self._unpack_metadata(data['metadata'])  # type: ignore
+    
+    def _unpack_metadata(self, action_metadata: ActionMetadataPayload):
+        if action_metadata.get("channel_id") is not None:
+            self.notify_channel_id = int(action_metadata.get("channel_id"))  # type: ignore
+        if action_metadata.get("duration_seconds") is not None:
+            self.timeout_seconds: int = action_metadata.get("duration_seconds")  # type: ignore -- it was already fixed
+    
+    
 
 
 class AutoModerationRule(Hashable):
@@ -54,16 +81,34 @@ class AutoModerationRule(Hashable):
 
     Attributes
     -----------
-    id :class:`int`
+    id: :class:`int`
         The auto moderation rule's ID.
-    guild :class:`Guild`
+    guild: :class:`Guild`
         The guild that this auto moderation rule active in.
-    name :class:`str`
+    name: :class:`str`
         The name of this auto moderation rule.
-    event_type :class:`EventType`
+    event_type: :class:`EventType`
         The type of the event that the rule should execute when this event is called.
-    trigger_type :class:`TriggerType`
+    trigger_type: :class:`TriggerType`
         The trigger type of this auto moderation rule.
+    guild_id: :class:`int`
+        The guild ID that this auto moderation rule active in.
+    creator_id: :class:`int`
+        The creator of this auto moderation rule's ID.
+    enabled: :class:`bool`
+        Whether is this rule enabled or not.
+    exempt_role_ids: List[:class:`int`]
+        A list of roles that will not be affected by this rule.
+        .. note::
+            Bots are always not affected by any rule.
+    exempt_channel_ids: List[:class:`int`]
+        A list of channels that will not be affected by this rule.
+    filter: List[str]
+        The custom filter for this auto moderation rule. `[]` if not set.
+    preset_type: Optional[:class:`KeywordPresetType`]
+        The pre-set type of this auto moderation rule. `None` if not set.
+    actions: List[:class:`AutoModerationAction`]
+        The actions that this auto moderation rule will execute if triggered.
     """
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
@@ -87,26 +132,19 @@ class AutoModerationRule(Hashable):
         self.exempt_channel_ids: List[int] = [
             int(exempt_channel) for exempt_channel in data["exempt_channels"]
         ]
-        self.notify_channel_id: Optional[int] = None
-        self.filter: Optional[List[str]] = None
-        self.timeout_seconds: int = 0
+        self.filter: List[str] = []
         self.preset_type: Optional[KeywordPresetType] = None
 
         self._unpack_trigger_metadata(data["trigger_metadata"])
+        self.actions: List[AutoModerationAction] = []
 
         for action in data["actions"]:
-            if action.get("metadata") is not None:
-                self._unpack_action_metadata(action["metadata"])  # type: ignore -- last line already fixed it
+            self.actions.append(AutoModerationAction(action))
+            
 
     def _unpack_trigger_metadata(self, trigger_metadata: TriggerMetadataPayload):
         self.filter = trigger_metadata.get("keyword_filter")
         self.preset_type = try_enum(KeywordPresetType, trigger_metadata.get("presets"))
-
-    def _unpack_action_metadata(self, action_metadata: ActionMetadataPayload):
-        if action_metadata.get("channel_id") is not None:
-            self.notify_channel_id = int(action_metadata.get("channel_id"))
-        if action_metadata.get("duration_seconds") is not None:
-            self.timeout_seconds: int = action_metadata.get("duration_seconds")  # type: ignore -- it was already fixed
 
     async def delete(self):
         await self._state.http.delete_automod_rule(guild_id=self.guild.id, rule_id=self.id)
@@ -116,11 +154,20 @@ class AutoModerationRule(Hashable):
         """Optional[:class:`Member`] The member that created this rule."""
         return self.guild.get_member(self.creator_id)
     
+    async def fetch_creator(self):
+        """Optional[:class:`Member`] Retrieves the member that created this rule through Discord's API.
+        
+        .. note::
+            This method is an API call. If you have :attr:`Intents.members` and member cache enabled, consider :attr:`creator` instead."""
     @property
     def exempt_roles(self) -> List[Role]:
+        """List[:class:`Role`]: A list of role that will not be affected by this rule. `[]` if not set."""
         return [self.guild.get_role(exempt_role_id) for exempt_role_id in self.exempt_role_ids]  # type: ignore -- they can't be None.
     
     @property
     def exempt_channels(self) -> List[MessageableChannel]:
+        """List[:class:`MessageableChannel`]: A list of channels that will not be affected by this rule. `[]` if not set."""
         return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore -- same
+    
+
 
