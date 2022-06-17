@@ -59,7 +59,7 @@ class AutoModerationAction:
 
     def __init__(self, data: AutoModerationActionPayload):
         self.type: ActionType = try_enum(ActionType, data["type"])
-        self.notify_channel_id: Optional[int] = None,
+        self.notify_channel_id: Optional[int] = None
         self.timeout_seconds: Optional[int] = None
         if data.get("metadata"):
             self._unpack_metadata(data["metadata"])  # type: ignore
