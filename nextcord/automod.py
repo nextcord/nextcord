@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from typing import List, Optional
 
     from .abc import GuildChannel
+    from .errors import InvalidArgument
     from .guild import Guild
     from .role import Role
     from .state import ConnectionState
@@ -41,7 +42,6 @@ if TYPE_CHECKING:
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
-    from .errors import InvalidArgument
     from .utils import MISSING
 
 
@@ -123,6 +123,7 @@ class AutoModerationRule(Hashable):
     actions: List[:class:`AutoModerationAction`]
         The actions that this auto moderation rule will execute if triggered.
     """
+
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
         self.id = int(data["id"])
         self.guild: Guild = guild
@@ -246,25 +247,29 @@ class AutoModerationRule(Hashable):
         """
         payload = {}
         if "name" in fields:
-            payload['name'] = fields['name']
+            payload["name"] = fields["name"]
 
         if "event_type" in fields:
-            payload['event_type'] = fields["event_type"].value
+            payload["event_type"] = fields["event_type"].value
 
         if "keyword_filter" in fields and "keyword_filters" in fields:
-            raise InvalidArgument("Cannot pass keyword_filter and keyword_filters simultaneously to edit()")
+            raise InvalidArgument(
+                "Cannot pass keyword_filter and keyword_filters simultaneously to edit()"
+            )
 
         if "keyword_filter" in fields and self.trigger_type != TriggerType.keyword:
             raise InvalidArgument("trigger_type must be TriggerType.keyword to pass keyword_filter")
 
         if "keyword_filters" in fields and self.trigger_type != TriggerType.keyword:
-            raise InvalidArgument("trigger_type must be TriggerType.keyword to pass keyword_filters")
+            raise InvalidArgument(
+                "trigger_type must be TriggerType.keyword to pass keyword_filters"
+            )
 
         if "keyword_filter" in fields:
-            payload['trigger_metadata']['keyword_filters'] = [fields['keyword_filter']]
+            payload["trigger_metadata"]["keyword_filters"] = [fields["keyword_filter"]]
 
         if "keyword_filters" in fields:
-            payload['trigger_metadata']['keyword_filters'] = fields['keyword_filters']
+            payload["trigger_metadata"]["keyword_filters"] = fields["keyword_filters"]
 
         if "preset" in fields and "presets" in fields:
             raise InvalidArgument("Cannot pass preset and presets simultaneously to edit()")
@@ -276,28 +281,32 @@ class AutoModerationRule(Hashable):
             raise InvalidArgument("trigger_type must be TriggerType.keyword_preset to pass presets")
 
         if "preset" in fields:
-            payload['trigger_metadata']['preset'] = fields['preset']
+            payload["trigger_metadata"]["preset"] = fields["preset"]
 
         # TODO: notify_channel + timeout_seconds
 
         if "enabled" in fields:
-            payload['enabled'] = fields['enabled']
+            payload["enabled"] = fields["enabled"]
 
         if "exempt_role" in fields and "exempt_roles" in fields:
-            raise InvalidArgument("Cannot pass exempt_role and exempt_roles simultaneously to edit()")
+            raise InvalidArgument(
+                "Cannot pass exempt_role and exempt_roles simultaneously to edit()"
+            )
 
         if "exempt_role" in fields:
-            payload['exempt_roles'] = [fields['exempt_role'].id]
+            payload["exempt_roles"] = [fields["exempt_role"].id]
 
         if "exempt_roles" in fields:
-            payload['exempt_roles'] = [role.id for role in fields['exempt_roles']]
+            payload["exempt_roles"] = [role.id for role in fields["exempt_roles"]]
 
         if "exempt_channel" in fields:
-            payload['exempt_channels'] = [fields['exempt_channel'].id]
+            payload["exempt_channels"] = [fields["exempt_channel"].id]
 
         if "exempt_channels" in fields:
-            payload['exempt_channels'] = [exempt_channel.id for exempt_channel in fields['exempt_channels']]
+            payload["exempt_channels"] = [
+                exempt_channel.id for exempt_channel in fields["exempt_channels"]
+            ]
 
-
-
-        await self._state.http.modify_automod_rule(guild_id=self.guild.id, rule_id=self.id, **payload)
+        await self._state.http.modify_automod_rule(
+            guild_id=self.guild.id, rule_id=self.id, **payload
+        )
