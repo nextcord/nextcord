@@ -2398,9 +2398,9 @@ class HTTPClient:
         trigger_metadata: automod.TriggerMetadata = MISSING,
         actions: List[automod.AutoModerationAction] = MISSING,
         enabled: bool = MISSING,
-        exempt_role: List[Snowflake] = MISSING,
-        exempt_channel: List[Snowflake] = MISSING,
-    ):
+        exempt_roles: List[Snowflake] = MISSING,
+        exempt_channels: List[Snowflake] = MISSING,
+    ) -> Response[automod.AutoModerationRule]:
         params = {}
         if name is not MISSING:
             params["name"] = name
@@ -2417,11 +2417,11 @@ class HTTPClient:
         if enabled is not MISSING:
             params["enabled"] = enabled
 
-        if exempt_role is not MISSING:
-            params["exempt_role"] = exempt_role
+        if exempt_roles is not MISSING:
+            params["exempt_roles"] = exempt_roles
 
-        if exempt_channel is not MISSING:
-            params["exempt_channel"] = exempt_channel
+        if exempt_channels is not MISSING:
+            params["exempt_channels"] = exempt_channels
 
         r = Route(
             "PATCH",
@@ -2435,7 +2435,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         rule_id: Snowflake,
-    ):
+    ) -> Response:
         r = Route(
             "DELETE",
             "guilds/{guild_id}/auto-moderation/rules/{rule_id}",

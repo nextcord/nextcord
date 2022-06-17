@@ -23,7 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 from .enums import ActionType, EventType, KeywordPresetType, TriggerType, try_enum
 from .mixins import Hashable
@@ -31,7 +31,7 @@ from .mixins import Hashable
 if TYPE_CHECKING:
     from typing import List, Optional
 
-    from .abc import MessageableChannel
+    from .abc import GuildChannel
     from .guild import Guild
     from .role import Role
     from .state import ConnectionState
@@ -41,6 +41,7 @@ if TYPE_CHECKING:
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
+    from .errors import InvalidArgument
     from .utils import MISSING
 
 
@@ -115,14 +116,13 @@ class AutoModerationRule(Hashable):
             Bots are always not affected by any rule.
     exempt_channel_ids: List[:class:`int`]
         A list of channels that will not be affected by this rule.
-    filters: Optional[List[str]]
+    keyword_filters: Optional[List[str]]
         The custom filter for this auto moderation rule. `None` if not set.
-    preset_type: Optional[:class:`KeywordPresetType`]
+    presets: Optional[List[:class:`KeywordPresetType`]]
         The pre-set type of this auto moderation rule. `None` if not set.
     actions: List[:class:`AutoModerationAction`]
         The actions that this auto moderation rule will execute if triggered.
     """
-
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
         self.id = int(data["id"])
         self.guild: Guild = guild
@@ -144,8 +144,8 @@ class AutoModerationRule(Hashable):
             ("enabled", self.enabled),
             ("exempt_role_ids", self.exempt_role_ids),
             ("exempt_channel_ids", self.exempt_channel_ids),
-            ("filter", self.filters),
-            ("preset_type", self.preset_type),
+            ("keyword_filters", self.keyword_filters),
+            ("presets", self.presets),
             ("actions", self.actions),
         )
         inner = " ".join("%s=%r" % t for t in attrs)
@@ -162,20 +162,20 @@ class AutoModerationRule(Hashable):
         self.exempt_channel_ids: List[int] = [
             int(exempt_channel) for exempt_channel in data["exempt_channels"]
         ]
-        self.filters: Optional[List[str]] = None
-        self.preset_type: Optional[KeywordPresetType] = None
+        self.keyword_filters: Optional[List[str]] = None
+        self.presets: Optional[List[KeywordPresetType]] = None
 
         self._unpack_trigger_metadata(data["trigger_metadata"])
         self.actions: List[AutoModerationAction] = []
 
         for action in data["actions"]:
-            self.actions.append(AutoModerationAction(action))
+            self.actions.append(AutoModerationAction(data=action))
 
     def _unpack_trigger_metadata(self, trigger_metadata: TriggerMetadataPayload):
         if trigger_metadata.get("keyword_filter") is not None:
-            self.filter = trigger_metadata["keyword_filter"]  # type: ignore
+            self.keyword_filters = trigger_metadata["keyword_filter"]  # type: ignore
         if trigger_metadata.get("presets") is not None:
-            self.preset_types = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore -- pylint messed up somehow
+            self.presets = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore -- pylint messed up somehow
 
     async def delete(self):
         await self._state.http.delete_automod_rule(guild_id=self.guild.id, rule_id=self.id)
@@ -185,18 +185,118 @@ class AutoModerationRule(Hashable):
         """Optional[:class:`Member`] The member that created this rule."""
         return self.guild.get_member(self.creator_id)
 
-    async def fetch_creator(self):
-        """Optional[:class:`Member`] Retrieves the member that created this rule through Discord's API.
-
-        .. note::
-            This method is an API call. If you have :attr:`Intents.members` and member cache enabled, consider :attr:`creator` instead."""
-
     @property
     def exempt_roles(self) -> List[Role]:
         """List[:class:`Role`]: A list of role that will not be affected by this rule. `[]` if not set."""
         return [self.guild.get_role(exempt_role_id) for exempt_role_id in self.exempt_role_ids]  # type: ignore -- they can't be None.
 
     @property
-    def exempt_channels(self) -> List[MessageableChannel]:
-        """List[:class:`MessageableChannel`]: A list of channels that will not be affected by this rule. `[]` if not set."""
+    def exempt_channels(self) -> List[GuildChannel]:
+        """List[:class:`GuildChannel`]: A list of channels that will not be affected by this rule. `[]` if not set."""
         return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore -- same
+
+    # TODO: edit() overloads
+    async def edit(self, **fields):
+        """
+        |coro|
+        Edit this auto moderation rule.
+
+        Parameters
+        -----------
+        name: Optional[:class:`str`]
+            The new name of this auto moderation rule.
+        event_type: Optional[:class:`EventType`]
+            The new trigger event type of this auto moderation rule.
+        keyword_filter: Optional[:class:`str`]
+            The keyword that the filter should match. Cannot be mixed with ``keyword_filters``.
+
+            .. note::
+
+                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword`
+        keyword_filters: Optional[List[:class:`str`]]
+            The keywords that the filter should match. Cannot be mixed with ``keyword_filter``.
+
+            .. note::
+                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword`.
+        preset: Optional[:class:`KeywordPresetType`]
+            The keyword preset that the filter should match. Cannot be mixed with ``presets``
+
+            .. note::
+                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_preset`
+        presets: Optional[List[:class:`KeywordPresetType`]]
+            The keyword presets that the filter should match. Cannot be mixed with ``preset``.
+
+            .. note::
+                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_preset`
+        notify_channel: Optional[List[:class:`GuildChannel`]]
+            The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
+        timeout_seconds: Optional[:class:`int`]
+            The seconds to timeout the person triggered this rule.
+        enabled: Optional[:class:`bool`]
+            Whether if this rule is enabled.
+        exempt_role: Optional[:class:`Role`]
+            The role that should not be affected by this rule. Cannot be mixed with ``exempt_roles``.
+        exempt_roles: Optional[List[:class:`Role`]]
+            A list of roles that should not be affected by this rule. Cannot be mixed with ``exempt_role``.
+        exempt_channel: Optional[List[:class:`GuildChannel`]]
+            The channel that should not be affected by this rule. Cannot be mixed with ``exempt_channels``
+        exempt_channels: Optional[List[:class:`GuildChannel`]]
+            A list of channels that should not be affected by this rule. Cannot be mixed with ``exempt_channel``.
+        """
+        payload = {}
+        if "name" in fields:
+            payload['name'] = fields['name']
+
+        if "event_type" in fields:
+            payload['event_type'] = fields["event_type"].value
+
+        if "keyword_filter" in fields and "keyword_filters" in fields:
+            raise InvalidArgument("Cannot pass keyword_filter and keyword_filters simultaneously to edit()")
+
+        if "keyword_filter" in fields and self.trigger_type != TriggerType.keyword:
+            raise InvalidArgument("trigger_type must be TriggerType.keyword to pass keyword_filter")
+
+        if "keyword_filters" in fields and self.trigger_type != TriggerType.keyword:
+            raise InvalidArgument("trigger_type must be TriggerType.keyword to pass keyword_filters")
+
+        if "keyword_filter" in fields:
+            payload['trigger_metadata']['keyword_filters'] = [fields['keyword_filter']]
+
+        if "keyword_filters" in fields:
+            payload['trigger_metadata']['keyword_filters'] = fields['keyword_filters']
+
+        if "preset" in fields and "presets" in fields:
+            raise InvalidArgument("Cannot pass preset and presets simultaneously to edit()")
+
+        if "preset" in fields and self.trigger_type != TriggerType.keyword_preset:
+            raise InvalidArgument("trigger_type must be TriggerType.keyword_preset to pass preset")
+
+        if "presets" in fields and self.trigger_type != TriggerType.keyword_preset:
+            raise InvalidArgument("trigger_type must be TriggerType.keyword_preset to pass presets")
+
+        if "preset" in fields:
+            payload['trigger_metadata']['preset'] = fields['preset']
+
+        # TODO: notify_channel + timeout_seconds
+
+        if "enabled" in fields:
+            payload['enabled'] = fields['enabled']
+
+        if "exempt_role" in fields and "exempt_roles" in fields:
+            raise InvalidArgument("Cannot pass exempt_role and exempt_roles simultaneously to edit()")
+
+        if "exempt_role" in fields:
+            payload['exempt_roles'] = [fields['exempt_role'].id]
+
+        if "exempt_roles" in fields:
+            payload['exempt_roles'] = [role.id for role in fields['exempt_roles']]
+
+        if "exempt_channel" in fields:
+            payload['exempt_channels'] = [fields['exempt_channel'].id]
+
+        if "exempt_channels" in fields:
+            payload['exempt_channels'] = [exempt_channel.id for exempt_channel in fields['exempt_channels']]
+
+
+
+        await self._state.http.modify_automod_rule(guild_id=self.guild.id, rule_id=self.id, **payload)
