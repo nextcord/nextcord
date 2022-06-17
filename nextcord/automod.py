@@ -307,6 +307,9 @@ class AutoModerationRule(Hashable):
                 exempt_channel.id for exempt_channel in fields["exempt_channels"]
             ]
 
+        if "reason" in fields:
+            payload['reason'] = fields['reason']
+
         await self._state.http.modify_automod_rule(
             guild_id=self.guild.id, rule_id=self.id, **payload
         )

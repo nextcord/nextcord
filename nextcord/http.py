@@ -2371,6 +2371,7 @@ class HTTPClient:
         enabled: bool = MISSING,
         exempt_role: List[Snowflake] = MISSING,
         exempt_channel: List[Snowflake] = MISSING,
+        reason: Optional[str] = None
     ) -> Response[automod.AutoModerationRule]:
         params = {name: name, event_type: event_type, trigger_type: trigger_type, actions: actions}
         if trigger_metadata is not MISSING:
@@ -2386,7 +2387,7 @@ class HTTPClient:
             params["exempt_channel"] = exempt_channel
 
         r = Route("POST", "guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
-        return self.request(r, json=params)
+        return self.request(r, json=params, reason=reason)
 
     def modify_automod_rule(
         self,
@@ -2400,6 +2401,7 @@ class HTTPClient:
         enabled: bool = MISSING,
         exempt_roles: List[Snowflake] = MISSING,
         exempt_channels: List[Snowflake] = MISSING,
+        reason: Optional[str] = None
     ) -> Response[automod.AutoModerationRule]:
         params = {}
         if name is not MISSING:
@@ -2429,7 +2431,7 @@ class HTTPClient:
             guild_id=guild_id,
             rule_id=rule_id,
         )
-        return self.request(r, json=params)
+        return self.request(r, json=params, reason=reason)
 
     def delete_automod_rule(
         self,
