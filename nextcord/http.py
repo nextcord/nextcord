@@ -2345,7 +2345,7 @@ class HTTPClient:
     def list_guild_automod_rules(
         self, guild_id: Snowflake
     ) -> Response[List[automod.AutoModerationRule]]:
-        r = Route("GET", "guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
+        r = Route("GET", "/guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
         return self.request(r)
 
     def get_automod_rule(

@@ -59,14 +59,26 @@ class AutoModerationAction:
 
     def __init__(self, data: AutoModerationActionPayload):
         self.type: ActionType = try_enum(ActionType, data["type"])
+        self.notify_channel_id: Optional[int] = None,
+        self.timeout_seconds: Optional[int] = None
         if data.get("metadata"):
             self._unpack_metadata(data["metadata"])  # type: ignore
+        
+    def __repr__(self):
+        attrs = (
+            ("type", self.type),
+            ("notify_channel_id", self.notify_channel_id),
+            ("timeout_seconds", self.timeout_seconds)
+        )
+        inner = " ".join("%s=%r" % t for t in attrs)
+        return f"<AutoModerationAction {inner}>"
 
     def _unpack_metadata(self, action_metadata: ActionMetadataPayload):
+        
         if action_metadata.get("channel_id") is not None:
-            self.notify_channel_id = int(action_metadata.get("channel_id"))
+            self.notify_channel_id: Optional[int] = int(action_metadata.get("channel_id"))
         if action_metadata.get("duration_seconds") is not None:
-            self.timeout_seconds: int = action_metadata.get("duration_seconds")  # type: ignore -- it was already fixed
+            self.timeout_seconds: Optional[int] = action_metadata.get("duration_seconds")  # type: ignore -- it was already fixed
 
 
 class AutoModerationRule(Hashable):
@@ -103,7 +115,7 @@ class AutoModerationRule(Hashable):
             Bots are always not affected by any rule.
     exempt_channel_ids: List[:class:`int`]
         A list of channels that will not be affected by this rule.
-    filter: Optional[List[str]]
+    filters: Optional[List[str]]
         The custom filter for this auto moderation rule. `None` if not set.
     preset_type: Optional[:class:`KeywordPresetType`]
         The pre-set type of this auto moderation rule. `None` if not set.
@@ -116,6 +128,29 @@ class AutoModerationRule(Hashable):
         self.guild: Guild = guild
         self._state: ConnectionState = state
         self._from_payload(data)
+    
+    def __int__(self):
+        return self.id
+    
+    def __repr__(self):
+        attrs = (
+            ("id", self.id),
+            ("guild", self.guild),
+            ("guild_id", self.guild_id),
+            ("name", self.name),
+            ("creator_id", self.creator_id),
+            ("event_type", self.event_type),
+            ("trigger_type", self.trigger_type),
+            ("enabled", self.enabled),
+            ("exempt_role_ids", self.exempt_role_ids),
+            ("exempt_channel_ids", self.exempt_channel_ids),
+            ("filter", self.filters),
+            ("preset_type", self.preset_type),
+            ("actions", self.actions),
+        )
+        inner = " ".join("%s=%r" % t for t in attrs)
+        return f"<AutoModerationRule {inner}>"
+                
 
     def _from_payload(self, data: AutoModerationRulePayload):
         self.guild_id: int = int(data["guild_id"])
@@ -128,7 +163,7 @@ class AutoModerationRule(Hashable):
         self.exempt_channel_ids: List[int] = [
             int(exempt_channel) for exempt_channel in data["exempt_channels"]
         ]
-        self.filter: Optional[List[str]] = None
+        self.filters: Optional[List[str]] = None
         self.preset_type: Optional[KeywordPresetType] = None
 
         self._unpack_trigger_metadata(data["trigger_metadata"])
@@ -138,8 +173,10 @@ class AutoModerationRule(Hashable):
             self.actions.append(AutoModerationAction(action))
 
     def _unpack_trigger_metadata(self, trigger_metadata: TriggerMetadataPayload):
-        self.filter = trigger_metadata.get("keyword_filter")
-        self.preset_types = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore -- pylint messed up somehow
+        if trigger_metadata.get("keyword_filter") is not None:
+            self.filter = trigger_metadata["keyword_filter"]  # type: ignore
+        if trigger_metadata.get("presets") is not None:
+            self.preset_types = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore -- pylint messed up somehow
 
     async def delete(self):
         await self._state.http.delete_automod_rule(guild_id=self.guild.id, rule_id=self.id)
