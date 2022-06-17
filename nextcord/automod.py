@@ -63,7 +63,7 @@ class AutoModerationAction:
 
     def _unpack_metadata(self, action_metadata: ActionMetadataPayload):
         if action_metadata.get("channel_id") is not None:
-            self.notify_channel_id = int(action_metadata.get("channel_id"))  # type: ignore
+            self.notify_channel_id = int(action_metadata.get("channel_id"))
         if action_metadata.get("duration_seconds") is not None:
             self.timeout_seconds: int = action_metadata.get("duration_seconds")  # type: ignore -- it was already fixed
 
@@ -102,8 +102,8 @@ class AutoModerationRule(Hashable):
             Bots are always not affected by any rule.
     exempt_channel_ids: List[:class:`int`]
         A list of channels that will not be affected by this rule.
-    filter: List[str]
-        The custom filter for this auto moderation rule. `[]` if not set.
+    filter: Optional[List[str]]
+        The custom filter for this auto moderation rule. `None` if not set.
     preset_type: Optional[:class:`KeywordPresetType`]
         The pre-set type of this auto moderation rule. `None` if not set.
     actions: List[:class:`AutoModerationAction`]
@@ -127,7 +127,7 @@ class AutoModerationRule(Hashable):
         self.exempt_channel_ids: List[int] = [
             int(exempt_channel) for exempt_channel in data["exempt_channels"]
         ]
-        self.filter: List[str] = []
+        self.filter: Optional[List[str]] = None
         self.preset_type: Optional[KeywordPresetType] = None
 
         self._unpack_trigger_metadata(data["trigger_metadata"])
@@ -137,7 +137,7 @@ class AutoModerationRule(Hashable):
             self.actions.append(AutoModerationAction(action))
 
     def _unpack_trigger_metadata(self, trigger_metadata: TriggerMetadataPayload):
-        self.filter = trigger_metadata.get("keyword_filter")
+        self.filter = trigger_metadata.get("keyword_filter")  
         self.preset_type = try_enum(KeywordPresetType, trigger_metadata.get("presets"))
 
     async def delete(self):
