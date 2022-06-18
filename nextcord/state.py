@@ -51,6 +51,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
+from .automod import AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
@@ -75,7 +76,6 @@ from .threads import Thread, ThreadMember
 from .ui.modal import Modal, ModalStore
 from .ui.view import View, ViewStore
 from .user import ClientUser, User
-from .automod import AutoModerationRule
 
 if TYPE_CHECKING:
     from asyncio import Future
@@ -88,6 +88,7 @@ if TYPE_CHECKING:
     from .http import HTTPClient
     from .message import MessageableChannel
     from .types.activity import Activity as ActivityPayload
+    from .types.automod import AutoModerationRule as AutoModerationRulePayload
     from .types.channel import DMChannel as DMChannelPayload
     from .types.checks import ApplicationCheck, ApplicationHook
     from .types.emoji import Emoji as EmojiPayload
@@ -98,7 +99,6 @@ if TYPE_CHECKING:
     from .types.sticker import GuildSticker as GuildStickerPayload
     from .types.user import User as UserPayload
     from .voice_client import VoiceProtocol
-    from .types.automod import AutoModerationRule as AutoModerationRulePayload
 
     T = TypeVar("T")
     CS = TypeVar("CS", bound="ConnectionState")
@@ -2264,9 +2264,8 @@ class ConnectionState:
     def parse_auto_moderation_rule_create(self, data: AutoModerationRulePayload) -> None:
         self.dispatch(
             "automod_rule_create",
-            AutoModerationRule(state=self, guild=self._get_guild(data['guild_id']), data=data)
+            AutoModerationRule(state=self, guild=self._get_guild(data["guild_id"]), data=data),
         )
-
 
 
 class AutoShardedConnectionState(ConnectionState):
