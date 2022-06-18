@@ -3465,7 +3465,9 @@ class Guild(Hashable):
     async def fetch_automod_rules(self) -> List[AutoModerationRule]:
         """
         |coro|
-        Retrieves all of the auto moderation rules of this server from Discord.
+        Retrieves all auto moderation rules of this server from Discord.
+
+        You must have the :attr:`~Permissions.manage_guild` to be able to do this.
 
         Returns
         -------
@@ -3481,6 +3483,8 @@ class Guild(Hashable):
         """
         |coro|
         Retrieves an auto moderation rule from Discord.
+
+        You must have the :attr:`~Permissions.manage_guild` to be able to do this.
 
         Parameters
         -----------
@@ -3514,6 +3518,7 @@ class Guild(Hashable):
         """
         Create an auto moderation rule.
 
+        You must have the :attr:`~Permissions.manage_guild` to be able to do this.
         Parameters
         ----------
         name: :class:`str`

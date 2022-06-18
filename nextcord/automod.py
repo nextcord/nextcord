@@ -183,6 +183,7 @@ class AutoModerationRule(Hashable):
             self.presets = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore -- pylint messed up somehow
 
     async def delete(self):
+        """Delete this auto moderation rule."""
         await self._state.http.delete_automod_rule(guild_id=self.guild.id, rule_id=self.id)
 
     @property
@@ -447,6 +448,8 @@ class AutoModerationRule(Hashable):
         """
         |coro|
         Edit this auto moderation rule.
+
+        You must have the :attr:`~Permissions.manage_guild` to be able to do this.
 
         Parameters
         -----------
