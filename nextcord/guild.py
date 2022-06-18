@@ -3459,7 +3459,7 @@ class Guild(Hashable):
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)
 
-    async def get_automod_rules(self):
+    async def fetch_automod_rules(self):
         """
         Get all of the auto moderation rules.
         """
@@ -3469,9 +3469,13 @@ class Guild(Hashable):
             for rule in await self._state.http.list_guild_automod_rules(guild_id=self.id)
         ]
 
-    async def get_automod_rule(self, rule_id: int):
+    async def fetch_automod_rule(self, rule_id: int):
         """
         Get an auto moderation rule.
         """
         rule = await self._state.http.get_automod_rule(guild_id=self.id, rule_id=rule_id)
+        return AutoModerationRule(guild=self, state=self._state, data=rule)
+
+    def get_automod_rule(self, rule_id: int):
+        rule = await self._state.get_automod_rule(id=rule_id)
         return AutoModerationRule(guild=self, state=self._state, data=rule)
