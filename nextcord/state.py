@@ -2264,7 +2264,7 @@ class ConnectionState:
     def parse_auto_moderation_rule_create(self, data: AutoModerationRulePayload) -> None:
         self.dispatch(
             "automod_rule_create",
-            AutoModerationRule(state=self, guild=self._get_guild(data["guild_id"]), data=data),
+            AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
 
