@@ -2290,14 +2290,14 @@ class ConnectionState:
         self.dispatch(
             "automod_rule_update",
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=old_data),  # type: ignore
-            AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),
+            AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
     def parse_automod_rule_delete(self, data: AutoModerationRulePayload):
         self.delete_automod_rule(data["id"])
         self.dispatch(
             "automod_rule_delete",
-            AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),
+            AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
 
