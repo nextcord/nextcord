@@ -423,9 +423,7 @@ class DiscordWebSocket:
                 "properties": {
                     "os": sys.platform,
                     "browser": "nextcord",
-                    "device": "nextcord",
-                    "referrer": "",
-                    "referring_domain": "",
+                    "device": "nextcord"
                 },
                 "compress": True,
                 "large_threshold": 250,
