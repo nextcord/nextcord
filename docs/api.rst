@@ -1255,6 +1255,20 @@ of :class:`enum.Enum`.
 
         The auto moderation rule will be triggered if someone says thing matches the Discord-preset filters.
 
+.. class:: ActionType
+
+    .. attribute:: block
+
+        Block the message from being sent.
+
+    .. attribute:: send_alert
+
+        Send an alert to the designated channel.
+
+    .. attribute:: timeout
+
+        Temporarily disable the user's ability to interact with the community.
+
 .. class:: ChannelType
 
     Specifies the type of channel.
@@ -4126,6 +4140,18 @@ ScheduledEvent
     :members:
 
 .. autoclass:: EntityMetadata
+
+AutoModerationRule
+~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationRule
+
+.. autoclass:: AutoModerationRule()
+    :members:
+
+.. attributetable:: AutoModerationAction
+
+.. autoclass:: AutoModerationAction
 
 .. _discord_api_data:
 
