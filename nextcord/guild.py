@@ -3461,7 +3461,12 @@ class Guild(Hashable):
 
     async def fetch_automod_rules(self):
         """
-        Get all of the auto moderation rules.
+        |coro|
+        Retrieves all of the auto moderation rules of this server from Discord.
+
+        Returns
+        -------
+        List[:class:`AutoModerationRule`]
         """
         # TODO: docstring
         return [
@@ -3471,10 +3476,22 @@ class Guild(Hashable):
 
     async def fetch_automod_rule(self, rule_id: int):
         """
-        Get an auto moderation rule.
+        |coro|
+        Retrieves an auto moderation rule from Discord.
+
+        Parameters
+        -----------
+        rule_id: :class:`int`
+            The rule ID of the auto moderation rule you want to fetch.
+
+        Returns
+        --------
+        :class:`AutoModerationRule`
         """
         rule = await self._state.http.get_automod_rule(guild_id=self.id, rule_id=rule_id)
         return AutoModerationRule(guild=self, state=self._state, data=rule)
 
     def get_automod_rule(self, rule_id: int):
         return self._state.get_automod_rule(id=rule_id)
+
+
