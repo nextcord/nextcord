@@ -23,7 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from .enums import ActionType, EventType, KeywordPresetType, TriggerType, try_enum
 from .mixins import Hashable
@@ -196,7 +196,247 @@ class AutoModerationRule(Hashable):
         """List[:class:`GuildChannel`]: A list of channels that will not be affected by this rule. `[]` if not set."""
         return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore -- same
 
-    # TODO: edit() overloads
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filters: Optional[List[str]] = ...,
+        presets: Optional[List[KeywordPresetType]] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channels: Optional[List[GuildChannel]] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filter: Optional[str] = ...,
+        presets: Optional[List[KeywordPresetType]] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channels: Optional[List[GuildChannel]] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filters: Optional[List[str]] = ...,
+        preset: Optional[KeywordPresetType] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channels: Optional[List[GuildChannel]] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filters: Optional[List[str]] = ...,
+        presets: Optional[List[KeywordPresetType]] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_role: Optional[Role] = ...,
+        exempt_channels: Optional[List[GuildChannel]] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filters: Optional[List[str]] = ...,
+        presets: Optional[List[KeywordPresetType]] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channel: Optional[GuildChannel] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filter: Optional[str] = ...,
+        preset: Optional[KeywordPresetType] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channels: Optional[List[GuildChannel]] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filters: Optional[List[str]] = ...,
+        preset: Optional[KeywordPresetType] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_role: Optional[Role] = ...,
+        exempt_channels: Optional[List[GuildChannel]] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filters: Optional[List[str]] = ...,
+        presets: Optional[List[KeywordPresetType]] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_role: Optional[Role] = ...,
+        exempt_channel: Optional[GuildChannel] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filter: Optional[str] = ...,
+        presets: Optional[List[KeywordPresetType]] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_second: Optional[int] = ...,
+        exempt_role: Optional[Role] = ...,
+        exempt_channels: Optional[List[GuildChannel]] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filters: Optional[List[str]] = ...,
+        preset: Optional[KeywordPresetType] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channel: Optional[GuildChannel] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filter: Optional[str] = ...,
+        presets: Optional[List[KeywordPresetType]] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channel: Optional[GuildChannel] = ...,
+    ):
+        ...
+
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filter: Optional[str] = ...,
+        preset: Optional[KeywordPresetType] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_role: Optional[Role] = ...,
+        exempt_channels: Optional[List[GuildChannel]] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filter: Optional[str] = ...,
+        preset: Optional[KeywordPresetType] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channel: Optional[GuildChannel] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filter: Optional[str] = ...,
+        presets: Optional[List[KeywordPresetType]] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_role: Optional[Role] = ...,
+        exempt_channel: Optional[GuildChannel] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filters: Optional[List[str]] = ...,
+        preset: Optional[KeywordPresetType] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_role: Optional[Role] = ...,
+        exempt_channel: Optional[GuildChannel] = ...,
+    ):
+        ...
+
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filter: Optional[str] = ...,
+        preset: Optional[KeywordPresetType] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        exempt_role: Optional[Role] = ...,
+        exempt_channel: Optional[GuildChannel] = ...,
+    ):
+        ...
     async def edit(self, **fields):
         """
         |coro|
@@ -229,7 +469,7 @@ class AutoModerationRule(Hashable):
 
             .. note::
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_preset`
-        notify_channel: Optional[List[:class:`GuildChannel`]]
+        notify_channel: Optional[:class:`abc.GuildChannel`]
             The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
         timeout_seconds: Optional[:class:`int`]
             The seconds to timeout the person triggered this rule.
@@ -239,9 +479,9 @@ class AutoModerationRule(Hashable):
             The role that should not be affected by this rule. Cannot be mixed with ``exempt_roles``.
         exempt_roles: Optional[List[:class:`Role`]]
             A list of roles that should not be affected by this rule. Cannot be mixed with ``exempt_role``.
-        exempt_channel: Optional[List[:class:`GuildChannel`]]
+        exempt_channel: Optional[List[:class:`abc.GuildChannel`]]
             The channel that should not be affected by this rule. Cannot be mixed with ``exempt_channels``
-        exempt_channels: Optional[List[:class:`GuildChannel`]]
+        exempt_channels: Optional[List[:class:`abc.GuildChannel`]]
             A list of channels that should not be affected by this rule. Cannot be mixed with ``exempt_channel``.
         """
         payload = {}
@@ -328,6 +568,10 @@ class AutoModerationRule(Hashable):
         if "reason" in fields:
             payload["reason"] = fields["reason"]
 
-        await self._state.http.modify_automod_rule(
+        new_data = await self._state.http.modify_automod_rule(
             guild_id=self.guild.id, rule_id=self.id, **payload
         )
+
+        msg = self._state.add_automod_rule(self, data=new_data)
+
+
