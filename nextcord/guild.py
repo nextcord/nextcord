@@ -3513,7 +3513,7 @@ class Guild(Hashable):
         timeout_seconds: Optional[int] = MISSING,
         enabled: Optional[bool] = True,
         exempt_roles: Optional[List[Role]] = MISSING,
-        exempt_channels: Optional[GuildChannel] = MISSING,
+        exempt_channels: Optional[List[GuildChannel]] = MISSING,
     ):
         """
         Create an auto moderation rule.
