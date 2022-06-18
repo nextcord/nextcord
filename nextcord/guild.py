@@ -64,6 +64,9 @@ from .enums import (
     VerificationLevel,
     VideoQualityMode,
     VoiceRegion,
+    KeywordPresetType,
+    TriggerType,
+    EventType,
     try_enum,
 )
 from .errors import ClientException, InvalidArgument, InvalidData
@@ -3459,7 +3462,7 @@ class Guild(Hashable):
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)
 
-    async def fetch_automod_rules(self):
+    async def fetch_automod_rules(self) -> List[AutoModerationRule]:
         """
         |coro|
         Retrieves all of the auto moderation rules of this server from Discord.
@@ -3474,7 +3477,7 @@ class Guild(Hashable):
             for rule in await self._state.http.list_guild_automod_rules(guild_id=self.id)
         ]
 
-    async def fetch_automod_rule(self, rule_id: int):
+    async def fetch_automod_rule(self, rule_id: int) -> AutoModerationRule:
         """
         |coro|
         Retrieves an auto moderation rule from Discord.
@@ -3491,7 +3494,84 @@ class Guild(Hashable):
         rule = await self._state.http.get_automod_rule(guild_id=self.id, rule_id=rule_id)
         return AutoModerationRule(guild=self, state=self._state, data=rule)
 
-    def get_automod_rule(self, rule_id: int):
+    def get_automod_rule(self, rule_id: int) -> AutoModerationRule:
         return self._state.get_automod_rule(id=rule_id)
 
+    async def create_automod_rule(
+        self,
+        *,
+        name: str,
+        event_type: EventType = EventType.message_send,
+        trigger_type: TriggerType,
+        keyword_filters: Optional[List[str]] = MISSING,
+        presets: Optional[KeywordPresetType] = MISSING,
+        notify_channel: Optional[GuildChannel] = MISSING,
+        timeout_seconds: Optional[int] = MISSING,
+        enabled: Optional[bool] = True,
+        exempt_roles: Optional[List[Role]] = MISSING,
+        exempt_channels: Optional[GuildChannel] = MISSING,
+    ):
+        """
+        Create an auto moderation rule.
 
+        Parameters
+        ----------
+        name: :class:`str`
+            The name of this auto moderation rule.
+        event_type: :class:`EventType`
+            The event type that this rule should start finding. Default to :attr:`EventType.message_send`.
+        trigger_type: :class:`TriggerType`.
+            The trigger type of this rule.
+        keyword_filters: List[:class:`str`]
+            The words that this rule should filter.
+        presets: List[:class:`KeywordPresetType`]
+            The preset keywords that this rule should filter.
+        notify_channel: Optional[:class:`abc.GuildChannel`]
+            The channel that Discord will send an alert to this channel when the rule is triggered.
+            Either this or `timeout_seconds` must be provided.
+        timeout_seconds: Optional[:class:`int`]
+            The seconds to timeout the user that triggered this rule.
+            Either this or `notify_channel` must be provided.
+        enabled: Optional[:class:`bool`]
+            Whether if this rule is enabled or not. Default is True.
+        exempt_roles: Optional[List[:class:`Role`]]
+            The roles that should not be affected by this rule.
+        exempt_channels: Optional[List[:class:`abc.GuildChannel`]]
+            The channels that should not be affected by this rule.
+        Returns
+        -------
+        :class:`AutoModerationRule`
+            The rule that was created.
+        """
+        params = {
+            "name": name,
+            "event_type": event_type,
+            "trigger_type": trigger_type,
+            "enabled": enabled,
+            "actions": []
+        }
+        if keyword_filters is not MISSING:
+            params['trigger_metadata']['keyword_filters'] = keyword_filters
+        if presets is not MISSING:
+            params['trigger_metadata']['presets'] = presets
+        if notify_channel is not MISSING:
+            params['actions'].append(
+                {
+                    "type": 1,
+                    "channel_id": notify_channel.id
+                }
+            )
+        if timeout_seconds is not MISSING:
+            params['actions'].append(
+                {
+                    "type": 2,
+                    "duration_seconds": timeout_seconds
+                }
+            )
+        if exempt_roles is not MISSING:
+            params['exempt_roles'] = [role.id for role in exempt_roles]
+        if exempt_channels is not MISSING:
+            params['exempt_channels'] = [channel.id for channel in exempt_channels]
+        data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
+        rule = self._state.add_automod_rule(data=data)
+        return rule

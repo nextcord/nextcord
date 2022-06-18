@@ -30,6 +30,7 @@ from .mixins import Hashable
 
 if TYPE_CHECKING:
     from typing import List, Optional
+    from datetime import datetime
 
     from .abc import GuildChannel
     from .errors import InvalidArgument
@@ -42,9 +43,12 @@ if TYPE_CHECKING:
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
-    from .utils import MISSING
+    from .utils import MISSING, snowflake_time
 
-
+__all__ = (
+    "AutoModerationRule",
+    "AutoModerationAction"
+)
 class AutoModerationAction:
     """
     Represent an auto moderation action.
@@ -183,7 +187,7 @@ class AutoModerationRule(Hashable):
 
     @property
     def creator(self):
-        """Optional[:class:`Member`] The member that created this rule."""
+        """Optional[:class:`Member`]: The member that created this rule."""
         return self.guild.get_member(self.creator_id)
 
     @property
@@ -195,6 +199,8 @@ class AutoModerationRule(Hashable):
     def exempt_channels(self) -> List[GuildChannel]:
         """List[:class:`GuildChannel`]: A list of channels that will not be affected by this rule. `[]` if not set."""
         return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore -- same
+
+
 
 
     @overload
@@ -575,4 +581,7 @@ class AutoModerationRule(Hashable):
         rule = self._state.add_automod_rule(data=new_data)
         return rule
 
-
+    @property
+    def created_at(self) -> datetime:
+        """:class:`~datetime.datetime`: The time when this rule is created."""
+        return snowflake_time(self.id)
