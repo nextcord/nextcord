@@ -201,6 +201,35 @@ class AutoModerationRule(Hashable):
         """List[:class:`GuildChannel`]: A list of channels that will not be affected by this rule. `[]` if not set."""
         return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore -- same
 
+    @overload
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        keyword_filters: Optional[List[str]] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        enabled: Optional[bool] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channels: Optional[List[GuildChannel]]
+    ):
+        ...
+
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = ...,
+        event_type: Optional[EventType] = ...,
+        preset: Optional[KeywordPresetType] = ...,
+        notify_channel: Optional[GuildChannel] = ...,
+        timeout_seconds: Optional[int] = ...,
+        enabled: Optional[bool] = ...,
+        exempt_roles: Optional[List[Role]] = ...,
+        exempt_channels: Optional[List[GuildChannel]]
+    ):
+        ...
+
     async def edit(self, **fields):
         """
         |coro|

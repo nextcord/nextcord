@@ -3501,6 +3501,65 @@ class Guild(Hashable):
     def get_automod_rule(self, rule_id: int) -> Optional[AutoModerationRule]:
         return self._state.get_automod_rule(id=rule_id)
 
+    @overload
+    async def create_automod_rule(
+        self,
+        *,
+        name: str,
+        event_type: EventType = EventType.message_send,
+        trigger_type: TriggerType,
+        keyword_filters: Optional[List[str]] = MISSING,
+        notify_channel: Optional[GuildChannel] = MISSING,
+        enabled: Optional[bool] = True,
+        exempt_roles: Optional[List[Role]] = MISSING,
+        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+    ):
+        ...
+
+    @overload
+    async def create_automod_rule(
+        self,
+        *,
+        name: str,
+        event_type: EventType = EventType.message_send,
+        trigger_type: TriggerType,
+        keyword_filters: Optional[List[str]] = MISSING,
+        timeout_seconds: Optional[int] = MISSING,
+        enabled: Optional[bool] = True,
+        exempt_roles: Optional[List[Role]] = MISSING,
+        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+    ):
+        ...
+
+    @overload
+    async def create_automod_rule(
+        self,
+        *,
+        name: str,
+        event_type: EventType = EventType.message_send,
+        trigger_type: TriggerType,
+        presets: Optional[KeywordPresetType] = MISSING,
+        notify_channel: Optional[GuildChannel] = MISSING,
+        enabled: Optional[bool] = True,
+        exempt_roles: Optional[List[Role]] = MISSING,
+        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+    ):
+        ...
+
+    @overload
+    async def create_automod_rule(
+        self,
+        *,
+        name: str,
+        event_type: EventType = EventType.message_send,
+        trigger_type: TriggerType,
+        presets: Optional[KeywordPresetType] = MISSING,
+        notify_channel: Optional[GuildChannel] = MISSING,
+        enabled: Optional[bool] = True,
+        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+    ):
+        ...
+
     async def create_automod_rule(
         self,
         *,
