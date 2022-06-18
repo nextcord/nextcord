@@ -572,6 +572,7 @@ class AutoModerationRule(Hashable):
             guild_id=self.guild.id, rule_id=self.id, **payload
         )
 
-        msg = self._state.add_automod_rule(self, data=new_data)
+        msg = self._state.add_automod_rule(data=new_data)
+        return msg
 
 
