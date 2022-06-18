@@ -289,7 +289,7 @@ class AutoModerationRule(Hashable):
 
         if "notify_channel" in fields and not "timeout_seconds" in fields:
             payload["actions"].append(
-                {"type": 1, "notify_channel_id": fields.get("notify_channel").id}
+                {"type": 1, "notify_channel_id": fields.get("notify_channel").id}  # type: ignore
             )
 
         if "timeout_seconds" in fields and not "notify_channel" in fields:
@@ -297,10 +297,10 @@ class AutoModerationRule(Hashable):
 
         if "timeout_seconds" in fields and "notify_channel" in fields:
             payload["actions"].append(
-                {"type": 1, "notify_channel_id": fields.get("notify_channel").id}
+                {"type": 1, "notify_channel_id": fields.get("notify_channel").id}  # type: ignore
             )
             payload["actions"].append(
-                {"type": 2, "timeout_seconds": fields.get("timeout_seconds").id}
+                {"type": 2, "timeout_seconds": fields.get("timeout_seconds").id}  # type: ignore
             )
 
         if "enabled" in fields:

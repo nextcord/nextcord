@@ -258,7 +258,7 @@ class ConnectionState:
         ] = {}
         # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
         self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
-        self._automod_rules = {}
+        self._automod_rules: List[dict] = []
 
         if not intents.members or cache_flags._empty:
             self.store_user = self.create_user  # type: ignore
@@ -310,6 +310,7 @@ class ConnectionState:
         self._private_channels: OrderedDict[int, PrivateChannel] = OrderedDict()
         # extra dict to look up private channels by user id
         self._private_channels_by_user: Dict[int, DMChannel] = {}
+        self._automod_rules: List[dict] = []
         if self.max_messages is not None:
             self._messages: Optional[Deque[Message]] = deque(maxlen=self.max_messages)
         else:
