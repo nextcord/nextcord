@@ -3477,5 +3477,4 @@ class Guild(Hashable):
         return AutoModerationRule(guild=self, state=self._state, data=rule)
 
     def get_automod_rule(self, rule_id: int):
-        rule = self._state.get_automod_rule(id=rule_id)
-        return AutoModerationRule(guild=self, state=self._state, data=rule)
+        return self._state.get_automod_rule(id=rule_id)

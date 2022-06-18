@@ -2262,20 +2262,20 @@ class ConnectionState:
                 data["guild_id"],
             )
 
-    def add_automod_rule(self, data: AutoModerationRulePayload) -> None:
-        rule = AutoModerationRule(state=self, guild=self._get_guild(int(data['guild_id'])), data=data)
+    def add_automod_rule(self, data: AutoModerationRulePayload) -> AutoModerationRule:
+        rule = AutoModerationRule(state=self, guild=self._get_guild(int(data['guild_id'])), data=data)  # type: ignore -- automod rules can't be created in non-guilds
         self._automod_rules[int(data["id"])] = rule
         return rule
 
     def delete_automod_rule(self, id: int) -> None:
         self._automod_rules.pop(id)
 
-    def get_automod_rule(self, id: int) -> None:
+    def get_automod_rule(self, id: int) -> Optional[AutoModerationRule]:
         return self._automod_rules.get(id)
 
 
     def update_automod_rule(self, data: AutoModerationRulePayload) -> None:
-        self.delete_automod_rule(data["id"])
+        self.delete_automod_rule(int(data["id"]))
         self.add_automod_rule(data)
 
     def parse_auto_moderation_rule_create(self, data: AutoModerationRulePayload) -> None:
@@ -2290,12 +2290,12 @@ class ConnectionState:
         self.update_automod_rule(data)
         self.dispatch(
             "automod_rule_update",
-            old_data,  # type: ignore
+            old_data,
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
     def parse_auto_moderation_rule_delete(self, data: AutoModerationRulePayload) -> None:
-        self.delete_automod_rule(data["id"])
+        self.delete_automod_rule(int(data["id"]))
         self.dispatch(
             "automod_rule_delete",
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
