@@ -385,8 +385,6 @@ class ConnectionState:
                 user._stored = True
             return user
 
-
-
     def deref_user(self, user_id: int) -> None:
         self._users.pop(user_id, None)
 
@@ -2272,15 +2270,12 @@ class ConnectionState:
 
     def get_automod_rule(self, id: Snowflake):
         for x in self._automod_rules:
-            if int(x['id']) == int(id):
+            if int(x["id"]) == int(id):
                 return x
 
-
     def update_automod_rule(self, data: AutoModerationRulePayload):
-        self.delete_automod_rule(data['id'])
+        self.delete_automod_rule(data["id"])
         self.create_automod_rule(data)
-
-
 
     def parse_auto_moderation_rule_create(self, data: AutoModerationRulePayload) -> None:
         self.create_automod_rule(data)
@@ -2290,22 +2285,20 @@ class ConnectionState:
         )
 
     def parse_auto_moderation_rule_update(self, data: AutoModerationRulePayload):
-        old_data = self.get_automod_rule(data['id'])
+        old_data = self.get_automod_rule(data["id"])
         self.update_automod_rule(data)
         self.dispatch(
             "automod_rule_update",
-            AutoModerationRule(state=self, guild=self._get_guild(int(data['guild_id'])), data=old_data),  # type: ignore
-            AutoModerationRule(state=self, guild=self._get_guild(int(data['guild_id'])), data=data)
+            AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=old_data),  # type: ignore
+            AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),
         )
 
     def parse_automod_rule_delete(self, data: AutoModerationRulePayload):
-        self.delete_automod_rule(data['id'])
+        self.delete_automod_rule(data["id"])
         self.dispatch(
             "automod_rule_delete",
-            AutoModerationRule(state=self, guild=self._get_guild(int(data['guild_id'])), data=data)
+            AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),
         )
-
-
 
 
 class AutoShardedConnectionState(ConnectionState):
