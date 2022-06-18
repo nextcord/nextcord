@@ -420,11 +420,7 @@ class DiscordWebSocket:
             "op": self.IDENTIFY,
             "d": {
                 "token": self.token,
-                "properties": {
-                    "os": sys.platform,
-                    "browser": "nextcord",
-                    "device": "nextcord"
-                },
+                "properties": {"os": sys.platform, "browser": "nextcord", "device": "nextcord"},
                 "compress": True,
                 "large_threshold": 250,
             },
