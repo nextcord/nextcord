@@ -2271,7 +2271,10 @@ class ConnectionState:
         self._automod_rules.remove(data)
 
     def get_automod_rule(self, id: Snowflake):
-        return x for x in self._automod_rules if int(x['id']) = int(id)
+        for x in self._automod_rules:
+            if int(x['id']) == int(id):
+                return x
+
 
     def update_automod_rule(self, data: AutoModerationRulePayload):
         self.delete_automod_rule(data['id'])
