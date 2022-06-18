@@ -4151,7 +4151,8 @@ AutoModerationRule
 
 .. attributetable:: AutoModerationAction
 
-.. autoclass:: AutoModerationAction
+.. autoclass:: AutoModerationAction()
+    :members:
 
 .. _discord_api_data:
 
