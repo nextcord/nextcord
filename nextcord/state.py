@@ -258,6 +258,7 @@ class ConnectionState:
         ] = {}
         # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
         self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
+        self._automod_rules = {}
 
         if not intents.members or cache_flags._empty:
             self.store_user = self.create_user  # type: ignore
@@ -272,7 +273,6 @@ class ConnectionState:
         self._application_command_checks: List[ApplicationCheck] = []
         self._application_command_before_invoke: Optional[ApplicationHook] = None
         self._application_command_after_invoke: Optional[ApplicationHook] = None
-
         self.clear()
 
     def clear(self, *, views: bool = True, modals: bool = True) -> None:
@@ -384,6 +384,8 @@ class ConnectionState:
                 self._users[user_id] = user
                 user._stored = True
             return user
+
+
 
     def deref_user(self, user_id: int) -> None:
         self._users.pop(user_id, None)
@@ -2261,11 +2263,46 @@ class ConnectionState:
                 data["guild_id"],
             )
 
+    def create_automod_rule(self, data: AutoModerationRulePayload):
+        self._automod_rules.append(data)
+
+    def delete_automod_rule(self, id: Snowflake):
+        data = self.get_automod_rule(id=id)
+        self._automod_rules.remove(data)
+
+    def get_automod_rule(self, id: Snowflake):
+        return x for x in self._automod_rules if int(x['id']) = int(id)
+
+    def update_automod_rule(self, data: AutoModerationRulePayload):
+        self.delete_automod_rule(data['id'])
+        self.create_automod_rule(data)
+
+
+
     def parse_auto_moderation_rule_create(self, data: AutoModerationRulePayload) -> None:
+        self.create_automod_rule(data)
         self.dispatch(
             "automod_rule_create",
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
+
+    def parse_auto_moderation_rule_update(self, data: AutoModerationRulePayload):
+        old_data = self.get_automod_rule(data['id'])
+        self.update_automod_rule(data)
+        self.dispatch(
+            "automod_rule_update",
+            AutoModerationRule(state=self, guild=self._get_guild(int(data['guild_id'])), data=old_data),  # type: ignore
+            AutoModerationRule(state=self, guild=self._get_guild(int(data['guild_id'])), data=data)
+        )
+
+    def parse_automod_rule_delete(self, data: AutoModerationRulePayload):
+        self.delete_automod_rule(data['id'])
+        self.dispatch(
+            "automod_rule_delete",
+            AutoModerationRule(state=self, guild=self._get_guild(int(data['guild_id'])), data=data)
+        )
+
+
 
 
 class AutoShardedConnectionState(ConnectionState):
