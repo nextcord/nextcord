@@ -1208,6 +1208,53 @@ from being stringly typed in case the strings change in the future.
 All enumerations are subclasses of an internal class which mimics the behaviour
 of :class:`enum.Enum`.
 
+.. class:: KeywordPresetType
+
+    Specifies the auto moderation rule keyword preset type.
+
+    .. attribute:: profanity
+
+        Filter words that may be considered forms of swearing or cursing.
+    .. attribute:: sexual_content
+
+        Filter words that refer to sexually explicit behavior or activity.
+    .. attribute:: slurs
+
+        Filter personal insults or words that may be considered hate speech.
+
+.. class:: EventType
+
+    Specifies how an auto moderation rule will start filtering.
+
+    .. attribute:: message_send
+
+        This rule will be triggered when someone sends a message that matches the keyword.
+
+.. class:: TriggerType
+
+    Specifies how an auto moderation rule will be triggered.
+
+    .. attribute:: keyword
+
+        The auto moderation rule will be triggered if someone sends a message that matches the keyword.
+    .. attribute:: harmful_link
+
+        The auto moderation rule will be triggered if someone sends a harmful link.
+
+        .. note::
+
+            This trigger type is not released, so they can't be used in most servers.
+    .. attribute:: spam
+
+        The auto moderation rule will be triggered if someone spam.
+
+        .. note::
+
+            This trigger type is not released, so they can't be used in most servers.
+    .. attribute:: keyword_preset
+
+        The auto moderation rule will be triggered if someone says thing matches the Discord-preset filters.
+
 .. class:: ChannelType
 
     Specifies the type of channel.
