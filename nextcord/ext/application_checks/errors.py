@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
 
 from nextcord.abc import GuildChannel
+from nextcord.channel import PartialMessageable
 from nextcord.errors import ApplicationCheckFailure
 from nextcord.interactions import Interaction
 from nextcord.threads import Thread
@@ -259,12 +260,12 @@ class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
 
     Parameters
     -----------
-    channel: Union[:class:`.abc.GuildChannel`, :class:`.Thread`]
+    channel: Optional[Union[:class:`.abc.GuildChannel`, :class:`.Thread`, :class:`PartialMessageable`]]
         The channel that does not have NSFW enabled.
     """
 
-    def __init__(self, channel: Union[GuildChannel, Thread]) -> None:
-        self.channel: Union[GuildChannel, Thread] = channel
+    def __init__(self, channel: Optional[Union[GuildChannel, Thread, PartialMessageable]]) -> None:
+        self.channel = channel
         super().__init__(f"Channel '{channel}' needs to be NSFW for this command to work.")
 
 

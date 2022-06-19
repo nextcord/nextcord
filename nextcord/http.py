@@ -38,6 +38,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Optional,
     Sequence,
     Tuple,
@@ -112,8 +113,22 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
     return text
 
 
+_API_VERSION: Literal[9, 10] = 10
+
+
+# TODO: remove once message content is enforced on all versions (31 aug)
+def _modify_api_version(version: Literal[9, 10]):
+    if version not in (9, 10):
+        raise ValueError("Version must be an integer of `9` or `10`")
+
+    global _API_VERSION
+    _API_VERSION = version
+
+    Route.BASE = f"https://discord.com/api/v{version}"
+
+
 class Route:
-    BASE: ClassVar[str] = "https://discord.com/api/v9"
+    BASE: ClassVar[str] = "https://discord.com/api/v10"
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
@@ -777,11 +792,7 @@ class HTTPClient:
         r = Route(
             "DELETE", "/guilds/{guild_id}/members/{user_id}", guild_id=guild_id, user_id=user_id
         )
-        if reason:
-            # thanks aiohttp
-            r.url = f"{r.url}?reason={_uriquote(reason)}"
-
-        return self.request(r)
+        return self.request(r, reason=reason)
 
     def ban(
         self,
@@ -1813,10 +1824,15 @@ class HTTPClient:
     # Application commands (global)
 
     def get_global_commands(
-        self, application_id: Snowflake
+        self, application_id: Snowflake, with_localizations: bool = True
     ) -> Response[List[interactions.ApplicationCommand]]:
+        params = {}
+        if with_localizations:
+            params["with_localizations"] = "true"
+
         return self.request(
-            Route("GET", "/applications/{application_id}/commands", application_id=application_id)
+            Route("GET", "/applications/{application_id}/commands", application_id=application_id),
+            params=params,
         )
 
     def get_global_command(
@@ -1876,15 +1892,18 @@ class HTTPClient:
     # Application commands (guild)
 
     def get_guild_commands(
-        self, application_id: Snowflake, guild_id: Snowflake
+        self, application_id: Snowflake, guild_id: Snowflake, with_localizations: bool = True
     ) -> Response[List[interactions.ApplicationCommand]]:
+        params = {}
+        if with_localizations:
+            params["with_localizations"] = "true"
         r = Route(
             "GET",
             "/applications/{application_id}/guilds/{guild_id}/commands",
             application_id=application_id,
             guild_id=guild_id,
         )
-        return self.request(r)
+        return self.request(r, params=params)
 
     def get_guild_command(
         self,
@@ -2197,10 +2216,10 @@ class HTTPClient:
         except HTTPException as exc:
             raise GatewayNotFound() from exc
         if zlib:
-            value = "{0}?encoding={1}&v=9&compress=zlib-stream"
+            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
         else:
-            value = "{0}?encoding={1}&v=9"
-        return value.format(data["url"], encoding)
+            value = "{url}?encoding={encoding}&v={version}"
+        return value.format(url=data["url"], encoding=encoding, version=_API_VERSION)
 
     async def get_bot_gateway(
         self, *, encoding: str = "json", zlib: bool = True
@@ -2211,10 +2230,12 @@ class HTTPClient:
             raise GatewayNotFound() from exc
 
         if zlib:
-            value = "{0}?encoding={1}&v=9&compress=zlib-stream"
+            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
         else:
-            value = "{0}?encoding={1}&v=9"
-        return data["shards"], value.format(data["url"], encoding)
+            value = "{url}?encoding={encoding}&v={version}"
+        return data["shards"], value.format(
+            url=data["url"], encoding=encoding, version=_API_VERSION
+        )
 
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
         return self.request(Route("GET", "/users/{user_id}", user_id=user_id))
@@ -2300,17 +2321,17 @@ class HTTPClient:
         *,
         limit: int = MISSING,
         with_member: bool = MISSING,
-        before: Snowflake = MISSING,
-        after: Snowflake = MISSING,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
     ) -> Response[List[scheduled_events.ScheduledEventUser]]:
         params: Dict[str, Any] = {}
         if limit is not MISSING:
             params["limit"] = limit
         if with_member is not MISSING:
             params["with_member"] = str(with_member)
-        if before is not MISSING:
+        if before is not None:
             params["before"] = before
-        if after is not MISSING:
+        if after is not None:
             params["after"] = after
         r = Route(
             "GET",

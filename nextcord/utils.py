@@ -552,7 +552,7 @@ async def sane_wait_for(futures, *, timeout):
 def get_slots(cls: Type[Any]) -> Iterator[str]:
     for mro in reversed(cls.__mro__):
         try:
-            yield from mro.__slots__  # type: ignore handled below?
+            yield from mro.__slots__  # type: ignore # handled below?
         except AttributeError:
             continue
 
