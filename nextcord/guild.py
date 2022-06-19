@@ -3513,7 +3513,7 @@ class Guild(Hashable):
         enabled: Optional[bool] = True,
         exempt_roles: Optional[List[Role]] = MISSING,
         exempt_channels: Optional[List[GuildChannel]] = MISSING,
-    ):
+    ) -> AutoModerationRule:
         ...
 
     @overload
@@ -3528,7 +3528,7 @@ class Guild(Hashable):
         enabled: Optional[bool] = True,
         exempt_roles: Optional[List[Role]] = MISSING,
         exempt_channels: Optional[List[GuildChannel]] = MISSING,
-    ):
+    ) -> AutoModerationRule:
         ...
 
     @overload
@@ -3543,7 +3543,7 @@ class Guild(Hashable):
         enabled: Optional[bool] = True,
         exempt_roles: Optional[List[Role]] = MISSING,
         exempt_channels: Optional[List[GuildChannel]] = MISSING,
-    ):
+    ) -> AutoModerationRule:
         ...
 
     @overload
@@ -3557,7 +3557,7 @@ class Guild(Hashable):
         notify_channel: Optional[GuildChannel] = MISSING,
         enabled: Optional[bool] = True,
         exempt_channels: Optional[List[GuildChannel]] = MISSING,
-    ):
+    ) -> AutoModerationRule:
         ...
 
     async def create_automod_rule(
@@ -3573,7 +3573,7 @@ class Guild(Hashable):
         enabled: Optional[bool] = True,
         exempt_roles: Optional[List[Role]] = MISSING,
         exempt_channels: Optional[List[GuildChannel]] = MISSING,
-    ):
+    ) -> AutoModerationRule:
         """
         Create an auto moderation rule.
 
