@@ -29,8 +29,8 @@ from .enums import ActionType, EventType, KeywordPresetType, TriggerType, try_en
 from .mixins import Hashable
 
 if TYPE_CHECKING:
-    from typing import List, Optional
     from datetime import datetime
+    from typing import List, Optional
 
     from .abc import GuildChannel
     from .errors import InvalidArgument
@@ -45,10 +45,9 @@ if TYPE_CHECKING:
     )
     from .utils import MISSING, snowflake_time
 
-__all__ = (
-    "AutoModerationRule",
-    "AutoModerationAction"
-)
+__all__ = ("AutoModerationRule", "AutoModerationAction")
+
+
 class AutoModerationAction:
     """
     Represent an auto moderation action.
@@ -272,19 +271,13 @@ class AutoModerationRule(Hashable):
         if "event_type" in fields:
             payload["event_type"] = fields["event_type"].value
 
-
-
-
         if "keyword_filters" in fields and self.trigger_type != TriggerType.keyword:
             raise InvalidArgument(
                 "trigger_type must be TriggerType.keyword to pass keyword_filters"
             )
 
-
-
         if "keyword_filters" in fields:
             payload["trigger_metadata"]["keyword_filters"] = fields["keyword_filters"]
-
 
         if "presets" in fields and self.trigger_type != TriggerType.keyword_preset:
             raise InvalidArgument("trigger_type must be TriggerType.keyword_preset to pass presets")

@@ -28,11 +28,12 @@ import datetime
 from typing import TYPE_CHECKING, List, Optional, Set
 
 if TYPE_CHECKING:
+    from .automod import AutoModerationAction
     from .member import Member
     from .message import Message
     from .partial_emoji import PartialEmoji
-    from .automod import AutoModerationAction
     from .types.raw_models import (
+        AutoModerationActionExecutedEvent,
         BulkMessageDeleteEvent,
         IntegrationDeleteEvent,
         MemberRemoveEvent,
@@ -42,7 +43,6 @@ if TYPE_CHECKING:
         ReactionClearEmojiEvent,
         ReactionClearEvent,
         TypingEvent,
-        AutoModerationActionExecutedEvent,
     )
 
 
@@ -56,7 +56,7 @@ __all__ = (
     "RawIntegrationDeleteEvent",
     "RawTypingEvent",
     "RawMemberRemoveEvent",
-    "RawAutoModerationActionExecutedEvent"
+    "RawAutoModerationActionExecutedEvent",
 )
 
 
@@ -339,6 +339,7 @@ class RawMemberRemoveEvent(_RawReprMixin):
         self.guild_id: int = int(data["guild_id"])
         # FIXME: practically no data
 
+
 class RawAutoModerationActionExecutedEvent(_RawReprMixin):
     """
     Represent the payload for an :func:`on_automod_action_executed` event
@@ -366,31 +367,28 @@ class RawAutoModerationActionExecutedEvent(_RawReprMixin):
     matched_content: Optional[:class:`str`]
         The content that matched the defined auto moderation rule.
     """
+
     # TODO: fix docstrs
-    def __init__(
-        self, data: AutoModerationActionExecutedEvent
-    ) -> None:
-        self.guild_id: int = int(data['guild_id'])
-        self.action: AutoModerationAction = AutoModerationAction(data=data['action'])
-        self.rule_id: int = int(data['rule_id'])
-        self.rule_trigger_type: int = data['rule_trigger_type']
-        self.user_id: int = int(data['user_id'])
+    def __init__(self, data: AutoModerationActionExecutedEvent) -> None:
+        self.guild_id: int = int(data["guild_id"])
+        self.action: AutoModerationAction = AutoModerationAction(data=data["action"])
+        self.rule_id: int = int(data["rule_id"])
+        self.rule_trigger_type: int = data["rule_trigger_type"]
+        self.user_id: int = int(data["user_id"])
         self.channel_id: Optional[int] = None
         self.message_id: Optional[int] = None
         self.alert_system_message_id: Optional[int] = None
-        self.content: str = data['content']
-        self.matched_keyword: Optional[str] = data['matched_keyword']
-        self.matched_content: Optional[str] = data['matched_content']
+        self.content: str = data["content"]
+        self.matched_keyword: Optional[str] = data["matched_keyword"]
+        self.matched_content: Optional[str] = data["matched_content"]
         self._unpack_optional_arguments(data=data)
 
     def _unpack_optional_arguments(self, data: AutoModerationActionExecutedEvent) -> None:
         if data.get("channel_id") is not None:
-            self.channel_id = data['channel_id']
+            self.channel_id = data["channel_id"]
 
         if data.get("message_id") is not None:
-            self.message_id = data['message_id']
+            self.message_id = data["message_id"]
 
         if data.get("alert_system_message_id") is not None:
-            self.alert_system_message_id = data['message_id']
-
-
+            self.alert_system_message_id = data["message_id"]

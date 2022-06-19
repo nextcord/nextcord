@@ -2570,4 +2570,3 @@ class Client:
             return result
 
         return decorator
-

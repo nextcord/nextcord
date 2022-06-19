@@ -57,16 +57,16 @@ from .enums import (
     AuditLogAction,
     ChannelType,
     ContentFilter,
+    EventType,
+    KeywordPresetType,
     NotificationLevel,
     NSFWLevel,
     ScheduledEventEntityType,
     ScheduledEventPrivacyLevel,
+    TriggerType,
     VerificationLevel,
     VideoQualityMode,
     VoiceRegion,
-    KeywordPresetType,
-    TriggerType,
-    EventType,
     try_enum,
 )
 from .errors import ClientException, InvalidArgument, InvalidData
@@ -3612,30 +3612,20 @@ class Guild(Hashable):
             "event_type": event_type,
             "trigger_type": trigger_type,
             "enabled": enabled,
-            "actions": []
+            "actions": [],
         }
         if keyword_filters is not MISSING:
-            params['trigger_metadata']['keyword_filters'] = keyword_filters
+            params["trigger_metadata"]["keyword_filters"] = keyword_filters
         if presets is not MISSING:
-            params['trigger_metadata']['presets'] = presets
+            params["trigger_metadata"]["presets"] = presets
         if notify_channel is not MISSING:
-            params['actions'].append(
-                {
-                    "type": 1,
-                    "channel_id": notify_channel.id
-                }
-            )
+            params["actions"].append({"type": 1, "channel_id": notify_channel.id})
         if timeout_seconds is not MISSING:
-            params['actions'].append(
-                {
-                    "type": 2,
-                    "duration_seconds": timeout_seconds
-                }
-            )
+            params["actions"].append({"type": 2, "duration_seconds": timeout_seconds})
         if exempt_roles is not MISSING:
-            params['exempt_roles'] = [role.id for role in exempt_roles]
+            params["exempt_roles"] = [role.id for role in exempt_roles]
         if exempt_channels is not MISSING:
-            params['exempt_channels'] = [channel.id for channel in exempt_channels]
+            params["exempt_channels"] = [channel.id for channel in exempt_channels]
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
         rule = self._state.add_automod_rule(data=data)
         return rule

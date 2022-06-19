@@ -51,7 +51,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
-from .automod import AutoModerationRule, AutoModerationAction
+from .automod import AutoModerationAction, AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
@@ -2264,7 +2264,7 @@ class ConnectionState:
             )
 
     def add_automod_rule(self, data: AutoModerationRulePayload) -> AutoModerationRule:
-        rule = AutoModerationRule(state=self, guild=self._get_guild(int(data['guild_id'])), data=data)  # type: ignore -- automod rules can't be created in non-guilds
+        rule = AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data)  # type: ignore -- automod rules can't be created in non-guilds
         self._automod_rules[int(data["id"])] = rule
         return rule
 
@@ -2273,7 +2273,6 @@ class ConnectionState:
 
     def get_automod_rule(self, id: int) -> Optional[AutoModerationRule]:
         return self._automod_rules.get(id)
-
 
     def update_automod_rule(self, data: AutoModerationRulePayload) -> None:
         self.delete_automod_rule(int(data["id"]))
@@ -2302,27 +2301,20 @@ class ConnectionState:
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
-    def parse_auto_moderation_rule_executed(self, data: RawAutoModerationActionExecutedEvent) -> None:
-        self.dispatch(
-            "raw_automod_rule_executed",
-            RawAutoModerationActionExecutedEvent(data=data)
-        )
-        self.dispatch(
-            "automod_rule_executed",
-            AutoModerationAction(data['action'])
-        )
+    def parse_auto_moderation_rule_executed(
+        self, data: RawAutoModerationActionExecutedEvent
+    ) -> None:
+        self.dispatch("raw_automod_rule_executed", RawAutoModerationActionExecutedEvent(data=data))
+        self.dispatch("automod_rule_executed", AutoModerationAction(data["action"]))
 
     def _add_automod_rule_from_guild_data(self, data: GuildPayload):
-        id = int(data['id'])
+        id = int(data["id"])
         try:
             rules = self.http.list_guild_automod_rules(guild_id=id)
             for rule in rules:
                 self.add_automod_rule(data=rule)
         except Forbidden:
             pass
-
-
-
 
 
 class AutoShardedConnectionState(ConnectionState):
