@@ -937,7 +937,6 @@ class Intents(BaseFlags):
         """
         return 1 << 16
 
-
     @alias_flag_value
     def automod(self):
         """:class:`bool` Whether auto moderation related events are enabled.
@@ -968,7 +967,6 @@ class Intents(BaseFlags):
         This does not correspond to any attributes or classes in the library in terms of cache.
         """
         return 1 << 21
-
 
 
 @fill_with_flags()
