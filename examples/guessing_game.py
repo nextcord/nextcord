@@ -16,7 +16,7 @@ async def guess(ctx, guess: int = None):
     def is_correct(message):
         return message.author == ctx.author and message.content.isdigit()
 
-    answer = random.randin(1, 10)
+    answer = random.randint(1, 10)
 
     if not guess:
         await ctx.send("Guess a number between 1 and 10.")
