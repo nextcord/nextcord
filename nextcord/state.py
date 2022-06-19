@@ -51,7 +51,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
-from .automod import AutoModerationRule
+from .automod import AutoModerationRule, AutoModerationAction
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
@@ -1221,6 +1221,7 @@ class ConnectionState:
 
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
+            self._add_automod_rule_from_guild_data(guild_data)
 
         self.dispatch("connect")
         self._ready_task = asyncio.create_task(self._delay_ready())
@@ -2300,6 +2301,25 @@ class ConnectionState:
             "automod_rule_delete",
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
+
+    def parse_auto_moderation_rule_executed(self, data: RawAutoModerationActionExecutedEvent) -> None:
+        self.dispatch(
+            "raw_automod_rule_executed",
+            RawAutoModerationActionExecutedEvent(data=data)
+        )
+        self.dispatch(
+            "automod_rule_executed",
+            AutoModerationAction(data['action'])
+        )
+
+    def _add_automod_rule_from_guild_data(self, data: GuildPayload):
+        id = int(data['id'])
+        try:
+            rules = self.http.list_guild_automod_rules(guild_id=id)
+            for rule in rules:
+                self.add_automod_rule(data=rule)
+        except Forbidden:
+            pass
 
 
 

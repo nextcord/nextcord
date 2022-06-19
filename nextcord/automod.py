@@ -212,10 +212,11 @@ class AutoModerationRule(Hashable):
         timeout_seconds: Optional[int] = ...,
         enabled: Optional[bool] = ...,
         exempt_roles: Optional[List[Role]] = ...,
-        exempt_channels: Optional[List[GuildChannel]]
+        exempt_channels: Optional[List[GuildChannel]] = ...,
     ):
         ...
 
+    @overload
     async def edit(
         self,
         *,
@@ -226,7 +227,7 @@ class AutoModerationRule(Hashable):
         timeout_seconds: Optional[int] = ...,
         enabled: Optional[bool] = ...,
         exempt_roles: Optional[List[Role]] = ...,
-        exempt_channels: Optional[List[GuildChannel]]
+        exempt_channels: Optional[List[GuildChannel]] = ...,
     ):
         ...
 
@@ -243,7 +244,6 @@ class AutoModerationRule(Hashable):
             The new name of this auto moderation rule.
         event_type: Optional[:class:`EventType`]
             The new trigger event type of this auto moderation rule.
-
         keyword_filters: Optional[List[:class:`str`]]
             The keywords that the filter should match.
 

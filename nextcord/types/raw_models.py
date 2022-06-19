@@ -112,7 +112,7 @@ class _AutoModerationRuleExecutedEventOptional(TypedDict, total=False):
     alert_system_message_id: Snowflake
 
 
-class AutoModerationRuleExecutedEvent(_AutoModerationRuleExecutedEventOptional):
+class AutoModerationActionExecutedEvent(_AutoModerationRuleExecutedEventOptional):
     guild_id: Snowflake
     action: AutoModerationAction
     rule_id: Snowflake

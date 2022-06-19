@@ -206,6 +206,51 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     errors. To turn a function into a coroutine, they must be ``async def``
     functions.
 
+.. function:: on_automod_rule_create(rule)
+
+    Called when a new auto moderation rule is created.
+
+    :param rule: The rule that is newly created.
+    :type rule: :class:`AutoModerationRule`
+
+    .. versionadded:: 2.0
+
+.. function:: on_automod_rule_update(before, after)
+
+    Called when an auto moderation rule is updated.
+
+    :param before: The updated rule's old info.
+    :type before: :class:`AutoModerationRule`
+    :param after: The updated rule's new info.
+    :type after: :class:`AutoModerationRule`
+
+    .. versionadded:: 2.0
+
+.. function:: on_automod_rule_delete()
+
+    Called when an auto moderation rule is deleted.
+
+    .. versionadded:: 2.0
+
+.. function:: on_automod_action_executed(action)
+
+    Called when an auto moderation action is executed.
+
+    :param action: The action that was executed.
+    :type action: :class:`AutoModerationAction`
+
+    .. versionadded:: 2.0
+
+.. function:: on_raw_automod_action_executed(event):
+
+    Called when an auto moderation action is executed.
+    Unlike :func:`on_automod_action_executed`, you'll have to parse data yourself.
+
+    :param event: The event info.
+    :type event: :class:`RawAutoModerationActionExecutedEvent`
+
+
+
 .. function:: on_connect()
 
     Called when the client has successfully connected to Discord. This is not
@@ -4108,6 +4153,14 @@ RawIntegrationDeleteEvent
 .. attributetable:: RawIntegrationDeleteEvent
 
 .. autoclass:: RawIntegrationDeleteEvent()
+    :members:
+
+RawAutoModerationActionExecutedEvent
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: RawAutoModerationActionExecutedEvent
+
+.. autoclass:: RawAutoModerationActionExecutedEvent()
     :members:
 
 PartialWebhookGuild
