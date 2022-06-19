@@ -385,10 +385,10 @@ class RawAutoModerationActionExecutedEvent(_RawReprMixin):
 
     def _unpack_optional_arguments(self, data: AutoModerationActionExecutedEvent) -> None:
         if data.get("channel_id") is not None:
-            self.channel_id = data["channel_id"]
+            self.channel_id = data["channel_id"]  # type: ignore
 
         if data.get("message_id") is not None:
-            self.message_id = data["message_id"]
+            self.message_id = data["message_id"]  # type: ignore
 
         if data.get("alert_system_message_id") is not None:
-            self.alert_system_message_id = data["message_id"]
+            self.alert_system_message_id = data["message_id"]  # type: ignore
