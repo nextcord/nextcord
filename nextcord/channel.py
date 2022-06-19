@@ -515,7 +515,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             count += 1
             ret.append(message)
 
-        # SOme messages remaining to poll
+        # Some messages remaining to poll
         if count >= 2:
             # more than 2 messages -> bulk delete
             to_delete = ret[-count:]
@@ -1265,7 +1265,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             count += 1
             ret.append(message)
 
-        # SOme messages remaining to poll
+        # Some messages remaining to poll
         if count >= 2:
             # more than 2 messages -> bulk delete
             to_delete = ret[-count:]
