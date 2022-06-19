@@ -73,6 +73,7 @@ from .scheduled_events import ScheduledEvent, ScheduledEventUser
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
+from .types.raw_models import AutoModerationActionExecutedEvent
 from .ui.modal import Modal, ModalStore
 from .ui.view import View, ViewStore
 from .user import ClientUser, User
@@ -2302,7 +2303,7 @@ class ConnectionState:
         )
 
     def parse_auto_moderation_rule_executed(
-        self, data: RawAutoModerationActionExecutedEvent
+        self, data: AutoModerationActionExecutedEvent
     ) -> None:
         self.dispatch("raw_automod_rule_executed", RawAutoModerationActionExecutedEvent(data=data))
         self.dispatch("automod_rule_executed", AutoModerationAction(data["action"]))
@@ -2311,7 +2312,7 @@ class ConnectionState:
         id = int(data["id"])
         try:
             rules = self.http.list_guild_automod_rules(guild_id=id)
-            for rule in rules:
+            for rule in rules:  # type: ignore
                 self.add_automod_rule(data=rule)
         except Forbidden:
             pass
