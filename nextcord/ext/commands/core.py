@@ -1177,18 +1177,14 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 if local_check is not None:
                     ret = await nextcord.utils.maybe_coroutine(local_check, ctx)
                     if not ret:
-                        ctx.command = original
                         return False
 
             predicates = self.checks
             if not predicates:
                 # since we have no checks, then we just return True.
-                ctx.command = original
                 return True
 
-            result = await nextcord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
-            ctx.command = original
-            return result
+            return await nextcord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
         finally:
             ctx.command = original
 
