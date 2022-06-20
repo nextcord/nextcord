@@ -230,7 +230,19 @@ class AutoModerationRule(Hashable):
     ):
         ...
 
-    async def edit(self, **fields):
+    async def edit(
+        self,
+        *,
+        name: Optional[str] = MISSING,
+        event_type: Optional[EventType] = MISSING,
+        keyword_filters: Optional[List[str]] = MISSING,
+        notify_channel: Optional[GuildChannel] = MISSING,
+        timeout_seconds: Optional[int] = MISSING,
+        enabled: Optional[bool] = MISSING,
+        exempt_roles: Optional[List[Role]] = MISSING,
+        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+        preset: Optional[KeywordPresetType] = MISSING,
+    ):
         """
         |coro|
         Edit this auto moderation rule.
