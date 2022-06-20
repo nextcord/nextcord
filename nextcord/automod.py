@@ -85,8 +85,7 @@ class AutoModerationAction:
 
 
 class AutoModerationRule(Hashable):
-    """
-    Represent an auto moderation rule.
+    """Represents an auto moderation rule.
 
     .. container:: operations
         .. describe:: x == y
