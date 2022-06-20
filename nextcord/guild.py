@@ -2155,6 +2155,11 @@ class Guild(Hashable):
         -------
         List[:class:`Invite`]
             The list of invites that are currently active.
+
+        .. note::
+
+            This method does not include the Guild's vanity URL.
+            To get the vanity URL :class:`Invite`, refer to :meth:`Guild.vanity_invite`.
         """
 
         data = await self._state.http.invites_from(self.id)
