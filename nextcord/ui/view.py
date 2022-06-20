@@ -154,6 +154,10 @@ class View:
         If ``None`` then there is no timeout.
     children: List[:class:`Item`]
         The list of children attached to this view.
+    auto_defer: :class:`bool` = True
+        Whether or not to automatically defer the component interaction when the callback
+        completes without responding to the interaction. Set this to ``False`` if you want to
+        handle view interactions outside of the callback.
     """
 
     __discord_ui_view__: ClassVar[bool] = True
@@ -551,7 +555,7 @@ class ViewStore:
             return
 
         view, item = value
-        item.refresh_state(interaction)
+        item.refresh_state(interaction.data)  # type: ignore
         view._dispatch_item(item, interaction)
 
     def is_message_tracked(self, message_id: int):

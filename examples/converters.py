@@ -109,7 +109,7 @@ async def multiply(ctx, number: int, maybe: bool):
     # We want an `int` and a `bool` parameter here.
     # `bool` is a slightly special case, as shown here:
     # See: https://nextcord.readthedocs.io/en/latest/ext/commands/commands.html#bool
-    if maybe is True:
+    if maybe:
         return await ctx.send(number * 2)
     await ctx.send(number * 5)
 
