@@ -4156,7 +4156,7 @@ RawIntegrationDeleteEvent
     :members:
 
 RawAutoModerationActionExecutedEvent
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: RawAutoModerationActionExecutedEvent
 
