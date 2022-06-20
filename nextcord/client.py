@@ -79,7 +79,6 @@ from .errors import (
     HTTPException,
     InteractionResponded,
     InvalidArgument,
-    InvalidCommandType,
     InvalidData,
     LoginFailure,
     NoMoreItems,
