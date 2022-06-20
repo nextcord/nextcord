@@ -51,7 +51,7 @@ __all__ = ("AutoModerationRule", "AutoModerationAction")
 
 
 class AutoModerationAction:
-    """Represent an auto moderation action.
+    """Represents an auto moderation action.
 
     Attributes
     -----------
