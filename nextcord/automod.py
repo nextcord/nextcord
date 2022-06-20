@@ -185,7 +185,8 @@ class AutoModerationRule(Hashable):
     async def delete(self):
         """|coro|
 
-        Delete this auto moderation rule."""
+        Delete this auto moderation rule.
+        """
         await self._state.http.delete_automod_rule(guild_id=self.guild.id, rule_id=self.id)
 
     @property
