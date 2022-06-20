@@ -250,8 +250,8 @@ class AutoModerationRule(Hashable):
         exempt_channels: List[GuildChannel] = MISSING,
         reason: str = MISSING,
     ) -> AutoModerationRule:
-        """
-        |coro|
+        """|coro|
+
         Edit this auto moderation rule.
 
         You must have the :attr:`~Permissions.manage_guild` to be able to do this.
