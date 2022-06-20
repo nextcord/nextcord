@@ -45,7 +45,7 @@ if TYPE_CHECKING:
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
-    
+
 
 __all__ = ("AutoModerationRule", "AutoModerationAction")
 
