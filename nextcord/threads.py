@@ -836,7 +836,7 @@ class ThreadMember(Hashable):
         """Optional[:class:`Member`]: The :class:`Member` of this thread member."""
         return self.parent.guild.get_member(self.id)
 
-    async def fetch_member(self) -> Optional[Member]:
+    async def fetch_member(self) -> Member:
         """:class:`Member`: Retrieves the :class:`Member` of this thread member.
 
         ..note::
