@@ -2270,7 +2270,7 @@ class ConnectionState:
         return rule
 
     def delete_automod_rule(self, id: int) -> None:
-        self._automod_rules.pop(id)
+        self._automod_rules.pop(id, None)
 
     def get_automod_rule(self, id: int) -> Optional[AutoModerationRule]:
         return self._automod_rules.get(id)
