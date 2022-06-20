@@ -3479,8 +3479,8 @@ class Guild(Hashable):
         ]
 
     async def fetch_automod_rule(self, rule_id: int) -> AutoModerationRule:
-        """
-        |coro|
+        """|coro|
+
         Retrieves an auto moderation rule from Discord.
 
         You must have the :attr:`~Permissions.manage_guild` to be able to do this.
