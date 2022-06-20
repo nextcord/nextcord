@@ -285,7 +285,6 @@ class AutoModerationRule(Hashable):
         if "presets" in fields:
             payload["trigger_metadata"]["presets"] = fields["presets"]
 
-
         if "notify_channel" in fields or "timeout_seconds" in fields:
             payload["actions"] = []
 
