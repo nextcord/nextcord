@@ -109,7 +109,7 @@ class AutoModerationRule(Hashable):
     trigger_type: :class:`TriggerType`
         The trigger type of this auto moderation rule.
     guild_id: :class:`int`
-        The guild ID that this auto moderation rule active in.
+        The guild ID that this auto moderation rule is active in.
     creator_id: :class:`int`
         The creator of this auto moderation rule's ID.
     enabled: :class:`bool`
