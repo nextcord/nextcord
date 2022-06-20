@@ -320,9 +320,7 @@ class AutoModerationRule(Hashable):
             payload["actions"].append(
                 {"type": 1, "notify_channel_id": notify_channel.id}  # type: ignore
             )
-            payload["actions"].append(
-                {"type": 2, "duration_seconds": timeout_seconds}
-            )
+            payload["actions"].append({"type": 2, "duration_seconds": timeout_seconds})
 
         if enabled is not MISSING:
             payload["enabled"] = enabled
