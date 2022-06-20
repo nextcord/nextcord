@@ -226,9 +226,12 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     .. versionadded:: 2.0
 
-.. function:: on_automod_rule_delete()
+.. function:: on_automod_rule_delete(action)
 
     Called when an auto moderation rule is deleted.
+
+    :param action: The rule that was deleted
+    :type action: :class:`AutoModerationRule`
 
     .. versionadded:: 2.0
 
