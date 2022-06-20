@@ -3618,7 +3618,7 @@ class Guild(Hashable):
         if presets is not MISSING:
             params["trigger_metadata"]["presets"] = presets
         if notify_channel is not MISSING:
-            params["actions"].append({"type": 1, "channel_id": notify_channel.id})  # type: ignore
+            params["actions"].append({"type": 1, "channel_id": notify_channel.id})
         if timeout_seconds is not MISSING:
             params["actions"].append({"type": 2, "duration_seconds": timeout_seconds})
         if exempt_roles is not MISSING:
