@@ -4195,7 +4195,7 @@ ScheduledEvent
 .. autoclass:: EntityMetadata
 
 AutoModerationRule
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: AutoModerationRule
 
