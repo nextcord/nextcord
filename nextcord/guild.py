@@ -3463,8 +3463,8 @@ class Guild(Hashable):
             await self._state.delete_application_command(command, guild_id=self.id)
 
     async def fetch_automod_rules(self) -> List[AutoModerationRule]:
-        """
-        |coro|
+        """|coro|
+
         Retrieves all auto moderation rules of this server from Discord.
 
         You must have the :attr:`~Permissions.manage_guild` to be able to do this.
