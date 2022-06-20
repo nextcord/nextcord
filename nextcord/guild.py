@@ -3473,7 +3473,6 @@ class Guild(Hashable):
         -------
         List[:class:`AutoModerationRule`]
         """
-        # TODO: docstring
         return [
             AutoModerationRule(guild=self, state=self._state, data=rule)
             for rule in await self._state.http.list_guild_automod_rules(guild_id=self.id)
