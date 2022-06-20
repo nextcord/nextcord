@@ -2303,7 +2303,6 @@ class ConnectionState:
         )
 
     def parse_auto_moderation_rule_executed(self, data: AutoModerationActionExecutedEvent) -> None:
-        self.dispatch("raw_automod_rule_executed", RawAutoModerationActionExecutedEvent(data=data))
         self.dispatch("automod_rule_executed", AutoModerationAction(data["action"]))
 
     def _add_automod_rule_from_guild_data(self, data: GuildPayload):
