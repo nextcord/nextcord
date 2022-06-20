@@ -2156,6 +2156,7 @@ class Guild(Hashable):
         List[:class:`Invite`]
             The list of invites that are currently active.
 
+
         .. note::
 
             This method does not include the Guild's vanity URL.
