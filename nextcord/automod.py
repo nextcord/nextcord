@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, overload
 
 from .enums import ActionType, EventType, KeywordPresetType, TriggerType, try_enum
 from .mixins import Hashable
+from .utils import MISSING, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -44,7 +45,7 @@ if TYPE_CHECKING:
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
-    from .utils import MISSING, snowflake_time
+    
 
 __all__ = ("AutoModerationRule", "AutoModerationAction")
 
