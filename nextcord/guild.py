@@ -3508,11 +3508,11 @@ class Guild(Hashable):
         name: str,
         event_type: EventType = EventType.message_send,
         trigger_type: TriggerType,
-        keyword_filters: Optional[List[str]] = MISSING,
-        notify_channel: Optional[GuildChannel] = MISSING,
-        enabled: Optional[bool] = True,
-        exempt_roles: Optional[List[Role]] = MISSING,
-        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+        keyword_filters: List[str] = MISSING,
+        notify_channel: GuildChannel = MISSING,
+        enabled: bool = True,
+        exempt_roles: List[Role] = MISSING,
+        exempt_channels: List[GuildChannel] = MISSING,
     ) -> AutoModerationRule:
         ...
 
@@ -3523,11 +3523,11 @@ class Guild(Hashable):
         name: str,
         event_type: EventType = EventType.message_send,
         trigger_type: TriggerType,
-        keyword_filters: Optional[List[str]] = MISSING,
-        timeout_seconds: Optional[int] = MISSING,
-        enabled: Optional[bool] = True,
-        exempt_roles: Optional[List[Role]] = MISSING,
-        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+        keyword_filters: List[str] = MISSING,
+        timeout_seconds: int = MISSING,
+        enabled: bool = True,
+        exempt_roles: List[Role] = MISSING,
+        exempt_channels: List[GuildChannel] = MISSING,
     ) -> AutoModerationRule:
         ...
 
@@ -3538,11 +3538,11 @@ class Guild(Hashable):
         name: str,
         event_type: EventType = EventType.message_send,
         trigger_type: TriggerType,
-        presets: Optional[KeywordPresetType] = MISSING,
-        notify_channel: Optional[GuildChannel] = MISSING,
-        enabled: Optional[bool] = True,
-        exempt_roles: Optional[List[Role]] = MISSING,
-        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+        presets: KeywordPresetType = MISSING,
+        notify_channel: GuildChannel = MISSING,
+        enabled: bool = True,
+        exempt_roles: List[Role] = MISSING,
+        exempt_channels: List[GuildChannel] = MISSING,
     ) -> AutoModerationRule:
         ...
 
@@ -3553,10 +3553,10 @@ class Guild(Hashable):
         name: str,
         event_type: EventType = EventType.message_send,
         trigger_type: TriggerType,
-        presets: Optional[KeywordPresetType] = MISSING,
-        notify_channel: Optional[GuildChannel] = MISSING,
-        enabled: Optional[bool] = True,
-        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+        presets: KeywordPresetType = MISSING,
+        notify_channel: GuildChannel = MISSING,
+        enabled: bool = True,
+        exempt_channels: List[GuildChannel] = MISSING,
     ) -> AutoModerationRule:
         ...
 
@@ -3566,13 +3566,13 @@ class Guild(Hashable):
         name: str,
         event_type: EventType = EventType.message_send,
         trigger_type: TriggerType,
-        keyword_filters: Optional[List[str]] = MISSING,
-        presets: Optional[KeywordPresetType] = MISSING,
-        notify_channel: Optional[GuildChannel] = MISSING,
-        timeout_seconds: Optional[int] = MISSING,
-        enabled: Optional[bool] = True,
-        exempt_roles: Optional[List[Role]] = MISSING,
-        exempt_channels: Optional[List[GuildChannel]] = MISSING,
+        keyword_filters: List[str] = MISSING,
+        presets: KeywordPresetType = MISSING,
+        notify_channel: GuildChannel = MISSING,
+        timeout_seconds: int = MISSING,
+        enabled: bool = True,
+        exempt_roles: List[Role] = MISSING,
+        exempt_channels: List[GuildChannel] = MISSING,
     ) -> AutoModerationRule:
         """
         Create an auto moderation rule.
