@@ -29,12 +29,10 @@ import datetime
 from typing import TYPE_CHECKING, List, Optional, Set
 
 if TYPE_CHECKING:
-    from .automod import AutoModerationAction
     from .member import Member
     from .message import Message
     from .partial_emoji import PartialEmoji
     from .types.raw_models import (
-        AutoModerationActionExecutedEvent,
         BulkMessageDeleteEvent,
         IntegrationDeleteEvent,
         MemberRemoveEvent,
@@ -57,7 +55,6 @@ __all__ = (
     "RawIntegrationDeleteEvent",
     "RawTypingEvent",
     "RawMemberRemoveEvent",
-    "RawAutoModerationActionExecutedEvent",
 )
 
 
