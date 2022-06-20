@@ -1291,7 +1291,7 @@ of :class:`enum.Enum`.
             This trigger type is not released, so they can't be used in most servers.
     .. attribute:: spam
 
-        The auto moderation rule will be triggered if someone spam.
+        The auto moderation rule will be triggered if someone spams.
 
         .. note::
 
