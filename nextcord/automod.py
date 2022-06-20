@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .abc import GuildChannel
     from .errors import InvalidArgument
     from .guild import Guild
+    from .member import Member
     from .role import Role
     from .state import ConnectionState
     from .types.automod import (
@@ -126,7 +127,7 @@ class AutoModerationRule(Hashable):
     """
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
-        self.id = int(data["id"])
+        self.id: int = int(data["id"])
         self.guild: Guild = guild
         self._state: ConnectionState = state
         self._from_payload(data)
@@ -180,11 +181,13 @@ class AutoModerationRule(Hashable):
             self.presets = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore -- pylint messed up somehow
 
     async def delete(self):
-        """Delete this auto moderation rule."""
+        """|coro|
+
+        Delete this auto moderation rule."""
         await self._state.http.delete_automod_rule(guild_id=self.guild.id, rule_id=self.id)
 
     @property
-    def creator(self):
+    def creator(self) -> Optional[Member]:
         """Optional[:class:`Member`]: The member that created this rule."""
         return self.guild.get_member(self.creator_id)
 
@@ -234,6 +237,7 @@ class AutoModerationRule(Hashable):
         name: Optional[str] = MISSING,
         event_type: Optional[EventType] = MISSING,
         keyword_filters: Optional[List[str]] = MISSING,
+        presets: Optional[KeywordPresetType] = MISSING,
         notify_channel: Optional[GuildChannel] = MISSING,
         timeout_seconds: Optional[int] = MISSING,
         enabled: Optional[bool] = MISSING,
@@ -275,33 +279,34 @@ class AutoModerationRule(Hashable):
             A list of channels that should not be affected by this rule.
         """
         payload = {}
-        if "name" in fields:
-            payload["name"] = fields["name"]
+        if name is not MISSING:
+            payload["name"] = name
 
-        if "event_type" in fields:
+        if event_type is not MISSING:
             payload["event_type"] = fields["event_type"].value
 
-        if "keyword_filters" in fields and self.trigger_type != TriggerType.keyword:
+        if keyword_filters is not MISSING and self.trigger_type != TriggerType.keyword:
             raise InvalidArgument(
                 "trigger_type must be TriggerType.keyword to pass keyword_filters"
             )
 
-        if "keyword_filters" in fields:
-            payload["trigger_metadata"]["keyword_filters"] = fields["keyword_filters"]
+        if keyword_filters is not MISSING:
+            payload["trigger_metadata"]["keyword_filters"] = keyword_filters
 
-        if "presets" in fields and self.trigger_type != TriggerType.keyword_preset:
+        if presets is not MISSING and self.trigger_type != TriggerType.keyword_preset:
             raise InvalidArgument("trigger_type must be TriggerType.keyword_preset to pass presets")
 
-        if "presets" in fields:
-            payload["trigger_metadata"]["presets"] = fields["presets"]
+        if presets is not MISSING:
+            payload["trigger_metadata"]["presets"] = presets
 
-        if "notify_channel" in fields or "timeout_seconds" in fields:
+        if notify_channel is not MISSING or timeout_seconds is not MISSING:
             payload["actions"] = []
 
-        if "notify_channel" in fields and not "timeout_seconds" in fields:
+        if notify_channel is not MISSING and timeout_seconds is MISSING:
             payload["actions"].append(
-                {"type": 1, "notify_channel_id": fields.get("notify_channel").id}  # type: ignore
+                {"type": 1, "notify_channel_id": notify_channel.id}  # type: ignore
             )
+            payload["actions"].append()
 
         if "timeout_seconds" in fields and not "notify_channel" in fields:
             payload["actions"].append({"type": 2, "timeout_seconds": fields.get("timeout_seconds")})
