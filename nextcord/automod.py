@@ -59,7 +59,8 @@ class AutoModerationAction:
     notify_channel_id: Optional[:class:`int`]
         The ID of the channel that this action will notify in.
     timeout_seconds: Optional[:class:`int`]
-        The number of seconds this rule should timeout when someone breaks."""
+        The number of seconds this rule should timeout when someone breaks.
+    """
 
     def __init__(self, data: AutoModerationActionPayload):
         self.type: ActionType = try_enum(ActionType, data["type"])
