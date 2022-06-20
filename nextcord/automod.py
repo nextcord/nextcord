@@ -49,8 +49,7 @@ __all__ = ("AutoModerationRule", "AutoModerationAction")
 
 
 class AutoModerationAction:
-    """
-    Represent an auto moderation action.
+    """Represent an auto moderation action.
 
     Attributes
     -----------
