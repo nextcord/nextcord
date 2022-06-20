@@ -106,7 +106,7 @@ Quick Example
     bot.run("token")
 
 
-It is recommended that you use ``commands.Bot``, as although both ``nextcord.Client`` and ``commands.Bot`` allow you to interface with Discord, ``commands.Bot`` provides an easier way to make prefix commands with a framework. Make sure to not use both versions, though, as only one of them will actually be connected to Discord.
+It is recommended that you use ``commands.Bot``, as although both ``nextcord.Client`` and ``commands.Bot`` allow you to interface with Discord, ``commands.Bot`` provides an easier way to make prefix commands with a framework and is recommended to use for prefix commands & slash commands. Make sure to not use both versions, though, as only one of them will actually be connected to Discord.
 
 You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 
