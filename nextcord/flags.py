@@ -937,18 +937,6 @@ class Intents(BaseFlags):
         """
         return 1 << 16
 
-    @alias_flag_value
-    def automod(self):
-        """:class:`bool` Whether auto moderation related events are enabled.
-
-        This corresponding to the following events:
-        - :func:`on_automod_rule_create`
-        - :func:`on_automod_rule_update`
-        - :func:`on_automod_rule_delete`
-        - :func:`on_automod_action_executed`
-        """
-        return (1 << 20) | (1 << 21)
-
     @flag_value
     def automod_configuration(self):
         """:class:`bool` Whether auto moderation rules configuration related events are enabled.

@@ -213,7 +213,8 @@ class AutoModerationRule(Hashable):
         enabled: Optional[bool] = ...,
         exempt_roles: Optional[List[Role]] = ...,
         exempt_channels: Optional[List[GuildChannel]] = ...,
-    ):
+        reason: Optional[str] = ...,
+    ) -> AutoModerationRule:
         ...
 
     @overload
@@ -222,13 +223,14 @@ class AutoModerationRule(Hashable):
         *,
         name: Optional[str] = ...,
         event_type: Optional[EventType] = ...,
-        preset: Optional[KeywordPresetType] = ...,
+        presets: Optional[List[KeywordPresetType]] = ...,
         notify_channel: Optional[GuildChannel] = ...,
         timeout_seconds: Optional[int] = ...,
         enabled: Optional[bool] = ...,
         exempt_roles: Optional[List[Role]] = ...,
         exempt_channels: Optional[List[GuildChannel]] = ...,
-    ):
+        reason: Optional[str] = ...,
+    ) -> AutoModerationRule:
         ...
 
     async def edit(
@@ -237,14 +239,14 @@ class AutoModerationRule(Hashable):
         name: Optional[str] = MISSING,
         event_type: Optional[EventType] = MISSING,
         keyword_filters: Optional[List[str]] = MISSING,
-        presets: Optional[KeywordPresetType] = MISSING,
+        presets: Optional[List[KeywordPresetType]] = MISSING,
         notify_channel: Optional[GuildChannel] = MISSING,
         timeout_seconds: Optional[int] = MISSING,
         enabled: Optional[bool] = MISSING,
         exempt_roles: Optional[List[Role]] = MISSING,
         exempt_channels: Optional[List[GuildChannel]] = MISSING,
-        preset: Optional[KeywordPresetType] = MISSING,
-    ):
+        reason: Optional[str] = MISSING,
+    ) -> AutoModerationRule:
         """
         |coro|
         Edit this auto moderation rule.
@@ -261,11 +263,13 @@ class AutoModerationRule(Hashable):
             The keywords that the filter should match.
 
             .. note::
+
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword`.
         presets: Optional[List[:class:`KeywordPresetType`]]
             The keyword presets that the filter should match.
 
             .. note::
+
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_preset`
         notify_channel: Optional[:class:`abc.GuildChannel`]
             The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
@@ -277,13 +281,15 @@ class AutoModerationRule(Hashable):
             A list of roles that should not be affected by this rule.
         exempt_channels: Optional[List[:class:`abc.GuildChannel`]]
             A list of channels that should not be affected by this rule.
+        reason: Optional[:class:`str`]
+            The reason why is this auto moderation rule edited.
         """
         payload = {}
         if name is not MISSING:
             payload["name"] = name
 
         if event_type is not MISSING:
-            payload["event_type"] = fields["event_type"].value
+            payload["event_type"] = event_type
 
         if keyword_filters is not MISSING and self.trigger_type != TriggerType.keyword:
             raise InvalidArgument(
@@ -306,32 +312,31 @@ class AutoModerationRule(Hashable):
             payload["actions"].append(
                 {"type": 1, "notify_channel_id": notify_channel.id}  # type: ignore
             )
-            payload["actions"].append()
 
-        if "timeout_seconds" in fields and not "notify_channel" in fields:
-            payload["actions"].append({"type": 2, "timeout_seconds": fields.get("timeout_seconds")})
+        if timeout_seconds is not MISSING and notify_channel is MISSING:
+            payload["actions"].append({"type": 2, "timeout_seconds": timeout_seconds})
 
-        if "timeout_seconds" in fields and "notify_channel" in fields:
+        if timeout_seconds is not MISSING and notify_channel is not MISSING:
             payload["actions"].append(
-                {"type": 1, "notify_channel_id": fields.get("notify_channel").id}  # type: ignore
+                {"type": 1, "notify_channel_id": notify_channel.id}  # type: ignore
             )
             payload["actions"].append(
-                {"type": 2, "timeout_seconds": fields.get("timeout_seconds").id}  # type: ignore
+                {"type": 2, "duration_seconds": timeout_seconds}
             )
 
-        if "enabled" in fields:
-            payload["enabled"] = fields["enabled"]
+        if enabled is not MISSING:
+            payload["enabled"] = enabled
 
-        if "exempt_roles" in fields:
-            payload["exempt_roles"] = [role.id for role in fields["exempt_roles"]]
+        if exempt_roles is not MISSING:
+            payload["exempt_roles"] = [role.id for role in exempt_roles]  # type: ignore
 
-        if "exempt_channels" in fields:
+        if exempt_channels is not MISSING:
             payload["exempt_channels"] = [
-                exempt_channel.id for exempt_channel in fields["exempt_channels"]
+                exempt_channel.id for exempt_channel in exempt_channels  # type: ignore
             ]
 
-        if "reason" in fields:
-            payload["reason"] = fields["reason"]
+        if reason is not MISSING:
+            payload["reason"] = reason
 
         new_data = await self._state.http.modify_automod_rule(
             guild_id=self.guild.id, rule_id=self.id, **payload
