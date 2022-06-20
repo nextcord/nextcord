@@ -368,7 +368,6 @@ class RawAutoModerationActionExecutedEvent(_RawReprMixin):
         The content that matched the defined auto moderation rule.
     """
 
-    # TODO: fix docstrs
     def __init__(self, data: AutoModerationActionExecutedEvent) -> None:
         self.guild_id: int = int(data["guild_id"])
         self.action: AutoModerationAction = AutoModerationAction(data=data["action"])
