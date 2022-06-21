@@ -3639,6 +3639,7 @@ class Guild(Hashable):
             "trigger_type": trigger_type,
             "enabled": enabled,
             "actions": [],
+            "trigger_metadata": {}
         }
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument(
