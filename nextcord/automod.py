@@ -258,33 +258,33 @@ class AutoModerationRule(Hashable):
 
         Parameters
         -----------
-        name: Optional[:class:`str`]
+        name: :class:`str`
             The new name of this auto moderation rule.
-        event_type: Optional[:class:`EventType`]
+        event_type: :class:`EventType`
             The new trigger event type of this auto moderation rule.
-        keyword_filters: Optional[List[:class:`str`]]
+        keyword_filters: List[:class:`str`]
             The keywords that the filter should match.
 
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword`.
-        presets: Optional[List[:class:`KeywordPresetType`]]
+        presets: List[:class:`KeywordPresetType`]
             The keyword presets that the filter should match.
 
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_preset`
-        notify_channel: Optional[:class:`abc.GuildChannel`]
+        notify_channel: :class:`abc.GuildChannel`
             The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
-        timeout_seconds: Optional[:class:`int`]
+        timeout_seconds: :class:`int`
             The seconds to timeout the person triggered this rule.
-        enabled: Optional[:class:`bool`]
+        enabled: :class:`bool`
             Whether if this rule is enabled.
-        exempt_roles: Optional[List[:class:`Role`]]
+        exempt_roles: :class:`Role`
             A list of roles that should not be affected by this rule.
-        exempt_channels: Optional[List[:class:`abc.GuildChannel`]]
+        exempt_channels: :class:`abc.GuildChannel`
             A list of channels that should not be affected by this rule.
-        reason: Optional[:class:`str`]
+        reason: :class:`str`
             The reason why is this auto moderation rule edited.
         """
         payload = {}
