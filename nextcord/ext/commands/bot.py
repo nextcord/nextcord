@@ -28,6 +28,7 @@ from __future__ import annotations
 import asyncio
 import collections
 import collections.abc
+import copy
 import importlib.util
 import inspect
 import sys
@@ -1106,7 +1107,7 @@ class BotBase(GroupMixin):
             The invocation context to invoke.
         """
         if ctx.command is not None:
-            self.dispatch("command", ctx)
+            self.dispatch("command", copy.copy(ctx))
             try:
                 if await self.can_run(ctx, call_once=True):
                     await ctx.command.invoke(ctx)
