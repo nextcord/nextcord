@@ -70,11 +70,9 @@ class AutoModerationAction:
 
     def __init__(self, data: AutoModerationActionPayload):
         self.type: ActionType = try_enum(ActionType, data["type"])
-        self.notify_channel_id: Optional[int] = None
-        self.timeout_seconds: Optional[int] = None
         metadata: dict[str, Union[Snowflake, int]] = data.get("metadata", {})
-        self.notify_channel_id: int = int(metadata.get("notify_channel_id")) if metadata.get("notify_channel_id") is not None else None
-        self.timeout_seconds: int = metadata.get("duration_seconds")
+        self.notify_channel_id: Optional[int] = int(metadata.get("notify_channel_id")) if metadata.get("notify_channel_id") is not None else None
+        self.timeout_seconds: Optional[int] = metadata.get("duration_seconds")
 
     def __repr__(self):
         attrs = (
