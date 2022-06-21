@@ -3603,17 +3603,17 @@ class Guild(Hashable):
             The words that this rule should filter.
         presets: List[:class:`KeywordPresetType`]
             The preset keywords that this rule should filter.
-        notify_channel: Optional[:class:`abc.GuildChannel`]
+        notify_channel: :class:`abc.GuildChannel`
             The channel that Discord will send an alert to this channel when the rule is triggered.
             Either this or `timeout_seconds` must be provided.
-        timeout_seconds: Optional[:class:`int`]
+        timeout_seconds: :class:`int`
             The seconds to timeout the user that triggered this rule.
             Either this or `notify_channel` must be provided.
-        enabled: Optional[:class:`bool`]
+        enabled: :class:`bool`
             Whether if this rule is enabled or not. Default is True.
-        exempt_roles: Optional[List[:class:`Role`]]
+        exempt_roles: List[:class:`Role`]
             The roles that should not be affected by this rule.
-        exempt_channels: Optional[List[:class:`abc.GuildChannel`]]
+        exempt_channels: List[:class:`abc.GuildChannel`]
             The channels that should not be affected by this rule.
 
         Returns
