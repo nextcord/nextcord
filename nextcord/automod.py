@@ -31,11 +31,7 @@ from .utils import MISSING, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from typing import (
-        List,
-        Optional,
-        Union,
-    )
+    from typing import List, Optional, Union
 
     from .abc import GuildChannel
     from .errors import InvalidArgument
@@ -71,7 +67,11 @@ class AutoModerationAction:
     def __init__(self, data: AutoModerationActionPayload):
         self.type: ActionType = try_enum(ActionType, data["type"])
         metadata: dict[str, Union[Snowflake, int]] = data.get("metadata", {})
-        self.notify_channel_id: Optional[int] = int(metadata.get("notify_channel_id")) if metadata.get("notify_channel_id") is not None else None
+        self.notify_channel_id: Optional[int] = (
+            int(metadata.get("notify_channel_id"))
+            if metadata.get("notify_channel_id") is not None
+            else None
+        )
         self.timeout_seconds: Optional[int] = metadata.get("duration_seconds")
 
     def __repr__(self):
@@ -82,7 +82,6 @@ class AutoModerationAction:
         )
         inner = " ".join("%s=%r" % t for t in attrs)
         return f"<AutoModerationAction {inner}>"
-
 
 
 class AutoModerationRule(Hashable):
