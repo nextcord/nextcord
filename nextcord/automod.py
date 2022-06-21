@@ -31,7 +31,11 @@ from .utils import MISSING, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from typing import List, Optional
+    from typing import (
+        List,
+        Optional,
+        Union,
+    )
 
     from .abc import GuildChannel
     from .errors import InvalidArgument
@@ -45,6 +49,7 @@ if TYPE_CHECKING:
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
+    from .types.snowflake import Snowflake
 
 
 __all__ = ("AutoModerationRule", "AutoModerationAction")
@@ -67,8 +72,9 @@ class AutoModerationAction:
         self.type: ActionType = try_enum(ActionType, data["type"])
         self.notify_channel_id: Optional[int] = None
         self.timeout_seconds: Optional[int] = None
-        if data.get("metadata"):
-            self._unpack_metadata(data["metadata"])  # type: ignore
+        metadata: dict[str, Union[Snowflake, int]] = data.get("metadata", {})
+        self.notify_channel_id: int = int(metadata.get("notify_channel_id")) if metadata.get("notify_channel_id") is not None else None
+        self.timeout_seconds: int = metadata.get("duration_seconds")
 
     def __repr__(self):
         attrs = (
@@ -79,12 +85,6 @@ class AutoModerationAction:
         inner = " ".join("%s=%r" % t for t in attrs)
         return f"<AutoModerationAction {inner}>"
 
-    def _unpack_metadata(self, action_metadata: ActionMetadataPayload):
-
-        if action_metadata.get("channel_id") is not None:
-            self.notify_channel_id: Optional[int] = int(action_metadata.get("channel_id"))
-        if action_metadata.get("duration_seconds") is not None:
-            self.timeout_seconds: Optional[int] = action_metadata.get("duration_seconds")
 
 
 class AutoModerationRule(Hashable):
