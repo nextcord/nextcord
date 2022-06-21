@@ -3590,7 +3590,7 @@ class Guild(Hashable):
         event_type: EventType = EventType.message_send,
         trigger_type: TriggerType,
         keyword_filters: List[str] = MISSING,
-        presets: KeywordPresetType = MISSING,
+        presets: List[KeywordPresetType] = MISSING,
         notify_channel: GuildChannel = MISSING,
         timeout_seconds: int = MISSING,
         block_message: bool = True,
