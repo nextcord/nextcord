@@ -178,16 +178,16 @@ class ConnectionState:
         hooks: Dict[str, Callable],
         http: HTTPClient,
         loop: asyncio.AbstractEventLoop,
-        max_messages: Optional[int],
-        application_id: Optional[int],
-        heartbeat_timeout: float,
-        guild_ready_timeout: float,
-        allowed_mentions: Optional[AllowedMentions],
-        activity: Optional[BaseActivity],
-        status: Optional[Status],
-        intents: Intents,
-        chunk_guilds_at_startup: bool,
-        member_cache_flags: MemberCacheFlags,
+        max_messages: Optional[int] = 1000,
+        application_id: Optional[int] = None,
+        heartbeat_timeout: float = 60.0,
+        guild_ready_timeout: float = 2.0,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        activity: Optional[BaseActivity] = None,
+        status: Optional[Status] = None,
+        intents: Intents = Intents.default(),
+        chunk_guilds_at_startup: bool = MISSING,
+        member_cache_flags: MemberCacheFlags = MISSING,
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = loop
         self.http: HTTPClient = http
@@ -228,11 +228,8 @@ class ConnectionState:
         else:
             raw_status = None
 
-        if intents is not MISSING:
-            if not isinstance(intents, Intents):
-                raise TypeError(f"intents parameter must be Intent not {type(intents)!r}")
-        else:
-            intents = Intents.default()
+        if not isinstance(intents, Intents):
+            raise TypeError(f"intents parameter must be Intent not {type(intents)!r}")
 
         if not intents.guilds:
             _log.warning("Guilds intent seems to be disabled. This may cause state related issues.")
