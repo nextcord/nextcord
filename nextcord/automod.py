@@ -296,7 +296,7 @@ class AutoModerationRule(Hashable):
             raise InvalidArgument("trigger_type must be TriggerType.keyword_preset to pass presets")
 
         if presets is not MISSING:
-            payload["trigger_metadata"]["presets"] = presets
+            payload["trigger_metadata"]["presets"] = [preset.value for preset in presets]
 
         if (
             notify_channel is not MISSING

@@ -3651,7 +3651,7 @@ class Guild(Hashable):
         if keyword_filters is not MISSING:
             params["trigger_metadata"]["keyword_filters"] = keyword_filters
         if presets is not MISSING:
-            params["trigger_metadata"]["presets"] = presets
+            params["trigger_metadata"]["presets"] = [preset.value for preset in presets]
         if (
             (notify_channel is not MISSING)
             or (timeout_seconds is not MISSING)
