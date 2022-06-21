@@ -3498,6 +3498,18 @@ class Guild(Hashable):
         return AutoModerationRule(guild=self, state=self._state, data=rule)
 
     def get_automod_rule(self, rule_id: int) -> Optional[AutoModerationRule]:
+        """
+        Get an auto moderation rule.
+
+        Parameters
+        ----------
+        rule_id: :class:`int`
+            The rule ID to find for.
+
+        Returns
+        -------
+        Optional[:class:`AutoModerationRule`] or ``None`` if not found.
+        """
         return self._state.get_automod_rule(id=rule_id)
 
     @overload
