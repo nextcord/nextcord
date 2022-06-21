@@ -2305,10 +2305,10 @@ class ConnectionState:
     def parse_auto_moderation_rule_executed(self, data: AutoModerationActionExecutedEvent) -> None:
         self.dispatch("automod_rule_executed", AutoModerationAction(data["action"]))
 
-    def _add_automod_rule_from_guild_data(self, data: GuildPayload):
+    async def _add_automod_rule_from_guild_data(self, data: GuildPayload):
         id = int(data["id"])
         try:
-            rules = self.http.list_guild_automod_rules(guild_id=id)
+            rules = await self.http.list_guild_automod_rules(guild_id=id)
             for rule in rules:  # type: ignore
                 self.add_automod_rule(data=rule)
         except Forbidden:
