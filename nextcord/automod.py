@@ -279,6 +279,9 @@ class AutoModerationRule(Hashable):
 
         if event_type is not MISSING:
             payload["event_type"] = event_type
+        
+        if keyword_filters is not MISSING and presets is not MISSING:
+            raise InvalidArgument("Cannot pass keyword_filters and presets to edit()")
 
         if keyword_filters is not MISSING and self.trigger_type != TriggerType.keyword:
             raise InvalidArgument(

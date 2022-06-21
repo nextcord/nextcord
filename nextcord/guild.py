@@ -3640,6 +3640,10 @@ class Guild(Hashable):
             "enabled": enabled,
             "actions": [],
         }
+        if keyword_filters is not MISSING and presets is not MISSING:
+            raise InvalidArgument(
+                "Cannot pass keyword_filters and presets to create_automod_rule()"
+            )
         if keyword_filters is not MISSING:
             params["trigger_metadata"]["keyword_filters"] = keyword_filters
         if presets is not MISSING:
