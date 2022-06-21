@@ -3637,9 +3637,9 @@ class Guild(Hashable):
         if timeout_seconds is not MISSING:
             params["actions"].append({"type": 2, "duration_seconds": timeout_seconds})
         if exempt_roles is not MISSING:
-            params["exempt_roles"] = [role.id for role in exempt_roles]  # type: ignore
+            params["exempt_roles"] = [role.id for role in exempt_roles]
         if exempt_channels is not MISSING:
-            params["exempt_channels"] = [channel.id for channel in exempt_channels]  # type: ignore
+            params["exempt_channels"] = [channel.id for channel in exempt_channels]
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
         rule = self._state.add_automod_rule(data=data)
         return rule

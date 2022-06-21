@@ -313,7 +313,7 @@ class AutoModerationRule(Hashable):
 
         if notify_channel is not MISSING and timeout_seconds is MISSING:
             payload["actions"].append(
-                {"type": 1, "notify_channel_id": notify_channel.id}  # type: ignore
+                {"type": 1, "notify_channel_id": notify_channel.id}
             )
 
         if timeout_seconds is not MISSING and notify_channel is MISSING:
@@ -321,7 +321,7 @@ class AutoModerationRule(Hashable):
 
         if timeout_seconds is not MISSING and notify_channel is not MISSING:
             payload["actions"].append(
-                {"type": 1, "notify_channel_id": notify_channel.id}  # type: ignore
+                {"type": 1, "notify_channel_id": notify_channel.id}
             )
             payload["actions"].append({"type": 2, "duration_seconds": timeout_seconds})
 
@@ -329,11 +329,11 @@ class AutoModerationRule(Hashable):
             payload["enabled"] = enabled
 
         if exempt_roles is not MISSING:
-            payload["exempt_roles"] = [role.id for role in exempt_roles]  # type: ignore
+            payload["exempt_roles"] = [role.id for role in exempt_roles]
 
         if exempt_channels is not MISSING:
             payload["exempt_channels"] = [
-                exempt_channel.id for exempt_channel in exempt_channels  # type: ignore
+                exempt_channel.id for exempt_channel in exempt_channels
             ]
 
         if reason is not MISSING:
