@@ -1222,7 +1222,10 @@ class ConnectionState:
 
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
-            self._add_automod_rule_from_guild_data(guild_data)
+            try:
+                self._add_automod_rule_from_guild_data(guild_data)  # type: ignore
+            except RuntimeWarning:
+                pass
 
         self.dispatch("connect")
         self._ready_task = asyncio.create_task(self._delay_ready())
@@ -2309,7 +2312,7 @@ class ConnectionState:
         id = int(data["id"])
         try:
             rules = await self.http.list_guild_automod_rules(guild_id=id)
-            for rule in rules:  # type: ignore
+            for rule in rules:
                 self.add_automod_rule(data=rule)
         except Forbidden:
             pass
