@@ -2373,7 +2373,12 @@ class HTTPClient:
         exempt_channel: List[Snowflake] = MISSING,
         reason: Optional[str] = None,
     ) -> Response[automod.AutoModerationRule]:
-        params = {"name": name, "event_type": event_type, "trigger_type": trigger_type, "actions": actions}
+        params = {
+            "name": name,
+            "event_type": event_type,
+            "trigger_type": trigger_type,
+            "actions": actions,
+        }
         if trigger_metadata is not MISSING:
             params["trigger_metadata"] = trigger_metadata
 

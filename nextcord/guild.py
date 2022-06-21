@@ -3640,7 +3640,7 @@ class Guild(Hashable):
             "name": name,
             "event_type": event_type.value,
             "trigger_type": trigger_type.value,
-            "enabled": enabled
+            "enabled": enabled,
         }
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument(
