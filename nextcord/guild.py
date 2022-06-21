@@ -3573,7 +3573,8 @@ class Guild(Hashable):
         exempt_roles: List[Role] = MISSING,
         exempt_channels: List[GuildChannel] = MISSING,
     ) -> AutoModerationRule:
-        """
+        """|coro|
+
         Create an auto moderation rule.
 
         You must have the :attr:`~Permissions.manage_guild` to be able to do this.
