@@ -2309,7 +2309,7 @@ class ConnectionState:
         id = int(data["id"])
         try:
             rules = await self.http.list_guild_automod_rules(guild_id=id)
-            for rule in rules:  # type: ignore
+            for rule in rules:
                 self.add_automod_rule(data=rule)
         except Forbidden:
             pass
