@@ -2353,7 +2353,7 @@ class HTTPClient:
     ) -> Response[automod.AutoModerationRule]:
         r = Route(
             "GET",
-            "guilds/{guild_id}/auto-moderation/rules/{rule_id}",
+            "/guilds/{guild_id}/auto-moderation/rules/{rule_id}",
             guild_id=guild_id,
             rule_id=rule_id,
         )
@@ -2373,7 +2373,7 @@ class HTTPClient:
         exempt_channel: List[Snowflake] = MISSING,
         reason: Optional[str] = None,
     ) -> Response[automod.AutoModerationRule]:
-        params = {name: name, event_type: event_type, trigger_type: trigger_type, actions: actions}
+        params = {"name": name, "event_type": event_type, "trigger_type": trigger_type, "actions": actions}
         if trigger_metadata is not MISSING:
             params["trigger_metadata"] = trigger_metadata
 
@@ -2386,7 +2386,7 @@ class HTTPClient:
         if exempt_channel is not MISSING:
             params["exempt_channel"] = exempt_channel
 
-        r = Route("POST", "guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
+        r = Route("POST", "/guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
         return self.request(r, json=params, reason=reason)
 
     def modify_automod_rule(
@@ -2427,7 +2427,7 @@ class HTTPClient:
 
         r = Route(
             "PATCH",
-            "guilds/{guild_id}/auto-moderation/rules/{rule_id}",
+            "/guilds/{guild_id}/auto-moderation/rules/{rule_id}",
             guild_id=guild_id,
             rule_id=rule_id,
         )
@@ -2440,7 +2440,7 @@ class HTTPClient:
     ) -> Response:
         r = Route(
             "DELETE",
-            "guilds/{guild_id}/auto-moderation/rules/{rule_id}",
+            "/guilds/{guild_id}/auto-moderation/rules/{rule_id}",
             guild_id=guild_id,
             rule_id=rule_id,
         )

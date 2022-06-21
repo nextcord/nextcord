@@ -279,7 +279,7 @@ class AutoModerationRule(Hashable):
             payload["name"] = name
 
         if event_type is not MISSING:
-            payload["event_type"] = event_type
+            payload["event_type"] = event_type.value
 
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument("Cannot pass keyword_filters and presets to edit()")

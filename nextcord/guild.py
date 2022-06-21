@@ -3638,9 +3638,9 @@ class Guild(Hashable):
         """
         params = {
             "name": name,
-            "event_type": event_type,
-            "trigger_type": trigger_type,
-            "enabled": enabled,
+            "event_type": event_type.value,
+            "trigger_type": trigger_type.value,
+            "enabled": enabled
         }
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument(
