@@ -85,8 +85,6 @@ class AutoModerationRule(Hashable):
             Check if two auto moderation rule are equal.
         .. describe:: x != y
             Check if two auto moderation rule are not equal.
-        .. describe:: int(x)
-            Returns the ID of this auto moderation rule.
 
     Attributes
     -----------
