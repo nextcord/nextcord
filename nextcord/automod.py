@@ -82,9 +82,9 @@ class AutoModerationRule(Hashable):
 
     .. container:: operations
         .. describe:: x == y
-            Check if two auto moderation rule are equal.
+            Check if two auto moderation rules are equal.
         .. describe:: x != y
-            Check if two auto moderation rule are not equal.
+            Check if two auto moderation rules are not equal.
 
     Attributes
     -----------
@@ -111,9 +111,9 @@ class AutoModerationRule(Hashable):
     exempt_channel_ids: List[:class:`int`]
         A list of channels that will not be affected by this rule.
     keyword_filters: Optional[List[str]]
-        The custom filter for this auto moderation rule. `None` if not set.
+        The custom filters for this auto moderation rule. `None` if not set.
     presets: Optional[List[:class:`KeywordPresetType`]]
-        The pre-set type of this auto moderation rule. `None` if not set.
+        The pre-set types of this auto moderation rule. `None` if not set.
     actions: List[:class:`AutoModerationAction`]
         The actions that this auto moderation rule will execute if triggered.
     """
