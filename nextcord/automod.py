@@ -136,9 +136,6 @@ class AutoModerationRule(Hashable):
         self._state: ConnectionState = state
         self._from_payload(data)
 
-    def __int__(self) -> int:
-        return self.id
-
     def __repr__(self):
         attrs = (
             ("id", self.id),

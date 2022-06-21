@@ -3472,6 +3472,11 @@ class Guild(Hashable):
         Returns
         -------
         List[:class:`AutoModerationRule`]
+
+        Raises
+        -------
+        Forbidden
+            You're not allowed to do this.
         """
         return [
             AutoModerationRule(guild=self, state=self._state, data=rule)
@@ -3493,6 +3498,13 @@ class Guild(Hashable):
         Returns
         --------
         :class:`AutoModerationRule`
+
+        Raises
+        -------
+        Forbidden
+            You're not allowed to do this.
+        NotFound
+            The rule you tried to find doesn't exist.
         """
         rule = await self._state.http.get_automod_rule(guild_id=self.id, rule_id=rule_id)
         return AutoModerationRule(guild=self, state=self._state, data=rule)
