@@ -125,8 +125,30 @@ class AutoModerationRule(Hashable):
         self.id: int = int(data["id"])
         self.guild: Guild = guild
         self._state: ConnectionState = state
-        self._from_payload(data)
+        self.guild_id: int = int(data["guild_id"])
+        self.name: str = data["name"]
+        self.creator_id: int = int(data["creator_id"])
+        self.event_type: EventType = try_enum(EventType, data["event_type"])
+        self.trigger_type: TriggerType = try_enum(TriggerType, data["trigger_type"])  # same
+        self.enabled: bool = data["enabled"]
+        self.exempt_role_ids: List[int] = [int(exempt_role) for exempt_role in data["exempt_roles"]]
+        self.exempt_channel_ids: List[int] = [
+            int(exempt_channel) for exempt_channel in data["exempt_channels"]
+        ]
+        self.keyword_filters: Optional[List[str]] = None
+        self.presets: Optional[List[KeywordPresetType]] = None
 
+        trigger_metadata: TriggerMetadataPayload = data['trigger_metadata']
+
+        self.keyword_filters = trigger_metadata.get("keyword_filters")
+
+        self.actions: List[AutoModerationAction] = []
+        self.presets = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]] if trigger_metadata.get("presets") is not None else None  # type: ignore
+
+        for action in data["actions"]:
+            self.actions.append(AutoModerationAction(data=action))
+
+        
     def __repr__(self):
         attrs = (
             ("id", self.id),
@@ -145,32 +167,6 @@ class AutoModerationRule(Hashable):
         )
         inner = " ".join("%s=%r" % t for t in attrs)
         return f"<AutoModerationRule {inner}>"
-
-    def _from_payload(self, data: AutoModerationRulePayload):
-        self.guild_id: int = int(data["guild_id"])
-        self.name: str = data["name"]
-        self.creator_id: int = int(data["creator_id"])
-        self.event_type: EventType = try_enum(EventType, data["event_type"])
-        self.trigger_type: TriggerType = try_enum(TriggerType, data["trigger_type"])  # same
-        self.enabled: bool = data["enabled"]
-        self.exempt_role_ids: List[int] = [int(exempt_role) for exempt_role in data["exempt_roles"]]
-        self.exempt_channel_ids: List[int] = [
-            int(exempt_channel) for exempt_channel in data["exempt_channels"]
-        ]
-        self.keyword_filters: Optional[List[str]] = None
-        self.presets: Optional[List[KeywordPresetType]] = None
-
-        self._unpack_trigger_metadata(data["trigger_metadata"])
-        self.actions: List[AutoModerationAction] = []
-
-        for action in data["actions"]:
-            self.actions.append(AutoModerationAction(data=action))
-
-    def _unpack_trigger_metadata(self, trigger_metadata: TriggerMetadataPayload):
-        if trigger_metadata.get("keyword_filter") is not None:
-            self.keyword_filters = trigger_metadata["keyword_filter"]  # type: ignore
-        if trigger_metadata.get("presets") is not None:
-            self.presets = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore -- pylint messed up somehow
 
     async def delete(self):
         """|coro|
