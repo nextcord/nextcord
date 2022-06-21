@@ -3578,6 +3578,7 @@ class Guild(Hashable):
         Create an auto moderation rule.
 
         You must have the :attr:`~Permissions.manage_guild` to be able to do this.
+
         Parameters
         ----------
         name: :class:`str`
