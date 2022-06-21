@@ -75,13 +75,7 @@ class AutoModerationAction:
         self.timeout_seconds: Optional[int] = metadata.get("duration_seconds")  # type: ignore
 
     def __repr__(self):
-        attrs = (
-            ("type", self.type),
-            ("notify_channel_id", self.notify_channel_id),
-            ("timeout_seconds", self.timeout_seconds),
-        )
-        inner = " ".join("%s=%r" % t for t in attrs)
-        return f"<AutoModerationAction {inner}>"
+        return f"<AutoModerationAction type={self.type}, notify_channel_id={self.notify_channel_id}, timeout_seconds={self.timeout_seconds}>"
 
 
 class AutoModerationRule(Hashable):
