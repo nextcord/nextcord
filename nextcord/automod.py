@@ -40,7 +40,6 @@ if TYPE_CHECKING:
     from .role import Role
     from .state import ConnectionState
     from .types.automod import (
-        ActionMetadata as ActionMetadataPayload,
         AutoModerationAction as AutoModerationActionPayload,
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
