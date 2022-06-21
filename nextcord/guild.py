@@ -3603,6 +3603,7 @@ class Guild(Hashable):
             The roles that should not be affected by this rule.
         exempt_channels: Optional[List[:class:`abc.GuildChannel`]]
             The channels that should not be affected by this rule.
+
         Returns
         -------
         :class:`AutoModerationRule`
