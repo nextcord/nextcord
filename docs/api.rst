@@ -4149,14 +4149,6 @@ RawIntegrationDeleteEvent
 .. autoclass:: RawIntegrationDeleteEvent()
     :members:
 
-RawAutoModerationActionExecutedEvent
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. attributetable:: RawAutoModerationActionExecutedEvent
-
-.. autoclass:: RawAutoModerationActionExecutedEvent()
-    :members:
-
 PartialWebhookGuild
 ~~~~~~~~~~~~~~~~~~~~
 
