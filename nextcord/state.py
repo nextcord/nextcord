@@ -1226,7 +1226,6 @@ class ConnectionState:
                 warnings.simplefilter("ignore")
                 self._add_automod_rule_from_guild_data(guild_data)  # type: ignore
 
-
         self.dispatch("connect")
         self._ready_task = asyncio.create_task(self._delay_ready())
 
