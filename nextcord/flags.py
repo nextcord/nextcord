@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from functools import reduce
 from typing import (
     Any,
     Callable,
@@ -38,7 +39,6 @@ from typing import (
     TypeVar,
     overload,
 )
-from functools import reduce
 
 from .enums import UserFlags
 

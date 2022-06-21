@@ -3640,26 +3640,30 @@ class Guild(Hashable):
             "name": name,
             "event_type": event_type,
             "trigger_type": trigger_type,
-            "enabled": enabled
+            "enabled": enabled,
         }
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument(
                 "Cannot pass keyword_filters and presets to create_automod_rule()"
             )
         if keyword_filters is not MISSING or presets is not MISSING:
-            params['trigger_metadata'] = {}
+            params["trigger_metadata"] = {}
         if keyword_filters is not MISSING:
             params["trigger_metadata"]["keyword_filters"] = keyword_filters
         if presets is not MISSING:
             params["trigger_metadata"]["presets"] = presets
-        if (notify_channel is not MISSING) or (timeout_seconds is not MISSING) or (block_message is True):
-            params['actions'] = []
+        if (
+            (notify_channel is not MISSING)
+            or (timeout_seconds is not MISSING)
+            or (block_message is True)
+        ):
+            params["actions"] = []
         if block_message is True:
-            params['actions'].append({"type": 1})
+            params["actions"].append({"type": 1})
         if notify_channel is not MISSING:
-            params["actions"].append({"type": 2, "metadata": { "channel_id": notify_channel.id}})
+            params["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
         if timeout_seconds is not MISSING:
-            params["actions"].append({"type": 3, "metadata": { "duration_seconds": timeout_seconds}})
+            params["actions"].append({"type": 3, "metadata": {"duration_seconds": timeout_seconds}})
         if exempt_roles is not MISSING:
             params["exempt_roles"] = [role.id for role in exempt_roles]
         if exempt_channels is not MISSING:

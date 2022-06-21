@@ -138,7 +138,7 @@ class AutoModerationRule(Hashable):
         self.keyword_filters: Optional[List[str]] = None
         self.presets: Optional[List[KeywordPresetType]] = None
 
-        trigger_metadata: TriggerMetadataPayload = data['trigger_metadata']
+        trigger_metadata: TriggerMetadataPayload = data["trigger_metadata"]
 
         self.keyword_filters = trigger_metadata.get("keyword_filters")
 
@@ -148,7 +148,6 @@ class AutoModerationRule(Hashable):
         for action in data["actions"]:
             self.actions.append(AutoModerationAction(data=action))
 
-        
     def __repr__(self):
         attrs = (
             ("id", self.id),
@@ -268,7 +267,7 @@ class AutoModerationRule(Hashable):
         timeout_seconds: :class:`int`
             The seconds to timeout the person triggered this rule.
         block_message: :class:`bool`
-            Whether if this rule should blocks the message that triggered the rule or not. 
+            Whether if this rule should blocks the message that triggered the rule or not.
         enabled: :class:`bool`
             Whether if this rule is enabled.
         exempt_roles: :class:`Role`
@@ -284,7 +283,7 @@ class AutoModerationRule(Hashable):
 
         if event_type is not MISSING:
             payload["event_type"] = event_type
-        
+
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument("Cannot pass keyword_filters and presets to edit()")
 
@@ -302,32 +301,43 @@ class AutoModerationRule(Hashable):
         if presets is not MISSING:
             payload["trigger_metadata"]["presets"] = presets
 
-        if notify_channel is not MISSING or timeout_seconds is not MISSING or block_message is not MISSING:
+        if (
+            notify_channel is not MISSING
+            or timeout_seconds is not MISSING
+            or block_message is not MISSING
+        ):
             payload["actions"] = []
             if block_message is not MISSING:
                 if block_message:
-                    payload['actions'].append({"type": 1})
+                    payload["actions"].append({"type": 1})
             else:
                 for action in self.actions:
                     if action.type is ActionType.block:
-                        payload['actions'].append({"type": 1})
+                        payload["actions"].append({"type": 1})
 
         if notify_channel is not MISSING and timeout_seconds is MISSING:
             payload["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
             for action in self.actions:
                 if action.timeout_seconds is not None:
-                    payload["actions"].append({"type": 3, "metadata": { "duration_seconds": action.timeout_seconds}})
+                    payload["actions"].append(
+                        {"type": 3, "metadata": {"duration_seconds": action.timeout_seconds}}
+                    )
 
         if timeout_seconds is not MISSING and notify_channel is MISSING:
-            payload["actions"].append({"type": 3, "metadata": { "duration_seconds": timeout_seconds}})
+            payload["actions"].append(
+                {"type": 3, "metadata": {"duration_seconds": timeout_seconds}}
+            )
             for action in self.actions:
                 if action.notify_channel_id is not None:
-                    payload['actions'].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
+                    payload["actions"].append(
+                        {"type": 2, "metadata": {"channel_id": notify_channel.id}}
+                    )
 
         if timeout_seconds is not MISSING and notify_channel is not MISSING:
-            payload["actions"].append({"type": 2, "metadata": { "channel_id": notify_channel.id}})
-            payload["actions"].append({"type": 3, "metadata": { "duration_seconds": timeout_seconds}})
-            
+            payload["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
+            payload["actions"].append(
+                {"type": 3, "metadata": {"duration_seconds": timeout_seconds}}
+            )
 
         if enabled is not MISSING:
             payload["enabled"] = enabled
