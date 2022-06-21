@@ -3593,6 +3593,7 @@ class Guild(Hashable):
         presets: KeywordPresetType = MISSING,
         notify_channel: GuildChannel = MISSING,
         timeout_seconds: int = MISSING,
+        block_message: bool = True,
         enabled: bool = True,
         exempt_roles: List[Role] = MISSING,
         exempt_channels: List[GuildChannel] = MISSING,
@@ -3621,6 +3622,8 @@ class Guild(Hashable):
         timeout_seconds: :class:`int`
             The seconds to timeout the user that triggered this rule.
             Either this or `notify_channel` must be provided.
+        block_message: :class:`bool`
+            Whether blocks this message when this rule is triggered. Default is True.
         enabled: :class:`bool`
             Whether if this rule is enabled or not. Default is True.
         exempt_roles: List[:class:`Role`]
@@ -3637,22 +3640,26 @@ class Guild(Hashable):
             "name": name,
             "event_type": event_type,
             "trigger_type": trigger_type,
-            "enabled": enabled,
-            "actions": [],
-            "trigger_metadata": {}
+            "enabled": enabled
         }
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument(
                 "Cannot pass keyword_filters and presets to create_automod_rule()"
             )
+        if keyword_filters is not MISSING or presets is not MISSING:
+            params['trigger_metadata'] = {}
         if keyword_filters is not MISSING:
             params["trigger_metadata"]["keyword_filters"] = keyword_filters
         if presets is not MISSING:
             params["trigger_metadata"]["presets"] = presets
+        if (notify_channel is not MISSING) or (timeout_seconds is not MISSING) or (block_message is True):
+            params['actions'] = []
+        if block_message is True:
+            params['actions'].append({"type": 1})
         if notify_channel is not MISSING:
-            params["actions"].append({"type": 1, "channel_id": notify_channel.id})
+            params["actions"].append({"type": 2, "metadata": { "channel_id": notify_channel.id}})
         if timeout_seconds is not MISSING:
-            params["actions"].append({"type": 2, "duration_seconds": timeout_seconds})
+            params["actions"].append({"type": 3, "metadata": { "duration_seconds": timeout_seconds}})
         if exempt_roles is not MISSING:
             params["exempt_roles"] = [role.id for role in exempt_roles]
         if exempt_channels is not MISSING:

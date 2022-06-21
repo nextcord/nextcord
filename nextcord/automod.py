@@ -199,6 +199,7 @@ class AutoModerationRule(Hashable):
         keyword_filters: List[str] = ...,
         notify_channel: GuildChannel = ...,
         timeout_seconds: int = ...,
+        block_message: bool = ...,
         enabled: bool = ...,
         exempt_roles: List[Role] = ...,
         exempt_channels: List[GuildChannel] = ...,
@@ -215,6 +216,7 @@ class AutoModerationRule(Hashable):
         presets: List[KeywordPresetType] = ...,
         notify_channel: GuildChannel = ...,
         timeout_seconds: int = ...,
+        block_message: bool = ...,
         enabled: bool = ...,
         exempt_roles: List[Role] = ...,
         exempt_channels: List[GuildChannel] = ...,
@@ -231,6 +233,7 @@ class AutoModerationRule(Hashable):
         presets: List[KeywordPresetType] = MISSING,
         notify_channel: GuildChannel = MISSING,
         timeout_seconds: int = MISSING,
+        block_message: bool = MISSING,
         enabled: bool = MISSING,
         exempt_roles: List[Role] = MISSING,
         exempt_channels: List[GuildChannel] = MISSING,
@@ -264,6 +267,8 @@ class AutoModerationRule(Hashable):
             The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
         timeout_seconds: :class:`int`
             The seconds to timeout the person triggered this rule.
+        block_message: :class:`bool`
+            Whether if this rule should blocks the message that triggered the rule or not. 
         enabled: :class:`bool`
             Whether if this rule is enabled.
         exempt_roles: :class:`Role`
@@ -297,18 +302,32 @@ class AutoModerationRule(Hashable):
         if presets is not MISSING:
             payload["trigger_metadata"]["presets"] = presets
 
-        if notify_channel is not MISSING or timeout_seconds is not MISSING:
+        if notify_channel is not MISSING or timeout_seconds is not MISSING or block_message is not MISSING:
             payload["actions"] = []
+            if block_message is not MISSING:
+                if block_message:
+                    payload['actions'].append({"type": 1})
+            else:
+                for action in self.actions:
+                    if action.type is ActionType.block:
+                        payload['actions'].append({"type": 1})
 
         if notify_channel is not MISSING and timeout_seconds is MISSING:
-            payload["actions"].append({"type": 1, "notify_channel_id": notify_channel.id})
+            payload["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
+            for action in self.actions:
+                if action.timeout_seconds is not None:
+                    payload["actions"].append({"type": 3, "metadata": { "duration_seconds": action.timeout_seconds}})
 
         if timeout_seconds is not MISSING and notify_channel is MISSING:
-            payload["actions"].append({"type": 2, "timeout_seconds": timeout_seconds})
+            payload["actions"].append({"type": 3, "metadata": { "duration_seconds": timeout_seconds}})
+            for action in self.actions:
+                if action.notify_channel_id is not None:
+                    payload['actions'].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
 
         if timeout_seconds is not MISSING and notify_channel is not MISSING:
-            payload["actions"].append({"type": 1, "notify_channel_id": notify_channel.id})
-            payload["actions"].append({"type": 2, "duration_seconds": timeout_seconds})
+            payload["actions"].append({"type": 2, "metadata": { "channel_id": notify_channel.id}})
+            payload["actions"].append({"type": 3, "metadata": { "duration_seconds": timeout_seconds}})
+            
 
         if enabled is not MISSING:
             payload["enabled"] = enabled
