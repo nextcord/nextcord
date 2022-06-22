@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
 
 if TYPE_CHECKING:
-    from nextcord.application_command import ClientCog
+    from nextcord.cog import Cog
     from nextcord.errors import ApplicationError
 
     from ..interactions import Interaction
@@ -35,12 +35,12 @@ Coro = Coroutine[Any, Any, T]
 MaybeCoro = Union[T, Coro[T]]
 CoroFunc = Callable[..., Coro[Any]]
 ApplicationCheck = Union[
-    Callable[[ClientCog, Interaction], MaybeCoro[bool]], Callable[[Interaction], MaybeCoro[bool]]
+    Callable[[Cog, Interaction], MaybeCoro[bool]], Callable[[Interaction], MaybeCoro[bool]]
 ]
 ApplicationHook = Union[
-    Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
+    Callable[[Cog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
 ]
 ApplicationErrorCallback = Union[
-    Callable[[ClientCog, Interaction, Exception], Coro[Any]],
+    Callable[[Cog, Interaction, Exception], Coro[Any]],
     Callable[[Interaction, Exception], Coro[Any]],
 ]

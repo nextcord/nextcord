@@ -88,6 +88,7 @@ class CommandCogMeta(CogMeta):
     def __new__(cls: Type[CommandCogMeta], *args: Any, **kwargs: Any) -> CommandCogMeta:
         name, bases, attrs = args
         attrs["__cog_settings__"] = kwargs.pop("command_attrs", {})
+        attrs["__cog_commands__"] = []
         new_cls = super().__new__(cls, name, bases, attrs, **kwargs)
 
         commands = {}
@@ -112,8 +113,8 @@ class CommandCogMeta(CogMeta):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
 
-        new_cls.__cog_commands__ = list(commands.values())  # this will be copied in Cog.__new__
-        return new_cls
+        new_cls.__cog_commands__ = list(commands.values())  # this will be copied in CommandCog.__new__
+        return new_cls # type: ignore
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args)
@@ -328,10 +329,10 @@ class CommandCog(Cog, metaclass=CommandCogMeta):
                     raise e
 
         # check if we're overriding the default
-        if cls.bot_check is not Cog.bot_check:
+        if cls.bot_check is not CommandCog.bot_check:
             bot.add_check(self.bot_check)
 
-        if cls.bot_check_once is not Cog.bot_check_once:
+        if cls.bot_check_once is not CommandCog.bot_check_once:
             bot.add_check(self.bot_check_once, call_once=True)
 
         # while Bot.add_listener can raise if it's not a coroutine,
@@ -354,10 +355,10 @@ class CommandCog(Cog, metaclass=CommandCogMeta):
             for _, method_name in self.__cog_listeners__:
                 bot.remove_listener(getattr(self, method_name))
 
-            if cls.bot_check is not Cog.bot_check:
+            if cls.bot_check is not CommandCog.bot_check:
                 bot.remove_check(self.bot_check)
 
-            if cls.bot_check_once is not Cog.bot_check_once:
+            if cls.bot_check_once is not CommandCog.bot_check_once:
                 bot.remove_check(self.bot_check_once, call_once=True)
         finally:
             try:
