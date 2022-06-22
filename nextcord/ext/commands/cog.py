@@ -113,7 +113,7 @@ class CommandCogMeta(CogMeta):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
 
-        new_cls.__cog_commands__ = list(commands.values())  # this will be copied in CommandCog.__new__
+        new_cls.__cog_commands__ = list(commands.values()) # type: ignore
         return new_cls # type: ignore
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
