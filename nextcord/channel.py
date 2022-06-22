@@ -1048,7 +1048,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
         stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = None,
         nonce: Optional[str] = None,
         allowed_mentions: Optional[AllowedMentions] = None,
-        reference: Optional[MessageReference] = None,
         mention_author: Optional[bool] = None,
         view: Optional[ui.View] = None,
         reason: Optional[str] = None,
@@ -1133,14 +1132,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
         if mention_author is not None:
             raw_allowed_mentions = raw_allowed_mentions or AllowedMentions().to_dict()
             raw_allowed_mentions["replied_user"] = bool(mention_author)
-
-        if reference is not None:
-            try:
-                raw_reference = reference.to_message_reference_dict()
-            except AttributeError:
-                raise InvalidArgument(
-                    "reference parameter must be Message, MessageReference, or PartialMessage"
-                ) from None
 
         if view:
             if not hasattr(view, "__discord_ui_view__"):
