@@ -92,8 +92,9 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import BaseApplicationCommand, ClientCog
+    from .application_command import BaseApplicationCommand
     from .channel import DMChannel
+    from .cog import Cog
     from .enums import Locale
     from .member import Member
     from .message import Message
@@ -307,7 +308,7 @@ class Client:
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
         self._lazy_load_commands: bool = lazy_load_commands
-        self._client_cogs: Set[ClientCog] = set()
+        self._client_cogs: Set[Cog] = set()
         self._rollout_associate_known: bool = rollout_associate_known
         self._rollout_delete_unknown: bool = rollout_delete_unknown
         self._rollout_register_new: bool = rollout_register_new
@@ -2406,14 +2407,14 @@ class Client:
                 for cmd in to_register:
                     self.add_application_command(cmd, use_rollout=True)
 
-    def add_cog(self, cog: ClientCog) -> None:
+    def add_cog(self, cog: Cog) -> None:
         # cog.process_app_cmds()
         for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
 
         self._client_cogs.add(cog)
 
-    def remove_cog(self, cog: ClientCog) -> None:
+    def remove_cog(self, cog: Cog) -> None:
         for app_cmd in cog.application_commands:
             self._connection.remove_application_command(app_cmd)
 

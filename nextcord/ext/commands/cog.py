@@ -23,8 +23,6 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
-import asyncio
-import inspect
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -33,15 +31,13 @@ from typing import (
     Dict,
     Generator,
     List,
-    Optional,
     Tuple,
     Type,
     TypeVar,
 )
 
 import nextcord.utils
-from nextcord.application_command import ClientCog, _cog_special_method
-from nextcord.interactions import Interaction
+from nextcord.cog import Cog, CogMeta, _cog_special_method
 
 from ._types import _BaseCommand
 
@@ -51,58 +47,23 @@ if TYPE_CHECKING:
     from .core import Command
 
 __all__ = (
-    "CogMeta",
-    "Cog",
+    "CommandCogMeta",
+    "CommandCog",
 )
 
-CogT = TypeVar("CogT", bound="Cog")
+CogT = TypeVar("CogT", bound="CommandCog")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
 MISSING: Any = nextcord.utils.MISSING
 
 
-class CogMeta(type):
-    """A metaclass for defining a cog.
+class CommandCogMeta(CogMeta):
+    """The custom metaclass for Command Cogs.
 
-    Note that you should probably not use this directly. It is exposed
-    purely for documentation purposes along with making custom metaclasses to intermix
-    with other metaclasses such as the :class:`abc.ABCMeta` metaclass.
-
-    For example, to create an abstract cog mixin class, the following would be done.
-
-    .. code-block:: python3
-
-        import abc
-
-        class CogABCMeta(commands.CogMeta, abc.ABCMeta):
-            pass
-
-        class SomeMixin(metaclass=abc.ABCMeta):
-            pass
-
-        class SomeCogMixin(SomeMixin, commands.Cog, metaclass=CogABCMeta):
-            pass
-
-    .. note::
-
-        When passing an attribute of a metaclass that is documented below, note
-        that you must pass it as a keyword-only argument to the class creation
-        like the following example:
-
-        .. code-block:: python3
-
-            class MyCog(commands.Cog, name='My Cog'):
-                pass
+    This class inherits from :class:`CogMeta`.
 
     Attributes
     -----------
-    name: :class:`str`
-        The cog name. By default, it is the name of the class with no modification.
-    description: :class:`str`
-        The cog description. By default, it is the cleaned docstring of the class.
-
-        .. versionadded:: 1.6
-
     command_attrs: :class:`dict`
         A list of attributes to apply to every command inside this cog. The dictionary
         is passed into the :class:`Command` options at ``__init__``.
@@ -121,34 +82,23 @@ class CogMeta(type):
                     pass # hidden -> False
     """
 
-    __cog_name__: str
     __cog_settings__: Dict[str, Any]
     __cog_commands__: List[Command]
-    __cog_listeners__: List[Tuple[str, str]]
 
-    def __new__(cls: Type[CogMeta], *args: Any, **kwargs: Any) -> CogMeta:
+    def __new__(cls: Type[CommandCogMeta], *args: Any, **kwargs: Any) -> CommandCogMeta:
         name, bases, attrs = args
-        attrs["__cog_name__"] = kwargs.pop("name", name)
         attrs["__cog_settings__"] = kwargs.pop("command_attrs", {})
-
-        description = kwargs.pop("description", None)
-        if description is None:
-            description = inspect.cleandoc(attrs.get("__doc__", ""))
-        attrs["__cog_description__"] = description
+        new_cls = super().__new__(cls, name, bases, attrs, **kwargs)
 
         commands = {}
-        listeners = {}
         no_bot_cog = (
             "Commands or listeners must not start with cog_ or bot_ (in method {0.__name__}.{1})"
         )
 
-        new_cls = super().__new__(cls, name, bases, attrs, **kwargs)
         for base in reversed(new_cls.__mro__):
             for elem, value in base.__dict__.items():
                 if elem in commands:
                     del commands[elem]
-                if elem in listeners:
-                    del listeners[elem]
 
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
@@ -161,26 +111,8 @@ class CogMeta(type):
                     if elem.startswith(("cog_", "bot_")):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
-                elif asyncio.iscoroutinefunction(value):
-                    try:
-                        getattr(value, "__cog_listener__")
-                    except AttributeError:
-                        continue
-                    else:
-                        if elem.startswith(("cog_", "bot_")):
-                            raise TypeError(no_bot_cog.format(base, elem))
-                        listeners[elem] = value
 
         new_cls.__cog_commands__ = list(commands.values())  # this will be copied in Cog.__new__
-
-        listeners_as_list = []
-        for listener in listeners.values():
-            for listener_name in listener.__cog_listener_names__:
-                # I use __name__ instead of just storing the value so I can inject
-                # the self attribute when the time comes to add them to the bot
-                listeners_as_list.append((listener_name, listener.__name__))
-
-        new_cls.__cog_listeners__ = listeners_as_list
         return new_cls
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -191,21 +123,17 @@ class CogMeta(type):
         return cls.__cog_name__
 
 
-class Cog(ClientCog, metaclass=CogMeta):
-    """The base class that all cogs must inherit from.
+class CommandCog(Cog, metaclass=CommandCogMeta):
+    """A base class that adds support for prefixed commands.
 
-    A cog is a collection of commands, listeners, and optional state to
-    help group commands together. More information on them can be found on
-    the :ref:`ext_commands_cogs` page.
-
-    When inheriting from this class, the options shown in :class:`CogMeta`
-    are equally valid here.
+    This class inherits from :class:`Cog` and uses the :class:`CommandCogMeta`
+    metaclass.
     """
 
     __cog_name__: ClassVar[str]
     __cog_settings__: ClassVar[Dict[str, Any]]
     __cog_commands__: ClassVar[List[Command]]
-    __cog_listeners__: ClassVar[List[Tuple[str, str]]]
+    __cog_listeners__: List[Tuple[str, str]]
 
     def __new__(cls: Type[CogT], *args: Any, **kwargs: Any) -> CogT:
         # For issue 426, we need to store a copy of the command objects
@@ -282,59 +210,6 @@ class Cog(ClientCog, metaclass=CogMeta):
                 if isinstance(command, GroupMixin):
                     yield from command.walk_commands()
 
-    def get_listeners(self) -> List[Tuple[str, Callable[..., Any]]]:
-        """Returns a :class:`list` of (name, function) listener pairs that are defined in this cog.
-
-        Returns
-        --------
-        List[Tuple[:class:`str`, :ref:`coroutine <coroutine>`]]
-            The listeners defined in this cog.
-        """
-        return [(name, getattr(self, method_name)) for name, method_name in self.__cog_listeners__]
-
-    @classmethod
-    def listener(cls, name: str = MISSING) -> Callable[[FuncT], FuncT]:
-        """A decorator that marks a function as a listener.
-
-        This is the cog equivalent of :meth:`.Bot.listen`.
-
-        Parameters
-        ------------
-        name: :class:`str`
-            The name of the event being listened to. If not provided, it
-            defaults to the function's name.
-
-        Raises
-        --------
-        TypeError
-            The function is not a coroutine function or a string was not passed as
-            the name.
-        """
-
-        if name is not MISSING and not isinstance(name, str):
-            raise TypeError(
-                f"Cog.listener expected str but received {name.__class__.__name__!r} instead."
-            )
-
-        def decorator(func: FuncT) -> FuncT:
-            actual = func
-            if isinstance(actual, staticmethod):
-                actual = actual.__func__
-            if not asyncio.iscoroutinefunction(actual):
-                raise TypeError("Listener function must be a coroutine function.")
-            actual.__cog_listener__ = True
-            to_assign = name or actual.__name__
-            try:
-                actual.__cog_listener_names__.append(to_assign)
-            except AttributeError:
-                actual.__cog_listener_names__ = [to_assign]
-            # we have to return `func` instead of `actual` because
-            # we need the type to be `staticmethod` for the metaclass
-            # to pick it up but the metaclass unfurls the function and
-            # thus the assignments need to be on the actual function
-            return func
-
-        return decorator
 
     def has_error_handler(self) -> bool:
         """:class:`bool`: Checks whether the cog has an error handler.

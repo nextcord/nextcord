@@ -48,7 +48,7 @@ from typing import (
 import nextcord
 
 from ._types import _BaseCommand
-from .cog import Cog
+from .cog import CommandCog
 from .context import Context
 from .converter import Greedy, get_converter, run_converters
 from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMapping, MaxConcurrency
@@ -92,7 +92,7 @@ __all__ = (
 MISSING: Any = nextcord.utils.MISSING
 
 T = TypeVar("T")
-CogT = TypeVar("CogT", bound="Cog")
+CogT = TypeVar("CogT", bound="CommandCog")
 CommandT = TypeVar("CommandT", bound="Command")
 ContextT = TypeVar("ContextT", bound="Context")
 # CHT = TypeVar('CHT', bound='Check')
@@ -568,7 +568,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         try:
             if cog is not None:
-                local = Cog._get_overridden_method(cog.cog_command_error)
+                local = CommandCog._get_overridden_method(cog.cog_command_error)
                 if local is not None:
                     wrapped = wrap_callback(local)
                     await wrapped(ctx, error)
@@ -817,7 +817,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         # call the cog local hook if applicable:
         if cog is not None:
-            hook = Cog._get_overridden_method(cog.cog_before_invoke)
+            hook = CommandCog._get_overridden_method(cog.cog_before_invoke)
             if hook is not None:
                 await hook(ctx)
 
@@ -837,7 +837,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         # call the cog local hook if applicable:
         if cog is not None:
-            hook = Cog._get_overridden_method(cog.cog_after_invoke)
+            hook = CommandCog._get_overridden_method(cog.cog_after_invoke)
             if hook is not None:
                 await hook(ctx)
 
@@ -1173,7 +1173,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
             cog = self.cog
             if cog is not None:
-                local_check = Cog._get_overridden_method(cog.cog_check)
+                local_check = CommandCog._get_overridden_method(cog.cog_check)
                 if local_check is not None:
                     ret = await nextcord.utils.maybe_coroutine(local_check, ctx)
                     if not ret:
@@ -1598,7 +1598,7 @@ def command(
 ) -> Callable[
     [
         Union[
-            Callable[Concatenate[Cog, ContextT, P], Coro[Any]],
+            Callable[Concatenate[CommandCog, ContextT, P], Coro[Any]],
             Callable[Concatenate[ContextT, P], Coro[Any]],
         ]
     ],
@@ -1689,7 +1689,7 @@ def group(
 ) -> Callable[
     [
         Union[
-            Callable[Concatenate[Cog, ContextT, P], Coro[Any]],
+            Callable[Concatenate[CommandCog, ContextT, P], Coro[Any]],
             Callable[Concatenate[ContextT, P], Coro[Any]],
         ]
     ],

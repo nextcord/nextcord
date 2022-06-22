@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from nextcord.voice_client import VoiceProtocol
 
     from .bot import AutoShardedBot, Bot
-    from .cog import Cog
+    from .cog import CommandCog
     from .core import Command
     from .help import HelpCommand
     from .view import StringView
@@ -54,7 +54,7 @@ MISSING: Any = nextcord.utils.MISSING
 
 T = TypeVar("T")
 BotT = TypeVar("BotT", bound="Union[Bot, AutoShardedBot]")
-CogT = TypeVar("CogT", bound="Cog")
+CogT = TypeVar("CogT", bound="CommandCog")
 
 if TYPE_CHECKING:
     P = ParamSpec("P")
@@ -271,8 +271,8 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         return pattern.sub("@%s" % user.display_name.replace("\\", r"\\"), self.prefix)
 
     @property
-    def cog(self) -> Optional[Cog]:
-        """Optional[:class:`.Cog`]: Returns the cog associated with this context's command. None if it does not exist."""
+    def cog(self) -> Optional[CommandCog]:
+        """Optional[:class:`.CommandCog`]: Returns the cog associated with this context's command. None if it does not exist."""
 
         if self.command is None:
             return None
