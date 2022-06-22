@@ -58,6 +58,7 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import (
         CategoryChannel,
+        ForumChannel,
         PartialMessageable,
         StageChannel,
         TextChannel,
