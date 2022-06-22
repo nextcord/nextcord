@@ -2302,8 +2302,8 @@ class ConnectionState:
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
-    def parse_auto_moderation_rule_executed(self, data: AutoModerationActionExecutedEvent) -> None:
-        self.dispatch("automod_rule_executed", AutoModerationAction(data["action"]))
+    def parse_auto_moderation_action_execution(self, data: AutoModerationActionExecutedEvent) -> None:
+        self.dispatch("automod_action_execution", AutoModerationAction(data["action"]))
 
     async def _add_automod_rule_from_guild_data(self, data: GuildPayload):
         id = int(data["id"])

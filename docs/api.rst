@@ -1195,7 +1195,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     .. versionadded:: 2.0
 
-.. function:: on_automod_action_executed(action)
+.. function:: on_automod_action_execution(action)
 
     Called when an auto moderation action is executed.
 
