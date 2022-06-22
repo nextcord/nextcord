@@ -113,8 +113,8 @@ class CommandCogMeta(CogMeta):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
 
-        new_cls.__cog_commands__ = list(commands.values()) # type: ignore
-        return new_cls # type: ignore
+        new_cls.__cog_commands__ = list(commands.values())  # type: ignore
+        return new_cls  # type: ignore
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args)
@@ -210,7 +210,6 @@ class CommandCog(Cog, metaclass=CommandCogMeta):
                 yield command
                 if isinstance(command, GroupMixin):
                     yield from command.walk_commands()
-
 
     def has_error_handler(self) -> bool:
         """:class:`bool`: Checks whether the cog has an error handler.

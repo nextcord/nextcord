@@ -503,9 +503,7 @@ class CallbackMixin:
         if not self.parent_cog:
             return None
 
-        return Cog._get_overridden_method(
-            self.parent_cog.cog_application_command_before_invoke
-        )
+        return Cog._get_overridden_method(self.parent_cog.cog_application_command_before_invoke)
 
     @property
     def cog_after_invoke(self) -> Optional[ApplicationHook]:
@@ -519,9 +517,7 @@ class CallbackMixin:
         if not self.parent_cog:
             return None
 
-        return Cog._get_overridden_method(
-            self.parent_cog.cog_application_command_after_invoke
-        )
+        return Cog._get_overridden_method(self.parent_cog.cog_application_command_after_invoke)
 
     def has_error_handler(self) -> bool:
         """:class:`bool`: Checks whether the command has an error handler registered."""
@@ -663,9 +659,7 @@ class CallbackMixin:
 
         # Cog check
         if self.parent_cog:
-            cog_check = Cog._get_overridden_method(
-                self.parent_cog.cog_application_command_check
-            )
+            cog_check = Cog._get_overridden_method(self.parent_cog.cog_application_command_check)
             if cog_check is not None and not await maybe_coroutine(cog_check, interaction):
                 raise ApplicationCheckFailure(
                     f"The cog check functions for application command {self.error_name} failed."

@@ -26,9 +26,20 @@ from __future__ import annotations
 import asyncio
 import inspect
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+)
 
-from .enums import ApplicationCommandType, ApplicationCommandOptionType
+from .enums import ApplicationCommandOptionType, ApplicationCommandType
 from .utils import MISSING
 
 if TYPE_CHECKING:
@@ -41,6 +52,7 @@ __all__ = (
 )
 
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+
 
 def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
@@ -110,6 +122,7 @@ class CogMeta(type):
     def qualified_name(cls) -> str:
         return cls.__cog_name__
 
+
 class Cog(metaclass=CogMeta):
     """The base class that all cogs must inherit from.
 
@@ -135,7 +148,7 @@ class Cog(metaclass=CogMeta):
         """Iterates through the application (sub)commands contained within the Cog, runs their from_callback
         methods, then adds them to the internal list of application commands for this cog.
 
-        After adding all of the application commands into the internal list, 
+        After adding all of the application commands into the internal list,
         """
         self.__cog_application_commands__ = []
         for base in reversed(self.__class__.__mro__):
@@ -150,7 +163,10 @@ class Cog(metaclass=CogMeta):
                         value.parent_cog = self
                         value.from_callback(value.callback, call_children=False)
                         self.__cog_application_commands__.append(value)
-                    elif value.cmd_type is ApplicationCommandOptionType.sub_command or value.cmd_type is ApplicationCommandOptionType.sub_command_group:
+                    elif (
+                        value.cmd_type is ApplicationCommandOptionType.sub_command
+                        or value.cmd_type is ApplicationCommandOptionType.sub_command_group
+                    ):
                         # As subcommands are part of a parent command and
                         #  not usable on their own, we don't add them to the command list, but do set the self_argument and
                         #  run them from the callback.
@@ -208,7 +224,7 @@ class Cog(metaclass=CogMeta):
     @classmethod
     def listener(cls, name: str = MISSING):
         """A decorator that marks a function as a listener.
-        
+
         Parameters
         ------------
         name: :class:`str`
