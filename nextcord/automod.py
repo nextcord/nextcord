@@ -108,7 +108,7 @@ class AutoModerationRule(Hashable):
             Bots are always not affected by any rule.
     exempt_channel_ids: List[:class:`int`]
         A list of channels that will not be affected by this rule.
-    keyword_filters: Optional[List[str]]
+    keyword_filters: Optional[List[:class:`str`]]
         The custom filters for this auto moderation rule. `None` if not set.
     presets: Optional[List[:class:`KeywordPresetType`]]
         The pre-set types of this auto moderation rule. `None` if not set.
