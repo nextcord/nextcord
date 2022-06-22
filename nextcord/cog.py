@@ -95,7 +95,6 @@ class CogMeta(type):
     def __new__(cls: Type[CogMeta], *args: Any, **kwargs: Any) -> CogMeta:
         name, bases, attrs = args
         attrs["__cog_name__"] = kwargs.pop("name", name)
-        attrs["__cog_application_settings__"] = kwargs.pop("application_command_attrs", {})
 
         description = kwargs.pop("description", None)
         if description is None:
@@ -121,6 +120,7 @@ class Cog(metaclass=CogMeta):
     When inheriting from this class, the options shown in :class:`CogMeta`
     are equally valid here.
     """
+
     __cog_name__: ClassVar[str]
     __cog_application_commands__: List[BaseApplicationCommand]
     __cog_listeners__: List[Tuple[str, str]]
@@ -180,6 +180,20 @@ class Cog(metaclass=CogMeta):
         for listener in listeners.values():
             for listener_name in listener.__cog_listener_names__:
                 self.__cog_listeners__.append((listener_name, listener.__name__))
+
+    @property
+    def qualified_name(self) -> str:
+        """:class:`str`: Returns the cog's specified name, not the class name."""
+        return self.__cog_name__
+
+    @property
+    def description(self) -> str:
+        """:class:`str`: Returns the cog's description, typically the cleaned docstring."""
+        return self.__cog_description__
+
+    @description.setter
+    def description(self, description: str) -> None:
+        self.__cog_description__ = description
 
     @property
     def application_commands(self) -> List[BaseApplicationCommand]:
