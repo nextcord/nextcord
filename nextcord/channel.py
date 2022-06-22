@@ -1293,7 +1293,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         self.position: int = data["position"]
         self.bitrate: int = data.get("bitrate")
         self.user_limit: int = data.get("user_limit")
-        self.flags: ChannelFlags = ChannelFlags(data.get("flags", 0))
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
         self._fill_overwrites(data)
 
     @property

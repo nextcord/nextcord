@@ -464,7 +464,7 @@ class HTTPClient:
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
     ) -> Dict[str, Any]:
         payload = {}
@@ -509,7 +509,7 @@ class HTTPClient:
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
@@ -591,7 +591,7 @@ class HTTPClient:
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[dict]] = None,
     ) -> Response[message.Message]:
@@ -626,7 +626,7 @@ class HTTPClient:
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
