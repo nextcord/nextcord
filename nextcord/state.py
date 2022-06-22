@@ -1229,7 +1229,6 @@ class ConnectionState:
             except NotFound:
                 continue
 
-
         self.dispatch("connect")
         self._ready_task = asyncio.create_task(self._delay_ready())
 
