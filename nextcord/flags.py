@@ -48,6 +48,7 @@ __all__ = (
     "Intents",
     "MemberCacheFlags",
     "ApplicationFlags",
+    "ChannelFlags",
 )
 
 FV = TypeVar("FV", bound="flag_value")
