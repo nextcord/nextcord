@@ -271,6 +271,11 @@ class AutoModerationRule(Hashable):
             A list of channels that should not be affected by this rule.
         reason: :class:`str`
             The reason why is this auto moderation rule edited.
+        
+        Raises
+        -------
+        InvalidArgument
+            You specified both ``keyword_filters`` and ``presets``.
         """
         payload = {}
         if name is not MISSING:

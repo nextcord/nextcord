@@ -3476,7 +3476,7 @@ class Guild(Hashable):
         Raises
         -------
         Forbidden
-            You're not allowed to do this.
+            You do not have permissions to do this.
         """
         return [
             AutoModerationRule(guild=self, state=self._state, data=rule)
@@ -3502,7 +3502,7 @@ class Guild(Hashable):
         Raises
         -------
         Forbidden
-            You're not allowed to do this.
+            You do not have proper permissions to do this.
         NotFound
             The rule you tried to find doesn't exist.
         """
@@ -3635,6 +3635,13 @@ class Guild(Hashable):
         -------
         :class:`AutoModerationRule`
             The rule that was created.
+        
+        Raises
+        -------
+        Forbidden
+            You do not have proper permissions to do this.
+        InvalidArgument
+            You specified both ``presets`` and ``keyword_filters``.
         """
         params = {
             "name": name,
