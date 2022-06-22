@@ -567,7 +567,6 @@ class HTTPClient:
         else:
             payload.update(msg_payload)
 
-        form.append({"name": "payload_json"})
         for index, file in enumerate(files):
             payload["attachments"].append(
                 {
@@ -576,7 +575,18 @@ class HTTPClient:
                     "description": file.description,
                 }
             )
-        form[0]["value"] = utils._to_json(payload)
+
+            form.append(
+                {
+                    "name": f"files[{index}]",
+                    "value": file.fp,
+                    "filename": file.filename,
+                    "content_type": "application/octet-stream",
+                }
+            )
+
+        form.append({"name": "payload_json", "value": utils._to_json(payload)})
+
         return form
 
     def send_multipart_helper(
