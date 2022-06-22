@@ -135,7 +135,7 @@ class AutoModerationRule(Hashable):
 
         trigger_metadata: TriggerMetadataPayload = data["trigger_metadata"]
 
-        self.keyword_filters = trigger_metadata.get("keyword_filters")
+        self.keyword_filters = trigger_metadata.get("keyword_filter")
 
         self.actions: List[AutoModerationAction] = []
         self.presets = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]] if trigger_metadata.get("presets") is not None else None  # type: ignore
@@ -293,7 +293,7 @@ class AutoModerationRule(Hashable):
             )
 
         if keyword_filters is not MISSING:
-            payload["trigger_metadata"]["keyword_filters"] = keyword_filters
+            payload["trigger_metadata"]["keyword_filter"] = keyword_filters
 
         if presets is not MISSING and self.trigger_type != TriggerType.keyword_presets:
             raise InvalidArgument(
@@ -317,7 +317,7 @@ class AutoModerationRule(Hashable):
                     if action.type is ActionType.block:
                         payload["actions"].append({"type": 1})
 
-        if notify_channel is not MISSING and timeout_seconds is MISSING:
+        if (notify_channel is not MISSING) and (timeout_seconds is MISSING):
             payload["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
             for action in self.actions:
                 if action.timeout_seconds is not None:
@@ -325,7 +325,7 @@ class AutoModerationRule(Hashable):
                         {"type": 3, "metadata": {"duration_seconds": action.timeout_seconds}}
                     )
 
-        if timeout_seconds is not MISSING and notify_channel is MISSING:
+        if (timeout_seconds is not MISSING) and (notify_channel is MISSING):
             payload["actions"].append(
                 {"type": 3, "metadata": {"duration_seconds": timeout_seconds}}
             )
@@ -335,7 +335,7 @@ class AutoModerationRule(Hashable):
                         {"type": 2, "metadata": {"channel_id": notify_channel.id}}
                     )
 
-        if timeout_seconds is not MISSING and notify_channel is not MISSING:
+        if (timeout_seconds is not MISSING) and (notify_channel is not MISSING):
             payload["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
             payload["actions"].append(
                 {"type": 3, "metadata": {"duration_seconds": timeout_seconds}}
