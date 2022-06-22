@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Unio
 from .abc import Messageable
 from .enums import ChannelType, try_enum
 from .errors import ClientException
+from .flags import ChannelFlags
 from .mixins import Hashable
 from .utils import MISSING, _get_as_snowflake, parse_time
 
@@ -152,6 +153,7 @@ class Thread(Messageable, Hashable):
         "auto_archive_duration",
         "archive_timestamp",
         "create_timestamp",
+        "flags",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload):
@@ -183,6 +185,7 @@ class Thread(Messageable, Hashable):
         self.message_count = data["message_count"]
         self.member_count = data["member_count"]
         self._unroll_metadata(data["thread_metadata"])
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
 
         try:
             member = data["member"]
