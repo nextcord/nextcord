@@ -256,7 +256,7 @@ class AutoModerationRule(Hashable):
 
             .. note::
 
-                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_preset`
+                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_presets`
         notify_channel: :class:`abc.GuildChannel`
             The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
         timeout_seconds: :class:`int`
@@ -295,8 +295,8 @@ class AutoModerationRule(Hashable):
         if keyword_filters is not MISSING:
             payload["trigger_metadata"]["keyword_filters"] = keyword_filters
 
-        if presets is not MISSING and self.trigger_type != TriggerType.keyword_preset:
-            raise InvalidArgument("trigger_type must be TriggerType.keyword_preset to pass presets")
+        if presets is not MISSING and self.trigger_type != TriggerType.keyword_presets:
+            raise InvalidArgument("trigger_type must be TriggerType.keyword_presets to pass presets")
 
         if presets is not MISSING:
             payload["trigger_metadata"]["presets"] = [preset.value for preset in presets]
