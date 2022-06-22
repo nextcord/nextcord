@@ -296,7 +296,9 @@ class AutoModerationRule(Hashable):
             payload["trigger_metadata"]["keyword_filters"] = keyword_filters
 
         if presets is not MISSING and self.trigger_type != TriggerType.keyword_presets:
-            raise InvalidArgument("trigger_type must be TriggerType.keyword_presets to pass presets")
+            raise InvalidArgument(
+                "trigger_type must be TriggerType.keyword_presets to pass presets"
+            )
 
         if presets is not MISSING:
             payload["trigger_metadata"]["presets"] = [preset.value for preset in presets]
