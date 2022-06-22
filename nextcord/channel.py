@@ -49,6 +49,7 @@ from . import abc, ui, utils
 from .asset import Asset
 from .enums import ChannelType, StagePrivacyLevel, VideoQualityMode, VoiceRegion, try_enum
 from .errors import ClientException, InvalidArgument
+from .file import File
 from .flags import ChannelFlags
 from .iterators import ArchivedThreadIterator
 from .mentions import AllowedMentions
@@ -73,7 +74,6 @@ __all__ = (
 if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
     from .embeds import Embed
-    from .file import File
     from .guild import Guild, GuildChannel as GuildChannelType
     from .member import Member, VoiceState
     from .message import Message, MessageReference, PartialMessage
