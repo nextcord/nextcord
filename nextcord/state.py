@@ -1222,12 +1222,7 @@ class ConnectionState:
 
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
-            try:
-                asyncio.create_task(self._add_automod_rule_from_guild_data(guild_data))
-            except Forbidden:
-                continue
-            except NotFound:
-                continue
+            asyncio.create_task(self._add_automod_rule_from_guild_data(guild_data))
 
         self.dispatch("connect")
         self._ready_task = asyncio.create_task(self._delay_ready())
@@ -2319,6 +2314,8 @@ class ConnectionState:
             for rule in rules:
                 self.add_automod_rule(data=rule)
         except Forbidden:
+            pass
+        except NotFound:  # idk why it raises but h
             pass
 
 
