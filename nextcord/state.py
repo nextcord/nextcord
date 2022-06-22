@@ -1222,9 +1222,7 @@ class ConnectionState:
 
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                self._add_automod_rule_from_guild_data(guild_data)  # type: ignore
+            asyncio.create_task(self._add_automod_rule_from_guild_data(guild_data))
 
         self.dispatch("connect")
         self._ready_task = asyncio.create_task(self._delay_ready())
