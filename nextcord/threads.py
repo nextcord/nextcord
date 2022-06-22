@@ -210,6 +210,7 @@ class Thread(Messageable, Hashable):
             pass
 
         self.slowmode_delay = data.get("rate_limit_per_user", 0)
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
 
         try:
             self._unroll_metadata(data["thread_metadata"])
@@ -561,6 +562,7 @@ class Thread(Messageable, Hashable):
         invitable: bool = MISSING,
         slowmode_delay: int = MISSING,
         auto_archive_duration: ThreadArchiveDuration = MISSING,
+        flags: ChannelFlags = MISSING,
     ) -> Thread:
         """|coro|
 
@@ -616,6 +618,8 @@ class Thread(Messageable, Hashable):
             payload["invitable"] = invitable
         if slowmode_delay is not MISSING:
             payload["rate_limit_per_user"] = slowmode_delay
+        if flags is not MISSING:
+            payload["flags"] = flags.value
 
         data = await self._state.http.edit_channel(self.id, **payload)
         # The data payload will always be a Thread payload
