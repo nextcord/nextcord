@@ -14,7 +14,7 @@ __title__ = "nextcord"
 __author__ = "tag-epic & Rapptz"
 __license__ = "MIT"
 __copyright__ = "Copyright 2015-present Rapptz & tag-epic"
-__version__ = "2.0.0rc2"
+__version__ = "2.0.0rc1"
 
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
@@ -76,7 +76,7 @@ class VersionInfo(NamedTuple):
 
 
 version_info: VersionInfo = VersionInfo(
-    major=2, minor=0, micro=0, releaselevel="candidate", serial=2
+    major=2, minor=0, micro=0, releaselevel="candidate", serial=1
 )
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
