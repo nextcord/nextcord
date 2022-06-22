@@ -67,7 +67,7 @@ class AutoModerationAction:
         self.type: ActionType = try_enum(ActionType, data["type"])
         metadata = data.get("metadata", {})
         self.notify_channel_id: Optional[int] = (
-            int(metadata.get("channel_id"))  # type: ignore
+            int(metadata.get("channel_id"))
             if metadata.get("channel_id") is not None
             else None
         )
