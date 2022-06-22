@@ -67,9 +67,7 @@ class AutoModerationAction:
         self.type: ActionType = try_enum(ActionType, data["type"])
         metadata = data.get("metadata", {})
         self.notify_channel_id: Optional[int] = (
-            int(metadata.get("channel_id"))
-            if metadata.get("channel_id") is not None
-            else None
+            int(metadata.get("channel_id")) if metadata.get("channel_id") is not None else None
         )
         self.timeout_seconds: Optional[int] = metadata.get("duration_seconds")
 
