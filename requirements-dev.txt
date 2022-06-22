@@ -1,0 +1,6 @@
+pre-commit==2.18.1
+taskipy==1.10.1
+slotscheck==0.14.0
+python-dotenv==0.20.0
+# python cli wrapper
+pyright==1.1.244

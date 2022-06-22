@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -23,10 +24,10 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from typing import List, Literal, Optional, TypedDict, Union
-from .user import PartialUser
-from .snowflake import Snowflake
-from .threads import ThreadMetadata, ThreadMember, ThreadArchiveDuration
 
+from .snowflake import Snowflake
+from .threads import ThreadArchiveDuration, ThreadMember, ThreadMetadata
+from .user import PartialUser
 
 OverwriteType = Literal[0, 1]
 
@@ -68,15 +69,18 @@ class _TextChannelOptional(TypedDict, total=False):
 
 class TextChannel(_BaseGuildChannel, _TextChannelOptional):
     type: Literal[0]
-    
+
+
 class _ForumChannelOptional(TypedDict, total=False):
     topic: str
     last_message_id: Optional[Snowflake]
     rate_limit_per_user: int
     default_auto_archive_duration: ThreadArchiveDuration
 
+
 class ForumChannel(_BaseGuildChannel, _ForumChannelOptional):
     type: Literal[15]
+
 
 class NewsChannel(_BaseGuildChannel, _TextChannelOptional):
     type: Literal[5]
@@ -132,7 +136,15 @@ class ThreadChannel(_BaseChannel, _ThreadChannelOptional):
     thread_metadata: ThreadMetadata
 
 
-GuildChannel = Union[TextChannel, ForumChannel, NewsChannel, VoiceChannel, CategoryChannel, StageChannel, ThreadChannel]
+GuildChannel = Union[
+    TextChannel,
+    ForumChannel,
+    NewsChannel,
+    VoiceChannel,
+    CategoryChannel,
+    StageChannel,
+    ThreadChannel,
+]
 
 
 class DMChannel(_BaseChannel):

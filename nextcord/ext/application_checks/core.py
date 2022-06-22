@@ -27,24 +27,30 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import Callable, Union, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Union, cast
 
 import nextcord
-from nextcord.application_command import ApplicationSubcommand, Interaction
+from nextcord.application_command import (
+    BaseApplicationCommand,
+    CallbackWrapper,
+    SlashApplicationSubcommand,
+)
+from nextcord.interactions import Interaction
+
 from .errors import (
+    ApplicationBotMissingAnyRole,
+    ApplicationBotMissingPermissions,
+    ApplicationBotMissingRole,
     ApplicationCheckAnyFailure,
     ApplicationCheckFailure,
-    ApplicationNoPrivateMessage,
-    ApplicationMissingRole,
+    ApplicationCheckForBotOnly,
     ApplicationMissingAnyRole,
-    ApplicationBotMissingRole,
-    ApplicationBotMissingAnyRole,
     ApplicationMissingPermissions,
-    ApplicationBotMissingPermissions,
-    ApplicationPrivateMessageOnly,
+    ApplicationMissingRole,
+    ApplicationNoPrivateMessage,
     ApplicationNotOwner,
     ApplicationNSFWChannelRequired,
-    ApplicationCheckForBotOnly,
+    ApplicationPrivateMessageOnly,
 )
 
 if TYPE_CHECKING:
@@ -70,16 +76,49 @@ __all__ = (
     "application_command_after_invoke",
 )
 
-T = TypeVar("T")
+
+class CheckWrapper(CallbackWrapper):
+    def __init__(self, callback: Union[Callable, CallbackWrapper], predicate):
+        super().__init__(callback)
+
+        if not asyncio.iscoroutinefunction(predicate):
+
+            @functools.wraps(predicate)
+            async def async_wrapper(ctx):
+                return predicate(ctx)
+
+            self.predicate = async_wrapper
+        else:
+            self.predicate = predicate
+
+    def __call__(self, *args, **kwargs):
+        return self.predicate(*args, **kwargs)
+
+    def modify(self, app_cmd: BaseApplicationCommand):
+        app_cmd.checks.append(self.predicate)
 
 
-def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
-    r"""A decorator that adds a check to the :class:`.ApplicationCommand` or its
-    subclasses. These checks are accessible via :attr:`.ApplicationCommand.checks`.
+if TYPE_CHECKING:
+    AC = Callable[
+        [
+            Union[
+                CoroFunc,
+                Callable[[Interaction], bool],
+                BaseApplicationCommand,
+                SlashApplicationSubcommand,
+            ]
+        ],
+        CheckWrapper,
+    ]
+
+
+def check(predicate: "ApplicationCheck") -> AC:
+    r"""A decorator that adds a check to the :class:`.BaseApplicationCommand` or its
+    subclasses. These checks are accessible via :attr:`.BaseApplicationCommand.checks`.
 
     These checks should be predicates that take in a single parameter taking
-    a :class:`.Interaction`. If the check returns a ``False``\-like value, 
-    an ApplicationCheckFailure is raised during invocation and sent to the 
+    a :class:`.Interaction`. If the check returns a ``False``\-like value,
+    an ApplicationCheckFailure is raised during invocation and sent to the
     :func:`.on_application_command_error` event.
 
     If an exception should be thrown in the predicate then it should be a
@@ -145,37 +184,18 @@ def check(predicate: "ApplicationCheck") -> Callable[[T], T]:
         The predicate to check if the command should be invoked.
     """
 
-    def decorator(
-        func: Union[ApplicationSubcommand, "CoroFunc"]
-    ) -> Union[ApplicationSubcommand, "CoroFunc"]:
-        if isinstance(func, ApplicationSubcommand):
-            func.checks.insert(0, predicate)
-        else:
-            if not hasattr(func, "__slash_command_checks__"):
-                func.__slash_command_checks__ = []
+    def wrapper(func):
+        return CheckWrapper(func, predicate)
 
-            func.__slash_command_checks__.append(predicate)
-
-        return func
-
-    if asyncio.iscoroutinefunction(predicate):
-        decorator.predicate = predicate
-    else:
-
-        @functools.wraps(predicate)
-        async def wrapper(ctx):
-            return predicate(ctx)
-
-        decorator.predicate = wrapper
-
-    return decorator
+    wrapper.predicate = predicate
+    return wrapper
 
 
-def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
-    r"""A :func:`check` that will pass if any of the given checks pass, 
+def check_any(*checks: "ApplicationCheck") -> AC:
+    r"""A :func:`check` that will pass if any of the given checks pass,
     i.e. using logical OR.
 
-    If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal 
+    If all checks fail then :exc:`.ApplicationCheckAnyFailure` is raised to signal
     the failure. It inherits from :exc:`.ApplicationCheckFailure`.
 
     .. note::
@@ -219,7 +239,9 @@ def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
     unwrapped = []
     for wrapped in checks:
         try:
-            pred = wrapped.predicate
+            # we only want to get the predicate, the arg type is not used
+            wrapper = wrapped(None)  # type: ignore
+            pred = wrapper.predicate  # type: ignore
         except AttributeError:
             raise TypeError(
                 f"{wrapped!r} must be wrapped by application_checks.check decorator"
@@ -243,7 +265,7 @@ def check_any(*checks: "ApplicationCheck") -> Callable[[T], T]:
     return check(predicate)
 
 
-def has_role(item: Union[int, str]) -> Callable[[T], T]:
+def has_role(item: Union[int, str]) -> AC:
     """A :func:`.check` that is added that checks if the member invoking the
     command has the role specified via the name or ID specified.
 
@@ -291,7 +313,7 @@ def has_role(item: Union[int, str]) -> Callable[[T], T]:
     return check(predicate)
 
 
-def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
+def has_any_role(*items: Union[int, str]) -> AC:
     r"""A :func:`.check` that is added that checks if the member invoking the
     command has **any** of the roles specified. This means that if they have
     one out of the three roles specified, then this check will return `True`.
@@ -325,9 +347,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
         # interaction.guild is None doesn't narrow interaction.user to Member
         getter = functools.partial(nextcord.utils.get, interaction.user.roles)  # type: ignore
         if any(
-            getter(id=item) is not None
-            if isinstance(item, int)
-            else getter(name=item) is not None
+            getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None
             for item in items
         ):
             return True
@@ -336,15 +356,15 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
     return check(predicate)
 
 
-def bot_has_role(item: int) -> Callable[[T], T]:
+def bot_has_role(item: Union[int, str]) -> AC:
     """Similar to :func:`.has_role` except checks if the bot itself has the
     role.
 
-    This check raises one of two special exceptions, 
-    :exc:`.ApplicationBotMissingRole` if the bot is missing the role, 
+    This check raises one of two special exceptions,
+    :exc:`.ApplicationBotMissingRole` if the bot is missing the role,
     or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
-    
+
     Parameters
     -----------
     item: Union[:class:`int`, :class:`str`]
@@ -377,18 +397,18 @@ def bot_has_role(item: int) -> Callable[[T], T]:
     return check(predicate)
 
 
-def bot_has_any_role(*items: int) -> Callable[[T], T]:
+def bot_has_any_role(*items: Union[str, int]) -> AC:
     """Similar to :func:`.has_any_role` except checks if the bot itself has
     any of the roles listed.
 
-    This check raises one of two special exceptions, 
-    :exc:`.ApplicationBotMissingAnyRole` if the bot is missing all roles, 
+    This check raises one of two special exceptions,
+    :exc:`.ApplicationBotMissingAnyRole` if the bot is missing all roles,
     or :exc:`.ApplicationNoPrivateMessage` if it is used in a private message.
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
     Parameters
     -----------
-    items: List[Union[:class:`str`, :class:`int`]]
+    *items: Union[:class:`str`, :class:`int`]
         An argument list of names or IDs to check that the bot has roles wise.
 
     Example
@@ -406,12 +426,9 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
         if interaction.guild is None:
             raise ApplicationNoPrivateMessage()
 
-        me = interaction.guild.me or interaction.client.user
-        getter = functools.partial(nextcord.utils.get, me.roles)
+        getter = functools.partial(nextcord.utils.get, interaction.guild.me.roles)
         if any(
-            getter(id=item) is not None
-            if isinstance(item, int)
-            else getter(name=item) is not None
+            getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None
             for item in items
         ):
             return True
@@ -420,7 +437,7 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
     return check(predicate)
 
 
-def has_permissions(**perms: bool) -> Callable[[T], T]:
+def has_permissions(**perms: bool) -> AC:
     """A :func:`.check` that is added that checks if the member has all of
     the permissions necessary.
 
@@ -464,9 +481,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
         except AttributeError:
             raise ApplicationNoPrivateMessage()
 
-        missing = [
-            perm for perm, value in perms.items() if getattr(permissions, perm) != value
-        ]
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:
             return True
@@ -476,7 +491,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
     return check(predicate)
 
 
-def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
+def bot_has_permissions(**perms: bool) -> AC:
     """Similar to :func:`.has_permissions` except checks if the bot itself has
     the permissions listed.
 
@@ -500,9 +515,7 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
         except AttributeError:
             raise ApplicationNoPrivateMessage()
 
-        missing = [
-            perm for perm, value in perms.items() if getattr(permissions, perm) != value
-        ]
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:
             return True
@@ -512,7 +525,7 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
     return check(predicate)
 
 
-def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
+def has_guild_permissions(**perms: bool) -> AC:
     """Similar to :func:`.has_permissions`, but operates on guild wide
     permissions instead of the current channel permissions.
 
@@ -544,9 +557,7 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
             raise ApplicationNoPrivateMessage
 
         permissions = interaction.user.guild_permissions  # type: ignore
-        missing = [
-            perm for perm, value in perms.items() if getattr(permissions, perm) != value
-        ]
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:
             return True
@@ -556,7 +567,7 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
     return check(predicate)
 
 
-def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
+def bot_has_guild_permissions(**perms: bool) -> AC:
     """Similar to :func:`.has_guild_permissions`, but checks the bot
     members guild permissions.
     """
@@ -569,10 +580,8 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
         if not interaction.guild:
             raise ApplicationNoPrivateMessage
 
-        permissions = interaction.guild.me.guild_permissions  # type: ignore
-        missing = [
-            perm for perm, value in perms.items() if getattr(permissions, perm) != value
-        ]
+        permissions = interaction.guild.me.guild_permissions
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:
             return True
@@ -582,7 +591,7 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
     return check(predicate)
 
 
-def dm_only() -> Callable[[T], T]:
+def dm_only() -> AC:
     """A :func:`.check` that indicates this command must only be used in a
     DM context. Only private messages are allowed when
     using the command.
@@ -609,7 +618,7 @@ def dm_only() -> Callable[[T], T]:
     return check(predicate)
 
 
-def guild_only() -> Callable[[T], T]:
+def guild_only() -> AC:
     """A :func:`.check` that indicates this command must only be used in a
     guild context only. Basically, no private messages are allowed when
     using the command.
@@ -636,7 +645,7 @@ def guild_only() -> Callable[[T], T]:
     return check(predicate)
 
 
-def is_owner() -> Callable[[T], T]:
+def is_owner() -> AC:
     """A :func:`.check` that checks if the person invoking this command is the
     owner of the bot.
 
@@ -654,7 +663,7 @@ def is_owner() -> Callable[[T], T]:
     .. code-block:: python3
 
         bot = commands.Bot(owner_id=297045071457681409)
-    
+
         @bot.slash_command()
         @application_checks.is_owner()
         async def ownercmd(interaction: Interaction):
@@ -665,14 +674,14 @@ def is_owner() -> Callable[[T], T]:
         if not hasattr(interaction.client, "is_owner"):
             raise ApplicationCheckForBotOnly()
 
-        if not await interaction.client.is_owner(interaction.user):
+        if not await interaction.client.is_owner(interaction.user):  # type: ignore[handled above]
             raise ApplicationNotOwner("You do not own this bot.")
         return True
 
     return check(predicate)
 
 
-def is_nsfw() -> Callable[[T], T]:
+def is_nsfw() -> AC:
     """A :func:`.check` that checks if the channel is a NSFW channel.
 
     This check raises a special exception, :exc:`.ApplicationNSFWChannelRequired`
@@ -682,7 +691,7 @@ def is_nsfw() -> Callable[[T], T]:
     --------
 
     .. code-block:: python3
-    
+
         @bot.slash_command()
         @application_checks.is_nsfw()
         async def ownercmd(interaction: Interaction):
@@ -695,12 +704,12 @@ def is_nsfw() -> Callable[[T], T]:
             isinstance(ch, (nextcord.TextChannel, nextcord.Thread)) and ch.is_nsfw()
         ):
             return True
-        raise ApplicationNSFWChannelRequired(ch)  # type: ignore
+        raise ApplicationNSFWChannelRequired(ch)
 
     return check(pred)
 
 
-def application_command_before_invoke(coro) -> Callable[[T], T]:
+def application_command_before_invoke(coro) -> AC:
     """A decorator that registers a coroutine as a pre-invoke hook.
 
     This allows you to refer to one before invoke hook for several commands that
@@ -745,32 +754,32 @@ def application_command_before_invoke(coro) -> Callable[[T], T]:
         bot.add_cog(What())
     """
 
+    class BeforeInvokeModifier(CallbackWrapper):
+        def modify(self, app_cmd: BaseApplicationCommand):
+            app_cmd._callback_before_invoke = coro
+
     def decorator(
-        func: Union[ApplicationSubcommand, "CoroFunc"]
-    ) -> Union[ApplicationSubcommand, "CoroFunc"]:
-        if isinstance(func, ApplicationSubcommand):
-            func.application_command_before_invoke(coro)
-        else:
-            func.__application_command_before_invoke__ = coro
-        return func
+        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
+    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, BeforeInvokeModifier]:
+        return BeforeInvokeModifier(func)
 
     return decorator  # type: ignore
 
 
-def application_command_after_invoke(coro) -> Callable[[T], T]:
+def application_command_after_invoke(coro) -> AC:
     """A decorator that registers a coroutine as a post-invoke hook.
 
     This allows you to refer to one after invoke hook for several commands that
     do not have to be within the same cog.
     """
 
+    class AfterInvokeModifier(CallbackWrapper):
+        def modify(self, app_cmd: BaseApplicationCommand):
+            app_cmd._callback_after_invoke = coro
+
     def decorator(
-        func: Union[ApplicationSubcommand, "CoroFunc"]
-    ) -> Union[ApplicationSubcommand, "CoroFunc"]:
-        if isinstance(func, ApplicationSubcommand):
-            func.application_command_after_invoke(coro)
-        else:
-            func.__application_command_after_invoke__ = coro
-        return func
+        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
+    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, AfterInvokeModifier]:
+        return AfterInvokeModifier(func)
 
     return decorator  # type: ignore

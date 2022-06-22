@@ -34,7 +34,7 @@ Bot
 
     .. automethod:: Bot.command(*args, **kwargs)
         :decorator:
-    
+
     .. automethod:: Bot.event()
         :decorator:
 
@@ -438,6 +438,11 @@ Flag Converter
 .. autofunction:: nextcord.ext.commands.flag
 
 .. _ext_commands_api_errors:
+
+Warnings
+---------
+
+.. autoclass:: nextcord.ext.commands.MissingMessageContentIntentWarning
 
 Exceptions
 -----------
