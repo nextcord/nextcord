@@ -543,7 +543,7 @@ class HTTPClient:
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[dict]] = None,
     ) -> list[dict]:
@@ -1086,7 +1086,7 @@ class HTTPClient:
         embeds: Optional[List[embed.Embed]] = None,
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
@@ -1123,7 +1123,7 @@ class HTTPClient:
         embeds: Optional[List[embed.Embed]] = None,
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[dict]] = None,
         reason: Optional[str] = None,

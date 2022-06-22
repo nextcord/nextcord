@@ -37,6 +37,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -44,7 +45,7 @@ from typing import (
     overload,
 )
 
-from . import abc, utils
+from . import abc, ui, utils
 from .asset import Asset
 from .enums import ChannelType, StagePrivacyLevel, VideoQualityMode, VoiceRegion, try_enum
 from .errors import ClientException, InvalidArgument
@@ -71,12 +72,14 @@ __all__ = (
 
 if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
+    from .embeds import Embed
     from .file import File
     from .guild import Guild, GuildChannel as GuildChannelType
     from .member import Member, VoiceState
-    from .message import Message, PartialMessage
+    from .message import Message, MessageReference, PartialMessage
     from .role import Role
     from .state import ConnectionState
+    from .sticker import GuildSticker, StickerItem
     from .types.channel import (
         CategoryChannel as CategoryChannelPayload,
         DMChannel as DMChannelPayload,
@@ -204,7 +207,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
         self.default_auto_archive_duration: ThreadArchiveDuration = data.get(
             "default_auto_archive_duration", 1440
         )
-        self.flags: ChannelFlags = ChannelFlags(data.get("flags", 0))
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
         self._type: int = data.get("type", self._type)
         self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
         self._fill_overwrites(data)
@@ -868,7 +871,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         self.nsfw: bool = data.get("nsfw", False)
         # Does this need coercion into `int`? No idea yet.
         self.slowmode_delay: int = data.get("rate_limit_per_user", 0)
-        self.flags: ChannelFlags = ChannelFlags(data.get("flags", 0))
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
         self.default_auto_archive_duration: ThreadArchiveDuration = data.get(
             "default_auto_archive_duration", 1440
         )
@@ -1037,17 +1040,17 @@ class ForumChannel(abc.GuildChannel, Hashable):
         name: str,
         auto_archive_duration: ThreadArchiveDuration = MISSING,
         slowmode_delay: int = 0,
-        content=None,
-        embed=None,
-        embeds=None,
-        file=None,
-        files=None,
-        stickers=None,
-        nonce=None,
-        allowed_mentions=None,
-        reference=None,
-        mention_author=None,
-        view=None,
+        content: Optional[str] = None,
+        embed: Optional[Embed] = None,
+        embeds: Optional[List[Embed]] = None,
+        file: Optional[File] = None,
+        files: Optional[List[File]] = None,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = None,
+        nonce: Optional[str] = None,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        reference: Optional[MessageReference] = None,
+        mention_author: Optional[bool] = None,
+        view: Optional[ui.View] = None,
         reason: Optional[str] = None,
     ) -> Thread:
         """|coro|
@@ -1108,29 +1111,32 @@ class ForumChannel(abc.GuildChannel, Hashable):
             raise InvalidArgument("cannot pass both embed and embeds parameter to create_thread()")
 
         if embed is not None:
-            embed = embed.to_dict()
-
+            raw_embeds = [embed.to_dict()]
         elif embeds is not None:
-            embeds = [embed.to_dict() for embed in embeds]
+            raw_embeds = [embed.to_dict() for embed in embeds]
+        else:
+            raw_embeds = []
 
         if stickers is not None:
-            stickers = [sticker.id for sticker in stickers]
+            raw_stickers = [sticker.id for sticker in stickers]
+        else:
+            raw_stickers = []
 
         if allowed_mentions is not None:
             if state.allowed_mentions is not None:
-                allowed_mentions = state.allowed_mentions.merge(allowed_mentions).to_dict()
+                raw_allowed_mentions = state.allowed_mentions.merge(allowed_mentions).to_dict()
             else:
-                allowed_mentions = allowed_mentions.to_dict()
+                raw_allowed_mentions = allowed_mentions.to_dict()
         else:
-            allowed_mentions = state.allowed_mentions and state.allowed_mentions.to_dict()
+            raw_allowed_mentions = state.allowed_mentions and state.allowed_mentions.to_dict()
 
         if mention_author is not None:
-            allowed_mentions = allowed_mentions or AllowedMentions().to_dict()
-            allowed_mentions["replied_user"] = bool(mention_author)
+            raw_allowed_mentions = raw_allowed_mentions or AllowedMentions().to_dict()
+            raw_allowed_mentions["replied_user"] = bool(mention_author)
 
         if reference is not None:
             try:
-                reference = reference.to_message_reference_dict()
+                raw_reference = reference.to_message_reference_dict()
             except AttributeError:
                 raise InvalidArgument(
                     "reference parameter must be Message, MessageReference, or PartialMessage"
@@ -1148,30 +1154,9 @@ class ForumChannel(abc.GuildChannel, Hashable):
             raise InvalidArgument("cannot pass both file and files parameter to send()")
 
         if file is not None:
-            if not isinstance(file, File):
-                raise InvalidArgument("file parameter must be File")
+            files = [file]
 
-            try:
-                data = await state.http.start_thread_in_forum_channel_with_files(
-                    self.id,
-                    name=name,
-                    auto_archive_duration=auto_archive_duration
-                    or self.default_auto_archive_duration,
-                    rate_limit_per_user=slowmode_delay,
-                    files=files,
-                    content=content,
-                    embed=embed,
-                    embeds=embeds,
-                    nonce=nonce,
-                    allowed_mentions=allowed_mentions,
-                    stickers=stickers,
-                    components=components,
-                    reason=reason,
-                )
-            finally:
-                file.close()
-
-        elif files is not None:
+        if files is not None:
             if not all(isinstance(file, File) for file in files):
                 raise TypeError("Files parameter must be a list of type File")
 
@@ -1184,12 +1169,11 @@ class ForumChannel(abc.GuildChannel, Hashable):
                     rate_limit_per_user=slowmode_delay,
                     files=files,
                     content=content,
-                    embed=embed,
-                    embeds=embeds,
+                    embeds=raw_embeds,
                     nonce=nonce,
-                    allowed_mentions=allowed_mentions,
-                    stickers=stickers,
-                    components=components,
+                    allowed_mentions=raw_allowed_mentions,
+                    stickers=raw_stickers,
+                    components=components,  # type: ignore
                     reason=reason,
                 )
             finally:
@@ -1202,12 +1186,11 @@ class ForumChannel(abc.GuildChannel, Hashable):
                 auto_archive_duration=auto_archive_duration or self.default_auto_archive_duration,
                 rate_limit_per_user=slowmode_delay,
                 content=content,
-                embed=embed,
-                embeds=embeds,
+                embeds=raw_embeds,
                 nonce=nonce,
-                allowed_mentions=allowed_mentions,
-                stickers=stickers,
-                components=components,
+                allowed_mentions=raw_allowed_mentions,
+                stickers=raw_stickers,
+                components=components,  # type: ignore
                 reason=reason,
             )
 
@@ -1902,7 +1885,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         self.category_id: Optional[int] = utils._get_as_snowflake(data, "parent_id")
         self.nsfw: bool = data.get("nsfw", False)
         self.position: int = data["position"]
-        self.flags: ChannelFlags = ChannelFlags(data.get("flags", 0))
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
         self._fill_overwrites(data)
 
     @property
