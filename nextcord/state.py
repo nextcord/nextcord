@@ -56,7 +56,7 @@ from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, Status, try_enum
-from .errors import Forbidden
+from .errors import Forbidden, NotFound
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
@@ -1222,7 +1222,13 @@ class ConnectionState:
 
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
-            asyncio.create_task(self._add_automod_rule_from_guild_data(guild_data))
+            try:
+                asyncio.create_task(self._add_automod_rule_from_guild_data(guild_data))
+            except Forbidden:
+                continue
+            except NotFound:
+                continue
+
 
         self.dispatch("connect")
         self._ready_task = asyncio.create_task(self._delay_ready())
