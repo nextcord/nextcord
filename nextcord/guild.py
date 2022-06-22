@@ -3635,7 +3635,7 @@ class Guild(Hashable):
         -------
         :class:`AutoModerationRule`
             The rule that was created.
-        
+
         Raises
         -------
         Forbidden
