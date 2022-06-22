@@ -840,6 +840,6 @@ class ThreadMember(Hashable):
         """:class:`Member`: Retrieves the :class:`Member` of this thread member.
 
         .. note::
-            This method is an API call. If you have :attr:`Intents.member` and members cache enabled, consider :attr:`member` instead.
+            This method is an API call. If you have :attr:`Intents.members` and members cache enabled, consider :attr:`member` instead.
         """
         return await self.parent.guild.fetch_member(self.id)
