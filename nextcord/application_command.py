@@ -2027,6 +2027,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         option_class: Optional[Type[BaseCommandOption]] = BaseCommandOption,
     ) -> None:
         super().from_callback(callback=callback, option_class=option_class)
+        for modify_callback in self.modify_callbacks:
+            modify_callback(self)
 
     async def call_from_interaction(self, interaction: Interaction) -> None:
         """|coro|
@@ -2234,10 +2236,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             self.checks.extend(self.parent_cmd.checks)
             self._callback_before_invoke = self.parent_cmd._callback_before_invoke
             self._callback_after_invoke = self.parent_cmd._callback_after_invoke
-
         super().from_autocomplete()
-        for modify_callback in self.modify_callbacks:
-            modify_callback(self)
 
     def subcommand(
         self,
@@ -2407,9 +2406,6 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
                 child.from_callback(
                     callback=child.callback, option_class=option_class, call_children=call_children
                 )
-
-        for modify_callback in self.modify_callbacks:
-            modify_callback(self)
 
     def subcommand(
         self,
