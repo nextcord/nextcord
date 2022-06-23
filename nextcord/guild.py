@@ -3624,7 +3624,7 @@ class Guild(Hashable):
             The seconds to timeout the user that triggered this rule.
             Either this or `notify_channel` must be provided.
         block_message: :class:`bool`
-            Whether blocks this message when this rule is triggered. Default is True.
+            Whether or not the message that triggered the rule should be blocked when this rule is triggered. Default is True.
         enabled: :class:`bool`
             Whether or not this rule is enabled. Default is True.
         exempt_roles: List[:class:`Role`]
