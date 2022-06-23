@@ -134,7 +134,7 @@ class AutoModerationRule(Hashable):
         "exempt_channel_ids",
         "keyword_filters",
         "presets",
-        "actions"
+        "actions",
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
