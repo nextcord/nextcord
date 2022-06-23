@@ -3512,8 +3512,7 @@ class Guild(Hashable):
         return AutoModerationRule(guild=self, state=self._state, data=rule)
 
     def get_automod_rule(self, rule_id: int) -> Optional[AutoModerationRule]:
-        """
-        Get an auto moderation rule.
+        """Get an auto moderation rule.
 
         Parameters
         ----------
