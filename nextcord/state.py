@@ -2315,7 +2315,7 @@ class ConnectionState:
                 self.add_automod_rule(data=rule)
         except Forbidden:
             pass
-        except NotFound:  # idk why it raises but h
+        except NotFound:
             pass
 
 
