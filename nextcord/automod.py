@@ -264,7 +264,7 @@ class AutoModerationRule(Hashable):
         block_message: :class:`bool`
             Whether or not this rule should block the message which triggered the rule.
         enabled: :class:`bool`
-            Whether if this rule is enabled.
+            Whether or not if this rule is enabled.
         exempt_roles: :class:`Role`
             A list of roles that should not be affected by this rule.
         exempt_channels: :class:`abc.GuildChannel`
