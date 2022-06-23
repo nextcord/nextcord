@@ -176,7 +176,7 @@ class AutoModerationRule(Hashable):
 
     @property
     def exempt_roles(self) -> List[Role]:
-        """List[:class:`Role`]: A list of role that will not be affected by this rule. `[]` if not set."""
+        """List[:class:`Role`]: A list of roles that will not be affected by this rule. `[]` if not set."""
         return [self.guild.get_role(exempt_role_id) for exempt_role_id in self.exempt_role_ids]  # type: ignore -- they can't be None.
 
     @property
