@@ -325,7 +325,6 @@ class AutoModerationRule(Hashable):
                         {"type": 3, "metadata": {"duration_seconds": action.timeout_seconds}}
                     )
 
-
         if (timeout_seconds is not MISSING) and (notify_channel is MISSING):
             payload["actions"].append(
                 {"type": 3, "metadata": {"duration_seconds": timeout_seconds}}
