@@ -168,7 +168,7 @@ class CommandNotFound(CommandError):
     """
 
     def __init__(self, message: Optional[str] = None, *, command_name: str) -> None:
-        self.message: str = message
+        self.message: Optional[str] = message
         self.command_name: str = command_name
         super().__init__(message or f'Command "{self.command_name}" is not found')
 
