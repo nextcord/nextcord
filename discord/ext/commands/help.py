@@ -34,8 +34,8 @@ from nextcord.ext.commands.help import (
     DefaultHelpCommand,
     Group,
     HelpCommand,
-    MinimalHelpCommand,
     LegacyHelpCommand,
+    MinimalHelpCommand,
     Optional,
     Paginator,
     _HelpCommandImpl,
@@ -48,4 +48,10 @@ from nextcord.ext.commands.help import (
     re,
 )
 
-__all__ = ("Paginator", "HelpCommand", "DefaultHelpCommand", "MinimalHelpCommand", "LegacyHelpCommand")
+__all__ = (
+    "Paginator",
+    "HelpCommand",
+    "DefaultHelpCommand",
+    "MinimalHelpCommand",
+    "LegacyHelpCommand",
+)

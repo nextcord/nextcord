@@ -47,7 +47,7 @@ __all__ = (
     "HelpCommand",
     "DefaultHelpCommand",
     "MinimalHelpCommand",
-    "LegacyHelpCommand"
+    "LegacyHelpCommand",
 )
 
 # help -> shows info of bot on top/bottom and lists subcommands
