@@ -3676,6 +3676,7 @@ class Guild(Hashable):
             params["exempt_roles"] = [role.id for role in exempt_roles]
         if exempt_channels is not MISSING:
             params["exempt_channels"] = [channel.id for channel in exempt_channels]
+
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
         rule = self._state.add_automod_rule(data=data)
         return rule
