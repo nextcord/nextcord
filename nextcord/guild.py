@@ -3580,7 +3580,9 @@ class Guild(Hashable):
         trigger_type: TriggerType,
         presets: List[KeywordPresetType] = MISSING,
         notify_channel: GuildChannel = MISSING,
+        timeout_seconds: int = MISSING,
         enabled: bool = True,
+        exempt_roles: List[Role] = MISSING,
         exempt_channels: List[GuildChannel] = MISSING,
     ) -> AutoModerationRule:
         ...
