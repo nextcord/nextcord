@@ -362,5 +362,5 @@ class AutoModerationRule(Hashable):
 
     @property
     def created_at(self) -> datetime:
-        """:class:`~datetime.datetime`: The time when this rule is created."""
+        """:class:`~datetime.datetime`: The time when this rule was created."""
         return snowflake_time(self.id)
