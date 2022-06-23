@@ -3499,6 +3499,7 @@ class Guild(Hashable):
         Returns
         --------
         :class:`AutoModerationRule`
+             The rule from the rule ID.
 
         Raises
         -------
