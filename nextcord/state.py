@@ -2265,7 +2265,7 @@ class ConnectionState:
             )
 
     def add_automod_rule(self, data: AutoModerationRulePayload) -> AutoModerationRule:
-        rule = AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data)  # type: ignore -- automod rules can't be created in non-guilds
+        rule = AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data)  # type: ignore # automod rules can't be created in non-guilds
         self._automod_rules[int(data["id"])] = rule
         return rule
 
