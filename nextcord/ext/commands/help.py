@@ -31,15 +31,14 @@ import re
 from typing import TYPE_CHECKING
 
 import nextcord.utils
-
-from .core import Command, Group
-from .cog import Cog
-from .errors import CommandError
 from nextcord import Embed, Message
 
+from .cog import Cog
+from .core import Command, Group
+from .errors import CommandError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Union, Mapping
+    from typing import Any, Callable, Mapping, Optional, Union
 
     from .context import Context
 
