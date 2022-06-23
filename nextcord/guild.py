@@ -3472,6 +3472,7 @@ class Guild(Hashable):
         Returns
         -------
         List[:class:`AutoModerationRule`]
+            A list of the auto moderation rules configurated.
 
         Raises
         -------
