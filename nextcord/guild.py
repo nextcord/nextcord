@@ -3625,7 +3625,7 @@ class Guild(Hashable):
         block_message: :class:`bool`
             Whether blocks this message when this rule is triggered. Default is True.
         enabled: :class:`bool`
-            Whether if this rule is enabled or not. Default is True.
+            Whether or not this rule is enabled. Default is True.
         exempt_roles: List[:class:`Role`]
             The roles that should not be affected by this rule.
         exempt_channels: List[:class:`abc.GuildChannel`]
