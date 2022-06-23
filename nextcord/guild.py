@@ -3533,57 +3533,30 @@ class Guild(Hashable):
         name: str,
         event_type: EventType = EventType.message_send,
         trigger_type: TriggerType,
-        keyword_filters: List[str] = MISSING,
-        notify_channel: GuildChannel = MISSING,
-        enabled: bool = True,
-        exempt_roles: List[Role] = MISSING,
-        exempt_channels: List[GuildChannel] = MISSING,
-    ) -> AutoModerationRule:
-        ...
-
-    @overload
-    async def create_automod_rule(
-        self,
-        *,
-        name: str,
-        event_type: EventType = EventType.message_send,
-        trigger_type: TriggerType,
-        keyword_filters: List[str] = MISSING,
-        timeout_seconds: int = MISSING,
-        enabled: bool = True,
-        exempt_roles: List[Role] = MISSING,
-        exempt_channels: List[GuildChannel] = MISSING,
-    ) -> AutoModerationRule:
-        ...
-
-    @overload
-    async def create_automod_rule(
-        self,
-        *,
-        name: str,
-        event_type: EventType = EventType.message_send,
-        trigger_type: TriggerType,
-        presets: List[KeywordPresetType] = MISSING,
-        notify_channel: GuildChannel = MISSING,
-        enabled: bool = True,
-        exempt_roles: List[Role] = MISSING,
-        exempt_channels: List[GuildChannel] = MISSING,
-    ) -> AutoModerationRule:
-        ...
-
-    @overload
-    async def create_automod_rule(
-        self,
-        *,
-        name: str,
-        event_type: EventType = EventType.message_send,
-        trigger_type: TriggerType,
-        presets: List[KeywordPresetType] = MISSING,
+        keyword_filters: List[str],
         notify_channel: GuildChannel = MISSING,
         timeout_seconds: int = MISSING,
+        block_message: bool = True,
         enabled: bool = True,
         exempt_roles: List[Role] = MISSING,
-        exempt_channels: List[GuildChannel] = MISSING,
+        exempt_channels: List[GuildChannel] = MISSING
+    ) -> AutoModerationRule:
+        ...
+    
+    @overload
+    async def create_automod_rule(
+        self,
+        *,
+        name: str,
+        event_type: EventType = EventType.message_send,
+        trigger_type: TriggerType,
+        presets: List[KeywordPresetType],
+        notify_channel: GuildChannel = MISSING,
+        timeout_seconds: int = MISSING,
+        block_message: bool = True,
+        enabled: bool = True,
+        exempt_roles: List[Role] = MISSING,
+        exempt_channels: List[GuildChannel] = MISSING
     ) -> AutoModerationRule:
         ...
 
