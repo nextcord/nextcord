@@ -160,9 +160,17 @@ class CommandNotFound(CommandError):
     initial main command that is attempted to be invoked.
 
     This inherits from :exc:`CommandError`.
+
+    Attributes
+    -----------
+    command_name: :class:`str`
+        The command that was not found.
     """
 
-    pass
+    def __init__(self, message: Optional[str] = None, *, command_name: str) -> None:
+        self.message: str = message
+        self.command_name: str = command_name
+        super().__init__(message or f'Command "{self.command_name}" is not found')
 
 
 class MissingRequiredArgument(UserInputError):
