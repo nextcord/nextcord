@@ -64,7 +64,6 @@ if TYPE_CHECKING:
 
 __all__ = (
     "Command",
-    "Cog",
     "Group",
     "GroupMixin",
     "command",

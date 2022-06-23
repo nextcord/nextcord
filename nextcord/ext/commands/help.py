@@ -32,12 +32,14 @@ from typing import TYPE_CHECKING
 
 import nextcord.utils
 
-from ... import Embed, Message
-from .core import Cog, Command, Group
+from .core import Command, Group
+from .cog import Cog
 from .errors import CommandError
+from nextcord import Embed, Message
+
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Mapping, Optional, Union
+    from typing import Any, Callable, Optional, Union, Mapping
 
     from .context import Context
 
@@ -981,12 +983,12 @@ class DefaultHelpCommand(HelpCommand):
         return await self.send_embed(emb)
 
     # help <command>
-    async def send_command_help(self, cmd: Command) -> Union[Message, None]:
+    async def send_command_help(self, command: Command) -> Union[Message, None]:
 
-        syntax = f"{self.context.clean_prefix}{cmd.qualified_name} {cmd.signature}"
+        syntax = f"{self.context.clean_prefix}{command.qualified_name} {command.signature}"
         emb = Embed(title=self.command_heading)
         emb.add_field(
-            name=syntax, value=f"`{cmd.description or 'No description defined.'}`", inline=False
+            name=syntax, value=f"`{command.description or 'No description defined.'}`", inline=False
         )
 
         return await self.send_embed(emb)
