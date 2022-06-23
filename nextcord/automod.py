@@ -270,7 +270,7 @@ class AutoModerationRule(Hashable):
         exempt_channels: :class:`abc.GuildChannel`
             A list of channels that should not be affected by this rule.
         reason: :class:`str`
-            The reason why is this auto moderation rule edited.
+            The reason why this auto moderation rule was edited.
 
         Raises
         -------
