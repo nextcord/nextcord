@@ -2236,6 +2236,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             self.checks.extend(self.parent_cmd.checks)
             self._callback_before_invoke = self.parent_cmd._callback_before_invoke
             self._callback_after_invoke = self.parent_cmd._callback_after_invoke
+
         super().from_autocomplete()
 
     def subcommand(
