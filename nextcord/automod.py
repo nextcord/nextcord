@@ -138,7 +138,7 @@ class AutoModerationRule(Hashable):
         self.keyword_filters: Optional[List[str]] = trigger_metadata.get("keyword_filter")
 
         self.actions: List[AutoModerationAction] = []
-        self.presets = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]] if trigger_metadata.get("presets") is not None else None  # type: ignore
+        self.presets: Optional[List[KeywordPresetType]] = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]] if trigger_metadata.get("presets") is not None else None  # type: ignore
 
         for action in data["actions"]:
             self.actions.append(AutoModerationAction(data=action))
