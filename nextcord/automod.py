@@ -101,7 +101,7 @@ class AutoModerationRule(Hashable):
     creator_id: :class:`int`
         The creator of this auto moderation rule's ID.
     enabled: :class:`bool`
-        Whether is this rule enabled or not.
+        Whether this rule is enabled or not.
     exempt_role_ids: List[:class:`int`]
         A list of roles that will not be affected by this rule.
         .. note::
