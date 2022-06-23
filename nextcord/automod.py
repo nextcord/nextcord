@@ -62,6 +62,7 @@ class AutoModerationAction:
     timeout_seconds: Optional[:class:`int`]
         The number of seconds this rule should timeout when someone triggered the rule.
     """
+
     __slots__ = (
         "type",
         "notify_channel_id",
