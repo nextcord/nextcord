@@ -31,7 +31,7 @@ from .utils import MISSING, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from typing import List, Optional
+    from typing import List, Optional, Union
 
     from .abc import GuildChannel
     from .errors import InvalidArgument
@@ -40,11 +40,11 @@ if TYPE_CHECKING:
     from .role import Role
     from .state import ConnectionState
     from .types.automod import (
-        ActionMetadata as ActionMetadataPayload,
         AutoModerationAction as AutoModerationActionPayload,
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
+    from .types.snowflake import Snowflake
 
 
 __all__ = ("AutoModerationRule", "AutoModerationAction")
@@ -65,26 +65,14 @@ class AutoModerationAction:
 
     def __init__(self, data: AutoModerationActionPayload):
         self.type: ActionType = try_enum(ActionType, data["type"])
-        self.notify_channel_id: Optional[int] = None
-        self.timeout_seconds: Optional[int] = None
-        if data.get("metadata"):
-            self._unpack_metadata(data["metadata"])  # type: ignore
+        metadata = data.get("metadata", {})
+        self.notify_channel_id: Optional[int] = (
+            int(metadata.get("channel_id")) if metadata.get("channel_id") is not None else None
+        )
+        self.timeout_seconds: Optional[int] = metadata.get("duration_seconds")
 
     def __repr__(self):
-        attrs = (
-            ("type", self.type),
-            ("notify_channel_id", self.notify_channel_id),
-            ("timeout_seconds", self.timeout_seconds),
-        )
-        inner = " ".join("%s=%r" % t for t in attrs)
-        return f"<AutoModerationAction {inner}>"
-
-    def _unpack_metadata(self, action_metadata: ActionMetadataPayload):
-
-        if action_metadata.get("channel_id") is not None:
-            self.notify_channel_id: Optional[int] = int(action_metadata.get("channel_id"))
-        if action_metadata.get("duration_seconds") is not None:
-            self.timeout_seconds: Optional[int] = action_metadata.get("duration_seconds")
+        return f"<AutoModerationAction type={self.type}, notify_channel_id={self.notify_channel_id}, timeout_seconds={self.timeout_seconds}>"
 
 
 class AutoModerationRule(Hashable):
@@ -92,18 +80,16 @@ class AutoModerationRule(Hashable):
 
     .. container:: operations
         .. describe:: x == y
-            Check if two auto moderation rule are equal.
+            Check if two auto moderation rules are equal.
         .. describe:: x != y
-            Check if two auto moderation rule are not equal.
-        .. describe:: int(x)
-            Returns the ID of this auto moderation rule.
+            Check if two auto moderation rules are not equal.
 
     Attributes
     -----------
     id: :class:`int`
         The auto moderation rule's ID.
     guild: :class:`Guild`
-        The guild that this auto moderation rule active in.
+        The guild that this auto moderation rule is active in.
     name: :class:`str`
         The name of this auto moderation rule.
     event_type: :class:`EventType`
@@ -115,17 +101,17 @@ class AutoModerationRule(Hashable):
     creator_id: :class:`int`
         The creator of this auto moderation rule's ID.
     enabled: :class:`bool`
-        Whether is this rule enabled or not.
+        Whether this rule is enabled or not.
     exempt_role_ids: List[:class:`int`]
         A list of roles that will not be affected by this rule.
         .. note::
             Bots are always not affected by any rule.
     exempt_channel_ids: List[:class:`int`]
         A list of channels that will not be affected by this rule.
-    keyword_filters: Optional[List[str]]
-        The custom filter for this auto moderation rule. `None` if not set.
+    keyword_filters: Optional[List[:class:`str`]]
+        The custom filters for this auto moderation rule. `None` if not set.
     presets: Optional[List[:class:`KeywordPresetType`]]
-        The pre-set type of this auto moderation rule. `None` if not set.
+        The pre-set types of this auto moderation rule. `None` if not set.
     actions: List[:class:`AutoModerationAction`]
         The actions that this auto moderation rule will execute if triggered.
     """
@@ -134,10 +120,28 @@ class AutoModerationRule(Hashable):
         self.id: int = int(data["id"])
         self.guild: Guild = guild
         self._state: ConnectionState = state
-        self._from_payload(data)
+        self.guild_id: int = int(data["guild_id"])
+        self.name: str = data["name"]
+        self.creator_id: int = int(data["creator_id"])
+        self.event_type: EventType = try_enum(EventType, data["event_type"])
+        self.trigger_type: TriggerType = try_enum(TriggerType, data["trigger_type"])
+        self.enabled: bool = data["enabled"]
+        self.exempt_role_ids: List[int] = [int(exempt_role) for exempt_role in data["exempt_roles"]]
+        self.exempt_channel_ids: List[int] = [
+            int(exempt_channel) for exempt_channel in data["exempt_channels"]
+        ]
+        self.keyword_filters: Optional[List[str]] = None
+        self.presets: Optional[List[KeywordPresetType]] = None
 
-    def __int__(self) -> int:
-        return self.id
+        trigger_metadata: TriggerMetadataPayload = data["trigger_metadata"]
+
+        self.keyword_filters: Optional[List[str]] = trigger_metadata.get("keyword_filter")
+
+        self.actions: List[AutoModerationAction] = []
+        self.presets: Optional[List[KeywordPresetType]] = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]] if trigger_metadata.get("presets") is not None else None  # type: ignore
+
+        for action in data["actions"]:
+            self.actions.append(AutoModerationAction(data=action))
 
     def __repr__(self):
         attrs = (
@@ -158,32 +162,6 @@ class AutoModerationRule(Hashable):
         inner = " ".join("%s=%r" % t for t in attrs)
         return f"<AutoModerationRule {inner}>"
 
-    def _from_payload(self, data: AutoModerationRulePayload):
-        self.guild_id: int = int(data["guild_id"])
-        self.name: str = data["name"]
-        self.creator_id: int = int(data["creator_id"])
-        self.event_type: EventType = try_enum(EventType, data["event_type"])
-        self.trigger_type: TriggerType = try_enum(TriggerType, data["trigger_type"])  # same
-        self.enabled: bool = data["enabled"]
-        self.exempt_role_ids: List[int] = [int(exempt_role) for exempt_role in data["exempt_roles"]]
-        self.exempt_channel_ids: List[int] = [
-            int(exempt_channel) for exempt_channel in data["exempt_channels"]
-        ]
-        self.keyword_filters: Optional[List[str]] = None
-        self.presets: Optional[List[KeywordPresetType]] = None
-
-        self._unpack_trigger_metadata(data["trigger_metadata"])
-        self.actions: List[AutoModerationAction] = []
-
-        for action in data["actions"]:
-            self.actions.append(AutoModerationAction(data=action))
-
-    def _unpack_trigger_metadata(self, trigger_metadata: TriggerMetadataPayload):
-        if trigger_metadata.get("keyword_filter") is not None:
-            self.keyword_filters = trigger_metadata["keyword_filter"]  # type: ignore
-        if trigger_metadata.get("presets") is not None:
-            self.presets = [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore -- pylint messed up somehow
-
     async def delete(self):
         """|coro|
 
@@ -198,13 +176,13 @@ class AutoModerationRule(Hashable):
 
     @property
     def exempt_roles(self) -> List[Role]:
-        """List[:class:`Role`]: A list of role that will not be affected by this rule. `[]` if not set."""
-        return [self.guild.get_role(exempt_role_id) for exempt_role_id in self.exempt_role_ids]  # type: ignore -- they can't be None.
+        """List[:class:`Role`]: A list of roles that will not be affected by this rule. `[]` if not set."""
+        return [self.guild.get_role(exempt_role_id) for exempt_role_id in self.exempt_role_ids]  # type: ignore # they can't be None.
 
     @property
     def exempt_channels(self) -> List[GuildChannel]:
         """List[:class:`GuildChannel`]: A list of channels that will not be affected by this rule. `[]` if not set."""
-        return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore -- same
+        return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore # same
 
     @overload
     async def edit(
@@ -215,6 +193,7 @@ class AutoModerationRule(Hashable):
         keyword_filters: List[str] = ...,
         notify_channel: GuildChannel = ...,
         timeout_seconds: int = ...,
+        block_message: bool = ...,
         enabled: bool = ...,
         exempt_roles: List[Role] = ...,
         exempt_channels: List[GuildChannel] = ...,
@@ -231,6 +210,7 @@ class AutoModerationRule(Hashable):
         presets: List[KeywordPresetType] = ...,
         notify_channel: GuildChannel = ...,
         timeout_seconds: int = ...,
+        block_message: bool = ...,
         enabled: bool = ...,
         exempt_roles: List[Role] = ...,
         exempt_channels: List[GuildChannel] = ...,
@@ -247,6 +227,7 @@ class AutoModerationRule(Hashable):
         presets: List[KeywordPresetType] = MISSING,
         notify_channel: GuildChannel = MISSING,
         timeout_seconds: int = MISSING,
+        block_message: bool = MISSING,
         enabled: bool = MISSING,
         exempt_roles: List[Role] = MISSING,
         exempt_channels: List[GuildChannel] = MISSING,
@@ -275,26 +256,36 @@ class AutoModerationRule(Hashable):
 
             .. note::
 
-                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_preset`
+                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_presets`
         notify_channel: :class:`abc.GuildChannel`
             The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
         timeout_seconds: :class:`int`
-            The seconds to timeout the person triggered this rule.
+            The seconds to timeout the person that triggered this rule.
+        block_message: :class:`bool`
+            Whether or not this rule should block the message which triggered the rule.
         enabled: :class:`bool`
-            Whether if this rule is enabled.
+            Whether or not if this rule is enabled.
         exempt_roles: :class:`Role`
             A list of roles that should not be affected by this rule.
         exempt_channels: :class:`abc.GuildChannel`
             A list of channels that should not be affected by this rule.
         reason: :class:`str`
-            The reason why is this auto moderation rule edited.
+            The reason why this auto moderation rule was edited.
+
+        Raises
+        -------
+        InvalidArgument
+            You specified both ``keyword_filters`` and ``presets``.
         """
         payload = {}
         if name is not MISSING:
             payload["name"] = name
 
         if event_type is not MISSING:
-            payload["event_type"] = event_type
+            payload["event_type"] = event_type.value
+
+        if keyword_filters is not MISSING and presets is not MISSING:
+            raise InvalidArgument("Cannot pass keyword_filters and presets to edit()")
 
         if keyword_filters is not MISSING and self.trigger_type != TriggerType.keyword:
             raise InvalidArgument(
@@ -302,30 +293,53 @@ class AutoModerationRule(Hashable):
             )
 
         if keyword_filters is not MISSING:
-            payload["trigger_metadata"]["keyword_filters"] = keyword_filters
+            payload["trigger_metadata"]["keyword_filter"] = keyword_filters
 
-        if presets is not MISSING and self.trigger_type != TriggerType.keyword_preset:
-            raise InvalidArgument("trigger_type must be TriggerType.keyword_preset to pass presets")
+        if presets is not MISSING and self.trigger_type != TriggerType.keyword_presets:
+            raise InvalidArgument(
+                "trigger_type must be TriggerType.keyword_presets to pass presets"
+            )
 
         if presets is not MISSING:
-            payload["trigger_metadata"]["presets"] = presets
+            payload["trigger_metadata"]["presets"] = [preset.value for preset in presets]
 
-        if notify_channel is not MISSING or timeout_seconds is not MISSING:
+        if (
+            notify_channel is not MISSING
+            or timeout_seconds is not MISSING
+            or block_message is not MISSING
+        ):
             payload["actions"] = []
+            if block_message is not MISSING:
+                if block_message:
+                    payload["actions"].append({"type": 1})
+            else:
+                for action in self.actions:
+                    if action.type is ActionType.block:
+                        payload["actions"].append({"type": 1})
 
-        if notify_channel is not MISSING and timeout_seconds is MISSING:
+        if (notify_channel is not MISSING) and (timeout_seconds is MISSING):
+            payload["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
+            for action in self.actions:
+                if action.timeout_seconds is not None:
+                    payload["actions"].append(
+                        {"type": 3, "metadata": {"duration_seconds": action.timeout_seconds}}
+                    )
+
+        if (timeout_seconds is not MISSING) and (notify_channel is MISSING):
             payload["actions"].append(
-                {"type": 1, "notify_channel_id": notify_channel.id}
+                {"type": 3, "metadata": {"duration_seconds": timeout_seconds}}
             )
+            for action in self.actions:
+                if action.notify_channel_id is not None:
+                    payload["actions"].append(
+                        {"type": 2, "metadata": {"channel_id": action.notify_channel_id}}
+                    )
 
-        if timeout_seconds is not MISSING and notify_channel is MISSING:
-            payload["actions"].append({"type": 2, "timeout_seconds": timeout_seconds})
-
-        if timeout_seconds is not MISSING and notify_channel is not MISSING:
+        if (timeout_seconds is not MISSING) and (notify_channel is not MISSING):
+            payload["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
             payload["actions"].append(
-                {"type": 1, "notify_channel_id": notify_channel.id}
+                {"type": 3, "metadata": {"duration_seconds": timeout_seconds}}
             )
-            payload["actions"].append({"type": 2, "duration_seconds": timeout_seconds})
 
         if enabled is not MISSING:
             payload["enabled"] = enabled
@@ -334,9 +348,7 @@ class AutoModerationRule(Hashable):
             payload["exempt_roles"] = [role.id for role in exempt_roles]
 
         if exempt_channels is not MISSING:
-            payload["exempt_channels"] = [
-                exempt_channel.id for exempt_channel in exempt_channels
-            ]
+            payload["exempt_channels"] = [exempt_channel.id for exempt_channel in exempt_channels]
 
         if reason is not MISSING:
             payload["reason"] = reason
@@ -350,5 +362,5 @@ class AutoModerationRule(Hashable):
 
     @property
     def created_at(self) -> datetime:
-        """:class:`~datetime.datetime`: The time when this rule is created."""
+        """:class:`~datetime.datetime`: The time when this rule was created."""
         return snowflake_time(self.id)

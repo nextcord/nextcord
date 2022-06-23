@@ -56,7 +56,7 @@ from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, Status, try_enum
-from .errors import Forbidden
+from .errors import Forbidden, NotFound
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
@@ -1222,7 +1222,7 @@ class ConnectionState:
 
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
-            self._add_automod_rule_from_guild_data(guild_data)
+            asyncio.create_task(self._add_automod_rule_from_guild_data(guild_data))
 
         self.dispatch("connect")
         self._ready_task = asyncio.create_task(self._delay_ready())
@@ -2265,7 +2265,7 @@ class ConnectionState:
             )
 
     def add_automod_rule(self, data: AutoModerationRulePayload) -> AutoModerationRule:
-        rule = AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data)  # type: ignore -- automod rules can't be created in non-guilds
+        rule = AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data)  # type: ignore # automod rules can't be created in non-guilds
         self._automod_rules[int(data["id"])] = rule
         return rule
 
@@ -2302,8 +2302,10 @@ class ConnectionState:
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
-    def parse_auto_moderation_rule_executed(self, data: AutoModerationActionExecutedEvent) -> None:
-        self.dispatch("automod_rule_executed", AutoModerationAction(data["action"]))
+    def parse_auto_moderation_action_execution(
+        self, data: AutoModerationActionExecutedEvent
+    ) -> None:
+        self.dispatch("automod_action_execution", AutoModerationAction(data["action"]))
 
     async def _add_automod_rule_from_guild_data(self, data: GuildPayload):
         id = int(data["id"])
@@ -2311,7 +2313,7 @@ class ConnectionState:
             rules = await self.http.list_guild_automod_rules(guild_id=id)
             for rule in rules:
                 self.add_automod_rule(data=rule)
-        except Forbidden:
+        except (Forbidden, NotFound):
             pass
 
 

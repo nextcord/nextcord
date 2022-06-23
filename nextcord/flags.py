@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from functools import reduce
 from typing import (
     Any,
     Callable,
@@ -496,10 +497,8 @@ class Intents(BaseFlags):
     @classmethod
     def all(cls: Type[Intents]) -> Intents:
         """A factory method that creates a :class:`Intents` with everything enabled."""
-        bits = max(cls.VALID_FLAGS.values()).bit_length()
-        value = (1 << bits) - 1
         self = cls.__new__(cls)
-        self.value = value
+        self.value = reduce(lambda a, b: a | b, cls.VALID_FLAGS.values())
         return self
 
     @classmethod
@@ -936,6 +935,19 @@ class Intents(BaseFlags):
         This does not correspond to any attributes or classes in the library in terms of cache.
         """
         return 1 << 16
+
+    @alias_flag_value
+    def automod(self):
+        """:class:`bool` Whether auto moderation related events are enabled.
+
+        This corresponds to the following events:
+
+        - :func:`on_automod_rule_create`
+        - :func:`on_automod_rule_update`
+        - :func:`on_automod_rule_delete`
+        - :func:`on_automod_action_executed`
+        """
+        return (1 << 20) | (1 << 21)
 
     @flag_value
     def automod_configuration(self):

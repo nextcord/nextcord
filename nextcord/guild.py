@@ -3472,6 +3472,13 @@ class Guild(Hashable):
         Returns
         -------
         List[:class:`AutoModerationRule`]
+            A list of the auto moderation rules configurated.
+            A list of the auto moderation rules configurated.
+
+        Raises
+        -------
+        Forbidden
+            You do not have permissions to do this.
         """
         return [
             AutoModerationRule(guild=self, state=self._state, data=rule)
@@ -3493,13 +3500,20 @@ class Guild(Hashable):
         Returns
         --------
         :class:`AutoModerationRule`
+             The rule from the rule ID.
+
+        Raises
+        -------
+        Forbidden
+            You do not have proper permissions to do this.
+        NotFound
+            The rule you tried to find doesn't exist.
         """
         rule = await self._state.http.get_automod_rule(guild_id=self.id, rule_id=rule_id)
         return AutoModerationRule(guild=self, state=self._state, data=rule)
 
     def get_automod_rule(self, rule_id: int) -> Optional[AutoModerationRule]:
-        """
-        Get an auto moderation rule.
+        """Get an auto moderation rule.
 
         Parameters
         ----------
@@ -3519,68 +3533,44 @@ class Guild(Hashable):
         name: str,
         event_type: EventType = EventType.message_send,
         trigger_type: TriggerType,
-        keyword_filters: List[str] = MISSING,
-        notify_channel: GuildChannel = MISSING,
-        enabled: bool = True,
-        exempt_roles: List[Role] = MISSING,
-        exempt_channels: List[GuildChannel] = MISSING,
-    ) -> AutoModerationRule:
-        ...
-
-    @overload
-    async def create_automod_rule(
-        self,
-        *,
-        name: str,
-        event_type: EventType = EventType.message_send,
-        trigger_type: TriggerType,
-        keyword_filters: List[str] = MISSING,
-        timeout_seconds: int = MISSING,
-        enabled: bool = True,
-        exempt_roles: List[Role] = MISSING,
-        exempt_channels: List[GuildChannel] = MISSING,
-    ) -> AutoModerationRule:
-        ...
-
-    @overload
-    async def create_automod_rule(
-        self,
-        *,
-        name: str,
-        event_type: EventType = EventType.message_send,
-        trigger_type: TriggerType,
-        presets: KeywordPresetType = MISSING,
-        notify_channel: GuildChannel = MISSING,
-        enabled: bool = True,
-        exempt_roles: List[Role] = MISSING,
-        exempt_channels: List[GuildChannel] = MISSING,
-    ) -> AutoModerationRule:
-        ...
-
-    @overload
-    async def create_automod_rule(
-        self,
-        *,
-        name: str,
-        event_type: EventType = EventType.message_send,
-        trigger_type: TriggerType,
-        presets: KeywordPresetType = MISSING,
-        notify_channel: GuildChannel = MISSING,
-        enabled: bool = True,
-        exempt_channels: List[GuildChannel] = MISSING,
-    ) -> AutoModerationRule:
-        ...
-
-    async def create_automod_rule(
-        self,
-        *,
-        name: str,
-        event_type: EventType = EventType.message_send,
-        trigger_type: TriggerType,
-        keyword_filters: List[str] = MISSING,
-        presets: KeywordPresetType = MISSING,
+        keyword_filters: List[str],
         notify_channel: GuildChannel = MISSING,
         timeout_seconds: int = MISSING,
+        block_message: bool = True,
+        enabled: bool = True,
+        exempt_roles: List[Role] = MISSING,
+        exempt_channels: List[GuildChannel] = MISSING,
+    ) -> AutoModerationRule:
+        ...
+
+    @overload
+    async def create_automod_rule(
+        self,
+        *,
+        name: str,
+        event_type: EventType = EventType.message_send,
+        trigger_type: TriggerType,
+        presets: List[KeywordPresetType],
+        notify_channel: GuildChannel = MISSING,
+        timeout_seconds: int = MISSING,
+        block_message: bool = True,
+        enabled: bool = True,
+        exempt_roles: List[Role] = MISSING,
+        exempt_channels: List[GuildChannel] = MISSING,
+    ) -> AutoModerationRule:
+        ...
+
+    async def create_automod_rule(
+        self,
+        *,
+        name: str,
+        event_type: EventType = EventType.message_send,
+        trigger_type: TriggerType,
+        keyword_filters: List[str] = MISSING,
+        presets: List[KeywordPresetType] = MISSING,
+        notify_channel: GuildChannel = MISSING,
+        timeout_seconds: int = MISSING,
+        block_message: bool = True,
         enabled: bool = True,
         exempt_roles: List[Role] = MISSING,
         exempt_channels: List[GuildChannel] = MISSING,
@@ -3609,8 +3599,10 @@ class Guild(Hashable):
         timeout_seconds: :class:`int`
             The seconds to timeout the user that triggered this rule.
             Either this or `notify_channel` must be provided.
+        block_message: :class:`bool`
+            Whether or not the message that triggered the rule should be blocked when this rule is triggered. Default is True.
         enabled: :class:`bool`
-            Whether if this rule is enabled or not. Default is True.
+            Whether or not this rule is enabled. Default is True.
         exempt_roles: List[:class:`Role`]
             The roles that should not be affected by this rule.
         exempt_channels: List[:class:`abc.GuildChannel`]
@@ -3620,26 +3612,47 @@ class Guild(Hashable):
         -------
         :class:`AutoModerationRule`
             The rule that was created.
+
+        Raises
+        -------
+        Forbidden
+            You do not have proper permissions to do this.
+        InvalidArgument
+            You specified both ``presets`` and ``keyword_filters``.
         """
         params = {
             "name": name,
-            "event_type": event_type,
-            "trigger_type": trigger_type,
+            "event_type": event_type.value,
+            "trigger_type": trigger_type.value,
             "enabled": enabled,
-            "actions": [],
         }
+        if keyword_filters is not MISSING and presets is not MISSING:
+            raise InvalidArgument(
+                "Cannot pass keyword_filters and presets to create_automod_rule()"
+            )
+        if keyword_filters is not MISSING or presets is not MISSING:
+            params["trigger_metadata"] = {}
         if keyword_filters is not MISSING:
             params["trigger_metadata"]["keyword_filters"] = keyword_filters
         if presets is not MISSING:
-            params["trigger_metadata"]["presets"] = presets
+            params["trigger_metadata"]["presets"] = [preset.value for preset in presets]
+        if (
+            (notify_channel is not MISSING)
+            or (timeout_seconds is not MISSING)
+            or (block_message is True)
+        ):
+            params["actions"] = []
+        if block_message is True:
+            params["actions"].append({"type": 1})
         if notify_channel is not MISSING:
-            params["actions"].append({"type": 1, "channel_id": notify_channel.id})
+            params["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
         if timeout_seconds is not MISSING:
-            params["actions"].append({"type": 2, "duration_seconds": timeout_seconds})
+            params["actions"].append({"type": 3, "metadata": {"duration_seconds": timeout_seconds}})
         if exempt_roles is not MISSING:
             params["exempt_roles"] = [role.id for role in exempt_roles]
         if exempt_channels is not MISSING:
             params["exempt_channels"] = [channel.id for channel in exempt_channels]
+
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
         rule = self._state.add_automod_rule(data=data)
         return rule

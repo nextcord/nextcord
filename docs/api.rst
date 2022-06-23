@@ -1195,7 +1195,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     .. versionadded:: 2.0
 
-.. function:: on_automod_action_executed(action)
+.. function:: on_automod_action_execution(action)
 
     Called when an auto moderation action is executed.
 
@@ -1290,11 +1290,13 @@ of :class:`enum.Enum`.
         .. note::
 
             This trigger type is not released, so they can't be used in most servers.
-    .. attribute:: keyword_preset
+    .. attribute:: keyword_presets
 
         The auto moderation rule will be triggered if someone says thing matches the Discord-preset filters.
 
 .. class:: ActionType
+
+    Specifies how should message that trigger the rule should be actioned.
 
     .. attribute:: block
 
