@@ -32,13 +32,12 @@ from typing import TYPE_CHECKING
 
 import nextcord.utils
 
-from .core import Command, Group, Cog
-from .errors import CommandError
 from ... import Embed, Message
-
+from .core import Cog, Command, Group
+from .errors import CommandError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Union, Mapping
+    from typing import Any, Callable, Mapping, Optional, Union
 
     from .context import Context
 
