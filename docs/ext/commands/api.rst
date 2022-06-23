@@ -225,6 +225,16 @@ MinimalHelpCommand
     :members:
     :exclude-members: send_bot_help, send_cog_help, send_group_help, send_command_help, prepare_help_command
 
+LegacyHelpCommand
+~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: nextcord.ext.commands.LegacyHelpCommand
+
+.. autoclass:: nextcord.ext.commands.LegacyHelpCommand
+    :members:
+    :exclude-members: send_bot_help, send_cog_help, send_group_help, send_command_help, prepare_help_command
+
+
 Paginator
 ~~~~~~~~~~
 

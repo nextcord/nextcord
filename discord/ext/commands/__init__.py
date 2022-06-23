@@ -90,6 +90,7 @@ from nextcord.ext.commands.__init__ import (
     IDConverter,
     InvalidEndOfQuotedStringError,
     InviteConverter,
+    LegacyHelpCommand,
     MaxConcurrency,
     MaxConcurrencyReached,
     MemberConverter,
