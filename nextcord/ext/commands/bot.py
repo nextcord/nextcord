@@ -975,30 +975,29 @@ class BotBase(GroupMixin):
 
         Parameters
         ----------
-        names: :type:`List[str]`
+        names: List[:class:`str`]
             The names of all of the extensions to load.
-        package: :type:`Optional[str]`
+        package: Optional[:class:`str`]
             The package name to resolve relative imports with.
             This is required when loading an extension using a relative path, e.g ``.foo.test``.
             Defaults to ``None``.
-        packages: :type:`Optional[List[str]]`
+        packages: Optional[List[:class:`str`]]
             A list of packages to resolve relative imports with.
             This is required when loading an extension using a relative path, e.g ``.foo.test``.
             Defaults to ``None``.
-        extras: :type:`Optional[List[Dict[str, Any]]]`
+        extras: Optional[List[Dict[:class:`str`, Any]]]
             A list of extra arguments to pass to the extension's setup function.
 
         Returns
         --------
-        A :type:`List[str]` that contains the names of all of the extensions
+        A List[:class:`str`] that contains the names of all of the extensions
         that loaded successfully.
 
         Raises
         --------
         ValueError
-            If the ``package`` and ``packages`` parameters are both provided or if
-            the length of ``packages`` or the length of ``extras`` is not equal to
-            the length of ``names``.
+            - If the ``package`` and ``packages`` parameters are both provided
+            - If the length of ``packages`` or the length of ``extras` is not equal to the length of ``names``
         ExtensionNotFound
             An extension could not be imported.
         ExtensionAlreadyLoaded
@@ -1058,12 +1057,12 @@ class BotBase(GroupMixin):
             relative path based on the current folder.
         filter: :class:`str`
             The filter to use when looking for extensions. Defaults to ``*.py``.
-            To learn more about the syntax of the filter, check out the Python Docs
-            (https://docs.python.org/3/library/fnmatch.html#module-fnmatch).
+            To learn more about the syntax of the filter, check out the
+            `Python Docs. <https://docs.python.org/3/library/fnmatch.html#module-fnmatch>`_
 
         Returns
         --------
-        A :type:`List[str]` that contains the names of all of the extensions
+        A List[:class:`str`] that contains the names of all of the extensions
         that loaded successfully.
 
         Raises
