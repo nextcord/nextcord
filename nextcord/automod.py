@@ -260,7 +260,7 @@ class AutoModerationRule(Hashable):
         notify_channel: :class:`abc.GuildChannel`
             The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
         timeout_seconds: :class:`int`
-            The seconds to timeout the person triggered this rule.
+            The seconds to timeout the person that triggered this rule.
         block_message: :class:`bool`
             Whether or not this rule should block the message which triggered the rule.
         enabled: :class:`bool`
