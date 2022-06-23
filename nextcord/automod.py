@@ -62,6 +62,11 @@ class AutoModerationAction:
     timeout_seconds: Optional[:class:`int`]
         The number of seconds this rule should timeout when someone triggered the rule.
     """
+    __slots__ = (
+        "type",
+        "notify_channel_id",
+        "timeout_seconds",
+    )
 
     def __init__(self, data: AutoModerationActionPayload):
         self.type: ActionType = try_enum(ActionType, data["type"])
@@ -115,6 +120,22 @@ class AutoModerationRule(Hashable):
     actions: List[:class:`AutoModerationAction`]
         The actions that this auto moderation rule will execute if triggered.
     """
+
+    __slots__ = (
+        "id",
+        "guild",
+        "name",
+        "event_type",
+        "trigger_type",
+        "guild_id",
+        "creator_id",
+        "enabled",
+        "exempt_role_ids",
+        "exempt_channel_ids",
+        "keyword_filters",
+        "presets",
+        "actions"
+    )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
         self.id: int = int(data["id"])
