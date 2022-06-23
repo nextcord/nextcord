@@ -89,7 +89,7 @@ class AutoModerationRule(Hashable):
     id: :class:`int`
         The auto moderation rule's ID.
     guild: :class:`Guild`
-        The guild that this auto moderation rule active in.
+        The guild that this auto moderation rule is active in.
     name: :class:`str`
         The name of this auto moderation rule.
     event_type: :class:`EventType`
