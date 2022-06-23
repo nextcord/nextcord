@@ -3539,10 +3539,10 @@ class Guild(Hashable):
         block_message: bool = True,
         enabled: bool = True,
         exempt_roles: List[Role] = MISSING,
-        exempt_channels: List[GuildChannel] = MISSING
+        exempt_channels: List[GuildChannel] = MISSING,
     ) -> AutoModerationRule:
         ...
-    
+
     @overload
     async def create_automod_rule(
         self,
@@ -3556,7 +3556,7 @@ class Guild(Hashable):
         block_message: bool = True,
         enabled: bool = True,
         exempt_roles: List[Role] = MISSING,
-        exempt_channels: List[GuildChannel] = MISSING
+        exempt_channels: List[GuildChannel] = MISSING,
     ) -> AutoModerationRule:
         ...
 
