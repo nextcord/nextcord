@@ -262,7 +262,7 @@ class AutoModerationRule(Hashable):
         timeout_seconds: :class:`int`
             The seconds to timeout the person triggered this rule.
         block_message: :class:`bool`
-            Whether if this rule should blocks the message that triggered the rule or not.
+            Whether or not this rule should block the message which triggered the rule.
         enabled: :class:`bool`
             Whether if this rule is enabled.
         exempt_roles: :class:`Role`
