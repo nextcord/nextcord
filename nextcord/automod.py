@@ -124,7 +124,7 @@ class AutoModerationRule(Hashable):
         self.name: str = data["name"]
         self.creator_id: int = int(data["creator_id"])
         self.event_type: EventType = try_enum(EventType, data["event_type"])
-        self.trigger_type: TriggerType = try_enum(TriggerType, data["trigger_type"])  # same
+        self.trigger_type: TriggerType = try_enum(TriggerType, data["trigger_type"])
         self.enabled: bool = data["enabled"]
         self.exempt_role_ids: List[int] = [int(exempt_role) for exempt_role in data["exempt_roles"]]
         self.exempt_channel_ids: List[int] = [
