@@ -411,7 +411,7 @@ class MessageConverter(IDConverter[nextcord.Message]):
         except nextcord.NotFound:
             raise MessageNotFound(argument)
         except nextcord.Forbidden:
-            raise ChannelNotReadable(channel)  # type: ignore weird type conflict
+            raise ChannelNotReadable(channel)  # type: ignore  # weird type conflict
 
 
 class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
@@ -477,7 +477,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         else:
             thread_id = int(match.group(1))
             if guild:
-                result = guild.get_thread(thread_id)  # type: ignore handled below
+                result = guild.get_thread(thread_id)  # type: ignore  # handled below
 
         if not result or not isinstance(result, type):
             raise ThreadNotFound(argument)
