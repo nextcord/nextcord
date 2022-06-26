@@ -809,6 +809,8 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
 
     This is done by extracting the animated flag, name and ID from the emoji.
 
+    If the emoji is a unicode emoji, then the name is the unicode character.
+
     .. versionchanged:: 1.5
          Raise :exc:`.PartialEmojiConversionFailure` instead of generic :exc:`.BadArgument`
     """
