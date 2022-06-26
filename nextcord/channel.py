@@ -795,6 +795,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
             Retrieve archived channels before the given date or ID.
         private: :class:`bool`
             Whether to retrieve private archived threads.
+            This defaults to ``False``.
         joined: :class:`bool`
             Whether to retrieve private archived threads that you've joined.
             You cannot set ``joined`` to ``True`` and ``private`` to ``False``.
