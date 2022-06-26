@@ -1826,7 +1826,7 @@ class Client:
         Parameters
         ------------
         view: :class:`nextcord.ui.View`
-            The view to register for dispatching.
+            The view to remove from dispatching.
 
         Raises
         -------
