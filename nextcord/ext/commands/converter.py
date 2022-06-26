@@ -824,7 +824,9 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
                 ctx.bot._connection, animated=emoji_animated, name=emoji_name, id=emoji_id
             )
 
-        unicode_emoji_match = re.match(r"^[\U00002000-\U0010ffff]{1,3}$", argument)
+        unicode_emoji_match = re.match(
+            r"^[\u0023-\u0039]?[\u00ae\u00a9\U00002000-\U0010ffff]+$", argument
+        )
         if unicode_emoji_match:
             return nextcord.PartialEmoji.with_state(ctx.bot._connection, name=argument)
 
