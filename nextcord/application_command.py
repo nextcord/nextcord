@@ -67,7 +67,8 @@ from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
-    from .abc import MessageableChannel
+    from .abc import PartialMessageable
+    from .threads import Thread
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
@@ -95,7 +96,7 @@ __all__ = (
     "user_command",
     "Mentionable",
     "InteractionDefault",
-    "InteractionAuthor",
+    "InteractionUser",
     "InteractionGuild",
     "InteractionChannel",
 )
@@ -138,21 +139,21 @@ class InteractionDefault:
 class InteractionUser(InteractionDefault):
     """Return the author of the interaction."""
 
-    def default(self, interaction: Interaction) -> User:
+    def default(self, interaction: Interaction) -> Optional[Union[Member, User]]:
         return interaction.user
 
 
 class InteractionGuild(InteractionDefault):
     """Return the guild of this interaction."""
 
-    def default(self, interaction: Interaction) -> Guild:
+    def default(self, interaction: Interaction) -> Optional[Guild]:
         return interaction.guild
 
 
 class InteractionChannel(InteractionDefault):
     """Return the channel that the interaction was executed in."""
 
-    def default(self, interaction: Interaction) -> MessageableChannel:
+    def default(self, interaction: Interaction) -> Optional[Union[GuildChannel, PartialMessageable, Thread]]:
         return interaction.channel
 
 
