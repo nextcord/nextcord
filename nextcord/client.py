@@ -1817,6 +1817,38 @@ class Client:
             )
 
         self._connection.store_view(view, message_id)
+    
+    def remove_view(self, view: View, *, message_id: Optional[int] = None) -> None:
+        """Remove a :class:`nextcord.ui.View` for persistant listening.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        ------------
+        view: :class:`nextcord.ui.View`
+            The view to register for dispatching.
+        message_id: Optional[:class:`int`]
+            The message ID that the view is attached to. This is currently used to
+            refresh the view's state during message update events. If not given
+            then message update events are not propagated for the view.
+        
+        Raises
+        -------
+        TypeError
+            A view was not passed.
+        ValueError
+            The view is not persistent. A persistent view has no timeout
+            and all their components have an explicitly provided custom_id.
+        """
+        if not isinstance(view, View):
+            raise TypeError(f"Expected an instance of View not {view.__class__!r}")
+
+        if not view.is_persistent():
+            raise ValueError(
+                "View is not persistent. Items need to have a custom_id set and View must have no timeout"
+            )
+
+        self._connection.remove_view(view, message_id)
 
     def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
         """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
