@@ -823,7 +823,6 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
 
 class ForumChannel(abc.GuildChannel, Hashable):
-    # TODO: docstring
     """Represents a Discord guild forum channel.ster
 
     .. container:: operations
@@ -843,6 +842,31 @@ class ForumChannel(abc.GuildChannel, Hashable):
         .. describe:: str(x)
 
             Returns the channel's name.
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The snowflake ID of this channel.
+    guild: :class:`Guild`
+        The guild this channel belongs to.
+    name: :class:`str`
+        The name of this channel.
+    category_id: Optional[:class:`int`]
+        The ID of the :class:`CategoryChannel` this channel belongs to, if any.
+    topic: :class:`str`
+        The topic of this channel, if any.
+    position: :class:`int`
+        The position in the channel list, where the first channel is ``0``.
+    nsfw: :class:`bool`
+        If this channel is marked as NSFW.
+    slowmode_delay: :class:`int`
+        The delay in seconds which members must wait between sending messages.
+    flags: :class:`ChannelFlags`
+        The flags that detail features of this channel.
+    default_auto_archive_duration: :class:`int`
+        The archive duration which threads from this channel inherit by default.
+    last_message_id: :class:`int`
+        The snowflake ID of the last message sent to a thread in this channel.
     """
 
     __slots__ = (
