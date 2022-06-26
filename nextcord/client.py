@@ -1829,7 +1829,7 @@ class Client:
             The view to remove from dispatching.
 
         Raises
-        -------
+        ------
         TypeError
             A view was not passed.
         ValueError
