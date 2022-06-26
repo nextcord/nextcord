@@ -1856,7 +1856,7 @@ class Client:
         """Remove a :class:`nextcord.ui.Modal` from persistent listening.
 
         Parameters
-        ------------
+        ----------
         modal: :class:`nextcord.ui.Modal`
             The modal to remove from dispatching.
 
