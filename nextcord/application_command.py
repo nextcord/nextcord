@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
+    from abc import MessageableChannel
 
     _CustomTypingMetaBase = Any
 else:
@@ -151,7 +152,7 @@ class InteractionGuild(InteractionDefault):
 class InteractionChannel(InteractionDefault):
     """Return the channel that the interaction was executed in."""
 
-    def default(self, interaction: Interaction) -> GuildChannel:
+    def default(self, interaction: Interaction) -> MessageableChannel:
         return interaction.channel
 
 
