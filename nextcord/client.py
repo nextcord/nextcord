@@ -2427,6 +2427,7 @@ class Client:
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: Optional[bool] = None,
         force_global: bool = False,
     ):
         """Creates a User context command from the decorated function.
@@ -2447,6 +2448,9 @@ class Client:
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
+            being usable in Not-NSFW channels.
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2459,6 +2463,7 @@ class Client:
                 guild_ids=guild_ids,
                 dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
+                nsfw=nsfw,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2474,6 +2479,7 @@ class Client:
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: Optional[bool] = None,
         force_global: bool = False,
     ):
         """Creates a Message context command from the decorated function.
@@ -2494,6 +2500,9 @@ class Client:
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
+            being usable in Not-NSFW channels.
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
