@@ -1861,7 +1861,7 @@ class Client:
             The modal to remove from dispatching.
 
         Raises
-        -------
+        ------
         TypeError
             A modal was not passed.
         ValueError
