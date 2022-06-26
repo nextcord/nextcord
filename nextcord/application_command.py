@@ -93,6 +93,10 @@ __all__ = (
     "message_command",
     "user_command",
     "Mentionable",
+    "InteractionDefault",
+    "InteractionAuthor",
+    "InteractionGuild",
+    "InteractionChannel"
 )
 
 _log = logging.getLogger(__name__)
@@ -110,7 +114,39 @@ def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
     return func
 
+class InteractionDefault:
+    # TODO: fix docstring lol
+    """A class that makes all thing default.
+    
+    To make a default from the :class:`Interaction`, you can do like this:
+    .. code-block:: python3
+        class InteractionUser(InteractionDefault):
+            def default(self, interaction: Interaction):
+                return interaction.user
+        
+        @bot.slash_command()
+        async def balance(interaction, user = SlashOption(name="user", description="The user to check the balance", default=InteractionUser):
+            ...
+    """
+    def default(self, interaction: Interaction) -> None:
+        raise NotImplementedError
 
+class InteractionAuthor(InteractionDefault):
+    """Return the author of the interaction."""
+    def default(self, interaction: Interaction) -> User:
+        return interaction.author
+    
+class InteractionGuild(InteractionDefault):
+    """Return the guild of this interaction."""
+    def default(self, interaction: Interaction) -> Guild:
+        return interaction.guild
+
+class InteractionChannel(InteractionDefault):
+    """Return the channel that the interaction was executed in."""
+    def default(self, interaction: Interaction) -> GuildChannel:
+        return interaction.channel
+
+    
 class CallbackWrapper:
     """A class used to wrap a callback in a sane way to modify aspects of application commands.
 
@@ -1191,6 +1227,8 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         )
 
         self.autocomplete_callback: Optional[Callable] = autocomplete_callback
+        if issubclass(self.default, InteractionDefault):
+            self.default: Any = default.default
         self.default: Any = default
         self._verify: bool = verify
         if self._verify:
