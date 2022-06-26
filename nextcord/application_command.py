@@ -140,7 +140,7 @@ class InteractionAuthor(InteractionDefault):
     """Return the author of the interaction."""
 
     def default(self, interaction: Interaction) -> User:
-        return interaction.author
+        return interaction.user
 
 
 class InteractionGuild(InteractionDefault):
