@@ -1819,7 +1819,7 @@ class Client:
         self._connection.store_view(view, message_id)
 
     def remove_view(self, view: View) -> None:
-        """Remove a :class:`nextcord.ui.View` for persistant listening.
+        """Remove a :class:`nextcord.ui.View` from persistent listening.
 
         .. versionadded:: 2.0
 
