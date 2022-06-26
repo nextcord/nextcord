@@ -47,6 +47,7 @@ class _ApplicationCommandOptional(TypedDict, total=False):
     guild_id: Snowflake
     options: List[ApplicationCommandOption]
     dm_permission: bool
+    nsfw: bool
     default_permission: bool  # This is deprecated, remove it in the future.
     name_localizations: Dict[str, str]
     description_localizations: Dict[str, str]
