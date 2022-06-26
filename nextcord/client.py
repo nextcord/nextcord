@@ -1851,7 +1851,7 @@ class Client:
             )
 
         self._connection.store_modal(modal, user_id)
-    
+
     def remove_modal(self, modal: Modal) -> None:
         """Remove a :class:`nextcord.ui.Modal` from persistent listening.
 

@@ -412,7 +412,7 @@ class ConnectionState:
 
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)
-    
+
     def remove_modal(self, modal: Modal) -> None:
         self._modal_store.remove_modal(modal)
 
