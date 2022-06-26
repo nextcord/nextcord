@@ -136,7 +136,7 @@ class InteractionDefault:
         raise NotImplementedError
 
 
-class InteractionAuthor(InteractionDefault):
+class InteractionUser(InteractionDefault):
     """Return the author of the interaction."""
 
     def default(self, interaction: Interaction) -> User:
