@@ -1827,10 +1827,6 @@ class Client:
         ------------
         view: :class:`nextcord.ui.View`
             The view to register for dispatching.
-        message_id: Optional[:class:`int`]
-            The message ID that the view is attached to. This is currently used to
-            refresh the view's state during message update events. If not given
-            then message update events are not propagated for the view.
 
         Raises
         -------
@@ -1848,7 +1844,7 @@ class Client:
                 "View is not persistent. Items need to have a custom_id set and View must have no timeout"
             )
 
-        self._connection.remove_view(view, message_id)
+        self._connection.remove_view(view)
 
     def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
         """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
