@@ -412,6 +412,9 @@ class ConnectionState:
 
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)
+    
+    def remove_modal(self, modal: Modal) -> None:
+        self._modal_store.remove_modal(modal)
 
     def prevent_view_updates_for(self, message_id: Optional[int]) -> Optional[View]:
         return self._view_store.remove_message_tracking(message_id)  # type: ignore

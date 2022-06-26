@@ -1851,6 +1851,33 @@ class Client:
             )
 
         self._connection.store_modal(modal, user_id)
+    
+    def remove_modal(self, modal: Modal) -> None:
+        """Remove a :class:`nextcord.ui.Modal` from persistent listening.
+
+        Parameters
+        ------------
+        modal: :class:`nextcord.ui.Modal`
+            The view to register for dispatching.
+
+        Raises
+        -------
+        TypeError
+            A modal was not passed.
+        ValueError
+            The modal is not persistent. A persistent modal has a set
+            custom_id and all their components with a set custom_id
+            and a timeout set to None.
+        """
+        if not isinstance(modal, Modal):
+            raise TypeError(f"Expected an instance of Modal not {modal.__class__!r}")
+
+        if not modal.is_persistent():
+            raise ValueError(
+                "Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set"
+            )
+
+        self._connection.remove_modal(modal)
 
     @property
     def persistent_views(self) -> Sequence[View]:
