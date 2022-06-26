@@ -3624,6 +3624,8 @@ class Guild(Hashable):
             You do not have proper permissions to do this.
         InvalidArgument
             You specified both ``presets`` and ``keyword_filters``.
+        HTTPException
+            Creating the rule failed.
         """
         params = {
             "name": name,
@@ -3631,32 +3633,42 @@ class Guild(Hashable):
             "trigger_type": trigger_type.value,
             "enabled": enabled,
         }
-        if (keyword_filters is not MISSING) and (presets is not MISSING):
+        if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument(
                 "Cannot pass keyword_filters and presets to create_automod_rule()"
             )
-        if (keyword_filters is not MISSING) or (presets is not MISSING):
+
+        if keyword_filters is not MISSING or presets is not MISSING:
             params["trigger_metadata"] = {}
+
         if keyword_filters is not MISSING:
             params["trigger_metadata"]["keyword_filters"] = keyword_filters
+
         if presets is not MISSING:
             params["trigger_metadata"]["presets"] = [preset.value for preset in presets]
+
         if (
             (notify_channel is not MISSING)
             or (timeout_seconds is not MISSING)
             or (block_message is True)
         ):
             params["actions"] = []
+
         if block_message is True:
             params["actions"].append({"type": 1})
+
         if notify_channel is not MISSING:
             params["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
+
         if timeout_seconds is not MISSING:
             params["actions"].append({"type": 3, "metadata": {"duration_seconds": timeout_seconds}})
+
         if exempt_roles is not MISSING:
             params["exempt_roles"] = [role.id for role in exempt_roles]
+
         if exempt_channels is not MISSING:
             params["exempt_channels"] = [channel.id for channel in exempt_channels]
+
 
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
         rule = self._state.add_automod_rule(data=data)

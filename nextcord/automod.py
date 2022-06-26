@@ -276,6 +276,10 @@ class AutoModerationRule(Hashable):
         -------
         InvalidArgument
             You specified both ``keyword_filters`` and ``presets``.
+        HTTPException
+            Editing the rule failed.
+        Forbidden
+            You do not have proper permissions to edit this rule.
         """
         payload = {}
         if name is not MISSING:
