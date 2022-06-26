@@ -1824,7 +1824,7 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        ------------
+        ----------
         view: :class:`nextcord.ui.View`
             The view to remove from dispatching.
 
