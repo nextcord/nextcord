@@ -823,7 +823,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
 
 
 class ForumChannel(abc.GuildChannel, Hashable):
-    """Represents a Discord guild forum channel.ster
+    """Represents a Discord guild forum channel.
 
     .. container:: operations
 
