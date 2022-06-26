@@ -814,16 +814,19 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.PartialEmoji:
-        match = re.match(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>$", argument)
-
-        if match:
-            emoji_animated = bool(match.group(1))
-            emoji_name = match.group(2)
-            emoji_id = int(match.group(3))
+        custom_emoji_match = re.match(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>$", argument)
+        if custom_emoji_match:
+            emoji_animated = bool(custom_emoji_match.group(1))
+            emoji_name = custom_emoji_match.group(2)
+            emoji_id = int(custom_emoji_match.group(3))
 
             return nextcord.PartialEmoji.with_state(
                 ctx.bot._connection, animated=emoji_animated, name=emoji_name, id=emoji_id
             )
+
+        unicode_emoji_match = re.match(r"^[\U00002000-\U0010ffff]{1,3}$", argument)
+        if unicode_emoji_match:
+            return nextcord.PartialEmoji.with_state(ctx.bot._connection, name=argument)
 
         raise PartialEmojiConversionFailure(argument)
 
