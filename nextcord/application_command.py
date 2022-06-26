@@ -68,8 +68,8 @@ from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
     from .abc import PartialMessageable
-    from .threads import Thread
     from .state import ConnectionState
+    from .threads import Thread
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
 
@@ -153,7 +153,9 @@ class InteractionGuild(InteractionDefault):
 class InteractionChannel(InteractionDefault):
     """Return the channel that the interaction was executed in."""
 
-    def default(self, interaction: Interaction) -> Optional[Union[GuildChannel, PartialMessageable, Thread]]:
+    def default(
+        self, interaction: Interaction
+    ) -> Optional[Union[GuildChannel, PartialMessageable, Thread]]:
         return interaction.channel
 
 
