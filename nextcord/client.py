@@ -1858,7 +1858,7 @@ class Client:
         Parameters
         ------------
         modal: :class:`nextcord.ui.Modal`
-            The view to register for dispatching.
+            The view to remove from dispatching.
 
         Raises
         -------
