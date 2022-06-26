@@ -67,10 +67,11 @@ from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
+    from abc import MessageableChannel
+
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
-    from abc import MessageableChannel
 
     _CustomTypingMetaBase = Any
 else:
