@@ -3642,7 +3642,7 @@ class Guild(Hashable):
             params["trigger_metadata"] = {}
 
         if keyword_filters is not MISSING:
-            params["trigger_metadata"]["keyword_filters"] = keyword_filters
+            params["trigger_metadata"]["keyword_filter"] = keyword_filters
 
         if presets is not MISSING:
             params["trigger_metadata"]["presets"] = [preset.value for preset in presets]
