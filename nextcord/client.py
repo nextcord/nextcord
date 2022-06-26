@@ -1817,7 +1817,7 @@ class Client:
             )
 
         self._connection.store_view(view, message_id)
-    
+
     def remove_view(self, view: View, *, message_id: Optional[int] = None) -> None:
         """Remove a :class:`nextcord.ui.View` for persistant listening.
 
@@ -1831,7 +1831,7 @@ class Client:
             The message ID that the view is attached to. This is currently used to
             refresh the view's state during message update events. If not given
             then message update events are not propagated for the view.
-        
+
         Raises
         -------
         TypeError
