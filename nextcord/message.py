@@ -786,7 +786,11 @@ class Message(Hashable):
 
         from .interactions import MessageInteraction
 
-        self.interaction: Optional[MessageInteraction] = MessageInteraction(data.get("interaction")) if data.get("interaction") is not None else None
+        self.interaction: Optional[MessageInteraction] = (
+            MessageInteraction(data.get("interaction"))
+            if data.get("interaction") is not None
+            else None
+        )
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
