@@ -3648,9 +3648,9 @@ class Guild(Hashable):
             params["trigger_metadata"]["presets"] = [preset.value for preset in presets]
 
         if (
-            (notify_channel is not MISSING)
-            or (timeout_seconds is not MISSING)
-            or (block_message is True)
+            notify_channel is not MISSING
+            or timeout_seconds is not MISSING
+            or block_message is True
         ):
             params["actions"] = []
 
