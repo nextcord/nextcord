@@ -1280,7 +1280,7 @@ class MessageInteraction:
         The raw data from the interaction.
     """
 
-    __slots__: = (
+    __slots__ = (
         "_state",
         "data",
         "id",
