@@ -1220,6 +1220,7 @@ class BotBase(GroupMixin):
         A pre-invoke hook is called directly before the command is
         called. This makes it a useful function to set up database
         connections or any type of set up required.
+
         This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
 
         .. note::
