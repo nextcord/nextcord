@@ -255,13 +255,6 @@ class InteractionResponse(_InteractionResponseOptional):
     type: InteractionResponseType
 
 
-class MessageInteraction(TypedDict):
-    id: Snowflake
-    type: InteractionType
-    name: str
-    user: User
-
-
 class _EditApplicationCommandOptional(TypedDict, total=False):
     description: str
     options: Optional[List[ApplicationCommandOption]]
