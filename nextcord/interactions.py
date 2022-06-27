@@ -1276,7 +1276,7 @@ class MessageInteraction:
     name: :class:`str`
         The application ID that the interaction was for.
     user: :class:`User`
-        The user or member that sent the interaction.
+        The user that sent the interaction.
     data: :class:`dict`
         The raw data from the interaction.
     """
