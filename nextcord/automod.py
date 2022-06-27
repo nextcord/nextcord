@@ -321,7 +321,7 @@ class AutoModerationRule(Hashable):
                     if action.type is ActionType.block:
                         payload["actions"].append({"type": 1})
 
-        if (notify_channel is not MISSING) and (timeout_seconds is MISSING):
+        if notify_channel is not MISSING and timeout_seconds is MISSING:
             payload["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
             for action in self.actions:
                 if action.timeout_seconds is not None:
@@ -329,7 +329,7 @@ class AutoModerationRule(Hashable):
                         {"type": 3, "metadata": {"duration_seconds": action.timeout_seconds}}
                     )
 
-        if (timeout_seconds is not MISSING) and (notify_channel is MISSING):
+        if timeout_seconds is not MISSING and notify_channel is MISSING:
             payload["actions"].append(
                 {"type": 3, "metadata": {"duration_seconds": timeout_seconds}}
             )
@@ -339,7 +339,7 @@ class AutoModerationRule(Hashable):
                         {"type": 2, "metadata": {"channel_id": action.notify_channel_id}}
                     )
 
-        if timeout_seconds is not MISSING) and (notify_channel is not MISSING:
+        if timeout_seconds is not MISSING and notify_channel is not MISSING:
             payload["actions"].append({"type": 2, "metadata": {"channel_id": notify_channel.id}})
             payload["actions"].append(
                 {"type": 3, "metadata": {"duration_seconds": timeout_seconds}}
