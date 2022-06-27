@@ -813,6 +813,9 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
 
     .. versionchanged:: 1.5
          Raise :exc:`.PartialEmojiConversionFailure` instead of generic :exc:`.BadArgument`
+
+    .. versionchanged:: 2.0
+        Add support for converting unicode emojis
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.PartialEmoji:
