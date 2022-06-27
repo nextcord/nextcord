@@ -60,6 +60,7 @@ from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
 from .utils import MISSING, escape_mentions
+from .interactions import MessageInteraction
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
@@ -783,8 +784,6 @@ class Message(Hashable):
                 getattr(self, f"_handle_{handler}")(data[handler])
             except KeyError:
                 continue
-
-        from .interactions import MessageInteraction
 
         self.interaction: Optional[MessageInteraction] = (
             MessageInteraction(data.get("interaction"))
