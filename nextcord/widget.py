@@ -154,7 +154,6 @@ class WidgetMember(BaseUser):
         "status",
         "nick",
         "avatar",
-        "id",
         "activity",
         "deafened",
         "suppress",
