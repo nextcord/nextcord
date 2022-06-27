@@ -153,7 +153,8 @@ class WidgetMember(BaseUser):
     __slots__ = (
         "status",
         "nick",
-        "avatar" "id",
+        "avatar",
+        "id",
         "activity",
         "deafened",
         "suppress",

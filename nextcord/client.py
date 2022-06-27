@@ -2157,7 +2157,7 @@ class Client:
 
         Parameters
         ----------
-        data: Optional[List[:class:`dict]]
+        data: Optional[List[:class:`dict`]]
             Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
             the payload will be retrieved from Discord.
         guild_id: Optional[:class:`int`]
