@@ -1269,6 +1269,8 @@ class MessageInteraction:
 
     Attributes
     -----------
+    data: :class:`dict`
+        The raw data from the interaction.
     id: :class:`int`
         The interaction's ID.
     type: :class:`InteractionType`
@@ -1277,8 +1279,9 @@ class MessageInteraction:
         The application ID that the interaction was for.
     user: :class:`User`
         The user that sent the interaction.
-    data: :class:`dict`
-        The raw data from the interaction.
+    member: Optional[:class:`Member`]
+        The member that sent the interaction, 
+        if the interaction occured in a guild.
     """
 
     __slots__ = (
@@ -1288,9 +1291,10 @@ class MessageInteraction:
         "type",
         "name",
         "user",
+        "member",
     )
 
-    def __init__(self, *, data: MessageInteractionPayload, state: ConnectionState):
+    def __init__(self, *, data: MessageInteractionPayload, guild:Guild, state: ConnectionState):
         self._state: ConnectionState = state
 
         self.data: MessageInteractionPayload = data
@@ -1298,3 +1302,8 @@ class MessageInteraction:
         self.type: int = data["type"]
         self.name: str = data["name"]
         self.user: User = User(data=data["user"], state=state)
+        self.member: Optional[Member] = (
+            Member(data=data["member"], guild=guild, state=state)
+            if guild is not None
+            else None
+        )
