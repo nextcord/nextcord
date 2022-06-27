@@ -658,6 +658,9 @@ class Message(Hashable):
         .. versionadded:: 2.0
     guild: Optional[:class:`Guild`]
         The guild that the message belongs to, if applicable.
+        
+    interaction: Optional[:class:`Interaction`]
+        The interaction data of a message, if applicable.
     """
 
     __slots__ = (
@@ -676,6 +679,7 @@ class Message(Hashable):
         "mention_everyone",
         "embeds",
         "id",
+        "interaction",
         "mentions",
         "author",
         "attachments",
@@ -780,6 +784,13 @@ class Message(Hashable):
                 getattr(self, f"_handle_{handler}")(data[handler])
             except KeyError:
                 continue
+
+        from .interactions import MessageInteraction
+        self.interaction: Optional[MessageInteraction]
+        try:
+            self.interaction = MessageInteraction(data=data["interaction"], state=state)
+        except KeyError:
+            self.interaction = None
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
