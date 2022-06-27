@@ -1303,6 +1303,6 @@ class MessageInteraction:
         self.name: str = data["name"]
         self.user: Union[Member, User] = (
             Member(data=data["member"], guild=guild, state=state)
-            if guild is not None
+            if "member" in data and guild is not None
             else User(data=data["user"], state=state)
         )
