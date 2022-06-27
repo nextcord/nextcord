@@ -659,7 +659,7 @@ class Message(Hashable):
         .. versionadded:: 2.0
     guild: Optional[:class:`Guild`]
         The guild that the message belongs to, if applicable.
-    interaction: Optional[:class:`Interaction`]
+    interaction: Optional[:class:`MessageInteraction`]
         The interaction data of a message, if applicable.
     """
 
