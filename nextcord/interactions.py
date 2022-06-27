@@ -69,8 +69,11 @@ if TYPE_CHECKING:
     from .message import AllowedMentions
     from .state import ConnectionState
     from .threads import Thread
-    from .types.interactions import Interaction as InteractionPayload, InteractionData
-    from .types.interactions import MessageInteraction as MessageInteractionPayload
+    from .types.interactions import (
+        Interaction as InteractionPayload,
+        InteractionData,
+        MessageInteraction as MessageInteractionPayload,
+    )
     from .ui.modal import Modal
     from .ui.view import View
 
@@ -1255,6 +1258,7 @@ class InteractionMessage(_InteractionMessageMixin, Message):
 
     pass
 
+
 class MessageInteraction:
     """Represents a message's interaction data, reguardless of application.
 
@@ -1290,7 +1294,7 @@ class MessageInteraction:
         self._state: ConnectionState = state
 
         self.data: MessageInteractionPayload = data
-        self.id:int = int(data["id"])
+        self.id: int = int(data["id"])
         self.type: InteractionType = data["type"]
         self.name: str = data["name"]
         self.user: User = self._state.store_user(data["user"])
