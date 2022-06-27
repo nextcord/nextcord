@@ -50,6 +50,7 @@ __all__ = (
     "InteractionMessage",
     "InteractionResponse",
     "PartialInteractionMessage",
+    "MessageInteraction",
 )
 
 if TYPE_CHECKING:
@@ -69,6 +70,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .threads import Thread
     from .types.interactions import Interaction as InteractionPayload, InteractionData
+    from .types.interactions import MessageInteraction as MessageInteractionPayload
     from .ui.modal import Modal
     from .ui.view import View
 
@@ -1252,3 +1254,43 @@ class InteractionMessage(_InteractionMessageMixin, Message):
     """
 
     pass
+
+class MessageInteraction:
+    """Represents a message's interaction data, reguardless of application.
+
+    An message's interaction data is a property of a message when the message
+    is a response to an application that is self, or is another bot.
+
+    .. versionadded:: 2.0
+
+    Attributes
+    -----------
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    name: :class:`str`
+        The application ID that the interaction was for.
+    user: :class:`User`
+        The user or member that sent the interaction.
+    data: :class:`dict`
+        The raw data from the interaction.
+    """
+
+    __slots__: Tuple[str, ...] = (
+        "_state",
+        "data",
+        "id",
+        "type",
+        "name",
+        "user",
+    )
+
+    def __init__(self, *, data: MessageInteractionPayload, state: ConnectionState):
+        self._state: ConnectionState = state
+
+        self.data: MessageInteractionPayload = data
+        self.id:int = int(data["id"])
+        self.type: InteractionType = data["type"]
+        self.name: str = data["name"]
+        self.user: User = self._state.store_user(data["user"])
