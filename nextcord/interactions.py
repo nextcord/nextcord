@@ -1296,4 +1296,4 @@ class MessageInteraction:
         self.id: int = int(data["id"])
         self.type: InteractionType = data["type"]
         self.name: str = data["name"]
-        self.user: User = self._state.store_user(data["user"])
+        self.user: User = User(data["user"])
