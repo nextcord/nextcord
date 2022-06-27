@@ -1280,7 +1280,7 @@ class MessageInteraction:
     user: :class:`User`
         The user that sent the interaction.
     member: Optional[:class:`Member`]
-        The member that sent the interaction, 
+        The member that sent the interaction,
         if the interaction occured in a guild.
     """
 
@@ -1294,7 +1294,7 @@ class MessageInteraction:
         "member",
     )
 
-    def __init__(self, *, data: MessageInteractionPayload, guild:Guild, state: ConnectionState):
+    def __init__(self, *, data: MessageInteractionPayload, guild: Guild, state: ConnectionState):
         self._state: ConnectionState = state
 
         self.data: MessageInteractionPayload = data
@@ -1303,7 +1303,5 @@ class MessageInteraction:
         self.name: str = data["name"]
         self.user: User = User(data=data["user"], state=state)
         self.member: Optional[Member] = (
-            Member(data=data["member"], guild=guild, state=state)
-            if guild is not None
-            else None
+            Member(data=data["member"], guild=guild, state=state) if guild is not None else None
         )
