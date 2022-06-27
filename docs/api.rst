@@ -1528,14 +1528,14 @@ of :class:`enum.Enum`.
     .. attribute:: data
 
         Represent the id of the message where the interaction occured
-    .. attribute:: id 
+    .. attribute:: id
 
         Represents the type of message interaction
     .. attribute:: type
-    
+
         Represents the name of the message interaction
     .. attribute:: name
-    
+
         Represents the user that used the interaction
         Or the member that used the interaction if guild applicable
     .. attribute:: user
