@@ -232,7 +232,7 @@ class MessageInteraction(TypedDict):
     id: Snowflake
     type: InteractionType
     name: str
-    user: Union[Member, User]
+    user: User
 
 
 class InteractionApplicationCommandCallbackData(TypedDict, total=False):
