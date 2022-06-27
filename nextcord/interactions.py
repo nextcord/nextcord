@@ -1260,9 +1260,9 @@ class InteractionMessage(_InteractionMessageMixin, Message):
 
 
 class MessageInteraction:
-    """Represents a message's interaction data, reguardless of application.
+    """Represents a message's interaction data, regardless of application.
 
-    An message's interaction data is a property of a message when the message
+    A message's interaction data is a property of a message when the message
     is a response to an application that is self, or is another bot.
 
     .. versionadded:: 2.0
