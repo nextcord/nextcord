@@ -53,6 +53,7 @@ from .errors import HTTPException, InvalidArgument
 from .file import File
 from .flags import MessageFlags
 from .guild import Guild
+from .interactions import MessageInteraction
 from .member import Member
 from .mixins import Hashable
 from .partial_emoji import PartialEmoji
@@ -60,7 +61,6 @@ from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
 from .utils import MISSING, escape_mentions
-from .interactions import MessageInteraction
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
