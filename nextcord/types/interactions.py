@@ -258,7 +258,7 @@ class _MessageInteractionOptional(TypedDict, total=False):
     member: Member
 
 
-class MessageInteractionPayload(_MessageInteractionOptional):
+class MessageInteraction(_MessageInteractionOptional):
     id: Snowflake
     type: InteractionType
     name: str
