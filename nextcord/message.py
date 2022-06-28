@@ -546,7 +546,7 @@ def flatten_handlers(cls):
 
 
 class MessageInteraction:
-    """Represents a message's interaction data, regardless of application.
+    """Represents a message's interaction data.
 
     A message's interaction data is a property of a message when the message
     is a response to an interaction from any bot.
