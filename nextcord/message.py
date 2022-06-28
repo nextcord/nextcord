@@ -40,6 +40,7 @@ from typing import (
     Tuple,
     Type,
     TypeVar,
+    TypedDict,
     Union,
     overload,
 )
