@@ -563,7 +563,7 @@ class MessageInteraction:
         The interaction type.
     name: :class:`str`
         The application ID that the interaction was for.
-    user: :class:`User`
+    user: Union[:class:`User`, :class:`Member`]
         The user or that sent the interaction;
         Or member if the interaction occured in a guild.
     """
