@@ -39,8 +39,8 @@ from typing import (
     Optional,
     Tuple,
     Type,
-    TypeVar,
     TypedDict,
+    TypeVar,
     Union,
     overload,
 )
