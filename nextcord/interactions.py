@@ -72,7 +72,6 @@ if TYPE_CHECKING:
     from .types.interactions import (
         Interaction as InteractionPayload,
         InteractionData,
-        MessageInteraction as MessageInteractionPayload,
     )
     from .ui.modal import Modal
     from .ui.view import View
@@ -1257,48 +1256,3 @@ class InteractionMessage(_InteractionMessageMixin, Message):
     """
 
     pass
-
-
-class MessageInteraction:
-    """Represents a message's interaction data, regardless of application.
-
-    A message's interaction data is a property of a message when the message
-    is a response to an interaction from any bot.
-
-    .. versionadded:: 2.0
-
-    Attributes
-    -----------
-    data: :class:`dict`
-        The raw data from the interaction.
-    id: :class:`int`
-        The interaction's ID.
-    type: :class:`InteractionType`
-        The interaction type.
-    name: :class:`str`
-        The application ID that the interaction was for.
-    user: :class:`User`
-        The user or that sent the interaction;
-    """
-
-    __slots__ = (
-        "_state",
-        "data",
-        "id",
-        "type",
-        "name",
-        "user",
-    )
-
-    def __init__(self, *, data: MessageInteractionPayload, state: ConnectionState):
-        self._state: ConnectionState = state
-
-        self.data: MessageInteractionPayload = data
-        self.id: int = int(data["id"])
-        self.type: int = data["type"]
-        self.name: str = data["name"]
-        if "member" in data and guild is not None:
-            member_user = {**data["member"], "user": data["user"]}
-            self.user = Member(state=self._state, guild=guild, data=member_user)  # type: ignore
-        else:
-            self.user = User(state=self._state, data=data["user"])
