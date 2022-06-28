@@ -228,13 +228,6 @@ class Interaction(_InteractionOptional):
     version: int
 
 
-class MessageInteraction(TypedDict):
-    id: Snowflake
-    type: InteractionType
-    name: str
-    user: User
-
-
 class InteractionApplicationCommandCallbackData(TypedDict, total=False):
     tts: bool
     content: str
