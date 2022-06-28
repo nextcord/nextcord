@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.components import Component as ComponentPayload
     from .types.embed import Embed as EmbedPayload
+    from .types.interactions import MessageInteraction as MessageInteractionOptional
     from .types.member import Member as MemberPayload, UserWithMember as UserWithMemberPayload
     from .types.message import (
         Attachment as AttachmentPayload,
@@ -79,7 +80,6 @@ if TYPE_CHECKING:
         MessageReference as MessageReferencePayload,
         Reaction as ReactionPayload,
     )
-    from .types.interactions import MessageInteraction as MessageInteractionOptional
     from .types.threads import Thread as ThreadPayload, ThreadArchiveDuration
     from .types.user import User as UserPayload
     from .ui.view import View
