@@ -1518,28 +1518,6 @@ of :class:`enum.Enum`.
 
         See also :meth:`InteractionResponse.edit_message`
 
-.. class:: MessageInteraction
-
-    Represents the interaction data of a message if applicable
-
-    .. versionadded:: 2.0
-
-        Represents the raw data of the message interaction
-    .. attribute:: data
-
-        Represent the id of the message where the interaction occured
-    .. attribute:: id
-
-        Represents the type of message interaction
-    .. attribute:: type
-
-        Represents the name of the message interaction
-    .. attribute:: name
-
-        Represents the user that used the interaction
-        Or the member that used the interaction if guild applicable
-    .. attribute:: user
-
 .. class:: ComponentType
 
     Represents the component type of a component.
@@ -3726,6 +3704,14 @@ PartialInteractionMessage
 .. autoclass:: PartialInteractionMessage()
     :members:
     :inherited-members:
+
+MessageInteraction
+~~~~~~~~~~~~
+
+.. attributetable:: MessageInteraction
+
+.. autoclass:: MessageInteraction()
+    :members:
 
 Member
 ~~~~~~
