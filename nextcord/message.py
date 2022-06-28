@@ -564,8 +564,8 @@ class MessageInteraction:
     name: :class:`str`
         The name of the application command.
     user: Union[:class:`User`, :class:`Member`]
-        The user or that sent the interaction;
-        Or member if the interaction occured in a guild.
+        The :class:`User` who invoked the interaction or :class:`Member` if the interaction
+        occurred in a guild.
     """
 
     __slots__ = (
