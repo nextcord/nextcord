@@ -1290,9 +1290,7 @@ class MessageInteraction:
         "user",
     )
 
-    def __init__(
-        self, *, data: MessageInteractionPayload, state: ConnectionState
-    ):
+    def __init__(self, *, data: MessageInteractionPayload, state: ConnectionState):
         self._state: ConnectionState = state
 
         self.data: MessageInteractionPayload = data
