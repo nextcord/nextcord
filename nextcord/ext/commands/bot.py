@@ -41,6 +41,7 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    Iterable,
     List,
     Mapping,
     Optional,
@@ -203,7 +204,7 @@ class BotBase(GroupMixin):
         rollout_all_guilds: bool = False,
         description: Optional[str] = None,
         owner_id: Optional[int] = None,
-        owner_ids: set[int] = set(),
+        owner_ids: Iterable[int] = set(),
         strip_after_prefix: bool = False,
         help_command: Optional[HelpCommand] = _default,
         case_insensitive: bool = False,
@@ -248,11 +249,11 @@ class BotBase(GroupMixin):
         self._check_once = []
         self._before_invoke = None
         self._after_invoke = None
-        self._help_command = None
-        self.description = inspect.cleandoc(description) if description else ""
-        self.owner_id = owner_id
-        self.owner_ids = owner_ids
-        self.strip_after_prefix = strip_after_prefix
+        self._help_command: Optional[HelpCommand] = None
+        self.description: str = inspect.cleandoc(description) if description else ""
+        self.owner_id: Optional[int] = owner_id
+        self.owner_ids: Iterable[int] = owner_ids
+        self.strip_after_prefix: bool = strip_after_prefix
 
         if self.owner_id and self.owner_ids:
             raise TypeError("Both owner_id and owner_ids are set.")
@@ -282,9 +283,9 @@ class BotBase(GroupMixin):
             )
 
         if help_command is _default:
-            self.help_command = DefaultHelpCommand()
+            self._help_command = DefaultHelpCommand()
         else:
-            self.help_command = help_command
+            self._help_command = help_command
 
     # internal helpers
 
