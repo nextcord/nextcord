@@ -175,7 +175,7 @@ class BotBase(GroupMixin):
         self,
         command_prefix: Union[
             str, Sequence[str], Callable[[Self, Message], Union[Awaitable[str], str]]
-        ],
+        ] = tuple(),
         *,
         max_messages: Optional[int] = 1000,
         connector: Optional[aiohttp.BaseConnector] = None,
