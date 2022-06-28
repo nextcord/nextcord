@@ -70,7 +70,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.components import Component as ComponentPayload
     from .types.embed import Embed as EmbedPayload
-    from .types.interactions import MessageInteraction as MessageInteractionOptional
+    from .types.interactions import MessageInteraction as MessageInteractionPayload
     from .types.member import Member as MemberPayload, UserWithMember as UserWithMemberPayload
     from .types.message import (
         Attachment as AttachmentPayload,
@@ -94,6 +94,7 @@ __all__ = (
     "PartialMessage",
     "MessageReference",
     "DeletedReferencedMessage",
+    "MessageInteraction",
 )
 
 
