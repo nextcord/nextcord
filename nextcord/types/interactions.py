@@ -254,7 +254,11 @@ class _EditApplicationCommandOptional(TypedDict, total=False):
     type: ApplicationCommandType
 
 
-class MessageInteraction(TypedDict):
+class _MessageInteractionOptional(TypedDict, total=False):
+    member: Member
+
+
+class MessageInteractionPayload(_MessageInteractionOptional):
     id: Snowflake
     type: InteractionType
     name: str
