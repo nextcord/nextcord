@@ -1305,6 +1305,6 @@ class MessageInteraction:
         self.user: Union[Member, User]
         if "member" in data and guild is not None:
             data["member"]["user"] = data["user"]
-            self.user =  Member(data=data["member"], guild=guild, state=state)
+            self.user = Member(data=data["member"], guild=guild, state=state)
         else:
-            self.user =  User(data=data["user"], state=state)
+            self.user = User(data=data["user"], state=state)
