@@ -576,7 +576,9 @@ class MessageInteraction:
         "user",
     )
 
-    def __init__(self, *, data: MessageInteractionPayload, guild: Optional[Guild], state: ConnectionState):
+    def __init__(
+        self, *, data: MessageInteractionPayload, guild: Optional[Guild], state: ConnectionState
+    ):
         self._state: ConnectionState = state
 
         self.data: MessageInteractionPayload = data
