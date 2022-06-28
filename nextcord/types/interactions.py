@@ -254,6 +254,13 @@ class _EditApplicationCommandOptional(TypedDict, total=False):
     type: ApplicationCommandType
 
 
+class MessageInteraction(TypedDict):
+    id: Snowflake
+    type: InteractionType
+    name: str
+    user: User
+
+
 class EditApplicationCommand(_EditApplicationCommandOptional):
     name: str
     default_permission: bool
