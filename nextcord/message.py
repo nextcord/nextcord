@@ -542,14 +542,17 @@ def flatten_handlers(cls):
     cls._CACHED_SLOTS = [attr for attr in cls.__slots__ if attr.startswith("_cs_")]
     return cls
 
+
 class _MessageInteractionOptional(TypedDict, total=False):
     member: Member
+
 
 class MessageInteractionPayload(_MessageInteractionOptional):
     id: Snowflake
     type: InteractionType
     name: str
     user: User
+
 
 class MessageInteraction:
     """Represents a message's interaction data, regardless of application.
