@@ -1297,4 +1297,8 @@ class MessageInteraction:
         self.id: int = int(data["id"])
         self.type: int = data["type"]
         self.name: str = data["name"]
-        self.user: User = User(data=data["user"], state=state)
+        if "member" in data and guild is not None:
+            member_user = {**data["member"], "user": data["user"]}
+            self.user = Member(state=self._state, guild=guild, data=member_user)  # type: ignore
+        else:
+            self.user = User(state=self._state, data=data["user"])
