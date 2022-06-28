@@ -43,6 +43,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AsyncIterator,
+    Awaitable,
     Callable,
     Dict,
     ForwardRef,
@@ -522,7 +523,9 @@ def _parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
         return float(reset_after)
 
 
-async def maybe_coroutine(f, *args, **kwargs):
+async def maybe_coroutine(
+    f: Callable[P, Union[Any, Awaitable[Any]]], *args: P.args, **kwargs: P.kwargs
+) -> Any:
     value = f(*args, **kwargs)
     if _isawaitable(value):
         return await value
