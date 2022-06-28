@@ -247,13 +247,7 @@ class _InteractionResponseOptional(TypedDict, total=False):
 class InteractionResponse(_InteractionResponseOptional):
     type: InteractionResponseType
 
-
-class _EditApplicationCommandOptional(TypedDict, total=False):
-    description: str
-    options: Optional[List[ApplicationCommandOption]]
-    type: ApplicationCommandType
-
-
+        
 class _MessageInteractionOptional(TypedDict, total=False):
     member: Member
 
@@ -263,6 +257,11 @@ class MessageInteraction(_MessageInteractionOptional):
     type: InteractionType
     name: str
     user: User
+
+class _EditApplicationCommandOptional(TypedDict, total=False):
+    description: str
+    options: Optional[List[ApplicationCommandOption]]
+    type: ApplicationCommandType
 
 
 class EditApplicationCommand(_EditApplicationCommandOptional):
