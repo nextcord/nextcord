@@ -1277,10 +1277,8 @@ class MessageInteraction:
         The interaction type.
     name: :class:`str`
         The application ID that the interaction was for.
-    user: Union[:class:`Member`, :class:`User`]
-        The user or member that sent the interaction;
-        Member if interaction occured in a guild.
-        User if guild is None.
+    user: :class:`User`
+        The user or that sent the interaction;
     """
 
     __slots__ = (
@@ -1293,7 +1291,7 @@ class MessageInteraction:
     )
 
     def __init__(
-        self, *, data: MessageInteractionPayload, guild: Optional[Guild], state: ConnectionState
+        self, *, data: MessageInteractionPayload, state: ConnectionState
     ):
         self._state: ConnectionState = state
 
@@ -1301,10 +1299,4 @@ class MessageInteraction:
         self.id: int = int(data["id"])
         self.type: int = data["type"]
         self.name: str = data["name"]
-
-        self.user: Union[Member, User]
-        if "member" in data and guild is not None:
-            data["member"]["user"] = data["user"]
-            self.user = Member(data=data["member"], guild=guild, state=state)
-        else:
-            self.user = User(data=data["user"], state=state)
+        self.user: User = User(data=data["user"], state=state)
