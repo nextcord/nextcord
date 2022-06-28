@@ -39,7 +39,6 @@ from typing import (
     Optional,
     Tuple,
     Type,
-    TypedDict,
     TypeVar,
     Union,
     overload,
@@ -80,6 +79,7 @@ if TYPE_CHECKING:
         MessageReference as MessageReferencePayload,
         Reaction as ReactionPayload,
     )
+    from .types.interactions import MessageInteraction as MessageInteractionOptional
     from .types.threads import Thread as ThreadPayload, ThreadArchiveDuration
     from .types.user import User as UserPayload
     from .ui.view import View
@@ -542,17 +542,6 @@ def flatten_handlers(cls):
     cls._HANDLERS = handlers
     cls._CACHED_SLOTS = [attr for attr in cls.__slots__ if attr.startswith("_cs_")]
     return cls
-
-
-class _MessageInteractionOptional(TypedDict, total=False):
-    member: Member
-
-
-class MessageInteractionPayload(_MessageInteractionOptional):
-    id: Snowflake
-    type: InteractionType
-    name: str
-    user: User
 
 
 class MessageInteraction:
