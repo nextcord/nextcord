@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Unio
 from .abc import Messageable
 from .enums import ChannelType, try_enum
 from .errors import ClientException
-from .mixins import Hashable
+from .mixins import Hashable, PinsMixin
 from .utils import MISSING, _get_as_snowflake, parse_time
 
 __all__ = (
@@ -60,7 +60,7 @@ if TYPE_CHECKING:
     )
 
 
-class Thread(Messageable, Hashable):
+class Thread(Messageable, Hashable, PinsMixin):
     """Represents a Discord thread.
 
     .. container:: operations
