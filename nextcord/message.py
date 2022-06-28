@@ -586,7 +586,7 @@ class MessageInteraction:
         "user",
     )
 
-    def __init__(self, *, data: MessageInteractionPayload, state: ConnectionState):
+    def __init__(self, *, data: MessageInteractionPayload, guild: Guild, state: ConnectionState):
         self._state: ConnectionState = state
 
         self.data: MessageInteractionPayload = data
@@ -841,7 +841,7 @@ class Message(Hashable):
                 continue
 
         self.interaction: Optional[MessageInteraction] = (
-            MessageInteraction(data=data["interaction"], state=self._state)
+            MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
             if "interaction" in data
             else None
         )
