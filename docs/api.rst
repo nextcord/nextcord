@@ -3706,7 +3706,7 @@ PartialInteractionMessage
     :inherited-members:
 
 MessageInteraction
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: MessageInteraction
 
