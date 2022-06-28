@@ -50,7 +50,6 @@ __all__ = (
     "InteractionMessage",
     "InteractionResponse",
     "PartialInteractionMessage",
-    "MessageInteraction",
 )
 
 if TYPE_CHECKING:
