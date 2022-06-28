@@ -53,7 +53,6 @@ from .errors import HTTPException, InvalidArgument
 from .file import File
 from .flags import MessageFlags
 from .guild import Guild
-from .interactions import MessageInteraction
 from .member import Member
 from .mixins import Hashable
 from .partial_emoji import PartialEmoji
@@ -542,6 +541,59 @@ def flatten_handlers(cls):
     cls._HANDLERS = handlers
     cls._CACHED_SLOTS = [attr for attr in cls.__slots__ if attr.startswith("_cs_")]
     return cls
+
+class _MessageInteractionOptional(TypedDict, total=False):
+    member: Member
+
+class MessageInteractionPayload(_MessageInteractionOptional):
+    id: Snowflake
+    type: InteractionType
+    name: str
+    user: User
+
+class MessageInteraction:
+    """Represents a message's interaction data, regardless of application.
+
+    A message's interaction data is a property of a message when the message
+    is a response to an interaction from any bot.
+
+    .. versionadded:: 2.0
+
+    Attributes
+    -----------
+    data: :class:`dict`
+        The raw data from the interaction.
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    name: :class:`str`
+        The application ID that the interaction was for.
+    user: :class:`User`
+        The user or that sent the interaction;
+        Or member if the interaction occured in a guild.
+    """
+
+    __slots__ = (
+        "_state",
+        "data",
+        "id",
+        "type",
+        "name",
+        "user",
+    )
+
+    def __init__(self, *, data: MessageInteractionPayload, state: ConnectionState):
+        self._state: ConnectionState = state
+
+        self.data: MessageInteractionPayload = data
+        self.id: int = int(data["id"])
+        self.type: int = data["type"]
+        self.name: str = data["name"]
+        if "member" in data and guild is not None:
+            self.user = Member(state=self._state, guild=guild, data={**data["member"], "user": data["user"]})  # type: ignore
+        else:
+            self.user = User(state=self._state, data=data["user"])
 
 
 @flatten_handlers
