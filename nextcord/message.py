@@ -589,7 +589,7 @@ class MessageInteraction:
         if "member" in data and guild is not None:
             self.user = Member(state=self._state, guild=guild, data={**data["member"], "user": data["user"]})  # type: ignore
         else:
-            self.user = User(state=self._state, data=data["user"])
+            self.user = self._state.create_user(data=data["user"])
 
     def __repr__(self):
         return f"<{self.__class__.__name__} id={self.id} type={self.type} name={self.name} user={self.user!r}>"
