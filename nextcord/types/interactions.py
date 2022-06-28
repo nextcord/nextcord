@@ -228,11 +228,7 @@ class Interaction(_InteractionOptional):
     version: int
 
 
-class _MessageInteractionOptional(TypedDict, total=False):
-    member: Member
-
-
-class MessageInteraction(_MessageInteractionOptional):
+class MessageInteraction(TypedDict):
     id: Snowflake
     type: InteractionType
     name: str
