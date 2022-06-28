@@ -786,7 +786,7 @@ class Message(Hashable):
                 continue
 
         self.interaction: Optional[MessageInteraction] = (
-            MessageInteraction(data=data.get("interaction"), guild=self.guild, state=self._state)
+            MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
             if "interaction" in data
             else None
         )
