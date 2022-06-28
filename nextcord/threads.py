@@ -831,3 +831,16 @@ class ThreadMember(Hashable):
     def thread(self) -> Thread:
         """:class:`Thread`: The thread this member belongs to."""
         return self.parent
+
+    @property
+    def member(self) -> Optional[Member]:
+        """Optional[:class:`Member`]: The :class:`Member` of this thread member."""
+        return self.parent.guild.get_member(self.id)
+
+    async def fetch_member(self) -> Member:
+        """:class:`Member`: Retrieves the :class:`Member` of this thread member.
+
+        .. note::
+            This method is an API call. If you have :attr:`Intents.members` and members cache enabled, consider :attr:`member` instead.
+        """
+        return await self.parent.guild.fetch_member(self.id)
