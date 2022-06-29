@@ -1091,10 +1091,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         To create a public thread, you must have :attr:`~nextcord.Permissions.create_public_threads`.
         For a private thread, :attr:`~nextcord.Permissions.create_private_threads` is needed instead.
 
-        .. versionadded:: 2.0
+        .. versionadded:: 2.1
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the thread.
         auto_archive_duration: :class:`int`
@@ -1104,18 +1104,18 @@ class ForumChannel(abc.GuildChannel, Hashable):
             The reason for creating a new thread. Shows up on the audit log.
         content: Optional[:class:`str`]
             The content of the message to send.
-        embed: :class:`~nextcord.Embed`
+        embed: Optional[:class:`~nextcord.Embed`]
             The rich embed for the content.
-        embeds: List[:class:`~nextcord.Embed`]
+        embeds: Optional[List[:class:`~nextcord.Embed`]]
             A list of rich embeds for the content.
         file: :class:`~nextcord.File`
             The file to upload.
-        files: List[:class:`~nextcord.File`]
+        files: Optional[List[:class:`~nextcord.File`]]
             A list of files to upload. Must be a maximum of 10.
-        nonce: :class:`int`
+        nonce: Optional[:class:`int`]
             The nonce to use for sending this message. If the message was successfully sent,
             then the message will have a nonce with this value.
-        allowed_mentions: :class:`~nextcord.AllowedMentions`
+        allowed_mentions: Optional[:class:`~nextcord.AllowedMentions`]
             Controls the mentions being processed in this message. If this is
             passed, then the object is merged with :attr:`~nextcord.Client.allowed_mentions`.
             The merging behaviour only overrides attributes that have been explicitly passed
@@ -1124,14 +1124,14 @@ class ForumChannel(abc.GuildChannel, Hashable):
             are used instead.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to create a thread.
         HTTPException
             Starting the thread failed.
 
         Returns
-        --------
+        -------
         :class:`Thread`
             The created thread
         """
