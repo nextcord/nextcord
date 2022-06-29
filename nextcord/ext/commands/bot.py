@@ -1017,17 +1017,16 @@ class BotBase(GroupMixin):
         if extras is not None and len(extras) != len(names):
             raise ValueError("The length of extra parameters must match the length of extensions.")
 
-        packages_itr: Optional[Iterator] = iter(packages) and packages
-        extras_itr: Optional[Iterator] = iter(extras) and extras
+        # pyright doesn't understand these statements at all
+        packages_itr: Optional[Iterator] = iter(packages) and packages  # type: ignore
+        extras_itr: Optional[Iterator] = iter(extras) and extras  # type: ignore
 
         loaded_extensions: List[str] = []
 
         for extension in names:
-            # pyright doesn't seem to understand that this returns a dict or nothing
             cur_extra: Optional[Dict[str, Any]] = extras_itr and next(extras_itr)  # type: ignore
 
             if package is None:
-                # same here
                 package: Optional[str] = packages_itr and next(packages_itr)  # type: ignore
 
             try:
