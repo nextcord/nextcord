@@ -1027,10 +1027,10 @@ class BotBase(GroupMixin):
             cur_extra: Optional[Dict[str, Any]] = extras_itr and next(extras_itr)  # type: ignore
 
             if package is None:
-                package: Optional[str] = packages_itr and next(packages_itr)  # type: ignore
+                package = packages_itr and next(packages_itr)  # type: ignore
 
             try:
-                self.load_extension(extension, package=package, extras=cur_extra)  # type: ignore
+                self.load_extension(extension, package=package, extras=cur_extra)
             except Exception as e:
                 # we print the exception instead of raising it because we want to continue loading extensions
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
