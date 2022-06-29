@@ -241,9 +241,9 @@ class SystemChannelFlags(BaseFlags):
 
 @fill_with_flags()
 class ChannelFlags(BaseFlags):
-    r"""Wraps up a Discord channel flag value.
+    """Wraps up a Discord channel flag value.
 
-    Similar to :class:`Permissions`\, the properties provided are two way.
+    Similar to :class:`Permissions`, the properties provided are two way.
     You can set and retrieve individual bits using the properties as if they
     were regular bools. This allows you to edit the channel flags easily.
 
@@ -260,14 +260,14 @@ class ChannelFlags(BaseFlags):
             Checks if two flags are not equal.
         .. describe:: hash(x)
 
-               Return the flag's hash.
+            Return the flag's hash.
         .. describe:: iter(x)
 
-               Returns an iterator of ``(name, value)`` pairs. This allows it
-               to be, for example, constructed as a dict or a list of pairs.
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
 
     Attributes
-    -----------
+    ----------
     value: :class:`int`
         The raw value. This value is a bit array field of a 53-bit integer
         representing the currently available flags. You should query
