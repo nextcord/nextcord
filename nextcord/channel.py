@@ -936,10 +936,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
     @property
     def threads(self) -> List[Thread]:
-        """List[:class:`Thread`]: Returns all the threads of this channel.
-
-        .. versionadded:: 2.0
-        """
+        """List[:class:`Thread`]: Returns all the threads of this channel."""
         return [thread for thread in self.guild._threads.values() if thread.parent_id == self.id]
 
     def is_nsfw(self) -> bool:
@@ -1052,8 +1049,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
     def get_thread(self, thread_id: int, /) -> Optional[Thread]:
         """Returns a thread with the given ID.
 
-        .. versionadded:: 2.0
-
         Parameters
         -----------
         thread_id: :class:`int`
@@ -1090,8 +1085,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
         To create a public thread, you must have :attr:`~nextcord.Permissions.create_public_threads`.
         For a private thread, :attr:`~nextcord.Permissions.create_private_threads` is needed instead.
-
-        .. versionadded:: 2.1
 
         Parameters
         ----------
@@ -1235,8 +1228,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
         You must have :attr:`~Permissions.read_message_history` to use this. If iterating over private threads
         then :attr:`~Permissions.manage_threads` is also required.
-
-        .. versionadded:: 2.0
 
         Parameters
         ----------
