@@ -161,6 +161,9 @@ class CommandNotFound(CommandError):
 
     This inherits from :exc:`CommandError`.
 
+    .. versionchanged:: 2.1
+        Added :attr:`command_name` as a parameter.
+
     Attributes
     -----------
     command_name: :class:`str`
