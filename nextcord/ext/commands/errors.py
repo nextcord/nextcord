@@ -167,10 +167,9 @@ class CommandNotFound(CommandError):
         The command that was not found.
     """
 
-    def __init__(self, message: Optional[str] = None, *, command_name: str) -> None:
-        self.message: Optional[str] = message
+    def __init__(self, command_name: str) -> None:
         self.command_name: str = command_name
-        super().__init__(message or f'Command "{self.command_name}" is not found')
+        super().__init__(f'Command "{self.command_name}" is not found')
 
 
 class MissingRequiredArgument(UserInputError):
