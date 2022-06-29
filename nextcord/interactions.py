@@ -165,7 +165,7 @@ class Interaction:
         "version",
         "application_command",
         "attached",
-        "_app_permissions",
+        "_permissions",
         "_state",
         "_session",
         "_original_message",
@@ -204,10 +204,7 @@ class Interaction:
             self.message = None
 
         self.user: Optional[Union[User, Member]] = None
-        self._app_permissions: int = 0
-
-        if self.guild_id:
-            self._app_permissions = int(data.get("app_permissions"))  # type: ignore
+        self._permissions: int = int(data.get("app_permissions", 0))
 
     @property
     def client(self) -> Client:
@@ -263,7 +260,7 @@ class Interaction:
 
         In a non-guild context where this doesn't apply, an empty permissions object is returned.
         """
-        return Permissions(self._app_permissions)
+        return Permissions(self._permissions)
 
     @utils.cached_slot_property("_cs_response")
     def response(self) -> InteractionResponse:
