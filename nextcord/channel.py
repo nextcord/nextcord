@@ -936,7 +936,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
     @property
     def threads(self) -> List[Thread]:
-        """List[:class:`Thread`]: Returns all the threads that you can see.
+        """List[:class:`Thread`]: Returns all the threads of this channel.
 
         .. versionadded:: 2.0
         """
