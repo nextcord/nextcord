@@ -656,10 +656,6 @@ class Message(Hashable):
         A list of components in the message.
 
         .. versionadded:: 2.0
-    thread: Optional[:class:`Thread`]
-        The thread created from a message, if any.
-
-        .. versionadded:: 2.0
     guild: Optional[:class:`Guild`]
         The guild that the message belongs to, if applicable.
     """
