@@ -3599,7 +3599,7 @@ class Guild(Hashable):
         presets: List[:class:`KeywordPresetType`]
             The preset keywords that this rule should filter.
         notify_channel: :class:`abc.GuildChannel`
-            The channel that Discord will send an alert to this channel when the rule is triggered.
+            The channel Discord will send an alert to when this rule is triggered.
             Either this or `timeout_seconds` must be provided.
         timeout_seconds: :class:`int`
             The seconds to timeout the user that triggered this rule.
