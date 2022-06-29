@@ -982,14 +982,14 @@ class ForumChannel(abc.GuildChannel, Hashable):
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[ForumChannel]:
+    ) -> ForumChannel:
         ...
 
     @overload
-    async def edit(self) -> Optional[ForumChannel]:
+    async def edit(self) -> ForumChannel:
         ...
 
-    async def edit(self, *, reason=None, **options) -> Optional[ForumChannel]:
+    async def edit(self, *, reason=None, **options) -> ForumChannel:
         """|coro|
 
         Edits the channel.
@@ -1046,6 +1046,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+        else:
+            return self
 
     def get_thread(self, thread_id: int, /) -> Optional[Thread]:
         """Returns a thread with the given ID.
