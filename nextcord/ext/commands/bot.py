@@ -1122,7 +1122,7 @@ class BotBase(GroupMixin):
             else:
                 self.dispatch("command_completion", ctx)
         elif ctx.invoked_with:
-            exc = errors.CommandNotFound(f'Command "{ctx.invoked_with}" is not found')
+            exc = errors.CommandNotFound(ctx.invoked_with)
             self.dispatch("command_error", ctx, exc)
 
     async def process_commands(self, message: Message) -> None:
