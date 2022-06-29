@@ -1237,7 +1237,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         limit: Optional[:class:`bool`]
             The number of threads to retrieve.
             If ``None``, retrieves every archived thread in the channel. Note, however,
@@ -1258,7 +1258,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
             The request to get the archived threads failed.
 
         Yields
-        -------
+        ------
         :class:`Thread`
             The archived threads.
         """
