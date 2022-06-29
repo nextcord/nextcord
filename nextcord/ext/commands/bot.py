@@ -989,7 +989,7 @@ class BotBase(GroupMixin):
             A list of extra arguments to pass to the extension's setup function.
 
         Returns
-        --------
+        -------
         List[:class:`str`]
             A list that contains the names of all of the extensions
         that loaded successfully.
