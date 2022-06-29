@@ -207,7 +207,7 @@ class Interaction:
         self._app_permissions: int = 0
 
         if self.guild_id:
-            self._app_permissions = int(data.get("app_permissions"))
+            self._app_permissions = int(data.get("app_permissions"))  # type: ignore
 
     @property
     def client(self) -> Client:
