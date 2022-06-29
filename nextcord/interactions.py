@@ -165,7 +165,7 @@ class Interaction:
         "version",
         "application_command",
         "attached",
-        "_permissions",
+        "_app_permissions",
         "_state",
         "_session",
         "_original_message",
@@ -204,23 +204,10 @@ class Interaction:
             self.message = None
 
         self.user: Optional[Union[User, Member]] = None
-        self._permissions: int = 0
+        self._app_permissions: int = 0
 
-        # TODO: there's a potential data loss here
         if self.guild_id:
-            guild = self.guild or Object(id=self.guild_id)
-            try:
-                member = data["member"]
-            except KeyError:
-                pass
-            else:
-                self.user = Member(state=self._state, guild=guild, data=member)  # type: ignore
-                self._permissions = int(member.get("permissions", 0))
-        else:
-            try:
-                self.user = User(state=self._state, data=data["user"])
-            except KeyError:
-                pass
+            self._app_permissions = int(data.get("app_permissions"))
 
     @property
     def client(self) -> Client:
@@ -272,11 +259,11 @@ class Interaction:
 
     @property
     def permissions(self) -> Permissions:
-        """:class:`Permissions`: The resolved permissions of the member in the channel, including overwrites.
+        """:class:`Permissions`: The app permissions for this bot sent by Discord.
 
         In a non-guild context where this doesn't apply, an empty permissions object is returned.
         """
-        return Permissions(self._permissions)
+        return Permissions(self._app_permissions)
 
     @utils.cached_slot_property("_cs_response")
     def response(self) -> InteractionResponse:
