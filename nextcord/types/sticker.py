@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -25,6 +26,8 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import List, Literal, TypedDict, Union
+
+from typing_extensions import NotRequired
 
 from .snowflake import Snowflake
 from .user import User
@@ -52,14 +55,11 @@ class StandardSticker(BaseSticker):
     pack_id: Snowflake
 
 
-class _GuildStickerOptional(TypedDict, total=False):
-    user: User
-
-
-class GuildSticker(BaseSticker, _GuildStickerOptional):
+class GuildSticker(BaseSticker):
     type: Literal[2]
     available: bool
     guild_id: Snowflake
+    user: NotRequired[User]
 
 
 Sticker = Union[BaseSticker, StandardSticker, GuildSticker]
@@ -75,13 +75,10 @@ class StickerPack(TypedDict):
     banner_asset_id: Snowflake
 
 
-class _CreateGuildStickerOptional(TypedDict, total=False):
-    description: str
-
-
-class CreateGuildSticker(_CreateGuildStickerOptional):
+class CreateGuildSticker(TypedDict):
     name: str
     tags: str
+    description: NotRequired[str]
 
 
 class EditGuildSticker(TypedDict, total=False):

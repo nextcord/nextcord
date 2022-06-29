@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -26,6 +27,8 @@ from __future__ import annotations
 
 from typing import Literal, Optional, TypedDict
 
+from typing_extensions import NotRequired
+
 from .channel import PartialChannel
 from .snowflake import Snowflake
 from .user import User
@@ -37,28 +40,22 @@ class SourceGuild(TypedDict):
     icon: str
 
 
-class _WebhookOptional(TypedDict, total=False):
-    guild_id: Snowflake
-    user: User
-    token: str
-
-
 WebhookType = Literal[1, 2, 3]
 
 
-class _FollowerWebhookOptional(TypedDict, total=False):
-    source_channel: PartialChannel
-    source_guild: SourceGuild
-
-
-class FollowerWebhook(_FollowerWebhookOptional):
+class FollowerWebhook(TypedDict):
     channel_id: Snowflake
     webhook_id: Snowflake
+    source_channel: NotRequired[PartialChannel]
+    source_guild: NotRequired[SourceGuild]
 
 
-class PartialWebhook(_WebhookOptional):
+class PartialWebhook(TypedDict):
     id: Snowflake
     type: WebhookType
+    guild_id: NotRequired[Snowflake]
+    user: NotRequired[User]
+    token: NotRequired[str]
 
 
 class _FullWebhook(TypedDict, total=False):

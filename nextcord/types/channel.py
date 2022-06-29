@@ -25,6 +25,8 @@ DEALINGS IN THE SOFTWARE.
 
 from typing import List, Literal, Optional, TypedDict, Union
 
+from typing_extensions import NotRequired
+
 from .snowflake import Snowflake
 from .threads import ThreadArchiveDuration, ThreadMember, ThreadMetadata
 from .user import PartialUser
@@ -59,32 +61,31 @@ class PartialChannel(_BaseChannel):
     type: ChannelType
 
 
-class _TextChannelOptional(TypedDict, total=False):
-    topic: str
-    last_message_id: Optional[Snowflake]
-    last_pin_timestamp: str
-    rate_limit_per_user: int
-    default_auto_archive_duration: ThreadArchiveDuration
-
-
-class TextChannel(_BaseGuildChannel, _TextChannelOptional):
+class TextChannel(_BaseGuildChannel):
     type: Literal[0]
+    topic: NotRequired[str]
+    last_message_id: NotRequired[Optional[Snowflake]]
+    last_pin_timestamp: NotRequired[str]
+    rate_limit_per_user: NotRequired[int]
+    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
 
 
-class NewsChannel(_BaseGuildChannel, _TextChannelOptional):
+class NewsChannel(_BaseGuildChannel):
     type: Literal[5]
+    topic: NotRequired[str]
+    last_message_id: NotRequired[Optional[Snowflake]]
+    last_pin_timestamp: NotRequired[str]
+    rate_limit_per_user: NotRequired[int]
+    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
 
 
 VideoQualityMode = Literal[1, 2]
 
 
-class _VoiceChannelOptional(TypedDict, total=False):
-    last_message_id: Optional[Snowflake]
-    rtc_region: Optional[str]
-    video_quality_mode: VideoQualityMode
-
-
-class VoiceChannel(_BaseGuildChannel, _VoiceChannelOptional):
+class VoiceChannel(_BaseGuildChannel):
+    last_message_id: NotRequired[Optional[Snowflake]]
+    rtc_region: NotRequired[Optional[str]]
+    video_quality_mode: NotRequired[VideoQualityMode]
     type: Literal[2]
     bitrate: int
     user_limit: int
@@ -94,26 +95,20 @@ class CategoryChannel(_BaseGuildChannel):
     type: Literal[4]
 
 
-class _StageChannelOptional(TypedDict, total=False):
-    rtc_region: Optional[str]
-    topic: str
-
-
-class StageChannel(_BaseGuildChannel, _StageChannelOptional):
+class StageChannel(_BaseGuildChannel):
+    rtc_region: NotRequired[Optional[str]]
+    topic: NotRequired[str]
     type: Literal[13]
     bitrate: int
     user_limit: int
 
 
-class _ThreadChannelOptional(TypedDict, total=False):
-    member: ThreadMember
-    owner_id: Snowflake
-    rate_limit_per_user: int
-    last_message_id: Optional[Snowflake]
-    last_pin_timestamp: str
-
-
-class ThreadChannel(_BaseChannel, _ThreadChannelOptional):
+class ThreadChannel(_BaseChannel):
+    member: NotRequired[ThreadMember]
+    owner_id: NotRequired[Snowflake]
+    rate_limit_per_user: NotRequired[int]
+    last_message_id: NotRequired[Optional[Snowflake]]
+    last_pin_timestamp: NotRequired[str]
     type: Literal[10, 11, 12]
     guild_id: Snowflake
     parent_id: Snowflake

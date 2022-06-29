@@ -25,7 +25,6 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
 
 if TYPE_CHECKING:
     from nextcord.application_command import ClientCog
-    from nextcord.errors import ApplicationError
 
     from ..interactions import Interaction
 

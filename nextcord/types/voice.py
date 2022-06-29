@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -24,18 +25,15 @@ DEALINGS IN THE SOFTWARE.
 
 from typing import List, Literal, Optional, TypedDict
 
+from typing_extensions import NotRequired
+
 from .member import MemberWithUser
 from .snowflake import Snowflake
 
 SupportedModes = Literal["xsalsa20_poly1305_lite", "xsalsa20_poly1305_suffix", "xsalsa20_poly1305"]
 
 
-class _PartialVoiceStateOptional(TypedDict, total=False):
-    member: MemberWithUser
-    self_stream: bool
-
-
-class _VoiceState(_PartialVoiceStateOptional):
+class _VoiceState(TypedDict):
     user_id: Snowflake
     session_id: str
     deaf: bool
@@ -44,6 +42,8 @@ class _VoiceState(_PartialVoiceStateOptional):
     self_mute: bool
     self_video: bool
     suppress: bool
+    member: NotRequired[MemberWithUser]
+    self_stream: NotRequired[bool]
 
 
 class GuildVoiceState(_VoiceState):
