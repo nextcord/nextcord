@@ -990,11 +990,12 @@ class BotBase(GroupMixin):
 
         Returns
         --------
-        A List[:class:`str`] that contains the names of all of the extensions
+        List[:class:`str`]
+            A list that contains the names of all of the extensions
         that loaded successfully.
 
         Raises
-        --------
+        ------
         ValueError
             - If the ``package`` and ``packages`` parameters are both provided
             - If the length of ``packages`` or the length of ``extras` is not equal to the length of ``names``
@@ -1022,10 +1023,10 @@ class BotBase(GroupMixin):
         loaded_extensions: List[str] = []
 
         for extension in names:
-            cur_extra = next(extras_itr) if extras_itr is not None else None
+            cur_extra = extras_itr and next(extras_itr)
 
             if package is None:
-                package = next(packages_itr) if packages_itr is not None else None
+                package = packages_itr and next(packages_itr)
 
             try:
                 self.load_extension(extension, package=package, extras=cur_extra)
@@ -1061,12 +1062,13 @@ class BotBase(GroupMixin):
             `Python Docs. <https://docs.python.org/3/library/fnmatch.html#module-fnmatch>`_
 
         Returns
-        --------
-        A List[:class:`str`] that contains the names of all of the extensions
-        that loaded successfully.
+        -------
+        List[:class:`str`]
+            A list that contains the names of all of the extensions
+            that loaded successfully.
 
         Raises
-        --------
+        ------
         ValueError
             :param:`folder_name` is an absolute path, not a relative path.
         ExtensionNotFound
