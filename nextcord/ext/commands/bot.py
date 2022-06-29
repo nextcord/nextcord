@@ -1009,7 +1009,7 @@ class BotBase(GroupMixin):
             An extension or its setup function had an execution error.
         """
         if package and packages:
-            raise errors.InvalidArgument("Cannot provide both package and packages.")
+            raise errors.BadArgument("Cannot provide both package and packages.")
 
         if packages is not None and len(packages) != len(names):
             raise ValueError("The length of packages must match the length of extensions.")
@@ -1017,19 +1017,21 @@ class BotBase(GroupMixin):
         if extras is not None and len(extras) != len(names):
             raise ValueError("The length of extra parameters must match the length of extensions.")
 
-        packages_itr: Optional[Iterator] = iter(packages) if packages is not None else None
-        extras_itr: Optional[Iterator] = iter(extras) if extras is not None else None
+        packages_itr: Optional[Iterator] = iter(packages) and packages
+        extras_itr: Optional[Iterator] = iter(extras) and extras
 
         loaded_extensions: List[str] = []
 
         for extension in names:
-            cur_extra = extras_itr and next(extras_itr)
+            # pyright doesn't seem to understand that this returns a dict or nothing
+            cur_extra: Optional[Dict[str, Any]] = extras_itr and next(extras_itr) # type: ignore
 
             if package is None:
-                package = packages_itr and next(packages_itr)
+                # same here
+                package: Optional[str] = packages_itr and next(packages_itr) # type: ignore
 
             try:
-                self.load_extension(extension, package=package, extras=cur_extra)
+                self.load_extension(extension, package=package, extras=cur_extra) # type: ignore
             except Exception as e:
                 # we print the exception instead of raising it because we want to continue loading extensions
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
