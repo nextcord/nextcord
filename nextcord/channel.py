@@ -1050,12 +1050,12 @@ class ForumChannel(abc.GuildChannel, Hashable):
         """Returns a thread with the given ID.
 
         Parameters
-        -----------
+        ----------
         thread_id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`Thread`]
             The returned thread or ``None`` if not found.
         """
