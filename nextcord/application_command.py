@@ -195,6 +195,10 @@ class CallbackWrapperMixin:
         if isinstance(callback, CallbackWrapper):
             self.modify_callbacks += callback.modify_callbacks
 
+    def modify(self) -> None:
+        for modify_callback in self.modify_callbacks:
+            modify_callback(self)
+
 
 class ApplicationCommandOption:
     """This represents the `Application Command Option Structure
@@ -825,6 +829,8 @@ class CallbackMixin:
                     ApplicationInvokeError(error),
                 )
                 await self.invoke_error(interaction, error)
+            else:
+                state.dispatch("application_command_completion", interaction)
             finally:
                 if self._callback_after_invoke is not None:
                     await self._callback_after_invoke(interaction)  # type: ignore
@@ -2236,8 +2242,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             self._callback_after_invoke = self.parent_cmd._callback_after_invoke
 
         super().from_autocomplete()
-        for modify_callback in self.modify_callbacks:
-            modify_callback(self)
+        CallbackWrapperMixin.modify(self)
 
     def subcommand(
         self,
@@ -2408,8 +2413,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
                     callback=child.callback, option_class=option_class, call_children=call_children
                 )
 
-        for modify_callback in self.modify_callbacks:
-            modify_callback(self)
+        CallbackWrapperMixin.modify(self)
 
     def subcommand(
         self,
@@ -2532,6 +2536,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         option_class: Optional[Type[BaseCommandOption]] = None,
     ):
         super().from_callback(callback, option_class=option_class)
+        CallbackWrapperMixin.modify(self)
 
 
 class MessageApplicationCommand(BaseApplicationCommand):
@@ -2605,6 +2610,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         option_class: Optional[Type[BaseCommandOption]] = None,
     ):
         super().from_callback(callback, option_class=option_class)
+        CallbackWrapperMixin.modify(self)
 
 
 def slash_command(
