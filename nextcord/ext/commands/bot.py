@@ -1024,14 +1024,14 @@ class BotBase(GroupMixin):
 
         for extension in names:
             # pyright doesn't seem to understand that this returns a dict or nothing
-            cur_extra: Optional[Dict[str, Any]] = extras_itr and next(extras_itr) # type: ignore
+            cur_extra: Optional[Dict[str, Any]] = extras_itr and next(extras_itr)  # type: ignore
 
             if package is None:
                 # same here
-                package: Optional[str] = packages_itr and next(packages_itr) # type: ignore
+                package: Optional[str] = packages_itr and next(packages_itr)  # type: ignore
 
             try:
-                self.load_extension(extension, package=package, extras=cur_extra) # type: ignore
+                self.load_extension(extension, package=package, extras=cur_extra)  # type: ignore
             except Exception as e:
                 # we print the exception instead of raising it because we want to continue loading extensions
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
