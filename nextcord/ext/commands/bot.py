@@ -1008,7 +1008,7 @@ class BotBase(GroupMixin):
             An extension or its setup function had an execution error.
         """
         if package and packages:
-            raise ValueError("Cannot provide both package and packages.")
+            raise errors.InvalidArgument("Cannot provide both package and packages.")
 
         if packages is not None and len(packages) != len(names):
             raise ValueError("The length of packages must match the length of extensions.")
