@@ -551,7 +551,7 @@ class MessageInteraction(Hashable):
     A message's interaction data is a property of a message when the message
     is a response to an interaction from any bot.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.1
 
     Attributes
     -----------
