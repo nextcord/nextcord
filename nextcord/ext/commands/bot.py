@@ -52,9 +52,6 @@ from typing import (
 )
 
 import nextcord
-from nextcord.activity import BaseActivity
-from nextcord.enums import Status
-from nextcord.flags import Intents
 
 from . import errors
 from .cog import Cog
@@ -69,6 +66,8 @@ if TYPE_CHECKING:
     import aiohttp
     from typing_extensions import Self
 
+    from nextcord.activity import BaseActivity
+    from nextcord.enums import Status
     from nextcord.flags import MemberCacheFlags
     from nextcord.mentions import AllowedMentions
     from nextcord.message import Message
@@ -181,7 +180,7 @@ class BotBase(GroupMixin):
         shard_id: Optional[int] = None,
         shard_count: Optional[int] = None,
         application_id: Optional[int] = None,
-        intents: Intents = Intents.default(),
+        intents: nextcord.Intents = nextcord.Intents.default(),
         member_cache_flags: MemberCacheFlags = MISSING,
         chunk_guilds_at_startup: bool = MISSING,
         status: Optional[Status] = None,
