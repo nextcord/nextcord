@@ -171,11 +171,15 @@ class MissingMessageContentIntentWarning(UserWarning):
     pass
 
 
+_NonCallablePrefix = Union[str, Sequence[str]]
+
+
 class BotBase(GroupMixin):
     def __init__(
         self,
         command_prefix: Union[
-            str, Sequence[str], Callable[[Self, Message], Union[Awaitable[str], str]]
+            _NonCallablePrefix,
+            Callable[[Self, Message], Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix]],
         ] = tuple(),
         *,
         max_messages: Optional[int] = 1000,
@@ -250,10 +254,10 @@ class BotBase(GroupMixin):
         self._before_invoke = None
         self._after_invoke = None
         self._help_command: Optional[HelpCommand] = None
-        self.description: str = inspect.cleandoc(description) if description else ""
-        self.owner_id: Optional[int] = owner_id
-        self.owner_ids: Iterable[int] = owner_ids
-        self.strip_after_prefix: bool = strip_after_prefix
+        self.description = inspect.cleandoc(description) if description else ""
+        self.owner_id = owner_id
+        self.owner_ids = owner_ids
+        self.strip_after_prefix = strip_after_prefix
 
         if self.owner_id and self.owner_ids:
             raise TypeError("Both owner_id and owner_ids are set.")
