@@ -545,7 +545,7 @@ def flatten_handlers(cls):
     return cls
 
 
-class MessageInteraction:
+class MessageInteraction(Hashable):
     """Represents a message's interaction data.
 
     A message's interaction data is a property of a message when the message
