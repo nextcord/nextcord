@@ -142,14 +142,6 @@ def _is_submodule(parent: str, child: str) -> bool:
     return parent == child or child.startswith(parent + ".")
 
 
-class _DefaultRepr(HelpCommand):
-    def __repr__(self):
-        return "<default-help-command>"
-
-
-_default = _DefaultRepr()
-
-
 class MissingMessageContentIntentWarning(UserWarning):
     """Warning category raised when instantiating a :class:`~nextcord.ext.commands.Bot` with a
     :attr:`~nextcord.ext.commands.Bot.command_prefix` but without the :attr:`~nextcord.Intents.message_content`
@@ -210,7 +202,7 @@ class BotBase(GroupMixin):
         owner_id: Optional[int] = None,
         owner_ids: Iterable[int] = set(),
         strip_after_prefix: bool = False,
-        help_command: Optional[HelpCommand] = _default,
+        help_command: Optional[HelpCommand] = MISSING,
         case_insensitive: bool = False,
     ):
         nextcord.Client.__init__(
@@ -286,7 +278,7 @@ class BotBase(GroupMixin):
                 stacklevel=0,
             )
 
-        if help_command is _default:
+        if help_command is MISSING:
             self._help_command = DefaultHelpCommand()
         else:
             self._help_command = help_command
