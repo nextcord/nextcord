@@ -997,8 +997,9 @@ class BotBase(GroupMixin):
         Raises
         ------
         ValueError
-            - If the ``package`` and ``packages`` parameters are both provided
-            - If the length of ``packages`` or the length of ``extras` is not equal to the length of ``names``
+            The length of ``packages`` or the length of ``extras` is not equal to the length of ``names``
+        InvalidArgument
+            You passed both ``package`` and ``packages``.
         ExtensionNotFound
             An extension could not be imported.
         ExtensionAlreadyLoaded
