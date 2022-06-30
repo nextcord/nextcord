@@ -599,6 +599,7 @@ class MessageInteraction:
         """:class:`datetime.datetime`: The interaction's creation time in UTC."""
         return snowflake_time(self.id)
 
+
 @flatten_handlers
 class Message(Hashable):
     r"""Represents a message from Discord.
