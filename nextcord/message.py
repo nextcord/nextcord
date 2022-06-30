@@ -594,6 +594,10 @@ class MessageInteraction:
     def __repr__(self):
         return f"<{self.__class__.__name__} id={self.id} type={self.type} name={self.name} user={self.user!r}>"
 
+    @property
+    def created_at(self) -> datetime.datetime:
+        """:class:`datetime.datetime`: The interaction's creation time in UTC."""
+        return snowflake_time(self.id)
 
 @flatten_handlers
 class Message(Hashable):
