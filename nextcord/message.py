@@ -552,6 +552,20 @@ class MessageInteraction(Hashable):
     is a response to an interaction from any bot.
 
     .. versionadded:: 2.1
+    
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two message interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interaction messages are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the message interaction's hash.
 
     Attributes
     -----------
