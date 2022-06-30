@@ -172,6 +172,8 @@ class BotBase(GroupMixin):
             _NonCallablePrefix,
             Callable[[Self, Message], Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix]],
         ] = tuple(),
+        help_command: Optional[HelpCommand] = MISSING,
+        description: Optional[str] = None,
         *,
         max_messages: Optional[int] = 1000,
         connector: Optional[aiohttp.BaseConnector] = None,
@@ -197,11 +199,9 @@ class BotBase(GroupMixin):
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
-        description: Optional[str] = None,
         owner_id: Optional[int] = None,
         owner_ids: Iterable[int] = set(),
         strip_after_prefix: bool = False,
-        help_command: Optional[HelpCommand] = MISSING,
         case_insensitive: bool = False,
     ):
         nextcord.Client.__init__(
