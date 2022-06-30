@@ -597,7 +597,7 @@ class MessageInteraction(Hashable):
     @property
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: The interaction's creation time in UTC."""
-        return snowflake_time(self.id)
+        return utils.snowflake_time(self.id)
 
 
 @flatten_handlers
