@@ -569,7 +569,7 @@ class MessageInteraction(Hashable):
 
     Attributes
     -----------
-    data: :class:`dict`
+    data: Dict[:class:`str`, Any]
         The raw data from the interaction.
     id: :class:`int`
         The interaction's ID.
