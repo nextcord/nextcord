@@ -199,7 +199,10 @@ class Interaction:
 
         self.message: Optional[Message]
         try:
-            self.message = Message(state=self._state, channel=self.channel, data=data["message"])  # type: ignore
+            message = data["message"]
+            self.message = self._state._get_message(int(message["id"])) or Message(
+                state=self._state, channel=self.channel, data=message  # type: ignore
+            )
         except KeyError:
             self.message = None
 
@@ -208,17 +211,23 @@ class Interaction:
 
         # TODO: there's a potential data loss here
         if self.guild_id:
-            guild = self.guild or Object(id=self.guild_id)
             try:
                 member = data["member"]
             except KeyError:
                 pass
             else:
-                self.user = Member(state=self._state, guild=guild, data=member)  # type: ignore
+                guild = self.guild or Object(int(self.guild_id))
+
+                user_id = int(member["user"]["id"])  # type: ignore
+                cached_member = self.guild and self.guild.get_member(user_id)
+                self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore
                 self._permissions = int(member.get("permissions", 0))
         else:
             try:
-                self.user = User(state=self._state, data=data["user"])
+                user = data["user"]
+                self.user = self._state.get_user(int(user["id"])) or User(
+                    state=self._state, data=user
+                )
             except KeyError:
                 pass
 
