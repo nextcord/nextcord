@@ -3624,7 +3624,7 @@ class Guild(Hashable):
             You do not have proper permissions to do this.
         InvalidArgument
             - You specified both ``presets`` and ``keyword_filters``.
-            - You didn't specify either ``presets`` and ``keyword_filters``
+            - You didn't specify either ``presets`` and ``keyword_filters``.
         HTTPException
             Creating the rule failed.
         """
