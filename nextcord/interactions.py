@@ -211,13 +211,12 @@ class Interaction:
 
         # TODO: there's a potential data loss here
         if self.guild_id:
+            guild = self.guild or Object(int(self.guild_id))
             try:
                 member = data["member"]
             except KeyError:
                 pass
             else:
-                guild = self.guild or Object(int(self.guild_id))
-
                 user_id = int(member["user"]["id"])  # type: ignore
                 cached_member = self.guild and self.guild.get_member(user_id)
                 self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore
