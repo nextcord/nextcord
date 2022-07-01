@@ -217,8 +217,8 @@ class Interaction:
             except KeyError:
                 pass
             else:
-                cached_member = self.guild and self.guild.get_member(int(member["user"]["id"]))  # type: ignore
-                self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore
+                cached_member = self.guild and self.guild.get_member(int(member["user"]["id"]))  # type: ignore # user key should be present here
+                self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore # user key should be present here
                 self._permissions = int(member.get("permissions", 0))
         else:
             try:
