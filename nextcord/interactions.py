@@ -217,8 +217,7 @@ class Interaction:
             except KeyError:
                 pass
             else:
-                user_id = int(member["user"]["id"])  # type: ignore
-                cached_member = self.guild and self.guild.get_member(user_id)
+                cached_member = self.guild and self.guild.get_member(int(member["user"]["id"]))  # type: ignore
                 self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore
                 self._permissions = int(member.get("permissions", 0))
         else:
