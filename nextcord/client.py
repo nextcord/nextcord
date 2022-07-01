@@ -2452,7 +2452,7 @@ class Client:
             If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
             being usable in Not-NSFW channels.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 2.1
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2506,7 +2506,7 @@ class Client:
             If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
             being usable in Not-NSFW channels.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 2.1
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2569,7 +2569,7 @@ class Client:
             .. note::
                 Due to a discord limitation, this can only be set for the parent command for subcommands.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 2.1
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
             register to guilds. Has no effect if `guild_ids` are never set or added to.
