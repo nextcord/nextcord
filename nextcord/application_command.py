@@ -1561,7 +1561,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
             If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Not-NSFW channels.
+            being usable in Non NSFW channels.
+
+            .. versionadded:: 2.1
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2353,9 +2355,11 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
             If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Not-NSFW channels.
+            being usable in Non NSFW channels.
             .. note::
                 Due to a discord limitation, this can only be set for the parent command for subcommands.
+
+            .. versionadded:: 2.1
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2516,7 +2520,9 @@ class UserApplicationCommand(BaseApplicationCommand):
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
             If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Not-NSFW channels.
+            being usable in Non NSFW channels.
+
+            .. versionadded:: 2.1
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2595,7 +2601,9 @@ class MessageApplicationCommand(BaseApplicationCommand):
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
             If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Not-NSFW channels.
+            being usable in Non NSFW channels.
+
+            .. versionadded:: 2.1
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2676,9 +2684,11 @@ def slash_command(
         default. Server owners CAN override the permission requirements.
     nsfw: :class:`bool`
         If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-        being usable in Not-NSFW channels.
+        being usable in Non NSFW channels.
         .. note::
             Due to a discord limitation, this can only be set for the parent command for subcommands.
+
+        .. versionadded:: 2.1
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2736,7 +2746,9 @@ def message_command(
         default. Server owners CAN override the permission requirements.
     nsfw: :class:`bool`
         If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-        being usable in Not-NSFW channels.
+        being usable in Non NSFW channels.
+
+        .. versionadded:: 2.1
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.
@@ -2792,7 +2804,9 @@ def user_command(
         default. Server owners CAN override the permission requirements.
     nsfw: :class:`bool`
         If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-        being usable in Not-NSFW channels.
+        being usable in Non NSFW channels.
+
+        .. versionadded:: 2.1
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
         register to guilds. Has no effect if `guild_ids` are never set or added to.
