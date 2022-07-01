@@ -211,7 +211,7 @@ class Interaction:
 
         # TODO: there's a potential data loss here
         if self.guild_id:
-            guild = self.guild or Object(int(self.guild_id))
+            guild = self.guild or Object(id=self.guild_id)
             try:
                 member = data["member"]
             except KeyError:
