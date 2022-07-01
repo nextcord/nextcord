@@ -26,6 +26,6 @@ __title__ = "nextcord"
 __author__ = "tag-epic & Rapptz"
 __license__ = "MIT"
 __copyright__ = "Copyright 2015-present Rapptz & tag-epic"
-__version__ = "2.0.0rc2"
+__version__ = "2.1.0a"
 
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)

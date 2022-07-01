@@ -31,10 +31,12 @@ Overview
 - Many arguments are now specified as positional-only or keyword-only; e.g. :func:`oauth_url` now takes keyword-only arguments, and methods starting with ``get_`` or ``fetch_`` take positional-only arguments.
 - You must explicitly enable the :attr:`~Intents.message_content` intent to receive message :attr:`~Message.content`, :attr:`~Message.embeds`, :attr:`~Message.attachments`, and :attr:`~Message.components` in most messages.
 - :meth:`Guild.bans` is no longer a coroutine and returns an :class:`~nextcord.AsyncIterator` instead of a :class:`list`.
-- ``StoreChannel`` is removed as it is deprecated by Discord, see `here <https://support.discord.com/hc/en-us/articles/4688647258007-Self-serve-Game-Selling-Deprecation>`_ for more info.
+- ``StoreChannel`` is removed as it is deprecated by Discord, see `here <https://support.discord.com/hc/en-us/articles/4688647258007-Self-serve-Game-Selling-Deprecation>`__ for more info.
 - ``ChannelType.store`` is removed.
 - ``AppInfo.summary``, ``AppInfo.guild_id``, ``AppInfo.primary_sku_id`` and ``AppInfo.slug`` are removed.
 - ``PartialAppInfo.summary`` is removed.
+- :meth:`abc.Messageable.pins` has been extracted out from :class:`abc.Messageable` and moved to :class:`PinsMixin`
+- :class:`VoiceChannel` now inherits from :class:`Messageable`
 
 Changes
 -------
@@ -390,7 +392,7 @@ This was renamed to :attr:`MessageType.chat_input_command` due to Discord adding
 
 StoreChannel has been removed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-``StoreChannel`` has been removed as it has been deprecated by Discord, see `here <https://support-dev.discord.com/hc/en-us/articles/4414590563479>`_ for more info.
+``StoreChannel`` has been removed as it has been deprecated by Discord, see `here <https://support-dev.discord.com/hc/en-us/articles/4414590563479>`__ for more info.
 
 Meta Change
 -----------

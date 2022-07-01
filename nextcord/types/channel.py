@@ -79,6 +79,7 @@ VideoQualityMode = Literal[1, 2]
 
 
 class _VoiceChannelOptional(TypedDict, total=False):
+    last_message_id: Optional[Snowflake]
     rtc_region: Optional[str]
     video_quality_mode: VideoQualityMode
 

@@ -844,6 +844,8 @@ class CallbackMixin:
                     ApplicationInvokeError(error),
                 )
                 await self.invoke_error(interaction, error)
+            else:
+                state.dispatch("application_command_completion", interaction)
             finally:
                 if self._callback_after_invoke is not None:
                     await self._callback_after_invoke(interaction)  # type: ignore
