@@ -267,7 +267,8 @@ class AutoModerationRule(Hashable):
         Raises
         -------
         InvalidArgument
-            You specified both ``keyword_filters`` and ``presets``.
+            - You specified both ``keyword_filters`` and ``presets``.
+            - You didn't specify either ``keyword_filters`` and ``presets``.
         HTTPException
             Editing the rule failed.
         Forbidden
@@ -279,6 +280,9 @@ class AutoModerationRule(Hashable):
 
         if event_type is not MISSING:
             payload["event_type"] = event_type.value
+
+        if keyword_filters is MISSING and presets is MISSING:
+            raise InvalidArgument("Either keyword_filters or presets must be passed")
 
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument("Cannot pass keyword_filters and presets to edit()")

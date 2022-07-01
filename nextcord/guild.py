@@ -3623,7 +3623,8 @@ class Guild(Hashable):
         Forbidden
             You do not have proper permissions to do this.
         InvalidArgument
-            You specified both ``presets`` and ``keyword_filters``.
+            - You specified both ``presets`` and ``keyword_filters``.
+            - You didn't specify either ``presets`` and ``keyword_filters``
         HTTPException
             Creating the rule failed.
         """
@@ -3633,6 +3634,9 @@ class Guild(Hashable):
             "trigger_type": trigger_type.value,
             "enabled": enabled,
         }
+        if keyword_filters is MISSING and presets is MISSING:
+            raise InvalidArgument("Either keyword_filters and presets must be passed.")
+
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument(
                 "Cannot pass keyword_filters and presets to create_automod_rule()"
