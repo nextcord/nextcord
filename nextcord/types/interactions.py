@@ -218,6 +218,7 @@ class _InteractionOptional(TypedDict, total=False):
     message: Message
     locale: str
     guild_locale: str
+    app_permissions: str
 
 
 class Interaction(_InteractionOptional):
