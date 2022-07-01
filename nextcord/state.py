@@ -1698,7 +1698,7 @@ class ConnectionState:
             me = guild.me
             if member == me:
                 if member.guild_permissions.manage_guild is True:
-                    asyncio.create_task(self.__add_automod_rule_from_guild_data(data["guild"]))
+                    asyncio.create_task(self._add_automod_rule_from_guild_data(data["guild"]))
             old_member = Member._copy(member)
             member._update(data)
             user_update = member._update_inner_user(user)
