@@ -274,7 +274,7 @@ class Interaction:
 
     @property
     def permissions(self) -> Permissions:
-        """:class:`Permissions`: The resolved permissions of the member in the channel, including overwrites
+        """:class:`Permissions`: The resolved permissions of the member in the channel, including overwrites.
 
         In a non-guild context where this doesn't apply, an empty permissions object is returned.
         """
@@ -282,7 +282,7 @@ class Interaction:
 
     @property
     def app_permissions(self) -> Permissions:
-        """:class:`Permissions` The resolved permissions of the bot in the channel, including overwrites
+        """:class:`Permissions` The resolved permissions of the bot in the channel, including overwrites.
 
         In a non-guild context where this doesn't apply, an empty permissions object is returned.
         """
