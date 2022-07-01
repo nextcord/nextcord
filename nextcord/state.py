@@ -1695,6 +1695,10 @@ class ConnectionState:
 
         member = guild.get_member(user_id)
         if member is not None:
+            me = guild.me
+            if member == me:
+                if member.guild_permissions.manage_guild is True:
+                    asyncio.create_task(self.__add_automod_rule_from_guild_data(data['guild']))
             old_member = Member._copy(member)
             member._update(data)
             user_update = member._update_inner_user(user)
@@ -1790,6 +1794,7 @@ class ConnectionState:
             self.dispatch("guild_join", guild)
 
     def parse_guild_create(self, data) -> None:
+        asyncio.create_task(self._add_automod_rule_from_guild_data(data))
         unavailable = data.get("unavailable")
         if unavailable is True:
             # joined a guild with unavailable == True so..
