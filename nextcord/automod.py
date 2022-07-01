@@ -135,8 +135,11 @@ class AutoModerationRule(Hashable):
         self.actions: List[AutoModerationAction] = [
             AutoModerationAction(data=action) for action in data["actions"]
         ]
-        self.presets: Optional[List[KeywordPresetType]] = [try_enum(KeywordPresetType, preset)
-                                                           for preset in trigger_metadata["presets"]] if "presets" in metadata else None  # type: ignore
+        self.presets: Optional[List[KeywordPresetType]] = (
+            [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]
+            if "presets" in metadata
+            else None
+        )  # type: ignore
 
     def __repr__(self):
         attrs = (
