@@ -40,6 +40,7 @@ from typing import (
 )
 
 from . import enums, utils
+from .automod import AutoModerationRule
 from .asset import Asset
 from .colour import Colour
 from .invite import Invite
@@ -468,6 +469,9 @@ class AuditLogEntry(Hashable):
                 channel_id = int(self.extra["channel_id"])
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
+            elif self.action.name.startswith("automod_rule"):
+                self.extra = [AutoModerationRule(data=data) for data in data['auto_moderation_rules']]
+
 
         # this key is not present when the above is present, typically.
         # It's a list of { new_value: a, old_value: b, key: c }
