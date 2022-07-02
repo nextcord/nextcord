@@ -104,7 +104,9 @@ class AutoModerationRule(Hashable):
         Whether this rule is enabled or not.
     exempt_role_ids: List[:class:`int`]
         A list of roles that will not be affected by this rule.
+
         .. note::
+
             Bots are always not affected by any rule.
     exempt_channel_ids: List[:class:`int`]
         A list of channels that will not be affected by this rule.
