@@ -177,14 +177,38 @@ class AutoModerationRule(Hashable):
         """Optional[:class:`Member`]: The member that created this rule."""
         return self.guild.get_member(self.creator_id)
 
+    async def fetch_creator(self) -> Member:
+        """
+        |coro|
+
+        Retrieves the creator of this auto moderation rule from Discord.
+
+        .. note::
+
+            This method is an API call. If you have :attr:`Intents.members` and member cache enabled, consider :attr:`creator` instead.
+
+        Returns
+        --------
+        :class:`Member`
+            The creator of this rule.
+
+        Raises
+        -------
+        Forbidden
+            You do not have access to the guild that this auto moderation rule is in.
+        HTTPException
+            Fetching this member failed.
+        """
+        return await self.guild.fetch_member(self.creator_id)
+
     @property
     def exempt_roles(self) -> List[Role]:
-        """List[:class:`Role`]: A list of roles that will not be affected by this rule. `[]` if not set."""
+        """List[:class:`Role`]: A list of roles that will not be affected by this rule. ``[]`` if not set."""
         return [self.guild.get_role(exempt_role_id) for exempt_role_id in self.exempt_role_ids]  # type: ignore # they can't be None.
 
     @property
     def exempt_channels(self) -> List[GuildChannel]:
-        """List[:class:`GuildChannel`]: A list of channels that will not be affected by this rule. `[]` if not set."""
+        """List[:class:`GuildChannel`]: A list of channels that will not be affected by this rule. ``[]`` if not set."""
         return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore # same
 
     @overload
