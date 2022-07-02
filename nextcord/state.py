@@ -2333,7 +2333,7 @@ class ConnectionState:
             pass
 
     def list_cached_guild_automod_rule(self, guild_id: int):
-        return [rule for _, rule in self._automod_rules.values() if rule.guild_id == guild_id]
+        return [rule for rule in self._automod_rules.values() if rule.guild_id == guild_id]
 
 
 class AutoShardedConnectionState(ConnectionState):
