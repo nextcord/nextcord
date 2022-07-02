@@ -267,9 +267,16 @@ class AutoModerationRule(Hashable):
             Whether or not if this rule is enabled.
         exempt_roles: :class:`Role`
             A list of roles that should not be affected by this rule.
+
+            .. note::
+
+                Bots are always not affected by any rule.
         exempt_channels: :class:`abc.GuildChannel`
             A list of channels that should not be affected by this rule.
 
+            .. note::
+
+                Bots are always not affected by any rule.
         Raises
         -------
         InvalidArgument
