@@ -28,11 +28,13 @@ from __future__ import annotations
 import asyncio
 import collections
 import collections.abc
+import copy
 import importlib.util
 import inspect
 import sys
 import traceback
 import types
+import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Type, TypeVar, Union
 
 import nextcord
@@ -57,6 +59,7 @@ __all__ = (
     "when_mentioned_or",
     "Bot",
     "AutoShardedBot",
+    "MissingMessageContentIntentWarning",
 )
 
 MISSING: Any = nextcord.utils.MISSING
@@ -125,6 +128,27 @@ class _DefaultRepr:
 _default = _DefaultRepr()
 
 
+class MissingMessageContentIntentWarning(UserWarning):
+    """Warning category raised when instantiating a :class:`~nextcord.ext.commands.Bot` with a
+    :attr:`~nextcord.ext.commands.Bot.command_prefix` but without the :attr:`~nextcord.Intents.message_content`
+    intent enabled.
+
+    This warning is not raised when the :attr:`~nextcord.ext.commands.Bot.command_prefix`
+    is set to an empty iterable or :func:`when_mentioned <nextcord.ext.commands.when_mentioned>`.
+
+    This warning can be silenced using :func:`warnings.simplefilter`.
+
+    .. code-block:: python3
+
+        import warnings
+        from nextcord.ext import commands
+
+        warnings.simplefilter("ignore", commands.MissingMessageContentIntentWarning)
+    """
+
+    pass
+
+
 class BotBase(GroupMixin):
     def __init__(self, command_prefix=MISSING, help_command=_default, description=None, **options):
         super().__init__(**options)
@@ -147,6 +171,27 @@ class BotBase(GroupMixin):
 
         if self.owner_ids and not isinstance(self.owner_ids, collections.abc.Collection):
             raise TypeError(f"owner_ids must be a collection not {self.owner_ids.__class__!r}")
+
+        # if command prefix is a callable, string, or non-empty iterable and message content intent
+        # is disabled, warn the user that prefix commands might not work
+        if (
+            (
+                callable(self.command_prefix)
+                or isinstance(self.command_prefix, str)
+                or len(self.command_prefix) > 0
+            )
+            and self.command_prefix is not when_mentioned
+            and hasattr(self, "intents")
+            and not self.intents.message_content  # type: ignore
+        ):
+            warnings.warn(
+                "Message content intent is not enabled. "
+                "Prefix commands may not work as expected unless you enable this. "
+                "See https://docs.nextcord.dev/en/stable/intents.html#what-happened-to-my-prefix-commands "
+                "for more information.",
+                category=MissingMessageContentIntentWarning,
+                stacklevel=0,
+            )
 
         if help_command is _default:
             self.help_command = DefaultHelpCommand()
@@ -327,15 +372,19 @@ class BotBase(GroupMixin):
         """|coro|
         Checks if a :class:`~nextcord.User` or :class:`~nextcord.Member` is the owner of
         this bot.
+
         If an :attr:`owner_id` is not set, it is fetched automatically
         through the use of :meth:`~.Bot.application_info`.
+
         .. versionchanged:: 1.3
             The function also checks if the application is team-owned if
             :attr:`owner_ids` is not set.
+
         Parameters
         -----------
         user: :class:`.abc.User`
             The user to check for.
+
         Returns
         --------
         :class:`bool`
@@ -1062,7 +1111,7 @@ class BotBase(GroupMixin):
             The invocation context to invoke.
         """
         if ctx.command is not None:
-            self.dispatch("command", ctx)
+            self.dispatch("command", copy.copy(ctx))
             try:
                 if await self.can_run(ctx, call_once=True):
                     await ctx.command.invoke(ctx)
@@ -1073,7 +1122,7 @@ class BotBase(GroupMixin):
             else:
                 self.dispatch("command_completion", ctx)
         elif ctx.invoked_with:
-            exc = errors.CommandNotFound(f'Command "{ctx.invoked_with}" is not found')
+            exc = errors.CommandNotFound(ctx.invoked_with)
             self.dispatch("command_error", ctx, exc)
 
     async def process_commands(self, message: Message) -> None:
@@ -1167,18 +1216,24 @@ class BotBase(GroupMixin):
 
     def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
         """A decorator that registers a coroutine as a pre-invoke hook.
+
         A pre-invoke hook is called directly before the command is
         called. This makes it a useful function to set up database
         connections or any type of set up required.
+
         This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
         .. note::
+
             The :meth:`.application_command_before_invoke` and :meth:`.application_command_after_invoke`
             hooks are only called if all checks pass without error. If any check fails, then the hooks
             are not called.
+
         Parameters
         -----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the pre-invoke hook.
+
         Raises
         -------
         TypeError

@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import sys
 import time
@@ -56,12 +57,13 @@ from .item import Item, ItemCallbackType
 
 __all__ = ("View",)
 
-
 if TYPE_CHECKING:
     from ..interactions import Interaction
     from ..message import Message
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
+
+_log = logging.getLogger(__name__)
 
 
 def _walk_all_components(components: List[Component]) -> Iterator[Component]:
@@ -152,6 +154,10 @@ class View:
         If ``None`` then there is no timeout.
     children: List[:class:`Item`]
         The list of children attached to this view.
+    auto_defer: :class:`bool` = True
+        Whether or not to automatically defer the component interaction when the callback
+        completes without responding to the interaction. Set this to ``False`` if you want to
+        handle view interactions outside of the callback.
     """
 
     __discord_ui_view__: ClassVar[bool] = True
@@ -417,25 +423,29 @@ class View:
         )
 
     def refresh(self, components: List[Component]):
-        # This is pretty hacky at the moment
         # fmt: off
-        old_state: Dict[Tuple[int, str], Item] = {
-            (item.type.value, item.custom_id): item  # type: ignore
+        old_state: Dict[str, Item[Any]] = {
+            item.custom_id: item  # type: ignore
             for item in self.children
             if item.is_dispatchable()
         }
         # fmt: on
-        children: List[Item] = []
+
         for component in _walk_all_components(components):
+            custom_id = getattr(component, "custom_id", None)
+            if custom_id is None:
+                continue
+
             try:
-                older = old_state[(component.type.value, component.custom_id)]  # type: ignore
-            except (KeyError, AttributeError):
-                children.append(_component_to_item(component))
+                older = old_state[custom_id]
+            except KeyError:
+                _log.debug(
+                    "View interaction referenced an unknown item custom_id %s. Discarding",
+                    custom_id,
+                )
+                continue
             else:
                 older.refresh_component(component)
-                children.append(older)
-
-        self.children = children
 
     def stop(self) -> None:
         """Stops listening to interaction events from this view.
@@ -545,7 +555,7 @@ class ViewStore:
             return
 
         view, item = value
-        item.refresh_state(interaction)
+        item.refresh_state(interaction.data)  # type: ignore
         view._dispatch_item(item, interaction)
 
     def is_message_tracked(self, message_id: int):

@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -78,6 +79,7 @@ VideoQualityMode = Literal[1, 2]
 
 
 class _VoiceChannelOptional(TypedDict, total=False):
+    last_message_id: Optional[Snowflake]
     rtc_region: Optional[str]
     video_quality_mode: VideoQualityMode
 

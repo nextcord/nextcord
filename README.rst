@@ -2,16 +2,16 @@
    :alt: Nextcord
 
 .. image:: https://img.shields.io/discord/881118111967883295?color=blue&label=discord
-   :target: https://discord.gg/ZebatWssCB
+   :target: https://discord.gg/nextcord
    :alt: Discord server invite
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
-   :target: https://pypi.python.org/pypi/nextcord
+   :target: https://pypi.org/project/nextcord/
    :alt: PyPI version info
-.. image:: 	https://img.shields.io/pypi/dm/nextcord?color=informational&label=pypi%20downloads
-   :target: https://pypi.python.org/pypi/nextcord
+.. image:: https://img.shields.io/pypi/dm/nextcord?color=informational&label=pypi%20downloads
+   :target: https://pypi.org/project/nextcord/
    :alt: PyPI version info
 .. image:: https://img.shields.io/pypi/pyversions/nextcord.svg
-   :target: https://pypi.python.org/pypi/nextcord
+   :target: https://pypi.org/project/nextcord/
    :alt: PyPI supported Python versions
 .. image:: https://img.shields.io/readthedocs/nextcord
    :target: https://docs.nextcord.dev/
@@ -113,5 +113,5 @@ Links
 ------
 
 - `Documentation <https://docs.nextcord.dev/>`_
-- `Official Discord Server <https://discord.gg/ZebatWssCB>`_
+- `Official Discord Server <https://discord.gg/nextcord>`_
 - `Discord API <https://discord.gg/discord-api>`_

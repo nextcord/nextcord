@@ -1169,6 +1169,7 @@ class Messageable:
     - :class:`~nextcord.TextChannel`
     - :class:`~nextcord.DMChannel`
     - :class:`~nextcord.GroupChannel`
+    - :class:`~nextcord.VoiceChannel`
     - :class:`~nextcord.User`
     - :class:`~nextcord.Member`
     - :class:`~nextcord.ext.commands.Context`
@@ -1530,33 +1531,6 @@ class Messageable:
         channel = await self._get_channel()
         data = await self._state.http.get_message(channel.id, id)
         return self._state.create_message(channel=channel, data=data)
-
-    async def pins(self) -> List[Message]:
-        """|coro|
-
-        Retrieves all messages that are currently pinned in the channel.
-
-        .. note::
-
-            Due to a limitation with the Discord API, the :class:`.Message`
-            objects returned by this method do not contain complete
-            :attr:`.Message.reactions` data.
-
-        Raises
-        -------
-        ~nextcord.HTTPException
-            Retrieving the pinned messages failed.
-
-        Returns
-        --------
-        List[:class:`~nextcord.Message`]
-            The messages that are currently pinned.
-        """
-
-        channel = await self._get_channel()
-        state = self._state
-        data = await state.http.pins_from(channel.id)
-        return [state.create_message(channel=channel, data=m) for m in data]
 
     def history(
         self,
