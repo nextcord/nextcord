@@ -79,9 +79,12 @@ class AutoModerationRule(Hashable):
     """Represents an auto moderation rule.
 
     .. container:: operations
+
         .. describe:: x == y
+
             Check if two auto moderation rules are equal.
         .. describe:: x != y
+
             Check if two auto moderation rules are not equal.
 
     Attributes
@@ -257,7 +260,7 @@ class AutoModerationRule(Hashable):
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_presets`
         notify_channel: :class:`abc.GuildChannel`
-            The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
+            The channel that will receive the notification when this rule is triggered.
         timeout_seconds: :class:`int`
             The seconds to timeout the person that triggered this rule.
 
