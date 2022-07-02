@@ -197,7 +197,6 @@ class AutoModerationRule(Hashable):
         enabled: bool = ...,
         exempt_roles: List[Role] = ...,
         exempt_channels: List[GuildChannel] = ...,
-        reason: str = ...,
     ) -> AutoModerationRule:
         ...
 
@@ -214,7 +213,6 @@ class AutoModerationRule(Hashable):
         enabled: bool = ...,
         exempt_roles: List[Role] = ...,
         exempt_channels: List[GuildChannel] = ...,
-        reason: str = ...,
     ) -> AutoModerationRule:
         ...
 
@@ -231,7 +229,6 @@ class AutoModerationRule(Hashable):
         enabled: bool = MISSING,
         exempt_roles: List[Role] = MISSING,
         exempt_channels: List[GuildChannel] = MISSING,
-        reason: str = MISSING,
     ) -> AutoModerationRule:
         """|coro|
 
