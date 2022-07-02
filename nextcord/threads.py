@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -31,7 +32,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Unio
 from .abc import Messageable
 from .enums import ChannelType, try_enum
 from .errors import ClientException
-from .mixins import Hashable
+from .mixins import Hashable, PinsMixin
 from .utils import MISSING, _get_as_snowflake, parse_time
 
 __all__ = (
@@ -59,7 +60,7 @@ if TYPE_CHECKING:
     )
 
 
-class Thread(Messageable, Hashable):
+class Thread(Messageable, Hashable, PinsMixin):
     """Represents a Discord thread.
 
     .. container:: operations
@@ -830,3 +831,16 @@ class ThreadMember(Hashable):
     def thread(self) -> Thread:
         """:class:`Thread`: The thread this member belongs to."""
         return self.parent
+
+    @property
+    def member(self) -> Optional[Member]:
+        """Optional[:class:`Member`]: The :class:`Member` of this thread member."""
+        return self.parent.guild.get_member(self.id)
+
+    async def fetch_member(self) -> Member:
+        """:class:`Member`: Retrieves the :class:`Member` of this thread member.
+
+        .. note::
+            This method is an API call. If you have :attr:`Intents.members` and members cache enabled, consider :attr:`member` instead.
+        """
+        return await self.parent.guild.fetch_member(self.id)

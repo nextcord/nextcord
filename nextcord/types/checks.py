@@ -34,7 +34,9 @@ T = TypeVar("T")
 Coro = Coroutine[Any, Any, T]
 MaybeCoro = Union[T, Coro[T]]
 CoroFunc = Callable[..., Coro[Any]]
-ApplicationCheck = Callable[[Interaction], MaybeCoro[bool]]
+ApplicationCheck = Union[
+    Callable[[ClientCog, Interaction], MaybeCoro[bool]], Callable[[Interaction], MaybeCoro[bool]]
+]
 ApplicationHook = Union[
     Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
 ]

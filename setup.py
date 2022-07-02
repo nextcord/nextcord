@@ -17,7 +17,7 @@ with open("nextcord/__init__.py") as f:
 if not version:
     raise RuntimeError("version is not set")
 
-if version.endswith(("a", "b", "rc")):
+if any(v in version for v in ("a", "b", "rc")):
     # append version identifier based on commit count
     try:
         import subprocess
