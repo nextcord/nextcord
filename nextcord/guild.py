@@ -3672,3 +3672,6 @@ class Guild(Hashable):
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
         rule = self._state.add_automod_rule(data=data)
         return rule
+
+    def get_automod_rules(self) -> List[AutoModerationRule]:
+        return self._state.list_cached_guild_automod_rule(self.id)
