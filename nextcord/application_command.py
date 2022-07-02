@@ -718,7 +718,6 @@ class CallbackMixin:
             #  commands. While Discord doesn't support anything else having Options, we
             #  might be able to do something here.
             if option_class:
-                # first_arg = True
                 skip_counter = 1
                 typehints = typing.get_type_hints(self.callback)
                 # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
@@ -1264,9 +1263,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             cmd_arg = SlashOption()
             cmd_arg_given = False
 
-        self.name = (
-            cmd_arg.name or parameter.name
-        )  # Use the given name, or default to the parameter name.
+        self.name = cmd_arg.name or parameter.name
+        # Use the given name, or default to the parameter name.
 
         typehint_origin = typing.get_origin(parameter.annotation)
 
@@ -1284,19 +1282,24 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             for lit in typing.get_args(parameter.annotation):
                 lit = unpack_annotated(lit, list(self.option_types.keys()))
                 lit_type = type(lit)
-                if lit_type in (int, str, float, type(None)):
-                    if lit is None:
-                        # If None is included, they want it to be optional. But we don't want None added to the choices.
-                        annotation_required = False
-                    else:
-                        if found_type is MISSING:
-                            # If we haven't set the type of the annotation, set it.
-                            found_type = self.get_type(lit_type)
-                        elif self.get_type(lit_type) is not found_type:
-                            raise ValueError(
-                                f"{self.error_name} | Literal {lit} is incompatible with {found_type}"
-                            )
-                        found_choices.append(lit)
+                if lit is None:
+                    # If None is included, they want it to be optional. But we don't want None added to the choices.
+                    annotation_required = False
+
+                # if lit_type in (int, str, float, type(None)):
+                elif lit_type in (int, str, float):
+                    # if lit is None:
+                    #
+                    #     annotation_required = False
+                    # else:
+                    if found_type is MISSING:
+                        # If we haven't set the type of the annotation, set it.
+                        found_type = self.get_type(lit_type)
+                    elif self.get_type(lit_type) is not found_type:
+                        raise ValueError(
+                            f"{self.error_name} | Literal {lit} is incompatible with {found_type}"
+                        )
+                    found_choices.append(lit)
 
                 else:
                     raise ValueError(
@@ -1309,7 +1312,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             annotation_type = found_type
             annotation_choices = found_choices
-        elif typehint_origin in (Union, Optional, None):
+        elif typehint_origin in (Union, Optional, Annotated, None):
             # If the typehint base is Union, Optional, or not any grouping...
             found_type = MISSING
             found_channel_types = []
@@ -3104,14 +3107,18 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     return ret
 
 
-def unpack_annotated(given_anno, resolve_list: list = []) -> type:
-    origin = typing.get_origin(given_anno)
+def unpack_annotated(given_annotation, resolve_list: list = []) -> type:
+    origin = typing.get_origin(given_annotation)
     if origin is Annotated:
         located_annotation = MISSING
-        arg_list = typing.get_args(given_anno)
-        for i in range(1, len(arg_list)):
-            if arg_list[i] in resolve_list:
-                located_annotation = arg_list[i]
+        arg_list = typing.get_args(given_annotation)
+        # for i in range(1, len(arg_list)):
+        #     if arg_list[i] in resolve_list:
+        #         located_annotation = arg_list[i]
+        #         break
+        for arg in arg_list[1:]:
+            if arg in resolve_list:
+                located_annotation = arg
                 break
 
         if located_annotation is MISSING:
@@ -3119,15 +3126,15 @@ def unpack_annotated(given_anno, resolve_list: list = []) -> type:
 
         return located_annotation
     else:
-        return given_anno
+        return given_annotation
 
 
-def unpack_annotation(given_anno: Any, annotated_list: List[type] = []) -> Tuple[List[type], list]:
+def unpack_annotation(given_annotation: Any, annotated_list: List[type] = []) -> Tuple[List[type], list]:
     """Unpacks the given parameter annotation into its components.
 
     Parameters
     ----------
-    given_anno: Any
+    given_annotation: Any
         Given annotation to unpack. Should be from ``parameter.annotation``
     annotated_list: List[:class:`type`]
         List that the ``Annotated`` annotation should attempt to resolve to, from the 2nd arg to the right.
@@ -3141,37 +3148,40 @@ def unpack_annotation(given_anno: Any, annotated_list: List[type] = []) -> Tuple
     """
     type_ret = []
     literal_ret = []
-    origin = typing.get_origin(given_anno)
+    origin = typing.get_origin(given_annotation)
     if origin is None:
         # It doesn't have a fancy origin, just a normal type/object.
-        if isinstance(given_anno, type):
-            type_ret.append(given_anno)
+        if isinstance(given_annotation, type):
+            type_ret.append(given_annotation)
         else:
             # If it's not a type and the origin is None, it's probably a literal.
-            literal_ret.append(given_anno)
+            literal_ret.append(given_annotation)
 
     elif origin is Annotated:
         # We want to treat it like the last annotation given.
-        located_annotation = MISSING
-        arg_list = typing.get_args(given_anno)
-        for i in range(1, len(arg_list)):
-            if arg_list[i] in annotated_list:
-                located_annotation = arg_list[i]
-                break
-
-        if located_annotation is MISSING:
-            located_annotation = arg_list[-1]
+        # located_annotation = MISSING
+        # arg_list = typing.get_args(given_annotation)
+        # for i in range(1, len(arg_list)):
+        #     if arg_list[i] in annotated_list:
+        #         located_annotation = arg_list[i]
+        #         break
+        # for arg in arg_list[1:]:
+        #     if arg in annotated_list:
+        #
+        # if located_annotation is MISSING:
+        #     located_annotation = arg_list[-1]
+        located_annotation = unpack_annotated(given_annotation, annotated_list)
 
         unpacked_type, unpacked_literal = unpack_annotation(located_annotation, annotated_list)
         type_ret.extend(unpacked_type)
         literal_ret.extend(unpacked_literal)
     elif origin in (Union, Optional, Literal):
-        for anno in typing.get_args(given_anno):
+        for anno in typing.get_args(given_annotation):
             unpacked_type, unpacked_literal = unpack_annotation(anno, annotated_list)
             type_ret.extend(unpacked_type)
             literal_ret.extend(unpacked_literal)
 
     else:
-        raise ValueError(f"Given Anno {given_anno} has an unhandled origin: {origin}")
+        raise ValueError(f"Given Annotation {given_annotation} has an unhandled origin: {origin}")
 
     return type_ret, literal_ret
