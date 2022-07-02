@@ -245,12 +245,14 @@ class AutoModerationRule(Hashable):
             The new trigger event type of this auto moderation rule.
         keyword_filters: List[:class:`str`]
             The keywords that the filter should match.
+            Either this or ``presets`` must be passed.
 
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword`.
         presets: List[:class:`KeywordPresetType`]
             The keyword presets that the filter should match.
+            Either this or ``keyword_filters` must be passed.
 
             .. note::
 
@@ -267,8 +269,6 @@ class AutoModerationRule(Hashable):
             A list of roles that should not be affected by this rule.
         exempt_channels: :class:`abc.GuildChannel`
             A list of channels that should not be affected by this rule.
-        reason: :class:`str`
-            The reason why this auto moderation rule was edited.
 
         Raises
         -------
@@ -355,9 +355,6 @@ class AutoModerationRule(Hashable):
 
         if exempt_channels is not MISSING:
             payload["exempt_channels"] = [exempt_channel.id for exempt_channel in exempt_channels]
-
-        if reason is not MISSING:
-            payload["reason"] = reason
 
         new_data = await self._state.http.modify_automod_rule(
             guild_id=self.guild.id, rule_id=self.id, **payload
