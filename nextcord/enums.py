@@ -180,16 +180,6 @@ else:
             except (KeyError, TypeError):
                 return value
 
-        @property
-        def name(self):
-            """The name of the Enum member."""
-            return self.name
-
-        @property
-        def value(self):
-            """The value of the Enum member."""
-            return self.value
-
 
 class ChannelType(Enum):
     text = 0
