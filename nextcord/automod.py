@@ -111,9 +111,9 @@ class AutoModerationRule(Hashable):
     exempt_channel_ids: List[:class:`int`]
         A list of channels that will not be affected by this rule.
     keyword_filters: Optional[List[:class:`str`]]
-        The custom filters for this auto moderation rule. `None` if not set.
+        The custom filters for this auto moderation rule. ``None`` if not set.
     presets: Optional[List[:class:`KeywordPresetType`]]
-        The pre-set types of this auto moderation rule. `None` if not set.
+        The pre-set types of this auto moderation rule. ``None`` if not set.
     actions: List[:class:`AutoModerationAction`]
         The actions that this auto moderation rule will execute if triggered.
     """
