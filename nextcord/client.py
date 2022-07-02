@@ -1448,13 +1448,10 @@ class Client:
         """
         icon_base64 = await utils._obj_to_base64_data(icon)
 
-        if isinstance(region, VoiceRegion):
-            region = str(region)
-
         if code:
-            data = await self.http.create_from_template(code, name, region, icon_base64)
+            data = await self.http.create_from_template(code, name, str(region), icon_base64)
         else:
-            data = await self.http.create_guild(name, region, icon_base64)
+            data = await self.http.create_guild(name, str(region), icon_base64)
         return Guild(data=data, state=self._connection)
 
     async def fetch_stage_instance(self, channel_id: int, /) -> StageInstance:
