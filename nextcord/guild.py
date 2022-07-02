@@ -3684,9 +3684,11 @@ class Guild(Hashable):
         return rule
 
     def get_automod_rules(self) -> List[AutoModerationRule]:
-        """List all auto moderation rule configurated for this server.
+        """List all auto moderation rules configurated for this server.
 
         Returns
         --------
-        List[:class:`AutoModerationRule`]"""
+        List[:class:`AutoModerationRule`]
+            A list of the auto moderation rules configurated for this server.
+        """
         return self._state.list_cached_guild_automod_rule(self.id)
