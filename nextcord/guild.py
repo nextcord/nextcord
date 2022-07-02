@@ -3594,10 +3594,20 @@ class Guild(Hashable):
             The event type that this rule should start finding. Default to :attr:`EventType.message_send`.
         trigger_type: :class:`TriggerType`.
             The trigger type of this rule.
+
+            .. note::
+
+                The :attr:`TriggerType.harmful_link` and the :attr:`TriggerType.spam` is not released to most server yet.
         keyword_filters: List[:class:`str`]
             The words that this rule should filter.
+            .. note::
+
+                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword`.
         presets: List[:class:`KeywordPresetType`]
             The preset keywords that this rule should filter.
+            .. note::
+
+                This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_presets``
         notify_channel: :class:`abc.GuildChannel`
             The channel Discord will send an alert to when this rule is triggered.
             Either this or `timeout_seconds` must be provided.
