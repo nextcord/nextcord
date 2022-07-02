@@ -2332,6 +2332,9 @@ class ConnectionState:
         except (Forbidden, NotFound):
             pass
 
+    def list_cached_guild_automod_rule(self, guild_id: int):
+        return [rule for _, rule in self._automod_rules.values() if rule.guild_id == guild_id]
+
 
 class AutoShardedConnectionState(ConnectionState):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -2464,6 +2467,7 @@ class AutoShardedConnectionState(ConnectionState):
 
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
+            asyncio.create_task(self._add_automod_rule_from_guild_data(data))
 
         if self._messages:
             self._update_message_references()
