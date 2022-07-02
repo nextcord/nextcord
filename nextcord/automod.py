@@ -260,17 +260,21 @@ class AutoModerationRule(Hashable):
             The channel that will receive the notification when this rule is triggered. Cannot be mixed with ``notify_channels``.
         timeout_seconds: :class:`int`
             The seconds to timeout the person that triggered this rule.
+
+            .. note::
+
+                To be able to set this you must have :attr:`~Permissions.moderate_members` permissions.
         block_message: :class:`bool`
             Whether or not this rule should block the message which triggered the rule.
         enabled: :class:`bool`
             Whether or not if this rule is enabled.
-        exempt_roles: :class:`Role`
+        exempt_roles: List[:class:`Role`]
             A list of roles that should not be affected by this rule.
 
             .. note::
 
                 Bots are always not affected by any rule.
-        exempt_channels: :class:`abc.GuildChannel`
+        exempt_channels: List[:class:`abc.GuildChannel`]
             A list of channels that should not be affected by this rule.
 
             .. note::
