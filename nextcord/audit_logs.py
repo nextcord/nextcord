@@ -353,6 +353,9 @@ class _AuditLogProxyPinAction:
 class _AuditLogProxyStageInstanceAction:
     channel: abc.GuildChannel
 
+class _AuditLogProxyAutoModerationRuleAction:
+    rules: List[AutoModerationRule]
+
 
 class AuditLogEntry(Hashable):
     r"""Represents an Audit Log entry.
@@ -402,6 +405,7 @@ class AuditLogEntry(Hashable):
         _AuditLogProxyMemberDisconnect,
         _AuditLogProxyPinAction,
         _AuditLogProxyStageInstanceAction,
+        _AuditLogProxyAutoModerationRuleAction,
         Member,
         User,
         None,
@@ -470,9 +474,8 @@ class AuditLogEntry(Hashable):
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
             elif self.action.name.startswith("automod_rule"):
-                self.extra = [
-                    AutoModerationRule(data=data) for data in data["auto_moderation_rules"]
-                ]
+                elems = {"rules": [AutoModerationRule(data=rule) for rule in data['auto_moderation_rules']] or [Object(id=rule['id']) for rule in data['auto_moderation_rules']]}
+                self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
 
         # this key is not present when the above is present, typically.
         # It's a list of { new_value: a, old_value: b, key: c }
