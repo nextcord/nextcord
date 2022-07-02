@@ -276,6 +276,7 @@ class AutoModerationRule(Hashable):
             .. note::
 
                 Bots are always not affected by any rule.
+
         Raises
         -------
         InvalidArgument
