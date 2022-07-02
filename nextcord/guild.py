@@ -3645,7 +3645,7 @@ class Guild(Hashable):
             "enabled": enabled,
         }
         if keyword_filters is MISSING and presets is MISSING:
-            raise InvalidArgument("Either keyword_filters and presets must be passed.")
+            raise InvalidArgument("Either keyword_filters or presets must be passed.")
 
         if keyword_filters is not MISSING and presets is not MISSING:
             raise InvalidArgument(
