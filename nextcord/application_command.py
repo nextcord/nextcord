@@ -3129,7 +3129,9 @@ def unpack_annotated(given_annotation, resolve_list: list = []) -> type:
         return given_annotation
 
 
-def unpack_annotation(given_annotation: Any, annotated_list: List[type] = []) -> Tuple[List[type], list]:
+def unpack_annotation(
+    given_annotation: Any, annotated_list: List[type] = []
+) -> Tuple[List[type], list]:
     """Unpacks the given parameter annotation into its components.
 
     Parameters
