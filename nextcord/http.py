@@ -2370,7 +2370,7 @@ class HTTPClient:
         actions: List[automod.AutoModerationAction],
         enabled: bool = MISSING,
         exempt_role: List[Snowflake] = MISSING,
-        exempt_channel: List[Snowflake] = MISSING
+        exempt_channel: List[Snowflake] = MISSING,
     ) -> Response[automod.AutoModerationRule]:
         params = {
             "name": name,
