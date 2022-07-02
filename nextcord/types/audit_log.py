@@ -27,7 +27,6 @@ from __future__ import annotations
 
 from typing import List, Literal, Optional, TypedDict, Union
 
-from .automod import AutoModerationRule
 from .channel import ChannelType, PermissionOverwrite, VideoQualityMode
 from .guild import (
     DefaultMessageNotificationLevel,
@@ -285,4 +284,3 @@ class AuditLog(TypedDict):
     audit_log_entries: List[AuditLogEntry]
     integrations: List[PartialIntegration]
     threads: List[Thread]
-    auto_moderation_rules: List[AutoModerationRule]

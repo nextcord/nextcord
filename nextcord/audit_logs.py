@@ -41,7 +41,6 @@ from typing import (
 
 from . import enums, utils
 from .asset import Asset
-from .automod import AutoModerationRule
 from .colour import Colour
 from .invite import Invite
 from .mixins import Hashable
@@ -353,9 +352,6 @@ class _AuditLogProxyPinAction:
 class _AuditLogProxyStageInstanceAction:
     channel: abc.GuildChannel
 
-class _AuditLogProxyAutoModerationRuleAction:
-    rules: List[AutoModerationRule]
-
 
 class AuditLogEntry(Hashable):
     r"""Represents an Audit Log entry.
@@ -405,7 +401,6 @@ class AuditLogEntry(Hashable):
         _AuditLogProxyMemberDisconnect,
         _AuditLogProxyPinAction,
         _AuditLogProxyStageInstanceAction,
-        _AuditLogProxyAutoModerationRuleAction,
         Member,
         User,
         None,
@@ -472,9 +467,6 @@ class AuditLogEntry(Hashable):
             elif self.action.name.startswith("stage_instance"):
                 channel_id = int(self.extra["channel_id"])
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
-                self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
-            elif self.action.name.startswith("automod_rule"):
-                elems = {"rules": [AutoModerationRule(data=rule) for rule in data['auto_moderation_rules']] or [Object(id=rule['id']) for rule in data['auto_moderation_rules']]}
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
 
         # this key is not present when the above is present, typically.
