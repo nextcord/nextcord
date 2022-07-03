@@ -3600,11 +3600,13 @@ class Guild(Hashable):
                 The :attr:`TriggerType.harmful_link` and the :attr:`TriggerType.spam` is not released to most server yet.
         keyword_filters: List[:class:`str`]
             The words that this rule should filter.
+
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword`.
         presets: List[:class:`KeywordPresetType`]
             The preset keywords that this rule should filter.
+
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_presets``
@@ -3639,8 +3641,7 @@ class Guild(Hashable):
         Forbidden
             You do not have proper permissions to do this.
         InvalidArgument
-            - You specified both ``presets`` and ``keyword_filters``.
-            - You didn't specify either ``presets`` or ``keyword_filters``.
+            - You specified both ``presets`` and ``keyword_filters``, or none of them.
         HTTPException
             Creating the rule failed.
         """
