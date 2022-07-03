@@ -28,6 +28,7 @@ from __future__ import annotations
 import asyncio
 import collections
 import collections.abc
+import copy
 import importlib.util
 import inspect
 import os
@@ -385,15 +386,19 @@ class BotBase(GroupMixin):
         """|coro|
         Checks if a :class:`~nextcord.User` or :class:`~nextcord.Member` is the owner of
         this bot.
+
         If an :attr:`owner_id` is not set, it is fetched automatically
         through the use of :meth:`~.Bot.application_info`.
+
         .. versionchanged:: 1.3
             The function also checks if the application is team-owned if
             :attr:`owner_ids` is not set.
+
         Parameters
         -----------
         user: :class:`.abc.User`
             The user to check for.
+
         Returns
         --------
         :class:`bool`
@@ -1255,7 +1260,7 @@ class BotBase(GroupMixin):
             The invocation context to invoke.
         """
         if ctx.command is not None:
-            self.dispatch("command", ctx)
+            self.dispatch("command", copy.copy(ctx))
             try:
                 if await self.can_run(ctx, call_once=True):
                     await ctx.command.invoke(ctx)
@@ -1266,7 +1271,7 @@ class BotBase(GroupMixin):
             else:
                 self.dispatch("command_completion", ctx)
         elif ctx.invoked_with:
-            exc = errors.CommandNotFound(f'Command "{ctx.invoked_with}" is not found')
+            exc = errors.CommandNotFound(ctx.invoked_with)
             self.dispatch("command_error", ctx, exc)
 
     async def process_commands(self, message: Message) -> None:
@@ -1360,18 +1365,24 @@ class BotBase(GroupMixin):
 
     def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
         """A decorator that registers a coroutine as a pre-invoke hook.
+
         A pre-invoke hook is called directly before the command is
         called. This makes it a useful function to set up database
         connections or any type of set up required.
+
         This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
         .. note::
+
             The :meth:`.application_command_before_invoke` and :meth:`.application_command_after_invoke`
             hooks are only called if all checks pass without error. If any check fails, then the hooks
             are not called.
+
         Parameters
         -----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the pre-invoke hook.
+
         Raises
         -------
         TypeError
