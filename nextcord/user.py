@@ -372,13 +372,16 @@ class ClientUser(BaseUser):
         .. versionchanged:: 2.0
             The edit is no longer in-place, instead the newly edited client user is returned.
 
+        .. versionchanged:: 2.1
+            The :attr:`avatar` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         -----------
         username: :class:`str`
             The new username you wish to change to.
         avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the image to upload.
-            Could be ``None`` to denote no avatar.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the image to upload. Could be ``None`` to denote no avatar.
 
         Raises
         ------

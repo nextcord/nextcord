@@ -566,12 +566,16 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         .. versionchanged:: 1.1
             Added the ``reason`` keyword-only parameter.
 
+        .. versionchanged:: 2.1
+            The :attr:`avatar` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         -------------
         name: :class:`str`
             The webhook's name.
         avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the webhook's default avatar.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`,
+            or :class:`Asset` representing the webhook's default avatar.
             This operates similarly to :meth:`~ClientUser.edit`.
         reason: Optional[:class:`str`]
             The reason for creating this webhook. Shows up in the audit logs.

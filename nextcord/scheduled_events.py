@@ -342,6 +342,9 @@ class ScheduledEvent(Hashable):
 
         Edit the scheduled event.
 
+        .. versionchanged:: 2.1
+            The :attr:`image` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ----------
         channel: :class:`abc.GuildChannel`
@@ -372,8 +375,8 @@ class ScheduledEvent(Hashable):
                 active -> completed ;
                 scheduled -> canceled
         image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the cover image.
-            Could be ``None`` to denote removal of the cover image.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the cover image. Could be ``None`` to denote removal of the cover image.
 
         Returns
         -------

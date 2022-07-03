@@ -183,6 +183,9 @@ class Template:
 
         Bot accounts in more than 10 guilds are not allowed to create guilds.
 
+        .. versionchanged:: 2.1
+        The :attr:`icon` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ----------
         name: :class:`str`
@@ -191,8 +194,8 @@ class Template:
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
         icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
-            for more details on what is expected.
+            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the icon. See :meth:`.ClientUser.edit` for more details on what is expected.
 
         Raises
         ------

@@ -1497,6 +1497,10 @@ class Guild(Hashable):
         .. versionchanged:: 2.0
             The newly updated guild is returned.
 
+        .. versionchanged:: 2.1
+            The :attr:`icon`, :attr:`banner`, :attr:`splash`, :attr:`discovery_splash`
+             attributes now accept :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ----------
         name: :class:`str`
@@ -1505,23 +1509,21 @@ class Guild(Hashable):
             The new description of the guild. Could be ``None`` for no description.
             This is only available to guilds that contain ``PUBLIC`` in :attr:`Guild.features`.
         icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the icon. Only PNG/JPEG is supported.
-            GIF is only available to guilds that contain ``ANIMATED_ICON`` in :attr:`Guild.features`.
-            Could be ``None`` to denote removal of the icon.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the icon. Only PNG/JPEG is supported. GIF is only available to guilds that contain
+            ``ANIMATED_ICON`` in :attr:`Guild.features`. Could be ``None`` to denote removal of the icon.
         banner: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the banner.
-            Could be ``None`` to denote removal of the banner. This is only available to guilds that contain
-            ``BANNER`` in :attr:`Guild.features`.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the banner. Could be ``None`` to denote removal of the banner.
+            This is only available to guilds that contain ``BANNER`` in :attr:`Guild.features`.
         splash: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the invite splash.
-            Only PNG/JPEG supported. Could be ``None`` to denote removing the
-            splash. This is only available to guilds that contain ``INVITE_SPLASH``
-            in :attr:`Guild.features`.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the invite splash. Only PNG/JPEG supported. Could be ``None`` to denote removing the
+            splash. This is only available to guilds that contain ``INVITE_SPLASH`` in :attr:`Guild.features`.
         discovery_splash: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the discovery splash.
-            Only PNG/JPEG supported. Could be ``None`` to denote removing the
-            splash. This is only available to guilds that contain ``DISCOVERABLE``
-            in :attr:`Guild.features`.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+             representing the discovery splash. Only PNG/JPEG supported. Could be ``None`` to denote removing the
+            splash. This is only available to guilds that contain ``DISCOVERABLE`` in :attr:`Guild.features`.
         community: :class:`bool`
             Whether the guild should be a Community guild. If set to ``True``\, both ``rules_channel``
             and ``public_updates_channel`` parameters are required.
@@ -2467,13 +2469,16 @@ class Guild(Hashable):
         You must have the :attr:`~Permissions.manage_emojis` permission to
         do this.
 
+    .. versionchanged:: 2.1
+        The :attr:`image` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         -----------
         name: :class:`str`
             The emoji name. Must be at least 2 characters.
         image: Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]
-            The :term:`py:bytes-like object` representing the image data to use.
-            Only JPG, PNG and GIF images are supported.
+            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the image data to use. Only JPG, PNG and GIF images are supported.
         roles: List[:class:`Role`]
             A :class:`list` of :class:`Role`\s that can use this emoji. Leave empty to make it available to everyone.
         reason: Optional[:class:`str`]
@@ -2614,6 +2619,9 @@ class Guild(Hashable):
 
         .. versionchanged:: 1.6
             Can now pass ``int`` to ``colour`` keyword-only parameter.
+
+        .. versionchanged:: 2.1
+            The :attr:`icon` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         -----------
@@ -3265,6 +3273,9 @@ class Guild(Hashable):
 
         Create a new scheduled event object.
 
+        .. versionchanged:: 2.1
+        The :attr:`image` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ----------
         channel: :class:`abc.GuildChannel`
@@ -3284,7 +3295,8 @@ class Guild(Hashable):
         entity_type: :class:`ScheduledEventEntityType`
             The type of event
         image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the cover image.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the cover image.
         reason: Optional[:class:`str`]
             The reason for creating this scheduled_event. Shows up in the audit logs.
 

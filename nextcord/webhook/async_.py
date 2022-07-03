@@ -1253,12 +1253,16 @@ class Webhook(BaseWebhook):
 
         Edits this Webhook.
 
+        .. versionchanged:: 2.1
+            The :attr:`avatar` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ------------
         name: Optional[:class:`str`]
             The webhook's new default name.
         avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the webhook's new default avatar.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the webhook's new default avatar.
         channel: Optional[:class:`abc.Snowflake`]
             The webhook's new channel. This requires an authenticated webhook.
 
