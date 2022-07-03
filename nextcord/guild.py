@@ -2461,40 +2461,40 @@ class Guild(Hashable):
     ) -> Emoji:
         r"""|coro|
 
-        Creates a custom :class:`Emoji` for the guild.
+            Creates a custom :class:`Emoji` for the guild.
 
-        There is currently a limit of 50 static and animated emojis respectively per guild,
-        unless the guild has the ``MORE_EMOJI`` feature which extends the limit to 200.
+            There is currently a limit of 50 static and animated emojis respectively per guild,
+            unless the guild has the ``MORE_EMOJI`` feature which extends the limit to 200.
 
-        You must have the :attr:`~Permissions.manage_emojis` permission to
-        do this.
+            You must have the :attr:`~Permissions.manage_emojis` permission to
+            do this.
 
-    .. versionchanged:: 2.1
-        The :attr:`image` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+        .. versionchanged:: 2.1
+            The :attr:`image` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
-        Parameters
-        -----------
-        name: :class:`str`
-            The emoji name. Must be at least 2 characters.
-        image: Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]
-            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
-            representing the image data to use. Only JPG, PNG and GIF images are supported.
-        roles: List[:class:`Role`]
-            A :class:`list` of :class:`Role`\s that can use this emoji. Leave empty to make it available to everyone.
-        reason: Optional[:class:`str`]
-            The reason for creating this emoji. Shows up on the audit log.
+            Parameters
+            -----------
+            name: :class:`str`
+                The emoji name. Must be at least 2 characters.
+            image: Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]
+                The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+                representing the image data to use. Only JPG, PNG and GIF images are supported.
+            roles: List[:class:`Role`]
+                A :class:`list` of :class:`Role`\s that can use this emoji. Leave empty to make it available to everyone.
+            reason: Optional[:class:`str`]
+                The reason for creating this emoji. Shows up on the audit log.
 
-        Raises
-        -------
-        Forbidden
-            You are not allowed to create emojis.
-        HTTPException
-            An error occurred creating an emoji.
+            Raises
+            -------
+            Forbidden
+                You are not allowed to create emojis.
+            HTTPException
+                An error occurred creating an emoji.
 
-        Returns
-        --------
-        :class:`Emoji`
-            The created emoji.
+            Returns
+            --------
+            :class:`Emoji`
+                The created emoji.
         """
         img_base64 = await utils._obj_to_base64_data(image)
 
