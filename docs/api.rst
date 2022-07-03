@@ -2567,6 +2567,30 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.0
 
+    .. attribute:: automod_rule_create
+
+        An auto moderation rule was created.
+
+        .. versionadded:: 2.0
+
+    .. attribute:: automod_rule_update
+
+        An auto moderation rule was updated.
+
+        .. versionadded:: 2.0
+
+    .. attribute:: automod_rule_delete
+
+        An auto moderation rule was deleted.
+
+        .. versionadded:: 2.0
+
+    .. attribute:: automod_action_executed
+
+        An auto moderation rule was triggered. Therefore, the action(s) associated with the rule was executed.
+
+        .. versionadded:: 2.0
+
 .. class:: AuditLogActionCategory
 
     Represents the category that the :class:`AuditLogAction` belongs to.
