@@ -63,11 +63,7 @@ class AutoModerationAction:
         The number of seconds this rule should timeout when someone triggered the rule.
     """
 
-    __slots__ = (
-        "type",
-        "notify_channel_id",
-        "timeout_seconds"
-    )
+    __slots__ = ("type", "notify_channel_id", "timeout_seconds")
 
     def __init__(self, data: AutoModerationActionPayload):
         self.type: ActionType = try_enum(ActionType, data["type"])
@@ -141,7 +137,7 @@ class AutoModerationRule(Hashable):
         "exempt_channel_ids",
         "keyword_filters",
         "actions",
-        "presets"
+        "presets",
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
