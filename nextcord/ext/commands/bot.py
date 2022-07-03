@@ -1002,9 +1002,9 @@ class BotBase(GroupMixin):
         Raises
         ------
         ValueError
-            The length of ``packages`` or the length of ``extras` is not equal to the length of ``names``
+            The length of ``packages`` or the length of ``extras` is not equal to the length of ``names``.
         InvalidArgument
-            You passed both ``package`` and ``packages``.
+            You passed in both ``package`` and ``packages``.
         ExtensionNotFound
             An extension could not be imported.
         ExtensionAlreadyLoaded
@@ -1016,24 +1016,20 @@ class BotBase(GroupMixin):
         """
         if package and packages:
             raise errors.BadArgument("Cannot provide both package and packages.")
-
-        if packages is not None and len(packages) != len(names):
+        if packages and len(packages) != len(names):
             raise ValueError("The length of packages must match the length of extensions.")
-
-        if extras is not None and len(extras) != len(names):
+        if extras and len(extras) != len(names):
             raise ValueError("The length of extra parameters must match the length of extensions.")
 
-        # pyright doesn't understand these statements at all
-        packages_itr: Optional[Iterator] = iter(packages) and packages  # type: ignore
-        extras_itr: Optional[Iterator] = iter(extras) and extras  # type: ignore
+        packages_itr: Optional[Iterator] = iter(packages) if packages else None
+        extras_itr: Optional[Iterator] = iter(extras) if extras else None
 
         loaded_extensions: List[str] = []
 
         for extension in names:
-            cur_extra: Optional[Dict[str, Any]] = extras_itr and next(extras_itr)  # type: ignore
-
-            if package is None:
-                package = packages_itr and next(packages_itr)  # type: ignore
+            if packages_itr:
+                package = next(packages_itr)
+            cur_extra: Optional[Dict[str, Any]] = next(extras_itr) if extras_itr else None
 
             try:
                 self.load_extension(extension, package=package, extras=cur_extra)
@@ -1045,28 +1041,22 @@ class BotBase(GroupMixin):
 
         return loaded_extensions
 
-    def load_extensions_from_folder(
-        self, folder_name: str, filter: str = "*.py", ignore: Optional[List[str]] = None
+    def load_extensions_from_module(
+        self, source_module: str, ignore: Optional[List[str]] = None
     ) -> List[str]:
-        """Loads all extensions found in a folder.
+        """Loads all extensions found in a module.
 
         Once an extension found in a folder has been loaded and did not throw
         any exceptions, it will be added to a list of extension names that
         will be returned.
-
-        This function only works with cog setups where the entire cog is placed
-        into one file. If you have a different setup for your cogs, then you will
-        need to manually load them.
 
         Parameters
         ----------
         folder_name: :class:`str`
             The name (or path) of the folder to look through. This folder path is a
             relative path based on the current folder.
-        filter: :class:`str`
-            The filter to use when looking for extensions. Defaults to ``*.py``.
-            To learn more about the syntax of the filter, check out the
-            `Python Docs. <https://docs.python.org/3/library/fnmatch.html#module-fnmatch>`_
+        ignore: Optional[List[:class:`str`]]
+            File names of extensions to ignore.
 
         Returns
         -------
@@ -1077,7 +1067,8 @@ class BotBase(GroupMixin):
         Raises
         ------
         ValueError
-            :param:`folder_name` is an absolute path, not a relative path.
+            The module at ``source_module`` is not found, or the module at ``source_module``
+            has no submodules.
         ExtensionNotFound
             An extension could not be imported.
         ExtensionAlreadyLoaded
@@ -1087,19 +1078,31 @@ class BotBase(GroupMixin):
         ExtensionFailed
             An extension or its setup function had an execution error.
         """
-        path = Path(folder_name)
-        if path.is_absolute():
-            raise ValueError(
-                "folder_name must be a relative path based on the current working directory, not an absolute path"
-            )
+        name = self._resolve_name(source_module, None)
+        spec = importlib.util.find_spec(name)
+        if spec is None:
+            raise ValueError(f"Module {name} not found")
 
-        _raw_files: List[Path] = list(path.rglob(filter))
-        if ignore:
-            _raw_files = [f for f in _raw_files if f.name not in ignore]
+        submodule_paths = spec.submodule_search_locations
+        if submodule_paths is None:
+            raise ValueError(f"Module {name} has no submodules")
 
-        packages: List[str] = [str(p.parent).replace(os.sep, ".") for p in _raw_files]
-        modules: List[str] = [str(p.stem) for p in _raw_files]
-        extensions: List[str] = self.load_extensions(modules, packages=packages)
+        extensions: List[str] = []
+
+        for submodule_path in submodule_paths:
+            submodules = [
+                (
+                    f"{name}.{submodule[:-3]}"
+                    if submodule.endswith(".py")
+                    else f"{name}.{submodule}"
+                )
+                for submodule in os.listdir(submodule_path)
+                if not submodule.startswith("_")
+            ]
+            if ignore is not None:
+                submodules = [s for s in submodules if s not in ignore]
+
+            extensions.extend(self.load_extensions(submodules))
 
         return extensions
 
