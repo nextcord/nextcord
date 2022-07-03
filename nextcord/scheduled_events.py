@@ -33,7 +33,11 @@ from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
 from .utils import MISSING, _obj_to_base64_data, parse_time
 
-__all__: Tuple[str, ...] = ("EntityMetadata", "ScheduledEventUser", "ScheduledEvent")
+__all__: Tuple[str, ...] = (
+    "EntityMetadata",
+    "ScheduledEventUser",
+    "ScheduledEvent",
+)
 
 if TYPE_CHECKING:
     from datetime import datetime
