@@ -3623,6 +3623,12 @@ class Guild(Hashable):
         exempt_channels: List[:class:`abc.GuildChannel`]
             The channels that should not be affected by this rule.
 
+        .. note::
+
+            A guild can have max 3 rules with the :class:`TriggerType.keyword` trigger type,
+            1 rule with the :class:`TriggerType.keyword_presets` trigger type, 1 rule with the
+            :class:`TriggerType.spam` type and 1 rule with the :class:`TriggerType.harmful_link` type.
+
         Returns
         -------
         :class:`AutoModerationRule`
@@ -3634,7 +3640,7 @@ class Guild(Hashable):
             You do not have proper permissions to do this.
         InvalidArgument
             - You specified both ``presets`` and ``keyword_filters``.
-            - You didn't specify either ``presets`` and ``keyword_filters``.
+            - You didn't specify either ``presets`` or ``keyword_filters``.
         HTTPException
             Creating the rule failed.
         """

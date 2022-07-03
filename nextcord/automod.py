@@ -63,6 +63,12 @@ class AutoModerationAction:
         The number of seconds this rule should timeout when someone triggered the rule.
     """
 
+    __slots__ = (
+        "type",
+        "notify_channel_id",
+        "timeout_seconds"
+    )
+
     def __init__(self, data: AutoModerationActionPayload):
         self.type: ActionType = try_enum(ActionType, data["type"])
         metadata = data.get("metadata", {})
@@ -120,6 +126,23 @@ class AutoModerationRule(Hashable):
     actions: List[:class:`AutoModerationAction`]
         The actions that this auto moderation rule will execute if triggered.
     """
+
+    __slots__ = (
+        "id",
+        "guild",
+        "_state",
+        "guild_id",
+        "name",
+        "creator_id",
+        "event_type",
+        "trigger_type",
+        "enabled",
+        "exempt_role_ids",
+        "exempt_channel_ids",
+        "keyword_filters",
+        "actions",
+        "presets"
+    )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
         self.id: int = int(data["id"])
@@ -312,7 +335,7 @@ class AutoModerationRule(Hashable):
         -------
         InvalidArgument
             - You specified both ``keyword_filters`` and ``presets``.
-            - You didn't specify either ``keyword_filters`` and ``presets``.
+            - You didn't specify either ``keyword_filters`` or ``presets``.
         HTTPException
             Editing the rule failed.
         Forbidden
