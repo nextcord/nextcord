@@ -1471,7 +1471,7 @@ class HTTPClient:
         name: str,
         image: Optional[str],
         *,
-        roles: Optional[List[int]] = None,
+        roles: Optional[SnowflakeList] = None,
         reason: Optional[str] = None,
     ) -> Response[emoji.Emoji]:
         payload = {

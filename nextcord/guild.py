@@ -2492,6 +2492,8 @@ class Guild(Hashable):
             The created emoji.
         """
         img_base64 = await utils._obj_to_base64_data(image)
+
+        role_ids: SnowflakeList
         if roles:
             role_ids = [role.id for role in roles]
         else:
