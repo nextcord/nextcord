@@ -1413,9 +1413,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         if (self.min_length is not None or self.max_length is not None) and self.type is not (
             ApplicationCommandOptionType.string
         ):
-            raise ValueError(
-                "min_length or max_length can only be set if the type is a string."
-            )
+            raise ValueError("min_length or max_length can only be set if the type is a string.")
 
         return True
 
