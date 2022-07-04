@@ -1410,6 +1410,12 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         if self.max_length is not None and not isinstance(self.max_length, int):
             raise ValueError("max_length must be an int.")
 
+        if self.min_length is not None and self.min_length < 0:
+            raise ValueError("min_length must be greater than or equal to 0.")
+
+        if self.max_length is not None and self.max_length < 1:
+            raise ValueError("max_length must be greater than or equal to 1.")
+
         if (self.min_length is not None or self.max_length is not None) and self.type is not (
             ApplicationCommandOptionType.string
         ):
