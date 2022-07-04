@@ -3837,6 +3837,14 @@ PartialInteractionMessage
     :members:
     :inherited-members:
 
+MessageInteraction
+~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageInteraction
+
+.. autoclass:: MessageInteraction()
+    :members:
+
 Member
 ~~~~~~
 
