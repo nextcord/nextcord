@@ -1416,6 +1416,11 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         if self.max_length is not None and self.max_length < 1:
             raise ValueError("max_length must be greater than or equal to 1.")
 
+        # we check this ourselves because Discord doesn't do it yet
+        # see here: https://github.com/discord/discord-api-docs/issues/5149
+        if (self.min_length is not None and self.max_length is not None) and self.min_length > self.max_length:
+            raise ValueError("min_length must be less than or equal to max_length")
+
         if (self.min_length is not None or self.max_length is not None) and self.type is not (
             ApplicationCommandOptionType.string
         ):
