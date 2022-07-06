@@ -1202,7 +1202,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param action: The action that was executed.
     :type action: :class:`AutoModerationAction`
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.1
 
 
 .. _discord-api-utils:
