@@ -1173,7 +1173,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param rule: The rule that is newly created.
     :type rule: :class:`AutoModerationRule`
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.1
 
 .. function:: on_automod_rule_update(before, after)
 
