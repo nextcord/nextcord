@@ -2589,7 +2589,7 @@ of :class:`enum.Enum`.
 
         An auto moderation rule was triggered. Therefore, the action(s) associated with the rule was executed.
 
-        .. versionadded:: 2.0
+        .. versionadded:: 2.1
 
 .. class:: AuditLogActionCategory
 
