@@ -1231,7 +1231,7 @@ class ConnectionState:
                 # flags will always be present here
                 self.application_flags = ApplicationFlags._from_value(application["flags"])
 
-        asyncio.gather(self._add_automod_rule_from_guild_data(data=data) for data in data['guilds'])
+        asyncio.gather(*(self._add_automod_rule_from_guild_data(data=data) for data in data['guilds']))
 
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
