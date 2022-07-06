@@ -31,7 +31,7 @@ from .utils import MISSING, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from typing import List, Optional, Union
+    from typing import List, Optional
 
     from .abc import GuildChannel
     from .errors import InvalidArgument
@@ -44,7 +44,6 @@ if TYPE_CHECKING:
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
-    from .types.snowflake import Snowflake
 
 
 __all__ = ("AutoModerationRule", "AutoModerationAction")
