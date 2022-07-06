@@ -1193,7 +1193,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param action: The rule that was deleted
     :type action: :class:`AutoModerationRule`
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.1
 
 .. function:: on_automod_action_execution(action)
 
