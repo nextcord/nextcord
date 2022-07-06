@@ -2577,7 +2577,7 @@ of :class:`enum.Enum`.
 
         An auto moderation rule was updated.
 
-        .. versionadded:: 2.0
+        .. versionadded:: 2.1
 
     .. attribute:: automod_rule_delete
 
