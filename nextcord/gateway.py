@@ -421,11 +421,9 @@ class DiscordWebSocket:
             "d": {
                 "token": self.token,
                 "properties": {
-                    "$os": sys.platform,
-                    "$browser": "nextcord",
-                    "$device": "nextcord",
-                    "$referrer": "",
-                    "$referring_domain": "",
+                    "os": sys.platform,
+                    "browser": "nextcord",
+                    "device": "nextcord",
                 },
                 "compress": True,
                 "large_threshold": 250,
@@ -784,7 +782,7 @@ class DiscordVoiceWebSocket:
         self.secret_key = None
         self._hook = hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
 
-    def _default_hook(self, *args):
+    async def _default_hook(self, *args):
         ...
 
     async def send_as_json(self, data):

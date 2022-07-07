@@ -195,6 +195,10 @@ class CallbackWrapperMixin:
         if isinstance(callback, CallbackWrapper):
             self.modify_callbacks += callback.modify_callbacks
 
+    def modify(self) -> None:
+        for modify_callback in self.modify_callbacks:
+            modify_callback(self)
+
 
 class ApplicationCommandOption:
     """This represents the `Application Command Option Structure
@@ -754,7 +758,7 @@ class CallbackMixin:
         # Global checks
         for check in interaction.client._connection._application_command_checks:
             try:
-                check_result = await maybe_coroutine(check, interaction)
+                check_result = await maybe_coroutine(check, interaction)  # type: ignore
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
@@ -778,7 +782,7 @@ class CallbackMixin:
         # Command checks
         for check in self.checks:
             try:
-                check_result = await maybe_coroutine(check, interaction)
+                check_result = await maybe_coroutine(check, interaction)  # type: ignore
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
@@ -825,6 +829,8 @@ class CallbackMixin:
                     ApplicationInvokeError(error),
                 )
                 await self.invoke_error(interaction, error)
+            else:
+                state.dispatch("application_command_completion", interaction)
             finally:
                 if self._callback_after_invoke is not None:
                     await self._callback_after_invoke(interaction)  # type: ignore
@@ -1761,11 +1767,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             ret["guild_id"] = guild_id
         else:  # Global command specific payload options.
             if self.dm_permission is not None:
-                # While Discord defaults to True, they only send back the DM permission if we set it, so this is fairly
-                #  safe it seems? Going from True to None will cause a command update, but that's not too bad at all.
-                #  They might change this behavior though, so we might need to do a:
-                # if self.dm_permission not in (None, True):
                 ret["dm_permission"] = self.dm_permission
+            else:
+                # Discord seems to send back the DM permission as True regardless if we sent it or not, so we send as
+                #  the default (True) to ensure payload parity for comparisons.
+                ret["dm_permission"] = True
 
         return ret
 
@@ -2236,8 +2242,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             self._callback_after_invoke = self.parent_cmd._callback_after_invoke
 
         super().from_autocomplete()
-        for modify_callback in self.modify_callbacks:
-            modify_callback(self)
+        CallbackWrapperMixin.modify(self)
 
     def subcommand(
         self,
@@ -2280,7 +2285,10 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 parent_cog=self.parent_cog,
                 inherit_hooks=inherit_hooks,
             )
-            self.children[ret.name or func.__name__] = ret
+            self.children[
+                ret.name
+                or (func.callback.__name__ if isinstance(func, CallbackWrapper) else func.__name__)
+            ] = ret
             return ret
 
         if isinstance(
@@ -2405,8 +2413,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
                     callback=child.callback, option_class=option_class, call_children=call_children
                 )
 
-        for modify_callback in self.modify_callbacks:
-            modify_callback(self)
+        CallbackWrapperMixin.modify(self)
 
     def subcommand(
         self,
@@ -2449,7 +2456,10 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
                 parent_cog=self.parent_cog,
                 inherit_hooks=inherit_hooks,
             )
-            self.children[ret.name or func.__name__] = ret
+            self.children[
+                ret.name
+                or (func.callback.__name__ if isinstance(func, CallbackWrapper) else func.__name__)
+            ] = ret
             return ret
 
         return decorator
@@ -2526,6 +2536,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         option_class: Optional[Type[BaseCommandOption]] = None,
     ):
         super().from_callback(callback, option_class=option_class)
+        CallbackWrapperMixin.modify(self)
 
 
 class MessageApplicationCommand(BaseApplicationCommand):
@@ -2599,6 +2610,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         option_class: Optional[Type[BaseCommandOption]] = None,
     ):
         super().from_callback(callback, option_class=option_class)
+        CallbackWrapperMixin.modify(self)
 
 
 def slash_command(

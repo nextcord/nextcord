@@ -5,13 +5,13 @@
 .. _intro:
 
 Introduction
-==============
+============
 
 This is the documentation for nextcord, a library for Python to aid
 in creating applications that utilise the Discord API.
 
 Prerequisites
----------------
+-------------
 
 nextcord works with Python 3.8 or higher. Support for earlier versions of Python
 is not provided. Python 2.7 or lower is not supported. Python 3.7 or lower is not supported.
@@ -20,13 +20,13 @@ is not provided. Python 2.7 or lower is not supported. Python 3.7 or lower is no
 .. _installing:
 
 Installing
------------
+----------
 
 You can get the library directly from PyPI: ::
 
     python3 -m pip install -U nextcord
 
-If you are using Windows, then the following should be used instead: ::
+If you are using Windows and have not installed Python to PATH, then the following should be used instead: ::
 
     py -3 -m pip install -U nextcord
 
@@ -50,7 +50,7 @@ For a Debian-based system, the following command will get these dependencies:
 Remember to check your permissions!
 
 Virtual Environments
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 Sometimes you want to keep libraries from polluting system installs or use a different version of
 libraries than the ones installed on the system. You might also not have permission to install libraries system-wide.
@@ -89,7 +89,7 @@ However, for the quick and dirty:
 Congratulations. You now have a virtual environment all set up.
 
 Basic Concepts
----------------
+--------------
 
 nextcord revolves around the concept of :ref:`events <discord-api-events>`.
 An event is something you listen to and then respond to. For example, when a message
