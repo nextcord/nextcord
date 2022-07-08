@@ -40,6 +40,7 @@ from typing import (
     Any,
     Awaitable,
     Callable,
+    ClassVar,
     Dict,
     Iterable,
     List,
@@ -166,6 +167,8 @@ _NonCallablePrefix = Union[str, Sequence[str]]
 
 
 class BotBase(GroupMixin):
+    client_type: ClassVar[type[nextcord.Client]]
+
     def __init__(
         self,
         command_prefix: Union[
@@ -204,7 +207,7 @@ class BotBase(GroupMixin):
         strip_after_prefix: bool = False,
         case_insensitive: bool = False,
     ):
-        nextcord.Client.__init__(
+        self.client_type.__init__(
             self,  # type: ignore
             max_messages=max_messages,
             connector=connector,
@@ -1435,7 +1438,7 @@ class Bot(BotBase, nextcord.Client):
         .. versionadded:: 1.7
     """
 
-    pass
+    client_type = nextcord.Client
 
 
 class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
@@ -1443,4 +1446,4 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
     :class:`nextcord.AutoShardedClient` instead.
     """
 
-    pass
+    client_type = nextcord.AutoShardedClient
