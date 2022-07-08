@@ -572,24 +572,12 @@ class CallbackMixin:
 
         self.parent_cog = parent_cog
 
-    def _test_for_self(self, *args, **kwargs):
-        try:
-            self.callback(*args, **kwargs)
-        # this error most likely means self argument was not provided
-        except TypeError:
-            return False
-        else:
-            return True
-
     def __call__(self, interaction: Interaction, *args, **kwargs):
         """Invokes the callback, injecting ``self`` if available."""
         if self.callback is None:
             raise ValueError("Cannot call callback when it is not set.")
         elif self.parent_cog:
-            if self._test_for_self(self.parent_cog, interaction, *args, **kwargs):
-                return self.callback(self.parent_cog, interaction, *args, **kwargs)
-            else:
-                raise TypeError("Callback is missing the self argument.")
+            return self.callback(self.parent_cog, interaction, *args, **kwargs)
         else:
             return self.callback(interaction, *args, **kwargs)
 
