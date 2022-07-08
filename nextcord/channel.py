@@ -1122,11 +1122,13 @@ class ForumChannel(abc.GuildChannel, Hashable):
             You do not have permissions to create a thread.
         HTTPException
             Starting the thread failed.
+        InvalidArgument
+            You cannot pass both ``embed`` and ``embeds`` parameters.
 
         Returns
         -------
         :class:`Thread`
-            The created thread
+            The created thread.
         """
         state = self._state
         content = str(content) if content is not None else None
