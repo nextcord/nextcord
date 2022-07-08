@@ -704,12 +704,18 @@ class CallbackMixin:
 
                     possible_options.add(param.name)
 
-                intersection = set(map(lambda param: param.name, callback_params.values())) - possible_options
+                intersection = (
+                    set(map(lambda param: param.name, callback_params.values())) - possible_options
+                )
 
                 if self.parent_cog is not None and len(intersection) < 2:
-                    raise ValueError(f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function define.")
+                    raise ValueError(
+                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function define."
+                    )
                 elif len(intersection) < 1:
-                    raise ValueError(f"Callback {self.error_name} is missing the interaction parameter. Please double check your function define.")
+                    raise ValueError(
+                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function define."
+                    )
 
                 # not needed later on
                 del possible_options, intersection
