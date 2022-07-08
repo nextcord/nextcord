@@ -704,12 +704,32 @@ class CallbackMixin:
             if option_class:
                 first_arg = True
                 typehints = typing.get_type_hints(self.callback)
+                callback_params = signature(self.callback).parameters
+                possible_options: Set[str] = set()
+
+                for _, param in callback_params.items():
+                    if param.annotation is param.empty or param.annotation is Interaction:
+                        # self or interaction parameter, ignore
+                        continue
+
+                    possible_options.add(param.name)
+
+                intersection = set(map(lambda param: param.name, callback_params.values())) - possible_options
+
+                if self.parent_cog is not None and len(intersection) < 2:
+                    raise ValueError(f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function define.")
+                elif len(intersection) < 1:
+                    raise ValueError(f"Callback {self.error_name} is missing the interaction parameter. Please double check your function define.")
+
+                # not needed later on
+                del possible_options, intersection
+
                 # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
                 #  decorator going into effect before the class is instantiated, thus being a function at the time.
                 #  Try to look into fixing that in the future?
                 #  If self.parent_cog isn't reliable enough, we can possibly check if the first parameter name is `self`
                 self_skip = bool(self.parent_cog)
-                for name, param in signature(self.callback).parameters.items():
+                for name, param in callback_params.items():
                     if first_arg:
                         if not self_skip:
                             first_arg = False
