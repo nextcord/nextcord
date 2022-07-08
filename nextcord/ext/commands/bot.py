@@ -40,7 +40,6 @@ from typing import (
     Any,
     Awaitable,
     Callable,
-    ClassVar,
     Dict,
     Iterable,
     List,
@@ -65,7 +64,6 @@ if TYPE_CHECKING:
     import importlib.machinery
 
     import aiohttp
-    from typing_extensions import Self
 
     from nextcord.activity import BaseActivity
     from nextcord.enums import Status
@@ -171,15 +169,18 @@ class BotBase(GroupMixin):
         self,
         command_prefix: Union[
             _NonCallablePrefix,
-            Callable[[Self, Message], Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix]],
-        ] = tuple(),
-        help_command: Optional[HelpCommand] = MISSING,
-        description: Optional[str] = None,
+            Callable[
+                [Union[Bot, AutoShardedBot], Message],
+                Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix],
+            ],
+        ],
+        help_command: Optional[HelpCommand],
+        description: Optional[str],
         *,
         owner_id: Optional[int] = None,
-        owner_ids: Iterable[int] = set(),
-        strip_after_prefix: bool = False,
-        case_insensitive: bool = False,
+        owner_ids: Optional[Iterable[int]],
+        strip_after_prefix: bool,
+        case_insensitive: bool,
     ):
         super().__init__(
             case_insensitive=case_insensitive,
@@ -1034,7 +1035,8 @@ class BotBase(GroupMixin):
         """
         prefix = self.command_prefix
         if callable(prefix):
-            ret = await nextcord.utils.maybe_coroutine(prefix, self, message)
+            ret = await nextcord.utils.maybe_coroutine(prefix, self, message)  # type: ignore
+            # the callable wants an (AutoSharded)Bot but this is BotBase
         else:
             ret = prefix
 
@@ -1388,7 +1390,10 @@ class Bot(BotBase, nextcord.Client):
         self,
         command_prefix: Union[
             _NonCallablePrefix,
-            Callable[[Self, Message], Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix]],
+            Callable[
+                [Union[Bot, AutoShardedBot], Message],
+                Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix],
+            ],
         ] = tuple(),
         help_command: Optional[HelpCommand] = MISSING,
         description: Optional[str] = None,
@@ -1418,7 +1423,7 @@ class Bot(BotBase, nextcord.Client):
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         owner_id: Optional[int] = None,
-        owner_ids: Iterable[int] = set(),
+        owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
         case_insensitive: bool = False,
     ):
@@ -1452,7 +1457,7 @@ class Bot(BotBase, nextcord.Client):
 
         BotBase.__init__(
             self,
-            command_prefix=command_prefix,  # type: ignore
+            command_prefix=command_prefix,
             help_command=help_command,
             description=description,
             owner_id=owner_id,
@@ -1471,7 +1476,10 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
         self,
         command_prefix: Union[
             _NonCallablePrefix,
-            Callable[[Self, Message], Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix]],
+            Callable[
+                [Union[Bot, AutoShardedBot], Message],
+                Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix],
+            ],
         ] = tuple(),
         help_command: Optional[HelpCommand] = MISSING,
         description: Optional[str] = None,
@@ -1502,7 +1510,7 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         owner_id: Optional[int] = None,
-        owner_ids: Iterable[int] = set(),
+        owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
         case_insensitive: bool = False,
     ):
@@ -1537,7 +1545,7 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
 
         BotBase.__init__(
             self,
-            command_prefix=command_prefix,  # type: ignore
+            command_prefix=command_prefix,
             help_command=help_command,
             description=description,
             owner_id=owner_id,
