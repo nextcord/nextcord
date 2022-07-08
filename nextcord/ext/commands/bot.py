@@ -177,7 +177,7 @@ class BotBase(GroupMixin):
         help_command: Optional[HelpCommand],
         description: Optional[str],
         *,
-        owner_id: Optional[int] = None,
+        owner_id: Optional[int],
         owner_ids: Optional[Iterable[int]],
         strip_after_prefix: bool,
         case_insensitive: bool,
