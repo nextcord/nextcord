@@ -1482,6 +1482,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             or :meth:`fetch_message` with the :attr:`last_message_id`
             attribute.
 
+        .. versionadded:: 2.1
+
         Returns
         ---------
         Optional[:class:`Message`]
@@ -1601,6 +1603,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         You must have the :attr:`~Permissions.manage_messages` permission to
         use this.
 
+        .. versionadded:: 2.1
+
         Parameters
         -----------
         messages: Iterable[:class:`abc.Snowflake`]
@@ -1655,6 +1659,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         delete messages even if they are your own.
         The :attr:`~Permissions.read_message_history` permission is
         also needed to retrieve message history.
+
+        .. versionadded:: 2.1
 
         Examples
         ---------

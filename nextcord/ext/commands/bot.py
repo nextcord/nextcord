@@ -35,7 +35,21 @@ import sys
 import traceback
 import types
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import nextcord
 
@@ -49,6 +63,13 @@ from .view import StringView
 if TYPE_CHECKING:
     import importlib.machinery
 
+    import aiohttp
+    from typing_extensions import Self
+
+    from nextcord.activity import BaseActivity
+    from nextcord.enums import Status
+    from nextcord.flags import MemberCacheFlags
+    from nextcord.mentions import AllowedMentions
     from nextcord.message import Message
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
@@ -120,14 +141,6 @@ def _is_submodule(parent: str, child: str) -> bool:
     return parent == child or child.startswith(parent + ".")
 
 
-class _DefaultRepr:
-    def __repr__(self):
-        return "<default-help-command>"
-
-
-_default = _DefaultRepr()
-
-
 class MissingMessageContentIntentWarning(UserWarning):
     """Warning category raised when instantiating a :class:`~nextcord.ext.commands.Bot` with a
     :attr:`~nextcord.ext.commands.Bot.command_prefix` but without the :attr:`~nextcord.Intents.message_content`
@@ -149,9 +162,80 @@ class MissingMessageContentIntentWarning(UserWarning):
     pass
 
 
+_NonCallablePrefix = Union[str, Sequence[str]]
+
+
 class BotBase(GroupMixin):
-    def __init__(self, command_prefix=MISSING, help_command=_default, description=None, **options):
-        super().__init__(**options)
+    def __init__(
+        self,
+        command_prefix: Union[
+            _NonCallablePrefix,
+            Callable[[Self, Message], Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix]],
+        ] = tuple(),
+        help_command: Optional[HelpCommand] = MISSING,
+        description: Optional[str] = None,
+        *,
+        max_messages: Optional[int] = 1000,
+        connector: Optional[aiohttp.BaseConnector] = None,
+        proxy: Optional[str] = None,
+        proxy_auth: Optional[aiohttp.BasicAuth] = None,
+        shard_id: Optional[int] = None,
+        shard_count: Optional[int] = None,
+        application_id: Optional[int] = None,
+        intents: nextcord.Intents = nextcord.Intents.default(),
+        member_cache_flags: MemberCacheFlags = MISSING,
+        chunk_guilds_at_startup: bool = MISSING,
+        status: Optional[Status] = None,
+        activity: Optional[BaseActivity] = None,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        heartbeat_timeout: float = 60.0,
+        guild_ready_timeout: float = 2.0,
+        assume_unsync_clock: bool = True,
+        enable_debug_events: bool = False,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        lazy_load_commands: bool = True,
+        rollout_associate_known: bool = True,
+        rollout_delete_unknown: bool = True,
+        rollout_register_new: bool = True,
+        rollout_update_known: bool = True,
+        rollout_all_guilds: bool = False,
+        owner_id: Optional[int] = None,
+        owner_ids: Iterable[int] = set(),
+        strip_after_prefix: bool = False,
+        case_insensitive: bool = False,
+    ):
+        nextcord.Client.__init__(
+            self,  # type: ignore
+            max_messages=max_messages,
+            connector=connector,
+            proxy=proxy,
+            proxy_auth=proxy_auth,
+            shard_id=shard_id,
+            shard_count=shard_count,
+            application_id=application_id,
+            intents=intents,
+            member_cache_flags=member_cache_flags,
+            chunk_guilds_at_startup=chunk_guilds_at_startup,
+            status=status,
+            activity=activity,
+            allowed_mentions=allowed_mentions,
+            heartbeat_timeout=heartbeat_timeout,
+            guild_ready_timeout=guild_ready_timeout,
+            assume_unsync_clock=assume_unsync_clock,
+            enable_debug_events=enable_debug_events,
+            loop=loop,
+            lazy_load_commands=lazy_load_commands,
+            rollout_associate_known=rollout_associate_known,
+            rollout_delete_unknown=rollout_delete_unknown,
+            rollout_register_new=rollout_register_new,
+            rollout_update_known=rollout_update_known,
+            rollout_all_guilds=rollout_all_guilds,
+        )
+
+        super().__init__(
+            case_insensitive=case_insensitive,
+        )
+
         self.command_prefix = command_prefix if command_prefix is not MISSING else tuple()
         self.extra_events: Dict[str, List[CoroFunc]] = {}
         self.__cogs: Dict[str, Cog] = {}
@@ -160,11 +244,11 @@ class BotBase(GroupMixin):
         self._check_once = []
         self._before_invoke = None
         self._after_invoke = None
-        self._help_command = None
+        self._help_command: Optional[HelpCommand] = None
         self.description = inspect.cleandoc(description) if description else ""
-        self.owner_id = options.get("owner_id")
-        self.owner_ids = options.get("owner_ids", set())
-        self.strip_after_prefix = options.get("strip_after_prefix", False)
+        self.owner_id = owner_id
+        self.owner_ids = owner_ids
+        self.strip_after_prefix = strip_after_prefix
 
         if self.owner_id and self.owner_ids:
             raise TypeError("Both owner_id and owner_ids are set.")
@@ -193,10 +277,10 @@ class BotBase(GroupMixin):
                 stacklevel=0,
             )
 
-        if help_command is _default:
-            self.help_command = DefaultHelpCommand()
+        if help_command is MISSING:
+            self._help_command = DefaultHelpCommand()
         else:
-            self.help_command = help_command
+            self._help_command = help_command
 
     # internal helpers
 
@@ -999,9 +1083,11 @@ class BotBase(GroupMixin):
             A list of prefixes or a single prefix that the bot is
             listening for.
         """
-        prefix = ret = self.command_prefix
+        prefix = self.command_prefix
         if callable(prefix):
             ret = await nextcord.utils.maybe_coroutine(prefix, self, message)
+        else:
+            ret = prefix
 
         if not isinstance(ret, str):
             try:
@@ -1122,7 +1208,7 @@ class BotBase(GroupMixin):
             else:
                 self.dispatch("command_completion", ctx)
         elif ctx.invoked_with:
-            exc = errors.CommandNotFound(f'Command "{ctx.invoked_with}" is not found')
+            exc = errors.CommandNotFound(ctx.invoked_with)
             self.dispatch("command_error", ctx, exc)
 
     async def process_commands(self, message: Message) -> None:

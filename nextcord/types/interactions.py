@@ -218,6 +218,7 @@ class _InteractionOptional(TypedDict, total=False):
     message: Message
     locale: str
     guild_locale: str
+    app_permissions: str
 
 
 class Interaction(_InteractionOptional):
@@ -248,7 +249,11 @@ class InteractionResponse(_InteractionResponseOptional):
     type: InteractionResponseType
 
 
-class MessageInteraction(TypedDict):
+class _MessageInteractionOptional(TypedDict, total=False):
+    member: Member
+
+
+class MessageInteraction(_MessageInteractionOptional):
     id: Snowflake
     type: InteractionType
     name: str
