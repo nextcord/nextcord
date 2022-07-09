@@ -313,13 +313,3 @@ class Cog(metaclass=CogMeta):
             The invocation interaction.
         """
         pass
-
-    @property
-    def to_register(self) -> List[BaseApplicationCommand]:
-        warnings.warn(
-            ".to_register is deprecated, please use .application_commands instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        # TODO: Remove at later date.
-        return self.__cog_application_commands__
