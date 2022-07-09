@@ -975,6 +975,7 @@ class BotBase(GroupMixin):
         package: Optional[str] = None,
         packages: Optional[List[str]] = None,
         extras: Optional[List[Dict[str, Any]]] = None,
+        stop_at_error: bool = False,
     ) -> List[str]:
         """Loads all extensions provided in a list.
 
@@ -992,6 +993,9 @@ class BotBase(GroupMixin):
             Defaults to ``None``.
         extras: Optional[List[Dict[:class:`str`, Any]]]
             A list of extra arguments to pass to the extension's setup function.
+        stop_at_error: :class:`bool`
+            Whether or not an exception should be raised if we encounter one. Set to ``False`` by
+            default.
 
         Returns
         -------
@@ -1001,6 +1005,11 @@ class BotBase(GroupMixin):
 
         Raises
         ------
+
+        .. note::
+
+            By default, these exceptions will not be raised but will be printed on screen.
+
         ValueError
             The length of ``packages`` or the length of ``extras` is not equal to the length of ``names``.
         InvalidArgument
@@ -1034,15 +1043,18 @@ class BotBase(GroupMixin):
             try:
                 self.load_extension(extension, package=package, extras=cur_extra)
             except Exception as e:
-                # we print the exception instead of raising it because we want to continue loading extensions
-                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+                if stop_at_error:
+                    raise e
+                else:
+                    # we print the exception instead of raising it because we want to continue loading extensions
+                    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
             else:
                 loaded_extensions.append(extension)
 
         return loaded_extensions
 
     def load_extensions_from_module(
-        self, source_module: str, ignore: Optional[List[str]] = None
+        self, source_module: str, *, ignore: Optional[List[str]] = None, stop_at_error: bool = False
     ) -> List[str]:
         """Loads all extensions found in a module.
 
@@ -1052,11 +1064,13 @@ class BotBase(GroupMixin):
 
         Parameters
         ----------
-        folder_name: :class:`str`
-            The name (or path) of the folder to look through. This folder path is a
-            relative path based on the current folder.
+        source_module: :class:`str`
+            The name of the source module to look for submodules.
         ignore: Optional[List[:class:`str`]]
             File names of extensions to ignore.
+        stop_at_error: :class:`bool`
+            Whether or not an exception should be raised if we encounter one. Set to ``False`` by
+            default.
 
         Returns
         -------
@@ -1066,6 +1080,11 @@ class BotBase(GroupMixin):
 
         Raises
         ------
+
+        .. note::
+
+            By default, these exceptions will not be raised but will be printed on screen.
+
         ValueError
             The module at ``source_module`` is not found, or the module at ``source_module``
             has no submodules.
@@ -1098,7 +1117,7 @@ class BotBase(GroupMixin):
             if ignore is not None:
                 submodules = [s for s in submodules if s not in ignore]
 
-            extensions.extend(self.load_extensions(submodules))
+            extensions.extend(self.load_extensions(submodules, stop_at_error=stop_at_error))
 
         return extensions
 
