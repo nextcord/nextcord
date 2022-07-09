@@ -749,12 +749,15 @@ class SyncWebhook(BaseWebhook):
     ) -> SyncWebhook:
         """Edits this Webhook.
 
+        .. versionchanged:: 2.1
+            The :attr:`avatar` attribute now accepts :class:`File`.
+
         Parameters
         ------------
         name: Optional[:class:`str`]
             The webhook's new default name.
         avatar: Optional[Union[:class:`bytes`, :class:`File`]]
-            A :term:`py:bytes-like object` representing the webhook's new default avatar.
+            A :term:`py:bytes-like object`, :class:`File` representing the webhook's new default avatar.
         channel: Optional[:class:`abc.Snowflake`]
             The webhook's new channel. This requires an authenticated webhook.
         reason: Optional[:class:`str`]
