@@ -531,16 +531,6 @@ class ClientCog:
         """
         pass
 
-    @property
-    def to_register(self) -> List[BaseApplicationCommand]:
-        warnings.warn(
-            ".to_register is deprecated, please use .application_commands instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        # TODO: Remove at later date.
-        return self.__cog_application_commands__
-
 
 class CallbackMixin:
     name: Optional[str]
@@ -758,7 +748,7 @@ class CallbackMixin:
         # Global checks
         for check in interaction.client._connection._application_command_checks:
             try:
-                check_result = await maybe_coroutine(check, interaction)
+                check_result = await maybe_coroutine(check, interaction)  # type: ignore
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
@@ -782,7 +772,7 @@ class CallbackMixin:
         # Command checks
         for check in self.checks:
             try:
-                check_result = await maybe_coroutine(check, interaction)
+                check_result = await maybe_coroutine(check, interaction)  # type: ignore
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
