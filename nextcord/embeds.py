@@ -388,7 +388,7 @@ class Embed:
         icon_file: Optional[File]
             A file to use for the image.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 2.1
         """
         from . import InvalidArgument
 
@@ -403,8 +403,8 @@ class Embed:
             self._footer["icon_url"] = str(icon_url)
 
         if icon_file is not EmptyEmbed:
-            self._local_files["footer"] = icon_file
-            self._footer["icon_url"] = f"attachment://{icon_file.filename}"
+            self._local_files["footer"] = icon_file  # type: ignore
+            self._footer["icon_url"] = f"attachment://{icon_file.filename}"  # type: ignore
 
         return self
 
@@ -459,7 +459,7 @@ class Embed:
         file: Optional[File]
             A file to use for the image.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 2.1
         """
         from . import InvalidArgument
 
@@ -479,8 +479,8 @@ class Embed:
             raise InvalidArgument("Can't pass both url and file.")
 
         elif file is not EmptyEmbed:
-            self._local_files["image"] = file
-            self._image = {"url": f"attachment://{file.filename}"}
+            self._local_files["image"] = file  # type: ignore
+            self._image = {"url": f"attachment://{file.filename}"}  # type: ignore
 
         else:
             self._image = {"url": str(url)}
@@ -511,7 +511,7 @@ class Embed:
         icon_file: Optional[File]
             A file to use for the image.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 2.1
         """
         from . import InvalidArgument
 
@@ -524,8 +524,8 @@ class Embed:
             self._author["url"] = str(url)
 
         if icon_file is not EmptyEmbed:
-            self._local_files["author"] = icon_file
-            self._author["icon_url"] = f"attachment://{icon_file.filename}"
+            self._local_files["author"] = icon_file  # type: ignore
+            self._author["icon_url"] = f"attachment://{icon_file.filename}"  # type: ignore
 
         if icon_url is not EmptyEmbed:
             self._author["icon_url"] = str(icon_url)
@@ -568,7 +568,7 @@ class Embed:
         file: Optional[File]
             A file to use for the image.
 
-            .. versionadded:: 2.0
+            .. versionadded:: 2.1
         """
         from . import InvalidArgument
 
@@ -588,8 +588,8 @@ class Embed:
             raise InvalidArgument("Can't pass both url and file.")
 
         elif file:
-            self._local_files["thumbnail"] = file
-            self._thumbnail = {"url": f"attachment://{file.filename}"}
+            self._local_files["thumbnail"] = file  # type: ignore
+            self._thumbnail = {"url": f"attachment://{file.filename}"}  # type: ignore
 
         else:
             self._thumbnail = {"url": str(url)}
