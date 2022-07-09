@@ -128,7 +128,7 @@ class CommandCog(Cog, metaclass=CommandCogMeta):
     """A base class that adds support for prefixed commands.
 
     This class inherits from :class:`Cog` and uses the :class:`CommandCogMeta`
-    metaclass. More information on them can be found on the 
+    metaclass. More information on them can be found on the
     :ref:`ext_commands_cogs` page.
     """
 
