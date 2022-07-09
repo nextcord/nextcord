@@ -128,7 +128,7 @@ class Cog(metaclass=CogMeta):
 
     A cog is a collection of commands, listeners, and optional state to
     help group commands together. More information on them can be found on
-    the :ref:`ext_commands_cogs` page.
+    the :ref:`cogs` page.
 
     When inheriting from this class, the options shown in :class:`CogMeta`
     are equally valid here.
@@ -219,6 +219,15 @@ class Cog(metaclass=CogMeta):
     @property
     def listeners(self) -> List[Tuple[str, Callable[..., Any]]]:
         """Provides the list of listeners in this cog with the name and callback in a tuple."""
+        return [(name, getattr(self, method_name)) for name, method_name in self.__cog_listeners__]
+
+    def get_listeners(self) -> List[Tuple[str, Callable[..., Any]]]:
+        """Returns a :class:`list` of (name, function) listener pairs that are defined in this cog.
+        Returns
+        --------
+        List[Tuple[:class:`str`, :ref:`coroutine <coroutine>`]]
+            The listeners defined in this cog.
+        """
         return [(name, getattr(self, method_name)) for name, method_name in self.__cog_listeners__]
 
     @classmethod

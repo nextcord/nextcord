@@ -181,17 +181,17 @@ Cogs
 Cog
 ~~~~
 
-.. attributetable:: nextcord.ext.commands.Cog
+.. attributetable:: nextcord.ext.commands.CommandCog
 
-.. autoclass:: nextcord.ext.commands.Cog
+.. autoclass:: nextcord.ext.commands.CommandCog
     :members:
 
 CogMeta
 ~~~~~~~~
 
-.. attributetable:: nextcord.ext.commands.CogMeta
+.. attributetable:: nextcord.ext.commands.CommandCogMeta
 
-.. autoclass:: nextcord.ext.commands.CogMeta
+.. autoclass:: nextcord.ext.commands.CommandCogMeta
     :members:
 
 .. _ext_commands_help_command:
