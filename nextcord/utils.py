@@ -43,6 +43,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AsyncIterator,
+    Awaitable,
     Callable,
     Dict,
     ForwardRef,
@@ -522,12 +523,16 @@ def _parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
         return float(reset_after)
 
 
-async def maybe_coroutine(f, *args, **kwargs):
+async def maybe_coroutine(
+    f: Callable[P, Union[T, Awaitable[T]]], *args: P.args, **kwargs: P.kwargs
+) -> T:
     value = f(*args, **kwargs)
     if _isawaitable(value):
         return await value
     else:
-        return value
+        return value  # type: ignore
+        # type ignored as `_isawaitable` provides `TypeGuard[Awaitable[Any]]`
+        # yet we need a more specific type guard
 
 
 async def async_all(gen, *, check=_isawaitable):

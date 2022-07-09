@@ -311,8 +311,8 @@ class Modal:
         if self.__stopped.done():
             return
 
-        self.__stopped.set_result(True)
         asyncio.create_task(self.on_timeout(), name=f"discord-ui-modal-timeout-{self.id}")
+        self.__stopped.set_result(True)
 
     def _dispatch(self, interaction: Interaction):
         if self.__stopped.done():
