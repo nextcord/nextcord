@@ -470,10 +470,7 @@ class Embed:
                 pass
 
         if file is EmptyEmbed:
-            try:
-                del self._local_files["image"]
-            except:
-                pass
+            self._local_files.pop("image", None)
 
         elif url is not EmptyEmbed and file is not EmptyEmbed:
             raise InvalidArgument("Can't pass both url and file.")
@@ -579,10 +576,7 @@ class Embed:
                 pass
 
         if file is EmptyEmbed:
-            try:
-                del self._local_files["thumbnail"]
-            except:
-                pass
+            self._local_files.pop("thumbnail", None)
 
         elif url and file:
             raise InvalidArgument("Can't pass both url and file.")
