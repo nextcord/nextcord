@@ -147,7 +147,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
     flags: :class:`ChannelFlags`
         Extra features of the channel.
 
-        ..versionadded:: 2.0
+        ..versionadded:: 2.1
     nsfw: :class:`bool`
         If the channel is marked as "not safe for work".
 
@@ -1035,8 +1035,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         Returns
         --------
         Optional[:class:`.TextChannel`]
-            The newly edited text channel. If the edit was only positional
-            then ``None`` is returned instead.
+            The newly edited text channel.
         """
 
         payload = await self._edit(options, reason=reason)
@@ -1809,7 +1808,7 @@ class StageChannel(VocalGuildChannel):
     flags: :class:`ChannelFlags`
         Extra features of the channel.
 
-        ..versionadded:: 2.0
+        ..versionadded:: 2.1
     """
 
     __slots__ = ("topic",)
@@ -2094,7 +2093,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
     flags: :class:`ChannelFlags`
         Extra features of the channel.
 
-        ..versionadded:: 2.0
+        ..versionadded:: 2.1
     """
 
     __slots__ = (
