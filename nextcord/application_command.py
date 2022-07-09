@@ -710,11 +710,11 @@ class CallbackMixin:
 
                 if self.parent_cog is not None and len(intersection) < 2:
                     raise ValueError(
-                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function define."
+                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition."
                     )
                 elif len(intersection) < 1:
                     raise ValueError(
-                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function define."
+                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition."
                     )
 
                 # not needed later on
