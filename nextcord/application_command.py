@@ -235,8 +235,12 @@ class ApplicationCommandOption:
         Minimum value the user can input. Should only be set if this is an integer or number option.
     min_length: :class:`int`
         Minimum length of a string the user can input. Should only be set if this is a string option.
+
+        .. versionadded:: 2.1
     max_length: :class:`int`
         Maximum length of a string the user can input. Should only be set if this is a string option.
+
+        .. versionadded:: 2.1
     autocomplete: :class:`bool`
         If the command option should have autocomplete enabled.
     """
@@ -1163,9 +1167,13 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
     min_length: :class:`int`
         Minimum length for a string value the user is allowed to input. The parameter must be typed as a
         :class:`str` for this to function.
+
+        .. versionadded:: 2.1
     max_length: :class:`int`
         Maximum length for a string value the user is allowed to input. The parameter must be typed as a
         :class:`str` for this to function.
+
+        .. versionadded:: 2.1
     autocomplete: :class:`bool`
         If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
         if an autocomplete function for it is found.
