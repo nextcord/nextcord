@@ -385,7 +385,7 @@ class Embed:
             The footer text.
         icon_url: :class:`str`
             The URL of the footer icon. Only HTTP(S) is supported.
-        icon_file: Optional[File]
+        icon_file: Optional[:class:`File`]
             A file to use for the image.
 
             .. versionadded:: 2.1
@@ -456,7 +456,7 @@ class Embed:
         -----------
         url: :class:`str`
             The source URL for the image. Only HTTP(S) is supported.
-        file: Optional[File]
+        file: Optional[:class:`File`]
             A file to use for the image.
 
             .. versionadded:: 2.1
@@ -505,7 +505,7 @@ class Embed:
             The URL for the author.
         icon_url: :class:`str`
             The URL of the author icon. Only HTTP(S) is supported.
-        icon_file: Optional[File]
+        icon_file: Optional[:class:`File`]
             A file to use for the image.
 
             .. versionadded:: 2.1
@@ -562,7 +562,7 @@ class Embed:
         -----------
         url: :class:`str`
             The source URL for the thumbnail. Only HTTP(S) is supported.
-        file: Optional[File]
+        file: Optional[:class:`File`]
             A file to use for the image.
 
             .. versionadded:: 2.1
