@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-from typing import List, Literal, TypedDict, Union, Optional
+from typing import List, Literal, Optional, TypedDict, Union
 
 from .snowflake import Snowflake
 
@@ -75,7 +75,6 @@ class AutoModerationRule(TypedDict):
     exempt_channels: List[Snowflake]
 
 
-
 class _AutoModerationRuleExecutionOptional(TypedDict, total=False):
     channel_id: Snowflake
     message_id: Snowflake
@@ -91,4 +90,3 @@ class AutoModerationActionExecution(_AutoModerationRuleExecutionOptional):
     content: str
     matched_keyword: Optional[str]
     matched_content: Optional[str]
-

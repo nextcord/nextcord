@@ -37,18 +37,19 @@ if TYPE_CHECKING:
     from .errors import InvalidArgument
     from .guild import Guild
     from .member import Member
+    from .message import Message
     from .role import Role
     from .state import ConnectionState
     from .types.automod import (
         AutoModerationAction as AutoModerationActionPayload,
+        AutoModerationActionExecution as AutoModerationActionExecutionPayload,
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
-        AutoModerationActionExecution as AutoModerationActionExecutionPayload
     )
-    from .message import Message
 
 
 __all__ = ("AutoModerationRule", "AutoModerationAction", "AutoModerationActionExecution")
+
 
 class AutoModerationActionExecution:
     """Represent the payload that is sent when an auto moderation rule was triggered and the action was triggered.
@@ -82,6 +83,7 @@ class AutoModerationActionExecution:
     matched_content: :class:`str`
         The content that triggered this execution. `""` if :attr:`Intents.message_content` is not enabled.
     """
+
     # TODO: fix docstring in the <?> if you're reading this pls suggest smth, it can be something rather than msg.
     __slots__ = (
         "guild_id",
@@ -96,22 +98,31 @@ class AutoModerationActionExecution:
         "alert_message_id",
         "content",
         "matched_keyword",
-        "matched_content"
+        "matched_content",
     )
-    def __init__(self, state: ConnectionState, guild: Guild, data: AutoModerationActionExecutionPayload):
+
+    def __init__(
+        self, state: ConnectionState, guild: Guild, data: AutoModerationActionExecutionPayload
+    ):
         self.guild: Guild = guild
         self._state: ConnectionState = state
-        self.guild_id: int = int(data['guild_id'])
-        self.action: AutoModerationAction = AutoModerationAction(data=data['action'], guild=guild, state=state)
-        self.rule_id: int = int(data['rule_id'])
-        self.trigger_type: TriggerType = try_enum(TriggerType, data['rule_trigger_type'])
-        self.member_id: int = int(data['user_id'])
-        self.channel_id: Optional[int] = int(data.get("channel_id")) if "channel_id" in data else None
-        self.message_id: Optional[int] = int(data['message_id']) if "message_id" in data else None
-        self.alert_message_id: Optional[int] = int(data['alert_system_message_id']) if "alert_system_message_id" in data else None
-        self.content: str = data['content']
-        self.matched_keyword: str = data['matched_keyword']
-        self.matched_content: str = data['matched_content']
+        self.guild_id: int = int(data["guild_id"])
+        self.action: AutoModerationAction = AutoModerationAction(
+            data=data["action"], guild=guild, state=state
+        )
+        self.rule_id: int = int(data["rule_id"])
+        self.trigger_type: TriggerType = try_enum(TriggerType, data["rule_trigger_type"])
+        self.member_id: int = int(data["user_id"])
+        self.channel_id: Optional[int] = (
+            int(data.get("channel_id")) if "channel_id" in data else None
+        )
+        self.message_id: Optional[int] = int(data["message_id"]) if "message_id" in data else None
+        self.alert_message_id: Optional[int] = (
+            int(data["alert_system_message_id"]) if "alert_system_message_id" in data else None
+        )
+        self.content: str = data["content"]
+        self.matched_keyword: str = data["matched_keyword"]
+        self.matched_content: str = data["matched_content"]
 
     @property
     def channel(self) -> Optional[GuildChannel]:
@@ -179,7 +190,6 @@ class AutoModerationActionExecution:
         """
         return await self.channel.fetch_message(self.alert_message_id)
 
-
     async def fetch_message(self) -> Optional[Message]:
         """
         Retrieves the message that triggered this execution.
@@ -221,9 +231,6 @@ class AutoModerationActionExecution:
         return self._state.http.get_automod_rule(self.rule_id)
 
 
-
-
-
 class AutoModerationAction:
     """Represents an auto moderation action.
 
@@ -256,9 +263,11 @@ class AutoModerationAction:
     @property
     def notify_channel(self) -> Optional[GuildChannel]:
         "Optional[:class:`abc.GuildChannel`]: The channel that the system message will send a notification in when this action is executed."
-        return self.guild.get_channel(self.notify_channel_id) if self.notify_channel_id is not None else None
-
-
+        return (
+            self.guild.get_channel(self.notify_channel_id)
+            if self.notify_channel_id is not None
+            else None
+        )
 
 
 class AutoModerationRule(Hashable):
@@ -341,7 +350,8 @@ class AutoModerationRule(Hashable):
         trigger_metadata: TriggerMetadataPayload = data["trigger_metadata"]
         self.keyword_filters: Optional[List[str]] = trigger_metadata.get("keyword_filter")
         self.actions: List[AutoModerationAction] = [
-            AutoModerationAction(data=action, rule=self, guild=self.guild) for action in data["actions"]
+            AutoModerationAction(data=action, rule=self, guild=self.guild)
+            for action in data["actions"]
         ]
         self.presets: Optional[List[KeywordPresetType]] = (
             [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore
