@@ -1,7 +1,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2022 Rapptz
+Copyright (c) 2015-2021 Rapptz
 Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -800,7 +800,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             Whether to retrieve private archived threads that you've joined.
             This defaults to ``False``.
 
-            .. note::
+            .. warning::
 
                 You cannot set ``joined`` to ``True`` and ``private`` to ``False``.
 
@@ -854,7 +854,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     category_id: Optional[:class:`int`]
         The ID of the :class:`CategoryChannel` this channel belongs to, if any.
     topic: :class:`str`
-        The topic of this channel, if any.
+        The topic of this channel, if any. This is what is shown in the "Guidelines" section visually.
     position: :class:`int`
         The position in the channel list, where the first channel is ``0``.
     nsfw: :class:`bool`
@@ -1244,9 +1244,9 @@ class ForumChannel(abc.GuildChannel, Hashable):
             Whether to retrieve private archived threads that you've joined.
             This defaults to ``False``.
 
-            .. note::
+        .. note::
 
-                You cannot set ``joined`` to ``True`` and ``private`` to ``False``.
+            You cannot set ``joined`` to ``True`` and ``private`` to ``False``.
 
         Raises
         ------
