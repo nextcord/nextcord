@@ -43,10 +43,185 @@ if TYPE_CHECKING:
         AutoModerationAction as AutoModerationActionPayload,
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
+        AutoModerationActionExecution as AutoModerationActionExecutionPayload
     )
+    from .message import Message
 
 
-__all__ = ("AutoModerationRule", "AutoModerationAction")
+__all__ = ("AutoModerationRule", "AutoModerationAction", "AutoModerationActionExecution")
+
+class AutoModerationActionExecution:
+    """Represent the payload that is sent when an auto moderation rule was triggered and the action was triggered.
+
+    .. versionadded:: 2.1
+
+    Attributes
+    -----------
+    guild_id: int
+        The ID of the guild where the auto moderation action was triggered.
+    guild: :class:`Guild`
+        The guild where the auto moderation action was triggered.
+    action: :class:`AutoModerationRuleAction`
+        The auto moderation action associated with this execution.
+    rule_id: :class:`int`
+        The auto moderation rule associated with this execution's ID.
+    trigger_type :class:`TriggerType`
+        The trigger type of this execution.
+    member_id: :class:`int`
+        The user that triggered this execution's ID.
+    channel_id: Optional[:class:`int`]
+        The ID of the channel that was executed.
+    message_id: Optional[:class:`int`]
+        The ID of the message that triggered the action. ``None`` if the message was blocked by AutoMod.
+    alert_message_id: Optional[:class:`int`]
+        The system's alert message ID. ``None`` if not configured.
+    content: :class:`str`
+        The full content of the <?> that triggered this execution.
+    matched_keyword: :class:`str`
+        The keyword that matched the violated content.
+    matched_content: :class:`str`
+        The content that triggered this execution. `""` if :attr:`Intents.message_content` is not enabled.
+    """
+    # TODO: fix docstring in the <?> if you're reading this pls suggest smth, it can be something rather than msg.
+    __slots__ = (
+        "guild_id",
+        "guild",
+        "_state",
+        "action",
+        "rule_id",
+        "trigger_type",
+        "member_id",
+        "channel_id",
+        "message_id",
+        "alert_message_id",
+        "content",
+        "matched_keyword",
+        "matched_content"
+    )
+    def __init__(self, state: ConnectionState, guild: Guild, data: AutoModerationActionExecutionPayload):
+        self.guild: Guild = guild
+        self._state: ConnectionState = state
+        self.guild_id: int = int(data['guild_id'])
+        self.action: AutoModerationAction = AutoModerationAction(data=data['action'], guild=guild, state=state)
+        self.rule_id: int = int(data['rule_id'])
+        self.trigger_type: TriggerType = try_enum(TriggerType, data['rule_trigger_type'])
+        self.member_id: int = int(data['user_id'])
+        self.channel_id: Optional[int] = int(data.get("channel_id")) if "channel_id" in data else None
+        self.message_id: Optional[int] = int(data['message_id']) if "message_id" in data else None
+        self.alert_message_id: Optional[int] = int(data['alert_system_message_id']) if "alert_system_message_id" in data else None
+        self.content: str = data['content']
+        self.matched_keyword: str = data['matched_keyword']
+        self.matched_content: str = data['matched_content']
+
+    @property
+    def channel(self) -> Optional[GuildChannel]:
+        """Optional[:class:`abc.GuildChannel`] The channel that the content that triggered this execution is in."""
+        return self.guild.get_channel(self.channel_id)
+
+    @property
+    def member(self) -> Optional[Member]:
+        """Optional[:class:`Member`:] The member that triggered this execution."""
+        return self.guild.get_member(self.member_id)
+
+    async def fetch_member(self) -> Member:
+        """
+        Retrieves the member that triggered this execution from Discord.
+
+        Returns
+        --------
+        :class:`Member`
+            The member triggered this execution.
+
+        Raises
+        -------
+        HTTPException
+            Fetching the member failed.
+        Forbidden
+            You do not have access to the guild where this member is in.
+        NotFound
+            The member wasn't found.
+        """
+        return await self.guild.fetch_member(self.member_id)
+
+    async def fetch_channel(self) -> GuildChannel:
+        """
+        Retrieves the channel that the content that triggered this rule is in from Discord.
+
+        Returns
+        --------
+        :class:`abc.GuildChannel`
+            The channel that the content that triggered this rule is in.
+
+        Raises
+        -------
+        HTTPException
+            Fetching the channel failed.
+        Forbidden
+            You're not a member of the guild that this execution was executed.
+        """
+        return await self.guild.fetch_channel(self.channel_id)
+
+    async def fetch_alert_message(self) -> Optional[Message]:
+        """
+        Retrieves the system alert message associated with this execution.
+
+        Returns
+        -------
+        Optional[:class:`Message`]
+            The system alert message, or ``None`` if not configured.
+
+        Raises
+        -------
+        HTTPException
+            Fetching the message failed.
+        Forbidden
+            You do not have proper permissions to do this.
+        """
+        return await self.channel.fetch_message(self.alert_message_id)
+
+
+    async def fetch_message(self) -> Optional[Message]:
+        """
+        Retrieves the message that triggered this execution.
+
+        Returns
+        --------
+        Optional[:class:`Message`]
+            The message, or ``None`` if the message was automatically blocked by AutoMod.
+
+        Raises
+        -------
+        HTTPException
+            Fetching the message failed.
+        Forbidden
+            You don't have proper permissions to do this.
+        NotFound
+            The message wasn't found, i.e. deleted.
+        """
+        return await self.channel.fetch_message(self.message_id)
+
+    async def fetch_rule(self) -> AutoModerationRule:
+        """
+        Retrieves this execution's associated rule's info from Discord.
+
+        Requires :attr:`~Permissions.manage_guild`.
+
+        Returns
+        --------
+        :class:`AutoModerationRule`
+            The auto moderation rule.
+
+        Raises
+        -------
+        Forbidden
+            You don't have proper permissions to do this.
+        HTTPException
+            Fetching the rule failed.
+        """
+        return self._state.http.get_automod_rule(self.rule_id)
+
+
+
 
 
 class AutoModerationAction:
@@ -60,20 +235,30 @@ class AutoModerationAction:
         The ID of the channel that this action will notify in.
     timeout_seconds: Optional[:class:`int`]
         The number of seconds this rule should timeout when someone triggered the rule.
+    guild: :class:`Guild`
+        The guild that this auto moderation action's rule is in.
     """
 
-    __slots__ = ("type", "notify_channel_id", "timeout_seconds")
+    __slots__ = ("type", "notify_channel_id", "timeout_seconds", "guild")
 
-    def __init__(self, data: AutoModerationActionPayload):
+    def __init__(self, data: AutoModerationActionPayload, guild: Guild):
         self.type: ActionType = try_enum(ActionType, data["type"])
         metadata = data.get("metadata", {})
         self.notify_channel_id: Optional[int] = (
             int(metadata.get("channel_id")) if metadata.get("channel_id") is not None else None
         )
         self.timeout_seconds: Optional[int] = metadata.get("duration_seconds")
+        self.guild: Guild = guild
 
     def __repr__(self):
-        return f"<AutoModerationAction type={self.type}, notify_channel_id={self.notify_channel_id}, timeout_seconds={self.timeout_seconds}>"
+        return f"<AutoModerationAction type={self.type}, notify_channel_id={self.notify_channel_id}, timeout_seconds={self.timeout_seconds}, guild={self.guild}, rule={self.rule}>"
+
+    @property
+    def notify_channel(self) -> Optional[GuildChannel]:
+        "Optional[:class:`abc.GuildChannel`]: The channel that the system message will send a notification in when this action is executed."
+        return self.guild.get_channel(self.notify_channel_id) if self.notify_channel_id is not None else None
+
+
 
 
 class AutoModerationRule(Hashable):
@@ -156,7 +341,7 @@ class AutoModerationRule(Hashable):
         trigger_metadata: TriggerMetadataPayload = data["trigger_metadata"]
         self.keyword_filters: Optional[List[str]] = trigger_metadata.get("keyword_filter")
         self.actions: List[AutoModerationAction] = [
-            AutoModerationAction(data=action) for action in data["actions"]
+            AutoModerationAction(data=action, rule=self, guild=self.guild) for action in data["actions"]
         ]
         self.presets: Optional[List[KeywordPresetType]] = (
             [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore

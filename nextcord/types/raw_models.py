@@ -104,20 +104,3 @@ class TypingEvent(_TypingEventOptional):
 class MemberRemoveEvent(TypedDict):
     guild_id: Snowflake
     user: User
-
-
-class _AutoModerationRuleExecutedEventOptional(TypedDict, total=False):
-    channel_id: Snowflake
-    message_id: Snowflake
-    alert_system_message_id: Snowflake
-
-
-class AutoModerationActionExecutedEvent(_AutoModerationRuleExecutedEventOptional):
-    guild_id: Snowflake
-    action: AutoModerationAction
-    rule_id: Snowflake
-    rule_trigger_type: TriggerType
-    user_id: Snowflake
-    content: str
-    matched_keyword: Optional[str]
-    matched_content: Optional[str]

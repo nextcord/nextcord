@@ -51,7 +51,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
-from .automod import AutoModerationAction, AutoModerationRule
+from .automod import AutoModerationRule, AutoModerationActionExecution
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
@@ -2306,25 +2306,29 @@ class ConnectionState:
         )
 
     def parse_auto_moderation_rule_update(self, data: AutoModerationRulePayload) -> None:
-        old_data = self.get_automod_rule(int(data["id"]))
-        self.update_automod_rule(data)
         self.dispatch(
             "automod_rule_update",
-            old_data,
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
     def parse_auto_moderation_rule_delete(self, data: AutoModerationRulePayload) -> None:
-        self.delete_automod_rule(int(data["id"]))
         self.dispatch(
             "automod_rule_delete",
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
-    def parse_auto_moderation_action_execution(
-        self, data: AutoModerationActionExecutedEvent
-    ) -> None:
-        self.dispatch("automod_action_execution", AutoModerationAction(data["action"]))
+    def parse_auto_moderation_action_execution(self, data: AutoModerationActionExecutedEvent) -> None:
+        if guild := self._get_guild(data['guild_id']):
+            self.dispatch(
+                "automod_action_executed",
+                AutoModerationActionExecution(state=self, data=data, guild=guild)
+            )
+        else:
+            _log.debug(
+                "AUTO_MODERATION_ACTION_EXECUTION referencing unknown ",
+                " guild ID: %s. Discarding",
+                data['guild_id']
+            )
 
     async def _add_automod_rule_from_guild_data(self, data: GuildPayload):
         id = int(data["id"])

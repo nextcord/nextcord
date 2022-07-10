@@ -1175,23 +1175,21 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     .. versionadded:: 2.1
 
-.. function:: on_automod_rule_update(before, after)
+.. function:: on_automod_rule_update(rule)
 
     Called when an auto moderation rule is updated.
 
-    :param before: The updated rule's old info.
-    :type before: :class:`AutoModerationRule`
-    :param after: The updated rule's new info.
-    :type after: :class:`AutoModerationRule`
+    :param rule: The updated rule's new info.
+    :type rule: :class:`AutoModerationRule`
 
     .. versionadded:: 2.1
 
-.. function:: on_automod_rule_delete(action)
+.. function:: on_automod_rule_delete(rule)
 
     Called when an auto moderation rule is deleted.
 
-    :param action: The rule that was deleted
-    :type action: :class:`AutoModerationRule`
+    :param rule: The rule that was deleted
+    :type rule: :class:`AutoModerationRule`
 
     .. versionadded:: 2.1
 
@@ -1200,7 +1198,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     Called when an auto moderation action is executed.
 
     :param action: The action that was executed.
-    :type action: :class:`AutoModerationAction`
+    :type action: :class:`AutoModerationActionExecution`
 
     .. versionadded:: 2.1
 
@@ -4231,6 +4229,11 @@ AutoModerationRule
 .. attributetable:: AutoModerationAction
 
 .. autoclass:: AutoModerationAction()
+    :members:
+
+.. attributetable:: AutoModerationActionExecution
+
+.. autoclass:: AutoModerationActionExecution()
     :members:
 
 .. _discord_api_data:
