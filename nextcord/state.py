@@ -73,7 +73,7 @@ from .scheduled_events import ScheduledEvent, ScheduledEventUser
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
-from .types.raw_models import AutoModerationActionExecutedEvent
+from .types.automod import AutoModerationActionExecutionEvent
 from .ui.modal import Modal, ModalStore
 from .ui.view import View, ViewStore
 from .user import ClientUser, User
