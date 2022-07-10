@@ -1366,7 +1366,7 @@ class Messageable:
         if embed is not None and embeds is not None:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
-        local_embed_files = []
+        local_embed_files: List[File] = []
         if embed is not None:
             local_embed_files = list(embed._local_files.values())
             embed = embed.to_dict()

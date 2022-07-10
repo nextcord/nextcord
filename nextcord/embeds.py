@@ -45,7 +45,8 @@ from . import utils
 from .colour import Colour
 
 if TYPE_CHECKING:
-    from . import File, InvalidArgument
+    from .errors import InvalidArgument
+    from .file import File
 
 __all__ = ("Embed",)
 
@@ -397,7 +398,7 @@ class Embed:
             self._footer["text"] = str(text)
 
         if icon_url is not EmptyEmbed and icon_file is not EmptyEmbed:
-            raise InvalidArgument("Can't pass both icon_url and file.")
+            raise InvalidArgument("Cannot pass both icon_url and icon_file")
 
         if icon_url is not EmptyEmbed:
             self._footer["icon_url"] = str(icon_url)
@@ -472,8 +473,8 @@ class Embed:
         if file is EmptyEmbed:
             self._local_files.pop("image", None)
 
-        elif url is not EmptyEmbed and file is not EmptyEmbed:
-            raise InvalidArgument("Can't pass both url and file.")
+        if url is not EmptyEmbed and file is not EmptyEmbed:
+            raise InvalidArgument("Cannot pass both url and file.")
 
         elif file is not EmptyEmbed:
             self._local_files["image"] = file  # type: ignore
@@ -515,7 +516,7 @@ class Embed:
         self._author = {"name": str(name)}
 
         if icon_url is not EmptyEmbed and icon_file is not EmptyEmbed:
-            raise InvalidArgument("Can't pass both icon_url and file.")
+            raise InvalidArgument("Cannot pass both icon_url and icon_file")
 
         if url is not EmptyEmbed:
             self._author["url"] = str(url)
