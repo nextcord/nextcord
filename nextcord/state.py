@@ -73,7 +73,7 @@ from .scheduled_events import ScheduledEvent, ScheduledEventUser
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
-from .types.automod import AutoModerationActionExecution
+from .types.automod import AutoModerationActionExecution as AutoModerationActionExecutionPayload
 from .ui.modal import Modal, ModalStore
 from .ui.view import View, ViewStore
 from .user import ClientUser, User
@@ -2317,11 +2317,11 @@ class ConnectionState:
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
         )
 
-    def parse_auto_moderation_action_execution(self, data: AutoModerationActionExecution) -> None:
+    def parse_auto_moderation_action_execution(self, data: AutoModerationActionExecutionPayload) -> None:
         if guild := self._get_guild(data["guild_id"]):
             self.dispatch(
                 "automod_action_executed",
-                AutoModerationActionExecution.__init__(state=self, data=data, guild=guild),
+                AutoModerationActionExecution(state=self, data=data, guild=guild),
             )
         else:
             _log.debug(
