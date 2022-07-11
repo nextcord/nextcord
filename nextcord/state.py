@@ -2272,7 +2272,6 @@ class ConnectionState:
                 data["guild_id"],
             )
 
-
     def parse_auto_moderation_rule_create(self, data: AutoModerationRulePayload) -> None:
 
         self.dispatch(
