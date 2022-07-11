@@ -78,10 +78,10 @@ class AutoModerationActionExecution:
         The system's alert message ID. ``None`` if not configured.
     content: :class:`str`
         The full content of the <?> that triggered this execution.
-    matched_keyword: :class:`str`
+    matched_keyword: Optional[:class:`str`]
         The keyword that matched the violated content.
-    matched_content: :class:`str`
-        The content that triggered this execution. `""` if :attr:`Intents.message_content` is not enabled.
+    matched_content: Optional[:class:`str`]
+        The content that triggered this execution. ``None`` if :attr:`Intents.message_content` is not enabled.
     """
 
     # TODO: fix docstring in the <?> if you're reading this pls suggest smth, it can be something rather than msg.
@@ -119,8 +119,8 @@ class AutoModerationActionExecution:
             int(data["alert_system_message_id"]) if "alert_system_message_id" in data else None
         )
         self.content: str = data["content"]
-        self.matched_keyword: str = data["matched_keyword"]
-        self.matched_content: str = data["matched_content"]
+        self.matched_keyword: Optional[str] = data["matched_keyword"]
+        self.matched_content: Optional[str] = data["matched_content"]
 
     @property
     def channel(self) -> Optional[GuildChannel]:
