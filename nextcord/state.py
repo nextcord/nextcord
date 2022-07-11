@@ -2321,7 +2321,7 @@ class ConnectionState:
         if guild := self._get_guild(data["guild_id"]):
             self.dispatch(
                 "automod_action_executed",
-                AutoModerationActionExecution(state=self, data=data, guild=guild),
+                AutoModerationActionExecution.__init__(state=self, data=data, guild=guild),
             )
         else:
             _log.debug(
