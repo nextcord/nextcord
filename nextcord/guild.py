@@ -3517,20 +3517,6 @@ class Guild(Hashable):
         rule = await self._state.http.get_automod_rule(guild_id=self.id, rule_id=rule_id)
         return AutoModerationRule(guild=self, state=self._state, data=rule)
 
-    def get_automod_rule(self, rule_id: int) -> Optional[AutoModerationRule]:
-        """Get an auto moderation rule.
-
-        Parameters
-        ----------
-        rule_id: :class:`int`
-            The rule ID to find for.
-
-        Returns
-        -------
-        Optional[:class:`AutoModerationRule`] or ``None`` if not found.
-        """
-        return self._state.get_automod_rule(id=rule_id)
-
     @overload
     async def create_automod_rule(
         self,
@@ -3687,15 +3673,4 @@ class Guild(Hashable):
             params["exempt_channels"] = [channel.id for channel in exempt_channels]
 
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
-        rule = self._state.add_automod_rule(data=data)
-        return rule
-
-    def get_automod_rules(self) -> List[AutoModerationRule]:
-        """List all auto moderation rules configurated for this server.
-
-        Returns
-        --------
-        List[:class:`AutoModerationRule`]
-            A list of the auto moderation rules configurated for this server.
-        """
-        return self._state.list_cached_guild_automod_rule(self.id)
+        return AutoModerationRule(data=data)

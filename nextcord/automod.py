@@ -601,7 +601,7 @@ class AutoModerationRule(Hashable):
             guild_id=self.guild.id, rule_id=self.id, **payload
         )
 
-        rule = self._state.add_automod_rule(data=new_data)
+        rule: AutoModerationRule = self.__class__(state=self.state, guild=self.guild, data=new_data)
         return rule
 
     @property

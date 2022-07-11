@@ -56,7 +56,7 @@ from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, Status, try_enum
-from .errors import Forbidden, NotFound
+from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
@@ -270,7 +270,6 @@ class ConnectionState:
         ] = {}
         # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
         self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
-        self._automod_rules: dict[int, AutoModerationRule] = {}
 
         if not intents.members or member_cache_flags._empty:
             self.store_user = self.create_user  # type: ignore
@@ -322,7 +321,6 @@ class ConnectionState:
         self._private_channels: OrderedDict[int, PrivateChannel] = OrderedDict()
         # extra dict to look up private channels by user id
         self._private_channels_by_user: Dict[int, DMChannel] = {}
-        self._automod_rules: dict[int, AutoModerationRule] = {}
         if self.max_messages is not None:
             self._messages: Optional[Deque[Message]] = deque(maxlen=self.max_messages)
         else:
@@ -1231,10 +1229,6 @@ class ConnectionState:
                 # flags will always be present here
                 self.application_flags = ApplicationFlags._from_value(application["flags"])
 
-        asyncio.gather(
-            *(self._add_automod_rule_from_guild_data(data=data) for data in data["guilds"])
-        )
-
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
 
@@ -1698,10 +1692,6 @@ class ConnectionState:
 
         member = guild.get_member(user_id)
         if member is not None:
-            me = guild.me
-            if member == me:
-                if member.guild_permissions.manage_guild is True:
-                    asyncio.create_task(self._add_automod_rule_from_guild_data(data["guild"]))
             old_member = Member._copy(member)
             member._update(data)
             user_update = member._update_inner_user(user)
@@ -1797,7 +1787,6 @@ class ConnectionState:
             self.dispatch("guild_join", guild)
 
     def parse_guild_create(self, data) -> None:
-        asyncio.create_task(self._add_automod_rule_from_guild_data(data))
         unavailable = data.get("unavailable")
         if unavailable is True:
             # joined a guild with unavailable == True so..
@@ -2283,23 +2272,9 @@ class ConnectionState:
                 data["guild_id"],
             )
 
-    def add_automod_rule(self, data: AutoModerationRulePayload) -> AutoModerationRule:
-        rule = AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data)  # type: ignore # automod rules can't be created in non-guilds
-        self._automod_rules[int(data["id"])] = rule
-        return rule
-
-    def delete_automod_rule(self, id: int) -> None:
-        self._automod_rules.pop(id, None)
-
-    def get_automod_rule(self, id: int) -> Optional[AutoModerationRule]:
-        return self._automod_rules.get(id)
-
-    def update_automod_rule(self, data: AutoModerationRulePayload) -> None:
-        self.delete_automod_rule(int(data["id"]))
-        self.add_automod_rule(data)
 
     def parse_auto_moderation_rule_create(self, data: AutoModerationRulePayload) -> None:
-        self.add_automod_rule(data)
+
         self.dispatch(
             "automod_rule_create",
             AutoModerationRule(state=self, guild=self._get_guild(int(data["guild_id"])), data=data),  # type: ignore
@@ -2329,18 +2304,6 @@ class ConnectionState:
                 " guild ID: %s. Discarding",
                 data["guild_id"],
             )
-
-    async def _add_automod_rule_from_guild_data(self, data: GuildPayload):
-        id = int(data["id"])
-        try:
-            rules = await self.http.list_guild_automod_rules(guild_id=id)
-            for rule in rules:
-                self.add_automod_rule(data=rule)
-        except (Forbidden, NotFound):
-            pass
-
-    def list_cached_guild_automod_rule(self, guild_id: int):
-        return [rule for rule in self._automod_rules.values() if rule.guild_id == guild_id]
 
 
 class AutoShardedConnectionState(ConnectionState):
@@ -2474,7 +2437,6 @@ class AutoShardedConnectionState(ConnectionState):
 
         for guild_data in data["guilds"]:
             self._add_guild_from_data(guild_data)
-            asyncio.create_task(self._add_automod_rule_from_guild_data(data))
 
         if self._messages:
             self._update_message_references()
