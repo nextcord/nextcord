@@ -108,7 +108,7 @@ class AutoModerationActionExecution:
         self._state: ConnectionState = state
         self.guild_id: int = int(data["guild_id"])
         self.action: AutoModerationAction = AutoModerationAction(
-            data=data["action"], guild=guild, state=state
+            data=data["action"], guild=guild
         )
         self.rule_id: int = int(data["rule_id"])
         self.trigger_type: TriggerType = try_enum(TriggerType, data["rule_trigger_type"])
