@@ -278,9 +278,9 @@ class BotBase(GroupMixin):
             )
 
         if help_command is MISSING:
-            self._help_command = DefaultHelpCommand()
+            self.help_command = DefaultHelpCommand()
         else:
-            self._help_command = help_command
+            self.help_command = help_command
 
     # internal helpers
 
