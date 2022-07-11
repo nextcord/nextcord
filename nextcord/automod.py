@@ -341,8 +341,7 @@ class AutoModerationRule(Hashable):
         trigger_metadata: TriggerMetadataPayload = data["trigger_metadata"]
         self.keyword_filters: Optional[List[str]] = trigger_metadata.get("keyword_filter")
         self.actions: List[AutoModerationAction] = [
-            AutoModerationAction(data=action, guild=self.guild)
-            for action in data["actions"]
+            AutoModerationAction(data=action, guild=self.guild) for action in data["actions"]
         ]
         self.presets: Optional[List[KeywordPresetType]] = (
             [try_enum(KeywordPresetType, preset) for preset in trigger_metadata["presets"]]  # type: ignore
