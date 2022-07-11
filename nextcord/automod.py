@@ -31,11 +31,7 @@ from .utils import MISSING, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from typing import (
-        List,
-        Optional,
-        Union,
-    )
+    from typing import List, Optional, Union
 
     from .abc import GuildChannel
     from .errors import InvalidArgument
@@ -44,13 +40,13 @@ if TYPE_CHECKING:
     from .message import Message
     from .role import Role
     from .state import ConnectionState
+    from .threads import Thread
     from .types.automod import (
         AutoModerationAction as AutoModerationActionPayload,
         AutoModerationActionExecution as AutoModerationActionExecutionPayload,
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
-    from .threads import Thread
 
 
 __all__ = ("AutoModerationRule", "AutoModerationAction", "AutoModerationActionExecution")
@@ -130,7 +126,11 @@ class AutoModerationActionExecution:
     @property
     def channel(self) -> Optional[Union[GuildChannel, Thread]]:
         """Optional[Union[:class:`abc.GuildChannel`, :class:`Thread`]] The channel that the content that triggered this execution is in. Can be ``None``."""
-        return self.guild.get_channel_or_thread(self.channel_id) if self.channel_id is not None else None
+        return (
+            self.guild.get_channel_or_thread(self.channel_id)
+            if self.channel_id is not None
+            else None
+        )
 
     @property
     def member(self) -> Optional[Member]:
