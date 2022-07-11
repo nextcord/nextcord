@@ -22,9 +22,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import List, Optional, TypedDict
+from typing import List, TypedDict
 
-from .automod import AutoModerationAction, TriggerType
 from .emoji import PartialEmoji
 from .member import Member
 from .snowflake import Snowflake
