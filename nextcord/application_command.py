@@ -697,8 +697,10 @@ class CallbackMixin:
                 callback_params = signature(self.callback).parameters
                 possible_options: Set[str] = set()
 
-                for param in callback_params.values():
-                    if param.annotation is param.empty or param.annotation is Interaction:
+                for i, param in enumerate(callback_params.values()):
+                    if (
+                        param.annotation is param.empty or param.annotation is Interaction
+                    ) and i in (0, 1):
                         # self or interaction parameter, ignore
                         continue
 
