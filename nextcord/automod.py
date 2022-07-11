@@ -124,8 +124,8 @@ class AutoModerationActionExecution:
 
     @property
     def channel(self) -> Optional[GuildChannel]:
-        """Optional[:class:`abc.GuildChannel`] The channel that the content that triggered this execution is in."""
-        return self.guild.get_channel(self.channel_id)
+        """Optional[:class:`abc.GuildChannel`] The channel that the content that triggered this execution is in. Can be ``None``."""
+        return self.guild.get_channel(self.channel_id) if self.channel_id is not None else None
 
     @property
     def member(self) -> Optional[Member]:
