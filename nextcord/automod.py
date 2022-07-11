@@ -31,7 +31,11 @@ from .utils import MISSING, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from typing import List, Optional
+    from typing import (
+        List,
+        Optional,
+        Union,
+    )
 
     from .abc import GuildChannel
     from .errors import InvalidArgument
@@ -46,6 +50,7 @@ if TYPE_CHECKING:
         AutoModerationRule as AutoModerationRulePayload,
         TriggerMetadata as TriggerMetadataPayload,
     )
+    from .threads import Thread
 
 
 __all__ = ("AutoModerationRule", "AutoModerationAction", "AutoModerationActionExecution")
@@ -123,9 +128,9 @@ class AutoModerationActionExecution:
         self.matched_content: Optional[str] = data["matched_content"]
 
     @property
-    def channel(self) -> Optional[GuildChannel]:
-        """Optional[:class:`abc.GuildChannel`] The channel that the content that triggered this execution is in. Can be ``None``."""
-        return self.guild.get_channel(self.channel_id) if self.channel_id is not None else None
+    def channel(self) -> Optional[Union[GuildChannel, Thread]]:
+        """Optional[Union[:class:`abc.GuildChannel`, :class:`Thread`]] The channel that the content that triggered this execution is in. Can be ``None``."""
+        return self.guild.get_channel_or_thread(self.channel_id) if self.channel_id is not None else None
 
     @property
     def member(self) -> Optional[Member]:
@@ -152,14 +157,14 @@ class AutoModerationActionExecution:
         """
         return await self.guild.fetch_member(self.member_id)
 
-    async def fetch_channel(self) -> GuildChannel:
+    async def fetch_channel(self) -> Optional[Union[Thread, GuildChannel]]:
         """
         Retrieves the channel that the content that triggered this rule is in from Discord.
 
         Returns
         --------
-        :class:`abc.GuildChannel`
-            The channel that the content that triggered this rule is in.
+        Optional[Union[:class:`abc.GuildChannel`, :class:`Thread`]]
+            The channel that the content that triggered this rule is in. None the content that triggered the rule isn't part of any channel.
 
         Raises
         -------
@@ -170,24 +175,6 @@ class AutoModerationActionExecution:
         """
         return await self.guild.fetch_channel(self.channel_id)
 
-    async def fetch_alert_message(self) -> Optional[Message]:
-        """
-        Retrieves the system alert message associated with this execution.
-
-        Returns
-        -------
-        Optional[:class:`Message`]
-            The system alert message, or ``None`` if not configured.
-
-        Raises
-        -------
-        HTTPException
-            Fetching the message failed.
-        Forbidden
-            You do not have proper permissions to do this.
-        """
-        return await self.channel.fetch_message(self.alert_message_id)
-
     async def fetch_message(self) -> Optional[Message]:
         """
         Retrieves the message that triggered this execution.
@@ -195,7 +182,7 @@ class AutoModerationActionExecution:
         Returns
         --------
         Optional[:class:`Message`]
-            The message, or ``None`` if the message was automatically blocked by AutoMod.
+            The message, or ``None`` if the message was automatically blocked by AutoMod, or the message was not part of any channel.
 
         Raises
         -------
@@ -206,7 +193,13 @@ class AutoModerationActionExecution:
         NotFound
             The message wasn't found, i.e. deleted.
         """
-        return await self.channel.fetch_message(self.message_id)
+        if channel := self.channel:
+            if msg_id := self.message_id:
+                return await channel.fetch_message(msg_id)  # type: ignore
+            else:
+                return None
+        else:
+            return None
 
     async def fetch_rule(self) -> AutoModerationRule:
         """
