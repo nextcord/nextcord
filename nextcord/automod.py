@@ -114,7 +114,7 @@ class AutoModerationActionExecution:
         self.trigger_type: TriggerType = try_enum(TriggerType, data["rule_trigger_type"])
         self.member_id: int = int(data["user_id"])
         self.channel_id: Optional[int] = (
-            int(data.get("channel_id")) if "channel_id" in data else None
+            int(data.get("channel_id")) if "channel_id" in data else None  # type: ignore
         )
         self.message_id: Optional[int] = int(data["message_id"]) if "message_id" in data else None
         self.alert_message_id: Optional[int] = (
