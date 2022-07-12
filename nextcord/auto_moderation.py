@@ -22,13 +22,33 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import List, Literal, TypedDict
+from __future__ import annotations
 
-AutoModerationEventType = Literal[1]
-AutoModerationTriggerType = Literal[1, 2, 3, 4]
-KeywordPresetType = Literal[1, 2, 3]
+from typing import TYPE_CHECKING, List
+
+from .enums import KeywordPresetType, try_enum
+
+if TYPE_CHECKING:
+    from .types.auto_moderation import (
+        AutoModerationTriggerMetadata as AutoModerationTriggerMetadataPayload,
+    )
+
+__all__ = ("AutoModerationTriggerMetadata",)
 
 
-class AutoModerationTriggerMetadata(TypedDict):
-    keyword_filter: List[str]
-    presets: List[KeywordPresetType]
+class AutoModerationTriggerMetadata:
+    """Represents data about an auto moderation trigger rule.
+
+    Attributes
+    ----------
+    keyword_filter: List[:class:`str`]
+        A list of substrings which will be searched for in content.
+    presets: List[:class:`KeywordPresetType`]
+        A list of Discord pre-defined wordsets which will be searched for in content.
+    """
+
+    def __init__(self, data: AutoModerationTriggerMetadataPayload) -> None:
+        self.keyword_filter: List[str] = data["keyword_filter"]
+        self.presets: List[KeywordPresetType] = [
+            try_enum(KeywordPresetType, preset) for preset in data["presets"]
+        ]
