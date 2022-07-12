@@ -3673,4 +3673,4 @@ class Guild(Hashable):
             params["exempt_channels"] = [channel.id for channel in exempt_channels]
 
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
-        return AutoModerationRule(data=data)
+        return AutoModerationRule(data=data, guild=self, state=self._state)
