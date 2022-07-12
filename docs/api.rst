@@ -2772,6 +2772,25 @@ of :class:`enum.Enum`.
         This rule checks if content contains words from Discord pre-defined wordsets.
 
 
+.. class:: KeywordPresetType
+
+    Represents the type of a keyword preset auto moderation rule.
+
+    .. versionadded:: 2.1
+
+    .. attribute:: profanity
+
+        Words that may be considered forms of swearing or cursing.
+
+    .. attribute:: sexual_content
+
+        Words that refer to sexually explicit behaviour or activity.
+
+    .. attribute:: slurs
+
+        Personal insults or words that may be considered hate speech.
+
+
 Async Iterator
 ----------------
 

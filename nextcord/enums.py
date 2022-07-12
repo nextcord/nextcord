@@ -733,6 +733,12 @@ class AutoModerationTriggerType(Enum):
     keyword_preset = 4
 
 
+class KeywordPresetType(Enum):
+    profanity = 1
+    sexual_content = 2
+    slurs = 3
+
+
 T = TypeVar("T")
 
 
