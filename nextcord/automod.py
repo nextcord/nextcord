@@ -222,7 +222,7 @@ class AutoModerationActionExecution:
         HTTPException
             Fetching the rule failed.
         """
-        return self._state.http.get_automod_rule(self.rule_id)
+        return await self.guild.fetch_automod_rule(self.rule_id)
 
 
 class AutoModerationAction:
@@ -252,7 +252,7 @@ class AutoModerationAction:
         self.guild: Guild = guild
 
     def __repr__(self):
-        return f"<AutoModerationAction type={self.type}, notify_channel_id={self.notify_channel_id}, timeout_seconds={self.timeout_seconds}, guild={self.guild}, rule={self.rule}>"
+        return f"<AutoModerationAction type={self.type}, notify_channel_id={self.notify_channel_id}, timeout_seconds={self.timeout_seconds}, guild={self.guild}>"
 
     @property
     def notify_channel(self) -> Optional[GuildChannel]:
