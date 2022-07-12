@@ -726,6 +726,13 @@ class AutoModerationEventType(Enum):
     message_send = 1
 
 
+class AutoModerationTriggerType(Enum):
+    keyword = 1
+    harmful_link = 2
+    spam = 3
+    keyword_preset = 4
+
+
 T = TypeVar("T")
 
 

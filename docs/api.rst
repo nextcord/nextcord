@@ -2749,6 +2749,29 @@ of :class:`enum.Enum`.
 
         A member sends or edits a message in the guild.
 
+.. class:: AutoModerationTriggerType
+
+    Represents the type of content which can trigger an auto moderation rule.
+
+    .. versionadded:: 2.1
+
+    .. attribute:: keyword
+
+        This rule checks if content contains words from a user defined list of keywords.
+
+    .. attribute:: harmful_link
+
+        This rule checks if content contains any harmful links.
+
+    .. attribute:: spam
+
+        This rule checks if content represents generic spam.
+
+    .. attribute:: keyword_preset
+
+        This rule checks if content contains words from Discord pre-defined wordsets.
+
+
 Async Iterator
 ----------------
 
