@@ -2563,7 +2563,7 @@ of :class:`enum.Enum`.
         - :attr:`~AuditLogDiff.locked`
         - :attr:`~AuditLogDiff.auto_archive_duration`
 
-        .. versionadded:: 2.1
+        .. versionadded:: 2.0
 
     .. attribute:: automod_rule_create
 
