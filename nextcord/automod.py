@@ -125,7 +125,7 @@ class AutoModerationActionExecution:
 
     @property
     def channel(self) -> Optional[Union[GuildChannel, Thread]]:
-        """Optional[Union[:class:`abc.GuildChannel`, :class:`Thread`]] The channel that the content that triggered this execution is in. Can be ``None``."""
+        """Optional[Union[:class:`abc.GuildChannel`, :class:`Thread`]]: The channel that the content that triggered this execution is in. Can be ``None``."""
         return (
             self.guild.get_channel_or_thread(self.channel_id)
             if self.channel_id is not None
@@ -134,7 +134,7 @@ class AutoModerationActionExecution:
 
     @property
     def member(self) -> Optional[Member]:
-        """Optional[:class:`Member`:] The member that triggered this execution."""
+        """Optional[:class:`Member`]: The member that triggered this execution."""
         return self.guild.get_member(self.member_id)
 
     async def fetch_member(self) -> Member:
@@ -419,7 +419,7 @@ class AutoModerationRule(Hashable):
 
     @property
     def exempt_channels(self) -> List[GuildChannel]:
-        """List[:class:`GuildChannel`]: A list of channels that will not be affected by this rule. ``[]`` if not set."""
+        """List[:class:`abc.GuildChannel`]: A list of channels that will not be affected by this rule. ``[]`` if not set."""
         return [self.guild.get_channel(exempt_channel_id) for exempt_channel_id in self.exempt_channel_ids]  # type: ignore # same
 
     @overload
