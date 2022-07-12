@@ -173,7 +173,10 @@ class AutoModerationActionExecution:
         Forbidden
             You're not a member of the guild that this execution was executed.
         """
-        return await self.guild.fetch_channel(self.channel_id)
+        if channel := self.channel_id:
+            return await self.guild.fetch_channel(channel)
+        else:
+            return None
 
     async def fetch_message(self) -> Optional[Message]:
         """
