@@ -63,11 +63,11 @@ class AutoModerationActionExecution:
         The ID of the guild where the auto moderation action was triggered.
     guild: :class:`Guild`
         The guild where the auto moderation action was triggered.
-    action: :class:`AutoModerationRuleAction`
+    action: :class:`AutoModerationAction`
         The auto moderation action associated with this execution.
     rule_id: :class:`int`
         The auto moderation rule associated with this execution's ID.
-    trigger_type :class:`TriggerType`
+    trigger_type: :class:`TriggerType`
         The trigger type of this execution.
     member_id: :class:`int`
         The user that triggered this execution's ID.
