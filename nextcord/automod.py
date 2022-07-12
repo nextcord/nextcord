@@ -308,6 +308,8 @@ class AutoModerationRule(Hashable):
         The pre-set types of this auto moderation rule. ``None`` if not set.
     actions: List[:class:`AutoModerationAction`]
         The actions that this auto moderation rule will execute if triggered.
+    allow_list: List[:class:`str`]
+        A list of words that this auto moderation rule will ignore.
     """
 
     __slots__ = (
@@ -325,6 +327,7 @@ class AutoModerationRule(Hashable):
         "keyword_filters",
         "actions",
         "presets",
+        "allow_list",
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: AutoModerationRulePayload):
@@ -351,6 +354,7 @@ class AutoModerationRule(Hashable):
             if "presets" in trigger_metadata
             else None
         )
+        self.allow_list: List[str] = trigger_metadata['allow_list']
 
     def __repr__(self):
         attrs = (
@@ -367,6 +371,7 @@ class AutoModerationRule(Hashable):
             ("keyword_filters", self.keyword_filters),
             ("presets", self.presets),
             ("actions", self.actions),
+            ("allow_list", self.allow_list),
         )
         inner = " ".join("%s=%r" % t for t in attrs)
         return f"<AutoModerationRule {inner}>"
@@ -440,6 +445,7 @@ class AutoModerationRule(Hashable):
         name: str = ...,
         event_type: EventType = ...,
         presets: List[KeywordPresetType] = ...,
+        allow_list: List[str] = ...,
         notify_channel: GuildChannel = ...,
         timeout_seconds: int = ...,
         block_message: bool = ...,
@@ -456,6 +462,7 @@ class AutoModerationRule(Hashable):
         event_type: EventType = MISSING,
         keyword_filters: List[str] = MISSING,
         presets: List[KeywordPresetType] = MISSING,
+        allow_list: List[str] = MISSING,
         notify_channel: GuildChannel = MISSING,
         timeout_seconds: int = MISSING,
         block_message: bool = MISSING,
@@ -489,6 +496,8 @@ class AutoModerationRule(Hashable):
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_presets`
+        allow_list: List[:class:`str`]
+            A list of words that this auto moderation rule will ignore.
         notify_channel: :class:`abc.GuildChannel`
             The channel that will receive the notification when this rule is triggered.
         timeout_seconds: :class:`int`
@@ -599,6 +608,9 @@ class AutoModerationRule(Hashable):
 
         if exempt_channels is not MISSING:
             payload["exempt_channels"] = [exempt_channel.id for exempt_channel in exempt_channels]
+
+        if allow_list is not MISSING:
+            payload['trigger_metadata']['allow_list'] = allow_list
 
         new_data = await self._state.http.modify_automod_rule(
             guild_id=self.guild.id, rule_id=self.id, **payload

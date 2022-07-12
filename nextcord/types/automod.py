@@ -48,6 +48,7 @@ class TriggerMetadataKeywordFilter(TypedDict):
 
 class TriggerMetadataKeywordPreset(TypedDict):
     presets: List[KeywordPresetType]
+    allow_list: List[str]
 
 
 TriggerMetadata = Union[TriggerMetadataKeywordFilter, TriggerMetadataKeywordPreset]

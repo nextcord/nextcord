@@ -3542,6 +3542,7 @@ class Guild(Hashable):
         event_type: EventType = EventType.message_send,
         trigger_type: TriggerType,
         presets: List[KeywordPresetType],
+        allow_list: List[str] = MISSING,
         notify_channel: GuildChannel = MISSING,
         timeout_seconds: int = MISSING,
         block_message: bool = True,
@@ -3565,6 +3566,7 @@ class Guild(Hashable):
         enabled: bool = True,
         exempt_roles: List[Role] = MISSING,
         exempt_channels: List[GuildChannel] = MISSING,
+        allow_list: List[str] = MISSING,
     ) -> AutoModerationRule:
         """|coro|
 
@@ -3596,6 +3598,8 @@ class Guild(Hashable):
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_presets``
+        allow_List: List[:class:`str`]
+            A list of words that won't be affected by this rule.
         notify_channel: :class:`abc.GuildChannel`
             The channel Discord will send an alert to when this rule is triggered.
             Either this or `timeout_seconds` must be provided.
@@ -3672,5 +3676,7 @@ class Guild(Hashable):
         if exempt_channels is not MISSING:
             params["exempt_channels"] = [channel.id for channel in exempt_channels]
 
+        if allow_list is not MISSING:
+            params['trigger_metadata']['allow_list'] = allow_list
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
         return AutoModerationRule(data=data, guild=self, state=self._state)
