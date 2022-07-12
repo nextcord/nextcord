@@ -485,14 +485,12 @@ class AutoModerationRule(Hashable):
         keyword_filters: List[:class:`str`]
             The keywords that the filter should match.
             Either this or ``presets`` must be passed.
-
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword`.
         presets: List[:class:`KeywordPresetType`]
             The keyword presets that the filter should match.
             Either this or ``keyword_filters` must be passed.
-
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_presets`
@@ -502,7 +500,6 @@ class AutoModerationRule(Hashable):
             The channel that will receive the notification when this rule is triggered.
         timeout_seconds: :class:`int`
             The seconds to timeout the person that triggered this rule.
-
             .. note::
 
                 To be able to set this you must have :attr:`~Permissions.moderate_members` permissions.
@@ -512,13 +509,11 @@ class AutoModerationRule(Hashable):
             Whether or not if this rule is enabled.
         exempt_roles: List[:class:`Role`]
             A list of roles that should not be affected by this rule.
-
             .. note::
 
                 Bots are always not affected by any rule.
         exempt_channels: List[:class:`abc.GuildChannel`]
             A list of channels that should not be affected by this rule.
-
             .. note::
 
                 Bots are always not affected by any rule.

@@ -3582,19 +3582,16 @@ class Guild(Hashable):
             The event type that this rule should start finding. Default to :attr:`EventType.message_send`.
         trigger_type: :class:`TriggerType`.
             The trigger type of this rule.
-
             .. note::
 
                 The :attr:`TriggerType.harmful_link` and the :attr:`TriggerType.spam` is not released to most server yet.
         keyword_filters: List[:class:`str`]
             The words that this rule should filter.
-
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword`.
         presets: List[:class:`KeywordPresetType`]
             The preset keywords that this rule should filter.
-
             .. note::
 
                 This will only work if the rule's ``trigger_type`` is :attr:`TriggerType.keyword_presets``
@@ -3614,7 +3611,6 @@ class Guild(Hashable):
             The roles that should not be affected by this rule.
         exempt_channels: List[:class:`abc.GuildChannel`]
             The channels that should not be affected by this rule.
-
         .. note::
 
             A guild can have max 3 rules with the :class:`TriggerType.keyword` trigger type,
