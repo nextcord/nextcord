@@ -610,7 +610,7 @@ class AutoModerationRule(Hashable):
             payload["exempt_channels"] = [exempt_channel.id for exempt_channel in exempt_channels]
 
         if allow_list is not MISSING:
-            payload['trigger_metadata']['allow_list'] = allow_list
+            payload["trigger_metadata"]["allow_list"] = allow_list
 
         new_data = await self._state.http.modify_automod_rule(
             guild_id=self.guild.id, rule_id=self.id, **payload
