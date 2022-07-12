@@ -521,8 +521,7 @@ class AutoModerationRule(Hashable):
         Raises
         -------
         InvalidArgument
-            - You specified both ``keyword_filters`` and ``presets``.
-            - You didn't specify either ``keyword_filters`` or ``presets``.
+            You specified both ``keyword_filters`` and ``presets``, or none of them.
         HTTPException
             Editing the rule failed.
         Forbidden
