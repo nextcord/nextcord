@@ -2274,41 +2274,38 @@ class ConnectionState:
             )
 
     def parse_auto_moderation_rule_create(self, data: AutoModerationRulePayload) -> None:
-        if guild := self._get_guild(int(data['guild_id'])):
+        if guild := self._get_guild(int(data["guild_id"])):
             self.dispatch(
                 "automod_rule_create",
                 AutoModerationRule(state=self, guild=guild, data=data),
             )
         else:
             _log.debug(
-                "AUTO_MODERATION_RULE_CREATE referencing unknown"
-                " guild ID: %s. Discarding.",
+                "AUTO_MODERATION_RULE_CREATE referencing unknown" " guild ID: %s. Discarding.",
                 data["guild_id"],
             )
 
     def parse_auto_moderation_rule_update(self, data: AutoModerationRulePayload) -> None:
-        if guild := self._get_guild(int(data['guild_id'])):
+        if guild := self._get_guild(int(data["guild_id"])):
             self.dispatch(
                 "automod_rule_update",
                 AutoModerationRule(state=self, guild=guild, data=data),
             )
         else:
             _log.debug(
-                "AUTO_MODERATION_RULE_UPDATE referencing unknown"
-                " guild ID: %s. Discarding.",
+                "AUTO_MODERATION_RULE_UPDATE referencing unknown" " guild ID: %s. Discarding.",
                 data["guild_id"],
             )
 
     def parse_auto_moderation_rule_delete(self, data: AutoModerationRulePayload) -> None:
-        if guild := self._get_guild(int(data['guild_id'])):
+        if guild := self._get_guild(int(data["guild_id"])):
             self.dispatch(
                 "automod_rule_delete",
                 AutoModerationRule(state=self, guild=guild, data=data),
             )
         else:
             _log.debug(
-                "AUTO_MODERATION_RULE_DELETE referencing unknown"
-                " guild ID: %s. Discarding.",
+                "AUTO_MODERATION_RULE_DELETE referencing unknown" " guild ID: %s. Discarding.",
                 data["guild_id"],
             )
 
