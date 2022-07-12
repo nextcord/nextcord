@@ -3677,6 +3677,6 @@ class Guild(Hashable):
             params["exempt_channels"] = [channel.id for channel in exempt_channels]
 
         if allow_list is not MISSING:
-            params['trigger_metadata']['allow_list'] = allow_list
+            params["trigger_metadata"]["allow_list"] = allow_list
         data = await self._state.http.create_automod_rule(guild_id=self.id, **params)
         return AutoModerationRule(data=data, guild=self, state=self._state)
