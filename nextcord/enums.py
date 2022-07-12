@@ -722,6 +722,10 @@ class ScheduledEventStatus(Enum):
     cancelled = 4
 
 
+class AutoModerationEventType(Enum):
+    message_send = 1
+
+
 T = TypeVar("T")
 
 

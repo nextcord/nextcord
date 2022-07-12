@@ -2739,6 +2739,16 @@ of :class:`enum.Enum`.
 .. autoclass:: Locale
     :members:
 
+.. class:: AutoModerationEventType
+
+    Represents what event context an auto moderation rule will be checked.
+
+    .. versionadded:: 2.1
+
+    .. attribute:: message_send
+
+        A member sends or edits a message in the guild.
+
 Async Iterator
 ----------------
 
