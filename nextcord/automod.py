@@ -308,7 +308,7 @@ class AutoModerationRule(Hashable):
         The pre-set types of this auto moderation rule. ``None`` if not set.
     actions: List[:class:`AutoModerationAction`]
         The actions that this auto moderation rule will execute if triggered.
-    allow_list: List[:class:`str`]
+    allow_list: Optional[List[:class:`str`]]
         A list of words that this auto moderation rule will ignore.
     """
 
@@ -354,7 +354,7 @@ class AutoModerationRule(Hashable):
             if "presets" in trigger_metadata
             else None
         )
-        self.allow_list: List[str] = trigger_metadata["allow_list"]  # type: ignore
+        self.allow_list: Optional[List[str]] = trigger_metadata["allow_list"] if "allow_list" in metadata else None  # type: ignore
 
     def __repr__(self):
         attrs = (
