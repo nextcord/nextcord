@@ -284,6 +284,7 @@ class ConnectionState:
         self._application_command_checks: List[ApplicationCheck] = []
         self._application_command_before_invoke: Optional[ApplicationHook] = None
         self._application_command_after_invoke: Optional[ApplicationHook] = None
+
         self.clear()
 
     def clear(self, *, views: bool = True, modals: bool = True) -> None:
