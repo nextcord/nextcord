@@ -2274,7 +2274,7 @@ class ConnectionState:
             )
 
     def parse_auto_moderation_rule_create(self, data: AutoModerationRulePayload) -> None:
-        if guild := self._get_guild(int(data["guild_id"])):
+        if guild := self._get_guild(int(data["guild_id"])):  # type: ignore
             self.dispatch(
                 "automod_rule_create",
                 AutoModerationRule(state=self, guild=guild, data=data),
@@ -2286,7 +2286,7 @@ class ConnectionState:
             )
 
     def parse_auto_moderation_rule_update(self, data: AutoModerationRulePayload) -> None:
-        if guild := self._get_guild(int(data["guild_id"])):
+        if guild := self._get_guild(int(data["guild_id"])):  # type: ignore
             self.dispatch(
                 "automod_rule_update",
                 AutoModerationRule(state=self, guild=guild, data=data),
@@ -2298,7 +2298,7 @@ class ConnectionState:
             )
 
     def parse_auto_moderation_rule_delete(self, data: AutoModerationRulePayload) -> None:
-        if guild := self._get_guild(int(data["guild_id"])):
+        if guild := self._get_guild(int(data["guild_id"])):  # type: ignore
             self.dispatch(
                 "automod_rule_delete",
                 AutoModerationRule(state=self, guild=guild, data=data),
@@ -2312,7 +2312,7 @@ class ConnectionState:
     def parse_auto_moderation_action_execution(
         self, data: AutoModerationActionExecutionPayload
     ) -> None:
-        if guild := self._get_guild(data["guild_id"]):
+        if guild := self._get_guild(int(data["guild_id"])):  # type: ignore
             self.dispatch(
                 "automod_action_executed",
                 AutoModerationActionExecution(state=self, data=data, guild=guild),
