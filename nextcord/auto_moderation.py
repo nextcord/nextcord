@@ -39,6 +39,8 @@ __all__ = ("AutoModerationTriggerMetadata",)
 class AutoModerationTriggerMetadata:
     """Represents data about an auto moderation trigger rule.
 
+    .. versionadded:: 2.1
+
     Attributes
     ----------
     keyword_filter: List[:class:`str`]
