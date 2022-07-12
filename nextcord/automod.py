@@ -354,7 +354,7 @@ class AutoModerationRule(Hashable):
             if "presets" in trigger_metadata
             else None
         )
-        self.allow_list: Optional[List[str]] = trigger_metadata["allow_list"] if "allow_list" in metadata else None  # type: ignore
+        self.allow_list: Optional[List[str]] = trigger_metadata["allow_list"] if "allow_list" in trigger_metadata else None  # type: ignore
 
     def __repr__(self):
         attrs = (
