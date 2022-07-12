@@ -945,7 +945,7 @@ class Intents(BaseFlags):
         - :func:`on_automod_rule_create`
         - :func:`on_automod_rule_update`
         - :func:`on_automod_rule_delete`
-        - :func:`on_automod_action_executed`
+        - :func:`on_automod_action_execution`
         """
         return (1 << 20) | (1 << 21)
 
@@ -963,7 +963,7 @@ class Intents(BaseFlags):
 
     @flag_value
     def automod_execution(self):
-        """:class:`bool`: Whether :func:`on_automod_action_executed` event should be received.
+        """:class:`bool` Whether :func:`on_automod_action_execution` event should be received.
         This does not correspond to any attributes or classes in the library in terms of cache.
         """
         return 1 << 21
