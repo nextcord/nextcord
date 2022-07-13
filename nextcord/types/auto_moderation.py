@@ -62,3 +62,27 @@ class AutoModerationRule(TypedDict):
     enabled: bool
     exempt_roles: List[Snowflake]
     exempt_channels: List[Snowflake]
+
+
+class _AutoModerationRuleCreateOptional(TypedDict, total=False):
+    trigger_metadata: AutoModerationTriggerMetadata
+    enabled: bool
+    exempt_roles: List[Snowflake]
+    exempt_channels: List[Snowflake]
+
+
+class AutoModerationRuleCreate(_AutoModerationRuleCreateOptional):
+    name: str
+    event_type: AutoModerationEventType
+    trigger_type: AutoModerationTriggerType
+    actions: List[AutoModerationAction]
+
+
+class AutoModerationRuleModify(TypedDict, total=False):
+    name: str
+    event_type: AutoModerationEventType
+    trigger_metadata: AutoModerationTriggerMetadata
+    actions: List[AutoModerationAction]
+    enabled: bool
+    exempt_roles: List[Snowflake]
+    exempt_channels: List[Snowflake]
