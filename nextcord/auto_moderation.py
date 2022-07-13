@@ -26,11 +26,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from .enums import KeywordPresetType, try_enum
+from .enums import AutoModerationActionType, KeywordPresetType, try_enum
 from .utils import _get_as_snowflake
 
 if TYPE_CHECKING:
     from .types.auto_moderation import (
+        AutoModerationAction as AutoModerationActionPayload,
         AutoModerationActionMetadata as ActionMetadataPayload,
         AutoModerationTriggerMetadata as TriggerMetadataPayload,
     )
@@ -151,3 +152,23 @@ class AutoModerationActionMetadata:
             payload["duration_seconds"] = self.duration_seconds
 
         return payload
+
+
+class AutoModerationAction:
+    """Represents an auto moderation action which will execute whenever a rule is triggered.
+
+    .. versionadded:: 2.1
+
+    Attributes
+    ----------
+    type: :class:`AutoModerationActionType`
+        The type of this action.
+    metadata: :class:`AutoModerationActionMetadata`
+        The additional metadata needed during execution for this specific action type.
+    """
+
+    __slots__ = ("type", "metadata")
+
+    def __init__(self, data: AutoModerationActionPayload) -> None:
+        self.type = try_enum(AutoModerationActionType, data["type"])
+        self.metadata = AutoModerationActionMetadata.from_data(data.get("metadata", {}))

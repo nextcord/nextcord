@@ -40,3 +40,11 @@ class AutoModerationTriggerMetadata(TypedDict, total=False):
 class AutoModerationActionMetadata(TypedDict, total=False):
     channel_id: Snowflake
     duration_seconds: int
+
+
+class _AutoModerationActionOptional(TypedDict, total=False):
+    metadata: AutoModerationActionMetadata
+
+
+class AutoModerationAction(_AutoModerationActionOptional):
+    type: AutoModerationActionType
