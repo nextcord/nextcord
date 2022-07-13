@@ -29,9 +29,7 @@ from typing import TYPE_CHECKING, List
 from .enums import KeywordPresetType, try_enum
 
 if TYPE_CHECKING:
-    from .types.auto_moderation import (
-        AutoModerationTriggerMetadata as AutoModerationTriggerMetadataPayload,
-    )
+    from .types.auto_moderation import AutoModerationTriggerMetadata as TriggerMetadataPayload
 
 __all__ = ("AutoModerationTriggerMetadata",)
 
@@ -49,7 +47,7 @@ class AutoModerationTriggerMetadata:
         A list of Discord pre-defined wordsets which will be searched for in content.
     """
 
-    def __init__(self, data: AutoModerationTriggerMetadataPayload) -> None:
+    def __init__(self, data: TriggerMetadataPayload) -> None:
         self.keyword_filter: List[str] = data["keyword_filter"]
         self.presets: List[KeywordPresetType] = [
             try_enum(KeywordPresetType, preset) for preset in data["presets"]
