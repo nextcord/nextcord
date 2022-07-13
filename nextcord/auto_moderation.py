@@ -48,6 +48,8 @@ if TYPE_CHECKING:
 __all__ = (
     "AutoModerationTriggerMetadata",
     "AutoModerationActionMetadata",
+    "AutoModerationAction",
+    "AutoModerationRule",
 )
 
 
