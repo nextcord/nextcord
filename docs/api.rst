@@ -4167,6 +4167,22 @@ ScheduledEvent
 
 .. autoclass:: EntityMetadata
 
+AutoModerationTriggerMetadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationTriggerMetadata
+
+.. autoclass:: AutoModerationTriggerMetadata()
+    :members:
+
+AutoModerationActionMetadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationActionMetadata
+
+.. autoclass:: AutoModerationActionMetadata()
+    :members:
+
 .. _discord_api_data:
 
 Data Classes

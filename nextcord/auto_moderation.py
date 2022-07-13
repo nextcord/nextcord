@@ -24,14 +24,21 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from .enums import KeywordPresetType, try_enum
+from .utils import _get_as_snowflake
 
 if TYPE_CHECKING:
-    from .types.auto_moderation import AutoModerationTriggerMetadata as TriggerMetadataPayload
+    from .types.auto_moderation import (
+        AutoModerationActionMetadata as ActionMetadataPayload,
+        AutoModerationTriggerMetadata as TriggerMetadataPayload,
+    )
 
-__all__ = ("AutoModerationTriggerMetadata",)
+__all__ = (
+    "AutoModerationTriggerMetadata",
+    "AutoModerationActionMetadata",
+)
 
 
 class AutoModerationTriggerMetadata:
@@ -52,3 +59,37 @@ class AutoModerationTriggerMetadata:
         self.presets: List[KeywordPresetType] = [
             try_enum(KeywordPresetType, preset) for preset in data["presets"]
         ]
+
+
+class AutoModerationActionMetadata:
+    """Represents additional data that is used when an action is executed.
+
+    .. versionadded:: 2.1
+
+    Attributes
+    ----------
+    channel_id: Optional[:class:`int`]
+        The channel to which message content should be logged.
+
+        .. note::
+
+            This is ``None`` if the action type of the rule is not
+            :attr:`AutoModerationActionType.send_alert_message`.
+    duration_seconds: Optional[:class:`int`]
+        The duration of the timeout in seconds.
+
+        .. note::
+
+            This is ``None`` if the action type of the rule is not
+            :attr:`AutoModerationActionType.send_alert_message`.
+
+        .. note::
+
+            The maximum value that can be used is `2419200` seconds (4 weeks)
+    """
+
+    def __init__(self, data: ActionMetadataPayload) -> None:
+        self.channel_id: Optional[int] = _get_as_snowflake(data, "channel_id")
+        self.duration_seconds: Optional[int] = (
+            data["duration_seconds"] if "duration_seconds" in data else None
+        )

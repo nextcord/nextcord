@@ -24,6 +24,8 @@ DEALINGS IN THE SOFTWARE.
 
 from typing import List, Literal, TypedDict
 
+from .snowflake import Snowflake
+
 AutoModerationEventType = Literal[1]
 AutoModerationTriggerType = Literal[1, 2, 3, 4]
 KeywordPresetType = Literal[1, 2, 3]
@@ -33,3 +35,8 @@ AutoModerationActionType = Literal[1, 2, 3, 4]
 class AutoModerationTriggerMetadata(TypedDict):
     keyword_filter: List[str]
     presets: List[KeywordPresetType]
+
+
+class AutoModerationActionMetadata(TypedDict, total=False):
+    channel_id: Snowflake
+    duration_seconds: int
