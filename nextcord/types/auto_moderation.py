@@ -27,6 +27,7 @@ from typing import List, Literal, TypedDict
 AutoModerationEventType = Literal[1]
 AutoModerationTriggerType = Literal[1, 2, 3, 4]
 KeywordPresetType = Literal[1, 2, 3]
+AutoModerationActionType = Literal[1, 2, 3, 4]
 
 
 class AutoModerationTriggerMetadata(TypedDict):
