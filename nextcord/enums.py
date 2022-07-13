@@ -63,6 +63,9 @@ __all__ = (
     "ScheduledEventEntityType",
     "ScheduledEventPrivacyLevel",
     "ScheduledEventStatus",
+    "AutoModerationEventType",
+    "AutoModerationTriggerType",
+    "KeywordPresetType",
 )
 
 
