@@ -26,13 +26,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from .enums import AutoModerationActionType, KeywordPresetType, try_enum
+from .enums import (
+    AutoModerationActionType,
+    AutoModerationEventType,
+    AutoModerationTriggerType,
+    KeywordPresetType,
+    try_enum,
+)
+from .mixins import Hashable
 from .utils import _get_as_snowflake
 
 if TYPE_CHECKING:
+    from .state import ConnectionState
     from .types.auto_moderation import (
         AutoModerationAction as AutoModerationActionPayload,
         AutoModerationActionMetadata as ActionMetadataPayload,
+        AutoModerationRule as AutoModerationRulePayload,
         AutoModerationTriggerMetadata as TriggerMetadataPayload,
     )
 
@@ -172,3 +181,109 @@ class AutoModerationAction:
     def __init__(self, data: AutoModerationActionPayload) -> None:
         self.type = try_enum(AutoModerationActionType, data["type"])
         self.metadata = AutoModerationActionMetadata.from_data(data.get("metadata", {}))
+
+
+class AutoModerationRule(Hashable):
+    """Represents a Discord auto moderation rule.
+
+    .. versionadded:: 2.1
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two rules are equal.
+
+        .. describe:: x != y
+
+            Checks if two rules are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the rules's hash.
+
+        .. describe:: str(x)
+
+            Returns the rules's name.
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The rule's unique ID.
+    guild_id: :class:`int`
+        The guild's unique ID which this rule belongs to.
+    guild: Optional[:class:`Guild`]
+        The guild which this rule belongs to, if found in cache.
+    name: :class:`str`
+        The rule's name.
+    creator_id: :class:`int`
+        The user's unique ID which first created this rule.
+    creator: :class:`Member`
+        The member which first created this rule, if found in cache.
+    event_type: :class:`AutoModerationEventType`
+        The event context in which this rule is checked.
+    trigger_type: :class:`AutoModerationTriggerType`
+        The type of content that can trigger this rule.
+    trigger_metadata: :class:`AutoModerationTriggerMetadata`
+        Additional data that is used when checking if this rule is triggered.
+    actions: List[:class:`AutoModerationAction`]
+        The actions which will execute when the rule is triggered.
+    enabled: :class:`bool`
+        Whether the rule is enabled.
+    exempt_role_ids: List[:class:`int`]
+        The role ids that should not be affected by the rule.
+    exempt_channel_ids: List[:class:`int`]
+        The channel ids that should not be affected by the rule.
+    exempt_roles: List[:class:`Role`]
+        The roles that should not be affected by the rule, if found in cache.
+    exempt_channels: List[:class:`abc.GuildChannel`]
+        The channels that should not be affected by the rule, if found in cache.
+    """
+
+    __slots__ = (
+        "_state",
+        "id",
+        "guild_id",
+        "guild",
+        "name",
+        "creator_id",
+        "creator",
+        "event_type",
+        "trigger_type",
+        "trigger_metadata",
+        "actions",
+        "enabled",
+        "exempt_role_ids",
+        "exempt_channel_ids",
+        "exempt_roles",
+        "exempt_channels",
+    )
+
+    def __init__(self, *, data: AutoModerationRulePayload, state: ConnectionState):
+        self._state = state
+        self.id = int(data["id"])
+        self.guild_id = int(data["guild_id"])
+        self.guild = state._get_guild(self.guild_id)
+        self.name = data["name"]
+        self.creator_id = int(data["creator_id"])
+        self.creator = self.guild.get_member(self.creator_id) if self.guild is not None else None
+        self.event_type = try_enum(AutoModerationEventType, data["event_type"])
+        self.trigger_type = try_enum(AutoModerationTriggerType, data["trigger_type"])
+        self.trigger_metadata = AutoModerationTriggerMetadata.from_data(data["trigger_metadata"])
+        self.actions = [AutoModerationAction(data=action) for action in data["actions"]]
+        self.enabled = data["enabled"]
+        self.exempt_role_ids = [int(role_id) for role_id in data["exempt_roles"]]
+        self.exempt_channel_ids = [int(channel_id) for channel_id in data["exempt_channels"]]
+        self.exempt_roles = (
+            [self.guild.get_role(role_id) for role_id in self.exempt_role_ids]
+            if self.guild is not None
+            else []
+        )
+        self.exempt_channels = (
+            [self.guild.get_channel(channel_id) for channel_id in self.exempt_channel_ids]
+            if self.guild is not None
+            else []
+        )
+
+    def __str__(self) -> str:
+        return self.name

@@ -4175,6 +4175,14 @@ AutoModerationAction
 .. autoclass:: AutoModerationAction()
     :members:
 
+AutoModerationRule
+~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationRule
+
+.. autoclass:: AutoModerationRule()
+    :members:
+
 .. _discord_api_data:
 
 Data Classes

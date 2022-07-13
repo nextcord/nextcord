@@ -48,3 +48,17 @@ class _AutoModerationActionOptional(TypedDict, total=False):
 
 class AutoModerationAction(_AutoModerationActionOptional):
     type: AutoModerationActionType
+
+
+class AutoModerationRule(TypedDict):
+    id: Snowflake
+    guild_id: Snowflake
+    name: str
+    creator_id: Snowflake
+    event_type: AutoModerationEventType
+    trigger_type: AutoModerationTriggerType
+    trigger_metadata: AutoModerationTriggerMetadata
+    actions: List[AutoModerationAction]
+    enabled: bool
+    exempt_roles: List[Snowflake]
+    exempt_channels: List[Snowflake]
