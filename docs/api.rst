@@ -2771,7 +2771,6 @@ of :class:`enum.Enum`.
 
         This rule checks if content contains words from Discord pre-defined wordsets.
 
-
 .. class:: KeywordPresetType
 
     Represents the type of a keyword preset auto moderation rule.
@@ -2789,6 +2788,28 @@ of :class:`enum.Enum`.
     .. attribute:: slurs
 
         Personal insults or words that may be considered hate speech.
+
+.. class:: AutoModerationActionType
+
+    Represents the action that will be taken if an auto moderation rule is triggered.
+
+    .. versionadded:: 2.1
+
+    .. attribute:: block_message
+
+        Blocks a message with content matching the rule.
+
+    .. attribute:: send_alert_message
+
+        Logs message content to a specified channel.
+
+    .. attribute:: timeout
+
+        Timeout user for a specified duration.
+
+        .. note::
+
+            This action type can only be used with the :attr:`Permissions.moderate_members` permission.
 
 
 Async Iterator

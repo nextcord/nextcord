@@ -66,6 +66,7 @@ __all__ = (
     "AutoModerationEventType",
     "AutoModerationTriggerType",
     "KeywordPresetType",
+    "AutoModerationActionType",
 )
 
 
@@ -740,6 +741,12 @@ class KeywordPresetType(Enum):
     profanity = 1
     sexual_content = 2
     slurs = 3
+
+
+class AutoModerationActionType(Enum):
+    block_message = 1
+    send_alert_message = 2
+    timeout = 3
 
 
 T = TypeVar("T")
