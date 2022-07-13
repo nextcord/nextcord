@@ -4167,22 +4167,6 @@ ScheduledEvent
 
 .. autoclass:: EntityMetadata
 
-AutoModerationTriggerMetadata
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. attributetable:: AutoModerationTriggerMetadata
-
-.. autoclass:: AutoModerationTriggerMetadata()
-    :members:
-
-AutoModerationActionMetadata
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. attributetable:: AutoModerationActionMetadata
-
-.. autoclass:: AutoModerationActionMetadata()
-    :members:
-
 .. _discord_api_data:
 
 Data Classes
@@ -4374,6 +4358,22 @@ PublicUserFlags
 .. attributetable:: PublicUserFlags
 
 .. autoclass:: PublicUserFlags()
+    :members:
+
+AutoModerationTriggerMetadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationTriggerMetadata
+
+.. autoclass:: AutoModerationTriggerMetadata()
+    :members:
+
+AutoModerationActionMetadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationActionMetadata
+
+.. autoclass:: AutoModerationActionMetadata()
     :members:
 
 .. _discord_ui_kit:

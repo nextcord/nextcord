@@ -50,15 +50,52 @@ class AutoModerationTriggerMetadata:
     ----------
     keyword_filter: List[:class:`str`]
         A list of substrings which will be searched for in content.
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the trigger type of the rule is not
+            :attr:`AutoModerationTriggerType.keyword`.
     presets: List[:class:`KeywordPresetType`]
         A list of Discord pre-defined wordsets which will be searched for in content.
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the trigger type of the rule is not
+            :attr:`AutoModerationTriggerType.keyword_preset`.
     """
 
-    def __init__(self, data: TriggerMetadataPayload) -> None:
-        self.keyword_filter: List[str] = data["keyword_filter"]
-        self.presets: List[KeywordPresetType] = [
-            try_enum(KeywordPresetType, preset) for preset in data["presets"]
-        ]
+    __slots__ = ("keyword_filter", "presets")
+
+    def __init__(
+        self,
+        keyword_filter: Optional[List[str]] = None,
+        presets: Optional[List[KeywordPresetType]] = None,
+    ) -> None:
+        self.keyword_filter = keyword_filter
+        self.presets = presets
+
+    @classmethod
+    def from_data(cls, data: TriggerMetadataPayload):
+        keyword_filter = data["keyword_filter"] if "keyword_filter" in data else None
+        presets = (
+            [try_enum(KeywordPresetType, preset) for preset in data["presets"]]
+            if "presets" in data
+            else None
+        )
+
+        return cls(keyword_filter=keyword_filter, presets=presets)
+
+    @property
+    def payload(self) -> TriggerMetadataPayload:
+        payload: TriggerMetadataPayload = {}
+
+        if self.keyword_filter is not None:
+            payload["keyword_filter"] = self.keyword_filter
+
+        if self.presets is not None:
+            payload["presets"] = [enum.value for enum in self.presets]
+
+        return payload
 
 
 class AutoModerationActionMetadata:
@@ -73,14 +110,14 @@ class AutoModerationActionMetadata:
 
         .. note::
 
-            This is ``None`` if the action type of the rule is not
+            This is ``None`` and cannot be provided if the action type of the rule is not
             :attr:`AutoModerationActionType.send_alert_message`.
     duration_seconds: Optional[:class:`int`]
         The duration of the timeout in seconds.
 
         .. note::
 
-            This is ``None`` if the action type of the rule is not
+            This is ``None`` and cannot be provided if the action type of the rule is not
             :attr:`AutoModerationActionType.send_alert_message`.
 
         .. note::
@@ -88,8 +125,29 @@ class AutoModerationActionMetadata:
             The maximum value that can be used is `2419200` seconds (4 weeks)
     """
 
-    def __init__(self, data: ActionMetadataPayload) -> None:
-        self.channel_id: Optional[int] = _get_as_snowflake(data, "channel_id")
-        self.duration_seconds: Optional[int] = (
+    __slots__ = ("channel_id", "duration_seconds")
+
+    def __init__(self, channel_id: Optional[int] = None, duration_seconds: Optional[int] = None):
+        self.channel_id = channel_id
+        self.duration_seconds = duration_seconds
+
+    @classmethod
+    def from_data(cls, data: ActionMetadataPayload):
+        channel_id: Optional[int] = _get_as_snowflake(data, "channel_id")
+        duration_seconds: Optional[int] = (
             data["duration_seconds"] if "duration_seconds" in data else None
         )
+
+        return cls(channel_id=channel_id, duration_seconds=duration_seconds)
+
+    @property
+    def payload(self) -> ActionMetadataPayload:
+        payload: ActionMetadataPayload = {}
+
+        if self.channel_id is not None:
+            payload["channel_id"] = self.channel_id
+
+        if self.duration_seconds is not None:
+            payload["duration_seconds"] = self.duration_seconds
+
+        return payload

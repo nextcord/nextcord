@@ -32,7 +32,7 @@ KeywordPresetType = Literal[1, 2, 3]
 AutoModerationActionType = Literal[1, 2, 3, 4]
 
 
-class AutoModerationTriggerMetadata(TypedDict):
+class AutoModerationTriggerMetadata(TypedDict, total=False):
     keyword_filter: List[str]
     presets: List[KeywordPresetType]
 
