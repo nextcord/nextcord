@@ -47,6 +47,7 @@ from typing import (
 
 from . import abc, utils
 from .asset import Asset
+from .auto_moderation import AutoModerationRule
 from .bans import BanEntry
 from .channel import *
 from .channel import _guild_channel_factory, _threaded_guild_channel_factory
@@ -3463,3 +3464,24 @@ class Guild(Hashable):
     async def delete_application_commands(self, *commands: BaseApplicationCommand) -> None:
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)
+
+    async def auto_moderation_rules(self) -> List[AutoModerationRule]:
+        """|coro|
+
+        Get the list of auto moderation rules from this guild.
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        Raises
+        ------
+        Forbidden
+            You do not have permission to fetch the auto moderation rules.
+
+        Returns
+        -------
+        List[:class:`AutoModerationRule`]
+            The auto moderation rules of this guild.
+        """
+
+        data = await self._state.http.list_guild_auto_moderation_rules(self.id)
+        return [AutoModerationRule(data=d, state=self._state) for d in data]
