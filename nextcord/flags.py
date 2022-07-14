@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from itertools import reduce
 from typing import (
     Any,
     Callable,
@@ -496,10 +497,9 @@ class Intents(BaseFlags):
     @classmethod
     def all(cls: Type[Intents]) -> Intents:
         """A factory method that creates a :class:`Intents` with everything enabled."""
-        bits = max(cls.VALID_FLAGS.values()).bit_length()
-        value = (1 << bits) - 1
         self = cls.__new__(cls)
-        self.value = value
+        add_bits: Callable[[int, int], int] = lambda a, b: a | b
+        self.value = reduce(add_bits, cls.VALID_FLAGS.values())
         return self
 
     @classmethod
