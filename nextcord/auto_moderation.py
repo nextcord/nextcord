@@ -88,7 +88,7 @@ class AutoModerationTriggerMetadata:
 
     @classmethod
     def from_data(cls, data: TriggerMetadataPayload):
-        keyword_filter = data["keyword_filter"] if "keyword_filter" in data else None
+        keyword_filter = data.get("keyword_filter")
         presets = (
             [try_enum(KeywordPresetType, preset) for preset in data["presets"]]
             if "presets" in data
@@ -145,10 +145,8 @@ class AutoModerationActionMetadata:
 
     @classmethod
     def from_data(cls, data: ActionMetadataPayload):
-        channel_id: Optional[int] = _get_as_snowflake(data, "channel_id")
-        duration_seconds: Optional[int] = (
-            data["duration_seconds"] if "duration_seconds" in data else None
-        )
+        channel_id = _get_as_snowflake(data, "channel_id")
+        duration_seconds = data.get("duration_seconds")
 
         return cls(channel_id=channel_id, duration_seconds=duration_seconds)
 
