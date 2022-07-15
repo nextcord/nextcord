@@ -2145,7 +2145,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
     @property
     def qualified_name(self) -> str:
-        return self.parent_cmd.qualified_name + " " + str(self.name) if self.parent_cmd else self.name
+        return (
+            self.parent_cmd.qualified_name + " " + str(self.name) if self.parent_cmd else self.name
+        )
 
     async def call(
         self, state: ConnectionState, interaction: Interaction, option_data: List[dict]
