@@ -1074,7 +1074,7 @@ class BotBase(GroupMixin):
         -------
         List[:class:`str`]
             A list that contains the names of all of the extensions
-        that loaded successfully.
+            that loaded successfully.
 
         Raises
         ------
