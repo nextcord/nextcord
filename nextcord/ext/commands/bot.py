@@ -1076,13 +1076,12 @@ class BotBase(GroupMixin):
             A list that contains the names of all of the extensions
             that loaded successfully.
 
-        Raises
-        ------
-
         .. note::
 
             By default, these exceptions will not be raised but will be printed on screen.
 
+        Raises
+        ------
         ValueError
             The length of ``packages`` or the length of ``extras` is not equal to the length of ``names``.
         InvalidArgument
@@ -1151,13 +1150,12 @@ class BotBase(GroupMixin):
             A list that contains the names of all of the extensions
             that loaded successfully.
 
-        Raises
-        ------
-
         .. note::
 
             By default, these exceptions will not be raised but will be printed on screen.
 
+        Raises
+        ------
         ValueError
             The module at ``source_module`` is not found, or the module at ``source_module``
             has no submodules.
