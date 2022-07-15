@@ -866,7 +866,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     default_auto_archive_duration: :class:`int`
         The archive duration which threads from this channel inherit by default.
     last_message_id: :class:`int`
-        The snowflake ID of the last message sent to a thread in this channel.
+        The snowflake ID of the last thread in this channel.
     """
 
     __slots__ = (

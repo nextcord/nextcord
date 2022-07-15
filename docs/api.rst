@@ -1255,6 +1255,12 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.0
 
+    .. attribute:: forum
+
+        A forum channel.
+
+        .. versionadded:: 2.1
+
 .. class:: MessageType
 
     Specifies the type of :class:`Message`. This is used to denote if a message
@@ -4285,6 +4291,22 @@ PublicUserFlags
 .. attributetable:: PublicUserFlags
 
 .. autoclass:: PublicUserFlags()
+    :members:
+
+ChannelFlags
+~~~~~~~~~~~~
+
+.. attributetable:: ChannelFlags
+
+.. autoclass:: ChannelFlags()
+    :members:
+
+ForumChannel
+~~~~~~~~~~~~
+
+.. attributetable:: ForumChannel
+
+.. autoclass:: ForumChannel()
     :members:
 
 .. _discord_ui_kit:
