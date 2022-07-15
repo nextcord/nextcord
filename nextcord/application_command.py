@@ -2146,7 +2146,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
     @property
     def qualified_name(self) -> str:
         return (
-            self.parent_cmd.qualified_name + " " + str(self.name) if self.parent_cmd else self.name
+            self.parent_cmd.qualified_name + " " + str(self.name) if self.parent_cmd else str(self.name)
         )
 
     async def call(
