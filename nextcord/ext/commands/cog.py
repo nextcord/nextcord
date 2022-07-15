@@ -132,9 +132,9 @@ class CommandCog(Cog, metaclass=CommandCogMeta):
     :ref:`ext_commands_cogs` page.
     """
 
-    __cog_name__: ClassVar[str]
-    __cog_settings__: ClassVar[Dict[str, Any]]
-    __cog_commands__: ClassVar[List[Command]]
+    __cog_name__: str
+    __cog_settings__: Dict[str, Any]
+    __cog_commands__: List[Command]
     __cog_listeners__: List[Tuple[str, str]]
 
     def __new__(cls: Type[CogT], *args: Any, **kwargs: Any) -> CogT:

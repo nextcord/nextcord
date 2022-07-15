@@ -89,17 +89,15 @@ class CogMeta(type):
 
         .. code-block:: python3
 
-            class MyCog(nextcord.Cog, name='My Cog'):
+            class MyCog(nextcord.Cog, name="My Cog"):
                 pass
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The cog name. By default, it is the name of the class with no modification.
     description: :class:`str`
         The cog description. By default, it is the cleaned docstring of the class.
-
-        .. versionadded:: 1.6
     """
 
     __cog_name__: str
@@ -213,7 +211,7 @@ class Cog(metaclass=CogMeta):
 
     @property
     def application_commands(self) -> List[BaseApplicationCommand]:
-        """Provides the list of application commands in this cog. Subcommands are not included."""
+        """List[:class:`BaseApplicationCommand`]: Provides the list of application commands in this cog. Subcommands are not included."""
         return self.__cog_application_commands__
 
     @property
@@ -223,8 +221,9 @@ class Cog(metaclass=CogMeta):
 
     def get_listeners(self) -> List[Tuple[str, Callable[..., Any]]]:
         """Returns a :class:`list` of (name, function) listener pairs that are defined in this cog.
+
         Returns
-        --------
+        -------
         List[Tuple[:class:`str`, :ref:`coroutine <coroutine>`]]
             The listeners defined in this cog.
         """
@@ -235,13 +234,13 @@ class Cog(metaclass=CogMeta):
         """A decorator that marks a function as a listener.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The name of the event being listened to. If not provided, it
             defaults to the function's name.
 
         Raises
-        --------
+        ------
         TypeError
             The function is not a coroutine function or a string was not passed as
             the name.
@@ -302,7 +301,7 @@ class Cog(metaclass=CogMeta):
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
@@ -317,7 +316,7 @@ class Cog(metaclass=CogMeta):
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
