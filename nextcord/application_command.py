@@ -1244,7 +1244,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
 
 class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin):
     command: Union[SlashApplicationCommand, SlashApplicationSubcommand]
-    option_types = {
+    option_types: Dict[type, ApplicationCommandOptionType] = {
         str: ApplicationCommandOptionType.string,
         int: ApplicationCommandOptionType.integer,
         bool: ApplicationCommandOptionType.boolean,
@@ -1264,6 +1264,17 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         Attachment: ApplicationCommandOptionType.attachment,
     }
     """Maps Python annotations/typehints to Discord Application Command type values."""
+
+    channel_mapping: Dict[type, Tuple[ChannelType, ...]] = {
+        CategoryChannel: (ChannelType.category, ),
+        DMChannel: (ChannelType.private, ),
+        GroupChannel: (ChannelType.group, ),
+        StageChannel: (ChannelType.stage_voice, ),
+        TextChannel: (ChannelType.text, ChannelType.news, ),
+        VoiceChannel: (ChannelType.voice, ),
+        Thread: (ChannelType.news_thread, ChannelType.public_thread, ChannelType.private_thread, ),
+    }
+    """Maps Python channel annotations/typehints to Discord ChannelType values."""
 
     def __init__(
         self,
@@ -1308,12 +1319,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                     # If None is included, they want it to be optional. But we don't want None added to the choices.
                     annotation_required = False
 
-                # if lit_type in (int, str, float, type(None)):
                 elif lit_type in (int, str, float):
-                    # if lit is None:
-                    #
-                    #     annotation_required = False
-                    # else:
                     if found_type is MISSING:
                         # If we haven't set the type of the annotation, set it.
                         found_type = self.get_type(lit_type)
@@ -1389,24 +1395,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                             f"{self.error_name} | Annotation {anno} is incompatible with {found_type}"
                         )
 
-                    # Annotation specific changes.
-                    if anno is CategoryChannel:
-                        found_channel_types.append(ChannelType.category)
-                    elif anno is DMChannel:
-                        found_channel_types.append(ChannelType.private)
-                    elif anno is GroupChannel:
-                        found_channel_types.append(ChannelType.group)
-                    elif anno is StageChannel:
-                        found_channel_types.append(ChannelType.stage_voice)
-                    elif anno is TextChannel:
-                        found_channel_types.append(ChannelType.text)
-                        found_channel_types.append(ChannelType.news)
-                    elif anno is VoiceChannel:
-                        found_channel_types.append(ChannelType.voice)
-                    elif anno is Thread:
-                        found_channel_types.append(ChannelType.news_thread)
-                        found_channel_types.append(ChannelType.public_thread)
-                        found_channel_types.append(ChannelType.private_thread)
+                    if channel_types := self.channel_mapping.get(anno):
+                        found_channel_types.extend(channel_types)
 
             annotation_type = found_type
             if found_channel_types:
