@@ -950,7 +950,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         The last message ID of the message sent to this channel. It may
         *not* point to an existing or valid message.
 
-        .. versionadded:: 2.0
+        .. versionadded:: 2.1
     nsfw: :class:`bool`
         If the channel is marked as "not safe for work".
 
@@ -958,7 +958,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
             To check if the channel or the guild of that channel are marked as NSFW, consider :meth:`is_nsfw` instead.
 
-        .. versionadded:: 2.0
+        .. versionadded:: 2.1
     """
 
     __slots__ = (
@@ -1010,6 +1010,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             last message, consider using either :meth:`history`
             or :meth:`fetch_message` with the :attr:`last_message_id`
             attribute.
+
+        .. versionadded:: 2.1
 
         Returns
         ---------
@@ -1129,6 +1131,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         You must have the :attr:`~Permissions.manage_messages` permission to
         use this.
 
+        .. versionadded:: 2.1
+
         Parameters
         -----------
         messages: Iterable[:class:`abc.Snowflake`]
@@ -1183,6 +1187,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         delete messages even if they are your own.
         The :attr:`~Permissions.read_message_history` permission is
         also needed to retrieve message history.
+
+        .. versionadded:: 2.1
 
         Examples
         ---------

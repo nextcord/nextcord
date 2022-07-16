@@ -166,6 +166,7 @@ class Interaction:
         "application_command",
         "attached",
         "_permissions",
+        "_app_permissions",
         "_state",
         "_session",
         "_original_message",
@@ -199,11 +200,15 @@ class Interaction:
 
         self.message: Optional[Message]
         try:
-            self.message = Message(state=self._state, channel=self.channel, data=data["message"])  # type: ignore
+            message = data["message"]
+            self.message = self._state._get_message(int(message["id"])) or Message(
+                state=self._state, channel=self.channel, data=message  # type: ignore
+            )
         except KeyError:
             self.message = None
 
         self.user: Optional[Union[User, Member]] = None
+        self._app_permissions: int = int(data.get("app_permissions", 0))
         self._permissions: int = 0
 
         # TODO: there's a potential data loss here
@@ -214,11 +219,15 @@ class Interaction:
             except KeyError:
                 pass
             else:
-                self.user = Member(state=self._state, guild=guild, data=member)  # type: ignore
+                cached_member = self.guild and self.guild.get_member(int(member["user"]["id"]))  # type: ignore # user key should be present here
+                self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore # user key should be present here
                 self._permissions = int(member.get("permissions", 0))
         else:
             try:
-                self.user = User(state=self._state, data=data["user"])
+                user = data["user"]
+                self.user = self._state.get_user(int(user["id"])) or User(
+                    state=self._state, data=user
+                )
             except KeyError:
                 pass
 
@@ -277,6 +286,14 @@ class Interaction:
         In a non-guild context where this doesn't apply, an empty permissions object is returned.
         """
         return Permissions(self._permissions)
+
+    @property
+    def app_permissions(self) -> Permissions:
+        """:class:`Permissions`: The resolved permissions of the bot in the channel, including overwrites.
+
+        In a non-guild context where this doesn't apply, an empty permissions object is returned.
+        """
+        return Permissions(self._app_permissions)
 
     @utils.cached_slot_property("_cs_response")
     def response(self) -> InteractionResponse:

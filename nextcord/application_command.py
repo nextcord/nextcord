@@ -245,6 +245,14 @@ class ApplicationCommandOption:
         Minimum value the user can input. Should only be set if this is an integer or number option.
     max_value: Union[:class:`int`, :class:`float`]
         Minimum value the user can input. Should only be set if this is an integer or number option.
+    min_length: :class:`int`
+        Minimum length of a string the user can input. Should only be set if this is a string option.
+
+        .. versionadded:: 2.1
+    max_length: :class:`int`
+        Maximum length of a string the user can input. Should only be set if this is a string option.
+
+        .. versionadded:: 2.1
     autocomplete: :class:`bool`
         If the command option should have autocomplete enabled.
     """
@@ -265,6 +273,8 @@ class ApplicationCommandOption:
         channel_types: Optional[List[ChannelType]] = None,
         min_value: Union[int, float, None] = None,
         max_value: Union[int, float, None] = None,
+        min_length: Optional[int] = None,
+        max_length: Optional[int] = None,
         autocomplete: Optional[bool] = None,
     ):
         self.type: Optional[ApplicationCommandOptionType] = cmd_type
@@ -284,6 +294,8 @@ class ApplicationCommandOption:
         self.channel_types: Optional[List[ChannelType]] = channel_types
         self.min_value: Optional[Union[int, float]] = min_value
         self.max_value: Optional[Union[int, float]] = max_value
+        self.min_length: Optional[int] = min_length
+        self.max_length: Optional[int] = max_length
         self.autocomplete: Optional[bool] = autocomplete
 
     def get_name_localization_payload(self) -> Optional[Dict[str, str]]:
@@ -359,6 +371,12 @@ class ApplicationCommandOption:
 
         if self.max_value is not None:
             ret["max_value"] = self.max_value
+
+        if self.min_length is not None:
+            ret["min_length"] = self.min_length
+
+        if self.max_length is not None:
+            ret["max_length"] = self.max_length
 
         if self.autocomplete:
             ret["autocomplete"] = self.autocomplete
@@ -546,16 +564,6 @@ class ClientCog:
             The invocation interaction.
         """
         pass
-
-    @property
-    def to_register(self) -> List[BaseApplicationCommand]:
-        warnings.warn(
-            ".to_register is deprecated, please use .application_commands instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        # TODO: Remove at later date.
-        return self.__cog_application_commands__
 
 
 class CallbackMixin:
@@ -772,7 +780,7 @@ class CallbackMixin:
         # Global checks
         for check in interaction.client._connection._application_command_checks:
             try:
-                check_result = await maybe_coroutine(check, interaction)
+                check_result = await maybe_coroutine(check, interaction)  # type: ignore
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
@@ -796,7 +804,7 @@ class CallbackMixin:
         # Command checks
         for check in self.checks:
             try:
-                check_result = await maybe_coroutine(check, interaction)
+                check_result = await maybe_coroutine(check, interaction)  # type: ignore
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
@@ -1160,6 +1168,16 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
     max_value: Union[:class:`int`, :class:`float`]
         Maximum integer or floating point value the user is allowed to input. The parameter must be typed as an
         :class:`int` or :class:`float` for this to function.
+    min_length: :class:`int`
+        Minimum length for a string value the user is allowed to input. The parameter must be typed as a
+        :class:`str` for this to function.
+
+        .. versionadded:: 2.1
+    max_length: :class:`int`
+        Maximum length for a string value the user is allowed to input. The parameter must be typed as a
+        :class:`str` for this to function.
+
+        .. versionadded:: 2.1
     autocomplete: :class:`bool`
         If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
         if an autocomplete function for it is found.
@@ -1187,6 +1205,8 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         channel_types: Optional[List[ChannelType]] = None,
         min_value: Union[int, float, None] = None,
         max_value: Union[int, float, None] = None,
+        min_length: Optional[int] = None,
+        max_length: Optional[int] = None,
         autocomplete: Optional[bool] = None,
         autocomplete_callback: Optional[Callable] = None,
         default: Any = MISSING,
@@ -1203,6 +1223,8 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
             channel_types=channel_types,
             min_value=min_value,
             max_value=max_value,
+            min_length=min_length,
+            max_length=max_length,
             autocomplete=autocomplete,
         )
 
@@ -1400,6 +1422,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         self.min_value = cmd_arg.min_value
         self.max_value = cmd_arg.max_value
+        self.min_length = cmd_arg.min_length
+        self.max_length = cmd_arg.max_length
         self.autocomplete = cmd_arg.autocomplete
         self.autocomplete_callback = cmd_arg.autocomplete_callback
         if self.autocomplete_callback and self.autocomplete is None:
@@ -1511,6 +1535,30 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             raise ValueError(
                 "min_value or max_value can only be set if the type is integer or number."
             )
+
+        if self.min_length is not None and not isinstance(self.min_length, int):
+            raise ValueError("min_length must be an int.")
+
+        if self.max_length is not None and not isinstance(self.max_length, int):
+            raise ValueError("max_length must be an int.")
+
+        if self.min_length is not None and self.min_length < 0:
+            raise ValueError("min_length must be greater than or equal to 0.")
+
+        if self.max_length is not None and self.max_length < 1:
+            raise ValueError("max_length must be greater than or equal to 1.")
+
+        # we check this ourselves because Discord doesn't do it yet
+        # see here: https://github.com/discord/discord-api-docs/issues/5149
+        if (
+            self.min_length is not None and self.max_length is not None
+        ) and self.min_length > self.max_length:
+            raise ValueError("min_length must be less than or equal to max_length")
+
+        if (self.min_length is not None or self.max_length is not None) and self.type is not (
+            ApplicationCommandOptionType.string
+        ):
+            raise ValueError("min_length or max_length can only be set if the type is a string.")
 
         return True
 
