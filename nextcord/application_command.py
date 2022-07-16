@@ -1404,9 +1404,11 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
                     # Theoretically, it COULD be an OptionConverter at this point if it somehow skipped passed the upper
                     #  two isinstance if statements AND didn't error on self.get_type.
-                    if channel_types := self.channel_mapping.get(
-                        anno.type if isinstance(anno, OptionConverter) else anno
-                    ):
+                    if isinstance(anno, ApplicationCommandOptionType) or isinstance(anno, OptionConverter):
+                        # This is probably from an option converter. An OptionType alone doesn't imply what
+                        #  channel types are desired, so we ignore it.
+                        pass
+                    elif channel_types := self.channel_mapping.get(anno):
                         found_channel_types.extend(channel_types)
 
             annotation_type = found_type
