@@ -1266,13 +1266,20 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
     """Maps Python annotations/typehints to Discord Application Command type values."""
 
     channel_mapping: Dict[type, Tuple[ChannelType, ...]] = {
-        CategoryChannel: (ChannelType.category, ),
-        DMChannel: (ChannelType.private, ),
-        GroupChannel: (ChannelType.group, ),
-        StageChannel: (ChannelType.stage_voice, ),
-        TextChannel: (ChannelType.text, ChannelType.news, ),
-        VoiceChannel: (ChannelType.voice, ),
-        Thread: (ChannelType.news_thread, ChannelType.public_thread, ChannelType.private_thread, ),
+        CategoryChannel: (ChannelType.category,),
+        DMChannel: (ChannelType.private,),
+        GroupChannel: (ChannelType.group,),
+        StageChannel: (ChannelType.stage_voice,),
+        TextChannel: (
+            ChannelType.text,
+            ChannelType.news,
+        ),
+        VoiceChannel: (ChannelType.voice,),
+        Thread: (
+            ChannelType.news_thread,
+            ChannelType.public_thread,
+            ChannelType.private_thread,
+        ),
     }
     """Maps Python channel annotations/typehints to Discord ChannelType values."""
 
