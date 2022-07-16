@@ -69,6 +69,8 @@ class _ApplicationCommandOptionOptional(TypedDict, total=False):
     channel_types: List[ChannelType]
     min_value: Union[int, float]
     max_value: Union[int, float]
+    min_length: int
+    max_length: int
     autocomplete: bool
 
 
