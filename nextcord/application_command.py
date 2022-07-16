@@ -3150,10 +3150,6 @@ def unpack_annotated(given_annotation, resolve_list: list = []) -> type:
     if origin is Annotated:
         located_annotation = MISSING
         arg_list = typing.get_args(given_annotation)
-        # for i in range(1, len(arg_list)):
-        #     if arg_list[i] in resolve_list:
-        #         located_annotation = arg_list[i]
-        #         break
         for arg in arg_list[1:]:
             if arg in resolve_list:
                 located_annotation = arg
@@ -3198,18 +3194,6 @@ def unpack_annotation(
             literal_ret.append(given_annotation)
 
     elif origin is Annotated:
-        # We want to treat it like the last annotation given.
-        # located_annotation = MISSING
-        # arg_list = typing.get_args(given_annotation)
-        # for i in range(1, len(arg_list)):
-        #     if arg_list[i] in annotated_list:
-        #         located_annotation = arg_list[i]
-        #         break
-        # for arg in arg_list[1:]:
-        #     if arg in annotated_list:
-        #
-        # if located_annotation is MISSING:
-        #     located_annotation = arg_list[-1]
         located_annotation = unpack_annotated(given_annotation, annotated_list)
 
         unpacked_type, unpacked_literal = unpack_annotation(located_annotation, annotated_list)
