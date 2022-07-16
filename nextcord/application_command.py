@@ -1389,8 +1389,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                     annotation_converters.append(made_converter)
                     anno = made_converter.type
 
-                if anno is None or anno == type(None):  # type: ignore
-                    # Ignore whatever your IDE tells you about the `==`, using `is` makes it not work.
+                if anno is None or anno is type(None):  # type: ignore
                     # If None is included, they want it to be optional. But we don't want None processed fully as anno.
                     annotation_required = False
                 else:
