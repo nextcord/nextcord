@@ -1506,7 +1506,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         # noinspection PyTypeChecker,PyUnboundLocalVariable
         if param_typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
-        elif valid_type := self.option_types.get(param_typing, None):  # type: ignore
+        elif valid_type := self.option_types.get(param_typing, None):
             return valid_type
         elif (
             type(None) in typing.get_args(param_typing)
