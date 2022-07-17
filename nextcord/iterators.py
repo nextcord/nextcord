@@ -523,7 +523,7 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         self.before: Optional[Snowflake] = before
         self.user_id = user_id
         self.action_type = action_type
-        self.after: Optional[Snowflake] = OLDEST_OBJECT
+        self.after: Optional[Snowflake] = after or OLDEST_OBJECT
         self._users = {}
         self._state = guild._state
 
@@ -531,14 +531,9 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
 
         self.entries = asyncio.Queue()
 
-        if self.reverse:
-            self._strategy = self._after_strategy
-            if self.before:
-                self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
-        else:
-            self._strategy = self._before_strategy
-            if self.after and self.after != OLDEST_OBJECT:
-                self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
+        self._strategy = self._before_strategy
+        if self.after and self.after != OLDEST_OBJECT:
+            self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
 
     async def _before_strategy(self, retrieve):
         before = self.before.id if self.before else None
@@ -555,22 +550,6 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
             if self.limit is not None:
                 self.limit -= retrieve
             self.before = Object(id=int(entries[-1]["id"]))
-        return data.get("users", []), entries
-
-    async def _after_strategy(self, retrieve):
-        after = self.after.id if self.after else None
-        data: AuditLogPayload = await self.request(
-            self.guild.id,
-            limit=retrieve,
-            user_id=self.user_id,
-            action_type=self.action_type,
-            after=after,
-        )
-        entries = data.get("audit_log_entries", [])
-        if len(data) and entries:
-            if self.limit is not None:
-                self.limit -= retrieve
-            self.after = Object(id=int(entries[0]["id"]))
         return data.get("users", []), entries
 
     async def next(self) -> AuditLogEntry:
