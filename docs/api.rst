@@ -4457,7 +4457,7 @@ Slash Options
     * - :class:`Optional` [<type>]
       - Makes the slash option not required with the type of the given <type>.
     * - :class:`Literal` [<choice1>, <choice2>, ...]
-      - Makes the slash option into a choice of the given type. All choices have to have the same data type.
+      - Makes the slash option into a choice of the given type. All choices have to be the same data type.
     * - :class:`Union` [<type1>, <type2>, ...]
       - Allows compatible annotations to be typehinted together. Channel types in a union will allow the slash option
         to be any of them.
