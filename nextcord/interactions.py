@@ -111,13 +111,30 @@ class InteractionAttached(dict):
         return f"<InteractionAttached {super().__repr__()}>"
 
 
-class Interaction:
+class Interaction(Hashable):
     """Represents a Discord interaction.
 
     An interaction happens when a user does an action that needs to
     be notified. Current examples are slash commands and components.
 
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interactions are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the interaction's hash.
+
     .. versionadded:: 2.0
+
+    .. versionchanged:: 2.1
+        :class:`Interaction` is now hashable.
 
     Attributes
     -----------
@@ -1190,7 +1207,7 @@ class _InteractionMessageMixin:
         await self._state._interaction.delete_original_message(delay=delay)
 
 
-class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
+class PartialInteractionMessage(_InteractionMessageMixin):
     """Represents the original interaction response message when only the
     application state and interaction token are available.
 
@@ -1202,7 +1219,28 @@ class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
     The :meth:`~PartialInteractionMessage.fetch` method can be used to
     retrieve the full :class:`InteractionMessage` object.
 
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two partial interaction messages are equal.
+
+        .. describe:: x != y
+
+            Checks if two partial interaction messages are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the partial interaction message's hash.
+
     .. versionadded:: 2.0
+
+    .. versionchanged:: 2.1
+        :class:`PartialInteractionMessage` is now hashable by :attr:`Interaction.id`.
+
+    .. note::
+        The hash of a :class:`PartialInteractionMessage` is the same as the hash of the
+        :class:`Interaction` that it is associated with but not that of the full :class:`InteractionMessage`.
     """
 
     def __init__(self, state: _InteractionMessageState):
@@ -1254,6 +1292,20 @@ class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
 
     def __repr__(self):
         return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, PartialInteractionMessage)
+            and self._state._interaction == other._state._interaction
+        )
+
+    def __ne__(self, other: object) -> bool:
+        if isinstance(other, PartialInteractionMessage):
+            return self._state._interaction != other._state._interaction
+        return True
+
+    def __hash__(self) -> int:
+        return hash(self._state._interaction)
 
 
 class InteractionMessage(_InteractionMessageMixin, Message):
