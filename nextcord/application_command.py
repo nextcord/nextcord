@@ -1584,7 +1584,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
     @property
     def qualified_name(self) -> str:
-        """Retrieves the fully qualified command name."""
+        """:class:`str`: Retrieves the fully qualified command name."""
         return str(self.name)
 
     @property
@@ -2145,6 +2145,12 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
     @property
     def qualified_name(self) -> str:
+        """:class:`str`: Retrieve the command name including all parents space separated.
+        
+        An example of the output would be `parent group subcommand`.
+
+        .. versionadded:: 2.1
+        """
         return (
             self.parent_cmd.qualified_name + " " + str(self.name)
             if self.parent_cmd
