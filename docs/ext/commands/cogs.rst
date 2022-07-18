@@ -5,7 +5,7 @@
 Cogs
 ======
 
-:class:`~.commands.CommandCog` is like :class:`~.Cog` except it adds support for :class:`~.commands.Command`
+:class:`~.commands.Cog` is like :class:`~.Cog` except it adds support for :class:`~.commands.Command`
 and more special methods.
 
 It should be noted that cogs are typically used alongside with :ref:`ext_commands_extensions`.
@@ -47,13 +47,13 @@ As cogs get more complicated and have more commands, there comes a point where w
 
 They are as follows:
 
-- :meth:`.CommandCog.cog_unload`
-- :meth:`.CommandCog.cog_check`
-- :meth:`.CommandCog.cog_command_error`
-- :meth:`.CommandCog.cog_before_invoke`
-- :meth:`.CommandCog.cog_after_invoke`
-- :meth:`.CommandCog.bot_check`
-- :meth:`.CommandCog.bot_check_once`
+- :meth:`.Cog.cog_unload`
+- :meth:`.Cog.cog_check`
+- :meth:`.Cog.cog_command_error`
+- :meth:`.Cog.cog_before_invoke`
+- :meth:`.Cog.cog_after_invoke`
+- :meth:`.Cog.bot_check`
+- :meth:`.Cog.bot_check_once`
 
 You can visit the reference to get more detail and see additional special methods in :ref:`cog`.
 
