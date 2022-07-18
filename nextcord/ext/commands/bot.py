@@ -1076,8 +1076,8 @@ class BotBase(GroupMixin):
                 # main.py
                 bot.load_extensions(
                     [
-                        ".mycog",
-                        ".mycogtwo",
+                        ".my_cog",
+                        ".my_cog_two",
                     ],
                     packages=[
                         "cogs.coolcog",
@@ -1085,7 +1085,7 @@ class BotBase(GroupMixin):
                     ],
                 )
 
-                # cogs/coolcog/mycog.py
+                # cogs/coolcog/my_cog.py
                 class MyCog(commands.Cog):
                     def __init__(self, bot):
                         self.bot = bot
@@ -1097,7 +1097,7 @@ class BotBase(GroupMixin):
                     bot.add_cog(MyCog(bot))
 
 
-                # cogs/coolcogtwo/mycogtwo.py
+                # cogs/coolcogtwo/my_cog_two.py
                 class MyCogTwo(commands.Cog):
                     def __init__(self, bot):
                         self.bot = bot
@@ -1116,18 +1116,18 @@ class BotBase(GroupMixin):
                 # main.py
                 bot.load_extensions(
                     [
-                        ".mycog",
-                        ".mycogtwo",
+                        ".my_cog",
+                        ".my_cog_two",
                     ],
                     package="cogs",
-                    extras=[{"myattribute": 11}, {"myotherattribute": 12}],
+                    extras=[{"my_attribute": 11}, {"my_other_attribute": 12}],
                 )
 
-                # cogs/mycog.py
+                # cogs/my_cog.py
                 class MyCog(commands.Cog):
-                    def __init__(self, bot, myattribute):
+                    def __init__(self, bot, my_attribute):
                         self.bot = bot
-                        self.myattribute = myattribute
+                        self.my_attribute = my_attribute
 
                     # ...
 
@@ -1136,17 +1136,17 @@ class BotBase(GroupMixin):
                     bot.add_cog(MyCog(bot, **kwargs))
 
 
-                # cogs/mycogtwo.py
+                # cogs/my_cog_two.py
                 class MyCogTwo(commands.Cog):
-                    def __init__(self, bot, myotherattribute):
+                    def __init__(self, bot, my_other_attribute):
                         self.bot = bot
-                        self.myotherattribute = myotherattribute
+                        self.my_other_attribute = my_other_attribute
 
                     # ...
 
 
-                def setup(bot, myotherattribute):
-                    bot.add_cog(MyCogTwo(bot, myotherattribute))
+                def setup(bot, my_other_attribute):
+                    bot.add_cog(MyCogTwo(bot, my_other_attribute))
 
         stop_at_error: :class:`bool`
             Whether or not an exception should be raised if we encounter one. Set to ``False`` by
