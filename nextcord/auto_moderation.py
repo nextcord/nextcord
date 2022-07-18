@@ -287,3 +287,25 @@ class AutoModerationRule(Hashable):
 
     def __str__(self) -> str:
         return self.name
+
+    async def delete(self, *, reason: Optional[str] = None) -> None:
+        """|coro|
+
+        Delete the current rule from its guild.
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        Parameters
+        ----------
+        reason: Optional[:class:`str`]
+            The reason for deleting this rule. Shows up on the audit log.
+
+        Raises
+        ------
+        Forbidden
+            You do not have permission to delete this rule.
+        HTTPException
+            Deleting the rule failed.
+        """
+
+        await self._state.http.delete_auto_moderation_rule(self.guild_id, self.id, reason=reason)
