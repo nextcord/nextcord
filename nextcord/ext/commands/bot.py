@@ -1071,7 +1071,7 @@ class BotBase(GroupMixin):
             This is required when loading an extension using a relative path, e.g ``.foo.test``.
             Defaults to ``None``.
 
-            Usage ::
+            Usage::
 
                 # main.py
                 bot.load_extensions(
@@ -1092,10 +1092,8 @@ class BotBase(GroupMixin):
 
                     # ...
 
-
                 def setup(bot):
                     bot.add_cog(MyCog(bot))
-
 
                 # cogs/coolcogtwo/my_cog_two.py
                 class MyCogTwo(commands.Cog):
@@ -1104,15 +1102,13 @@ class BotBase(GroupMixin):
 
                     # ...
 
-
                 def setup(bot):
                     bot.add_cog(MyCogTwo(bot))
-
 
         extras: Optional[List[Dict[:class:`str`, Any]]]
             A list of extra arguments to pass to the extension's setup function.
 
-            Usage ::
+            Usage::
 
                 # main.py
                 bot.load_extensions(
@@ -1132,10 +1128,8 @@ class BotBase(GroupMixin):
 
                     # ...
 
-
                 def setup(bot, **kwargs):
                     bot.add_cog(MyCog(bot, **kwargs))
-
 
                 # cogs/my_cog_two.py
                 class MyCogTwo(commands.Cog):
@@ -1145,10 +1139,8 @@ class BotBase(GroupMixin):
 
                     # ...
 
-
                 def setup(bot, my_other_attribute):
                     bot.add_cog(MyCogTwo(bot, my_other_attribute))
-
 
         stop_at_error: :class:`bool`
             Whether or not an exception should be raised if we encounter one. Set to ``False`` by
