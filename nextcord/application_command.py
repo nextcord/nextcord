@@ -1542,7 +1542,7 @@ class SlashCommandMixin(CallbackMixin):
                     raise ValueError(f"default lambda has to take in one parameter, not {len_params}!")
                 default = default(interaction)
 
-            kwargs[uncalled_arg.functional_name] = uncalled_arg.default
+            kwargs[uncalled_arg.functional_name] = default
 
         return kwargs
 
