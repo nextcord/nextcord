@@ -31,10 +31,12 @@ import collections.abc
 import copy
 import importlib.util
 import inspect
+import os
 import sys
 import traceback
 import types
 import warnings
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -42,6 +44,7 @@ from typing import (
     Callable,
     Dict,
     Iterable,
+    Iterator,
     List,
     Mapping,
     Optional,
@@ -890,7 +893,7 @@ class BotBase(GroupMixin):
             Usage ::
 
                 # main.py
-                bot.load_extensions("cogs.me_cog", extras={"keyword_arg": True})
+                bot.load_extension("cogs.me_cog", extras={"keyword_arg": True})
 
                 # cogs/me_cog.py
                 class MeCog(commands.Cog):
@@ -1037,6 +1040,231 @@ class BotBase(GroupMixin):
             # revert sys.modules back to normal and raise back to caller
             sys.modules.update(modules)
             raise
+
+    def load_extensions(
+        self,
+        names: List[str],
+        *,
+        package: Optional[str] = None,
+        packages: Optional[List[str]] = None,
+        extras: Optional[List[Dict[str, Any]]] = None,
+        stop_at_error: bool = False,
+    ) -> List[str]:
+        """Loads all extensions provided in a list.
+
+        .. note::
+
+            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/`stderr`).
+
+        .. versionadded:: 2.1
+
+        Parameters
+        ----------
+        names: List[:class:`str`]
+            The names of all of the extensions to load.
+        package: Optional[:class:`str`]
+            The package name to resolve relative imports with.
+            This is required when loading an extension using a relative path, e.g ``.foo.test``.
+            Defaults to ``None``.
+        packages: Optional[List[:class:`str`]]
+            A list of package names to resolve relative imports with.
+            This is required when loading an extension using a relative path, e.g ``.foo.test``.
+            Defaults to ``None``.
+
+            Usage::
+
+                # main.py
+                bot.load_extensions(
+                    [
+                        ".my_cog",
+                        ".my_cog_two",
+                    ],
+                    packages=[
+                        "cogs.coolcog",
+                        "cogs.coolcogtwo",
+                    ],
+                )
+
+                # cogs/coolcog/my_cog.py
+                class MyCog(commands.Cog):
+                    def __init__(self, bot):
+                        self.bot = bot
+
+                    # ...
+
+                def setup(bot):
+                    bot.add_cog(MyCog(bot))
+
+                # cogs/coolcogtwo/my_cog_two.py
+                class MyCogTwo(commands.Cog):
+                    def __init__(self, bot):
+                        self.bot = bot
+
+                    # ...
+
+                def setup(bot):
+                    bot.add_cog(MyCogTwo(bot))
+
+        extras: Optional[List[Dict[:class:`str`, Any]]]
+            A list of extra arguments to pass to the extension's setup function.
+
+            Usage::
+
+                # main.py
+                bot.load_extensions(
+                    [
+                        ".my_cog",
+                        ".my_cog_two",
+                    ],
+                    package="cogs",
+                    extras=[{"my_attribute": 11}, {"my_other_attribute": 12}],
+                )
+
+                # cogs/my_cog.py
+                class MyCog(commands.Cog):
+                    def __init__(self, bot, my_attribute):
+                        self.bot = bot
+                        self.my_attribute = my_attribute
+
+                    # ...
+
+                def setup(bot, **kwargs):
+                    bot.add_cog(MyCog(bot, **kwargs))
+
+                # cogs/my_cog_two.py
+                class MyCogTwo(commands.Cog):
+                    def __init__(self, bot, my_other_attribute):
+                        self.bot = bot
+                        self.my_other_attribute = my_other_attribute
+
+                    # ...
+
+                def setup(bot, my_other_attribute):
+                    bot.add_cog(MyCogTwo(bot, my_other_attribute))
+
+        stop_at_error: :class:`bool`
+            Whether or not an exception should be raised if we encounter one. Set to ``False`` by
+            default.
+
+        Returns
+        -------
+        List[:class:`str`]
+            A list that contains the names of all of the extensions
+            that loaded successfully.
+
+        Raises
+        ------
+        ValueError
+            The length of ``packages`` or the length of ``extras` is not equal to the length of ``names``.
+        InvalidArgument
+            You passed in both ``package`` and ``packages``.
+        ExtensionNotFound
+            An extension could not be imported.
+        ExtensionAlreadyLoaded
+            An extension is already loaded.
+        NoEntryPointError
+            An extension does not have a setup function.
+        ExtensionFailed
+            An extension or its setup function had an execution error.
+        """
+        if package and packages:
+            raise errors.BadArgument("Cannot provide both package and packages.")
+        if packages and len(packages) != len(names):
+            raise ValueError("The length of packages must match the length of extensions.")
+        if extras and len(extras) != len(names):
+            raise ValueError("The length of extra parameters must match the length of extensions.")
+
+        packages_itr: Optional[Iterator] = iter(packages) if packages else None
+        extras_itr: Optional[Iterator] = iter(extras) if extras else None
+
+        loaded_extensions: List[str] = []
+
+        for extension in names:
+            if packages_itr:
+                package = next(packages_itr)
+            cur_extra: Optional[Dict[str, Any]] = next(extras_itr) if extras_itr else None
+
+            try:
+                self.load_extension(extension, package=package, extras=cur_extra)
+            except Exception as e:
+                if stop_at_error:
+                    raise e
+                else:
+                    # we print the exception instead of raising it because we want to continue loading extensions
+                    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+            else:
+                loaded_extensions.append(extension)
+
+        return loaded_extensions
+
+    def load_extensions_from_module(
+        self, source_module: str, *, ignore: Optional[List[str]] = None, stop_at_error: bool = False
+    ) -> List[str]:
+        """Loads all extensions found in a module.
+
+        Once an extension found in a module has been loaded and did not throw
+        any exceptions, it will be added to a list of extension names that
+        will be returned.
+
+        .. note::
+
+            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/`stderr`).
+
+        .. versionadded:: 2.1
+
+        Parameters
+        ----------
+        source_module: :class:`str`
+            The name of the source module to look for submodules.
+        ignore: Optional[List[:class:`str`]]
+            File names of extensions to ignore.
+        stop_at_error: :class:`bool`
+            Whether or not an exception should be raised if we encounter one. Set to ``False`` by
+            default.
+
+        Returns
+        -------
+        List[:class:`str`]
+            A list that contains the names of all of the extensions
+            that loaded successfully.
+
+        Raises
+        ------
+        ValueError
+            The module at ``source_module`` is not found, or the module at ``source_module``
+            has no submodules.
+        ExtensionNotFound
+            An extension could not be imported.
+        ExtensionAlreadyLoaded
+            An extension is already loaded.
+        NoEntryPointError
+            An extension does not have a setup function.
+        ExtensionFailed
+            An extension or its setup function had an execution error.
+        """
+        name = self._resolve_name(source_module, None)
+        spec = importlib.util.find_spec(name)
+        if spec is None:
+            raise ValueError(f"Module {name} not found")
+
+        submodule_paths = spec.submodule_search_locations
+        if submodule_paths is None:
+            raise ValueError(f"Module {name} has no submodules")
+
+        extensions: List[str] = []
+
+        for submodule_path in submodule_paths:
+            submodules = [
+                (f"{name}.{submodule[:-3]}" if submodule.endswith(".py") else f"{name}.{submodule}")
+                for submodule in os.listdir(submodule_path)
+                if not submodule.startswith("_")
+            ]
+            if ignore is not None:
+                submodules = [s for s in submodules if s not in ignore]
+
+            extensions.extend(self.load_extensions(submodules, stop_at_error=stop_at_error))
+
+        return extensions
 
     @property
     def extensions(self) -> Mapping[str, types.ModuleType]:
