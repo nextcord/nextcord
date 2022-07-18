@@ -1175,6 +1175,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param rule: The rule that was created.
     :type rule: :class:`AutoModerationRule`
 
+.. funcction:: on_auto_moderation_rule_update(rule)
+
+    Called when a :class:`AutoModerationRule` is edited.
+
+    .. versionadded:: 2.1
+
+    :param rule: The newly edited rule.
+    :type rule: :class:`AutoModerationRule`
+
 .. _discord-api-utils:
 
 Utility Functions

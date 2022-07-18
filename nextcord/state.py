@@ -2277,6 +2277,9 @@ class ConnectionState:
             AutoModerationRule(data=data, state=self),
         )
 
+    def parse_auto_moderation_rule_update(self, data) -> None:
+        self.dispatch("auto_moderation_rule_update", AutoModerationRule(data=data, state=self))
+
 
 class AutoShardedConnectionState(ConnectionState):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
