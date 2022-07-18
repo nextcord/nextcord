@@ -1539,7 +1539,9 @@ class SlashCommandMixin(CallbackMixin):
             if callable(default):
                 len_params = len(signature(default).parameters)
                 if len_params != 1:
-                    raise ValueError(f"default lambda has to take in one parameter, not {len_params}!")
+                    raise ValueError(
+                        f"default lambda has to take in one parameter, not {len_params}!"
+                    )
                 default = default(interaction)
 
             kwargs[uncalled_arg.functional_name] = default
