@@ -33,15 +33,18 @@ from .enums import (
     KeywordPresetType,
     try_enum,
 )
+from .errors import InvalidArgument
 from .mixins import Hashable
-from .utils import _get_as_snowflake
+from .utils import MISSING, _get_as_snowflake
 
 if TYPE_CHECKING:
+    from .abc import Snowflake
     from .state import ConnectionState
     from .types.auto_moderation import (
         AutoModerationAction as AutoModerationActionPayload,
         AutoModerationActionMetadata as ActionMetadataPayload,
         AutoModerationRule as AutoModerationRulePayload,
+        AutoModerationRuleModify,
         AutoModerationTriggerMetadata as TriggerMetadataPayload,
     )
 
@@ -176,11 +179,12 @@ class AutoModerationAction:
         The additional metadata needed during execution for this specific action type.
     """
 
-    __slots__ = ("type", "metadata")
+    __slots__ = ("type", "metadata", "_data")
 
     def __init__(self, data: AutoModerationActionPayload) -> None:
         self.type = try_enum(AutoModerationActionType, data["type"])
         self.metadata = AutoModerationActionMetadata.from_data(data.get("metadata", {}))
+        self._data = data
 
 
 class AutoModerationRule(Hashable):
@@ -309,3 +313,51 @@ class AutoModerationRule(Hashable):
         """
 
         await self._state.http.delete_auto_moderation_rule(self.guild_id, self.id, reason=reason)
+
+    async def edit(
+        self,
+        *,
+        name: str = MISSING,
+        event_type: AutoModerationEventType = MISSING,
+        trigger_metadata: AutoModerationTriggerMetadata = MISSING,
+        actions: List[AutoModerationAction] = MISSING,
+        enabled: bool = MISSING,
+        exempt_roles: List[Snowflake] = MISSING,
+        exempt_channels: List[Snowflake] = MISSING,
+        reason: Optional[str] = None,
+    ) -> AutoModerationRule:
+        payload: AutoModerationRuleModify = {}
+
+        if name is not MISSING:
+            payload["name"] = name
+
+        if event_type is not MISSING:
+            if not isinstance(event_type, AutoModerationEventType):
+                raise InvalidArgument("event_type must be of type AutoModerationEventType")
+
+            payload["event_type"] = event_type.value
+
+        if trigger_metadata is not MISSING:
+            if not isinstance(trigger_metadata, AutoModerationTriggerMetadata):
+                raise InvalidArgument(
+                    "trigger_metadata must be of type AutoModerationTriggerMetadata"
+                )
+
+            payload["trigger_metadata"] = trigger_metadata.payload
+
+        if actions is not MISSING:
+            payload["actions"] = [action._data for action in actions]
+
+        if enabled is not MISSING:
+            payload["enabled"] = enabled
+
+        if exempt_roles is not MISSING:
+            payload["exempt_roles"] = [str(role.id) for role in exempt_roles]
+
+        if exempt_channels is not MISSING:
+            payload["exempt_channels"] = [str(channel.id) for channel in exempt_channels]
+
+        data = await self._state.http.modify_auto_moderation_rule(
+            self.guild_id, self.id, data=payload, reason=reason
+        )
+        return AutoModerationRule(data=data, state=self._state)
