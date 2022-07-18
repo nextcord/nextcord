@@ -1075,8 +1075,14 @@ class BotBase(GroupMixin):
 
                 # main.py
                 bot.load_extensions(
-                    [".mycog", ".mycogtwo",],
-                    packages=["cogs.coolcog", "cogs.coolcogtwo",]
+                    [
+                        ".mycog",
+                        ".mycogtwo",
+                    ],
+                    packages=[
+                        "cogs.coolcog",
+                        "cogs.coolcogtwo",
+                    ],
                 )
 
                 # cogs/coolcog/mycog.py
@@ -1086,8 +1092,10 @@ class BotBase(GroupMixin):
 
                     # ...
 
+
                 def setup(bot):
                     bot.add_cog(MyCog(bot))
+
 
                 # cogs/coolcogtwo/mycogtwo.py
                 class MyCogTwo(commands.Cog):
@@ -1095,6 +1103,7 @@ class BotBase(GroupMixin):
                         self.bot = bot
 
                     # ...
+
 
                 def setup(bot):
                     bot.add_cog(MyCogTwo(bot))
@@ -1106,9 +1115,12 @@ class BotBase(GroupMixin):
 
                 # main.py
                 bot.load_extensions(
-                    [".mycog", ".mycogtwo",],
+                    [
+                        ".mycog",
+                        ".mycogtwo",
+                    ],
                     package="cogs",
-                    extras=[{"myattribute": 11}, {"myotherattribute": 12}]
+                    extras=[{"myattribute": 11}, {"myotherattribute": 12}],
                 )
 
                 # cogs/mycog.py
@@ -1119,8 +1131,10 @@ class BotBase(GroupMixin):
 
                     # ...
 
+
                 def setup(bot, **kwargs):
                     bot.add_cog(MyCog(bot, **kwargs))
+
 
                 # cogs/mycogtwo.py
                 class MyCogTwo(commands.Cog):
@@ -1129,6 +1143,7 @@ class BotBase(GroupMixin):
                         self.myotherattribute = myotherattribute
 
                     # ...
+
 
                 def setup(bot, myotherattribute):
                     bot.add_cog(MyCogTwo(bot, myotherattribute))
