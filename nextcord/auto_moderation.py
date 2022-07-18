@@ -326,6 +326,42 @@ class AutoModerationRule(Hashable):
         exempt_channels: List[Snowflake] = MISSING,
         reason: Optional[str] = None,
     ) -> AutoModerationRule:
+        """Modify the current auto moderation rule.
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The new name for this rule.
+        event_type: :class:`AutoModerationEventType`
+            The new event context in which this rule is checked.
+        trigger_metadata: :class:`AutoModerationTriggerMetadata`
+            The new additional data that is used when checking if this rule is triggered.
+        actions: List[:class:`AutoModerationAction`]
+            The new actions which will execute when the rule is triggered.
+        enabled: :class:`bool`
+            Whether the rule is enabled.
+        exempt_roles: List[:class:`abc.Snowflake`]
+            The new roles that should not be affected by the rule.
+        exempt_channels: List[:class:`abc.Snowflake`]
+            The new channels that should not be affected by the rule.
+        reason: Optional[:class:`str`]
+            The reason for editing this rule. Shows in the audit log.
+
+        Raises
+        ------
+        Forbidden
+            You do not have permission to edit this rule.
+        HTTPException
+            Editing the rule failed.
+
+        Returns
+        -------
+        :class:`AutoModerationRule`
+            The newly edited auto moderation rule.
+        """
+
         payload: AutoModerationRuleModify = {}
 
         if name is not MISSING:
