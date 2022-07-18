@@ -1166,6 +1166,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param user: The user that interested.
     :type user: :class:`ScheduledEventUser`
 
+.. function:: on_auto_moderation_rule_create(rule)
+
+    Called when a :class:`AutoModerationRule` is created.
+
+    .. versionadded:: 2.1
+
+    :param rule: The rule that was created.
+    :type rule: :class:`AutoModerationRule`
+
 .. _discord-api-utils:
 
 Utility Functions
