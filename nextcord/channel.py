@@ -2303,6 +2303,21 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         """
         return await self.guild.create_stage_channel(name, category=self, **options)
 
+    async def create_forum_channel(self, name: str, **options: Any) -> ForumChannel:
+        """|coro|
+
+        A shortcut method to :meth:`Guild.create_forum_channel` to create a :class:`ForumChannel`
+        in the category.
+
+        .. versionadded:: 2.1
+
+        Returns
+        -------
+        :class:`ForumChannel`
+            The channel that was just created.
+        """
+        return await self.guild.create_forum_channel(name, category=self, **options)
+
 
 DMC = TypeVar("DMC", bound="DMChannel")
 
