@@ -30,6 +30,7 @@ from .audit_logs import *
 from .bans import *
 from .channel import *
 from .client import *
+from .cog import *
 from .colour import *
 from .components import *
 from .embeds import *

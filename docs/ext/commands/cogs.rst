@@ -5,7 +5,7 @@
 Cogs
 ======
 
-:class:`~.commands.Cog` is like :class:`~.Cog` except it adds support for :class:`~.commands.Command`
+:class:`~.commands.Cog` is like :class:`nextcord.Cog` except it adds support for :class:`~.commands.Command`
 and more special methods.
 
 It should be noted that cogs are typically used alongside with :ref:`ext_commands_extensions`.
@@ -43,7 +43,7 @@ This example cog defines a ``Greetings`` category for your commands, with a sing
 Special Methods
 -----------------
 
-As cogs get more complicated and have more commands, there comes a point where we want to customise the behaviour of the entire cog or bot.
+Special Methods are exactly like what they are in :class:`nextcord.Cog`, however there are additional special methods.
 
 They are as follows:
 
@@ -55,7 +55,16 @@ They are as follows:
 - :meth:`.Cog.bot_check`
 - :meth:`.Cog.bot_check_once`
 
-You can visit the reference to get more detail and see additional special methods in :ref:`cog`.
+You can visit the reference to get more detail and see additional special methods in :ref:`cogs`.
+
+.. _ext_commands_cogs_meta_options:
+
+Meta Options
+--------------
+
+Meta options are exactly like what they are in :class:`nextcord.Cog`, however there is an additional option.
+
+If you would like to see what this extra option is, see the documentation of :class:`.CogMeta`. 
 
 Inspection
 ------------

@@ -128,7 +128,7 @@ class Cog(metaclass=CogMeta):
     help group commands together. More information on them can be found on
     the :ref:`cogs` page.
 
-    When inheriting from this class, the options shown in :class:`CogMeta`
+    When inheriting from this class, the options shown in :class:`nextcord.CogMeta`
     are equally valid here.
     """
 
