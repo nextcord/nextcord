@@ -1034,8 +1034,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
         Returns
         --------
-        Optional[:class:`.TextChannel`]
-            The newly edited text channel.
+        :class:`.ForumChannel`
+            The newly edited forum channel.
         """
 
         payload = await self._edit(options, reason=reason)
