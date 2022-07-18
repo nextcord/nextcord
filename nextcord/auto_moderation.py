@@ -295,7 +295,7 @@ class AutoModerationRule(Hashable):
         self.event_type = try_enum(AutoModerationEventType, data["event_type"])
         self.trigger_type = try_enum(AutoModerationTriggerType, data["trigger_type"])
         self.trigger_metadata = AutoModerationTriggerMetadata.from_data(data["trigger_metadata"])
-        self.actions = [AutoModerationAction(data=action) for action in data["actions"]]
+        self.actions = [AutoModerationAction.from_data(data=action) for action in data["actions"]]
         self.enabled = data["enabled"]
         self.exempt_role_ids = [int(role_id) for role_id in data["exempt_roles"]]
         self.exempt_channel_ids = [int(channel_id) for channel_id in data["exempt_channels"]]
@@ -376,6 +376,8 @@ class AutoModerationRule(Hashable):
             You do not have permission to edit this rule.
         HTTPException
             Editing the rule failed.
+        InvalidArgument
+            An incorrect type was passed.
 
         Returns
         -------
@@ -403,7 +405,7 @@ class AutoModerationRule(Hashable):
             payload["trigger_metadata"] = trigger_metadata.payload
 
         if actions is not MISSING:
-            payload["actions"] = [action._data for action in actions]
+            payload["actions"] = [action.payload for action in actions]
 
         if enabled is not MISSING:
             payload["enabled"] = enabled
