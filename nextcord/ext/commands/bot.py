@@ -1071,7 +1071,7 @@ class BotBase(GroupMixin):
             This is required when loading an extension using a relative path, e.g ``.foo.test``.
             Defaults to ``None``.
 
-            Usage::
+            Usage ::
 
                 # main.py
                 bot.load_extensions(
@@ -1112,7 +1112,7 @@ class BotBase(GroupMixin):
         extras: Optional[List[Dict[:class:`str`, Any]]]
             A list of extra arguments to pass to the extension's setup function.
 
-            Usage::
+            Usage ::
 
                 # main.py
                 bot.load_extensions(
