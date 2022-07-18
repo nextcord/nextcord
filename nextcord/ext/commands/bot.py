@@ -893,7 +893,7 @@ class BotBase(GroupMixin):
             Usage ::
 
                 # main.py
-                bot.load_extensions("cogs.me_cog", extras={"keyword_arg": True})
+                bot.load_extension("cogs.me_cog", extras={"keyword_arg": True})
 
                 # cogs/me_cog.py
                 class MeCog(commands.Cog):
@@ -1052,6 +1052,12 @@ class BotBase(GroupMixin):
     ) -> List[str]:
         """Loads all extensions provided in a list.
 
+        .. note::
+
+            By default, any exceptions found while loading will not be raised but will be printed on screen.
+
+        .. versionadded:: 2.1
+
         Parameters
         ----------
         names: List[:class:`str`]
@@ -1061,11 +1067,72 @@ class BotBase(GroupMixin):
             This is required when loading an extension using a relative path, e.g ``.foo.test``.
             Defaults to ``None``.
         packages: Optional[List[:class:`str`]]
-            A list of packages to resolve relative imports with.
+            A list of package names to resolve relative imports with.
             This is required when loading an extension using a relative path, e.g ``.foo.test``.
             Defaults to ``None``.
+
+            Usage::
+
+                # main.py
+                bot.load_extensions(
+                    [".mycog", ".mycogtwo",],
+                    packages=["cogs.coolcog", "cogs.coolcogtwo",]
+                )
+
+                # cogs/coolcog/mycog.py
+                class MyCog(commands.Cog):
+                    def __init__(self, bot):
+                        self.bot = bot
+
+                    # ...
+
+                def setup(bot):
+                    bot.add_cog(MyCog(bot))
+
+                # cogs/coolcogtwo/mycogtwo.py
+                class MyCogTwo(commands.Cog):
+                    def __init__(self, bot):
+                        self.bot = bot
+
+                    # ...
+
+                def setup(bot):
+                    bot.add_cog(MyCogTwo(bot))
+
         extras: Optional[List[Dict[:class:`str`, Any]]]
             A list of extra arguments to pass to the extension's setup function.
+
+            Usage::
+
+                # main.py
+                bot.load_extensions(
+                    [".mycog", ".mycogtwo",],
+                    package="cogs",
+                    extras=[{"myattribute": 11}, {"myotherattribute": 12}]
+                )
+
+                # cogs/mycog.py
+                class MyCog(commands.Cog):
+                    def __init__(self, bot, myattribute):
+                        self.bot = bot
+                        self.myattribute = myattribute
+
+                    # ...
+
+                def setup(bot, **kwargs):
+                    bot.add_cog(MyCog(bot, **kwargs))
+
+                # cogs/mycogtwo.py
+                class MyCogTwo(commands.Cog):
+                    def __init__(self, bot, myotherattribute):
+                        self.bot = bot
+                        self.myotherattribute = myotherattribute
+
+                    # ...
+
+                def setup(bot, myotherattribute):
+                    bot.add_cog(MyCogTwo(bot, myotherattribute))
+
         stop_at_error: :class:`bool`
             Whether or not an exception should be raised if we encounter one. Set to ``False`` by
             default.
@@ -1075,10 +1142,6 @@ class BotBase(GroupMixin):
         List[:class:`str`]
             A list that contains the names of all of the extensions
             that loaded successfully.
-
-        .. note::
-
-            By default, these exceptions will not be raised but will be printed on screen.
 
         Raises
         ------
@@ -1130,9 +1193,15 @@ class BotBase(GroupMixin):
     ) -> List[str]:
         """Loads all extensions found in a module.
 
-        Once an extension found in a folder has been loaded and did not throw
+        Once an extension found in a module has been loaded and did not throw
         any exceptions, it will be added to a list of extension names that
         will be returned.
+
+        .. note::
+
+            By default, any exceptions found while loading will not be raised but will be printed on screen.
+
+        .. versionadded:: 2.1
 
         Parameters
         ----------
@@ -1149,10 +1218,6 @@ class BotBase(GroupMixin):
         List[:class:`str`]
             A list that contains the names of all of the extensions
             that loaded successfully.
-
-        .. note::
-
-            By default, these exceptions will not be raised but will be printed on screen.
 
         Raises
         ------
