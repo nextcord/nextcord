@@ -26,7 +26,7 @@ DEALINGS IN THE SOFTWARE.
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
 
 if TYPE_CHECKING:
-    from .cog import CommandCog
+    from .cog import Cog
     from .context import Context
     from .errors import CommandError
 
@@ -37,14 +37,14 @@ MaybeCoro = Union[T, Coro[T]]
 CoroFunc = Callable[..., Coro[Any]]
 
 Check = Union[
-    Callable[["CommandCog", "Context[Any]"], MaybeCoro[bool]],
+    Callable[["Cog", "Context[Any]"], MaybeCoro[bool]],
     Callable[["Context[Any]"], MaybeCoro[bool]],
 ]
 Hook = Union[
-    Callable[["CommandCog", "Context[Any]"], Coro[Any]], Callable[["Context[Any]"], Coro[Any]]
+    Callable[["Cog", "Context[Any]"], Coro[Any]], Callable[["Context[Any]"], Coro[Any]]
 ]
 Error = Union[
-    Callable[["CommandCog", "Context[Any]", "CommandError"], Coro[Any]],
+    Callable[["Cog", "Context[Any]", "CommandError"], Coro[Any]],
     Callable[["Context[Any]", "CommandError"], Coro[Any]],
 ]
 

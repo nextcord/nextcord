@@ -54,7 +54,7 @@ from typing import (
 import nextcord
 
 from . import errors
-from .cog import CommandCog
+from .cog import Cog
 from .context import Context
 from .core import GroupMixin
 from .help import DefaultHelpCommand, HelpCommand
@@ -238,7 +238,7 @@ class BotBase(GroupMixin):
 
         self.command_prefix = command_prefix if command_prefix is not MISSING else tuple()
         self.extra_events: Dict[str, List[CoroFunc]] = {}
-        self.__cogs: Dict[str, CommandCog] = {}
+        self.__cogs: Dict[str, Cog] = {}
         self.__extensions: Dict[str, types.ModuleType] = {}
         self._checks: List[Check] = []
         self._check_once = []
@@ -646,7 +646,7 @@ class BotBase(GroupMixin):
 
     # cogs
 
-    def add_cog(self, cog: CommandCog, *, override: bool = False) -> None:
+    def add_cog(self, cog: Cog, *, override: bool = False) -> None:
         """Adds a "cog" to the bot.
 
         A cog is a class that has its own event listeners and commands.
@@ -658,7 +658,7 @@ class BotBase(GroupMixin):
 
         Parameters
         -----------
-        cog: :class:`.CommandCog`
+        cog: :class:`.Cog`
             The cog to register to the bot.
         override: :class:`bool`
             If a previously loaded cog with the same name should be ejected
@@ -669,15 +669,15 @@ class BotBase(GroupMixin):
         Raises
         -------
         TypeError
-            The cog does not inherit from :class:`.CommandCog`.
+            The cog does not inherit from :class:`.Cog`.
         CommandError
             An error happened during loading.
         .ClientException
             A cog with the same name is already loaded.
         """
 
-        if not isinstance(cog, CommandCog):
-            raise TypeError("cogs must derive from CommandCog")
+        if not isinstance(cog, Cog):
+            raise TypeError("cogs must derive from Cog")
 
         cog_name = cog.__cog_name__
         existing = self.__cogs.get(cog_name)
@@ -698,7 +698,7 @@ class BotBase(GroupMixin):
         # Whatever warning that your IDE is giving about the above line of code is correct. When Bot + BotBase
         # inevitably get reworked, make me happy and fix this.
 
-    def get_cog(self, name: str) -> Optional[CommandCog]:
+    def get_cog(self, name: str) -> Optional[Cog]:
         """Gets the cog instance requested.
 
         If the cog is not found, ``None`` is returned instead.
@@ -712,12 +712,12 @@ class BotBase(GroupMixin):
 
         Returns
         --------
-        Optional[:class:`CommandCog`]
+        Optional[:class:`Cog`]
             The cog that was requested. If not found, returns ``None``.
         """
         return self.__cogs.get(name)
 
-    def remove_cog(self, name: str) -> Optional[CommandCog]:
+    def remove_cog(self, name: str) -> Optional[Cog]:
         """Removes a cog from the bot and returns it.
 
         All registered commands and event listeners that the
@@ -752,8 +752,8 @@ class BotBase(GroupMixin):
         return cog
 
     @property
-    def cogs(self) -> Mapping[str, CommandCog]:
-        """Mapping[:class:`str`, :class:`CommandCog`]: A read-only mapping of cog name to cog."""
+    def cogs(self) -> Mapping[str, Cog]:
+        """Mapping[:class:`str`, :class:`Cog`]: A read-only mapping of cog name to cog."""
         return types.MappingProxyType(self.__cogs)
 
     # extensions
@@ -893,7 +893,7 @@ class BotBase(GroupMixin):
                 bot.load_extensions("cogs.me_cog", extras={"keyword_arg": True})
 
                 # cogs/me_cog.py
-                class MeCog(commands.CommandCog):
+                class MeCog(commands.Cog):
                     def __init__(self, bot, keyword_arg):
                         self.bot = bot
                         self.keyword_arg = keyword_arg

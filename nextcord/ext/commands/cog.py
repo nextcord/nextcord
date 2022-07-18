@@ -37,7 +37,7 @@ from typing import (
 )
 
 import nextcord.utils
-from nextcord.cog import Cog, CogMeta, _cog_special_method
+from nextcord.cog import Cog as _Cog, CogMeta as _CogMeta, _cog_special_method
 
 from ._types import _BaseCommand
 
@@ -47,20 +47,20 @@ if TYPE_CHECKING:
     from .core import Command
 
 __all__ = (
-    "CommandCogMeta",
-    "CommandCog",
+    "CogMeta",
+    "Cog",
 )
 
-CogT = TypeVar("CogT", bound="CommandCog")
+CogT = TypeVar("CogT", bound="Cog")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
 MISSING: Any = nextcord.utils.MISSING
 
 
-class CommandCogMeta(CogMeta):
+class CogMeta(_CogMeta):
     """The custom metaclass for Command Cogs.
 
-    This class inherits from :class:`CogMeta`.
+    This class inherits from :class:`nextcord.CogMeta`.
 
     Attributes
     -----------
@@ -85,7 +85,7 @@ class CommandCogMeta(CogMeta):
     __cog_settings__: Dict[str, Any]
     __cog_commands__: List[Command]
 
-    def __new__(cls: Type[CommandCogMeta], *args: Any, **kwargs: Any) -> CommandCogMeta:
+    def __new__(cls: Type[CogMeta], *args: Any, **kwargs: Any) -> CogMeta:
         name, bases, attrs = args
         attrs["__cog_settings__"] = kwargs.pop("command_attrs", {})
         attrs["__cog_commands__"] = []
@@ -113,6 +113,8 @@ class CommandCogMeta(CogMeta):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
 
+        # pyright says that nextcord.CogMeta and commands.CogMeta are incompatible
+        # even though commands.CogMeta is a subclass of nextcord.CogMeta
         new_cls.__cog_commands__ = list(commands.values())  # type: ignore
         return new_cls  # type: ignore
 
@@ -124,10 +126,10 @@ class CommandCogMeta(CogMeta):
         return cls.__cog_name__
 
 
-class CommandCog(Cog, metaclass=CommandCogMeta):
+class Cog(_Cog, metaclass=CogMeta):
     """A base class that adds support for prefixed commands.
 
-    This class inherits from :class:`Cog` and uses the :class:`CommandCogMeta`
+    This class inherits from :class:`nextcord.Cog` and uses the :class:`.CogMeta`
     metaclass. More information on them can be found on the
     :ref:`ext_commands_cogs` page.
     """
@@ -329,10 +331,10 @@ class CommandCog(Cog, metaclass=CommandCogMeta):
                     raise e
 
         # check if we're overriding the default
-        if cls.bot_check is not CommandCog.bot_check:
+        if cls.bot_check is not Cog.bot_check:
             bot.add_check(self.bot_check)
 
-        if cls.bot_check_once is not CommandCog.bot_check_once:
+        if cls.bot_check_once is not Cog.bot_check_once:
             bot.add_check(self.bot_check_once, call_once=True)
 
         # while Bot.add_listener can raise if it's not a coroutine,
@@ -355,10 +357,10 @@ class CommandCog(Cog, metaclass=CommandCogMeta):
             for _, method_name in self.__cog_listeners__:
                 bot.remove_listener(getattr(self, method_name))
 
-            if cls.bot_check is not CommandCog.bot_check:
+            if cls.bot_check is not Cog.bot_check:
                 bot.remove_check(self.bot_check)
 
-            if cls.bot_check_once is not CommandCog.bot_check_once:
+            if cls.bot_check_once is not Cog.bot_check_once:
                 bot.remove_check(self.bot_check_once, call_once=True)
         finally:
             try:
