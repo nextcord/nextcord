@@ -1137,7 +1137,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         content = str(content) if content is not None else None
 
         if embed is not None and embeds is not None:
-            raise InvalidArgument("cannot pass both embed and embeds parameter to create_thread()")
+            raise InvalidArgument("Cannot pass both embed and embeds parameter to create_thread()")
 
         if embed is not None:
             raw_embeds = [embed.to_dict()]
@@ -1165,14 +1165,14 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
         if view:
             if not hasattr(view, "__discord_ui_view__"):
-                raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
+                raise InvalidArgument(f"View parameter must be View not {view.__class__!r}")
 
             components = view.to_components()
         else:
             components = None
 
         if file is not None and files is not None:
-            raise InvalidArgument("cannot pass both file and files parameter to send()")
+            raise InvalidArgument("Cannot pass both file and files parameter to send()")
 
         if file is not None:
             files = [file]
