@@ -250,6 +250,8 @@ class ChannelFlags(BaseFlags):
     To construct an object you can pass keyword arguments denoting the flags
     to enable or disable.
 
+    .. versionadded:: 2.1
+
     .. container:: operations
 
         .. describe:: x == y
