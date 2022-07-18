@@ -1168,7 +1168,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
 .. function:: on_auto_moderation_rule_create(rule)
 
-    Called when a :class:`AutoModerationRule` is created.
+    Called when an :class:`AutoModerationRule` is created.
 
     .. versionadded:: 2.1
 
@@ -1177,11 +1177,20 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
 .. funcction:: on_auto_moderation_rule_update(rule)
 
-    Called when a :class:`AutoModerationRule` is edited.
+    Called when an :class:`AutoModerationRule` is edited.
 
     .. versionadded:: 2.1
 
     :param rule: The newly edited rule.
+    :type rule: :class:`AutoModerationRule`
+
+.. function:: on_auto_moderation_rule_delete(rule)
+
+    Called when a :class:`AutoModerationRule` is deleted.
+
+    .. versionadded:: 2.1
+
+    :param rule: The deleted rule.
     :type rule: :class:`AutoModerationRule`
 
 .. _discord-api-utils:
