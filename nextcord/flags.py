@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from itertools import reduce
+from functools import reduce
 from typing import (
     Any,
     Callable,

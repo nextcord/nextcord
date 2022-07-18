@@ -1175,7 +1175,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param rule: The rule that was created.
     :type rule: :class:`AutoModerationRule`
 
-.. funcction:: on_auto_moderation_rule_update(rule)
+.. function:: on_auto_moderation_rule_update(rule)
 
     Called when an :class:`AutoModerationRule` is edited.
 
