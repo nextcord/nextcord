@@ -1054,7 +1054,7 @@ class BotBase(GroupMixin):
 
         .. note::
 
-            By default, any exceptions found while loading will not be raised but will be printed on screen.
+            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/`stderr`).
 
         .. versionadded:: 2.1
 
@@ -1108,6 +1108,7 @@ class BotBase(GroupMixin):
                 def setup(bot):
                     bot.add_cog(MyCogTwo(bot))
 
+
         extras: Optional[List[Dict[:class:`str`, Any]]]
             A list of extra arguments to pass to the extension's setup function.
 
@@ -1147,6 +1148,7 @@ class BotBase(GroupMixin):
 
                 def setup(bot, my_other_attribute):
                     bot.add_cog(MyCogTwo(bot, my_other_attribute))
+
 
         stop_at_error: :class:`bool`
             Whether or not an exception should be raised if we encounter one. Set to ``False`` by
@@ -1214,7 +1216,7 @@ class BotBase(GroupMixin):
 
         .. note::
 
-            By default, any exceptions found while loading will not be raised but will be printed on screen.
+            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/`stderr`).
 
         .. versionadded:: 2.1
 
