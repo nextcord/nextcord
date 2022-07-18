@@ -576,7 +576,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         The thread must be unarchived to be edited.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The new name of the thread.
         archived: :class:`bool`
@@ -592,16 +592,20 @@ class Thread(Messageable, Hashable, PinsMixin):
         slowmode_delay: :class:`int`
             Specifies the slowmode rate limit for user in this thread, in seconds.
             A value of ``0`` disables slowmode. The maximum value possible is ``21600``.
+        flags: :class:`ChannelFlags`
+            The new channel flags to use for this thread.
+
+            .. versionadded:: 2.1
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to edit the thread.
         HTTPException
             Editing the thread failed.
 
         Returns
-        --------
+        -------
         :class:`Thread`
             The newly edited thread.
         """
