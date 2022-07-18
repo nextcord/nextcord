@@ -785,7 +785,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         limit: Optional[:class:`int`]
             The number of threads to retrieve.
             If ``None``, retrieves every archived thread in the channel. Note, however,
@@ -812,7 +812,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             The request to get the archived threads failed.
 
         Yields
-        -------
+        ------
         :class:`Thread`
             The archived threads.
         """
@@ -824,6 +824,8 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
 
 class ForumChannel(abc.GuildChannel, Hashable):
     """Represents a Discord guild forum channel.
+
+    .. versionadded:: 2.1
 
     .. container:: operations
 
@@ -924,7 +926,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
         base = super().permissions_for(obj)
 
-        # text channels do not have voice related permissions
+        # forum channels do not have voice related permissions
         denied = Permissions.voice()
         base.value &= ~denied.value
         return base
@@ -1033,7 +1035,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
             Editing the channel failed.
 
         Returns
-        --------
+        -------
         :class:`.ForumChannel`
             The newly edited forum channel.
         """
@@ -1082,8 +1084,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
         Creates a thread in this forum channel.
 
-        To create a public thread, you must have :attr:`~nextcord.Permissions.create_public_threads`.
-        For a private thread, :attr:`~nextcord.Permissions.create_private_threads` is needed instead.
+        To create a public thread, you must have
+        :attr:`~nextcord.Permissions.create_public_threads`.
+        For a private thread, :attr:`~nextcord.Permissions.create_private_threads`
+        is needed instead.
 
         Parameters
         ----------
@@ -1227,8 +1231,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
     ) -> ArchivedThreadIterator:
         """Returns an :class:`~nextcord.AsyncIterator` that iterates over all archived threads in the guild.
 
-        You must have :attr:`~Permissions.read_message_history` to use this. If iterating over private threads
-        then :attr:`~Permissions.manage_threads` is also required.
+        You must have :attr:`~Permissions.read_message_history` to use this.
+        If iterating over private threads then :attr:`~Permissions.manage_threads` is also required.
 
         Parameters
         ----------
