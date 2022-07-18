@@ -3486,3 +3486,33 @@ class Guild(Hashable):
 
         data = await self._state.http.list_guild_auto_moderation_rules(self.id)
         return [AutoModerationRule(data=d, state=self._state) for d in data]
+
+    async def fetch_auto_moderation_rule(self, rule_id: int, /) -> AutoModerationRule:
+        """|coro|
+
+        Retrieves a :class:`AutoModerationRule` from this guild by its ID
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        Parameters
+        ----------
+        rule_id: :class:`int`
+            The ID of the auto moderation rule to fetch.
+
+        Raises
+        ------
+        NotFound
+            The requested rule could not be found.
+        Forbidden
+            You do not have permission to fetch auto moderation rules.
+        HTTPException
+            Fetching the rule failed.
+
+        Returns
+        -------
+        :class:`AutoModerationRule`
+            The found auto moderation rule.
+        """
+
+        data = await self._state.http.get_auto_moderation_rule(self.id, rule_id)
+        return AutoModerationRule(data=data, state=self._state)
