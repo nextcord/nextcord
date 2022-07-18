@@ -171,6 +171,13 @@ class AutoModerationAction:
 
     .. versionadded:: 2.1
 
+    Parameters
+    ----------
+    type: :class:`AutoModerationActionType`
+        The type to use for this action.
+    metadata: :class:`AutoModerationActionMetadata`
+        The additional data to use during execution of this action.
+
     Attributes
     ----------
     type: :class:`AutoModerationActionType`
@@ -179,12 +186,26 @@ class AutoModerationAction:
         The additional metadata needed during execution for this specific action type.
     """
 
-    __slots__ = ("type", "metadata", "_data")
+    __slots__ = ("type", "metadata")
 
-    def __init__(self, data: AutoModerationActionPayload) -> None:
-        self.type = try_enum(AutoModerationActionType, data["type"])
-        self.metadata = AutoModerationActionMetadata.from_data(data.get("metadata", {}))
-        self._data = data
+    def __init__(
+        self, type: AutoModerationActionType, metadata: AutoModerationActionMetadata
+    ) -> None:
+        self.type = type
+        self.metadata = metadata
+
+    @classmethod
+    def from_data(cls, data: AutoModerationActionPayload) -> AutoModerationAction:
+        type = try_enum(AutoModerationActionType, data["type"])
+        metadata = AutoModerationActionMetadata.from_data(data.get("metadata", {}))
+        return cls(type=type, metadata=metadata)
+
+    @property
+    def payload(self) -> AutoModerationActionPayload:
+        return {
+            "type": self.type.value,
+            "metadata": self.metadata.payload,
+        }
 
 
 class AutoModerationRule(Hashable):

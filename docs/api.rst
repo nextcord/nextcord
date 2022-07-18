@@ -4167,14 +4167,6 @@ ScheduledEvent
 
 .. autoclass:: EntityMetadata
 
-AutoModerationAction
-~~~~~~~~~~~~~~~~~~~~
-
-.. attributetable:: AutoModerationAction
-
-.. autoclass:: AutoModerationAction()
-    :members:
-
 AutoModerationRule
 ~~~~~~~~~~~~~~~~~~
 
@@ -4390,6 +4382,14 @@ AutoModerationActionMetadata
 .. attributetable:: AutoModerationActionMetadata
 
 .. autoclass:: AutoModerationActionMetadata
+    :members:
+
+AutoModerationAction
+~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationAction
+
+.. autoclass:: AutoModerationAction
     :members:
 
 .. _discord_ui_kit:
