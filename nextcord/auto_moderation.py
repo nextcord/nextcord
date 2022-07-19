@@ -122,7 +122,7 @@ class AutoModerationActionMetadata:
 
     Attributes
     ----------
-    channel_id: Optional[:class:`int`]
+    channel: Optional[:class:`abc.Snowflake`]
         The channel to which message content should be logged.
 
         .. note::
@@ -135,7 +135,7 @@ class AutoModerationActionMetadata:
         .. note::
 
             This is ``None`` and cannot be provided if the action type of the rule is not
-            :attr:`AutoModerationActionType.send_alert_message`.
+            :attr:`AutoModerationActionType.timeout`.
 
         .. note::
 
@@ -144,8 +144,8 @@ class AutoModerationActionMetadata:
 
     __slots__ = ("channel_id", "duration_seconds")
 
-    def __init__(self, channel_id: Optional[int] = None, duration_seconds: Optional[int] = None):
-        self.channel_id = channel_id
+    def __init__(self, channel: Optional[Snowflake] = None, duration_seconds: Optional[int] = None):
+        self.channel_id = channel.id if channel is not None else None
         self.duration_seconds = duration_seconds
 
     @classmethod
