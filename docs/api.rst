@@ -2501,6 +2501,85 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.0
 
+    .. attribute:: auto_moderation_rule_create
+
+        An auto moderation rule was created.
+
+        WHen this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`AutoModerationRule` or :class:`Object` with the ID of the
+        rule which was created.
+
+        Possile attributes for :class:`AuditLogDiff`:
+
+        - :attr:`~AuditLogDiff.actions`
+        - :attr:`~AuditLogDiff.enabled`
+        - :attr:`~AuditLogDiff.exempt_channels`
+        - :attr:`~AuditLogDiff.exempt_roles`
+        - :attr:`~AuditLogDiff.event_type`
+        - :attr:`~AuditLogDiff.name`
+        - :attr:`~AuditLogDiff.trigger_type`
+        - :attr:`~AuditLogDiff.trigger_metadata`
+
+        .. versionadded:: 2.1
+
+    .. attribute:: auto_moderation_rule_update
+
+        An auto moderation rule was update.
+
+        WHen this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`AutoModerationRule` or :class:`Object` with the ID of the
+        rule which was updated.
+
+        Possile attributes for :class:`AuditLogDiff`:
+
+        - :attr:`~AuditLogDiff.actions`
+        - :attr:`~AuditLogDiff.enabled`
+        - :attr:`~AuditLogDiff.exempt_channels`
+        - :attr:`~AuditLogDiff.exempt_roles`
+        - :attr:`~AuditLogDiff.event_type`
+        - :attr:`~AuditLogDiff.name`
+        - :attr:`~AuditLogDiff.trigger_type`
+        - :attr:`~AuditLogDiff.trigger_metadata`
+
+        .. versionadded:: 2.1
+
+    .. attribute:: auto_moderation_rule_deleted
+
+        An auto moderation rule was deleted.
+
+        WHen this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`AutoModerationRule` or :class:`Object` with the ID of the
+        rule which was deleted.
+
+        Possile attributes for :class:`AuditLogDiff`:
+
+        - :attr:`~AuditLogDiff.actions`
+        - :attr:`~AuditLogDiff.enabled`
+        - :attr:`~AuditLogDiff.exempt_channels`
+        - :attr:`~AuditLogDiff.exempt_roles`
+        - :attr:`~AuditLogDiff.event_type`
+        - :attr:`~AuditLogDiff.name`
+        - :attr:`~AuditLogDiff.trigger_type`
+        - :attr:`~AuditLogDiff.trigger_metadata`
+
+        .. versionadded:: 2.1
+
+    .. attribute:: auto_moderation_block_message
+
+        A message was blocked by an auto moderation rule.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`Member` or :class:`User` who's message was blocked.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+        set to an unspecified proxy object with these three attributes:
+
+        - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the message was blocked.
+        - ``rule_name``: A :class:`str` with the name of the rule.
+        - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+        .. versionadded:: 2.1
+
 .. class:: AuditLogActionCategory
 
     Represents the category that the :class:`AuditLogAction` belongs to.
@@ -3495,6 +3574,52 @@ AuditLogDiff
         The default auto archive duration for newly created threads being changed.
 
         :type: :class:`int`
+
+    .. attribute:: enabled
+
+        Whether something was enabled or disabled.
+
+        :type: :class:`bool`
+
+    .. attribute:: trigger_type
+
+        The trigger type of an auto moderation rule being changed.
+
+        :type: :class:`AutoModerationTriggerType`
+
+    .. attribute:: event_type
+
+        The event type of an auto moderation rule being changed.
+
+        :type: :class:`AutoModerationEventType`
+
+    .. attribute:: actions
+
+        The list of actions of an auto moderation rule being changed.
+
+        :type: List[:class:`AutoModerationAction`]
+
+    .. attribute:: trigger_metadata
+
+        The trigger metadata of an auto moderation rule being changed.
+
+        :type: :class:`AutoModTriggerMetadata`
+
+    .. attribute:: exempt_roles
+
+        The list of roles that are exempt from an auto moderation rule being changed.
+
+        If a role is not found then it is an :class:`Object` with the ID set.
+
+        :type: List[Union[:class:`Role`, :class:`Object`]]
+
+    .. attribute:: exempt_channels
+
+        The list of channels that are exempt from an auto moderation rule being changed.
+
+        If a channel is not found then it is an :class:`Object` with the ID set.
+
+        :type: List[Union[:class:`abc.GuildChannel`, :class:`Object`]]
 
 .. this is currently missing the following keys: reason and application_id
    I'm not sure how to about porting these

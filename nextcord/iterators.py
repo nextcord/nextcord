@@ -40,6 +40,7 @@ from typing import (
 )
 
 from .audit_logs import AuditLogEntry
+from .auto_moderation import AutoModerationRule
 from .bans import BanEntry
 from .errors import NoMoreItems
 from .object import Object
@@ -524,7 +525,6 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         self.user_id = user_id
         self.action_type = action_type
         self.after: Optional[Snowflake] = OLDEST_OBJECT
-        self._users = {}
         self._state = guild._state
 
         self._filter: Optional[Callable[[AuditLogEntryPayload], bool]] = None  # entry dict -> bool
@@ -555,7 +555,7 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
             if self.limit is not None:
                 self.limit -= retrieve
             self.before = Object(id=int(entries[-1]["id"]))
-        return data.get("users", []), entries
+        return data
 
     async def _after_strategy(self, retrieve):
         after = self.after.id if self.after else None
@@ -571,7 +571,7 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
             if self.limit is not None:
                 self.limit -= retrieve
             self.after = Object(id=int(entries[0]["id"]))
-        return data.get("users", []), entries
+        return data
 
     async def next(self) -> AuditLogEntry:
         if self.entries.empty():
@@ -592,29 +592,37 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         return r > 0
 
     async def _fill(self):
-        from .user import User
-
         if self._get_retrieve():
-            users, data = await self._strategy(self.retrieve)
+            data = await self._strategy(self.retrieve)
             if len(data) < 100:
                 self.limit = 0  # terminate the infinite loop
 
+            entries = data.get("audit_log_entries")
             if self.reverse:
-                data = reversed(data)
+                entries = reversed(entries)
             if self._filter:
-                data = filter(self._filter, data)
+                entries = filter(self._filter, entries)
 
-            for user in users:
-                u = User(data=user, state=self._state)
-                self._users[u.id] = u
+            state = self._state
 
-            for element in data:
+            auto_moderation_rules = {
+                int(rule["id"]): AutoModerationRule(data=rule, state=state)
+                for rule in data.get("auto_moderation_rules", [])
+            }
+            users = {int(user["id"]): state.create_user(user) for user in data.get("users", [])}
+
+            for element in entries:
                 # TODO: remove this if statement later
                 if element["action_type"] is None:
                     continue
 
                 await self.entries.put(
-                    AuditLogEntry(data=element, users=self._users, guild=self.guild)
+                    AuditLogEntry(
+                        data=element,
+                        auto_moderation_rules=auto_moderation_rules,
+                        users=users,
+                        guild=self.guild,
+                    )
                 )
 
 
