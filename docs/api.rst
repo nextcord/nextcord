@@ -1193,6 +1193,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param rule: The deleted rule.
     :type rule: :class:`AutoModerationRule`
 
+.. function:: on_auto_moderation_action_execution(execution)
+
+    Called when an :class:`AutoModerationAction` is executed.
+
+    .. versionadded:: 2.1
+
+    :param execution: The object containing the execution information.
+    :type execution: :class:`AutoModerationActionExecution`
+
 .. _discord-api-utils:
 
 Utility Functions
@@ -4200,6 +4209,14 @@ AutoModerationRule
 .. attributetable:: AutoModerationRule
 
 .. autoclass:: AutoModerationRule()
+    :members:
+
+AutoModerationActionExecution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationActionExecution
+
+.. autoclass:: AutoModerationActionExecution()
     :members:
 
 .. _discord_api_data:
