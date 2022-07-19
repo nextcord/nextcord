@@ -3576,7 +3576,7 @@ class Guild(Hashable):
 
         Returns
         -------
-        :class:`AUtoModerationRule`
+        :class:`AutoModerationRule`
             The newly created auto moderation rule.
         """
 
