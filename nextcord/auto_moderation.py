@@ -191,7 +191,7 @@ class AutoModerationAction:
     __slots__ = ("type", "metadata")
 
     def __init__(
-        self, type: AutoModerationActionType, metadata: AutoModerationActionMetadata
+        self, type: AutoModerationActionType, metadata: AutoModerationActionMetadata = None
     ) -> None:
         self.type = type
         self.metadata = metadata
@@ -204,10 +204,12 @@ class AutoModerationAction:
 
     @property
     def payload(self) -> AutoModerationActionPayload:
-        return {
+        data: AutoModerationActionPayload = {
             "type": self.type.value,
-            "metadata": self.metadata.payload,
         }
+
+        if self.metadata is not None:
+            data["metadata"] = self.metadata.payload
 
 
 class AutoModerationRule(Hashable):
