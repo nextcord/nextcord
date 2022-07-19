@@ -94,7 +94,7 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
-    from .auto_moderatiomn import AutoModerationAction
+    from .auto_moderation import AutoModerationAction
     from .channel import CategoryChannel, StageChannel, TextChannel, VoiceChannel
     from .permissions import Permissions
     from .state import ConnectionState

@@ -22,7 +22,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import List, Literal, TypedDict
+from typing import List, Literal, Optional, TypedDict
 
 from .snowflake import Snowflake
 
@@ -86,3 +86,20 @@ class AutoModerationRuleModify(TypedDict, total=False):
     enabled: bool
     exempt_roles: List[Snowflake]
     exempt_channels: List[Snowflake]
+
+
+class _AutoModerationActionExecutionOptional(TypedDict, total=False):
+    channel_id: Snowflake
+    message_id: Snowflake
+    alert_system_message_id: Snowflake
+
+
+class AutoModerationActionExecution(_AutoModerationActionExecutionOptional):
+    guild_id: Snowflake
+    action: AutoModerationAction
+    rule_id: Snowflake
+    rule_trigger_type: AutoModerationTriggerType
+    user_id: Snowflake
+    content: str
+    matched_keyword: Optional[str]
+    matched_content: Optional[str]

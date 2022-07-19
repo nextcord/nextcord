@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.auto_moderation import (
         AutoModerationAction as AutoModerationActionPayload,
+        AutoModerationActionExecution as ActionExecutionPayload,
         AutoModerationActionMetadata as ActionMetadataPayload,
         AutoModerationRule as AutoModerationRulePayload,
         AutoModerationRuleModify,
@@ -53,6 +54,7 @@ __all__ = (
     "AutoModerationActionMetadata",
     "AutoModerationAction",
     "AutoModerationRule",
+    "AutoModerationActionExecution",
 )
 
 
@@ -420,3 +422,74 @@ class AutoModerationRule(Hashable):
             self.guild_id, self.id, data=payload, reason=reason
         )
         return AutoModerationRule(data=data, state=self._state)
+
+
+class AutoModerationActionExecution:
+    """Represents the execution of an auto moderation action
+
+    .. versionadded:: 2.1
+
+    Attributes
+    ----------
+    guild_id: :class:`int`
+        The guild ID where this action was executed.
+    guild: Optional[:class:`Guild`]
+        The guild where this action was executed, if it was found in cache.
+    channel_id: Optional[:class:`int`]
+        The channel ID where this action was executed, if applicable.
+    channel: Optional[:class:`abc.GuildChannel`]
+        The channel where this action was executed, if applicable and found in cache.
+    message_id: Optional[:class:`int`]
+        The message ID that executed this action, if it was not blocked.
+    message: Optional[:class:`Message`]
+        The message that executed this action, if it was not blocked and found in cache.
+    alert_system_message_id: Optional[:class:`int`]
+        The ID of the system alert message, if sent.
+    alert_system_message: Optional[:class:`Message`]
+        The system alert message, if sent and found in cache.
+    action: :class:`AutoModerationAction`
+        The action that was executed.
+    rule_id: :class:`int`
+        The id of the rule that was executed.
+    rule_trigger_type: :class:`AutoModerationTriggerType`
+        The type of rule that was executed.
+    user_id: :class:`int`
+        The ID of the user that triggered this action.
+    user: Optional[:class:`User`]
+        The user that triggered this action, if found in cache.
+    content: :class:`str`
+        The content the user sent in the message
+
+        .. note::
+
+            This requires :attr:`Intents.message_content` to not be empty.
+    matched_keyword: Optional[:class:`str`]
+        The keyword configured in the rule that matched this message, if applicable.
+    matched_content: Optional[:class:`str`]
+        The content in the message that matched the keyword, if applicable.
+
+        .. note::
+
+            This requires :attr:`Intents.message_conrent` to not be empty.
+    """
+
+    def __init__(self, data: ActionExecutionPayload, state: ConnectionState) -> None:
+        self.guild_id = int(data["guild_id"])
+        self.guild = state._get_guild(self.guild_id)
+        self.channel_id = _get_as_snowflake(data, "channel_id")
+        if self.guild is not None and self.channel_id is not None:
+            self.channel = self.guild.get_channel(self.channel_id)
+        else:
+            self.channel = None
+        self.message_id = _get_as_snowflake(data, "message_id")
+        self.message = state._get_message(self.message_id)
+        self.alert_system_message_id = _get_as_snowflake(data, "alert_system_message_id")
+        self.alert_system_message = state._get_message(self.alert_system_message_id)
+        self.action = AutoModerationAction.from_data(data=data["action"])
+        self.rule_id = int(data["rule_id"])
+        self.rule_trigger_type = try_enum(AutoModerationTriggerType, data["rule_trigger_type"])
+        self.user_id = int(data["user_id"])
+        self.user = state.get_user(self.user_id)
+        self.content = data["content"]
+        self.matched_keyword = data["matched_keyword"]
+        self.matched_content = data["matched_content"]
