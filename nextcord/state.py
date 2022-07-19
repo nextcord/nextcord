@@ -51,7 +51,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
-from .auto_moderation import AutoModerationRule
+from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
