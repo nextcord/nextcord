@@ -35,6 +35,7 @@ from .enums import (
 )
 from .errors import InvalidArgument
 from .mixins import Hashable
+from .object import Object
 from .utils import MISSING, _get_as_snowflake
 
 if TYPE_CHECKING:
@@ -151,9 +152,10 @@ class AutoModerationActionMetadata:
     @classmethod
     def from_data(cls, data: ActionMetadataPayload):
         channel_id = _get_as_snowflake(data, "channel_id")
+        channel = Object(id=channel_id) if channel_id is not None else None
         duration_seconds = data.get("duration_seconds")
 
-        return cls(channel_id=channel_id, duration_seconds=duration_seconds)
+        return cls(channel=channel, duration_seconds=duration_seconds)
 
     @property
     def payload(self) -> ActionMetadataPayload:
@@ -191,7 +193,9 @@ class AutoModerationAction:
     __slots__ = ("type", "metadata")
 
     def __init__(
-        self, type: AutoModerationActionType, metadata: AutoModerationActionMetadata = None
+        self,
+        type: AutoModerationActionType,
+        metadata: Optional[AutoModerationActionMetadata] = None,
     ) -> None:
         self.type = type
         self.metadata = metadata
@@ -210,6 +214,8 @@ class AutoModerationAction:
 
         if self.metadata is not None:
             data["metadata"] = self.metadata.payload
+
+        return data
 
 
 class AutoModerationRule(Hashable):
