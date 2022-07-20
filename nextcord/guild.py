@@ -629,7 +629,7 @@ class Guild(Hashable):
 
     @property
     def forum_channels(self) -> List[ForumChannel]:
-        """List[:class:`ForumChannel`]: A list of forum channels that belongs to this guild.
+        """List[:class:`ForumChannel`]: A list of forum channels that belong to this guild.
 
         This is sorted by the position and are in UI order from top to bottom.
         """
