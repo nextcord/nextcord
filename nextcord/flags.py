@@ -1151,3 +1151,8 @@ class ApplicationFlags(BaseFlags):
         message content over the gateway.
         """
         return 1 << 19
+
+    @flag_value
+    def application_command_badge(self):
+        """:class:`bool`: Returns ``True`` if the application has registered global application commands."""
+        return 1 << 23
