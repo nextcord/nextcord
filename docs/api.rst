@@ -3595,7 +3595,7 @@ AuditLogDiff
 
     .. attribute:: actions
 
-        The list of actions of an auto moderation rule being changed.
+        The list of actions being changed.
 
         :type: List[:class:`AutoModerationAction`]
 

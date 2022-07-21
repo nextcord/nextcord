@@ -39,7 +39,11 @@ from .object import Object
 from .utils import MISSING, _get_as_snowflake
 
 if TYPE_CHECKING:
-    from .abc import Snowflake
+    from .abc import GuildChannel, Snowflake
+    from .guild import Guild
+    from .member import Member
+    from .message import Message
+    from .role import Role
     from .state import ConnectionState
     from .types.auto_moderation import (
         AutoModerationAction as AutoModerationActionPayload,
@@ -86,11 +90,12 @@ class AutoModerationTriggerMetadata:
 
     def __init__(
         self,
+        *,
         keyword_filter: Optional[List[str]] = None,
         presets: Optional[List[KeywordPresetType]] = None,
     ) -> None:
-        self.keyword_filter = keyword_filter
-        self.presets = presets
+        self.keyword_filter: Optional[List[str]] = keyword_filter
+        self.presets: Optional[List[KeywordPresetType]] = presets
 
     @classmethod
     def from_data(cls, data: TriggerMetadataPayload):
@@ -145,9 +150,11 @@ class AutoModerationActionMetadata:
 
     __slots__ = ("channel_id", "duration_seconds")
 
-    def __init__(self, channel: Optional[Snowflake] = None, duration_seconds: Optional[int] = None):
-        self.channel_id = channel.id if channel is not None else None
-        self.duration_seconds = duration_seconds
+    def __init__(
+        self, *, channel: Optional[Snowflake] = None, duration_seconds: Optional[int] = None
+    ):
+        self.channel_id: Optional[int] = channel.id if channel is not None else None
+        self.duration_seconds: Optional[int] = duration_seconds
 
     @classmethod
     def from_data(cls, data: ActionMetadataPayload):
@@ -171,7 +178,7 @@ class AutoModerationActionMetadata:
 
 
 class AutoModerationAction:
-    """Represents an auto moderation action which will execute whenever a rule is triggered.
+    """Represents an auto moderation action that will execute whenever a rule is triggered.
 
     .. versionadded:: 2.1
 
@@ -194,11 +201,12 @@ class AutoModerationAction:
 
     def __init__(
         self,
+        *,
         type: AutoModerationActionType,
         metadata: Optional[AutoModerationActionMetadata] = None,
     ) -> None:
-        self.type = type
-        self.metadata = metadata
+        self.type: AutoModerationActionType = type
+        self.metadata: Optional[AutoModerationActionMetadata] = metadata
 
     @classmethod
     def from_data(cls, data: AutoModerationActionPayload) -> AutoModerationAction:
@@ -253,7 +261,7 @@ class AutoModerationRule(Hashable):
         The rule's name.
     creator_id: :class:`int`
         The user's unique ID which first created this rule.
-    creator: :class:`Member`
+    creator: Optional[:class:`Member`]
         The member which first created this rule, if found in cache.
     event_type: :class:`AutoModerationEventType`
         The event context in which this rule is checked.
@@ -296,25 +304,37 @@ class AutoModerationRule(Hashable):
 
     def __init__(self, *, data: AutoModerationRulePayload, state: ConnectionState):
         self._state = state
-        self.id = int(data["id"])
-        self.guild_id = int(data["guild_id"])
-        self.guild = state._get_guild(self.guild_id)
-        self.name = data["name"]
-        self.creator_id = int(data["creator_id"])
-        self.creator = self.guild.get_member(self.creator_id) if self.guild is not None else None
-        self.event_type = try_enum(AutoModerationEventType, data["event_type"])
-        self.trigger_type = try_enum(AutoModerationTriggerType, data["trigger_type"])
-        self.trigger_metadata = AutoModerationTriggerMetadata.from_data(data["trigger_metadata"])
-        self.actions = [AutoModerationAction.from_data(data=action) for action in data["actions"]]
-        self.enabled = data["enabled"]
-        self.exempt_role_ids = [int(role_id) for role_id in data["exempt_roles"]]
-        self.exempt_channel_ids = [int(channel_id) for channel_id in data["exempt_channels"]]
-        self.exempt_roles = (
+        self.id: int = int(data["id"])
+        self.guild_id: int = int(data["guild_id"])
+        self.guild: Optional[Guild] = state._get_guild(self.guild_id)
+        self.name: str = data["name"]
+        self.creator_id: int = int(data["creator_id"])
+        self.creator: Optional[Member] = (
+            self.guild.get_member(self.creator_id) if self.guild is not None else None
+        )
+        self.event_type: AutoModerationEventType = try_enum(
+            AutoModerationEventType, data["event_type"]
+        )
+        self.trigger_type: AutoModerationTriggerType = try_enum(
+            AutoModerationTriggerType, data["trigger_type"]
+        )
+        self.trigger_metadata: AutoModerationTriggerMetadata = (
+            AutoModerationTriggerMetadata.from_data(data["trigger_metadata"])
+        )
+        self.actions: List[AutoModerationAction] = [
+            AutoModerationAction.from_data(data=action) for action in data["actions"]
+        ]
+        self.enabled: bool = data["enabled"]
+        self.exempt_role_ids: List[int] = [int(role_id) for role_id in data["exempt_roles"]]
+        self.exempt_channel_ids: List[int] = [
+            int(channel_id) for channel_id in data["exempt_channels"]
+        ]
+        self.exempt_roles: List[Optional[Role]] = (
             [self.guild.get_role(role_id) for role_id in self.exempt_role_ids]
             if self.guild is not None
             else []
         )
-        self.exempt_channels = (
+        self.exempt_channels: List[Optional[GuildChannel]] = (
             [self.guild.get_channel(channel_id) for channel_id in self.exempt_channel_ids]
             if self.guild is not None
             else []
@@ -461,10 +481,10 @@ class AutoModerationActionExecution:
         The id of the rule that was executed.
     rule_trigger_type: :class:`AutoModerationTriggerType`
         The type of rule that was executed.
-    user_id: :class:`int`
+    member_id: :class:`int`
         The ID of the user that triggered this action.
-    user: Optional[:class:`User`]
-        The user that triggered this action, if found in cache.
+    member: Optional[:class:`Member`]
+        The member that triggered this action, if found in cache.
     content: :class:`str`
         The content the user sent in the message
 
@@ -481,23 +501,31 @@ class AutoModerationActionExecution:
             This requires :attr:`Intents.message_conrent` to not be empty.
     """
 
-    def __init__(self, data: ActionExecutionPayload, state: ConnectionState) -> None:
-        self.guild_id = int(data["guild_id"])
-        self.guild = state._get_guild(self.guild_id)
-        self.channel_id = _get_as_snowflake(data, "channel_id")
+    def __init__(self, *, data: ActionExecutionPayload, state: ConnectionState) -> None:
+        self.guild_id: int = int(data["guild_id"])
+        self.guild: Optional[Guild] = state._get_guild(self.guild_id)
+        self.channel_id: Optional[int] = _get_as_snowflake(data, "channel_id")
         if self.guild is not None and self.channel_id is not None:
-            self.channel = self.guild.get_channel(self.channel_id)
+            self.channel: Optional[GuildChannel] = self.guild.get_channel(self.channel_id)
         else:
-            self.channel = None
-        self.message_id = _get_as_snowflake(data, "message_id")
-        self.message = state._get_message(self.message_id)
-        self.alert_system_message_id = _get_as_snowflake(data, "alert_system_message_id")
-        self.alert_system_message = state._get_message(self.alert_system_message_id)
-        self.action = AutoModerationAction.from_data(data=data["action"])
-        self.rule_id = int(data["rule_id"])
-        self.rule_trigger_type = try_enum(AutoModerationTriggerType, data["rule_trigger_type"])
-        self.user_id = int(data["user_id"])
-        self.user = state.get_user(self.user_id)
-        self.content = data["content"]
-        self.matched_keyword = data["matched_keyword"]
-        self.matched_content = data["matched_content"]
+            self.channel: Optional[GuildChannel] = None
+        self.message_id: Optional[int] = _get_as_snowflake(data, "message_id")
+        self.message: Optional[Message] = state._get_message(self.message_id)
+        self.alert_system_message_id: Optional[int] = _get_as_snowflake(
+            data, "alert_system_message_id"
+        )
+        self.alert_system_message: Optional[Message] = state._get_message(
+            self.alert_system_message_id
+        )
+        self.action: AutoModerationAction = AutoModerationAction.from_data(data=data["action"])
+        self.rule_id: int = int(data["rule_id"])
+        self.rule_trigger_type: AutoModerationTriggerType = try_enum(
+            AutoModerationTriggerType, data["rule_trigger_type"]
+        )
+        self.member_id: int = int(data["user_id"])
+        self.member: Optional[Member] = (
+            self.guild.get_member(self.member_id) if self.guild is not None else None
+        )
+        self.content: str = data["content"]
+        self.matched_keyword: Optional[str] = data["matched_keyword"]
+        self.matched_content: Optional[str] = data["matched_content"]
