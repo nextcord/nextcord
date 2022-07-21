@@ -11,6 +11,7 @@ There are a number of utility commands being showcased here."""
 
 intents = nextcord.Intents.default()
 intents.members = True
+intents.message_content = True
 
 bot = commands.Bot(command_prefix="$", description=description, intents=intents)
 
