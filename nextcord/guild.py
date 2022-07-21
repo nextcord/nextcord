@@ -3552,6 +3552,8 @@ class Guild(Hashable):
             The name to use for this rule.
         event_type: :class:`AutoModerationEventType`
             The type of event conteto listen to for this rule.
+        actions: List[:class:`AutoModerationAction`]
+            The actions to execute when this rule is triggered.
         trigger_type: :class:`AutoModerationTriggerType`
             The type of content that triggers this rule.
         trigger_metadata: Optinal[:class:`AutoModerationTriggerMetadata`]
