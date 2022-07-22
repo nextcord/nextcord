@@ -102,9 +102,9 @@ Quick Example
     @bot.slash_command(description="Replies with pong!")
     async def ping(interaction: nextcord.Interaction):
         await interaction.send("Pong!", ephemeral=True)
+        
     bot.run("token")
     
-
 
 You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 
