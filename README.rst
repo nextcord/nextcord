@@ -104,7 +104,8 @@ Quick Example
         await interaction.send("Pong!", ephemeral=True)
         
     bot.run("token")
-    
+
+
 You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 
 **NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/stable/examples/secure_token_storage.py/>`_.
