@@ -1420,7 +1420,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         else:
             raise ValueError(
-                f"{self.error_name} Invalid annotation origin: {typehint_origin} \n| {type(typehint_origin)} \n| {typing.get_origin(typehint_origin)} \n| {parameter.annotation}"
+                f"{self.error_name} Invalid annotation origin: {typehint_origin} \n"
+                f"| {type(typehint_origin)} \n| {typing_extensions.get_origin(typehint_origin)} \n"
+                f"| {parameter.annotation}"
             )
 
         self.name_localizations = cmd_arg.name_localizations
@@ -3173,11 +3175,9 @@ def unpack_annotated(given_annotation, resolve_list: list = []) -> type:
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
     origin = typing_extensions.get_origin(given_annotation)
     if origin is Annotated:
-        _log.critical("TYPING IS ANNOTATED %s", given_annotation)
         located_annotation = MISSING
         # arg_list = typing.get_args(given_annotation)  # TODO: Once Python 3.10 is standard, use this
         arg_list = typing_extensions.get_args(given_annotation)
-        _log.critical("ARRRRGS %s", arg_list)
         for arg in arg_list[1:]:
             if arg in resolve_list:
                 located_annotation = arg
@@ -3223,7 +3223,6 @@ def unpack_annotation(
             literal_ret.append(given_annotation)
 
     elif origin is Annotated:
-        _log.critical("ORIGIN IS ANNOTATED! %s", given_annotation)
         located_annotation = unpack_annotated(given_annotation, annotated_list)
 
         unpacked_type, unpacked_literal = unpack_annotation(located_annotation, annotated_list)
