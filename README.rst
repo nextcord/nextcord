@@ -104,7 +104,8 @@ Quick Example
         await interaction.send("Pong!", ephemeral=True)
         
     bot.run("token")
-
+    
+    
 
 You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 
