@@ -28,6 +28,7 @@ import asyncio
 import inspect
 import logging
 import typing
+import typing_extensions
 import warnings
 from inspect import Parameter, signature
 from typing import (
@@ -1305,8 +1306,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         self.name = cmd_arg.name or parameter.name
         # Use the given name, or default to the parameter name.
-
-        typehint_origin = typing.get_origin(parameter.annotation)
+        # typehint_origin = typing.get_origin(parameter.annotation)  # TODO: Once Python 3.10 is standard, use this.
+        typehint_origin = typing_extensions.get_origin(parameter.annotation)
 
         annotation_type: ApplicationCommandOptionType = MISSING
         annotation_required = True
@@ -1319,7 +1320,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             #  technically None for setting it to be optional.
             found_type = MISSING
             found_choices = []
-            for lit in typing.get_args(parameter.annotation):
+            # for lit in typing.get_args(parameter.annotation):  # TODO: Once Python 3.10 is standard, use this.
+            for lit in typing_extensions.get_args(parameter.annotation):
                 lit = unpack_annotated(lit, list(self.option_types.keys()))
                 lit_type = type(lit)
                 if lit is None:
@@ -1398,7 +1400,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                         found_type = self.get_type(anno)
                     elif self.get_type(anno) is not found_type:
                         raise ValueError(
-                            f"{self.error_name} | Annotation {anno} is incompatible with {found_type}"
+                            f"{self.error_name} | Annotation {anno} is incompatible with {found_type} \n| {typehint_origin}\n| {parameter.annotation}\n| {grouped_annotations}"
                         )
 
                     # Theoretically, it COULD be an OptionConverter at this point if it somehow skipped passed the upper
@@ -1417,7 +1419,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 annotation_channel_types = found_channel_types
 
         else:
-            raise ValueError(f"{self.error_name} Invalid annotation origin: {typehint_origin}")
+            raise ValueError(
+                f"{self.error_name} Invalid annotation origin: {typehint_origin} \n| {type(typehint_origin)} \n| {typing.get_origin(typehint_origin)} \n| {parameter.annotation}"
+            )
 
         self.name_localizations = cmd_arg.name_localizations
         self._description = cmd_arg.description
@@ -1508,8 +1512,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         elif valid_type := self.option_types.get(param_typing, None):
             return valid_type
         elif (
-            type(None) in typing.get_args(param_typing)
-            and (inner_type := find(lambda t: t is not type(None), typing.get_args(param_typing)))
+            # type(None) in typing.get_args(param_typing)  # TODO: Once Python 3.10 is standard, use this
+            type(None) in typing_extensions.get_args(param_typing)
+            # and (inner_type := find(lambda t: t is not type(None), typing.get_args(param_typing)))
+            and (inner_type := find(lambda t: t is not type(None), typing_extensions.get_args(param_typing)))
             and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
@@ -3160,10 +3166,14 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
 
 
 def unpack_annotated(given_annotation, resolve_list: list = []) -> type:
-    origin = typing.get_origin(given_annotation)
+    # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
+    origin = typing_extensions.get_origin(given_annotation)
     if origin is Annotated:
+        _log.critical("TYPING IS ANNOTATED %s", given_annotation)
         located_annotation = MISSING
-        arg_list = typing.get_args(given_annotation)
+        # arg_list = typing.get_args(given_annotation)  # TODO: Once Python 3.10 is standard, use this
+        arg_list = typing_extensions.get_args(given_annotation)
+        _log.critical("ARRRRGS %s", arg_list)
         for arg in arg_list[1:]:
             if arg in resolve_list:
                 located_annotation = arg
@@ -3198,7 +3208,8 @@ def unpack_annotation(
     """
     type_ret = []
     literal_ret = []
-    origin = typing.get_origin(given_annotation)
+    # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
+    origin = typing_extensions.get_origin(given_annotation)
     if origin is None:
         # It doesn't have a fancy origin, just a normal type/object.
         if isinstance(given_annotation, type):
@@ -3208,13 +3219,15 @@ def unpack_annotation(
             literal_ret.append(given_annotation)
 
     elif origin is Annotated:
+        _log.critical("ORIGIN IS ANNOTATED! %s", given_annotation)
         located_annotation = unpack_annotated(given_annotation, annotated_list)
 
         unpacked_type, unpacked_literal = unpack_annotation(located_annotation, annotated_list)
         type_ret.extend(unpacked_type)
         literal_ret.extend(unpacked_literal)
     elif origin in (Union, Optional, Literal):
-        for anno in typing.get_args(given_annotation):
+        # for anno in typing.get_args(given_annotation):  # TODO: Once Python 3.10 is standard, use this.
+        for anno in typing_extensions.get_args(given_annotation):
             unpacked_type, unpacked_literal = unpack_annotation(anno, annotated_list)
             type_ret.extend(unpacked_type)
             literal_ret.extend(unpacked_literal)
