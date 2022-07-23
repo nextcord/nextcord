@@ -28,7 +28,6 @@ import asyncio
 import inspect
 import logging
 import typing
-import typing_extensions
 import warnings
 from inspect import Parameter, signature
 from typing import (
@@ -49,6 +48,7 @@ from typing import (
     cast,
 )
 
+import typing_extensions
 from typing_extensions import Annotated
 
 from .abc import GuildChannel
@@ -1515,7 +1515,11 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # type(None) in typing.get_args(param_typing)  # TODO: Once Python 3.10 is standard, use this
             type(None) in typing_extensions.get_args(param_typing)
             # and (inner_type := find(lambda t: t is not type(None), typing.get_args(param_typing)))
-            and (inner_type := find(lambda t: t is not type(None), typing_extensions.get_args(param_typing)))
+            and (
+                inner_type := find(
+                    lambda t: t is not type(None), typing_extensions.get_args(param_typing)
+                )
+            )
             and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
