@@ -1818,7 +1818,7 @@ class Client:
 
         self._connection.store_view(view, message_id)
 
-    def remove_view(self, view: View) -> None:
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
         """Remove a :class:`nextcord.ui.View` from persistent listening.
 
         .. versionadded:: 2.0
@@ -1827,6 +1827,8 @@ class Client:
         ----------
         view: :class:`nextcord.ui.View`
             The view to remove from dispatching.
+        message_id: Optional[:class:`int`]
+            The ID of the message that view was attached to.
 
         Raises
         ------
@@ -1844,7 +1846,7 @@ class Client:
                 "View is not persistent. Items need to have a custom_id set and View must have no timeout"
             )
 
-        self._connection.remove_view(view)
+        self._connection.remove_view(view, message_id)
 
     def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
         """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
