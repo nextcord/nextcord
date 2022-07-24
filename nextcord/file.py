@@ -145,5 +145,4 @@ class File:
 
     def close(self) -> None:
         self.fp.close = self._closer
-        if self._owner:
-            self._closer()
+        self._closer()
