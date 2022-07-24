@@ -410,8 +410,8 @@ class ConnectionState:
     def store_view(self, view: View, message_id: Optional[int] = None) -> None:
         self._view_store.add_view(view, message_id)
 
-    def remove_view(self, view: View) -> None:
-        self._view_store.remove_view(view)
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
+        self._view_store.remove_view(view, message_id)
 
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)

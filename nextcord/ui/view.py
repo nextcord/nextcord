@@ -534,10 +534,10 @@ class ViewStore:
         if message_id is not None:
             self._synced_message_views[message_id] = view
 
-    def remove_view(self, view: View):
+    def remove_view(self, view: View, message_id: Optional[int] = None):
         for item in view.children:
             if item.is_dispatchable():
-                self._views.pop((item.type.value, None, item.custom_id), None)  # type: ignore
+                self._views.pop((item.type.value, message_id, item.custom_id), None)  # type: ignore
 
         for key, value in self._synced_message_views.items():
             if value.id == view.id:
