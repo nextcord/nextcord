@@ -2569,7 +2569,7 @@ of :class:`enum.Enum`.
         A message was blocked by an auto moderation rule.
 
         When this is the action, the type of :attr:`~AuditLogEntry.target` is
-        the :class:`Member` or :class:`User` who's message was blocked.
+        the :class:`Member` or :class:`User` whose message was blocked.
 
         When this is the action, the type of :attr:`~AuditLogEntry.extra` is
         set to an unspecified proxy object with these three attributes:
