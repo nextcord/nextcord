@@ -3,7 +3,8 @@ from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot()
+
 
 # command will be global if guild_ids is not specified
 @bot.slash_command(guild_ids=[TESTING_GUILD_ID], description="Ping command")

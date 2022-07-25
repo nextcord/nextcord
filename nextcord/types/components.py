@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -28,7 +29,7 @@ from typing import List, Literal, TypedDict, Union
 
 from .emoji import PartialEmoji
 
-ComponentType = Literal[1, 2, 3]
+ComponentType = Literal[1, 2, 3, 4]
 ButtonStyle = Literal[1, 2, 3, 4, 5]
 TextInputStyle = Literal[1, 2]
 

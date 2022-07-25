@@ -512,11 +512,12 @@ class Intents(BaseFlags):
     @classmethod
     def default(cls: Type[Intents]) -> Intents:
         """A factory method that creates a :class:`Intents` with everything enabled
-        except :attr:`presences` and :attr:`members`.
+        except :attr:`presences`, :attr:`members`, and :attr:`message_content`.
         """
         self = cls.all()
         self.presences = False
         self.members = False
+        self.message_content = False
         return self
 
     @flag_value
@@ -896,6 +897,33 @@ class Intents(BaseFlags):
         return 1 << 14
 
     @flag_value
+    def message_content(self):
+        """:class:`bool`: Whether most message content can be accessed.
+
+        Without this intent, the following attributes may appear empty - either an
+        empty string or empty array depending on the data type:
+
+        - :attr:`Message.content`
+        - :attr:`Message.embeds`
+        - :attr:`Message.attachments`
+        - :attr:`Message.components`
+
+        A bot will always be able to get these attributes from:
+
+        - Messages the bot sends
+        - Messages the bot receives in DMs
+        - Messages in which the bot is mentioned
+
+        For more information go to the :ref:`message content intent documentation <need_message_content_intent>`.
+
+        .. note::
+
+            As of September 1, 2022, this requires opting in explicitly via the developer portal as well.
+            Bots in over 100 guilds will need to apply to Discord for verification.
+        """
+        return 1 << 15
+
+    @flag_value
     def scheduled_events(self):
         """:class:`bool`: Whether scheduled events related events are enabled.
 
@@ -1109,3 +1137,22 @@ class ApplicationFlags(BaseFlags):
     def embedded(self):
         """:class:`bool`: Returns ``True`` if the application is embedded within the Discord client."""
         return 1 << 17
+
+    @flag_value
+    def gateway_message_content(self):
+        """:class:`bool`: Returns ``True`` if the application is allowed to receive message content
+        over the gateway.
+        """
+        return 1 << 18
+
+    @flag_value
+    def gateway_message_content_limited(self):
+        """:class:`bool`: Returns ``True`` if the application is allowed to receive limited
+        message content over the gateway.
+        """
+        return 1 << 19
+
+    @flag_value
+    def application_command_badge(self):
+        """:class:`bool`: Returns ``True`` if the application has registered global application commands."""
+        return 1 << 23

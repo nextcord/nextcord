@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING, Optional, Tuple, Type, TypeVar
 
 from ..components import TextInput as TextInputComponent
 from ..enums import ComponentType, TextInputStyle
-from ..interactions import Interaction
 from ..utils import MISSING
 from .item import Item
 
@@ -43,14 +42,6 @@ if TYPE_CHECKING:
 
 T = TypeVar("T", bound="TextInput")
 V = TypeVar("V", bound="View", covariant=True)
-
-
-def _walk_all_components(components):
-    for item in components:
-        if item["type"] == 1:
-            yield from item["components"]
-        else:
-            yield item
 
 
 class TextInput(Item[V]):
@@ -131,7 +122,7 @@ class TextInput(Item[V]):
 
     @property
     def style(self) -> TextInputStyle:
-        """:class:`nextcord.TextInputStyle`: The style of the button."""
+        """:class:`nextcord.TextInputStyle`: The style of the text input."""
         return self._underlying.style
 
     @style.setter
@@ -140,7 +131,7 @@ class TextInput(Item[V]):
 
     @property
     def custom_id(self) -> Optional[str]:
-        """Optional[:class:`str`]: The ID of the button that gets received during an interaction."""
+        """Optional[:class:`str`]: The ID of the text input that gets received during an interaction."""
         return self._underlying.custom_id
 
     @custom_id.setter
@@ -253,9 +244,5 @@ class TextInput(Item[V]):
     def refresh_component(self, text_input: TextInputComponent) -> None:
         self._underlying = text_input
 
-    def refresh_state(self, interaction: Interaction) -> None:
-        data: ComponentInteractionData = interaction.data  # type: ignore
-        for component_data in _walk_all_components(data["components"]):  # type: ignore
-            if component_data["custom_id"] == self.custom_id:
-                self._inputed_value = component_data["value"]
-                return
+    def refresh_state(self, data: ComponentInteractionData) -> None:
+        self._inputed_value = data.get("value", "")

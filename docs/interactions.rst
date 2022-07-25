@@ -202,7 +202,7 @@ Context Menu Commands
 Context menu commands display commands in the Apps section of the right-click menu of a user or message.
 
 User Commands
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 Here is an example of a command that will say hi to a user that was right-clicked on.
 
@@ -214,7 +214,7 @@ Here is an example of a command that will say hi to a user that was right-clicke
         await interaction.response.send_message(f"Hello {member}!")
 
 Message Commands
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 Here is an example of a message command which sends the content of the right-clicked message as an ephemeral response to the user who invoked it.
 

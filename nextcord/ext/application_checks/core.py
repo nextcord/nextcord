@@ -98,10 +98,18 @@ class CheckWrapper(CallbackWrapper):
         app_cmd.checks.append(self.predicate)
 
 
-AC = Callable[
-    [Union[Callable[[Interaction], bool], BaseApplicationCommand, SlashApplicationSubcommand]],
-    CheckWrapper,
-]
+if TYPE_CHECKING:
+    AC = Callable[
+        [
+            Union[
+                CoroFunc,
+                Callable[[Interaction], bool],
+                BaseApplicationCommand,
+                SlashApplicationSubcommand,
+            ]
+        ],
+        CheckWrapper,
+    ]
 
 
 def check(predicate: "ApplicationCheck") -> AC:
@@ -348,7 +356,7 @@ def has_any_role(*items: Union[int, str]) -> AC:
     return check(predicate)
 
 
-def bot_has_role(item: int) -> AC:
+def bot_has_role(item: Union[int, str]) -> AC:
     """Similar to :func:`.has_role` except checks if the bot itself has the
     role.
 
@@ -389,7 +397,7 @@ def bot_has_role(item: int) -> AC:
     return check(predicate)
 
 
-def bot_has_any_role(*items: int) -> AC:
+def bot_has_any_role(*items: Union[str, int]) -> AC:
     """Similar to :func:`.has_any_role` except checks if the bot itself has
     any of the roles listed.
 
@@ -400,7 +408,7 @@ def bot_has_any_role(*items: int) -> AC:
 
     Parameters
     -----------
-    items: List[Union[:class:`str`, :class:`int`]]
+    *items: Union[:class:`str`, :class:`int`]
         An argument list of names or IDs to check that the bot has roles wise.
 
     Example

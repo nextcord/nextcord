@@ -436,7 +436,7 @@ class ScheduledEvent(Hashable):
         """
         return self._users.get(user_id)
 
-    async def fetch_users(
+    def fetch_users(
         self,
         *,
         limit: int = 100,

@@ -95,6 +95,7 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand, ClientCog
     from .channel import DMChannel
     from .enums import Locale
+    from .flags import MemberCacheFlags
     from .member import Member
     from .message import Message
     from .permissions import Permissions
@@ -174,7 +175,7 @@ class Client:
         Integer starting at ``0`` and less than :attr:`.shard_count`.
     shard_count: Optional[:class:`int`]
         The total number of shards.
-    application_id: :class:`int`
+    application_id: Optional[:class:`int`]
         The client's application ID.
     intents: :class:`Intents`
         The intents that you want to enable for the session. This is a way of
@@ -271,6 +272,23 @@ class Client:
     def __init__(
         self,
         *,
+        max_messages: Optional[int] = 1000,
+        connector: Optional[aiohttp.BaseConnector] = None,
+        proxy: Optional[str] = None,
+        proxy_auth: Optional[aiohttp.BasicAuth] = None,
+        shard_id: Optional[int] = None,
+        shard_count: Optional[int] = None,
+        application_id: Optional[int] = None,
+        intents: Intents = Intents.default(),
+        member_cache_flags: MemberCacheFlags = MISSING,
+        chunk_guilds_at_startup: bool = MISSING,
+        status: Optional[Status] = None,
+        activity: Optional[BaseActivity] = None,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        heartbeat_timeout: float = 60.0,
+        guild_ready_timeout: float = 2.0,
+        assume_unsync_clock: bool = True,
+        enable_debug_events: bool = False,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         lazy_load_commands: bool = True,
         rollout_associate_known: bool = True,
@@ -278,29 +296,42 @@ class Client:
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
-        **options: Any,
     ):
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
-        self.shard_id: Optional[int] = options.get("shard_id")
-        self.shard_count: Optional[int] = options.get("shard_count")
 
-        connector: Optional[aiohttp.BaseConnector] = options.pop("connector", None)
-        proxy: Optional[str] = options.pop("proxy", None)
-        proxy_auth: Optional[aiohttp.BasicAuth] = options.pop("proxy_auth", None)
-        unsync_clock: bool = options.pop("assume_unsync_clock", True)
+        self.shard_id: Optional[int] = shard_id
+        self.shard_count: Optional[int] = shard_count
+
         self.http: HTTPClient = HTTPClient(
-            connector, proxy=proxy, proxy_auth=proxy_auth, unsync_clock=unsync_clock, loop=self.loop
+            connector,
+            proxy=proxy,
+            proxy_auth=proxy_auth,
+            unsync_clock=assume_unsync_clock,
+            loop=self.loop,
         )
 
         self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}
 
         self._hooks: Dict[str, Callable] = {"before_identify": self._call_before_identify_hook}
 
-        self._enable_debug_events: bool = options.pop("enable_debug_events", False)
-        self._connection: ConnectionState = self._get_state(**options)
+        self._enable_debug_events: bool = enable_debug_events
+
+        self._connection: ConnectionState = self._get_state(
+            max_messages=max_messages,
+            application_id=application_id,
+            heartbeat_timeout=heartbeat_timeout,
+            guild_ready_timeout=guild_ready_timeout,
+            allowed_mentions=allowed_mentions,
+            activity=activity,
+            status=status,
+            intents=intents,
+            chunk_guilds_at_startup=chunk_guilds_at_startup,
+            member_cache_flags=member_cache_flags,
+        )
+
         self._connection.shard_count = self.shard_count
         self._closed: bool = False
         self._ready: asyncio.Event = asyncio.Event()
@@ -326,14 +357,35 @@ class Client:
     ) -> DiscordWebSocket:
         return self.ws
 
-    def _get_state(self, **options: Any) -> ConnectionState:
+    def _get_state(
+        self,
+        max_messages: Optional[int],
+        application_id: Optional[int],
+        heartbeat_timeout: float,
+        guild_ready_timeout: float,
+        allowed_mentions: Optional[AllowedMentions],
+        activity: Optional[BaseActivity],
+        status: Optional[Status],
+        intents: Intents,
+        chunk_guilds_at_startup: bool,
+        member_cache_flags: MemberCacheFlags,
+    ) -> ConnectionState:
         return ConnectionState(
             dispatch=self.dispatch,
             handlers=self._handlers,
             hooks=self._hooks,
             http=self.http,
             loop=self.loop,
-            **options,
+            max_messages=max_messages,
+            application_id=application_id,
+            heartbeat_timeout=heartbeat_timeout,
+            guild_ready_timeout=guild_ready_timeout,
+            allowed_mentions=allowed_mentions,
+            activity=activity,
+            status=status,
+            intents=intents,
+            chunk_guilds_at_startup=chunk_guilds_at_startup,
+            member_cache_flags=member_cache_flags,
         )
 
     def _handle_ready(self) -> None:
@@ -1273,7 +1325,7 @@ class Client:
     def fetch_guilds(
         self,
         *,
-        limit: Optional[int] = 100,
+        limit: Optional[int] = 200,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
     ) -> GuildIterator:
@@ -1309,7 +1361,11 @@ class Client:
             The number of guilds to retrieve.
             If ``None``, it retrieves every guild you have access to. Note, however,
             that this would make it a slow operation.
-            Defaults to ``100``.
+            Defaults to ``200``.
+
+            .. versionchanged:: 2.0
+                Changed default to ``200``.
+
         before: Union[:class:`.abc.Snowflake`, :class:`datetime.datetime`]
             Retrieves guilds before this date or object.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
@@ -2039,6 +2095,7 @@ class Client:
         delete_unknown: bool = True,
         update_known: bool = True,
         register_new: bool = True,
+        ignore_forbidden: bool = True,
     ) -> None:
         """|coro|
 
@@ -2059,20 +2116,24 @@ class Client:
         data: Optional[Dict[Optional[:class:`int`], List[:class:`dict`]]]
             Data to use when comparing local application commands to what Discord has. The key should be the
             :class:`int` guild ID (`None` for global) corresponding to the value list of application command payloads
-            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to `None`
+            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to ``None``
         use_rollout: :class:`bool`
-            If the rollout guild IDs of commands should be used. Defaults to `True`
+            If the rollout guild IDs of commands should be used. Defaults to ``True``
         associate_known: :class:`bool`
             If local commands that match a command already on Discord should be associated with each other.
-            Defaults to `True`
+            Defaults to ``True``
         delete_unknown: :class:`bool`
-            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
-            Defaults to `True`
+            Defaults to ``True``
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
-            Defaults to `True`
+            Defaults to ``True``
+        ignore_forbidden: :class:`bool`
+            If this command should suppress a :class:`errors.Forbidden` exception when the bot encounters a guild
+            where it doesn't have permissions to view application commands.
+            Defaults to ``True``
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
         # there, and vice versa.
@@ -2083,6 +2144,7 @@ class Client:
             delete_unknown=delete_unknown,
             update_known=update_known,
             register_new=register_new,
+            ignore_forbidden=ignore_forbidden,
         )
 
     async def sync_application_commands(
@@ -2147,7 +2209,7 @@ class Client:
 
         Parameters
         ----------
-        data: Optional[List[:class:`dict]]
+        data: Optional[List[:class:`dict`]]
             Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
             the payload will be retrieved from Discord.
         guild_id: Optional[:class:`int`]
@@ -2385,10 +2447,7 @@ class Client:
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
-            if isinstance(command, (SlashApplicationCommand, SlashApplicationSubcommand)):
-                command.from_callback(command.callback, call_children=False)
-            else:
-                command.from_callback(command.callback)
+            command.from_callback(command.callback)
 
             self.add_application_command(command, use_rollout=True)
 
