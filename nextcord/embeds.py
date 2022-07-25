@@ -41,8 +41,8 @@ from typing import (
 
 from . import utils
 from .colour import Colour
-from .file import File
 from .errors import InvalidArgument
+from .file import File
 
 __all__ = ("Embed",)
 
