@@ -3908,6 +3908,15 @@ GroupChannel
     .. automethod:: typing
         :async-with:
 
+ForumChannel
+~~~~~~~~~~~~
+
+.. attributetable:: ForumChannel
+
+.. autoclass:: ForumChannel()
+    :members:
+    :inherited-members:
+
 PartialInviteGuild
 ~~~~~~~~~~~~~~~~~~~
 
@@ -4299,14 +4308,6 @@ ChannelFlags
 .. attributetable:: ChannelFlags
 
 .. autoclass:: ChannelFlags()
-    :members:
-
-ForumChannel
-~~~~~~~~~~~~
-
-.. attributetable:: ForumChannel
-
-.. autoclass:: ForumChannel()
     :members:
 
 .. _discord_ui_kit:
