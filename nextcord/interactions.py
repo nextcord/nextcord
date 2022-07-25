@@ -814,10 +814,10 @@ class InteractionResponse:
         if embed is not MISSING:
             embeds = [embed]
 
-        local_embed_files = []
+        local_embed_files: List[File] = []
         if embeds:
             for embed in embeds:
-                local_embed_files.extend(list(embed._local_files.values()))
+                local_embed_files.extend(set(embed._local_files.values()))
             payload["embeds"] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:

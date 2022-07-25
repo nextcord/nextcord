@@ -1368,12 +1368,13 @@ class Messageable:
 
         local_embed_files: List[File] = []
         if embed is not None:
-            local_embed_files = list(embed._local_files.values())
+            # Discord hangs on duplicate upload it seems
+            local_embed_files.extend(set(embed._local_files.values()))
             embed = embed.to_dict()
 
         elif embeds is not None:
             for embed in embeds:
-                local_embed_files.extend(list(embed._local_files.values()))
+                local_embed_files.extend(set(embed._local_files.values()))
             embeds = [embed.to_dict() for embed in embeds]
 
         if stickers is not None:

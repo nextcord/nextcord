@@ -25,8 +25,6 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
-import io
-import os
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -43,10 +41,8 @@ from typing import (
 
 from . import utils
 from .colour import Colour
-
-if TYPE_CHECKING:
-    from .errors import InvalidArgument
-    from .file import File
+from .file import File
+from .errors import InvalidArgument
 
 __all__ = ("Embed",)
 
@@ -391,8 +387,6 @@ class Embed:
 
             .. versionadded:: 2.1
         """
-        from . import InvalidArgument
-
         self._footer = {}
         if text is not EmptyEmbed:
             self._footer["text"] = str(text)
@@ -403,9 +397,9 @@ class Embed:
         if icon_url is not EmptyEmbed:
             self._footer["icon_url"] = str(icon_url)
 
-        if icon_file is not EmptyEmbed:
-            self._local_files["footer"] = icon_file  # type: ignore
-            self._footer["icon_url"] = f"attachment://{icon_file.filename}"  # type: ignore
+        if isinstance(icon_file, File):
+            self._local_files["footer"] = icon_file
+            self._footer["icon_url"] = f"attachment://{icon_file.filename}"
 
         return self
 
@@ -462,8 +456,6 @@ class Embed:
 
             .. versionadded:: 2.1
         """
-        from . import InvalidArgument
-
         if url is EmptyEmbed:
             try:
                 del self._image
@@ -476,9 +468,9 @@ class Embed:
         if url is not EmptyEmbed and file is not EmptyEmbed:
             raise InvalidArgument("Cannot pass both url and file.")
 
-        elif file is not EmptyEmbed:
-            self._local_files["image"] = file  # type: ignore
-            self._image = {"url": f"attachment://{file.filename}"}  # type: ignore
+        elif isinstance(file, File):
+            self._local_files["image"] = file
+            self._image = {"url": f"attachment://{file.filename}"}
 
         else:
             self._image = {"url": str(url)}
@@ -511,8 +503,6 @@ class Embed:
 
             .. versionadded:: 2.1
         """
-        from . import InvalidArgument
-
         self._author = {"name": str(name)}
 
         if icon_url is not EmptyEmbed and icon_file is not EmptyEmbed:
@@ -521,9 +511,9 @@ class Embed:
         if url is not EmptyEmbed:
             self._author["url"] = str(url)
 
-        if icon_file is not EmptyEmbed:
-            self._local_files["author"] = icon_file  # type: ignore
-            self._author["icon_url"] = f"attachment://{icon_file.filename}"  # type: ignore
+        if isinstance(icon_file, File):
+            self._local_files["author"] = icon_file
+            self._author["icon_url"] = f"attachment://{icon_file.filename}"
 
         if icon_url is not EmptyEmbed:
             self._author["icon_url"] = str(icon_url)
@@ -568,8 +558,6 @@ class Embed:
 
             .. versionadded:: 2.1
         """
-        from . import InvalidArgument
-
         if url is EmptyEmbed:
             try:
                 del self._thumbnail
@@ -582,9 +570,9 @@ class Embed:
         elif url and file:
             raise InvalidArgument("Can't pass both url and file.")
 
-        elif file:
-            self._local_files["thumbnail"] = file  # type: ignore
-            self._thumbnail = {"url": f"attachment://{file.filename}"}  # type: ignore
+        elif isinstance(file, File):
+            self._local_files["thumbnail"] = file
+            self._thumbnail = {"url": f"attachment://{file.filename}"}
 
         else:
             self._thumbnail = {"url": str(url)}
