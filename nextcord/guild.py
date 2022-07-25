@@ -302,8 +302,8 @@ class Guild(Hashable):
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
-        None: _GuildLimit(emoji=50, stickers=0, bitrate=96e3, filesize=8388608),
-        0: _GuildLimit(emoji=50, stickers=0, bitrate=96e3, filesize=8388608),
+        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
+        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
         1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=8388608),
         2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=52428800),
         3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=104857600),
@@ -546,7 +546,7 @@ class Guild(Hashable):
 
     @property
     def channels(self) -> List[GuildChannel]:
-        """List[:class:`abc.GuildChannel`]: A list of channels that belongs to this guild."""
+        """List[:class:`abc.GuildChannel`]: A list of channels that belong to this guild."""
         return list(self._channels.values())
 
     @property
@@ -573,7 +573,7 @@ class Guild(Hashable):
 
     @property
     def voice_channels(self) -> List[VoiceChannel]:
-        """List[:class:`VoiceChannel`]: A list of voice channels that belongs to this guild.
+        """List[:class:`VoiceChannel`]: A list of voice channels that belong to this guild.
 
         This is sorted by the position and are in UI order from top to bottom.
         """
@@ -583,7 +583,7 @@ class Guild(Hashable):
 
     @property
     def stage_channels(self) -> List[StageChannel]:
-        """List[:class:`StageChannel`]: A list of stage channels that belongs to this guild.
+        """List[:class:`StageChannel`]: A list of stage channels that belong to this guild.
 
         .. versionadded:: 1.7
 
@@ -609,7 +609,7 @@ class Guild(Hashable):
 
     @property
     def text_channels(self) -> List[TextChannel]:
-        """List[:class:`TextChannel`]: A list of text channels that belongs to this guild.
+        """List[:class:`TextChannel`]: A list of text channels that belong to this guild.
 
         This is sorted by the position and are in UI order from top to bottom.
         """
@@ -619,7 +619,7 @@ class Guild(Hashable):
 
     @property
     def categories(self) -> List[CategoryChannel]:
-        """List[:class:`CategoryChannel`]: A list of categories that belongs to this guild.
+        """List[:class:`CategoryChannel`]: A list of categories that belong to this guild.
 
         This is sorted by the position and are in UI order from top to bottom.
         """
@@ -780,7 +780,7 @@ class Guild(Hashable):
 
         .. versionadded:: 2.0
         """
-        more_stickers = 60 if "MORE_STICKERS" in self.features else 0
+        more_stickers = 60 if "MORE_STICKERS" in self.features else 5
         return max(more_stickers, self._PREMIUM_GUILD_LIMITS[self.premium_tier].stickers)
 
     @property
@@ -2155,6 +2155,12 @@ class Guild(Hashable):
         -------
         List[:class:`Invite`]
             The list of invites that are currently active.
+
+
+        .. note::
+
+            This method does not include the Guild's vanity URL.
+            To get the vanity URL :class:`Invite`, refer to :meth:`Guild.vanity_invite`.
         """
 
         data = await self._state.http.invites_from(self.id)
@@ -2367,7 +2373,7 @@ class Guild(Hashable):
             "tags": emoji,
         }
 
-        data = await self._state.http.create_guild_sticker(self.id, payload, file, reason)
+        data = await self._state.http.create_guild_sticker(self.id, payload, file, reason=reason)
         return self._state.store_sticker(self, data)
 
     async def delete_sticker(self, sticker: Snowflake, *, reason: Optional[str] = None) -> None:

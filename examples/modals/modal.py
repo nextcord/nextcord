@@ -27,8 +27,23 @@ class Pet(nextcord.ui.Modal):
         )
         self.add_item(self.description)
 
+        self.pet_type = nextcord.ui.Select(
+            options=[
+                nextcord.SelectOption(label="Dog", emoji="🐶"),
+                nextcord.SelectOption(label="Cat", emoji="🐱"),
+                nextcord.SelectOption(label="Bird", emoji="🐦"),
+                nextcord.SelectOption(label="Fish", emoji="🐟"),
+                nextcord.SelectOption(label="Other", emoji="🐰"),
+            ],
+            min_values=1,
+            max_values=1,
+            placeholder="Type of pet",
+        )
+        self.add_item(self.pet_type)
+
     async def callback(self, interaction: nextcord.Interaction) -> None:
         response = f"{interaction.user.mention}'s favourite pet's name is {self.name.value}."
+        response += f"\nThe type of pet is {self.pet_type.values[0]}."
         if self.description.value != "":
             response += (
                 f"\nTheir pet can be recognized by this information:\n{self.description.value}"
@@ -36,7 +51,7 @@ class Pet(nextcord.ui.Modal):
         await interaction.send(response)
 
 
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot()
 
 
 @bot.slash_command(

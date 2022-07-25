@@ -411,7 +411,7 @@ class MessageConverter(IDConverter[nextcord.Message]):
         except nextcord.NotFound:
             raise MessageNotFound(argument)
         except nextcord.Forbidden:
-            raise ChannelNotReadable(channel)  # type: ignore weird type conflict
+            raise ChannelNotReadable(channel)  # type: ignore  # weird type conflict
 
 
 class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
@@ -477,7 +477,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         else:
             thread_id = int(match.group(1))
             if guild:
-                result = guild.get_thread(thread_id)  # type: ignore handled below
+                result = guild.get_thread(thread_id)  # type: ignore  # handled below
 
         if not result or not isinstance(result, type):
             raise ThreadNotFound(argument)
@@ -809,8 +809,13 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
 
     This is done by extracting the animated flag, name and ID from the emoji.
 
+    If the emoji is a unicode emoji, then the name is the unicode character.
+
     .. versionchanged:: 1.5
          Raise :exc:`.PartialEmojiConversionFailure` instead of generic :exc:`.BadArgument`
+
+    .. versionchanged:: 2.1
+        Add support for converting unicode emojis
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.PartialEmoji:
@@ -824,6 +829,10 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
             return nextcord.PartialEmoji.with_state(
                 ctx.bot._connection, animated=emoji_animated, name=emoji_name, id=emoji_id
             )
+
+        # If the emoji is a unicode emoji, then the name is the unicode character.
+        if re.match(r"^[\u0023-\u0039]?[\u00ae\u00a9\U00002000-\U0010ffff]+$", argument):
+            return nextcord.PartialEmoji.with_state(ctx.bot._connection, name=argument)
 
         raise PartialEmojiConversionFailure(argument)
 

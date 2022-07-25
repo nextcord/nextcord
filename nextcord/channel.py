@@ -48,7 +48,7 @@ from .asset import Asset
 from .enums import ChannelType, StagePrivacyLevel, VideoQualityMode, VoiceRegion, try_enum
 from .errors import ClientException, InvalidArgument
 from .iterators import ArchivedThreadIterator
-from .mixins import Hashable
+from .mixins import Hashable, PinsMixin
 from .object import Object
 from .permissions import PermissionOverwrite, Permissions
 from .stage_instance import StageInstance
@@ -91,7 +91,7 @@ async def _single_delete_strategy(messages: Iterable[Message]):
         await m.delete()
 
 
-class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
+class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
     """Represents a Discord guild text channel.
 
     .. container:: operations
@@ -515,7 +515,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable):
             count += 1
             ret.append(message)
 
-        # SOme messages remaining to poll
+        # Some messages remaining to poll
         if count >= 2:
             # more than 2 messages -> bulk delete
             to_delete = ret[-count:]
@@ -899,7 +899,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         return base
 
 
-class VoiceChannel(VocalGuildChannel):
+class VoiceChannel(VocalGuildChannel, abc.Messageable):
     """Represents a Discord guild voice channel.
 
     .. container:: operations
@@ -946,9 +946,25 @@ class VoiceChannel(VocalGuildChannel):
         The camera video quality for the voice channel's participants.
 
         .. versionadded:: 2.0
+    last_message_id: Optional[:class:`int`]
+        The last message ID of the message sent to this channel. It may
+        *not* point to an existing or valid message.
+
+        .. versionadded:: 2.1
+    nsfw: :class:`bool`
+        If the channel is marked as "not safe for work".
+
+        .. note::
+
+            To check if the channel or the guild of that channel are marked as NSFW, consider :meth:`is_nsfw` instead.
+
+        .. versionadded:: 2.1
     """
 
-    __slots__ = ()
+    __slots__ = (
+        "last_message_id",
+        "nsfw",
+    )
 
     def __repr__(self) -> str:
         attrs = [
@@ -964,10 +980,45 @@ class VoiceChannel(VocalGuildChannel):
         joined = " ".join("%s=%r" % t for t in attrs)
         return f"<{self.__class__.__name__} {joined}>"
 
+    def _update(self, guild: Guild, data: VoiceChannelPayload) -> None:
+        VocalGuildChannel._update(self, guild, data)
+        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
+        self.nsfw: bool = data.get("nsfw", False)
+
+    async def _get_channel(self):
+        return self
+
     @property
     def type(self) -> ChannelType:
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.voice
+
+    def is_nsfw(self) -> bool:
+        """:class:`bool`: Checks if the channel is NSFW."""
+        return self.nsfw
+
+    @property
+    def last_message(self) -> Optional[Message]:
+        """Fetches the last message from this channel in cache.
+
+        The message might not be valid or point to an existing message.
+
+        .. admonition:: Reliable Fetching
+            :class: helpful
+
+            For a slightly more reliable method of fetching the
+            last message, consider using either :meth:`history`
+            or :meth:`fetch_message` with the :attr:`last_message_id`
+            attribute.
+
+        .. versionadded:: 2.1
+
+        Returns
+        ---------
+        Optional[:class:`Message`]
+            The last message in this channel or ``None`` if not found.
+        """
+        return self._state._get_message(self.last_message_id) if self.last_message_id else None
 
     @utils.copy_doc(abc.GuildChannel.clone)
     async def clone(
@@ -1063,6 +1114,173 @@ class VoiceChannel(VocalGuildChannel):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+
+    async def delete_messages(self, messages: Iterable[Snowflake]) -> None:
+        """|coro|
+
+        Deletes a list of messages. This is similar to :meth:`Message.delete`
+        except it bulk deletes multiple messages.
+
+        As a special case, if the number of messages is 0, then nothing
+        is done. If the number of messages is 1 then single message
+        delete is done. If it's more than two, then bulk delete is used.
+
+        You cannot bulk delete more than 100 messages or messages that
+        are older than 14 days old.
+
+        You must have the :attr:`~Permissions.manage_messages` permission to
+        use this.
+
+        .. versionadded:: 2.1
+
+        Parameters
+        -----------
+        messages: Iterable[:class:`abc.Snowflake`]
+            An iterable of messages denoting which ones to bulk delete.
+
+        Raises
+        ------
+        ClientException
+            The number of messages to delete was more than 100.
+        Forbidden
+            You do not have proper permissions to delete the messages.
+        NotFound
+            If single delete, then the message was already deleted.
+        HTTPException
+            Deleting the messages failed.
+        """
+        if not isinstance(messages, (list, tuple)):
+            messages = list(messages)
+
+        if len(messages) == 0:
+            return  # do nothing
+
+        if len(messages) == 1:
+            message_id: int = messages[0].id
+            await self._state.http.delete_message(self.id, message_id)
+            return
+
+        if len(messages) > 100:
+            raise ClientException("Can only bulk delete messages up to 100 messages")
+
+        message_ids: SnowflakeList = [m.id for m in messages]
+        await self._state.http.delete_messages(self.id, message_ids)
+
+    async def purge(
+        self,
+        *,
+        limit: Optional[int] = 100,
+        check: Callable[[Message], bool] = MISSING,
+        before: Optional[SnowflakeTime] = None,
+        after: Optional[SnowflakeTime] = None,
+        around: Optional[SnowflakeTime] = None,
+        oldest_first: Optional[bool] = False,
+        bulk: bool = True,
+    ) -> List[Message]:
+        """|coro|
+
+        Purges a list of messages that meet the criteria given by the predicate
+        ``check``. If a ``check`` is not provided then all messages are deleted
+        without discrimination.
+
+        You must have the :attr:`~Permissions.manage_messages` permission to
+        delete messages even if they are your own.
+        The :attr:`~Permissions.read_message_history` permission is
+        also needed to retrieve message history.
+
+        .. versionadded:: 2.1
+
+        Examples
+        ---------
+
+        Deleting bot's messages ::
+
+            def is_me(m):
+                return m.author == client.user
+
+            deleted = await channel.purge(limit=100, check=is_me)
+            await channel.send(f'Deleted {len(deleted)} message(s)')
+
+        Parameters
+        -----------
+        limit: Optional[:class:`int`]
+            The number of messages to search through. This is not the number
+            of messages that will be deleted, though it can be.
+        check: Callable[[:class:`Message`], :class:`bool`]
+            The function used to check if a message should be deleted.
+            It must take a :class:`Message` as its sole parameter.
+        before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Same as ``before`` in :meth:`history`.
+        after: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Same as ``after`` in :meth:`history`.
+        around: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Same as ``around`` in :meth:`history`.
+        oldest_first: Optional[:class:`bool`]
+            Same as ``oldest_first`` in :meth:`history`.
+        bulk: :class:`bool`
+            If ``True``, use bulk delete. Setting this to ``False`` is useful for mass-deleting
+            a bot's own messages without :attr:`Permissions.manage_messages`. When ``True``, will
+            fall back to single delete if messages are older than two weeks.
+
+        Raises
+        -------
+        Forbidden
+            You do not have proper permissions to do the actions required.
+        HTTPException
+            Purging the messages failed.
+
+        Returns
+        --------
+        List[:class:`.Message`]
+            The list of messages that were deleted.
+        """
+
+        if check is MISSING:
+            check = lambda m: True
+
+        iterator = self.history(
+            limit=limit, before=before, after=after, oldest_first=oldest_first, around=around
+        )
+        ret: List[Message] = []
+        count = 0
+
+        minimum_time = int((time.time() - 14 * 24 * 60 * 60) * 1000.0 - 1420070400000) << 22
+        strategy = self.delete_messages if bulk else _single_delete_strategy
+
+        async for message in iterator:
+            if count == 100:
+                to_delete = ret[-100:]
+                await strategy(to_delete)
+                count = 0
+                await asyncio.sleep(1)
+
+            if not check(message):
+                continue
+
+            if message.id < minimum_time:
+                # older than 14 days old
+                if count == 1:
+                    await ret[-1].delete()
+                elif count >= 2:
+                    to_delete = ret[-count:]
+                    await strategy(to_delete)
+
+                count = 0
+                strategy = _single_delete_strategy
+
+            count += 1
+            ret.append(message)
+
+        # Some messages remaining to poll
+        if count >= 2:
+            # more than 2 messages -> bulk delete
+            to_delete = ret[-count:]
+            await strategy(to_delete)
+        elif count == 1:
+            # delete a single message
+            await ret[-1].delete()
+
+        return ret
 
 
 class StageChannel(VocalGuildChannel):
@@ -1595,7 +1813,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
 DMC = TypeVar("DMC", bound="DMChannel")
 
 
-class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable):
+class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
     """Represents a Discord direct message channel.
 
     .. container:: operations
@@ -1721,7 +1939,7 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable):
         return PartialMessage(channel=self, id=message_id)
 
 
-class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable):
+class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
     """Represents a Discord group channel.
 
     .. container:: operations

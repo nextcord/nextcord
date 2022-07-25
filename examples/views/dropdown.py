@@ -47,18 +47,18 @@ class DropdownView(nextcord.ui.View):
         self.add_item(Dropdown())
 
 
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot()
 
 
-@bot.command()
-async def colour(ctx):
+@bot.slash_command()
+async def colour(interaction):
     """Sends a message with our dropdown containing colours"""
 
     # Create the view containing our dropdown
     view = DropdownView()
 
     # Sending a message containing our view
-    await ctx.send("Pick your favourite colour:", view=view)
+    await interaction.send("Pick your favourite colour:", view=view)
 
 
 bot.run("token")

@@ -67,6 +67,7 @@ if TYPE_CHECKING:
     from .types.audit_log import AuditLog as AuditLogPayload, AuditLogEntry as AuditLogEntryPayload
     from .types.guild import Ban as BanPayload, Guild as GuildPayload
     from .types.message import Message as MessagePayload
+    from .types.scheduled_events import ScheduledEventUser as ScheduledEventUserPayload
     from .types.threads import Thread as ThreadPayload
     from .types.user import PartialUser as PartialUserPayload
     from .user import User
@@ -522,7 +523,7 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         self.before: Optional[Snowflake] = before
         self.user_id = user_id
         self.action_type = action_type
-        self.after: Optional[Snowflake] = OLDEST_OBJECT
+        self.after: Optional[Snowflake] = after or OLDEST_OBJECT
         self._users = {}
         self._state = guild._state
 
@@ -530,14 +531,9 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
 
         self.entries = asyncio.Queue()
 
-        if self.reverse:
-            self._strategy = self._after_strategy
-            if self.before:
-                self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
-        else:
-            self._strategy = self._before_strategy
-            if self.after and self.after != OLDEST_OBJECT:
-                self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
+        self._strategy = self._before_strategy
+        if self.after and self.after != OLDEST_OBJECT:
+            self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
 
     async def _before_strategy(self, retrieve):
         before = self.before.id if self.before else None
@@ -554,22 +550,6 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
             if self.limit is not None:
                 self.limit -= retrieve
             self.before = Object(id=int(entries[-1]["id"]))
-        return data.get("users", []), entries
-
-    async def _after_strategy(self, retrieve):
-        after = self.after.id if self.after else None
-        data: AuditLogPayload = await self.request(
-            self.guild.id,
-            limit=retrieve,
-            user_id=self.user_id,
-            action_type=self.action_type,
-            after=after,
-        )
-        entries = data.get("audit_log_entries", [])
-        if len(data) and entries:
-            if self.limit is not None:
-                self.limit -= retrieve
-            self.after = Object(id=int(entries[0]["id"]))
         return data.get("users", []), entries
 
     async def next(self) -> AuditLogEntry:
@@ -664,13 +644,14 @@ class GuildIterator(_AsyncIterator["Guild"]):
         self.get_guilds = self.bot.http.get_guilds
         self.guilds = asyncio.Queue()
 
-        if self.before and self.after:
+        if self.before:
+            self.reverse = True
             self._retrieve_guilds = self._retrieve_guilds_before_strategy  # type: ignore
-            self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
-        elif self.after:
-            self._retrieve_guilds = self._retrieve_guilds_after_strategy  # type: ignore
+            if self.after:
+                self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
         else:
-            self._retrieve_guilds = self._retrieve_guilds_before_strategy  # type: ignore
+            self.reverse = False
+            self._retrieve_guilds = self._retrieve_guilds_after_strategy  # type: ignore
 
     async def next(self) -> Guild:
         if self.guilds.empty():
@@ -683,8 +664,8 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
     def _get_retrieve(self):
         l = self.limit
-        if l is None or l > 100:
-            r = 100
+        if l is None or l > 200:
+            r = 200
         else:
             r = l
         self.retrieve = r
@@ -698,9 +679,11 @@ class GuildIterator(_AsyncIterator["Guild"]):
     async def fill_guilds(self):
         if self._get_retrieve():
             data = await self._retrieve_guilds(self.retrieve)
-            if self.limit is None or len(data) < 100:
+            if len(data) < 200:
                 self.limit = 0
 
+            if self.reverse:
+                data = reversed(data)
             if self._filter:
                 data = filter(self._filter, data)
 
@@ -718,7 +701,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.before = Object(id=int(data[-1]["id"]))
+            self.before = Object(id=int(data[0]["id"]))
         return data
 
     async def _retrieve_guilds_after_strategy(self, retrieve):
@@ -728,7 +711,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
-            self.after = Object(id=int(data[0]["id"]))
+            self.after = Object(id=int(data[-1]["id"]))
         return data
 
 
@@ -885,6 +868,7 @@ class ScheduledEventIterator(_AsyncIterator["ScheduledEvent"]):
         self.state = self.guild._state
         self.get_guild_events = self.state.http.get_guild_events
         self.queue = asyncio.Queue()
+        self.has_more = True
 
     async def next(self) -> Member:
         if self.queue.empty():
@@ -896,7 +880,11 @@ class ScheduledEventIterator(_AsyncIterator["ScheduledEvent"]):
             raise NoMoreItems()
 
     async def fill_queue(self):
+        if not self.has_more:
+            raise NoMoreItems()
+
         data = await self.get_guild_events(self.guild.id, self.with_users)
+        self.has_more = False
         if not data:
             # no data, terminate
             return
@@ -913,21 +901,28 @@ class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
         self,
         guild: Guild,
         event: ScheduledEvent,
-        limit: int = 100,
         with_member: bool = False,
+        limit: Optional[int] = None,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
     ):
         self.guild = guild
         self.event = event
-        self.limit = limit
         self.with_member = with_member
+
+        self.limit = limit
         self.before = before
-        self.after = after
+        self.after = after or OLDEST_OBJECT
+
+        if self.before:
+            self._retrieve_users = self._retrieve_users_before_strategy
+        else:
+            self._retrieve_users = self._retrieve_users_after_strategy
 
         self.state = self.guild._state
         self.get_event_users = self.state.http.get_event_users
         self.queue = asyncio.Queue()
+        self.has_more = True
 
     async def next(self) -> Member:
         if self.queue.empty():
@@ -938,14 +933,46 @@ class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
         except asyncio.QueueEmpty:
             raise NoMoreItems()
 
-    async def fill_queue(self):
-        data = await self.get_event_users(self.guild.id, self.event.id)
-        if not data:
-            # no data, terminate
-            return
+    def _get_retrieve(self) -> bool:
+        self.retrieve = min(self.limit, 100) if self.limit is not None else 100
+        return self.retrieve > 0
 
-        for element in reversed(data):
-            await self.queue.put(self.create_user(element))
+    async def fill_queue(self):
+        if self._get_retrieve():
+            data = await self._retrieve_users(self.retrieve)
+            if len(data) < 100:
+                self.limit = 0  # terminate the infinite loop
+
+            for element in reversed(data):
+                await self.queue.put(self.create_user(element))
 
     def create_user(self, data):
         return self.event._update_user(data=data)
+
+    async def _retrieve_users_before_strategy(
+        self, retrieve: int
+    ) -> List[ScheduledEventUserPayload]:
+        """Retrieve users using before parameter."""
+        before = self.before.id if self.before else None
+        data: List[ScheduledEventUserPayload] = await self.get_event_users(
+            self.guild.id, self.event.id, limit=retrieve, before=before
+        )
+        if len(data):
+            if self.limit is not None:
+                self.limit -= len(data)
+            self.before = Object(id=int(data[0]["user"]["id"]))
+        return data
+
+    async def _retrieve_users_after_strategy(
+        self, retrieve: int
+    ) -> List[ScheduledEventUserPayload]:
+        """Retrieve users using after parameter."""
+        after = self.after.id if self.after else None
+        data: List[ScheduledEventUserPayload] = await self.get_event_users(
+            self.guild.id, self.event.id, limit=retrieve, after=after
+        )
+        if len(data):
+            if self.limit is not None:
+                self.limit -= len(data)
+            self.after = Object(id=int(data[-1]["user"]["id"]))
+        return data

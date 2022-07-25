@@ -55,6 +55,7 @@ from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, Status, try_enum
+from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
@@ -78,7 +79,7 @@ from .user import ClientUser, User
 if TYPE_CHECKING:
     from asyncio import Future
 
-    from .abc import PrivateChannel
+    from .abc import MessageableChannel, PrivateChannel
     from .application_command import BaseApplicationCommand
     from .client import Client
     from .gateway import DiscordWebSocket
@@ -100,6 +101,9 @@ if TYPE_CHECKING:
     T = TypeVar("T")
     CS = TypeVar("CS", bound="ConnectionState")
     Channel = Union[GuildChannel, VocalGuildChannel, PrivateChannel, PartialMessageable]
+
+
+MISSING = utils.MISSING
 
 
 class ChunkRequest:
@@ -174,11 +178,20 @@ class ConnectionState:
         hooks: Dict[str, Callable],
         http: HTTPClient,
         loop: asyncio.AbstractEventLoop,
-        **options: Any,
+        max_messages: Optional[int] = 1000,
+        application_id: Optional[int] = None,
+        heartbeat_timeout: float = 60.0,
+        guild_ready_timeout: float = 2.0,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        activity: Optional[BaseActivity] = None,
+        status: Optional[Status] = None,
+        intents: Intents = Intents.default(),
+        chunk_guilds_at_startup: bool = MISSING,
+        member_cache_flags: MemberCacheFlags = MISSING,
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = loop
         self.http: HTTPClient = http
-        self.max_messages: Optional[int] = options.get("max_messages", 1000)
+        self.max_messages: Optional[int] = max_messages
         if self.max_messages is not None and self.max_messages <= 0:
             self.max_messages = 1000
 
@@ -187,13 +200,11 @@ class ConnectionState:
         self.hooks: Dict[str, Callable] = hooks
         self.shard_count: Optional[int] = None
         self._ready_task: Optional[asyncio.Task] = None
-        self.application_id: Optional[int] = utils._get_as_snowflake(options, "application_id")
-        self.heartbeat_timeout: float = options.get("heartbeat_timeout", 60.0)
-        self.guild_ready_timeout: float = options.get("guild_ready_timeout", 2.0)
+        self.application_id: Optional[int] = application_id
+        self.heartbeat_timeout: float = heartbeat_timeout
+        self.guild_ready_timeout: float = guild_ready_timeout
         if self.guild_ready_timeout < 0:
             raise ValueError("guild_ready_timeout cannot be negative")
-
-        allowed_mentions = options.get("allowed_mentions")
 
         if allowed_mentions is not None and not isinstance(allowed_mentions, AllowedMentions):
             raise TypeError("allowed_mentions parameter must be AllowedMentions")
@@ -201,50 +212,51 @@ class ConnectionState:
         self.allowed_mentions: Optional[AllowedMentions] = allowed_mentions
         self._chunk_requests: Dict[Union[int, str], ChunkRequest] = {}
 
-        activity = options.get("activity", None)
-        if activity:
+        if activity is not None:
             if not isinstance(activity, BaseActivity):
                 raise TypeError("activity parameter must derive from BaseActivity.")
 
-            activity = activity.to_dict()
+            raw_activity = activity.to_dict()
+        else:
+            raw_activity = activity
 
-        status = options.get("status", None)
         if status:
             if status is Status.offline:
-                status = "invisible"
+                raw_status = "invisible"
             else:
-                status = str(status)
-
-        intents = options.get("intents", None)
-        if intents is not None:
-            if not isinstance(intents, Intents):
-                raise TypeError(f"intents parameter must be Intent not {type(intents)!r}")
+                raw_status = str(status)
         else:
-            intents = Intents.default()
+            raw_status = None
+
+        if not isinstance(intents, Intents):
+            raise TypeError(f"intents parameter must be Intent not {type(intents)!r}")
 
         if not intents.guilds:
             _log.warning("Guilds intent seems to be disabled. This may cause state related issues.")
 
-        self._chunk_guilds: bool = options.get("chunk_guilds_at_startup", intents.members)
+        if chunk_guilds_at_startup is MISSING:
+            chunk_guilds_at_startup = intents.members
+
+        self._chunk_guilds: bool = chunk_guilds_at_startup
 
         # Ensure these two are set properly
         if not intents.members and self._chunk_guilds:
             raise ValueError("Intents.members must be enabled to chunk guilds at startup.")
 
-        cache_flags = options.get("member_cache_flags", None)
-        if cache_flags is None:
-            cache_flags = MemberCacheFlags.from_intents(intents)
+        if member_cache_flags is MISSING:
+            member_cache_flags = MemberCacheFlags.from_intents(intents)
         else:
-            if not isinstance(cache_flags, MemberCacheFlags):
+            if not isinstance(member_cache_flags, MemberCacheFlags):
                 raise TypeError(
-                    f"member_cache_flags parameter must be MemberCacheFlags not {type(cache_flags)!r}"
+                    "member_cache_flags parameter must be MemberCacheFlags "
+                    f"not {type(member_cache_flags)!r}"
                 )
 
-            cache_flags._verify_intents(intents)
+            member_cache_flags._verify_intents(intents)
 
-        self.member_cache_flags: MemberCacheFlags = cache_flags
-        self._activity: Optional[ActivityPayload] = activity
-        self._status: Optional[str] = status
+        self.member_cache_flags: MemberCacheFlags = member_cache_flags
+        self._activity: Optional[ActivityPayload] = raw_activity
+        self._status: Optional[str] = raw_status
         self._intents: Intents = intents
         # A set of all application command objects available. Set because duplicates should not exist.
         self._application_commands: Set[BaseApplicationCommand] = set()
@@ -256,7 +268,7 @@ class ConnectionState:
         # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
         self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
 
-        if not intents.members or cache_flags._empty:
+        if not intents.members or member_cache_flags._empty:
             self.store_user = self.create_user  # type: ignore
             self.deref_user = self.deref_user_no_intents  # type: ignore
 
@@ -527,8 +539,12 @@ class ConnectionState:
         try:
             guild = self._get_guild(int(data["guild_id"]))
         except KeyError:
-            channel = DMChannel._from_message(self, channel_id)
-            guild = None
+            channel = self.get_channel(channel_id)
+
+            if channel is None:
+                channel = DMChannel._from_message(self, channel_id)
+
+            guild = getattr(channel, "guild", None)
         else:
             channel = guild and guild._resolve_channel(channel_id)
 
@@ -663,6 +679,7 @@ class ConnectionState:
         delete_unknown: bool = True,
         update_known: bool = True,
         register_new: bool = True,
+        ignore_forbidden: bool = True,
     ):
         """|coro|
 
@@ -683,20 +700,24 @@ class ConnectionState:
         data: Optional[Dict[Optional[:class:`int`], List[:class:`dict`]]]
             Data to use when comparing local application commands to what Discord has. The key should be the
             :class:`int` guild ID (`None` for global) corresponding to the value list of application command payloads
-            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to `None`
+            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to ``None``
         use_rollout: :class:`bool`
-            If the rollout guild IDs of commands should be used. Defaults to `True`
+            If the rollout guild IDs of commands should be used. Defaults to ``True``
         associate_known: :class:`bool`
             If local commands that match a command already on Discord should be associated with each other.
-            Defaults to `True`
+            Defaults to ``True``
         delete_unknown: :class:`bool`
             If commands on Discord that don't match a local command should be deleted. Defaults to `True`
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
-            Defaults to `True`
+            Defaults to ``True``
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
-            Defaults to `True`
+            Defaults to ``True``
+        ignore_forbidden: :class:`bool`
+            If this command should raise an :class:`errors.Forbidden` exception when the bot encounters a guild where
+            it doesn't have permissions to view application commands.
+            Defaults to ``True``
         """
         _log.debug("Beginning sync of all application commands.")
         self._get_client().add_all_application_commands()
@@ -718,12 +739,23 @@ class ConnectionState:
             if app_cmd.is_guild:
                 for guild_id in app_cmd.guild_ids_to_rollout if use_rollout else app_cmd.guild_ids:
                     if guild_id not in data:
-                        data[guild_id] = await self.http.get_guild_commands(
-                            self.application_id, guild_id
-                        )
-                        _log.debug(
-                            "Fetched guild application command data for guild ID %s", guild_id
-                        )
+                        try:
+                            data[guild_id] = await self.http.get_guild_commands(
+                                self.application_id, guild_id
+                            )
+                            _log.debug(
+                                "Fetched guild application command data for guild ID %s", guild_id
+                            )
+                        except Forbidden as e:
+                            if ignore_forbidden:
+                                _log.warning(
+                                    f"nextcord.Client: Forbidden error for %s, is the applications.commands "
+                                    f"Oauth scope enabled? %s",
+                                    guild_id,
+                                    e,
+                                )
+                            else:
+                                raise e
 
         for guild_id in data:
             _log.debug("Running sync for %s", "global" if guild_id is None else f"Guild {guild_id}")
@@ -2140,7 +2172,7 @@ class ConnectionState:
     def create_message(
         self,
         *,
-        channel: Union[TextChannel, Thread, DMChannel, GroupChannel, PartialMessageable],
+        channel: MessageableChannel,
         data: MessagePayload,
     ) -> Message:
         return Message(state=self, channel=channel, data=data)
