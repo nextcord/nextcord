@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, TTypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, Typevar
 
 from . import utils
 from .channel import ChannelType, PartialMessageable
@@ -63,7 +63,7 @@ if TYPE_CHECKING:
         TextChannel,
         VoiceChannel,
     )
-    from .client import Client
+    from .client import Client, AutoShardedClient
     from .guild import Guild
     from .message import AllowedMentions
     from .state import ConnectionState
@@ -75,7 +75,8 @@ if TYPE_CHECKING:
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
     ]
-    C = TypeVar("C", bound=Client)
+
+C = TypeVar("C", bound="Union[Client, AutoShardedClient]")
 
 MISSING: Any = utils.MISSING
 
