@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 from . import utils
 from .channel import ChannelType, PartialMessageable
@@ -63,7 +63,7 @@ if TYPE_CHECKING:
         TextChannel,
         VoiceChannel,
     )
-    from .client import Client, AutoShardedClient
+    from .client import AutoShardedClient, Client
     from .guild import Guild
     from .message import AllowedMentions
     from .state import ConnectionState
