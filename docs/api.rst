@@ -4464,8 +4464,7 @@ Slash Options
     * - :class:`Annotated` [<type1>, <type2>, ..., <typeN>]
       - Makes your IDE see <type1> as the expected type, but Nextcord will attempt to use <typeN> as the option type.
         If <typeN> isn't a valid option type, Nextcord will work backwards towards <type2> until it finds a type that
-        can be
-        used as a valid option type.
+        can be used as a valid option type.
 
 .. attributetable:: SlashOption
 
