@@ -55,12 +55,12 @@ if TYPE_CHECKING:
 
 
 class EntityMetadata:
-    """Represents the metadata for an event
+    """Represents the metadata for an event.
 
     Parameters
     ----------
-    location : Optional[str]
-        The location of the event, defaults to None
+    location: Optional[:class:`str`]
+        The location of the event, defaults to None.
     """
 
     # kwargs is for if more attributes are added to the api, prevent breakage
@@ -71,24 +71,24 @@ class EntityMetadata:
 
 
 class ScheduledEventUser(Hashable):
-    """Represents a user in a scheduled event
+    """Represents a user in a scheduled event.
 
     Attributes
     ----------
     event: :class:`ScheduledEvent`
         The event the user is interested in.
     user: Optional[:class:`User`]
-        The related user object. Blank if no member intents
+        The related user object. Blank if :attr:`Intents.members` is not enabled.
     member: Optional[:class:`Member`]
         The related member object, if requested with
         :meth:`ScheduledEvent.fetch_users`.
-    user_id: int
-        The id of the interested user
+    user_id: :class:`int`
+        The ID of the interested user.
 
 
     .. warning::
 
-        user or member may be ``None``, this may occur if you don't have
+        `user` or `member` may be ``None``, this may occur if you don't have
         :attr:`Intents.members` enabled.
     """
 
@@ -181,17 +181,17 @@ class ScheduledEvent(Hashable):
     channel: Optional[:class:`abc.GuildChannel`]
         The channel the event will take place, if any.
     channel_id: Optional[:class:`int`]
-        The channel id where the event will take place, if any.
+        The channel ID where the event will take place, if any.
     creator: Optional[:class:`User`]
         The user who created the event, if cached.
     description: :class:`str`
         The description of the event.
-    end_time: :class:`datetime.datetime`
+    end_time: Optional[:class:`datetime.datetime`]
         The scheduled end time for the event, if set.
     guild: :class:`Guild`
         The guild the event will be in.
     id: :class:`int`
-        The snowflake id for the event.
+        The snowflake ID for the event.
     metadata: Optional[:class:`EntityMetadata`]
         The metadata for the event, if any.
     name: :class:`str`
@@ -202,8 +202,8 @@ class ScheduledEvent(Hashable):
         The scheduled start time for the event.
     user_count: :class:`int`
         An approximate count of the 'interested' users.
-    image: :class:`Asset`
-        The event cover image.
+    image: Optional[:class:`Asset`]
+        The event cover image, if set.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -427,7 +427,7 @@ class ScheduledEvent(Hashable):
         Parameters
         ----------
         user_id: :class:`int`
-            The user id to get from cache.
+            The user ID to get from cache.
 
         Returns
         -------
@@ -444,23 +444,23 @@ class ScheduledEvent(Hashable):
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
     ) -> ScheduledEventUserIterator:
-        """Fetch the users that are interested, returns an asyc iterator.
+        """Fetch the users that are interested, returns an async iterator.
 
         Parameters
         ----------
         limit: :class:`int`
-            Amount of users to fetch, by default 100
+            Amount of users to fetch, by default 100.
         with_member: :class:`bool`
-            If the user objects should contain members too, by default False
+            If the user objects should contain members too, by default ``False``.
         before: Optional[:class:`int`]
-            A snowflake id to start with, useful for chunks of users, by default None
+            A snowflake id to start with, useful for chunks of users, by default ``None``.
         after: Optional[:class:`int`]
-            A snowflake id to end with, useful for chunks of usersby default None
+            A snowflake id to end with, useful for chunks of users by default ``None``.
 
         Yields
         -------
         :class:`ScheduledEventUser`
-            A full event user object
+            A full event user object.
         """
         return ScheduledEventUserIterator(
             self.guild, self, limit=limit, with_member=with_member, before=before, after=after
