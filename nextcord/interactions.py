@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, TTypeVar
 
 from . import utils
 from .channel import ChannelType, PartialMessageable
@@ -75,6 +75,7 @@ if TYPE_CHECKING:
     InteractionChannel = Union[
         VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
     ]
+    C = TypeVar("C", bound=Client)
 
 MISSING: Any = utils.MISSING
 
@@ -225,7 +226,7 @@ class Interaction:
                 pass
 
     @property
-    def client(self) -> Client:
+    def client(self) -> C:
         """:class:`Client`: The client that handled the interaction."""
         return self._state._get_client()
 
