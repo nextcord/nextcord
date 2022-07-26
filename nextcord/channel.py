@@ -868,7 +868,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     default_auto_archive_duration: :class:`int`
         The archive duration which threads from this channel inherit by default.
     last_message_id: :class:`int`
-        The snowflake ID of the last thread in this channel.
+        The snowflake ID of the message starting the last thread in this channel.
     """
 
     __slots__ = (
@@ -947,7 +947,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
     @property
     def last_message(self) -> Optional[Message]:
-        """Fetches the last message from this channel in cache.
+        """Fetches the message that started the last thread from this channel in cache.
 
         The message might not be valid or point to an existing message.
 
@@ -962,7 +962,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         Returns
         -------
         Optional[:class:`Message`]
-            The last message in this channel or ``None`` if not found.
+            The message that started the last thread in this channel or ``None`` if not found.
         """
         return self._state._get_message(self.last_message_id) if self.last_message_id else None
 
