@@ -48,8 +48,14 @@ from typing import (
 from . import abc, utils
 from .asset import Asset
 from .bans import BanEntry
-from .channel import *
-from .channel import _guild_channel_factory, _threaded_guild_channel_factory
+from .channel import (
+    CategoryChannel,
+    StageChannel,
+    TextChannel,
+    VoiceChannel,
+    _guild_channel_factory,
+    _threaded_guild_channel_factory,
+)
 from .colour import Colour
 from .emoji import Emoji
 from .enums import (
@@ -66,7 +72,6 @@ from .enums import (
     try_enum,
 )
 from .errors import ClientException, InvalidArgument, InvalidData
-from .file import File
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
@@ -92,6 +97,8 @@ if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
     from .channel import CategoryChannel, StageChannel, TextChannel, VoiceChannel
+    from .file import File
+    from .message import Attachment
     from .permissions import Permissions
     from .state import ConnectionState
     from .template import Template
@@ -1455,10 +1462,10 @@ class Guild(Hashable):
         reason: Optional[str] = MISSING,
         name: str = MISSING,
         description: Optional[str] = MISSING,
-        icon: Optional[bytes] = MISSING,
-        banner: Optional[bytes] = MISSING,
-        splash: Optional[bytes] = MISSING,
-        discovery_splash: Optional[bytes] = MISSING,
+        icon: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        banner: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        splash: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        discovery_splash: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
         community: bool = MISSING,
         region: Optional[Union[str, VoiceRegion]] = MISSING,
         afk_channel: Optional[VoiceChannel] = MISSING,
@@ -1490,6 +1497,10 @@ class Guild(Hashable):
         .. versionchanged:: 2.0
             The newly updated guild is returned.
 
+        .. versionchanged:: 2.1
+            The ``icon``, ``banner``, ``splash``, ``discovery_splash``
+            parameters now accept :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ----------
         name: :class:`str`
@@ -1497,24 +1508,22 @@ class Guild(Hashable):
         description: Optional[:class:`str`]
             The new description of the guild. Could be ``None`` for no description.
             This is only available to guilds that contain ``PUBLIC`` in :attr:`Guild.features`.
-        icon: :class:`bytes`
-            A :term:`py:bytes-like object` representing the icon. Only PNG/JPEG is supported.
-            GIF is only available to guilds that contain ``ANIMATED_ICON`` in :attr:`Guild.features`.
-            Could be ``None`` to denote removal of the icon.
-        banner: :class:`bytes`
-            A :term:`py:bytes-like object` representing the banner.
-            Could be ``None`` to denote removal of the banner. This is only available to guilds that contain
-            ``BANNER`` in :attr:`Guild.features`.
-        splash: :class:`bytes`
-            A :term:`py:bytes-like object` representing the invite splash.
-            Only PNG/JPEG supported. Could be ``None`` to denote removing the
-            splash. This is only available to guilds that contain ``INVITE_SPLASH``
-            in :attr:`Guild.features`.
-        discovery_splash: :class:`bytes`
-            A :term:`py:bytes-like object` representing the discovery splash.
-            Only PNG/JPEG supported. Could be ``None`` to denote removing the
-            splash. This is only available to guilds that contain ``DISCOVERABLE``
-            in :attr:`Guild.features`.
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the icon. Only PNG/JPEG is supported. GIF is only available to guilds that contain
+            ``ANIMATED_ICON`` in :attr:`Guild.features`. Could be ``None`` to denote removal of the icon.
+        banner: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the banner. Could be ``None`` to denote removal of the banner.
+            This is only available to guilds that contain ``BANNER`` in :attr:`Guild.features`.
+        splash: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the invite splash. Only PNG/JPEG supported. Could be ``None`` to denote removing the
+            splash. This is only available to guilds that contain ``INVITE_SPLASH`` in :attr:`Guild.features`.
+        discovery_splash: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+             representing the discovery splash. Only PNG/JPEG supported. Could be ``None`` to denote removing the
+            splash. This is only available to guilds that contain ``DISCOVERABLE`` in :attr:`Guild.features`.
         community: :class:`bool`
             Whether the guild should be a Community guild. If set to ``True``\, both ``rules_channel``
             and ``public_updates_channel`` parameters are required.
@@ -1590,28 +1599,16 @@ class Guild(Hashable):
             fields["afk_timeout"] = afk_timeout
 
         if icon is not MISSING:
-            if icon is None:
-                fields["icon"] = icon
-            else:
-                fields["icon"] = utils._bytes_to_base64_data(icon)
+            fields["icon"] = await utils._obj_to_base64_data(icon)
 
         if banner is not MISSING:
-            if banner is None:
-                fields["banner"] = banner
-            else:
-                fields["banner"] = utils._bytes_to_base64_data(banner)
+            fields["banner"] = await utils._obj_to_base64_data(banner)
 
         if splash is not MISSING:
-            if splash is None:
-                fields["splash"] = splash
-            else:
-                fields["splash"] = utils._bytes_to_base64_data(splash)
+            fields["splash"] = await utils._obj_to_base64_data(splash)
 
         if discovery_splash is not MISSING:
-            if discovery_splash is None:
-                fields["discovery_splash"] = discovery_splash
-            else:
-                fields["discovery_splash"] = utils._bytes_to_base64_data(discovery_splash)
+            fields["discovery_splash"] = await utils._obj_to_base64_data(discovery_splash)
 
         if default_notifications is not MISSING:
             if not isinstance(default_notifications, NotificationLevel):
@@ -2458,7 +2455,7 @@ class Guild(Hashable):
         self,
         *,
         name: str,
-        image: bytes,
+        image: Union[bytes, Asset, Attachment, File],
         roles: List[Role] = MISSING,
         reason: Optional[str] = None,
     ) -> Emoji:
@@ -2472,13 +2469,16 @@ class Guild(Hashable):
         You must have the :attr:`~Permissions.manage_emojis` permission to
         do this.
 
+        .. versionchanged:: 2.1
+            The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         -----------
         name: :class:`str`
             The emoji name. Must be at least 2 characters.
-        image: :class:`bytes`
-            The :term:`py:bytes-like object` representing the image data to use.
-            Only JPG, PNG and GIF images are supported.
+        image: Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]
+            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the image data to use. Only JPG, PNG and GIF images are supported.
         roles: List[:class:`Role`]
             A :class:`list` of :class:`Role`\s that can use this emoji. Leave empty to make it available to everyone.
         reason: Optional[:class:`str`]
@@ -2496,8 +2496,7 @@ class Guild(Hashable):
         :class:`Emoji`
             The created emoji.
         """
-
-        img = utils._bytes_to_base64_data(image)
+        img_base64 = await utils._obj_to_base64_data(image)
 
         role_ids: SnowflakeList
         if roles:
@@ -2506,7 +2505,7 @@ class Guild(Hashable):
             role_ids = []
 
         data = await self._state.http.create_custom_emoji(
-            self.id, name, img, roles=role_ids, reason=reason
+            self.id, name, img_base64, roles=role_ids, reason=reason
         )
         return self._state.store_emoji(self, data)
 
@@ -2579,7 +2578,7 @@ class Guild(Hashable):
         colour: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
-        icon: Optional[Union[str, bytes, File]] = ...,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
     ) -> Role:
         ...
 
@@ -2593,7 +2592,7 @@ class Guild(Hashable):
         color: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
-        icon: Optional[Union[str, bytes, File]] = ...,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
     ) -> Role:
         ...
 
@@ -2606,8 +2605,8 @@ class Guild(Hashable):
         colour: Union[Colour, int] = MISSING,
         hoist: bool = MISSING,
         mentionable: bool = MISSING,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = MISSING,
         reason: Optional[str] = None,
-        icon: Optional[Union[str, bytes, File]] = MISSING,
     ) -> Role:
         """|coro|
 
@@ -2620,6 +2619,9 @@ class Guild(Hashable):
 
         .. versionchanged:: 1.6
             Can now pass ``int`` to ``colour`` keyword-only parameter.
+
+        .. versionchanged:: 2.1
+            The ``icon`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         -----------
@@ -2636,10 +2638,10 @@ class Guild(Hashable):
         mentionable: :class:`bool`
             Indicates if the role should be mentionable by others.
             Defaults to ``False``.
+        icon: Optional[Union[:class:`str`, :class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            The icon of the role. Supports unicode emojis and images
         reason: Optional[:class:`str`]
             The reason for creating this role. Shows up on the audit log.
-        icon: Optional[Union[:class:`str`, :class:`bytes`]]
-            The icon of the role. Supports unicode emojis and images
 
         Raises
         -------
@@ -2677,19 +2679,14 @@ class Guild(Hashable):
             fields["name"] = name
 
         if icon is not MISSING:
-            if icon is None:
-                fields["icon"] = icon
-            elif isinstance(icon, str):
+            if isinstance(icon, str):
                 fields["unicode_emoji"] = icon
-            elif isinstance(icon, File):
-                fields["icon"] = utils._bytes_to_base64_data(icon.fp.read())
             else:
-                fields["icon"] = utils._bytes_to_base64_data(icon)
+                fields["icon"] = await utils._obj_to_base64_data(icon)
 
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
         role = Role(guild=self, data=data, state=self._state)
 
-        # TODO: add to cache
         return role
 
     async def edit_role_positions(
@@ -3269,12 +3266,15 @@ class Guild(Hashable):
         privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
-        image: bytes = MISSING,
+        image: Optional[Union[bytes, Asset, Attachment, File]] = None,
         reason: Optional[str] = None,
     ) -> ScheduledEvent:
         """|coro|
 
         Create a new scheduled event object.
+
+        .. versionchanged:: 2.1
+            The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -3294,18 +3294,22 @@ class Guild(Hashable):
             The description for the event
         entity_type: :class:`ScheduledEventEntityType`
             The type of event
-        image: :class:`bytes`
-            A :term:`py:bytes-like object` representing the cover image.
+        image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the cover image.
+        reason: Optional[:class:`str`]
+            The reason for creating this scheduled event. Shows up in the audit logs.
 
         Returns
         -------
         :class:`ScheduledEvent`
             The created event object.
         """
-        payload: Dict[str, Any] = {}
-        payload["name"] = name
-        payload["entity_type"] = entity_type.value
-        payload["scheduled_start_time"] = start_time.isoformat()
+        payload: Dict[str, Any] = {
+            "name": name,
+            "entity_type": entity_type.value,
+            "scheduled_start_time": start_time.isoformat(),
+        }
         if channel is not MISSING:
             payload["channel_id"] = channel.id
         if metadata is not MISSING:
@@ -3316,8 +3320,9 @@ class Guild(Hashable):
             payload["scheduled_end_time"] = end_time.isoformat()
         if description is not MISSING:
             payload["description"] = description
-        if image is not MISSING:
-            payload["image"] = utils._bytes_to_base64_data(image)
+        if image is not None:
+            payload["image"] = await utils._obj_to_base64_data(image)
+
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)
 

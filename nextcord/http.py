@@ -1106,7 +1106,7 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         name: str,
-        avatar: Optional[bytes] = None,
+        avatar: Optional[str] = None,
         reason: Optional[str] = None,
     ) -> Response[webhook.Webhook]:
         payload: Dict[str, Any] = {
@@ -1469,7 +1469,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         name: str,
-        image: bytes | str,
+        image: Optional[str],
         *,
         roles: Optional[SnowflakeList] = None,
         reason: Optional[str] = None,
@@ -2292,6 +2292,7 @@ class HTTPClient:
             "description",
             "entity_type",
             "status",
+            "image",
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(
