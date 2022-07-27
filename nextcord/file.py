@@ -63,6 +63,12 @@ class File:
         in the Discord client.
     spoiler: :class:`bool`
         Whether the attachment is a spoiler.
+    force_close: :class:`bool`
+        Whether to forcibly close the bytes used to create the file
+        when ``.close()`` is called.
+        This will also make the file bytes unusable by flusing it from
+        memory after it is sent once.
+        Keep this enabled if you don't wish to reuse the same bytes.
 
     Attributes
     -----------
@@ -78,15 +84,22 @@ class File:
         in the Discord client.
     spoiler: :class:`bool`
         Whether the attachment is a spoiler.
+    force_close: :class:`bool`
+        Whether to forcibly close the bytes used to create the file
+        when ``.close()`` is called.
+        This will also make the file bytes unusable by flusing it from
+        memory after it is sent or used once.
+        Keep this enabled if you don't wish to reuse the same bytes.
     """
 
-    __slots__ = ("fp", "filename", "spoiler", "_original_pos", "_owner", "_closer", "description")
+    __slots__ = ("fp", "filename", "spoiler", "force_close", "_original_pos", "_owner", "_closer", "description")
 
     if TYPE_CHECKING:
         fp: Union[io.BufferedReader, io.BufferedIOBase]
         filename: Optional[str]
         description: Optional[str]
         spoiler: bool
+        force_close: bool
 
     def __init__(
         self,
@@ -95,6 +108,7 @@ class File:
         *,
         description: Optional[str] = None,
         spoiler: bool = False,
+        force_close: bool = True, # Accessed in .close()
     ):
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
@@ -144,5 +158,7 @@ class File:
             self.fp.seek(self._original_pos)
 
     def close(self) -> None:
-        self.fp.close = self._closer
-        self._closer()
+        if self._owner or self.force_close:
+            self._closer()
+        else:
+            self.fp.close = self._closer
