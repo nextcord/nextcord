@@ -92,7 +92,16 @@ class File:
         Keep this enabled if you don't wish to reuse the same bytes.
     """
 
-    __slots__ = ("fp", "filename", "spoiler", "force_close", "_original_pos", "_owner", "_closer", "description")
+    __slots__ = (
+        "fp",
+        "filename",
+        "spoiler",
+        "force_close",
+        "_original_pos",
+        "_owner",
+        "_closer",
+        "description",
+    )
 
     if TYPE_CHECKING:
         fp: Union[io.BufferedReader, io.BufferedIOBase]
@@ -108,7 +117,7 @@ class File:
         *,
         description: Optional[str] = None,
         spoiler: bool = False,
-        force_close: bool = True, # Accessed in .close()
+        force_close: bool = True,  # Accessed in .close()
     ):
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
