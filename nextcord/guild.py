@@ -3274,7 +3274,7 @@ class Guild(Hashable):
         Create a new scheduled event object.
 
         .. versionchanged:: 2.1
-        The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+            The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------

@@ -184,7 +184,7 @@ class Template:
         Bot accounts in more than 10 guilds are not allowed to create guilds.
 
         .. versionchanged:: 2.1
-            The :attr:`icon` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+            The ``icon`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
