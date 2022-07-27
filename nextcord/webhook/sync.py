@@ -750,7 +750,7 @@ class SyncWebhook(BaseWebhook):
         """Edits this Webhook.
 
         .. versionchanged:: 2.1
-            The :attr:`avatar` attribute now accepts :class:`File`.
+            The ``avatar`` parameter now accepts :class:`File`.
 
         Parameters
         ------------

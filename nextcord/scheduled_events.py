@@ -343,7 +343,7 @@ class ScheduledEvent(Hashable):
         Edit the scheduled event.
 
         .. versionchanged:: 2.1
-            The :attr:`image` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+            The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -366,7 +366,7 @@ class ScheduledEvent(Hashable):
         status: :class:`ScheduledEventStatus`
             The new status for the event.
         reason: Optional[:class:`str`]
-            The reason for editing this scheduled_event. Shows up in the audit logs.
+            The reason for editing this scheduled event. Shows up in the audit logs.
 
             .. note::
 

@@ -567,7 +567,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             Added the ``reason`` keyword-only parameter.
 
         .. versionchanged:: 2.1
-            The :attr:`avatar` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         -------------

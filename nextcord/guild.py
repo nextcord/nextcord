@@ -1498,8 +1498,8 @@ class Guild(Hashable):
             The newly updated guild is returned.
 
         .. versionchanged:: 2.1
-            The :attr:`icon`, :attr:`banner`, :attr:`splash`, :attr:`discovery_splash`
-             attributes now accept :class:`File`, :class:`Attachment`, and :class:`Asset`.
+            The ``icon``, ``banner``, ``splash``, ``discovery_splash``
+            parameters now accept :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -2470,7 +2470,7 @@ class Guild(Hashable):
         do this.
 
         .. versionchanged:: 2.1
-            The :attr:`image` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+            The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         -----------
@@ -2621,7 +2621,7 @@ class Guild(Hashable):
             Can now pass ``int`` to ``colour`` keyword-only parameter.
 
         .. versionchanged:: 2.1
-            The :attr:`icon` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+            The ``icon`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         -----------
@@ -3274,7 +3274,7 @@ class Guild(Hashable):
         Create a new scheduled event object.
 
         .. versionchanged:: 2.1
-        The :attr:`image` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+        The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -3298,7 +3298,7 @@ class Guild(Hashable):
             A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
             representing the cover image.
         reason: Optional[:class:`str`]
-            The reason for creating this scheduled_event. Shows up in the audit logs.
+            The reason for creating this scheduled event. Shows up in the audit logs.
 
         Returns
         -------

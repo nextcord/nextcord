@@ -373,7 +373,7 @@ class ClientUser(BaseUser):
             The edit is no longer in-place, instead the newly edited client user is returned.
 
         .. versionchanged:: 2.1
-            The :attr:`avatar` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         -----------

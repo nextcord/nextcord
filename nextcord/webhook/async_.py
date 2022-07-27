@@ -1254,7 +1254,7 @@ class Webhook(BaseWebhook):
         Edits this Webhook.
 
         .. versionchanged:: 2.1
-            The :attr:`avatar` attribute now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ------------

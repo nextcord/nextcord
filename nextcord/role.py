@@ -396,7 +396,7 @@ class Role(Hashable):
             Edits are no longer in-place, the newly edited role is returned instead.
 
         .. versionchanged:: 2.1
-            The :attr:`icon` attribute now accepts :class:`Attachment`, and :class:`Asset`.
+            The ``icon`` parameter now accepts :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         -----------
