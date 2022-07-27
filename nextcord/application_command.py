@@ -700,7 +700,6 @@ class CallbackMixin:
                 for i, param in enumerate(callback_params.values()):
                     if (
                         param.annotation is param.empty
-                        or param.annotation is Interaction
                         or issubclass(param.annotation, Interaction)
                     ) and i in (0, 1):
                         # self or interaction parameter, ignore
@@ -708,9 +707,7 @@ class CallbackMixin:
 
                     possible_options.add(param.name)
 
-                intersection = (
-                    set(map(lambda param: param.name, callback_params.values())) - possible_options
-                )
+                intersection = {param.name for param in callback_params.values()} - possible_options
 
                 if self.parent_cog is not None and len(intersection) < 2:
                     raise ValueError(
