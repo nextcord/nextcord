@@ -309,12 +309,10 @@ class Embed:
 
     @colour.setter
     def colour(self, value: Optional[Union[int, Colour]]):  # type: ignore
-        if isinstance(value, Colour):
+        if isinstance(value, Colour) or value is None:
             self._colour = value
         elif isinstance(value, int):
             self._colour = Colour(value=value)
-        elif value is None:
-            self._colour = None
         else:
             raise TypeError(
                 f"Expected nextcord.Colour, int, or None but received {value.__class__.__name__} instead."
@@ -328,12 +326,12 @@ class Embed:
 
     @timestamp.setter
     def timestamp(self, value: Optional[datetime.datetime]):
-        if isinstance(value, datetime.datetime):
+        if value is None:
+            self._timestamp = value
+        elif isinstance(value, datetime.datetime):
             if value.tzinfo is None:
                 value = value.astimezone()
             self._timestamp = value
-        elif value is None:
-            self._timestamp = None
         else:
             raise TypeError(
                 f"Expected datetime.datetime or None received {value.__class__.__name__} instead"
