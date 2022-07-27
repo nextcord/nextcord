@@ -167,7 +167,6 @@ class File:
             self.fp.seek(self._original_pos)
 
     def close(self) -> None:
+        self.fp.close = self._closer
         if self._owner or self.force_close:
             self._closer()
-        else:
-            self.fp.close = self._closer
