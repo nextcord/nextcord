@@ -125,7 +125,8 @@ class Embed:
 
     .. versionchanged:: 2.2
         ``Embed.Empty`` is now an alias for ``None`` for a non-breaking change, every field uses ``None``
-            and is typed as `Optional[]` over ``Embed.Empty`` now.
+            and is typed as `Optional[]` over ``Embed.Empty``.
+            This also means that you can no longer use ``len()`` on an empty field.
 
     Attributes
     -----------
@@ -170,7 +171,7 @@ class Embed:
     )
 
     # backwards compatibility
-    Empty: Literal[None] = None
+    Empty = EmptyEmbed
 
     def __init__(
         self,
@@ -184,7 +185,7 @@ class Embed:
         timestamp: Optional[datetime.datetime] = None,
     ):
 
-        self.colour = colour or color
+        self.colour = colour if colour is not None else color
         self.title = title
         self.type = type
         self.url = url
@@ -308,10 +309,12 @@ class Embed:
 
     @colour.setter
     def colour(self, value: Optional[Union[int, Colour]]):  # type: ignore
-        if value is None:
-            self._colour = None
+        if isinstance(value, Colour):
+            self._colour = value
         elif isinstance(value, int):
             self._colour = Colour(value=value)
+        elif value is None:
+            self._colour = None
         else:
             raise TypeError(
                 f"Expected nextcord.Colour, int, or None but received {value.__class__.__name__} instead."
@@ -325,12 +328,12 @@ class Embed:
 
     @timestamp.setter
     def timestamp(self, value: Optional[datetime.datetime]):
-        if value is None:
-            self._timestamp = None
-        elif isinstance(value, datetime.datetime):
+        if isinstance(value, datetime.datetime):
             if value.tzinfo is None:
                 value = value.astimezone()
             self._timestamp = value
+        elif value is None:
+            self._timestamp = None
         else:
             raise TypeError(
                 f"Expected datetime.datetime or None received {value.__class__.__name__} instead"
@@ -354,9 +357,9 @@ class Embed:
 
         Parameters
         -----------
-        text: :class:`str`
+        text: Optional[:class:`str`]
             The footer text.
-        icon_url: :class:`str`
+        icon_url: Optional[:class:`str`]
             The URL of the footer icon. Only HTTP(S) is supported.
         """
 
@@ -410,7 +413,7 @@ class Embed:
 
         Parameters
         -----------
-        url: :class:`str`
+        url: Optional[:class:`str`]
             The source URL for the image. Only HTTP(S) is supported.
         """
 
@@ -516,11 +519,11 @@ class Embed:
 
         Parameters
         -----------
-        name: :class:`str`
+        name: Optional[:class:`str`]
             The name of the author.
-        url: :class:`str`
+        url: Optional[:class:`str`]
             The URL for the author.
-        icon_url: :class:`str`
+        icon_url: Optional[:class:`str`]
             The URL of the author icon. Only HTTP(S) is supported.
         """
 
@@ -574,7 +577,7 @@ class Embed:
         value: :class:`str`
             The value of the field.
         inline: :class:`bool`
-            Whether the field should be displayed inline.
+            Whether the field should be displayed inline. Defaults to ``True``.
         """
 
         field = {
@@ -607,7 +610,7 @@ class Embed:
         value: :class:`str`
             The value of the field.
         inline: :class:`bool`
-            Whether the field should be displayed inline.
+            Whether the field should be displayed inline. Defaults to ``True``.
         """
 
         field = {
