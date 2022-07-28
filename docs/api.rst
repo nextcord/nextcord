@@ -4582,6 +4582,7 @@ AutoModerationAction
 .. attributetable:: AutoModerationAction
 
 .. autoclass:: AutoModerationAction
+    :members:
 
 .. _discord_ui_kit:
 
