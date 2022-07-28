@@ -2155,9 +2155,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         .. versionadded:: 2.1
         """
         return (
-            f"{self.parent_cmd.qualified_name} {self.name}"
-            if self.parent_cmd
-            else str(self.name)
+            f"{self.parent_cmd.qualified_name} {self.name}" if self.parent_cmd else str(self.name)
         )
 
     async def call(
