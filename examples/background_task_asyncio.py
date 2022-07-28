@@ -20,5 +20,5 @@ class Bot(commands.Bot):
             await asyncio.sleep(60)  # task runs every 60 seconds
 
 
-bot = Bot(command_prefix="$")
+bot = Bot()
 bot.run("token")

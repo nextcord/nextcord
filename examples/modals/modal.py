@@ -51,7 +51,7 @@ class Pet(nextcord.ui.Modal):
         await interaction.send(response)
 
 
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot()
 
 
 @bot.slash_command(
