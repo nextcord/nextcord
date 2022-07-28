@@ -46,7 +46,11 @@ class _ApplicationCommandOptional(TypedDict, total=False):
     type: ApplicationCommandType
     guild_id: Snowflake
     options: List[ApplicationCommandOption]
-    default_permission: bool
+    dm_permission: bool
+    nsfw: bool
+    default_permission: bool  # This is deprecated, remove it in the future.
+    name_localizations: Dict[str, str]
+    description_localizations: Dict[str, str]
 
 
 class ApplicationCommand(_ApplicationCommandOptional):
@@ -54,12 +58,14 @@ class ApplicationCommand(_ApplicationCommandOptional):
     application_id: Snowflake
     name: str
     description: str
+    default_member_permissions: str
     version: Snowflake
 
 
 class ApplicationCommandOptionChoice(TypedDict):
     name: str
     value: Union[str, int, float]
+    name_localizations: Dict[str, str]
 
 
 class _ApplicationCommandOptionOptional(TypedDict, total=False):
@@ -72,6 +78,8 @@ class _ApplicationCommandOptionOptional(TypedDict, total=False):
     min_length: int
     max_length: int
     autocomplete: bool
+    name_localizations: Dict[str, str]
+    description_localizations: Dict[str, str]
 
 
 ApplicationCommandOptionType = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
