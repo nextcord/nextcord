@@ -2150,7 +2150,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
     def qualified_name(self) -> str:
         """:class:`str`: Retrieve the command name including all parents space separated.
 
-        An example of the output would be `parent group subcommand`.
+        An example of the output would be ``parent group subcommand``.
 
         .. versionadded:: 2.1
         """
