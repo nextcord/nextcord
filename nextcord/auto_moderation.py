@@ -543,6 +543,6 @@ class AutoModerationActionExecution:
         self.member: Optional[Member] = (
             self.guild.get_member(self.member_id) if self.guild is not None else None
         )
-        self.content: str = data["content"]
+        self.content: str = data.get("content", "")
         self.matched_keyword: Optional[str] = data["matched_keyword"]
-        self.matched_content: Optional[str] = data["matched_content"]
+        self.matched_content: Optional[str] = data.get("matched_content", "")

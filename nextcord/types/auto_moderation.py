@@ -93,6 +93,8 @@ class _AutoModerationActionExecutionOptional(TypedDict, total=False):
     channel_id: Snowflake
     message_id: Snowflake
     alert_system_message_id: Snowflake
+    content: str
+    matched_content: Optional[str]
 
 
 class AutoModerationActionExecution(_AutoModerationActionExecutionOptional):
@@ -101,6 +103,4 @@ class AutoModerationActionExecution(_AutoModerationActionExecutionOptional):
     rule_id: Snowflake
     rule_trigger_type: AutoModerationTriggerType
     user_id: Snowflake
-    content: str
     matched_keyword: Optional[str]
-    matched_content: Optional[str]
