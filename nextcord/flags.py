@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from functools import reduce
 from typing import (
     Any,
     Callable,
@@ -542,10 +543,9 @@ class Intents(BaseFlags):
     @classmethod
     def all(cls: Type[Intents]) -> Intents:
         """A factory method that creates a :class:`Intents` with everything enabled."""
-        bits = max(cls.VALID_FLAGS.values()).bit_length()
-        value = (1 << bits) - 1
         self = cls.__new__(cls)
-        self.value = value
+        add_bits: Callable[[int, int], int] = lambda a, b: a | b
+        self.value = reduce(add_bits, cls.VALID_FLAGS.values())
         return self
 
     @classmethod
@@ -982,6 +982,50 @@ class Intents(BaseFlags):
         This does not correspond to any attributes or classes in the library in terms of cache.
         """
         return 1 << 16
+
+    @flag_value
+    def auto_moderation_configuration(self):
+        """:class:`bool`: Whether auto moderation configuration related events are enabled.
+
+        This corresponds to the following events:
+
+        - :func:`on_auto_moderation_rule_create`
+        - :func:`on_auto_moderation_rule_update`
+        - :func:`on_auto_moderation_rule_delete`
+
+        This does not correspond to any attributes or classes in the library in terms of cache.
+        """
+        return 1 << 20
+
+    @flag_value
+    def auto_moderation_execution(self):
+        """:class:`bool`: Whether auto moderation execution related events are enabled.
+
+        This corresponds to the following events:
+
+        - :func:`on_auto_moderation_action_execution`
+
+        This does not correspond to any attributes or classes in the library in terms of cache.
+        """
+        return 1 << 21
+
+    @alias_flag_value
+    def auto_moderation(self):
+        """:class:`bool`: Whether auto moderation related events are enabled.
+
+        This is a shortcut to set or get both
+        :attr:`auto_moderation_configuration` and :attr:`auto_moderation_execution`.
+
+        This corresponds to the following events:
+
+        - :func:`on_auto_moderation_rule_create`
+        - :func:`on_auto_moderation_rule_update`
+        - :func:`on_auto_moderation_rule_delete`
+        - :func:`on_auto_moderation_action_execution`
+
+        This does not correspond to any attributes or classes in the library in terms of cache.
+        """
+        return (1 << 20) | (1 << 21)
 
 
 @fill_with_flags()

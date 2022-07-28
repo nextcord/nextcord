@@ -1166,6 +1166,42 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param user: The user that interested.
     :type user: :class:`ScheduledEventUser`
 
+.. function:: on_auto_moderation_rule_create(rule)
+
+    Called when an :class:`AutoModerationRule` is created.
+
+    .. versionadded:: 2.1
+
+    :param rule: The rule that was created.
+    :type rule: :class:`AutoModerationRule`
+
+.. function:: on_auto_moderation_rule_update(rule)
+
+    Called when an :class:`AutoModerationRule` is edited.
+
+    .. versionadded:: 2.1
+
+    :param rule: The newly edited rule.
+    :type rule: :class:`AutoModerationRule`
+
+.. function:: on_auto_moderation_rule_delete(rule)
+
+    Called when a :class:`AutoModerationRule` is deleted.
+
+    .. versionadded:: 2.1
+
+    :param rule: The deleted rule.
+    :type rule: :class:`AutoModerationRule`
+
+.. function:: on_auto_moderation_action_execution(execution)
+
+    Called when an :class:`AutoModerationAction` is executed.
+
+    .. versionadded:: 2.1
+
+    :param execution: The object containing the execution information.
+    :type execution: :class:`AutoModerationActionExecution`
+
 .. _discord-api-utils:
 
 Utility Functions
@@ -2471,6 +2507,85 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.0
 
+    .. attribute:: auto_moderation_rule_create
+
+        An auto moderation rule was created.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`AutoModerationRule` or :class:`Object` with the ID of the
+        rule which was created.
+
+        Possible attributes for :class:`AuditLogDiff`:
+
+        - :attr:`~AuditLogDiff.actions`
+        - :attr:`~AuditLogDiff.enabled`
+        - :attr:`~AuditLogDiff.exempt_channels`
+        - :attr:`~AuditLogDiff.exempt_roles`
+        - :attr:`~AuditLogDiff.event_type`
+        - :attr:`~AuditLogDiff.name`
+        - :attr:`~AuditLogDiff.trigger_type`
+        - :attr:`~AuditLogDiff.trigger_metadata`
+
+        .. versionadded:: 2.1
+
+    .. attribute:: auto_moderation_rule_update
+
+        An auto moderation rule was updated.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`AutoModerationRule` or :class:`Object` with the ID of the
+        rule which was updated.
+
+        Possible attributes for :class:`AuditLogDiff`:
+
+        - :attr:`~AuditLogDiff.actions`
+        - :attr:`~AuditLogDiff.enabled`
+        - :attr:`~AuditLogDiff.exempt_channels`
+        - :attr:`~AuditLogDiff.exempt_roles`
+        - :attr:`~AuditLogDiff.event_type`
+        - :attr:`~AuditLogDiff.name`
+        - :attr:`~AuditLogDiff.trigger_type`
+        - :attr:`~AuditLogDiff.trigger_metadata`
+
+        .. versionadded:: 2.1
+
+    .. attribute:: auto_moderation_rule_deleted
+
+        An auto moderation rule was deleted.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`AutoModerationRule` or :class:`Object` with the ID of the
+        rule which was deleted.
+
+        Possible attributes for :class:`AuditLogDiff`:
+
+        - :attr:`~AuditLogDiff.actions`
+        - :attr:`~AuditLogDiff.enabled`
+        - :attr:`~AuditLogDiff.exempt_channels`
+        - :attr:`~AuditLogDiff.exempt_roles`
+        - :attr:`~AuditLogDiff.event_type`
+        - :attr:`~AuditLogDiff.name`
+        - :attr:`~AuditLogDiff.trigger_type`
+        - :attr:`~AuditLogDiff.trigger_metadata`
+
+        .. versionadded:: 2.1
+
+    .. attribute:: auto_moderation_block_message
+
+        A message was blocked by an auto moderation rule.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`Member` or :class:`User` whose message was blocked.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+        set to an unspecified proxy object with these three attributes:
+
+        - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the message was blocked.
+        - ``rule_name``: A :class:`str` with the name of the rule.
+        - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+        .. versionadded:: 2.1
+
 .. class:: AuditLogActionCategory
 
     Represents the category that the :class:`AuditLogAction` belongs to.
@@ -2744,6 +2859,79 @@ of :class:`enum.Enum`.
 
 .. autoclass:: Locale
     :members:
+
+.. class:: AutoModerationEventType
+
+    Represents what event context an auto moderation rule will be checked.
+
+    .. versionadded:: 2.1
+
+    .. attribute:: message_send
+
+        A member sends or edits a message in the guild.
+
+.. class:: AutoModerationTriggerType
+
+    Represents the type of content which can trigger an auto moderation rule.
+
+    .. versionadded:: 2.1
+
+    .. attribute:: keyword
+
+        This rule checks if content contains words from a user defined list of keywords.
+
+    .. attribute:: harmful_link
+
+        This rule checks if content contains any harmful links.
+
+    .. attribute:: spam
+
+        This rule checks if content represents generic spam.
+
+    .. attribute:: keyword_preset
+
+        This rule checks if content contains words from Discord pre-defined wordsets.
+
+.. class:: KeywordPresetType
+
+    Represents the type of a keyword preset auto moderation rule.
+
+    .. versionadded:: 2.1
+
+    .. attribute:: profanity
+
+        Words that may be considered forms of swearing or cursing.
+
+    .. attribute:: sexual_content
+
+        Words that refer to sexually explicit behaviour or activity.
+
+    .. attribute:: slurs
+
+        Personal insults or words that may be considered hate speech.
+
+.. class:: AutoModerationActionType
+
+    Represents the action that will be taken if an auto moderation rule is triggered.
+
+    .. versionadded:: 2.1
+
+    .. attribute:: block_message
+
+        Blocks a message with content matching the rule.
+
+    .. attribute:: send_alert_message
+
+        Logs message content to a specified channel.
+
+    .. attribute:: timeout
+
+        Timeout user for a specified duration.
+
+        .. note::
+
+            This action type can only be used with the :attr:`Permissions.moderate_members` permission.
+
 
 Async Iterator
 ----------------
@@ -3392,6 +3580,52 @@ AuditLogDiff
         The default auto archive duration for newly created threads being changed.
 
         :type: :class:`int`
+
+    .. attribute:: enabled
+
+        Whether something was enabled or disabled.
+
+        :type: :class:`bool`
+
+    .. attribute:: trigger_type
+
+        The trigger type of an auto moderation rule being changed.
+
+        :type: :class:`AutoModerationTriggerType`
+
+    .. attribute:: event_type
+
+        The event type of an auto moderation rule being changed.
+
+        :type: :class:`AutoModerationEventType`
+
+    .. attribute:: actions
+
+        The list of actions being changed.
+
+        :type: List[:class:`AutoModerationAction`]
+
+    .. attribute:: trigger_metadata
+
+        The trigger metadata of an auto moderation rule being changed.
+
+        :type: :class:`AutoModTriggerMetadata`
+
+    .. attribute:: exempt_roles
+
+        The list of roles that are exempt from an auto moderation rule being changed.
+
+        If a role is not found then it is an :class:`Object` with the ID set.
+
+        :type: List[Union[:class:`Role`, :class:`Object`]]
+
+    .. attribute:: exempt_channels
+
+        The list of channels that are exempt from an auto moderation rule being changed.
+
+        If a channel is not found then it is an :class:`Object` with the ID set.
+
+        :type: List[Union[:class:`abc.GuildChannel`, :class:`Object`]]
 
 .. this is currently missing the following keys: reason and application_id
    I'm not sure how to about porting these
@@ -4109,6 +4343,22 @@ ScheduledEvent
 
 .. autoclass:: EntityMetadata
 
+AutoModerationRule
+~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationRule
+
+.. autoclass:: AutoModerationRule()
+    :members:
+
+AutoModerationActionExecution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationActionExecution
+
+.. autoclass:: AutoModerationActionExecution()
+    :members:
+
 .. _discord_api_data:
 
 Data Classes
@@ -4308,6 +4558,30 @@ ChannelFlags
 .. attributetable:: ChannelFlags
 
 .. autoclass:: ChannelFlags()
+    :members:
+
+AutoModerationTriggerMetadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationTriggerMetadata
+
+.. autoclass:: AutoModerationTriggerMetadata
+    :members:
+
+AutoModerationActionMetadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationActionMetadata
+
+.. autoclass:: AutoModerationActionMetadata
+    :members:
+
+AutoModerationAction
+~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModerationAction
+
+.. autoclass:: AutoModerationAction
     :members:
 
 .. _discord_ui_kit:

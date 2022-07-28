@@ -47,6 +47,7 @@ from typing import (
 
 from . import abc, utils
 from .asset import Asset
+from .auto_moderation import AutoModerationRule, AutoModerationTriggerMetadata
 from .bans import BanEntry
 from .channel import (
     CategoryChannel,
@@ -60,6 +61,8 @@ from .colour import Colour
 from .emoji import Emoji
 from .enums import (
     AuditLogAction,
+    AutoModerationEventType,
+    AutoModerationTriggerType,
     ChannelType,
     ContentFilter,
     NotificationLevel,
@@ -96,12 +99,14 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
+    from .auto_moderation import AutoModerationAction
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
     from .state import ConnectionState
     from .template import Template
+    from .types.auto_moderation import AutoModerationRuleCreate
     from .types.guild import (
         Ban as BanPayload,
         Guild as GuildPayload,
@@ -213,6 +218,7 @@ class Guild(Hashable):
         They are currently as follows:
 
         - ``ANIMATED_ICON``: Guild can upload an animated icon.
+        - ``AUTO_MODERATION``: Guild has set up auto moderation rules.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
         - ``COMMUNITY``: Guild is a community server.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
@@ -3550,3 +3556,150 @@ class Guild(Hashable):
     async def delete_application_commands(self, *commands: BaseApplicationCommand) -> None:
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)
+
+    async def auto_moderation_rules(self) -> List[AutoModerationRule]:
+        """|coro|
+
+        Get the list of auto moderation rules from this guild.
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        .. versionadded:: 2.1
+
+        Raises
+        ------
+        Forbidden
+            You do not have permission to fetch the auto moderation rules.
+
+        Returns
+        -------
+        List[:class:`AutoModerationRule`]
+            The auto moderation rules of this guild.
+        """
+
+        data = await self._state.http.list_guild_auto_moderation_rules(self.id)
+        return [AutoModerationRule(data=d, state=self._state) for d in data]
+
+    async def fetch_auto_moderation_rule(self, rule_id: int, /) -> AutoModerationRule:
+        """|coro|
+
+        Retrieves a :class:`AutoModerationRule` from this guild by its ID
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        .. versionadded:: 2.1
+
+        Parameters
+        ----------
+        rule_id: :class:`int`
+            The ID of the auto moderation rule to fetch.
+
+        Raises
+        ------
+        NotFound
+            The requested rule could not be found.
+        Forbidden
+            You do not have permission to fetch auto moderation rules.
+        HTTPException
+            Fetching the rule failed.
+
+        Returns
+        -------
+        :class:`AutoModerationRule`
+            The found auto moderation rule.
+        """
+
+        data = await self._state.http.get_auto_moderation_rule(self.id, rule_id)
+        return AutoModerationRule(data=data, state=self._state)
+
+    async def create_auto_moderation_rule(
+        self,
+        *,
+        name: str,
+        event_type: AutoModerationEventType,
+        trigger_type: AutoModerationTriggerType,
+        actions: List[AutoModerationAction],
+        trigger_metadata: Optional[AutoModerationTriggerMetadata] = None,
+        enabled: Optional[bool] = None,
+        exempt_roles: Optional[List[Snowflake]] = None,
+        exempt_channels: Optional[List[Snowflake]] = None,
+        reason: Optional[str] = None,
+    ) -> AutoModerationRule:
+        """|coro|
+
+        Create a new auto moderation rule.
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        .. versionadded:: 2.1
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The name to use for this rule.
+        event_type: :class:`AutoModerationEventType`
+            The type of event conteto listen to for this rule.
+        actions: List[:class:`AutoModerationAction`]
+            The actions to execute when this rule is triggered.
+        trigger_type: :class:`AutoModerationTriggerType`
+            The type of content that triggers this rule.
+        trigger_metadata: Optinal[:class:`AutoModerationTriggerMetadata`]
+            The additional data to use to determine if this rule has been triggered.
+        enabled: Optional[:class:`bool`]
+            If this rule should be enabled.
+        exempt_roles: Optional[List[:class:`abc.Snowflake`]]
+            Roles that should be exempt from this rule.
+        exempt_channels: Optional[List[:class:`abc.Snowflake`]]
+            Channels that should be exempt from this rule.
+        reason: Optional[:class:`str`]
+            The reason for creating this rule. Shows in the audit log.
+
+        Raises
+        ------
+        Forbidden
+            You do not have permission to create auto moderation rules.
+        HTTPException
+            Creating the rule failed.
+        InvalidArgument
+            An invalid type was passed for an argument.
+
+        Returns
+        -------
+        :class:`AutoModerationRule`
+            The newly created auto moderation rule.
+        """
+
+        if not isinstance(event_type, AutoModerationEventType):
+            raise InvalidArgument("event_type must be of type AutoModerationEventType")
+
+        if not isinstance(trigger_type, AutoModerationTriggerType):
+            raise InvalidArgument("trigger_type must be of type AutoModerationTriggerType")
+
+        payload: AutoModerationRuleCreate = {
+            "name": str(name),
+            "event_type": event_type.value,
+            "trigger_type": trigger_type.value,
+            "actions": [action.payload for action in actions],
+        }
+
+        if trigger_metadata is not None:
+            if not isinstance(trigger_metadata, AutoModerationTriggerMetadata):
+                raise InvalidArgument(
+                    "trigger_metadata must be of type AutoModerationTriggerMetadata"
+                )
+
+            payload["trigger_metadata"] = trigger_metadata.payload
+
+        if enabled is not None:
+            payload["enabled"] = enabled
+
+        if exempt_roles is not None:
+            payload["exempt_roles"] = [str(role.id) for role in exempt_roles]
+
+        if exempt_channels is not None:
+            payload["exempt_channels"] = [str(channel.id) for channel in exempt_channels]
+
+        data = await self._state.http.create_auto_moderation_rule(
+            self.id, data=payload, reason=reason
+        )
+        return AutoModerationRule(data=data, state=self._state)

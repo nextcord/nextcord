@@ -74,6 +74,7 @@ if TYPE_CHECKING:
     from .types import (
         appinfo,
         audit_log,
+        auto_moderation,
         channel,
         components,
         embed,
@@ -2477,3 +2478,88 @@ class HTTPClient:
             event_id=event_id,
         )
         return self.request(r, params=params)
+
+    def list_guild_auto_moderation_rules(
+        self, guild_id: Snowflake
+    ) -> Response[List[auto_moderation.AutoModerationRule]]:
+        r = Route("GET", "/guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
+        return self.request(r)
+
+    def get_auto_moderation_rule(
+        self,
+        guild_id: Snowflake,
+        auto_moderation_rule_id: Snowflake,
+    ) -> Response[auto_moderation.AutoModerationRule]:
+        r = Route(
+            "GET",
+            "/guilds/{guild_id}/auto-moderation/rules/{auto_moderation_rule_id}",
+            guild_id=guild_id,
+            auto_moderation_rule_id=auto_moderation_rule_id,
+        )
+        return self.request(r)
+
+    def create_auto_moderation_rule(
+        self,
+        guild_id: Snowflake,
+        data: auto_moderation.AutoModerationRuleCreate,
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[auto_moderation.AutoModerationRule]:
+        valid_keys = (
+            "trigger_metadata",
+            "enabled",
+            "exempt_roles",
+            "exempt_channels",
+            "name",
+            "event_type",
+            "trigger_type",
+            "actions",
+        )
+
+        payload = {k: v for k, v in data.items() if k in valid_keys}
+
+        r = Route("POST", "/guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
+        return self.request(r, json=payload, reason=reason)
+
+    def modify_auto_moderation_rule(
+        self,
+        guild_id: Snowflake,
+        auto_moderation_rule_id: Snowflake,
+        data: auto_moderation.AutoModerationRuleModify,
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[auto_moderation.AutoModerationRule]:
+        valid_keys = (
+            "name",
+            "event_type",
+            "trigger_metadata",
+            "actions",
+            "enabled",
+            "exempt_roles",
+            "exempt_channels",
+        )
+
+        payload = {k: v for k, v in data.items() if k in valid_keys}
+
+        r = Route(
+            "PATCH",
+            "/guilds/{guild_id}/auto-moderation/rules/{auto_moderation_rule_id}",
+            guild_id=guild_id,
+            auto_moderation_rule_id=auto_moderation_rule_id,
+        )
+        return self.request(r, json=payload, reason=reason)
+
+    def delete_auto_moderation_rule(
+        self,
+        guild_id: Snowflake,
+        auto_moderation_rule_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[None]:
+        r = Route(
+            "DELETE",
+            "/guilds/{guild_id}/auto-moderation/rules/{auto_moderation_rule_id}",
+            guild_id=guild_id,
+            auto_moderation_rule_id=auto_moderation_rule_id,
+        )
+        return self.request(r, reason=reason)

@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015-present Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -41,6 +42,7 @@ from typing import (
 
 from . import enums, utils
 from .asset import Asset
+from .auto_moderation import AutoModerationAction, AutoModerationTriggerMetadata
 from .colour import Colour
 from .invite import Invite
 from .mixins import Hashable
@@ -58,6 +60,7 @@ if TYPE_CHECKING:
     import datetime
 
     from . import abc
+    from .auto_moderation import AutoModerationRule
     from .emoji import Emoji
     from .guild import Guild
     from .member import Member
@@ -68,6 +71,10 @@ if TYPE_CHECKING:
     from .types.audit_log import (
         AuditLogChange as AuditLogChangePayload,
         AuditLogEntry as AuditLogEntryPayload,
+    )
+    from .types.auto_moderation import (
+        AutoModerationAction as AutoModerationActionPayload,
+        AutoModerationTriggerMetadata as AutoModerationTriggerMetadataPayload,
     )
     from .types.channel import PermissionOverwrite as PermissionOverwritePayload
     from .types.role import Role as RolePayload
@@ -86,6 +93,7 @@ if TYPE_CHECKING:
         GuildSticker,
         Thread,
         Object,
+        AutoModerationRule,
         None,
     ]
 
@@ -170,11 +178,12 @@ def _guild_hash_transformer(path: str) -> Callable[[AuditLogEntry, Optional[str]
     return _transform
 
 
-T = TypeVar("T", bound=enums.Enum)
+T = TypeVar("T")
+E = TypeVar("E", bound=enums.Enum)
 
 
-def _enum_transformer(enum: Type[T]) -> Callable[[AuditLogEntry, int], T]:
-    def _transform(entry: AuditLogEntry, data: int) -> T:
+def _enum_transformer(enum: Type[E]) -> Callable[[AuditLogEntry, int], E]:
+    def _transform(entry: AuditLogEntry, data: int) -> E:
         return enums.try_enum(enum, data)
 
     return _transform
@@ -185,6 +194,42 @@ def _transform_type(entry: AuditLogEntry, data: int) -> Union[enums.ChannelType,
         return enums.try_enum(enums.StickerType, data)
     else:
         return enums.try_enum(enums.ChannelType, data)
+
+
+def _list_transformer(
+    func: Callable[[AuditLogEntry, Any], T]
+) -> Callable[[AuditLogEntry, Any], List[T]]:
+    def _transform(entry: AuditLogEntry, data: Any) -> List[T]:
+        if not data:
+            return []
+        return [func(entry, value) for value in data if value is not None]
+
+    return _transform
+
+
+def _transform_auto_moderation_action(
+    entry: AuditLogEntry, data: Optional[AutoModerationActionPayload]
+) -> Optional[AutoModerationAction]:
+    if data is None:
+        return None
+    return AutoModerationAction.from_data(data)
+
+
+def _transform_auto_moderation_trigger_metadata(
+    entry: AuditLogEntry, data: Optional[AutoModerationTriggerMetadataPayload]
+) -> Optional[AutoModerationTriggerMetadata]:
+    if data is None:
+        return None
+    return AutoModerationTriggerMetadata.from_data(data)
+
+
+def _transform_role(
+    entry: AuditLogEntry, data: Optional[Snowflake]
+) -> Optional[Union[Role, Object]]:
+    if data is None:
+        return None
+    role = entry.guild.get_role(int(data))
+    return role or Object(id=data)
 
 
 class AuditLogDiff:
@@ -213,38 +258,44 @@ Transformer = Callable[["AuditLogEntry", Any], Any]
 class AuditLogChanges:
     # fmt: off
     TRANSFORMERS: ClassVar[Dict[str, Tuple[Optional[str], Optional[Transformer]]]] = {
-        'verification_level':            (None, _enum_transformer(enums.VerificationLevel)),
-        'explicit_content_filter':       (None, _enum_transformer(enums.ContentFilter)),
-        'allow':                         (None, _transform_permissions),
-        'deny':                          (None, _transform_permissions),
-        'permissions':                   (None, _transform_permissions),
-        'id':                            (None, _transform_snowflake),
-        'color':                         ('colour', _transform_color),
-        'owner_id':                      ('owner', _transform_member_id),
-        'inviter_id':                    ('inviter', _transform_member_id),
-        'channel_id':                    ('channel', _transform_channel),
-        'afk_channel_id':                ('afk_channel', _transform_channel),
-        'system_channel_id':             ('system_channel', _transform_channel),
-        'widget_channel_id':             ('widget_channel', _transform_channel),
-        'rules_channel_id':              ('rules_channel', _transform_channel),
-        'public_updates_channel_id':     ('public_updates_channel', _transform_channel),
-        'permission_overwrites':         ('overwrites', _transform_overwrites),
-        'splash_hash':                   ('splash', _guild_hash_transformer('splashes')),
-        'banner_hash':                   ('banner', _guild_hash_transformer('banners')),
-        'discovery_splash_hash':         ('discovery_splash', _guild_hash_transformer('discovery-splashes')),
-        'icon_hash':                     ('icon', _transform_icon),
-        'avatar_hash':                   ('avatar', _transform_avatar),
-        'rate_limit_per_user':           ('slowmode_delay', None),
-        'guild_id':                      ('guild', _transform_guild_id),
-        'tags':                          ('emoji', None),
-        'default_message_notifications': ('default_notifications', _enum_transformer(enums.NotificationLevel)),
-        'region':                        (None, _enum_transformer(enums.VoiceRegion)),
-        'rtc_region':                    (None, _enum_transformer(enums.VoiceRegion)),
-        'video_quality_mode':            (None, _enum_transformer(enums.VideoQualityMode)),
-        'privacy_level':                 (None, _enum_transformer(enums.StagePrivacyLevel)),
-        'format_type':                   (None, _enum_transformer(enums.StickerFormatType)),
-        'entity_type':                   (None, _enum_transformer(enums.ScheduledEventEntityType)),
-        'type':                          (None, _transform_type),
+        "verification_level":            (None, _enum_transformer(enums.VerificationLevel)),
+        "explicit_content_filter":       (None, _enum_transformer(enums.ContentFilter)),
+        "allow":                         (None, _transform_permissions),
+        "deny":                          (None, _transform_permissions),
+        "permissions":                   (None, _transform_permissions),
+        "id":                            (None, _transform_snowflake),
+        "color":                         ("colour", _transform_color),
+        "owner_id":                      ("owner", _transform_member_id),
+        "inviter_id":                    ("inviter", _transform_member_id),
+        "channel_id":                    ("channel", _transform_channel),
+        "afk_channel_id":                ("afk_channel", _transform_channel),
+        "system_channel_id":             ("system_channel", _transform_channel),
+        "widget_channel_id":             ("widget_channel", _transform_channel),
+        "rules_channel_id":              ("rules_channel", _transform_channel),
+        "public_updates_channel_id":     ("public_updates_channel", _transform_channel),
+        "permission_overwrites":         ("overwrites", _transform_overwrites),
+        "splash_hash":                   ("splash", _guild_hash_transformer("splashes")),
+        "banner_hash":                   ("banner", _guild_hash_transformer("banners")),
+        "discovery_splash_hash":         ("discovery_splash", _guild_hash_transformer("discovery-splashes")),
+        "icon_hash":                     ("icon", _transform_icon),
+        "avatar_hash":                   ("avatar", _transform_avatar),
+        "rate_limit_per_user":           ("slowmode_delay", None),
+        "guild_id":                      ("guild", _transform_guild_id),
+        "tags":                          ("emoji", None),
+        "default_message_notifications": ("default_notifications", _enum_transformer(enums.NotificationLevel)),
+        "region":                        (None, _enum_transformer(enums.VoiceRegion)),
+        "rtc_region":                    (None, _enum_transformer(enums.VoiceRegion)),
+        "video_quality_mode":            (None, _enum_transformer(enums.VideoQualityMode)),
+        "privacy_level":                 (None, _enum_transformer(enums.StagePrivacyLevel)),
+        "format_type":                   (None, _enum_transformer(enums.StickerFormatType)),
+        "entity_type":                   (None, _enum_transformer(enums.ScheduledEventEntityType)),
+        "type":                          (None, _transform_type),
+        "trigger_type":                  (None, _enum_transformer(enums.AutoModerationTriggerType)),
+        "event_type":                    (None, _enum_transformer(enums.AutoModerationEventType)),
+        "actions":                       (None, _list_transformer(_transform_auto_moderation_action)),
+        "trigger_metadata":              (None, _transform_auto_moderation_trigger_metadata),
+        "exempt_roles":                  (None, _list_transformer(_transform_role)),
+        "exempt_channels":               (None, _list_transformer(_transform_channel)),
     }
     # fmt: on
 
@@ -353,6 +404,12 @@ class _AuditLogProxyStageInstanceAction:
     channel: abc.GuildChannel
 
 
+class _AuditLogProxyAutoModerationBlockMessage:
+    channel: abc.GuildChannel
+    rule_name: str
+    rule_trigger_type: enums.AutoModerationTriggerType
+
+
 class AuditLogEntry(Hashable):
     r"""Represents an Audit Log entry.
 
@@ -401,15 +458,24 @@ class AuditLogEntry(Hashable):
         _AuditLogProxyMemberDisconnect,
         _AuditLogProxyPinAction,
         _AuditLogProxyStageInstanceAction,
+        _AuditLogProxyAutoModerationBlockMessage,
         Member,
         User,
         None,
         Role,
     ]
 
-    def __init__(self, *, users: Dict[int, User], data: AuditLogEntryPayload, guild: Guild):
+    def __init__(
+        self,
+        *,
+        auto_moderation_rules: Dict[int, AutoModerationRule],
+        users: Dict[int, User],
+        data: AuditLogEntryPayload,
+        guild: Guild,
+    ):
         self._state = guild._state
         self.guild = guild
+        self._auto_moderation_rules = auto_moderation_rules
         self._users = users
         self._from_data(data)
 
@@ -467,6 +533,19 @@ class AuditLogEntry(Hashable):
             elif self.action.name.startswith("stage_instance"):
                 channel_id = int(self.extra["channel_id"])
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
+                self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
+            elif self.action is enums.AuditLogAction.auto_moderation_block_message:
+                channel_id = int(self.extra["channel_id"])
+                elems = {
+                    "channel": (
+                        self.guild.get_channel_or_thread(channel_id) or Object(id=channel_id)
+                    ),
+                    "rule_name": self.extra["auto_moderation_rule_name"],
+                    "rule_trigger_type": enums.try_enum(
+                        enums.AutoModerationTriggerType,
+                        int(self.extra["auto_moderation_rule_trigger_type"]),
+                    ),
+                }
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
 
         # this key is not present when the above is present, typically.
@@ -570,3 +649,8 @@ class AuditLogEntry(Hashable):
 
     def _convert_target_thread(self, target_id: int) -> Union[Thread, Object]:
         return self.guild.get_thread(target_id) or Object(id=target_id)
+
+    def _convert_target_auto_moderation_rule(
+        self, rule_id: int
+    ) -> Union[AutoModerationRule, Object]:
+        return self._auto_moderation_rules.get(rule_id) or Object(id=rule_id)
