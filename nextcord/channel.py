@@ -76,7 +76,7 @@ if TYPE_CHECKING:
     from .embeds import Embed
     from .guild import Guild, GuildChannel as GuildChannelType
     from .member import Member, VoiceState
-    from .message import Message, MessageReference, PartialMessage
+    from .message import Attachment, Message, PartialMessage
     from .role import Role
     from .state import ConnectionState
     from .sticker import GuildSticker, StickerItem
@@ -566,7 +566,11 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         return [Webhook.from_state(d, state=self._state) for d in data]
 
     async def create_webhook(
-        self, *, name: str, avatar: Optional[bytes] = None, reason: Optional[str] = None
+        self,
+        *,
+        name: str,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = None,
+        reason: Optional[str] = None,
     ) -> Webhook:
         """|coro|
 
@@ -577,12 +581,16 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         .. versionchanged:: 1.1
             Added the ``reason`` keyword-only parameter.
 
+        .. versionchanged:: 2.1
+            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         -------------
         name: :class:`str`
             The webhook's name.
-        avatar: Optional[:class:`bytes`]
-            A :term:`py:bytes-like object` representing the webhook's default avatar.
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`,
+            or :class:`Asset` representing the webhook's default avatar.
             This operates similarly to :meth:`~ClientUser.edit`.
         reason: Optional[:class:`str`]
             The reason for creating this webhook. Shows up in the audit logs.
@@ -602,11 +610,10 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
 
         from .webhook import Webhook
 
-        if avatar is not None:
-            avatar = utils._bytes_to_base64_data(avatar)  # type: ignore
+        avatar_base64 = await utils._obj_to_base64_data(avatar)
 
         data = await self._state.http.create_webhook(
-            self.id, name=str(name), avatar=avatar, reason=reason
+            self.id, name=str(name), avatar=avatar_base64, reason=reason
         )
         return Webhook.from_state(data, state=self._state)
 

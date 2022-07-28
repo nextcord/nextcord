@@ -1,9 +1,12 @@
 import asyncio
 import random
 
+import nextcord
 from nextcord.ext import commands
 
-bot = commands.Bot(command_prefix="$")
+intents = nextcord.intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()

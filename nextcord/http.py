@@ -1245,7 +1245,7 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         name: str,
-        avatar: Optional[bytes] = None,
+        avatar: Optional[str] = None,
         reason: Optional[str] = None,
     ) -> Response[webhook.Webhook]:
         payload: Dict[str, Any] = {
@@ -1608,7 +1608,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         name: str,
-        image: bytes | str,
+        image: Optional[str],
         *,
         roles: Optional[SnowflakeList] = None,
         reason: Optional[str] = None,
@@ -1702,15 +1702,12 @@ class HTTPClient:
         guild_id: Snowflake,
         limit: int = 100,
         before: Optional[Snowflake] = None,
-        after: Optional[Snowflake] = None,
         user_id: Optional[Snowflake] = None,
         action_type: Optional[AuditLogAction] = None,
     ) -> Response[audit_log.AuditLog]:
         params: Dict[str, Any] = {"limit": limit}
         if before:
             params["before"] = before
-        if after:
-            params["after"] = after
         if user_id:
             params["user_id"] = user_id
         if action_type:
@@ -2434,6 +2431,7 @@ class HTTPClient:
             "description",
             "entity_type",
             "status",
+            "image",
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(

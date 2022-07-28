@@ -3,7 +3,9 @@ import typing
 import nextcord
 from nextcord.ext import commands
 
-bot = commands.Bot(command_prefix="$", description="Nothing to see here!")
+intents = nextcord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix="$", description="Nothing to see here!", intents=intents)
 
 
 # the `hidden` keyword argument hides it from the help command.
