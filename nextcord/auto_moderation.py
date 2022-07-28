@@ -84,18 +84,31 @@ class AutoModerationTriggerMetadata:
 
             This is ``None`` and cannot be provided if the trigger type of the rule is not
             :attr:`AutoModerationTriggerType.keyword_preset`.
+    allow_list: List[:class:`str`]
+        A list of exempt strings that will not trigger the preset type.
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the trigger type of the rule is not
+            :attr:`AutoModerationTriggerType.keyword_preset`.
+
+        .. warning::
+
+            Wildcard syntax (`*`) is not supported here.
     """
 
-    __slots__ = ("keyword_filter", "presets")
+    __slots__ = ("keyword_filter", "presets", "allow_list")
 
     def __init__(
         self,
         *,
         keyword_filter: Optional[List[str]] = None,
         presets: Optional[List[KeywordPresetType]] = None,
+        allow_list: Optional[List[str]] = None,
     ) -> None:
         self.keyword_filter: Optional[List[str]] = keyword_filter
         self.presets: Optional[List[KeywordPresetType]] = presets
+        self.allow_list: Optional[List[str]] = allow_list
 
     @classmethod
     def from_data(cls, data: TriggerMetadataPayload):
@@ -105,8 +118,9 @@ class AutoModerationTriggerMetadata:
             if "presets" in data
             else None
         )
+        allow_list = data.get("allow_list")
 
-        return cls(keyword_filter=keyword_filter, presets=presets)
+        return cls(keyword_filter=keyword_filter, presets=presets, allow_list=allow_list)
 
     @property
     def payload(self) -> TriggerMetadataPayload:
@@ -117,6 +131,9 @@ class AutoModerationTriggerMetadata:
 
         if self.presets is not None:
             payload["presets"] = [enum.value for enum in self.presets]
+
+        if self.allow_list is not None:
+            payload["allow_list"] = self.allow_list
 
         return payload
 

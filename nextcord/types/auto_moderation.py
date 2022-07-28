@@ -35,6 +35,7 @@ AutoModerationActionType = Literal[1, 2, 3, 4]
 class AutoModerationTriggerMetadata(TypedDict, total=False):
     keyword_filter: List[str]
     presets: List[KeywordPresetType]
+    allow_list: List[str]
 
 
 class AutoModerationActionMetadata(TypedDict, total=False):
