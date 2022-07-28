@@ -1793,6 +1793,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     # Simple-ish getter + setter methods.
 
     @property
+    def qualified_name(self) -> str:
+        """:class:`str`: Retrieves the fully qualified command name.
+
+        .. versionadded:: 2.1
+        """
+        return str(self.name)
+
+    @property
     def description(self) -> str:
         """The description the command should have in Discord. Should be 1-100 characters long."""
         return self._description or DEFAULT_SLASH_DESCRIPTION
@@ -2347,6 +2355,18 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
         self.options: Dict[str, SlashCommandOption] = {}
         self.children: Dict[str, SlashApplicationSubcommand] = {}
+
+    @property
+    def qualified_name(self) -> str:
+        """:class:`str`: Retrieve the command name including all parents space separated.
+
+        An example of the output would be ``parent group subcommand``.
+
+        .. versionadded:: 2.1
+        """
+        return (
+            f"{self.parent_cmd.qualified_name} {self.name}" if self.parent_cmd else str(self.name)
+        )
 
     async def call(
         self, state: ConnectionState, interaction: Interaction, option_data: List[dict]

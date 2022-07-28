@@ -19,13 +19,13 @@ class Google(nextcord.ui.View):
         self.add_item(nextcord.ui.Button(label="Click Here", url=url))
 
 
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot()
 
 
-@bot.command()
-async def google(ctx, *, query: str):
+@bot.slash_command()
+async def google(interaction, query: str):
     """Returns a google link for a query"""
-    await ctx.send(f"Google Result for: `{query}`", view=Google(query))
+    await interaction.send(f"Google Result for: `{query}`", view=Google(query))
 
 
 bot.run("token")

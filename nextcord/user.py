@@ -24,21 +24,22 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union
 
 from . import abc
 from .asset import Asset
 from .colour import Colour
 from .enums import DefaultAvatar
 from .flags import PublicUserFlags
-from .utils import MISSING, _bytes_to_base64_data, snowflake_time
+from .utils import MISSING, _obj_to_base64_data, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
 
     from .channel import DMChannel
+    from .file import File
     from .guild import Guild
-    from .message import Message
+    from .message import Attachment, Message
     from .state import ConnectionState
     from .types.channel import DMChannel as DMChannelPayload
     from .types.user import User as UserPayload
@@ -159,7 +160,10 @@ class BaseUser(_UserTag):
 
     @property
     def default_avatar(self) -> Asset:
-        """:class:`Asset`: Returns the default avatar for a given user. This is calculated by the user's discriminator."""
+        """:class:`Asset`: Returns the default avatar for a given user.
+
+        This is calculated by the user's discriminator.
+        """
         return Asset._from_default_avatar(self._state, int(self.discriminator) % len(DefaultAvatar))
 
     @property
@@ -346,7 +350,12 @@ class ClientUser(BaseUser):
         self._flags = data.get("flags", 0)
         self.mfa_enabled = data.get("mfa_enabled", False)
 
-    async def edit(self, *, username: str = MISSING, avatar: bytes = MISSING) -> ClientUser:
+    async def edit(
+        self,
+        *,
+        username: str = MISSING,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+    ) -> ClientUser:
         """|coro|
 
         Edits the current profile of the client.
@@ -363,13 +372,16 @@ class ClientUser(BaseUser):
         .. versionchanged:: 2.0
             The edit is no longer in-place, instead the newly edited client user is returned.
 
+        .. versionchanged:: 2.1
+            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         -----------
         username: :class:`str`
             The new username you wish to change to.
-        avatar: :class:`bytes`
-            A :term:`py:bytes-like object` representing the image to upload.
-            Could be ``None`` to denote no avatar.
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the image to upload. Could be ``None`` to denote no avatar.
 
         Raises
         ------
@@ -386,9 +398,8 @@ class ClientUser(BaseUser):
         payload: Dict[str, Any] = {}
         if username is not MISSING:
             payload["username"] = username
-
         if avatar is not MISSING:
-            payload["avatar"] = _bytes_to_base64_data(avatar)
+            payload["avatar"] = await _obj_to_base64_data(avatar)
 
         data: UserPayload = await self._state.http.edit_profile(payload)
         return ClientUser(state=self._state, data=data)

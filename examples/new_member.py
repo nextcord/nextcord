@@ -16,6 +16,7 @@ class Bot(commands.Bot):
 
 intents = nextcord.Intents.default()
 intents.members = True
+intents.message_content = True
 
 bot = Bot(command_prefix="$", intents=intents)
 bot.run("token")

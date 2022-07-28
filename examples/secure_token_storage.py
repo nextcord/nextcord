@@ -10,7 +10,7 @@ from nextcord.ext import commands
 # load_dotenv reads from a file called .env in the same directory as the python files which should roughly look like BOT_TOKEN="1234567890"
 load_dotenv()
 
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot()
 
 # run the bot using the token in .env
 bot.run(os.getenv("BOT_TOKEN"))

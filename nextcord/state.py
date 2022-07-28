@@ -51,6 +51,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
+from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
@@ -1243,8 +1244,8 @@ class ConnectionState:
         self.dispatch("message", message)
         if self._messages is not None:
             self._messages.append(message)
-        # we ensure that the channel is either a TextChannel or Thread
-        if channel and channel.__class__ in (TextChannel, Thread):
+        # we ensure that the channel is either a TextChannel, ForumChannel or Thread
+        if channel and channel.__class__ in (TextChannel, ForumChannel, Thread):
             channel.last_message_id = message.id  # type: ignore
 
     def parse_message_delete(self, data) -> None:
@@ -2269,6 +2270,23 @@ class ConnectionState:
                 " guild ID: %s. Discarding.",
                 data["guild_id"],
             )
+
+    def parse_auto_moderation_rule_create(self, data) -> None:
+        self.dispatch(
+            "auto_moderation_rule_create",
+            AutoModerationRule(data=data, state=self),
+        )
+
+    def parse_auto_moderation_rule_update(self, data) -> None:
+        self.dispatch("auto_moderation_rule_update", AutoModerationRule(data=data, state=self))
+
+    def parse_auto_moderation_rule_delete(self, data) -> None:
+        self.dispatch("auto_moderation_rule_delete", AutoModerationRule(data=data, state=self))
+
+    def parse_auto_moderation_action_execution(self, data) -> None:
+        self.dispatch(
+            "auto_moderation_action_execution", AutoModerationActionExecution(data=data, state=self)
+        )
 
 
 class AutoShardedConnectionState(ConnectionState):

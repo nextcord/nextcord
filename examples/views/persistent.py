@@ -1,5 +1,5 @@
 import nextcord
-from nextcord.ext import commands
+from nextcord.ext import application_checks, commands
 
 
 # Define a simple View that persists between bot restarts
@@ -51,18 +51,18 @@ class Bot(commands.Bot):
         print(f"Logged in as {self.user} (ID: {self.user.id})")
 
 
-bot = Bot(command_prefix="$")
+bot = Bot()
 
 
-@bot.command()
-@commands.is_owner()
-async def prepare(ctx):
+@bot.slash_command()
+@application_checks.is_owner()
+async def prepare(interaction):
     """Starts a persistent view."""
     # In order for a persistent view to be listened to, it needs to be sent to an actual message.
     # Call this method once just to store it somewhere.
     # In a more complicated program you might fetch the message_id from a database for use later.
     # However this is outside of the scope of this simple example.
-    await ctx.send("What's your favourite colour?", view=PersistentView())
+    await interaction.send("What's your favourite colour?", view=PersistentView())
 
 
 bot.run("token")

@@ -77,6 +77,7 @@ VerificationLevel = Literal[0, 1, 2, 3, 4]
 NSFWLevel = Literal[0, 1, 2, 3]
 PremiumTier = Literal[0, 1, 2, 3]
 GuildFeature = Literal[
+    "AUTO_MODERATION",
     "ANIMATED_ICON",
     "BANNER",
     "COMMUNITY",
