@@ -1516,7 +1516,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         elif (
             # type(None) in typing.get_args(param_typing)  # TODO: Once Python 3.10 is standard, use this
             type(None) in typing_extensions.get_args(param_typing)
-            # and (inner_type := find(lambda t: t is not type(None), typing.get_args(param_typing)))
             and (
                 inner_type := find(
                     lambda t: t is not type(None), typing_extensions.get_args(param_typing)
@@ -3171,7 +3170,25 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     return ret
 
 
-def unpack_annotated(given_annotation, resolve_list: list = []) -> type:
+def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> type:
+    """Takes an annotation. If the origin is Annotated, it will attempt to resolve it using the given list of accepted
+    types, going from the last type and working up to the first. If no matches to the given list is found, the last
+    type specified in the Annotated typehint will be returned.
+
+    If the origin is not Annotated, the typehint will be returned as-is.
+
+    Parameters
+    ----------
+    given_annotation
+        Annotation to attempt to resolve.
+    resolve_list
+        List of types the annotation can resolve to.
+
+    Returns
+    -------
+    :class:`type`
+        Resolved annotation.
+    """
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
     origin = typing_extensions.get_origin(given_annotation)
     if origin is Annotated:
