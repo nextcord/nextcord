@@ -1584,7 +1584,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
     @property
     def qualified_name(self) -> str:
-        """:class:`str`: Retrieves the fully qualified command name."""
+        """:class:`str`: Retrieves the fully qualified command name.
+
+        .. versionadded:: 2.1
+        """
         return str(self.name)
 
     @property
@@ -2152,7 +2155,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         .. versionadded:: 2.1
         """
         return (
-            self.parent_cmd.qualified_name + " " + str(self.name)
+            f"{self.parent_cmd.qualified_name} {self.name}"
             if self.parent_cmd
             else str(self.name)
         )
