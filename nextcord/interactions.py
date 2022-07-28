@@ -58,6 +58,7 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import (
         CategoryChannel,
+        ForumChannel,
         PartialMessageable,
         StageChannel,
         TextChannel,
@@ -73,7 +74,13 @@ if TYPE_CHECKING:
     from .ui.view import View
 
     InteractionChannel = Union[
-        VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
+        VoiceChannel,
+        StageChannel,
+        TextChannel,
+        CategoryChannel,
+        Thread,
+        PartialMessageable,
+        ForumChannel,
     ]
 
 MISSING: Any = utils.MISSING

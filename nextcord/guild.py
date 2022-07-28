@@ -96,7 +96,7 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
-    from .channel import CategoryChannel, StageChannel, TextChannel, VoiceChannel
+    from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -121,7 +121,7 @@ if TYPE_CHECKING:
     from .webhook import Webhook
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
-    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel]
+    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, ForumChannel]
     ByCategoryItem = Tuple[Optional[CategoryChannel], List[GuildChannel]]
 
 
@@ -631,6 +631,16 @@ class Guild(Hashable):
         This is sorted by the position and are in UI order from top to bottom.
         """
         r = [ch for ch in self._channels.values() if isinstance(ch, CategoryChannel)]
+        r.sort(key=lambda c: (c.position, c.id))
+        return r
+
+    @property
+    def forum_channels(self) -> List[ForumChannel]:
+        """List[:class:`ForumChannel`]: A list of forum channels that belong to this guild.
+
+        This is sorted by the position and are in UI order from top to bottom.
+        """
+        r = [ch for ch in self._channels.values() if isinstance(ch, ForumChannel)]
         r.sort(key=lambda c: (c.position, c.id))
         return r
 
@@ -1416,6 +1426,78 @@ class Guild(Hashable):
         )
         channel = CategoryChannel(state=self._state, guild=self, data=data)  # type: ignore
         # payload *should* contain all category channel info
+
+        # temporarily add to the cache
+        self._channels[channel.id] = channel
+        return channel
+
+    async def create_forum_channel(
+        self,
+        name: str,
+        *,
+        topic: str,
+        position: int = MISSING,
+        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        category: Optional[CategoryChannel] = None,
+        reason: Optional[str] = None,
+    ) -> ForumChannel:
+        """|coro|
+
+        This is similar to :meth:`create_text_channel` except makes a :class:`ForumChannel` instead.
+
+        .. versionadded:: 2.1
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The channel's name.
+        topic: :class:`str`
+            The new channel's topic.
+        overwrites: Dict[Union[:class:`Role`, :class:`Member`], :class:`PermissionOverwrite`]
+            A :class:`dict` of target (either a role or a member) to
+            :class:`PermissionOverwrite` to apply upon creation of a channel.
+            Useful for creating secret channels.
+        category: Optional[:class:`CategoryChannel`]
+            The category to place the newly created channel under.
+            The permissions will be automatically synced to category if no
+            overwrites are provided.
+        position: :class:`int`
+            The position in the channel list. This is a number that starts
+            at 0. e.g. the top channel is position 0.
+        reason: Optional[:class:`str`]
+            The reason for creating this channel. Shows up on the audit log.
+
+        Raises
+        ------
+        Forbidden
+            You do not have the proper permissions to create this channel.
+        HTTPException
+            Creating the channel failed.
+        InvalidArgument
+            The permission overwrite information is not in proper form.
+
+        Returns
+        -------
+        :class:`ForumChannel`
+            The channel that was just created.
+        """
+
+        options: Dict[str, Any] = {
+            "topic": topic,
+        }
+        if position is not MISSING:
+            options["position"] = position
+
+        data = await self._create_channel(
+            name,
+            overwrites=overwrites,
+            channel_type=ChannelType.forum,
+            category=category,
+            reason=reason,
+            **options,
+        )
+        channel = ForumChannel(state=self._state, guild=self, data=data)  # type: ignore
+        # payload *should* contain all forum channel info
 
         # temporarily add to the cache
         self._channels[channel.id] = channel

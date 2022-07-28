@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Unio
 from .abc import Messageable
 from .enums import ChannelType, try_enum
 from .errors import ClientException
+from .flags import ChannelFlags
 from .mixins import Hashable, PinsMixin
 from .utils import MISSING, _get_as_snowflake, parse_time
 
@@ -152,6 +153,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         "auto_archive_duration",
         "archive_timestamp",
         "create_timestamp",
+        "flags",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload):
@@ -183,6 +185,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         self.message_count = data["message_count"]
         self.member_count = data["member_count"]
         self._unroll_metadata(data["thread_metadata"])
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
 
         try:
             member = data["member"]
@@ -207,6 +210,7 @@ class Thread(Messageable, Hashable, PinsMixin):
             pass
 
         self.slowmode_delay = data.get("rate_limit_per_user", 0)
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
 
         try:
             self._unroll_metadata(data["thread_metadata"])
@@ -558,6 +562,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         invitable: bool = MISSING,
         slowmode_delay: int = MISSING,
         auto_archive_duration: ThreadArchiveDuration = MISSING,
+        flags: ChannelFlags = MISSING,
     ) -> Thread:
         """|coro|
 
@@ -571,7 +576,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         The thread must be unarchived to be edited.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The new name of the thread.
         archived: :class:`bool`
@@ -587,16 +592,20 @@ class Thread(Messageable, Hashable, PinsMixin):
         slowmode_delay: :class:`int`
             Specifies the slowmode rate limit for user in this thread, in seconds.
             A value of ``0`` disables slowmode. The maximum value possible is ``21600``.
+        flags: :class:`ChannelFlags`
+            The new channel flags to use for this thread.
+
+            .. versionadded:: 2.1
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to edit the thread.
         HTTPException
             Editing the thread failed.
 
         Returns
-        --------
+        -------
         :class:`Thread`
             The newly edited thread.
         """
@@ -613,6 +622,8 @@ class Thread(Messageable, Hashable, PinsMixin):
             payload["invitable"] = invitable
         if slowmode_delay is not MISSING:
             payload["rate_limit_per_user"] = slowmode_delay
+        if flags is not MISSING:
+            payload["flags"] = flags.value
 
         data = await self._state.http.edit_channel(self.id, **payload)
         # The data payload will always be a Thread payload
