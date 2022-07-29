@@ -129,6 +129,8 @@ class File:
             self.fp = open(fp, "rb")
             self._original_pos = 0
             self._owner = True
+        
+        self.force_close = force_close
 
         # aiohttp only uses two methods from IOBase
         # read and close, since I want to control when the files
