@@ -41,6 +41,8 @@ from typing import (
 
 from . import utils
 from .colour import Colour
+from .errors import InvalidArgument
+from .file import File
 
 __all__ = ("Embed",)
 
@@ -181,6 +183,7 @@ class Embed:
         "_author",
         "_fields",
         "description",
+        "_local_files",
     )
 
     Empty: Final = EmptyEmbed
@@ -214,6 +217,8 @@ class Embed:
 
         if timestamp:
             self.timestamp = timestamp
+
+        self._local_files: Dict[str, File] = {}
 
     @classmethod
     def from_dict(cls: Type[E], data: Mapping[str, Any]) -> E:
@@ -360,7 +365,11 @@ class Embed:
         return EmbedProxy(getattr(self, "_footer", {}))  # type: ignore
 
     def set_footer(
-        self: E, *, text: MaybeEmpty[Any] = EmptyEmbed, icon_url: MaybeEmpty[Any] = EmptyEmbed
+        self: E,
+        *,
+        text: MaybeEmpty[Any] = EmptyEmbed,
+        icon_url: MaybeEmpty[Any] = EmptyEmbed,
+        icon_file: MaybeEmpty[File] = EmptyEmbed,
     ) -> E:
         """Sets the footer for the embed content.
 
@@ -373,14 +382,24 @@ class Embed:
             The footer text.
         icon_url: :class:`str`
             The URL of the footer icon. Only HTTP(S) is supported.
-        """
+        icon_file: Optional[:class:`File`]
+            A file to use for the image.
 
+            .. versionadded:: 2.1
+        """
         self._footer = {}
         if text is not EmptyEmbed:
             self._footer["text"] = str(text)
 
+        if icon_url is not EmptyEmbed and icon_file is not EmptyEmbed:
+            raise InvalidArgument("Cannot pass both icon_url and icon_file")
+
         if icon_url is not EmptyEmbed:
             self._footer["icon_url"] = str(icon_url)
+
+        if isinstance(icon_file, File):
+            self._local_files["footer"] = icon_file
+            self._footer["icon_url"] = f"attachment://{icon_file.filename}"
 
         return self
 
@@ -414,7 +433,12 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_image", {}))  # type: ignore
 
-    def set_image(self: E, url: MaybeEmpty[Any]) -> E:
+    def set_image(
+        self: E,
+        url: MaybeEmpty[Any] = EmptyEmbed,
+        *,
+        file: MaybeEmpty[File] = EmptyEmbed,
+    ) -> E:
         """Sets the image for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -427,17 +451,72 @@ class Embed:
         -----------
         url: :class:`str`
             The source URL for the image. Only HTTP(S) is supported.
-        """
+        file: Optional[:class:`File`]
+            A file to use for the image.
 
+            .. versionadded:: 2.1
+        """
         if url is EmptyEmbed:
             try:
                 del self._image
             except AttributeError:
                 pass
+
+        if file is EmptyEmbed:
+            self._local_files.pop("image", None)
+
+        if url is not EmptyEmbed and file is not EmptyEmbed:
+            raise InvalidArgument("Cannot pass both url and file.")
+
+        elif isinstance(file, File):
+            self._local_files["image"] = file
+            self._image = {"url": f"attachment://{file.filename}"}
+
         else:
-            self._image = {
-                "url": str(url),
-            }
+            self._image = {"url": str(url)}
+
+        return self
+
+    def set_author(
+        self: E,
+        *,
+        name: Any,
+        url: MaybeEmpty[Any] = EmptyEmbed,
+        icon_url: MaybeEmpty[Any] = EmptyEmbed,
+        icon_file: MaybeEmpty[File] = EmptyEmbed,
+    ) -> E:
+        """Sets the author for the embed content.
+
+        This function returns the class instance to allow for fluent-style
+        chaining.
+
+        Parameters
+        -----------
+        name: :class:`str`
+            The name of the author.
+        url: :class:`str`
+            The URL for the author.
+        icon_url: :class:`str`
+            The URL of the author icon. Only HTTP(S) is supported.
+        icon_file: Optional[:class:`File`]
+            A file to use for the image.
+
+            .. versionadded:: 2.1
+        """
+        self._author = {"name": str(name)}
+
+        if icon_url is not EmptyEmbed and icon_file is not EmptyEmbed:
+            raise InvalidArgument("Cannot pass both icon_url and icon_file")
+
+        if url is not EmptyEmbed:
+            self._author["url"] = str(url)
+
+        if isinstance(icon_file, File):
+            self._local_files["author"] = icon_file
+            self._author["icon_url"] = f"attachment://{icon_file.filename}"
+
+        if icon_url is not EmptyEmbed:
+            self._author["icon_url"] = str(icon_url)
 
         return self
 
@@ -456,7 +535,12 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_thumbnail", {}))  # type: ignore
 
-    def set_thumbnail(self: E, url: MaybeEmpty[Any]) -> E:
+    def set_thumbnail(
+        self: E,
+        url: MaybeEmpty[Any] = EmptyEmbed,
+        *,
+        file: MaybeEmpty[File] = EmptyEmbed,
+    ) -> E:
         """Sets the thumbnail for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -469,17 +553,29 @@ class Embed:
         -----------
         url: :class:`str`
             The source URL for the thumbnail. Only HTTP(S) is supported.
-        """
+        file: Optional[:class:`File`]
+            A file to use for the image.
 
+            .. versionadded:: 2.1
+        """
         if url is EmptyEmbed:
             try:
                 del self._thumbnail
             except AttributeError:
                 pass
+
+        if file is EmptyEmbed:
+            self._local_files.pop("thumbnail", None)
+
+        elif url and file:
+            raise InvalidArgument("Can't pass both url and file.")
+
+        elif isinstance(file, File):
+            self._local_files["thumbnail"] = file
+            self._thumbnail = {"url": f"attachment://{file.filename}"}
+
         else:
-            self._thumbnail = {
-                "url": str(url),
-            }
+            self._thumbnail = {"url": str(url)}
 
         return self
 
@@ -516,40 +612,6 @@ class Embed:
         If the attribute has no value then :attr:`Empty` is returned.
         """
         return EmbedProxy(getattr(self, "_author", {}))  # type: ignore
-
-    def set_author(
-        self: E,
-        *,
-        name: Any,
-        url: MaybeEmpty[Any] = EmptyEmbed,
-        icon_url: MaybeEmpty[Any] = EmptyEmbed,
-    ) -> E:
-        """Sets the author for the embed content.
-
-        This function returns the class instance to allow for fluent-style
-        chaining.
-
-        Parameters
-        -----------
-        name: :class:`str`
-            The name of the author.
-        url: :class:`str`
-            The URL for the author.
-        icon_url: :class:`str`
-            The URL of the author icon. Only HTTP(S) is supported.
-        """
-
-        self._author = {
-            "name": str(name),
-        }
-
-        if url is not EmptyEmbed:
-            self._author["url"] = str(url)
-
-        if icon_url is not EmptyEmbed:
-            self._author["icon_url"] = str(icon_url)
-
-        return self
 
     def remove_author(self: E) -> E:
         """Clears embed's author information.
@@ -716,13 +778,11 @@ class Embed:
         """Converts this embed object into a dict."""
 
         # add in the raw data into the dict
-        # fmt: off
         result = {
             key[1:]: getattr(self, key)
             for key in self.__slots__
-            if key[0] == '_' and hasattr(self, key)
+            if key[0] == "_" and hasattr(self, key) and key != "_local_files"
         }
-        # fmt: on
 
         # deal with basic convenience wrappers
 

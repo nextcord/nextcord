@@ -1369,10 +1369,14 @@ class Messageable:
         if embed is not None and embeds is not None:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
+        local_embed_files: List[File] = []
         if embed is not None:
-            embed = embed.to_dict()
+            embeds = [embed]
 
-        elif embeds is not None:
+        if embeds is not None:
+            # Discord hangs on duplicate upload it seems
+            for embed in embeds:
+                local_embed_files.extend(set(embed._local_files.values()))
             embeds = [embed.to_dict() for embed in embeds]
 
         if stickers is not None:
@@ -1409,28 +1413,15 @@ class Messageable:
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
 
-        if file is not None:
-            if not isinstance(file, File):
-                raise InvalidArgument("file parameter must be File")
+        if file:
+            files = [file]
 
-            try:
-                data = await state.http.send_files(
-                    channel.id,
-                    files=[file],
-                    allowed_mentions=allowed_mentions,
-                    content=content,
-                    tts=tts,
-                    embed=embed,
-                    embeds=embeds,
-                    nonce=nonce,
-                    message_reference=reference,
-                    stickers=stickers,
-                    components=components,
-                )
-            finally:
-                file.close()
+        if local_embed_files and files:
+            files.extend(local_embed_files)
+        elif local_embed_files:
+            files = local_embed_files
 
-        elif files is not None:
+        if files is not None:
             if not all(isinstance(file, File) for file in files):
                 raise TypeError("Files parameter must be a list of type File")
 
