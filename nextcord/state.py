@@ -665,7 +665,6 @@ class ConnectionState:
             command.get_rollout_signatures() if use_rollout else command.get_signatures()
         )
         for signature in signature_set:
-            print("add_application_command", signature)
             if not overwrite and (
                 found_command := self._application_command_signatures.get(signature, None)
             ):
@@ -676,7 +675,6 @@ class ConnectionState:
                     )
                 # No else because we do not care if the command has its own signature already in.
             else:
-                print("adding sig", command, command.name_localizations)
                 self._application_command_signatures[signature] = command
         for command_id in command.command_ids.values():
             # PyCharm flags found_command as it "might be referenced before assignment", but that can't happen due to it
