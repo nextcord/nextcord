@@ -80,7 +80,7 @@ if TYPE_CHECKING:
     from asyncio import Future
 
     from .abc import MessageableChannel, PrivateChannel
-    from .application_command import BaseApplicationCommand
+    from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .client import Client
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
@@ -561,9 +561,53 @@ class ConnectionState:
         return self._application_command_ids.get(command_id, None)
 
     def get_application_command_from_signature(
-        self, name: Optional[str], cmd_type: int, guild_id: Optional[int]
-    ) -> Optional[BaseApplicationCommand]:
-        return self._application_command_signatures.get((name, cmd_type, guild_id), None)
+        self,
+        cmd_type: int,
+        guild_id: Optional[int],
+        qualified_name: Optional[str],
+        *,
+        search_locales: bool = False
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+        if not qualified_name:
+            return self._application_command_signatures.get((None, cmd_type, guild_id), None)
+
+        def get_parent_command(name: str, /) -> Optional[BaseApplicationCommand]:
+            if search_locales is False:
+                return self._application_command_signatures.get((name, cmd_type, guild_id), None)
+
+            for command in list(self._application_command_signatures.values()):
+                if command.name_localizations and name in list(command.name_localizations.values()):
+                    return command
+
+            return None
+
+        def find_children(
+            parent: Union[BaseApplicationCommand, SlashApplicationSubcommand],
+            name: str,
+            /
+        ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+            children: Dict[str, SlashApplicationSubcommand] = getattr(parent, "children", {})
+            if not children:
+                return parent
+
+            if search_locales is False:
+                return children.get(name, None)
+    
+            subcommand: Union[BaseApplicationCommand, SlashApplicationSubcommand]
+            for subcommand in list(children.values()):
+                if subcommand.name_localizations and name in list(subcommand.name_localizations.values()):
+                    return subcommand
+
+            return None
+
+        parent: Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]] = None
+        for command_name in qualified_name.split(" "):
+            if parent is None:
+                parent = get_parent_command(command_name)
+            else:
+                parent = find_children(parent, command_name)
+
+        return parent
 
     def get_guild_application_commands(
         self, guild_id: Optional[int] = None, rollout: bool = False
@@ -621,6 +665,7 @@ class ConnectionState:
             command.get_rollout_signatures() if use_rollout else command.get_signatures()
         )
         for signature in signature_set:
+            print("add_application_command", signature)
             if not overwrite and (
                 found_command := self._application_command_signatures.get(signature, None)
             ):
@@ -631,6 +676,7 @@ class ConnectionState:
                     )
                 # No else because we do not care if the command has its own signature already in.
             else:
+                print("adding sig", command, command.name_localizations)
                 self._application_command_signatures[signature] = command
         for command_id in command.command_ids.values():
             # PyCharm flags found_command as it "might be referenced before assignment", but that can't happen due to it
@@ -876,7 +922,7 @@ class ConnectionState:
             fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else None
             payload_type = raw_response["type"] if "type" in raw_response else 1
 
-            response_signature = (raw_response["name"], int(payload_type), fixed_guild_id)
+            response_signature = (int(payload_type), fixed_guild_id, raw_response["name"])
             if app_cmd := self.get_application_command_from_signature(*response_signature):
                 if app_cmd.is_payload_valid(raw_response, guild_id):
                     if associate_known:

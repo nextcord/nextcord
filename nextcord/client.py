@@ -1955,9 +1955,9 @@ class Client:
                 _log.debug(f"nextcord.Client: %s", response_signature)
                 do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
-                    interaction.data["name"],
                     int(interaction.data["type"]),
                     int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None,
+                    interaction.data["name"],
                 ):
                     _log.debug(
                         "nextcord.Client: Basic signature matches, checking against raw payload."
@@ -2021,22 +2021,41 @@ class Client:
         return self._connection.get_application_command(command_id)
 
     def get_application_command_from_signature(
-        self, name: str, cmd_type: Union[int, ApplicationCommandType], guild_id: Optional[int]
-    ) -> Optional[BaseApplicationCommand]:
+        self,
+        cmd_type: Union[int, ApplicationCommandType],
+        guild_id: Optional[int],
+        qualified_name: str,
+        *,
+        search_locales: bool = False,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         """Gets a locally stored application command object that matches the given signature.
+
+        .. versionadded:: 2.0
+
+        .. versionchanged:: 2.2
+            Renamed the ``name`` parameter to ``qualified_name`` and moved it to the end of the signature.
+        
+        .. versionchanged:: 2.2
+            Group/subcommand commands can now be retrieved with this method.
+
+        .. versionchanged:: 2.2
+            Added the ``search_locales`` keyword argument.
 
         Parameters
         ----------
-        name: :class:`str`
-            Name of the application command. Capital sensitive.
         cmd_type: Union[:class:`int`, :class:`ApplicationCommandType`]
             Type of application command.
         guild_id: Optional[:class:`int`]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
+        qualified_name: :class:`str`
+            Name of the application command subcommands are supported. Capital sensitive.
+            Subcommand commands must be separated by a space, E.g, ``parent group subcommand``.
+        search_locales: :class:`bool`
+            Whether to also search through the command's name locals. Defaults to ``False``.
 
         Returns
         -------
-        command: Optional[:class:`BaseApplicationCommand`]
+        command: Optional[:class:`BaseApplicationCommand`, :class:`SlashApplicationSubcommand`]
             Application Command with the given signature. If no command with that signature is
             found, returns ``None`` instead.
         """
@@ -2046,7 +2065,7 @@ class Client:
             actual_type = cmd_type
 
         return self._connection.get_application_command_from_signature(
-            name=name, cmd_type=actual_type, guild_id=guild_id
+            cmd_type=actual_type, guild_id=guild_id, qualified_name=qualified_name, search_locales=search_locales
         )
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
