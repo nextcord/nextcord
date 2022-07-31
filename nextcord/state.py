@@ -47,6 +47,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    overload,
 )
 
 from . import utils
@@ -559,6 +560,28 @@ class ConnectionState:
 
     def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
         return self._application_command_ids.get(command_id, None)
+
+    @overload
+    def get_application_command_from_signature(
+        self,
+        cmd_type: int,
+        guild_id: Optional[int],
+        qualified_name: Optional[str],
+        *,
+        search_locales: bool = ...,
+    ) -> Optional[BaseApplicationCommand]:
+        ...
+
+    @overload
+    def get_application_command_from_signature(
+        self,
+        cmd_type: int,
+        guild_id: Optional[int],
+        qualified_name: str,
+        *,
+        search_locales: bool = ...,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+        ...
 
     def get_application_command_from_signature(
         self,
