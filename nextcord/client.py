@@ -2034,7 +2034,7 @@ class Client:
 
         .. versionchanged:: 2.2
             Renamed the ``name`` parameter to ``qualified_name`` and moved it to the end of the signature.
-        
+
         .. versionchanged:: 2.2
             Group/subcommand commands can now be retrieved with this method.
 
@@ -2065,7 +2065,10 @@ class Client:
             actual_type = cmd_type
 
         return self._connection.get_application_command_from_signature(
-            cmd_type=actual_type, guild_id=guild_id, qualified_name=qualified_name, search_locales=search_locales
+            cmd_type=actual_type,
+            guild_id=guild_id,
+            qualified_name=qualified_name,
+            search_locales=search_locales,
         )
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:

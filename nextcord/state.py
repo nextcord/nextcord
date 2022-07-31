@@ -566,7 +566,7 @@ class ConnectionState:
         guild_id: Optional[int],
         qualified_name: Optional[str],
         *,
-        search_locales: bool = False
+        search_locales: bool = False,
     ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         if not qualified_name:
             return self._application_command_signatures.get((None, cmd_type, guild_id), None)
@@ -582,9 +582,7 @@ class ConnectionState:
             return None
 
         def find_children(
-            parent: Union[BaseApplicationCommand, SlashApplicationSubcommand],
-            name: str,
-            /
+            parent: Union[BaseApplicationCommand, SlashApplicationSubcommand], name: str, /
         ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
             children: Dict[str, SlashApplicationSubcommand] = getattr(parent, "children", {})
             if not children:
@@ -592,10 +590,12 @@ class ConnectionState:
 
             if search_locales is False:
                 return children.get(name, None)
-    
+
             subcommand: Union[BaseApplicationCommand, SlashApplicationSubcommand]
             for subcommand in list(children.values()):
-                if subcommand.name_localizations and name in list(subcommand.name_localizations.values()):
+                if subcommand.name_localizations and name in list(
+                    subcommand.name_localizations.values()
+                ):
                     return subcommand
 
             return None
