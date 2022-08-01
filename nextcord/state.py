@@ -51,6 +51,7 @@ from typing import (
 )
 
 from . import utils
+from .application_command import BaseApplicationCommand
 from .activity import BaseActivity
 from .channel import *
 from .channel import _channel_factory
@@ -81,7 +82,7 @@ if TYPE_CHECKING:
     from asyncio import Future
 
     from .abc import MessageableChannel, PrivateChannel
-    from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
+    from .application_command import SlashApplicationSubcommand
     from .client import Client
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
@@ -561,39 +562,14 @@ class ConnectionState:
     def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
         return self._application_command_ids.get(command_id, None)
 
-    @overload
-    def get_application_command_from_signature(
-        self,
-        cmd_type: int,
-        guild_id: Optional[int],
-        qualified_name: Optional[str],
-        *,
-        search_locales: bool = ...,
-    ) -> Optional[BaseApplicationCommand]:
-        ...
-
-    @overload
     def get_application_command_from_signature(
         self,
         cmd_type: int,
         guild_id: Optional[int],
         qualified_name: str,
         *,
-        search_locales: bool = ...,
-    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
-        ...
-
-    def get_application_command_from_signature(
-        self,
-        cmd_type: int,
-        guild_id: Optional[int],
-        qualified_name: Optional[str],
-        *,
         search_locales: bool = False,
     ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
-        if not qualified_name:
-            return self._application_command_signatures.get((None, cmd_type, guild_id), None)
-
         def get_parent_command(name: str, /) -> Optional[BaseApplicationCommand]:
             if search_locales is False:
                 return self._application_command_signatures.get((name, cmd_type, guild_id), None)
@@ -623,7 +599,7 @@ class ConnectionState:
 
             return None
 
-        parent: Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]] = None
+        parent = None
         for command_name in qualified_name.split(" "):
             if parent is None:
                 parent = get_parent_command(command_name)
@@ -944,29 +920,38 @@ class ConnectionState:
             payload_type = raw_response["type"] if "type" in raw_response else 1
 
             response_signature = (int(payload_type), fixed_guild_id, raw_response["name"])
-            if app_cmd := self.get_application_command_from_signature(*response_signature):
-                if app_cmd.is_payload_valid(raw_response, guild_id):
-                    if associate_known:
+            app_cmd = self.get_application_command_from_signature(*response_signature)
+            if app_cmd:
+                if isinstance(app_cmd, BaseApplicationCommand):
+                    if app_cmd.is_payload_valid(raw_response, guild_id):
+                        if associate_known:
+                            _log.debug(
+                                "nextcord.ConnectionState: Command with signature %s associated with added command.",
+                                response_signature,
+                            )
+                            app_cmd.parse_discord_response(self, raw_response)
+                            self.add_application_command(app_cmd, use_rollout=True)
+
+                    elif update_known:
                         _log.debug(
-                            "nextcord.ConnectionState: Command with signature %s associated with added command.",
+                            "nextcord.ConnectionState: Command with signature %s found but failed deep check, updating.",
                             response_signature,
                         )
-                        app_cmd.parse_discord_response(self, raw_response)
-                        self.add_application_command(app_cmd, use_rollout=True)
-
-                elif update_known:
-                    _log.debug(
-                        "nextcord.ConnectionState: Command with signature %s found but failed deep check, updating.",
-                        response_signature,
+                        await self.register_application_command(app_cmd, guild_id)
+                    elif delete_unknown:
+                        _log.debug(
+                            "nextcord.ConnectionState: Command with signature %s found but failed deep check, removing.",
+                            response_signature,
+                        )
+                        # TODO: Re-examine how worthwhile this is.
+                        await self.delete_application_command(app_cmd, guild_id)
+                else:
+                    raise ValueError(
+                        (
+                            f".get_application_command_from_signature with signature: {response_signature}) "
+                            f"returned {type(app_cmd)} but BaseApplicationCommand was expected."
+                        )
                     )
-                    await self.register_application_command(app_cmd, guild_id)
-                elif delete_unknown:
-                    _log.debug(
-                        "nextcord.ConnectionState: Command with signature %s found but failed deep check, removing.",
-                        response_signature,
-                    )
-                    # TODO: Re-examine how worthwhile this is.
-                    await self.delete_application_command(app_cmd, guild_id)
 
             elif delete_unknown:
                 _log.debug(

@@ -1954,24 +1954,37 @@ class Client:
                 )
                 _log.debug(f"nextcord.Client: %s", response_signature)
                 do_deploy = False
-                if app_cmd := self._connection.get_application_command_from_signature(
+
+                response_signature = (
                     int(interaction.data["type"]),
                     int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None,
                     interaction.data["name"],
-                ):
-                    _log.debug(
-                        "nextcord.Client: Basic signature matches, checking against raw payload."
-                    )
-                    if app_cmd.is_interaction_valid(interaction):
+                )
+                app_cmd = self._connection.get_application_command_from_signature(
+                    *response_signature
+                )
+                if app_cmd:
+                    if isinstance(app_cmd, BaseApplicationCommand):
                         _log.debug(
-                            f"nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
-                            app_cmd.error_name,
+                            "nextcord.Client: Basic signature matches, checking against raw payload."
                         )
-                        app_cmd.parse_discord_response(self._connection, interaction.data)
-                        self.add_application_command(app_cmd)
-                        await app_cmd.call_from_interaction(interaction)
+                        if app_cmd.is_interaction_valid(interaction):
+                            _log.debug(
+                                f"nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
+                                app_cmd.error_name,
+                            )
+                            app_cmd.parse_discord_response(self._connection, interaction.data)
+                            self.add_application_command(app_cmd)
+                            await app_cmd.call_from_interaction(interaction)
+                        else:
+                            do_deploy = True
                     else:
-                        do_deploy = True
+                        raise ValueError(
+                            (
+                                f".get_application_command_from_signature with signature: {response_signature}) "
+                                f"returned {type(app_cmd)} but BaseApplicationCommand was expected."
+                            )
+                        )
 
                 else:
                     do_deploy = True
@@ -2031,6 +2044,9 @@ class Client:
         """Gets a locally stored application command object that matches the given signature.
 
         .. versionadded:: 2.0
+
+        .. versionchanged:: 2.2
+            it's no longer possible to pass ``None`` to the ``name`` parameter.
 
         .. versionchanged:: 2.2
             Renamed the ``name`` parameter to ``qualified_name`` and moved it to the end of the signature.
