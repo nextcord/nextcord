@@ -85,7 +85,7 @@ if TYPE_CHECKING:
 
 MISSING: Any = utils.MISSING
 
-ClientT = TypeVar("ClientT", bound=Client)
+ClientT = TypeVar("ClientT", bound="Client")
 
 
 class InteractionAttached(dict):
