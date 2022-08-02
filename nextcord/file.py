@@ -117,7 +117,7 @@ class File:
         *,
         description: Optional[str] = None,
         spoiler: bool = False,
-        force_close: bool = True,  # Accessed in .close()
+        force_close: bool = False,
     ):
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
