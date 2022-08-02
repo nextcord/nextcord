@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 from . import utils
 from .channel import ChannelType, PartialMessageable
@@ -85,6 +85,8 @@ if TYPE_CHECKING:
 
 MISSING: Any = utils.MISSING
 
+ClientT = TypeVar("ClientT", bound=Client)
+
 
 class InteractionAttached(dict):
     """Represents the attached data of an interaction.
@@ -118,7 +120,7 @@ class InteractionAttached(dict):
         return f"<InteractionAttached {super().__repr__()}>"
 
 
-class Interaction(Hashable):
+class Interaction(Hashable, Generic[ClientT]):
     """Represents a Discord interaction.
 
     An interaction happens when a user does an action that needs to
@@ -256,9 +258,9 @@ class Interaction(Hashable):
                 pass
 
     @property
-    def client(self) -> Client:
+    def client(self) -> ClientT:
         """:class:`Client`: The client that handled the interaction."""
-        return self._state._get_client()
+        return self._state._get_client()  # type: ignore
 
     @property
     def guild(self) -> Optional[Guild]:
