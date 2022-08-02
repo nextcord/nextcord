@@ -124,6 +124,7 @@ class AssetMixin:
         filename: Optional[str] = MISSING,
         description: Optional[str] = None,
         spoiler: bool = False,
+        force_close: bool = True,
     ) -> File:
         """|coro|
 
@@ -141,6 +142,12 @@ class AssetMixin:
             The description for the file.
         spoiler: :class:`bool`
             Whether the file is a spoiler.
+        force_close: :class:`bool`
+            Whether to forcibly close the bytes used to create the file
+            when ``.close()`` is called.
+            This will also make the file bytes unusable by flusing it from
+            memory after it is sent or used once.
+            Keep this enabled if you don't wish to reuse the same bytes.
 
         Raises
         ------
@@ -164,7 +171,7 @@ class AssetMixin:
         data = await self.read()
         file_filename = filename if filename is not MISSING else yarl.URL(self.url).name
         return File(
-            io.BytesIO(data), filename=file_filename, description=description, spoiler=spoiler
+            io.BytesIO(data), filename=file_filename, description=description, spoiler=spoiler, force_close=force_close
         )
 
 
