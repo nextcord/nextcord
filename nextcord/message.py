@@ -296,7 +296,7 @@ class Attachment(Hashable):
         description: Optional[str] = MISSING,
         use_cached: bool = False,
         spoiler: bool = False,
-        force_close=True,
+        force_close: bool = True,
     ) -> File:
         """|coro|
 
