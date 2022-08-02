@@ -87,9 +87,9 @@ class File:
     force_close: :class:`bool`
         Whether to forcibly close the bytes used to create the file
         when ``.close()`` is called.
-        This will also make the file bytes unusable by flusing it from
+        This will also make the file bytes unusable by flushing it from
         memory after it is sent or used once.
-        Keep this enabled if you don't wish to reuse the same bytes.
+        Enable this if you don't wish to reuse the same bytes.
     """
 
     __slots__ = (
