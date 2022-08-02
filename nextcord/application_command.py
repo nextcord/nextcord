@@ -766,7 +766,7 @@ class CallbackMixin:
         # Global checks
         for check in interaction.client._connection._application_command_checks:
             try:
-                check_result = await maybe_coroutine(check, interaction)  # type: ignore
+                check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
