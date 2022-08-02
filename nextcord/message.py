@@ -296,6 +296,7 @@ class Attachment(Hashable):
         description: Optional[str] = MISSING,
         use_cached: bool = False,
         spoiler: bool = False,
+        force_close = True,
     ) -> File:
         """|coro|
 
@@ -329,6 +330,14 @@ class Attachment(Hashable):
             Whether the file is a spoiler.
 
             .. versionadded:: 1.4
+        force_close: :class:`bool`
+            Whether to forcibly close the bytes used to create the file
+            when ``.close()`` is called.
+            This will also make the file bytes unusable by flushing it from
+            memory after it is sent or used once.
+            Keep this enabled if you don't wish to reuse the same bytes.
+           
+           .. versionadded:: 2.2
 
         Raises
         ------
@@ -349,7 +358,7 @@ class Attachment(Hashable):
         file_filename = filename if filename is not MISSING else self.filename
         file_description = description if description is not MISSING else self.description
         return File(
-            io.BytesIO(data), filename=file_filename, description=file_description, spoiler=spoiler
+            io.BytesIO(data), filename=file_filename, description=file_description, spoiler=spoiler, force_close=force_close
         )
 
     def to_dict(self) -> AttachmentPayload:
