@@ -68,7 +68,7 @@ class File:
         when ``.close()`` is called.
         This will also make the file bytes unusable by flushing it from
         memory after it is sent once.
-        Keep this enabled if you don't wish to reuse the same bytes.
+        Enable this if you don't wish to reuse the same bytes.
 
     Attributes
     -----------
