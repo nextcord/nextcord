@@ -70,6 +70,8 @@ class File:
         memory after it is sent once.
         Enable this if you don't wish to reuse the same bytes.
 
+        .. versionadded:: 2.2
+
     Attributes
     -----------
     fp: Union[:class:`io.BufferedReader`, :class:`io.BufferedIOBase`]
