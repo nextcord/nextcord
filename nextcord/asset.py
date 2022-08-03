@@ -149,6 +149,8 @@ class AssetMixin:
             memory after it is sent or used once.
             Keep this enabled if you don't wish to reuse the same bytes.
 
+            .. versionadded:: 2.2
+
         Raises
         ------
         DiscordException
