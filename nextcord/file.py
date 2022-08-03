@@ -92,6 +92,8 @@ class File:
         This will also make the file bytes unusable by flushing it from
         memory after it is sent or used once.
         Enable this if you don't wish to reuse the same bytes.
+
+        .. versionadded:: 2.2
     """
 
     __slots__ = (
