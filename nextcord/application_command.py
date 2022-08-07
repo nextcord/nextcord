@@ -1406,15 +1406,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                             f"{self.error_name} | Annotation {anno} is incompatible with {found_type} \n| {typehint_origin}\n| {parameter.annotation}\n| {grouped_annotations}"
                         )
 
-                    # Theoretically, it COULD be an OptionConverter at this point if it somehow skipped passed the upper
-                    #  two isinstance if statements AND didn't error on self.get_type.
-                    if isinstance(anno, ApplicationCommandOptionType) or isinstance(
-                        anno, OptionConverter
+                    if not (isinstance(anno, ApplicationCommandOptionType) or isinstance(anno, OptionConverter)) and (
+                            channel_types := self.channel_mapping.get(anno)
                     ):
-                        # This is probably from an option converter. An OptionType alone doesn't imply what
-                        #  channel types are desired, so we ignore it.
-                        pass
-                    elif channel_types := self.channel_mapping.get(anno):
                         found_channel_types.extend(channel_types)
 
             annotation_type = found_type
