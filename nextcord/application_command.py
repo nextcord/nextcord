@@ -1271,7 +1271,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
     channel_mapping: Dict[type, Tuple[ChannelType, ...]] = {
         CategoryChannel: (ChannelType.category,),
         DMChannel: (ChannelType.private,),
-        ForumChannel: (ChannelType.forum, ),
+        ForumChannel: (ChannelType.forum,),
         GroupChannel: (ChannelType.group,),
         StageChannel: (ChannelType.stage_voice,),
         TextChannel: (
