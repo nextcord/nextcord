@@ -1347,15 +1347,17 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                     )
 
             if found_type is MISSING:
-                # ??? Why are they using Literal???
-                found_type = ApplicationCommandOptionType.string
+                raise NotImplementedError(
+                    "This behavior currently isn't handled in Nextcord. Please join the Nextcord Discord server and "
+                    "explain what you are doing to get this error and why we would support it."
+                )
 
             annotation_type = found_type
             annotation_choices = found_choices
         elif typehint_origin in (Union, Optional, Annotated, None):
             # If the typehint base is Union, Optional, or not any grouping...
             found_type = MISSING
-            found_channel_types = []
+            found_channel_types: List[ChannelType] = []
 
             if typehint_origin is None:
                 unpacked_annotations: List[type] = [
