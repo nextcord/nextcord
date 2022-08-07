@@ -55,6 +55,7 @@ from .abc import GuildChannel
 from .channel import (
     CategoryChannel,
     DMChannel,
+    ForumChannel,
     GroupChannel,
     StageChannel,
     TextChannel,
@@ -1254,6 +1255,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         GuildChannel: ApplicationCommandOptionType.channel,
         CategoryChannel: ApplicationCommandOptionType.channel,
         DMChannel: ApplicationCommandOptionType.channel,
+        ForumChannel: ApplicationCommandOptionType.channel,
         GroupChannel: ApplicationCommandOptionType.channel,
         StageChannel: ApplicationCommandOptionType.channel,
         TextChannel: ApplicationCommandOptionType.channel,
@@ -1269,18 +1271,19 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
     channel_mapping: Dict[type, Tuple[ChannelType, ...]] = {
         CategoryChannel: (ChannelType.category,),
         DMChannel: (ChannelType.private,),
+        ForumChannel: (ChannelType.forum, ),
         GroupChannel: (ChannelType.group,),
         StageChannel: (ChannelType.stage_voice,),
         TextChannel: (
             ChannelType.text,
             ChannelType.news,
         ),
-        VoiceChannel: (ChannelType.voice,),
         Thread: (
             ChannelType.news_thread,
             ChannelType.public_thread,
             ChannelType.private_thread,
         ),
+        VoiceChannel: (ChannelType.voice,),
     }
     """Maps Python channel annotations/typehints to Discord ChannelType values."""
 
