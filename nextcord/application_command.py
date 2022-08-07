@@ -1312,7 +1312,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         # typehint_origin = typing.get_origin(parameter.annotation)  # TODO: Once Python 3.10 is standard, use this.
         typehint_origin = typing_extensions.get_origin(parameter.annotation)
 
-        annotation_type: ApplicationCommandOptionType = MISSING
+        annotation_type: ApplicationCommandOptionType
         annotation_required = True
         annotation_choices: List[Union[str, int, float]] = []
         annotation_channel_types: List[ChannelType] = []
