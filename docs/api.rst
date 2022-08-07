@@ -4717,6 +4717,9 @@ Slash Options
     * - :class:`DMChannel`
       - Channel
       - Restricts the accepted channel types to DM channels.
+    * - :class:`ForumChannel`
+      - Channel
+      - Restricts the accepted channel types to Forum Channels.
     * - :class:`GroupChannel`
       - Channel
       - Restricts the accepted channel types to Group DM channels.
