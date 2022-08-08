@@ -1422,6 +1422,11 @@ of :class:`enum.Enum`.
         The system message denoting that a context menu command was executed.
 
         .. versionadded:: 2.0
+    .. attribute:: auto_moderation_action
+
+        The system message denoting that an auto moderation action was executed
+
+        .. versionadded:: 2.1
 
 .. class:: UserFlags
 
@@ -2549,7 +2554,7 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.1
 
-    .. attribute:: auto_moderation_rule_deleted
+    .. attribute:: auto_moderation_rule_delete
 
         An auto moderation rule was deleted.
 
