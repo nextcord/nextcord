@@ -1293,7 +1293,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: guild_directory
 
-        A channel containing the guilds in a `Discord Student Hub <https://support.discord.com/hc/en-us/articles/4406046651927-Discord-Student-Hubs-FAQ>`_
+        A channel containing the guilds in a `Student Hub <https://support.discord.com/hc/en-us/articles/4406046651927-Discord-Student-Hubs-FAQ>`_
 
         .. versionadded:: 2.2
 
