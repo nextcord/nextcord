@@ -3369,11 +3369,16 @@ class Range(int):
             if len(value) != 2:
                 raise ValueError("Range can only take 1-2 arguments")
 
-            Inner.min = value[0]
+            min = value[0]
             max = value[1]
         else:
-            Inner.min = None
+            min = None
             max = value
+
+        if isinstance(min, EllipsisType):
+            Inner.min = None
+        else:
+            Inner.min = min
 
         if isinstance(max, EllipsisType):
             Inner.max = None
