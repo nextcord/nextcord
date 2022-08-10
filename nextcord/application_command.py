@@ -3319,6 +3319,25 @@ def unpack_annotation(
 
 
 class Range(int):
+    """An annotation helper for defining slash command `min_value` and `max_value` parameters.
+
+    .. versionadded:: 2.2
+
+    .. container:: operations
+
+        .. describe:: Range[x, y]
+
+            Creates a range from ``x`` to ``y``.
+
+        .. describe:: Range[x]
+        
+            Create a range up to ``x``.
+
+        .. describe:: Range[x, ...]
+
+            Create a range from ``x``.
+    """
+
     min: ClassVar[Optional[Union[int, float]]]
     max: ClassVar[Optional[Union[int, float]]]
 
