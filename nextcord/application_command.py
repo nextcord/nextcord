@@ -3321,7 +3321,7 @@ class _RangeMeta(type):
             return cls(None, value)
 
 
-class Range(float, metaclass=_RangeMeta):
+class Range(metaclass=_RangeMeta):
     def __init__(self, min: Union[float, None], max: float) -> None:
         self.min: Optional[float] = min
         self.max: Optional[float] = max
