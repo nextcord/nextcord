@@ -34,6 +34,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    ClassVar,
     Coroutine,
     Dict,
     Iterable,
@@ -1358,6 +1359,15 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             annotation_type = found_type
             annotation_choices = found_choices
+        # Range needs to be above origin in (None) as there is no origin.
+        elif issubclass(parameter.annotation, Range):
+            if not isinstance(parameter.annotation.max, (int, float)):
+                raise TypeError("Items of Range[] must be int or float.")
+
+            annotation_type = self.option_types[type(parameter.annotation.max)]
+
+            annotation_min_value = parameter.annotation.min
+            annotation_max_value = parameter.annotation.max
         elif typehint_origin in (Union, Optional, Annotated, None):
             # If the typehint base is Union, Optional, or not any grouping...
             found_type = MISSING
@@ -1421,14 +1431,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             annotation_type = found_type
             if found_channel_types:
                 annotation_channel_types = found_channel_types
-        elif isinstance(parameter.annotation, Range):
-            if not isinstance(parameter.annotation.max, (int, float)):
-                raise TypeError("Items of Range[] must be int or float.")
-
-            annotation_type = self.option_types[type(parameter.annotation.max)]
-
-            annotation_min_value = parameter.annotation.min
-            annotation_max_value = parameter.annotation.max
         else:
             raise ValueError(
                 f"{self.error_name} Invalid annotation origin: {typehint_origin} \n"
@@ -1543,6 +1545,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
+        elif issubclass(param_typing, Range):
+            return self.option_types[type(param_typing.max)]
         else:
             raise ValueError(
                 f"{self.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
@@ -3297,31 +3301,32 @@ def unpack_annotation(
     return type_ret, literal_ret
 
 
-class _RangeMeta(type):
+class Range(int):
+    min: ClassVar[Optional[Union[int, float]]]
+    max: ClassVar[Union[int, float]]
+
     @overload
-    def __getitem__(cls, value: float) -> type[float]:
+    def __class_getitem__(cls, value: Union[int, Tuple[int, int]]) -> Type[int]:
         ...
 
     @overload
-    def __getitem__(cls, value: int) -> type[int]:
+    def __class_getitem__(cls, value: Union[float, Tuple[float, float]]) -> Type[float]:
         ...
 
-    @overload
-    def __getitem__(cls, value: tuple[float, float]) -> type[float]:
-        ...
+    def __class_getitem__(
+        cls, value: Union[int, float, Tuple[int, int], Tuple[float, float]]
+    ) -> Type[Union[int, float]]:
+        class Inner(Range):
+            ...
 
-    @overload
-    def __getitem__(cls, value: tuple[int, int]) -> type[int]:
-        ...
-
-    def __getitem__(cls, value: Union[float, tuple[float, float]]) -> type[float]:
         if isinstance(value, tuple):
-            return cls(*value)
+            if len(value) != 2:
+                raise ValueError("Range can only take 1-2 arguments")
+
+            Inner.min = value[0]
+            Inner.max = value[1]
         else:
-            return cls(None, value)
+            Inner.min = None
+            Inner.max = value
 
-
-class Range(metaclass=_RangeMeta):
-    def __init__(self, min: Union[float, None], max: float) -> None:
-        self.min: Optional[float] = min
-        self.max: Optional[float] = max
+        return Inner
