@@ -3330,7 +3330,7 @@ class Range(int):
             Creates a range from ``x`` to ``y``.
 
         .. describe:: Range[x]
-        
+
             Create a range up to ``x``.
 
         .. describe:: Range[x, ...]
