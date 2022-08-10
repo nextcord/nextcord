@@ -121,6 +121,11 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+# As nextcord.types exist, we cannot import types
+if TYPE_CHECKING:
+    EllipsisType = ellipsis  # noqa: F821
+else:
+    EllipsisType = type(Ellipsis)
 
 
 def _cog_special_method(func: FuncT) -> FuncT:
@@ -1361,10 +1366,22 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             annotation_choices = found_choices
         # Range needs to be above origin in (None) as there is no origin.
         elif issubclass(parameter.annotation, Range):
-            if not isinstance(parameter.annotation.max, (int, float)):
-                raise TypeError("Items of Range[] must be int or float.")
+            if parameter.annotation.min is not None and not isinstance(
+                parameter.annotation.min, (int, float)
+            ):
+                raise TypeError("Range min must be int or float.")
+            if parameter.annotation.max is not None and not isinstance(
+                parameter.annotation.max, (int, float)
+            ):
+                raise TypeError("Range max must be int or float.")
 
-            annotation_type = self.option_types[type(parameter.annotation.max)]
+            if parameter.annotation.min is None:
+                if parameter.annotation.max is None:
+                    raise TypeError("At least one of min or max must be set.")
+
+                annotation_type = self.option_types[type(parameter.annotation.max)]
+            else:
+                annotation_type = self.option_types[type(parameter.annotation.min)]
 
             annotation_min_value = parameter.annotation.min
             annotation_max_value = parameter.annotation.max
@@ -3303,18 +3320,25 @@ def unpack_annotation(
 
 class Range(int):
     min: ClassVar[Optional[Union[int, float]]]
-    max: ClassVar[Union[int, float]]
+    max: ClassVar[Optional[Union[int, float]]]
 
     @overload
-    def __class_getitem__(cls, value: Union[int, Tuple[int, int]]) -> Type[int]:
+    def __class_getitem__(
+        cls, value: Union[int, Tuple[int, int], Tuple[int, EllipsisType]]
+    ) -> Type[int]:
         ...
 
     @overload
-    def __class_getitem__(cls, value: Union[float, Tuple[float, float]]) -> Type[float]:
+    def __class_getitem__(
+        cls, value: Union[float, Tuple[float, float], Tuple[float, EllipsisType]]
+    ) -> Type[float]:
         ...
 
     def __class_getitem__(
-        cls, value: Union[int, float, Tuple[int, int], Tuple[float, float]]
+        cls,
+        value: Union[
+            int, float, Tuple[int, int], Tuple[float, float], Tuple[Union[int, float], EllipsisType]
+        ],
     ) -> Type[Union[int, float]]:
         class Inner(Range):
             ...
@@ -3324,9 +3348,14 @@ class Range(int):
                 raise ValueError("Range can only take 1-2 arguments")
 
             Inner.min = value[0]
-            Inner.max = value[1]
+            max = value[1]
         else:
             Inner.min = None
-            Inner.max = value
+            max = value
+
+        if isinstance(max, EllipsisType):
+            Inner.max = None
+        else:
+            Inner.max = max
 
         return Inner
