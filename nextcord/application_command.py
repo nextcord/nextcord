@@ -1460,14 +1460,12 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         self.description_localizations = cmd_arg.description_localizations
         self.choice_localizations = cmd_arg.choice_localizations
 
-        if annotation_min_value is not MISSING:
-            self.min_value = annotation_min_value
-        else:
+        self.min_value = annotation_min_value if annotation_min_value is not MISSING else None
+        if cmd_arg.min_value is not None:
             self.min_value = cmd_arg.min_value
-
-        if annotation_max_value is not MISSING:
-            self.max_value = annotation_max_value
-        else:
+        
+        self.max_value = annotation_max_value if annotation_max_value is not MISSING else None
+        if cmd_arg.max_value is not None:
             self.max_value = cmd_arg.max_value
 
         self.min_length = cmd_arg.min_length
