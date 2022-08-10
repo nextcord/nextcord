@@ -1563,7 +1563,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         ):
             return valid_type
         elif issubclass(param_typing, Range):
-            return self.option_types[type(param_typing.max)]
+            if param_typing.max is not None:
+                return self.option_types[type(param_typing.max)]
+            else:
+                return self.option_types[type(param_typing.min)]
         else:
             raise ValueError(
                 f"{self.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
