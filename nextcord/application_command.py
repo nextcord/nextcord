@@ -1325,8 +1325,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         annotation_choices: List[Union[str, int, float]] = []
         annotation_channel_types: List[ChannelType] = []
         annotation_converters: List[OptionConverter] = []
-        annotation_min_value: Optional[float] = MISSING
-        annotation_max_value: Optional[float] = MISSING
+        annotation_min_value: Optional[Union[float, int]] = MISSING
+        annotation_max_value: Optional[Union[float, int]] = MISSING
 
         if typehint_origin is Literal:
             # If they use the Literal typehint as their base. This currently should only support int, float, str, and
