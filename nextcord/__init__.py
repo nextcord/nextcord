@@ -14,7 +14,7 @@ __title__ = "nextcord"
 __author__ = "tag-epic & Rapptz"
 __license__ = "MIT"
 __copyright__ = "Copyright 2015-present Rapptz & tag-epic"
-__version__ = "2.1.0a"
+__version__ = "2.2.0a"
 
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
@@ -27,6 +27,7 @@ from .appinfo import *
 from .application_command import *
 from .asset import *
 from .audit_logs import *
+from .auto_moderation import *
 from .bans import *
 from .channel import *
 from .client import *
@@ -74,6 +75,6 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-version_info: VersionInfo = VersionInfo(major=2, minor=1, micro=0, releaselevel="alpha", serial=0)
+version_info: VersionInfo = VersionInfo(major=2, minor=2, micro=0, releaselevel="alpha", serial=0)
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

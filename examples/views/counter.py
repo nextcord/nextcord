@@ -21,13 +21,13 @@ class Counter(nextcord.ui.View):
         await interaction.response.edit_message(view=self)
 
 
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot()
 
 
-@bot.command()
-async def counter(ctx):
+@bot.slash_command()
+async def counter(interaction):
     """Starts a counter for pressing."""
-    await ctx.send("Press!", view=Counter())
+    await interaction.send("Press!", view=Counter())
 
 
 bot.run("token")

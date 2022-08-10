@@ -674,7 +674,7 @@ def is_owner() -> AC:
         if not hasattr(interaction.client, "is_owner"):
             raise ApplicationCheckForBotOnly()
 
-        if not await interaction.client.is_owner(interaction.user):  # type: ignore[handled above]
+        if not await interaction.client.is_owner(interaction.user):
             raise ApplicationNotOwner("You do not own this bot.")
         return True
 

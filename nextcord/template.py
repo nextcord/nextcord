@@ -24,17 +24,20 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from .enums import VoiceRegion
 from .guild import Guild
-from .utils import MISSING, _bytes_to_base64_data, parse_time
+from .utils import MISSING, _bytes_to_base64_data, _obj_to_base64_data, parse_time
 
 __all__ = ("Template",)
 
 if TYPE_CHECKING:
     import datetime
 
+    from .asset import Asset
+    from .file import File
+    from .message import Attachment
     from .state import ConnectionState
     from .types.template import Template as TemplatePayload
     from .user import User
@@ -169,13 +172,19 @@ class Template:
         )
 
     async def create_guild(
-        self, name: str, region: Optional[VoiceRegion] = None, icon: Any = None
+        self,
+        name: str,
+        region: Optional[VoiceRegion] = None,
+        icon: Optional[Union[bytes, Asset, Attachment, File]] = None,
     ) -> Guild:
         """|coro|
 
         Creates a :class:`.Guild` using the template.
 
         Bot accounts in more than 10 guilds are not allowed to create guilds.
+
+        .. versionchanged:: 2.1
+            The ``icon`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -184,9 +193,9 @@ class Template:
         region: :class:`.VoiceRegion`
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
-        icon: :class:`bytes`
-            The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
-            for more details on what is expected.
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the icon. See :meth:`.ClientUser.edit` for more details on what is expected.
 
         Raises
         ------
@@ -201,13 +210,14 @@ class Template:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is not None:
-            icon = _bytes_to_base64_data(icon)
+        icon_base64 = await _obj_to_base64_data(icon)
 
         region = region or VoiceRegion.us_west
         region_value = region.value
 
-        data = await self._state.http.create_from_template(self.code, name, region_value, icon)
+        data = await self._state.http.create_from_template(
+            self.code, name, region_value, icon_base64
+        )
         return Guild(data=data, state=self._state)
 
     async def sync(self) -> Template:

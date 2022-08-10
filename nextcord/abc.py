@@ -47,6 +47,7 @@ from .context_managers import Typing
 from .enums import ChannelType
 from .errors import ClientException, InvalidArgument
 from .file import File
+from .flags import ChannelFlags
 from .invite import Invite
 from .iterators import HistoryIterator
 from .mentions import AllowedMentions
@@ -256,6 +257,7 @@ class GuildChannel:
     type: ChannelType
     position: int
     category_id: Optional[int]
+    flags: ChannelFlags
     _state: ConnectionState
     _overwrites: List[_Overwrites]
 

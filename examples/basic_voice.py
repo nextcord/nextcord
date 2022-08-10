@@ -125,7 +125,11 @@ class Music(commands.Cog):
             ctx.voice_client.stop()
 
 
-bot = commands.Bot(command_prefix="$", description="Relatively simple music bot example")
+intents = nextcord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(
+    command_prefix="$", description="Relatively simple music bot example", intents=intents
+)
 
 
 bot.add_cog(Music(bot))

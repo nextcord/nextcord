@@ -72,7 +72,7 @@ class Bot(commands.Bot):
         print(f"Logged in as {self.user} (ID: {self.user.id})")
 
 
-bot = Bot(command_prefix="$")
+bot = Bot()
 
 
 @bot.slash_command(
