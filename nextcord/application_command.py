@@ -108,6 +108,7 @@ __all__ = (
     "message_command",
     "user_command",
     "Mentionable",
+    "Range",
 )
 
 _log = logging.getLogger(__name__)
