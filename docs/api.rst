@@ -1422,6 +1422,11 @@ of :class:`enum.Enum`.
         The system message denoting that a context menu command was executed.
 
         .. versionadded:: 2.0
+    .. attribute:: auto_moderation_action
+
+        The system message denoting that an auto moderation action was executed
+
+        .. versionadded:: 2.1
 
 .. class:: UserFlags
 
@@ -2549,7 +2554,7 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.1
 
-    .. attribute:: auto_moderation_rule_deleted
+    .. attribute:: auto_moderation_rule_delete
 
         An auto moderation rule was deleted.
 
@@ -4683,7 +4688,7 @@ Slash Commands
 Slash Options
 ~~~~~~~~~~~~~
 
-.. list-table:: Accepted Default Option Types
+.. list-table:: Accepted Default Option Types/Annotations
     :widths: 25 25 50
     :header-rows: 1
 
@@ -4711,6 +4716,30 @@ Slash Options
     * - :class:`abc.GuildChannel`
       - Channel
       - Includes all channel types + categories. Use :class:`SlashOption` to configure which channel types to allow.
+    * - :class:`CategoryChannel`
+      - Channel
+      - Restricts the accepted channel types to Guild Category channels.
+    * - :class:`DMChannel`
+      - Channel
+      - Restricts the accepted channel types to DM channels.
+    * - :class:`ForumChannel`
+      - Channel
+      - Restricts the accepted channel types to Forum Channels.
+    * - :class:`GroupChannel`
+      - Channel
+      - Restricts the accepted channel types to Group DM channels.
+    * - :class:`StageChannel`
+      - Channel
+      - Restricts the accepted channel types to Stage Voice channels.
+    * - :class:`TextChannel`
+      - Channel
+      - Restricts the accepted channel types to Text and News channels.
+    * - :class:`VoiceChannel`
+      - Channel
+      - Restricts the accepted channel types to Voice channels.
+    * - :class:`Thread`
+      - Channel
+      - Restricts the accepted "channel" types to News, Public, and Private threads.
     * - :class:`Role`
       - Role
       -
@@ -4723,6 +4752,24 @@ Slash Options
     * - :class:`Attachment`
       - Attachment
       -
+
+.. list-table:: Advanced Annotations
+    :widths: 25 75
+    :header-rows: 1
+
+    * - Typing Annotation
+      - Notes
+    * - :class:`Optional` [<type>]
+      - Makes the slash option not required with the type of the given <type>.
+    * - :class:`Literal` [<choice1>, <choice2>, ...]
+      - Makes the slash option into a choice of the given type. All choices have to be the same data type.
+    * - :class:`Union` [<type1>, <type2>, ...]
+      - Allows compatible annotations to be typehinted together. Channel types in a union will allow the slash option
+        to be any of them.
+    * - :class:`Annotated` [<type1>, <type2>, ..., <typeN>]
+      - Makes your IDE see <type1> as the expected type, but Nextcord will attempt to use <typeN> as the option type.
+        If <typeN> isn't a valid option type, Nextcord will work backwards towards <type2> until it finds a type that
+        can be used as a valid option type.
 
 .. attributetable:: SlashOption
 
