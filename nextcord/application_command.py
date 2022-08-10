@@ -1463,7 +1463,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         self.min_value = annotation_min_value if annotation_min_value is not MISSING else None
         if cmd_arg.min_value is not None:
             self.min_value = cmd_arg.min_value
-        
+
         self.max_value = annotation_max_value if annotation_max_value is not MISSING else None
         if cmd_arg.max_value is not None:
             self.max_value = cmd_arg.max_value
