@@ -29,10 +29,9 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypeVar, Union
 from .asset import Asset
 from .colour import Colour
 from .errors import InvalidArgument
-from .file import File
 from .mixins import Hashable
 from .permissions import Permissions
-from .utils import MISSING, _bytes_to_base64_data, _get_as_snowflake, snowflake_time
+from .utils import MISSING, _get_as_snowflake, _obj_to_base64_data, snowflake_time
 
 __all__ = (
     "RoleTags",
@@ -42,8 +41,10 @@ __all__ = (
 if TYPE_CHECKING:
     import datetime
 
+    from .file import File
     from .guild import Guild
     from .member import Member
+    from .message import Attachment
     from .state import ConnectionState
     from .types.guild import RolePositionUpdate
     from .types.role import Role as RolePayload, RoleTags as RoleTagPayload
@@ -377,7 +378,7 @@ class Role(Hashable):
         mentionable: bool = MISSING,
         position: int = MISSING,
         reason: Optional[str] = MISSING,
-        icon: Optional[Union[str, bytes, File]] = MISSING,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = MISSING,
     ) -> Optional[Role]:
         """|coro|
 
@@ -394,6 +395,9 @@ class Role(Hashable):
         .. versionchanged:: 2.0
             Edits are no longer in-place, the newly edited role is returned instead.
 
+        .. versionchanged:: 2.1
+            The ``icon`` parameter now accepts :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         -----------
         name: :class:`str`
@@ -409,7 +413,7 @@ class Role(Hashable):
         position: :class:`int`
             The new role's position. This must be below your top role's
             position or it will fail.
-        icon: Union[:class:`str`, :class:`bytes`, :class:`File`]
+        icon: Optional[Union[:class:`str`, :class:`bytes`, :class:`File`, :class:`Asset`, :class:`Attachment`]]
             The role's icon image
         reason: Optional[:class:`str`]
             The reason for editing this role. Shows up on the audit log.
@@ -455,15 +459,10 @@ class Role(Hashable):
             payload["mentionable"] = mentionable
 
         if icon is not MISSING:
-            if icon is None:
-                payload["icon"] = icon
-            elif isinstance(icon, str):
+            if isinstance(icon, str):
                 payload["unicode_emoji"] = icon
-                payload["icon"] = None
-            elif isinstance(icon, File):
-                payload["icon"] = _bytes_to_base64_data(icon.fp.read())
             else:
-                payload["icon"] = _bytes_to_base64_data(icon)
+                payload["icon"] = await _obj_to_base64_data(icon)
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         return Role(guild=self.guild, data=data, state=self._state)

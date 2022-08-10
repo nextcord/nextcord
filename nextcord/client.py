@@ -93,12 +93,14 @@ from .widget import Widget
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
+    from .asset import Asset
     from .channel import DMChannel
     from .cog import Cog
     from .enums import Locale
+    from .file import File
     from .flags import MemberCacheFlags
     from .member import Member
-    from .message import Message
+    from .message import Attachment, Message
     from .permissions import Permissions
     from .scheduled_events import ScheduledEvent
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
@@ -1460,7 +1462,7 @@ class Client:
         *,
         name: str,
         region: Union[VoiceRegion, str] = VoiceRegion.us_west,
-        icon: bytes = MISSING,
+        icon: Optional[Union[bytes, Asset, Attachment, File]] = None,
         code: str = MISSING,
     ) -> Guild:
         """|coro|
@@ -1469,6 +1471,9 @@ class Client:
 
         Bot accounts in more than 10 guilds are not allowed to create guilds.
 
+        .. versionchanged:: 2.1
+            The ``icon`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ----------
         name: :class:`str`
@@ -1476,9 +1481,9 @@ class Client:
         region: :class:`.VoiceRegion`
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
-        icon: Optional[:class:`bytes`]
-            The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
-            for more details on what is expected.
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the icon. See :meth:`.ClientUser.edit` for more details on what is expected.
         code: :class:`str`
             The code for a template to create the guild with.
 
@@ -1497,17 +1502,12 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is not MISSING:
-            icon_base64 = utils._bytes_to_base64_data(icon)
-        else:
-            icon_base64 = None
-
-        region_value = str(region)
+        icon_base64 = await utils._obj_to_base64_data(icon)
 
         if code:
-            data = await self.http.create_from_template(code, name, region_value, icon_base64)
+            data = await self.http.create_from_template(code, name, str(region), icon_base64)
         else:
-            data = await self.http.create_guild(name, region_value, icon_base64)
+            data = await self.http.create_guild(name, str(region), icon_base64)
         return Guild(data=data, state=self._connection)
 
     async def fetch_stage_instance(self, channel_id: int, /) -> StageInstance:

@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 from . import utils
 from .channel import ChannelType, PartialMessageable
@@ -58,6 +58,7 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import (
         CategoryChannel,
+        ForumChannel,
         PartialMessageable,
         StageChannel,
         TextChannel,
@@ -73,10 +74,18 @@ if TYPE_CHECKING:
     from .ui.view import View
 
     InteractionChannel = Union[
-        VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
+        VoiceChannel,
+        StageChannel,
+        TextChannel,
+        CategoryChannel,
+        Thread,
+        PartialMessageable,
+        ForumChannel,
     ]
 
 MISSING: Any = utils.MISSING
+
+ClientT = TypeVar("ClientT", bound="Client")
 
 
 class InteractionAttached(dict):
@@ -111,13 +120,30 @@ class InteractionAttached(dict):
         return f"<InteractionAttached {super().__repr__()}>"
 
 
-class Interaction:
+class Interaction(Hashable, Generic[ClientT]):
     """Represents a Discord interaction.
 
     An interaction happens when a user does an action that needs to
     be notified. Current examples are slash commands and components.
 
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interactions are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the interaction's hash.
+
     .. versionadded:: 2.0
+
+    .. versionchanged:: 2.1
+        :class:`Interaction` is now hashable.
 
     Attributes
     -----------
@@ -200,7 +226,10 @@ class Interaction:
 
         self.message: Optional[Message]
         try:
-            self.message = Message(state=self._state, channel=self.channel, data=data["message"])  # type: ignore
+            message = data["message"]
+            self.message = self._state._get_message(int(message["id"])) or Message(
+                state=self._state, channel=self.channel, data=message  # type: ignore
+            )
         except KeyError:
             self.message = None
 
@@ -216,18 +245,22 @@ class Interaction:
             except KeyError:
                 pass
             else:
-                self.user = Member(state=self._state, guild=guild, data=member)  # type: ignore
+                cached_member = self.guild and self.guild.get_member(int(member["user"]["id"]))  # type: ignore # user key should be present here
+                self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore # user key should be present here
                 self._permissions = int(member.get("permissions", 0))
         else:
             try:
-                self.user = User(state=self._state, data=data["user"])
+                user = data["user"]
+                self.user = self._state.get_user(int(user["id"])) or User(
+                    state=self._state, data=user
+                )
             except KeyError:
                 pass
 
     @property
-    def client(self) -> Client:
+    def client(self) -> ClientT:
         """:class:`Client`: The client that handled the interaction."""
-        return self._state._get_client()
+        return self._state._get_client()  # type: ignore
 
     @property
     def guild(self) -> Optional[Guild]:
@@ -1183,7 +1216,7 @@ class _InteractionMessageMixin:
         await self._state._interaction.delete_original_message(delay=delay)
 
 
-class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
+class PartialInteractionMessage(_InteractionMessageMixin):
     """Represents the original interaction response message when only the
     application state and interaction token are available.
 
@@ -1195,7 +1228,28 @@ class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
     The :meth:`~PartialInteractionMessage.fetch` method can be used to
     retrieve the full :class:`InteractionMessage` object.
 
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two partial interaction messages are equal.
+
+        .. describe:: x != y
+
+            Checks if two partial interaction messages are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the partial interaction message's hash.
+
     .. versionadded:: 2.0
+
+    .. versionchanged:: 2.1
+        :class:`PartialInteractionMessage` is now hashable by :attr:`Interaction.id`.
+
+    .. note::
+        The hash of a :class:`PartialInteractionMessage` is the same as the hash of the
+        :class:`Interaction` that it is associated with but not that of the full :class:`InteractionMessage`.
     """
 
     def __init__(self, state: _InteractionMessageState):
@@ -1247,6 +1301,20 @@ class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
 
     def __repr__(self):
         return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, PartialInteractionMessage)
+            and self._state._interaction == other._state._interaction
+        )
+
+    def __ne__(self, other: object) -> bool:
+        if isinstance(other, PartialInteractionMessage):
+            return self._state._interaction != other._state._interaction
+        return True
+
+    def __hash__(self) -> int:
+        return hash(self._state._interaction)
 
 
 class InteractionMessage(_InteractionMessageMixin, Message):
