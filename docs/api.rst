@@ -4774,6 +4774,10 @@ Slash Options
       - Makes a range of values set in :attr:`SlashOption.min_value` and :attr:`SlashOption.max_value`.
         If ``type1`` is not set or is an ellipsis, ``min_value`` is ``None``.
         If ``type2`` is an ellipsis (``...``), ``max_value`` is ``None``.
+    * - :class:`Length` [[type1 | ``...``], <type2 | ``...``>]
+      - Makes a range of string length set in :attr:`SlashOption.min_length` and :attr:`SlashOption.max_length`.
+        If ``type1`` is not set or is an ellipsis, ``min_length`` is ``None``.
+        If ``type2`` is an ellipsis (``...``), ``max_length`` is ``None``.
 
 .. attributetable:: SlashOption
 

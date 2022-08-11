@@ -3330,7 +3330,7 @@ class Range(int):
 
             Creates a range from ``x`` to ``y``.
 
-        .. describe:: Range[x]
+        .. describe:: Range[x] | Range[..., x]
 
             Create a range up to ``x``.
 
@@ -3399,7 +3399,7 @@ class Range(int):
             min = None
             max = value
 
-        if isinstance(min, EllipsisType):
+        if min is None or isinstance(min, EllipsisType):
             Inner.min = None
         elif isinstance(min, (int, float)):
             Inner.min = min
@@ -3412,6 +3412,80 @@ class Range(int):
             Inner.max = max
         else:
             raise TypeError("Range max must be int or float.")
+
+        if Inner.min is None and Inner.max is None:
+            raise TypeError("At least one of min or max must be set.")
+
+        return Inner
+
+
+class Length(int):
+    """An annotation helper for defining slash command `min_length` and `max_length` parameters.
+
+    .. versionadded:: 2.2
+
+    .. container:: operations
+
+        .. describe:: Length[x, y]
+
+            Creates a range of string length from ``x`` to ``y``.
+
+        .. describe:: Length[x] | Length[..., x]
+
+            Create a range of string length up to ``x``.
+
+        .. describe:: Length[x, ...]
+
+            Create a range of string length from ``x``.
+    """
+
+    min: ClassVar[Optional[int]]
+    max: ClassVar[Optional[int]]
+
+    def __class_getitem__(
+        cls,
+        value: Union[
+            int,
+            Tuple[int, int],
+            Tuple[int, EllipsisType],
+            Tuple[EllipsisType, int],
+        ],
+    ) -> Type[int]:
+        class Inner(Length, OptionConverter):
+            def __init__(self):
+                super().__init__(option_type=type(self.min or self.max))
+
+            def modify(self, option: SlashCommandOption):
+                if self.min:
+                    if option.min_length is None:
+                        option.min_length = self.min
+                if self.max:
+                    if option.max_length is None:
+                        option.max_length = self.max
+
+        if isinstance(value, tuple):
+            if len(value) != 2:
+                raise ValueError("Length can only take 1-2 arguments")
+
+            min = value[0]
+            max = value[1]
+        else:
+            min = None
+            max = value
+
+        if isinstance(min, EllipsisType):
+            Inner.min = None
+        elif isinstance(min, int):
+            Inner.min = min
+        else:
+            raise TypeError("Length min must be int.")
+
+        if isinstance(max, EllipsisType):
+            Inner.max = None
+        elif isinstance(max, int):
+            Inner.max = max
+        else:
+            raise TypeError("Length max must be int.")
 
         if Inner.min is None and Inner.max is None:
             raise TypeError("At least one of min or max must be set.")
