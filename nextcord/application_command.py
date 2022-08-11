@@ -3344,20 +3344,37 @@ class Range(int):
 
     @overload
     def __class_getitem__(
-        cls, value: Union[int, Tuple[int, int], Tuple[int, EllipsisType]]
+        cls,
+        value: Union[
+            int,
+            Tuple[int, int],
+            Tuple[int, EllipsisType],
+            Tuple[EllipsisType, int],
+        ],
     ) -> Type[int]:
         ...
 
     @overload
     def __class_getitem__(
-        cls, value: Union[float, Tuple[float, float], Tuple[float, EllipsisType]]
+        cls,
+        value: Union[
+            float,
+            Tuple[float, float],
+            Tuple[float, EllipsisType],
+            Tuple[EllipsisType, float],
+        ],
     ) -> Type[float]:
         ...
 
     def __class_getitem__(
         cls,
         value: Union[
-            int, float, Tuple[int, int], Tuple[float, float], Tuple[Union[int, float], EllipsisType]
+            int,
+            float,
+            Tuple[int, int],
+            Tuple[float, float],
+            Tuple[Union[int, float], EllipsisType],
+            Tuple[EllipsisType, Union[int, float]],
         ],
     ) -> Type[Union[int, float]]:
         class Inner(Range, OptionConverter):

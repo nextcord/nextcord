@@ -4770,9 +4770,9 @@ Slash Options
       - Makes your IDE see <type1> as the expected type, but Nextcord will attempt to use <typeN> as the option type.
         If <typeN> isn't a valid option type, Nextcord will work backwards towards <type2> until it finds a type that
         can be used as a valid option type.
-    * - :class:`Range` [[type1], <type2 | ``...``>]
+    * - :class:`Range` [[type1 | ``...``], <type2 | ``...``>]
       - Makes a range of values set in :attr:`SlashOption.min_value` and :attr:`SlashOption.max_value`.
-        If ``type1`` is not set, ``min_value`` is ``None``.
+        If ``type1`` is not set or is an ellipsis, ``min_value`` is ``None``.
         If ``type2`` is an ellipsis (``...``), ``max_value`` is ``None``.
 
 .. attributetable:: SlashOption
