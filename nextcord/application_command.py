@@ -738,7 +738,8 @@ class CallbackMixin:
             #  might be able to do something here.
             if option_class:
                 skip_counter = 1
-                typehints = typing.get_type_hints(self.callback, include_extras=True)
+                # TODO: use typing.get_type_hints when 3.9 is standard
+                typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
                 # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
                 #  decorator going into effect before the class is instantiated, thus being a function at the time.
                 #  Try to look into fixing that in the future?
