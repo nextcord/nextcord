@@ -4795,6 +4795,8 @@ Slash Options
 
 .. autoclass:: Range()
 
+.. autoclass:: Length()
+
 User Commands
 ~~~~~~~~~~~~~
 
