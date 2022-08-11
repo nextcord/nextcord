@@ -948,7 +948,7 @@ class ConnectionState:
                 else:
                     raise ValueError(
                         (
-                            f".get_application_command_from_signature with signature: {response_signature}) "
+                            f".get_application_command_from_signature with signature: {response_signature} "
                             f"returned {type(app_cmd)} but BaseApplicationCommand was expected."
                         )
                     )
