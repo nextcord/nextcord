@@ -737,7 +737,7 @@ class CallbackMixin:
             #  might be able to do something here.
             if option_class:
                 skip_counter = 1
-                typehints = typing.get_type_hints(self.callback)
+                typehints = typing.get_type_hints(self.callback, include_extras=True)
                 # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
                 #  decorator going into effect before the class is instantiated, thus being a function at the time.
                 #  Try to look into fixing that in the future?
@@ -1428,26 +1428,26 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             if found_channel_types:
                 annotation_channel_types = found_channel_types
 
-            if issubclass(parameter.annotation, Range):
-                if parameter.annotation.min is not None and not isinstance(
-                    parameter.annotation.min, (int, float)
-                ):
-                    raise TypeError("Range min must be int or float.")
-                if parameter.annotation.max is not None and not isinstance(
-                    parameter.annotation.max, (int, float)
-                ):
-                    raise TypeError("Range max must be int or float.")
+            # if isinstance(parameter.annotation, type) and issubclass(parameter.annotation, Range):
+            #     if parameter.annotation.min is not None and not isinstance(
+            #         parameter.annotation.min, (int, float)
+            #     ):
+            #         raise TypeError("Range min must be int or float.")
+            #     if parameter.annotation.max is not None and not isinstance(
+            #         parameter.annotation.max, (int, float)
+            #     ):
+            #         raise TypeError("Range max must be int or float.")
 
-                if parameter.annotation.min is None:
-                    if parameter.annotation.max is None:
-                        raise TypeError("At least one of min or max must be set.")
+            #     if parameter.annotation.min is None:
+            #         if parameter.annotation.max is None:
+            #             raise TypeError("At least one of min or max must be set.")
 
-                    annotation_type = self.option_types[type(parameter.annotation.max)]
-                else:
-                    annotation_type = self.option_types[type(parameter.annotation.min)]
+            #         annotation_type = self.option_types[type(parameter.annotation.max)]
+            #     else:
+            #         annotation_type = self.option_types[type(parameter.annotation.min)]
 
-                annotation_min_value = parameter.annotation.min
-                annotation_max_value = parameter.annotation.max
+            #     annotation_min_value = parameter.annotation.min
+            #     annotation_max_value = parameter.annotation.max
         else:
             raise ValueError(
                 f"{self.error_name} Invalid annotation origin: {typehint_origin} \n"
@@ -3256,8 +3256,8 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
         located_annotation = MISSING
         # arg_list = typing.get_args(given_annotation)  # TODO: Once Python 3.10 is standard, use this
         arg_list = typing_extensions.get_args(given_annotation)
-        for arg in arg_list[1:]:
-            if arg in resolve_list:
+        for arg in arg_list[1::-1]:
+            if arg in resolve_list or isinstance(arg, type) and issubclass(arg, OptionConverter):
                 located_annotation = arg
                 break
 
@@ -3360,8 +3360,17 @@ class Range(int):
             int, float, Tuple[int, int], Tuple[float, float], Tuple[Union[int, float], EllipsisType]
         ],
     ) -> Type[Union[int, float]]:
-        class Inner(Range):
-            ...
+        class Inner(Range, OptionConverter):
+            def __init__(self):
+                super().__init__(option_type=type(self.min or self.max))
+
+            def modify(self, option: SlashCommandOption):
+                if self.min:
+                    if option.min_value is None:
+                        option.min_value = self.min
+                if self.max:
+                    if option.max_value is None:
+                        option.max_value = self.max
 
         if isinstance(value, tuple):
             if len(value) != 2:
@@ -3375,12 +3384,19 @@ class Range(int):
 
         if isinstance(min, EllipsisType):
             Inner.min = None
-        else:
+        elif isinstance(min, (int, float)):
             Inner.min = min
+        else:
+            raise TypeError("Range min must be int or float.")
 
         if isinstance(max, EllipsisType):
             Inner.max = None
-        else:
+        elif isinstance(max, (int, float)):
             Inner.max = max
+        else:
+            raise TypeError("Range max must be int or float.")
+
+        if Inner.min is None and Inner.max is None:
+            raise TypeError("At least one of min or max must be set.")
 
         return Inner
