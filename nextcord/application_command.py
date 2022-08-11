@@ -110,6 +110,7 @@ __all__ = (
     "user_command",
     "Mentionable",
     "Range",
+    "Length",
 )
 
 _log = logging.getLogger(__name__)
@@ -1427,27 +1428,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             annotation_type = found_type
             if found_channel_types:
                 annotation_channel_types = found_channel_types
-
-            # if isinstance(parameter.annotation, type) and issubclass(parameter.annotation, Range):
-            #     if parameter.annotation.min is not None and not isinstance(
-            #         parameter.annotation.min, (int, float)
-            #     ):
-            #         raise TypeError("Range min must be int or float.")
-            #     if parameter.annotation.max is not None and not isinstance(
-            #         parameter.annotation.max, (int, float)
-            #     ):
-            #         raise TypeError("Range max must be int or float.")
-
-            #     if parameter.annotation.min is None:
-            #         if parameter.annotation.max is None:
-            #             raise TypeError("At least one of min or max must be set.")
-
-            #         annotation_type = self.option_types[type(parameter.annotation.max)]
-            #     else:
-            #         annotation_type = self.option_types[type(parameter.annotation.min)]
-
-            #     annotation_min_value = parameter.annotation.min
-            #     annotation_max_value = parameter.annotation.max
         else:
             raise ValueError(
                 f"{self.error_name} Invalid annotation origin: {typehint_origin} \n"
@@ -1560,11 +1540,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
-        elif issubclass(param_typing, Range):
-            if param_typing.max is not None:
-                return self.option_types[type(param_typing.max)]
-            else:
-                return self.option_types[type(param_typing.min)]
         else:
             raise ValueError(
                 f"{self.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
@@ -3453,7 +3428,7 @@ class Length(int):
     ) -> Type[int]:
         class Inner(Length, OptionConverter):
             def __init__(self):
-                super().__init__(option_type=type(self.min or self.max))
+                super().__init__(option_type=str)
 
             def modify(self, option: SlashCommandOption):
                 if self.min:
