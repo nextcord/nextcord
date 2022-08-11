@@ -1364,27 +1364,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             annotation_type = found_type
             annotation_choices = found_choices
-        # Range needs to be above origin in (None) as there is no origin.
-        elif issubclass(parameter.annotation, Range):
-            if parameter.annotation.min is not None and not isinstance(
-                parameter.annotation.min, (int, float)
-            ):
-                raise TypeError("Range min must be int or float.")
-            if parameter.annotation.max is not None and not isinstance(
-                parameter.annotation.max, (int, float)
-            ):
-                raise TypeError("Range max must be int or float.")
-
-            if parameter.annotation.min is None:
-                if parameter.annotation.max is None:
-                    raise TypeError("At least one of min or max must be set.")
-
-                annotation_type = self.option_types[type(parameter.annotation.max)]
-            else:
-                annotation_type = self.option_types[type(parameter.annotation.min)]
-
-            annotation_min_value = parameter.annotation.min
-            annotation_max_value = parameter.annotation.max
         elif typehint_origin in (Union, Optional, Annotated, None):
             # If the typehint base is Union, Optional, or not any grouping...
             found_type = MISSING
@@ -1448,6 +1427,27 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             annotation_type = found_type
             if found_channel_types:
                 annotation_channel_types = found_channel_types
+
+            if issubclass(parameter.annotation, Range):
+                if parameter.annotation.min is not None and not isinstance(
+                    parameter.annotation.min, (int, float)
+                ):
+                    raise TypeError("Range min must be int or float.")
+                if parameter.annotation.max is not None and not isinstance(
+                    parameter.annotation.max, (int, float)
+                ):
+                    raise TypeError("Range max must be int or float.")
+
+                if parameter.annotation.min is None:
+                    if parameter.annotation.max is None:
+                        raise TypeError("At least one of min or max must be set.")
+
+                    annotation_type = self.option_types[type(parameter.annotation.max)]
+                else:
+                    annotation_type = self.option_types[type(parameter.annotation.min)]
+
+                annotation_min_value = parameter.annotation.min
+                annotation_max_value = parameter.annotation.max
         else:
             raise ValueError(
                 f"{self.error_name} Invalid annotation origin: {typehint_origin} \n"
