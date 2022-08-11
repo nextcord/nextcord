@@ -110,7 +110,7 @@ __all__ = (
     "user_command",
     "Mentionable",
     "Range",
-    "Length",
+    "String",
 )
 
 _log = logging.getLogger(__name__)
@@ -3395,22 +3395,22 @@ class Range(int):
         return Inner
 
 
-class Length(int):
+class String(int):
     """An annotation helper for defining slash command `min_length` and `max_length` parameters.
 
     .. versionadded:: 2.2
 
     .. container:: operations
 
-        .. describe:: Length[x, y]
+        .. describe:: String[x, y]
 
             Creates a range of string length from ``x`` to ``y``.
 
-        .. describe:: Length[x] | Length[..., x]
+        .. describe:: String[x] | String[..., x]
 
             Create a range of string length up to ``x``.
 
-        .. describe:: Length[x, ...]
+        .. describe:: String[x, ...]
 
             Create a range of string length from ``x``.
     """
@@ -3427,7 +3427,7 @@ class Length(int):
             Tuple[EllipsisType, int],
         ],
     ) -> Type[int]:
-        class Inner(Length, OptionConverter):
+        class Inner(String, OptionConverter):
             def __init__(self):
                 super().__init__(option_type=str)
 
@@ -3441,7 +3441,7 @@ class Length(int):
 
         if isinstance(value, tuple):
             if len(value) != 2:
-                raise ValueError("Length can only take 1-2 arguments")
+                raise ValueError("String can only take 1-2 arguments")
 
             min = value[0]
             max = value[1]
@@ -3454,14 +3454,14 @@ class Length(int):
         elif isinstance(min, int):
             Inner.min = min
         else:
-            raise TypeError("Length min must be int.")
+            raise TypeError("String min must be int.")
 
         if isinstance(max, EllipsisType):
             Inner.max = None
         elif isinstance(max, int):
             Inner.max = max
         else:
-            raise TypeError("Length max must be int.")
+            raise TypeError("String max must be int.")
 
         if Inner.min is None and Inner.max is None:
             raise TypeError("At least one of min or max must be set.")
