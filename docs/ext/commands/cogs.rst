@@ -64,7 +64,7 @@ Meta Options
 
 Meta options are exactly like what they are in :class:`nextcord.Cog`, however there is an additional option.
 
-If you would like to see what this extra option is, see the documentation of :class:`.CogMeta`.
+For more information, see the documentation of :class:`.CogMeta`.
 
 Inspection
 ------------
