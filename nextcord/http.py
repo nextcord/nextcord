@@ -2347,32 +2347,29 @@ class HTTPClient:
     def application_info(self) -> Response[appinfo.AppInfo]:
         return self.request(Route("GET", "/oauth2/applications/@me"))
 
+    @staticmethod
+    def format_websocket_url(url: str, encoding: str = "json", zlib: bool = True) -> str:
+        if zlib:
+            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
+        else:
+            value = "{url}?encoding={encoding}&v={version}"
+        return value.format(url=url, encoding=encoding, version=_API_VERSION)
+
     async def get_gateway(self, *, encoding: str = "json", zlib: bool = True) -> str:
         try:
             data = await self.request(Route("GET", "/gateway"))
         except HTTPException as exc:
             raise GatewayNotFound() from exc
-        if zlib:
-            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
-        else:
-            value = "{url}?encoding={encoding}&v={version}"
-        return value.format(url=data["url"], encoding=encoding, version=_API_VERSION)
 
-    async def get_bot_gateway(
-        self, *, encoding: str = "json", zlib: bool = True
-    ) -> Tuple[int, str]:
+        return self.format_websocket_url(data["url"], encoding, zlib)
+
+    async def get_bot_gateway(self, *, encoding: str = "json", zlib: bool = True) -> Tuple[int, str]:
         try:
             data = await self.request(Route("GET", "/gateway/bot"))
         except HTTPException as exc:
             raise GatewayNotFound() from exc
 
-        if zlib:
-            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
-        else:
-            value = "{url}?encoding={encoding}&v={version}"
-        return data["shards"], value.format(
-            url=data["url"], encoding=encoding, version=_API_VERSION
-        )
+        return data["shards"], self.format_websocket_url(data["url"], encoding, zlib)
 
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
         return self.request(Route("GET", "/users/{user_id}", user_id=user_id))

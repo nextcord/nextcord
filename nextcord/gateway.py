@@ -317,6 +317,7 @@ class DiscordWebSocket:
 
         # ws related stuff
         self.session_id = None
+        self.resume_url = None
         self.sequence = None
         self._zlib = zlib.decompressobj()
         self._buffer = bytearray()
@@ -347,12 +348,17 @@ class DiscordWebSocket:
         session=None,
         sequence=None,
         resume=False,
+        format_gateway=False,
     ):
         """Creates a main websocket for Discord from a :class:`Client`.
 
         This is for internal use only.
         """
-        gateway = gateway or await client.http.get_gateway()
+        if not gateway:
+            gateway = await client.http.get_gateway()
+        elif format_gateway:
+            gateway = client.http.format_websocket_url(gateway)
+
         socket = await client.http.ws_connect(gateway)
         ws = cls(socket, loop=client.loop)
 
@@ -534,13 +540,15 @@ class DiscordWebSocket:
             self._trace = trace = data.get("_trace", [])
             self.sequence = msg["s"]
             self.session_id = data["session_id"]
+            self.resume_url = data["resume_gateway_url"]
             # pass back shard ID to ready handler
             data["__shard_id__"] = self.shard_id
             _log.info(
-                "Shard ID %s has connected to Gateway: %s (Session ID: %s).",
+                "Shard ID %s has connected to Gateway: %s (Session ID: %s). Reconnect specified as %s",
                 self.shard_id,
                 ", ".join(trace),
                 self.session_id,
+                self.resume_url,
             )
 
         elif event == "RESUMED":
