@@ -1610,7 +1610,7 @@ class Guild(Hashable):
             splash. This is only available to guilds that contain ``INVITE_SPLASH`` in :attr:`Guild.features`.
         discovery_splash: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
-             representing the discovery splash. Only PNG/JPEG supported. Could be ``None`` to denote removing the
+            representing the discovery splash. Only PNG/JPEG supported. Could be ``None`` to denote removing the
             splash. This is only available to guilds that contain ``DISCOVERABLE`` in :attr:`Guild.features`.
         community: :class:`bool`
             Whether the guild should be a Community guild. If set to ``True``\, both ``rules_channel``
