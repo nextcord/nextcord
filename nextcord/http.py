@@ -2363,7 +2363,9 @@ class HTTPClient:
 
         return self.format_websocket_url(data["url"], encoding, zlib)
 
-    async def get_bot_gateway(self, *, encoding: str = "json", zlib: bool = True) -> Tuple[int, str]:
+    async def get_bot_gateway(
+        self, *, encoding: str = "json", zlib: bool = True
+    ) -> Tuple[int, str]:
         try:
             data = await self.request(Route("GET", "/gateway/bot"))
         except HTTPException as exc:
