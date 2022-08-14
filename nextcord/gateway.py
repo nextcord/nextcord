@@ -544,7 +544,7 @@ class DiscordWebSocket:
             # pass back shard ID to ready handler
             data["__shard_id__"] = self.shard_id
             _log.info(
-                "Shard ID %s has connected to Gateway: %s (Session ID: %s). Reconnect specified as %s",
+                "Shard ID %s has connected to Gateway: %s (Session ID: %s). Resume URL specified as %s",
                 self.shard_id,
                 ", ".join(trace),
                 self.session_id,
