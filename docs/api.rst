@@ -4836,6 +4836,9 @@ Cogs
 .. autoclass:: Cog
     :members:
 
+.. autoclass:: ClientCog
+    :members:
+
 Exceptions
 ------------
 
