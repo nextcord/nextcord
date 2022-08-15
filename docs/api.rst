@@ -4710,6 +4710,9 @@ Slash Options
     * - :class:`int`
       - Integer
       - Any integer between -2^53 and 2^53
+    * - :class:`float`
+      - Number
+      - Any double between -2^53 and 2^53
     * - :class:`bool`
       - Boolean
       -
@@ -4752,9 +4755,6 @@ Slash Options
     * - :class:`Mentionable`
       - Mentionable
       - Includes Users and Roles.
-    * - :class:`float`
-      - Number
-      - Any double between -2^53 and 2^53
     * - :class:`Attachment`
       - Attachment
       -
