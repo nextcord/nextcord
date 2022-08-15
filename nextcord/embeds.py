@@ -26,22 +26,10 @@ from __future__ import annotations
 
 import datetime
 import warnings
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Protocol,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, Type, TypeVar, Union
 
 from . import utils
 from .colour import Colour
-
 
 __all__ = ("Embed",)
 
