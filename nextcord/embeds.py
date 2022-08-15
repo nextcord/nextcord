@@ -25,12 +25,12 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import datetime
+import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
     List,
-    Literal,
     Mapping,
     Optional,
     Protocol,
@@ -42,10 +42,11 @@ from typing import (
 from . import utils
 from .colour import Colour
 
+
 __all__ = ("Embed",)
 
 # Backwards compatibility
-EmptyEmbed: Literal[None] = None
+EmptyEmbed = None
 
 
 class EmbedProxy:
@@ -170,9 +171,6 @@ class Embed:
         "description",
     )
 
-    # backwards compatibility
-    Empty = EmptyEmbed
-
     def __init__(
         self,
         *,
@@ -202,6 +200,16 @@ class Embed:
 
         if timestamp:
             self.timestamp = timestamp
+
+    # backwards compatibility
+    @property
+    def Empty(self) -> None:
+        warnings.warn(
+            "Empty is deprecated and will be removed in a future version. Use None instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return None
 
     @classmethod
     def from_dict(cls: Type[E], data: Mapping[str, Any]) -> E:
