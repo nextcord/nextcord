@@ -224,7 +224,7 @@ class Embed:
 
         # fill in the basic fields
 
-        self.title = data.get("title", None)
+        self.title = data.get("title")
         self.type = data.get("type", None)
         self.description = data.get("description", None)
         self.url = data.get("url", None)
@@ -554,7 +554,7 @@ class Embed:
 
     @property
     def fields(self) -> List[_EmbedFieldProxy]:
-        """List[Union[``EmbedProxy``, ``None``]]: Returns a :class:`list` of ``EmbedProxy`` denoting the field contents.
+        """List[Optional[``EmbedProxy``]]: Returns a :class:`list` of ``EmbedProxy`` denoting the field contents.
 
         See :meth:`add_field` for possible values you can access.
 
