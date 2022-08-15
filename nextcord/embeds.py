@@ -233,9 +233,9 @@ class Embed:
         # fill in the basic fields
 
         self.title = data.get("title")
-        self.type = data.get("type", None)
-        self.description = data.get("description", None)
-        self.url = data.get("url", None)
+        self.type = data.get("type")
+        self.description = data.get("description")
+        self.url = data.get("url")
 
         if self.title is not None:
             self.title = str(self.title)
