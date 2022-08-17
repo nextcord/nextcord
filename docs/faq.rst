@@ -316,6 +316,12 @@ display separately, but instead in the embed's thumbnail, image, footer or autho
 
 To do so, create a file object and pass it as a ``file`` kwarg.
 
+This is supported on the following methods:
+
+- :meth:`Embed.set_image`
+- :meth:`Embed.set_author`
+- :meth:`Embed.set_footer`
+- :meth:`Embed.set_thumbnail`
 
 Quick example: ::
 

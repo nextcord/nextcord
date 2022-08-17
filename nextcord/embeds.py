@@ -397,9 +397,13 @@ class Embed:
         if icon_url is not EmptyEmbed:
             self._footer["icon_url"] = str(icon_url)
 
-        if isinstance(icon_file, File):
+        elif isinstance(icon_file, File):
             self._local_files["footer"] = icon_file
             self._footer["icon_url"] = f"attachment://{icon_file.filename}"
+
+        else:
+            self._footer.pop("icon_url", None)
+            self._local_files.pop("footer", None)
 
         return self
 
@@ -515,8 +519,12 @@ class Embed:
             self._local_files["author"] = icon_file
             self._author["icon_url"] = f"attachment://{icon_file.filename}"
 
-        if icon_url is not EmptyEmbed:
+        elif icon_url is not EmptyEmbed:
             self._author["icon_url"] = str(icon_url)
+
+        else:
+            self._author.pop("icon_url", None)
+            self._local_files.pop("author", None)
 
         return self
 
