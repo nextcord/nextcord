@@ -53,7 +53,7 @@ async def choose_colour_command(
         name="colour",  # name for the argument "colour" by default in English
         name_localizations={
             Locale.en_US: "color",  # localization for name of the argument "colour" in US English
-            Locale.de: "farbe",  # localization for name of the argument "colour" in German (Deutschen)
+            Locale.de: "farbe",  # localization for name of the argument "colour" in German (Deutsch)
             Locale.fr: "couleur",  # localization for name of the argument "colour" in French (Français)
             Locale.es_ES: "color",  # localization for name of the argument "colour" in Spanish (Español)
         },
