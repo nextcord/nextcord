@@ -54,10 +54,10 @@ async def choose_colour_command(
     colour: str = SlashOption(
         name="colour",              # name for the argument "colour" by default in English
         name_localizations={
-            Locale.en_US : "color", # localization for name of the argument "colour" in US English
-            Locale.de : "farbe",    # localization for name of the argument "colour" in German (Deutschen)
-            Locale.fr : "couleur",  # localization for name of the argument "colour" in French (Français)
-            Locale.es_ES: "color"   # localization for name of the argument "colour" in Spanish (Español)
+            Locale.en_US : "color", # localization for the name of the argument "colour" in US English
+            Locale.de : "farbe",    # localization for the name of the argument "colour" in German (Deutsch)
+            Locale.fr : "couleur",  # localization for the name of the argument "colour" in French (Français)
+            Locale.es_ES: "color"   # localization for the name of the argument "colour" in Spanish (Español)
         },
         description="Choose the colour",         # description of the argument by default in English
         description_localizations={
