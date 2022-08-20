@@ -1207,7 +1207,7 @@ class BotBase(GroupMixin):
             submodules = [
                 (f"{name}.{submodule[:-3]}" if submodule.endswith(".py") else f"{name}.{submodule}")
                 for submodule in os.listdir(submodule_path)
-                if not submodule.startswith("_")
+                if not submodule.startswith("_") and os.path.isfile(os.path.join(submodule_path, submodule))
             ]
             if ignore is not None:
                 submodules = [s for s in submodules if s not in ignore]
