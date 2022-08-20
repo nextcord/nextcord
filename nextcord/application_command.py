@@ -2597,8 +2597,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         ret = super().get_payload(guild_id)
         if self.children:
             ret["options"] = [child.payload for child in self.children.values()]
-        else:
+        elif self.options:
             ret["options"] = [parameter.payload for parameter in self.options.values()]
+
         return ret
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
