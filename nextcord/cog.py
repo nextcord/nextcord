@@ -49,6 +49,7 @@ if TYPE_CHECKING:
 __all__ = (
     "CogMeta",
     "Cog",
+    "ClientCog",
 )
 
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
@@ -130,6 +131,8 @@ class Cog(metaclass=CogMeta):
 
     When inheriting from this class, the options shown in :class:`nextcord.CogMeta`
     are equally valid here.
+
+    There is an alias for this called :class:`ClientCog`.
     """
 
     __cog_name__: ClassVar[str]
@@ -321,3 +324,15 @@ class Cog(metaclass=CogMeta):
             The invocation interaction.
         """
         pass
+
+
+class ClientCog(Cog):
+    """An alias of :class:`Cog` for backwards compatibility reasons."""
+
+    def __new__(cls, *args, **kwargs):
+        warnings.warn(
+            "nextcord.ClientCog is deprecated, use nextcord.Cog instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+        return super().__new__(*args, **kwargs)
