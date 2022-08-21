@@ -93,4 +93,4 @@ async def choose_colour_command(
         await interaction.response.send_message(f"You chose **`{colour}`** colour")
 
 
-bot.run(BOT_TOKEN)
+bot.run("token")
