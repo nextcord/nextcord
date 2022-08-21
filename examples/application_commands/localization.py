@@ -2,7 +2,6 @@ from nextcord import Interaction, Locale, SlashOption
 from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
-BOT_TOKEN = ""  # Replace with your bot token
 
 
 bot = commands.Bot()
