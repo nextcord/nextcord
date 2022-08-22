@@ -2621,3 +2621,26 @@ class Client:
             return result
 
         return decorator
+
+    def parse_mentions(self, text: str) -> List[User]:
+        """Parses user mentions in a string and returns a list of :class:`User` objects.
+
+        .. note::
+
+            This does not include role or channel mentions. See :meth:`Guild.parse_mentions` for
+            :class:`Member` objects, :meth:`Guild.parse_role_mentions` for :class:`Role` objects,
+            and :meth:`Guild.parse_channel_mentions` for :class:`abc.GuildChannel` objects.
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[:class:`User`]
+            List of :class:`User` objects that were mentioned in the string.
+        """
+
+        it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
+        return utils._unique(it)
