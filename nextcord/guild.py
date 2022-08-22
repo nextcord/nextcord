@@ -3711,9 +3711,9 @@ class Guild(Hashable):
 
         .. note::
 
-            This does not include role or channel mentions. See :meth:`Guild.parse_role_mentions`
-            for :class:`Role` objects and :meth:`Guild.parse_channel_mentions` for
-            :class:`abc.GuildChannel` objects.
+            This does not include role or channel mentions. See :meth:`~Guild.parse_role_mentions`
+            for :class:`Role` objects and :meth:`~Guild.parse_channel_mentions` for
+            :class:`~abc.GuildChannel` objects.
 
         Parameters
         ----------
@@ -3748,7 +3748,7 @@ class Guild(Hashable):
         return utils._unique(it)
 
     def parse_channel_mentions(self, text: str) -> List[abc.GuildChannel]:
-        """Parses channel mentions in a string and returns a list of :class:`abc.GuildChannel` objects.
+        """Parses channel mentions in a string and returns a list of :class:`~abc.GuildChannel` objects.
 
         Parameters
         ----------
@@ -3757,8 +3757,8 @@ class Guild(Hashable):
 
         Returns
         -------
-        List[:class:`abc.GuildChannel`]
-            List of :class:`abc.GuildChannel` objects that were mentioned in the string.
+        List[:class:`~abc.GuildChannel`]
+            List of :class:`~abc.GuildChannel` objects that were mentioned in the string.
         """
         it = filter(None, map(self.get_channel, utils.parse_raw_channel_mentions(text)))
         return utils._unique(it)
