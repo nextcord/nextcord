@@ -81,6 +81,7 @@ from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
+    from .abc import Snowflake
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
@@ -2683,6 +2684,22 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             return ret
 
         return decorator
+
+    def get_mention(self, guild: Optional[Snowflake] = None) -> str:
+        """Returns a string that allows you to mention the application command.
+
+        Parameters
+        ----------
+        guild: Optional[:class:`~abc.Snowflake`]
+            The :class:`Guild` of the command to mention. If ``None``, then the global command will be mentioned.
+
+        Returns
+        -------
+        :class:`str`
+            The string that allows you to mention the application command.
+        """
+        command_id = self.command_ids.get(guild.id if guild else None)
+        return f"</{self.qualified_name}:{command_id}>"
 
 
 class UserApplicationCommand(BaseApplicationCommand):
