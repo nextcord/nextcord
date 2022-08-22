@@ -2688,6 +2688,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
     def get_mention(self, guild: Optional[Snowflake] = None) -> str:
         """Returns a string that allows you to mention the application command.
 
+        .. versionadded:: 2.2
+
         Parameters
         ----------
         guild: Optional[:class:`~abc.Snowflake`]
