@@ -2631,6 +2631,8 @@ class Client:
             :class:`Member` objects, :meth:`Guild.parse_role_mentions` for :class:`Role` objects,
             and :meth:`Guild.parse_channel_mentions` for :class:`~abc.GuildChannel` objects.
 
+        .. versionadded:: 2.2
+
         Parameters
         ----------
         text: :class:`str`

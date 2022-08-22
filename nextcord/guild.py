@@ -3715,6 +3715,8 @@ class Guild(Hashable):
             for :class:`Role` objects and :meth:`~Guild.parse_channel_mentions` for
             :class:`~abc.GuildChannel` objects.
 
+        .. versionadded:: 2.2
+
         Parameters
         ----------
         text: :class:`str`
@@ -3734,6 +3736,8 @@ class Guild(Hashable):
     def parse_role_mentions(self, text: str) -> List[Role]:
         """Parses role mentions in a string and returns a list of :class:`Role` objects.
 
+        .. versionadded:: 2.2
+
         Parameters
         ----------
         text: :class:`str`
@@ -3749,6 +3753,8 @@ class Guild(Hashable):
 
     def parse_channel_mentions(self, text: str) -> List[abc.GuildChannel]:
         """Parses channel mentions in a string and returns a list of :class:`~abc.GuildChannel` objects.
+
+        .. versionadded:: 2.2
 
         Parameters
         ----------
