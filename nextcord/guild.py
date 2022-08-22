@@ -3706,7 +3706,8 @@ class Guild(Hashable):
         return AutoModerationRule(data=data, state=self._state)
 
     def parse_mentions(self, text: str) -> List[Union[Member, User]]:
-        """Parses user mentions in a string and returns a list of :class:`Member` or :class:`User` objects.
+        """Parses user mentions in a string and returns a list of :class:`Member` objects.
+        If the member is not in the guild, a :class:`User` object is returned for that member instead.
 
         .. note::
 
@@ -3721,7 +3722,7 @@ class Guild(Hashable):
 
         Returns
         -------
-        List[Uinon[:class:`Member`, :class:`User`]]
+        List[Union[:class:`Member`, :class:`User`]]
             List of :class:`Member` or :class:`User` objects that were mentioned in the string.
         """
         get_member_or_user: Callable[
