@@ -3712,7 +3712,7 @@ class Guild(Hashable):
         .. note::
 
             This does not include role or channel mentions. See :meth:`Guild.parse_role_mentions`
-            for :class:`Role` objects, and :meth:`Guild.parse_channel_mentions` for
+            for :class:`Role` objects and :meth:`Guild.parse_channel_mentions` for
             :class:`abc.GuildChannel` objects.
 
         Parameters
