@@ -856,7 +856,7 @@ def escape_mentions(text: str) -> str:
 
 def parse_raw_mentions(text: str) -> List[int]:
     """A helper function that parses mentions from a string as an array of user IDs
-    matched with the syntax of ``<@user_id>``.
+    matched with the syntax of ``<@user_id>`` or ``<@!user_id>``.
 
     .. note::
 
