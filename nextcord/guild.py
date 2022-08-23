@@ -3715,6 +3715,11 @@ class Guild(Hashable):
             for :class:`Role` objects and :meth:`~Guild.parse_channel_mentions` for
             :class:`~abc.GuildChannel` objects.
 
+        .. note::
+
+            Only members or users found in the cache will be returned. To get the IDs of all users
+            mentioned, use :func:`~utils.parse_raw_mentions` instead.
+
         .. versionadded:: 2.2
 
         Parameters
@@ -3736,6 +3741,11 @@ class Guild(Hashable):
     def parse_role_mentions(self, text: str) -> List[Role]:
         """Parses role mentions in a string and returns a list of :class:`Role` objects.
 
+        .. note::
+
+            Only cached roles found in the :class:`Guild` will be returned. To get the IDs
+            of all roles mentioned, use :func:`~utils.parse_raw_role_mentions` instead.
+
         .. versionadded:: 2.2
 
         Parameters
@@ -3753,6 +3763,11 @@ class Guild(Hashable):
 
     def parse_channel_mentions(self, text: str) -> List[abc.GuildChannel]:
         """Parses channel mentions in a string and returns a list of :class:`~abc.GuildChannel` objects.
+
+        .. note::
+
+            Only cached channels found in the :class:`Guild` will be returned. To get the IDs of all
+            channels mentioned, use :func:`~utils.parse_raw_channel_mentions` instead.
 
         .. versionadded:: 2.2
 

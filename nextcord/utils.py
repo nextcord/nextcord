@@ -855,7 +855,7 @@ def escape_mentions(text: str) -> str:
 
 
 def parse_raw_mentions(text: str) -> List[int]:
-    """A helper function that parses mentions from a string as an array of user IDs
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.User` IDs
     matched with the syntax of ``<@user_id>`` or ``<@!user_id>``.
 
     .. note::
@@ -879,7 +879,7 @@ def parse_raw_mentions(text: str) -> List[int]:
 
 
 def parse_raw_role_mentions(text: str) -> List[int]:
-    """A helper function that parses mentions from a string as an array of role IDs
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.Role` IDs
     matched with the syntax of ``<@&role_id>``.
 
     .. versionadded:: 2.2
@@ -898,7 +898,7 @@ def parse_raw_role_mentions(text: str) -> List[int]:
 
 
 def parse_raw_channel_mentions(text: str) -> List[int]:
-    """A helper function that parses mentions from a string as an array of channel IDs
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.abc.GuildChannel` IDs
     matched with the syntax of ``<#channel_id>``.
 
     .. versionadded:: 2.2

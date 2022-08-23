@@ -2623,13 +2623,19 @@ class Client:
         return decorator
 
     def parse_mentions(self, text: str) -> List[User]:
-        """Parses user mentions in a string and returns a list of :class:`User` objects.
+        """Parses user mentions in a string and returns a list of :class:`~nextcord.User` objects.
 
         .. note::
 
-            This does not include role or channel mentions. See :meth:`Guild.parse_mentions` for
-            :class:`Member` objects, :meth:`Guild.parse_role_mentions` for :class:`Role` objects,
-            and :meth:`Guild.parse_channel_mentions` for :class:`~abc.GuildChannel` objects.
+            This does not include role or channel mentions. See :meth:`Guild.parse_mentions <nextcord.Guild.parse_mentions>`
+            for :class:`~nextcord.Member` objects, :meth:`Guild.parse_role_mentions <nextcord.Guild.parse_role_mentions>`
+            for :class:`~nextcord.Role` objects, and :meth:`Guild.parse_channel_mentions <nextcord.Guild.parse_channel_mentions>`
+            for :class:`~nextcord.abc.GuildChannel` objects.
+
+        .. note::
+
+            Only cached users will be returned. To get the IDs of all users mentioned, use
+            :func:`~nextcord.utils.parse_raw_mentions` instead.
 
         .. versionadded:: 2.2
 
@@ -2640,8 +2646,8 @@ class Client:
 
         Returns
         -------
-        List[:class:`User`]
-            List of :class:`User` objects that were mentioned in the string.
+        List[:class:`~nextcord.User`]
+            List of :class:`~nextcord.User` objects that were mentioned in the string.
         """
 
         it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
