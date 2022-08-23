@@ -368,7 +368,9 @@ class ApplicationCommandOption:
             # noinspection PyUnresolvedReferences
             # When reading application commands from Discord, they return the channel types sorted.
             # To prevent needless syncing and allow lazy loading, we need to sort them as well.
-            ret["channel_types"] = sorted([channel_type.value for channel_type in self.channel_types])
+            ret["channel_types"] = sorted(
+                [channel_type.value for channel_type in self.channel_types]
+            )
 
         if self.min_value is not None:
             ret["min_value"] = self.min_value
