@@ -1716,6 +1716,24 @@ class SlashCommandMixin(CallbackMixin):
             kwargs = await self.get_slash_kwargs(state, interaction, option_data)
             await self.invoke_callback_with_hooks(state, interaction, **kwargs)
 
+    def get_mention(self, guild: Optional[Snowflake] = None) -> str:
+        """Returns a string that allows you to mention the slash command.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        guild: Optional[:class:`~abc.Snowflake`]
+            The :class:`Guild` of the command to mention. If ``None``, then the global command will be mentioned.
+
+        Returns
+        -------
+        :class:`str`
+            The string that allows you to mention the slash command.
+        """
+        command_id = self.command_ids.get(guild.id if guild else None)  # type: ignore
+        return f"</{self.qualified_name}:{command_id}>"  # type: ignore
+
 
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     def __init__(
@@ -2522,28 +2540,12 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self.type = ApplicationCommandOptionType.sub_command_group
         return decorator
 
-    def get_mention(self, guild: Optional[Snowflake] = None) -> str:
-        """Returns a string that allows you to mention the slash subcommand.
-
-        .. versionadded:: 2.2
-
-        Parameters
-        ----------
-        guild: Optional[:class:`~abc.Snowflake`]
-            The :class:`Guild` of the command to mention. If ``None``, then the global command will be mentioned.
-
-        Returns
-        -------
-        :class:`str`
-            The string that allows you to mention the slash subcommand.
+    @property
+    def command_ids(self) -> Dict[Optional[int], int]:
+        """Dict[Optional[:class:`int`], :class:`int`]: Command IDs that this application command currently has.
+        Schema: {Guild ID (None for global): command ID}
         """
-        parent_cmd = self.parent_cmd
-        while not isinstance(parent_cmd, SlashApplicationCommand):
-            if parent_cmd is None:
-                return ""
-            parent_cmd = parent_cmd.parent_cmd
-        command_id = parent_cmd.command_ids.get(guild.id if guild else None)
-        return f"</{self.qualified_name}:{command_id}>"
+        return self.parent_cmd.command_ids if self.parent_cmd else {}
 
 
 class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
@@ -2707,24 +2709,6 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             return ret
 
         return decorator
-
-    def get_mention(self, guild: Optional[Snowflake] = None) -> str:
-        """Returns a string that allows you to mention the slash command.
-
-        .. versionadded:: 2.2
-
-        Parameters
-        ----------
-        guild: Optional[:class:`~abc.Snowflake`]
-            The :class:`Guild` of the command to mention. If ``None``, then the global command will be mentioned.
-
-        Returns
-        -------
-        :class:`str`
-            The string that allows you to mention the slash command.
-        """
-        command_id = self.command_ids.get(guild.id if guild else None)
-        return f"</{self.qualified_name}:{command_id}>"
 
 
 class UserApplicationCommand(BaseApplicationCommand):
