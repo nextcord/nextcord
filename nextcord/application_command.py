@@ -1719,9 +1719,7 @@ class SlashCommandMixin(CallbackMixin):
             await self.invoke_callback_with_hooks(state, interaction, **kwargs)
 
     def get_mention(self, guild: Optional[Snowflake] = None) -> str:
-        """Returns a string that allows you to mention the slash command. If no command ID is found for the
-        :class:`Guild` provided, or a guild is passed but the command is global, a text representation of the
-        command name is returned instead.
+        """Returns a string that allows you to mention the slash command.
 
         .. versionadded:: 2.2
 
@@ -1734,8 +1732,25 @@ class SlashCommandMixin(CallbackMixin):
         -------
         :class:`str`
             The string that allows you to mention the slash command.
+
+        Raises
+        ------
+        ValueError
+            If no guild was provided and the command is not registered globally, or the command is not registered
+            in the guild provided.
         """
         command_id = self.command_ids.get(guild.id if guild else None)
+        if command_id is None:
+            if None in self.command_ids:
+                command_id = self.command_ids[None]
+            elif guild is None:
+                raise ValueError(
+                    "No guild was passed to get_mention, but the command is not global."
+                )
+            else:
+                raise ValueError(
+                    "The command is not registered in the guild provided to get_mention."
+                )
         return f"</{self.qualified_name}:{command_id}>" if command_id else f"/{self.qualified_name}"
 
 
