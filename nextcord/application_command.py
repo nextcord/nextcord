@@ -3295,7 +3295,7 @@ def unpack_annotation(
     return type_ret, literal_ret
 
 
-class Range(int):
+class Range:
     """An annotation helper for defining slash command `min_value` and `max_value` parameters.
 
     .. versionadded:: 2.2
@@ -3356,6 +3356,9 @@ class Range(int):
         class Inner(Range, OptionConverter):
             def __init__(self):
                 super().__init__(option_type=type(self.min or self.max))
+                
+            async def convert(self, interaction: Interaction, value: Any) -> Any:
+                return value
 
             def modify(self, option: SlashCommandOption):
                 if self.min:
@@ -3395,7 +3398,7 @@ class Range(int):
         return Inner
 
 
-class String(int):
+class String:
     """An annotation helper for defining slash command `min_length` and `max_length` parameters.
 
     .. versionadded:: 2.2
@@ -3430,6 +3433,9 @@ class String(int):
         class Inner(String, OptionConverter):
             def __init__(self):
                 super().__init__(option_type=str)
+                
+            async def convert(self, interaction: Interaction, value: Any) -> Any:
+                return value
 
             def modify(self, option: SlashCommandOption):
                 if self.min:
