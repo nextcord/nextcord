@@ -3356,7 +3356,7 @@ class Range:
         class Inner(Range, OptionConverter):
             def __init__(self):
                 super().__init__(option_type=type(self.min or self.max))
-                
+
             async def convert(self, interaction: Interaction, value: Any) -> Any:
                 return value
 
@@ -3433,7 +3433,7 @@ class String:
         class Inner(String, OptionConverter):
             def __init__(self):
                 super().__init__(option_type=str)
-                
+
             async def convert(self, interaction: Interaction, value: Any) -> Any:
                 return value
 
