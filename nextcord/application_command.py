@@ -2538,12 +2538,10 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
             The string that allows you to mention the application command.
         """
         parent_cmd = self.parent_cmd
-        while not hasattr(parent_cmd, "command_ids"):
-            if not hasattr(parent_cmd, "parent_cmd"):
-                break
-            parent_cmd = parent_cmd.parent_cmd  # type: ignore
-        if not isinstance(parent_cmd, SlashApplicationCommand):
-            return ""
+        while not isinstance(parent_cmd, SlashApplicationCommand):
+            if parent_cmd is None:
+                return ""
+            parent_cmd = parent_cmd.parent_cmd
         command_id = parent_cmd.command_ids.get(guild.id if guild else None)
         return f"</{self.qualified_name}:{command_id}>"
 
