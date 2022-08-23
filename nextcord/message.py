@@ -836,7 +836,7 @@ class Message(Hashable):
                 self.guild = None
 
         if thread_data := data.get("thread"):
-            if not self.thread and self.guild:
+            if not self.thread and isinstance(self.guild, Guild):
                 self.guild._store_thread(thread_data)
 
         try:
@@ -1156,7 +1156,10 @@ class Message(Hashable):
     @property
     def thread(self) -> Optional[Thread]:
         """Optional[:class:`Thread`]: The thread started from this message. None if no thread was started."""
-        return self.guild and self.guild.get_thread(self.id)
+        if not isinstance(self.guild, Guild):
+            return None
+
+        return self.guild.get_thread(self.id)
 
     def is_system(self) -> bool:
         """:class:`bool`: Whether the message is a system message.
