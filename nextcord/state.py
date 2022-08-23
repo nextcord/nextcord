@@ -1086,17 +1086,26 @@ class ConnectionState:
         if self.application_id is None:
             raise NotImplementedError("Could not get the current application id")
 
-        if guild_id:
-            await self.http.delete_guild_command(
-                self.application_id, guild_id, command.command_ids[guild_id]
-            )
-        else:
-            await self.http.delete_global_command(
-                self.application_id, command.command_ids[guild_id]
-            )
+        try:
+            if guild_id:
+                await self.http.delete_guild_command(
+                    self.application_id, guild_id, command.command_ids[guild_id]
+                )
+            else:
+                await self.http.delete_global_command(
+                    self.application_id, command.command_ids[guild_id]
+                )
 
-        self._application_command_ids.pop(command.command_ids[guild_id], None)
-        self._application_command_signatures.pop(command.get_signature(guild_id), None)
+            self._application_command_ids.pop(command.command_ids[guild_id], None)
+            self._application_command_signatures.pop(command.get_signature(guild_id), None)
+
+        except KeyError as e:
+            _log.error("Could not globally unregister command %s as it is not a global command.", command.error_name)
+            raise KeyError("This command cannot be globally unregistered, as it is not a global command.")
+
+        except Exception as e:
+            _log.error("Error unregistering command %s: %s", command.error_name, e)
+            raise e
 
     # async def register_bulk_application_commands(self) -> None:
     #     # TODO: Using Bulk upsert seems to delete all commands
