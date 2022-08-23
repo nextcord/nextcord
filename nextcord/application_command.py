@@ -1627,6 +1627,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
 class SlashCommandMixin(CallbackMixin):
     _description: Optional[str]
+    command_ids: Dict[Optional[int], int]
+    qualified_name: str
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]):
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
@@ -1717,7 +1719,9 @@ class SlashCommandMixin(CallbackMixin):
             await self.invoke_callback_with_hooks(state, interaction, **kwargs)
 
     def get_mention(self, guild: Optional[Snowflake] = None) -> str:
-        """Returns a string that allows you to mention the slash command.
+        """Returns a string that allows you to mention the slash command. If no command ID is found for the
+        :class:`Guild` provided, or a guild is passed but the command is global, a text representation of the
+        command name is returned instead.
 
         .. versionadded:: 2.2
 
@@ -1731,8 +1735,8 @@ class SlashCommandMixin(CallbackMixin):
         :class:`str`
             The string that allows you to mention the slash command.
         """
-        command_id = self.command_ids.get(guild.id if guild else None)  # type: ignore
-        return f"</{self.qualified_name}:{command_id}>"  # type: ignore
+        command_id = self.command_ids.get(guild.id if guild else None)
+        return f"</{self.qualified_name}:{command_id}>" if command_id else f"/{self.qualified_name}"
 
 
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
@@ -2542,8 +2546,10 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
     @property
     def command_ids(self) -> Dict[Optional[int], int]:
-        """Dict[Optional[:class:`int`], :class:`int`]: Command IDs that this application command currently has.
+        """Dict[Optional[:class:`int`], :class:`int`]: Command IDs the parent command of this subcommand currently has.
         Schema: {Guild ID (None for global): command ID}
+
+        .. versionadded:: 2.2
         """
         return self.parent_cmd.command_ids if self.parent_cmd else {}
 
