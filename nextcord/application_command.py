@@ -2523,7 +2523,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         return decorator
 
     def get_mention(self, guild: Optional[Snowflake] = None) -> str:
-        """Returns a string that allows you to mention the application command.
+        """Returns a string that allows you to mention the slash subcommand.
 
         .. versionadded:: 2.2
 
@@ -2535,7 +2535,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         Returns
         -------
         :class:`str`
-            The string that allows you to mention the application command.
+            The string that allows you to mention the slash subcommand.
         """
         parent_cmd = self.parent_cmd
         while not isinstance(parent_cmd, SlashApplicationCommand):
@@ -2709,7 +2709,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         return decorator
 
     def get_mention(self, guild: Optional[Snowflake] = None) -> str:
-        """Returns a string that allows you to mention the application command.
+        """Returns a string that allows you to mention the slash command.
 
         .. versionadded:: 2.2
 
@@ -2721,7 +2721,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         Returns
         -------
         :class:`str`
-            The string that allows you to mention the application command.
+            The string that allows you to mention the slash command.
         """
         command_id = self.command_ids.get(guild.id if guild else None)
         return f"</{self.qualified_name}:{command_id}>"
