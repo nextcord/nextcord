@@ -2522,6 +2522,31 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self.type = ApplicationCommandOptionType.sub_command_group
         return decorator
 
+    def get_mention(self, guild: Optional[Snowflake] = None) -> str:
+        """Returns a string that allows you to mention the application command.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        guild: Optional[:class:`~abc.Snowflake`]
+            The :class:`Guild` of the command to mention. If ``None``, then the global command will be mentioned.
+
+        Returns
+        -------
+        :class:`str`
+            The string that allows you to mention the application command.
+        """
+        parent_cmd = self.parent_cmd
+        while not hasattr(parent_cmd, "command_ids"):
+            if not hasattr(parent_cmd, "parent_cmd"):
+                break
+            parent_cmd = parent_cmd.parent_cmd  # type: ignore
+        if not isinstance(parent_cmd, SlashApplicationCommand):
+            return ""
+        command_id = parent_cmd.command_ids.get(guild.id if guild else None)
+        return f"</{self.qualified_name}:{command_id}>"
+
 
 class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
     def __init__(
