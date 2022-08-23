@@ -1751,7 +1751,7 @@ class SlashCommandMixin(CallbackMixin):
                 raise ValueError(
                     "The command is not registered in the guild provided to get_mention."
                 )
-        return f"</{self.qualified_name}:{command_id}>" if command_id else f"/{self.qualified_name}"
+        return f"</{self.qualified_name}:{command_id}>"
 
 
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
