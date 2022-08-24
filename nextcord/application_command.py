@@ -366,7 +366,11 @@ class ApplicationCommandOption:
 
         if self.channel_types:
             # noinspection PyUnresolvedReferences
-            ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
+            # When reading application commands from Discord, they return the channel types sorted.
+            # To prevent needless syncing and allow lazy loading, we need to sort them as well.
+            ret["channel_types"] = sorted(
+                [channel_type.value for channel_type in self.channel_types]
+            )
 
         if self.min_value is not None:
             ret["min_value"] = self.min_value
@@ -2597,8 +2601,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         ret = super().get_payload(guild_id)
         if self.children:
             ret["options"] = [child.payload for child in self.children.values()]
-        else:
+        elif self.options:
             ret["options"] = [parameter.payload for parameter in self.options.values()]
+
         return ret
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
