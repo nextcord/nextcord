@@ -884,7 +884,7 @@ class HTTPClient:
         r = Route(
             "PATCH", "/guilds/{guild_id}/members/{user_id}", guild_id=guild_id, user_id=user_id
         )
-        payload = {}
+        payload: Dict[str, bool] = {}
         if mute is not None:
             payload["mute"] = mute
 
@@ -1194,7 +1194,7 @@ class HTTPClient:
             "GET", "/channels/{channel_id}/threads/archived/public", channel_id=channel_id
         )
 
-        params = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
         if before:
             params["before"] = before
         params["limit"] = limit
@@ -1207,7 +1207,7 @@ class HTTPClient:
             "GET", "/channels/{channel_id}/threads/archived/private", channel_id=channel_id
         )
 
-        params = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
         if before:
             params["before"] = before
         params["limit"] = limit
@@ -1221,7 +1221,7 @@ class HTTPClient:
             "/channels/{channel_id}/users/@me/threads/archived/private",
             channel_id=channel_id,
         )
-        params = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
         if before:
             params["before"] = before
         params["limit"] = limit
@@ -1400,7 +1400,7 @@ class HTTPClient:
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
     ) -> Response[List[guild.Ban]]:
-        params: Dict[str, Any] = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
 
         if limit is not None:
             params["limit"] = limit
@@ -1959,7 +1959,7 @@ class HTTPClient:
     def get_global_commands(
         self, application_id: Snowflake, with_localizations: bool = True
     ) -> Response[List[interactions.ApplicationCommand]]:
-        params = {}
+        params: Dict[str, str] = {}
         if with_localizations:
             params["with_localizations"] = "true"
 
@@ -2027,7 +2027,7 @@ class HTTPClient:
     def get_guild_commands(
         self, application_id: Snowflake, guild_id: Snowflake, with_localizations: bool = True
     ) -> Response[List[interactions.ApplicationCommand]]:
-        params = {}
+        params: Dict[str, str] = {}
         if with_localizations:
             params["with_localizations"] = "true"
         r = Route(
