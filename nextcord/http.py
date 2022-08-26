@@ -468,33 +468,32 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
     ) -> Dict[str, Any]:
-        payload = {}
+        payload: Dict[str, Any] = {
+            "tts": tts,
+        }
 
-        if content:
+        if content is not None:
             payload["content"] = content
 
-        if tts:
-            payload["tts"] = True
-
-        if embed:
+        if embed is not None:
             payload["embeds"] = [embed]
 
-        if embeds:
+        if embeds is not None:
             payload["embeds"] = embeds
 
-        if nonce:
+        if nonce is not None:
             payload["nonce"] = nonce
 
-        if allowed_mentions:
+        if allowed_mentions is not None:
             payload["allowed_mentions"] = allowed_mentions
 
-        if message_reference:
+        if message_reference is not None:
             payload["message_reference"] = message_reference
 
-        if components:
+        if components is not None:
             payload["components"] = components
 
-        if stickers:
+        if stickers is not None:
             payload["sticker_ids"] = stickers
 
         return payload
