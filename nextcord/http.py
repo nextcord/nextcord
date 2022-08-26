@@ -91,7 +91,6 @@ if TYPE_CHECKING:
         template,
         threads,
         user,
-        voice,
         webhook,
         widget,
     )
@@ -531,10 +530,9 @@ class HTTPClient:
     def send_typing(self, channel_id: Snowflake) -> Response[None]:
         return self.request(Route("POST", "/channels/{channel_id}/typing", channel_id=channel_id))
 
-    # basic method to get the multipart form without requesting to send a message
     def get_message_multipart_form(
         self,
-        payload: Dict[str, Any] = {},
+        payload: Dict[str, Any],
         message_key: Optional[str] = None,
         *,
         files: Sequence[File],
@@ -546,9 +544,9 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
-        attachments: Optional[List[dict]] = None,
-    ) -> list[dict]:
-        form = []
+        attachments: Optional[List[Dict[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        form: List[Dict[str, Any]] = []
 
         payload["attachments"] = attachments or []
 
@@ -563,7 +561,7 @@ class HTTPClient:
             components=components,
         )
 
-        if message_key:
+        if message_key is not None:
             payload[message_key] = msg_payload
         else:
             payload.update(msg_payload)
@@ -576,7 +574,6 @@ class HTTPClient:
                     "description": file.description,
                 }
             )
-
             form.append(
                 {
                     "name": f"files[{index}]",
@@ -585,7 +582,6 @@ class HTTPClient:
                     "content_type": "application/octet-stream",
                 }
             )
-
         form.append({"name": "payload_json", "value": utils._to_json(payload)})
 
         return form
@@ -604,14 +600,14 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
-        attachments: Optional[List[dict]] = None,
+        attachments: Optional[List[Dict[str, Any]]] = None,
     ) -> Response[message.Message]:
         payload: Dict[str, Any] = {
             "tts": tts,
             "attachments": attachments or [],
         }
         form = self.get_message_multipart_form(
-            payload,
+            payload=payload,
             files=files,
             content=content,
             embed=embed,
@@ -1136,7 +1132,7 @@ class HTTPClient:
         allowed_mentions: Optional[message.AllowedMentions] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
-        attachments: Optional[List[dict]] = None,
+        attachments: Optional[List[Dict[str, Any]]] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
