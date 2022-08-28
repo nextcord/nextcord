@@ -24,11 +24,11 @@ bot = commands.Bot()
 )
 async def hello_command(interaction: Interaction):
 
-    if interaction.locale == Locale.de:
+    if interaction.locale == "de":
         await interaction.response.send_message("Hallo Welt!")
-    elif interaction.locale == Locale.fr:
+    elif interaction.locale == "fr":
         await interaction.response.send_message("Bonjour le monde!")
-    elif interaction.locale == Locale.es_ES:
+    elif interaction.locale == "es-ES":
         await interaction.response.send_message("¡Hola Mundo!")
     else:
         await interaction.response.send_message("Hello, world!")
