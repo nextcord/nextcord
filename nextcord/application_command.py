@@ -1626,9 +1626,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
 
 class SlashCommandMixin(CallbackMixin):
-    _description: Optional[str]
-    command_ids: Dict[Optional[int], int]
-    qualified_name: str
+    if TYPE_CHECKING:
+        _description: Optional[str]
+        command_ids: Dict[Optional[int], int]
+        qualified_name: str
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]):
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
