@@ -29,7 +29,7 @@ import time
 from collections import deque
 from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Optional, Type, TypeVar
 
-from nextcord.enums import Enum
+from nextcord.enums import IntEnum
 
 from ...abc import PrivateChannel
 from .errors import MaxConcurrencyReached
@@ -49,7 +49,7 @@ C = TypeVar("C", bound="CooldownMapping")
 MC = TypeVar("MC", bound="MaxConcurrency")
 
 
-class BucketType(Enum):
+class BucketType(IntEnum):
     default = 0
     user = 1
     guild = 2
