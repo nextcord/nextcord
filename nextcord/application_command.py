@@ -3430,12 +3430,10 @@ class String:
                 return value
 
             def modify(self, option: SlashCommandOption):
-                if self.min:
-                    if option.min_length is None:
-                        option.min_length = self.min
-                if self.max:
-                    if option.max_length is None:
-                        option.max_length = self.max
+                if self.min and option.min_length is None:
+                    option.min_length = self.min
+                if self.max and option.max_length is None:
+                    option.max_length = self.max
 
         if isinstance(value, tuple):
             if len(value) != 2:
