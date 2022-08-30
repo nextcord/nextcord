@@ -1327,8 +1327,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         annotation_choices: List[Union[str, int, float]] = []
         annotation_channel_types: List[ChannelType] = []
         annotation_converters: List[OptionConverter] = []
-        annotation_min_value: Optional[Union[float, int]] = MISSING
-        annotation_max_value: Optional[Union[float, int]] = MISSING
 
         if typehint_origin is Literal:
             # If they use the Literal typehint as their base. This currently should only support int, float, str, and
@@ -1441,14 +1439,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         self.description_localizations = cmd_arg.description_localizations
         self.choice_localizations = cmd_arg.choice_localizations
 
-        self.min_value = annotation_min_value if annotation_min_value is not MISSING else None
-        if cmd_arg.min_value is not None:
-            self.min_value = cmd_arg.min_value
-
-        self.max_value = annotation_max_value if annotation_max_value is not MISSING else None
-        if cmd_arg.max_value is not None:
-            self.max_value = cmd_arg.max_value
-
+        self.min_value = cmd_arg.min_value
+        self.max_value = cmd_arg.max_value
         self.min_length = cmd_arg.min_length
         self.max_length = cmd_arg.max_length
         self.autocomplete = cmd_arg.autocomplete
