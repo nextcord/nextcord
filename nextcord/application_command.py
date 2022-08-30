@@ -3364,23 +3364,23 @@ class Range:
             if len(value) != 2:
                 raise ValueError("Range can only take 1-2 arguments")
 
-            min = value[0]
-            max = value[1]
+            min_value = value[0]
+            max_value = value[1]
         else:
-            min = None
-            max = value
+            min_value = None
+            max_value = value
 
-        if min is None or isinstance(min, EllipsisType):
+        if min_value is None or isinstance(min_value, EllipsisType):
             Inner.min = None
-        elif isinstance(min, (int, float)):
-            Inner.min = min
+        elif isinstance(min_value, (int, float)):
+            Inner.min = min_value
         else:
             raise TypeError("Range min must be int or float.")
 
-        if isinstance(max, EllipsisType):
+        if isinstance(max_value, EllipsisType):
             Inner.max = None
-        elif isinstance(max, (int, float)):
-            Inner.max = max
+        elif isinstance(max_value, (int, float)):
+            Inner.max = max_value
         else:
             raise TypeError("Range max must be int or float.")
 
