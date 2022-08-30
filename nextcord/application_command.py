@@ -3353,12 +3353,10 @@ class Range:
                 return value
 
             def modify(self, option: SlashCommandOption):
-                if self.min:
-                    if option.min_value is None:
-                        option.min_value = self.min
-                if self.max:
-                    if option.max_value is None:
-                        option.max_value = self.max
+                if self.min and option.min_value is None:
+                    option.min_value = self.min
+                if self.max and option.max_value is None:
+                    option.max_value = self.max
 
         if isinstance(value, tuple):
             if len(value) != 2:
