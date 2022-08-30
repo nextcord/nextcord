@@ -23,7 +23,6 @@ bot = commands.Bot()
     guild_ids=[TESTING_GUILD_ID],
 )
 async def hello_command(interaction: Interaction):
-
     if interaction.locale == "de":
         await interaction.response.send_message("Hallo Welt!")
     elif interaction.locale == "fr":
