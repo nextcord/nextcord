@@ -32,6 +32,7 @@ from asyncio import Future
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     ClassVar,
     Dict,
     List,
@@ -3703,3 +3704,82 @@ class Guild(Hashable):
             self.id, data=payload, reason=reason
         )
         return AutoModerationRule(data=data, state=self._state)
+
+    def parse_mentions(self, text: str) -> List[Union[Member, User]]:
+        """Parses user mentions in a string and returns a list of :class:`Member` objects.
+        If the member is not in the guild, a :class:`User` object is returned for that member instead.
+
+        .. note::
+
+            This does not include role or channel mentions. See :meth:`~Guild.parse_role_mentions`
+            for :class:`Role` objects and :meth:`~Guild.parse_channel_mentions` for
+            :class:`~abc.GuildChannel` objects.
+
+        .. note::
+
+            Only members or users found in the cache will be returned. To get the IDs of all users
+            mentioned, use :func:`~utils.parse_raw_mentions` instead.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[Union[:class:`Member`, :class:`User`]]
+            List of :class:`Member` or :class:`User` objects that were mentioned in the string.
+        """
+        get_member_or_user: Callable[
+            [int], Optional[Union[Member, User]]
+        ] = lambda id: self.get_member(id) or self._state.get_user(id)
+        it = filter(None, map(get_member_or_user, utils.parse_raw_mentions(text)))
+        return utils._unique(it)
+
+    def parse_role_mentions(self, text: str) -> List[Role]:
+        """Parses role mentions in a string and returns a list of :class:`Role` objects.
+
+        .. note::
+
+            Only cached roles found in the :class:`Guild` will be returned. To get the IDs
+            of all roles mentioned, use :func:`~utils.parse_raw_role_mentions` instead.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[:class:`Role`]
+            List of :class:`Role` objects that were mentioned in the string.
+        """
+        it = filter(None, map(self.get_role, utils.parse_raw_role_mentions(text)))
+        return utils._unique(it)
+
+    def parse_channel_mentions(self, text: str) -> List[abc.GuildChannel]:
+        """Parses channel mentions in a string and returns a list of :class:`~abc.GuildChannel` objects.
+
+        .. note::
+
+            Only cached channels found in the :class:`Guild` will be returned. To get the IDs of all
+            channels mentioned, use :func:`~utils.parse_raw_channel_mentions` instead.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[:class:`~abc.GuildChannel`]
+            List of :class:`~abc.GuildChannel` objects that were mentioned in the string.
+        """
+        it = filter(None, map(self.get_channel, utils.parse_raw_channel_mentions(text)))
+        return utils._unique(it)

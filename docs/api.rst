@@ -1221,6 +1221,12 @@ Utility Functions
 
 .. autofunction:: nextcord.utils.escape_mentions
 
+.. autofunction:: nextcord.utils.parse_raw_mentions
+
+.. autofunction:: nextcord.utils.parse_raw_role_mentions
+
+.. autofunction:: nextcord.utils.parse_raw_channel_mentions
+
 .. autofunction:: nextcord.utils.resolve_invite
 
 .. autofunction:: nextcord.utils.resolve_template
