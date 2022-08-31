@@ -72,6 +72,8 @@ __all__ = (
 
 
 class UnknownEnumValue(NamedTuple):
+    """Proxy for the underlying name and value of an attribute not known to the Enum."""
+
     name: str
     value: Any
 
@@ -83,7 +85,7 @@ class UnknownEnumValue(NamedTuple):
     def __int__(self):
         if isinstance(self.value, int):
             return self.value
-        raise TypeError(f"{self.name}.{self.value} is not an integer")
+        raise TypeError(f"{self.name}.{self.value} cannot be converted to an int")
 
     def __repr__(self):
         return f"<{self.name}.{self.value!r}>"
