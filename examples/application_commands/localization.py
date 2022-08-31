@@ -83,9 +83,9 @@ async def choose_colour_command(
     if interaction.locale == "en-US":
         await interaction.response.send_message(f"You chose **`{colour}`** color")
     elif interaction.locale == "de":
-        await interaction.response.send_message(f"Sie haben **`{colour}`** Farbe gewählt")
+        await interaction.response.send_message(f"Du hast **`{colour}`** Farbe gewählt")
     elif interaction.locale == "fr":
-        await interaction.response.send_message(f"Vous avez choisi la couleur rouge **`{colour}`**")
+        await interaction.response.send_message(f"Tu as choisi la couleur **`{colour}`**")
     elif interaction.locale == "es-ES":
         await interaction.response.send_message(f"Elegiste el color **`{colour}`**")
     else:
