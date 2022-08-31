@@ -30,6 +30,7 @@ __all__ = (
     "Enum",
     "IntEnum",
     "StrEnum",
+    "UnknownEnumValue",
     "ChannelType",
     "MessageType",
     "VoiceRegion",
