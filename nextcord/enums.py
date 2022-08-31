@@ -142,9 +142,15 @@ class Enum(enum.Enum):
 class IntEnum(str, Enum):
     """An enum that supports comparing and hashing as an int."""
 
+    def __int__(self):
+        return self.value
+
 
 class StrEnum(str, Enum):
     """An enum that supports comparing and hashing as a string."""
+
+    def __str__(self):
+        return self.value
 
 
 class ChannelType(IntEnum):
