@@ -139,7 +139,7 @@ class Enum(enum.Enum):
             return value
 
 
-class IntEnum(str, Enum):
+class IntEnum(int, Enum):
     """An enum that supports comparing and hashing as an int."""
 
     def __int__(self):
