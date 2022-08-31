@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import enum
-from typing import Any, Dict, NamedTuple, Optional, Type, TypeVar, Union
+from typing import Any, Dict, NamedTuple, Optional, Type, TypeVar
 
 __all__ = (
     "Enum",
