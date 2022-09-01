@@ -29,6 +29,7 @@ import asyncio
 import json
 import logging
 import sys
+import warnings
 import weakref
 from typing import (
     TYPE_CHECKING,
@@ -114,13 +115,35 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
     return text
 
 
-_API_VERSION: Literal[9, 10] = 10
+_DEFAULT_API_VERSION = 10
+
+_API_VERSION: Literal[9, 10] = _DEFAULT_API_VERSION
 
 
-# TODO: remove once message content is enforced on all versions (31 aug)
+class UnsupportedAPIVersion(UserWarning):
+    """Warning category raised when changing the API version to an unsupported version."""
+
+
 def _modify_api_version(version: Literal[9, 10]):
-    if version not in (9, 10):
-        raise ValueError("Version must be an integer of `9` or `10`")
+    """Modify the API version used by the HTTP client.
+
+    Additional versions may be added around the time of a Discord API
+    version bump to allow temporarily downgrading to an older API version.
+
+    Downgrading to an older API version is not supported and may result in
+    unexpected behaviour.
+    """
+    available_versions = (9, 10)
+
+    if version not in available_versions:
+        raise ValueError(f"Only API versions {available_versions} are available.")
+
+    if version != _DEFAULT_API_VERSION:
+        warnings.warn(
+            "Downgrading to an older API version is not supported and may result in unexpected behaviour.",
+            category=UnsupportedAPIVersion,
+            stacklevel=2,
+        )
 
     global _API_VERSION
     _API_VERSION = version
@@ -129,7 +152,7 @@ def _modify_api_version(version: Literal[9, 10]):
 
 
 class Route:
-    BASE: ClassVar[str] = "https://discord.com/api/v10"
+    BASE: ClassVar[str] = f"https://discord.com/api/v{_DEFAULT_API_VERSION}"
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
