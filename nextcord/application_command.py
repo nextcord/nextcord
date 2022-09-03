@@ -3437,23 +3437,23 @@ class String:
             if len(value) != 2:
                 raise ValueError("String can only take 1-2 arguments")
 
-            min = value[0]
-            max = value[1]
+            min_value = value[0]
+            max_value = value[1]
         else:
-            min = None
-            max = value
+            min_value = None
+            max_value = value
 
-        if isinstance(min, EllipsisType):
+        if min_value is None or isinstance(min_value, EllipsisType):
             Inner.min = None
-        elif isinstance(min, int):
-            Inner.min = min
+        elif isinstance(min_value, int):
+            Inner.min = min_value
         else:
             raise TypeError("String min must be int.")
 
-        if isinstance(max, EllipsisType):
+        if isinstance(max_value, EllipsisType):
             Inner.max = None
-        elif isinstance(max, int):
-            Inner.max = max
+        elif isinstance(max_value, int):
+            Inner.max = max_value
         else:
             raise TypeError("String max must be int.")
 
