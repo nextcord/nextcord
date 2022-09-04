@@ -2687,8 +2687,8 @@ class Client:
         Interaction
             An instance :py:class:`Interaction` or the provided subclass.
 
-        Notes
-        -----
-        This is synchronous due to how slash commands are implemented.
+        .. note::
+
+            This is synchronous due to how slash commands are implemented.
         """
         return cls(data=data, state=self._connection)
