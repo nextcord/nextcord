@@ -81,6 +81,7 @@ from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
+    from .abc import Snowflake
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
@@ -1629,7 +1630,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
 
 class SlashCommandMixin(CallbackMixin):
-    _description: Optional[str]
+    if TYPE_CHECKING:
+        _description: Optional[str]
+        command_ids: Dict[Optional[int], int]
+        qualified_name: str
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]):
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
@@ -1718,6 +1722,41 @@ class SlashCommandMixin(CallbackMixin):
         else:
             kwargs = await self.get_slash_kwargs(state, interaction, option_data)
             await self.invoke_callback_with_hooks(state, interaction, **kwargs)
+
+    def get_mention(self, guild: Optional[Snowflake] = None) -> str:
+        """Returns a string that allows you to mention the slash command.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        guild: Optional[:class:`~abc.Snowflake`]
+            The :class:`Guild` of the command to mention. If ``None``, then the global command will be mentioned.
+
+        Returns
+        -------
+        :class:`str`
+            The string that allows you to mention the slash command.
+
+        Raises
+        ------
+        ValueError
+            If no guild was provided and the command is not registered globally, or the command is not registered
+            in the guild provided.
+        """
+        command_id = self.command_ids.get(guild.id if guild else None)
+        if command_id is None:
+            if None in self.command_ids:
+                command_id = self.command_ids[None]
+            elif guild is None:
+                raise ValueError(
+                    "No guild was passed to get_mention, but the command is not global."
+                )
+            else:
+                raise ValueError(
+                    "The command is not registered in the guild provided to get_mention."
+                )
+        return f"</{self.qualified_name}:{command_id}>"
 
 
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
@@ -2524,6 +2563,15 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
         self.type = ApplicationCommandOptionType.sub_command_group
         return decorator
+
+    @property
+    def command_ids(self) -> Dict[Optional[int], int]:
+        """Dict[Optional[:class:`int`], :class:`int`]: Command IDs the parent command of this subcommand currently has.
+        Schema: {Guild ID (None for global): command ID}
+
+        .. versionadded:: 2.2
+        """
+        return self.parent_cmd.command_ids if self.parent_cmd else {}
 
 
 class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
