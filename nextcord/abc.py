@@ -1258,20 +1258,20 @@ class Messageable:
 
     async def send(
         self,
-        content=None,
+        content: Optional[str]=None,
         *,
-        tts=None,
-        embed=None,
-        embeds=None,
-        file=None,
-        files=None,
-        stickers=None,
-        delete_after=None,
-        nonce=None,
-        allowed_mentions=None,
-        reference=None,
-        mention_author=None,
-        view=None,
+        tts: Optional[bool]=None,
+        embed: Optional[Embed]=None,
+        embeds: Optional[List[Embed]]=None,
+        file: Optional[File]=None,
+        files: Optional[List[File]]=None,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]]=None,
+        delete_after: Optional[float]=None,
+        nonce: Optional[Union[str, int]]=None,
+        allowed_mentions: Optional[AllowedMentions]=None,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]]=None,
+        mention_author: Optional[bool]=None,
+        view: Optional[View]=None,
     ):
         """|coro|
 
