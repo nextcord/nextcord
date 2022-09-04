@@ -20,9 +20,8 @@ class Client(nextcord.Client):
         return super().get_interaction(data, cls=MyInteraction)
 
 
+client = Client()
 TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
-intents = nextcord.Intents.default()
-client = Client(intents=intents)
 
 
 @client.slash_command(guild_ids=[TESTING_GUILD_ID])
