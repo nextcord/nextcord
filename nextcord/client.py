@@ -49,6 +49,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    overload,
 )
 
 import aiohttp
@@ -2654,6 +2655,18 @@ class Client:
 
         it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
         return utils._unique(it)
+
+    @overload
+    def get_interaction(self, data) -> Interaction:
+        ...
+
+    @overload
+    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction:
+        ...
+
+    @overload
+    def get_interaction(self, data, *, cls: Type[InterT]) -> InterT:
+        ...
 
     def get_interaction(
         self, data, *, cls: Type[InterT] = Interaction
