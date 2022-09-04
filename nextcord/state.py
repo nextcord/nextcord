@@ -1367,7 +1367,7 @@ class ConnectionState:
                     self.dispatch("reaction_clear_emoji", reaction)
 
     def parse_interaction_create(self, data) -> None:
-        interaction = Interaction(data=data, state=self)
+        interaction = self._get_client().get_interaction(data=data)
         if data["type"] == 3:  # interaction component
             custom_id = interaction.data["custom_id"]  # type: ignore
             component_type = interaction.data["component_type"]  # type: ignore
