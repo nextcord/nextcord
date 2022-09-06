@@ -2893,13 +2893,13 @@ of :class:`enum.Enum`.
 
     .. versionadded:: 2.1
 
+    .. versionchanged:: 2.2
+
+        Removed ``harmful_link`` as it is no longer used by Discord.
+
     .. attribute:: keyword
 
         This rule checks if content contains words from a user defined list of keywords.
-
-    .. attribute:: harmful_link
-
-        This rule checks if content contains any harmful links.
 
     .. attribute:: spam
 
