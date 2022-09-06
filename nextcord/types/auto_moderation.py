@@ -27,7 +27,7 @@ from typing import List, Literal, Optional, TypedDict
 from .snowflake import Snowflake
 
 AutoModerationEventType = Literal[1]
-AutoModerationTriggerType = Literal[1, 2, 3, 4]
+AutoModerationTriggerType = Literal[1, 2, 3, 4, 5]
 KeywordPresetType = Literal[1, 2, 3]
 AutoModerationActionType = Literal[1, 2, 3, 4]
 
@@ -36,6 +36,7 @@ class AutoModerationTriggerMetadata(TypedDict, total=False):
     keyword_filter: List[str]
     presets: List[KeywordPresetType]
     allow_list: List[str]
+    mention_total_limit: int
 
 
 class AutoModerationActionMetadata(TypedDict, total=False):

@@ -2909,6 +2909,11 @@ of :class:`enum.Enum`.
 
         This rule checks if content contains words from Discord pre-defined wordsets.
 
+    .. attribute:: mention_spam
+
+        This rule checks if the content contains more mentions than allowed.
+
+
 .. class:: KeywordPresetType
 
     Represents the type of a keyword preset auto moderation rule.
