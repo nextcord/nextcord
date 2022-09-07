@@ -2072,7 +2072,11 @@ class Client:
         return self._connection.get_global_application_commands(rollout=rollout)
 
     def add_application_command(
-        self, command: BaseApplicationCommand, overwrite: bool = False, use_rollout: bool = False, pre_remove: bool = True
+        self,
+        command: BaseApplicationCommand,
+        overwrite: bool = False,
+        use_rollout: bool = False,
+        pre_remove: bool = True,
     ) -> None:
         """Adds a BaseApplicationCommand object to the client for use.
 
