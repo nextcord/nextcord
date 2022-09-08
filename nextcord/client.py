@@ -2345,7 +2345,7 @@ class Client:
             from global commands instead. Defaults to `None`.
         """
         for command in commands:
-            await self._connection.delete_application_command(command, guild_id=None)
+            await self._connection.delete_application_command(command, guild_id=guild_id)
 
     def _get_global_commands(self) -> Set[BaseApplicationCommand]:
         ret = set()
