@@ -1099,14 +1099,25 @@ class ConnectionState:
             self._application_command_ids.pop(command.command_ids[guild_id], None)
             self._application_command_signatures.pop(command.get_signature(guild_id), None)
 
-        except KeyError as e:
-            _log.error(
-                "Could not globally unregister command %s as it is not a global command.",
-                command.error_name,
-            )
-            raise KeyError(
-                "This command cannot be globally unregistered, as it is not a global command."
-            )
+        except KeyError:
+            if guild_id:
+                _log.error(
+                    "Could not globally unregister command %s "
+                    "as it is not registered in the provided guild.",
+                    command.error_name,
+                )
+                raise KeyError(
+                    "This command cannot be globally unregistered, "
+                    "as it is not registered in the provided guild."
+                )
+            else:
+                _log.error(
+                    "Could not globally unregister command %s as it is not a global command.",
+                    command.error_name,
+                )
+                raise KeyError(
+                    "This command cannot be globally unregistered, as it is not a global command."
+                )
 
         except Exception as e:
             _log.error("Error unregistering command %s: %s", command.error_name, e)
