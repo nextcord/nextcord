@@ -572,7 +572,7 @@ class ConnectionState:
     ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         def get_parent_command(name: str, /) -> Optional[BaseApplicationCommand]:
             if not search_locales:
-                return self._application_command_signatures.get((name, type, guild_id), None)
+                return self._application_command_signatures.get((name, type, guild_id))
 
             for command in self._application_command_signatures.values():
                 if command.name_localizations and name in command.name_localizations.values():
@@ -588,7 +588,7 @@ class ConnectionState:
                 return parent
 
             if not search_locales:
-                return children.get(name, None)
+                return children.get(name)
 
             subcommand: Union[BaseApplicationCommand, SlashApplicationSubcommand]
             for subcommand in children.values():
