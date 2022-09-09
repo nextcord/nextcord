@@ -3341,7 +3341,7 @@ def unpack_annotation(
 
 
 class Range:
-    """An annotation helper for defining slash command `min_value` and `max_value` parameters.
+    """An annotation helper for defining slash command ``min_value`` and ``max_value`` parameters.
 
     .. versionadded:: 2.2
 
@@ -3442,7 +3442,7 @@ class Range:
 
 
 class String:
-    """An annotation helper for defining slash command `min_length` and `max_length` parameters.
+    """An annotation helper for defining slash command ``min_length`` and ``max_length`` parameters.
 
     .. versionadded:: 2.2
 
