@@ -47,7 +47,6 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
-    overload,
 )
 
 from . import utils
