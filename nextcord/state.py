@@ -51,8 +51,8 @@ from typing import (
 )
 
 from . import utils
-from .application_command import BaseApplicationCommand
 from .activity import BaseActivity
+from .application_command import BaseApplicationCommand
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
@@ -954,7 +954,6 @@ class ConnectionState:
                     )
                     # TODO: Re-examine how worthwhile this is.
                     await self.delete_application_command(app_cmd, guild_id)
-                    
 
             elif delete_unknown:
                 _log.debug(

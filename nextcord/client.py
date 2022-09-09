@@ -1958,9 +1958,13 @@ class Client:
                 response_signature: Dict[str, Any] = {
                     "type": int(interaction.data["type"]),
                     "qualified_name": interaction.data["name"],
-                    "guild_id": int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None,
+                    "guild_id": int(guild_id)
+                    if (guild_id := interaction.data.get("guild_id"))
+                    else None,
                 }
-                app_cmd = self._connection.get_application_command_from_signature(**response_signature)
+                app_cmd = self._connection.get_application_command_from_signature(
+                    **response_signature
+                )
                 if app_cmd:
                     if not isinstance(app_cmd, BaseApplicationCommand):
                         raise ValueError(
@@ -1969,7 +1973,6 @@ class Client:
                                 f"returned {type(app_cmd)} but BaseApplicationCommand was expected."
                             )
                         )
-
 
                     _log.debug(
                         "nextcord.Client: Basic signature matches, checking against raw payload."
@@ -1984,7 +1987,6 @@ class Client:
                         await app_cmd.call_from_interaction(interaction)
                     else:
                         do_deploy = True
-
 
                 else:
                     do_deploy = True
