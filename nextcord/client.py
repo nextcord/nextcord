@@ -45,9 +45,11 @@ from typing import (
     Sequence,
     Set,
     Tuple,
+    Type,
     TypeVar,
     Union,
     cast,
+    overload,
 )
 
 import aiohttp
@@ -93,11 +95,13 @@ from .widget import Widget
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand, ClientCog
+    from .asset import Asset
     from .channel import DMChannel
     from .enums import Locale
+    from .file import File
     from .flags import MemberCacheFlags
     from .member import Member
-    from .message import Message
+    from .message import Attachment, Message
     from .permissions import Permissions
     from .scheduled_events import ScheduledEvent
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
@@ -107,6 +111,7 @@ if TYPE_CHECKING:
 __all__ = ("Client",)
 
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
+InterT = TypeVar("InterT", bound="Interaction")
 
 
 _log = logging.getLogger(__name__)
@@ -1459,7 +1464,7 @@ class Client:
         *,
         name: str,
         region: Union[VoiceRegion, str] = VoiceRegion.us_west,
-        icon: bytes = MISSING,
+        icon: Optional[Union[bytes, Asset, Attachment, File]] = None,
         code: str = MISSING,
     ) -> Guild:
         """|coro|
@@ -1468,6 +1473,9 @@ class Client:
 
         Bot accounts in more than 10 guilds are not allowed to create guilds.
 
+        .. versionchanged:: 2.1
+            The ``icon`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ----------
         name: :class:`str`
@@ -1475,9 +1483,9 @@ class Client:
         region: :class:`.VoiceRegion`
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
-        icon: Optional[:class:`bytes`]
-            The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
-            for more details on what is expected.
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the icon. See :meth:`.ClientUser.edit` for more details on what is expected.
         code: :class:`str`
             The code for a template to create the guild with.
 
@@ -1496,17 +1504,12 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is not MISSING:
-            icon_base64 = utils._bytes_to_base64_data(icon)
-        else:
-            icon_base64 = None
-
-        region_value = str(region)
+        icon_base64 = await utils._obj_to_base64_data(icon)
 
         if code:
-            data = await self.http.create_from_template(code, name, region_value, icon_base64)
+            data = await self.http.create_from_template(code, name, str(region), icon_base64)
         else:
-            data = await self.http.create_guild(name, region_value, icon_base64)
+            data = await self.http.create_guild(name, str(region), icon_base64)
         return Guild(data=data, state=self._connection)
 
     async def fetch_stage_instance(self, channel_id: int, /) -> StageInstance:
@@ -2389,7 +2392,7 @@ class Client:
             from global commands instead. Defaults to `None`.
         """
         for command in commands:
-            await self._connection.delete_application_command(command, guild_id=None)
+            await self._connection.delete_application_command(command, guild_id=guild_id)
 
     def _get_global_commands(self) -> Set[BaseApplicationCommand]:
         ret = set()
@@ -2665,3 +2668,71 @@ class Client:
             return result
 
         return decorator
+
+    def parse_mentions(self, text: str) -> List[User]:
+        """Parses user mentions in a string and returns a list of :class:`~nextcord.User` objects.
+
+        .. note::
+
+            This does not include role or channel mentions. See :meth:`Guild.parse_mentions <nextcord.Guild.parse_mentions>`
+            for :class:`~nextcord.Member` objects, :meth:`Guild.parse_role_mentions <nextcord.Guild.parse_role_mentions>`
+            for :class:`~nextcord.Role` objects, and :meth:`Guild.parse_channel_mentions <nextcord.Guild.parse_channel_mentions>`
+            for :class:`~nextcord.abc.GuildChannel` objects.
+
+        .. note::
+
+            Only cached users will be returned. To get the IDs of all users mentioned, use
+            :func:`~nextcord.utils.parse_raw_mentions` instead.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[:class:`~nextcord.User`]
+            List of :class:`~nextcord.User` objects that were mentioned in the string.
+        """
+
+        it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
+        return utils._unique(it)
+
+    @overload
+    def get_interaction(self, data) -> Interaction:
+        ...
+
+    @overload
+    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction:
+        ...
+
+    @overload
+    def get_interaction(self, data, *, cls: Type[InterT]) -> InterT:
+        ...
+
+    def get_interaction(
+        self, data, *, cls: Type[InterT] = Interaction
+    ) -> Union[Interaction, InterT]:
+        """Returns an interaction for a gateway event.
+
+        Parameters
+        ----------
+        data
+            The data direct from the gateway.
+        cls
+            The factory class that will be used to create the interaction.
+            By default, this is :py:class:`Interaction`. Should a custom
+            class be provided, it should be a subclass of :py:class:`Interaction`.
+
+        Returns
+        -------
+        Interaction
+            An instance :py:class:`Interaction` or the provided subclass.
+
+        .. note::
+
+            This is synchronous due to how slash commands are implemented.
+        """
+        return cls(data=data, state=self._connection)

@@ -34,7 +34,7 @@ class Bot(commands.Bot):
 
 intents = nextcord.Intents.default()
 intents.message_content = True
-bot = Bot(command_prefix="$")
+bot = Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()

@@ -32,6 +32,7 @@ from asyncio import Future
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     ClassVar,
     Dict,
     List,
@@ -47,13 +48,22 @@ from typing import (
 
 from . import abc, utils
 from .asset import Asset
+from .auto_moderation import AutoModerationRule, AutoModerationTriggerMetadata
 from .bans import BanEntry
-from .channel import *
-from .channel import _guild_channel_factory, _threaded_guild_channel_factory
+from .channel import (
+    CategoryChannel,
+    StageChannel,
+    TextChannel,
+    VoiceChannel,
+    _guild_channel_factory,
+    _threaded_guild_channel_factory,
+)
 from .colour import Colour
 from .emoji import Emoji
 from .enums import (
     AuditLogAction,
+    AutoModerationEventType,
+    AutoModerationTriggerType,
     ChannelType,
     ContentFilter,
     NotificationLevel,
@@ -66,7 +76,6 @@ from .enums import (
     try_enum,
 )
 from .errors import ClientException, InvalidArgument, InvalidData
-from .file import File
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
@@ -91,10 +100,14 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
-    from .channel import CategoryChannel, StageChannel, TextChannel, VoiceChannel
+    from .auto_moderation import AutoModerationAction
+    from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
+    from .file import File
+    from .message import Attachment
     from .permissions import Permissions
     from .state import ConnectionState
     from .template import Template
+    from .types.auto_moderation import AutoModerationRuleCreate
     from .types.guild import (
         Ban as BanPayload,
         Guild as GuildPayload,
@@ -114,7 +127,7 @@ if TYPE_CHECKING:
     from .webhook import Webhook
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
-    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel]
+    GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, ForumChannel]
     ByCategoryItem = Tuple[Optional[CategoryChannel], List[GuildChannel]]
 
 
@@ -206,6 +219,7 @@ class Guild(Hashable):
         They are currently as follows:
 
         - ``ANIMATED_ICON``: Guild can upload an animated icon.
+        - ``AUTO_MODERATION``: Guild has set up auto moderation rules.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
         - ``COMMUNITY``: Guild is a community server.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
@@ -624,6 +638,16 @@ class Guild(Hashable):
         This is sorted by the position and are in UI order from top to bottom.
         """
         r = [ch for ch in self._channels.values() if isinstance(ch, CategoryChannel)]
+        r.sort(key=lambda c: (c.position, c.id))
+        return r
+
+    @property
+    def forum_channels(self) -> List[ForumChannel]:
+        """List[:class:`ForumChannel`]: A list of forum channels that belong to this guild.
+
+        This is sorted by the position and are in UI order from top to bottom.
+        """
+        r = [ch for ch in self._channels.values() if isinstance(ch, ForumChannel)]
         r.sort(key=lambda c: (c.position, c.id))
         return r
 
@@ -1414,6 +1438,78 @@ class Guild(Hashable):
         self._channels[channel.id] = channel
         return channel
 
+    async def create_forum_channel(
+        self,
+        name: str,
+        *,
+        topic: str,
+        position: int = MISSING,
+        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        category: Optional[CategoryChannel] = None,
+        reason: Optional[str] = None,
+    ) -> ForumChannel:
+        """|coro|
+
+        This is similar to :meth:`create_text_channel` except makes a :class:`ForumChannel` instead.
+
+        .. versionadded:: 2.1
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The channel's name.
+        topic: :class:`str`
+            The new channel's topic.
+        overwrites: Dict[Union[:class:`Role`, :class:`Member`], :class:`PermissionOverwrite`]
+            A :class:`dict` of target (either a role or a member) to
+            :class:`PermissionOverwrite` to apply upon creation of a channel.
+            Useful for creating secret channels.
+        category: Optional[:class:`CategoryChannel`]
+            The category to place the newly created channel under.
+            The permissions will be automatically synced to category if no
+            overwrites are provided.
+        position: :class:`int`
+            The position in the channel list. This is a number that starts
+            at 0. e.g. the top channel is position 0.
+        reason: Optional[:class:`str`]
+            The reason for creating this channel. Shows up on the audit log.
+
+        Raises
+        ------
+        Forbidden
+            You do not have the proper permissions to create this channel.
+        HTTPException
+            Creating the channel failed.
+        InvalidArgument
+            The permission overwrite information is not in proper form.
+
+        Returns
+        -------
+        :class:`ForumChannel`
+            The channel that was just created.
+        """
+
+        options: Dict[str, Any] = {
+            "topic": topic,
+        }
+        if position is not MISSING:
+            options["position"] = position
+
+        data = await self._create_channel(
+            name,
+            overwrites=overwrites,
+            channel_type=ChannelType.forum,
+            category=category,
+            reason=reason,
+            **options,
+        )
+        channel = ForumChannel(state=self._state, guild=self, data=data)  # type: ignore
+        # payload *should* contain all forum channel info
+
+        # temporarily add to the cache
+        self._channels[channel.id] = channel
+        return channel
+
     create_category_channel = create_category
 
     async def leave(self) -> None:
@@ -1455,10 +1551,10 @@ class Guild(Hashable):
         reason: Optional[str] = MISSING,
         name: str = MISSING,
         description: Optional[str] = MISSING,
-        icon: Optional[bytes] = MISSING,
-        banner: Optional[bytes] = MISSING,
-        splash: Optional[bytes] = MISSING,
-        discovery_splash: Optional[bytes] = MISSING,
+        icon: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        banner: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        splash: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        discovery_splash: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
         community: bool = MISSING,
         region: Optional[Union[str, VoiceRegion]] = MISSING,
         afk_channel: Optional[VoiceChannel] = MISSING,
@@ -1490,6 +1586,10 @@ class Guild(Hashable):
         .. versionchanged:: 2.0
             The newly updated guild is returned.
 
+        .. versionchanged:: 2.1
+            The ``icon``, ``banner``, ``splash``, ``discovery_splash``
+            parameters now accept :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ----------
         name: :class:`str`
@@ -1497,24 +1597,22 @@ class Guild(Hashable):
         description: Optional[:class:`str`]
             The new description of the guild. Could be ``None`` for no description.
             This is only available to guilds that contain ``PUBLIC`` in :attr:`Guild.features`.
-        icon: :class:`bytes`
-            A :term:`py:bytes-like object` representing the icon. Only PNG/JPEG is supported.
-            GIF is only available to guilds that contain ``ANIMATED_ICON`` in :attr:`Guild.features`.
-            Could be ``None`` to denote removal of the icon.
-        banner: :class:`bytes`
-            A :term:`py:bytes-like object` representing the banner.
-            Could be ``None`` to denote removal of the banner. This is only available to guilds that contain
-            ``BANNER`` in :attr:`Guild.features`.
-        splash: :class:`bytes`
-            A :term:`py:bytes-like object` representing the invite splash.
-            Only PNG/JPEG supported. Could be ``None`` to denote removing the
-            splash. This is only available to guilds that contain ``INVITE_SPLASH``
-            in :attr:`Guild.features`.
-        discovery_splash: :class:`bytes`
-            A :term:`py:bytes-like object` representing the discovery splash.
-            Only PNG/JPEG supported. Could be ``None`` to denote removing the
-            splash. This is only available to guilds that contain ``DISCOVERABLE``
-            in :attr:`Guild.features`.
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the icon. Only PNG/JPEG is supported. GIF is only available to guilds that contain
+            ``ANIMATED_ICON`` in :attr:`Guild.features`. Could be ``None`` to denote removal of the icon.
+        banner: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the banner. Could be ``None`` to denote removal of the banner.
+            This is only available to guilds that contain ``BANNER`` in :attr:`Guild.features`.
+        splash: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the invite splash. Only PNG/JPEG supported. Could be ``None`` to denote removing the
+            splash. This is only available to guilds that contain ``INVITE_SPLASH`` in :attr:`Guild.features`.
+        discovery_splash: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the discovery splash. Only PNG/JPEG supported. Could be ``None`` to denote removing the
+            splash. This is only available to guilds that contain ``DISCOVERABLE`` in :attr:`Guild.features`.
         community: :class:`bool`
             Whether the guild should be a Community guild. If set to ``True``\, both ``rules_channel``
             and ``public_updates_channel`` parameters are required.
@@ -1590,28 +1688,16 @@ class Guild(Hashable):
             fields["afk_timeout"] = afk_timeout
 
         if icon is not MISSING:
-            if icon is None:
-                fields["icon"] = icon
-            else:
-                fields["icon"] = utils._bytes_to_base64_data(icon)
+            fields["icon"] = await utils._obj_to_base64_data(icon)
 
         if banner is not MISSING:
-            if banner is None:
-                fields["banner"] = banner
-            else:
-                fields["banner"] = utils._bytes_to_base64_data(banner)
+            fields["banner"] = await utils._obj_to_base64_data(banner)
 
         if splash is not MISSING:
-            if splash is None:
-                fields["splash"] = splash
-            else:
-                fields["splash"] = utils._bytes_to_base64_data(splash)
+            fields["splash"] = await utils._obj_to_base64_data(splash)
 
         if discovery_splash is not MISSING:
-            if discovery_splash is None:
-                fields["discovery_splash"] = discovery_splash
-            else:
-                fields["discovery_splash"] = utils._bytes_to_base64_data(discovery_splash)
+            fields["discovery_splash"] = await utils._obj_to_base64_data(discovery_splash)
 
         if default_notifications is not MISSING:
             if not isinstance(default_notifications, NotificationLevel):
@@ -2458,7 +2544,7 @@ class Guild(Hashable):
         self,
         *,
         name: str,
-        image: bytes,
+        image: Union[bytes, Asset, Attachment, File],
         roles: List[Role] = MISSING,
         reason: Optional[str] = None,
     ) -> Emoji:
@@ -2472,13 +2558,16 @@ class Guild(Hashable):
         You must have the :attr:`~Permissions.manage_emojis` permission to
         do this.
 
+        .. versionchanged:: 2.1
+            The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         -----------
         name: :class:`str`
             The emoji name. Must be at least 2 characters.
-        image: :class:`bytes`
-            The :term:`py:bytes-like object` representing the image data to use.
-            Only JPG, PNG and GIF images are supported.
+        image: Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]
+            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the image data to use. Only JPG, PNG and GIF images are supported.
         roles: List[:class:`Role`]
             A :class:`list` of :class:`Role`\s that can use this emoji. Leave empty to make it available to everyone.
         reason: Optional[:class:`str`]
@@ -2496,8 +2585,7 @@ class Guild(Hashable):
         :class:`Emoji`
             The created emoji.
         """
-
-        img = utils._bytes_to_base64_data(image)
+        img_base64 = await utils._obj_to_base64_data(image)
 
         role_ids: SnowflakeList
         if roles:
@@ -2506,7 +2594,7 @@ class Guild(Hashable):
             role_ids = []
 
         data = await self._state.http.create_custom_emoji(
-            self.id, name, img, roles=role_ids, reason=reason
+            self.id, name, img_base64, roles=role_ids, reason=reason
         )
         return self._state.store_emoji(self, data)
 
@@ -2579,7 +2667,7 @@ class Guild(Hashable):
         colour: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
-        icon: Optional[Union[str, bytes, File]] = ...,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
     ) -> Role:
         ...
 
@@ -2593,7 +2681,7 @@ class Guild(Hashable):
         color: Union[Colour, int] = ...,
         hoist: bool = ...,
         mentionable: bool = ...,
-        icon: Optional[Union[str, bytes, File]] = ...,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
     ) -> Role:
         ...
 
@@ -2606,8 +2694,8 @@ class Guild(Hashable):
         colour: Union[Colour, int] = MISSING,
         hoist: bool = MISSING,
         mentionable: bool = MISSING,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = MISSING,
         reason: Optional[str] = None,
-        icon: Optional[Union[str, bytes, File]] = MISSING,
     ) -> Role:
         """|coro|
 
@@ -2620,6 +2708,9 @@ class Guild(Hashable):
 
         .. versionchanged:: 1.6
             Can now pass ``int`` to ``colour`` keyword-only parameter.
+
+        .. versionchanged:: 2.1
+            The ``icon`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         -----------
@@ -2636,10 +2727,10 @@ class Guild(Hashable):
         mentionable: :class:`bool`
             Indicates if the role should be mentionable by others.
             Defaults to ``False``.
+        icon: Optional[Union[:class:`str`, :class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            The icon of the role. Supports unicode emojis and images
         reason: Optional[:class:`str`]
             The reason for creating this role. Shows up on the audit log.
-        icon: Optional[Union[:class:`str`, :class:`bytes`]]
-            The icon of the role. Supports unicode emojis and images
 
         Raises
         -------
@@ -2677,19 +2768,14 @@ class Guild(Hashable):
             fields["name"] = name
 
         if icon is not MISSING:
-            if icon is None:
-                fields["icon"] = icon
-            elif isinstance(icon, str):
+            if isinstance(icon, str):
                 fields["unicode_emoji"] = icon
-            elif isinstance(icon, File):
-                fields["icon"] = utils._bytes_to_base64_data(icon.fp.read())
             else:
-                fields["icon"] = utils._bytes_to_base64_data(icon)
+                fields["icon"] = await utils._obj_to_base64_data(icon)
 
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
         role = Role(guild=self, data=data, state=self._state)
 
-        # TODO: add to cache
         return role
 
     async def edit_role_positions(
@@ -3269,12 +3355,15 @@ class Guild(Hashable):
         privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
         end_time: datetime.datetime = MISSING,
         description: str = MISSING,
-        image: bytes = MISSING,
+        image: Optional[Union[bytes, Asset, Attachment, File]] = None,
         reason: Optional[str] = None,
     ) -> ScheduledEvent:
         """|coro|
 
         Create a new scheduled event object.
+
+        .. versionchanged:: 2.1
+            The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -3294,18 +3383,22 @@ class Guild(Hashable):
             The description for the event
         entity_type: :class:`ScheduledEventEntityType`
             The type of event
-        image: :class:`bytes`
-            A :term:`py:bytes-like object` representing the cover image.
+        image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the cover image.
+        reason: Optional[:class:`str`]
+            The reason for creating this scheduled event. Shows up in the audit logs.
 
         Returns
         -------
         :class:`ScheduledEvent`
             The created event object.
         """
-        payload: Dict[str, Any] = {}
-        payload["name"] = name
-        payload["entity_type"] = entity_type.value
-        payload["scheduled_start_time"] = start_time.isoformat()
+        payload: Dict[str, Any] = {
+            "name": name,
+            "entity_type": entity_type.value,
+            "scheduled_start_time": start_time.isoformat(),
+        }
         if channel is not MISSING:
             payload["channel_id"] = channel.id
         if metadata is not MISSING:
@@ -3316,8 +3409,9 @@ class Guild(Hashable):
             payload["scheduled_end_time"] = end_time.isoformat()
         if description is not MISSING:
             payload["description"] = description
-        if image is not MISSING:
-            payload["image"] = utils._bytes_to_base64_data(image)
+        if image is not None:
+            payload["image"] = await utils._obj_to_base64_data(image)
+
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)
 
@@ -3463,3 +3557,229 @@ class Guild(Hashable):
     async def delete_application_commands(self, *commands: BaseApplicationCommand) -> None:
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)
+
+    async def auto_moderation_rules(self) -> List[AutoModerationRule]:
+        """|coro|
+
+        Get the list of auto moderation rules from this guild.
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        .. versionadded:: 2.1
+
+        Raises
+        ------
+        Forbidden
+            You do not have permission to fetch the auto moderation rules.
+
+        Returns
+        -------
+        List[:class:`AutoModerationRule`]
+            The auto moderation rules of this guild.
+        """
+
+        data = await self._state.http.list_guild_auto_moderation_rules(self.id)
+        return [AutoModerationRule(data=d, state=self._state) for d in data]
+
+    async def fetch_auto_moderation_rule(self, rule_id: int, /) -> AutoModerationRule:
+        """|coro|
+
+        Retrieves a :class:`AutoModerationRule` from this guild by its ID
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        .. versionadded:: 2.1
+
+        Parameters
+        ----------
+        rule_id: :class:`int`
+            The ID of the auto moderation rule to fetch.
+
+        Raises
+        ------
+        NotFound
+            The requested rule could not be found.
+        Forbidden
+            You do not have permission to fetch auto moderation rules.
+        HTTPException
+            Fetching the rule failed.
+
+        Returns
+        -------
+        :class:`AutoModerationRule`
+            The found auto moderation rule.
+        """
+
+        data = await self._state.http.get_auto_moderation_rule(self.id, rule_id)
+        return AutoModerationRule(data=data, state=self._state)
+
+    async def create_auto_moderation_rule(
+        self,
+        *,
+        name: str,
+        event_type: AutoModerationEventType,
+        trigger_type: AutoModerationTriggerType,
+        actions: List[AutoModerationAction],
+        trigger_metadata: Optional[AutoModerationTriggerMetadata] = None,
+        enabled: Optional[bool] = None,
+        exempt_roles: Optional[List[Snowflake]] = None,
+        exempt_channels: Optional[List[Snowflake]] = None,
+        reason: Optional[str] = None,
+    ) -> AutoModerationRule:
+        """|coro|
+
+        Create a new auto moderation rule.
+
+        Requires the :attr:`~Permissions.manage_guild` permission.
+
+        .. versionadded:: 2.1
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The name to use for this rule.
+        event_type: :class:`AutoModerationEventType`
+            The type of event conteto listen to for this rule.
+        actions: List[:class:`AutoModerationAction`]
+            The actions to execute when this rule is triggered.
+        trigger_type: :class:`AutoModerationTriggerType`
+            The type of content that triggers this rule.
+        trigger_metadata: Optinal[:class:`AutoModerationTriggerMetadata`]
+            The additional data to use to determine if this rule has been triggered.
+        enabled: Optional[:class:`bool`]
+            If this rule should be enabled.
+        exempt_roles: Optional[List[:class:`abc.Snowflake`]]
+            Roles that should be exempt from this rule.
+        exempt_channels: Optional[List[:class:`abc.Snowflake`]]
+            Channels that should be exempt from this rule.
+        reason: Optional[:class:`str`]
+            The reason for creating this rule. Shows in the audit log.
+
+        Raises
+        ------
+        Forbidden
+            You do not have permission to create auto moderation rules.
+        HTTPException
+            Creating the rule failed.
+        InvalidArgument
+            An invalid type was passed for an argument.
+
+        Returns
+        -------
+        :class:`AutoModerationRule`
+            The newly created auto moderation rule.
+        """
+
+        if not isinstance(event_type, AutoModerationEventType):
+            raise InvalidArgument("event_type must be of type AutoModerationEventType")
+
+        if not isinstance(trigger_type, AutoModerationTriggerType):
+            raise InvalidArgument("trigger_type must be of type AutoModerationTriggerType")
+
+        payload: AutoModerationRuleCreate = {
+            "name": str(name),
+            "event_type": event_type.value,
+            "trigger_type": trigger_type.value,
+            "actions": [action.payload for action in actions],
+        }
+
+        if trigger_metadata is not None:
+            if not isinstance(trigger_metadata, AutoModerationTriggerMetadata):
+                raise InvalidArgument(
+                    "trigger_metadata must be of type AutoModerationTriggerMetadata"
+                )
+
+            payload["trigger_metadata"] = trigger_metadata.payload
+
+        if enabled is not None:
+            payload["enabled"] = enabled
+
+        if exempt_roles is not None:
+            payload["exempt_roles"] = [str(role.id) for role in exempt_roles]
+
+        if exempt_channels is not None:
+            payload["exempt_channels"] = [str(channel.id) for channel in exempt_channels]
+
+        data = await self._state.http.create_auto_moderation_rule(
+            self.id, data=payload, reason=reason
+        )
+        return AutoModerationRule(data=data, state=self._state)
+
+    def parse_mentions(self, text: str) -> List[Union[Member, User]]:
+        """Parses user mentions in a string and returns a list of :class:`Member` objects.
+        If the member is not in the guild, a :class:`User` object is returned for that member instead.
+
+        .. note::
+
+            This does not include role or channel mentions. See :meth:`~Guild.parse_role_mentions`
+            for :class:`Role` objects and :meth:`~Guild.parse_channel_mentions` for
+            :class:`~abc.GuildChannel` objects.
+
+        .. note::
+
+            Only members or users found in the cache will be returned. To get the IDs of all users
+            mentioned, use :func:`~utils.parse_raw_mentions` instead.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[Union[:class:`Member`, :class:`User`]]
+            List of :class:`Member` or :class:`User` objects that were mentioned in the string.
+        """
+        get_member_or_user: Callable[
+            [int], Optional[Union[Member, User]]
+        ] = lambda id: self.get_member(id) or self._state.get_user(id)
+        it = filter(None, map(get_member_or_user, utils.parse_raw_mentions(text)))
+        return utils._unique(it)
+
+    def parse_role_mentions(self, text: str) -> List[Role]:
+        """Parses role mentions in a string and returns a list of :class:`Role` objects.
+
+        .. note::
+
+            Only cached roles found in the :class:`Guild` will be returned. To get the IDs
+            of all roles mentioned, use :func:`~utils.parse_raw_role_mentions` instead.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[:class:`Role`]
+            List of :class:`Role` objects that were mentioned in the string.
+        """
+        it = filter(None, map(self.get_role, utils.parse_raw_role_mentions(text)))
+        return utils._unique(it)
+
+    def parse_channel_mentions(self, text: str) -> List[abc.GuildChannel]:
+        """Parses channel mentions in a string and returns a list of :class:`~abc.GuildChannel` objects.
+
+        .. note::
+
+            Only cached channels found in the :class:`Guild` will be returned. To get the IDs of all
+            channels mentioned, use :func:`~utils.parse_raw_channel_mentions` instead.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[:class:`~abc.GuildChannel`]
+            List of :class:`~abc.GuildChannel` objects that were mentioned in the string.
+        """
+        it = filter(None, map(self.get_channel, utils.parse_raw_channel_mentions(text)))
+        return utils._unique(it)

@@ -1245,7 +1245,7 @@ class Webhook(BaseWebhook):
         *,
         reason: Optional[str] = None,
         name: Optional[str] = MISSING,
-        avatar: Optional[bytes] = MISSING,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
         channel: Optional[Snowflake] = None,
         prefer_auth: bool = True,
     ) -> Webhook:
@@ -1253,12 +1253,16 @@ class Webhook(BaseWebhook):
 
         Edits this Webhook.
 
+        .. versionchanged:: 2.1
+            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ------------
         name: Optional[:class:`str`]
             The webhook's new default name.
-        avatar: Optional[:class:`bytes`]
-            A :term:`py:bytes-like object` representing the webhook's new default avatar.
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the webhook's new default avatar.
         channel: Optional[:class:`abc.Snowflake`]
             The webhook's new channel. This requires an authenticated webhook.
 
@@ -1286,12 +1290,12 @@ class Webhook(BaseWebhook):
         if self.token is None and self.auth_token is None:
             raise InvalidArgument("This webhook does not have a token associated with it")
 
-        payload = {}
+        payload: Dict[str, Any] = {}
         if name is not MISSING:
             payload["name"] = str(name) if name is not None else None
 
         if avatar is not MISSING:
-            payload["avatar"] = utils._bytes_to_base64_data(avatar) if avatar is not None else None
+            payload["avatar"] = await utils._obj_to_base64_data(avatar)
 
         adapter = async_context.get()
 

@@ -24,14 +24,14 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .abc import Snowflake
 from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
-from .utils import MISSING, _bytes_to_base64_data, parse_time
+from .utils import MISSING, _obj_to_base64_data, parse_time
 
 __all__: Tuple[str, ...] = (
     "EntityMetadata",
@@ -44,8 +44,10 @@ if TYPE_CHECKING:
 
     from .abc import GuildChannel
     from .enums import ScheduledEventEntityType, ScheduledEventStatus
+    from .file import File
     from .guild import Guild
     from .member import Member
+    from .message import Attachment
     from .state import ConnectionState
     from .types.scheduled_events import (
         ScheduledEvent as ScheduledEventPayload,
@@ -333,12 +335,15 @@ class ScheduledEvent(Hashable):
         description: str = MISSING,
         type: ScheduledEventEntityType = MISSING,
         status: ScheduledEventStatus = MISSING,
-        reason: str = MISSING,
-        image: Optional[bytes] = MISSING,
+        reason: Optional[str] = None,
+        image: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
     ) -> ScheduledEvent:
         """|coro|
 
         Edit the scheduled event.
+
+        .. versionchanged:: 2.1
+            The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -360,6 +365,8 @@ class ScheduledEvent(Hashable):
             The new type for the event.
         status: :class:`ScheduledEventStatus`
             The new status for the event.
+        reason: Optional[:class:`str`]
+            The reason for editing this scheduled event. Shows up in the audit logs.
 
             .. note::
 
@@ -367,16 +374,16 @@ class ScheduledEvent(Hashable):
                 scheduled -> active ;
                 active -> completed ;
                 scheduled -> canceled
-        image: Optional[:class:`bytes`]
-            A :term:`py:bytes-like object` representing the cover image.
-            Could be ``None`` to denote removal of the cover image.
+        image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the cover image. Could be ``None`` to denote removal of the cover image.
 
         Returns
         -------
         :class:`ScheduledEvent`
             The updated event object.
         """
-        payload: dict = {}
+        payload: Dict[str, Any] = {}
         if channel is not MISSING:
             payload["channel_id"] = channel.id
 
@@ -405,10 +412,7 @@ class ScheduledEvent(Hashable):
             payload["status"] = status.value
 
         if image is not MISSING:
-            if image is None:
-                payload["image"] = image
-            else:
-                payload["image"] = _bytes_to_base64_data(image)
+            payload["image"] = await _obj_to_base64_data(image)
 
         if not payload:
             return self

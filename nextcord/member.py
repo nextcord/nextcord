@@ -508,9 +508,11 @@ class Member(abc.Messageable, _UserTag):
 
     @property
     def mention(self) -> str:
-        """:class:`str`: Returns a string that allows you to mention the member."""
-        if self.nick:
-            return f"<@!{self._user.id}>"
+        """:class:`str`: Returns a string that allows you to mention the member.
+
+        .. versionchanged:: 2.2
+            The nickname mention syntax is no longer returned as it is deprecated by Discord.
+        """
         return f"<@{self._user.id}>"
 
     @property
