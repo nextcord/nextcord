@@ -12,6 +12,21 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p1p1:
+
+v2.1.1
+------
+
+This version includes a few bug fixes backported from ``v2.2.0`` as that includes breaking changes.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix issue where :attr:`Message.thread` does not check if :attr:`Message.guild` is an :class:`Object` before initialising, resulting in an error (:issue:`772`, :issue:`793`).
+- Fix slash command auto-sync needlessly syncing if ``options`` or ``channel_types`` are in a different order (:issue:`785`).
+- Fix message editing not sending empty list fields (``embeds``, ``components``, ...) (:issue:`796`).
+- Fix :func:`Client.delete_application_commands` not deleting guild commands when ``guild_id`` is passed (:issue:`792`).
+
 .. _vp2p1p0:
 
 v2.1.0
