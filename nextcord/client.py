@@ -2063,8 +2063,8 @@ class Client:
             Added the ``search_locales`` keyword argument.
 
         .. versionchanged:: 2.2
-            Changed the signature from `(qualified_name, cmd_type, guild_id, *, search_locales)` to `(*, type, qualified_name, guild_id, search_locales)`.
-            All paramters are now keyword-only.
+            Changed the signature from ``(qualified_name, cmd_type, guild_id, *, search_locales)`` to ``(*, type, qualified_name, guild_id, search_locales) `.
+            All parameters are now keyword-only.
 
         Parameters
         ----------
@@ -2081,8 +2081,7 @@ class Client:
         Returns
         -------
         command: Optional[:class:`BaseApplicationCommand`, :class:`SlashApplicationSubcommand`]
-            Application Command with the given signature. If no command with that signature is
-            found, returns ``None`` instead.
+            Application Command with the given signature. If found else ``None`` is returned instead.
         """
         return self._connection.get_application_command_from_signature(
             type=type.value if isinstance(type, ApplicationCommandType) else type,
