@@ -2063,7 +2063,8 @@ class Client:
             Added the ``search_locales`` keyword argument.
 
         .. versionchanged:: 2.2
-            Changed the signature order from `(qualified_name, cmd_type, guild_id, *, search_locales)` to `(*, type, qualified_name, guild_id, search_locales)`.
+            Changed the signature from `(qualified_name, cmd_type, guild_id, *, search_locales)` to `(*, type, qualified_name, guild_id, search_locales)`.
+            All paramters are now keyword-only.
 
         Parameters
         ----------
@@ -2083,14 +2084,8 @@ class Client:
             Application Command with the given signature. If no command with that signature is
             found, returns ``None`` instead.
         """
-        _type: int
-        if isinstance(type, ApplicationCommandType):
-            _type = type.value
-        else:
-            _type = type
-
         return self._connection.get_application_command_from_signature(
-            type=_type,
+            type=type.value if isinstance(type, ApplicationCommandType) else type,
             qualified_name=qualified_name,
             guild_id=guild_id,
             search_locales=search_locales,
