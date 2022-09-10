@@ -2887,6 +2887,8 @@ class Guild(Hashable):
         You must have the :attr:`~Permissions.ban_members` permission to
         do this.
 
+        For backwards compatibility reasons, by default one day worth of messages will be deleted.
+
         .. warning::
             delete_message_days is deprecated and will be removed in a future version.
             Use delete_message_seconds instead.
@@ -2895,14 +2897,14 @@ class Guild(Hashable):
         -----------
         user: :class:`abc.Snowflake`
             The user to ban from their guild.
-        reason: Optional[:class:`str`]
-            The reason the user got banned.
         delete_message_seconds: Optional[:class:`int`]
             The number of seconds worth of messages to delete from the user
             in the guild.
         delete_message_days: Optional[:class:`int`]
             The number of days worth of messages to delete from the user
             in the guild. The minimum is 0 and the maximum is 7.
+        reason: Optional[:class:`str`]
+            The reason the user got banned.
 
         Raises
         -------
