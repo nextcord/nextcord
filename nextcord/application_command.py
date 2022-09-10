@@ -749,13 +749,10 @@ class CallbackMixin:
                 possible_options: Set[str] = set()
 
                 for i, param in enumerate(callback_params.values()):
-                    if (
+                    if not (
                         param.annotation is param.empty or issubclass(param.annotation, Interaction)
                     ) and i in (0, 1):
-                        # self or interaction parameter, ignore
-                        continue
-
-                    possible_options.add(param.name)
+                        possible_options.add(param.name)
 
                 intersection = {param.name for param in callback_params.values()} - possible_options
 
@@ -776,6 +773,7 @@ class CallbackMixin:
                 #  Try to look into fixing that in the future?
                 #  If self.parent_cog isn't reliable enough, we can possibly check if the first parameter name is `self`
                 self_skip = bool(self.parent_cog)
+                first_arg = True
                 for name, param in callback_params.items():
                     if first_arg:
                         if not self_skip:
