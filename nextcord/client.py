@@ -45,9 +45,11 @@ from typing import (
     Sequence,
     Set,
     Tuple,
+    Type,
     TypeVar,
     Union,
     cast,
+    overload,
 )
 
 import aiohttp
@@ -109,6 +111,7 @@ if TYPE_CHECKING:
 __all__ = ("Client",)
 
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
+InterT = TypeVar("InterT", bound="Interaction")
 
 
 _log = logging.getLogger(__name__)
@@ -2345,7 +2348,7 @@ class Client:
             from global commands instead. Defaults to `None`.
         """
         for command in commands:
-            await self._connection.delete_application_command(command, guild_id=None)
+            await self._connection.delete_application_command(command, guild_id=guild_id)
 
     def _get_global_commands(self) -> Set[BaseApplicationCommand]:
         ret = set()
@@ -2621,3 +2624,71 @@ class Client:
             return result
 
         return decorator
+
+    def parse_mentions(self, text: str) -> List[User]:
+        """Parses user mentions in a string and returns a list of :class:`~nextcord.User` objects.
+
+        .. note::
+
+            This does not include role or channel mentions. See :meth:`Guild.parse_mentions <nextcord.Guild.parse_mentions>`
+            for :class:`~nextcord.Member` objects, :meth:`Guild.parse_role_mentions <nextcord.Guild.parse_role_mentions>`
+            for :class:`~nextcord.Role` objects, and :meth:`Guild.parse_channel_mentions <nextcord.Guild.parse_channel_mentions>`
+            for :class:`~nextcord.abc.GuildChannel` objects.
+
+        .. note::
+
+            Only cached users will be returned. To get the IDs of all users mentioned, use
+            :func:`~nextcord.utils.parse_raw_mentions` instead.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[:class:`~nextcord.User`]
+            List of :class:`~nextcord.User` objects that were mentioned in the string.
+        """
+
+        it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
+        return utils._unique(it)
+
+    @overload
+    def get_interaction(self, data) -> Interaction:
+        ...
+
+    @overload
+    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction:
+        ...
+
+    @overload
+    def get_interaction(self, data, *, cls: Type[InterT]) -> InterT:
+        ...
+
+    def get_interaction(
+        self, data, *, cls: Type[InterT] = Interaction
+    ) -> Union[Interaction, InterT]:
+        """Returns an interaction for a gateway event.
+
+        Parameters
+        ----------
+        data
+            The data direct from the gateway.
+        cls
+            The factory class that will be used to create the interaction.
+            By default, this is :py:class:`Interaction`. Should a custom
+            class be provided, it should be a subclass of :py:class:`Interaction`.
+
+        Returns
+        -------
+        Interaction
+            An instance :py:class:`Interaction` or the provided subclass.
+
+        .. note::
+
+            This is synchronous due to how slash commands are implemented.
+        """
+        return cls(data=data, state=self._connection)

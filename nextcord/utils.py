@@ -85,6 +85,9 @@ __all__ = (
     "remove_markdown",
     "escape_markdown",
     "escape_mentions",
+    "parse_raw_mentions",
+    "parse_raw_role_mentions",
+    "parse_raw_channel_mentions",
     "as_chunks",
     "format_dt",
 )
@@ -849,6 +852,68 @@ def escape_mentions(text: str) -> str:
         The text with the mentions removed.
     """
     return re.sub(r"@(everyone|here|[!&]?[0-9]{17,20})", "@\u200b\\1", text)
+
+
+def parse_raw_mentions(text: str) -> List[int]:
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.User` IDs
+    matched with the syntax of ``<@user_id>`` or ``<@!user_id>``.
+
+    .. note::
+
+        This does not include role or channel mentions. See :func:`parse_raw_role_mentions`
+        and :func:`parse_raw_channel_mentions` for those.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    -----------
+    text: :class:`str`
+        The text to parse mentions from.
+
+    Returns
+    --------
+    List[:class:`int`]
+        A list of user IDs that were mentioned.
+    """
+    return [int(x) for x in re.findall(r"<@!?(\d{15,20})>", text)]
+
+
+def parse_raw_role_mentions(text: str) -> List[int]:
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.Role` IDs
+    matched with the syntax of ``<@&role_id>``.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    -----------
+    text: :class:`str`
+        The text to parse mentions from.
+
+    Returns
+    --------
+    List[:class:`int`]
+        A list of role IDs that were mentioned.
+    """
+    return [int(x) for x in re.findall(r"<@&(\d{15,20})>", text)]
+
+
+def parse_raw_channel_mentions(text: str) -> List[int]:
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.abc.GuildChannel` IDs
+    matched with the syntax of ``<#channel_id>``.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    -----------
+    text: :class:`str`
+        The text to parse mentions from.
+
+    Returns
+    --------
+    List[:class:`int`]
+        A list of channel IDs that were mentioned.
+    """
+    return [int(x) for x in re.findall(r"<#(\d{15,20})>", text)]
 
 
 def _chunk(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]:

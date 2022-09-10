@@ -836,7 +836,7 @@ class Message(Hashable):
                 self.guild = None
 
         if thread_data := data.get("thread"):
-            if not self.thread and self.guild:
+            if not self.thread and isinstance(self.guild, Guild):
                 self.guild._store_thread(thread_data)
 
         try:
@@ -1061,21 +1061,21 @@ class Message(Hashable):
         This allows you to receive the user IDs of mentioned users
         even in a private message context.
         """
-        return [int(x) for x in re.findall(r"<@!?([0-9]{15,20})>", self.content)]
+        return utils.parse_raw_mentions(self.content)
 
     @utils.cached_slot_property("_cs_raw_channel_mentions")
     def raw_channel_mentions(self) -> List[int]:
         """List[:class:`int`]: A property that returns an array of channel IDs matched with
         the syntax of ``<#channel_id>`` in the message content.
         """
-        return [int(x) for x in re.findall(r"<#([0-9]{15,20})>", self.content)]
+        return utils.parse_raw_channel_mentions(self.content)
 
     @utils.cached_slot_property("_cs_raw_role_mentions")
     def raw_role_mentions(self) -> List[int]:
         """List[:class:`int`]: A property that returns an array of role IDs matched with
         the syntax of ``<@&role_id>`` in the message content.
         """
-        return [int(x) for x in re.findall(r"<@&([0-9]{15,20})>", self.content)]
+        return utils.parse_raw_role_mentions(self.content)
 
     @utils.cached_slot_property("_cs_channel_mentions")
     def channel_mentions(self) -> List[GuildChannel]:
@@ -1156,7 +1156,10 @@ class Message(Hashable):
     @property
     def thread(self) -> Optional[Thread]:
         """Optional[:class:`Thread`]: The thread started from this message. None if no thread was started."""
-        return self.guild and self.guild.get_thread(self.id)
+        if not isinstance(self.guild, Guild):
+            return None
+
+        return self.guild.get_thread(self.id)
 
     def is_system(self) -> bool:
         """:class:`bool`: Whether the message is a system message.

@@ -29,6 +29,7 @@ import asyncio
 import json
 import logging
 import sys
+import warnings
 import weakref
 from typing import (
     TYPE_CHECKING,
@@ -91,7 +92,6 @@ if TYPE_CHECKING:
         template,
         threads,
         user,
-        voice,
         webhook,
         widget,
     )
@@ -115,13 +115,36 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
     return text
 
 
-_API_VERSION: Literal[9, 10] = 10
+_DEFAULT_API_VERSION = 10
+
+_API_VERSION: Literal[9, 10] = _DEFAULT_API_VERSION
 
 
-# TODO: remove once message content is enforced on all versions (31 aug)
+class UnsupportedAPIVersion(UserWarning):
+    """Warning category raised when changing the API version to an unsupported version."""
+
+
 def _modify_api_version(version: Literal[9, 10]):
-    if version not in (9, 10):
-        raise ValueError("Version must be an integer of `9` or `10`")
+    """Modify the API version used by the HTTP client.
+
+    Additional versions may be added around the time of a Discord API
+    version bump to allow temporarily downgrading to an older API version
+    or upgrading to a newer version that is not yet supported by the library.
+
+    Changing the API version from the default is not supported and may result in
+    unexpected behaviour.
+    """
+    available_versions = (9, 10)
+
+    if version not in available_versions:
+        raise ValueError(f"Only API versions {available_versions} are available.")
+
+    if version != _DEFAULT_API_VERSION:
+        warnings.warn(
+            "Changing the API version is not supported and may result in unexpected behaviour.",
+            category=UnsupportedAPIVersion,
+            stacklevel=2,
+        )
 
     global _API_VERSION
     _API_VERSION = version
@@ -130,7 +153,7 @@ def _modify_api_version(version: Literal[9, 10]):
 
 
 class Route:
-    BASE: ClassVar[str] = "https://discord.com/api/v10"
+    BASE: ClassVar[str] = f"https://discord.com/api/v{_DEFAULT_API_VERSION}"
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
@@ -468,33 +491,32 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
     ) -> Dict[str, Any]:
-        payload = {}
+        payload: Dict[str, Any] = {
+            "tts": tts,
+        }
 
-        if content:
+        if content is not None:
             payload["content"] = content
 
-        if tts:
-            payload["tts"] = True
-
-        if embed:
+        if embed is not None:
             payload["embeds"] = [embed]
 
-        if embeds:
+        if embeds is not None:
             payload["embeds"] = embeds
 
-        if nonce:
+        if nonce is not None:
             payload["nonce"] = nonce
 
-        if allowed_mentions:
+        if allowed_mentions is not None:
             payload["allowed_mentions"] = allowed_mentions
 
-        if message_reference:
+        if message_reference is not None:
             payload["message_reference"] = message_reference
 
-        if components:
+        if components is not None:
             payload["components"] = components
 
-        if stickers:
+        if stickers is not None:
             payload["sticker_ids"] = stickers
 
         return payload
@@ -531,10 +553,9 @@ class HTTPClient:
     def send_typing(self, channel_id: Snowflake) -> Response[None]:
         return self.request(Route("POST", "/channels/{channel_id}/typing", channel_id=channel_id))
 
-    # basic method to get the multipart form without requesting to send a message
     def get_message_multipart_form(
         self,
-        payload: Dict[str, Any] = {},
+        payload: Dict[str, Any],
         message_key: Optional[str] = None,
         *,
         files: Sequence[File],
@@ -546,9 +567,9 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
-        attachments: Optional[List[dict]] = None,
-    ) -> list[dict]:
-        form = []
+        attachments: Optional[List[Dict[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        form: List[Dict[str, Any]] = []
 
         payload["attachments"] = attachments or []
 
@@ -563,7 +584,7 @@ class HTTPClient:
             components=components,
         )
 
-        if message_key:
+        if message_key is not None:
             payload[message_key] = msg_payload
         else:
             payload.update(msg_payload)
@@ -576,7 +597,6 @@ class HTTPClient:
                     "description": file.description,
                 }
             )
-
             form.append(
                 {
                     "name": f"files[{index}]",
@@ -585,7 +605,6 @@ class HTTPClient:
                     "content_type": "application/octet-stream",
                 }
             )
-
         form.append({"name": "payload_json", "value": utils._to_json(payload)})
 
         return form
@@ -604,14 +623,14 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
-        attachments: Optional[List[dict]] = None,
+        attachments: Optional[List[Dict[str, Any]]] = None,
     ) -> Response[message.Message]:
         payload: Dict[str, Any] = {
             "tts": tts,
             "attachments": attachments or [],
         }
         form = self.get_message_multipart_form(
-            payload,
+            payload=payload,
             files=files,
             content=content,
             embed=embed,
@@ -888,7 +907,7 @@ class HTTPClient:
         r = Route(
             "PATCH", "/guilds/{guild_id}/members/{user_id}", guild_id=guild_id, user_id=user_id
         )
-        payload = {}
+        payload: Dict[str, bool] = {}
         if mute is not None:
             payload["mute"] = mute
 
@@ -1136,7 +1155,7 @@ class HTTPClient:
         allowed_mentions: Optional[message.AllowedMentions] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
-        attachments: Optional[List[dict]] = None,
+        attachments: Optional[List[Dict[str, Any]]] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
@@ -1198,7 +1217,7 @@ class HTTPClient:
             "GET", "/channels/{channel_id}/threads/archived/public", channel_id=channel_id
         )
 
-        params = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
         if before:
             params["before"] = before
         params["limit"] = limit
@@ -1211,7 +1230,7 @@ class HTTPClient:
             "GET", "/channels/{channel_id}/threads/archived/private", channel_id=channel_id
         )
 
-        params = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
         if before:
             params["before"] = before
         params["limit"] = limit
@@ -1225,7 +1244,7 @@ class HTTPClient:
             "/channels/{channel_id}/users/@me/threads/archived/private",
             channel_id=channel_id,
         )
-        params = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
         if before:
             params["before"] = before
         params["limit"] = limit
@@ -1404,7 +1423,7 @@ class HTTPClient:
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
     ) -> Response[List[guild.Ban]]:
-        params: Dict[str, Any] = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
 
         if limit is not None:
             params["limit"] = limit
@@ -1963,7 +1982,7 @@ class HTTPClient:
     def get_global_commands(
         self, application_id: Snowflake, with_localizations: bool = True
     ) -> Response[List[interactions.ApplicationCommand]]:
-        params = {}
+        params: Dict[str, str] = {}
         if with_localizations:
             params["with_localizations"] = "true"
 
@@ -2031,7 +2050,7 @@ class HTTPClient:
     def get_guild_commands(
         self, application_id: Snowflake, guild_id: Snowflake, with_localizations: bool = True
     ) -> Response[List[interactions.ApplicationCommand]]:
-        params = {}
+        params: Dict[str, str] = {}
         if with_localizations:
             params["with_localizations"] = "true"
         r = Route(

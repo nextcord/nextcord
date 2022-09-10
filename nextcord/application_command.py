@@ -34,6 +34,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    ClassVar,
     Coroutine,
     Dict,
     Iterable,
@@ -46,6 +47,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    overload,
 )
 
 import typing_extensions
@@ -81,6 +83,7 @@ from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
+    from .abc import Snowflake
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
@@ -107,6 +110,8 @@ __all__ = (
     "message_command",
     "user_command",
     "Mentionable",
+    "Range",
+    "String",
 )
 
 _log = logging.getLogger(__name__)
@@ -118,6 +123,11 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+# As nextcord.types exist, we cannot import types
+if TYPE_CHECKING:
+    EllipsisType = ellipsis  # noqa: F821
+else:
+    EllipsisType = type(Ellipsis)
 
 
 def _cog_special_method(func: FuncT) -> FuncT:
@@ -366,7 +376,11 @@ class ApplicationCommandOption:
 
         if self.channel_types:
             # noinspection PyUnresolvedReferences
-            ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
+            # When reading application commands from Discord, they return the channel types sorted.
+            # To prevent needless syncing and allow lazy loading, we need to sort them as well.
+            ret["channel_types"] = sorted(
+                [channel_type.value for channel_type in self.channel_types]
+            )
 
         if self.min_value is not None:
             ret["min_value"] = self.min_value
@@ -729,7 +743,8 @@ class CallbackMixin:
             #  might be able to do something here.
             if option_class:
                 skip_counter = 1
-                typehints = typing.get_type_hints(self.callback)
+                # TODO: use typing.get_type_hints when 3.9 is standard
+                typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
                 callback_params = signature(self.callback).parameters
                 possible_options: Set[str] = set()
 
@@ -1448,7 +1463,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             annotation_type = found_type
             if found_channel_types:
                 annotation_channel_types = found_channel_types
-
         else:
             raise ValueError(
                 f"{self.error_name} Invalid annotation origin: {typehint_origin} \n"
@@ -1656,7 +1670,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
 
 class SlashCommandMixin(CallbackMixin):
-    _description: Optional[str]
+    if TYPE_CHECKING:
+        _description: Optional[str]
+        command_ids: Dict[Optional[int], int]
+        qualified_name: str
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]):
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
@@ -1745,6 +1762,41 @@ class SlashCommandMixin(CallbackMixin):
         else:
             kwargs = await self.get_slash_kwargs(state, interaction, option_data)
             await self.invoke_callback_with_hooks(state, interaction, **kwargs)
+
+    def get_mention(self, guild: Optional[Snowflake] = None) -> str:
+        """Returns a string that allows you to mention the slash command.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        guild: Optional[:class:`~abc.Snowflake`]
+            The :class:`Guild` of the command to mention. If ``None``, then the global command will be mentioned.
+
+        Returns
+        -------
+        :class:`str`
+            The string that allows you to mention the slash command.
+
+        Raises
+        ------
+        ValueError
+            If no guild was provided and the command is not registered globally, or the command is not registered
+            in the guild provided.
+        """
+        command_id = self.command_ids.get(guild.id if guild else None)
+        if command_id is None:
+            if None in self.command_ids:
+                command_id = self.command_ids[None]
+            elif guild is None:
+                raise ValueError(
+                    "No guild was passed to get_mention, but the command is not global."
+                )
+            else:
+                raise ValueError(
+                    "The command is not registered in the guild provided to get_mention."
+                )
+        return f"</{self.qualified_name}:{command_id}>"
 
 
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
@@ -2552,6 +2604,15 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self.type = ApplicationCommandOptionType.sub_command_group
         return decorator
 
+    @property
+    def command_ids(self) -> Dict[Optional[int], int]:
+        """Dict[Optional[:class:`int`], :class:`int`]: Command IDs the parent command of this subcommand currently has.
+        Schema: {Guild ID (None for global): command ID}
+
+        .. versionadded:: 2.2
+        """
+        return self.parent_cmd.command_ids if self.parent_cmd else {}
+
 
 class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
     def __init__(
@@ -2628,8 +2689,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         ret = super().get_payload(guild_id)
         if self.children:
             ret["options"] = [child.payload for child in self.children.values()]
-        else:
+        elif self.options:
             ret["options"] = [parameter.payload for parameter in self.options.values()]
+
         return ret
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
@@ -3246,8 +3308,8 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
         located_annotation = MISSING
         # arg_list = typing.get_args(given_annotation)  # TODO: Once Python 3.10 is standard, use this
         arg_list = typing_extensions.get_args(given_annotation)
-        for arg in arg_list[1:]:
-            if arg in resolve_list:
+        for arg in reversed(arg_list[1:]):
+            if arg in resolve_list or isinstance(arg, type) and issubclass(arg, OptionConverter):
                 located_annotation = arg
                 break
 
@@ -3307,3 +3369,179 @@ def unpack_annotation(
         raise ValueError(f"Given Annotation {given_annotation} has an unhandled origin: {origin}")
 
     return type_ret, literal_ret
+
+
+class Range:
+    """An annotation helper for defining slash command ``min_value`` and ``max_value`` parameters.
+
+    .. versionadded:: 2.2
+
+    .. container:: operations
+
+        .. describe:: Range[x, y]
+
+            Creates a range from ``x`` to ``y``.
+
+        .. describe:: Range[x] | Range[..., x]
+
+            Create a range up to ``x``.
+
+        .. describe:: Range[x, ...]
+
+            Create a range from ``x``.
+    """
+
+    min: ClassVar[Optional[Union[int, float]]]
+    max: ClassVar[Optional[Union[int, float]]]
+
+    @overload
+    def __class_getitem__(
+        cls,
+        value: Union[
+            int,
+            Tuple[int, int],
+            Tuple[int, EllipsisType],
+            Tuple[EllipsisType, int],
+        ],
+    ) -> Type[int]:
+        ...
+
+    @overload
+    def __class_getitem__(
+        cls,
+        value: Union[
+            float,
+            Tuple[float, float],
+            Tuple[float, EllipsisType],
+            Tuple[EllipsisType, float],
+        ],
+    ) -> Type[float]:
+        ...
+
+    def __class_getitem__(
+        cls,
+        value: Union[
+            int,
+            float,
+            Tuple[int, int],
+            Tuple[float, float],
+            Tuple[Union[int, float], EllipsisType],
+            Tuple[EllipsisType, Union[int, float]],
+        ],
+    ) -> Type[Union[int, float]]:
+        class Inner(Range, OptionConverter):
+            def __init__(self):
+                super().__init__(option_type=type(self.min or self.max))
+
+            async def convert(self, interaction: Interaction, value: Any) -> Any:
+                return value
+
+            def modify(self, option: SlashCommandOption):
+                if self.min and option.min_value is None:
+                    option.min_value = self.min
+                if self.max and option.max_value is None:
+                    option.max_value = self.max
+
+        if isinstance(value, tuple):
+            if len(value) != 2:
+                raise ValueError("Range can only take 1-2 arguments")
+
+            min_value = value[0]
+            max_value = value[1]
+        else:
+            min_value = None
+            max_value = value
+
+        if min_value is None or isinstance(min_value, EllipsisType):
+            Inner.min = None
+        elif isinstance(min_value, (int, float)):
+            Inner.min = min_value
+        else:
+            raise TypeError("Range min must be int or float.")
+
+        if isinstance(max_value, EllipsisType):
+            Inner.max = None
+        elif isinstance(max_value, (int, float)):
+            Inner.max = max_value
+        else:
+            raise TypeError("Range max must be int or float.")
+
+        if Inner.min is None and Inner.max is None:
+            raise TypeError("At least one of min or max must be set.")
+
+        return Inner
+
+
+class String:
+    """An annotation helper for defining slash command ``min_length`` and ``max_length`` parameters.
+
+    .. versionadded:: 2.2
+
+    .. container:: operations
+
+        .. describe:: String[x, y]
+
+            Creates a range of string length from ``x`` to ``y``.
+
+        .. describe:: String[x] | String[..., x]
+
+            Create a range of string length up to ``x``.
+
+        .. describe:: String[x, ...]
+
+            Create a range of string length from ``x``.
+    """
+
+    min: ClassVar[Optional[int]]
+    max: ClassVar[Optional[int]]
+
+    def __class_getitem__(
+        cls,
+        value: Union[
+            int,
+            Tuple[int, int],
+            Tuple[int, EllipsisType],
+            Tuple[EllipsisType, int],
+        ],
+    ) -> Type[int]:
+        class Inner(String, OptionConverter):
+            def __init__(self):
+                super().__init__(option_type=str)
+
+            async def convert(self, interaction: Interaction, value: Any) -> Any:
+                return value
+
+            def modify(self, option: SlashCommandOption):
+                if self.min and option.min_length is None:
+                    option.min_length = self.min
+                if self.max and option.max_length is None:
+                    option.max_length = self.max
+
+        if isinstance(value, tuple):
+            if len(value) != 2:
+                raise ValueError("String can only take 1-2 arguments")
+
+            min_value = value[0]
+            max_value = value[1]
+        else:
+            min_value = None
+            max_value = value
+
+        if min_value is None or isinstance(min_value, EllipsisType):
+            Inner.min = None
+        elif isinstance(min_value, int):
+            Inner.min = min_value
+        else:
+            raise TypeError("String min must be int.")
+
+        if isinstance(max_value, EllipsisType):
+            Inner.max = None
+        elif isinstance(max_value, int):
+            Inner.max = max_value
+        else:
+            raise TypeError("String max must be int.")
+
+        if Inner.min is None and Inner.max is None:
+            raise TypeError("At least one of min or max must be set.")
+
+        return Inner

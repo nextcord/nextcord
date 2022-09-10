@@ -1221,6 +1221,12 @@ Utility Functions
 
 .. autofunction:: nextcord.utils.escape_mentions
 
+.. autofunction:: nextcord.utils.parse_raw_mentions
+
+.. autofunction:: nextcord.utils.parse_raw_role_mentions
+
+.. autofunction:: nextcord.utils.parse_raw_channel_mentions
+
 .. autofunction:: nextcord.utils.resolve_invite
 
 .. autofunction:: nextcord.utils.resolve_template
@@ -1290,6 +1296,12 @@ of :class:`enum.Enum`.
         A private thread
 
         .. versionadded:: 2.0
+
+    .. attribute:: guild_directory
+
+        A channel containing the guilds in a `Student Hub <https://support.discord.com/hc/en-us/articles/4406046651927-Discord-Student-Hubs-FAQ>`_
+
+        .. versionadded:: 2.2
 
     .. attribute:: forum
 
@@ -2881,13 +2893,13 @@ of :class:`enum.Enum`.
 
     .. versionadded:: 2.1
 
+    .. versionchanged:: 2.2
+
+        Removed ``harmful_link`` as it is no longer used by Discord.
+
     .. attribute:: keyword
 
         This rule checks if content contains words from a user defined list of keywords.
-
-    .. attribute:: harmful_link
-
-        This rule checks if content contains any harmful links.
 
     .. attribute:: spam
 
@@ -4704,6 +4716,9 @@ Slash Options
     * - :class:`int`
       - Integer
       - Any integer between -2^53 and 2^53
+    * - :class:`float`
+      - Number
+      - Any double between -2^53 and 2^53
     * - :class:`bool`
       - Boolean
       -
@@ -4746,9 +4761,6 @@ Slash Options
     * - :class:`Mentionable`
       - Mentionable
       - Includes Users and Roles.
-    * - :class:`float`
-      - Number
-      - Any double between -2^53 and 2^53
     * - :class:`Attachment`
       - Attachment
       -
@@ -4759,17 +4771,25 @@ Slash Options
 
     * - Typing Annotation
       - Notes
-    * - :class:`Optional` [<type>]
+    * - :data:`~typing.Optional` [<type>]
       - Makes the slash option not required with the type of the given <type>.
-    * - :class:`Literal` [<choice1>, <choice2>, ...]
+    * - :data:`~typing.Literal` [<choice1>, <choice2>, ...]
       - Makes the slash option into a choice of the given type. All choices have to be the same data type.
-    * - :class:`Union` [<type1>, <type2>, ...]
+    * - :data:`~typing.Union` [<type1>, <type2>, ...]
       - Allows compatible annotations to be typehinted together. Channel types in a union will allow the slash option
         to be any of them.
-    * - :class:`Annotated` [<type1>, <type2>, ..., <typeN>]
+    * - :data:`~typing.Annotated` [<type1>, <type2>, ..., <typeN>]
       - Makes your IDE see <type1> as the expected type, but Nextcord will attempt to use <typeN> as the option type.
         If <typeN> isn't a valid option type, Nextcord will work backwards towards <type2> until it finds a type that
         can be used as a valid option type.
+    * - :class:`Range` [[type1 | ``...``], <type2 | ``...``>]
+      - Makes a range of values set in :attr:`SlashOption.min_value` and :attr:`SlashOption.max_value`.
+        If ``type1`` is not set or is an ellipsis, ``min_value`` is ``None``.
+        If ``type2`` is an ellipsis (``...``), ``max_value`` is ``None``.
+    * - :class:`String` [[type1 | ``...``], <type2 | ``...``>]
+      - Makes a range of string length set in :attr:`SlashOption.min_length` and :attr:`SlashOption.max_length`.
+        If ``type1`` is not set or is an ellipsis, ``min_length`` is ``None``.
+        If ``type2`` is an ellipsis (``...``), ``max_length`` is ``None``.
 
 .. attributetable:: SlashOption
 
@@ -4784,6 +4804,10 @@ Slash Options
     :members:
     :inherited-members:
     :exclude-members: option_types
+
+.. autoclass:: Range()
+
+.. autoclass:: String()
 
 User Commands
 ~~~~~~~~~~~~~
