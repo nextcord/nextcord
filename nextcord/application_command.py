@@ -838,7 +838,7 @@ class CallbackMixin:
         self,
         state: ConnectionState,
         interaction: Interaction,
-        args: Optional[List[Any]] = None,
+        args: Optional[tuple] = None,
         kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """|coro|
