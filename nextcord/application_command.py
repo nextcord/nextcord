@@ -835,7 +835,11 @@ class CallbackMixin:
         return True
 
     async def invoke_callback_with_hooks(
-        self, state: ConnectionState, interaction: Interaction, args: List[Any] = [], kwargs: Dict[str, Any] = {}
+        self,
+        state: ConnectionState,
+        interaction: Interaction,
+        args: List[Any] = [],
+        kwargs: Dict[str, Any] = {},
     ) -> None:
         """|coro|
         Invokes the callback with all hooks and checks.
