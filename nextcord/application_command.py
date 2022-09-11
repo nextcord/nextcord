@@ -846,7 +846,7 @@ class CallbackMixin:
         """
 
         if not args:
-            args = []
+            args = ()
         if not kwargs:
             kwargs = {}
 
