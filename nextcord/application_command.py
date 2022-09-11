@@ -2819,7 +2819,7 @@ class UserApplicationCommand(BaseApplicationCommand):
 
     async def call(self, state: ConnectionState, interaction: Interaction):
         await self.invoke_callback_with_hooks(
-            state, interaction, args=[get_users_from_interaction(state, interaction)[0]]
+            state, interaction, args=(get_users_from_interaction(state, interaction)[0],)
         )
 
     def from_callback(
@@ -2893,7 +2893,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
 
     async def call(self, state: ConnectionState, interaction: Interaction):
         await self.invoke_callback_with_hooks(
-            state, interaction, args=[get_messages_from_interaction(state, interaction)[0]]
+            state, interaction, args=(get_messages_from_interaction(state, interaction)[0],)
         )
 
     def from_callback(
