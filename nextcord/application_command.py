@@ -835,7 +835,7 @@ class CallbackMixin:
         return True
 
     async def invoke_callback_with_hooks(
-        self, state: ConnectionState, interaction: Interaction, *args, **kwargs
+        self, state: ConnectionState, interaction: Interaction, args: List[Any] = [], kwargs: Dict[str, Any] = {}
     ) -> None:
         """|coro|
         Invokes the callback with all hooks and checks.
@@ -1730,7 +1730,7 @@ class SlashCommandMixin(CallbackMixin):
             )
         else:
             kwargs = await self.get_slash_kwargs(state, interaction, option_data)
-            await self.invoke_callback_with_hooks(state, interaction, **kwargs)
+            await self.invoke_callback_with_hooks(state, interaction, kwargs=kwargs)
 
     def get_mention(self, guild: Optional[Snowflake] = None) -> str:
         """Returns a string that allows you to mention the slash command.
@@ -2809,7 +2809,7 @@ class UserApplicationCommand(BaseApplicationCommand):
 
     async def call(self, state: ConnectionState, interaction: Interaction):
         await self.invoke_callback_with_hooks(
-            state, interaction, get_users_from_interaction(state, interaction)[0]
+            state, interaction, args=[get_users_from_interaction(state, interaction)[0]]
         )
 
     def from_callback(
@@ -2883,7 +2883,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
 
     async def call(self, state: ConnectionState, interaction: Interaction):
         await self.invoke_callback_with_hooks(
-            state, interaction, get_messages_from_interaction(state, interaction)[0]
+            state, interaction, args=[get_messages_from_interaction(state, interaction)[0]]
         )
 
     def from_callback(
