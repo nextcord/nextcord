@@ -73,7 +73,7 @@ if TYPE_CHECKING:
     from .asset import Asset
     from .channel import CategoryChannel, DMChannel, GroupChannel, PartialMessageable, TextChannel
     from .client import Client
-    from .embeds import Embed
+    from .embeds import Embed, EmbedData
     from .enums import InviteTarget
     from .guild import Guild
     from .member import Member
@@ -86,6 +86,11 @@ if TYPE_CHECKING:
         OverwriteType,
         PermissionOverwrite as PermissionOverwritePayload,
     )
+    from .types.message import (
+        AllowedMentions as AllowedMentionsT,
+        MessageReference as MessageReferencePayloadT,
+    )
+    from .types.components import Component as ComponentT
     from .ui.view import View
     from .user import ClientUser
 
@@ -1260,7 +1265,7 @@ class Messageable:
         self,
         content: Optional[str] = None,
         *,
-        tts: Optional[bool] = None,
+        tts: bool = False,
         embed: Optional[Embed] = None,
         embeds: Optional[List[Embed]] = None,
         file: Optional[File] = None,
@@ -1303,7 +1308,7 @@ class Messageable:
             The file to upload.
         files: List[:class:`~nextcord.File`]
             A list of files to upload. Must be a maximum of 10.
-        nonce: :class:`int`
+        nonce: Union[:class:`int`, :class:`str`]
             The nonce to use for sending this message. If the message was successfully sent,
             then the message will have a nonce with this value.
         delete_after: :class:`float`
@@ -1370,29 +1375,33 @@ class Messageable:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
         if embed is not None:
-            embed = embed.to_dict()
+            embed: EmbedData = embed.to_dict()
 
         elif embeds is not None:
-            embeds = [embed.to_dict() for embed in embeds]
+            embeds: List[EmbedData] = [em.to_dict() for em in embeds]
 
         if stickers is not None:
-            stickers = [sticker.id for sticker in stickers]
+            stickers: List[int] = [sticker.id for sticker in stickers]
 
         if allowed_mentions is not None:
             if state.allowed_mentions is not None:
-                allowed_mentions = state.allowed_mentions.merge(allowed_mentions).to_dict()
+                allowed_mentions: AllowedMentionsT = state.allowed_mentions.merge(
+                    allowed_mentions
+                ).to_dict()
             else:
-                allowed_mentions = allowed_mentions.to_dict()
+                allowed_mentions: AllowedMentionsT = allowed_mentions.to_dict()
         else:
-            allowed_mentions = state.allowed_mentions and state.allowed_mentions.to_dict()
+            allowed_mentions: AllowedMentionsT = (
+                state.allowed_mentions and state.allowed_mentions.to_dict()
+            )
 
         if mention_author is not None:
-            allowed_mentions = allowed_mentions or AllowedMentions().to_dict()
+            allowed_mentions: AllowedMentionsT = allowed_mentions or AllowedMentions().to_dict()
             allowed_mentions["replied_user"] = bool(mention_author)
 
         if reference is not None:
             try:
-                reference = reference.to_message_reference_dict()
+                reference: MessageReferencePayloadT = reference.to_message_reference_dict()
             except AttributeError:
                 raise InvalidArgument(
                     "reference parameter must be Message, MessageReference, or PartialMessage"
@@ -1402,9 +1411,9 @@ class Messageable:
             if not hasattr(view, "__discord_ui_view__"):
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
-            components = view.to_components()
+            components: List[ComponentT] = view.to_components()
         else:
-            components = None
+            components: Optional[List[ComponentT]] = None
 
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
