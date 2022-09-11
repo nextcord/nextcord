@@ -838,12 +838,18 @@ class CallbackMixin:
         self,
         state: ConnectionState,
         interaction: Interaction,
-        args: List[Any] = [],
-        kwargs: Dict[str, Any] = {},
+        args: Optional[List[Any]] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """|coro|
         Invokes the callback with all hooks and checks.
         """
+
+        if not args:
+            args = []
+        if not kwargs:
+            kwargs = {}
+
         interaction._set_application_command(self)  # type: ignore
         try:
             can_run = await self.can_run(interaction)
