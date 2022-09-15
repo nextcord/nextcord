@@ -17,7 +17,7 @@ with open("nextcord/__init__.py") as f:
 if not version:
     raise RuntimeError("version is not set")
 
-if version.endswith(("a", "b", "rc")):
+if any(v in version for v in ("a", "b", "rc")):
     # append version identifier based on commit count
     try:
         import subprocess
@@ -44,9 +44,10 @@ with open("README.rst") as f:
 extras_require = {
     "voice": ["PyNaCl>=1.3.0,<1.5"],
     "docs": [
-        "sphinx==4.0.2",
+        "sphinx>=5.0.1,<6",
         "sphinxcontrib_trio==1.1.2",
         "sphinxcontrib-websupport",
+        "typing_extensions>=4.2.0, <5",
     ],
     "speed": ["orjson>=3.5.4", "aiodns>=1.1", "Brotli", "cchardet"],
 }

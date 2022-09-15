@@ -40,13 +40,17 @@ from .errors import (
     HTTPException,
     PrivilegedIntentsRequired,
 )
+from .flags import Intents
 from .gateway import *
 from .state import AutoShardedConnectionState
+from .utils import MISSING
 
 if TYPE_CHECKING:
     from .activity import BaseActivity
     from .enums import Status
+    from .flags import MemberCacheFlags
     from .gateway import DiscordWebSocket
+    from .mentions import AllowedMentions
 
     EI = TypeVar("EI", bound="EventItem")
 
@@ -326,11 +330,61 @@ class AutoShardedClient(Client):
         _connection: AutoShardedConnectionState
 
     def __init__(
-        self, *args: Any, loop: Optional[asyncio.AbstractEventLoop] = None, **kwargs: Any
+        self,
+        *,
+        shard_ids: Optional[list[int]] = None,
+        max_messages: Optional[int] = 1000,
+        connector: Optional[aiohttp.BaseConnector] = None,
+        proxy: Optional[str] = None,
+        proxy_auth: Optional[aiohttp.BasicAuth] = None,
+        shard_id: Optional[int] = None,
+        shard_count: Optional[int] = None,
+        application_id: Optional[int] = None,
+        intents: Intents = Intents.default(),
+        member_cache_flags: MemberCacheFlags = MISSING,
+        chunk_guilds_at_startup: bool = MISSING,
+        status: Optional[Status] = None,
+        activity: Optional[BaseActivity] = None,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        heartbeat_timeout: float = 60.0,
+        guild_ready_timeout: float = 2.0,
+        assume_unsync_clock: bool = True,
+        enable_debug_events: bool = False,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        lazy_load_commands: bool = True,
+        rollout_associate_known: bool = True,
+        rollout_delete_unknown: bool = True,
+        rollout_register_new: bool = True,
+        rollout_update_known: bool = True,
+        rollout_all_guilds: bool = False,
     ) -> None:
-        kwargs.pop("shard_id", None)
-        self.shard_ids: Optional[List[int]] = kwargs.pop("shard_ids", None)
-        super().__init__(*args, loop=loop, **kwargs)
+        self.shard_ids: Optional[List[int]] = shard_ids
+        super().__init__(
+            max_messages=max_messages,
+            connector=connector,
+            proxy=proxy,
+            proxy_auth=proxy_auth,
+            shard_id=shard_id,
+            shard_count=shard_count,
+            application_id=application_id,
+            intents=intents,
+            member_cache_flags=member_cache_flags,
+            chunk_guilds_at_startup=chunk_guilds_at_startup,
+            status=status,
+            activity=activity,
+            allowed_mentions=allowed_mentions,
+            heartbeat_timeout=heartbeat_timeout,
+            guild_ready_timeout=guild_ready_timeout,
+            assume_unsync_clock=assume_unsync_clock,
+            enable_debug_events=enable_debug_events,
+            loop=loop,
+            lazy_load_commands=lazy_load_commands,
+            rollout_associate_known=rollout_associate_known,
+            rollout_delete_unknown=rollout_delete_unknown,
+            rollout_register_new=rollout_register_new,
+            rollout_update_known=rollout_update_known,
+            rollout_all_guilds=rollout_all_guilds,
+        )
 
         if self.shard_ids is not None:
             if self.shard_count is None:
@@ -355,14 +409,35 @@ class AutoShardedClient(Client):
             shard_id = (guild_id >> 22) % self.shard_count  # type: ignore
         return self.__shards[shard_id].ws
 
-    def _get_state(self, **options: Any) -> AutoShardedConnectionState:
+    def _get_state(
+        self,
+        max_messages: Optional[int],
+        application_id: Optional[int],
+        heartbeat_timeout: float,
+        guild_ready_timeout: float,
+        allowed_mentions: Optional[AllowedMentions],
+        activity: Optional[BaseActivity],
+        status: Optional[Status],
+        intents: Intents,
+        chunk_guilds_at_startup: bool,
+        member_cache_flags: MemberCacheFlags,
+    ) -> AutoShardedConnectionState:
         return AutoShardedConnectionState(
             dispatch=self.dispatch,
             handlers=self._handlers,
             hooks=self._hooks,
             http=self.http,
             loop=self.loop,
-            **options,
+            max_messages=max_messages,
+            application_id=application_id,
+            heartbeat_timeout=heartbeat_timeout,
+            guild_ready_timeout=guild_ready_timeout,
+            allowed_mentions=allowed_mentions,
+            activity=activity,
+            status=status,
+            intents=intents,
+            chunk_guilds_at_startup=chunk_guilds_at_startup,
+            member_cache_flags=member_cache_flags,
         )
 
     @property

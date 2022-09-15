@@ -25,15 +25,15 @@ class Confirm(nextcord.ui.View):
         self.stop()
 
 
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot()
 
 
-@bot.command()
-async def ask(ctx):
+@bot.slash_command()
+async def ask(interaction):
     """Asks the user a question to confirm something."""
     # We create the view and assign it to a variable so we can wait for it later.
     view = Confirm()
-    await ctx.send("Do you want to continue?", view=view)
+    await interaction.send("Do you want to continue?", view=view)
     # Wait for the View to stop listening for input...
     await view.wait()
     if view.value is None:

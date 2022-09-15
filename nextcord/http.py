@@ -29,6 +29,7 @@ import asyncio
 import json
 import logging
 import sys
+import warnings
 import weakref
 from typing import (
     TYPE_CHECKING,
@@ -60,6 +61,7 @@ from .errors import (
     LoginFailure,
     NotFound,
 )
+from .file import File
 from .gateway import DiscordClientWebSocketResponse
 from .utils import MISSING
 
@@ -73,6 +75,7 @@ if TYPE_CHECKING:
     from .types import (
         appinfo,
         audit_log,
+        auto_moderation,
         channel,
         components,
         embed,
@@ -89,7 +92,6 @@ if TYPE_CHECKING:
         template,
         threads,
         user,
-        voice,
         webhook,
         widget,
     )
@@ -113,13 +115,36 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
     return text
 
 
-_API_VERSION: Literal[9, 10] = 10
+_DEFAULT_API_VERSION = 10
+
+_API_VERSION: Literal[9, 10] = _DEFAULT_API_VERSION
 
 
-# TODO: remove once message content is enforced on all versions (31 aug)
+class UnsupportedAPIVersion(UserWarning):
+    """Warning category raised when changing the API version to an unsupported version."""
+
+
 def _modify_api_version(version: Literal[9, 10]):
-    if version not in (9, 10):
-        raise ValueError("Version must be an integer of `9` or `10`")
+    """Modify the API version used by the HTTP client.
+
+    Additional versions may be added around the time of a Discord API
+    version bump to allow temporarily downgrading to an older API version
+    or upgrading to a newer version that is not yet supported by the library.
+
+    Changing the API version from the default is not supported and may result in
+    unexpected behaviour.
+    """
+    available_versions = (9, 10)
+
+    if version not in available_versions:
+        raise ValueError(f"Only API versions {available_versions} are available.")
+
+    if version != _DEFAULT_API_VERSION:
+        warnings.warn(
+            "Changing the API version is not supported and may result in unexpected behaviour.",
+            category=UnsupportedAPIVersion,
+            stacklevel=2,
+        )
 
     global _API_VERSION
     _API_VERSION = version
@@ -128,7 +153,7 @@ def _modify_api_version(version: Literal[9, 10]):
 
 
 class Route:
-    BASE: ClassVar[str] = "https://discord.com/api/v10"
+    BASE: ClassVar[str] = f"https://discord.com/api/v{_DEFAULT_API_VERSION}"
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
@@ -453,6 +478,49 @@ class HTTPClient:
 
         return self.request(Route("POST", "/users/@me/channels"), json=payload)
 
+    def get_message_payload(
+        self,
+        content: Optional[str],
+        *,
+        tts: bool = False,
+        embed: Optional[embed.Embed] = None,
+        embeds: Optional[List[embed.Embed]] = None,
+        nonce: Optional[str] = None,
+        allowed_mentions: Optional[message.AllowedMentions] = None,
+        message_reference: Optional[message.MessageReference] = None,
+        stickers: Optional[List[int]] = None,
+        components: Optional[List[components.Component]] = None,
+    ) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "tts": tts,
+        }
+
+        if content is not None:
+            payload["content"] = content
+
+        if embed is not None:
+            payload["embeds"] = [embed]
+
+        if embeds is not None:
+            payload["embeds"] = embeds
+
+        if nonce is not None:
+            payload["nonce"] = nonce
+
+        if allowed_mentions is not None:
+            payload["allowed_mentions"] = allowed_mentions
+
+        if message_reference is not None:
+            payload["message_reference"] = message_reference
+
+        if components is not None:
+            payload["components"] = components
+
+        if stickers is not None:
+            payload["sticker_ids"] = stickers
+
+        return payload
+
     def send_message(
         self,
         channel_id: Snowflake,
@@ -464,85 +532,63 @@ class HTTPClient:
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
-        payload = {}
-
-        if content:
-            payload["content"] = content
-
-        if tts:
-            payload["tts"] = True
-
-        if embed:
-            payload["embeds"] = [embed]
-
-        if embeds:
-            payload["embeds"] = embeds
-
-        if nonce:
-            payload["nonce"] = nonce
-
-        if allowed_mentions:
-            payload["allowed_mentions"] = allowed_mentions
-
-        if message_reference:
-            payload["message_reference"] = message_reference
-
-        if components:
-            payload["components"] = components
-
-        if stickers:
-            payload["sticker_ids"] = stickers
+        payload = self.get_message_payload(
+            content,
+            tts=tts,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            message_reference=message_reference,
+            stickers=stickers,
+            components=components,
+        )
 
         return self.request(r, json=payload)
 
     def send_typing(self, channel_id: Snowflake) -> Response[None]:
         return self.request(Route("POST", "/channels/{channel_id}/typing", channel_id=channel_id))
 
-    def send_multipart_helper(
+    def get_message_multipart_form(
         self,
-        route: Route,
+        payload: Dict[str, Any],
+        message_key: Optional[str] = None,
         *,
         files: Sequence[File],
         content: Optional[str] = None,
-        tts: bool = False,
         embed: Optional[embed.Embed] = None,
-        embeds: Optional[Iterable[Optional[embed.Embed]]] = None,
+        embeds: Optional[List[embed.Embed]] = None,
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
-        attachments: Optional[List[dict]] = None,
-    ) -> Response[message.Message]:
-        form = []
+        attachments: Optional[List[Dict[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        form: List[Dict[str, Any]] = []
 
-        payload: Dict[str, Any] = {
-            "tts": tts,
-            "attachments": attachments or [],
-        }
+        payload["attachments"] = attachments or []
 
-        if content is not None:
-            payload["content"] = content
-        if embed is not None:
-            payload["embeds"] = [embed]
-        if embeds is not None:
-            payload["embeds"] = embeds
-        if nonce is not None:
-            payload["nonce"] = nonce
-        if allowed_mentions is not None:
-            payload["allowed_mentions"] = allowed_mentions
-        if message_reference is not None:
-            payload["message_reference"] = message_reference
-        if components is not None:
-            payload["components"] = components
-        if stickers is not None:
-            payload["sticker_ids"] = stickers
+        msg_payload = self.get_message_payload(
+            content,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            message_reference=message_reference,
+            stickers=stickers,
+            components=components,
+        )
 
-        form.append({"name": "payload_json"})
+        if message_key is not None:
+            payload[message_key] = msg_payload
+        else:
+            payload.update(msg_payload)
+
         for index, file in enumerate(files):
             payload["attachments"].append(
                 {
@@ -559,8 +605,43 @@ class HTTPClient:
                     "content_type": "application/octet-stream",
                 }
             )
-        form[0]["value"] = utils._to_json(payload)
+        form.append({"name": "payload_json", "value": utils._to_json(payload)})
 
+        return form
+
+    def send_multipart_helper(
+        self,
+        route: Route,
+        *,
+        files: Sequence[File],
+        content: Optional[str] = None,
+        tts: bool = False,
+        embed: Optional[embed.Embed] = None,
+        embeds: Optional[List[embed.Embed]] = None,
+        nonce: Optional[str] = None,
+        allowed_mentions: Optional[message.AllowedMentions] = None,
+        message_reference: Optional[message.MessageReference] = None,
+        stickers: Optional[List[int]] = None,
+        components: Optional[List[components.Component]] = None,
+        attachments: Optional[List[Dict[str, Any]]] = None,
+    ) -> Response[message.Message]:
+        payload: Dict[str, Any] = {
+            "tts": tts,
+            "attachments": attachments or [],
+        }
+        form = self.get_message_multipart_form(
+            payload=payload,
+            files=files,
+            content=content,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            message_reference=message_reference,
+            stickers=stickers,
+            components=components,
+            attachments=attachments,
+        )
         return self.request(route, form=form, files=files)
 
     def send_files(
@@ -575,7 +656,7 @@ class HTTPClient:
         nonce: Optional[str] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
-        stickers: Optional[List[sticker.StickerItem]] = None,
+        stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
@@ -826,7 +907,7 @@ class HTTPClient:
         r = Route(
             "PATCH", "/guilds/{guild_id}/members/{user_id}", guild_id=guild_id, user_id=user_id
         )
-        payload = {}
+        payload: Dict[str, bool] = {}
         if mute is not None:
             payload["mute"] = mute
 
@@ -920,6 +1001,7 @@ class HTTPClient:
             "locked",
             "invitable",
             "default_auto_archive_duration",
+            "flags",
         )
         payload = {k: v for k, v in options.items() if k in valid_keys}
         return self.request(r, reason=reason, json=payload)
@@ -1022,6 +1104,83 @@ class HTTPClient:
         route = Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id)
         return self.request(route, json=payload, reason=reason)
 
+    def start_thread_in_forum_channel(
+        self,
+        channel_id: Snowflake,
+        *,
+        name: str,
+        auto_archive_duration: threads.ThreadArchiveDuration,
+        rate_limit_per_user: int,
+        content: Optional[str] = None,
+        embed: Optional[embed.Embed] = None,
+        embeds: Optional[List[embed.Embed]] = None,
+        nonce: Optional[str] = None,
+        allowed_mentions: Optional[message.AllowedMentions] = None,
+        stickers: Optional[List[int]] = None,
+        components: Optional[List[components.Component]] = None,
+        reason: Optional[str] = None,
+    ) -> Response[threads.Thread]:
+        payload = {
+            "name": name,
+            "auto_archive_duration": auto_archive_duration,
+            "rate_limit_per_user": rate_limit_per_user,
+        }
+        msg_payload = self.get_message_payload(
+            content=content,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            stickers=stickers,
+            components=components,
+        )
+        if msg_payload != {}:
+            payload["message"] = msg_payload
+        params = {"use_nested_fields": "true"}
+        route = Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id)
+        return self.request(route, json=payload, reason=reason, params=params)
+
+    def start_thread_in_forum_channel_with_files(
+        self,
+        channel_id: Snowflake,
+        *,
+        name: str,
+        auto_archive_duration: threads.ThreadArchiveDuration,
+        rate_limit_per_user: int,
+        files: Sequence[File],
+        content: Optional[str] = None,
+        embed: Optional[embed.Embed] = None,
+        embeds: Optional[List[embed.Embed]] = None,
+        nonce: Optional[str] = None,
+        allowed_mentions: Optional[message.AllowedMentions] = None,
+        stickers: Optional[List[int]] = None,
+        components: Optional[List[components.Component]] = None,
+        attachments: Optional[List[Dict[str, Any]]] = None,
+        reason: Optional[str] = None,
+    ) -> Response[threads.Thread]:
+        payload = {
+            "name": name,
+            "auto_archive_duration": auto_archive_duration,
+            "rate_limit_per_user": rate_limit_per_user,
+            "attachments": attachments or [],
+        }
+        form = self.get_message_multipart_form(
+            payload=payload,
+            message_key="message",
+            files=files,
+            content=content,
+            embed=embed,
+            embeds=embeds,
+            nonce=nonce,
+            allowed_mentions=allowed_mentions,
+            stickers=stickers,
+            components=components,
+            attachments=attachments,
+        )
+        params = {"use_nested_fields": "true"}
+        route = Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id)
+        return self.request(route, form=form, files=files, reason=reason, params=params)
+
     def join_thread(self, channel_id: Snowflake) -> Response[None]:
         return self.request(
             Route("POST", "/channels/{channel_id}/thread-members/@me", channel_id=channel_id)
@@ -1058,7 +1217,7 @@ class HTTPClient:
             "GET", "/channels/{channel_id}/threads/archived/public", channel_id=channel_id
         )
 
-        params = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
         if before:
             params["before"] = before
         params["limit"] = limit
@@ -1071,7 +1230,7 @@ class HTTPClient:
             "GET", "/channels/{channel_id}/threads/archived/private", channel_id=channel_id
         )
 
-        params = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
         if before:
             params["before"] = before
         params["limit"] = limit
@@ -1085,7 +1244,7 @@ class HTTPClient:
             "/channels/{channel_id}/users/@me/threads/archived/private",
             channel_id=channel_id,
         )
-        params = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
         if before:
             params["before"] = before
         params["limit"] = limit
@@ -1106,7 +1265,7 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         name: str,
-        avatar: Optional[bytes] = None,
+        avatar: Optional[str] = None,
         reason: Optional[str] = None,
     ) -> Response[webhook.Webhook]:
         payload: Dict[str, Any] = {
@@ -1264,7 +1423,7 @@ class HTTPClient:
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
     ) -> Response[List[guild.Ban]]:
-        params: Dict[str, Any] = {}
+        params: Dict[str, Union[int, Snowflake]] = {}
 
         if limit is not None:
             params["limit"] = limit
@@ -1469,7 +1628,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         name: str,
-        image: bytes | str,
+        image: Optional[str],
         *,
         roles: Optional[SnowflakeList] = None,
         reason: Optional[str] = None,
@@ -1563,15 +1722,12 @@ class HTTPClient:
         guild_id: Snowflake,
         limit: int = 100,
         before: Optional[Snowflake] = None,
-        after: Optional[Snowflake] = None,
         user_id: Optional[Snowflake] = None,
         action_type: Optional[AuditLogAction] = None,
     ) -> Response[audit_log.AuditLog]:
         params: Dict[str, Any] = {"limit": limit}
         if before:
             params["before"] = before
-        if after:
-            params["after"] = after
         if user_id:
             params["user_id"] = user_id
         if action_type:
@@ -1826,7 +1982,7 @@ class HTTPClient:
     def get_global_commands(
         self, application_id: Snowflake, with_localizations: bool = True
     ) -> Response[List[interactions.ApplicationCommand]]:
-        params = {}
+        params: Dict[str, str] = {}
         if with_localizations:
             params["with_localizations"] = "true"
 
@@ -1894,7 +2050,7 @@ class HTTPClient:
     def get_guild_commands(
         self, application_id: Snowflake, guild_id: Snowflake, with_localizations: bool = True
     ) -> Response[List[interactions.ApplicationCommand]]:
-        params = {}
+        params: Dict[str, str] = {}
         if with_localizations:
             params["with_localizations"] = "true"
         r = Route(
@@ -2295,6 +2451,7 @@ class HTTPClient:
             "description",
             "entity_type",
             "status",
+            "image",
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(
@@ -2340,3 +2497,88 @@ class HTTPClient:
             event_id=event_id,
         )
         return self.request(r, params=params)
+
+    def list_guild_auto_moderation_rules(
+        self, guild_id: Snowflake
+    ) -> Response[List[auto_moderation.AutoModerationRule]]:
+        r = Route("GET", "/guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
+        return self.request(r)
+
+    def get_auto_moderation_rule(
+        self,
+        guild_id: Snowflake,
+        auto_moderation_rule_id: Snowflake,
+    ) -> Response[auto_moderation.AutoModerationRule]:
+        r = Route(
+            "GET",
+            "/guilds/{guild_id}/auto-moderation/rules/{auto_moderation_rule_id}",
+            guild_id=guild_id,
+            auto_moderation_rule_id=auto_moderation_rule_id,
+        )
+        return self.request(r)
+
+    def create_auto_moderation_rule(
+        self,
+        guild_id: Snowflake,
+        data: auto_moderation.AutoModerationRuleCreate,
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[auto_moderation.AutoModerationRule]:
+        valid_keys = (
+            "trigger_metadata",
+            "enabled",
+            "exempt_roles",
+            "exempt_channels",
+            "name",
+            "event_type",
+            "trigger_type",
+            "actions",
+        )
+
+        payload = {k: v for k, v in data.items() if k in valid_keys}
+
+        r = Route("POST", "/guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
+        return self.request(r, json=payload, reason=reason)
+
+    def modify_auto_moderation_rule(
+        self,
+        guild_id: Snowflake,
+        auto_moderation_rule_id: Snowflake,
+        data: auto_moderation.AutoModerationRuleModify,
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[auto_moderation.AutoModerationRule]:
+        valid_keys = (
+            "name",
+            "event_type",
+            "trigger_metadata",
+            "actions",
+            "enabled",
+            "exempt_roles",
+            "exempt_channels",
+        )
+
+        payload = {k: v for k, v in data.items() if k in valid_keys}
+
+        r = Route(
+            "PATCH",
+            "/guilds/{guild_id}/auto-moderation/rules/{auto_moderation_rule_id}",
+            guild_id=guild_id,
+            auto_moderation_rule_id=auto_moderation_rule_id,
+        )
+        return self.request(r, json=payload, reason=reason)
+
+    def delete_auto_moderation_rule(
+        self,
+        guild_id: Snowflake,
+        auto_moderation_rule_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[None]:
+        r = Route(
+            "DELETE",
+            "/guilds/{guild_id}/auto-moderation/rules/{auto_moderation_rule_id}",
+            guild_id=guild_id,
+            auto_moderation_rule_id=auto_moderation_rule_id,
+        )
+        return self.request(r, reason=reason)

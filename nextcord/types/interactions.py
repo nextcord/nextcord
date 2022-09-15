@@ -75,6 +75,8 @@ class _ApplicationCommandOptionOptional(TypedDict, total=False):
     channel_types: List[ChannelType]
     min_value: Union[int, float]
     max_value: Union[int, float]
+    min_length: int
+    max_length: int
     autocomplete: bool
     name_localizations: Dict[str, str]
     description_localizations: Dict[str, str]
@@ -226,6 +228,7 @@ class _InteractionOptional(TypedDict, total=False):
     message: Message
     locale: str
     guild_locale: str
+    app_permissions: str
 
 
 class Interaction(_InteractionOptional):
@@ -256,7 +259,11 @@ class InteractionResponse(_InteractionResponseOptional):
     type: InteractionResponseType
 
 
-class MessageInteraction(TypedDict):
+class _MessageInteractionOptional(TypedDict, total=False):
+    member: Member
+
+
+class MessageInteraction(_MessageInteractionOptional):
     id: Snowflake
     type: InteractionType
     name: str

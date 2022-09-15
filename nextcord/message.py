@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.components import Component as ComponentPayload
     from .types.embed import Embed as EmbedPayload
+    from .types.interactions import MessageInteraction as MessageInteractionPayload
     from .types.member import Member as MemberPayload, UserWithMember as UserWithMemberPayload
     from .types.message import (
         Attachment as AttachmentPayload,
@@ -93,6 +94,7 @@ __all__ = (
     "PartialMessage",
     "MessageReference",
     "DeletedReferencedMessage",
+    "MessageInteraction",
 )
 
 
@@ -294,6 +296,7 @@ class Attachment(Hashable):
         description: Optional[str] = MISSING,
         use_cached: bool = False,
         spoiler: bool = False,
+        force_close: bool = True,
     ) -> File:
         """|coro|
 
@@ -327,6 +330,14 @@ class Attachment(Hashable):
             Whether the file is a spoiler.
 
             .. versionadded:: 1.4
+        force_close: :class:`bool`
+            Whether to forcibly close the bytes used to create the file
+            when ``.close()`` is called.
+            This will also make the file bytes unusable by flushing it from
+            memory after it is sent or used once.
+            Keep this enabled if you don't wish to reuse the same bytes.
+
+           .. versionadded:: 2.2
 
         Raises
         ------
@@ -347,7 +358,11 @@ class Attachment(Hashable):
         file_filename = filename if filename is not MISSING else self.filename
         file_description = description if description is not MISSING else self.description
         return File(
-            io.BytesIO(data), filename=file_filename, description=file_description, spoiler=spoiler
+            io.BytesIO(data),
+            filename=file_filename,
+            description=file_description,
+            spoiler=spoiler,
+            force_close=force_close,
         )
 
     def to_dict(self) -> AttachmentPayload:
@@ -543,6 +558,75 @@ def flatten_handlers(cls):
     return cls
 
 
+class MessageInteraction(Hashable):
+    """Represents a message's interaction data.
+
+    A message's interaction data is a property of a message when the message
+    is a response to an interaction from any bot.
+
+    .. versionadded:: 2.1
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two message interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interaction messages are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the message interaction's hash.
+
+    Attributes
+    -----------
+    data: Dict[:class:`str`, Any]
+        The raw data from the interaction.
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    name: :class:`str`
+        The name of the application command.
+    user: Union[:class:`User`, :class:`Member`]
+        The :class:`User` who invoked the interaction or :class:`Member` if the interaction
+        occurred in a guild.
+    """
+
+    __slots__ = (
+        "_state",
+        "data",
+        "id",
+        "type",
+        "name",
+        "user",
+    )
+
+    def __init__(
+        self, *, data: MessageInteractionPayload, guild: Optional[Guild], state: ConnectionState
+    ):
+        self._state: ConnectionState = state
+
+        self.data: MessageInteractionPayload = data
+        self.id: int = int(data["id"])
+        self.type: int = data["type"]
+        self.name: str = data["name"]
+        if "member" in data and guild is not None:
+            self.user = Member(state=self._state, guild=guild, data={**data["member"], "user": data["user"]})  # type: ignore
+        else:
+            self.user = self._state.create_user(data=data["user"])
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} id={self.id} type={self.type} name={self.name} user={self.user!r}>"
+
+    @property
+    def created_at(self) -> datetime.datetime:
+        """:class:`datetime.datetime`: The interaction's creation time in UTC."""
+        return utils.snowflake_time(self.id)
+
+
 @flatten_handlers
 class Message(Hashable):
     r"""Represents a message from Discord.
@@ -656,12 +740,10 @@ class Message(Hashable):
         A list of components in the message.
 
         .. versionadded:: 2.0
-    thread: Optional[:class:`Thread`]
-        The thread created from a message, if any.
-
-        .. versionadded:: 2.0
     guild: Optional[:class:`Guild`]
         The guild that the message belongs to, if applicable.
+    interaction: Optional[:class:`MessageInteraction`]
+        The interaction data of a message, if applicable.
     """
 
     __slots__ = (
@@ -680,6 +762,7 @@ class Message(Hashable):
         "mention_everyone",
         "embeds",
         "id",
+        "interaction",
         "mentions",
         "author",
         "attachments",
@@ -753,7 +836,7 @@ class Message(Hashable):
                 self.guild = None
 
         if thread_data := data.get("thread"):
-            if not self.thread and self.guild:
+            if not self.thread and isinstance(self.guild, Guild):
                 self.guild._store_thread(thread_data)
 
         try:
@@ -784,6 +867,12 @@ class Message(Hashable):
                 getattr(self, f"_handle_{handler}")(data[handler])
             except KeyError:
                 continue
+
+        self.interaction: Optional[MessageInteraction] = (
+            MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
+            if "interaction" in data
+            else None
+        )
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
@@ -972,21 +1061,21 @@ class Message(Hashable):
         This allows you to receive the user IDs of mentioned users
         even in a private message context.
         """
-        return [int(x) for x in re.findall(r"<@!?([0-9]{15,20})>", self.content)]
+        return utils.parse_raw_mentions(self.content)
 
     @utils.cached_slot_property("_cs_raw_channel_mentions")
     def raw_channel_mentions(self) -> List[int]:
         """List[:class:`int`]: A property that returns an array of channel IDs matched with
         the syntax of ``<#channel_id>`` in the message content.
         """
-        return [int(x) for x in re.findall(r"<#([0-9]{15,20})>", self.content)]
+        return utils.parse_raw_channel_mentions(self.content)
 
     @utils.cached_slot_property("_cs_raw_role_mentions")
     def raw_role_mentions(self) -> List[int]:
         """List[:class:`int`]: A property that returns an array of role IDs matched with
         the syntax of ``<@&role_id>`` in the message content.
         """
-        return [int(x) for x in re.findall(r"<@&([0-9]{15,20})>", self.content)]
+        return utils.parse_raw_role_mentions(self.content)
 
     @utils.cached_slot_property("_cs_channel_mentions")
     def channel_mentions(self) -> List[GuildChannel]:
@@ -1067,7 +1156,10 @@ class Message(Hashable):
     @property
     def thread(self) -> Optional[Thread]:
         """Optional[:class:`Thread`]: The thread started from this message. None if no thread was started."""
-        return self.guild and self.guild.get_thread(self.id)
+        if not isinstance(self.guild, Guild):
+            return None
+
+        return self.guild.get_thread(self.id)
 
     def is_system(self) -> bool:
         """:class:`bool`: Whether the message is a system message.

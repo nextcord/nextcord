@@ -49,6 +49,7 @@ class Item(Generic[V]):
 
     - :class:`nextcord.ui.Button`
     - :class:`nextcord.ui.Select`
+    - :class:`nextcord.ui.TextInput`
 
     .. versionadded:: 2.0
     """

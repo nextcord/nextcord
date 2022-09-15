@@ -2,6 +2,7 @@
 
 .. |commands| replace:: [:ref:`ext.commands <discord_ext_commands>`]
 .. |tasks| replace:: [:ref:`ext.tasks <discord_ext_tasks>`]
+.. |app_checks| replace:: [:ref:`ext.application_checks <discord_ext_application_checks>`]
 
 .. _whats_new:
 
@@ -10,6 +11,172 @@ Changelog
 
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
+
+.. _vp2p2p0:
+
+v2.2.0
+------
+
+This version comes with mostly quality of life features.
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+- Remove ``AutoModerationTriggerType.harmful_link`` as it is no longer supported by Discord due to it being always enabled (:issue:`809`).
+
+Deprecations
+~~~~~~~~~~~~
+
+- Deprecate the use of ``Embed.Empty`` as a value for :class:`Embed`'s missing fields (:issue:`753`). This means that you should begin to use and expect :data:`None` for:
+    - :attr:`Embed.title`
+    - :attr:`Embed.description`
+    - :attr:`Embed.url`
+    - :attr:`Embed.colour`
+    - :attr:`Embed.video`
+    - :attr:`Embed.provider`
+    - :attr:`Embed.author`
+    - :meth:`Embed.set_footer`
+    - :meth:`Embed.set_image`
+    - :meth:`Embed.set_thumbnail`
+    - :meth:`Embed.set_author`
+    - Each field in :attr:`Embed.fields`
+
+New Features
+~~~~~~~~~~~~
+
+- Add the ability to use :class:`Client` as a :class:`generic <typing.Generic>` type on :class:`Interaction` (:issue:`760`).
+- Add :attr:`File.force_close` to force close :class:`io.BufferedIOBase` files when :func:`File.close` is called (:issue:`752`).
+- Add :attr:`ChannelType.guild_directory` to represent a channel of guilds in a `Student Hub <https://support.discord.com/hc/en-us/articles/4406046651927-Discord-Student-Hubs-FAQ>`_ (:issue:`164`, :issue:`763`).
+- Add the ability to use :data:`None` as a value for missing :class:`Embed` fields (:issue:`753`).
+- Add helper functions and methods to help with parsing Discord mention syntax:
+    - :meth:`Client.parse_mentions`
+    - :meth:`Guild.parse_mentions`
+    - :meth:`Guild.parse_role_mentions`
+    - :meth:`Guild.parse_channel_mentions`
+    - :func:`utils.parse_raw_mentions`
+    - :func:`utils.parse_raw_role_mentions`
+    - :func:`utils.parse_raw_channel_mentions`
+- Add the ability to get a slash command (and sub command)'s mention (:issue:`791`). This adds:
+    - :meth:`SlashApplicationCommand.get_mention`
+    - :meth:`SlashApplicationSubcommand.get_mention`
+    - :attr:`SlashApplicationSubcommand.command_ids`
+- Add :class:`Range` to represent ``min_value`` and ``max_value``, and :class:`String` to represent ``min_length`` and ``max_length`` for slash command options (:issue:`590`, :issue:`766`).
+- Add :meth:`Client.get_interaction` to get an :class:`Interaction` with the data. This allows custom :class:`Interaction` subclasses to be used with a subclass of :class:`Client` (:issue:`757`, :issue:`803`).
+
+.. _vp2p1p1:
+
+v2.1.1
+------
+
+This version includes a few bug fixes backported from :ref:`vp2p2p0` as that includes breaking changes.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix issue where :attr:`Message.thread` does not check if :attr:`Message.guild` is an :class:`Object` before initialising, resulting in an error (:issue:`772`, :issue:`793`).
+- Fix slash command auto-sync needlessly syncing if ``options`` or ``channel_types`` are in a different order (:issue:`785`).
+- Fix message editing not sending empty list fields (``embeds``, ``components``, ...) (:issue:`796`).
+- Fix :func:`Client.delete_application_commands` not deleting guild commands when ``guild_id`` is passed (:issue:`792`).
+
+.. _vp2p1p0:
+
+v2.1.0
+------
+
+This version comes with support for forum channels, text in voice, auto moderation and other recent features.
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+- :class:`Client` no longer accepts options that do not exist (:issue:`695`)
+- Remove :meth:`ClientCog.to_register` as it was deprecated in :ref:`vp2p0p0`
+- |commands| :class:`Bot <ext.commands.Bot>` No longer accepts options that do not exist (:issue:`719`)
+
+New Features
+~~~~~~~~~~~~
+
+- Add support for text in voice by implementing :class:`abc.Messageable` in :class:`VoiceChannel` (:issue:`674`, :issue:`655`). This adds:
+    - :meth:`VoiceChannel.send`
+    - :meth:`VoiceChannel.typing`
+    - :meth:`VoiceChannel.trigger_typing`
+    - :meth:`VoiceChannel.history`
+    - :meth:`VoiceChannel.fetch_message`
+- Add :attr:`ThreadMember.member` as a shortcut to ``member.parent.guild.get_member(member.id)`` (:issue:`265`, :issue:`679`)
+- Add :attr:`Interaction.app_permissions` to which contains the application's permissions in the channel the command was invoked in (:issue:`720`)
+- Add :attr:`Message.interaction` which contains data about the application command that was run, if any (:issue:`714`)
+- Add support for ``min_length`` and ``max_length`` in :class:`SlashOption` (:issue:`732`)
+- :class:`Interaction` is now hashable (:issue:`739`)
+- Add :attr:`ApplicationFlags.application_command_badge` which represents the new application command badge on bots (:issue:`750`)
+- Add support for :class:`bytes`, :class:`Asset`, :class:`File`, :class:`Attachment` for relevant methods (:issue:`607`). The following now supports these:
+    - :meth:`TextChannel.create_webhook` - ``avatar`` parameter
+    - :meth:`Client.create_guild` - ``icon`` parameter
+    - :meth:`Guild.edit` - ``icon``, ``banner``, ``splash``, ``discovery_splash`` parameters
+    - :meth:`Guild.create_custom_emoji` - ``image`` parameter
+    - :meth:`Guild.create_role` - ``icon`` parameter
+    - :meth:`Guild.create_scheduled_event` - ``image`` parameter
+    - :meth:`Role.edit` - ``icon`` parameter
+    - :meth:`ScheduledEvent.edit` - ``image`` parameter
+    - :meth:`Template.create_guild` - ``icon`` parameter
+    - :meth:`ClientUser.edit` - ``avatar`` parameter
+    - :meth:`Webhook.edit` - ``avatar`` parameter
+    - :meth:`SyncWebhook.edit` - ``avatar`` parameter
+- Add support for forum channels (:issue:`608`, :issue:`593`). This adds:
+    - :attr:`abc.GuildChannel.flags` to hold the channel's :class:`ChannelFlags`, this includes every channel type that implements :class:`abc.GuildChannel`
+    - :class:`ForumChannel`, a channel that can only have threads ("posts")
+    - :meth:`CategoryChannel.create_forum_channel` as a shortcut to :meth:`Guild.create_forum_channel` in that category
+    - :attr:`ChannelType.forum`
+    - :class:`ChannelFlags`, currently only including :attr:`ChannelFlags.pinned` which represents if a forum channel "post" is pinned in the parent channel
+    - :attr:`Guild.forum_channels` which contains all the forum channels in the guild
+    - :meth:`Guild.create_forum_channel` to create a forum channel in that guild
+- Add :attr:`SlashApplicationSubcommand.qualified_name` and :attr:`SlashApplicationSubcommand.qualified_name` which represent the full formatted name of the command.
+- Add support for auto moderation (:issue:`740`). This adds the following:
+    - :meth:`Guild.create_auto_moderation_rule` to create a rule
+    - :meth:`AutoModerationRule.edit` to modify a rule
+    - :meth:`AutoModerationRule.delete` to delete a rule
+    - :meth:`Guild.auto_moderation_rules` to list all rules in a guild
+    - :meth:`Guild.fetch_auto_moderation_rule` to get a rule by ID
+    - :func:`on_auto_moderation_rule_create` which is fired when a rule is created
+    - :func:`on_auto_moderation_rule_update` which is fired when a rule is updated
+    - :func:`on_auto_moderation_rule_delete` which is fired when a rule is deleted
+    - :func:`on_auto_moderation_action_execution` which is fired when an auto moderation action is executed
+    - :attr:`Intents.auto_moderation_configuration` to subscribe to events related to rules
+    - :attr:`Intents.auto_moderation_execution` to subscribe to auto moderation execution events
+    - :attr:`Intents.auto_moderation` to subscribe to both auto moderation-related intents
+    - The following audit log actions:
+        - :attr:`AuditLogAction.auto_moderation_rule_create`
+        - :attr:`AuditLogAction.auto_moderation_rule_update`
+        - :attr:`AuditLogAction.auto_moderation_rule_delete`
+        - :attr:`AuditLogAction.auto_moderation_block_message`
+    - :class:`AutoModerationRule`
+    - :class:`AutoModerationTriggerType` which represents the type of trigger a rule has
+    - :class:`AutoModerationTriggerMetadata` which holds the metadata for a trigger
+    - :class:`KeywordPresetType` which represents the type of keyword preset a rule uses
+    - :class:`AutoModerationEventType` which represents the type of event a rule is associated with
+    - :class:`AutoModerationAction` which represents the action that will be taken if a rule is triggered
+    - :class:`AutoModerationActionType` which represents the type of action
+    - :class:`AutoModerationActionMetadata` which holds the metadata for an action
+    - :class:`MessageType.auto_moderation_action` which represents a message that logs an action execution if enabled
+- Add support for more annotation types for slash command options (:issue:`678`, :issue:`589`, :issue:`591`, :issue:`615`, :issue:`673`)
+    - :data:`typing.Union` for channel types such as :class:`TextChannel`
+    - :data:`typing.Annotated` for adding metadata to options, 2nd and forward will be scanned for valid converters
+    - :data:`typing.Literal` for choice values
+- |app_checks| Add :func:`~ext.application_checks.on_application_command_completion` which is called on a successful application command invocation (:issue:`721`, :issue:`720`)
+- |commands| Add :attr:`CommandNotFound.command_name <ext.commands.CommandNotFound.command_name>` to find the name of the command the user tried (:issue:`699`)
+- |commands| Add :attr:`Bot.load_extensions <ext.commands.Bot.load_extensions>` and :attr:`Bot.load_extensions_from_module <ext.commands.Bot.load_extensions_from_module>` to load multiple extensions easily (:issue:`598`)
+
+Bug Fixes
+~~~~~~~~~
+
+- Run :meth:`ui.View.on_timeout` / :meth:`ui.Modal.on_timeout` before :meth:`ui.View.wait` / :meth:`ui.Modal.wait` exits (:issue:`726`)
+- Fix presence data not being present in :class:`Interaction.user` by getting the member from cache if available (:issue:`724`, :issue:`605`)
+- Fix :meth:`Guild.audit_logs` after strategy (:issue:`741`)
+- Fix ``PartialInteractionMessage.__hash__`` to use :attr:`Interaction.id` as itself does not have an id.
+- |commands| Support unicode emojis in :meth:`PartialEmojiConverter.convert <ext.commands.PartialEmojiConverter.convert>`.
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+- Describe new version guarantees in :ref:`version_guarantees`.
 
 .. _vp2p0p0:
 

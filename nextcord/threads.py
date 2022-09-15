@@ -32,7 +32,8 @@ from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Unio
 from .abc import Messageable
 from .enums import ChannelType, try_enum
 from .errors import ClientException
-from .mixins import Hashable
+from .flags import ChannelFlags
+from .mixins import Hashable, PinsMixin
 from .utils import MISSING, _get_as_snowflake, parse_time
 
 __all__ = (
@@ -60,7 +61,7 @@ if TYPE_CHECKING:
     )
 
 
-class Thread(Messageable, Hashable):
+class Thread(Messageable, Hashable, PinsMixin):
     """Represents a Discord thread.
 
     .. container:: operations
@@ -152,6 +153,7 @@ class Thread(Messageable, Hashable):
         "auto_archive_duration",
         "archive_timestamp",
         "create_timestamp",
+        "flags",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload):
@@ -183,6 +185,7 @@ class Thread(Messageable, Hashable):
         self.message_count = data["message_count"]
         self.member_count = data["member_count"]
         self._unroll_metadata(data["thread_metadata"])
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
 
         try:
             member = data["member"]
@@ -207,6 +210,7 @@ class Thread(Messageable, Hashable):
             pass
 
         self.slowmode_delay = data.get("rate_limit_per_user", 0)
+        self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
 
         try:
             self._unroll_metadata(data["thread_metadata"])
@@ -558,6 +562,7 @@ class Thread(Messageable, Hashable):
         invitable: bool = MISSING,
         slowmode_delay: int = MISSING,
         auto_archive_duration: ThreadArchiveDuration = MISSING,
+        flags: ChannelFlags = MISSING,
     ) -> Thread:
         """|coro|
 
@@ -571,7 +576,7 @@ class Thread(Messageable, Hashable):
         The thread must be unarchived to be edited.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The new name of the thread.
         archived: :class:`bool`
@@ -587,16 +592,20 @@ class Thread(Messageable, Hashable):
         slowmode_delay: :class:`int`
             Specifies the slowmode rate limit for user in this thread, in seconds.
             A value of ``0`` disables slowmode. The maximum value possible is ``21600``.
+        flags: :class:`ChannelFlags`
+            The new channel flags to use for this thread.
+
+            .. versionadded:: 2.1
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to edit the thread.
         HTTPException
             Editing the thread failed.
 
         Returns
-        --------
+        -------
         :class:`Thread`
             The newly edited thread.
         """
@@ -613,6 +622,8 @@ class Thread(Messageable, Hashable):
             payload["invitable"] = invitable
         if slowmode_delay is not MISSING:
             payload["rate_limit_per_user"] = slowmode_delay
+        if flags is not MISSING:
+            payload["flags"] = flags.value
 
         data = await self._state.http.edit_channel(self.id, **payload)
         # The data payload will always be a Thread payload
@@ -831,3 +842,16 @@ class ThreadMember(Hashable):
     def thread(self) -> Thread:
         """:class:`Thread`: The thread this member belongs to."""
         return self.parent
+
+    @property
+    def member(self) -> Optional[Member]:
+        """Optional[:class:`Member`]: The :class:`Member` of this thread member."""
+        return self.parent.guild.get_member(self.id)
+
+    async def fetch_member(self) -> Member:
+        """:class:`Member`: Retrieves the :class:`Member` of this thread member.
+
+        .. note::
+            This method is an API call. If you have :attr:`Intents.members` and members cache enabled, consider :attr:`member` instead.
+        """
+        return await self.parent.guild.fetch_member(self.id)

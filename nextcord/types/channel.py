@@ -71,6 +71,17 @@ class TextChannel(_BaseGuildChannel, _TextChannelOptional):
     type: Literal[0]
 
 
+class _ForumChannelOptional(TypedDict, total=False):
+    topic: str
+    last_message_id: Optional[Snowflake]
+    rate_limit_per_user: int
+    default_auto_archive_duration: ThreadArchiveDuration
+
+
+class ForumChannel(_BaseGuildChannel, _ForumChannelOptional):
+    type: Literal[15]
+
+
 class NewsChannel(_BaseGuildChannel, _TextChannelOptional):
     type: Literal[5]
 
@@ -79,6 +90,7 @@ VideoQualityMode = Literal[1, 2]
 
 
 class _VoiceChannelOptional(TypedDict, total=False):
+    last_message_id: Optional[Snowflake]
     rtc_region: Optional[str]
     video_quality_mode: VideoQualityMode
 
@@ -126,7 +138,13 @@ class ThreadChannel(_BaseChannel, _ThreadChannelOptional):
 
 
 GuildChannel = Union[
-    TextChannel, NewsChannel, VoiceChannel, CategoryChannel, StageChannel, ThreadChannel
+    TextChannel,
+    ForumChannel,
+    NewsChannel,
+    VoiceChannel,
+    CategoryChannel,
+    StageChannel,
+    ThreadChannel,
 ]
 
 
