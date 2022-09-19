@@ -377,7 +377,7 @@ class Asset(AssetMixin):
             Must be either 'webp', 'jpeg', 'jpg', or 'png'.
 
         Raises
-        -------
+        ------
         InvalidArgument
             An invalid size or format was passed.
 

@@ -550,7 +550,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
         Raises
-        -------
+        ------
         Forbidden
             You don't have permissions to get the webhooks.
 
