@@ -1426,7 +1426,7 @@ class BotBase(GroupMixin):
 
         This is useful if you want to execute multiple commands in
         one message.
-        
+
         Parameters
         ----------
         message: :class:`nextcord.Message`
