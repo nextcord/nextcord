@@ -1418,6 +1418,29 @@ class BotBase(GroupMixin):
         ctx = await self.get_context(message)
         await self.invoke(ctx)
 
+    async def process_with_str(self, message: Message, content: str) -> None:
+        """|coro|
+
+        This function is like :func:`.process_commands` except it
+        processes the provided message with different content.
+
+        This is useful if you want to execute multiple commands in
+        one message.
+        
+        Parameters
+        ----------
+        message: :class:`nextcord.Message`
+            The message to process commands for.
+        content: :class:`str`
+            The content to subsitute for the message's content.
+        """
+        old_content = message.content
+        message.content = content
+
+        await self.process_commands(message)
+
+        message.content = old_content
+
     async def on_message(self, message):
         await self.process_commands(message)
 
