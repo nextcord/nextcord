@@ -1881,12 +1881,12 @@ class Client:
         .. versionadded:: 2.3
 
         Parameters
-        ------------
+        ----------
         view: :class:`nextcord.ui.View`
             The view to remove from dispatching.
 
         Raises
-        -------
+        ------
         TypeError
             A view was not passed.
         ValueError
@@ -1946,12 +1946,12 @@ class Client:
         .. versionadded:: 2.3
 
         Parameters
-        ------------
+        ----------
         modal: :class:`nextcord.ui.Modal`
             The view to remove from dispatching.
 
         Raises
-        -------
+        ------
         TypeError
             A modal was not passed.
         ValueError
