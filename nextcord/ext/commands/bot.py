@@ -107,7 +107,7 @@ def when_mentioned_or(*prefixes: str) -> Callable[[Union[Bot, AutoShardedBot], M
     These are meant to be passed into the :attr:`.Bot.command_prefix` attribute.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -127,7 +127,7 @@ def when_mentioned_or(*prefixes: str) -> Callable[[Union[Bot, AutoShardedBot], M
 
 
     See Also
-    ----------
+    --------
     :func:`.when_mentioned`
     """
 
@@ -304,7 +304,7 @@ class BotBase(GroupMixin):
         :exc:`.CommandError`.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -384,7 +384,7 @@ class BotBase(GroupMixin):
         :exc:`.CommandError`.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -423,7 +423,7 @@ class BotBase(GroupMixin):
             The user to check for.
 
         Returns
-        --------
+        -------
         :class:`bool`
             Whether the user is the owner.
         """
@@ -464,7 +464,7 @@ class BotBase(GroupMixin):
             The coroutine to register as the pre-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -497,7 +497,7 @@ class BotBase(GroupMixin):
             The coroutine to register as the post-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -520,7 +520,7 @@ class BotBase(GroupMixin):
             The name of the event to listen for. Defaults to ``func.__name__``.
 
         Example
-        --------
+        -------
 
         .. code-block:: python3
 
@@ -569,7 +569,7 @@ class BotBase(GroupMixin):
         The functions being listened to must be a :ref:`coroutine <coroutine>`.
 
         Example
-        --------
+        -------
 
         .. code-block:: python3
 
@@ -586,7 +586,7 @@ class BotBase(GroupMixin):
         Would print one and two in an unspecified order.
 
         Raises
-        -------
+        ------
         TypeError
             The function being listened to is not a coroutine.
         """
@@ -620,7 +620,7 @@ class BotBase(GroupMixin):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         TypeError
             The cog does not inherit from :class:`.Cog`.
         CommandError
@@ -664,7 +664,7 @@ class BotBase(GroupMixin):
             argument in class creation or the class name if unspecified.
 
         Returns
-        --------
+        -------
         Optional[:class:`Cog`]
             The cog that was requested. If not found, returns ``None``.
         """
@@ -861,7 +861,7 @@ class BotBase(GroupMixin):
             .. versionadded:: 2.0.0
 
         Raises
-        --------
+        ------
         ExtensionNotFound
             The extension could not be imported.
             This is also raised if the name of the extension could not
@@ -912,7 +912,7 @@ class BotBase(GroupMixin):
             .. versionadded:: 1.7
 
         Raises
-        -------
+        ------
         ExtensionNotFound
             The name of the extension could not
             be resolved using the provided ``package`` parameter.
@@ -950,7 +950,7 @@ class BotBase(GroupMixin):
             .. versionadded:: 1.7
 
         Raises
-        -------
+        ------
         ExtensionNotLoaded
             The extension was not loaded.
         ExtensionNotFound
@@ -1256,7 +1256,7 @@ class BotBase(GroupMixin):
             The message context to get the prefix of.
 
         Returns
-        --------
+        -------
         Union[List[:class:`str`], :class:`str`]
             A list of prefixes or a single prefix that the bot is
             listening for.
@@ -1308,7 +1308,7 @@ class BotBase(GroupMixin):
             interface.
 
         Returns
-        --------
+        -------
         :class:`.Context`
             The invocation context. The type of this can change via the
             ``cls`` parameter.
@@ -1468,7 +1468,7 @@ class BotBase(GroupMixin):
         :exc:`.ApplicationError`.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -1500,7 +1500,7 @@ class BotBase(GroupMixin):
             The coroutine to register as the pre-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -1533,7 +1533,7 @@ class BotBase(GroupMixin):
             The coroutine to register as the post-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """

@@ -110,7 +110,7 @@ class Cooldown:
             If not supplied then :func:`time.time()` is used.
 
         Returns
-        --------
+        -------
         :class:`int`
             The number of tokens available before the cooldown is to be applied.
         """
@@ -184,7 +184,7 @@ class Cooldown:
         """Creates a copy of this cooldown.
 
         Returns
-        --------
+        -------
         :class:`Cooldown`
             A new instance of this cooldown.
         """

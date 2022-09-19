@@ -536,7 +536,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         """Creates a copy of this command.
 
         Returns
-        --------
+        -------
         :class:`Command`
             A new instance of this command.
         """
@@ -888,7 +888,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             The invocation context to use when checking the commands cooldown status.
 
         Returns
-        --------
+        -------
         :class:`bool`
             A boolean indicating if the command is on cooldown.
         """
@@ -923,7 +923,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             The invocation context to retrieve the cooldown from.
 
         Returns
-        --------
+        -------
         :class:`float`
             The amount of time left on this command's cooldown in seconds.
             If this is ``0.0`` then the command isn't on cooldown.
@@ -977,7 +977,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             The coroutine to register as the local error handler.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -1012,7 +1012,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             The coroutine to register as the pre-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -1039,7 +1039,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             The coroutine to register as the post-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -1148,13 +1148,13 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             The ctx of the command currently being invoked.
 
         Raises
-        -------
+        ------
         :class:`CommandError`
             Any command error that was raised during a check call will be propagated
             by this function.
 
         Returns
-        --------
+        -------
         :class:`bool`
             A boolean indicating if the command can be invoked.
         """
@@ -1234,7 +1234,7 @@ class GroupMixin(Generic[CogT]):
             The command to add.
 
         Raises
-        -------
+        ------
         :exc:`.CommandRegistrationError`
             If the command or its alias is already registered by different command.
         TypeError
@@ -1269,7 +1269,7 @@ class GroupMixin(Generic[CogT]):
             The name of the command to remove.
 
         Returns
-        --------
+        -------
         Optional[:class:`.Command`]
             The command that was removed. If the name is not valid then
             ``None`` is returned instead.
@@ -1326,7 +1326,7 @@ class GroupMixin(Generic[CogT]):
             The name of the command to get.
 
         Returns
-        --------
+        -------
         Optional[:class:`Command`]
             The command that was requested. If not found, returns ``None``.
         """
@@ -1389,7 +1389,7 @@ class GroupMixin(Generic[CogT]):
         the internal command list via :meth:`~.GroupMixin.add_command`.
 
         Returns
-        --------
+        -------
         Callable[..., :class:`Command`]
             A decorator that converts the provided method into a Command, adds it to the bot, then returns it.
         """
@@ -1442,7 +1442,7 @@ class GroupMixin(Generic[CogT]):
         the internal command list via :meth:`~.GroupMixin.add_command`.
 
         Returns
-        --------
+        -------
         Callable[..., :class:`Group`]
             A decorator that converts the provided method into a Group, adds it to the bot, then returns it.
         """
@@ -1488,7 +1488,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
         """Creates a copy of this :class:`Group`.
 
         Returns
-        --------
+        -------
         :class:`Group`
             A new instance of this group.
         """
@@ -1642,7 +1642,7 @@ def command(
         by ``cls``.
 
     Raises
-    -------
+    ------
     TypeError
         If the function is not a coroutine or is already a command.
     """
@@ -1760,7 +1760,7 @@ def check(predicate: Check) -> Callable[[T], T]:
         The ``predicate`` attribute was added.
 
     Examples
-    ---------
+    --------
 
     Creating a basic check to see if the command invoker is you.
 
@@ -1838,13 +1838,13 @@ def check_any(*checks: Check) -> Callable[[T], T]:
         the :func:`check` decorator.
 
     Raises
-    -------
+    ------
     TypeError
         A check passed has not been decorated with the :func:`check`
         decorator.
 
     Examples
-    ---------
+    --------
 
     Creating a basic check to see if it's the bot owner or
     the server owner:

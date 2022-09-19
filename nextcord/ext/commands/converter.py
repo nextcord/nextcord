@@ -132,7 +132,7 @@ class Converter(Protocol[T_co]):
             The argument that is being converted.
 
         Raises
-        -------
+        ------
         :exc:`.CommandError`
             A generic exception occurred when converting the argument.
         :exc:`.BadArgument`
@@ -1201,12 +1201,12 @@ async def run_converters(ctx: Context, converter, argument: str, param: inspect.
         The parameter being converted. This is mainly for error reporting.
 
     Raises
-    -------
+    ------
     CommandError
         The converter failed to convert.
 
     Returns
-    --------
+    -------
     Any
         The resulting conversion.
     """

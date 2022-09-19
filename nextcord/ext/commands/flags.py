@@ -586,14 +586,14 @@ class FlagConverter(metaclass=FlagsMeta):
             The argument to convert from.
 
         Raises
-        --------
+        ------
         FlagError
             A flag related parsing error.
         CommandError
             A command related error.
 
         Returns
-        --------
+        -------
         :class:`FlagConverter`
             The flag converter instance with all flags parsed.
         """

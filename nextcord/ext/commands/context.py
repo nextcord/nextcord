@@ -177,7 +177,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             The keyword arguments to use.
 
         Raises
-        -------
+        ------
         TypeError
             The command argument to invoke is missing.
         """
@@ -209,7 +209,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             The default is to start where we left off.
 
         Raises
-        -------
+        ------
         ValueError
             The context to reinvoke is not valid.
         """
@@ -337,7 +337,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             The entity to show help for.
 
         Returns
-        --------
+        -------
         Any
             The result of the help command, if any.
         """

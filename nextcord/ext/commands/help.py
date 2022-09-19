@@ -394,7 +394,7 @@ class HelpCommand:
         then it returns the internal command name of the help command.
 
         Returns
-        ---------
+        -------
         :class:`str`
             The command name that triggered this invocation.
         """
@@ -413,7 +413,7 @@ class HelpCommand:
             The command to get the signature of.
 
         Returns
-        --------
+        -------
         :class:`str`
             The signature for the command.
         """
@@ -466,7 +466,7 @@ class HelpCommand:
         To unbind the cog from the help command, you can set it to ``None``.
 
         Returns
-        --------
+        -------
         Optional[:class:`Cog`]
             The cog that is currently set for the help command.
         """
@@ -496,7 +496,7 @@ class HelpCommand:
             had mentions removed to prevent abuse.
 
         Returns
-        ---------
+        -------
         :class:`str`
             The string to use when a command has not been found.
         """
@@ -524,7 +524,7 @@ class HelpCommand:
             had mentions removed to prevent abuse.
 
         Returns
-        ---------
+        -------
         :class:`str`
             The string to use when the command did not have the subcommand requested.
         """
@@ -554,7 +554,7 @@ class HelpCommand:
             passed as ``True`` then this will default as the command name.
 
         Returns
-        ---------
+        -------
         List[:class:`Command`]
             A list of commands that passed the filter.
         """
@@ -601,7 +601,7 @@ class HelpCommand:
             A sequence of commands to check for the largest size.
 
         Returns
-        --------
+        -------
         :class:`int`
             The maximum width of the commands.
         """

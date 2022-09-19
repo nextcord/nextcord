@@ -241,7 +241,7 @@ class Cog(ClientCog, metaclass=CogMeta):
     def get_commands(self) -> List[Command]:
         r"""
         Returns
-        --------
+        -------
         List[:class:`.Command`]
             A :class:`list` of :class:`.Command`\s that are
             defined inside this cog.
@@ -286,7 +286,7 @@ class Cog(ClientCog, metaclass=CogMeta):
         """Returns a :class:`list` of (name, function) listener pairs that are defined in this cog.
 
         Returns
-        --------
+        -------
         List[Tuple[:class:`str`, :ref:`coroutine <coroutine>`]]
             The listeners defined in this cog.
         """
@@ -305,7 +305,7 @@ class Cog(ClientCog, metaclass=CogMeta):
             defaults to the function's name.
 
         Raises
-        --------
+        ------
         TypeError
             The function is not a coroutine function or a string was not passed as
             the name.
