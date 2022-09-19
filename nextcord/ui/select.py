@@ -206,7 +206,7 @@ class Select(Item[V]):
             Whether this option is selected by default.
 
         Raises
-        -------
+        ------
         ValueError
             The number of options exceeds 25.
         """
@@ -230,7 +230,7 @@ class Select(Item[V]):
             The option to append to the select menu.
 
         Raises
-        -------
+        ------
         ValueError
             The number of options exceeds 25.
         """

@@ -300,12 +300,12 @@ class Loop(Generic[LF]):
             The keyword arguments to use.
 
         Raises
-        --------
+        ------
         RuntimeError
             A task has already been launched and is running.
 
         Returns
-        ---------
+        -------
         :class:`asyncio.Task`
             The task that has been created.
         """
@@ -391,7 +391,7 @@ class Loop(Generic[LF]):
             An argument list of exception classes to handle.
 
         Raises
-        --------
+        ------
         TypeError
             An exception passed is either not a class or not inherited from :class:`BaseException`.
         """
@@ -422,7 +422,7 @@ class Loop(Generic[LF]):
             An argument list of exception classes to handle.
 
         Returns
-        ---------
+        -------
         :class:`bool`
             Whether all exceptions were successfully removed.
         """
@@ -476,7 +476,7 @@ class Loop(Generic[LF]):
             The coroutine to register before the loop runs.
 
         Raises
-        -------
+        ------
         TypeError
             The function was not a coroutine.
         """
@@ -504,7 +504,7 @@ class Loop(Generic[LF]):
             The coroutine to register after the loop finishes.
 
         Raises
-        -------
+        ------
         TypeError
             The function was not a coroutine.
         """
@@ -531,7 +531,7 @@ class Loop(Generic[LF]):
             The coroutine to register in the event of an unhandled exception.
 
         Raises
-        -------
+        ------
         TypeError
             The function was not a coroutine.
         """
@@ -646,7 +646,7 @@ class Loop(Generic[LF]):
                 Duplicate times will be ignored, and only run once.
 
         Raises
-        -------
+        ------
         ValueError
             An invalid value was given.
         TypeError
@@ -735,7 +735,7 @@ def loop(
         defaults to :func:`asyncio.get_event_loop`.
 
     Raises
-    --------
+    ------
     ValueError
         An invalid value was given.
     TypeError

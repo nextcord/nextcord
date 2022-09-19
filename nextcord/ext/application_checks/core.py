@@ -150,7 +150,7 @@ def check(predicate: "ApplicationCheck") -> AC:
         even if the original function was not a coroutine.
 
     Examples
-    ---------
+    --------
 
     Creating a basic check to see if the command invoker is you.
 
@@ -209,13 +209,13 @@ def check_any(*checks: "ApplicationCheck") -> AC:
         the :func:`check` decorator.
 
     Raises
-    -------
+    ------
     TypeError
         A check passed has not been decorated with the :func:`check`
         decorator.
 
     Examples
-    ---------
+    --------
 
     Creating a basic check to see if it's the bot owner or
     the server owner:
@@ -287,7 +287,7 @@ def has_role(item: Union[int, str]) -> AC:
         The name or ID of the role to check.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -330,7 +330,7 @@ def has_any_role(*items: Union[int, str]) -> AC:
         An argument list of names or IDs to check that the member has roles wise.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -371,7 +371,7 @@ def bot_has_role(item: Union[int, str]) -> AC:
         The name or ID of the role to check.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -412,7 +412,7 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
         An argument list of names or IDs to check that the bot has roles wise.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -459,7 +459,7 @@ def has_permissions(**perms: bool) -> AC:
         An argument list of permissions to check for.
 
     Example
-    ---------
+    -------
 
     .. code-block:: python3
 
@@ -538,7 +538,7 @@ def has_guild_permissions(**perms: bool) -> AC:
         An argument list of guild permissions to check for.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -600,7 +600,7 @@ def dm_only() -> AC:
     that is inherited from :exc:`.ApplicationCheckFailure`.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -627,7 +627,7 @@ def guild_only() -> AC:
     that is inherited from :exc:`.ApplicationCheckFailure`.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -658,7 +658,7 @@ def is_owner() -> AC:
     raise :exc:`.ApplicationCheckForBotOnly`.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -688,7 +688,7 @@ def is_nsfw() -> AC:
     that is derived from :exc:`.ApplicationCheckFailure`.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -716,7 +716,7 @@ def application_command_before_invoke(coro) -> AC:
     do not have to be within the same cog.
 
     Example
-    ---------
+    -------
 
     .. code-block:: python3
 

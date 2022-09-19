@@ -194,7 +194,7 @@ class Modal:
             The item to add to the modal.
 
         Raises
-        --------
+        ------
         TypeError
             An :class:`Item` was not passed.
         ValueError
