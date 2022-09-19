@@ -1884,7 +1884,7 @@ class Client:
         ------------
         view: :class:`nextcord.ui.View`
             The view to remove from dispatching.
-        
+
         Raises
         -------
         TypeError
@@ -1949,7 +1949,7 @@ class Client:
         ------------
         modal: :class:`nextcord.ui.Modal`
             The view to remove from dispatching.
-        
+
         Raises
         -------
         TypeError
