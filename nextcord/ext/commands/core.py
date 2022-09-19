@@ -209,7 +209,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     decorator or functional interface.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The name of the command.
     callback: :ref:`coroutine <coroutine>`
@@ -462,7 +462,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         .. versionadded:: 1.3
 
         Parameters
-        -----------
+        ----------
         func
             The function that will be used as a check.
         """
@@ -478,7 +478,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         .. versionadded:: 1.3
 
         Parameters
-        -----------
+        ----------
         func
             The function to remove from the checks.
         """
@@ -883,7 +883,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         """Checks whether the command is currently on cooldown.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context to use when checking the commands cooldown status.
 
@@ -904,7 +904,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         """Resets the cooldown on this command.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context to reset the cooldown under.
         """
@@ -918,7 +918,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         .. versionadded:: 1.4
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context to retrieve the cooldown from.
 
@@ -972,7 +972,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         invoked afterwards as the catch-all.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the local error handler.
 
@@ -1007,7 +1007,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         See :meth:`.Bot.before_invoke` for more info.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the pre-invoke hook.
 
@@ -1034,7 +1034,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         See :meth:`.Bot.after_invoke` for more info.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the post-invoke hook.
 
@@ -1143,7 +1143,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             Checks whether the command is disabled or not
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The ctx of the command currently being invoked.
 
@@ -1194,7 +1194,7 @@ class GroupMixin(Generic[CogT]):
     similar to :class:`.Group` and are allowed to register commands.
 
     Attributes
-    -----------
+    ----------
     all_commands: :class:`dict`
         A mapping of command name to :class:`.Command`
         objects.
@@ -1229,7 +1229,7 @@ class GroupMixin(Generic[CogT]):
              Raise :exc:`.CommandRegistrationError` instead of generic :exc:`.ClientException`
 
         Parameters
-        -----------
+        ----------
         command: :class:`Command`
             The command to add.
 
@@ -1264,7 +1264,7 @@ class GroupMixin(Generic[CogT]):
         This could also be used as a way to remove aliases.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the command to remove.
 
@@ -1321,7 +1321,7 @@ class GroupMixin(Generic[CogT]):
         subcommand is not found then ``None`` is returned just as usual.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the command to get.
 
@@ -1464,7 +1464,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
     valid in :class:`.Command` are valid in here as well.
 
     Attributes
-    -----------
+    ----------
     invoke_without_command: :class:`bool`
         Indicates if the group callback should begin parsing and
         invocation only if no subcommand was found. Useful for
@@ -1630,7 +1630,7 @@ def command(
     decorator.
 
     Parameters
-    -----------
+    ----------
     name: :class:`str`
         The name to create the command with. By default this uses the
         function name unchanged.
@@ -1789,7 +1789,7 @@ def check(predicate: Check) -> Callable[[T], T]:
             await ctx.send('Only you!')
 
     Parameters
-    -----------
+    ----------
     predicate: Callable[[:class:`Context`], :class:`bool`]
         The predicate to check if the command should be invoked.
     """
@@ -1832,7 +1832,7 @@ def check_any(*checks: Check) -> Callable[[T], T]:
     .. versionadded:: 1.3
 
     Parameters
-    ------------
+    ----------
     \*checks: Callable[[:class:`Context`], :class:`bool`]
         An argument list of checks that have been decorated with
         the :func:`check` decorator.
@@ -1909,7 +1909,7 @@ def has_role(item: Union[int, str]) -> Callable[[T], T]:
         instead of generic :exc:`.CheckFailure`
 
     Parameters
-    -----------
+    ----------
     item: Union[:class:`int`, :class:`str`]
         The name or ID of the role to check.
     """
@@ -1947,7 +1947,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
         instead of generic :exc:`.CheckFailure`
 
     Parameters
-    -----------
+    ----------
     items: List[Union[:class:`str`, :class:`int`]]
         An argument list of names or IDs to check that the member has roles wise.
 
@@ -2052,7 +2052,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
     that is inherited from :exc:`.CheckFailure`.
 
     Parameters
-    ------------
+    ----------
     perms
         An argument list of permissions to check for.
 
@@ -2262,7 +2262,7 @@ def cooldown(
     A command can only have a single cooldown.
 
     Parameters
-    ------------
+    ----------
     rate: :class:`int`
         The number of times a command can be used before triggering a cooldown.
     per: :class:`float`
@@ -2308,7 +2308,7 @@ def dynamic_cooldown(
     .. versionadded:: 2.0
 
     Parameters
-    ------------
+    ----------
     cooldown: Callable[[:class:`.nextcord.Message`], Optional[:class:`.Cooldown`]]
         A function that takes a message and returns a cooldown that will
         apply to this invocation or ``None`` if the cooldown should be bypassed.
@@ -2341,7 +2341,7 @@ def max_concurrency(
     .. versionadded:: 1.3
 
     Parameters
-    -------------
+    ----------
     number: :class:`int`
         The maximum number of invocations of this command that can be running at the same time.
     per: :class:`.BucketType`

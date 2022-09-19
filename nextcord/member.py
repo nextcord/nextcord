@@ -73,7 +73,7 @@ class VoiceState:
     """Represents a Discord user's voice state.
 
     Attributes
-    ------------
+    ----------
     deaf: :class:`bool`
         Indicates if the user is currently deafened by the guild.
     mute: :class:`bool`
@@ -570,7 +570,7 @@ class Member(abc.Messageable, _UserTag):
         """Checks if the member is mentioned in the specified message.
 
         Parameters
-        -----------
+        ----------
         message: :class:`Message`
             The message to check if you're mentioned in.
 
@@ -689,7 +689,7 @@ class Member(abc.Messageable, _UserTag):
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         timeout: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]]
             The time until the member should not be timed out.
             Set this to None to disable their timeout.
@@ -741,7 +741,7 @@ class Member(abc.Messageable, _UserTag):
             The newly member is now optionally returned, if applicable.
 
         Parameters
-        -----------
+        ----------
         nick: Optional[:class:`str`]
             The member's new nickname. Use ``None`` to remove the nickname.
         mute: :class:`bool`
@@ -767,14 +767,14 @@ class Member(abc.Messageable, _UserTag):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have the proper permissions to the action requested.
         HTTPException
             The operation failed.
 
         Returns
-        --------
+        -------
         Optional[:class:`.Member`]
             The newly updated member, if applicable. This is only returned
             when certain fields are updated.
@@ -859,7 +859,7 @@ class Member(abc.Messageable, _UserTag):
         .. versionadded:: 1.7
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have the proper permissions to the action requested.
         HTTPException
@@ -892,7 +892,7 @@ class Member(abc.Messageable, _UserTag):
             Can now pass ``None`` to kick a member from voice.
 
         Parameters
-        -----------
+        ----------
         channel: Optional[:class:`VoiceChannel`]
             The new voice channel to move the member to.
             Pass ``None`` to kick them from voice.
@@ -912,7 +912,7 @@ class Member(abc.Messageable, _UserTag):
         This raises the same exceptions as :meth:`edit`.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for doing this action. Shows up on the audit log.
         """
@@ -930,7 +930,7 @@ class Member(abc.Messageable, _UserTag):
         of roles than the highest role of the member.
 
         Parameters
-        -----------
+        ----------
         \*roles: :class:`abc.Snowflake`
             An argument list of :class:`abc.Snowflake` representing a :class:`Role`
             to give to the member.
@@ -942,7 +942,7 @@ class Member(abc.Messageable, _UserTag):
             state of the cache.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to add these roles.
         HTTPException
@@ -973,7 +973,7 @@ class Member(abc.Messageable, _UserTag):
         of roles than the highest role of the member.
 
         Parameters
-        -----------
+        ----------
         \*roles: :class:`abc.Snowflake`
             An argument list of :class:`abc.Snowflake` representing a :class:`Role`
             to remove from the member.
@@ -985,7 +985,7 @@ class Member(abc.Messageable, _UserTag):
             state of the cache.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to remove these roles.
         HTTPException
@@ -1016,12 +1016,12 @@ class Member(abc.Messageable, _UserTag):
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         role_id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`Role`]
             The role or ``None`` if not found in the member's roles.
         """

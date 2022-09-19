@@ -122,7 +122,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             Returns the channel's name.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The channel name.
     guild: :class:`Guild`
@@ -269,7 +269,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             attribute.
 
         Returns
-        ---------
+        -------
         Optional[:class:`Message`]
             The last message in this channel or ``None`` if not found.
         """
@@ -358,7 +358,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             Editing the channel failed.
 
         Returns
-        --------
+        -------
         Optional[:class:`.TextChannel`]
             The newly edited text channel. If the edit was only positional
             then ``None`` is returned instead.
@@ -396,7 +396,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         use this.
 
         Parameters
-        -----------
+        ----------
         messages: Iterable[:class:`abc.Snowflake`]
             An iterable of messages denoting which ones to bulk delete.
 
@@ -462,7 +462,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             await channel.send(f'Deleted {len(deleted)} message(s)')
 
         Parameters
-        -----------
+        ----------
         limit: Optional[:class:`int`]
             The number of messages to search through. This is not the number
             of messages that will be deleted, though it can be.
@@ -490,7 +490,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             Purging the messages failed.
 
         Returns
-        --------
+        -------
         List[:class:`.Message`]
             The list of messages that were deleted.
         """
@@ -555,7 +555,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             You don't have permissions to get the webhooks.
 
         Returns
-        --------
+        -------
         List[:class:`Webhook`]
             The webhooks for this channel.
         """
@@ -585,7 +585,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
-        -------------
+        ----------
         name: :class:`str`
             The webhook's name.
         avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
@@ -603,7 +603,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             You do not have permissions to create a webhook.
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             The created webhook.
         """
@@ -631,7 +631,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         .. versionadded:: 1.3
 
         Parameters
-        -----------
+        ----------
         destination: :class:`TextChannel`
             The channel you would like to follow from.
         reason: Optional[:class:`str`]
@@ -647,7 +647,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             You do not have the permissions to create a webhook.
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             The created webhook.
         """
@@ -674,12 +674,12 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         .. versionadded:: 1.6
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to create a partial message for.
 
         Returns
-        ---------
+        -------
         :class:`PartialMessage`
             The partial message.
         """
@@ -694,12 +694,12 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         thread_id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`Thread`]
             The returned thread or ``None`` if not found.
         """
@@ -724,7 +724,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the thread.
         message: Optional[:class:`abc.Snowflake`]
@@ -749,7 +749,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             Starting the thread failed.
 
         Returns
-        --------
+        -------
         :class:`Thread`
             The created thread
         """
@@ -1353,7 +1353,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
             when the member cache is unavailable.
 
         Returns
-        --------
+        -------
         Mapping[:class:`int`, :class:`VoiceState`]
             The mapping of member ID to a voice state.
         """
@@ -1400,7 +1400,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             Returns the channel's name.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The channel name.
     guild: :class:`Guild`
@@ -1497,7 +1497,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         .. versionadded:: 2.1
 
         Returns
-        ---------
+        -------
         Optional[:class:`Message`]
             The last message in this channel or ``None`` if not found.
         """
@@ -1588,7 +1588,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             Editing the channel failed.
 
         Returns
-        --------
+        -------
         Optional[:class:`.VoiceChannel`]
             The newly edited voice channel. If the edit was only positional
             then ``None`` is returned instead.
@@ -1618,7 +1618,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         .. versionadded:: 2.1
 
         Parameters
-        -----------
+        ----------
         messages: Iterable[:class:`abc.Snowflake`]
             An iterable of messages denoting which ones to bulk delete.
 
@@ -1686,7 +1686,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             await channel.send(f'Deleted {len(deleted)} message(s)')
 
         Parameters
-        -----------
+        ----------
         limit: Optional[:class:`int`]
             The number of messages to search through. This is not the number
             of messages that will be deleted, though it can be.
@@ -1707,14 +1707,14 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             fall back to single delete if messages are older than two weeks.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have proper permissions to do the actions required.
         HTTPException
             Purging the messages failed.
 
         Returns
-        --------
+        -------
         List[:class:`.Message`]
             The list of messages that were deleted.
         """
@@ -1791,7 +1791,7 @@ class StageChannel(VocalGuildChannel):
             Returns the channel's name.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The channel name.
     guild: :class:`Guild`
@@ -1923,7 +1923,7 @@ class StageChannel(VocalGuildChannel):
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         topic: :class:`str`
             The stage instance's topic.
         privacy_level: :class:`StagePrivacyLevel`
@@ -1941,7 +1941,7 @@ class StageChannel(VocalGuildChannel):
             Creating a stage instance failed.
 
         Returns
-        --------
+        -------
         :class:`StageInstance`
             The newly created stage instance.
         """
@@ -1965,14 +1965,14 @@ class StageChannel(VocalGuildChannel):
         .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         :exc:`.NotFound`
             The stage instance or channel could not be found.
         :exc:`.HTTPException`
             Getting the stage instance failed.
 
         Returns
-        --------
+        -------
         :class:`StageInstance`
             The stage instance.
         """
@@ -2049,7 +2049,7 @@ class StageChannel(VocalGuildChannel):
             Editing the channel failed.
 
         Returns
-        --------
+        -------
         Optional[:class:`.StageChannel`]
             The newly edited stage channel. If the edit was only positional
             then ``None`` is returned instead.
@@ -2085,7 +2085,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
             Returns the category's name.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The category name.
     guild: :class:`Guild`
@@ -2210,7 +2210,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
             Editing the category failed.
 
         Returns
-        --------
+        -------
         Optional[:class:`.CategoryChannel`]
             The newly edited category channel. If the edit was only positional
             then ``None`` is returned instead.
@@ -2418,13 +2418,13 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         - :attr:`~Permissions.manage_messages`: You cannot delete others messages in a DM.
 
         Parameters
-        -----------
+        ----------
         obj: :class:`User`
             The user to check permissions for. This parameter is ignored
             but kept for compatibility with other ``permissions_for`` methods.
 
         Returns
-        --------
+        -------
         :class:`Permissions`
             The resolved permissions.
         """
@@ -2444,12 +2444,12 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         .. versionadded:: 1.6
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to create a partial message for.
 
         Returns
-        ---------
+        -------
         :class:`PartialMessage`
             The partial message.
         """
@@ -2567,12 +2567,12 @@ class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         This also checks the kick_members permission if the user is the owner.
 
         Parameters
-        -----------
+        ----------
         obj: :class:`~abc.Snowflake`
             The user to check permissions for.
 
         Returns
-        --------
+        -------
         :class:`Permissions`
             The resolved permissions for the user.
         """
@@ -2629,7 +2629,7 @@ class PartialMessageable(abc.Messageable, Hashable):
             Returns the partial messageable's hash.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The channel ID associated with this partial messageable.
     type: Optional[:class:`ChannelType`]
@@ -2652,12 +2652,12 @@ class PartialMessageable(abc.Messageable, Hashable):
         doing an unnecessary API call.
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to create a partial message for.
 
         Returns
-        ---------
+        -------
         :class:`PartialMessage`
             The partial message.
         """

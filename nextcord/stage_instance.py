@@ -60,7 +60,7 @@ class StageInstance(Hashable):
             Returns the stage instance's hash.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The stage instance's ID.
     guild: :class:`Guild`
@@ -125,7 +125,7 @@ class StageInstance(Hashable):
         use this.
 
         Parameters
-        -----------
+        ----------
         topic: :class:`str`
             The stage instance's new topic.
         privacy_level: :class:`StagePrivacyLevel`
@@ -166,7 +166,7 @@ class StageInstance(Hashable):
         use this.
 
         Parameters
-        -----------
+        ----------
         reason: :class:`str`
             The reason the stage instance was deleted. Shows up on the audit log.
 

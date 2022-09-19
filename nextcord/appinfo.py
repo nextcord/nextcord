@@ -48,7 +48,7 @@ class AppInfo:
 
 
     Attributes
-    -------------
+    ----------
     id: :class:`int`
         The application ID.
     name: :class:`str`
@@ -146,7 +146,7 @@ class PartialAppInfo:
     .. versionadded:: 2.0
 
     Attributes
-    -------------
+    ----------
     id: :class:`int`
         The application ID.
     name: :class:`str`

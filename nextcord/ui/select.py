@@ -59,7 +59,7 @@ class Select(Item[V]):
     .. versionadded:: 2.0
 
     Parameters
-    ------------
+    ----------
     custom_id: :class:`str`
         The ID of the select menu that gets received during an interaction.
         If not given then one is generated for you.
@@ -189,7 +189,7 @@ class Select(Item[V]):
         :meth:`append_option` method instead.
 
         Parameters
-        -----------
+        ----------
         label: :class:`str`
             The label of the option. This is displayed to users.
             Can only be up to 100 characters.
@@ -225,7 +225,7 @@ class Select(Item[V]):
         """Appends an option to the select menu.
 
         Parameters
-        -----------
+        ----------
         option: :class:`nextcord.SelectOption`
             The option to append to the select menu.
 
@@ -307,7 +307,7 @@ def select(
     use :attr:`Select.values`.
 
     Parameters
-    ------------
+    ----------
     placeholder: Optional[:class:`str`]
         The placeholder text that is shown if nothing is selected, if any.
     custom_id: :class:`str`

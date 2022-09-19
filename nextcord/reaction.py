@@ -65,7 +65,7 @@ class Reaction:
             Returns the string form of the reaction's emoji.
 
     Attributes
-    -----------
+    ----------
     emoji: Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]
         The reaction emoji. May be a custom emoji, or a unicode emoji.
     count: :class:`int`
@@ -126,12 +126,12 @@ class Reaction:
         the :class:`abc.Snowflake` abc.
 
         Parameters
-        -----------
+        ----------
         user: :class:`abc.Snowflake`
              The user or member from which to remove the reaction.
 
         Raises
-        -------
+        ------
         HTTPException
             Removing the reaction failed.
         Forbidden
@@ -152,7 +152,7 @@ class Reaction:
         .. versionadded:: 1.3
 
         Raises
-        --------
+        ------
         HTTPException
             Clearing the reaction failed.
         Forbidden
@@ -189,7 +189,7 @@ class Reaction:
             await channel.send(f'{winner} has won the raffle.')
 
         Parameters
-        ------------
+        ----------
         limit: Optional[:class:`int`]
             The maximum number of results to return.
             If not provided, returns all the users who
@@ -198,12 +198,12 @@ class Reaction:
             For pagination, reactions are sorted by member.
 
         Raises
-        --------
+        ------
         HTTPException
             Getting the users for the reaction failed.
 
         Yields
-        --------
+        ------
         Union[:class:`User`, :class:`Member`]
             The member (if retrievable) or the user that has reacted
             to this message. The case where it can be a :class:`Member` is

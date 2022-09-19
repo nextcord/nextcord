@@ -560,7 +560,7 @@ class ClientCog:
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
@@ -575,7 +575,7 @@ class ClientCog:
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
@@ -779,18 +779,18 @@ class CallbackMixin:
         inside the :attr:`~ApplicationCommand.checks` attribute, as well as all global and cog checks.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The interaction of the command currently being invoked.
 
         Raises
-        -------
+        ------
         :class:`ApplicationError`
             Any application command error that was raised during a check call will be propagated
             by this function.
 
         Returns
-        --------
+        -------
         :class:`bool`
             A boolean indicating if the command can be invoked.
         """

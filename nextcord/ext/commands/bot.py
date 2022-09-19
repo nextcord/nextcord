@@ -324,7 +324,7 @@ class BotBase(GroupMixin):
         and :meth:`.check_once`.
 
         Parameters
-        -----------
+        ----------
         func
             The function that was used as a global check.
         call_once: :class:`bool`
@@ -344,7 +344,7 @@ class BotBase(GroupMixin):
         if the function is not in the global checks.
 
         Parameters
-        -----------
+        ----------
         func
             The function to remove from the global checks.
         call_once: :class:`bool`
@@ -418,7 +418,7 @@ class BotBase(GroupMixin):
             :attr:`owner_ids` is not set.
 
         Parameters
-        -----------
+        ----------
         user: :class:`.abc.User`
             The user to check for.
 
@@ -459,7 +459,7 @@ class BotBase(GroupMixin):
             then the hooks are not called.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the pre-invoke hook.
 
@@ -492,7 +492,7 @@ class BotBase(GroupMixin):
             This makes it ideal for clean-up scenarios.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the post-invoke hook.
 
@@ -513,7 +513,7 @@ class BotBase(GroupMixin):
         """The non decorator alternative to :meth:`.listen`.
 
         Parameters
-        -----------
+        ----------
         func: :ref:`coroutine <coroutine>`
             The function to call.
         name: :class:`str`
@@ -545,7 +545,7 @@ class BotBase(GroupMixin):
         """Removes a listener from the pool of listeners.
 
         Parameters
-        -----------
+        ----------
         func
             The function that was used as a listener to remove.
         name: :class:`str`
@@ -610,7 +610,7 @@ class BotBase(GroupMixin):
             is already loaded.
 
         Parameters
-        -----------
+        ----------
         cog: :class:`.Cog`
             The cog to register to the bot.
         override: :class:`bool`
@@ -657,7 +657,7 @@ class BotBase(GroupMixin):
         If the cog is not found, ``None`` is returned instead.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the cog you are requesting.
             This is equivalent to the name passed via keyword
@@ -679,7 +679,7 @@ class BotBase(GroupMixin):
         If no cog is found then this method has no effect.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the cog to remove.
 
@@ -825,7 +825,7 @@ class BotBase(GroupMixin):
         point must have a single argument, the ``bot``.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The extension name to load. It must be dot separated like
             regular Python imports if accessing a sub-module. e.g.
@@ -899,7 +899,7 @@ class BotBase(GroupMixin):
         :meth:`~.Bot.load_extension`.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The extension name to unload. It must be dot separated like
             regular Python imports if accessing a sub-module. e.g.
@@ -937,7 +937,7 @@ class BotBase(GroupMixin):
         the bot will roll-back to the prior working state.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The extension name to reload. It must be dot separated like
             regular Python imports if accessing a sub-module. e.g.
@@ -1251,7 +1251,7 @@ class BotBase(GroupMixin):
         with the message as a context.
 
         Parameters
-        -----------
+        ----------
         message: :class:`nextcord.Message`
             The message context to get the prefix of.
 
@@ -1298,7 +1298,7 @@ class BotBase(GroupMixin):
         invoked under :meth:`~.Bot.invoke`.
 
         Parameters
-        -----------
+        ----------
         message: :class:`nextcord.Message`
             The message to get the invocation context from.
         cls
@@ -1371,7 +1371,7 @@ class BotBase(GroupMixin):
         handles all the internal event dispatch mechanisms.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context to invoke.
         """
@@ -1408,7 +1408,7 @@ class BotBase(GroupMixin):
         call :meth:`~.Bot.get_context` or :meth:`~.Bot.invoke` if so.
 
         Parameters
-        -----------
+        ----------
         message: :class:`nextcord.Message`
             The message to process commands for.
         """
@@ -1428,7 +1428,7 @@ class BotBase(GroupMixin):
         and :meth:`.check_once`.
 
         Parameters
-        -----------
+        ----------
         func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
             The function that was used as a global application check.
         """
@@ -1442,7 +1442,7 @@ class BotBase(GroupMixin):
         if the function is not in the global checks.
 
         Parameters
-        -----------
+        ----------
         func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
             The function to remove from the global application checks.
         """
@@ -1495,7 +1495,7 @@ class BotBase(GroupMixin):
             are not called.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the pre-invoke hook.
 
@@ -1528,7 +1528,7 @@ class BotBase(GroupMixin):
             This makes it ideal for clean-up scenarios.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine`
             The coroutine to register as the post-invoke hook.
 
@@ -1555,7 +1555,7 @@ class Bot(BotBase, nextcord.Client):
     to manage commands.
 
     Attributes
-    -----------
+    ----------
     command_prefix
         The command prefix is what the message content must contain initially
         to have a command invoked. This prefix could either be a string to

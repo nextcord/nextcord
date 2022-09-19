@@ -84,7 +84,7 @@ class Cooldown:
     """Represents a cooldown for a command.
 
     Attributes
-    -----------
+    ----------
     rate: :class:`int`
         The total number of tokens available per :attr:`per` seconds.
     per: :class:`float`
@@ -104,7 +104,7 @@ class Cooldown:
         """Returns the number of available tokens before rate limiting is applied.
 
         Parameters
-        ------------
+        ----------
         current: Optional[:class:`float`]
             The time in seconds since Unix epoch to calculate tokens at.
             If not supplied then :func:`time.time()` is used.
@@ -127,7 +127,7 @@ class Cooldown:
         """Returns the time in seconds until the cooldown will be reset.
 
         Parameters
-        -------------
+        ----------
         current: Optional[:class:`float`]
             The current time in seconds since Unix epoch.
             If not supplied, then :func:`time.time()` is used.
@@ -149,7 +149,7 @@ class Cooldown:
         """Updates the cooldown rate limit.
 
         Parameters
-        -------------
+        ----------
         current: Optional[:class:`float`]
             The time in seconds since Unix epoch to update the rate limit at.
             If not supplied, then :func:`time.time()` is used.

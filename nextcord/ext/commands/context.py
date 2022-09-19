@@ -72,7 +72,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
     This class implements the :class:`~nextcord.abc.Messageable` ABC.
 
     Attributes
-    -----------
+    ----------
     message: :class:`.Message`
         The message that triggered the command being executed.
     bot: :class:`.Bot`
@@ -168,7 +168,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             using this function.
 
         Parameters
-        -----------
+        ----------
         command: :class:`.Command`
             The command that is going to be called.
         \*args
@@ -200,7 +200,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             fail again.
 
         Parameters
-        ------------
+        ----------
         call_hooks: :class:`bool`
             Whether to call the before and after invoke hooks.
         restart: :class:`bool`
@@ -332,7 +332,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             this returns :class:`None` on bad input or no help command.
 
         Parameters
-        ------------
+        ----------
         entity: Optional[Union[:class:`Command`, :class:`Cog`, :class:`str`]]
             The entity to show help for.
 

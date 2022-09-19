@@ -462,7 +462,7 @@ class ScheduledEvent(Hashable):
             A snowflake id to end with, useful for chunks of usersby default None
 
         Yields
-        -------
+        ------
         :class:`ScheduledEventUser`
             A full event user object
         """

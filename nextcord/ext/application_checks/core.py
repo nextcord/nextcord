@@ -179,7 +179,7 @@ def check(predicate: "ApplicationCheck") -> AC:
             await interaction.response.send_message('Only you!')
 
     Parameters
-    -----------
+    ----------
     predicate: Callable[[:class:`~.Interaction`], :class:`bool`]
         The predicate to check if the command should be invoked.
     """
@@ -203,7 +203,7 @@ def check_any(*checks: "ApplicationCheck") -> AC:
         The ``predicate`` attribute for this function **is** a coroutine.
 
     Parameters
-    ------------
+    ----------
     \*checks: Callable[[:class:`~.Interaction`], :class:`bool`]
         An argument list of checks that have been decorated with
         the :func:`check` decorator.
@@ -282,7 +282,7 @@ def has_role(item: Union[int, str]) -> AC:
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
     Parameters
-    -----------
+    ----------
     item: Union[:class:`int`, :class:`str`]
         The name or ID of the role to check.
 
@@ -325,7 +325,7 @@ def has_any_role(*items: Union[int, str]) -> AC:
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
     Parameters
-    -----------
+    ----------
     items: List[Union[:class:`str`, :class:`int`]]
         An argument list of names or IDs to check that the member has roles wise.
 
@@ -366,7 +366,7 @@ def bot_has_role(item: Union[int, str]) -> AC:
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
     Parameters
-    -----------
+    ----------
     item: Union[:class:`int`, :class:`str`]
         The name or ID of the role to check.
 
@@ -407,7 +407,7 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
     Parameters
-    -----------
+    ----------
     *items: Union[:class:`str`, :class:`int`]
         An argument list of names or IDs to check that the bot has roles wise.
 
@@ -454,7 +454,7 @@ def has_permissions(**perms: bool) -> AC:
     exception, :exc:`.ApplicationNoPrivateMessage`.
 
     Parameters
-    ------------
+    ----------
     perms: :class:`bool`
         An argument list of permissions to check for.
 
@@ -533,7 +533,7 @@ def has_guild_permissions(**perms: bool) -> AC:
     exception, :exc:`.ApplicationNoPrivateMessage`.
 
     Parameters
-    -----------
+    ----------
     perms: :class:`bool`
         An argument list of guild permissions to check for.
 
