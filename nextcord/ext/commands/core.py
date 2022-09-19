@@ -1952,7 +1952,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
         An argument list of names or IDs to check that the member has roles wise.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -2057,7 +2057,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
         An argument list of permissions to check for.
 
     Example
-    ---------
+    -------
 
     .. code-block:: python3
 
@@ -2374,7 +2374,7 @@ def before_invoke(coro) -> Callable[[T], T]:
     .. versionadded:: 1.4
 
     Example
-    ---------
+    -------
 
     .. code-block:: python3
 

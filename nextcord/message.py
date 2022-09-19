@@ -1823,7 +1823,7 @@ class Message(Hashable):
             .. versionadded:: 1.7
 
         Returns
-        ---------
+        -------
         :class:`~nextcord.MessageReference`
             The reference to this message.
         """

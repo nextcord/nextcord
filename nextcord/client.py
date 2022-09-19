@@ -679,7 +679,7 @@ class Client:
             invalid sharding payloads or bad tokens).
 
         Raises
-        -------
+        ------
         :exc:`.GatewayNotFound`
             If the gateway to connect to Discord is not found. Usually if this
             is thrown then there is a Discord API outage.
@@ -798,7 +798,7 @@ class Client:
         A shorthand coroutine for :meth:`login` + :meth:`connect`.
 
         Raises
-        -------
+        ------
         TypeError
             An unexpected keyword argument was received.
         """

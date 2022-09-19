@@ -94,7 +94,7 @@ class InteractionAttached(dict):
     This is used to store information about an :class:`Interaction`. This is useful if you want to save some data from a :meth:`ApplicationCommand.application_command_before_invoke` to use later in the callback.
 
     Example
-    ---------
+    -------
 
     .. code-block:: python3
 

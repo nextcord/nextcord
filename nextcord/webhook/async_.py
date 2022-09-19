@@ -1216,7 +1216,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the webhook failed.
         NotFound
@@ -1278,7 +1278,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the webhook failed.
         NotFound
@@ -1723,7 +1723,7 @@ class Webhook(BaseWebhook):
             The message ID to delete.
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the message failed.
         Forbidden

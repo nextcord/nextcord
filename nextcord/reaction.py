@@ -173,7 +173,7 @@ class Reaction:
         and meet the :class:`abc.Snowflake` abc.
 
         Examples
-        ---------
+        --------
 
         Usage ::
 

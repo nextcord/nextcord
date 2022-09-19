@@ -1133,7 +1133,7 @@ class MemberCacheFlags(BaseFlags):
             The intents to select from.
 
         Returns
-        ---------
+        -------
         :class:`MemberCacheFlags`
             The resulting member cache flags.
         """

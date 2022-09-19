@@ -668,7 +668,7 @@ class Guild(Hashable):
         ``None``.
 
         Returns
-        --------
+        -------
         List[Tuple[Optional[:class:`CategoryChannel`], List[:class:`abc.GuildChannel`]]]:
             The categories and their associated channels.
         """
@@ -711,7 +711,7 @@ class Guild(Hashable):
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[Union[:class:`Thread`, :class:`.abc.GuildChannel`]]
             The returned channel or thread or ``None`` if not found.
         """
@@ -730,7 +730,7 @@ class Guild(Hashable):
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`.abc.GuildChannel`]
             The returned channel or ``None`` if not found.
         """
@@ -747,7 +747,7 @@ class Guild(Hashable):
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`Thread`]
             The returned thread or ``None`` if not found.
         """
@@ -858,7 +858,7 @@ class Guild(Hashable):
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`Member`]
             The member or ``None`` if not found.
         """
@@ -887,7 +887,7 @@ class Guild(Hashable):
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`Role`]
             The role or ``None`` if not found.
         """
@@ -943,7 +943,7 @@ class Guild(Hashable):
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`StageInstance`]
             The stage instance or ``None`` if not found.
         """
@@ -1045,7 +1045,7 @@ class Guild(Hashable):
             The name of the member to lookup with an optional discriminator.
 
         Returns
-        --------
+        -------
         Optional[:class:`Member`]
             The member in this guild with the associated name. If not found
             then ``None`` is returned.
@@ -1141,7 +1141,7 @@ class Guild(Hashable):
             will be required to update the position of the channel in the channel list.
 
         Examples
-        ----------
+        --------
 
         Creating a basic channel:
 
@@ -1663,7 +1663,7 @@ class Guild(Hashable):
             guild and request an ownership transfer.
 
         Returns
-        --------
+        -------
         :class:`Guild`
             The newly updated guild. Note that this has the same limitations as
             mentioned in :meth:`Client.fetch_guild` and may not have full data.
@@ -1916,7 +1916,7 @@ class Guild(Hashable):
             Fetching the member failed.
 
         Returns
-        --------
+        -------
         :class:`Member`
             The member from the member ID.
         """
@@ -2013,7 +2013,7 @@ class Guild(Hashable):
             Due to a breaking change in Discord's API, this now returns an :class:`~nextcord.AsyncIterator` instead of a :class:`list`.
 
         Examples
-        ---------
+        --------
 
         Usage ::
 
@@ -3199,7 +3199,7 @@ class Guild(Hashable):
             The presences intent is not enabled.
 
         Returns
-        --------
+        -------
         List[:class:`Member`]
             The list of members that have matched the query.
         """

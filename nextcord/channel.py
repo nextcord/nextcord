@@ -451,7 +451,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         also needed to retrieve message history.
 
         Examples
-        ---------
+        --------
 
         Deleting bot's messages ::
 
@@ -483,7 +483,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             fall back to single delete if messages are older than two weeks.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have proper permissions to do the actions required.
         HTTPException
@@ -596,7 +596,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             The reason for creating this webhook. Shows up in the audit logs.
 
         Raises
-        -------
+        ------
         HTTPException
             Creating the webhook failed.
         Forbidden
@@ -640,7 +640,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             .. versionadded:: 1.4
 
         Raises
-        -------
+        ------
         HTTPException
             Following the channel failed.
         Forbidden
@@ -742,7 +742,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             The reason for creating a new thread. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to create a thread.
         HTTPException
@@ -1675,7 +1675,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         .. versionadded:: 2.1
 
         Examples
-        ---------
+        --------
 
         Deleting bot's messages ::
 
@@ -2596,7 +2596,7 @@ class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         If you are the only one in the group, this deletes it as well.
 
         Raises
-        -------
+        ------
         HTTPException
             Leaving the group failed.
         """

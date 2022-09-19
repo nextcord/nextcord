@@ -387,7 +387,7 @@ class Modal:
         or it times out.
 
         Returns
-        --------
+        -------
         :class:`bool`
             If ``True``, then the modal timed out. If ``False`` then
             the modal finished normally.

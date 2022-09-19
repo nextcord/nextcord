@@ -481,7 +481,7 @@ class Asset(AssetMixin):
             The new static format of the asset.
 
         Raises
-        -------
+        ------
         InvalidArgument
             The asset had an invalid format.
 

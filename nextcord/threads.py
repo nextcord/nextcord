@@ -457,7 +457,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         also needed to retrieve message history.
 
         Examples
-        ---------
+        --------
 
         Deleting bot's messages ::
 

@@ -703,7 +703,7 @@ class GuildChannel:
             Shows up on the audit log.
 
         Raises
-        -------
+        ------
         ~nextcord.Forbidden
             You do not have proper permissions to delete the channel.
         ~nextcord.NotFound
@@ -758,7 +758,7 @@ class GuildChannel:
             This method *replaces* the old overwrites with the ones given.
 
         Examples
-        ----------
+        --------
 
         Setting allow and deny: ::
 
@@ -790,7 +790,7 @@ class GuildChannel:
             The reason for doing this action. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         ~nextcord.Forbidden
             You do not have permissions to edit channel specific permissions.
         ~nextcord.HTTPException
@@ -875,7 +875,7 @@ class GuildChannel:
             The reason for cloning this channel. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         ~nextcord.Forbidden
             You do not have the proper permissions to create this channel.
         ~nextcord.HTTPException
@@ -986,7 +986,7 @@ class GuildChannel:
             The reason for the move.
 
         Raises
-        -------
+        ------
         InvalidArgument
             An invalid position was given or a bad mix of arguments were passed.
         Forbidden
@@ -1111,7 +1111,7 @@ class GuildChannel:
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         ~nextcord.HTTPException
             Invite creation failed.
 
@@ -1344,7 +1344,7 @@ class Messageable:
             .. versionadded:: 2.0
 
         Raises
-        --------
+        ------
         ~nextcord.HTTPException
             Sending the message failed.
         ~nextcord.Forbidden
@@ -1516,7 +1516,7 @@ class Messageable:
             The message ID to look for.
 
         Raises
-        --------
+        ------
         ~nextcord.NotFound
             The specified message was not found.
         ~nextcord.Forbidden
@@ -1548,7 +1548,7 @@ class Messageable:
         You must have :attr:`~nextcord.Permissions.read_message_history` permissions to use this.
 
         Examples
-        ---------
+        --------
 
         Usage ::
 
@@ -1596,7 +1596,7 @@ class Messageable:
             The request to get message history failed.
 
         Yields
-        -------
+        ------
         :class:`~nextcord.Message`
             The message with the message data parsed.
         """
@@ -1656,7 +1656,7 @@ class Connectable(Protocol):
             Defaults to :class:`~nextcord.VoiceClient`.
 
         Raises
-        -------
+        ------
         asyncio.TimeoutError
             Could not connect to the voice channel in time.
         ~nextcord.ClientException
