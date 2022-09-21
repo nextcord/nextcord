@@ -45,6 +45,8 @@ from typing import (
     Tuple,
 )
 
+from typing_extensions import Self
+
 from ..components import (
     ActionRow as ActionRowComponent,
     Button as ButtonComponent,
@@ -274,7 +276,7 @@ class View:
         """
         return self.__timeout_expiry
 
-    def add_item(self, item: Item) -> None:
+    def add_item(self, item: Item[Self]) -> None:
         """Adds an item to the view.
 
         Parameters
