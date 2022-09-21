@@ -103,7 +103,7 @@ class AssetMixin:
             The asset was deleted.
 
         Returns
-        --------
+        -------
         :class:`int`
             The number of bytes written.
         """
@@ -134,7 +134,7 @@ class AssetMixin:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         filename: Optional[:class:`str`]
             The filename of the file. If not provided, then the filename from
             the asset's URL is used.
@@ -366,7 +366,7 @@ class Asset(AssetMixin):
         """Returns a new asset with the passed components replaced.
 
         Parameters
-        -----------
+        ----------
         size: :class:`int`
             The new size of the asset.
         format: :class:`str`
@@ -377,12 +377,12 @@ class Asset(AssetMixin):
             Must be either 'webp', 'jpeg', 'jpg', or 'png'.
 
         Raises
-        -------
+        ------
         InvalidArgument
             An invalid size or format was passed.
 
         Returns
-        --------
+        -------
         :class:`Asset`
             The newly updated asset.
         """
@@ -418,17 +418,17 @@ class Asset(AssetMixin):
         """Returns a new asset with the specified size.
 
         Parameters
-        ------------
+        ----------
         size: :class:`int`
             The new size of the asset.
 
         Raises
-        -------
+        ------
         InvalidArgument
             The asset had an invalid size.
 
         Returns
-        --------
+        -------
         :class:`Asset`
             The new updated asset.
         """
@@ -442,17 +442,17 @@ class Asset(AssetMixin):
         """Returns a new asset with the specified format.
 
         Parameters
-        ------------
+        ----------
         format: :class:`str`
             The new format of the asset.
 
         Raises
-        -------
+        ------
         InvalidArgument
             The asset had an invalid format.
 
         Returns
-        --------
+        -------
         :class:`Asset`
             The new updated asset.
         """
@@ -476,17 +476,17 @@ class Asset(AssetMixin):
         not animated. Otherwise, the asset is not changed.
 
         Parameters
-        ------------
+        ----------
         format: :class:`str`
             The new static format of the asset.
 
         Raises
-        -------
+        ------
         InvalidArgument
             The asset had an invalid format.
 
         Returns
-        --------
+        -------
         :class:`Asset`
             The new updated asset.
         """

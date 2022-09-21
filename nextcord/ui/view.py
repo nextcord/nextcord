@@ -140,7 +140,7 @@ class View:
     .. versionadded:: 2.0
 
     Parameters
-    -----------
+    ----------
     timeout: Optional[:class:`float`]
         Timeout in seconds from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
@@ -150,7 +150,7 @@ class View:
         handle view interactions outside of the callback.
 
     Attributes
-    ------------
+    ----------
     timeout: Optional[:class:`float`]
         Timeout from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
@@ -246,14 +246,14 @@ class View:
         converted into a :class:`View` first.
 
         Parameters
-        -----------
+        ----------
         message: :class:`nextcord.Message`
             The message with components to convert into a view.
         timeout: Optional[:class:`float`]
             The timeout of the converted view.
 
         Returns
-        --------
+        -------
         :class:`View`
             The converted view. This always returns a :class:`View` and not
             one of its subclasses.
@@ -280,12 +280,12 @@ class View:
         """Adds an item to the view.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to add to the view.
 
         Raises
-        --------
+        ------
         TypeError
             An :class:`Item` was not passed.
         ValueError
@@ -308,7 +308,7 @@ class View:
         """Removes an item from the view.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to remove from the view.
         """
@@ -342,12 +342,12 @@ class View:
             is considered a failure and :meth:`on_error` is called.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`~nextcord.Interaction`
             The interaction that occurred.
 
         Returns
-        ---------
+        -------
         :class:`bool`
             Whether the view children's callbacks should be called.
         """
@@ -369,7 +369,7 @@ class View:
         The default implementation prints the traceback to stderr.
 
         Parameters
-        -----------
+        ----------
         error: :class:`Exception`
             The exception that was raised.
         item: :class:`Item`
@@ -489,7 +489,7 @@ class View:
         or it times out.
 
         Returns
-        --------
+        -------
         :class:`bool`
             If ``True``, then the view timed out. If ``False`` then
             the view finished normally.

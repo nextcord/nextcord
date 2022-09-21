@@ -125,7 +125,7 @@ class Item(Generic[V]):
         This can be overridden by subclasses.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The interaction that triggered this UI item.
         """

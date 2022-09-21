@@ -115,7 +115,7 @@ class Snowflake(Protocol):
     :class:`.Object`.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The model's unique ID.
     """
@@ -137,7 +137,7 @@ class User(Snowflake, Protocol):
     This ABC must also implement :class:`~nextcord.abc.Snowflake`.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The user's username.
     discriminator: :class:`str`
@@ -178,7 +178,7 @@ class PrivateChannel(Snowflake, Protocol):
     This ABC must also implement :class:`~nextcord.abc.Snowflake`.
 
     Attributes
-    -----------
+    ----------
     me: :class:`~nextcord.ClientUser`
         The user presenting yourself.
     """
@@ -239,7 +239,7 @@ class GuildChannel:
     This ABC must also implement :class:`~nextcord.abc.Snowflake`.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The channel name.
     guild: :class:`~nextcord.Guild`
@@ -461,13 +461,13 @@ class GuildChannel:
         """Returns the channel-specific overwrites for a member or a role.
 
         Parameters
-        -----------
+        ----------
         obj: Union[:class:`~nextcord.Role`, :class:`~nextcord.abc.User`]
             The role or user denoting
             whose overwrite to get.
 
         Returns
-        ---------
+        -------
         :class:`~nextcord.PermissionOverwrite`
             The permission overwrites for this object.
         """
@@ -497,7 +497,7 @@ class GuildChannel:
         overwrite as a :class:`~nextcord.PermissionOverwrite`.
 
         Returns
-        --------
+        -------
         Dict[Union[:class:`~nextcord.Role`, :class:`~nextcord.Member`], :class:`~nextcord.PermissionOverwrite`]
             The channel's permission overwrites.
         """
@@ -697,13 +697,13 @@ class GuildChannel:
         You must have :attr:`~nextcord.Permissions.manage_channels` permission to use this.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this channel.
             Shows up on the audit log.
 
         Raises
-        -------
+        ------
         ~nextcord.Forbidden
             You do not have proper permissions to delete the channel.
         ~nextcord.NotFound
@@ -758,7 +758,7 @@ class GuildChannel:
             This method *replaces* the old overwrites with the ones given.
 
         Examples
-        ----------
+        --------
 
         Setting allow and deny: ::
 
@@ -777,7 +777,7 @@ class GuildChannel:
             await channel.set_permissions(member, overwrite=overwrite)
 
         Parameters
-        -----------
+        ----------
         target: Union[:class:`~nextcord.Member`, :class:`~nextcord.Role`]
             The member or role to overwrite permissions for.
         overwrite: Optional[:class:`~nextcord.PermissionOverwrite`]
@@ -790,7 +790,7 @@ class GuildChannel:
             The reason for doing this action. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         ~nextcord.Forbidden
             You do not have permissions to edit channel specific permissions.
         ~nextcord.HTTPException
@@ -867,7 +867,7 @@ class GuildChannel:
         .. versionadded:: 1.1
 
         Parameters
-        ------------
+        ----------
         name: Optional[:class:`str`]
             The name of the new channel. If not provided, defaults to this
             channel name.
@@ -875,14 +875,14 @@ class GuildChannel:
             The reason for cloning this channel. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         ~nextcord.Forbidden
             You do not have the proper permissions to create this channel.
         ~nextcord.HTTPException
             Creating the channel failed.
 
         Returns
-        --------
+        -------
         :class:`.abc.GuildChannel`
             The channel that was created.
         """
@@ -954,7 +954,7 @@ class GuildChannel:
         .. versionadded:: 1.7
 
         Parameters
-        ------------
+        ----------
         beginning: :class:`bool`
             Whether to move the channel to the beginning of the
             channel list (or category if given).
@@ -986,7 +986,7 @@ class GuildChannel:
             The reason for the move.
 
         Raises
-        -------
+        ------
         InvalidArgument
             An invalid position was given or a bad mix of arguments were passed.
         Forbidden
@@ -1079,7 +1079,7 @@ class GuildChannel:
         do this.
 
         Parameters
-        ------------
+        ----------
         max_age: :class:`int`
             How long the invite should last in seconds. If it's 0 then the invite
             doesn't expire. Defaults to ``0``.
@@ -1111,7 +1111,7 @@ class GuildChannel:
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         ~nextcord.HTTPException
             Invite creation failed.
 
@@ -1119,7 +1119,7 @@ class GuildChannel:
             The channel that was passed is a category or an invalid channel.
 
         Returns
-        --------
+        -------
         :class:`~nextcord.Invite`
             The invite that was created.
         """
@@ -1145,7 +1145,7 @@ class GuildChannel:
         You must have :attr:`~nextcord.Permissions.manage_channels` to get this information.
 
         Raises
-        -------
+        ------
         ~nextcord.Forbidden
             You do not have proper permissions to get the information.
         ~nextcord.HTTPException
@@ -1292,7 +1292,7 @@ class Messageable:
         **Specifying both parameters will lead to an exception**.
 
         Parameters
-        ------------
+        ----------
         content: Optional[:class:`str`]
             The content of the message to send.
         tts: :class:`bool`
@@ -1344,7 +1344,7 @@ class Messageable:
             .. versionadded:: 2.0
 
         Raises
-        --------
+        ------
         ~nextcord.HTTPException
             Sending the message failed.
         ~nextcord.Forbidden
@@ -1357,7 +1357,7 @@ class Messageable:
             :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`.
 
         Returns
-        ---------
+        -------
         :class:`~nextcord.Message`
             The message that was sent.
         """
@@ -1511,12 +1511,12 @@ class Messageable:
         Retrieves a single :class:`~nextcord.Message` from the destination.
 
         Parameters
-        ------------
+        ----------
         id: :class:`int`
             The message ID to look for.
 
         Raises
-        --------
+        ------
         ~nextcord.NotFound
             The specified message was not found.
         ~nextcord.Forbidden
@@ -1525,7 +1525,7 @@ class Messageable:
             Retrieving the message failed.
 
         Returns
-        --------
+        -------
         :class:`~nextcord.Message`
             The message asked for.
         """
@@ -1548,7 +1548,7 @@ class Messageable:
         You must have :attr:`~nextcord.Permissions.read_message_history` permissions to use this.
 
         Examples
-        ---------
+        --------
 
         Usage ::
 
@@ -1565,7 +1565,7 @@ class Messageable:
         All parameters are optional.
 
         Parameters
-        -----------
+        ----------
         limit: Optional[:class:`int`]
             The number of messages to retrieve.
             If ``None``, retrieves every message in the channel. Note, however,
@@ -1596,7 +1596,7 @@ class Messageable:
             The request to get message history failed.
 
         Yields
-        -------
+        ------
         :class:`~nextcord.Message`
             The message with the message data parsed.
         """
@@ -1644,7 +1644,7 @@ class Connectable(Protocol):
         This requires :attr:`Intents.voice_states`.
 
         Parameters
-        -----------
+        ----------
         timeout: :class:`float`
             The timeout in seconds to wait for the voice endpoint.
         reconnect: :class:`bool`
@@ -1656,7 +1656,7 @@ class Connectable(Protocol):
             Defaults to :class:`~nextcord.VoiceClient`.
 
         Raises
-        -------
+        ------
         asyncio.TimeoutError
             Could not connect to the voice channel in time.
         ~nextcord.ClientException
@@ -1665,7 +1665,7 @@ class Connectable(Protocol):
             The opus library has not been loaded.
 
         Returns
-        --------
+        -------
         :class:`~nextcord.VoiceProtocol`
             A voice client that is fully connected to the voice server.
         """

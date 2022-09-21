@@ -85,7 +85,7 @@ class Thread(Messageable, Hashable, PinsMixin):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The thread name.
     guild: :class:`Guild`
@@ -271,7 +271,7 @@ class Thread(Messageable, Hashable, PinsMixin):
             attribute.
 
         Returns
-        ---------
+        -------
         Optional[:class:`Message`]
             The last message in this channel or ``None`` if not found.
         """
@@ -282,7 +282,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         """The category channel the parent channel belongs to, if applicable.
 
         Raises
-        -------
+        ------
         ClientException
             The parent channel was not cached and returned ``None``.
 
@@ -302,7 +302,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         """The category channel ID the parent channel belongs to, if applicable.
 
         Raises
-        -------
+        ------
         ClientException
             The parent channel was not cached and returned ``None``.
 
@@ -367,7 +367,7 @@ class Thread(Messageable, Hashable, PinsMixin):
             are not computed.
 
         Raises
-        -------
+        ------
         ClientException
             The parent channel was not cached and returned ``None``
 
@@ -401,7 +401,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         Usable only by bot accounts.
 
         Parameters
-        -----------
+        ----------
         messages: Iterable[:class:`abc.Snowflake`]
             An iterable of messages denoting which ones to bulk delete.
 
@@ -457,7 +457,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         also needed to retrieve message history.
 
         Examples
-        ---------
+        --------
 
         Deleting bot's messages ::
 
@@ -468,7 +468,7 @@ class Thread(Messageable, Hashable, PinsMixin):
             await thread.send(f'Deleted {len(deleted)} message(s)')
 
         Parameters
-        -----------
+        ----------
         limit: Optional[:class:`int`]
             The number of messages to search through. This is not the number
             of messages that will be deleted, though it can be.
@@ -489,14 +489,14 @@ class Thread(Messageable, Hashable, PinsMixin):
             fall back to single delete if messages are older than two weeks.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have proper permissions to do the actions required.
         HTTPException
             Purging the messages failed.
 
         Returns
-        --------
+        -------
         List[:class:`.Message`]
             The list of messages that were deleted.
         """
@@ -638,7 +638,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         If the thread is private, :attr:`~Permissions.manage_threads` is also needed.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to join the thread.
         HTTPException
@@ -652,7 +652,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         Leaves this thread.
 
         Raises
-        -------
+        ------
         HTTPException
             Leaving the thread failed.
         """
@@ -669,12 +669,12 @@ class Thread(Messageable, Hashable, PinsMixin):
         is required to add a user to the thread.
 
         Parameters
-        -----------
+        ----------
         user: :class:`abc.Snowflake`
             The user to add to the thread.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to add the user to the thread.
         HTTPException
@@ -690,12 +690,12 @@ class Thread(Messageable, Hashable, PinsMixin):
         You must have :attr:`~Permissions.manage_threads` or be the creator of the thread to remove a user.
 
         Parameters
-        -----------
+        ----------
         user: :class:`abc.Snowflake`
             The user to add to the thread.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to remove the user from the thread.
         HTTPException
@@ -712,12 +712,12 @@ class Thread(Messageable, Hashable, PinsMixin):
         other than yourself.
 
         Raises
-        -------
+        ------
         HTTPException
             Retrieving the members failed.
 
         Returns
-        --------
+        -------
         List[:class:`ThreadMember`]
             All thread members in the thread.
         """
@@ -733,7 +733,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         You must have :attr:`~Permissions.manage_threads` to delete threads.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to delete this thread.
         HTTPException
@@ -750,12 +750,12 @@ class Thread(Messageable, Hashable, PinsMixin):
         .. versionadded:: 2.0
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to create a partial message for.
 
         Returns
-        ---------
+        -------
         :class:`PartialMessage`
             The partial message.
         """
@@ -795,7 +795,7 @@ class ThreadMember(Hashable):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The thread member's ID.
     thread_id: :class:`int`
