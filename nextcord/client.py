@@ -694,7 +694,7 @@ class Client:
         }
         while not self.is_closed():
             try:
-                coro = DiscordWebSocket.from_client(self, **ws_params)
+                coro = DiscordWebSocket.from_client(self, format_gateway=True, **ws_params)
                 self.ws = await asyncio.wait_for(coro, timeout=60.0)
                 ws_params["initial"] = False
                 while True:
@@ -702,9 +702,23 @@ class Client:
             except ReconnectWebSocket as e:
                 _log.info("Got a request to %s the websocket.", e.op)
                 self.dispatch("disconnect")
-                ws_params.update(
-                    sequence=self.ws.sequence, resume=e.resume, session=self.ws.session_id
-                )
+
+                # Only specify new gateway if resuming, otherwise use the default one
+                if e.resume:
+                    ws_params.update(
+                        sequence=self.ws.sequence,
+                        gateway=self.ws.resume_url,
+                        resume=True,
+                        session=self.ws.session_id,
+                    )
+                else:
+                    ws_params.update(
+                        sequence=None,
+                        gateway=None,
+                        resume=False,
+                        session=None,
+                    )
+
                 continue
             except (
                 OSError,
@@ -730,6 +744,7 @@ class Client:
                 if isinstance(exc, OSError) and exc.errno in (54, 10054):
                     ws_params.update(
                         sequence=self.ws.sequence,
+                        gateway=self.ws.resume_url,
                         initial=False,
                         resume=True,
                         session=self.ws.session_id,
@@ -753,7 +768,13 @@ class Client:
                 # Always try to RESUME the connection
                 # If the connection is not RESUME-able then the gateway will invalidate the session.
                 # This is apparently what the official Discord client does.
-                ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
+                ws_params.update(
+                    sequence=self.ws.sequence,
+                    gateway=self.ws.resume_url,
+                    initial=False,
+                    resume=True,
+                    session=self.ws.session_id,
+                )
 
     async def close(self) -> None:
         """|coro|
