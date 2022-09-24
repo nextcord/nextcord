@@ -43,7 +43,6 @@ from typing import (
     Set,
     Tuple,
     Union,
-    cast,
     overload,
 )
 
@@ -2899,7 +2898,7 @@ class Guild(Hashable):
             The user to ban from their guild.
         delete_message_seconds: Optional[:class:`int`]
             The number of seconds worth of messages to delete from the user
-            in the guild.
+            in the guild. The minimum is 0 and the maximum is 604800 (7 days).
         delete_message_days: Optional[:class:`int`]
             The number of days worth of messages to delete from the user
             in the guild. The minimum is 0 and the maximum is 7.
@@ -2917,21 +2916,18 @@ class Guild(Hashable):
             raise InvalidArgument(
                 "Cannot pass both delete_message_days and delete_message_seconds."
             )
-        elif delete_message_days is None and delete_message_seconds is None:
-            # Default to one day
-            delete_message_seconds = 24 * 60 * 60
-
-        if delete_message_days is not None:
+        elif delete_message_days is not None:
             warnings.warn(
                 DeprecationWarning(
                     "delete_message_days is deprecated, use delete_message_seconds instead."
                 )
             )
             delete_message_seconds = delete_message_days * 24 * 60 * 60
+        elif delete_message_seconds is None:
+            # Default to one day
+            delete_message_seconds = 24 * 60 * 60
 
-        await self._state.http.ban(
-            user.id, self.id, cast(int, delete_message_seconds), reason=reason
-        )
+        await self._state.http.ban(user.id, self.id, delete_message_seconds, reason=reason)
 
     async def unban(self, user: Snowflake, *, reason: Optional[str] = None) -> None:
         """|coro|

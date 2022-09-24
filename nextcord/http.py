@@ -879,7 +879,7 @@ class HTTPClient:
         self,
         user_id: Snowflake,
         guild_id: Snowflake,
-        delete_message_seconds: int = 0,
+        delete_message_seconds: int = 86400,
         reason: Optional[str] = None,
     ) -> Response[None]:
         r = Route("PUT", "/guilds/{guild_id}/bans/{user_id}", guild_id=guild_id, user_id=user_id)
