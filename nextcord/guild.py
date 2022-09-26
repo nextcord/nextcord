@@ -2874,7 +2874,8 @@ class Guild(Hashable):
         user: Snowflake,
         *,
         reason: Optional[str] = None,
-        delete_message_days: Literal[0, 1, 2, 3, 4, 5, 6, 7] = 1,
+        delete_message_seconds: Optional[int] = None,
+        delete_message_days: Optional[Literal[0, 1, 2, 3, 4, 5, 6, 7]] = None,
     ) -> None:
         """|coro|
 
@@ -2885,11 +2886,20 @@ class Guild(Hashable):
         You must have the :attr:`~Permissions.ban_members` permission to
         do this.
 
+        For backwards compatibility reasons, by default one day worth of messages will be deleted.
+
+        .. warning::
+            delete_message_days is deprecated and will be removed in a future version.
+            Use delete_message_seconds instead.
+
         Parameters
         ----------
         user: :class:`abc.Snowflake`
             The user to ban from their guild.
-        delete_message_days: :class:`int`
+        delete_message_seconds: Optional[:class:`int`]
+            The number of seconds worth of messages to delete from the user
+            in the guild. The minimum is 0 and the maximum is 604800 (7 days).
+        delete_message_days: Optional[:class:`int`]
             The number of days worth of messages to delete from the user
             in the guild. The minimum is 0 and the maximum is 7.
         reason: Optional[:class:`str`]
@@ -2902,7 +2912,22 @@ class Guild(Hashable):
         HTTPException
             Banning failed.
         """
-        await self._state.http.ban(user.id, self.id, delete_message_days, reason=reason)
+        if delete_message_days is not None and delete_message_seconds is not None:
+            raise InvalidArgument(
+                "Cannot pass both delete_message_days and delete_message_seconds."
+            )
+        elif delete_message_days is not None:
+            warnings.warn(
+                DeprecationWarning(
+                    "delete_message_days is deprecated, use delete_message_seconds instead."
+                )
+            )
+            delete_message_seconds = delete_message_days * 24 * 60 * 60
+        elif delete_message_seconds is None:
+            # Default to one day
+            delete_message_seconds = 24 * 60 * 60
+
+        await self._state.http.ban(user.id, self.id, delete_message_seconds, reason=reason)
 
     async def unban(self, user: Snowflake, *, reason: Optional[str] = None) -> None:
         """|coro|
