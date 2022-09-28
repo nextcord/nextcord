@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -26,16 +27,12 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from typing_extensions import NotRequired
+
 from .snowflake import Snowflake
 
 
-class _RoleOptional(TypedDict, total=False):
-    tags: RoleTags
-    unicode_emoji: str
-    icon: str
-
-
-class Role(_RoleOptional):
+class Role(TypedDict):
     id: Snowflake
     name: str
     color: int
@@ -44,6 +41,9 @@ class Role(_RoleOptional):
     permissions: str
     managed: bool
     mentionable: bool
+    tags: NotRequired[RoleTags]
+    unicode_emoji: NotRequired[str]
+    icon: NotRequired[str]
 
 
 class RoleTags(TypedDict, total=False):
