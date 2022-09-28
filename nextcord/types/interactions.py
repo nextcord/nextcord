@@ -106,37 +106,37 @@ InteractionType = Literal[1, 2, 3]
 
 class _ApplicationCommandInteractionDataOptionSubcommand(TypedDict):
     type: Literal[1, 2]
-    name: NotRequired[str]
+    name: str
     options: List[ApplicationCommandInteractionDataOption]
 
 
 class _ApplicationCommandInteractionDataOptionString(TypedDict):
     type: Literal[3]
-    name: NotRequired[str]
+    name: str
     value: str
 
 
 class _ApplicationCommandInteractionDataOptionInteger(TypedDict):
     type: Literal[4]
-    name: NotRequired[str]
+    name: str
     value: int
 
 
 class _ApplicationCommandInteractionDataOptionBoolean(TypedDict):
     type: Literal[5]
-    name: NotRequired[str]
+    name: str
     value: bool
 
 
 class _ApplicationCommandInteractionDataOptionSnowflake(TypedDict):
     type: Literal[6, 7, 8, 9]
-    name: NotRequired[str]
+    name: str
     value: Snowflake
 
 
 class _ApplicationCommandInteractionDataOptionNumber(TypedDict):
     type: Literal[10]
-    name: NotRequired[str]
+    name: str
     value: float
 
 
