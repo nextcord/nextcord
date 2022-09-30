@@ -63,7 +63,7 @@ class CogMeta(_CogMeta):
     This class inherits from :class:`nextcord.CogMeta`.
 
     Attributes
-    -----------
+    ----------
     command_attrs: :class:`dict`
         A list of attributes to apply to every command inside this cog. The dictionary
         is passed into the :class:`Command` options at ``__init__``.
@@ -173,7 +173,7 @@ class Cog(_Cog, metaclass=CogMeta):
     def get_commands(self) -> List[Command]:
         r"""
         Returns
-        --------
+        -------
         List[:class:`.Command`]
             A :class:`list` of :class:`.Command`\s that are
             defined inside this cog.
@@ -273,7 +273,7 @@ class Cog(_Cog, metaclass=CogMeta):
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context where the error happened.
         error: :class:`CommandError`
@@ -290,7 +290,7 @@ class Cog(_Cog, metaclass=CogMeta):
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context.
         """
@@ -305,7 +305,7 @@ class Cog(_Cog, metaclass=CogMeta):
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context.
         """

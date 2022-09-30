@@ -114,7 +114,7 @@ class HTTPException(DiscordException):
     """Exception that's raised when an HTTP request operation fails.
 
     Attributes
-    ------------
+    ----------
     response: :class:`aiohttp.ClientResponse`
         The response of the failed HTTP request. This is an
         instance of :class:`aiohttp.ClientResponse`. In some cases
@@ -217,7 +217,7 @@ class ConnectionClosed(ClientException):
     closed for reasons that could not be handled internally.
 
     Attributes
-    -----------
+    ----------
     code: :class:`int`
         The close code of the websocket.
     reason: :class:`str`
@@ -253,7 +253,7 @@ class PrivilegedIntentsRequired(ClientException):
     - :attr:`Intents.presences`
 
     Attributes
-    -----------
+    ----------
     shard_id: Optional[:class:`int`]
         The shard ID that got closed if applicable.
     """
@@ -278,7 +278,7 @@ class InteractionResponded(ClientException):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     interaction: :class:`Interaction`
         The interaction that's already been responded to.
     """
@@ -313,7 +313,7 @@ class ApplicationInvokeError(ApplicationError):
     This inherits from :exc:`ApplicationError`
 
     Attributes
-    -----------
+    ----------
     original: :exc:`Exception`
         The original exception that was raised. You can also get this via
         the ``__cause__`` attribute.

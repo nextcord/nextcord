@@ -68,7 +68,7 @@ class WidgetChannel:
             Returns the partial channel's name.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The channel's ID.
     name: :class:`str`
@@ -123,7 +123,7 @@ class WidgetMember(BaseUser):
             Returns the widget member's `name#discriminator`.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The member's ID.
     name: :class:`str`
@@ -219,7 +219,7 @@ class Widget:
             Returns the widget's JSON URL.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The guild's ID.
     name: :class:`str`
@@ -299,14 +299,14 @@ class Widget:
         code is abstracted away.
 
         Parameters
-        -----------
+        ----------
         with_counts: :class:`bool`
             Whether to include count information in the invite. This fills the
             :attr:`Invite.approximate_member_count` and :attr:`Invite.approximate_presence_count`
             fields.
 
         Returns
-        --------
+        -------
         :class:`Invite`
             The invite from the widget's invite URL.
         """

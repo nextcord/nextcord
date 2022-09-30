@@ -3,7 +3,7 @@
 .. _ext_commands_cogs:
 
 Cogs
-======
+====
 
 :class:`~.commands.Cog` is like :class:`nextcord.Cog` except it adds support for :class:`~.commands.Command`
 and more special methods.
@@ -11,7 +11,7 @@ and more special methods.
 It should be noted that cogs are typically used alongside with :ref:`ext_commands_extensions`.
 
 Quick Example
----------------
+-------------
 
 This example cog defines a ``Greetings`` category for your commands, with a single :ref:`command <ext_commands_commands>` named ``hello`` as well as a listener to listen to an :ref:`Event <discord-api-events>`.
 
@@ -38,10 +38,11 @@ This example cog defines a ``Greetings`` category for your commands, with a sing
                 await ctx.send(f'Hello {member.name}... This feels familiar.')
             self._last_member = member
 
+
 .. _ext_commands_cogs_special_methods:
 
 Special Methods
------------------
+---------------
 
 Special Methods are exactly like what they are in :class:`nextcord.Cog`, however there are additional special methods.
 
@@ -60,14 +61,14 @@ You can visit the reference to get more detail and see additional special method
 .. _ext_commands_cogs_meta_options:
 
 Meta Options
---------------
+------------
 
 Meta options are exactly like what they are in :class:`nextcord.Cog`, however there is an additional option.
 
 For more information, see the documentation of :class:`.CogMeta`.
 
 Inspection
-------------
+----------
 
 Since cogs ultimately are classes, we have some tools to help us inspect certain properties of the cog.
 

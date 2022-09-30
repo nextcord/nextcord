@@ -85,6 +85,9 @@ __all__ = (
     "remove_markdown",
     "escape_markdown",
     "escape_mentions",
+    "parse_raw_mentions",
+    "parse_raw_role_mentions",
+    "parse_raw_channel_mentions",
     "as_chunks",
     "format_dt",
 )
@@ -281,7 +284,7 @@ def oauth_url(
     into guilds.
 
     Parameters
-    -----------
+    ----------
     client_id: Union[:class:`int`, :class:`str`]
         The client ID for your bot.
     permissions: :class:`~nextcord.Permissions`
@@ -301,7 +304,7 @@ def oauth_url(
         .. versionadded:: 2.0
 
     Returns
-    --------
+    -------
     :class:`str`
         The OAuth2 URL for inviting the bot into guilds.
     """
@@ -323,12 +326,12 @@ def oauth_url(
 def snowflake_time(id: int) -> datetime.datetime:
     """
     Parameters
-    -----------
+    ----------
     id: :class:`int`
         The snowflake ID.
 
     Returns
-    --------
+    -------
     :class:`datetime.datetime`
         An aware datetime in UTC representing the creation time of the snowflake.
     """
@@ -346,7 +349,7 @@ def time_snowflake(dt: datetime.datetime, high: bool = False) -> int:
     to be inclusive, ``high=False`` to be exclusive
 
     Parameters
-    -----------
+    ----------
     dt: :class:`datetime.datetime`
         A datetime object to convert to a snowflake.
         If naive, the timezone is assumed to be local time.
@@ -354,7 +357,7 @@ def time_snowflake(dt: datetime.datetime, high: bool = False) -> int:
         Whether or not to set the lower 22 bit to high or low.
 
     Returns
-    --------
+    -------
     :class:`int`
         The snowflake representing the time given.
     """
@@ -375,7 +378,7 @@ def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
     a valid entry.
 
     Parameters
-    -----------
+    ----------
     predicate
         A function that returns a boolean-like result.
     seq: :class:`collections.abc.Iterable`
@@ -418,7 +421,7 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     ``None`` is returned.
 
     Examples
-    ---------
+    --------
 
     Basic usage:
 
@@ -439,7 +442,7 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
         channel = nextcord.utils.get(client.get_all_channels(), guild__name='Cool', name='general')
 
     Parameters
-    -----------
+    ----------
     iterable
         An iterable to search through.
     \*\*attrs
@@ -595,7 +598,7 @@ async def sleep_until(when: datetime.datetime, result: Optional[T] = None) -> Op
     .. versionadded:: 1.3
 
     Parameters
-    -----------
+    ----------
     when: :class:`datetime.datetime`
         The timestamp in which to sleep until. If the datetime is naive then
         it is assumed to be local time.
@@ -615,7 +618,7 @@ def utcnow() -> datetime.datetime:
     .. versionadded:: 2.0
 
     Returns
-    --------
+    -------
     :class:`datetime.datetime`
         The current aware datetime in UTC.
     """
@@ -681,12 +684,12 @@ def resolve_invite(invite: Union[Invite, str]) -> str:
     Resolves an invite from a :class:`~nextcord.Invite`, URL or code.
 
     Parameters
-    -----------
+    ----------
     invite: Union[:class:`~nextcord.Invite`, :class:`str`]
         The invite.
 
     Returns
-    --------
+    -------
     :class:`str`
         The invite code.
     """
@@ -712,12 +715,12 @@ def resolve_template(code: Union[Template, str]) -> str:
     .. versionadded:: 1.4
 
     Parameters
-    -----------
+    ----------
     code: Union[:class:`~nextcord.Template`, :class:`str`]
         The code.
 
     Returns
-    --------
+    -------
     :class:`str`
         The template code.
     """
@@ -758,7 +761,7 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
             if the input contains ``10 * 5`` then it will be converted into ``10  5``.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The text to remove markdown from.
     ignore_links: :class:`bool`
@@ -767,7 +770,7 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
         be left alone. Defaults to ``True``.
 
     Returns
-    --------
+    -------
     :class:`str`
         The text with the markdown special characters removed.
     """
@@ -786,7 +789,7 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
     r"""A helper function that escapes Discord's markdown.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The text to escape markdown from.
     as_needed: :class:`bool`
@@ -802,7 +805,7 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
         Defaults to ``True``.
 
     Returns
-    --------
+    -------
     :class:`str`
         The text with the markdown special characters escaped with a slash.
     """
@@ -839,16 +842,78 @@ def escape_mentions(text: str) -> str:
         class.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The text to escape mentions from.
 
     Returns
-    --------
+    -------
     :class:`str`
         The text with the mentions removed.
     """
     return re.sub(r"@(everyone|here|[!&]?[0-9]{17,20})", "@\u200b\\1", text)
+
+
+def parse_raw_mentions(text: str) -> List[int]:
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.User` IDs
+    matched with the syntax of ``<@user_id>`` or ``<@!user_id>``.
+
+    .. note::
+
+        This does not include role or channel mentions. See :func:`parse_raw_role_mentions`
+        and :func:`parse_raw_channel_mentions` for those.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    ----------
+    text: :class:`str`
+        The text to parse mentions from.
+
+    Returns
+    -------
+    List[:class:`int`]
+        A list of user IDs that were mentioned.
+    """
+    return [int(x) for x in re.findall(r"<@!?(\d{15,20})>", text)]
+
+
+def parse_raw_role_mentions(text: str) -> List[int]:
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.Role` IDs
+    matched with the syntax of ``<@&role_id>``.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    ----------
+    text: :class:`str`
+        The text to parse mentions from.
+
+    Returns
+    -------
+    List[:class:`int`]
+        A list of role IDs that were mentioned.
+    """
+    return [int(x) for x in re.findall(r"<@&(\d{15,20})>", text)]
+
+
+def parse_raw_channel_mentions(text: str) -> List[int]:
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.abc.GuildChannel` IDs
+    matched with the syntax of ``<#channel_id>``.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    ----------
+    text: :class:`str`
+        The text to parse mentions from.
+
+    Returns
+    -------
+    List[:class:`int`]
+        A list of channel IDs that were mentioned.
+    """
+    return [int(x) for x in re.findall(r"<#(\d{15,20})>", text)]
 
 
 def _chunk(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]:
@@ -907,7 +972,7 @@ def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
         The last chunk collected may not be as large as ``max_size``.
 
     Returns
-    --------
+    -------
     Union[:class:`Iterator`, :class:`AsyncIterator`]
         A new iterator which yields chunks of a given size.
     """
@@ -1050,14 +1115,14 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
     .. versionadded:: 2.0
 
     Parameters
-    -----------
+    ----------
     dt: :class:`datetime.datetime`
         The datetime to format.
     style: :class:`str`
         The style to format the datetime with.
 
     Returns
-    --------
+    -------
     :class:`str`
         The formatted string.
     """
@@ -1096,14 +1161,14 @@ def _trim_text(text: str, max_chars: int) -> str:
     """Trims a string and adds an ellpsis if it exceeds the maximum length.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The string to trim.
     max_chars: :class:`int`
         The maximum number of characters to allow.
 
     Returns
-    --------
+    -------
     :class:`str`
         The trimmed string.
     """
@@ -1117,7 +1182,7 @@ def parse_docstring(func: Callable, max_chars: int = MISSING) -> Dict[str, Any]:
     """Parses the docstring of a function into a dictionary.
 
     Parameters
-    ------------
+    ----------
     func: :class:`Callable`
         The function to parse the docstring of.
     max_chars: :class:`int`
@@ -1125,7 +1190,7 @@ def parse_docstring(func: Callable, max_chars: int = MISSING) -> Dict[str, Any]:
         If MISSING, then there is no maximum.
 
     Returns
-    --------
+    -------
     :class:`Dict[str, Any]`
         The parsed docstring including the function description and
         descriptions of arguments.

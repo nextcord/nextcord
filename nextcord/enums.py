@@ -196,6 +196,7 @@ class ChannelType(Enum):
     public_thread = 11
     private_thread = 12
     stage_voice = 13
+    guild_directory = 14
     forum = 15
 
     def __str__(self):
@@ -752,7 +753,6 @@ class AutoModerationEventType(Enum):
 
 class AutoModerationTriggerType(Enum):
     keyword = 1
-    harmful_link = 2
     spam = 3
     keyword_preset = 4
 
