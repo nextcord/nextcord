@@ -131,8 +131,6 @@ class Cog(metaclass=CogMeta):
 
     When inheriting from this class, the options shown in :class:`nextcord.CogMeta`
     are equally valid here.
-
-    There is an alias for this called :class:`ClientCog`.
     """
 
     __cog_name__: ClassVar[str]
