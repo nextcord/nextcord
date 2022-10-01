@@ -400,6 +400,10 @@ class Cog(ClientCog, metaclass=CogMeta):
             The invocation context where the error happened.
         error: :class:`CommandError`
             The error that happened.
+
+        .. note::
+
+            This is only called for prefix commands and not application commands.
         """
         pass
 
