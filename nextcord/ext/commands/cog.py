@@ -403,7 +403,7 @@ class Cog(ClientCog, metaclass=CogMeta):
 
         .. note::
 
-            This is only called for prefix commands and not application commands.
+            This is only called for prefix commands.
         """
         pass
 
