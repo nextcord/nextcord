@@ -69,7 +69,7 @@ __all__ = (
 class ReconnectWebSocket(Exception):
     """Signals to safely reconnect the websocket."""
 
-    def __init__(self, shard_id: int, *, resume: bool = True):
+    def __init__(self, shard_id: Optional[int], *, resume: bool = True):
         self.shard_id = shard_id
         self.resume = resume
         self.op = "RESUME" if resume else "IDENTIFY"
@@ -478,16 +478,16 @@ class DiscordWebSocket:
             self._buffer = bytearray()
 
         self.log_receive(msg)
-        msg: Any = utils._from_json(msg)
+        message: dict = utils._from_json(msg)
 
         _log.debug("For Shard ID %s: WebSocket Event: %s", self.shard_id, msg)
-        event = msg.get("t")
+        event = message.get("t")
         if event:
             self._dispatch("socket_event_type", event)
 
-        op = msg.get("op")
-        data = msg.get("d")
-        seq = msg.get("s")
+        op = message.get("op")
+        data = message["d"]
+        seq = message.get("s")
         if seq is not None:
             self.sequence = seq
 
@@ -540,7 +540,7 @@ class DiscordWebSocket:
 
         if event == "READY":
             self._trace = trace = data.get("_trace", [])
-            self.sequence = msg["s"]
+            self.sequence = message["s"]
             self.session_id = data["session_id"]
             self.resume_url = data["resume_gateway_url"]
             # pass back shard ID to ready handler
@@ -682,16 +682,16 @@ class DiscordWebSocket:
         if activity is not None:
             if not isinstance(activity, BaseActivity):
                 raise InvalidArgument("activity must derive from BaseActivity.")
-            activity: list = [activity.to_dict()]
+            activities: list = [activity.to_dict()]
         else:
-            activity = []
+            activities = []
 
         if status == "idle":
             since = int(time.time() * 1000)
 
         payload = {
             "op": self.PRESENCE,
-            "d": {"activities": activity, "afk": False, "since": since, "status": status},
+            "d": {"activities": activities, "afk": False, "since": since, "status": status},
         }
 
         sent = utils._to_json(payload)
@@ -725,7 +725,7 @@ class DiscordWebSocket:
         await self.send_as_json(payload)
 
     async def voice_state(
-        self, guild_id: int, channel_id: int, self_mute: bool = False, self_deaf: bool = False
+        self, guild_id: int, channel_id: Optional[int], self_mute: bool = False, self_deaf: bool = False
     ) -> None:
         payload = {
             "op": self.VOICE_STATE,
