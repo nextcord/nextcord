@@ -52,6 +52,7 @@ from .auto_moderation import AutoModerationRule, AutoModerationTriggerMetadata
 from .bans import BanEntry
 from .channel import (
     CategoryChannel,
+    ForumChannel,
     StageChannel,
     TextChannel,
     VoiceChannel,
@@ -101,7 +102,6 @@ if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
-    from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
