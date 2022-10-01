@@ -191,7 +191,7 @@ class Cog(metaclass=CogMeta):
                 if is_static_method:
                     value = value.__func__
 
-                if asyncio.iscoroutinefunction(value):
+                if asyncio.iscoroutinefunction(value) and getattr(value, "__cog_listener__", False):
                     listeners[elem] = value
 
         for listener in listeners.values():
