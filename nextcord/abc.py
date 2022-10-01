@@ -1416,9 +1416,6 @@ class Messageable:
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
             components = cast(List[ComponentT], view.to_components())
-
-            components = [] + view.to_components()
-            components.extend(view.to_components())
         else:
             components = None
 
