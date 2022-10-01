@@ -394,16 +394,16 @@ class Cog(ClientCog, metaclass=CogMeta):
 
         This **must** be a coroutine.
 
+        .. note::
+
+            This is only called for prefix commands.
+
         Parameters
         ----------
         ctx: :class:`.Context`
             The invocation context where the error happened.
         error: :class:`CommandError`
             The error that happened.
-
-        .. note::
-
-            This is only called for prefix commands.
         """
         pass
 
