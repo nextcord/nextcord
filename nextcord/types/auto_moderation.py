@@ -24,6 +24,8 @@ DEALINGS IN THE SOFTWARE.
 
 from typing import List, Literal, Optional, TypedDict
 
+from typing_extensions import NotRequired
+
 from .snowflake import Snowflake
 
 AutoModerationEventType = Literal[1]
@@ -43,12 +45,9 @@ class AutoModerationActionMetadata(TypedDict, total=False):
     duration_seconds: int
 
 
-class _AutoModerationActionOptional(TypedDict, total=False):
-    metadata: AutoModerationActionMetadata
-
-
-class AutoModerationAction(_AutoModerationActionOptional):
+class AutoModerationAction(TypedDict):
     type: AutoModerationActionType
+    metadata: NotRequired[AutoModerationActionMetadata]
 
 
 class AutoModerationRule(TypedDict):
@@ -65,18 +64,15 @@ class AutoModerationRule(TypedDict):
     exempt_channels: List[Snowflake]
 
 
-class _AutoModerationRuleCreateOptional(TypedDict, total=False):
-    trigger_metadata: AutoModerationTriggerMetadata
-    enabled: bool
-    exempt_roles: List[Snowflake]
-    exempt_channels: List[Snowflake]
-
-
-class AutoModerationRuleCreate(_AutoModerationRuleCreateOptional):
+class AutoModerationRuleCreate(TypedDict):
     name: str
     event_type: AutoModerationEventType
     trigger_type: AutoModerationTriggerType
     actions: List[AutoModerationAction]
+    trigger_metadata: NotRequired[AutoModerationTriggerMetadata]
+    enabled: NotRequired[bool]
+    exempt_roles: NotRequired[List[Snowflake]]
+    exempt_channels: NotRequired[List[Snowflake]]
 
 
 class AutoModerationRuleModify(TypedDict, total=False):
@@ -89,18 +85,15 @@ class AutoModerationRuleModify(TypedDict, total=False):
     exempt_channels: List[Snowflake]
 
 
-class _AutoModerationActionExecutionOptional(TypedDict, total=False):
-    channel_id: Snowflake
-    message_id: Snowflake
-    alert_system_message_id: Snowflake
-    content: str
-    matched_content: Optional[str]
-
-
-class AutoModerationActionExecution(_AutoModerationActionExecutionOptional):
+class AutoModerationActionExecution(TypedDict):
     guild_id: Snowflake
     action: AutoModerationAction
     rule_id: Snowflake
     rule_trigger_type: AutoModerationTriggerType
     user_id: Snowflake
     matched_keyword: Optional[str]
+    channel_id: NotRequired[Snowflake]
+    message_id: NotRequired[Snowflake]
+    alert_system_message_id: NotRequired[Snowflake]
+    content: NotRequired[str]
+    matched_content: NotRequired[Optional[str]]
