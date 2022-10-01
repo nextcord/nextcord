@@ -725,7 +725,11 @@ class DiscordWebSocket:
         await self.send_as_json(payload)
 
     async def voice_state(
-        self, guild_id: int, channel_id: Optional[int], self_mute: bool = False, self_deaf: bool = False
+        self,
+        guild_id: int,
+        channel_id: Optional[int],
+        self_mute: bool = False,
+        self_deaf: bool = False,
     ) -> None:
         payload = {
             "op": self.VOICE_STATE,
