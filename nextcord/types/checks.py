@@ -1,6 +1,8 @@
 """
 The MIT License (MIT)
-Copyright (c) 2021-present tag-epic
+
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -25,7 +27,6 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
 
 if TYPE_CHECKING:
     from nextcord.cog import Cog
-    from nextcord.errors import ApplicationError
 
     from ..interactions import Interaction
 
