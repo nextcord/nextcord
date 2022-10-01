@@ -1872,7 +1872,7 @@ class Client:
 
         self._connection.store_view(view, message_id)
 
-    def remove_view(self, view: View) -> None:
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
         """Removes a :class:`~nextcord.ui.View` from persistent listening.
 
         This method should be used if a persistent view is set in a cog and
@@ -1901,7 +1901,7 @@ class Client:
                 "View is not persistent. Items need to have a custom_id set and View must have no timeout"
             )
 
-        self._connection.remove_view(view)
+        self._connection.remove_view(view, message_id)
 
     def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
         """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
