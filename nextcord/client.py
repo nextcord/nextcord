@@ -2094,7 +2094,11 @@ class Client:
         return self._connection.get_global_application_commands(rollout=rollout)
 
     def add_application_command(
-        self, command: BaseApplicationCommand, overwrite: bool = False, use_rollout: bool = False
+        self,
+        command: BaseApplicationCommand,
+        overwrite: bool = False,
+        use_rollout: bool = False,
+        pre_remove: bool = True,
     ) -> None:
         """Adds a BaseApplicationCommand object to the client for use.
 
@@ -2106,9 +2110,12 @@ class Client:
             If to overwrite any existing commands that would conflict with this one. Defaults to ``False``
         use_rollout: :class:`bool`
             If to apply the rollout signatures instead of existing ones. Defaults to ``False``
+        pre_remove: :class:`bool`
+            If the command should be removed before adding it. This will clear all signatures from storage, including
+            rollout ones.
         """
         self._connection.add_application_command(
-            command, overwrite=overwrite, use_rollout=use_rollout
+            command, overwrite=overwrite, use_rollout=use_rollout, pre_remove=pre_remove
         )
 
     async def sync_all_application_commands(
@@ -2474,14 +2481,14 @@ class Client:
         for command in self._application_commands_to_add:
             command.from_callback(command.callback)
 
-            self.add_application_command(command, use_rollout=True)
+            self.add_application_command(command, use_rollout=True, pre_remove=False)
 
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
         for cog in self._client_cogs:
             if to_register := cog.application_commands:
                 for cmd in to_register:
-                    self.add_application_command(cmd, use_rollout=True)
+                    self.add_application_command(cmd, use_rollout=True, pre_remove=False)
 
     def add_cog(self, cog: Cog) -> None:
         # cog.process_app_cmds()
