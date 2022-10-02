@@ -750,7 +750,8 @@ class CallbackMixin:
 
                 for i, param in enumerate(callback_params.values()):
                     if (
-                        param.annotation is not param.empty  # could be a self or interaction parameter
+                        param.annotation
+                        is not param.empty  # could be a self or interaction parameter
                         or not issubclass(
                             param.annotation, Interaction
                         )  # will always be an interaction parameter
