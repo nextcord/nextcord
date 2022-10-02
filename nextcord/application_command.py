@@ -743,6 +743,13 @@ class CallbackMixin:
             #  might be able to do something here.
             if option_class:
                 skip_counter = 1
+                # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
+                #  decorator going into effect before the class is instantiated, thus being a function at the time.
+                #  Try to look into fixing that in the future?
+                #  If self.parent_cog isn't reliable enough, we can possibly check if the first parameter name is `self`
+                if self.parent_cog:
+                    skip_counter += 1
+
                 # TODO: use typing.get_type_hints when 3.9 is standard
                 typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
                 callback_params = signature(self.callback).parameters
@@ -750,18 +757,16 @@ class CallbackMixin:
 
                 for i, param in enumerate(callback_params.values()):
                     if (
-                        param.annotation
-                        is not param.empty  # could be a self or interaction parameter
-                        or not issubclass(
-                            param.annotation, Interaction
-                        )  # will always be an interaction parameter
+                        # could be a self or interaction parameter
+                        param.annotation is not param.empty
+                        # will always be an interaction parameter
+                        and not issubclass(param.annotation, Interaction)
+                        # will always be a self parameter
                         # TODO: use typing.Self when 3.11 is standard
-                        or param.annotation
-                        is not typing_extensions.Self  # will always be a self parameter
-                        or not isinstance(
-                            param.annotation, typing.TypeVar
-                        )  # will always be a self parameter
-                    ) and i not in (0, 1):
+                        and param.annotation is not typing_extensions.Self
+                        # will always be a self parameter
+                        and not isinstance(param.annotation, typing.TypeVar)
+                    ) or i not in (0, 1):
                         possible_options.add(param.name)
 
                 difference = {param.name for param in callback_params.values()} - possible_options
