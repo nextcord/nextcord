@@ -749,46 +749,30 @@ class CallbackMixin:
                 possible_options: Set[str] = set()
 
                 for i, param in enumerate(callback_params.values()):
-                    if not (
-                        param.annotation is param.empty  # could be a self or interaction parameter
-                        or issubclass(
+                    if (
+                        param.annotation is not param.empty  # could be a self or interaction parameter
+                        or not issubclass(
                             param.annotation, Interaction
                         )  # will always be an interaction parameter
                         # TODO: use typing.Self when 3.11 is standard
                         or param.annotation
-                        is typing_extensions.Self  # will always be a self parameter
-                        or isinstance(
+                        is not typing_extensions.Self  # will always be a self parameter
+                        or not isinstance(
                             param.annotation, typing.TypeVar
                         )  # will always be a self parameter
-                    ) and i in (0, 1):
+                    ) and i not in (0, 1):
                         possible_options.add(param.name)
 
-                intersection = {param.name for param in callback_params.values()} - possible_options
+                difference = {param.name for param in callback_params.values()} - possible_options
 
-                if self.parent_cog is not None and len(intersection) < 2:
+                if self.parent_cog is not None and len(difference) < 2:
                     raise ValueError(
                         f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition."
                     )
-                elif len(intersection) < 1:
+                elif len(difference) < 1:
                     raise ValueError(
                         f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition."
                     )
-
-                # not needed later on
-                del possible_options, intersection
-
-                # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
-                #  decorator going into effect before the class is instantiated, thus being a function at the time.
-                #  Try to look into fixing that in the future?
-                #  If self.parent_cog isn't reliable enough, we can possibly check if the first parameter name is `self`
-                self_skip = bool(self.parent_cog)
-                first_arg = True
-                for name, param in callback_params.items():
-                    if first_arg:
-                        if not self_skip:
-                            first_arg = False
-                        else:
-                            self_skip = False
 
                 for name, param in signature(self.callback).parameters.items():
                     if skip_counter:
