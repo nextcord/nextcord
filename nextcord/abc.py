@@ -1416,8 +1416,6 @@ class Messageable:
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
             components = cast(List[ComponentT], view.to_components())
-        else:
-            components = None
 
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
