@@ -753,34 +753,29 @@ class CallbackMixin:
                 # TODO: use typing.get_type_hints when 3.9 is standard
                 typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
                 callback_params = signature(self.callback).parameters
-                possible_options: Set[str] = set()
+                non_option_params = sum(
+                    # could be a self or interaction parameter
+                    param.annotation is not param.empty
+                    # will always be an interaction parameter
+                    and not issubclass(param.annotation, Interaction)
+                    # will always be a self parameter
+                    # TODO: use typing.Self when 3.11 is standard
+                    and param.annotation is not typing_extensions.Self
+                    # will always be a self parameter
+                    and not isinstance(param.annotation, typing.TypeVar)
+                    for param in list(callback_params.values())[:skip_counter]
+                )
 
-                for i, param in enumerate(callback_params.values()):
-                    if (
-                        # could be a self or interaction parameter
-                        param.annotation is not param.empty
-                        # will always be an interaction parameter
-                        and not issubclass(param.annotation, Interaction)
-                        # will always be a self parameter
-                        # TODO: use typing.Self when 3.11 is standard
-                        and param.annotation is not typing_extensions.Self
-                        # will always be a self parameter
-                        and not isinstance(param.annotation, typing.TypeVar)
-                    ) or i not in (0, 1):
-                        possible_options.add(param.name)
-
-                difference = {param.name for param in callback_params.values()} - possible_options
-
-                if self.parent_cog is not None and len(difference) < 2:
+                if self.parent_cog is not None and non_option_params < 2:
                     raise ValueError(
                         f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition."
                     )
-                elif len(difference) < 1:
+                elif non_option_params < 1:
                     raise ValueError(
                         f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition."
                     )
 
-                for name, param in signature(self.callback).parameters.items():
+                for name, param in callback_params.items():
                     if skip_counter:
                         skip_counter -= 1
                     else:
