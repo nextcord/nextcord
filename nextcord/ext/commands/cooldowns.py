@@ -29,7 +29,7 @@ import time
 from collections import deque
 from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Optional, Type, TypeVar
 
-from nextcord.enums import Enum
+from nextcord.enums import IntEnum
 
 from ...abc import PrivateChannel
 from .errors import MaxConcurrencyReached
@@ -49,7 +49,7 @@ C = TypeVar("C", bound="CooldownMapping")
 MC = TypeVar("MC", bound="MaxConcurrency")
 
 
-class BucketType(Enum):
+class BucketType(IntEnum):
     default = 0
     user = 1
     guild = 2
@@ -84,7 +84,7 @@ class Cooldown:
     """Represents a cooldown for a command.
 
     Attributes
-    -----------
+    ----------
     rate: :class:`int`
         The total number of tokens available per :attr:`per` seconds.
     per: :class:`float`
@@ -104,13 +104,13 @@ class Cooldown:
         """Returns the number of available tokens before rate limiting is applied.
 
         Parameters
-        ------------
+        ----------
         current: Optional[:class:`float`]
             The time in seconds since Unix epoch to calculate tokens at.
             If not supplied then :func:`time.time()` is used.
 
         Returns
-        --------
+        -------
         :class:`int`
             The number of tokens available before the cooldown is to be applied.
         """
@@ -127,7 +127,7 @@ class Cooldown:
         """Returns the time in seconds until the cooldown will be reset.
 
         Parameters
-        -------------
+        ----------
         current: Optional[:class:`float`]
             The current time in seconds since Unix epoch.
             If not supplied, then :func:`time.time()` is used.
@@ -149,7 +149,7 @@ class Cooldown:
         """Updates the cooldown rate limit.
 
         Parameters
-        -------------
+        ----------
         current: Optional[:class:`float`]
             The time in seconds since Unix epoch to update the rate limit at.
             If not supplied, then :func:`time.time()` is used.
@@ -184,7 +184,7 @@ class Cooldown:
         """Creates a copy of this cooldown.
 
         Returns
-        --------
+        -------
         :class:`Cooldown`
             A new instance of this cooldown.
         """

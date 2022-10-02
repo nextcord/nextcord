@@ -1,6 +1,6 @@
 """
 nextcord.webhook
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 Webhook support
 

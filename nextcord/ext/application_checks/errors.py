@@ -52,7 +52,7 @@ class ApplicationCheckAnyFailure(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`.
 
     Attributes
-    ------------
+    ----------
     errors: List[:class:`~.ApplicationCheckFailure`]
         A list of errors that were caught during execution.
     checks: List[Callable[[:class:`~.Interaction`], :class:`bool`]]
@@ -88,7 +88,7 @@ class ApplicationMissingRole(ApplicationCheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
         This is the parameter passed to :func:`~.application_checks.has_role`.
@@ -107,7 +107,7 @@ class ApplicationMissingAnyRole(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the invoker is missing.
         These are the parameters passed to :func:`has_any_role`.
@@ -135,7 +135,7 @@ class ApplicationBotMissingRole(ApplicationCheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
         This is the parameter passed to :func:`has_role`.
@@ -156,7 +156,7 @@ class ApplicationBotMissingAnyRole(ApplicationCheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the bot's member is missing.
         These are the parameters passed to :func:`has_any_role`.
@@ -184,7 +184,7 @@ class ApplicationMissingPermissions(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_permissions: List[:class:`str`]
         The required permissions that are missing.
     """
@@ -212,7 +212,7 @@ class ApplicationBotMissingPermissions(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_permissions: List[:class:`str`]
         The required permissions that are missing.
     """
@@ -259,7 +259,7 @@ class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`.
 
     Parameters
-    -----------
+    ----------
     channel: Optional[Union[:class:`.abc.GuildChannel`, :class:`.Thread`, :class:`PartialMessageable`]]
         The channel that does not have NSFW enabled.
     """

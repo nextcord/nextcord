@@ -68,7 +68,7 @@ class Component:
     .. versionadded:: 2.0
 
     Attributes
-    ------------
+    ----------
     type: :class:`ComponentType`
         The type of component.
     """
@@ -108,7 +108,7 @@ class ActionRow(Component):
     .. versionadded:: 2.0
 
     Attributes
-    ------------
+    ----------
     type: :class:`ComponentType`
         The type of component.
     children: List[:class:`Component`]
@@ -143,7 +143,7 @@ class Button(Component):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     style: :class:`.ButtonStyle`
         The style of the button.
     custom_id: Optional[:class:`str`]
@@ -216,7 +216,7 @@ class SelectMenu(Component):
     .. versionadded:: 2.0
 
     Attributes
-    ------------
+    ----------
     custom_id: Optional[:class:`str`]
         The ID of the select menu that gets received during an interaction.
     placeholder: Optional[:class:`str`]
@@ -279,7 +279,7 @@ class SelectOption:
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     label: :class:`str`
         The label of the option. This is displayed to users.
         Can only be up to 100 characters.

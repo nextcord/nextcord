@@ -265,7 +265,7 @@ class BaseUser(_UserTag):
         """Checks if the user is mentioned in the specified message.
 
         Parameters
-        -----------
+        ----------
         message: :class:`Message`
             The message to check if you're mentioned in.
 
@@ -303,7 +303,7 @@ class ClientUser(BaseUser):
             Returns the user's name with discriminator.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The user's username.
     id: :class:`int`
@@ -376,7 +376,7 @@ class ClientUser(BaseUser):
             The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
-        -----------
+        ----------
         username: :class:`str`
             The new username you wish to change to.
         avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
@@ -391,7 +391,7 @@ class ClientUser(BaseUser):
             Wrong image format passed for ``avatar``.
 
         Returns
-        ---------
+        -------
         :class:`ClientUser`
             The newly edited client user.
         """
@@ -427,7 +427,7 @@ class User(BaseUser, abc.Messageable):
             Returns the user's name with discriminator.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The user's username.
     id: :class:`int`

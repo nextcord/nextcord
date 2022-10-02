@@ -41,7 +41,7 @@ class File:
         multiple :meth:`abc.Messageable.send`\s.
 
     Parameters
-    -----------
+    ----------
 
     fp: Union[str, bytes, os.PathLike, io.BufferedIOBase]
         A file-like object opened in binary mode and read mode
@@ -73,7 +73,7 @@ class File:
         .. versionadded:: 2.2
 
     Attributes
-    -----------
+    ----------
     fp: Union[:class:`io.BufferedReader`, :class:`io.BufferedIOBase`]
         A file-like object opened in binary mode and read mode.
         This will be a :class:`io.BufferedIOBase` if an

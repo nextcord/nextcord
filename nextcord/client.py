@@ -159,7 +159,7 @@ class Client:
     A number of options can be passed to the :class:`Client`.
 
     Parameters
-    -----------
+    ----------
     max_messages: Optional[:class:`int`]
         The maximum number of messages to store in the internal message cache.
         This defaults to ``1000``. Passing in ``None`` disables the message cache.
@@ -267,7 +267,7 @@ class Client:
 
 
     Attributes
-    -----------
+    ----------
     ws
         The websocket gateway the client is currently connected to. Could be ``None``.
     loop: :class:`asyncio.AbstractEventLoop`
@@ -618,7 +618,7 @@ class Client:
         .. versionadded:: 1.4
 
         Parameters
-        ------------
+        ----------
         shard_id: :class:`int`
             The shard ID that requested being IDENTIFY'd
         initial: :class:`bool`
@@ -637,7 +637,7 @@ class Client:
 
 
         Parameters
-        -----------
+        ----------
         token: :class:`str`
             The authentication token. Do not prefix this token with
             anything as the library will do it for you.
@@ -671,7 +671,7 @@ class Client:
         is not resumed until the WebSocket connection is terminated.
 
         Parameters
-        -----------
+        ----------
         reconnect: :class:`bool`
             If we should attempt reconnecting, either due to internet
             failure or a specific failure on Discord's part. Certain
@@ -679,7 +679,7 @@ class Client:
             invalid sharding payloads or bad tokens).
 
         Raises
-        -------
+        ------
         :exc:`.GatewayNotFound`
             If the gateway to connect to Discord is not found. Usually if this
             is thrown then there is a Discord API outage.
@@ -694,7 +694,7 @@ class Client:
         }
         while not self.is_closed():
             try:
-                coro = DiscordWebSocket.from_client(self, **ws_params)
+                coro = DiscordWebSocket.from_client(self, format_gateway=True, **ws_params)
                 self.ws = await asyncio.wait_for(coro, timeout=60.0)
                 ws_params["initial"] = False
                 while True:
@@ -702,9 +702,23 @@ class Client:
             except ReconnectWebSocket as e:
                 _log.info("Got a request to %s the websocket.", e.op)
                 self.dispatch("disconnect")
-                ws_params.update(
-                    sequence=self.ws.sequence, resume=e.resume, session=self.ws.session_id
-                )
+
+                # Only specify new gateway if resuming, otherwise use the default one
+                if e.resume:
+                    ws_params.update(
+                        sequence=self.ws.sequence,
+                        gateway=self.ws.resume_url,
+                        resume=True,
+                        session=self.ws.session_id,
+                    )
+                else:
+                    ws_params.update(
+                        sequence=None,
+                        gateway=None,
+                        resume=False,
+                        session=None,
+                    )
+
                 continue
             except (
                 OSError,
@@ -730,6 +744,7 @@ class Client:
                 if isinstance(exc, OSError) and exc.errno in (54, 10054):
                     ws_params.update(
                         sequence=self.ws.sequence,
+                        gateway=self.ws.resume_url,
                         initial=False,
                         resume=True,
                         session=self.ws.session_id,
@@ -753,7 +768,13 @@ class Client:
                 # Always try to RESUME the connection
                 # If the connection is not RESUME-able then the gateway will invalidate the session.
                 # This is apparently what the official Discord client does.
-                ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
+                ws_params.update(
+                    sequence=self.ws.sequence,
+                    gateway=self.ws.resume_url,
+                    initial=False,
+                    resume=True,
+                    session=self.ws.session_id,
+                )
 
     async def close(self) -> None:
         """|coro|
@@ -798,7 +819,7 @@ class Client:
         A shorthand coroutine for :meth:`login` + :meth:`connect`.
 
         Raises
-        -------
+        ------
         TypeError
             An unexpected keyword argument was received.
         """
@@ -944,12 +965,12 @@ class Client:
         """Returns a channel or thread with the given ID.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[Union[:class:`.abc.GuildChannel`, :class:`.Thread`, :class:`.abc.PrivateChannel`]]
             The returned channel or ``None`` if not found.
         """
@@ -966,14 +987,14 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The channel ID to create a partial messageable for.
         type: Optional[:class:`.ChannelType`]
             The underlying channel type for the partial messageable.
 
         Returns
-        --------
+        -------
         :class:`.PartialMessageable`
             The partial messageable
         """
@@ -985,12 +1006,12 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`.StageInstance`]
             The returns stage instance of ``None`` if not found.
         """
@@ -1005,12 +1026,12 @@ class Client:
         """Returns a guild with the given ID.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`.Guild`]
             The guild or ``None`` if not found.
         """
@@ -1020,12 +1041,12 @@ class Client:
         """Returns a user with the given ID.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`~nextcord.User`]
             The user or ``None`` if not found.
         """
@@ -1035,12 +1056,12 @@ class Client:
         """Returns an emoji with the given ID.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`.Emoji`]
             The custom emoji or ``None`` if not found.
         """
@@ -1057,7 +1078,7 @@ class Client:
             or :meth:`.fetch_premium_sticker_packs`.
 
         Returns
-        --------
+        -------
         Optional[:class:`.GuildSticker`]
             The sticker or ``None`` if not found.
         """
@@ -1069,12 +1090,12 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The scheduled event's ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`.ScheduledEvent`]
             The scheduled event or ``None`` if not found.
         """
@@ -1158,7 +1179,7 @@ class Client:
         This function returns the **first event that meets the requirements**.
 
         Examples
-        ---------
+        --------
 
         Waiting for a user reply: ::
 
@@ -1194,7 +1215,7 @@ class Client:
 
 
         Parameters
-        ------------
+        ----------
         event: :class:`str`
             The event name, similar to the :ref:`event reference <discord-api-events>`,
             but without the ``on_`` prefix, to wait for.
@@ -1206,12 +1227,12 @@ class Client:
             :exc:`asyncio.TimeoutError`.
 
         Raises
-        -------
+        ------
         asyncio.TimeoutError
             If a timeout is provided and it was reached.
 
         Returns
-        --------
+        -------
         Any
             Returns no arguments, a single argument, or a :class:`tuple` of multiple
             arguments that mirrors the parameters passed in the
@@ -1246,7 +1267,7 @@ class Client:
         The events must be a :ref:`coroutine <coroutine>`, if not, :exc:`TypeError` is raised.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -1255,7 +1276,7 @@ class Client:
                 print('Ready!')
 
         Raises
-        --------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -1278,7 +1299,7 @@ class Client:
         Changes the client's presence.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -1346,7 +1367,7 @@ class Client:
             This method is an API call. For general usage, consider :attr:`guilds` instead.
 
         Examples
-        ---------
+        --------
 
         Usage ::
 
@@ -1361,7 +1382,7 @@ class Client:
         All parameters are optional.
 
         Parameters
-        -----------
+        ----------
         limit: Optional[:class:`int`]
             The number of guilds to retrieve.
             If ``None``, it retrieves every guild you have access to. Note, however,
@@ -1386,7 +1407,7 @@ class Client:
             Getting the guilds failed.
 
         Yields
-        --------
+        ------
         :class:`.Guild`
             The guild with the guild data parsed.
         """
@@ -1398,19 +1419,19 @@ class Client:
         Gets a :class:`.Template` from a nextcord.new URL or code.
 
         Parameters
-        -----------
+        ----------
         code: Union[:class:`.Template`, :class:`str`]
             The Discord Template Code or URL (must be a nextcord.new URL).
 
         Raises
-        -------
+        ------
         :exc:`.NotFound`
             The template is invalid.
         :exc:`.HTTPException`
             Getting the template failed.
 
         Returns
-        --------
+        -------
         :class:`.Template`
             The template from the URL/code.
         """
@@ -1433,7 +1454,7 @@ class Client:
             This method is an API call. For general usage, consider :meth:`get_guild` instead.
 
         Parameters
-        -----------
+        ----------
         guild_id: :class:`int`
             The guild's ID to fetch from.
 
@@ -1452,7 +1473,7 @@ class Client:
             Getting the guild failed.
 
         Returns
-        --------
+        -------
         :class:`.Guild`
             The guild from the ID.
         """
@@ -1520,19 +1541,19 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         channel_id: :class:`int`
             The stage channel ID.
 
         Raises
-        -------
+        ------
         :exc:`.NotFound`
             The stage instance or channel could not be found.
         :exc:`.HTTPException`
             Getting the stage instance failed.
 
         Returns
-        --------
+        -------
         :class:`.StageInstance`
             The stage instance from the stage channel ID.
         """
@@ -1556,7 +1577,7 @@ class Client:
             :class:`.PartialInviteChannel` respectively.
 
         Parameters
-        -----------
+        ----------
         url: Union[:class:`.Invite`, :class:`str`]
             The Discord invite ID or URL (must be a discord.gg URL).
         with_counts: :class:`bool`
@@ -1570,14 +1591,14 @@ class Client:
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         :exc:`.NotFound`
             The invite has expired or is invalid.
         :exc:`.HTTPException`
             Getting the invite failed.
 
         Returns
-        --------
+        -------
         :class:`.Invite`
             The invite from the URL/ID.
         """
@@ -1602,7 +1623,7 @@ class Client:
             The invite to revoke.
 
         Raises
-        -------
+        ------
         :exc:`.Forbidden`
             You do not have permissions to revoke invites.
         :exc:`.NotFound`
@@ -1626,19 +1647,19 @@ class Client:
             The guild must have the widget enabled to get this information.
 
         Parameters
-        -----------
+        ----------
         guild_id: :class:`int`
             The ID of the guild.
 
         Raises
-        -------
+        ------
         :exc:`.Forbidden`
             The widget for this guild is disabled.
         :exc:`.HTTPException`
             Retrieving the widget failed.
 
         Returns
-        --------
+        -------
         :class:`.Widget`
             The guild's widget.
         """
@@ -1652,12 +1673,12 @@ class Client:
         Retrieves the bot's application information.
 
         Raises
-        -------
+        ------
         :exc:`.HTTPException`
             Retrieving the information failed somehow.
 
         Returns
-        --------
+        -------
         :class:`.AppInfo`
             The bot's application information.
         """
@@ -1678,19 +1699,19 @@ class Client:
             This method is an API call. If you have :attr:`nextcord.Intents.members` and member cache enabled, consider :meth:`get_user` instead.
 
         Parameters
-        -----------
+        ----------
         user_id: :class:`int`
             The user's ID to fetch from.
 
         Raises
-        -------
+        ------
         :exc:`.NotFound`
             A user with this ID does not exist.
         :exc:`.HTTPException`
             Fetching the user failed.
 
         Returns
-        --------
+        -------
         :class:`~nextcord.User`
             The user you requested.
         """
@@ -1711,7 +1732,7 @@ class Client:
         .. versionadded:: 1.2
 
         Raises
-        -------
+        ------
         :exc:`.InvalidData`
             An unknown channel type was received from Discord.
         :exc:`.HTTPException`
@@ -1722,7 +1743,7 @@ class Client:
             You do not have permission to fetch this channel.
 
         Returns
-        --------
+        -------
         Union[:class:`.abc.GuildChannel`, :class:`.abc.PrivateChannel`, :class:`.Thread`]
             The channel from the ID.
         """
@@ -1750,7 +1771,7 @@ class Client:
         Retrieves a :class:`.Webhook` with the specified ID.
 
         Raises
-        --------
+        ------
         :exc:`.HTTPException`
             Retrieving the webhook failed.
         :exc:`.NotFound`
@@ -1759,7 +1780,7 @@ class Client:
             You do not have permission to fetch this webhook.
 
         Returns
-        ---------
+        -------
         :class:`.Webhook`
             The webhook you requested.
         """
@@ -1774,14 +1795,14 @@ class Client:
         .. versionadded:: 2.0
 
         Raises
-        --------
+        ------
         :exc:`.HTTPException`
             Retrieving the sticker failed.
         :exc:`.NotFound`
             Invalid sticker ID.
 
         Returns
-        --------
+        -------
         Union[:class:`.StandardSticker`, :class:`.GuildSticker`]
             The sticker you requested.
         """
@@ -1797,12 +1818,12 @@ class Client:
         .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         :exc:`.HTTPException`
             Retrieving the sticker packs failed.
 
         Returns
-        ---------
+        -------
         List[:class:`.StickerPack`]
             All available premium sticker packs.
         """
@@ -1820,7 +1841,7 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         user: :class:`~nextcord.abc.Snowflake`
             The user to create a DM with.
 
@@ -1846,7 +1867,7 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        ------------
+        ----------
         view: :class:`nextcord.ui.View`
             The view to register for dispatching.
         message_id: Optional[:class:`int`]
@@ -1855,7 +1876,7 @@ class Client:
             then message update events are not propagated for the view.
 
         Raises
-        -------
+        ------
         TypeError
             A view was not passed.
         ValueError
@@ -1881,7 +1902,7 @@ class Client:
         depend on particular criteria.
 
         Parameters
-        ------------
+        ----------
         modal: :class:`nextcord.ui.Modal`
             The view to register for dispatching.
         user_id: Optional[:class:`int`]
@@ -1889,7 +1910,7 @@ class Client:
             the modal calls based on the users.
 
         Raises
-        -------
+        ------
         TypeError
             A modal was not passed.
         ValueError
@@ -2072,7 +2093,11 @@ class Client:
         return self._connection.get_global_application_commands(rollout=rollout)
 
     def add_application_command(
-        self, command: BaseApplicationCommand, overwrite: bool = False, use_rollout: bool = False
+        self,
+        command: BaseApplicationCommand,
+        overwrite: bool = False,
+        use_rollout: bool = False,
+        pre_remove: bool = True,
     ) -> None:
         """Adds a BaseApplicationCommand object to the client for use.
 
@@ -2084,9 +2109,12 @@ class Client:
             If to overwrite any existing commands that would conflict with this one. Defaults to ``False``
         use_rollout: :class:`bool`
             If to apply the rollout signatures instead of existing ones. Defaults to ``False``
+        pre_remove: :class:`bool`
+            If the command should be removed before adding it. This will clear all signatures from storage, including
+            rollout ones.
         """
         self._connection.add_application_command(
-            command, overwrite=overwrite, use_rollout=use_rollout
+            command, overwrite=overwrite, use_rollout=use_rollout, pre_remove=pre_remove
         )
 
     async def sync_all_application_commands(
@@ -2452,14 +2480,14 @@ class Client:
         for command in self._application_commands_to_add:
             command.from_callback(command.callback)
 
-            self.add_application_command(command, use_rollout=True)
+            self.add_application_command(command, use_rollout=True, pre_remove=False)
 
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
         for cog in self._client_cogs:
             if to_register := cog.application_commands:
                 for cmd in to_register:
-                    self.add_application_command(cmd, use_rollout=True)
+                    self.add_application_command(cmd, use_rollout=True, pre_remove=False)
 
     def add_cog(self, cog: ClientCog) -> None:
         # cog.process_app_cmds()
