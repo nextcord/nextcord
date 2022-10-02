@@ -755,14 +755,14 @@ class CallbackMixin:
                 callback_params = signature(self.callback).parameters
                 non_option_params = sum(
                     # could be a self or interaction parameter
-                    param.annotation is not param.empty
+                    param.annotation is param.empty
                     # will always be an interaction parameter
-                    and not issubclass(param.annotation, Interaction)
+                    or issubclass(param.annotation, Interaction)
                     # will always be a self parameter
                     # TODO: use typing.Self when 3.11 is standard
-                    and param.annotation is not typing_extensions.Self
+                    or param.annotation is typing_extensions.Self
                     # will always be a self parameter
-                    and not isinstance(param.annotation, typing.TypeVar)
+                    or isinstance(param.annotation, typing.TypeVar)
                     for param in list(callback_params.values())[:skip_counter]
                 )
 
