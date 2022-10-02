@@ -1421,7 +1421,7 @@ class BotBase(GroupMixin):
     async def process_with_str(self, message: Message, content: str) -> None:
         """|coro|
 
-        This function is like :func:`.process_commands` except it
+        This function is like :meth:`.process_commands` except it
         processes the provided message with different content.
 
         This is useful if you want to execute multiple commands in
