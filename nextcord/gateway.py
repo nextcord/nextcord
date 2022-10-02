@@ -34,7 +34,7 @@ import time
 import traceback
 import zlib
 from collections import deque, namedtuple
-from typing import TYPE_CHECKING, Callable, List, NoReturn, Optional, Union
+from typing import TYPE_CHECKING, Awaitable, Callable, NoReturn, Optional, Union
 
 import aiohttp
 
@@ -46,9 +46,9 @@ from .errors import ConnectionClosed, InvalidArgument
 if TYPE_CHECKING:
     from typing import Any, Protocol
 
-    from .activity import Activity
     from .client import Client
     from .state import ConnectionState
+    from .types.activity import Activity
     from .voice_client import VoiceClient
 
     class VariadicArgNone(Protocol):
@@ -683,9 +683,9 @@ class DiscordWebSocket:
         if activity is not None:
             if not isinstance(activity, BaseActivity):
                 raise InvalidArgument("activity must derive from BaseActivity.")
-            activities: List = [activity.to_dict()]
+            activities: list[Activity] = [activity.to_dict()]
         else:
-            activities: List = []
+            activities: list[Activity] = []
 
         if status == "idle":
             since = int(time.time() * 1000)
@@ -816,7 +816,7 @@ class DiscordVoiceWebSocket:
         self._keep_alive: Optional[VoiceKeepAliveHandler] = None
         self._close_code: Optional[int] = None
         self.secret_key: Optional[str] = None
-        self._hook: Callable = (
+        self._hook: Callable[..., Awaitable[None]] = (
             hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
         )
 
@@ -856,7 +856,11 @@ class DiscordVoiceWebSocket:
 
     @classmethod
     async def from_client(
-        cls, client: VoiceClient, *, resume: bool = False, hook: Optional[Callable] = None
+        cls,
+        client: VoiceClient,
+        *,
+        resume: bool = False,
+        hook: Optional[Callable[..., Awaitable[None]]] = None,
     ):
         """Creates a voice websocket for the :class:`VoiceClient`."""
         gateway = "wss://" + client.endpoint + "/?v=4"
@@ -960,7 +964,7 @@ class DiscordVoiceWebSocket:
 
         return sum(heartbeat.recent_ack_latencies) / len(heartbeat.recent_ack_latencies)
 
-    async def load_secret_key(self, data: dict) -> None:
+    async def load_secret_key(self, data: dict[str, Any]) -> None:
         _log.info("received secret key for voice connection")
         self.secret_key = self._connection.secret_key = data.get("secret_key")
         await self.speak()
