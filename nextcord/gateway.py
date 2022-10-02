@@ -319,7 +319,7 @@ class DiscordWebSocket:
         # ws related stuff
         self.session_id: Optional[str] = None
         self.resume_url: Optional[str] = None
-        self.sequence: Optional[str] = None
+        self.sequence: Optional[int] = None
         self._zlib: zlib._Decompress = zlib.decompressobj()
         self._buffer: bytearray = bytearray()
         self._close_code: Optional[int] = None
@@ -347,7 +347,7 @@ class DiscordWebSocket:
         gateway: Optional[str] = None,
         shard_id: Optional[int] = None,
         session: Optional[str] = None,
-        sequence: Optional[str] = None,
+        sequence: Optional[int] = None,
         resume: bool = False,
         format_gateway: bool = False,
     ):
@@ -541,9 +541,9 @@ class DiscordWebSocket:
 
         if event == "READY":
             self._trace = trace = data.get("_trace", [])
-            self.sequence: str = message["s"]
-            self.session_id: str = data["session_id"]
-            self.resume_url: str = data["resume_gateway_url"]
+            self.sequence: Optional[int] = message["s"]
+            self.session_id: Optional[str] = data["session_id"]
+            self.resume_url: Optional[str] = data["resume_gateway_url"]
             # pass back shard ID to ready handler
             data["__shard_id__"] = self.shard_id
             _log.info(
@@ -683,7 +683,7 @@ class DiscordWebSocket:
         if activity is not None:
             if not isinstance(activity, BaseActivity):
                 raise InvalidArgument("activity must derive from BaseActivity.")
-            activities: List[Activity] = [activity.to_dict()]
+            activities: List = [activity.to_dict()]
         else:
             activities: List = []
 
@@ -813,7 +813,7 @@ class DiscordVoiceWebSocket:
     ):
         self.ws: DiscordClientWebSocketResponse = socket
         self.loop: asyncio.AbstractEventLoop = loop
-        self._keep_alive: Optional[KeepAliveHandler] = None
+        self._keep_alive: Optional[VoiceKeepAliveHandler] = None
         self._close_code: Optional[int] = None
         self.secret_key: Optional[str] = None
         self._hook: Callable = (
@@ -901,7 +901,8 @@ class DiscordVoiceWebSocket:
         if op == self.READY:
             await self.initial_connection(data)
         elif op == self.HEARTBEAT_ACK:
-            self._keep_alive.ack()
+            if self._keep_alive is not None:
+                self._keep_alive.ack()
         elif op == self.RESUMED:
             _log.info("Voice RESUME succeeded.")
         elif op == self.SESSION_DESCRIPTION:
