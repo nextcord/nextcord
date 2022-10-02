@@ -394,6 +394,10 @@ class Cog(ClientCog, metaclass=CogMeta):
 
         This **must** be a coroutine.
 
+        .. note::
+
+            This is only called for prefix commands.
+
         Parameters
         ----------
         ctx: :class:`.Context`
