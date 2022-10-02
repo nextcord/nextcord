@@ -1425,7 +1425,17 @@ class BotBase(GroupMixin):
         processes the provided message with different content.
 
         This is useful if you want to execute multiple commands in
-        one message.
+        a single message.
+
+        Example
+        -------
+
+        .. code-block:: python3
+
+            @bot.event
+            async def on_message(message):
+                for msg in message.content.split(";"):
+                    await bot.process_with_str(message, msg)
 
         Parameters
         ----------
