@@ -34,7 +34,7 @@ import time
 import traceback
 import zlib
 from collections import deque, namedtuple
-from typing import TYPE_CHECKING, Callable, NoReturn, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, NoReturn, Optional, Union
 
 import aiohttp
 
@@ -46,6 +46,7 @@ from .errors import ConnectionClosed, InvalidArgument
 if TYPE_CHECKING:
     from typing import Any, Protocol
 
+    from .activity import Activity
     from .client import Client
     from .state import ConnectionState
     from .voice_client import VoiceClient
@@ -69,7 +70,7 @@ __all__ = (
 class ReconnectWebSocket(Exception):
     """Signals to safely reconnect the websocket."""
 
-    def __init__(self, shard_id: Optional[int], *, resume: bool = True):
+    def __init__(self, shard_id: Optional[int], *, resume: bool = True) -> None:
         self.shard_id = shard_id
         self.resume = resume
         self.op = "RESUME" if resume else "IDENTIFY"
@@ -133,23 +134,23 @@ class GatewayRatelimiter:
 class KeepAliveHandler(threading.Thread):
     def __init__(self, *args, **kwargs):
         ws: DiscordWebSocket = kwargs.pop("ws")  # will fail at `_main_thread_id` anyway
-        interval = kwargs.pop("interval", None)
-        shard_id = kwargs.pop("shard_id", None)
+        interval: float = kwargs.pop("interval", None)
+        shard_id: Optional[int] = kwargs.pop("shard_id", None)
         threading.Thread.__init__(self, *args, **kwargs)
         self.ws = ws
         self._main_thread_id = ws.thread_id
-        self.interval = interval
-        self.daemon = True
-        self.shard_id = shard_id
-        self.msg = "Keeping shard ID %s websocket alive with sequence %s."
-        self.block_msg = "Shard ID %s heartbeat blocked for more than %s seconds."
-        self.behind_msg = "Can't keep up, shard ID %s websocket is %.1fs behind."
-        self._stop_ev = threading.Event()
-        self._last_ack = time.perf_counter()
-        self._last_send = time.perf_counter()
-        self._last_recv = time.perf_counter()
-        self.latency = float("inf")
-        self.heartbeat_timeout = ws._max_heartbeat_timeout
+        self.interval: float = interval
+        self.daemon: bool = True
+        self.shard_id: Optional[int] = shard_id
+        self.msg: str = "Keeping shard ID %s websocket alive with sequence %s."
+        self.block_msg: str = "Shard ID %s heartbeat blocked for more than %s seconds."
+        self.behind_msg: str = "Can't keep up, shard ID %s websocket is %.1fs behind."
+        self._stop_ev: threading.Event = threading.Event()
+        self._last_ack: float = time.perf_counter()
+        self._last_send: float = time.perf_counter()
+        self._last_recv: float = time.perf_counter()
+        self.latency: float = float("inf")
+        self.heartbeat_timeout: float = ws._max_heartbeat_timeout
 
     def run(self) -> None:
         while not self._stop_ev.wait(self.interval):
@@ -303,26 +304,26 @@ class DiscordWebSocket:
         shard_count: int | None
         _max_heartbeat_timeout: float
 
-    def __init__(self, socket: Any, *, loop: asyncio.AbstractEventLoop):
-        self.socket = socket
-        self.loop = loop
+    def __init__(self, socket: Any, *, loop: asyncio.AbstractEventLoop) -> None:
+        self.socket: Any = socket
+        self.loop: asyncio.AbstractEventLoop = loop
 
         # an empty dispatcher to prevent crashes
         self._dispatch: VariadicArgNone = lambda *args: None
         # generic event listeners
         self._dispatch_listeners: list[EventListener] = []
         # the keep alive
-        self._keep_alive = None
-        self.thread_id = threading.get_ident()
+        self._keep_alive: Optional[KeepAliveHandler] = None
+        self.thread_id: int = threading.get_ident()
 
         # ws related stuff
         self.session_id: Optional[str] = None
-        self.resume_url = None
-        self.sequence = None
-        self._zlib = zlib.decompressobj()
-        self._buffer = bytearray()
-        self._close_code = None
-        self._rate_limiter = GatewayRatelimiter()
+        self.resume_url: Optional[str] = None
+        self.sequence: Optional[str] = None
+        self._zlib: zlib._Decompress = zlib.decompressobj()
+        self._buffer: bytearray = bytearray()
+        self._close_code: Optional[int] = None
+        self._rate_limiter: GatewayRatelimiter = GatewayRatelimiter()
 
     @property
     def open(self) -> bool:
@@ -346,7 +347,7 @@ class DiscordWebSocket:
         gateway: Optional[str] = None,
         shard_id: Optional[int] = None,
         session: Optional[str] = None,
-        sequence=None,
+        sequence: Optional[str] = None,
         resume: bool = False,
         format_gateway: bool = False,
     ):
@@ -478,16 +479,16 @@ class DiscordWebSocket:
             self._buffer = bytearray()
 
         self.log_receive(msg)
-        message: dict = utils._from_json(msg)
+        message: dict[str, Any] = utils._from_json(msg)
 
         _log.debug("For Shard ID %s: WebSocket Event: %s", self.shard_id, msg)
         event = message.get("t")
         if event:
             self._dispatch("socket_event_type", event)
 
-        op = message.get("op")
-        data = message["d"]
-        seq = message.get("s")
+        op: int = message["op"]
+        data: dict[str, Any] = message["d"]
+        seq: int = message["s"]
         if seq is not None:
             self.sequence = seq
 
@@ -540,9 +541,9 @@ class DiscordWebSocket:
 
         if event == "READY":
             self._trace = trace = data.get("_trace", [])
-            self.sequence = message["s"]
-            self.session_id = data["session_id"]
-            self.resume_url = data["resume_gateway_url"]
+            self.sequence: str = message["s"]
+            self.session_id: str = data["session_id"]
+            self.resume_url: str = data["resume_gateway_url"]
             # pass back shard ID to ready handler
             data["__shard_id__"] = self.shard_id
             _log.info(
@@ -682,9 +683,9 @@ class DiscordWebSocket:
         if activity is not None:
             if not isinstance(activity, BaseActivity):
                 raise InvalidArgument("activity must derive from BaseActivity.")
-            activities: list = [activity.to_dict()]
+            activities: List[Activity] = [activity.to_dict()]
         else:
-            activities = []
+            activities: List = []
 
         if status == "idle":
             since = int(time.time() * 1000)
@@ -804,14 +805,20 @@ class DiscordVoiceWebSocket:
         thread_id: int
 
     def __init__(
-        self, socket: DiscordClientWebSocketResponse, loop: asyncio.AbstractEventLoop, *, hook=None
+        self,
+        socket: DiscordClientWebSocketResponse,
+        loop: asyncio.AbstractEventLoop,
+        *,
+        hook: Optional[Callable] = None,
     ):
-        self.ws = socket
-        self.loop = loop
-        self._keep_alive: Any = None
-        self._close_code = None
-        self.secret_key = None
-        self._hook = hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
+        self.ws: DiscordClientWebSocketResponse = socket
+        self.loop: asyncio.AbstractEventLoop = loop
+        self._keep_alive: Optional[KeepAliveHandler] = None
+        self._close_code: Optional[int] = None
+        self.secret_key: Optional[str] = None
+        self._hook: Callable = (
+            hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
+        )
 
     async def _default_hook(self, *args) -> None:
         ...
@@ -848,7 +855,9 @@ class DiscordVoiceWebSocket:
         await self.send_as_json(payload)
 
     @classmethod
-    async def from_client(cls, client: VoiceClient, *, resume: bool = False, hook=None):
+    async def from_client(
+        cls, client: VoiceClient, *, resume: bool = False, hook: Optional[Callable] = None
+    ):
         """Creates a voice websocket for the :class:`VoiceClient`."""
         gateway = "wss://" + client.endpoint + "/?v=4"
         http = client._state.http
@@ -886,8 +895,8 @@ class DiscordVoiceWebSocket:
 
     async def received_message(self, msg: dict[str, Any]) -> None:
         _log.debug("Voice websocket frame received: %s", msg)
-        op = msg["op"]
-        data: Any = msg.get("d")
+        op: int = msg["op"]
+        data: dict[str, Any] = msg["d"]
 
         if op == self.READY:
             await self.initial_connection(data)
