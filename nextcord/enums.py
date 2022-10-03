@@ -95,7 +95,7 @@ class UnknownEnumValue(NamedTuple):
         try:
             return self.value <= other.value
         except AttributeError:
-            return self.value >= other
+            return self.value <= other
 
     def __ge__(self, other):
         try:
