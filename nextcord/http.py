@@ -344,7 +344,14 @@ class HTTPClient:
                                 bucket,
                                 delta,
                             )
-                            self._dispatch("http_ratelimit", 5, 0, delta, response.headers.get("X-RateLimit-Bucket"), None)
+                            self._dispatch(
+                                "http_ratelimit",
+                                5,
+                                0,
+                                delta,
+                                response.headers.get("X-RateLimit-Bucket"),
+                                None,
+                            )
                             maybe_lock.defer()
                             self.loop.call_later(delta, lock.release)
 
@@ -365,7 +372,14 @@ class HTTPClient:
                             retry_after: float = data["retry_after"]
                             _log.warning(fmt, retry_after, bucket)
 
-                            self._dispatch("http_ratelimit", 5, 0, retry_after, response.headers.get("X-RateLimit-Bucket"), response.headers.get("X-RateLimit-Scope"))
+                            self._dispatch(
+                                "http_ratelimit",
+                                5,
+                                0,
+                                retry_after,
+                                response.headers.get("X-RateLimit-Bucket"),
+                                response.headers.get("X-RateLimit-Scope"),
+                            )
 
                             # check if it's a global rate limit
                             is_global = data.get("global", False)
