@@ -340,7 +340,7 @@ class Client:
             intents=intents,
             chunk_guilds_at_startup=chunk_guilds_at_startup,
             member_cache_flags=member_cache_flags,
-            default_guild_ids=default_guild_ids
+            default_guild_ids=default_guild_ids,
         )
 
         self._connection.shard_count = self.shard_count
