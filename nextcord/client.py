@@ -265,6 +265,10 @@ class Client:
         Warning: While enabling this will prevent "ghost" commands on guilds with removed code references, rolling out
         to ALL guilds with anything other than a very small bot will likely cause it to get rate limited.
 
+    default_guild_ids: List[:class:`int`]
+        The default guild ids for every application command set. If the application command doesn't have any explicit
+        guild ids set and this list is not empty, then the application command's guild ids will be set to this.
+        Defaults to `[]`.
 
     Attributes
     ----------
@@ -301,6 +305,7 @@ class Client:
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
+        default_guild_ids: List[int] = [],
     ):
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
@@ -335,6 +340,7 @@ class Client:
             intents=intents,
             chunk_guilds_at_startup=chunk_guilds_at_startup,
             member_cache_flags=member_cache_flags,
+            default_guild_ids=default_guild_ids
         )
 
         self._connection.shard_count = self.shard_count
@@ -374,6 +380,7 @@ class Client:
         intents: Intents,
         chunk_guilds_at_startup: bool,
         member_cache_flags: MemberCacheFlags,
+        default_guild_ids: List[int],
     ) -> ConnectionState:
         return ConnectionState(
             dispatch=self.dispatch,
@@ -391,6 +398,7 @@ class Client:
             intents=intents,
             chunk_guilds_at_startup=chunk_guilds_at_startup,
             member_cache_flags=member_cache_flags,
+            default_guild_ids=default_guild_ids,
         )
 
     def _handle_ready(self) -> None:
@@ -2522,7 +2530,8 @@ class Client:
             Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
             name as the value
         guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+            IDs of :class:`Guild`'s to add this command to. If unset and `default_guild_ids` is set, then those
+            default guild ids will be used instead. If both of those are unset, then the command will be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2569,7 +2578,8 @@ class Client:
             Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
             name as the value
         guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+            IDs of :class:`Guild`'s to add this command to. If unset and `default_guild_ids` is set, then those
+            default guild ids will be used instead. If both of those are unset, then the command will be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2624,7 +2634,8 @@ class Client:
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
         guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+            IDs of :class:`Guild`'s to add this command to. If unset and `default_guild_ids` is set, then those
+            default guild ids will be used instead. If both of those are unset, then the command will be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.

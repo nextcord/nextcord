@@ -357,6 +357,7 @@ class AutoShardedClient(Client):
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
+        default_guild_ids: List[int] = [],
     ) -> None:
         self.shard_ids: Optional[List[int]] = shard_ids
         super().__init__(
@@ -384,6 +385,7 @@ class AutoShardedClient(Client):
             rollout_register_new=rollout_register_new,
             rollout_update_known=rollout_update_known,
             rollout_all_guilds=rollout_all_guilds,
+            default_guild_ids=default_guild_ids,
         )
 
         if self.shard_ids is not None:
@@ -421,6 +423,7 @@ class AutoShardedClient(Client):
         intents: Intents,
         chunk_guilds_at_startup: bool,
         member_cache_flags: MemberCacheFlags,
+        default_guild_ids: List[int],
     ) -> AutoShardedConnectionState:
         return AutoShardedConnectionState(
             dispatch=self.dispatch,
@@ -438,6 +441,7 @@ class AutoShardedClient(Client):
             intents=intents,
             chunk_guilds_at_startup=chunk_guilds_at_startup,
             member_cache_flags=member_cache_flags,
+            default_guild_ids=default_guild_ids,
         )
 
     @property
