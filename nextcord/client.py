@@ -265,10 +265,10 @@ class Client:
         Warning: While enabling this will prevent "ghost" commands on guilds with removed code references, rolling out
         to ALL guilds with anything other than a very small bot will likely cause it to get rate limited.
 
-    default_guild_ids: List[:class:`int`]
+    default_guild_ids: Optional[List[:class:`int`]]
         The default guild ids for every application command set. If the application command doesn't have any explicit
         guild ids set and this list is not empty, then the application command's guild ids will be set to this.
-        Defaults to `[]`.
+        Defaults to `None`.
 
     Attributes
     ----------
@@ -305,7 +305,7 @@ class Client:
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
-        default_guild_ids: List[int] = [],
+        default_guild_ids: Optional[List[int]] = None,
     ):
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
@@ -328,6 +328,9 @@ class Client:
         self._hooks: Dict[str, Callable] = {"before_identify": self._call_before_identify_hook}
 
         self._enable_debug_events: bool = enable_debug_events
+
+        if default_guild_ids is None:
+            default_guild_ids = []
 
         self._connection: ConnectionState = self._get_state(
             max_messages=max_messages,
