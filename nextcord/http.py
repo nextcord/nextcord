@@ -333,7 +333,9 @@ class HTTPClient:
                         data = await json_or_text(response)
 
                         # check if we have rate limit header information
-                        remaining = response.headers.get("X-Ratelimit-Remaining")
+                        limit = response.headers.get("X-RateLimit-Limit") or "5"
+                        remaining = response.headers.get("X-Ratelimit-Remaining") or "0"
+                        bucket = response.headers.get("X-RateLimit-Bucket")
                         if remaining == "0" and response.status != 429:
                             # we've depleted our current bucket
                             delta = utils._parse_ratelimit_header(
@@ -346,10 +348,10 @@ class HTTPClient:
                             )
                             self._dispatch(
                                 "http_ratelimit",
-                                5,
-                                0,
+                                int(limit),
+                                int(remaining),
                                 delta,
-                                response.headers.get("X-RateLimit-Bucket"),
+                                bucket,
                                 None,
                             )
                             maybe_lock.defer()
@@ -374,10 +376,10 @@ class HTTPClient:
 
                             self._dispatch(
                                 "http_ratelimit",
-                                5,
-                                0,
+                                int(limit),
+                                int(remaining),
                                 retry_after,
-                                response.headers.get("X-RateLimit-Bucket"),
+                                bucket,
                                 response.headers.get("X-RateLimit-Scope"),
                             )
 
