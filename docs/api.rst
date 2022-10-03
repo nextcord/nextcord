@@ -241,6 +241,23 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param shard_id: The shard ID that has disconnected.
     :type shard_id: :class:`int`
 
+.. function:: on_http_ratelimit(limit, remaining, reset_after, bucket, scope)
+
+    Called when a HTTP request in progress either exhausts its bucket or gets a 429 response.
+
+    .. versionadded:: 2.3
+
+    :param limit: The amount of requests that have been made under the bucket that the request correlates to.
+    :type limit: :class:`int`
+    :param remaining: The amount of remaining requests that can be made under the bucket that the request correlates to.
+    :type remaining: :class:`int`
+    :param reset_after: The amount of time we have to wait before making another request under the same bucket.
+    :type reset_after: :class:`float`
+    :param bucket: The hash correlating to the bucket of the request from Discord.
+    :type bucket: :class:`str`
+    :param scope: If we get a 429, the scope of the 429 response.
+    :type scope: Optional[:class:`str`]
+
 .. function:: on_ready()
 
     Called when the client is done preparing the data received from Discord. Usually after login is successful

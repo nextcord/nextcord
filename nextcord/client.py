@@ -316,6 +316,7 @@ class Client:
             proxy_auth=proxy_auth,
             unsync_clock=assume_unsync_clock,
             loop=self.loop,
+            dispatch=self.dispatch,
         )
 
         self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}

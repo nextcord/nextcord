@@ -34,6 +34,7 @@ import weakref
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     ClassVar,
     Coroutine,
     Dict,
@@ -214,6 +215,7 @@ class HTTPClient:
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         unsync_clock: bool = True,
+        dispatch: Callable,
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
         self.connector = connector
@@ -226,6 +228,7 @@ class HTTPClient:
         self.proxy: Optional[str] = proxy
         self.proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
         self.use_clock: bool = not unsync_clock
+        self._dispatch: Callable = dispatch
 
         user_agent = "DiscordBot (https://github.com/nextcord/nextcord/ {0}) Python/{1[0]}.{1[1]} aiohttp/{2}"
         self.user_agent: str = user_agent.format(__version__, sys.version_info, aiohttp.__version__)
@@ -341,6 +344,7 @@ class HTTPClient:
                                 bucket,
                                 delta,
                             )
+                            self._dispatch("http_ratelimit", 5, 0, delta, response.headers.get("X-RateLimit-Bucket"), None)
                             maybe_lock.defer()
                             self.loop.call_later(delta, lock.release)
 
@@ -360,6 +364,8 @@ class HTTPClient:
                             # sleep a bit
                             retry_after: float = data["retry_after"]
                             _log.warning(fmt, retry_after, bucket)
+
+                            self._dispatch("http_ratelimit", 5, 0, retry_after, response.headers.get("X-RateLimit-Bucket"), response.headers.get("X-RateLimit-Scope"))
 
                             # check if it's a global rate limit
                             is_global = data.get("global", False)
