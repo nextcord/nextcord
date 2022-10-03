@@ -1884,6 +1884,9 @@ class Client:
         ----------
         view: :class:`nextcord.ui.View`
             The view to remove from dispatching.
+        message_id: Optional[:class:`int`]
+            The message ID that the view is attached to. This is used to properly
+            remove the view from the view store.
 
         Raises
         ------
