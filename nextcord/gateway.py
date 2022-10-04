@@ -683,7 +683,7 @@ class DiscordWebSocket:
         if activity is not None:
             if not isinstance(activity, BaseActivity):
                 raise InvalidArgument("activity must derive from BaseActivity.")
-            activities: list[Activity] = [activity.to_dict()]
+            activities: List[Activity] = [activity.to_dict()]
         else:
             activities: list[Activity] = []
 
