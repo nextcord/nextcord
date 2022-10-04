@@ -197,7 +197,7 @@ class KeepAliveHandler(threading.Thread):
             else:
                 self._last_send = time.perf_counter()
 
-    def get_payload(self) -> dict[str, Any]:
+    def get_payload(self) -> Dict[str, Any]:
         return {"op": self.ws.HEARTBEAT, "d": self.ws.sequence}
 
     def stop(self) -> None:
