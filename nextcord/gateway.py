@@ -487,7 +487,7 @@ class DiscordWebSocket:
             self._dispatch("socket_event_type", event)
 
         op: int = message["op"]
-        data: dict[str, Any] = message["d"]
+        data: Dict[str, Any] = message["d"]
         seq: int = message["s"]
         if seq is not None:
             self.sequence = seq
