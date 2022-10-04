@@ -333,8 +333,15 @@ class HTTPClient:
                         data = await json_or_text(response)
 
                         # check if we have rate limit header information
-                        limit = response.headers.get("X-RateLimit-Limit") or "5"
-                        remaining = response.headers.get("X-Ratelimit-Remaining") or "0"
+                        is_global = bool(response.headers.get("X-RateLimit-Global", False))
+
+                        if is_global:
+                            limit = response.headers.get("X-RateLimit-Limit", "")
+                            remaining = response.headers.get("X-Ratelimit-Remaining", "")
+                        else:
+                            limit = response.headers["X-RateLimit-Limit"]
+                            remaining = response.headers["X-RateLimit-Remaining"]
+
                         bucket = response.headers.get("X-RateLimit-Bucket")
                         if remaining == "0" and response.status != 429:
                             # we've depleted our current bucket
@@ -374,23 +381,26 @@ class HTTPClient:
                             retry_after: float = data["retry_after"]
                             _log.warning(fmt, retry_after, bucket)
 
-                            self._dispatch(
-                                "http_ratelimit",
-                                int(limit),
-                                int(remaining),
-                                retry_after,
-                                bucket,
-                                response.headers.get("X-RateLimit-Scope"),
-                            )
-
                             # check if it's a global rate limit
-                            is_global = data.get("global", False)
                             if is_global:
                                 _log.warning(
                                     "Global rate limit has been hit. Retrying in %.2f seconds.",
                                     retry_after,
                                 )
+                                self._dispatch(
+                                    "global_http_ratelimit",
+                                    retry_after,
+                                )
                                 self._global_over.clear()
+                            else:
+                                self._dispatch(
+                                    "http_ratelimit",
+                                    int(limit),
+                                    int(remaining),
+                                    retry_after,
+                                    bucket,
+                                    response.headers.get("X-RateLimit-Scope"),
+                                )
 
                             await asyncio.sleep(retry_after)
                             _log.debug("Done sleeping for the rate limit. Retrying...")

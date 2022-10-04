@@ -245,6 +245,8 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     Called when a HTTP request in progress either exhausts its bucket or gets a 429 response.
 
+    If the 429 response is a global ratelimit, then use :func:`on_global_http_ratelimit` instead.
+
     .. versionadded:: 2.3
 
     :param limit: The amount of requests that have been made under the bucket that the request correlates to.
@@ -257,6 +259,16 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :type bucket: :class:`str`
     :param scope: If we get a 429, the scope of the 429 response.
     :type scope: Optional[:class:`str`]
+
+.. function:: on_global_http_ratelimit(retry_after)
+
+    Called when a HTTP request in progress gets a 429 response and the scope is global.
+
+    If the 429 response is a non-global ratelimit or you want to track when the bucket expires,
+    then use :func:`on_http_ratelimit` instead.
+
+    :param retry_after: The amount of time we have to wait before making another request.
+    :type retry_after: :class:`float`
 
 .. function:: on_ready()
 
