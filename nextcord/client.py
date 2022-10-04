@@ -2535,8 +2535,8 @@ class Client:
             Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
             name as the value
         guild_ids: Optional[Iterable[:class:`int`]]
-            IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is 
-            set, then those default guild ids will be used instead. If both of those are unset, then the command will 
+            IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command. Defaults to `None`.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
@@ -2584,8 +2584,8 @@ class Client:
             Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
             name as the value
         guild_ids: Optional[Iterable[:class:`int`]]
-            IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is 
-            set, then those default guild ids will be used instead. If both of those are unset, then the command will 
+            IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command. Defaults to `None`.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
@@ -2641,8 +2641,8 @@ class Client:
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
         guild_ids: Optional[Iterable[:class:`int`]]
-            IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is 
-            set, then those default guild ids will be used instead. If both of those are unset, then the command will 
+            IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command. Defaults to `None`.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
