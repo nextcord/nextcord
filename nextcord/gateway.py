@@ -900,7 +900,7 @@ class DiscordVoiceWebSocket:
     async def received_message(self, msg: dict[str, Any]) -> None:
         _log.debug("Voice websocket frame received: %s", msg)
         op: int = msg["op"]
-        data: dict[str, Any] = msg["d"]
+        data: Dict[str, Any] = msg["d"]
 
         if op == self.READY:
             await self.initial_connection(data)
