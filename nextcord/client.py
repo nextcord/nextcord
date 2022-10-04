@@ -2122,7 +2122,7 @@ class Client:
             If the command should be removed before adding it. This will clear all signatures from storage, including
             rollout ones.
         """
-        if not command.force_global and not command.guild_ids_to_rollout:
+        if command.use_default_guild_ids:
             for id in self._default_guild_ids:
                 command.add_guild_rollout(id)
 

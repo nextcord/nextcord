@@ -1838,6 +1838,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Dict[Union[str, Locale], str]
         ] = description_localizations
         self.guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
+        self.use_default_guild_ids: bool = guild_ids is MISSING and not force_global
         self.dm_permission: Optional[bool] = dm_permission
         self.default_member_permissions: Optional[
             Union[Permissions, int]
