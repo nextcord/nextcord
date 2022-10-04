@@ -479,7 +479,7 @@ class DiscordWebSocket:
             self._buffer = bytearray()
 
         self.log_receive(msg)
-        message: dict[str, Any] = utils._from_json(msg)
+        message: Dict[str, Any] = utils._from_json(msg)
 
         _log.debug("For Shard ID %s: WebSocket Event: %s", self.shard_id, msg)
         event = message.get("t")
