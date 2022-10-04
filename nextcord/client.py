@@ -2520,7 +2520,7 @@ class Client:
         name: Optional[str] = None,
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
@@ -2537,7 +2537,7 @@ class Client:
         guild_ids: Optional[Iterable[:class:`int`]]
             IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
-            be a global command. Defaults to `None`.
+            be a global command. Defaults to `MISSING`.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2569,7 +2569,7 @@ class Client:
         name: Optional[str] = None,
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
@@ -2586,7 +2586,7 @@ class Client:
         guild_ids: Optional[Iterable[:class:`int`]]
             IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
-            be a global command. Defaults to `None`.
+            be a global command. Defaults to `MISSING`.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2620,7 +2620,7 @@ class Client:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
@@ -2643,7 +2643,7 @@ class Client:
         guild_ids: Optional[Iterable[:class:`int`]]
             IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
-            be a global command. Defaults to `None`.
+            be a global command. Defaults to `MISSING`.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
