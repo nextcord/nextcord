@@ -189,7 +189,6 @@ class ConnectionState:
         intents: Intents = Intents.default(),
         chunk_guilds_at_startup: bool = MISSING,
         member_cache_flags: MemberCacheFlags = MISSING,
-        default_guild_ids: List[int],
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = loop
         self.http: HTTPClient = http
@@ -260,7 +259,6 @@ class ConnectionState:
         self._activity: Optional[ActivityPayload] = raw_activity
         self._status: Optional[str] = raw_status
         self._intents: Intents = intents
-        self._default_guild_ids: List[int] = default_guild_ids
         # A set of all application command objects available. Set because duplicates should not exist.
         self._application_commands: Set[BaseApplicationCommand] = set()
         # A dictionary of all available unique command signatures. Compiled at runtime because needing to iterate
@@ -620,10 +618,6 @@ class ConnectionState:
         """
         if pre_remove:
             self.remove_application_command(command)
-
-        if not command.force_global and not command.guild_ids_to_rollout:
-            for id in self._default_guild_ids:
-                command.add_guild_rollout(id)
 
         signature_set = (
             command.get_rollout_signatures() if use_rollout else command.get_signatures()

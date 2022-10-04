@@ -329,9 +329,6 @@ class Client:
 
         self._enable_debug_events: bool = enable_debug_events
 
-        if default_guild_ids is None:
-            default_guild_ids = []
-
         self._connection: ConnectionState = self._get_state(
             max_messages=max_messages,
             application_id=application_id,
@@ -343,7 +340,6 @@ class Client:
             intents=intents,
             chunk_guilds_at_startup=chunk_guilds_at_startup,
             member_cache_flags=member_cache_flags,
-            default_guild_ids=default_guild_ids,
         )
 
         self._connection.shard_count = self.shard_count
@@ -359,6 +355,10 @@ class Client:
         self._rollout_update_known: bool = rollout_update_known
         self._rollout_all_guilds: bool = rollout_all_guilds
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
+
+        if default_guild_ids is None:
+            default_guild_ids = []
+        self._default_guild_ids = default_guild_ids
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -383,7 +383,6 @@ class Client:
         intents: Intents,
         chunk_guilds_at_startup: bool,
         member_cache_flags: MemberCacheFlags,
-        default_guild_ids: List[int],
     ) -> ConnectionState:
         return ConnectionState(
             dispatch=self.dispatch,
@@ -401,7 +400,6 @@ class Client:
             intents=intents,
             chunk_guilds_at_startup=chunk_guilds_at_startup,
             member_cache_flags=member_cache_flags,
-            default_guild_ids=default_guild_ids,
         )
 
     def _handle_ready(self) -> None:
@@ -2124,6 +2122,10 @@ class Client:
             If the command should be removed before adding it. This will clear all signatures from storage, including
             rollout ones.
         """
+        if not command.force_global and not command.guild_ids_to_rollout:
+            for id in self._default_guild_ids:
+                command.add_guild_rollout(id)
+
         self._connection.add_application_command(
             command, overwrite=overwrite, use_rollout=use_rollout, pre_remove=pre_remove
         )
