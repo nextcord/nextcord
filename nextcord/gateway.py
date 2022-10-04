@@ -919,7 +919,7 @@ class DiscordVoiceWebSocket:
 
         await self._hook(self, msg)
 
-    async def initial_connection(self, data: dict[str, Any]) -> None:
+    async def initial_connection(self, data: Dict[str, Any]) -> None:
         state = self._connection
         state.ssrc = data["ssrc"]
         state.voice_port = data["port"]
