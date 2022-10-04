@@ -359,7 +359,7 @@ class HTTPClient:
                                 int(remaining),
                                 delta,
                                 bucket,
-                                None,
+                                response.headers.get("X-RateLimit-Scope"),
                             )
                             maybe_lock.defer()
                             self.loop.call_later(delta, lock.release)
