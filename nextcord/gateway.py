@@ -685,7 +685,7 @@ class DiscordWebSocket:
                 raise InvalidArgument("activity must derive from BaseActivity.")
             activities: List[Activity] = [activity.to_dict()]
         else:
-            activities: list[Activity] = []
+            activities: List[Activity] = []
 
         if status == "idle":
             since = int(time.time() * 1000)
