@@ -705,7 +705,7 @@ class DiscordWebSocket:
         query: Optional[str] = None,
         *,
         limit: int,
-        user_ids: Optional[list[int]] = None,
+        user_ids: Optional[List[int]] = None,
         presences: bool = False,
         nonce: Optional[str] = None,
     ) -> None:
