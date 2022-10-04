@@ -222,7 +222,7 @@ class VoiceKeepAliveHandler(KeepAliveHandler):
         self.block_msg = "Shard ID %s voice heartbeat blocked for more than %s seconds"
         self.behind_msg = "High socket latency, shard ID %s heartbeat is %.1fs behind"
 
-    def get_payload(self) -> dict[str, int]:
+    def get_payload(self) -> Dict[str, int]:
         return {"op": self.ws.HEARTBEAT, "d": int(time.time() * 1000)}
 
     def ack(self) -> None:
