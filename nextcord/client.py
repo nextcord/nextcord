@@ -2534,9 +2534,10 @@ class Client:
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
             name as the value
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset and `default_guild_ids` is set, then those
-            default guild ids will be used instead. If both of those are unset, then the command will be a global command.
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is 
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will 
+            be a global command. Defaults to `None`.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2582,9 +2583,10 @@ class Client:
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
             name as the value
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset and `default_guild_ids` is set, then those
-            default guild ids will be used instead. If both of those are unset, then the command will be a global command.
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is 
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will 
+            be a global command. Defaults to `None`.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2638,9 +2640,10 @@ class Client:
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset and `default_guild_ids` is set, then those
-            default guild ids will be used instead. If both of those are unset, then the command will be a global command.
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and `default_guild_ids` is 
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will 
+            be a global command. Defaults to `None`.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
