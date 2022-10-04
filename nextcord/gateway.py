@@ -304,8 +304,10 @@ class DiscordWebSocket:
         shard_count: int | None
         _max_heartbeat_timeout: float
 
-    def __init__(self, socket: aiohttp.ClientWebSocketResponse, *, loop: asyncio.AbstractEventLoop) -> None:
-        self.socket: aiohttp.ClientWebSocketResponse= socket
+    def __init__(
+        self, socket: aiohttp.ClientWebSocketResponse, *, loop: asyncio.AbstractEventLoop
+    ) -> None:
+        self.socket: aiohttp.ClientWebSocketResponse = socket
         self.loop: asyncio.AbstractEventLoop = loop
 
         # an empty dispatcher to prevent crashes
