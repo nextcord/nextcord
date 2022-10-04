@@ -618,7 +618,6 @@ class ConnectionState:
         """
         if pre_remove:
             self.remove_application_command(command)
-
         signature_set = (
             command.get_rollout_signatures() if use_rollout else command.get_signatures()
         )
