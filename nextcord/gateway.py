@@ -964,7 +964,7 @@ class DiscordVoiceWebSocket:
 
         return sum(heartbeat.recent_ack_latencies) / len(heartbeat.recent_ack_latencies)
 
-    async def load_secret_key(self, data: dict[str, Any]) -> None:
+    async def load_secret_key(self, data: Dict[str, Any]) -> None:
         _log.info("received secret key for voice connection")
         self.secret_key = self._connection.secret_key = data.get("secret_key")
         await self.speak()
