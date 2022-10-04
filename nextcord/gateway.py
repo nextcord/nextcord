@@ -311,7 +311,7 @@ class DiscordWebSocket:
         # an empty dispatcher to prevent crashes
         self._dispatch: VariadicArgNone = lambda *args: None
         # generic event listeners
-        self._dispatch_listeners: list[EventListener] = []
+        self._dispatch_listeners: List[EventListener] = []
         # the keep alive
         self._keep_alive: Optional[KeepAliveHandler] = None
         self.thread_id: int = threading.get_ident()
