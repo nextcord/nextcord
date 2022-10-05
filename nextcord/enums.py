@@ -702,6 +702,7 @@ class AutoModerationTriggerType(IntEnum):
     keyword = 1
     spam = 3
     keyword_preset = 4
+    mention_spam = 5
 
 
 class KeywordPresetType(IntEnum):

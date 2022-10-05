@@ -29,7 +29,7 @@ from typing_extensions import NotRequired
 from .snowflake import Snowflake
 
 AutoModerationEventType = Literal[1]
-AutoModerationTriggerType = Literal[1, 2, 3, 4]
+AutoModerationTriggerType = Literal[1, 2, 3, 4, 5]
 KeywordPresetType = Literal[1, 2, 3]
 AutoModerationActionType = Literal[1, 2, 3, 4]
 
@@ -38,6 +38,7 @@ class AutoModerationTriggerMetadata(TypedDict, total=False):
     keyword_filter: List[str]
     presets: List[KeywordPresetType]
     allow_list: List[str]
+    mention_total_limit: Optional[int]
 
 
 class AutoModerationActionMetadata(TypedDict, total=False):

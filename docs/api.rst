@@ -2909,6 +2909,10 @@ of :class:`enum.Enum`.
 
         This rule checks if content contains words from Discord pre-defined wordsets.
 
+    .. attribute:: mention_total_limit
+
+        This rule checks if the number of mentions in the message is more than the maximum allowed the number of mentions allowed.
+
 .. class:: KeywordPresetType
 
     Represents the type of a keyword preset auto moderation rule.

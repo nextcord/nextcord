@@ -95,9 +95,15 @@ class AutoModerationTriggerMetadata:
         .. warning::
 
             Wildcard syntax (`*`) is not supported here.
+    mention_total_limit: :class:`int`
+        The max amount of mentions allowed in one messsage.
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the trigger type of this rule is not :attr:`AutoModerationTriggerType.mention_spam`.
     """
 
-    __slots__ = ("keyword_filter", "presets", "allow_list")
+    __slots__ = ("keyword_filter", "presets", "allow_list", "mention_total_limit")
 
     def __init__(
         self,
@@ -105,10 +111,12 @@ class AutoModerationTriggerMetadata:
         keyword_filter: Optional[List[str]] = None,
         presets: Optional[List[KeywordPresetType]] = None,
         allow_list: Optional[List[str]] = None,
+        mention_total_limit: Optional[int] = None,
     ) -> None:
         self.keyword_filter: Optional[List[str]] = keyword_filter
         self.presets: Optional[List[KeywordPresetType]] = presets
         self.allow_list: Optional[List[str]] = allow_list
+        self.mention_total_limit: Optional[int] = mention_total_limit
 
     @classmethod
     def from_data(cls, data: TriggerMetadataPayload):
@@ -119,8 +127,14 @@ class AutoModerationTriggerMetadata:
             else None
         )
         allow_list = data.get("allow_list")
+        mention_total_limit = data.get("mention_total_limit")
 
-        return cls(keyword_filter=keyword_filter, presets=presets, allow_list=allow_list)
+        return cls(
+            keyword_filter=keyword_filter,
+            presets=presets,
+            allow_list=allow_list,
+            mention_total_limit=mention_total_limit,
+        )
 
     @property
     def payload(self) -> TriggerMetadataPayload:
@@ -134,6 +148,9 @@ class AutoModerationTriggerMetadata:
 
         if self.allow_list is not None:
             payload["allow_list"] = self.allow_list
+
+        if self.mention_total_limit is not None:
+            payload["mention_total_limit"] = self.mention_total_limit
 
         return payload
 
