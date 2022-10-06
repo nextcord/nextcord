@@ -322,7 +322,7 @@ class DiscordWebSocket:
         self.session_id: Optional[str] = None
         self.resume_url: Optional[str] = None
         self.sequence: Optional[int] = None
-        self._zlib: zlib._Decompress = zlib.decompressobj()
+        self._zlib = zlib.decompressobj()
         self._buffer: bytearray = bytearray()
         self._close_code: Optional[int] = None
         self._rate_limiter: GatewayRatelimiter = GatewayRatelimiter()
