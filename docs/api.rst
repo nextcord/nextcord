@@ -2911,7 +2911,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: mention_spam
 
-        This rule checks if the number of mentions in the message is more than the maximum allowed the number of mentions allowed.
+        This rule checks if the number of mentions in the message is more than the maximum allowed.
 
 .. class:: KeywordPresetType
 
