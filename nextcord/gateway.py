@@ -139,7 +139,7 @@ class KeepAliveHandler(threading.Thread):
         threading.Thread.__init__(self, *args, **kwargs)
         self.ws = ws
         self._main_thread_id = ws.thread_id
-        self.interval: float = interval
+        self.interval: Optional[float] = interval
         self.daemon: bool = True
         self.shard_id: Optional[int] = shard_id
         self.msg: str = "Keeping shard ID %s websocket alive with sequence %s."
