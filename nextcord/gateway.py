@@ -134,7 +134,7 @@ class GatewayRatelimiter:
 class KeepAliveHandler(threading.Thread):
     def __init__(self, *args, **kwargs):
         ws: DiscordWebSocket = kwargs.pop("ws")  # will fail at `_main_thread_id` anyway
-        interval: float = kwargs.pop("interval", None)
+        interval: Optional[float] = kwargs.pop("interval", None)
         shard_id: Optional[int] = kwargs.pop("shard_id", None)
         threading.Thread.__init__(self, *args, **kwargs)
         self.ws = ws
