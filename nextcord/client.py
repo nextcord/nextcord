@@ -1897,7 +1897,7 @@ class Client:
             and all their components have an explicitly provided custom_id.
         """
         if not isinstance(view, View):
-            raise TypeError(f"Expected an instance of View not {view.__class__!r}")
+            raise TypeError(f"Expected an instance of View not {view.__class__.__name__}")
 
         if not view.is_persistent():
             raise ValueError(
@@ -1963,7 +1963,7 @@ class Client:
             and a timeout set to None.
         """
         if not isinstance(modal, Modal):
-            raise TypeError(f"Expected an instance of Modal not {modal.__class__!r}")
+            raise TypeError(f"Expected an instance of Modal not {modal.__class__.__name__}")
 
         if not modal.is_persistent():
             raise ValueError(
