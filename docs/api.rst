@@ -2949,6 +2949,18 @@ of :class:`enum.Enum`.
 
             This action type can only be used with the :attr:`Permissions.moderate_members` permission.
 
+.. class:: SortOrderTypes
+
+    The default sort order type used to sort posts in forum channel.
+
+    .. attribute:: latest_activity
+
+        Sort forum posts by its activity.
+
+    .. attribute:: creation_date
+
+        Sort forum posts by its creation date.
+
 
 Async Iterator
 --------------

@@ -346,6 +346,13 @@ class GuildChannel:
         else:
             options["video_quality_mode"] = int(video_quality_mode)
 
+        try:
+            default_sort_order = options.pop("default_sort_order")
+        except KeyError:
+            pass
+        else:
+            options["default_sort_order"] = default_sort_order.value
+
         lock_permissions = options.pop("sync_permissions", False)
 
         try:

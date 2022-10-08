@@ -102,6 +102,7 @@ if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
+    from .enums import SortOrderTypes
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -1447,6 +1448,7 @@ class Guild(Hashable):
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
         category: Optional[CategoryChannel] = None,
         reason: Optional[str] = None,
+        default_sort_order: SortOrderTypes = MISSING,
     ) -> ForumChannel:
         """|coro|
 
@@ -1473,6 +1475,8 @@ class Guild(Hashable):
             at 0. e.g. the top channel is position 0.
         reason: Optional[:class:`str`]
             The reason for creating this channel. Shows up on the audit log.
+        default_sort_order: Optional[:class:`SortOrderTypes`]
+            The default sort order used to sort posts in this channel.
 
         Raises
         ------
@@ -1494,6 +1498,9 @@ class Guild(Hashable):
         }
         if position is not MISSING:
             options["position"] = position
+
+        if default_sort_order is not MISSING:
+            options["default_sort_order"] = default_sort_order.value
 
         data = await self._create_channel(
             name,
