@@ -399,7 +399,7 @@ class DiscordWebSocket:
         return ws
 
     def wait_for(
-        self, event: str, predicate: Callable, result: Optional[Callable[Any], Any] = None
+        self, event: str, predicate: Callable, result: Optional[Callable[[Any], Any]] = None
     ) -> asyncio.Future:
         """Waits for a DISPATCH'd event that meets the predicate.
 
@@ -811,14 +811,14 @@ class DiscordVoiceWebSocket:
         socket: DiscordClientWebSocketResponse,
         loop: asyncio.AbstractEventLoop,
         *,
-        hook: Optional[Callable] = None,
+        hook: Optional[Callable[..., Awaitable[None]]] = None,
     ):
         self.ws: DiscordClientWebSocketResponse = socket
         self.loop: asyncio.AbstractEventLoop = loop
         self._keep_alive: Optional[VoiceKeepAliveHandler] = None
         self._close_code: Optional[int] = None
         self.secret_key: Optional[str] = None
-        self._hook: Callable[..., Awaitable[None]] = (
+        self._hook: Optional[Callable[..., Awaitable[None]]] = (
             hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
         )
 
@@ -919,7 +919,8 @@ class DiscordVoiceWebSocket:
             self._keep_alive = VoiceKeepAliveHandler(ws=self, interval=min(interval, 5.0))
             self._keep_alive.start()
 
-        await self._hook(self, msg)
+        if self._hook is not None:
+            await self._hook(self, msg)
 
     async def initial_connection(self, data: Dict[str, Any]) -> None:
         state = self._connection
