@@ -63,7 +63,7 @@ from .errors import (
 )
 from .file import File
 from .gateway import DiscordClientWebSocketResponse
-from .utils import MISSING, _from_json, _to_json, _parse_ratelimit_header, _get_mime_type_for_image
+from .utils import MISSING, _from_json, _get_mime_type_for_image, _parse_ratelimit_header, _to_json
 
 _log = logging.getLogger(__name__)
 
@@ -333,9 +333,7 @@ class HTTPClient:
                         remaining = response.headers.get("X-Ratelimit-Remaining")
                         if remaining == "0" and response.status != 429:
                             # we've depleted our current bucket
-                            delta = _parse_ratelimit_header(
-                                response, use_clock=self.use_clock
-                            )
+                            delta = _parse_ratelimit_header(response, use_clock=self.use_clock)
                             _log.debug(
                                 "A rate limit bucket has been exhausted (bucket: %s, retry: %s).",
                                 bucket,
