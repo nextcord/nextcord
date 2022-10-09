@@ -41,6 +41,7 @@ from typing import (
     Generator,
     Iterable,
     List,
+    Literal,
     Optional,
     Sequence,
     Set,
@@ -87,7 +88,7 @@ from .types.interactions import ApplicationCommandInteractionData
 from .ui.modal import Modal
 from .ui.view import View
 from .user import ClientUser, User
-from .utils import MISSING
+from .utils import MISSING, copy_doc
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
@@ -2038,7 +2039,7 @@ class Client:
         """
         return self._connection.get_application_command(command_id)
 
-    def get_application_command_from_signature(
+    def __actual_get_application_command_from_signature(
         self,
         *,
         type: Union[int, ApplicationCommandType],
@@ -2057,13 +2058,16 @@ class Client:
             Renamed the ``name`` parameter to ``qualified_name``.
 
         .. versionchanged:: 2.2
-            Group/subcommand commands can now be retrieved with this method.
+            Renamed the ``cmd_type`` parameter to ``type``.
 
         .. versionchanged:: 2.2
             Added the ``search_locales`` keyword argument.
 
         .. versionchanged:: 2.2
-            Changed the signature from ``(qualified_name, cmd_type, guild_id, *, search_locales)`` to ``(*, type, qualified_name, guild_id, search_locales) `.
+            Group/subcommand commands can now be retrieved with this method.
+
+        .. versionchanged:: 2.2
+            Changed the signature from ``(qualified_name, type, guild_id, *, search_locales)`` to ``(*, type, qualified_name, guild_id, search_locales)``.
             All parameters are now keyword-only.
 
         Parameters
@@ -2088,6 +2092,118 @@ class Client:
             qualified_name=qualified_name,
             guild_id=guild_id,
             search_locales=search_locales,
+        )
+
+    @overload
+    def get_application_command_from_signature(
+        self,
+        *,
+        qualified_name: str,
+        type: Union[int, ApplicationCommandType],
+        guild_id: Optional[int],
+        search_locales: bool = ...,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+        ...
+
+    @overload
+    def get_application_command_from_signature(
+        self,
+        qualified_name: str,
+        type: Union[int, ApplicationCommandType],
+        guild_id: Optional[int],
+        *,
+        search_locales: bool = ...,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+        ...
+
+    @overload
+    def get_application_command_from_signature(
+        self,
+        type: Union[int, ApplicationCommandType],
+        qualified_name: str,
+        guild_id: Optional[int],
+        *,
+        search_locales: bool = ...,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+        ...
+
+    @copy_doc(__actual_get_application_command_from_signature)
+    def get_application_command_from_signature(
+        self, *args: Any, search_locales: bool = False, **kwargs: Any
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+        REQUIRED_ARGS = ("qualified_name", "type", "guild_id")
+        FUNC = "get_application_command_from_signature()"
+        ARGS_DEPRECATED_MESSAGE = "The signature passed to {name} is deprecated, please use keyword arguments only instead. Converted signature: {converted_signature}."
+        KWARG_DEPRECATION_MESSAGE = 'The keyword argument "{old}=" used in {name} is deprecated, please use "{new}=" instead.'
+
+        kwargs_convert_table: Dict[str, Any] = {"name": "qualified_name", "cmd_type": "type"}
+        VALID_KWARGS = ("type", "qualified_name", "guild_id", "search_locales")
+        for kw in kwargs.copy():
+            if kw in kwargs_convert_table:
+                warnings.warn(
+                    KWARG_DEPRECATION_MESSAGE.format(
+                        name=FUNC, old=kw, new=kwargs_convert_table[kw]
+                    ),
+                    stacklevel=2,
+                    category=FutureWarning,
+                )
+                kwargs[kwargs_convert_table[kw]] = kwargs.pop(kw)
+            elif kw not in VALID_KWARGS:
+                raise TypeError(f"{FUNC} got an unexpected keyword argument '{kw}'")
+
+        if len(args) > 3:
+            raise TypeError(f"{FUNC} takes 3 positional argument but {len(args)} were given")
+        for index, arg in enumerate(args):
+            if index in (0, 1):
+                if isinstance(arg, str):
+                    kwargs["qualified_name"] = kwargs.get("qualified_name", arg)
+                elif isinstance(arg, (int, ApplicationCommandType)):
+                    kwargs["type"] = kwargs.get("type", arg)
+            elif index == 2:
+                kwargs["guild_id"] = kwargs.get("guild_id", arg)
+
+        # mimicking the python error
+        def ARGS_ERROR_MESSAGE(*required_arguments: str) -> str:
+            base = f"{FUNC} missing {len(required_arguments)} required positional {'arguments' if len(required_arguments) > 1 else 'argument'}: "
+            if len(required_arguments) == 1:
+                base += f"`{required_arguments[0]}`"
+            elif len(required_arguments) == 2:
+                base += f"`{required_arguments[0]}` and `{required_arguments[1]}`"
+            else:
+                without_last_argument = required_arguments[:-1]
+                last_argument = required_arguments[-1]
+                base += (
+                    ", ".join(f"'{key}'" for key in without_last_argument)
+                    + f", and '{last_argument}'"
+                )
+
+            return base
+
+        MISSING_ARGS = []
+        for arg in REQUIRED_ARGS:
+            if arg not in kwargs:
+                MISSING_ARGS.append(arg)
+
+        if MISSING_ARGS:
+            message = ARGS_ERROR_MESSAGE(*MISSING_ARGS)
+            raise TypeError(message)
+
+        if args:
+            params = [
+                f"{key}={value if isinstance(value, ApplicationCommandType) else value!r}"
+                for key, value in kwargs.items()
+            ]
+            CONVERTED_SIGNATURE = (
+                "get_application_command_from_signature(" + ", ".join(params) + ")"
+            )
+            warnings.warn(
+                ARGS_DEPRECATED_MESSAGE.format(name=FUNC, converted_signature=CONVERTED_SIGNATURE),
+                stacklevel=2,
+                category=FutureWarning,
+            )
+
+        return self.__actual_get_application_command_from_signature(
+            search_locales=search_locales, **kwargs
         )
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
