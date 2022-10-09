@@ -2051,22 +2051,22 @@ class Client:
 
         .. versionadded:: 2.0
 
-        .. versionchanged:: 2.2
+        .. versionchanged:: 2.3
             it's no longer possible to pass ``None`` to the ``name`` parameter.
 
-        .. versionchanged:: 2.2
+        .. versionchanged:: 2.3
             Renamed the ``name`` parameter to ``qualified_name``.
 
-        .. versionchanged:: 2.2
+        .. versionchanged:: 2.3
             Renamed the ``cmd_type`` parameter to ``type``.
 
-        .. versionchanged:: 2.2
+        .. versionchanged:: 2.3
             Added the ``search_locales`` keyword argument.
 
-        .. versionchanged:: 2.2
+        .. versionchanged:: 2.3
             Group/subcommand commands can now be retrieved with this method.
 
-        .. versionchanged:: 2.2
+        .. versionchanged:: 2.3
             Changed the signature from ``(qualified_name, type, guild_id, *, search_locales)`` to ``(*, type, qualified_name, guild_id, search_locales)``.
             All parameters are now keyword-only.
 
