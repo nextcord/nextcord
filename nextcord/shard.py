@@ -423,7 +423,6 @@ class AutoShardedClient(Client):
         intents: Intents,
         chunk_guilds_at_startup: bool,
         member_cache_flags: MemberCacheFlags,
-        default_guild_ids: List[int],
     ) -> AutoShardedConnectionState:
         return AutoShardedConnectionState(
             dispatch=self.dispatch,
@@ -441,7 +440,6 @@ class AutoShardedClient(Client):
             intents=intents,
             chunk_guilds_at_startup=chunk_guilds_at_startup,
             member_cache_flags=member_cache_flags,
-            default_guild_ids=default_guild_ids,
         )
 
     @property
