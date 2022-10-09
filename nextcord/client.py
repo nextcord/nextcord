@@ -54,7 +54,6 @@ from typing import (
 
 import aiohttp
 
-from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
 from .application_command import (
@@ -87,7 +86,7 @@ from .types.interactions import ApplicationCommandInteractionData
 from .ui.modal import Modal
 from .ui.view import View
 from .user import ClientUser, User
-from .utils import MISSING
+from .utils import MISSING, SequenceProxy, resolve_template, _obj_to_base64_data, resolve_invite, parse_raw_mentions, _unique
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
@@ -446,7 +445,7 @@ class Client:
 
         .. versionadded:: 1.1
         """
-        return utils.SequenceProxy(self._connection._messages or [])
+        return SequenceProxy(self._connection._messages or [])
 
     @property
     def private_channels(self) -> List[PrivateChannel]:
@@ -1435,7 +1434,7 @@ class Client:
         :class:`.Template`
             The template from the URL/code.
         """
-        code = utils.resolve_template(code)
+        code = resolve_template(code)
         data = await self.http.get_template(code)
         return Template(data=data, state=self._connection)
 
@@ -1525,7 +1524,7 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        icon_base64 = await utils._obj_to_base64_data(icon)
+        icon_base64 = await _obj_to_base64_data(icon)
 
         if code:
             data = await self.http.create_from_template(code, name, str(region), icon_base64)
@@ -1603,7 +1602,7 @@ class Client:
             The invite from the URL/ID.
         """
 
-        invite_id = utils.resolve_invite(url)
+        invite_id = resolve_invite(url)
         data = await self.http.get_invite(
             invite_id, with_counts=with_counts, with_expiration=with_expiration
         )
@@ -1632,7 +1631,7 @@ class Client:
             Revoking the invite failed.
         """
 
-        invite_id = utils.resolve_invite(invite)
+        invite_id = resolve_invite(invite)
         await self.http.delete_invite(invite_id)
 
     # Miscellaneous stuff
@@ -2681,8 +2680,8 @@ class Client:
             List of :class:`~nextcord.User` objects that were mentioned in the string.
         """
 
-        it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
-        return utils._unique(it)
+        it = filter(None, map(self.get_user, parse_raw_mentions(text)))
+        return _unique(it)
 
     @overload
     def get_interaction(self, data) -> Interaction:

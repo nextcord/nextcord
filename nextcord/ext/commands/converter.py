@@ -44,6 +44,7 @@ from typing import (
 )
 
 import nextcord
+from nextcord.utils import get, find, _get_as_snowflake, escape_markdown, remove_markdown, escape_mentions
 
 from .errors import *
 
@@ -96,7 +97,6 @@ def _get_from_guilds(bot, getter, argument):
     return result
 
 
-_utils_get = nextcord.utils.get
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 CT = TypeVar("CT", bound=nextcord.abc.GuildChannel)
@@ -203,11 +203,11 @@ class MemberConverter(IDConverter[nextcord.Member]):
         if len(argument) > 5 and argument[-5] == "#":
             username, _, discriminator = argument.rpartition("#")
             members = await guild.query_members(username, limit=100, cache=cache)
-            return nextcord.utils.get(members, name=username, discriminator=discriminator)
+            return get(members, name=username, discriminator=discriminator)
         else:
             members = await guild.query_members(argument, limit=100, cache=cache)
             finder: Callable[[Member], bool] = lambda m: m.name == argument or m.nick == argument
-            return nextcord.utils.find(finder, members)
+            return find(finder, members)
 
     async def query_member_by_id(self, bot, guild, user_id):
         ws = bot._get_websocket(shard_id=guild.shard_id)
@@ -245,7 +245,7 @@ class MemberConverter(IDConverter[nextcord.Member]):
         else:
             user_id = int(match.group(1))
             if guild:
-                result = guild.get_member(user_id) or _utils_get(ctx.message.mentions, id=user_id)
+                result = guild.get_member(user_id) or get(ctx.message.mentions, id=user_id)
             else:
                 result = _get_from_guilds(bot, "get_member", user_id)
 
@@ -291,7 +291,7 @@ class UserConverter(IDConverter[nextcord.User]):
 
         if match is not None:
             user_id = int(match.group(1))
-            result = ctx.bot.get_user(user_id) or _utils_get(ctx.message.mentions, id=user_id)
+            result = ctx.bot.get_user(user_id) or get(ctx.message.mentions, id=user_id)
             if result is None:
                 try:
                     result = await ctx.bot.fetch_user(user_id)
@@ -314,12 +314,12 @@ class UserConverter(IDConverter[nextcord.User]):
             predicate: Callable[[User], bool] = (
                 lambda u: u.name == name and u.discriminator == discrim
             )
-            result = nextcord.utils.find(predicate, state._users.values())
+            result = find(predicate, state._users.values())
             if result is not None:
                 return result
 
         predicate = lambda u: u.name == arg
-        result = nextcord.utils.find(predicate, state._users.values())
+        result = find(predicate, state._users.values())
 
         if result is None:
             raise UserNotFound(argument)
@@ -351,7 +351,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
         if not match:
             raise MessageNotFound(argument)
         data = match.groupdict()
-        channel_id = nextcord.utils._get_as_snowflake(data, "channel_id")
+        channel_id = _get_as_snowflake(data, "channel_id")
         message_id = int(data["message_id"])
         guild_id = data.get("guild_id")
         if guild_id is None:
@@ -444,13 +444,13 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
             # not a mention
             if guild:
                 iterable: Iterable[CT] = getattr(guild, attribute)
-                result: Optional[CT] = nextcord.utils.get(iterable, name=argument)
+                result: Optional[CT] = get(iterable, name=argument)
             else:
 
                 def check(c):
                     return isinstance(c, type) and c.name == argument
 
-                result = nextcord.utils.find(check, bot.get_all_channels())
+                result = find(check, bot.get_all_channels())
         else:
             channel_id = int(match.group(1))
             if guild:
@@ -473,7 +473,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
             # not a mention
             if guild:
                 iterable: Iterable[TT] = getattr(guild, attribute)
-                result: Optional[TT] = nextcord.utils.get(iterable, name=argument)
+                result: Optional[TT] = get(iterable, name=argument)
         else:
             thread_id = int(match.group(1))
             if guild:
@@ -703,7 +703,7 @@ class RoleConverter(IDConverter[nextcord.Role]):
         if match:
             result = guild.get_role(int(match.group(1)))
         else:
-            result = nextcord.utils.get(guild._roles.values(), name=argument)
+            result = get(guild._roles.values(), name=argument)
 
         if result is None:
             raise RoleNotFound(argument)
@@ -754,7 +754,7 @@ class GuildConverter(IDConverter[nextcord.Guild]):
             result = ctx.bot.get_guild(guild_id)
 
         if result is None:
-            result = nextcord.utils.get(ctx.bot.guilds, name=argument)
+            result = get(ctx.bot.guilds, name=argument)
 
             if result is None:
                 raise GuildNotFound(argument)
@@ -788,10 +788,10 @@ class EmojiConverter(IDConverter[nextcord.Emoji]):
         if match is None:
             # Try to get the emoji by name. Try local guild first.
             if guild:
-                result = nextcord.utils.get(guild.emojis, name=argument)
+                result = get(guild.emojis, name=argument)
 
             if result is None:
-                result = nextcord.utils.get(bot.emojis, name=argument)
+                result = get(bot.emojis, name=argument)
         else:
             emoji_id = int(match.group(1))
 
@@ -860,10 +860,10 @@ class GuildStickerConverter(IDConverter[nextcord.GuildSticker]):
         if match is None:
             # Try to get the sticker by name. Try local guild first.
             if guild:
-                result = nextcord.utils.get(guild.stickers, name=argument)
+                result = get(guild.stickers, name=argument)
 
             if result is None:
-                result = nextcord.utils.get(bot.stickers, name=argument)
+                result = get(bot.stickers, name=argument)
         else:
             sticker_id = int(match.group(1))
 
@@ -909,10 +909,10 @@ class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
         if match is None:
             # Try to get the scheduled event by name. Try local guild first.
             if guild:
-                result = nextcord.utils.get(guild.scheduled_events, name=argument)
+                result = get(guild.scheduled_events, name=argument)
 
             if result is None:
-                result = nextcord.utils.get(bot.scheduled_events, name=argument)
+                result = get(bot.scheduled_events, name=argument)
         else:
             scheduled_event_id = int(match.group(1))
 
@@ -996,7 +996,7 @@ class clean_content(Converter[str]):
         else:
 
             def resolve_member(id: int) -> str:
-                m = _utils_get(msg.mentions, id=id) or ctx.bot.get_user(id)
+                m = get(msg.mentions, id=id) or ctx.bot.get_user(id)
                 return f"@{m.name}" if m else "@deleted-user"
 
             def resolve_role(id: int) -> str:
@@ -1028,12 +1028,12 @@ class clean_content(Converter[str]):
 
         result = re.sub(r"<(@[!&]?|#)([0-9]{15,20})>", repl, argument)
         if self.escape_markdown:
-            result = nextcord.utils.escape_markdown(result)
+            result = escape_markdown(result)
         elif self.remove_markdown:
-            result = nextcord.utils.remove_markdown(result)
+            result = remove_markdown(result)
 
         # Completely ensure no mentions escape:
-        return nextcord.utils.escape_mentions(result)
+        return escape_mentions(result)
 
 
 class Greedy(List[T]):

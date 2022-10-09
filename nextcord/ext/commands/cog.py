@@ -39,7 +39,7 @@ from typing import (
     TypeVar,
 )
 
-import nextcord.utils
+from nextcord.utils import MISSING
 from nextcord.application_command import ClientCog, _cog_special_method
 from nextcord.interactions import Interaction
 
@@ -57,8 +57,6 @@ __all__ = (
 
 CogT = TypeVar("CogT", bound="Cog")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
-
-MISSING: Any = nextcord.utils.MISSING
 
 
 class CogMeta(type):

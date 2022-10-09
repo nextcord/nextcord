@@ -30,7 +30,6 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
-from . import utils
 from .channel import ChannelType, PartialMessageable
 from .embeds import Embed
 from .enums import InteractionResponseType, InteractionType, try_enum
@@ -42,7 +41,7 @@ from .mixins import Hashable
 from .object import Object
 from .permissions import Permissions
 from .user import ClientUser, User
-from .utils import snowflake_time
+from .utils import snowflake_time, MISSING, _get_as_snowflake, utcnow, cached_slot_property
 from .webhook.async_ import Webhook, WebhookMessage, async_context, handle_message_parameters
 
 __all__ = (
@@ -82,8 +81,6 @@ if TYPE_CHECKING:
         PartialMessageable,
         ForumChannel,
     ]
-
-MISSING: Any = utils.MISSING
 
 ClientT = TypeVar("ClientT", bound="Client")
 
@@ -218,8 +215,8 @@ class Interaction(Hashable, Generic[ClientT]):
         self.data: Optional[InteractionData] = data.get("data")
         self.token: str = data["token"]
         self.version: int = data["version"]
-        self.channel_id: Optional[int] = utils._get_as_snowflake(data, "channel_id")
-        self.guild_id: Optional[int] = utils._get_as_snowflake(data, "guild_id")
+        self.channel_id: Optional[int] = _get_as_snowflake(data, "channel_id")
+        self.guild_id: Optional[int] = _get_as_snowflake(data, "guild_id")
         self.application_id: int = int(data["application_id"])
         self.locale: Optional[str] = data.get("locale")
         self.guild_locale: Optional[str] = data.get("guild_locale")
@@ -282,14 +279,14 @@ class Interaction(Hashable, Generic[ClientT]):
 
     def is_expired(self) -> bool:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
-        return utils.utcnow() > self.expires_at
+        return utcnow() > self.expires_at
 
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
     ):
         self.application_command = app_cmd
 
-    @utils.cached_slot_property("_cs_channel")
+    @cached_slot_property("_cs_channel")
     def channel(self) -> Optional[InteractionChannel]:
         """Optional[Union[:class:`abc.GuildChannel`, :class:`PartialMessageable`, :class:`Thread`]]: The channel the interaction was sent from.
 
@@ -321,7 +318,7 @@ class Interaction(Hashable, Generic[ClientT]):
         """
         return Permissions(self._app_permissions)
 
-    @utils.cached_slot_property("_cs_response")
+    @cached_slot_property("_cs_response")
     def response(self) -> InteractionResponse:
         """:class:`InteractionResponse`: Returns an object responsible for handling responding to the interaction.
 
@@ -330,7 +327,7 @@ class Interaction(Hashable, Generic[ClientT]):
         """
         return InteractionResponse(self)
 
-    @utils.cached_slot_property("_cs_followup")
+    @cached_slot_property("_cs_followup")
     def followup(self) -> Webhook:
         """:class:`Webhook`: Returns the follow up webhook for follow up interactions."""
         payload = {

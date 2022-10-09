@@ -26,8 +26,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, SupportsInt, Union
 
-from . import utils
 from .mixins import Hashable
+from .utils import snowflake_time
 
 if TYPE_CHECKING:
     import datetime
@@ -90,4 +90,4 @@ class Object(Hashable):
     @property
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: Returns the snowflake's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return snowflake_time(self.id)

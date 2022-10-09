@@ -42,7 +42,6 @@ from typing import (
     runtime_checkable,
 )
 
-from . import utils
 from .context_managers import Typing
 from .enums import ChannelType
 from .errors import ClientException, InvalidArgument
@@ -54,6 +53,7 @@ from .mentions import AllowedMentions
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
 from .sticker import GuildSticker, StickerItem
+from .utils import MISSING, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
 
 __all__ = (
@@ -92,8 +92,6 @@ if TYPE_CHECKING:
     PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
-
-MISSING = utils.MISSING
 
 
 class _Undefined:
@@ -455,7 +453,7 @@ class GuildChannel:
     @property
     def created_at(self) -> datetime:
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return snowflake_time(self.id)
 
     def overwrites_for(self, obj: Union[Role, User]) -> PermissionOverwrite:
         """Returns the channel-specific overwrites for a member or a role.
@@ -626,7 +624,7 @@ class GuildChannel:
             if obj.is_default():
                 return base
 
-            overwrite = utils.get(self._overwrites, type=_Overwrites.ROLE, id=obj.id)
+            overwrite = get(self._overwrites, type=_Overwrites.ROLE, id=obj.id)
             if overwrite is not None:
                 base.handle_overwrite(overwrite.allow, overwrite.deny)
 

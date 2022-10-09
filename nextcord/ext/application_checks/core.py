@@ -36,6 +36,7 @@ from nextcord.application_command import (
     SlashApplicationSubcommand,
 )
 from nextcord.interactions import Interaction
+from nextcord.utils import get
 
 from .errors import (
     ApplicationBotMissingAnyRole,
@@ -303,9 +304,9 @@ def has_role(item: Union[int, str]) -> AC:
 
         # interaction.guild is None doesn't narrow interaction.user to Member
         if isinstance(item, int):
-            role = nextcord.utils.get(interaction.user.roles, id=item)  # type: ignore
+            role = get(interaction.user.roles, id=item)  # type: ignore
         else:
-            role = nextcord.utils.get(interaction.user.roles, name=item)  # type: ignore
+            role = get(interaction.user.roles, name=item)  # type: ignore
         if role is None:
             raise ApplicationMissingRole(item)
         return True
@@ -345,7 +346,7 @@ def has_any_role(*items: Union[int, str]) -> AC:
             raise ApplicationNoPrivateMessage()
 
         # interaction.guild is None doesn't narrow interaction.user to Member
-        getter = functools.partial(nextcord.utils.get, interaction.user.roles)  # type: ignore
+        getter = functools.partial(get, interaction.user.roles)  # type: ignore
         if any(
             getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None
             for item in items
@@ -387,9 +388,9 @@ def bot_has_role(item: Union[int, str]) -> AC:
 
         me = interaction.guild.me
         if isinstance(item, int):
-            role = nextcord.utils.get(me.roles, id=item)
+            role = get(me.roles, id=item)
         else:
-            role = nextcord.utils.get(me.roles, name=item)
+            role = get(me.roles, name=item)
         if role is None:
             raise ApplicationBotMissingRole(item)
         return True
@@ -426,7 +427,7 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
         if interaction.guild is None:
             raise ApplicationNoPrivateMessage()
 
-        getter = functools.partial(nextcord.utils.get, interaction.guild.me.roles)
+        getter = functools.partial(get, interaction.guild.me.roles)
         if any(
             getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None
             for item in items

@@ -28,7 +28,7 @@ import datetime
 import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, Type, TypeVar, Union
 
-from . import utils
+from .utils import parse_time
 from .colour import Colour
 
 __all__ = ("Embed",)
@@ -242,7 +242,7 @@ class Embed:
             pass
 
         try:
-            self._timestamp = utils.parse_time(data["timestamp"])
+            self._timestamp = parse_time(data["timestamp"])
         except KeyError:
             pass
 

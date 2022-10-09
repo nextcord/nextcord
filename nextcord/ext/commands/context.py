@@ -28,8 +28,8 @@ import re
 from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, TypeVar, Union
 
 import nextcord.abc
-import nextcord.utils
 from nextcord.message import Message
+from nextcord.utils import MISSING, cached_property, copy_doc
 
 if TYPE_CHECKING:
     from typing_extensions import ParamSpec
@@ -48,8 +48,6 @@ if TYPE_CHECKING:
     from .view import StringView
 
 __all__ = ("Context",)
-
-MISSING: Any = nextcord.utils.MISSING
 
 
 T = TypeVar("T")
@@ -278,26 +276,26 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             return None
         return self.command.cog
 
-    @nextcord.utils.cached_property
+    @cached_property
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`.Guild`]: Returns the guild associated with this context's command. None if not available."""
         return self.message.guild
 
-    @nextcord.utils.cached_property
+    @cached_property
     def channel(self) -> MessageableChannel:
         """Union[:class:`.abc.Messageable`]: Returns the channel associated with this context's command.
         Shorthand for :attr:`.Message.channel`.
         """
         return self.message.channel
 
-    @nextcord.utils.cached_property
+    @cached_property
     def author(self) -> Union[User, Member]:
         """Union[:class:`~nextcord.User`, :class:`.Member`]:
         Returns the author associated with this context's command. Shorthand for :attr:`.Message.author`
         """
         return self.message.author
 
-    @nextcord.utils.cached_property
+    @cached_property
     def me(self) -> Union[Member, ClientUser]:
         """Union[:class:`.Member`, :class:`.ClientUser`]:
         Similar to :attr:`.Guild.me` except it may return the :class:`.ClientUser` in private message contexts.
@@ -392,6 +390,6 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         except CommandError as e:
             await cmd.on_help_command_error(self, e)
 
-    @nextcord.utils.copy_doc(Message.reply)
+    @copy_doc(Message.reply)
     async def reply(self, content: Optional[str] = None, **kwargs: Any) -> Message:
         return await self.message.reply(content, **kwargs)

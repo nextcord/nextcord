@@ -36,7 +36,7 @@ import aiohttp
 
 import nextcord
 from nextcord.backoff import ExponentialBackoff
-from nextcord.utils import MISSING, utcnow
+from nextcord.utils import MISSING, utcnow, compute_timedelta
 
 __all__ = ("loop",)
 
@@ -53,12 +53,12 @@ class SleepHandle:
     def __init__(self, dt: datetime.datetime, *, loop: asyncio.AbstractEventLoop) -> None:
         self.loop = loop
         self.future = future = loop.create_future()
-        relative_delta = nextcord.utils.compute_timedelta(dt)
+        relative_delta = compute_timedelta(dt)
         self.handle = loop.call_later(relative_delta, future.set_result, True)
 
     def recalculate(self, dt: datetime.datetime) -> None:
         self.handle.cancel()
-        relative_delta = nextcord.utils.compute_timedelta(dt)
+        relative_delta = compute_timedelta(dt)
         self.handle = self.loop.call_later(relative_delta, self.future.set_result, True)
 
     def wait(self) -> asyncio.Future[Any]:

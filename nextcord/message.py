@@ -44,7 +44,6 @@ from typing import (
     overload,
 )
 
-from . import utils
 from .components import _component_factory
 from .embeds import Embed
 from .emoji import Emoji
@@ -59,7 +58,7 @@ from .partial_emoji import PartialEmoji
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
-from .utils import MISSING, escape_mentions
+from .utils import MISSING, escape_mentions, _get_as_snowflake, snowflake_time, parse_time, find, cached_slot_property, parse_raw_mentions, parse_raw_channel_mentions, parse_raw_role_mentions, _unique
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
@@ -474,9 +473,9 @@ class MessageReference:
     @classmethod
     def with_state(cls: Type[MR], state: ConnectionState, data: MessageReferencePayload) -> MR:
         self = cls.__new__(cls)
-        self.message_id = utils._get_as_snowflake(data, "message_id")
+        self.message_id = _get_as_snowflake(data, "message_id")
         self.channel_id = int(data.pop("channel_id"))
-        self.guild_id = utils._get_as_snowflake(data, "guild_id")
+        self.guild_id = _get_as_snowflake(data, "guild_id")
         self.fail_if_not_exists = data.get("fail_if_not_exists", True)
         self._state = state
         self.resolved = None
@@ -624,7 +623,7 @@ class MessageInteraction(Hashable):
     @property
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: The interaction's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return snowflake_time(self.id)
 
 
 @flatten_handlers
@@ -798,7 +797,7 @@ class Message(Hashable):
     ):
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
-        self.webhook_id: Optional[int] = utils._get_as_snowflake(data, "webhook_id")
+        self.webhook_id: Optional[int] = _get_as_snowflake(data, "webhook_id")
         self.reactions: List[Reaction] = [
             Reaction(message=self, data=d) for d in data.get("reactions", [])
         ]
@@ -809,7 +808,7 @@ class Message(Hashable):
         self.application: Optional[MessageApplicationPayload] = data.get("application")
         self.activity: Optional[MessageActivityPayload] = data.get("activity")
         self.channel: MessageableChannel = channel
-        self._edited_timestamp: Optional[datetime.datetime] = utils.parse_time(
+        self._edited_timestamp: Optional[datetime.datetime] = parse_time(
             data["edited_timestamp"]
         )
         self.type: MessageType = try_enum(MessageType, data["type"])
@@ -831,7 +830,7 @@ class Message(Hashable):
             self.guild = channel.guild  # type: ignore
         except AttributeError:
             if getattr(channel, "type", None) not in (ChannelType.group, ChannelType.private):
-                self.guild = state._get_guild(utils._get_as_snowflake(data, "guild_id"))
+                self.guild = state._get_guild(_get_as_snowflake(data, "guild_id"))
             else:
                 self.guild = None
 
@@ -891,7 +890,7 @@ class Message(Hashable):
 
     def _add_reaction(self, data, emoji: Emoji | PartialEmoji | str, user_id) -> Reaction:
         finder: Callable[[Reaction], bool] = lambda r: r.emoji == emoji
-        reaction = utils.find(finder, self.reactions)
+        reaction = find(finder, self.reactions)
         is_me = data["me"] = user_id == self._state.self_id
 
         if reaction is None:
@@ -907,7 +906,7 @@ class Message(Hashable):
     def _remove_reaction(
         self, data: ReactionPayload, emoji: EmojiInputType, user_id: int
     ) -> Reaction:
-        reaction = utils.find(lambda r: r.emoji == emoji, self.reactions)
+        reaction = find(lambda r: r.emoji == emoji, self.reactions)
 
         if reaction is None:
             # already removed?
@@ -958,7 +957,7 @@ class Message(Hashable):
                 pass
 
     def _handle_edited_timestamp(self, value: str) -> None:
-        self._edited_timestamp = utils.parse_time(value)
+        self._edited_timestamp = parse_time(value)
 
     def _handle_pinned(self, value: bool) -> None:
         self.pinned = value
@@ -1053,7 +1052,7 @@ class Message(Hashable):
         self.guild = new_guild
         self.channel = new_channel
 
-    @utils.cached_slot_property("_cs_raw_mentions")
+    @cached_slot_property("_cs_raw_mentions")
     def raw_mentions(self) -> List[int]:
         """List[:class:`int`]: A property that returns an array of user IDs matched with
         the syntax of ``<@user_id>`` in the message content.
@@ -1061,30 +1060,30 @@ class Message(Hashable):
         This allows you to receive the user IDs of mentioned users
         even in a private message context.
         """
-        return utils.parse_raw_mentions(self.content)
+        return parse_raw_mentions(self.content)
 
-    @utils.cached_slot_property("_cs_raw_channel_mentions")
+    @cached_slot_property("_cs_raw_channel_mentions")
     def raw_channel_mentions(self) -> List[int]:
         """List[:class:`int`]: A property that returns an array of channel IDs matched with
         the syntax of ``<#channel_id>`` in the message content.
         """
-        return utils.parse_raw_channel_mentions(self.content)
+        return parse_raw_channel_mentions(self.content)
 
-    @utils.cached_slot_property("_cs_raw_role_mentions")
+    @cached_slot_property("_cs_raw_role_mentions")
     def raw_role_mentions(self) -> List[int]:
         """List[:class:`int`]: A property that returns an array of role IDs matched with
         the syntax of ``<@&role_id>`` in the message content.
         """
-        return utils.parse_raw_role_mentions(self.content)
+        return parse_raw_role_mentions(self.content)
 
-    @utils.cached_slot_property("_cs_channel_mentions")
+    @cached_slot_property("_cs_channel_mentions")
     def channel_mentions(self) -> List[GuildChannel]:
         if self.guild is None:
             return []
         it = filter(None, map(self.guild.get_channel, self.raw_channel_mentions))
-        return utils._unique(it)
+        return _unique(it)
 
-    @utils.cached_slot_property("_cs_clean_content")
+    @cached_slot_property("_cs_clean_content")
     def clean_content(self) -> str:
         """:class:`str`: A property that returns the content in a "cleaned up"
         manner. This basically means that mentions are transformed
@@ -1097,7 +1096,7 @@ class Message(Hashable):
         .. note::
 
             This *does not* affect markdown. If you want to escape
-            or remove markdown then use :func:`utils.escape_markdown` or :func:`utils.remove_markdown`
+            or remove markdown then use :func:`escape_markdown` or :func:`remove_markdown`
             respectively, along with this function.
         """
 
@@ -1140,7 +1139,7 @@ class Message(Hashable):
     @property
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: The message's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return snowflake_time(self.id)
 
     @property
     def edited_at(self) -> Optional[datetime.datetime]:
@@ -1177,7 +1176,7 @@ class Message(Hashable):
             MessageType.thread_starter_message,
         )
 
-    @utils.cached_slot_property("_cs_system_content")
+    @cached_slot_property("_cs_system_content")
     def system_content(self):
         r""":class:`str`: A property that returns the content that is rendered
         regardless of the :attr:`Message.type`.
@@ -1924,9 +1923,9 @@ class PartialMessage(Hashable):
     @property
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: The partial message's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return snowflake_time(self.id)
 
-    @utils.cached_slot_property("_cs_guild")
+    @cached_slot_property("_cs_guild")
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild that the partial message belongs to, if applicable."""
         return getattr(self.channel, "guild", None)

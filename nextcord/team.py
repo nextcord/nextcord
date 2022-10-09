@@ -26,10 +26,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from . import utils
 from .asset import Asset
 from .enums import TeamMembershipState, try_enum
 from .user import BaseUser
+from .utils import _get_as_snowflake, get
 
 if TYPE_CHECKING:
     from .state import ConnectionState
@@ -66,7 +66,7 @@ class Team:
         self.id: int = int(data["id"])
         self.name: str = data["name"]
         self._icon: Optional[str] = data["icon"]
-        self.owner_id: Optional[int] = utils._get_as_snowflake(data, "owner_user_id")
+        self.owner_id: Optional[int] = _get_as_snowflake(data, "owner_user_id")
         self.members: List[TeamMember] = [
             TeamMember(self, self._state, member) for member in data["members"]
         ]
@@ -84,7 +84,7 @@ class Team:
     @property
     def owner(self) -> Optional[TeamMember]:
         """Optional[:class:`TeamMember`]: The team's owner."""
-        return utils.get(self.members, id=self.owner_id)
+        return get(self.members, id=self.owner_id)
 
 
 class TeamMember(BaseUser):

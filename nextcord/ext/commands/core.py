@@ -46,6 +46,7 @@ from typing import (
 )
 
 import nextcord
+from nextcord.utils import MISSING, maybe_coroutine, get, evaluate_annotation
 
 from ._types import _BaseCommand
 from .cog import Cog
@@ -89,8 +90,6 @@ __all__ = (
     "bot_has_guild_permissions",
 )
 
-MISSING: Any = nextcord.utils.MISSING
-
 T = TypeVar("T")
 CogT = TypeVar("CogT", bound="Cog")
 CommandT = TypeVar("CommandT", bound="Command")
@@ -123,7 +122,7 @@ def get_signature_parameters(
     signature = inspect.signature(function)
     params = {}
     cache: Dict[str, Any] = {}
-    eval_annotation = nextcord.utils.evaluate_annotation
+    eval_annotation = evaluate_annotation
     for name, parameter in signature.parameters.items():
         annotation = parameter.annotation
         if annotation is parameter.empty:
@@ -1175,7 +1174,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             if cog is not None:
                 local_check = Cog._get_overridden_method(cog.cog_check)
                 if local_check is not None:
-                    ret = await nextcord.utils.maybe_coroutine(local_check, ctx)
+                    ret = await maybe_coroutine(local_check, ctx)
                     if not ret:
                         return False
 
@@ -1184,7 +1183,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 # since we have no checks, then we just return True.
                 return True
 
-            return await nextcord.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+            return await async_all(predicate(ctx) for predicate in predicates)  # type: ignore
         finally:
             ctx.command = original
 
@@ -1920,9 +1919,9 @@ def has_role(item: Union[int, str]) -> Callable[[T], T]:
 
         # ctx.guild is None doesn't narrow ctx.author to Member
         if isinstance(item, int):
-            role = nextcord.utils.get(ctx.author.roles, id=item)  # type: ignore
+            role = get(ctx.author.roles, id=item)  # type: ignore
         else:
-            role = nextcord.utils.get(ctx.author.roles, name=item)  # type: ignore
+            role = get(ctx.author.roles, name=item)  # type: ignore
         if role is None:
             raise MissingRole(item)
         return True
@@ -1967,7 +1966,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
             raise NoPrivateMessage()
 
         # ctx.guild is None doesn't narrow ctx.author to Member
-        getter = functools.partial(nextcord.utils.get, ctx.author.roles)
+        getter = functools.partial(get, ctx.author.roles)
         if any(
             getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None
             for item in items
@@ -1998,9 +1997,9 @@ def bot_has_role(item: int) -> Callable[[T], T]:
 
         me = ctx.me
         if isinstance(item, int):
-            role = nextcord.utils.get(me.roles, id=item)
+            role = get(me.roles, id=item)
         else:
-            role = nextcord.utils.get(me.roles, name=item)
+            role = get(me.roles, name=item)
         if role is None:
             raise BotMissingRole(item)
         return True
@@ -2027,7 +2026,7 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
             raise NoPrivateMessage()
 
         me = ctx.me
-        getter = functools.partial(nextcord.utils.get, me.roles)
+        getter = functools.partial(get, me.roles)
         if any(
             getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None
             for item in items

@@ -30,9 +30,9 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Tuple, Union
 
 import yarl
 
-from . import utils
 from .errors import DiscordException, InvalidArgument
 from .file import File
+from .utils import MISSING, valid_icon_size
 
 __all__ = ("Asset",)
 
@@ -42,9 +42,6 @@ if TYPE_CHECKING:
 
 VALID_STATIC_FORMATS = frozenset({"jpeg", "jpg", "webp", "png"})
 VALID_ASSET_FORMATS = VALID_STATIC_FORMATS | {"gif"}
-
-
-MISSING = utils.MISSING
 
 
 class AssetMixin:
@@ -405,7 +402,7 @@ class Asset(AssetMixin):
             url = url.with_path(f"{path}.{static_format}")
 
         if size is not MISSING:
-            if not utils.valid_icon_size(size):
+            if not valid_icon_size(size):
                 raise InvalidArgument("size must be a power of 2 between 16 and 4096")
             url = url.with_query(size=size)
         else:
@@ -432,7 +429,7 @@ class Asset(AssetMixin):
         :class:`Asset`
             The new updated asset.
         """
-        if not utils.valid_icon_size(size):
+        if not valid_icon_size(size):
             raise InvalidArgument("size must be a power of 2 between 16 and 4096")
 
         url = str(yarl.URL(self._url).with_query(size=size))

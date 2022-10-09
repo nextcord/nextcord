@@ -27,9 +27,9 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type, TypeVar, Union
 
-from . import utils
 from .asset import Asset, AssetMixin
 from .errors import InvalidArgument
+from .utils import _get_as_snowflake, snowflake_time
 
 __all__ = ("PartialEmoji",)
 
@@ -109,7 +109,7 @@ class PartialEmoji(_EmojiTag, AssetMixin):
     def from_dict(cls: Type[PE], data: Union[PartialEmojiPayload, Dict[str, Any]]) -> PE:
         return cls(
             animated=data.get("animated", False),
-            id=utils._get_as_snowflake(data, "id"),
+            id=_get_as_snowflake(data, "id"),
             name=data.get("name") or "",
         )
 
@@ -220,7 +220,7 @@ class PartialEmoji(_EmojiTag, AssetMixin):
         if self.id is None:
             return None
 
-        return utils.snowflake_time(self.id)
+        return snowflake_time(self.id)
 
     @property
     def url(self) -> str:

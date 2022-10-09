@@ -55,6 +55,7 @@ from typing import (
 )
 
 import nextcord
+from nextcord.utils import MISSING, copy_doc, maybe_coroutine, async_all, find
 
 from . import errors
 from .cog import Cog
@@ -84,8 +85,6 @@ __all__ = (
     "AutoShardedBot",
     "MissingMessageContentIntentWarning",
 )
-
-MISSING: Any = nextcord.utils.MISSING
 
 T = TypeVar("T")
 CFT = TypeVar("CFT", bound="CoroFunc")
@@ -244,7 +243,7 @@ class BotBase(GroupMixin):
         for event in self.extra_events.get(ev, []):
             self._schedule_event(event, ev, *args, **kwargs)  # type: ignore
 
-    @nextcord.utils.copy_doc(nextcord.Client.close)
+    @copy_doc(nextcord.Client.close)
     async def close(self) -> None:
         for extension in tuple(self.__extensions):
             try:
@@ -403,7 +402,7 @@ class BotBase(GroupMixin):
             return True
 
         # type-checker doesn't distinguish between functions and methods
-        return await nextcord.utils.async_all(f(ctx) for f in data)  # type: ignore
+        return await async_all(f(ctx) for f in data)  # type: ignore
 
     async def is_owner(self, user: nextcord.User) -> bool:
         """|coro|
@@ -1263,7 +1262,7 @@ class BotBase(GroupMixin):
         """
         prefix = self.command_prefix
         if callable(prefix):
-            ret = await nextcord.utils.maybe_coroutine(prefix, self, message)  # type: ignore
+            ret = await maybe_coroutine(prefix, self, message)  # type: ignore
             # the callable wants an (AutoSharded)Bot but this is BotBase
         else:
             ret = prefix
@@ -1332,7 +1331,7 @@ class BotBase(GroupMixin):
                 # if the context class' __init__ consumes something from the view this
                 # will be wrong.  That seems unreasonable though.
                 if message.content.startswith(tuple(prefix)):
-                    invoked_prefix = nextcord.utils.find(view.skip_string, prefix)
+                    invoked_prefix = find(view.skip_string, prefix)
                 else:
                     return ctx
 
