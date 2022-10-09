@@ -53,8 +53,8 @@ from .mentions import AllowedMentions
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
 from .sticker import GuildSticker, StickerItem
-from .voice_client import VoiceClient, VoiceProtocol
 from .utils import MISSING, get, snowflake_time
+from .voice_client import VoiceClient, VoiceProtocol
 
 __all__ = (
     "Snowflake",
