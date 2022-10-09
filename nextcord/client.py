@@ -2098,8 +2098,8 @@ class Client:
     def get_application_command_from_signature(
         self,
         *,
-        qualified_name: str,
         type: Union[int, ApplicationCommandType],
+        qualified_name: str,
         guild_id: Optional[int],
         search_locales: bool = ...,
     ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
