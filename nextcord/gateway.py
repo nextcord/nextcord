@@ -399,7 +399,7 @@ class DiscordWebSocket:
         return ws
 
     def wait_for(
-        self, event: str, predicate: Callable, result: Optional[Callable] = None
+        self, event: str, predicate: Callable, result: Optional[Callable[Any], Any] = None
     ) -> asyncio.Future:
         """Waits for a DISPATCH'd event that meets the predicate.
 
@@ -609,7 +609,7 @@ class DiscordWebSocket:
         code = self._close_code or self.socket.close_code
         return code not in (1000, 4004, 4010, 4011, 4012, 4013, 4014)
 
-    async def poll_event(self) -> Union[None, NoReturn]:
+    async def poll_event(self) -> None:
         """Polls for a DISPATCH event and handles the general gateway loop.
 
         Raises
@@ -681,7 +681,7 @@ class DiscordWebSocket:
         activity: Optional[BaseActivity] = None,
         status: Optional[str] = None,
         since: float = 0.0,
-    ):
+    ) -> None:
         if activity is not None:
             if not isinstance(activity, BaseActivity):
                 raise InvalidArgument("activity must derive from BaseActivity.")
@@ -822,7 +822,7 @@ class DiscordVoiceWebSocket:
             hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
         )
 
-    async def _default_hook(self, *args) -> None:
+    async def _default_hook(self, *args: Any) -> None:
         ...
 
     async def send_as_json(self, data: Any) -> None:
@@ -972,7 +972,7 @@ class DiscordVoiceWebSocket:
         await self.speak()
         await self.speak(SpeakingState.none)
 
-    async def poll_event(self) -> Union[None, NoReturn]:
+    async def poll_event(self) -> None:
         # This exception is handled up the chain
         msg = await asyncio.wait_for(self.ws.receive(), timeout=30.0)
         if msg.type is aiohttp.WSMsgType.TEXT:
