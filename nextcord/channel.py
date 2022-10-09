@@ -1003,7 +1003,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-        default_sort_order: Optional[SortOrderTypeư = ...,
+        default_sort_order: Optional[SortOrderType] = ...,
     ) -> ForumChannel:
         ...
 
