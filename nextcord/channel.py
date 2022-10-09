@@ -49,7 +49,7 @@ from . import abc, ui, utils
 from .asset import Asset
 from .enums import (
     ChannelType,
-    SortOrderTypes,
+    SortOrderType,
     StagePrivacyLevel,
     VideoQualityMode,
     VoiceRegion,
@@ -883,7 +883,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         The archive duration which threads from this channel inherit by default.
     last_message_id: :class:`int`
         The snowflake ID of the message starting the last thread in this channel.
-    default_sort_order: :class:`SortOrderTypes`
+    default_sort_order: :class:`SortOrderType`
         The default sort order type used to sort posts in forum channels.
     """
 
@@ -926,9 +926,9 @@ class ForumChannel(abc.GuildChannel, Hashable):
         )
         self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
         if sort_order := data.get("default_sort_order"):
-            self.default_sort_order: Optional[SortOrderTypes] = try_enum(SortOrderTypes, sort_order)
+            self.default_sort_order: Optional[SortOrderType] = try_enum(SortOrderType, sort_order)
         else:
-            self.default_sort_order: Optional[SortOrderTypes] = None
+            self.default_sort_order: Optional[SortOrderType] = None
 
         self._fill_overwrites(data)
 
@@ -1003,7 +1003,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-        default_sort_order: int = ...,
+        default_sort_order: Optional[SortOrderTypeư = ...,
     ) -> ForumChannel:
         ...
 
@@ -1046,7 +1046,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         default_auto_archive_duration: :class:`int`
             The new default auto archive duration in minutes for threads created in this channel.
             Must be one of ``60``, ``1440``, ``4320``, or ``10080``.
-        default_sort_order: :class:`SortOrderTypes`
+        default_sort_order: :class:`SortOrderType`
             The default sort order type used to sort posts in forum channels.
 
         Raises

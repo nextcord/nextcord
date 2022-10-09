@@ -716,7 +716,7 @@ class AutoModerationActionType(IntEnum):
     timeout = 3
 
 
-class SortOrderTypes(IntEnum):
+class SortOrderType(IntEnum):
     latest_activity = 0
     creation_date = 1
 
