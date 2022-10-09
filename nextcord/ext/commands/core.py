@@ -46,7 +46,7 @@ from typing import (
 )
 
 import nextcord
-from nextcord.utils import MISSING, maybe_coroutine, get, evaluate_annotation
+from nextcord.utils import MISSING, evaluate_annotation, get, maybe_coroutine
 
 from ._types import _BaseCommand
 from .cog import Cog

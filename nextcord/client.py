@@ -86,7 +86,15 @@ from .types.interactions import ApplicationCommandInteractionData
 from .ui.modal import Modal
 from .ui.view import View
 from .user import ClientUser, User
-from .utils import MISSING, SequenceProxy, resolve_template, _obj_to_base64_data, resolve_invite, parse_raw_mentions, _unique
+from .utils import (
+    MISSING,
+    SequenceProxy,
+    _obj_to_base64_data,
+    _unique,
+    parse_raw_mentions,
+    resolve_invite,
+    resolve_template,
+)
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget

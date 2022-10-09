@@ -36,7 +36,7 @@ import aiohttp
 
 import nextcord
 from nextcord.backoff import ExponentialBackoff
-from nextcord.utils import MISSING, utcnow, compute_timedelta
+from nextcord.utils import MISSING, compute_timedelta, utcnow
 
 __all__ = ("loop",)
 

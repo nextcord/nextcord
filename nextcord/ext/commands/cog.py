@@ -39,9 +39,9 @@ from typing import (
     TypeVar,
 )
 
-from nextcord.utils import MISSING
 from nextcord.application_command import ClientCog, _cog_special_method
 from nextcord.interactions import Interaction
+from nextcord.utils import MISSING
 
 from ._types import _BaseCommand
 

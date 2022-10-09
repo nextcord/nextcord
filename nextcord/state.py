@@ -74,7 +74,7 @@ from .threads import Thread, ThreadMember
 from .ui.modal import Modal, ModalStore
 from .ui.view import View, ViewStore
 from .user import ClientUser, User
-from .utils import MISSING, find, _get_as_snowflake, parse_time, sane_wait_for
+from .utils import MISSING, _get_as_snowflake, find, parse_time, sane_wait_for
 
 if TYPE_CHECKING:
     from asyncio import Future
@@ -510,11 +510,7 @@ class ConnectionState:
                 self._private_channels_by_user.pop(recipient.id, None)
 
     def _get_message(self, msg_id: Optional[int]) -> Optional[Message]:
-        return (
-            find(lambda m: m.id == msg_id, reversed(self._messages))
-            if self._messages
-            else None
-        )
+        return find(lambda m: m.id == msg_id, reversed(self._messages)) if self._messages else None
 
     def _add_guild_from_data(self, data: GuildPayload) -> Guild:
         guild = Guild(data=data, state=self)
@@ -1510,9 +1506,7 @@ class ConnectionState:
             )
             return
 
-        last_pin = (
-            parse_time(data["last_pin_timestamp"]) if data["last_pin_timestamp"] else None
-        )
+        last_pin = parse_time(data["last_pin_timestamp"]) if data["last_pin_timestamp"] else None
 
         if guild is None:
             self.dispatch("private_channel_pins_update", channel, last_pin)
@@ -2365,9 +2359,7 @@ class AutoShardedConnectionState(ConnectionState):
                     )
                     if len(current_bucket) >= max_concurrency:
                         try:
-                            await sane_wait_for(
-                                current_bucket, timeout=max_concurrency * 70.0
-                            )
+                            await sane_wait_for(current_bucket, timeout=max_concurrency * 70.0)
                         except asyncio.TimeoutError:
                             fmt = "Shard ID %s failed to wait for chunks from a sub-bucket with length %d"
                             _log.warning(fmt, guild.shard_id, len(current_bucket))

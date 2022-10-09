@@ -28,8 +28,8 @@ import datetime
 import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, Type, TypeVar, Union
 
-from .utils import parse_time
 from .colour import Colour
+from .utils import parse_time
 
 __all__ = ("Embed",)
 
