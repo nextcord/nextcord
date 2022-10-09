@@ -40,7 +40,7 @@ from typing import (
     Union,
 )
 
-from . import enums, utils
+from . import enums
 from .asset import Asset
 from .auto_moderation import AutoModerationAction, AutoModerationTriggerMetadata
 from .colour import Colour
@@ -48,6 +48,7 @@ from .invite import Invite
 from .mixins import Hashable
 from .object import Object
 from .permissions import PermissionOverwrite, Permissions
+from .utils import _get_as_snowflake, cached_property, snowflake_time
 
 __all__ = (
     "AuditLogDiff",
@@ -555,8 +556,8 @@ class AuditLogEntry(Hashable):
         # into meaningful data when requested
         self._changes = data.get("changes", [])
 
-        self.user = self._get_member(utils._get_as_snowflake(data, "user_id"))  # type: ignore
-        self._target_id = utils._get_as_snowflake(data, "target_id")
+        self.user = self._get_member(_get_as_snowflake(data, "user_id"))  # type: ignore
+        self._target_id = _get_as_snowflake(data, "target_id")
 
     def _get_member(self, user_id: int) -> Union[Member, User, None]:
         return self.guild.get_member(user_id) or self._users.get(user_id)
@@ -564,12 +565,12 @@ class AuditLogEntry(Hashable):
     def __repr__(self) -> str:
         return f"<AuditLogEntry id={self.id} action={self.action} user={self.user!r}>"
 
-    @utils.cached_property
+    @cached_property
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: Returns the entry's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return snowflake_time(self.id)
 
-    @utils.cached_property
+    @cached_property
     def target(self) -> AuditTarget:
         try:
             converter = getattr(self, "_convert_target_" + str(self.action.target_type))
@@ -581,24 +582,24 @@ class AuditLogEntry(Hashable):
         else:
             return converter(self._target_id)
 
-    @utils.cached_property
+    @cached_property
     def category(self) -> Optional[enums.AuditLogActionCategory]:
         """Optional[:class:`AuditLogActionCategory`]: The category of the action, if applicable."""
         return self.action.category
 
-    @utils.cached_property
+    @cached_property
     def changes(self) -> AuditLogChanges:
         """:class:`AuditLogChanges`: The list of changes this entry has."""
         obj = AuditLogChanges(self, self._changes)
         del self._changes
         return obj
 
-    @utils.cached_property
+    @cached_property
     def before(self) -> AuditLogDiff:
         """:class:`AuditLogDiff`: The target's prior state."""
         return self.changes.before
 
-    @utils.cached_property
+    @cached_property
     def after(self) -> AuditLogDiff:
         """:class:`AuditLogDiff`: The target's subsequent state."""
         return self.changes.after

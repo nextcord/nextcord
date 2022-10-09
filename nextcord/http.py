@@ -51,7 +51,7 @@ from urllib.parse import quote as _uriquote
 
 import aiohttp
 
-from . import __version__, utils
+from . import __version__
 from .errors import (
     DiscordServerError,
     Forbidden,
@@ -63,7 +63,7 @@ from .errors import (
 )
 from .file import File
 from .gateway import DiscordClientWebSocketResponse
-from .utils import MISSING
+from .utils import MISSING, _from_json, _to_json, _parse_ratelimit_header, _get_mime_type_for_image
 
 _log = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
     text = await response.text(encoding="utf-8")
     try:
         if response.headers["content-type"] == "application/json":
-            return utils._from_json(text)
+            return _from_json(text)
     except KeyError:
         # Thanks Cloudflare
         pass
@@ -279,7 +279,7 @@ class HTTPClient:
         # some checking if it's a JSON request
         if "json" in kwargs:
             headers["Content-Type"] = "application/json"
-            kwargs["data"] = utils._to_json(kwargs.pop("json"))
+            kwargs["data"] = _to_json(kwargs.pop("json"))
 
         try:
             reason = kwargs.pop("reason")
@@ -333,7 +333,7 @@ class HTTPClient:
                         remaining = response.headers.get("X-Ratelimit-Remaining")
                         if remaining == "0" and response.status != 429:
                             # we've depleted our current bucket
-                            delta = utils._parse_ratelimit_header(
+                            delta = _parse_ratelimit_header(
                                 response, use_clock=self.use_clock
                             )
                             _log.debug(
@@ -605,7 +605,7 @@ class HTTPClient:
                     "content_type": "application/octet-stream",
                 }
             )
-        form.append({"name": "payload_json", "value": utils._to_json(payload)})
+        form.append({"name": "payload_json", "value": _to_json(payload)})
 
         return form
 
@@ -1550,7 +1550,7 @@ class HTTPClient:
         initial_bytes = file.fp.read(16)
 
         try:
-            mime_type = utils._get_mime_type_for_image(initial_bytes)
+            mime_type = _get_mime_type_for_image(initial_bytes)
         except InvalidArgument:
             if initial_bytes.startswith(b"{"):
                 mime_type = "application/json"
@@ -2163,7 +2163,7 @@ class HTTPClient:
         form: List[Dict[str, Any]] = [
             {
                 "name": "payload_json",
-                "value": utils._to_json(payload),
+                "value": _to_json(payload),
             }
         ]
 
