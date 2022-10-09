@@ -55,7 +55,7 @@ from typing import (
 )
 
 import nextcord
-from nextcord.utils import MISSING, copy_doc, maybe_coroutine, async_all, find
+from nextcord.utils import MISSING, async_all, copy_doc, find, maybe_coroutine
 
 from . import errors
 from .cog import Cog

@@ -58,7 +58,19 @@ from .partial_emoji import PartialEmoji
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
-from .utils import MISSING, escape_mentions, _get_as_snowflake, snowflake_time, parse_time, find, cached_slot_property, parse_raw_mentions, parse_raw_channel_mentions, parse_raw_role_mentions, _unique
+from .utils import (
+    MISSING,
+    _get_as_snowflake,
+    _unique,
+    cached_slot_property,
+    escape_mentions,
+    find,
+    parse_raw_channel_mentions,
+    parse_raw_mentions,
+    parse_raw_role_mentions,
+    parse_time,
+    snowflake_time,
+)
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
@@ -808,9 +820,7 @@ class Message(Hashable):
         self.application: Optional[MessageApplicationPayload] = data.get("application")
         self.activity: Optional[MessageActivityPayload] = data.get("activity")
         self.channel: MessageableChannel = channel
-        self._edited_timestamp: Optional[datetime.datetime] = parse_time(
-            data["edited_timestamp"]
-        )
+        self._edited_timestamp: Optional[datetime.datetime] = parse_time(data["edited_timestamp"])
         self.type: MessageType = try_enum(MessageType, data["type"])
         self.pinned: bool = data["pinned"]
         self.flags: MessageFlags = MessageFlags._from_value(data.get("flags", 0))

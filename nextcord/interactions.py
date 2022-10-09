@@ -41,7 +41,7 @@ from .mixins import Hashable
 from .object import Object
 from .permissions import Permissions
 from .user import ClientUser, User
-from .utils import snowflake_time, MISSING, _get_as_snowflake, utcnow, cached_slot_property
+from .utils import MISSING, _get_as_snowflake, cached_slot_property, snowflake_time, utcnow
 from .webhook.async_ import Webhook, WebhookMessage, async_context, handle_message_parameters
 
 __all__ = (

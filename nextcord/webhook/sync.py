@@ -54,8 +54,8 @@ from ..channel import PartialMessageable
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
 from ..http import Route
 from ..message import Attachment, Message
+from ..utils import MISSING, _bytes_to_base64_data, _parse_ratelimit_header, _to_json
 from .async_ import BaseWebhook, _WebhookState, handle_message_parameters
-from ..utils import MISSING, _to_json, _parse_ratelimit_header, _bytes_to_base64_data
 
 __all__ = (
     "SyncWebhook",
