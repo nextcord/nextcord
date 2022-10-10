@@ -421,7 +421,9 @@ class ConnectionState:
         self._stickers[sticker_id] = sticker = GuildSticker(state=self, data=data)
         return sticker
 
-    def store_view(self, view: View, message_id: Optional[int] = None, persistent: bool = True) -> None:
+    def store_view(
+        self, view: View, message_id: Optional[int] = None, persistent: bool = True
+    ) -> None:
         if persistent:
             self._view_store.add_view(view, message_id)
         else:

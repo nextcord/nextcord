@@ -1937,13 +1937,13 @@ class Client:
         warnings.warn(
             ".persistent_views is deprecated, use .views instead.",
             stacklevel=2,
-            category=FutureWarning
+            category=FutureWarning,
         )
         return self.views()
 
     def views(self, *, persistent: bool = True) -> Sequence[View]:
         """Returns all persistent or non-persistent views.
-        
+
         Parameters
         ----------
         persistent: :class:`bool`
