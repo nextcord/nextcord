@@ -255,9 +255,9 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :type remaining: :class:`int`
     :param reset_after: The amount of time we have to wait before making another request under the same bucket.
     :type reset_after: :class:`float`
-    :param bucket: The hash correlating to the bucket of the request from Discord.
+    :param bucket: The hash correlating to the bucket of the request from Discord. This hash denotes the rate limit being encountered.
     :type bucket: :class:`str`
-    :param scope: If we get a 429, the scope of the 429 response.
+    :param scope: If we get a 429, the scope of the 429 response. This value can either be "user" (rate limit relating to the user) or "shared" (rate limit relating to a resource).
     :type scope: Optional[:class:`str`]
 
 .. function:: on_global_http_ratelimit(retry_after)
