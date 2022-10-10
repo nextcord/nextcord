@@ -1402,6 +1402,7 @@ class Messageable:
             if not hasattr(view, "__discord_ui_view__"):
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
+            self._state.store_view(view, persistent=False)
             components = view.to_components()
         else:
             components = None

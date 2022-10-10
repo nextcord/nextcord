@@ -325,6 +325,8 @@ class ConnectionState:
         else:
             self._messages: Optional[Deque[Message]] = None
 
+        self._non_persistent_views: List[View] = []
+
     def process_chunk_requests(
         self, guild_id: int, nonce: Optional[str], members: List[Member], complete: bool
     ) -> None:
@@ -419,8 +421,11 @@ class ConnectionState:
         self._stickers[sticker_id] = sticker = GuildSticker(state=self, data=data)
         return sticker
 
-    def store_view(self, view: View, message_id: Optional[int] = None) -> None:
-        self._view_store.add_view(view, message_id)
+    def store_view(self, view: View, message_id: Optional[int] = None, persistent: bool = True) -> None:
+        if persistent:
+            self._view_store.add_view(view, message_id)
+        else:
+            self._non_persistent_views.append(view)
 
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)
@@ -428,9 +433,8 @@ class ConnectionState:
     def prevent_view_updates_for(self, message_id: Optional[int]) -> Optional[View]:
         return self._view_store.remove_message_tracking(message_id)  # type: ignore
 
-    @property
-    def persistent_views(self) -> Sequence[View]:
-        return self._view_store.persistent_views
+    def views(self, persistent: bool = True) -> Sequence[View]:
+        return self._view_store.persistent_views if persistent else self._non_persistent_views
 
     @property
     def guilds(self) -> List[Guild]:

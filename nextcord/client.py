@@ -1934,7 +1934,27 @@ class Client:
 
         .. versionadded:: 2.0
         """
-        return self._connection.persistent_views
+        warnings.warn(
+            ".persistent_views is deprecated, use .views instead.",
+            stacklevel=2,
+            category=FutureWarning
+        )
+        return self.views()
+
+    def views(self, *, persistent: bool = True) -> Sequence[View]:
+        """Returns all persistent or non-persistent views.
+        
+        Parameters
+        ----------
+        persistent: :class:`bool`
+            Whether or not we should grab persistent views. Defaults to ``True``.
+
+        Returns
+        -------
+        Sequence[:class:`ui.View`]
+            The views requested.
+        """
+        return self._connection.views(persistent)
 
     @property
     def scheduled_events(self) -> List[ScheduledEvent]:
