@@ -1049,6 +1049,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         default_sort_order: :class:`SortOrderType`
             The default sort order type used to sort posts in forum channels.
 
+            .. versionadded:: 2.3
+
         Raises
         ------
         InvalidArgument
