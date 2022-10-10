@@ -1478,6 +1478,8 @@ class Guild(Hashable):
         default_sort_order: Optional[:class:`SortOrderType`]
             The default sort order used to sort posts in this channel.
 
+            .. versionadded:: 2.3
+
         Raises
         ------
         Forbidden
