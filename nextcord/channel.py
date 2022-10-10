@@ -885,6 +885,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         The snowflake ID of the message starting the last thread in this channel.
     default_sort_order: :class:`SortOrderType`
         The default sort order type used to sort posts in forum channels.
+
+        .. versionadded:: 2.3
     """
 
     __slots__ = (
