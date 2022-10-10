@@ -2951,6 +2951,8 @@ of :class:`enum.Enum`.
 
 .. class:: SortOrderType
 
+    .. versionadded:: 2.3
+
     The default sort order type used to sort posts in a :class:`ForumChannel`.
 
     .. attribute:: latest_activity
