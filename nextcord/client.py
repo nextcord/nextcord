@@ -356,9 +356,7 @@ class Client:
         self._rollout_all_guilds: bool = rollout_all_guilds
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
 
-        if default_guild_ids is None:
-            default_guild_ids = []
-        self._default_guild_ids = default_guild_ids
+        self._default_guild_ids = default_guild_ids or []
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
