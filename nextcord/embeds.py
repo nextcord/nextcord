@@ -343,7 +343,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_footer", {}))  # type: ignore
 
-    def set_footer(self: E, *, text: Optional[Any] = None, icon_url: Optional[Any] = None) -> E:
+    def set_footer(self: E, text: Optional[Any] = None, *, icon_url: Optional[Any] = None) -> E:
         """Sets the footer for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -501,8 +501,8 @@ class Embed:
 
     def set_author(
         self: E,
-        *,
         name: Any,
+        *,
         url: Optional[Any] = None,
         icon_url: Optional[Any] = None,
     ) -> E:
@@ -558,7 +558,7 @@ class Embed:
         """
         return [EmbedProxy(d) for d in getattr(self, "_fields", [])]  # type: ignore
 
-    def add_field(self: E, *, name: Any, value: Any, inline: bool = True) -> E:
+    def add_field(self: E, name: Any, value: Any, *, inline: bool = True) -> E:
         """Adds a field to the embed object.
 
         This function returns the class instance to allow for fluent-style
@@ -587,7 +587,7 @@ class Embed:
 
         return self
 
-    def insert_field_at(self: E, index: int, *, name: Any, value: Any, inline: bool = True) -> E:
+    def insert_field_at(self: E, index: int, name: Any, value: Any, *, inline: bool = True) -> E:
         """Inserts a field before a specified index to the embed.
 
         This function returns the class instance to allow for fluent-style
@@ -659,7 +659,7 @@ class Embed:
 
         return self
 
-    def set_field_at(self: E, index: int, *, name: Any, value: Any, inline: bool = True) -> E:
+    def set_field_at(self: E, index: int, name: Any, value: Any, *, inline: bool = True) -> E:
         """Modifies a field to the embed object.
 
         The index must point to a valid pre-existing field.
