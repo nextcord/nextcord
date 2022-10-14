@@ -1198,13 +1198,13 @@ class Messageable:
         tts: bool = ...,
         embed: Embed = ...,
         file: File = ...,
-        stickers: Sequence[Union[GuildSticker, StickerItem]] = ...,
-        delete_after: float = ...,
-        nonce: Union[str, int] = ...,
-        allowed_mentions: AllowedMentions = ...,
-        reference: Union[Message, MessageReference, PartialMessage] = ...,
-        mention_author: bool = ...,
-        view: View = ...,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = ...,
+        delete_after: Optional[float] = ...,
+        nonce: Optional[Union[str, int]] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
+        mention_author: Optional[bool] = ...,
+        view: Optional[View] = ...,
     ) -> Message:
         ...
 
@@ -1216,13 +1216,13 @@ class Messageable:
         tts: bool = ...,
         embed: Embed = ...,
         files: List[File] = ...,
-        stickers: Sequence[Union[GuildSticker, StickerItem]] = ...,
-        delete_after: float = ...,
-        nonce: Union[str, int] = ...,
-        allowed_mentions: AllowedMentions = ...,
-        reference: Union[Message, MessageReference, PartialMessage] = ...,
-        mention_author: bool = ...,
-        view: View = ...,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = ...,
+        delete_after: Optional[float] = ...,
+        nonce: Optional[Union[str, int]] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
+        mention_author: Optional[bool] = ...,
+        view: Optional[View] = ...,
     ) -> Message:
         ...
 
@@ -1234,13 +1234,13 @@ class Messageable:
         tts: bool = ...,
         embeds: List[Embed] = ...,
         file: File = ...,
-        stickers: Sequence[Union[GuildSticker, StickerItem]] = ...,
-        delete_after: float = ...,
-        nonce: Union[str, int] = ...,
-        allowed_mentions: AllowedMentions = ...,
-        reference: Union[Message, MessageReference, PartialMessage] = ...,
-        mention_author: bool = ...,
-        view: View = ...,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = ...,
+        delete_after: Optional[float] = ...,
+        nonce: Optional[Union[str, int]] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
+        mention_author: Optional[bool] = ...,
+        view: Optional[View] = ...,
     ) -> Message:
         ...
 
@@ -1252,13 +1252,13 @@ class Messageable:
         tts: bool = ...,
         embeds: List[Embed] = ...,
         files: List[File] = ...,
-        stickers: Sequence[Union[GuildSticker, StickerItem]] = ...,
-        delete_after: float = ...,
-        nonce: Union[str, int] = ...,
-        allowed_mentions: AllowedMentions = ...,
-        reference: Union[Message, MessageReference, PartialMessage] = ...,
-        mention_author: bool = ...,
-        view: View = ...,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = ...,
+        delete_after: Optional[float] = ...,
+        nonce: Optional[Union[str, int]] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
+        mention_author: Optional[bool] = ...,
+        view: Optional[View] = ...,
     ) -> Message:
         ...
 
