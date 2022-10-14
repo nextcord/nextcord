@@ -38,6 +38,8 @@ from ..item import Item, ItemCallbackType
 __all__ = (
     "Select",
     "select",
+    "StringSelect",
+    "string_select",
 )
 
 if TYPE_CHECKING:
@@ -348,3 +350,6 @@ def select(
         return func
 
     return decorator
+
+StringSelect = Select
+string_select = select
