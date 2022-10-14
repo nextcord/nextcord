@@ -258,7 +258,9 @@ class SelectMenu(Component):
             SelectOption.from_dict(option) for option in data.get("options", [])
         ]
         self.disabled: bool = data.get("disabled", False)
-        self.channel_types: List[ChannelType] = [ChannelType(t) for t in data.get("channel_types", [])]
+        self.channel_types: List[ChannelType] = [
+            ChannelType(t) for t in data.get("channel_types", [])
+        ]
 
     def to_dict(self) -> SelectMenuPayload:
         payload: SelectMenuPayload = {
