@@ -70,7 +70,7 @@ class SelectOption(_SelectOptionsOptional):
 
 
 class SelectMenu(_SelectMenuOptional):
-    type: Literal[3]
+    type: Literal[3, 5, 6, 7, 8]
     custom_id: str
 
 
