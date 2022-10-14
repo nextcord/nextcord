@@ -31,6 +31,7 @@ from .partial_emoji import PartialEmoji, _EmojiTag
 from .utils import MISSING, get_slots
 
 if TYPE_CHECKING:
+    from .channel import ChannelType
     from .emoji import Emoji
     from .types.components import (
         ActionRow as ActionRowPayload,
@@ -257,6 +258,7 @@ class SelectMenu(Component):
             SelectOption.from_dict(option) for option in data.get("options", [])
         ]
         self.disabled: bool = data.get("disabled", False)
+        self.channel_types: List[ChannelType] = [ChannelType(t) for t in data.get("channel_types", [])]
 
     def to_dict(self) -> SelectMenuPayload:
         payload: SelectMenuPayload = {
