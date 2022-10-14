@@ -28,12 +28,12 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar, Union
 
-from ..components import SelectMenu, SelectOption
-from ..emoji import Emoji
-from ..enums import ComponentType
-from ..partial_emoji import PartialEmoji
-from ..utils import MISSING
-from .item import Item, ItemCallbackType
+from ...components import SelectMenu, SelectOption
+from ...emoji import Emoji
+from ...enums import ComponentType
+from ...partial_emoji import PartialEmoji
+from ...utils import MISSING
+from ..item import Item, ItemCallbackType
 
 __all__ = (
     "Select",
@@ -41,9 +41,9 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from ..types.components import SelectMenu as SelectMenuPayload
-    from ..types.interactions import ComponentInteractionData
-    from .view import View
+    from ...types.components import SelectMenu as SelectMenuPayload
+    from ...types.interactions import ComponentInteractionData
+    from ..view import View
 
 S = TypeVar("S", bound="Select")
 V = TypeVar("V", bound="View", covariant=True)

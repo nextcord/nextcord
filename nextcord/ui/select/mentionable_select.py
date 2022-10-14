@@ -27,29 +27,30 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import TYPE_CHECKING, Callable, List, Optional
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
-from ..components import SelectMenu, SelectOption
-from ..enums import ComponentType
-from ..utils import MISSING
-from .item import Item, ItemCallbackType
-from .select import Select
+from ...components import SelectMenu, SelectOption
+from ...enums import ComponentType
+from ...utils import MISSING
+from ..item import Item, ItemCallbackType
+from .string_select import Select
 
 if TYPE_CHECKING:
-    from ..guild import Guild
-    from ..role import Role
+    from ...guild import Guild
+    from ...member import Member
+    from ...role import Role
 
-__all__ = ("RoleSelect", "role_select")
+__all__ = ("MentionableSelect", "mentionable_select")
 
 
-class RoleSelect(Select):
+class MentionableSelect(Select):
 
-    """Represents a UI role select menu.
+    """Represents a UI mentionable select menu.
 
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`Select.values`., :meth:`Select.get_roles` or :meth:`Select.fetch_roles`.
+    use :attr:`Select.values`., :meth:`Select.get_mentionables` or :meth:`Select.fetch_mentionables`.
 
     .. versionadded:: 2.0
 
@@ -92,7 +93,7 @@ class RoleSelect(Select):
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = SelectMenu._raw_construct(
             custom_id=custom_id,
-            type=ComponentType.role_select,
+            type=ComponentType.mentionable_select,
             placeholder=placeholder,
             min_values=min_values,
             max_values=max_values,
@@ -103,66 +104,78 @@ class RoleSelect(Select):
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since role selects cannot have any options."""
+        This will always be an empty list since mentionable selects cannot have any options."""
         return []
 
     @property
     def values(self) -> List[int]:
-        """List[:class:`int`]: A list of role ids that have been selected by the user."""
+        """List[:class:`int`]: A list of mentionable ids that have been selected by the user."""
         return [int(id) for id in self._selected_values]
 
-    def get_roles(self, guild: Guild) -> List[Role]:
-        """A shortcut for getting all :class:`nextcord.Role`'s of :attr:`.values`.
-        Roles that are not found in cache will not be returned.
-        To get all roles regardless of whether they are in cache or not, use :meth:`.fetch_roles`.
+    def get_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
+        """A shortcut for getting all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
+        Mentionables that are not found in cache will not be returned.
+        To get all mentionables regardless of whether they are in cache or not, use :meth:`.fetch_mentionables`.
 
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
-            The guild to get the roles from.
+            The guild to get the mentionables from.
 
         Returns
         -------
-        List[:class:`nextcord.Role`]
-            A list of roles that were found."""
-        roles: List[Role] = []
+        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
+            A list of mentionables that have been selected by the user.
+        """
+        mentionables: List[Union[Member, Role]] = []
         for id in self.values:
-            member = guild.get_role(id)
-            if member is not None:
-                roles.append(member)
-        return roles
+            mentionable = guild.get_member(id) or guild.get_role(id)
+            if mentionable:
+                mentionables.append(mentionable)
+        return mentionables
 
-    async def fetch_roles(self, guild: Guild) -> List[Role]:
-        """A shortcut for fetching all :class:`nextcord.Role`'s of :attr:`.values`.
-        Roles that are not found in cache will be fetched.
+    async def fetch_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
+        """A shortcut for fetching all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
+        Mentionables that are not found in cache will be fetched.
 
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
-            The guild to fetch the roles from.
+            The guild to get the mentionables from.
 
         Raises
         ------
         :exc:`.HTTPException`
-            Retrieving the roles failed.
+            Fetching the mentionables failed.
+        :exc:`.Forbidden`
+            You do not have the proper permissions to fetch the mentionables.
 
         Returns
         -------
-        List[:class:`nextcord.Role`]
-            A list of all roles that have been selected."""
-        roles: List[Role] = self.get_roles(guild)
-        if len(roles) == len(self.values):
-            return roles
-        guild_roles: List[Role] = await guild.fetch_roles()
+        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
+            A list of mentionables that have been selected by the user.
+        """
+        mentionables = self.get_mentionables(guild)
+        if len(mentionables) == len(self.values):
+            return mentionables
+        mentionables: List[Union[Member, Role]] = []
+        guild_roles = None
         for id in self.values:
-            for role in guild_roles:
-                if role.id == id:
-                    roles.append(role)
-                    break
-        return roles
+            mentionable = guild.get_member(id) or guild.get_role(id)
+            if not mentionable:
+                if not guild_roles:
+                    guild_roles = await guild.fetch_roles()
+                for role in guild_roles:
+                    if role.id == id:
+                        mentionable = role
+                        break
+                if not mentionable:
+                    mentionable = await guild.fetch_member(id)
+            mentionables.append(mentionable)
+        return mentionables
 
 
-def role_select(
+def mentionable_select(
     *,
     placeholder: Optional[str] = None,
     custom_id: str = MISSING,
@@ -171,14 +184,14 @@ def role_select(
     disabled: bool = False,
     row: Optional[int] = None,
 ) -> Callable[[ItemCallbackType], ItemCallbackType]:
-    """A decorator that attaches a role select menu to a component.
+    """A decorator that attaches a mentionable select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.RoleSelect` being pressed and
+    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.MentionableSelect` being pressed and
     the :class:`nextcord.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`Select.values`., :attr:`Select.get_roles` or :attr:`Select.fetch_roles`.
+    use :attr:`Select.values`., :attr:`Select.get_mentionables` or :attr:`Select.fetch_mentionables`.
 
     Parameters
     ------------
@@ -207,7 +220,7 @@ def role_select(
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
-        func.__discord_ui_model_type__ = RoleSelect
+        func.__discord_ui_model_type__ = MentionableSelect
         func.__discord_ui_model_kwargs__ = {
             "placeholder": placeholder,
             "custom_id": custom_id,
