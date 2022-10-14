@@ -339,7 +339,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
                 if self.before:
                     self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
             else:
-                self._retrieve_messages = self._retrieve_messages_before_strategy
+                self._retrieve_messages = self._retrieve_messages_before_strategy  # type: ignore
                 if self.after and self.after != OLDEST_OBJECT:
                     self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
 
