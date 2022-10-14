@@ -242,7 +242,7 @@ class SelectMenu(Component):
         "max_values",
         "options",
         "disabled",
-        "channel_types"
+        "channel_types",
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
@@ -270,10 +270,10 @@ class SelectMenu(Component):
 
         if self.placeholder:
             payload["placeholder"] = self.placeholder
-            
+
         if hasattr(self, "channel_types"):
             payload["channel_types"] = [channel_type.value for channel_type in self.channel_types]
-            
+
         if hasattr(self, "options"):
             payload["options"] = [op.to_dict() for op in self.options]
 

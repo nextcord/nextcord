@@ -29,29 +29,26 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional
 
-from .item import Item, ItemCallbackType
-from .select import Select
-
 from ..components import SelectMenu, SelectOption
 from ..enums import ComponentType
 from ..utils import MISSING
+from .item import Item, ItemCallbackType
+from .select import Select
 
 if TYPE_CHECKING:
     from ..guild import Guild
     from ..role import Role
 
-__all__ = (
-    "RoleSelect",
-    "role_select"
-)
+__all__ = ("RoleSelect", "role_select")
+
 
 class RoleSelect(Select):
-    
+
     """Represents a UI role select menu.
 
     This is usually represented as a drop down menu.
 
-    In order to get the selected items that the user has chosen, 
+    In order to get the selected items that the user has chosen,
     use :attr:`Select.values`., :meth:`Select.get_roles` or :meth:`Select.fetch_roles`.
 
     .. versionadded:: 2.0
@@ -78,7 +75,7 @@ class RoleSelect(Select):
         For example, row=1 will show up before row=2. Defaults to ``None``, which is automatic
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
-    
+
     def __init__(
         self,
         *,
@@ -102,28 +99,28 @@ class RoleSelect(Select):
             disabled=disabled,
         )
         self.row = row
-        
+
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
         This will always be an empty list since role selects cannot have any options."""
         return []
-    
+
     @property
     def values(self) -> List[int]:
         """List[:class:`int`]: A list of role ids that have been selected by the user."""
         return [int(id) for id in self._selected_values]
-        
+
     def get_roles(self, guild: Guild) -> List[Role]:
         """A shortcut for getting all :class:`nextcord.Role`'s of :attr:`.values`.
         Roles that are not found in cache will not be returned.
         To get all roles regardless of whether they are in cache or not, use :meth:`.fetch_roles`.
-        
+
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
             The guild to get the roles from.
-            
+
         Returns
         -------
         List[:class:`nextcord.Role`]
@@ -134,21 +131,21 @@ class RoleSelect(Select):
             if member is not None:
                 roles.append(member)
         return roles
-        
+
     async def fetch_roles(self, guild: Guild) -> List[Role]:
         """A shortcut for fetching all :class:`nextcord.Role`'s of :attr:`.values`.
         Roles that are not found in cache will be fetched.
-        
+
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
             The guild to fetch the roles from.
-            
+
         Raises
         ------
         :exc:`.HTTPException`
             Retrieving the roles failed.
-            
+
         Returns
         -------
         List[:class:`nextcord.Role`]
@@ -163,8 +160,8 @@ class RoleSelect(Select):
                     roles.append(role)
                     break
         return roles
-        
-        
+
+
 def role_select(
     *,
     placeholder: Optional[str] = None,
@@ -222,4 +219,3 @@ def role_select(
         return func
 
     return decorator
-        

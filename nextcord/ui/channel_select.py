@@ -29,12 +29,11 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
-from .item import Item, ItemCallbackType
-from .select import Select
-
 from ..components import SelectMenu, SelectOption
 from ..enums import ComponentType
 from ..utils import MISSING
+from .item import Item, ItemCallbackType
+from .select import Select
 
 if TYPE_CHECKING:
     from ..abc import GuildChannel
@@ -42,18 +41,16 @@ if TYPE_CHECKING:
     from ..guild import Guild
     from ..threads import Thread
 
-__all__ = (
-    "ChannelSelect",
-    "channel_select"
-)
+__all__ = ("ChannelSelect", "channel_select")
+
 
 class ChannelSelect(Select):
-    
+
     """Represents a UI channel select menu.
 
     This is usually represented as a drop down menu.
 
-    In order to get the selected items that the user has chosen, 
+    In order to get the selected items that the user has chosen,
     use :attr:`Select.values`., :meth:`Select.get_channels` or :meth:`Select.fetch_channels`.
 
     .. versionadded:: 2.0
@@ -82,7 +79,7 @@ class ChannelSelect(Select):
     channel_types: List[:class:`nextcord.ChannelType`]
         The types of channels that can be selected. If not given, all channel types are allowed.
     """
-    
+
     def __init__(
         self,
         *,
@@ -108,31 +105,31 @@ class ChannelSelect(Select):
             min_values=min_values,
             max_values=max_values,
             disabled=disabled,
-            **kwargs
+            **kwargs,
         )
         self.row = row
-        
+
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
         This will always be an empty list since channel selects cannot have any options."""
         return []
-    
+
     @property
     def values(self) -> List[int]:
         """List[:class:`int`]: A list of channel ids that have been selected by the user."""
         return [int(id) for id in self._selected_values]
-        
+
     def get_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
         """A shortcut for getting all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
         Channels that are not found in cache will not be returned.
         To get all channels regardless of whether they are in cache or not, use :meth:`.fetch_channels`.
-        
+
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
             The guild to get the channels from.
-            
+
         Returns
         -------
         List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
@@ -144,16 +141,16 @@ class ChannelSelect(Select):
             if channel is not None:
                 channels.append(channel)
         return channels
-    
+
     async def fetch_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
         """A shortcut for fetching all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
         Channels that are not found in cache will be fetched.
-        
+
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
             The guild to get the channels from.
-            
+
         Raises
         ------
         :exc:`.HTTPException`
@@ -164,7 +161,7 @@ class ChannelSelect(Select):
             You do not have the proper permissions to fetch a channel.
         :exc:`.InvalidArgument`
             The channel type is not supported.
-            
+
         Returns
         -------
         List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
@@ -184,8 +181,8 @@ class ChannelSelect(Select):
             else:
                 channels.append(channel)
         return channels
-         
-        
+
+
 def channel_select(
     *,
     placeholder: Optional[str] = None,
@@ -247,4 +244,3 @@ def channel_select(
         return func
 
     return decorator
-        

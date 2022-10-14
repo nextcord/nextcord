@@ -29,30 +29,27 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
-from .item import Item, ItemCallbackType
-from .select import Select
-
 from ..components import SelectMenu, SelectOption
 from ..enums import ComponentType
 from ..utils import MISSING
+from .item import Item, ItemCallbackType
+from .select import Select
 
 if TYPE_CHECKING:
     from ..guild import Guild
     from ..member import Member
     from ..role import Role
 
-__all__ = (
-    "MentionableSelect",
-    "mentionable_select"
-)
+__all__ = ("MentionableSelect", "mentionable_select")
+
 
 class MentionableSelect(Select):
-    
+
     """Represents a UI mentionable select menu.
 
     This is usually represented as a drop down menu.
 
-    In order to get the selected items that the user has chosen, 
+    In order to get the selected items that the user has chosen,
     use :attr:`Select.values`., :meth:`Select.get_mentionables` or :meth:`Select.fetch_mentionables`.
 
     .. versionadded:: 2.0
@@ -79,7 +76,7 @@ class MentionableSelect(Select):
         For example, row=1 will show up before row=2. Defaults to ``None``, which is automatic
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
-    
+
     def __init__(
         self,
         *,
@@ -103,28 +100,28 @@ class MentionableSelect(Select):
             disabled=disabled,
         )
         self.row = row
-        
+
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
         This will always be an empty list since mentionable selects cannot have any options."""
         return []
-    
+
     @property
     def values(self) -> List[int]:
         """List[:class:`int`]: A list of mentionable ids that have been selected by the user."""
         return [int(id) for id in self._selected_values]
-        
+
     def get_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
         """A shortcut for getting all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
         Mentionables that are not found in cache will not be returned.
         To get all mentionables regardless of whether they are in cache or not, use :meth:`.fetch_mentionables`.
-        
+
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
             The guild to get the mentionables from.
-            
+
         Returns
         -------
         List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
@@ -136,23 +133,23 @@ class MentionableSelect(Select):
             if mentionable:
                 mentionables.append(mentionable)
         return mentionables
-    
+
     async def fetch_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
         """A shortcut for fetching all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
         Mentionables that are not found in cache will be fetched.
-        
+
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
             The guild to get the mentionables from.
-            
+
         Raises
         ------
         :exc:`.HTTPException`
             Fetching the mentionables failed.
         :exc:`.Forbidden`
             You do not have the proper permissions to fetch the mentionables.
-            
+
         Returns
         -------
         List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
@@ -176,8 +173,8 @@ class MentionableSelect(Select):
                     mentionable = await guild.fetch_member(id)
             mentionables.append(mentionable)
         return mentionables
-         
-        
+
+
 def mentionable_select(
     *,
     placeholder: Optional[str] = None,
@@ -235,4 +232,3 @@ def mentionable_select(
         return func
 
     return decorator
-        

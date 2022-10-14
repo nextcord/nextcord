@@ -29,8 +29,8 @@ from typing import List, Literal, TypedDict, Union
 
 from typing_extensions import NotRequired
 
-from .emoji import PartialEmoji
 from ..channel import ChannelType
+from .emoji import PartialEmoji
 
 ComponentType = Literal[1, 2, 3, 4]
 ButtonStyle = Literal[1, 2, 3, 4, 5]

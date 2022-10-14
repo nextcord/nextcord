@@ -29,29 +29,26 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional
 
-from .item import Item, ItemCallbackType
-from .select import Select
-
 from ..components import SelectMenu, SelectOption
 from ..enums import ComponentType
 from ..utils import MISSING
+from .item import Item, ItemCallbackType
+from .select import Select
 
 if TYPE_CHECKING:
     from ..guild import Guild
     from ..member import Member
 
-__all__ = (
-    "UserSelect",
-    "user_select"
-)
+__all__ = ("UserSelect", "user_select")
+
 
 class UserSelect(Select):
-    
+
     """Represents a UI user select menu.
 
     This is usually represented as a drop down menu.
 
-    In order to get the selected items that the user has chosen, 
+    In order to get the selected items that the user has chosen,
     use :attr:`Select.values`., :meth:`Select.get_members` or :meth:`Select.fetch_members`.
 
     .. versionadded:: 2.0
@@ -78,7 +75,7 @@ class UserSelect(Select):
         For example, row=1 will show up before row=2. Defaults to ``None``, which is automatic
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
-    
+
     def __init__(
         self,
         *,
@@ -102,28 +99,28 @@ class UserSelect(Select):
             disabled=disabled,
         )
         self.row = row
-        
+
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
         This will always be an empty list since user selects cannot have any options."""
         return []
-    
+
     @property
     def values(self) -> List[int]:
         """List[:class:`int`]: A list of user ids that have been selected by the user."""
         return [int(id) for id in self._selected_values]
-        
+
     def get_members(self, guild: Guild) -> List[Member]:
         """A shortcut for getting all :class:`nextcord.Member`'s of :attr:`.values`.
         Users that are not found in cache will not be returned.
         To get all members regardless of whether they are in cache or not, use :meth:`.fetch_members`.
-        
+
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
             The guild to get the members from.
-            
+
         Returns
         -------
         List[:class:`nextcord.Member`]
@@ -134,23 +131,23 @@ class UserSelect(Select):
             if member is not None:
                 members.append(member)
         return members
-        
+
     async def fetch_members(self, guild: Guild) -> List[Member]:
         """A shortcut for fetching all :class:`nextcord.Member`'s of :attr:`.values`.
         Users that are not found in cache will be fetched.
-        
+
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
             The guild to fetch the members from.
-            
+
         Raises
         ------
         :exc:`.Forbidden`
             You do not have access to the guild.
         :exc:`.HTTPException`
             Fetching a member failed.
-            
+
         Returns
         -------
         List[:class:`nextcord.Member`]
@@ -162,8 +159,8 @@ class UserSelect(Select):
                 member = await guild.fetch_member(id)
             members.append(member)
         return members
-        
-        
+
+
 def user_select(
     *,
     placeholder: Optional[str] = None,
@@ -221,4 +218,3 @@ def user_select(
         return func
 
     return decorator
-        
