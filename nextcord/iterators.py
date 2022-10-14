@@ -192,7 +192,7 @@ class _FilteredAsyncIterator(_AsyncIterator[T]):
         while True:
             # propagate NoMoreItems similar to _MappedAsyncIterator
             item = await getter()
-            ret = await maybe_coroutine(pred, item)  # type: ignore
+            ret = await maybe_coroutine(pred, item)
             if ret:
                 return item
 
@@ -325,7 +325,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
             elif self.limit == 101:
                 self.limit = 100  # Thanks discord
 
-            self._retrieve_messages = self._retrieve_messages_around_strategy
+            self._retrieve_messages = self._retrieve_messages_around_strategy  # type: ignore
             if self.before and self.after:
                 # lambda type ignores are as before/after/around are optional but exist here
                 self._filter = lambda m: self.after.id < int(m["id"]) < self.before.id  # type: ignore
@@ -335,7 +335,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
                 self._filter = lambda m: self.after.id < int(m["id"])  # type: ignore
         else:
             if self.reverse:
-                self._retrieve_messages = self._retrieve_messages_after_strategy
+                self._retrieve_messages = self._retrieve_messages_after_strategy  # type: ignore
                 if self.before:
                     self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
             else:
@@ -381,7 +381,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
             for element in data:
                 await self.messages.put(self.state.create_message(channel=channel, data=element))
 
-    async def _retrieve_messages(self, retrieve) -> List[MessagePayload]:
+    async def _retrieve_messages(self, retrieve: int) -> List[MessagePayload]:
         """Retrieve messages and update next parameters."""
         raise NotImplementedError
 
@@ -686,12 +686,12 @@ class GuildIterator(_AsyncIterator["Guild"]):
         self.reverse: bool
         if self.before:
             self.reverse = True
-            self._retrieve_guilds = self._retrieve_guilds_before_strategy
+            self._retrieve_guilds = self._retrieve_guilds_before_strategy  # type: ignore
             if self.after:
                 self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
         else:
             self.reverse = False
-            self._retrieve_guilds = self._retrieve_guilds_after_strategy
+            self._retrieve_guilds = self._retrieve_guilds_after_strategy  # type: ignore
 
     async def next(self) -> Guild:
         if self.guilds.empty():
