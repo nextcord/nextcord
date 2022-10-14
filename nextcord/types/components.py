@@ -55,6 +55,7 @@ class _SelectMenuOptional(TypedDict, total=False):
     min_values: int
     max_values: int
     disabled: bool
+    options: List[SelectOption]
 
 
 class _SelectOptionsOptional(TypedDict, total=False):
@@ -71,7 +72,6 @@ class SelectOption(_SelectOptionsOptional):
 class SelectMenu(_SelectMenuOptional):
     type: Literal[3]
     custom_id: str
-    options: List[SelectOption]
 
 
 class _TextInputComponentOptional(TypedDict, total=False):
