@@ -33,23 +33,23 @@ from ...components import SelectMenu, SelectOption
 from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
-from .string_select import Select
+from .string import Select
 
 if TYPE_CHECKING:
     from ...guild import Guild
-    from ...role import Role
+    from ...member import Member
 
-__all__ = ("RoleSelect", "role_select")
+__all__ = ("UserSelect", "user_select")
 
 
-class RoleSelect(Select):
+class UserSelect(Select):
 
-    """Represents a UI role select menu.
+    """Represents a UI user select menu.
 
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`Select.values`., :meth:`Select.get_roles` or :meth:`Select.fetch_roles`.
+    use :attr:`Select.values`., :meth:`Select.get_members` or :meth:`Select.fetch_members`.
 
     .. versionadded:: 2.0
 
@@ -92,7 +92,7 @@ class RoleSelect(Select):
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = SelectMenu._raw_construct(
             custom_id=custom_id,
-            type=ComponentType.role_select,
+            type=ComponentType.user_select,
             placeholder=placeholder,
             min_values=min_values,
             max_values=max_values,
@@ -103,66 +103,65 @@ class RoleSelect(Select):
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since role selects cannot have any options."""
+        This will always be an empty list since user selects cannot have any options."""
         return []
 
     @property
     def values(self) -> List[int]:
-        """List[:class:`int`]: A list of role ids that have been selected by the user."""
+        """List[:class:`int`]: A list of user ids that have been selected by the user."""
         return [int(id) for id in self._selected_values]
 
-    def get_roles(self, guild: Guild) -> List[Role]:
-        """A shortcut for getting all :class:`nextcord.Role`'s of :attr:`.values`.
-        Roles that are not found in cache will not be returned.
-        To get all roles regardless of whether they are in cache or not, use :meth:`.fetch_roles`.
+    def get_members(self, guild: Guild) -> List[Member]:
+        """A shortcut for getting all :class:`nextcord.Member`'s of :attr:`.values`.
+        Users that are not found in cache will not be returned.
+        To get all members regardless of whether they are in cache or not, use :meth:`.fetch_members`.
 
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
-            The guild to get the roles from.
+            The guild to get the members from.
 
         Returns
         -------
-        List[:class:`nextcord.Role`]
-            A list of roles that were found."""
-        roles: List[Role] = []
+        List[:class:`nextcord.Member`]
+            A list of members that were found."""
+        members: List[Member] = []
         for id in self.values:
-            member = guild.get_role(id)
+            member = guild.get_member(id)
             if member is not None:
-                roles.append(member)
-        return roles
+                members.append(member)
+        return members
 
-    async def fetch_roles(self, guild: Guild) -> List[Role]:
-        """A shortcut for fetching all :class:`nextcord.Role`'s of :attr:`.values`.
-        Roles that are not found in cache will be fetched.
+    async def fetch_members(self, guild: Guild) -> List[Member]:
+        """A shortcut for fetching all :class:`nextcord.Member`'s of :attr:`.values`.
+        Users that are not found in cache will be fetched.
 
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
-            The guild to fetch the roles from.
+            The guild to fetch the members from.
 
         Raises
         ------
+        :exc:`.Forbidden`
+            You do not have access to the guild.
         :exc:`.HTTPException`
-            Retrieving the roles failed.
+            Fetching a member failed.
 
         Returns
         -------
-        List[:class:`nextcord.Role`]
-            A list of all roles that have been selected."""
-        roles: List[Role] = self.get_roles(guild)
-        if len(roles) == len(self.values):
-            return roles
-        guild_roles: List[Role] = await guild.fetch_roles()
+        List[:class:`nextcord.Member`]
+            A list of all members that have been selected."""
+        members: List[Member] = []
         for id in self.values:
-            for role in guild_roles:
-                if role.id == id:
-                    roles.append(role)
-                    break
-        return roles
+            member = guild.get_member(id)
+            if member is None:
+                member = await guild.fetch_member(id)
+            members.append(member)
+        return members
 
 
-def role_select(
+def user_select(
     *,
     placeholder: Optional[str] = None,
     custom_id: str = MISSING,
@@ -171,14 +170,14 @@ def role_select(
     disabled: bool = False,
     row: Optional[int] = None,
 ) -> Callable[[ItemCallbackType], ItemCallbackType]:
-    """A decorator that attaches a role select menu to a component.
+    """A decorator that attaches a user select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.RoleSelect` being pressed and
+    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.UserSelect` being pressed and
     the :class:`nextcord.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`Select.values`., :attr:`Select.get_roles` or :attr:`Select.fetch_roles`.
+    use :attr:`Select.values`., :attr:`Select.get_members` or :attr:`Select.fetch_members`.
 
     Parameters
     ------------
@@ -207,7 +206,7 @@ def role_select(
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
-        func.__discord_ui_model_type__ = RoleSelect
+        func.__discord_ui_model_type__ = UserSelect
         func.__discord_ui_model_kwargs__ = {
             "placeholder": placeholder,
             "custom_id": custom_id,

@@ -33,24 +33,25 @@ from ...components import SelectMenu, SelectOption
 from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
-from .string_select import Select
+from .string import Select
 
 if TYPE_CHECKING:
+    from ...abc import GuildChannel
+    from ...enums import ChannelType
     from ...guild import Guild
-    from ...member import Member
-    from ...role import Role
+    from ...threads import Thread
 
-__all__ = ("MentionableSelect", "mentionable_select")
+__all__ = ("ChannelSelect", "channel_select")
 
 
-class MentionableSelect(Select):
+class ChannelSelect(Select):
 
-    """Represents a UI mentionable select menu.
+    """Represents a UI channel select menu.
 
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`Select.values`., :meth:`Select.get_mentionables` or :meth:`Select.fetch_mentionables`.
+    use :attr:`Select.values`., :meth:`Select.get_channels` or :meth:`Select.fetch_channels`.
 
     .. versionadded:: 2.0
 
@@ -75,6 +76,8 @@ class MentionableSelect(Select):
         like to control the relative positioning of the row then passing an index is advised.
         For example, row=1 will show up before row=2. Defaults to ``None``, which is automatic
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
+    channel_types: List[:class:`nextcord.ChannelType`]
+        The types of channels that can be selected. If not given, all channel types are allowed.
     """
 
     def __init__(
@@ -86,96 +89,101 @@ class MentionableSelect(Select):
         max_values: int = 1,
         disabled: bool = False,
         row: Optional[int] = None,
+        channel_types: List[ChannelType] = MISSING,
     ) -> None:
         Item.__init__(self)
         self._selected_values: List[str] = []
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
+        kwargs = {}
+        if channel_types is not MISSING:
+            kwargs["channel_types"] = channel_types
         self._underlying = SelectMenu._raw_construct(
             custom_id=custom_id,
-            type=ComponentType.mentionable_select,
+            type=ComponentType.channel_select,
             placeholder=placeholder,
             min_values=min_values,
             max_values=max_values,
             disabled=disabled,
+            **kwargs,
         )
         self.row = row
 
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since mentionable selects cannot have any options."""
+        This will always be an empty list since channel selects cannot have any options."""
         return []
 
     @property
     def values(self) -> List[int]:
-        """List[:class:`int`]: A list of mentionable ids that have been selected by the user."""
+        """List[:class:`int`]: A list of channel ids that have been selected by the user."""
         return [int(id) for id in self._selected_values]
 
-    def get_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
-        """A shortcut for getting all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
-        Mentionables that are not found in cache will not be returned.
-        To get all mentionables regardless of whether they are in cache or not, use :meth:`.fetch_mentionables`.
+    def get_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
+        """A shortcut for getting all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
+        Channels that are not found in cache will not be returned.
+        To get all channels regardless of whether they are in cache or not, use :meth:`.fetch_channels`.
 
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
-            The guild to get the mentionables from.
+            The guild to get the channels from.
 
         Returns
         -------
-        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
-            A list of mentionables that have been selected by the user.
+        List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
+            A list of channels that have been selected by the user.
         """
-        mentionables: List[Union[Member, Role]] = []
+        channels: List[Union[GuildChannel, Thread]] = []
         for id in self.values:
-            mentionable = guild.get_member(id) or guild.get_role(id)
-            if mentionable:
-                mentionables.append(mentionable)
-        return mentionables
+            channel = guild.get_channel_or_thread(id)
+            if channel is not None:
+                channels.append(channel)
+        return channels
 
-    async def fetch_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
-        """A shortcut for fetching all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
-        Mentionables that are not found in cache will be fetched.
+    async def fetch_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
+        """A shortcut for fetching all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
+        Channels that are not found in cache will be fetched.
 
         Parameters
         ----------
         guild: :class:`nextcord.Guild`
-            The guild to get the mentionables from.
+            The guild to get the channels from.
 
         Raises
         ------
         :exc:`.HTTPException`
-            Fetching the mentionables failed.
+            Fetching the channels failed.
+        :exc:`.NotFound`
+            A channel was not found.
         :exc:`.Forbidden`
-            You do not have the proper permissions to fetch the mentionables.
+            You do not have the proper permissions to fetch a channel.
+        :exc:`.InvalidArgument`
+            The channel type is not supported.
 
         Returns
         -------
-        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
-            A list of mentionables that have been selected by the user.
+        List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
+            A list of channels that have been selected by the user.
         """
-        mentionables = self.get_mentionables(guild)
-        if len(mentionables) == len(self.values):
-            return mentionables
-        mentionables: List[Union[Member, Role]] = []
-        guild_roles = None
+        channels: List[Union[GuildChannel, Thread]] = []
+        guild_channels = None
         for id in self.values:
-            mentionable = guild.get_member(id) or guild.get_role(id)
-            if not mentionable:
-                if not guild_roles:
-                    guild_roles = await guild.fetch_roles()
-                for role in guild_roles:
-                    if role.id == id:
-                        mentionable = role
+            channel = guild.get_channel_or_thread(id)
+            if channel is None:
+                if guild_channels is None:
+                    guild_channels = await guild.fetch_channels()
+                for channel in guild_channels:
+                    if channel.id == id:
+                        channels.append(channel)
                         break
-                if not mentionable:
-                    mentionable = await guild.fetch_member(id)
-            mentionables.append(mentionable)
-        return mentionables
+            else:
+                channels.append(channel)
+        return channels
 
 
-def mentionable_select(
+def channel_select(
     *,
     placeholder: Optional[str] = None,
     custom_id: str = MISSING,
@@ -183,15 +191,16 @@ def mentionable_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
+    channel_types: List[ChannelType] = MISSING,
 ) -> Callable[[ItemCallbackType], ItemCallbackType]:
-    """A decorator that attaches a mentionable select menu to a component.
+    """A decorator that attaches a channel select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.MentionableSelect` being pressed and
+    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.ChannelSelect` being pressed and
     the :class:`nextcord.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`Select.values`., :attr:`Select.get_mentionables` or :attr:`Select.fetch_mentionables`.
+    use :attr:`Select.values`., :attr:`Select.get_channels` or :attr:`Select.fetch_channels`.
 
     Parameters
     ------------
@@ -214,13 +223,15 @@ def mentionable_select(
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    channel_types: List[:class:`nextcord.ChannelType`]
+        A list of channel types that can be selected in this menu.
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
-        func.__discord_ui_model_type__ = MentionableSelect
+        func.__discord_ui_model_type__ = ChannelSelect
         func.__discord_ui_model_kwargs__ = {
             "placeholder": placeholder,
             "custom_id": custom_id,
@@ -228,6 +239,7 @@ def mentionable_select(
             "min_values": min_values,
             "max_values": max_values,
             "disabled": disabled,
+            "channel_types": channel_types,
         }
         return func
 
