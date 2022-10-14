@@ -23,14 +23,12 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING, Union
 
-import os
 import io
+import os
+from typing import TYPE_CHECKING, Optional, Union
 
-__all__ = (
-    'File',
-)
+__all__ = ("File",)
 
 
 class File:
@@ -43,7 +41,7 @@ class File:
         multiple :meth:`abc.Messageable.send`\s.
 
     Parameters
-    -----------
+    ----------
 
     fp: Union[str, bytes, os.PathLike, io.BufferedIOBase]
         A file-like object opened in binary mode and read mode
@@ -65,9 +63,17 @@ class File:
         in the Discord client.
     spoiler: :class:`bool`
         Whether the attachment is a spoiler.
+    force_close: :class:`bool`
+        Whether to forcibly close the bytes used to create the file
+        when ``.close()`` is called.
+        This will also make the file bytes unusable by flushing it from
+        memory after it is sent once.
+        Enable this if you don't wish to reuse the same bytes.
+
+        .. versionadded:: 2.2
 
     Attributes
-    -----------
+    ----------
     fp: Union[:class:`io.BufferedReader`, :class:`io.BufferedIOBase`]
         A file-like object opened in binary mode and read mode.
         This will be a :class:`io.BufferedIOBase` if an
@@ -80,15 +86,33 @@ class File:
         in the Discord client.
     spoiler: :class:`bool`
         Whether the attachment is a spoiler.
+    force_close: :class:`bool`
+        Whether to forcibly close the bytes used to create the file
+        when ``.close()`` is called.
+        This will also make the file bytes unusable by flushing it from
+        memory after it is sent or used once.
+        Enable this if you don't wish to reuse the same bytes.
+
+        .. versionadded:: 2.2
     """
 
-    __slots__ = ('fp', 'filename', 'spoiler', '_original_pos', '_owner', '_closer', 'description')
+    __slots__ = (
+        "fp",
+        "filename",
+        "spoiler",
+        "force_close",
+        "_original_pos",
+        "_owner",
+        "_closer",
+        "description",
+    )
 
     if TYPE_CHECKING:
         fp: Union[io.BufferedReader, io.BufferedIOBase]
         filename: Optional[str]
         description: Optional[str]
         spoiler: bool
+        force_close: bool
 
     def __init__(
         self,
@@ -97,17 +121,20 @@ class File:
         *,
         description: Optional[str] = None,
         spoiler: bool = False,
+        force_close: bool = False,
     ):
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
-                raise ValueError(f'File buffer {fp!r} must be seekable and readable')
+                raise ValueError(f"File buffer {fp!r} must be seekable and readable")
             self.fp = fp
             self._original_pos = fp.tell()
             self._owner = False
         else:
-            self.fp = open(fp, 'rb')
+            self.fp = open(fp, "rb")
             self._original_pos = 0
             self._owner = True
+
+        self.force_close = force_close
 
         # aiohttp only uses two methods from IOBase
         # read and close, since I want to control when the files
@@ -120,16 +147,18 @@ class File:
             if isinstance(fp, str):
                 _, self.filename = os.path.split(fp)
             else:
-                self.filename = getattr(fp, 'name', None)
+                self.filename = getattr(fp, "name", None)
         else:
             self.filename = filename
 
         self.description = description
 
-        if spoiler and self.filename is not None and not self.filename.startswith('SPOILER_'):
-            self.filename = 'SPOILER_' + self.filename
+        if spoiler and self.filename is not None and not self.filename.startswith("SPOILER_"):
+            self.filename = "SPOILER_" + self.filename
 
-        self.spoiler = spoiler or (self.filename is not None and self.filename.startswith('SPOILER_'))
+        self.spoiler = spoiler or (
+            self.filename is not None and self.filename.startswith("SPOILER_")
+        )
 
     def reset(self, *, seek: Union[int, bool] = True) -> None:
         # The `seek` parameter is needed because
@@ -145,5 +174,5 @@ class File:
 
     def close(self) -> None:
         self.fp.close = self._closer
-        if self._owner:
+        if self._owner or self.force_close:
             self._closer()

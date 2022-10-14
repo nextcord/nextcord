@@ -5,16 +5,16 @@
 .. _intents_primer:
 
 A Primer to Gateway Intents
-=============================
+===========================
 
 In version 1.5 comes the introduction of :class:`Intents`. This is a radical change in how bots are written. Put simply, an intent allows a bot to subscribe to specific buckets of events. The events that correspond to each intent are documented in the individual attribute of the :class:`Intents` documentation.
 
 These intents are passed to the constructor of :class:`Client` or its subclasses (:class:`AutoShardedClient`, :class:`~.AutoShardedBot`, :class:`~.Bot`) with the ``intents`` argument.
 
-If intents are not passed, then the library defaults to every intent being enabled except the privileged intents, currently :attr:`Intents.members` and :attr:`Intents.presences`.
+If intents are not passed, then the library defaults to every intent being enabled except the privileged intents, currently :attr:`Intents.members`, :attr:`Intents.presences`, and :attr:`Intents.message_content`.
 
 What intents are needed?
---------------------------
+------------------------
 
 The intents that are necessary for your bot can only be dictated by yourself. Each attribute in the :class:`Intents` class documents what :ref:`events <discord-api-events>` it corresponds to and what kind of cache it enables.
 
@@ -55,21 +55,21 @@ Another example showing a bot that only deals with messages and guild informatio
 .. _privileged_intents:
 
 Privileged Intents
----------------------
+------------------
 
 With the API change requiring bot authors to specify intents, some intents were restricted further and require more manual steps. These intents are called **privileged intents**.
 
 A privileged intent is an intent that requires you to go to the developer portal and manually enable it. To enable privileged intents, do the following:
 
 1. Make sure you're logged on to the `Discord website <https://discord.com>`_.
-2. Navigate to the `application page <https://discord.com/developers/applications>`_.
+2. Navigate to the `Application page <https://discord.com/developers/applications>`_.
 3. Click on the bot you want to enable privileged intents for.
 4. Navigate to the bot tab on the left side of the screen.
 
     .. image:: /images/discord_bot_tab.png
         :alt: The bot tab in the application page.
 
-5. Scroll down to the "Privileged Gateway Intents" section and enable the ones you want.
+5. Scroll down to the "Privileged Gateway Intents" section and enable the intents you need.
 
     .. image:: /images/discord_privileged_intents.png
         :alt: The privileged gateway intents selector.
@@ -84,14 +84,14 @@ A privileged intent is an intent that requires you to go to the developer portal
     through code as well.
 
 Do I need privileged intents?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is a quick checklist to see if you need specific privileged intents.
 
 .. _need_presence_intent:
 
 Presence Intent
-+++++++++++++++++
++++++++++++++++
 
 - Whether you use :attr:`Member.status` at all to track member statuses.
 - Whether you use :attr:`Member.activity` or :attr:`Member.activities` to check member's activities.
@@ -99,7 +99,7 @@ Presence Intent
 .. _need_members_intent:
 
 Member Intent
-+++++++++++++++
++++++++++++++
 
 - Whether you track member joins or member leaves, corresponds to :func:`on_member_join` and :func:`on_member_remove` events.
 - Whether you want to track member updates such as nickname or role changes.
@@ -107,10 +107,22 @@ Member Intent
 - Whether you want to request the guild member list through :meth:`Guild.chunk` or :meth:`Guild.fetch_members`.
 - Whether you want high accuracy member cache under :attr:`Guild.members`.
 
+.. _need_message_content_intent:
+
+Message Content
++++++++++++++++
+
+- Whether you want to read :attr:`Message.content`, :attr:`Message.embeds`, :attr:`Message.attachments`, or :attr:`Message.components` in most messages.
+
+.. note::
+
+    Without this intent, the attributes above will appear empty (either an empty string or empty array depending on the data type) in most messages.
+    The bot will always be able to get these attributes from messages the bot sends, messages the bot receives in DMs, and messages in which the bot is mentioned.
+
 .. _intents_member_cache:
 
 Member Cache
--------------
+------------
 
 Along with intents, Discord now further restricts the ability to cache members and expects bot authors to cache as little as is necessary. However, to properly maintain a cache the :attr:`Intents.members` intent is required to track the members who left and properly evict them.
 
@@ -130,7 +142,7 @@ Other events that take a :class:`Member` will require the use of the member cach
 .. _retrieving_members:
 
 Retrieving Members
---------------------
+------------------
 
 If the cache is disabled or you disable chunking guilds at startup, we might still need a way to load members. The library offers a few ways to do this:
 
@@ -148,14 +160,14 @@ If the cache is disabled or you disable chunking guilds at startup, we might sti
 It should be noted that the gateway has a strict rate limit of 120 requests per 60 seconds.
 
 Troubleshooting
-------------------
+---------------
 
 Some common issues relating to the mandatory intent change.
 
-Where'd my members go?
+Where did my members go?
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Due to an :ref:`API change <intents_member_cache>` Discord is now forcing developers who want member caching to explicitly opt-in to it. This is a Discord mandated change and there is no way to bypass it. To get members back, you have to explicitly enable the :ref:`members privileged intent <privileged_intents>` and change the :attr:`Intents.members` attribute to true.
+Due to an :ref:`API change <intents_member_cache>` Discord is now forcing developers who want member caching to explicitly opt in to it. This is a Discord mandated change and there is no way to bypass it. To get members back, you have to explicitly enable the :ref:`members privileged intent <privileged_intents>` and change the :attr:`Intents.members` attribute to true.
 
 For example:
 
@@ -172,8 +184,31 @@ For example:
     # from nextcord.ext import commands
     # bot = commands.Bot(command_prefix='!', intents=intents)
 
+What happened to my prefix commands?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Due to an :ref:`API change <need_message_content_intent>`, to read message content in most messages,
+you have to explicitly opt in to it. This is a Discord mandated change and there is no way to bypass it.
+To get message content back, you have to explicitly enable the :ref:`message content privileged intent <privileged_intents>`
+and change the :attr:`Intents.message_content` attribute to true.
+
+For example:
+
+.. code-block:: python3
+   :emphasize-lines: 3,6,8,9
+
+    import nextcord
+    intents = nextcord.Intents.default()
+    intents.message_content = True
+
+    # Somewhere else:
+    # client = nextcord.Client(intents=intents)
+    # or
+    # from nextcord.ext import commands
+    # bot = commands.Bot(command_prefix='!', intents=intents)
+
 Why does ``on_ready`` take so long to fire?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As part of the API change regarding intents, Discord also changed how members are loaded in the beginning. Originally the library could request 75 guilds at once and only request members from guilds that have the :attr:`Guild.large` attribute set to ``True``. With the new intent changes, Discord mandates that we can only send 1 guild per request. This causes a 75x slowdown which is further compounded by the fact that *all* guilds, not just large guilds are being requested.
 
@@ -183,7 +218,7 @@ The first solution is to request the privileged presences intent along with the 
 
 The second solution is to disable member chunking by setting ``chunk_guilds_at_startup`` to ``False`` when constructing a client. Then, when chunking for a guild is necessary you can use the various techniques to :ref:`retrieve members <retrieving_members>`.
 
-To illustrate the slowdown caused by the API change, take a bot who is in 840 guilds and 95 of these guilds are "large" (over 250 members).
+To illustrate the slowdown caused by the API change, take a bot that is in 840 guilds and 95 of these guilds are "large" (over 250 members).
 
 Under the original system, this would result in 2 requests to fetch the member list (75 guilds, 20 guilds) roughly taking 60 seconds. With :attr:`Intents.members` but not :attr:`Intents.presences` this requires 840 requests, with a rate limit of 120 requests per 60 seconds means that due to waiting for the rate limit it totals to around 7 minutes of waiting for the rate limit to fetch all the members. With both :attr:`Intents.members` and :attr:`Intents.presences` we mostly get the old behaviour so we're only required to request for the 95 large guilds, this is slightly less than our rate limit so it's close to the original timing to fetch the member list.
 

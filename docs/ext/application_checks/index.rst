@@ -88,6 +88,13 @@ Events
     :param error: The error that occurred.
     :type error: :class:`Exception`
 
+.. function:: on_application_command_completion(interaction)
+
+    The event that is fired when the application command invoked completed successfully without any errors.
+
+    :param interaction: The interaction of the invoked application command.
+    :type interaction: :class:`~.Interaction`
+
 Exceptions
 ----------
 

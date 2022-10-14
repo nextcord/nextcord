@@ -1,25 +1,42 @@
 .. _version_guarantees:
 
 Version Guarantees
-=====================
+==================
 
-The library follows a `semantic versioning principle <https://semver.org/>`_ which means that the major version is updated every time there is an incompatible API change. However due to the lack of guarantees on the Discord side when it comes to breaking changes along with the fairly dynamic nature of Python it can be hard to discern what can be considered a breaking change and what isn't.
+Nextcord does not follow semantic versioning exactly, the main difference is that breaking changes may also be made on minor version bumps (similar to Python's scheme).
+The reason for this is the Discord API lacks guarantees on breaking changes per API version, so library breaking changes unfortunately have to be made to match.
+Breaking changes that are not forced by Discord will be deprecated but not removed in a minor version (special cases apply, such as low impact changes).
 
-The first thing to keep in mind is that breaking changes only apply to **publicly documented functions and classes**. If it's not listed in the documentation here then it is not part of the public API and is thus bound to change. This includes attributes that start with an underscore or functions without underscores that are not documented.
+However, any breaking changes will always be marked as such in the release notes/changelogs.
+
+Summary of The Versioning Scheme
+--------------------------------
+
+The version scheme ``major.minor.micro`` used aims to follow these rules:
+
+- ``major`` bumps usually contain large refactors/changes (most likely containing breaking changes).
+- ``minor`` bumps contain new features, sometimes bug fixes, and **may contain breaking changes**.
+- ``micro`` bumps only contain bug fixes, so no new features and no breaking changes.
+
+.. note::
+
+    Breaking changes are not applied on **privately documented functions and classes**.
+    A function/class is not part of the public API if it is not listed in the documentation.
+    Attributes and functions that start with an underscore are also not part of the public API.
 
 .. note::
 
     The examples below are non-exhaustive.
 
 Examples of Breaking Changes
-------------------------------
+----------------------------
 
 - Changing the default parameter value to something else.
 - Renaming a function without an alias to an old function.
 - Adding or removing parameters to an event.
 
 Examples of Non-Breaking Changes
-----------------------------------
+--------------------------------
 
 - Adding or removing private underscored attributes.
 - Adding an element into the ``__slots__`` of a data class.
@@ -27,4 +44,3 @@ Examples of Non-Breaking Changes
 - Changes in the documentation.
 - Modifying the internal HTTP handling.
 - Upgrading the dependencies to a new version, major or otherwise.
-

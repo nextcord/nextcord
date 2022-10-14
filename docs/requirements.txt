@@ -1,0 +1,4 @@
+sphinx==5.0.1
+sphinxcontrib_trio==1.1.2
+sphinxcontrib-websupport
+typing_extensions>=4.2.0, <5

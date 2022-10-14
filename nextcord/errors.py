@@ -23,7 +23,8 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Dict, List, Optional, TYPE_CHECKING, Any, Tuple, Union
+
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from aiohttp import ClientResponse, ClientWebSocketResponse
@@ -39,7 +40,6 @@ if TYPE_CHECKING:
 
 __all__ = (
     "DiscordException",
-    "InvalidCommandType",
     "ClientException",
     "NoMoreItems",
     "GatewayNotFound",
@@ -56,6 +56,7 @@ __all__ = (
     "ApplicationError",
     "ApplicationInvokeError",
     "ApplicationCheckFailure",
+    "ApplicationCommandOptionMissing",
 )
 
 
@@ -73,12 +74,6 @@ class ClientException(DiscordException):
 
     These are usually for exceptions that happened due to user input.
     """
-
-    pass
-
-
-class InvalidCommandType(ClientException):
-    """Raised when an unhandled Application Command type is encountered."""
 
     pass
 
@@ -119,7 +114,7 @@ class HTTPException(DiscordException):
     """Exception that's raised when an HTTP request operation fails.
 
     Attributes
-    ------------
+    ----------
     response: :class:`aiohttp.ClientResponse`
         The response of the failed HTTP request. This is an
         instance of :class:`aiohttp.ClientResponse`. In some cases
@@ -133,9 +128,7 @@ class HTTPException(DiscordException):
         The Discord specific error code for the failure.
     """
 
-    def __init__(
-        self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]
-    ):
+    def __init__(self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]):
         self.response: _ResponseType = response
         self.status: int = response.status  # type: ignore
         self.code: int
@@ -224,7 +217,7 @@ class ConnectionClosed(ClientException):
     closed for reasons that could not be handled internally.
 
     Attributes
-    -----------
+    ----------
     code: :class:`int`
         The close code of the websocket.
     reason: :class:`str`
@@ -260,7 +253,7 @@ class PrivilegedIntentsRequired(ClientException):
     - :attr:`Intents.presences`
 
     Attributes
-    -----------
+    ----------
     shard_id: Optional[:class:`int`]
         The shard ID that got closed if applicable.
     """
@@ -285,7 +278,7 @@ class InteractionResponded(ClientException):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     interaction: :class:`Interaction`
         The interaction that's already been responded to.
     """
@@ -308,9 +301,7 @@ class ApplicationError(DiscordException):
     def __init__(self, message: Optional[str] = None, *args: Any) -> None:
         if message is not None:
             # clean-up @everyone and @here mentions
-            m = message.replace("@everyone", "@\u200beveryone").replace(
-                "@here", "@\u200bhere"
-            )
+            m = message.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
             super().__init__(m, *args)
         else:
             super().__init__(*args)
@@ -322,7 +313,7 @@ class ApplicationInvokeError(ApplicationError):
     This inherits from :exc:`ApplicationError`
 
     Attributes
-    -----------
+    ----------
     original: :exc:`Exception`
         The original exception that was raised. You can also get this via
         the ``__cause__`` attribute.
@@ -335,9 +326,15 @@ class ApplicationInvokeError(ApplicationError):
 
 
 class ApplicationCheckFailure(ApplicationError):
-    """Exception raised when the predicates in :attr:`.ApplicationCommand.checks` have failed.
+    """Exception raised when the predicates in :attr:`.BaseApplicationCommand.checks` have failed.
 
     This inherits from :exc:`ApplicationError`
     """
+
+    pass
+
+
+class ApplicationCommandOptionMissing(ApplicationError):
+    """Raised when an option that's supposed to be part of an application command is missing on our end."""
 
     pass

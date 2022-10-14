@@ -23,37 +23,39 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Literal, TYPE_CHECKING, List, Optional, Tuple, Type, Union
-import unicodedata
 
-from .mixins import Hashable
+import unicodedata
+from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Type, Union
+
 from .asset import Asset, AssetMixin
-from .utils import cached_slot_property, find, snowflake_time, get, MISSING
+from .enums import StickerFormatType, StickerType, try_enum
 from .errors import InvalidData
-from .enums import StickerType, StickerFormatType, try_enum
+from .mixins import Hashable
+from .utils import MISSING, cached_slot_property, find, get, snowflake_time
 
 __all__ = (
-    'StickerPack',
-    'StickerItem',
-    'Sticker',
-    'StandardSticker',
-    'GuildSticker',
+    "StickerPack",
+    "StickerItem",
+    "Sticker",
+    "StandardSticker",
+    "GuildSticker",
 )
 
 if TYPE_CHECKING:
     import datetime
-    from .state import ConnectionState
-    from .user import User
+
     from .guild import Guild
+    from .state import ConnectionState
     from .types.sticker import (
-        StickerPack as StickerPackPayload,
-        StickerItem as StickerItemPayload,
-        Sticker as StickerPayload,
-        StandardSticker as StandardStickerPayload,
+        EditGuildSticker,
         GuildSticker as GuildStickerPayload,
         ListPremiumStickerPacks as ListPremiumStickerPacksPayload,
-        EditGuildSticker,
+        StandardSticker as StandardStickerPayload,
+        Sticker as StickerPayload,
+        StickerItem as StickerItemPayload,
+        StickerPack as StickerPackPayload,
     )
+    from .user import User
 
 
 class StickerPack(Hashable):
@@ -76,7 +78,7 @@ class StickerPack(Hashable):
            Checks if the sticker pack is not equal to another sticker pack.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The name of the sticker pack.
     description: :class:`str`
@@ -94,15 +96,15 @@ class StickerPack(Hashable):
     """
 
     __slots__ = (
-        '_state',
-        'id',
-        'stickers',
-        'name',
-        'sku_id',
-        'cover_sticker_id',
-        'cover_sticker',
-        'description',
-        '_banner',
+        "_state",
+        "id",
+        "stickers",
+        "name",
+        "sku_id",
+        "cover_sticker_id",
+        "cover_sticker",
+        "description",
+        "_banner",
     )
 
     def __init__(self, *, state: ConnectionState, data: StickerPackPayload) -> None:
@@ -110,15 +112,17 @@ class StickerPack(Hashable):
         self._from_data(data)
 
     def _from_data(self, data: StickerPackPayload) -> None:
-        self.id: int = int(data['id'])
-        stickers = data['stickers']
-        self.stickers: List[StandardSticker] = [StandardSticker(state=self._state, data=sticker) for sticker in stickers]
-        self.name: str = data['name']
-        self.sku_id: int = int(data['sku_id'])
-        self.cover_sticker_id: int = int(data['cover_sticker_id'])
-        self.cover_sticker: StandardSticker = get(self.stickers, id=self.cover_sticker_id) # type: ignore
-        self.description: str = data['description']
-        self._banner: int = int(data['banner_asset_id'])
+        self.id: int = int(data["id"])
+        stickers = data["stickers"]
+        self.stickers: List[StandardSticker] = [
+            StandardSticker(state=self._state, data=sticker) for sticker in stickers
+        ]
+        self.name: str = data["name"]
+        self.sku_id: int = int(data["sku_id"])
+        self.cover_sticker_id: int = int(data["cover_sticker_id"])
+        self.cover_sticker: StandardSticker = get(self.stickers, id=self.cover_sticker_id)  # type: ignore
+        self.description: str = data["description"]
+        self._banner: int = int(data["banner_asset_id"])
 
     @property
     def banner(self) -> Asset:
@@ -126,7 +130,7 @@ class StickerPack(Hashable):
         return Asset._from_sticker_banner(self._state, self._banner)
 
     def __repr__(self) -> str:
-        return f'<StickerPack id={self.id} name={self.name!r} description={self.description!r}>'
+        return f"<StickerPack id={self.id} name={self.name!r} description={self.description!r}>"
 
     def __str__(self) -> str:
         return self.name
@@ -186,7 +190,7 @@ class StickerItem(_StickerTag):
            Checks if the sticker item is not equal to another sticker item.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The sticker's name.
     id: :class:`int`
@@ -197,17 +201,17 @@ class StickerItem(_StickerTag):
         The URL for the sticker's image.
     """
 
-    __slots__ = ('_state', 'name', 'id', 'format', 'url')
+    __slots__ = ("_state", "name", "id", "format", "url")
 
     def __init__(self, *, state: ConnectionState, data: StickerItemPayload):
         self._state: ConnectionState = state
-        self.name: str = data['name']
-        self.id: int = int(data['id'])
-        self.format: StickerFormatType = try_enum(StickerFormatType, data['format_type'])
-        self.url: str = f'{Asset.BASE}/stickers/{self.id}.{self.format.file_extension}'
+        self.name: str = data["name"]
+        self.id: int = int(data["id"])
+        self.format: StickerFormatType = try_enum(StickerFormatType, data["format_type"])
+        self.url: str = f"{Asset.BASE}/stickers/{self.id}.{self.format.file_extension}"
 
     def __repr__(self) -> str:
-        return f'<StickerItem id={self.id} name={self.name!r} format={self.format}>'
+        return f"<StickerItem id={self.id} name={self.name!r} format={self.format}>"
 
     def __str__(self) -> str:
         return self.name
@@ -218,17 +222,17 @@ class StickerItem(_StickerTag):
         Attempts to retrieve the full sticker data of the sticker item.
 
         Raises
-        --------
+        ------
         HTTPException
             Retrieving the sticker failed.
 
         Returns
-        --------
+        -------
         Union[:class:`StandardSticker`, :class:`GuildSticker`]
             The retrieved sticker.
         """
         data: StickerPayload = await self._state.http.get_sticker(self.id)
-        cls, _ = _sticker_factory(data['type'])  # type: ignore
+        cls, _ = _sticker_factory(data["type"])  # type: ignore
         return cls(state=self._state, data=data)
 
 
@@ -267,21 +271,21 @@ class Sticker(_StickerTag):
         The URL for the sticker's image.
     """
 
-    __slots__ = ('_state', 'id', 'name', 'description', 'format', 'url')
+    __slots__ = ("_state", "id", "name", "description", "format", "url")
 
     def __init__(self, *, state: ConnectionState, data: StickerPayload) -> None:
         self._state: ConnectionState = state
         self._from_data(data)
 
     def _from_data(self, data: StickerPayload) -> None:
-        self.id: int = int(data['id'])
-        self.name: str = data['name']
-        self.description: str = data['description']
-        self.format: StickerFormatType = try_enum(StickerFormatType, data['format_type'])
-        self.url: str = f'{Asset.BASE}/stickers/{self.id}.{self.format.file_extension}'
+        self.id: int = int(data["id"])
+        self.name: str = data["name"]
+        self.description: str = data["description"]
+        self.format: StickerFormatType = try_enum(StickerFormatType, data["format_type"])
+        self.url: str = f"{Asset.BASE}/stickers/{self.id}.{self.format.file_extension}"
 
     def __repr__(self) -> str:
-        return f'<Sticker id={self.id} name={self.name!r}>'
+        return f"<Sticker id={self.id} name={self.name!r}>"
 
     def __str__(self) -> str:
         return self.name
@@ -329,21 +333,21 @@ class StandardSticker(Sticker):
         The sticker's sort order within its pack.
     """
 
-    __slots__ = ('sort_value', 'pack_id', 'type', 'tags')
+    __slots__ = ("sort_value", "pack_id", "type", "tags")
 
     def _from_data(self, data: StandardStickerPayload) -> None:
         super()._from_data(data)
-        self.sort_value: int = data['sort_value']
-        self.pack_id: int = int(data['pack_id'])
+        self.sort_value: int = data["sort_value"]
+        self.pack_id: int = int(data["pack_id"])
         self.type: StickerType = StickerType.standard
 
         try:
-            self.tags: List[str] = [tag.strip() for tag in data['tags'].split(',')]
+            self.tags: List[str] = [tag.strip() for tag in data["tags"].split(",")]
         except KeyError:
             self.tags = []
 
     def __repr__(self) -> str:
-        return f'<StandardSticker id={self.id} name={self.name!r} pack_id={self.pack_id}>'
+        return f"<StandardSticker id={self.id} name={self.name!r} pack_id={self.pack_id}>"
 
     async def pack(self) -> StickerPack:
         """|coro|
@@ -351,24 +355,24 @@ class StandardSticker(Sticker):
         Retrieves the sticker pack that this sticker belongs to.
 
         Raises
-        --------
+        ------
         InvalidData
             The corresponding sticker pack was not found.
         HTTPException
             Retrieving the sticker pack failed.
 
         Returns
-        --------
+        -------
         :class:`StickerPack`
             The retrieved sticker pack.
         """
         data: ListPremiumStickerPacksPayload = await self._state.http.list_premium_sticker_packs()
-        packs = data['sticker_packs']
-        pack = find(lambda d: int(d['id']) == self.pack_id, packs)
+        packs = data["sticker_packs"]
+        pack = find(lambda d: int(d["id"]) == self.pack_id, packs)
 
         if pack:
             return StickerPack(state=self._state, data=pack)
-        raise InvalidData(f'Could not find corresponding sticker pack for {self!r}')
+        raise InvalidData(f"Could not find corresponding sticker pack for {self!r}")
 
 
 class GuildSticker(Sticker):
@@ -411,21 +415,21 @@ class GuildSticker(Sticker):
         The name of a unicode emoji that represents this sticker.
     """
 
-    __slots__ = ('available', 'guild_id', 'user', 'emoji', 'type', '_cs_guild')
+    __slots__ = ("available", "guild_id", "user", "emoji", "type", "_cs_guild")
 
     def _from_data(self, data: GuildStickerPayload) -> None:
         super()._from_data(data)
-        self.available: bool = data['available']
-        self.guild_id: int = int(data['guild_id'])
-        user = data.get('user')
+        self.available: bool = data["available"]
+        self.guild_id: int = int(data["guild_id"])
+        user = data.get("user")
         self.user: Optional[User] = self._state.store_user(user) if user else None
-        self.emoji: str = data['tags']
+        self.emoji: str = data["tags"]
         self.type: StickerType = StickerType.guild
 
     def __repr__(self) -> str:
-        return f'<GuildSticker name={self.name!r} id={self.id} guild_id={self.guild_id} user={self.user!r}>'
+        return f"<GuildSticker name={self.name!r} id={self.id} guild_id={self.guild_id} user={self.user!r}>"
 
-    @cached_slot_property('_cs_guild')
+    @cached_slot_property("_cs_guild")
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild that this sticker is from.
         Could be ``None`` if the bot is not in the guild.
@@ -447,7 +451,7 @@ class GuildSticker(Sticker):
         Edits a :class:`GuildSticker` for the guild.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The sticker's new name. Must be at least 2 characters.
         description: Optional[:class:`str`]
@@ -458,24 +462,24 @@ class GuildSticker(Sticker):
             The reason for editing this sticker. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You are not allowed to edit stickers.
         HTTPException
             An error occurred editing the sticker.
 
         Returns
-        --------
+        -------
         :class:`GuildSticker`
             The newly modified sticker.
         """
         payload: EditGuildSticker = {}
 
         if name is not MISSING:
-            payload['name'] = name
+            payload["name"] = name
 
         if description is not MISSING:
-            payload['description'] = description
+            payload["description"] = description
 
         if emoji is not MISSING:
             try:
@@ -483,11 +487,13 @@ class GuildSticker(Sticker):
             except TypeError:
                 pass
             else:
-                emoji = emoji.replace(' ', '_')
+                emoji = emoji.replace(" ", "_")
 
-            payload['tags'] = emoji
+            payload["tags"] = emoji
 
-        data: GuildStickerPayload = await self._state.http.modify_guild_sticker(self.guild_id, self.id, payload, reason)
+        data: GuildStickerPayload = await self._state.http.modify_guild_sticker(
+            self.guild_id, self.id, payload, reason
+        )
         return GuildSticker(state=self._state, data=data)
 
     async def delete(self, *, reason: Optional[str] = None) -> None:
@@ -499,21 +505,23 @@ class GuildSticker(Sticker):
         do this.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this sticker. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You are not allowed to delete stickers.
         HTTPException
             An error occurred deleting the sticker.
         """
-        await self._state.http.delete_guild_sticker(self.guild_id, self.id, reason)
+        await self._state.http.delete_guild_sticker(self.guild_id, self.id, reason=reason)
 
 
-def _sticker_factory(sticker_type: Literal[1, 2]) -> Tuple[Type[Union[StandardSticker, GuildSticker, Sticker]], StickerType]:
+def _sticker_factory(
+    sticker_type: Literal[1, 2]
+) -> Tuple[Type[Union[StandardSticker, GuildSticker, Sticker]], StickerType]:
     value = try_enum(StickerType, sticker_type)
     if value == StickerType.standard:
         return StandardSticker, value

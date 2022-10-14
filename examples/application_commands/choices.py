@@ -4,7 +4,7 @@ from nextcord.ext import commands
 
 TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 
-bot = commands.Bot(command_prefix="$")
+bot = commands.Bot()
 
 
 @bot.slash_command(guild_ids=[TESTING_GUILD_ID])
@@ -24,9 +24,7 @@ async def hi(
     interaction: Interaction,
     member: nextcord.Member = SlashOption(name="user", description="User to say hi to"),
 ):
-    await interaction.response.send_message(
-        f"{interaction.user} just said hi to {member.mention}"
-    )
+    await interaction.response.send_message(f"{interaction.user} just said hi to {member.mention}")
 
 
 bot.run("token")

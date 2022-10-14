@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -25,20 +26,20 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import Literal, Optional, TypedDict, Union
+
+from typing_extensions import NotRequired
+
 from .snowflake import Snowflake
 from .user import User
 
 
-class _IntegrationApplicationOptional(TypedDict, total=False):
-    bot: User
-
-
-class IntegrationApplication(_IntegrationApplicationOptional):
+class IntegrationApplication(TypedDict):
     id: Snowflake
     name: str
     icon: Optional[str]
     description: str
     summary: str
+    bot: NotRequired[User]
 
 
 class IntegrationAccount(TypedDict):
@@ -56,7 +57,7 @@ class PartialIntegration(TypedDict):
     account: IntegrationAccount
 
 
-IntegrationType = Literal['twitch', 'youtube', 'discord']
+IntegrationType = Literal["twitch", "youtube", "discord"]
 
 
 class BaseIntegration(PartialIntegration):

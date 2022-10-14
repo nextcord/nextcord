@@ -25,12 +25,10 @@ from __future__ import annotations
 
 import inspect
 import re
-
-from typing import Any, Dict, Generic, List, Optional, TYPE_CHECKING, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, TypeVar, Union
 
 import nextcord.abc
 import nextcord.utils
-
 from nextcord.message import Message
 
 if TYPE_CHECKING:
@@ -43,27 +41,25 @@ if TYPE_CHECKING:
     from nextcord.user import ClientUser, User
     from nextcord.voice_client import VoiceProtocol
 
-    from .bot import Bot, AutoShardedBot
+    from .bot import AutoShardedBot, Bot
     from .cog import Cog
     from .core import Command
     from .help import HelpCommand
     from .view import StringView
 
-__all__ = (
-    'Context',
-)
+__all__ = ("Context",)
 
 MISSING: Any = nextcord.utils.MISSING
 
 
-T = TypeVar('T')
-BotT = TypeVar('BotT', bound="Union[Bot, AutoShardedBot]")
-CogT = TypeVar('CogT', bound="Cog")
+T = TypeVar("T")
+BotT = TypeVar("BotT", bound="Union[Bot, AutoShardedBot]")
+CogT = TypeVar("CogT", bound="Cog")
 
 if TYPE_CHECKING:
-    P = ParamSpec('P')
+    P = ParamSpec("P")
 else:
-    P = TypeVar('P')
+    P = TypeVar("P")
 
 
 class Context(nextcord.abc.Messageable, Generic[BotT]):
@@ -76,7 +72,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
     This class implements the :class:`~nextcord.abc.Messageable` ABC.
 
     Attributes
-    -----------
+    ----------
     message: :class:`.Message`
         The message that triggered the command being executed.
     bot: :class:`.Bot`
@@ -122,7 +118,8 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         or invoked.
     """
 
-    def __init__(self,
+    def __init__(
+        self,
         *,
         message: Message,
         bot: BotT,
@@ -171,7 +168,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             using this function.
 
         Parameters
-        -----------
+        ----------
         command: :class:`.Command`
             The command that is going to be called.
         \*args
@@ -180,7 +177,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             The keyword arguments to use.
 
         Raises
-        -------
+        ------
         TypeError
             The command argument to invoke is missing.
         """
@@ -203,7 +200,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             fail again.
 
         Parameters
-        ------------
+        ----------
         call_hooks: :class:`bool`
             Whether to call the before and after invoke hooks.
         restart: :class:`bool`
@@ -212,14 +209,14 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             The default is to start where we left off.
 
         Raises
-        -------
+        ------
         ValueError
             The context to reinvoke is not valid.
         """
         cmd = self.command
         view = self.view
         if cmd is None:
-            raise ValueError('This context is not valid.')
+            raise ValueError("This context is not valid.")
 
         # some state to revert to when we're done
         index, previous = view.index, view.previous
@@ -230,10 +227,10 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
 
         if restart:
             to_call = cmd.root_parent or cmd
-            view.index = len(self.prefix or '')
+            view.index = len(self.prefix or "")
             view.previous = 0
             self.invoked_parents = []
-            self.invoked_with = view.get_word() # advance to get the root command
+            self.invoked_with = view.get_word()  # advance to get the root command
         else:
             to_call = cmd
 
@@ -263,7 +260,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         .. versionadded:: 2.0
         """
         if self.prefix is None:
-            return ''
+            return ""
 
         user = self.me
         # this breaks if the prefix mention is not the bot itself but I
@@ -271,7 +268,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         # for this common use case rather than waste performance for the
         # odd one.
         pattern = re.compile(r"<@!?%s>" % user.id)
-        return pattern.sub("@%s" % user.display_name.replace('\\', r'\\'), self.prefix)
+        return pattern.sub("@%s" % user.display_name.replace("\\", r"\\"), self.prefix)
 
     @property
     def cog(self) -> Optional[Cog]:
@@ -335,16 +332,16 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             this returns :class:`None` on bad input or no help command.
 
         Parameters
-        ------------
+        ----------
         entity: Optional[Union[:class:`Command`, :class:`Cog`, :class:`str`]]
             The entity to show help for.
 
         Returns
-        --------
+        -------
         Any
             The result of the help command, if any.
         """
-        from .core import Group, Command, wrap_callback
+        from .core import Command, Group, wrap_callback
         from .errors import CommandError
 
         bot = self.bot
@@ -381,7 +378,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         await cmd.prepare_help_command(self, entity.qualified_name)
 
         try:
-            if hasattr(entity, '__cog_commands__'):
+            if hasattr(entity, "__cog_commands__"):
                 injected = wrap_callback(cmd.send_cog_help)
                 return await injected(entity)
             elif isinstance(entity, Group):

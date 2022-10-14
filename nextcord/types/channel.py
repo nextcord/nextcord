@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -23,10 +24,12 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from typing import List, Literal, Optional, TypedDict, Union
-from .user import PartialUser
-from .snowflake import Snowflake
-from .threads import ThreadMetadata, ThreadMember, ThreadArchiveDuration
 
+from typing_extensions import NotRequired
+
+from .snowflake import Snowflake
+from .threads import ThreadArchiveDuration, ThreadMember, ThreadMetadata
+from .user import PartialUser
 
 OverwriteType = Literal[0, 1]
 
@@ -58,60 +61,57 @@ class PartialChannel(_BaseChannel):
     type: ChannelType
 
 
-class _TextChannelOptional(TypedDict, total=False):
-    topic: str
-    last_message_id: Optional[Snowflake]
-    last_pin_timestamp: str
-    rate_limit_per_user: int
-    default_auto_archive_duration: ThreadArchiveDuration
-
-
-class TextChannel(_BaseGuildChannel, _TextChannelOptional):
+class TextChannel(_BaseGuildChannel):
     type: Literal[0]
+    topic: NotRequired[str]
+    last_message_id: NotRequired[Optional[Snowflake]]
+    last_pin_timestamp: NotRequired[str]
+    rate_limit_per_user: NotRequired[int]
+    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
 
 
-class NewsChannel(_BaseGuildChannel, _TextChannelOptional):
+class ForumChannel(_BaseGuildChannel):
+    type: Literal[15]
+    topic: NotRequired[str]
+    last_message_id: NotRequired[Optional[Snowflake]]
+    rate_limit_per_user: NotRequired[int]
+    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
+
+
+class NewsChannel(_BaseGuildChannel):
     type: Literal[5]
+    topic: NotRequired[str]
+    last_message_id: NotRequired[Optional[Snowflake]]
+    last_pin_timestamp: NotRequired[str]
+    rate_limit_per_user: NotRequired[int]
+    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
 
 
 VideoQualityMode = Literal[1, 2]
 
 
-class _VoiceChannelOptional(TypedDict, total=False):
-    rtc_region: Optional[str]
-    video_quality_mode: VideoQualityMode
-
-
-class VoiceChannel(_BaseGuildChannel, _VoiceChannelOptional):
+class VoiceChannel(_BaseGuildChannel):
     type: Literal[2]
     bitrate: int
     user_limit: int
+    last_message_id: NotRequired[Optional[Snowflake]]
+    rtc_region: NotRequired[Optional[str]]
+    video_quality_mode: NotRequired[VideoQualityMode]
 
 
 class CategoryChannel(_BaseGuildChannel):
     type: Literal[4]
 
 
-class _StageChannelOptional(TypedDict, total=False):
-    rtc_region: Optional[str]
-    topic: str
-
-
-class StageChannel(_BaseGuildChannel, _StageChannelOptional):
+class StageChannel(_BaseGuildChannel):
     type: Literal[13]
     bitrate: int
     user_limit: int
+    rtc_region: NotRequired[Optional[str]]
+    topic: NotRequired[str]
 
 
-class _ThreadChannelOptional(TypedDict, total=False):
-    member: ThreadMember
-    owner_id: Snowflake
-    rate_limit_per_user: int
-    last_message_id: Optional[Snowflake]
-    last_pin_timestamp: str
-
-
-class ThreadChannel(_BaseChannel, _ThreadChannelOptional):
+class ThreadChannel(_BaseChannel):
     type: Literal[10, 11, 12]
     guild_id: Snowflake
     parent_id: Snowflake
@@ -122,9 +122,19 @@ class ThreadChannel(_BaseChannel, _ThreadChannelOptional):
     message_count: int
     member_count: int
     thread_metadata: ThreadMetadata
+    member: NotRequired[ThreadMember]
+    last_pin_timestamp: NotRequired[str]
 
 
-GuildChannel = Union[TextChannel, NewsChannel, VoiceChannel, CategoryChannel, StageChannel, ThreadChannel]
+GuildChannel = Union[
+    TextChannel,
+    ForumChannel,
+    NewsChannel,
+    VoiceChannel,
+    CategoryChannel,
+    StageChannel,
+    ThreadChannel,
+]
 
 
 class DMChannel(_BaseChannel):

@@ -24,14 +24,10 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, SupportsInt, Union
+
 from . import utils
 from .mixins import Hashable
-
-from typing import (
-    SupportsInt,
-    TYPE_CHECKING,
-    Union,
-)
 
 if TYPE_CHECKING:
     import datetime
@@ -70,7 +66,7 @@ class Object(Hashable):
             Returns the object's hash.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The ID of the object.
     """
@@ -79,7 +75,9 @@ class Object(Hashable):
         try:
             id = int(id)
         except ValueError:
-            raise TypeError(f"id parameter must be convertable to int not {id.__class__!r}") from None
+            raise TypeError(
+                f"id parameter must be convertable to int not {id.__class__!r}"
+            ) from None
         else:
             self.id = id
 

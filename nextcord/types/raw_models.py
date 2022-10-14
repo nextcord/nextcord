@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -22,81 +23,68 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import TypedDict, List
-from .snowflake import Snowflake
-from .member import Member
+from typing import List, TypedDict
+
+from typing_extensions import NotRequired
+
 from .emoji import PartialEmoji
+from .member import Member
+from .snowflake import Snowflake
 from .user import User
 
 
-class _MessageEventOptional(TypedDict, total=False):
-    guild_id: Snowflake
-
-
-class MessageDeleteEvent(_MessageEventOptional):
+class MessageDeleteEvent(TypedDict):
     id: Snowflake
     channel_id: Snowflake
+    guild_id: NotRequired[Snowflake]
 
 
-class BulkMessageDeleteEvent(_MessageEventOptional):
+class BulkMessageDeleteEvent(TypedDict):
     ids: List[Snowflake]
     channel_id: Snowflake
+    guild_id: NotRequired[Snowflake]
 
 
-class _ReactionActionEventOptional(TypedDict, total=False):
-    guild_id: Snowflake
-    member: Member
-
-
-class MessageUpdateEvent(_MessageEventOptional):
+class MessageUpdateEvent(TypedDict):
     id: Snowflake
     channel_id: Snowflake
+    guild_id: NotRequired[Snowflake]
 
 
-class ReactionActionEvent(_ReactionActionEventOptional):
+class ReactionActionEvent(TypedDict):
     user_id: Snowflake
     channel_id: Snowflake
     message_id: Snowflake
     emoji: PartialEmoji
+    guild_id: NotRequired[Snowflake]
+    member: NotRequired[Member]
 
 
-class _ReactionClearEventOptional(TypedDict, total=False):
-    guild_id: Snowflake
-
-
-class ReactionClearEvent(_ReactionClearEventOptional):
+class ReactionClearEvent(TypedDict):
     channel_id: Snowflake
     message_id: Snowflake
+    guild_id: NotRequired[Snowflake]
 
 
-class _ReactionClearEmojiEventOptional(TypedDict, total=False):
-    guild_id: Snowflake
-
-
-class ReactionClearEmojiEvent(_ReactionClearEmojiEventOptional):
+class ReactionClearEmojiEvent(TypedDict):
     channel_id: int
     message_id: int
     emoji: PartialEmoji
+    guild_id: NotRequired[Snowflake]
 
 
-class _IntegrationDeleteEventOptional(TypedDict, total=False):
-    application_id: Snowflake
-
-
-class IntegrationDeleteEvent(_IntegrationDeleteEventOptional):
+class IntegrationDeleteEvent(TypedDict):
     id: Snowflake
     guild_id: Snowflake
+    application_id: NotRequired[Snowflake]
 
 
-class _TypingEventOptional(TypedDict, total=False):
-    guild_id: Snowflake
-    member: Member
-
-
-class TypingEvent(_TypingEventOptional):
+class TypingEvent(TypedDict):
     channel_id: Snowflake
     user_id: Snowflake
     timestamp: int
+    guild_id: NotRequired[Snowflake]
+    member: NotRequired[Member]
 
 
 class MemberRemoveEvent(TypedDict):

@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -24,19 +25,20 @@ DEALINGS IN THE SOFTWARE.
 
 from typing import List, Literal, TypedDict
 
-class _EmbedFooterOptional(TypedDict, total=False):
-    icon_url: str
-    proxy_icon_url: str
+from typing_extensions import NotRequired
 
-class EmbedFooter(_EmbedFooterOptional):
+
+class EmbedFooter(TypedDict):
     text: str
+    icon_url: NotRequired[str]
+    proxy_icon_url: NotRequired[str]
 
-class _EmbedFieldOptional(TypedDict, total=False):
-    inline: bool
 
-class EmbedField(_EmbedFieldOptional):
+class EmbedField(TypedDict):
     name: str
     value: str
+    inline: NotRequired[bool]
+
 
 class EmbedThumbnail(TypedDict, total=False):
     url: str
@@ -44,11 +46,13 @@ class EmbedThumbnail(TypedDict, total=False):
     height: int
     width: int
 
+
 class EmbedVideo(TypedDict, total=False):
     url: str
     proxy_url: str
     height: int
     width: int
+
 
 class EmbedImage(TypedDict, total=False):
     url: str
@@ -56,9 +60,11 @@ class EmbedImage(TypedDict, total=False):
     height: int
     width: int
 
+
 class EmbedProvider(TypedDict, total=False):
     name: str
     url: str
+
 
 class EmbedAuthor(TypedDict, total=False):
     name: str
@@ -66,7 +72,9 @@ class EmbedAuthor(TypedDict, total=False):
     icon_url: str
     proxy_icon_url: str
 
-EmbedType = Literal['rich', 'image', 'video', 'gifv', 'article', 'link']
+
+EmbedType = Literal["rich", "image", "video", "gifv", "article", "link"]
+
 
 class Embed(TypedDict, total=False):
     title: str

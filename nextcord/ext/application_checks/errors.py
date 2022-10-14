@@ -21,20 +21,14 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
+
+from nextcord.abc import GuildChannel
+from nextcord.channel import PartialMessageable
 from nextcord.errors import ApplicationCheckFailure
 from nextcord.interactions import Interaction
-from typing import (
-    Any,
-    Callable,
-    List,
-    Optional,
-    TYPE_CHECKING,
-    Union,
-)
-
-from nextcord.types.snowflake import Snowflake, SnowflakeList
-from nextcord.abc import GuildChannel
 from nextcord.threads import Thread
+from nextcord.types.snowflake import Snowflake, SnowflakeList
 
 __all__ = (
     "ApplicationCheckAnyFailure",
@@ -58,7 +52,7 @@ class ApplicationCheckAnyFailure(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`.
 
     Attributes
-    ------------
+    ----------
     errors: List[:class:`~.ApplicationCheckFailure`]
         A list of errors that were caught during execution.
     checks: List[Callable[[:class:`~.Interaction`], :class:`bool`]]
@@ -94,7 +88,7 @@ class ApplicationMissingRole(ApplicationCheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
         This is the parameter passed to :func:`~.application_checks.has_role`.
@@ -113,7 +107,7 @@ class ApplicationMissingAnyRole(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the invoker is missing.
         These are the parameters passed to :func:`has_any_role`.
@@ -141,7 +135,7 @@ class ApplicationBotMissingRole(ApplicationCheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
         This is the parameter passed to :func:`has_role`.
@@ -162,7 +156,7 @@ class ApplicationBotMissingAnyRole(ApplicationCheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the bot's member is missing.
         These are the parameters passed to :func:`has_any_role`.
@@ -190,7 +184,7 @@ class ApplicationMissingPermissions(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_permissions: List[:class:`str`]
         The required permissions that are missing.
     """
@@ -218,7 +212,7 @@ class ApplicationBotMissingPermissions(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_permissions: List[:class:`str`]
         The required permissions that are missing.
     """
@@ -247,9 +241,7 @@ class ApplicationPrivateMessageOnly(ApplicationCheckFailure):
     """
 
     def __init__(self, message: Optional[str] = None) -> None:
-        super().__init__(
-            message or "This command can only be used in private messages."
-        )
+        super().__init__(message or "This command can only be used in private messages.")
 
 
 class ApplicationNotOwner(ApplicationCheckFailure):
@@ -267,16 +259,14 @@ class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`.
 
     Parameters
-    -----------
-    channel: Union[:class:`.abc.GuildChannel`, :class:`.Thread`]
+    ----------
+    channel: Optional[Union[:class:`.abc.GuildChannel`, :class:`.Thread`, :class:`PartialMessageable`]]
         The channel that does not have NSFW enabled.
     """
 
-    def __init__(self, channel: Union[GuildChannel, Thread]) -> None:
-        self.channel: Union[GuildChannel, Thread] = channel
-        super().__init__(
-            f"Channel '{channel}' needs to be NSFW for this command to work."
-        )
+    def __init__(self, channel: Optional[Union[GuildChannel, Thread, PartialMessageable]]) -> None:
+        self.channel = channel
+        super().__init__(f"Channel '{channel}' needs to be NSFW for this command to work.")
 
 
 class ApplicationCheckForBotOnly(ApplicationCheckFailure):
@@ -286,6 +276,4 @@ class ApplicationCheckForBotOnly(ApplicationCheckFailure):
     """
 
     def __init__(self) -> None:
-        super().__init__(
-            "This application check can only be used for ext.commands.Bot."
-        )
+        super().__init__("This application check can only be used for ext.commands.Bot.")

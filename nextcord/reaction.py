@@ -23,20 +23,20 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, Union, Optional
+
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from .iterators import ReactionIterator
 
-__all__ = (
-    'Reaction',
-)
+__all__ = ("Reaction",)
 
 if TYPE_CHECKING:
-    from .types.message import Reaction as ReactionPayload
+    from .abc import Snowflake
+    from .emoji import Emoji
     from .message import Message
     from .partial_emoji import PartialEmoji
-    from .emoji import Emoji
-    from .abc import Snowflake
+    from .types.message import Reaction as ReactionPayload
+
 
 class Reaction:
     """Represents a reaction to a message.
@@ -65,7 +65,7 @@ class Reaction:
             Returns the string form of the reaction's emoji.
 
     Attributes
-    -----------
+    ----------
     emoji: Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]
         The reaction emoji. May be a custom emoji, or a unicode emoji.
     count: :class:`int`
@@ -75,13 +75,22 @@ class Reaction:
     message: :class:`Message`
         Message this reaction is for.
     """
-    __slots__ = ('message', 'count', 'emoji', 'me')
 
-    def __init__(self, *, message: Message, data: ReactionPayload, emoji: Optional[Union[PartialEmoji, Emoji, str]] = None):
+    __slots__ = ("message", "count", "emoji", "me")
+
+    def __init__(
+        self,
+        *,
+        message: Message,
+        data: ReactionPayload,
+        emoji: Optional[Union[PartialEmoji, Emoji, str]] = None,
+    ):
         self.message: Message = message
-        self.emoji: Union[PartialEmoji, Emoji, str] = emoji or message._state.get_reaction_emoji(data['emoji'])
-        self.count: int = data.get('count', 1)
-        self.me: bool = data.get('me')
+        self.emoji: Union[PartialEmoji, Emoji, str] = emoji or message._state.get_reaction_emoji(
+            data["emoji"]
+        )
+        self.count: int = data.get("count", 1)
+        self.me: bool = data.get("me")
 
     # TODO: typeguard
     def is_custom_emoji(self) -> bool:
@@ -103,7 +112,7 @@ class Reaction:
         return str(self.emoji)
 
     def __repr__(self) -> str:
-        return f'<Reaction emoji={self.emoji!r} me={self.me} count={self.count}>'
+        return f"<Reaction emoji={self.emoji!r} me={self.me} count={self.count}>"
 
     async def remove(self, user: Snowflake) -> None:
         """|coro|
@@ -117,12 +126,12 @@ class Reaction:
         the :class:`abc.Snowflake` abc.
 
         Parameters
-        -----------
+        ----------
         user: :class:`abc.Snowflake`
              The user or member from which to remove the reaction.
 
         Raises
-        -------
+        ------
         HTTPException
             Removing the reaction failed.
         Forbidden
@@ -143,7 +152,7 @@ class Reaction:
         .. versionadded:: 1.3
 
         Raises
-        --------
+        ------
         HTTPException
             Clearing the reaction failed.
         Forbidden
@@ -155,14 +164,16 @@ class Reaction:
         """
         await self.message.clear_reaction(self.emoji)
 
-    def users(self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None) -> ReactionIterator:
+    def users(
+        self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
+    ) -> ReactionIterator:
         """Returns an :class:`AsyncIterator` representing the users that have reacted to the message.
 
         The ``after`` parameter must represent a member
         and meet the :class:`abc.Snowflake` abc.
 
         Examples
-        ---------
+        --------
 
         Usage ::
 
@@ -178,7 +189,7 @@ class Reaction:
             await channel.send(f'{winner} has won the raffle.')
 
         Parameters
-        ------------
+        ----------
         limit: Optional[:class:`int`]
             The maximum number of results to return.
             If not provided, returns all the users who
@@ -187,12 +198,12 @@ class Reaction:
             For pagination, reactions are sorted by member.
 
         Raises
-        --------
+        ------
         HTTPException
             Getting the users for the reaction failed.
 
         Yields
-        --------
+        ------
         Union[:class:`User`, :class:`Member`]
             The member (if retrievable) or the user that has reacted
             to this message. The case where it can be a :class:`Member` is
@@ -201,7 +212,7 @@ class Reaction:
         """
 
         if not isinstance(self.emoji, str):
-            emoji = f'{self.emoji.name}:{self.emoji.id}'
+            emoji = f"{self.emoji.name}:{self.emoji.id}"
         else:
             emoji = self.emoji
 

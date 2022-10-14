@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -24,16 +25,18 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TypedDict, List, Optional
+from typing import List, Optional, TypedDict
 
-from .user import PartialUser
 from .snowflake import Snowflake
+from .user import PartialUser
+
 
 class TeamMember(TypedDict):
     user: PartialUser
     membership_state: int
     permissions: List[str]
     team_id: Snowflake
+
 
 class Team(TypedDict):
     id: Snowflake
