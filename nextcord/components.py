@@ -230,6 +230,8 @@ class SelectMenu(Component):
         A list of options that can be selected in this menu.
     disabled: :class:`bool`
         Whether the select is disabled or not.
+    channel_types: List[:class:`ChannelType`]
+        A list of channel types that are allowed to be chosen in this select menu.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -239,6 +241,7 @@ class SelectMenu(Component):
         'max_values',
         'options',
         'disabled',
+        'channel_types'
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
@@ -258,12 +261,17 @@ class SelectMenu(Component):
             'custom_id': self.custom_id,
             'min_values': self.min_values,
             'max_values': self.max_values,
-            'options': [op.to_dict() for op in self.options],
             'disabled': self.disabled,
         }
 
         if self.placeholder:
             payload['placeholder'] = self.placeholder
+            
+        if hasattr(self, 'channel_types'):
+            payload['channel_types'] = [channel_type.value for channel_type in self.channel_types]
+            
+        if hasattr(self, 'options'):
+            payload['options'] = [op.to_dict() for op in self.options]
 
         return payload
 
