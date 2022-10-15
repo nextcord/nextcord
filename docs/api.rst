@@ -1598,7 +1598,6 @@ of :class:`enum.Enum`.
     .. attribute:: select
 
         Represents a select component.
-
     .. attribute:: text_input
 
         Represents a text input component.
