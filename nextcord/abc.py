@@ -235,6 +235,7 @@ class GuildChannel:
     - :class:`~nextcord.VoiceChannel`
     - :class:`~nextcord.CategoryChannel`
     - :class:`~nextcord.StageChannel`
+    - :class:`~nextcord.ForumChannel`
 
     This ABC must also implement :class:`~nextcord.abc.Snowflake`.
 
