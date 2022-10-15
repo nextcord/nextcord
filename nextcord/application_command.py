@@ -1669,10 +1669,7 @@ class SlashCommandMixin(CallbackMixin):
 
             ``.children`` is now a read-only property.
         """
-        if self._children is not None:
-            return self._children
-        else:
-            return {}
+        return self._children
 
     @property
     def description(self) -> str:
