@@ -205,7 +205,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
     ):
         self.message: Message = message
         self.limit: int = limit
-        self.after: Union[Snowflake, None] = after
+        self.after: Optional[Snowflake] = after
         self.state: ConnectionState = message._state
         self.emoji: str = emoji
         self.guild: Optional[Guild] = message.guild
