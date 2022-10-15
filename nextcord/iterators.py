@@ -33,11 +33,12 @@ from typing import (
     AsyncIterator,
     Awaitable,
     Callable,
-    Dict,
+    Generic,
     List,
     Optional,
     TypeVar,
     Union,
+    cast,
 )
 
 from .audit_logs import AuditLogEntry
@@ -126,8 +127,8 @@ class _AsyncIterator(AsyncIterator[T]):
             raise ValueError("Async iterator chunk sizes must be greater than 0")
         return _ChunkedAsyncIterator(self, max_size)
 
-    def map(self, func: _Func[T, OT]) -> _MappedAsyncIterator[OT]:
-        return _MappedAsyncIterator(self, func)  # type: ignore
+    def map(self, func: _Func[T, OT]) -> _MappedAsyncIterator[T, OT]:
+        return _MappedAsyncIterator(self, func)
 
     def filter(self, predicate: _Func[T, bool]) -> _FilteredAsyncIterator[T]:
         return _FilteredAsyncIterator(self, predicate)
@@ -167,12 +168,12 @@ class _ChunkedAsyncIterator(_AsyncIterator[List[T]]):
         return ret
 
 
-class _MappedAsyncIterator(_AsyncIterator[T]):
-    def __init__(self, iterator: _AsyncIterator[T], func: _Func[T, T]) -> None:
+class _MappedAsyncIterator(Generic[T, OT], _AsyncIterator[T]):
+    def __init__(self, iterator: _AsyncIterator[T], func: _Func[T, OT]) -> None:
         self.iterator: _AsyncIterator[T] = iterator
-        self.func: Callable[[T], Union[Any, Awaitable[Any]]] = func
+        self.func: _Func[T, Any] = func
 
-    async def next(self) -> T:
+    async def next(self) -> OT:
         # this raises NoMoreItems and will propagate appropriately
         item = await self.iterator.next()
         return await maybe_coroutine(self.func, item)
@@ -228,9 +229,13 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
             retrieve = self.limit if self.limit <= 100 else 100
 
             after = self.after.id if self.after else None
-            data: List[PartialUserPayload] = await self.state.http.get_reaction_users(
-                self.channel_id, self.message.id, self.emoji, retrieve, after=after  # type: ignore
+            data: List[PartialUserPayload] = cast(
+                List[PartialUserPayload],
+                await self.state.http.get_reaction_users(
+                    self.channel_id, self.message.id, self.emoji, retrieve, after=after
+                ),
             )
+            # cast needed here because of list's invariance
 
             if data:
                 self.limit -= retrieve
