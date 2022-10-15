@@ -1372,50 +1372,50 @@ class Messageable:
         state = self._state
         content = str(content) if content is not None else None
 
-        embed_data: Optional[EmbedData] = None
-        embeds_data: Optional[List[EmbedData]] = None
-        stickers_data: Optional[List[int]] = None
-        reference_data: Optional[MessageReferencePayloadT] = None
-        allowed_mentions_data: Optional[AllowedMentionsT] = None
+        embed_payload: Optional[EmbedData] = None
+        embeds_payload: Optional[List[EmbedData]] = None
+        stickers_payload: Optional[List[int]] = None
+        reference_payload: Optional[MessageReferencePayload] = None
+        allowed_mentions_payload: Optional[AllowedMentionsPayload] = None
 
         if embed is not None and embeds is not None:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
         if embed is not None:
-            embed_data = embed.to_dict()
+            embed_payload = embed.to_dict()
 
         elif embeds is not None:
-            embeds_data = [em.to_dict() for em in embeds]
+            embeds_payload = [em.to_dict() for em in embeds]
 
         if stickers is not None:
-            stickers_data = [sticker.id for sticker in stickers]
+            stickers_payload = [sticker.id for sticker in stickers]
 
         if allowed_mentions is not None:
             if state.allowed_mentions is not None:
-                allowed_mentions_data = state.allowed_mentions.merge(allowed_mentions).to_dict()
+                allowed_mentions_payload = state.allowed_mentions.merge(allowed_mentions).to_dict()
             else:
-                allowed_mentions_data = allowed_mentions.to_dict()
+                allowed_mentions_payload = allowed_mentions.to_dict()
         else:
-            allowed_mentions_data = state.allowed_mentions and state.allowed_mentions.to_dict()
+            allowed_mentions_payload = state.allowed_mentions and state.allowed_mentions.to_dict()
 
         if mention_author is not None:
-            allowed_mentions_data = allowed_mentions_data or AllowedMentions().to_dict()
-            allowed_mentions_data["replied_user"] = bool(mention_author)
+            allowed_mentions_payload = allowed_mentions_payload or AllowedMentions().to_dict()
+            allowed_mentions_payload["replied_user"] = bool(mention_author)
 
         if reference is not None:
             try:
-                reference_data = reference.to_message_reference_dict()
+                reference_payload = reference.to_message_reference_dict()
             except AttributeError:
                 raise InvalidArgument(
                     "reference parameter must be Message, MessageReference, or PartialMessage"
                 ) from None
 
-        components: Optional[List[ComponentT]] = None
+        components: Optional[List[ComponentPayload]] = None
         if view:
             if not hasattr(view, "__discord_ui_view__"):
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
-            components = cast(List[ComponentT], view.to_components())
+            components = cast(List[ComponentPayload], view.to_components())
 
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
@@ -1428,14 +1428,14 @@ class Messageable:
                 data = await state.http.send_files(
                     channel.id,
                     files=[file],
-                    allowed_mentions=allowed_mentions_data,
+                    allowed_mentions=allowed_mentions_payload,
                     content=content,
                     tts=tts,
-                    embed=embed_data,
-                    embeds=embeds_data,
+                    embed=embed_payload,
+                    embeds=embeds_payload,
                     nonce=nonce,
-                    message_reference=reference_data,
-                    stickers=stickers_data,
+                    message_reference=reference_payload,
+                    stickers=stickers_payload,
                     components=components,
                 )
             finally:
@@ -1451,12 +1451,12 @@ class Messageable:
                     files=files,
                     content=content,
                     tts=tts,
-                    embed=embed_data,
-                    embeds=embeds_data,
+                    embed=embed_payload,
+                    embeds=embeds_payload,
                     nonce=nonce,
-                    allowed_mentions=allowed_mentions_data,
-                    message_reference=reference_data,
-                    stickers=stickers_data,
+                    allowed_mentions=allowed_mentions_payload,
+                    message_reference=reference_payload,
+                    stickers=stickers_payload,
                     components=components,
                 )
             finally:
@@ -1467,12 +1467,12 @@ class Messageable:
                 channel.id,
                 content,
                 tts=tts,
-                embed=embed_data,
-                embeds=embeds_data,
+                embed=embed_payload,
+                embeds=embeds_payload,
                 nonce=nonce,
-                allowed_mentions=allowed_mentions_data,
-                message_reference=reference_data,
-                stickers=stickers_data,
+                allowed_mentions=allowed_mentions_payload,
+                message_reference=reference_payload,
+                stickers=stickers_payload,
                 components=components,
             )
 
