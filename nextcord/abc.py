@@ -87,10 +87,10 @@ if TYPE_CHECKING:
         OverwriteType,
         PermissionOverwrite as PermissionOverwritePayload,
     )
-    from .types.components import Component as ComponentT
+    from .types.components import Component as ComponentPayload
     from .types.message import (
-        AllowedMentions as AllowedMentionsT,
-        MessageReference as MessageReferencePayloadT,
+        AllowedMentions as AllowedMentionsPayload,
+        MessageReference as MessageReferencePayload,
     )
     from .ui.view import View
     from .user import ClientUser
