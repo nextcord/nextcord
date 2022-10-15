@@ -51,7 +51,7 @@ class ChannelSelect(Select):
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`ChannelSelect.values`., :meth:`ChannelSelect.get_channels` 
+    use :attr:`ChannelSelect.values`., :meth:`ChannelSelect.get_channels`
     or :meth:`ChannelSelect.fetch_channels`.
 
     .. versionadded:: 2.3
@@ -205,9 +205,9 @@ def channel_select(
     the :class:`nextcord.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`ChannelSelect.values`., :attr:`ChannelSelect.get_channels` 
+    use :attr:`ChannelSelect.values`., :attr:`ChannelSelect.get_channels`
     or :attr:`ChannelSelect.fetch_channels`.
-    
+
     .. versionadded:: 2.3
 
     Parameters

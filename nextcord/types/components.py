@@ -77,8 +77,8 @@ class UserSelectMenu(TypedDict):
     min_values: NotRequired[int]
     max_values: NotRequired[int]
     disabled: NotRequired[bool]
-    
-    
+
+
 class RoleSelectMenu(TypedDict):
     type: Literal[6]
     custom_id: str
@@ -86,8 +86,8 @@ class RoleSelectMenu(TypedDict):
     min_values: NotRequired[int]
     max_values: NotRequired[int]
     disabled: NotRequired[bool]
-    
-    
+
+
 class MentionableSelectMenu(TypedDict):
     type: Literal[7]
     custom_id: str
@@ -95,8 +95,8 @@ class MentionableSelectMenu(TypedDict):
     min_values: NotRequired[int]
     max_values: NotRequired[int]
     disabled: NotRequired[bool]
-    
-    
+
+
 class ChannelSelectMenu(TypedDict):
     type: Literal[8]
     custom_id: str

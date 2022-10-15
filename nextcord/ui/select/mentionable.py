@@ -50,7 +50,7 @@ class MentionableSelect(Select):
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`MentionableSelect.values`., :meth:`MentionableSelect.get_mentionables` 
+    use :attr:`MentionableSelect.values`., :meth:`MentionableSelect.get_mentionables`
     or :meth:`MentionableSelect.fetch_mentionables`.
 
     .. versionadded:: 2.3
@@ -196,7 +196,7 @@ def mentionable_select(
     the :class:`nextcord.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`MentionableSelect.values`., :attr:`MentionableSelect.get_mentionables` 
+    use :attr:`MentionableSelect.values`., :attr:`MentionableSelect.get_mentionables`
     or :attr:`MentionableSelect.fetch_mentionables`.
 
     .. versionadded:: 2.3

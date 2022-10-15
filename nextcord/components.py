@@ -36,14 +36,14 @@ if TYPE_CHECKING:
     from .types.components import (
         ActionRow as ActionRowPayload,
         ButtonComponent as ButtonComponentPayload,
-        Component as ComponentPayload,
-        SelectMenu as SelectMenuPayload,
-        UserSelectMenu as UserSelectMenuPayload,
-        RoleSelectMenu as RoleSelectMenuPayload,
-        MentionableSelectMenu as MentionableSelectMenuPayload,
         ChannelSelectMenu as ChannelSelectMenuPayload,
+        Component as ComponentPayload,
+        MentionableSelectMenu as MentionableSelectMenuPayload,
+        RoleSelectMenu as RoleSelectMenuPayload,
+        SelectMenu as SelectMenuPayload,
         SelectOption as SelectOptionPayload,
         TextInputComponent as TextInputComponentPayload,
+        UserSelectMenu as UserSelectMenuPayload,
     )
 
 
@@ -282,8 +282,8 @@ class SelectMenu(Component):
             payload["options"] = [op.to_dict() for op in self.options]
 
         return payload
-    
-    
+
+
 class UserSelectMenu(Component):
     """Represents a user select menu from the Discord Bot UI Kit.
 
@@ -344,8 +344,8 @@ class UserSelectMenu(Component):
             payload["placeholder"] = self.placeholder
 
         return payload
-    
-    
+
+
 class RoleSelectMenu(Component):
     """Represents a role select menu from the Discord Bot UI Kit.
 
@@ -468,8 +468,8 @@ class MentionableSelectMenu(Component):
             payload["placeholder"] = self.placeholder
 
         return payload
-    
-    
+
+
 class ChannelSelectMenu(Component):
     """Represents a mentionable select menu from the Discord Bot UI Kit.
 
@@ -537,7 +537,7 @@ class ChannelSelectMenu(Component):
             payload["channel_types"] = [t.value for t in self.channel_types]
 
         return payload
-    
+
 
 class SelectOption:
     """Represents a select menu's option.

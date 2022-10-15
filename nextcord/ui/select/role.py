@@ -161,7 +161,7 @@ class RoleSelect(Select):
                     roles.append(role)
                     break
         return roles
-    
+
     def to_component_dict(self) -> RoleSelectMenuPayload:
         return self._underlying.to_dict()
 

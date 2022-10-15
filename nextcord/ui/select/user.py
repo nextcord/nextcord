@@ -28,7 +28,7 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional
 
-from ...components import UserSelectMenu, SelectOption
+from ...components import SelectOption, UserSelectMenu
 from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
@@ -160,7 +160,7 @@ class UserSelect(Select):
                 member = await guild.fetch_member(id)
             members.append(member)
         return members
-    
+
     def to_component_dict(self) -> UserSelectMenuPayload:
         return self._underlying.to_dict()
 
