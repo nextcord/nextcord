@@ -1,7 +1,6 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
 Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,7 +28,7 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
-from ...components import SelectMenu, SelectOption
+from ...components import ChannelSelectMenu, SelectOption
 from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
@@ -40,6 +39,7 @@ if TYPE_CHECKING:
     from ...enums import ChannelType
     from ...guild import Guild
     from ...threads import Thread
+    from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
 
 __all__ = ("ChannelSelect", "channel_select")
 
@@ -51,12 +51,13 @@ class ChannelSelect(Select):
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`Select.values`., :meth:`Select.get_channels` or :meth:`Select.fetch_channels`.
+    use :attr:`ChannelSelect.values`., :meth:`ChannelSelect.get_channels` 
+    or :meth:`ChannelSelect.fetch_channels`.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.3
 
     Parameters
-    ------------
+    ----------
     custom_id: :class:`str`
         The ID of the select menu that gets received during an interaction.
         If not given then one is generated for you.
@@ -98,7 +99,7 @@ class ChannelSelect(Select):
         kwargs = {}
         if channel_types is not MISSING:
             kwargs["channel_types"] = channel_types
-        self._underlying = SelectMenu._raw_construct(
+        self._underlying = ChannelSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.channel_select,
             placeholder=placeholder,
@@ -112,7 +113,8 @@ class ChannelSelect(Select):
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since channel selects cannot have any options."""
+        This will always be an empty list since channel selects cannot have any options.
+        """
         return []
 
     @property
@@ -182,6 +184,9 @@ class ChannelSelect(Select):
                 channels.append(channel)
         return channels
 
+    def to_component_dict(self) -> ChannelSelectMenuPayload:
+        return self._underlying.to_dict()
+
 
 def channel_select(
     *,
@@ -200,10 +205,13 @@ def channel_select(
     the :class:`nextcord.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`Select.values`., :attr:`Select.get_channels` or :attr:`Select.fetch_channels`.
+    use :attr:`ChannelSelect.values`., :attr:`ChannelSelect.get_channels` 
+    or :attr:`ChannelSelect.fetch_channels`.
+    
+    .. versionadded:: 2.3
 
     Parameters
-    ------------
+    ----------
     placeholder: Optional[:class:`str`]
         The placeholder text that is shown if nothing is selected, if any.
     custom_id: :class:`str`

@@ -61,9 +61,45 @@ class SelectOption(TypedDict):
 
 
 class SelectMenu(TypedDict):
-    type: Literal[3, 5, 6, 7, 8]
+    type: Literal[3]
     custom_id: str
-    options: NotRequired[List[SelectOption]]
+    options: List[SelectOption]
+    placeholder: NotRequired[str]
+    min_values: NotRequired[int]
+    max_values: NotRequired[int]
+    disabled: NotRequired[bool]
+
+
+class UserSelectMenu(TypedDict):
+    type: Literal[5]
+    custom_id: str
+    placeholder: NotRequired[str]
+    min_values: NotRequired[int]
+    max_values: NotRequired[int]
+    disabled: NotRequired[bool]
+    
+    
+class RoleSelectMenu(TypedDict):
+    type: Literal[6]
+    custom_id: str
+    placeholder: NotRequired[str]
+    min_values: NotRequired[int]
+    max_values: NotRequired[int]
+    disabled: NotRequired[bool]
+    
+    
+class MentionableSelectMenu(TypedDict):
+    type: Literal[7]
+    custom_id: str
+    placeholder: NotRequired[str]
+    min_values: NotRequired[int]
+    max_values: NotRequired[int]
+    disabled: NotRequired[bool]
+    
+    
+class ChannelSelectMenu(TypedDict):
+    type: Literal[8]
+    custom_id: str
     placeholder: NotRequired[str]
     min_values: NotRequired[int]
     max_values: NotRequired[int]

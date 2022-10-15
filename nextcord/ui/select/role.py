@@ -1,7 +1,6 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
 Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,7 +28,7 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional
 
-from ...components import SelectMenu, SelectOption
+from ...components import RoleSelectMenu, SelectOption
 from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
@@ -38,6 +37,7 @@ from .string import Select
 if TYPE_CHECKING:
     from ...guild import Guild
     from ...role import Role
+    from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
 
 __all__ = ("RoleSelect", "role_select")
 
@@ -49,9 +49,9 @@ class RoleSelect(Select):
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`Select.values`., :meth:`Select.get_roles` or :meth:`Select.fetch_roles`.
+    use :attr:`RoleSelect.values`., :meth:`RoleSelect.get_roles` or :meth:`RoleSelect.fetch_roles`.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.3
 
     Parameters
     ------------
@@ -90,7 +90,7 @@ class RoleSelect(Select):
         self._selected_values: List[str] = []
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
-        self._underlying = SelectMenu._raw_construct(
+        self._underlying = RoleSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.role_select,
             placeholder=placeholder,
@@ -103,7 +103,8 @@ class RoleSelect(Select):
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since role selects cannot have any options."""
+        This will always be an empty list since role selects cannot have any options.
+        """
         return []
 
     @property
@@ -160,6 +161,9 @@ class RoleSelect(Select):
                     roles.append(role)
                     break
         return roles
+    
+    def to_component_dict(self) -> RoleSelectMenuPayload:
+        return self._underlying.to_dict()
 
 
 def role_select(
@@ -178,10 +182,12 @@ def role_select(
     the :class:`nextcord.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`Select.values`., :attr:`Select.get_roles` or :attr:`Select.fetch_roles`.
+    use :attr:`RoleSelect.values`., :attr:`RoleSelect.get_roles` or :attr:`RoleSelect.fetch_roles`.
+
+    .. versionadded:: 2.3
 
     Parameters
-    ------------
+    ----------
     placeholder: Optional[:class:`str`]
         The placeholder text that is shown if nothing is selected, if any.
     custom_id: :class:`str`

@@ -1,7 +1,6 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
 Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,7 +28,7 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
-from ...components import SelectMenu, SelectOption
+from ...components import MentionableSelectMenu, SelectOption
 from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
@@ -39,6 +38,7 @@ if TYPE_CHECKING:
     from ...guild import Guild
     from ...member import Member
     from ...role import Role
+    from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
 
 __all__ = ("MentionableSelect", "mentionable_select")
 
@@ -50,9 +50,10 @@ class MentionableSelect(Select):
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`Select.values`., :meth:`Select.get_mentionables` or :meth:`Select.fetch_mentionables`.
+    use :attr:`MentionableSelect.values`., :meth:`MentionableSelect.get_mentionables` 
+    or :meth:`MentionableSelect.fetch_mentionables`.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.3
 
     Parameters
     ------------
@@ -91,7 +92,7 @@ class MentionableSelect(Select):
         self._selected_values: List[str] = []
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
-        self._underlying = SelectMenu._raw_construct(
+        self._underlying = MentionableSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.mentionable_select,
             placeholder=placeholder,
@@ -104,7 +105,8 @@ class MentionableSelect(Select):
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since mentionable selects cannot have any options."""
+        This will always be an empty list since mentionable selects cannot have any options.
+        """
         return []
 
     @property
@@ -174,6 +176,9 @@ class MentionableSelect(Select):
             mentionables.append(mentionable)
         return mentionables
 
+    def to_component_dict(self) -> MentionableSelectMenuPayload:
+        return self._underlying.to_dict()
+
 
 def mentionable_select(
     *,
@@ -191,7 +196,10 @@ def mentionable_select(
     the :class:`nextcord.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`Select.values`., :attr:`Select.get_mentionables` or :attr:`Select.fetch_mentionables`.
+    use :attr:`MentionableSelect.values`., :attr:`MentionableSelect.get_mentionables` 
+    or :attr:`MentionableSelect.fetch_mentionables`.
+
+    .. versionadded:: 2.3
 
     Parameters
     ------------

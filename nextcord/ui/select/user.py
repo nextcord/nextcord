@@ -1,7 +1,6 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
 Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,7 +28,7 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional
 
-from ...components import SelectMenu, SelectOption
+from ...components import UserSelectMenu, SelectOption
 from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
@@ -38,6 +37,7 @@ from .string import Select
 if TYPE_CHECKING:
     from ...guild import Guild
     from ...member import Member
+    from ...types.components import UserSelectMenu as UserSelectMenuPayload
 
 __all__ = ("UserSelect", "user_select")
 
@@ -49,12 +49,12 @@ class UserSelect(Select):
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`Select.values`., :meth:`Select.get_members` or :meth:`Select.fetch_members`.
+    use :attr:`UserSelect.values`., :meth:`UserSelect.get_members` or :meth:`UserSelect.fetch_members`.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.3
 
     Parameters
-    ------------
+    ----------
     custom_id: :class:`str`
         The ID of the select menu that gets received during an interaction.
         If not given then one is generated for you.
@@ -90,7 +90,7 @@ class UserSelect(Select):
         self._selected_values: List[str] = []
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
-        self._underlying = SelectMenu._raw_construct(
+        self._underlying = UserSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.user_select,
             placeholder=placeholder,
@@ -103,7 +103,8 @@ class UserSelect(Select):
     @property
     def options(self) -> List[SelectOption]:
         """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since user selects cannot have any options."""
+        This will always be an empty list since user selects cannot have any options.
+        """
         return []
 
     @property
@@ -159,6 +160,9 @@ class UserSelect(Select):
                 member = await guild.fetch_member(id)
             members.append(member)
         return members
+    
+    def to_component_dict(self) -> UserSelectMenuPayload:
+        return self._underlying.to_dict()
 
 
 def user_select(
@@ -177,10 +181,12 @@ def user_select(
     the :class:`nextcord.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`Select.values`., :attr:`Select.get_members` or :attr:`Select.fetch_members`.
+    use :attr:`UserSelect.values`., :attr:`UserSelect.get_members` or :attr:`UserSelect.fetch_members`.
+
+    .. versionadded:: 2.3
 
     Parameters
-    ------------
+    ----------
     placeholder: Optional[:class:`str`]
         The placeholder text that is shown if nothing is selected, if any.
     custom_id: :class:`str`

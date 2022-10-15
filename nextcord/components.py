@@ -38,6 +38,10 @@ if TYPE_CHECKING:
         ButtonComponent as ButtonComponentPayload,
         Component as ComponentPayload,
         SelectMenu as SelectMenuPayload,
+        UserSelectMenu as UserSelectMenuPayload,
+        RoleSelectMenu as RoleSelectMenuPayload,
+        MentionableSelectMenu as MentionableSelectMenuPayload,
+        ChannelSelectMenu as ChannelSelectMenuPayload,
         SelectOption as SelectOptionPayload,
         TextInputComponent as TextInputComponentPayload,
     )
@@ -243,7 +247,6 @@ class SelectMenu(Component):
         "max_values",
         "options",
         "disabled",
-        "channel_types",
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
@@ -258,9 +261,6 @@ class SelectMenu(Component):
             SelectOption.from_dict(option) for option in data.get("options", [])
         ]
         self.disabled: bool = data.get("disabled", False)
-        self.channel_types: List[ChannelType] = [
-            ChannelType(t) for t in data.get("channel_types", [])
-        ]
 
     def to_dict(self) -> SelectMenuPayload:
         payload: SelectMenuPayload = {
@@ -268,21 +268,276 @@ class SelectMenu(Component):
             "custom_id": self.custom_id,
             "min_values": self.min_values,
             "max_values": self.max_values,
-            "options": [op.to_dict() for op in self.options],
+            "disabled": self.disabled,
+            "options": [option.to_dict() for option in self.options],
+        }
+
+        if self.placeholder:
+            payload["placeholder"] = self.placeholder
+
+        # if self.channel_types:
+        #     payload["channel_types"] = [channel_type.value for channel_type in self.channel_types]
+
+        if self.options:
+            payload["options"] = [op.to_dict() for op in self.options]
+
+        return payload
+    
+    
+class UserSelectMenu(Component):
+    """Represents a user select menu from the Discord Bot UI Kit.
+
+    A user select menu is functionally the same as a dropdown, however
+    on mobile it renders a bit differently.
+
+    .. note::
+
+        The user constructible and usable type to create a select menu is
+        :class:`nextcord.ui.Select` not this one.
+
+    .. versionadded:: 2.0
+
+    Attributes
+    ----------
+    custom_id: Optional[:class:`str`]
+        The ID of the select menu that gets received during an interaction.
+    placeholder: Optional[:class:`str`]
+        The placeholder text that is shown if nothing is selected, if any.
+    min_values: :class:`int`
+        The minimum number of items that must be chosen for this select menu.
+        Defaults to 1 and must be between 1 and 25.
+    max_values: :class:`int`
+        The maximum number of items that must be chosen for this select menu.
+        Defaults to 1 and must be between 1 and 25.
+    disabled: :class:`bool`
+        Whether the select is disabled or not.
+    """
+
+    __slots__: Tuple[str, ...] = (
+        "custom_id",
+        "placeholder",
+        "min_values",
+        "max_values",
+        "disabled",
+    )
+
+    __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    def __init__(self, data: UserSelectMenuPayload):
+        self.type = ComponentType.select
+        self.custom_id: str = data["custom_id"]
+        self.placeholder: Optional[str] = data.get("placeholder")
+        self.min_values: int = data.get("min_values", 1)
+        self.max_values: int = data.get("max_values", 1)
+        self.disabled: bool = data.get("disabled", False)
+
+    def to_dict(self) -> UserSelectMenuPayload:
+        payload: UserSelectMenuPayload = {
+            "type": self.type.value,
+            "custom_id": self.custom_id,
+            "min_values": self.min_values,
+            "max_values": self.max_values,
             "disabled": self.disabled,
         }
 
         if self.placeholder:
             payload["placeholder"] = self.placeholder
 
-        if hasattr(self, "channel_types"):
-            payload["channel_types"] = [channel_type.value for channel_type in self.channel_types]
+        return payload
+    
+    
+class RoleSelectMenu(Component):
+    """Represents a role select menu from the Discord Bot UI Kit.
 
-        if hasattr(self, "options"):
-            payload["options"] = [op.to_dict() for op in self.options]
+    A role select menu is functionally the same as a dropdown, however
+    on mobile it renders a bit differently.
+
+    .. note::
+
+        The user constructible and usable type to create a select menu is
+        :class:`nextcord.ui.Select` not this one.
+
+    .. versionadded:: 2.0
+
+    Attributes
+    ----------
+    custom_id: Optional[:class:`str`]
+        The ID of the select menu that gets received during an interaction.
+    placeholder: Optional[:class:`str`]
+        The placeholder text that is shown if nothing is selected, if any.
+    min_values: :class:`int`
+        The minimum number of items that must be chosen for this select menu.
+        Defaults to 1 and must be between 1 and 25.
+    max_values: :class:`int`
+        The maximum number of items that must be chosen for this select menu.
+        Defaults to 1 and must be between 1 and 25.
+    disabled: :class:`bool`
+        Whether the select is disabled or not.
+    """
+
+    __slots__: Tuple[str, ...] = (
+        "custom_id",
+        "placeholder",
+        "min_values",
+        "max_values",
+        "disabled",
+    )
+
+    __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    def __init__(self, data: RoleSelectMenuPayload):
+        self.type = ComponentType.select
+        self.custom_id: str = data["custom_id"]
+        self.placeholder: Optional[str] = data.get("placeholder")
+        self.min_values: int = data.get("min_values", 1)
+        self.max_values: int = data.get("max_values", 1)
+        self.disabled: bool = data.get("disabled", False)
+
+    def to_dict(self) -> RoleSelectMenuPayload:
+        payload: RoleSelectMenuPayload = {
+            "type": self.type.value,
+            "custom_id": self.custom_id,
+            "min_values": self.min_values,
+            "max_values": self.max_values,
+            "disabled": self.disabled,
+        }
+
+        if self.placeholder:
+            payload["placeholder"] = self.placeholder
 
         return payload
 
+
+class MentionableSelectMenu(Component):
+    """Represents a mentionable select menu from the Discord Bot UI Kit.
+
+    A mentionable select menu is functionally the same as a dropdown, however
+    on mobile it renders a bit differently.
+
+    .. note::
+
+        The user constructible and usable type to create a select menu is
+        :class:`nextcord.ui.Select` not this one.
+
+    .. versionadded:: 2.0
+
+    Attributes
+    ----------
+    custom_id: Optional[:class:`str`]
+        The ID of the select menu that gets received during an interaction.
+    placeholder: Optional[:class:`str`]
+        The placeholder text that is shown if nothing is selected, if any.
+    min_values: :class:`int`
+        The minimum number of items that must be chosen for this select menu.
+        Defaults to 1 and must be between 1 and 25.
+    max_values: :class:`int`
+        The maximum number of items that must be chosen for this select menu.
+        Defaults to 1 and must be between 1 and 25.
+    disabled: :class:`bool`
+        Whether the select is disabled or not.
+    """
+
+    __slots__: Tuple[str, ...] = (
+        "custom_id",
+        "placeholder",
+        "min_values",
+        "max_values",
+        "disabled",
+    )
+
+    __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    def __init__(self, data: MentionableSelectMenuPayload):
+        self.type = ComponentType.select
+        self.custom_id: str = data["custom_id"]
+        self.placeholder: Optional[str] = data.get("placeholder")
+        self.min_values: int = data.get("min_values", 1)
+        self.max_values: int = data.get("max_values", 1)
+        self.disabled: bool = data.get("disabled", False)
+
+    def to_dict(self) -> MentionableSelectMenuPayload:
+        payload: MentionableSelectMenuPayload = {
+            "type": self.type.value,
+            "custom_id": self.custom_id,
+            "min_values": self.min_values,
+            "max_values": self.max_values,
+            "disabled": self.disabled,
+        }
+
+        if self.placeholder:
+            payload["placeholder"] = self.placeholder
+
+        return payload
+    
+    
+class ChannelSelectMenu(Component):
+    """Represents a mentionable select menu from the Discord Bot UI Kit.
+
+    A mentionable select menu is functionally the same as a dropdown, however
+    on mobile it renders a bit differently.
+
+    .. note::
+
+        The user constructible and usable type to create a select menu is
+        :class:`nextcord.ui.Select` not this one.
+
+    .. versionadded:: 2.0
+
+    Attributes
+    ----------
+    custom_id: Optional[:class:`str`]
+        The ID of the select menu that gets received during an interaction.
+    placeholder: Optional[:class:`str`]
+        The placeholder text that is shown if nothing is selected, if any.
+    min_values: :class:`int`
+        The minimum number of items that must be chosen for this select menu.
+        Defaults to 1 and must be between 1 and 25.
+    max_values: :class:`int`
+        The maximum number of items that must be chosen for this select menu.
+        Defaults to 1 and must be between 1 and 25.
+    disabled: :class:`bool`
+        Whether the select is disabled or not.
+    """
+
+    __slots__: Tuple[str, ...] = (
+        "custom_id",
+        "placeholder",
+        "min_values",
+        "max_values",
+        "disabled",
+        "channel_types",
+    )
+
+    __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    def __init__(self, data: ChannelSelectMenuPayload):
+        self.type = ComponentType.select
+        self.custom_id: str = data["custom_id"]
+        self.placeholder: Optional[str] = data.get("placeholder")
+        self.min_values: int = data.get("min_values", 1)
+        self.max_values: int = data.get("max_values", 1)
+        self.disabled: bool = data.get("disabled", False)
+        self.channel_types: List[ChannelType] = [
+            ChannelType(t) for t in data.get("channel_types", [])
+        ]
+
+    def to_dict(self) -> ChannelSelectMenuPayload:
+        payload: ChannelSelectMenuPayload = {
+            "type": self.type.value,
+            "custom_id": self.custom_id,
+            "min_values": self.min_values,
+            "max_values": self.max_values,
+            "disabled": self.disabled,
+        }
+
+        if self.placeholder:
+            payload["placeholder"] = self.placeholder
+
+        if self.channel_types:
+            payload["channel_types"] = [t.value for t in self.channel_types]
+
+        return payload
+    
 
 class SelectOption:
     """Represents a select menu's option.
