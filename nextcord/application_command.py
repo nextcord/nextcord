@@ -1653,12 +1653,25 @@ class SlashCommandMixin(CallbackMixin):
         _description: Optional[str]
         command_ids: Dict[Optional[int], int]
         qualified_name: str
+        _children: Dict[str, SlashApplicationSubcommand]
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]):
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
         self.options: Dict[str, SlashCommandOption] = {}
-        self.children: Dict[str, SlashApplicationSubcommand] = {}
         self._parsed_docstring: Optional[Dict[str, Any]] = None
+
+    @property
+    def children(self) -> Dict[str, SlashApplicationSubcommand]:
+        """Returns the sub-commands and sub-command groups of the command.
+        
+        .. versionupdated:: 2.3
+
+            ``.children`` is now a read-only property.
+        """
+        if self._children is not None:
+            return self._children
+        else:
+            return {}
 
     @property
     def description(self) -> str:
@@ -2416,7 +2429,6 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self._inherit_hooks: bool = inherit_hooks
 
         self.options: Dict[str, SlashCommandOption] = {}
-        self.children: Dict[str, SlashApplicationSubcommand] = {}
 
     @property
     def qualified_name(self) -> str:
