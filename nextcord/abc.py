@@ -43,7 +43,6 @@ from typing import (
     runtime_checkable,
 )
 
-from . import utils
 from .context_managers import Typing
 from .enums import ChannelType
 from .errors import ClientException, InvalidArgument
@@ -55,6 +54,7 @@ from .mentions import AllowedMentions
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
 from .sticker import GuildSticker, StickerItem
+from .utils import MISSING, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
 
 __all__ = (
@@ -98,16 +98,6 @@ if TYPE_CHECKING:
     PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
-
-MISSING = utils.MISSING
-
-
-class _Undefined:
-    def __repr__(self) -> str:
-        return "see-below"
-
-
-_undefined: Any = _Undefined()
 
 
 @runtime_checkable
@@ -318,7 +308,7 @@ class GuildChannel:
         payload = []
         for index, c in enumerate(channels):
             d: Dict[str, Any] = {"id": c.id, "position": index}
-            if parent_id is not _undefined and c.id == self.id:
+            if parent_id is not MISSING and c.id == self.id:
                 d.update(parent_id=parent_id, lock_permissions=lock_permissions)
             payload.append(d)
 
@@ -330,7 +320,7 @@ class GuildChannel:
         try:
             parent = options.pop("category")
         except KeyError:
-            parent_id = _undefined
+            parent_id = MISSING
         else:
             parent_id = parent and parent.id
 
@@ -358,7 +348,7 @@ class GuildChannel:
         try:
             position = options.pop("position")
         except KeyError:
-            if parent_id is not _undefined:
+            if parent_id is not MISSING:
                 if lock_permissions:
                     category = self.guild.get_channel(parent_id)
                     if category:
@@ -462,7 +452,7 @@ class GuildChannel:
     @property
     def created_at(self) -> datetime:
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return snowflake_time(self.id)
 
     def overwrites_for(self, obj: Union[Role, User]) -> PermissionOverwrite:
         """Returns the channel-specific overwrites for a member or a role.
@@ -633,7 +623,7 @@ class GuildChannel:
             if obj.is_default():
                 return base
 
-            overwrite = utils.get(self._overwrites, type=_Overwrites.ROLE, id=obj.id)
+            overwrite = get(self._overwrites, type=_Overwrites.ROLE, id=obj.id)
             if overwrite is not None:
                 base.handle_overwrite(overwrite.allow, overwrite.deny)
 
@@ -725,7 +715,7 @@ class GuildChannel:
         self,
         target: Union[Member, Role],
         *,
-        overwrite: Optional[Union[PermissionOverwrite, _Undefined]] = ...,
+        overwrite: Optional[PermissionOverwrite] = ...,
         reason: Optional[str] = ...,
     ) -> None:
         ...
@@ -740,7 +730,7 @@ class GuildChannel:
     ) -> None:
         ...
 
-    async def set_permissions(self, target, *, overwrite=_undefined, reason=None, **permissions):
+    async def set_permissions(self, target, *, overwrite=MISSING, reason=None, **permissions):
         r"""|coro|
 
         Sets the channel specific permission overwrites for a target in the
@@ -818,7 +808,7 @@ class GuildChannel:
         else:
             raise InvalidArgument("target parameter must be either Member or Role")
 
-        if overwrite is _undefined:
+        if overwrite is MISSING:
             if len(permissions) == 0:
                 raise InvalidArgument("No overwrite provided.")
             try:
