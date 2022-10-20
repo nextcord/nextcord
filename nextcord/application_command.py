@@ -95,6 +95,7 @@ else:
 
 if sys.version_info[1] >= 10:
     from types import UnionType
+
     # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
 else:
     UnionType = None
