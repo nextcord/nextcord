@@ -1416,7 +1416,7 @@ class Client:
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|
 
-        Gets a :class:`.Template` from a nextcord.new URL or code.
+        Gets a :class:`.Template` from a discord.new URL or code.
 
         Parameters
         ----------
