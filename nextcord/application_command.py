@@ -93,7 +93,7 @@ if TYPE_CHECKING:
 else:
     _CustomTypingMetaBase = object
 
-if sys.version_info[1] >= 10:
+if sys.version_info >= (3, 10):
     from types import UnionType
 
     # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
