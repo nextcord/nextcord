@@ -1421,7 +1421,7 @@ class Client:
         Parameters
         ----------
         code: Union[:class:`.Template`, :class:`str`]
-            The Discord Template Code or URL (must be a nextcord.new URL).
+            The Discord Template Code or URL (must be a discord.new URL).
 
         Raises
         ------
