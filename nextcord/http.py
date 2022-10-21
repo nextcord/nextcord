@@ -335,12 +335,8 @@ class HTTPClient:
                         # check if we have rate limit header information
                         is_global = bool(response.headers.get("X-RateLimit-Global", False))
 
-                        if is_global:
-                            limit = response.headers.get("X-RateLimit-Limit", "")
-                            remaining = response.headers.get("X-Ratelimit-Remaining", "")
-                        else:
-                            limit = response.headers["X-RateLimit-Limit"]
-                            remaining = response.headers["X-RateLimit-Remaining"]
+                        limit = response.headers.get("X-RateLimit-Limit", "")
+                        remaining = response.headers.get("X-Ratelimit-Remaining", "")
 
                         bucket = response.headers.get("X-RateLimit-Bucket")
                         if remaining == "0" and response.status != 429:
