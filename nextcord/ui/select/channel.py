@@ -164,9 +164,6 @@ class ChannelSelect(Select):
         self._selected_values: List[str] = []
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
-        kwargs = {}
-        if channel_types is not MISSING:
-            kwargs["channel_types"] = channel_types
         self._underlying = ChannelSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.channel_select,
@@ -174,7 +171,7 @@ class ChannelSelect(Select):
             min_values=min_values,
             max_values=max_values,
             disabled=disabled,
-            **kwargs,
+            channel_types=channel_types,
         )
         self.row = row
 

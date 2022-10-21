@@ -290,7 +290,7 @@ class UserSelectMenu(Component):
     .. note::
 
         The user constructible and usable type to create a select menu is
-        :class:`nextcord.ui.Select` not this one.
+        :class:`nextcord.ui.UserSelect` not this one.
 
     .. versionadded:: 2.3
 
@@ -352,7 +352,7 @@ class RoleSelectMenu(Component):
     .. note::
 
         The user constructible and usable type to create a select menu is
-        :class:`nextcord.ui.Select` not this one.
+        :class:`nextcord.ui.RoleSelect` not this one.
 
     .. versionadded:: 2.3
 
@@ -414,7 +414,7 @@ class MentionableSelectMenu(Component):
     .. note::
 
         The user constructible and usable type to create a select menu is
-        :class:`nextcord.ui.Select` not this one.
+        :class:`nextcord.ui.MentionableSelect` not this one.
 
     .. versionadded:: 2.3
 
@@ -476,7 +476,7 @@ class ChannelSelectMenu(Component):
     .. note::
 
         The user constructible and usable type to create a select menu is
-        :class:`nextcord.ui.Select` not this one.
+        :class:`nextcord.ui.ChannelSelect` not this one.
 
     .. versionadded:: 2.3
 
