@@ -60,33 +60,50 @@ class SelectOption(TypedDict):
     emoji: NotRequired[PartialEmoji]
 
 
-class BaseSelectMenu(TypedDict):
+class SelectMenu(TypedDict):
+    type: Literal[3]
     custom_id: str
-    disabled: NotRequired[bool]
+    options: List[SelectOption]
     placeholder: NotRequired[str]
     min_values: NotRequired[int]
     max_values: NotRequired[int]
+    disabled: NotRequired[bool]
 
 
-class SelectMenu(BaseSelectMenu):
-    type: Literal[3]
-    options: List[SelectOption]
-
-
-class UserSelectMenu(BaseSelectMenu):
+class UserSelectMenu(TypedDict):
     type: Literal[5]
+    custom_id: str
+    placeholder: NotRequired[str]
+    min_values: NotRequired[int]
+    max_values: NotRequired[int]
+    disabled: NotRequired[bool]
 
 
-class RoleSelectMenu(BaseSelectMenu):
+class RoleSelectMenu(TypedDict):
     type: Literal[6]
+    custom_id: str
+    placeholder: NotRequired[str]
+    min_values: NotRequired[int]
+    max_values: NotRequired[int]
+    disabled: NotRequired[bool]
 
 
-class MentionableSelectMenu(BaseSelectMenu):
+class MentionableSelectMenu(TypedDict):
     type: Literal[7]
+    custom_id: str
+    placeholder: NotRequired[str]
+    min_values: NotRequired[int]
+    max_values: NotRequired[int]
+    disabled: NotRequired[bool]
 
 
 class ChannelSelectMenu(TypedDict):
     type: Literal[8]
+    custom_id: str
+    placeholder: NotRequired[str]
+    min_values: NotRequired[int]
+    max_values: NotRequired[int]
+    disabled: NotRequired[bool]
     channel_types: NotRequired[List[ChannelType]]
 
 
