@@ -125,7 +125,8 @@ class UserSelect(Select):
         Returns
         -------
         List[:class:`nextcord.Member`]
-            A list of members that were found."""
+            A list of members that were found.
+        """
         members: List[Member] = []
         for id in self.values:
             member = guild.get_member(id)
