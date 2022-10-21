@@ -113,7 +113,7 @@ class UserSelect(Select):
 
     def get_members(self, guild: Guild) -> List[Member]:
         """A shortcut for getting all :class:`nextcord.Member`'s of :attr:`.values`.
-        
+
         Users that are not found in cache will not be returned.
         To get all members regardless of whether they are in cache or not, use :meth:`.fetch_members`.
 
@@ -135,7 +135,7 @@ class UserSelect(Select):
 
     async def fetch_members(self, guild: Guild) -> List[Member]:
         """A shortcut for fetching all :class:`nextcord.Member`'s of :attr:`.values`.
-        
+
         Users that are not found in cache will be fetched.
 
         Parameters

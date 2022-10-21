@@ -124,7 +124,7 @@ class ChannelSelect(Select):
 
     def get_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
         """A shortcut for getting all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
-        
+
         Channels that are not found in cache will not be returned.
         To get all channels regardless of whether they are in cache or not, use :meth:`.fetch_channels`.
 
@@ -147,7 +147,7 @@ class ChannelSelect(Select):
 
     async def fetch_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
         """A shortcut for fetching all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
-        
+
         Channels that are not found in cache will be fetched.
 
         Parameters

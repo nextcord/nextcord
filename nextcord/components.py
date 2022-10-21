@@ -274,7 +274,7 @@ class SelectMenu(Component):
 
         if self.placeholder:
             payload["placeholder"] = self.placeholder
-            
+
         if self.options:
             payload["options"] = [op.to_dict() for op in self.options]
 
