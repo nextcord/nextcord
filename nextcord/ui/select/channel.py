@@ -25,8 +25,8 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from collections import UserList
 import os
+from collections import UserList
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 from ...components import ChannelSelectMenu, SelectOption

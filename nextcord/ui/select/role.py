@@ -25,8 +25,8 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from collections import UserList
 import os
+from collections import UserList
 from typing import TYPE_CHECKING, Callable, List, Optional
 
 from ...components import RoleSelectMenu, SelectOption
@@ -45,7 +45,7 @@ __all__ = ("RoleSelect", "role_select")
 
 class RoleSelectValues(UserList):
     """Represents the values of a :class:`RoleSelect`."""
-    
+
     def get(self, guild: Guild) -> List[Role]:
         """A shortcut for getting all :class:`nextcord.Role`'s of :attr:`.values`.
 

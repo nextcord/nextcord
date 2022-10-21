@@ -25,8 +25,8 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from collections import UserList
 import os
+from collections import UserList
 from typing import TYPE_CHECKING, Callable, List, Optional
 
 from ...components import SelectOption, UserSelectMenu
@@ -45,7 +45,7 @@ __all__ = ("UserSelect", "user_select")
 
 class UserSelectValues(UserList):
     """Represents the values of a :class:`UserSelect`."""
-        
+
     def get(self, guild: Guild) -> List[Member]:
         """A shortcut for getting all :class:`nextcord.Member`'s of :attr:`.values`.
 
