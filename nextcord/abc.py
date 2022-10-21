@@ -629,6 +629,7 @@ class GuildChannel:
 
             return base
 
+        # Handle Member case
         roles = obj._roles
         get_role = self.guild.get_role
 
@@ -683,6 +684,13 @@ class GuildChannel:
         if not base.read_messages:
             denied = Permissions.all_channel()
             base.value &= ~denied.value
+
+        # if you are timed out then you lose all permissions except view_channel and read_message_history
+        if obj.communication_disabled_until != None:
+            denied = Permissions.none()
+            denied.view_channel = True
+            denied.read_message_history = True
+            base.value &= denied.value
 
         return base
 
