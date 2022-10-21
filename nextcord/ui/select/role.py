@@ -114,7 +114,7 @@ class RoleSelect(Select):
 
     def get_roles(self, guild: Guild) -> List[Role]:
         """A shortcut for getting all :class:`nextcord.Role`'s of :attr:`.values`.
-        
+
         Roles that are not found in cache will not be returned.
         To get all roles regardless of whether they are in cache or not, use :meth:`.fetch_roles`.
 
@@ -137,7 +137,7 @@ class RoleSelect(Select):
 
     async def fetch_roles(self, guild: Guild) -> List[Role]:
         """A shortcut for fetching all :class:`nextcord.Role`'s of :attr:`.values`.
-        
+
         Roles that are not found in cache will be fetched.
 
         Parameters
@@ -158,7 +158,7 @@ class RoleSelect(Select):
         roles: List[Role] = self.get_roles(guild)
         if len(roles) == len(self.values):
             return roles
-        
+
         guild_roles: List[Role] = await guild.fetch_roles()
         for id in self.values:
             role = get(guild_roles, id=id)

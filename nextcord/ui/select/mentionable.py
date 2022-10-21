@@ -116,7 +116,7 @@ class MentionableSelect(Select):
 
     def get_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
         """A shortcut for getting all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
-        
+
         Mentionables that are not found in cache will not be returned.
         To get all mentionables regardless of whether they are in cache or not, use :meth:`.fetch_mentionables`.
 
@@ -139,7 +139,7 @@ class MentionableSelect(Select):
 
     async def fetch_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
         """A shortcut for fetching all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
-        
+
         Mentionables that are not found in cache will be fetched.
 
         Parameters
@@ -162,7 +162,7 @@ class MentionableSelect(Select):
         mentionables = self.get_mentionables(guild)
         if len(mentionables) == len(self.values):
             return mentionables
-        
+
         mentionables: List[Union[Member, Role]] = []
         guild_roles = None
         for id in self.values:
