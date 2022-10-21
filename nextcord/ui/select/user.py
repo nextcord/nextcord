@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+from collections import UserList
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional
 
@@ -42,13 +43,70 @@ if TYPE_CHECKING:
 __all__ = ("UserSelect", "user_select")
 
 
+class UserSelectValues(UserList):
+    """Represents the values of a :class:`UserSelect`."""
+        
+    def get(self, guild: Guild) -> List[Member]:
+        """A shortcut for getting all :class:`nextcord.Member`'s of :attr:`.values`.
+
+        Users that are not found in cache will not be returned.
+        To get all members regardless of whether they are in cache or not, use :meth:`.fetch_members`.
+
+        Parameters
+        ----------
+        guild: :class:`nextcord.Guild`
+            The guild to get the members from.
+
+        Returns
+        -------
+        List[:class:`nextcord.Member`]
+            A list of members that were found.
+        """
+        members: List[Member] = []
+        for id in self.data:
+            member = guild.get_member(id)
+            if member is not None:
+                members.append(member)
+        return members
+
+    async def fetch(self, guild: Guild) -> List[Member]:
+        """A shortcut for fetching all :class:`nextcord.Member`'s of :attr:`.values`.
+
+        Users that are not found in cache will be fetched.
+
+        Parameters
+        ----------
+        guild: :class:`nextcord.Guild`
+            The guild to fetch the members from.
+
+        Raises
+        ------
+        :exc:`.Forbidden`
+            You do not have access to the guild.
+        :exc:`.HTTPException`
+            Fetching a member failed.
+
+        Returns
+        -------
+        List[:class:`nextcord.Member`]
+            A list of all members that have been selected.
+        """
+        members: List[Member] = []
+        for id in self.data:
+            member = guild.get_member(id)
+            if member is None:
+                member = await guild.fetch_member(id)
+            members.append(member)
+        return members
+
+
 class UserSelect(Select):
     """Represents a UI user select menu.
 
     This is usually represented as a drop down menu.
 
-    In order to get the selected items that the user has chosen,
-    use :attr:`UserSelect.values`., :meth:`UserSelect.get_members` or :meth:`UserSelect.fetch_members`.
+    In order to get the selected items that the user has chosen, use :attr:`UserSelect.values`,
+    :meth:`UserSelect.values.get` or :meth:`UserSelect.values.fetch`.
 
     .. versionadded:: 2.3
 
@@ -107,62 +165,9 @@ class UserSelect(Select):
         return []
 
     @property
-    def values(self) -> List[int]:
+    def values(self) -> UserSelectValues:
         """List[:class:`int`]: A list of user ids that have been selected by the user."""
-        return [int(id) for id in self._selected_values]
-
-    def get_members(self, guild: Guild) -> List[Member]:
-        """A shortcut for getting all :class:`nextcord.Member`'s of :attr:`.values`.
-
-        Users that are not found in cache will not be returned.
-        To get all members regardless of whether they are in cache or not, use :meth:`.fetch_members`.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the members from.
-
-        Returns
-        -------
-        List[:class:`nextcord.Member`]
-            A list of members that were found.
-        """
-        members: List[Member] = []
-        for id in self.values:
-            member = guild.get_member(id)
-            if member is not None:
-                members.append(member)
-        return members
-
-    async def fetch_members(self, guild: Guild) -> List[Member]:
-        """A shortcut for fetching all :class:`nextcord.Member`'s of :attr:`.values`.
-
-        Users that are not found in cache will be fetched.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to fetch the members from.
-
-        Raises
-        ------
-        :exc:`.Forbidden`
-            You do not have access to the guild.
-        :exc:`.HTTPException`
-            Fetching a member failed.
-
-        Returns
-        -------
-        List[:class:`nextcord.Member`]
-            A list of all members that have been selected.
-        """
-        members: List[Member] = []
-        for id in self.values:
-            member = guild.get_member(id)
-            if member is None:
-                member = await guild.fetch_member(id)
-            members.append(member)
-        return members
+        return UserSelectValues([int(id) for id in self._selected_values])
 
     def to_component_dict(self) -> UserSelectMenuPayload:
         return self._underlying.to_dict()

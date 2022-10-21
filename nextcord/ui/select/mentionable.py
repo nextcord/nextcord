@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+from collections import UserList
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
@@ -41,6 +42,70 @@ if TYPE_CHECKING:
     from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
 
 __all__ = ("MentionableSelect", "mentionable_select")
+
+
+class MentionableSelectValues(UserList):
+    """Represents the values of a :class:`MentionableSelect`."""
+
+    def get(self, guild: Guild) -> List[Union[Member, Role]]:
+        """A shortcut for getting all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
+
+        Mentionables that are not found in cache will not be returned.
+        To get all mentionables regardless of whether they are in cache or not, use :meth:`.fetch_mentionables`.
+
+        Parameters
+        ----------
+        guild: :class:`nextcord.Guild`
+            The guild to get the mentionables from.
+
+        Returns
+        -------
+        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
+            A list of mentionables that have been selected by the user.
+        """
+        mentionables: List[Union[Member, Role]] = []
+        for id in self.data:
+            mentionable = guild.get_member(id) or guild.get_role(id)
+            if mentionable:
+                mentionables.append(mentionable)
+        return mentionables
+
+    async def fetch(self, guild: Guild) -> List[Union[Member, Role]]:
+        """A shortcut for fetching all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
+
+        Mentionables that are not found in cache will be fetched.
+
+        Parameters
+        ----------
+        guild: :class:`nextcord.Guild`
+            The guild to get the mentionables from.
+
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Fetching the mentionables failed.
+        :exc:`.Forbidden`
+            You do not have the proper permissions to fetch the mentionables.
+
+        Returns
+        -------
+        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
+            A list of mentionables that have been selected by the user.
+        """
+        mentionables = self.get(guild)
+        if len(mentionables) == len(self.data):
+            return mentionables
+
+        mentionables: List[Union[Member, Role]] = []
+        guild_roles = None
+        for id in self.data:
+            mentionable = guild.get_member(id) or guild.get_role(id)
+            if not mentionable:
+                if not guild_roles:
+                    guild_roles = await guild.fetch_roles()
+                mentionable = get(guild_roles, id=id) or await guild.fetch_member(id)
+            mentionables.append(mentionable)
+        return mentionables
 
 
 class MentionableSelect(Select):
@@ -110,69 +175,9 @@ class MentionableSelect(Select):
         return []
 
     @property
-    def values(self) -> List[int]:
+    def values(self) -> MentionableSelectValues:
         """List[:class:`int`]: A list of mentionable ids that have been selected by the user."""
-        return [int(id) for id in self._selected_values]
-
-    def get_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
-        """A shortcut for getting all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
-
-        Mentionables that are not found in cache will not be returned.
-        To get all mentionables regardless of whether they are in cache or not, use :meth:`.fetch_mentionables`.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the mentionables from.
-
-        Returns
-        -------
-        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
-            A list of mentionables that have been selected by the user.
-        """
-        mentionables: List[Union[Member, Role]] = []
-        for id in self.values:
-            mentionable = guild.get_member(id) or guild.get_role(id)
-            if mentionable:
-                mentionables.append(mentionable)
-        return mentionables
-
-    async def fetch_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
-        """A shortcut for fetching all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
-
-        Mentionables that are not found in cache will be fetched.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the mentionables from.
-
-        Raises
-        ------
-        :exc:`.HTTPException`
-            Fetching the mentionables failed.
-        :exc:`.Forbidden`
-            You do not have the proper permissions to fetch the mentionables.
-
-        Returns
-        -------
-        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
-            A list of mentionables that have been selected by the user.
-        """
-        mentionables = self.get_mentionables(guild)
-        if len(mentionables) == len(self.values):
-            return mentionables
-
-        mentionables: List[Union[Member, Role]] = []
-        guild_roles = None
-        for id in self.values:
-            mentionable = guild.get_member(id) or guild.get_role(id)
-            if not mentionable:
-                if not guild_roles:
-                    guild_roles = await guild.fetch_roles()
-                mentionable = get(guild_roles, id=id) or await guild.fetch_member(id)
-            mentionables.append(mentionable)
-        return mentionables
+        return MentionableSelectValues([int(id) for id in self._selected_values])
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:
         return self._underlying.to_dict()

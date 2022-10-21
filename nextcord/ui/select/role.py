@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+from collections import UserList
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional
 
@@ -40,6 +41,64 @@ if TYPE_CHECKING:
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
 
 __all__ = ("RoleSelect", "role_select")
+
+
+class RoleSelectValues(UserList):
+    """Represents the values of a :class:`RoleSelect`."""
+    
+    def get(self, guild: Guild) -> List[Role]:
+        """A shortcut for getting all :class:`nextcord.Role`'s of :attr:`.values`.
+
+        Roles that are not found in cache will not be returned.
+        To get all roles regardless of whether they are in cache or not, use :meth:`.fetch_roles`.
+
+        Parameters
+        ----------
+        guild: :class:`nextcord.Guild`
+            The guild to get the roles from.
+
+        Returns
+        -------
+        List[:class:`nextcord.Role`]
+            A list of roles that were found.
+        """
+        roles: List[Role] = []
+        for id in self.data:
+            member = guild.get_role(id)
+            if member is not None:
+                roles.append(member)
+        return roles
+
+    async def fetch(self, guild: Guild) -> List[Role]:
+        """A shortcut for fetching all :class:`nextcord.Role`'s of :attr:`.values`.
+
+        Roles that are not found in cache will be fetched.
+
+        Parameters
+        ----------
+        guild: :class:`nextcord.Guild`
+            The guild to fetch the roles from.
+
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Retrieving the roles failed.
+
+        Returns
+        -------
+        List[:class:`nextcord.Role`]
+            A list of all roles that have been selected.
+        """
+        roles: List[Role] = self.get(guild)
+        if len(roles) == len(self.data):
+            return roles
+
+        guild_roles: List[Role] = await guild.fetch_roles()
+        for id in self.data:
+            role = get(guild_roles, id=id)
+            if role:
+                roles.append(role)
+        return roles
 
 
 class RoleSelect(Select):
@@ -108,63 +167,9 @@ class RoleSelect(Select):
         return []
 
     @property
-    def values(self) -> List[int]:
+    def values(self) -> RoleSelectValues:
         """List[:class:`int`]: A list of role ids that have been selected by the user."""
-        return [int(id) for id in self._selected_values]
-
-    def get_roles(self, guild: Guild) -> List[Role]:
-        """A shortcut for getting all :class:`nextcord.Role`'s of :attr:`.values`.
-
-        Roles that are not found in cache will not be returned.
-        To get all roles regardless of whether they are in cache or not, use :meth:`.fetch_roles`.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the roles from.
-
-        Returns
-        -------
-        List[:class:`nextcord.Role`]
-            A list of roles that were found.
-        """
-        roles: List[Role] = []
-        for id in self.values:
-            member = guild.get_role(id)
-            if member is not None:
-                roles.append(member)
-        return roles
-
-    async def fetch_roles(self, guild: Guild) -> List[Role]:
-        """A shortcut for fetching all :class:`nextcord.Role`'s of :attr:`.values`.
-
-        Roles that are not found in cache will be fetched.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to fetch the roles from.
-
-        Raises
-        ------
-        :exc:`.HTTPException`
-            Retrieving the roles failed.
-
-        Returns
-        -------
-        List[:class:`nextcord.Role`]
-            A list of all roles that have been selected.
-        """
-        roles: List[Role] = self.get_roles(guild)
-        if len(roles) == len(self.values):
-            return roles
-
-        guild_roles: List[Role] = await guild.fetch_roles()
-        for id in self.values:
-            role = get(guild_roles, id=id)
-            if role:
-                roles.append(role)
-        return roles
+        return RoleSelectValues([int(id) for id in self._selected_values])
 
     def to_component_dict(self) -> RoleSelectMenuPayload:
         return self._underlying.to_dict()

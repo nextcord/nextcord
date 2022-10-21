@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+from collections import UserList
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
@@ -42,6 +43,73 @@ if TYPE_CHECKING:
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
 
 __all__ = ("ChannelSelect", "channel_select")
+
+
+class ChannelSelectValues(UserList):
+    """Represents the values of a :class:`ChannelSelect`."""
+
+    def get(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
+        """A shortcut for getting all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
+
+        Channels that are not found in cache will not be returned.
+        To get all channels regardless of whether they are in cache or not, use :meth:`.fetch_channels`.
+
+        Parameters
+        ----------
+        guild: :class:`nextcord.Guild`
+            The guild to get the channels from.
+
+        Returns
+        -------
+        List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
+            A list of channels that have been selected by the user.
+        """
+        channels: List[Union[GuildChannel, Thread]] = []
+        for id in self.data:
+            channel = guild.get_channel_or_thread(id)
+            if channel is not None:
+                channels.append(channel)
+        return channels
+
+    async def fetch(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
+        """A shortcut for fetching all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
+
+        Channels that are not found in cache will be fetched.
+
+        Parameters
+        ----------
+        guild: :class:`nextcord.Guild`
+            The guild to get the channels from.
+
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Fetching the channels failed.
+        :exc:`.NotFound`
+            A channel was not found.
+        :exc:`.Forbidden`
+            You do not have the proper permissions to fetch a channel.
+        :exc:`.InvalidArgument`
+            The channel type is not supported.
+
+        Returns
+        -------
+        List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
+            A list of channels that have been selected by the user.
+        """
+        channels: List[Union[GuildChannel, Thread]] = []
+        guild_channels = None
+        for id in self.data:
+            channel = guild.get_channel_or_thread(id)
+            if channel is None:
+                if guild_channels is None:
+                    guild_channels = await guild.fetch_channels()
+                channel = get(guild_channels, id=id)
+                if channel:
+                    channels.append(channel)
+            else:
+                channels.append(channel)
+        return channels
 
 
 class ChannelSelect(Select):
@@ -118,72 +186,9 @@ class ChannelSelect(Select):
         return []
 
     @property
-    def values(self) -> List[int]:
+    def values(self) -> ChannelSelectValues:
         """List[:class:`int`]: A list of channel ids that have been selected by the user."""
-        return [int(id) for id in self._selected_values]
-
-    def get_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
-        """A shortcut for getting all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
-
-        Channels that are not found in cache will not be returned.
-        To get all channels regardless of whether they are in cache or not, use :meth:`.fetch_channels`.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the channels from.
-
-        Returns
-        -------
-        List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
-            A list of channels that have been selected by the user.
-        """
-        channels: List[Union[GuildChannel, Thread]] = []
-        for id in self.values:
-            channel = guild.get_channel_or_thread(id)
-            if channel is not None:
-                channels.append(channel)
-        return channels
-
-    async def fetch_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
-        """A shortcut for fetching all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
-
-        Channels that are not found in cache will be fetched.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the channels from.
-
-        Raises
-        ------
-        :exc:`.HTTPException`
-            Fetching the channels failed.
-        :exc:`.NotFound`
-            A channel was not found.
-        :exc:`.Forbidden`
-            You do not have the proper permissions to fetch a channel.
-        :exc:`.InvalidArgument`
-            The channel type is not supported.
-
-        Returns
-        -------
-        List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
-            A list of channels that have been selected by the user.
-        """
-        channels: List[Union[GuildChannel, Thread]] = []
-        guild_channels = None
-        for id in self.values:
-            channel = guild.get_channel_or_thread(id)
-            if channel is None:
-                if guild_channels is None:
-                    guild_channels = await guild.fetch_channels()
-                channel = get(guild_channels, id=id)
-                if channel:
-                    channels.append(channel)
-            else:
-                channels.append(channel)
-        return channels
+        return ChannelSelectValues([int(id) for id in self._selected_values])
 
     def to_component_dict(self) -> ChannelSelectMenuPayload:
         return self._underlying.to_dict()
