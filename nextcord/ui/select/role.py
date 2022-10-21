@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional
 
 from ...components import RoleSelectMenu, SelectOption
 from ...enums import ComponentType
-from ...utils import MISSING
+from ...utils import MISSING, get
 from ..item import Item, ItemCallbackType
 from .string import Select
 
@@ -67,7 +67,7 @@ class RoleSelect(Select):
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
-        Whether the select is disabled or not.
+        Whether the select is disabled or not. Defaults to ``False``.
     row: Optional[:class:`int`]
         The relative row this select menu belongs to. A Discord component can only have 5
         rows. By default, items are arranged automatically into those 5 rows. If you'd
@@ -114,6 +114,7 @@ class RoleSelect(Select):
 
     def get_roles(self, guild: Guild) -> List[Role]:
         """A shortcut for getting all :class:`nextcord.Role`'s of :attr:`.values`.
+        
         Roles that are not found in cache will not be returned.
         To get all roles regardless of whether they are in cache or not, use :meth:`.fetch_roles`.
 
@@ -125,7 +126,8 @@ class RoleSelect(Select):
         Returns
         -------
         List[:class:`nextcord.Role`]
-            A list of roles that were found."""
+            A list of roles that were found.
+        """
         roles: List[Role] = []
         for id in self.values:
             member = guild.get_role(id)
@@ -135,6 +137,7 @@ class RoleSelect(Select):
 
     async def fetch_roles(self, guild: Guild) -> List[Role]:
         """A shortcut for fetching all :class:`nextcord.Role`'s of :attr:`.values`.
+        
         Roles that are not found in cache will be fetched.
 
         Parameters
@@ -150,16 +153,17 @@ class RoleSelect(Select):
         Returns
         -------
         List[:class:`nextcord.Role`]
-            A list of all roles that have been selected."""
+            A list of all roles that have been selected.
+        """
         roles: List[Role] = self.get_roles(guild)
         if len(roles) == len(self.values):
             return roles
+        
         guild_roles: List[Role] = await guild.fetch_roles()
         for id in self.values:
-            for role in guild_roles:
-                if role.id == id:
-                    roles.append(role)
-                    break
+            role = get(guild_roles, id=id)
+            if role:
+                roles.append(role)
         return roles
 
     def to_component_dict(self) -> RoleSelectMenuPayload:

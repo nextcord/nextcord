@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 from ...components import MentionableSelectMenu, SelectOption
 from ...enums import ComponentType
-from ...utils import MISSING
+from ...utils import MISSING, get
 from ..item import Item, ItemCallbackType
 from .string import Select
 
@@ -69,7 +69,7 @@ class MentionableSelect(Select):
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
-        Whether the select is disabled or not.
+        Whether the select is disabled or not. Defaults to ``False``.
     row: Optional[:class:`int`]
         The relative row this select menu belongs to. A Discord component can only have 5
         rows. By default, items are arranged automatically into those 5 rows. If you'd
@@ -116,6 +116,7 @@ class MentionableSelect(Select):
 
     def get_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
         """A shortcut for getting all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
+        
         Mentionables that are not found in cache will not be returned.
         To get all mentionables regardless of whether they are in cache or not, use :meth:`.fetch_mentionables`.
 
@@ -138,6 +139,7 @@ class MentionableSelect(Select):
 
     async def fetch_mentionables(self, guild: Guild) -> List[Union[Member, Role]]:
         """A shortcut for fetching all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
+        
         Mentionables that are not found in cache will be fetched.
 
         Parameters
@@ -160,6 +162,7 @@ class MentionableSelect(Select):
         mentionables = self.get_mentionables(guild)
         if len(mentionables) == len(self.values):
             return mentionables
+        
         mentionables: List[Union[Member, Role]] = []
         guild_roles = None
         for id in self.values:
@@ -167,12 +170,7 @@ class MentionableSelect(Select):
             if not mentionable:
                 if not guild_roles:
                     guild_roles = await guild.fetch_roles()
-                for role in guild_roles:
-                    if role.id == id:
-                        mentionable = role
-                        break
-                if not mentionable:
-                    mentionable = await guild.fetch_member(id)
+                mentionable = get(guild_roles, id=id) or await guild.fetch_member(id)
             mentionables.append(mentionable)
         return mentionables
 

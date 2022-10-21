@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 from ...components import ChannelSelectMenu, SelectOption
 from ...enums import ComponentType
-from ...utils import MISSING
+from ...utils import MISSING, get
 from ..item import Item, ItemCallbackType
 from .string import Select
 
@@ -70,7 +70,7 @@ class ChannelSelect(Select):
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
-        Whether the select is disabled or not.
+        Whether the select is disabled or not. Defaults to ``False``.
     row: Optional[:class:`int`]
         The relative row this select menu belongs to. A Discord component can only have 5
         rows. By default, items are arranged automatically into those 5 rows. If you'd
@@ -124,6 +124,7 @@ class ChannelSelect(Select):
 
     def get_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
         """A shortcut for getting all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
+        
         Channels that are not found in cache will not be returned.
         To get all channels regardless of whether they are in cache or not, use :meth:`.fetch_channels`.
 
@@ -146,6 +147,7 @@ class ChannelSelect(Select):
 
     async def fetch_channels(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
         """A shortcut for fetching all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
+        
         Channels that are not found in cache will be fetched.
 
         Parameters
@@ -176,10 +178,9 @@ class ChannelSelect(Select):
             if channel is None:
                 if guild_channels is None:
                     guild_channels = await guild.fetch_channels()
-                for channel in guild_channels:
-                    if channel.id == id:
-                        channels.append(channel)
-                        break
+                channel = get(guild_channels, id=id)
+                if channel:
+                    channels.append(channel)
             else:
                 channels.append(channel)
         return channels

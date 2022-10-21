@@ -235,7 +235,7 @@ class SelectMenu(Component):
     options: List[:class:`SelectOption`]
         A list of options that can be selected in this menu.
     disabled: :class:`bool`
-        Whether the select is disabled or not.
+        Whether the select is disabled or not. Defaults to ``False``.
     channel_types: List[:class:`ChannelType`]
         A list of channel types that are allowed to be chosen in this select menu.
     """
@@ -274,10 +274,7 @@ class SelectMenu(Component):
 
         if self.placeholder:
             payload["placeholder"] = self.placeholder
-
-        # if self.channel_types:
-        #     payload["channel_types"] = [channel_type.value for channel_type in self.channel_types]
-
+            
         if self.options:
             payload["options"] = [op.to_dict() for op in self.options]
 
@@ -295,7 +292,7 @@ class UserSelectMenu(Component):
         The user constructible and usable type to create a select menu is
         :class:`nextcord.ui.Select` not this one.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.3
 
     Attributes
     ----------
@@ -310,7 +307,7 @@ class UserSelectMenu(Component):
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
-        Whether the select is disabled or not.
+        Whether the select is disabled or not. Defaults to ``False``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -357,7 +354,7 @@ class RoleSelectMenu(Component):
         The user constructible and usable type to create a select menu is
         :class:`nextcord.ui.Select` not this one.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.3
 
     Attributes
     ----------
@@ -372,7 +369,7 @@ class RoleSelectMenu(Component):
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
-        Whether the select is disabled or not.
+        Whether the select is disabled or not. Defaults to ``False``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -419,7 +416,7 @@ class MentionableSelectMenu(Component):
         The user constructible and usable type to create a select menu is
         :class:`nextcord.ui.Select` not this one.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.3
 
     Attributes
     ----------
@@ -434,7 +431,7 @@ class MentionableSelectMenu(Component):
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
-        Whether the select is disabled or not.
+        Whether the select is disabled or not. Defaults to ``False``.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -481,7 +478,7 @@ class ChannelSelectMenu(Component):
         The user constructible and usable type to create a select menu is
         :class:`nextcord.ui.Select` not this one.
 
-    .. versionadded:: 2.0
+    .. versionadded:: 2.3
 
     Attributes
     ----------
@@ -496,7 +493,7 @@ class ChannelSelectMenu(Component):
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
-        Whether the select is disabled or not.
+        Whether the select is disabled or not. Defaults to ``False``.
     """
 
     __slots__: Tuple[str, ...] = (

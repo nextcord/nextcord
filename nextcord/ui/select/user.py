@@ -43,7 +43,6 @@ __all__ = ("UserSelect", "user_select")
 
 
 class UserSelect(Select):
-
     """Represents a UI user select menu.
 
     This is usually represented as a drop down menu.
@@ -67,7 +66,7 @@ class UserSelect(Select):
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
-        Whether the select is disabled or not.
+        Whether the select is disabled or not. Defaults to ``False``.
     row: Optional[:class:`int`]
         The relative row this select menu belongs to. A Discord component can only have 5
         rows. By default, items are arranged automatically into those 5 rows. If you'd
@@ -114,6 +113,7 @@ class UserSelect(Select):
 
     def get_members(self, guild: Guild) -> List[Member]:
         """A shortcut for getting all :class:`nextcord.Member`'s of :attr:`.values`.
+        
         Users that are not found in cache will not be returned.
         To get all members regardless of whether they are in cache or not, use :meth:`.fetch_members`.
 
@@ -135,6 +135,7 @@ class UserSelect(Select):
 
     async def fetch_members(self, guild: Guild) -> List[Member]:
         """A shortcut for fetching all :class:`nextcord.Member`'s of :attr:`.values`.
+        
         Users that are not found in cache will be fetched.
 
         Parameters
@@ -152,7 +153,8 @@ class UserSelect(Select):
         Returns
         -------
         List[:class:`nextcord.Member`]
-            A list of all members that have been selected."""
+            A list of all members that have been selected.
+        """
         members: List[Member] = []
         for id in self.values:
             member = guild.get_member(id)
