@@ -1616,9 +1616,15 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             value = interaction.guild.get_role(int(value))
         elif self.type is ApplicationCommandOptionType.integer:
-            value = int(value) if value.isdigit() else None
+            try:
+                value = int(value)
+            except ValueError:
+                value = None
         elif self.type is ApplicationCommandOptionType.number:
-            value = float(value)
+            try:
+                value = float(value)
+            except ValueError:
+                value = None
         elif self.type is ApplicationCommandOptionType.attachment:
             try:
                 # this looks messy but is too much effort to handle
