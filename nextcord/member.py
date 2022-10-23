@@ -29,7 +29,6 @@ import asyncio
 import datetime
 import itertools
 import sys
-from functools import partial
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
 

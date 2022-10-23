@@ -36,7 +36,6 @@ import sys
 import traceback
 import types
 import warnings
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,

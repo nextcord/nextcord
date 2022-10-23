@@ -25,9 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import inspect
 import logging
-import typing
 import warnings
 from inspect import Parameter, signature
 from typing import (
@@ -64,12 +62,7 @@ from .channel import (
     VoiceChannel,
 )
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
-from .errors import (
-    ApplicationCheckFailure,
-    ApplicationCommandOptionMissing,
-    ApplicationError,
-    ApplicationInvokeError,
-)
+from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
@@ -78,7 +71,6 @@ from .permissions import Permissions
 from .role import Role
 from .threads import Thread
 from .types.interactions import ApplicationCommandInteractionData
-from .types.member import MemberWithUser
 from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 

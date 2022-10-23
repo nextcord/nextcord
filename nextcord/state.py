@@ -60,7 +60,6 @@ from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
-from .interactions import Interaction
 from .invite import Invite
 from .member import Member
 from .mentions import AllowedMentions

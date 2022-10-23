@@ -904,7 +904,7 @@ class ScheduledEventIterator(_AsyncIterator["ScheduledEvent"]):
         return self.guild._store_scheduled_event(data)
 
 
-class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
+class ScheduledEventUserIterator(_AsyncIterator[ScheduledEventUser]):
     def __init__(
         self,
         guild: Guild,

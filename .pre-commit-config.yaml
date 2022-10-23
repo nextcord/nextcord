@@ -5,6 +5,20 @@ ci:
     style: auto fixes from pre-commit hooks
 
 repos:
+  - repo: https://github.com/PyCQA/autoflake
+    rev: bbe2f1dbc9d10b830c8cbe314948f634ab99aa87
+    hooks:
+      - id: autoflake
+        name: Remove unused imports with autoflake.
+        args:
+          [
+            "--in-place",
+            "--remove-all-unused-imports",
+            "--ignore-init-module-imports",
+            "--ignore-pass-after-docstring",
+            "--exclude=discord/**",
+          ]
+
   - repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
