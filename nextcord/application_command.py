@@ -1665,7 +1665,7 @@ class SlashCommandMixin(CallbackMixin):
     def children(self) -> Dict[str, SlashApplicationSubcommand]:
         """Returns the sub-commands and sub-command groups of the command.
 
-        .. versionupdated:: 2.3
+        .. versionchanged:: 2.3
 
             ``.children`` is now a read-only property.
         """

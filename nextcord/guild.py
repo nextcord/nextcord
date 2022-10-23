@@ -2899,9 +2899,13 @@ class Guild(Hashable):
         delete_message_seconds: Optional[:class:`int`]
             The number of seconds worth of messages to delete from the user
             in the guild. The minimum is 0 and the maximum is 604800 (7 days).
+
+            .. versionadded:: 2.3
         delete_message_days: Optional[:class:`int`]
             The number of days worth of messages to delete from the user
             in the guild. The minimum is 0 and the maximum is 7.
+
+            .. deprecated:: 2.3
         reason: Optional[:class:`str`]
             The reason the user got banned.
 
