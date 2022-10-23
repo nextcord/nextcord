@@ -294,12 +294,8 @@ class SelectMenu(BaseSelectMenu):
     """
 
     __slots__: Tuple[str, ...] = (
-        "custom_id",
-        "placeholder",
-        "min_values",
-        "max_values",
         "options",
-        "disabled",
+        "type",
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
@@ -351,11 +347,7 @@ class UserSelectMenu(BaseSelectMenu):
     """
 
     __slots__: Tuple[str, ...] = (
-        "custom_id",
-        "placeholder",
-        "min_values",
-        "max_values",
-        "disabled",
+        "type",
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
@@ -401,11 +393,7 @@ class RoleSelectMenu(BaseSelectMenu):
     """
 
     __slots__: Tuple[str, ...] = (
-        "custom_id",
-        "placeholder",
-        "min_values",
-        "max_values",
-        "disabled",
+        "type",
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
@@ -451,11 +439,7 @@ class MentionableSelectMenu(BaseSelectMenu):
     """
 
     __slots__: Tuple[str, ...] = (
-        "custom_id",
-        "placeholder",
-        "min_values",
-        "max_values",
-        "disabled",
+        "type",
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
@@ -503,11 +487,7 @@ class ChannelSelectMenu(BaseSelectMenu):
     """
 
     __slots__: Tuple[str, ...] = (
-        "custom_id",
-        "placeholder",
-        "min_values",
-        "max_values",
-        "disabled",
+        "type",
         "channel_types",
     )
 
