@@ -295,7 +295,6 @@ class SelectMenu(BaseSelectMenu):
 
     __slots__: Tuple[str, ...] = (
         "options",
-        "type",
     )
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
@@ -346,7 +345,7 @@ class UserSelectMenu(BaseSelectMenu):
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    __slots__: Tuple[str, ...] = ("type",)
+    __slots__: Tuple[str, ...] = ()
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
@@ -390,7 +389,7 @@ class RoleSelectMenu(BaseSelectMenu):
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    __slots__: Tuple[str, ...] = ("type",)
+    __slots__: Tuple[str, ...] = ()
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
@@ -434,7 +433,7 @@ class MentionableSelectMenu(BaseSelectMenu):
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    __slots__: Tuple[str, ...] = ("type",)
+    __slots__: Tuple[str, ...] = ()
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
@@ -481,7 +480,6 @@ class ChannelSelectMenu(BaseSelectMenu):
     """
 
     __slots__: Tuple[str, ...] = (
-        "type",
         "channel_types",
     )
 
