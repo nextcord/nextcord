@@ -153,7 +153,7 @@ class IDConverter(Converter[T_co]):
 class ObjectConverter(IDConverter[nextcord.Object]):
     """Converts to a :class:`~nextcord.Object`.
 
-    The argument must follow the valid ID or mention formats (e.g. `<@80088516616269824>`).
+    The argument must follow the valid ID or mention formats (e.g. ``<@80088516616269824>``).
 
     .. versionadded:: 2.0
 

@@ -120,7 +120,7 @@ class WidgetMember(BaseUser):
 
         .. describe:: str(x)
 
-            Returns the widget member's `name#discriminator`.
+            Returns the widget member's ``name#discriminator``.
 
     Attributes
     ----------
