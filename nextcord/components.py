@@ -494,6 +494,8 @@ class ChannelSelectMenu(Component):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    channel_types: List[:class:`nextcord.ChannelType`]
+        The types of channels that can be selected. If not given, all channel types are allowed.
     """
 
     __slots__: Tuple[str, ...] = (
