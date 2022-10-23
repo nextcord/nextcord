@@ -1208,7 +1208,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
     autocomplete: :class:`bool`
         If this parameter has an autocomplete function decorated for it. If unset, it will automatically be ``True``
         if an autocomplete function for it is found.
-    autocomplete_callback: Optional[:class:`~typing.Callable`]
+    autocomplete_callback: Optional[:class:`Callable`]
         The function that will be used to autocomplete this parameter. If not specified, it will be looked for
         using the :meth:`~SlashApplicationSubcommand.on_autocomplete` decorator.
     default: Any
