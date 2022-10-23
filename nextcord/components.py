@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .emoji import Emoji
     from .types.components import (
         ActionRow as ActionRowPayload,
+        BaseSelectMenu as BaseSelectMenuPayload,
         ButtonComponent as ButtonComponentPayload,
         ChannelSelectMenu as ChannelSelectMenuPayload,
         Component as ComponentPayload,
@@ -207,7 +208,59 @@ class Button(Component):
         return payload  # type: ignore
 
 
-class SelectMenu(Component):
+class BaseSelectMenu(Component):
+    """Represents a Discord Bot UI Kit Select Menu.
+
+    This is the base class for all select menus.
+
+    .. versionadded:: 2.3
+
+    Attributes
+    ----------
+    custom_id: :class:`str`
+        The ID of the select menu that gets received during an interaction.
+    disabled: :class:`bool`
+        Whether the select menu is disabled or not.
+    placeholder: Optional[:class:`str`]
+        The placeholder of the select menu, if any.
+    min_values: :class:`int`
+        The minimum number of values that must be chosen.
+    max_values: :class:`int`
+        The maximum number of values that can be chosen.
+    """
+
+    __slots__: Tuple[str, ...] = (
+        "custom_id",
+        "disabled",
+        "placeholder",
+        "min_values",
+        "max_values",
+    )
+
+    __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    def __init__(self, data: BaseSelectMenuPayload):
+        self.custom_id: str = data["custom_id"]
+        self.disabled: bool = data.get("disabled", False)
+        self.placeholder: Optional[str] = data.get("placeholder")
+        self.min_values: int = data.get("min_values", 1)
+        self.max_values: int = data.get("max_values", 1)
+
+    def to_dict(self) -> BaseSelectMenuPayload:
+        payload: BaseSelectMenuPayload = {
+            "custom_id": self.custom_id,
+            "disabled": self.disabled,
+            "min_values": self.min_values,
+            "max_values": self.max_values,
+        }
+        
+        if self.placeholder:
+            payload["placeholder"] = self.placeholder
+
+        return payload
+
+
+class SelectMenu(BaseSelectMenu):
     """Represents a select menu from the Discord Bot UI Kit.
 
     A select menu is functionally the same as a dropdown, however
@@ -252,36 +305,23 @@ class SelectMenu(Component):
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     def __init__(self, data: SelectMenuPayload):
+        super().__init__(data)
         self.type = ComponentType.select
-        self.custom_id: str = data["custom_id"]
-        self.placeholder: Optional[str] = data.get("placeholder")
-        self.min_values: int = data.get("min_values", 1)
-        self.max_values: int = data.get("max_values", 1)
         self.options: List[SelectOption] = [
             SelectOption.from_dict(option) for option in data.get("options", [])
         ]
-        self.disabled: bool = data.get("disabled", False)
 
     def to_dict(self) -> SelectMenuPayload:
-        payload: SelectMenuPayload = {
-            "type": self.type.value,
-            "custom_id": self.custom_id,
-            "min_values": self.min_values,
-            "max_values": self.max_values,
-            "disabled": self.disabled,
-            "options": [option.to_dict() for option in self.options],
-        }
+        payload: SelectMenuPayload = super().to_dict() # type: ignore
 
-        if self.placeholder:
-            payload["placeholder"] = self.placeholder
-
+        payload["type"] = self.type.value
         if self.options:
             payload["options"] = [op.to_dict() for op in self.options]
 
         return payload
 
 
-class UserSelectMenu(Component):
+class UserSelectMenu(BaseSelectMenu):
     """Represents a user select menu from the Discord Bot UI Kit.
 
     A user select menu is functionally the same as a dropdown, however
@@ -321,29 +361,17 @@ class UserSelectMenu(Component):
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     def __init__(self, data: UserSelectMenuPayload):
-        self.type = ComponentType.select
-        self.custom_id: str = data["custom_id"]
-        self.placeholder: Optional[str] = data.get("placeholder")
-        self.min_values: int = data.get("min_values", 1)
-        self.max_values: int = data.get("max_values", 1)
-        self.disabled: bool = data.get("disabled", False)
+        super().__init__(data)
+        self.type = ComponentType.user_select
 
     def to_dict(self) -> UserSelectMenuPayload:
-        payload: UserSelectMenuPayload = {
-            "type": self.type.value,
-            "custom_id": self.custom_id,
-            "min_values": self.min_values,
-            "max_values": self.max_values,
-            "disabled": self.disabled,
-        }
-
-        if self.placeholder:
-            payload["placeholder"] = self.placeholder
+        payload: UserSelectMenuPayload = super().to_dict() # type: ignore
+        payload["type"] = self.type.value
 
         return payload
 
 
-class RoleSelectMenu(Component):
+class RoleSelectMenu(BaseSelectMenu):
     """Represents a role select menu from the Discord Bot UI Kit.
 
     A role select menu is functionally the same as a dropdown, however
@@ -383,29 +411,17 @@ class RoleSelectMenu(Component):
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     def __init__(self, data: RoleSelectMenuPayload):
-        self.type = ComponentType.select
-        self.custom_id: str = data["custom_id"]
-        self.placeholder: Optional[str] = data.get("placeholder")
-        self.min_values: int = data.get("min_values", 1)
-        self.max_values: int = data.get("max_values", 1)
-        self.disabled: bool = data.get("disabled", False)
+        super().__init__(data)
+        self.type = ComponentType.role_select
 
     def to_dict(self) -> RoleSelectMenuPayload:
-        payload: RoleSelectMenuPayload = {
-            "type": self.type.value,
-            "custom_id": self.custom_id,
-            "min_values": self.min_values,
-            "max_values": self.max_values,
-            "disabled": self.disabled,
-        }
-
-        if self.placeholder:
-            payload["placeholder"] = self.placeholder
+        payload: RoleSelectMenuPayload = super().to_dict() # type: ignore
+        payload["type"] = self.type.value
 
         return payload
 
 
-class MentionableSelectMenu(Component):
+class MentionableSelectMenu(BaseSelectMenu):
     """Represents a mentionable select menu from the Discord Bot UI Kit.
 
     A mentionable select menu is functionally the same as a dropdown, however
@@ -445,29 +461,17 @@ class MentionableSelectMenu(Component):
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     def __init__(self, data: MentionableSelectMenuPayload):
-        self.type = ComponentType.select
-        self.custom_id: str = data["custom_id"]
-        self.placeholder: Optional[str] = data.get("placeholder")
-        self.min_values: int = data.get("min_values", 1)
-        self.max_values: int = data.get("max_values", 1)
-        self.disabled: bool = data.get("disabled", False)
+        super().__init__(data)
+        self.type = ComponentType.mentionable_select
 
     def to_dict(self) -> MentionableSelectMenuPayload:
-        payload: MentionableSelectMenuPayload = {
-            "type": self.type.value,
-            "custom_id": self.custom_id,
-            "min_values": self.min_values,
-            "max_values": self.max_values,
-            "disabled": self.disabled,
-        }
-
-        if self.placeholder:
-            payload["placeholder"] = self.placeholder
+        payload: MentionableSelectMenuPayload = super().to_dict() # type: ignore
+        payload["type"] = self.type.value
 
         return payload
 
 
-class ChannelSelectMenu(Component):
+class ChannelSelectMenu(BaseSelectMenu):
     """Represents a mentionable select menu from the Discord Bot UI Kit.
 
     A mentionable select menu is functionally the same as a dropdown, however
@@ -510,28 +514,16 @@ class ChannelSelectMenu(Component):
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     def __init__(self, data: ChannelSelectMenuPayload):
-        self.type = ComponentType.select
-        self.custom_id: str = data["custom_id"]
-        self.placeholder: Optional[str] = data.get("placeholder")
-        self.min_values: int = data.get("min_values", 1)
-        self.max_values: int = data.get("max_values", 1)
-        self.disabled: bool = data.get("disabled", False)
+        super().__init__(data)
+        self.type = ComponentType.channel_select
         self.channel_types: List[ChannelType] = [
             ChannelType(t) for t in data.get("channel_types", [])
         ]
 
     def to_dict(self) -> ChannelSelectMenuPayload:
-        payload: ChannelSelectMenuPayload = {
-            "type": self.type.value,
-            "custom_id": self.custom_id,
-            "min_values": self.min_values,
-            "max_values": self.max_values,
-            "disabled": self.disabled,
-        }
-
-        if self.placeholder:
-            payload["placeholder"] = self.placeholder
-
+        payload: ChannelSelectMenuPayload = super().to_dict() # type: ignore
+        
+        payload["type"] = self.type.value
         if self.channel_types:
             payload["channel_types"] = [t.value for t in self.channel_types]
 
