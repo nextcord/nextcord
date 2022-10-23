@@ -253,7 +253,7 @@ class BaseSelectMenu(Component):
             "min_values": self.min_values,
             "max_values": self.max_values,
         }
-        
+
         if self.placeholder:
             payload["placeholder"] = self.placeholder
 
@@ -312,7 +312,7 @@ class SelectMenu(BaseSelectMenu):
         ]
 
     def to_dict(self) -> SelectMenuPayload:
-        payload: SelectMenuPayload = super().to_dict() # type: ignore
+        payload: SelectMenuPayload = super().to_dict()  # type: ignore
 
         payload["type"] = self.type.value
         if self.options:
@@ -365,7 +365,7 @@ class UserSelectMenu(BaseSelectMenu):
         self.type = ComponentType.user_select
 
     def to_dict(self) -> UserSelectMenuPayload:
-        payload: UserSelectMenuPayload = super().to_dict() # type: ignore
+        payload: UserSelectMenuPayload = super().to_dict()  # type: ignore
         payload["type"] = self.type.value
 
         return payload
@@ -415,7 +415,7 @@ class RoleSelectMenu(BaseSelectMenu):
         self.type = ComponentType.role_select
 
     def to_dict(self) -> RoleSelectMenuPayload:
-        payload: RoleSelectMenuPayload = super().to_dict() # type: ignore
+        payload: RoleSelectMenuPayload = super().to_dict()  # type: ignore
         payload["type"] = self.type.value
 
         return payload
@@ -465,7 +465,7 @@ class MentionableSelectMenu(BaseSelectMenu):
         self.type = ComponentType.mentionable_select
 
     def to_dict(self) -> MentionableSelectMenuPayload:
-        payload: MentionableSelectMenuPayload = super().to_dict() # type: ignore
+        payload: MentionableSelectMenuPayload = super().to_dict()  # type: ignore
         payload["type"] = self.type.value
 
         return payload
@@ -521,8 +521,8 @@ class ChannelSelectMenu(BaseSelectMenu):
         ]
 
     def to_dict(self) -> ChannelSelectMenuPayload:
-        payload: ChannelSelectMenuPayload = super().to_dict() # type: ignore
-        
+        payload: ChannelSelectMenuPayload = super().to_dict()  # type: ignore
+
         payload["type"] = self.type.value
         if self.channel_types:
             payload["channel_types"] = [t.value for t in self.channel_types]
