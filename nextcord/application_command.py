@@ -1666,7 +1666,6 @@ class SlashCommandMixin(CallbackMixin):
         """Returns the sub-commands and sub-command groups of the command.
 
         .. versionchanged:: 2.3
-
             ``.children`` is now a read-only property.
         """
         return self._children
