@@ -293,9 +293,7 @@ class SelectMenu(BaseSelectMenu):
         A list of channel types that are allowed to be chosen in this select menu.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "options",
-    )
+    __slots__: Tuple[str, ...] = ("options",)
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
@@ -479,9 +477,7 @@ class ChannelSelectMenu(BaseSelectMenu):
         The types of channels that can be selected. If not given, all channel types are allowed.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "channel_types",
-    )
+    __slots__: Tuple[str, ...] = ("channel_types",)
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
