@@ -60,7 +60,6 @@ from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
-from .interactions import Interaction
 from .invite import Invite
 from .member import Member
 from .mentions import AllowedMentions
@@ -86,7 +85,6 @@ if TYPE_CHECKING:
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
-    from .message import MessageableChannel
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
     from .types.checks import ApplicationCheck, ApplicationHook
@@ -432,6 +430,12 @@ class ConnectionState:
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)
 
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
+        self._view_store.remove_view(view, message_id)
+
+    def remove_modal(self, modal: Modal) -> None:
+        self._modal_store.remove_modal(modal)
+
     def prevent_view_updates_for(self, message_id: Optional[int]) -> Optional[View]:
         return self._view_store.remove_message_tracking(message_id)  # type: ignore
 
@@ -756,8 +760,8 @@ class ConnectionState:
                         except Forbidden as e:
                             if ignore_forbidden:
                                 _log.warning(
-                                    f"nextcord.Client: Forbidden error for %s, is the applications.commands "
-                                    f"Oauth scope enabled? %s",
+                                    "nextcord.Client: Forbidden error for %s, is the applications.commands "
+                                    "Oauth scope enabled? %s",
                                     guild_id,
                                     e,
                                 )
@@ -1053,7 +1057,7 @@ class ConnectionState:
         """
         payload: EditApplicationCommand = command.get_payload(guild_id)  # type: ignore
         _log.info(
-            f"nextcord.ConnectionState: Registering command with signature %s",
+            "nextcord.ConnectionState: Registering command with signature %s",
             command.get_signature(guild_id),
         )
 
