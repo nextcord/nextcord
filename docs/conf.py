@@ -358,6 +358,11 @@ texinfo_documents = [
 # texinfo_no_detailmenu = False
 
 
+# Remove members from toctree, added by sphinx 5.2
+# This *could* be re-enabled once the docs uses multiple pages.
+toc_object_entries = False
+
+
 def setup(app):
     if app.config.language == "ja":
         app.config.intersphinx_mapping["py"] = ("https://docs.python.org/ja/3", None)

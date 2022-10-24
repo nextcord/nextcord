@@ -36,7 +36,6 @@ import sys
 import traceback
 import types
 import warnings
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -790,7 +789,7 @@ class BotBase(GroupMixin):
                     asyncio.create_task(setup(self, **extras))
                 except RuntimeError:
                     raise RuntimeError(
-                        f"""
+                        """
                     Looks like you are attempting to load an asynchronous setup function incorrectly.
                     Please read our FAQ here:
                     https://docs.nextcord.dev/en/stable/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
@@ -1417,6 +1416,39 @@ class BotBase(GroupMixin):
 
         ctx = await self.get_context(message)
         await self.invoke(ctx)
+
+    async def process_with_str(self, message: Message, content: str) -> None:
+        """|coro|
+
+        This function is like :meth:`.process_commands` except it
+        processes the provided message with different content.
+
+        This is useful if you want to execute multiple commands in
+        a single message.
+
+        Example
+        -------
+
+        .. code-block:: python3
+
+            @bot.event
+            async def on_message(message):
+                for msg in message.content.split(";"):
+                    await bot.process_with_str(message, msg)
+
+        Parameters
+        ----------
+        message: :class:`nextcord.Message`
+            The message to process commands for.
+        content: :class:`str`
+            The content to subsitute for the message's content.
+        """
+        old_content = message.content
+        message.content = content
+
+        await self.process_commands(message)
+
+        message.content = old_content
 
     async def on_message(self, message):
         await self.process_commands(message)

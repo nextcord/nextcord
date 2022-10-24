@@ -25,9 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import inspect
 import logging
-import typing
 import warnings
 from inspect import Parameter, signature
 from typing import (
@@ -65,12 +63,7 @@ from .channel import (
 )
 from .cog import Cog
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
-from .errors import (
-    ApplicationCheckFailure,
-    ApplicationCommandOptionMissing,
-    ApplicationError,
-    ApplicationInvokeError,
-)
+from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
@@ -79,7 +72,6 @@ from .permissions import Permissions
 from .role import Role
 from .threads import Thread
 from .types.interactions import ApplicationCommandInteractionData
-from .types.member import MemberWithUser
 from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
@@ -357,7 +349,7 @@ class ApplicationCommandOption:
     def payload(self) -> dict:
         """:class:`dict`: Returns a dict payload made of the attributes of the option to be sent to Discord."""
         if self.type is None:
-            raise ValueError(f"The option type must be set before obtaining the payload.")
+            raise ValueError("The option type must be set before obtaining the payload.")
 
         # noinspection PyUnresolvedReferences
         ret: Dict[str, Any] = {
@@ -671,7 +663,7 @@ class CallbackMixin:
                         self.options[arg.name] = arg
 
         except Exception as e:
-            _log.error(f"Error creating from callback %s: %s", self.error_name, e)
+            _log.error("Error creating from callback %s: %s", self.error_name, e)
             raise e
 
     async def can_run(self, interaction: Interaction) -> bool:
@@ -1045,6 +1037,34 @@ class AutocompleteCommandMixin:
             raise ValueError(f'{self.error_name} kwarg "{arg_name}" for autocomplete not found.')
 
     def on_autocomplete(self, on_kwarg: str):
+        """Decorator that adds an autocomplete callback to the given kwarg.
+
+        .. code-block:: python3
+
+            @bot.slash_command()
+            async def your_favorite_dog(interaction: Interaction, dog: str):
+                await interaction.response.send_message(f"Your favorite dog is {dog}!")
+
+            @your_favorite_dog.on_autocomplete("dog")
+            async def favorite_dog(interaction: Interaction, dog: str):
+                if not dog:
+                    # send the full autocomplete list
+                    await interaction.response.send_autocomplete(list_of_dog_breeds)
+                    return
+                # send a list of nearest matches from the list of dog breeds
+                get_near_dog = [breed for breed in list_of_dog_breeds if breed.lower().startswith(dog.lower())]
+                await interaction.response.send_autocomplete(get_near_dog)
+
+        .. note::
+            To use inputs from other options inputted in the command, you can add them as arguments to the autocomplete
+            callback. The order of the arguments does not matter, but the names do.
+
+        Parameters
+        ----------
+        on_kwarg: :class:`str`
+            The slash command option to add the autocomplete callback to.
+        """
+
         def decorator(func: Callable):
             self._temp_autocomplete_callbacks[on_kwarg] = func
             return func
@@ -1110,7 +1130,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         if an autocomplete function for it is found.
     autocomplete_callback: Optional[:class:`Callable`]
         The function that will be used to autocomplete this parameter. If not specified, it will be looked for
-        using the :meth:`~SlashApplicationSubcommand.on_autocomplete` decorator.
+        using the :meth:`~SlashApplicationCommand.on_autocomplete` decorator.
     default: Any
         When required is not True and the user doesn't provide a value for this Option, this value is given instead.
     verify: :class:`bool`
@@ -1516,9 +1536,15 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             value = interaction.guild.get_role(int(value))
         elif self.type is ApplicationCommandOptionType.integer:
-            value = int(value) if value != "" else None
+            try:
+                value = int(value)
+            except ValueError:
+                value = None
         elif self.type is ApplicationCommandOptionType.number:
-            value = float(value)
+            try:
+                value = float(value)
+            except ValueError:
+                value = None
         elif self.type is ApplicationCommandOptionType.attachment:
             try:
                 # this looks messy but is too much effort to handle
@@ -1553,12 +1579,22 @@ class SlashCommandMixin(CallbackMixin):
         _description: Optional[str]
         command_ids: Dict[Optional[int], int]
         qualified_name: str
+        _children: Dict[str, SlashApplicationSubcommand]
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[Cog]):
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
         self.options: Dict[str, SlashCommandOption] = {}
-        self.children: Dict[str, SlashApplicationSubcommand] = {}
         self._parsed_docstring: Optional[Dict[str, Any]] = None
+        self._children: Dict[str, SlashApplicationSubcommand] = {}
+
+    @property
+    def children(self) -> Dict[str, SlashApplicationSubcommand]:
+        """Returns the sub-commands and sub-command groups of the command.
+
+        .. versionchanged:: 2.3
+            ``.children`` is now a read-only property.
+        """
+        return self._children
 
     @property
     def description(self) -> str:
@@ -2316,7 +2352,6 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self._inherit_hooks: bool = inherit_hooks
 
         self.options: Dict[str, SlashCommandOption] = {}
-        self.children: Dict[str, SlashApplicationSubcommand] = {}
 
     @property
     def qualified_name(self) -> str:
@@ -2467,7 +2502,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 parent_cog=self.parent_cog,
                 inherit_hooks=inherit_hooks,
             )
-            self.children[
+            self._children[
                 ret.name
                 or (func.callback.__name__ if isinstance(func, CallbackWrapper) else func.__name__)
             ] = ret

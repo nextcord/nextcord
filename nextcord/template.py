@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 from .enums import VoiceRegion
 from .guild import Guild
-from .utils import MISSING, _bytes_to_base64_data, _obj_to_base64_data, parse_time
+from .utils import MISSING, _obj_to_base64_data, parse_time
 
 __all__ = ("Template",)
 

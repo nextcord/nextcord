@@ -52,6 +52,7 @@ from .auto_moderation import AutoModerationRule, AutoModerationTriggerMetadata
 from .bans import BanEntry
 from .channel import (
     CategoryChannel,
+    ForumChannel,
     StageChannel,
     TextChannel,
     VoiceChannel,
@@ -101,7 +102,6 @@ if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
-    from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -222,6 +222,7 @@ class Guild(Hashable):
         - ``AUTO_MODERATION``: Guild has set up auto moderation rules.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
         - ``COMMUNITY``: Guild is a community server.
+        - ``DEVELOPER_SUPPORT_SERVER``: Guild has been set as a support server on the App Directory.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
         - ``FEATURABLE``: Guild is able to be featured in Server Discovery.
         - ``INVITE_SPLASH``: Guild's invite page can have a special splash.
@@ -2899,9 +2900,13 @@ class Guild(Hashable):
         delete_message_seconds: Optional[:class:`int`]
             The number of seconds worth of messages to delete from the user
             in the guild. The minimum is 0 and the maximum is 604800 (7 days).
+
+            .. versionadded:: 2.3
         delete_message_days: Optional[:class:`int`]
             The number of days worth of messages to delete from the user
             in the guild. The minimum is 0 and the maximum is 7.
+
+            .. deprecated:: 2.3
         reason: Optional[:class:`str`]
             The reason the user got banned.
 
