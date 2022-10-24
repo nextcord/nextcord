@@ -593,7 +593,7 @@ class CallbackMixin:
 
         Parameters
         ----------
-        callback: Optional[:class:`Callable`]
+        callback: Optional[:data:`~typing.Callable`]
             Callback to create options from and invoke. If provided, it must be a coroutine function.
         parent_cog: Optional[:class:`ClientCog`]
             Class that the callback resides on. Will be passed into the callback if provided.
@@ -714,7 +714,7 @@ class CallbackMixin:
 
         Parameters
         ----------
-        callback: Optional[Callable]
+        callback: Optional[:data:`~typing.Callable`]
             Callback to create options from. Must be a coroutine function.
         option_class: Optional[Type[:class:`BaseCommandOption`]]
             Class to create the options using. Should either be or subclass :class:`BaseCommandOption`. Defaults
@@ -970,7 +970,7 @@ class AutocompleteOptionMixin:
 
         Parameters
         ----------
-        autocomplete_callback: Optional[:class:`Callable`]
+        autocomplete_callback: Optional[:data:`~typing.Callable`]
             Callback to create options from and invoke. If provided, it must be a coroutine function.
         parent_cog: Optional[:class:`ClientCog`]
             Class that the callback resides on. Will be passed into the callback if provided.
@@ -1208,7 +1208,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
     autocomplete: :class:`bool`
         If this parameter has an autocomplete function decorated for it. If unset, it will automatically be ``True``
         if an autocomplete function for it is found.
-    autocomplete_callback: Optional[:class:`Callable`]
+    autocomplete_callback: Optional[:data:`~typing.Callable`]
         The function that will be used to autocomplete this parameter. If not specified, it will be looked for
         using the :meth:`~SlashApplicationSubcommand.on_autocomplete` decorator.
     default: Any
@@ -1822,7 +1822,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list/set/whatever of guild ID's that the application command should register to.
@@ -2633,7 +2633,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2790,7 +2790,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized name as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2864,7 +2864,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized name as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
