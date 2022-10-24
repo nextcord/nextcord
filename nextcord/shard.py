@@ -47,7 +47,6 @@ from .utils import MISSING
 
 if TYPE_CHECKING:
     from .activity import BaseActivity
-    from .enums import Status
     from .flags import MemberCacheFlags
     from .gateway import DiscordWebSocket
     from .mentions import AllowedMentions
