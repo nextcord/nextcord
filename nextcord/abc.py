@@ -570,6 +570,9 @@ class GuildChannel:
         - The default role permission overwrites
         - The permission overwrites of the role used as a parameter
 
+        .. versionchanged:: 2.3
+            Only ``view_channel`` and ``read_message_history`` can be returned for timed-out members
+
         .. versionchanged:: 2.0
             The object passed in can now be a role object.
 
