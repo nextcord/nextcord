@@ -85,7 +85,6 @@ if TYPE_CHECKING:
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
-    from .message import MessageableChannel
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
     from .types.checks import ApplicationCheck, ApplicationHook
@@ -755,8 +754,8 @@ class ConnectionState:
                         except Forbidden as e:
                             if ignore_forbidden:
                                 _log.warning(
-                                    f"nextcord.Client: Forbidden error for %s, is the applications.commands "
-                                    f"Oauth scope enabled? %s",
+                                    "nextcord.Client: Forbidden error for %s, is the applications.commands "
+                                    "Oauth scope enabled? %s",
                                     guild_id,
                                     e,
                                 )
@@ -1052,7 +1051,7 @@ class ConnectionState:
         """
         payload: EditApplicationCommand = command.get_payload(guild_id)  # type: ignore
         _log.info(
-            f"nextcord.ConnectionState: Registering command with signature %s",
+            "nextcord.ConnectionState: Registering command with signature %s",
             command.get_signature(guild_id),
         )
 

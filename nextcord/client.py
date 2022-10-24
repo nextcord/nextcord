@@ -2026,7 +2026,7 @@ class Client:
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
                 _log.debug(
-                    f"nextcord.Client: Interaction command not found, attempting to lazy load."
+                    "nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
                 # _log.debug(f"nextcord.Client: %s", interaction.data)
                 response_signature = (
@@ -2034,7 +2034,7 @@ class Client:
                     int(interaction.data["type"]),
                     interaction.guild_id,
                 )
-                _log.debug(f"nextcord.Client: %s", response_signature)
+                _log.debug("nextcord.Client: %s", response_signature)
                 do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
                     interaction.data["name"],
@@ -2046,7 +2046,7 @@ class Client:
                     )
                     if app_cmd.is_interaction_valid(interaction):
                         _log.debug(
-                            f"nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
+                            "nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
                             app_cmd.error_name,
                         )
                         app_cmd.parse_discord_response(self._connection, interaction.data)
@@ -2078,7 +2078,7 @@ class Client:
             # TODO: Is it really worth trying to lazy load with this?
             _log.debug("nextcord.Client: Autocomplete interaction received.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.debug(f"nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
+                _log.debug("nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
                 await app_cmd.call_autocomplete_from_interaction(interaction)  # type: ignore
             else:
                 raise ValueError(

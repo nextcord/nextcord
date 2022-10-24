@@ -349,7 +349,7 @@ class ApplicationCommandOption:
     def payload(self) -> dict:
         """:class:`dict`: Returns a dict payload made of the attributes of the option to be sent to Discord."""
         if self.type is None:
-            raise ValueError(f"The option type must be set before obtaining the payload.")
+            raise ValueError("The option type must be set before obtaining the payload.")
 
         # noinspection PyUnresolvedReferences
         ret: Dict[str, Any] = {
@@ -761,7 +761,7 @@ class CallbackMixin:
                         self.options[arg.name] = arg
 
         except Exception as e:
-            _log.error(f"Error creating from callback %s: %s", self.error_name, e)
+            _log.error("Error creating from callback %s: %s", self.error_name, e)
             raise e
 
     async def can_run(self, interaction: Interaction) -> bool:

@@ -70,7 +70,6 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from .enums import AuditLogAction, InteractionResponseType
-    from .file import File
     from .types import (
         appinfo,
         audit_log,

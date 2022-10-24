@@ -49,7 +49,6 @@ __all__ = (
 
 if TYPE_CHECKING:
     from .abc import Snowflake
-    from .asset import Asset
     from .channel import DMChannel, StageChannel, VoiceChannel
     from .flags import PublicUserFlags
     from .guild import Guild
