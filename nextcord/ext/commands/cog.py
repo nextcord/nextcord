@@ -23,18 +23,7 @@ DEALINGS IN THE SOFTWARE.
 """
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    Generator,
-    List,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Tuple, Type, TypeVar
 
 import nextcord.utils
 from nextcord.cog import Cog as _Cog, CogMeta as _CogMeta, _cog_special_method

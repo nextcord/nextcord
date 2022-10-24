@@ -26,18 +26,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import warnings
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Optional, Tuple, Type, TypeVar
 
 from .enums import ApplicationCommandOptionType, ApplicationCommandType
 from .utils import MISSING
