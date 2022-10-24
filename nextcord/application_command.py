@@ -1137,6 +1137,34 @@ class AutocompleteCommandMixin:
             raise ValueError(f'{self.error_name} kwarg "{arg_name}" for autocomplete not found.')
 
     def on_autocomplete(self, on_kwarg: str):
+        """Decorator that adds an autocomplete callback to the given kwarg.
+
+        .. code-block:: python3
+
+            @bot.slash_command()
+            async def your_favorite_dog(interaction: Interaction, dog: str):
+                await interaction.response.send_message(f"Your favorite dog is {dog}!")
+
+            @your_favorite_dog.on_autocomplete("dog")
+            async def favorite_dog(interaction: Interaction, dog: str):
+                if not dog:
+                    # send the full autocomplete list
+                    await interaction.response.send_autocomplete(list_of_dog_breeds)
+                    return
+                # send a list of nearest matches from the list of dog breeds
+                get_near_dog = [breed for breed in list_of_dog_breeds if breed.lower().startswith(dog.lower())]
+                await interaction.response.send_autocomplete(get_near_dog)
+
+        .. note::
+            To use inputs from other options inputted in the command, you can add them as arguments to the autocomplete
+            callback. The order of the arguments does not matter, but the names do.
+
+        Parameters
+        ----------
+        on_kwarg: :class:`str`
+            The slash command option to add the autocomplete callback to.
+        """
+
         def decorator(func: Callable):
             self._temp_autocomplete_callbacks[on_kwarg] = func
             return func
@@ -1202,7 +1230,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         if an autocomplete function for it is found.
     autocomplete_callback: Optional[:class:`Callable`]
         The function that will be used to autocomplete this parameter. If not specified, it will be looked for
-        using the :meth:`~SlashApplicationSubcommand.on_autocomplete` decorator.
+        using the :meth:`~SlashApplicationCommand.on_autocomplete` decorator.
     default: Any
         When required is not True and the user doesn't provide a value for this Option, this value is given instead.
     verify: :class:`bool`
