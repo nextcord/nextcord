@@ -61,6 +61,7 @@ GuildFeature = Literal[
     "ANIMATED_ICON",
     "BANNER",
     "COMMUNITY",
+    "DEVELOPER_SUPPORT_SERVER",
     "DISCOVERABLE",
     "FEATURABLE",
     "INVITE_SPLASH",
