@@ -686,9 +686,7 @@ class GuildChannel:
 
         # if you are timed out then you lose all permissions except view_channel and read_message_history
         if obj.communication_disabled_until is not None:
-            allowed = Permissions.none()
-            allowed.view_channel = True
-            allowed.read_message_history = True
+            allowed = Permissions(view_channel=True, read_message_history=True)
             base.value &= allowed.value
 
         return base
