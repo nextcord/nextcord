@@ -560,6 +560,7 @@ class GuildChannel:
         - Guild roles
         - Channel overrides
         - Member overrides
+        - Timed-out members
 
         If a :class:`~nextcord.Role` is passed, then it checks the permissions
         someone with that role would have, which is essentially:
