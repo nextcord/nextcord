@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
 import aiohttp
 
