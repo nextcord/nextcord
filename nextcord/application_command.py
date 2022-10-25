@@ -51,6 +51,7 @@ from typing import (
 import typing_extensions
 from typing_extensions import Annotated
 
+from . import _cog
 from .abc import GuildChannel
 from .channel import (
     CategoryChannel,
@@ -61,7 +62,6 @@ from .channel import (
     TextChannel,
     VoiceChannel,
 )
-from . import _cog
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
