@@ -26,8 +26,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Tuple, Type, TypeVar
 
 import nextcord.utils
-from nextcord.cog import _cog_special_method
-from nextcord.cog import Cog as _Cog, CogMeta as _CogMeta
+from nextcord.cog import Cog as _Cog, CogMeta as _CogMeta, _cog_special_method
 
 from ._types import _BaseCommand
 
@@ -138,7 +137,7 @@ class Cog(_Cog, metaclass=CogMeta):
 
         # Either update the command with the cog provided defaults or copy it.
         # r.e type ignore, type-checker complains about overriding a ClassVar
-        self.__cog_commands__ = tuple(c._update_copy(cmd_attrs) for c in cls.__cog_commands__)  # type: ignore 
+        self.__cog_commands__ = tuple(c._update_copy(cmd_attrs) for c in cls.__cog_commands__)  # type: ignore
 
         lookup = {
             cmd.qualified_name: cmd

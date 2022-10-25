@@ -64,7 +64,11 @@ def _cog_special_method(func: FuncT) -> FuncT:
 
 def _replace_type_placeholders():
     global BaseApplicationCommandType, SlashApplicationCommandType, SlashApplicationSubcommandType
-    from .application_command import BaseApplicationCommand, SlashApplicationCommand, SlashApplicationSubcommand
+    from .application_command import (
+        BaseApplicationCommand,
+        SlashApplicationCommand,
+        SlashApplicationSubcommand,
+    )
 
     BaseApplicationCommandType = BaseApplicationCommand
     SlashApplicationCommandType = SlashApplicationCommand
