@@ -27,7 +27,7 @@ from __future__ import annotations
 import asyncio
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar, Union
 
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
@@ -150,6 +150,14 @@ class ChannelSelect(SelectBase):
     channel_types: List[:class:`nextcord.ChannelType`]
         The types of channels that can be selected. If not given, all channel types are allowed.
     """
+    
+    __item_repr_attributes__: Tuple[str, ...] = (
+        "placeholder",
+        "min_values",
+        "max_values",
+        "disabled",
+        "channel_types",
+    )
 
     def __init__(
         self,
