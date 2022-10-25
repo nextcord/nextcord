@@ -24,8 +24,8 @@ DEALINGS IN THE SOFTWARE.
 
 # this is a wrapper for _cog to prevent circular imports
 
-from importlib import reload
 import typing
+from importlib import reload
 
 from . import _cog
 

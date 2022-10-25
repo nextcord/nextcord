@@ -32,7 +32,11 @@ from .interactions import Interaction
 from .utils import MISSING
 
 if TYPE_CHECKING:
-    from .application_command import BaseApplicationCommand, SlashApplicationCommand, SlashApplicationSubcommand
+    from .application_command import (
+        BaseApplicationCommand,
+        SlashApplicationCommand,
+        SlashApplicationSubcommand,
+    )
 
     BaseApplicationCommandType = BaseApplicationCommand
     SlashApplicationCommandType = SlashApplicationCommand
