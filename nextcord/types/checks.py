@@ -26,7 +26,7 @@ DEALINGS IN THE SOFTWARE.
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
 
 if TYPE_CHECKING:
-    from nextcord._cog import Cog
+    from nextcord.cog import Cog
 
     from ..interactions import Interaction
 

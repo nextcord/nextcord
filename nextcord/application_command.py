@@ -51,7 +51,7 @@ from typing import (
 import typing_extensions
 from typing_extensions import Annotated
 
-from . import _cog
+from . import cog
 from .abc import GuildChannel
 from .channel import (
     CategoryChannel,
@@ -128,8 +128,8 @@ def _cog_special_method(func: FuncT) -> FuncT:
     return func
 
 
-Cog = _cog.Cog
-ClientCog = _cog.ClientCog
+Cog = cog.Cog
+ClientCog = cog.ClientCog
 
 
 class CallbackWrapper:
@@ -3466,6 +3466,7 @@ class String:
         return Inner
 
 
-_cog.BaseApplicationCommandType = BaseApplicationCommand
-_cog.SlashApplicationCommandType = SlashApplicationCommand
-_cog.SlashApplicationSubcommandType = SlashApplicationSubcommand
+# we do this manually because cog._replace_type_placeholders imports this module
+cog.BaseApplicationCommandType = BaseApplicationCommand
+cog.SlashApplicationCommandType = SlashApplicationCommand
+cog.SlashApplicationSubcommandType = SlashApplicationSubcommand
