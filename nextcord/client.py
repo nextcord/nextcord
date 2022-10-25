@@ -90,7 +90,7 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand
     from .asset import Asset
     from .channel import DMChannel
-    from .cog import Cog
+    from ._cog import Cog
     from .enums import Locale
     from .file import File
     from .flags import MemberCacheFlags

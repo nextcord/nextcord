@@ -26,7 +26,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Tuple, Type, TypeVar
 
 import nextcord.utils
-from nextcord.cog import Cog as _Cog, CogMeta as _CogMeta, _cog_special_method
+from nextcord._cog import _cog_special_method
+from nextcord.cog import Cog as _Cog, CogMeta as _CogMeta
 
 from ._types import _BaseCommand
 

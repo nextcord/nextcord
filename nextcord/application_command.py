@@ -61,7 +61,7 @@ from .channel import (
     TextChannel,
     VoiceChannel,
 )
-from .cog import Cog
+from . import _cog
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
@@ -104,6 +104,7 @@ __all__ = (
     "Mentionable",
     "Range",
     "String",
+    "ClientCog",
 )
 
 _log = logging.getLogger(__name__)
@@ -125,6 +126,10 @@ else:
 def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
     return func
+
+
+Cog = _cog.Cog
+ClientCog = _cog.ClientCog
 
 
 class CallbackWrapper:
@@ -3459,3 +3464,8 @@ class String:
             raise TypeError("At least one of min or max must be set.")
 
         return Inner
+
+
+_cog.BaseApplicationCommandType = BaseApplicationCommand
+_cog.SlashApplicationCommandType = SlashApplicationCommand
+_cog.SlashApplicationSubcommandType = SlashApplicationSubcommand
