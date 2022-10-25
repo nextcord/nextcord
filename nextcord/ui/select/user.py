@@ -29,11 +29,11 @@ import os
 from collections import UserList
 from typing import TYPE_CHECKING, Callable, List, Optional, Type, TypeVar
 
-from .base import SelectBase
-from ...components import SelectOption, UserSelectMenu
+from ...components import UserSelectMenu
 from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
+from .base import SelectBase
 
 if TYPE_CHECKING:
     from ...guild import Guild
@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 __all__ = ("UserSelect", "user_select")
 
 S = TypeVar("S", bound="UserSelect")
+
 
 class UserSelectValues(UserList):
     """Represents the values of a :class:`UserSelect`."""
@@ -165,7 +166,7 @@ class UserSelect(SelectBase):
 
     def to_component_dict(self) -> UserSelectMenuPayload:
         return self._underlying.to_dict()
-    
+
     @classmethod
     def from_component(cls: Type[S], component: UserSelectMenu) -> S:
         return cls(

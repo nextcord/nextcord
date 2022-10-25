@@ -35,13 +35,13 @@ if TYPE_CHECKING:
     from .emoji import Emoji
     from .types.components import (
         ActionRow as ActionRowPayload,
-        SelectMenuBase as SelectMenuBasePayload,
         ButtonComponent as ButtonComponentPayload,
         ChannelSelectMenu as ChannelSelectMenuPayload,
         Component as ComponentPayload,
         MentionableSelectMenu as MentionableSelectMenuPayload,
         RoleSelectMenu as RoleSelectMenuPayload,
         SelectMenu as SelectMenuPayload,
+        SelectMenuBase as SelectMenuBasePayload,
         SelectOption as SelectOptionPayload,
         TextInputComponent as TextInputComponentPayload,
         UserSelectMenu as UserSelectMenuPayload,

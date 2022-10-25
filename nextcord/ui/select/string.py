@@ -26,15 +26,15 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Callable, List, Optional, Tuple, Type, TypeVar, Union
 
-from .base import SelectBase
 from ...components import SelectMenu, SelectOption
 from ...emoji import Emoji
 from ...enums import ComponentType
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
+from .base import SelectBase
 
 __all__ = (
     "Select",

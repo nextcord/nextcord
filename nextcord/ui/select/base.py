@@ -33,9 +33,7 @@ from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item
 
-__all__ = (
-    "SelectBase",
-)
+__all__ = ("SelectBase",)
 
 if TYPE_CHECKING:
     from ...types.components import SelectMenu as SelectMenuPayload

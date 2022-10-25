@@ -27,13 +27,13 @@ from __future__ import annotations
 import asyncio
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional, Union, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, List, Optional, Type, TypeVar, Union
 
-from .base import SelectBase
-from ...components import MentionableSelectMenu, SelectOption
+from ...components import MentionableSelectMenu
 from ...enums import ComponentType
 from ...utils import MISSING, get
 from ..item import Item, ItemCallbackType
+from .base import SelectBase
 
 if TYPE_CHECKING:
     from ...guild import Guild
@@ -176,7 +176,7 @@ class MentionableSelect(SelectBase):
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:
         return self._underlying.to_dict()
-    
+
     @classmethod
     def from_component(cls: Type[S], component: MentionableSelectMenu) -> S:
         return cls(
