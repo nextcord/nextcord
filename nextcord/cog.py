@@ -29,8 +29,8 @@ from importlib import reload
 
 from . import _cog
 
-__all__ = ()
-__all__ += _cog.__all__
+__all__ = []
+__all__.extend(_cog.__all__)
 
 typing.TYPE_CHECKING = True
 
