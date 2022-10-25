@@ -141,7 +141,7 @@ class Cog(_Cog, metaclass=CogMeta):
 
         lookup = {
             cmd.qualified_name: cmd
-            for cmd in self.__cog_commands__ # type: ignore
+            for cmd in self.__cog_commands__  # type: ignore
             # pyright cannot read class annotations i guess
         }
 
