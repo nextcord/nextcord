@@ -1902,7 +1902,7 @@ class Client:
             The view to remove from dispatching.
         message_id: Optional[:class:`int`]
             The message ID that the view is attached to. This is used to properly
-            remove the view from the view store. This cannot be provided if the 
+            remove the view from the view store. This cannot be provided if the
             view is non-persistent.
 
         Raises
