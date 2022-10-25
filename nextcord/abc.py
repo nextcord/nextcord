@@ -1406,10 +1406,7 @@ class Messageable:
             if not hasattr(view, "__discord_ui_view__"):
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
-            self._state.store_view(view, persistent=False)
             components = cast(List[ComponentPayload], view.to_components())
-        else:
-            components = None
 
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
