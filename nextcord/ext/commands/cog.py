@@ -142,12 +142,12 @@ class Cog(_Cog, metaclass=CogMeta):
 
         lookup = {
             cmd.qualified_name: cmd
-            for cmd in self.__cog_commands__
+            for cmd in self.__cog_commands__ # type: ignore
             # pyright cannot read class annotations i guess
         }
 
         # Update the Command instances dynamically as well
-        for command in self.__cog_commands__:
+        for command in self.__cog_commands__:  # type: ignore
             setattr(self, command.callback.__name__, command)
             parent = command.parent
             if parent is not None:
@@ -158,7 +158,7 @@ class Cog(_Cog, metaclass=CogMeta):
                 parent.remove_command(command.name)  # type: ignore
                 parent.add_command(command)  # type: ignore
 
-        return self
+        return self  # type: ignore
 
     def get_commands(self) -> List[Command]:
         r"""
