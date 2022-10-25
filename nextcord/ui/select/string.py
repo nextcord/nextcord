@@ -28,6 +28,7 @@ import asyncio
 import os
 from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar, Union
 
+from .base import SelectBase
 from ...components import SelectMenu, SelectOption
 from ...emoji import Emoji
 from ...enums import ComponentType
@@ -42,16 +43,10 @@ __all__ = (
     "string_select",
 )
 
-if TYPE_CHECKING:
-    from ...types.components import SelectMenu as SelectMenuPayload
-    from ...types.interactions import ComponentInteractionData
-    from ..view import View
-
 S = TypeVar("S", bound="Select")
-V = TypeVar("V", bound="View", covariant=True)
 
 
-class Select(Item[V]):
+class Select(SelectBase):
     """Represents a UI select menu.
 
     This is usually represented as a drop down menu.
@@ -104,7 +99,7 @@ class Select(Item[V]):
         disabled: bool = False,
         row: Optional[int] = None,
     ) -> None:
-        super().__init__()
+        Item.__init__(self)
         self._selected_values: List[str] = []
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
@@ -119,48 +114,6 @@ class Select(Item[V]):
             disabled=disabled,
         )
         self.row = row
-
-    @property
-    def custom_id(self) -> str:
-        """:class:`str`: The ID of the select menu that gets received during an interaction."""
-        return self._underlying.custom_id
-
-    @custom_id.setter
-    def custom_id(self, value: str):
-        if not isinstance(value, str):
-            raise TypeError("custom_id must be None or str")
-
-        self._underlying.custom_id = value
-
-    @property
-    def placeholder(self) -> Optional[str]:
-        """Optional[:class:`str`]: The placeholder text that is shown if nothing is selected, if any."""
-        return self._underlying.placeholder
-
-    @placeholder.setter
-    def placeholder(self, value: Optional[str]):
-        if value is not None and not isinstance(value, str):
-            raise TypeError("placeholder must be None or str")
-
-        self._underlying.placeholder = value
-
-    @property
-    def min_values(self) -> int:
-        """:class:`int`: The minimum number of items that must be chosen for this select menu."""
-        return self._underlying.min_values
-
-    @min_values.setter
-    def min_values(self, value: int):
-        self._underlying.min_values = int(value)
-
-    @property
-    def max_values(self) -> int:
-        """:class:`int`: The maximum number of items that must be chosen for this select menu."""
-        return self._underlying.max_values
-
-    @max_values.setter
-    def max_values(self, value: int):
-        self._underlying.max_values = int(value)
 
     @property
     def options(self) -> List[SelectOption]:
@@ -242,33 +195,6 @@ class Select(Item[V]):
 
         self._underlying.options.append(option)
 
-    @property
-    def disabled(self) -> bool:
-        """:class:`bool`: Whether the select is disabled or not."""
-        return self._underlying.disabled
-
-    @disabled.setter
-    def disabled(self, value: bool):
-        self._underlying.disabled = bool(value)
-
-    @property
-    def values(self) -> List[str]:
-        """List[:class:`str`]: A list of values that have been selected by the user."""
-        return self._selected_values
-
-    @property
-    def width(self) -> int:
-        return 5
-
-    def to_component_dict(self) -> SelectMenuPayload:
-        return self._underlying.to_dict()
-
-    def refresh_component(self, component: SelectMenu) -> None:
-        self._underlying = component
-
-    def refresh_state(self, data: ComponentInteractionData) -> None:
-        self._selected_values = data.get("values", [])
-
     @classmethod
     def from_component(cls: Type[S], component: SelectMenu) -> S:
         return cls(
@@ -280,13 +206,6 @@ class Select(Item[V]):
             disabled=component.disabled,
             row=None,
         )
-
-    @property
-    def type(self) -> ComponentType:
-        return self._underlying.type
-
-    def is_dispatchable(self) -> bool:
-        return True
 
 
 def select(

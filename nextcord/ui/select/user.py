@@ -27,13 +27,13 @@ from __future__ import annotations
 import asyncio
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional
+from typing import TYPE_CHECKING, Callable, List, Optional, Type, TypeVar
 
+from .base import SelectBase
 from ...components import SelectOption, UserSelectMenu
 from ...enums import ComponentType
 from ...utils import MISSING
 from ..item import Item, ItemCallbackType
-from .string import Select
 
 if TYPE_CHECKING:
     from ...guild import Guild
@@ -42,6 +42,7 @@ if TYPE_CHECKING:
 
 __all__ = ("UserSelect", "user_select")
 
+S = TypeVar("S", bound="UserSelect")
 
 class UserSelectValues(UserList):
     """Represents the values of a :class:`UserSelect`."""
@@ -100,7 +101,7 @@ class UserSelectValues(UserList):
         return members
 
 
-class UserSelect(Select):
+class UserSelect(SelectBase):
     """Represents a UI user select menu.
 
     This is usually represented as a drop down menu.
@@ -158,19 +159,23 @@ class UserSelect(Select):
         self.row = row
 
     @property
-    def options(self) -> List[SelectOption]:
-        """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since user selects cannot have any options.
-        """
-        return []
-
-    @property
     def values(self) -> UserSelectValues:
         """List[:class:`int`]: A list of user ids that have been selected by the user."""
         return UserSelectValues([int(id) for id in self._selected_values])
 
     def to_component_dict(self) -> UserSelectMenuPayload:
         return self._underlying.to_dict()
+    
+    @classmethod
+    def from_component(cls: Type[S], component: UserSelectMenu) -> S:
+        return cls(
+            custom_id=component.custom_id,
+            placeholder=component.placeholder,
+            min_values=component.min_values,
+            max_values=component.max_values,
+            disabled=component.disabled,
+            row=None,
+        )
 
 
 def user_select(

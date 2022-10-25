@@ -27,13 +27,13 @@ from __future__ import annotations
 import asyncio
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional
+from typing import TYPE_CHECKING, Callable, List, Optional, Type, TypeVar
 
+from .base import SelectBase
 from ...components import RoleSelectMenu, SelectOption
 from ...enums import ComponentType
 from ...utils import MISSING, get
 from ..item import Item, ItemCallbackType
-from .string import Select
 
 if TYPE_CHECKING:
     from ...guild import Guild
@@ -41,6 +41,8 @@ if TYPE_CHECKING:
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
 
 __all__ = ("RoleSelect", "role_select")
+
+S = TypeVar("S", bound="RoleSelect")
 
 
 class RoleSelectValues(UserList):
@@ -101,7 +103,7 @@ class RoleSelectValues(UserList):
         return roles
 
 
-class RoleSelect(Select):
+class RoleSelect(SelectBase):
 
     """Represents a UI role select menu.
 
@@ -160,19 +162,23 @@ class RoleSelect(Select):
         self.row = row
 
     @property
-    def options(self) -> List[SelectOption]:
-        """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since role selects cannot have any options.
-        """
-        return []
-
-    @property
     def values(self) -> RoleSelectValues:
         """List[:class:`int`]: A list of role ids that have been selected by the user."""
         return RoleSelectValues([int(id) for id in self._selected_values])
 
     def to_component_dict(self) -> RoleSelectMenuPayload:
         return self._underlying.to_dict()
+    
+    @classmethod
+    def from_component(cls: Type[S], component: RoleSelectMenu) -> S:
+        return cls(
+            custom_id=component.custom_id,
+            placeholder=component.placeholder,
+            min_values=component.min_values,
+            max_values=component.max_values,
+            disabled=component.disabled,
+            row=None,
+        )
 
 
 def role_select(

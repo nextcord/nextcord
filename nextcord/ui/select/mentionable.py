@@ -27,13 +27,13 @@ from __future__ import annotations
 import asyncio
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Union, Type, TypeVar
 
+from .base import SelectBase
 from ...components import MentionableSelectMenu, SelectOption
 from ...enums import ComponentType
 from ...utils import MISSING, get
 from ..item import Item, ItemCallbackType
-from .string import Select
 
 if TYPE_CHECKING:
     from ...guild import Guild
@@ -42,6 +42,8 @@ if TYPE_CHECKING:
     from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
 
 __all__ = ("MentionableSelect", "mentionable_select")
+
+S = TypeVar("S", bound="MentionableSelect")
 
 
 class MentionableSelectValues(UserList):
@@ -108,7 +110,7 @@ class MentionableSelectValues(UserList):
         return mentionables
 
 
-class MentionableSelect(Select):
+class MentionableSelect(SelectBase):
 
     """Represents a UI mentionable select menu.
 
@@ -168,19 +170,23 @@ class MentionableSelect(Select):
         self.row = row
 
     @property
-    def options(self) -> List[SelectOption]:
-        """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since mentionable selects cannot have any options.
-        """
-        return []
-
-    @property
     def values(self) -> MentionableSelectValues:
         """List[:class:`int`]: A list of mentionable ids that have been selected by the user."""
         return MentionableSelectValues([int(id) for id in self._selected_values])
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:
         return self._underlying.to_dict()
+    
+    @classmethod
+    def from_component(cls: Type[S], component: MentionableSelectMenu) -> S:
+        return cls(
+            custom_id=component.custom_id,
+            placeholder=component.placeholder,
+            min_values=component.min_values,
+            max_values=component.max_values,
+            disabled=component.disabled,
+            row=None,
+        )
 
 
 def mentionable_select(

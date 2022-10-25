@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from .emoji import Emoji
     from .types.components import (
         ActionRow as ActionRowPayload,
-        BaseSelectMenu as BaseSelectMenuPayload,
+        SelectMenuBase as SelectMenuBasePayload,
         ButtonComponent as ButtonComponentPayload,
         ChannelSelectMenu as ChannelSelectMenuPayload,
         Component as ComponentPayload,
@@ -208,7 +208,7 @@ class Button(Component):
         return payload  # type: ignore
 
 
-class BaseSelectMenu(Component):
+class SelectMenuBase(Component):
     """Represents a Discord Bot UI Kit Select Menu.
 
     This is the base class for all select menus.
@@ -239,15 +239,15 @@ class BaseSelectMenu(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: BaseSelectMenuPayload):
+    def __init__(self, data: SelectMenuBasePayload):
         self.custom_id: str = data["custom_id"]
         self.disabled: bool = data.get("disabled", False)
         self.placeholder: Optional[str] = data.get("placeholder")
         self.min_values: int = data.get("min_values", 1)
         self.max_values: int = data.get("max_values", 1)
 
-    def to_dict(self) -> BaseSelectMenuPayload:
-        payload: BaseSelectMenuPayload = {
+    def to_dict(self) -> SelectMenuBasePayload:
+        payload: SelectMenuBasePayload = {
             "custom_id": self.custom_id,
             "disabled": self.disabled,
             "min_values": self.min_values,
@@ -260,7 +260,7 @@ class BaseSelectMenu(Component):
         return payload
 
 
-class SelectMenu(BaseSelectMenu):
+class SelectMenu(SelectMenuBase):
     """Represents a select menu from the Discord Bot UI Kit.
 
     A select menu is functionally the same as a dropdown, however
@@ -289,8 +289,6 @@ class SelectMenu(BaseSelectMenu):
         A list of options that can be selected in this menu.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
-    channel_types: List[:class:`ChannelType`]
-        A list of channel types that are allowed to be chosen in this select menu.
     """
 
     __slots__: Tuple[str, ...] = ("options",)
@@ -314,7 +312,7 @@ class SelectMenu(BaseSelectMenu):
         return payload
 
 
-class UserSelectMenu(BaseSelectMenu):
+class UserSelectMenu(SelectMenuBase):
     """Represents a user select menu from the Discord Bot UI Kit.
 
     A user select menu is functionally the same as a dropdown, however
@@ -358,7 +356,7 @@ class UserSelectMenu(BaseSelectMenu):
         return payload
 
 
-class RoleSelectMenu(BaseSelectMenu):
+class RoleSelectMenu(SelectMenuBase):
     """Represents a role select menu from the Discord Bot UI Kit.
 
     A role select menu is functionally the same as a dropdown, however
@@ -402,7 +400,7 @@ class RoleSelectMenu(BaseSelectMenu):
         return payload
 
 
-class MentionableSelectMenu(BaseSelectMenu):
+class MentionableSelectMenu(SelectMenuBase):
     """Represents a mentionable select menu from the Discord Bot UI Kit.
 
     A mentionable select menu is functionally the same as a dropdown, however
@@ -446,7 +444,7 @@ class MentionableSelectMenu(BaseSelectMenu):
         return payload
 
 
-class ChannelSelectMenu(BaseSelectMenu):
+class ChannelSelectMenu(SelectMenuBase):
     """Represents a mentionable select menu from the Discord Bot UI Kit.
 
     A mentionable select menu is functionally the same as a dropdown, however

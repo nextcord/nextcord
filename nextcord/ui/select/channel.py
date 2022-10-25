@@ -27,13 +27,13 @@ from __future__ import annotations
 import asyncio
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Union, Type, TypeVar
 
+from .base import SelectBase
 from ...components import ChannelSelectMenu, SelectOption
 from ...enums import ComponentType
 from ...utils import MISSING, get
 from ..item import Item, ItemCallbackType
-from .string import Select
 
 if TYPE_CHECKING:
     from ...abc import GuildChannel
@@ -43,6 +43,8 @@ if TYPE_CHECKING:
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
 
 __all__ = ("ChannelSelect", "channel_select")
+
+S = TypeVar("S", bound="ChannelSelect")
 
 
 class ChannelSelectValues(UserList):
@@ -112,7 +114,7 @@ class ChannelSelectValues(UserList):
         return channels
 
 
-class ChannelSelect(Select):
+class ChannelSelect(SelectBase):
 
     """Represents a UI channel select menu.
 
@@ -176,19 +178,23 @@ class ChannelSelect(Select):
         self.row = row
 
     @property
-    def options(self) -> List[SelectOption]:
-        """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu.
-        This will always be an empty list since channel selects cannot have any options.
-        """
-        return []
-
-    @property
     def values(self) -> ChannelSelectValues:
         """List[:class:`int`]: A list of channel ids that have been selected by the user."""
         return ChannelSelectValues([int(id) for id in self._selected_values])
 
     def to_component_dict(self) -> ChannelSelectMenuPayload:
         return self._underlying.to_dict()
+    
+    @classmethod
+    def from_component(cls: Type[S], component: ChannelSelectMenu) -> S:
+        return cls(
+            custom_id=component.custom_id,
+            placeholder=component.placeholder,
+            min_values=component.min_values,
+            max_values=component.max_values,
+            disabled=component.disabled,
+            row=None,
+        )
 
 
 def channel_select(
