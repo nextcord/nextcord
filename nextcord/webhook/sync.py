@@ -35,19 +35,7 @@ import logging
 import re
 import threading
 import time
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, overload
 from urllib.parse import quote as urlquote
 
 from .. import utils

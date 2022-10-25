@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import collections
 import logging
 import signal
 import sys
@@ -57,13 +56,7 @@ import aiohttp
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import (
-    SlashApplicationCommand,
-    SlashApplicationSubcommand,
-    message_command,
-    slash_command,
-    user_command,
-)
+from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
@@ -1883,7 +1876,6 @@ class Client:
             The view is not persistent. A persistent view has no timeout
             and all their components have an explicitly provided custom_id.
         """
-
         if not isinstance(view, View):
             raise TypeError(f"Expected an instance of View not {view.__class__!r}")
 
@@ -1893,6 +1885,40 @@ class Client:
             )
 
         self._connection.store_view(view, message_id)
+
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
+        """Removes a :class:`~nextcord.ui.View` from persistent listening.
+
+        This method should be used if a persistent view is set in a cog and
+        should be freed when the cog is unloaded to save memory.
+
+        .. versionadded:: 2.3
+
+        Parameters
+        ----------
+        view: :class:`nextcord.ui.View`
+            The view to remove from dispatching.
+        message_id: Optional[:class:`int`]
+            The message ID that the view is attached to. This is used to properly
+            remove the view from the view store.
+
+        Raises
+        ------
+        TypeError
+            A view was not passed.
+        ValueError
+            The view is not persistent. A persistent view has no timeout
+            and all their components have an explicitly provided custom_id.
+        """
+        if not isinstance(view, View):
+            raise TypeError(f"Expected an instance of View not {view.__class__.__name__}")
+
+        if not view.is_persistent():
+            raise ValueError(
+                "View is not persistent. Items need to have a custom_id set and View must have no timeout"
+            )
+
+        self._connection.remove_view(view, message_id)
 
     def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
         """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
@@ -1927,6 +1953,38 @@ class Client:
             )
 
         self._connection.store_modal(modal, user_id)
+
+    def remove_modal(self, modal: Modal) -> None:
+        """Removes a :class:`~nextcord.ui.Modal` from persistent listening.
+
+        This method should be used if a persistent modal is set in a cog and
+        should be freed when the cog is unloaded to save memory.
+
+        .. versionadded:: 2.3
+
+        Parameters
+        ----------
+        modal: :class:`nextcord.ui.Modal`
+            The modal to remove from dispatching.
+
+        Raises
+        ------
+        TypeError
+            A modal was not passed.
+        ValueError
+            The modal is not persistent. A persistent modal has a set
+            custom_id and all their components with a set custom_id
+            and a timeout set to None.
+        """
+        if not isinstance(modal, Modal):
+            raise TypeError(f"Expected an instance of Modal not {modal.__class__.__name__}")
+
+        if not modal.is_persistent():
+            raise ValueError(
+                "Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set"
+            )
+
+        self._connection.remove_modal(modal)
 
     @property
     def persistent_views(self) -> Sequence[View]:
@@ -1968,7 +2026,7 @@ class Client:
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
                 _log.debug(
-                    f"nextcord.Client: Interaction command not found, attempting to lazy load."
+                    "nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
                 # _log.debug(f"nextcord.Client: %s", interaction.data)
                 response_signature = (
@@ -1976,7 +2034,7 @@ class Client:
                     int(interaction.data["type"]),
                     interaction.guild_id,
                 )
-                _log.debug(f"nextcord.Client: %s", response_signature)
+                _log.debug("nextcord.Client: %s", response_signature)
                 do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
                     interaction.data["name"],
@@ -1988,7 +2046,7 @@ class Client:
                     )
                     if app_cmd.is_interaction_valid(interaction):
                         _log.debug(
-                            f"nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
+                            "nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
                             app_cmd.error_name,
                         )
                         app_cmd.parse_discord_response(self._connection, interaction.data)
@@ -2020,7 +2078,7 @@ class Client:
             # TODO: Is it really worth trying to lazy load with this?
             _log.debug("nextcord.Client: Autocomplete interaction received.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.debug(f"nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
+                _log.debug("nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
                 await app_cmd.call_autocomplete_from_interaction(interaction)  # type: ignore
             else:
                 raise ValueError(

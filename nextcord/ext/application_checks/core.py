@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import TYPE_CHECKING, Callable, Union, cast
+from typing import TYPE_CHECKING, Callable, Union
 
 import nextcord
 from nextcord.application_command import (

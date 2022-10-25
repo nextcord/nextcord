@@ -34,7 +34,7 @@ import time
 import traceback
 import zlib
 from collections import deque, namedtuple
-from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, NoReturn, Optional, Union
+from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional, Union
 
 import aiohttp
 
