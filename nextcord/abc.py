@@ -731,10 +731,10 @@ class GuildChannel:
         ...
 
     async def set_permissions(
-        self, 
-        target: Union[Member, Role], 
-        *, 
-        reason: Optional[str] = None, 
+        self,
+        target: Union[Member, Role],
+        *,
+        reason: Optional[str] = None,
         **kwargs: Any,
     ):
         r"""|coro|
