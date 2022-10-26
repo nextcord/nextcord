@@ -730,7 +730,13 @@ class GuildChannel:
     ) -> None:
         ...
 
-    async def set_permissions(self, target, *, overwrite=MISSING, reason=None, **permissions):
+    async def set_permissions(
+        self, 
+        target: Union[Member, Role], 
+        *, 
+        reason: Optional[str] = None, 
+        **kwargs: Any,
+    ):
         r"""|coro|
 
         Sets the channel specific permission overwrites for a target in the
@@ -800,6 +806,8 @@ class GuildChannel:
         """
 
         http = self._state.http
+        overwrite: Optional[PermissionOverwrite] = kwargs.pop("overwrite", MISSING)
+        permissions: Dict[str, bool] = kwargs
 
         if isinstance(target, User):
             perm_type = _Overwrites.MEMBER
