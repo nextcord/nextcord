@@ -94,13 +94,13 @@ class Flag:
         Whether multiple given values overrides the previous value.
     """
 
-    name: str = MISSING
+    name: str = field(default_factory=MISSING)
     aliases: List[str] = field(default_factory=list)
-    attribute: str = MISSING
-    annotation: Any = MISSING
-    default: Any = MISSING
-    max_args: int = MISSING
-    override: bool = MISSING
+    attribute: str = field(default_factory=MISSING)
+    annotation: Any = field(default_factory=MISSING)
+    default: Any = field(default_factory=MISSING)
+    max_args: int = field(default_factory=MISSING)
+    override: bool = field(default_factory=MISSING)
     cast_to_dict: bool = False
 
     @property
