@@ -3036,7 +3036,7 @@ class Guild(Hashable):
 
         Parameters
         ----------
-        limit: :class:`int`
+        limit: Optional[:class:`int`]
             The number of entries to retrieve. If ``None`` retrieve all entries.
         before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
             Retrieve entries before this date or entry.
