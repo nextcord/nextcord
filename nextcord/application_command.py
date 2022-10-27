@@ -425,12 +425,15 @@ class BaseCommandOption(ApplicationCommandOption):
 
 
 class OptionConverter(_CustomTypingMetaBase):
-    def __init__(self, option_type: Union[type, ApplicationCommandOptionType] = str) -> None:
-        """Based on, in basic functionality, the ``ext.commands`` Converter. Users subclass this and use convert to
-        provide custom "typings" for slash commands.
+    """Based on, in basic functionality, the ``ext.commands`` Converter. Users subclass this and use convert to
+    provide custom "typings" for slash commands.
 
-        The ``convert`` method MUST be overridden to convert the value from Discord to the desired value.
-        The ``modify`` method MAY be overridden to modify the :class:`BaseCommandOption`.
+    The ``convert`` method MUST be overridden to convert the value from Discord to the desired value.
+    The ``modify`` method MAY be overridden to modify the :class:`BaseCommandOption`.
+    """
+
+    def __init__(self, option_type: Union[type, ApplicationCommandOptionType] = str) -> None:
+        """Initializes the converter.
 
         Parameters
         ----------
@@ -1815,6 +1818,19 @@ class SlashCommandMixin(CallbackMixin):
 
 
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
+    """Base class for all application commands.
+
+    Attributes
+    ----------
+    checks: List[Union[Callable[[:class:`ClientCog`, :class:`Interaction`], MaybeCoro[:class:`bool`]], Callable[[:class:`Interaction`], MaybeCoro[:class:`bool`]]]]
+        A list of predicates that verifies if the command could be executed
+        with the given :class:`Interaction` as the sole parameter. If an exception
+        is necessary to be thrown to signal failure, then one inherited from
+        :exc:`.ApplicationError` should be used. Note that if the checks fail then
+        :exc:`.ApplicationCheckFailure` exception is raised to the :func:`.on_application_command_error`
+        event.
+    """
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2395,6 +2411,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
 
 class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, CallbackWrapperMixin):
+    """Class representing a subcommand or subcommand group of a slash command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2629,6 +2647,8 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
 
 class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
+    """Class representing a slash command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2793,6 +2813,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
 
 class UserApplicationCommand(BaseApplicationCommand):
+    """Class representing a user context menu command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2867,6 +2889,8 @@ class UserApplicationCommand(BaseApplicationCommand):
 
 
 class MessageApplicationCommand(BaseApplicationCommand):
+    """Class representing a message context menu command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
