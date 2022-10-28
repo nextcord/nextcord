@@ -585,7 +585,7 @@ class CallbackMixin:
 
         Parameters
         ----------
-        callback: Optional[Callable]
+        callback: Optional[:data:`~typing.Callable`]
             Callback to create options from and invoke. If provided, it must be a coroutine function.
         parent_cog: Optional[:class:`ClientCog`]
             Class that the callback resides on. Will be passed into the callback if provided.
@@ -701,12 +701,12 @@ class CallbackMixin:
         callback: Optional[Callable] = None,
         option_class: Optional[Type[BaseCommandOption]] = BaseCommandOption,
     ) -> None:
-        """Creates objects of type `option_class` with the parameters of the function, and stores them in
+        """Creates objects of type ``option_class`` with the parameters of the function, and stores them in
         the options attribute.
 
         Parameters
         ----------
-        callback: Optional[Callable]
+        callback: Optional[:data:`~typing.Callable`]
             Callback to create options from. Must be a coroutine function.
         option_class: Optional[Type[:class:`BaseCommandOption`]]
             Class to create the options using. Should either be or subclass :class:`BaseCommandOption`. Defaults
@@ -962,7 +962,7 @@ class AutocompleteOptionMixin:
 
         Parameters
         ----------
-        autocomplete_callback: `Callable`
+        autocomplete_callback: Optional[:data:`~typing.Callable`]
             Callback to create options from and invoke. If provided, it must be a coroutine function.
         parent_cog: Optional[:class:`ClientCog`]
             Class that the callback resides on. Will be passed into the callback if provided.
@@ -1203,11 +1203,11 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         A list of choices that a user must choose.
         If a :class:`dict` is given, the keys are what the users are able to see, the values are what is sent back
         to the bot.
-        Otherwise, it is treated as an `Iterable` where what the user sees and is sent back to the bot are the same.
+        Otherwise, it is treated as an :class:`~collections.abc.Iterable` where what the user sees and is sent back to the bot are the same.
     choice_localizations: Dict[:class:`str`, Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]]
         A dictionary of choice display names as the keys, and dictionaries of locale: localized name as the values.
     channel_types: List[:class:`ChannelType`]
-        List of `ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
+        List of :class:`ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
         typed as :class:`GuildChannel` for this to function.
     min_value: Union[:class:`int`, :class:`float`]
         Minimum integer or floating point value the user is allowed to input. The parameter must be typed as an
@@ -1226,9 +1226,9 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
 
         .. versionadded:: 2.1
     autocomplete: :class:`bool`
-        If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
+        If this parameter has an autocomplete function decorated for it. If unset, it will automatically be ``True``
         if an autocomplete function for it is found.
-    autocomplete_callback: Optional[:class:`Callable`]
+    autocomplete_callback: Optional[:data:`~typing.Callable`]
         The function that will be used to autocomplete this parameter. If not specified, it will be looked for
         using the :meth:`~SlashApplicationCommand.on_autocomplete` decorator.
     default: Any
@@ -1847,7 +1847,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list/set/whatever of guild ID's that the application command should register to.
@@ -2242,7 +2242,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
             Parameters
             ----------
-            inter_options: :class`dict`
+            inter_options: :class:`dict`
                 Command option data from the interaction.
             cmd_options: :class:`dict`
                 Command option data from the local command.
@@ -2658,7 +2658,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2815,7 +2815,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized name as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2889,7 +2889,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized name as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2977,8 +2977,8 @@ def slash_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     force_global: :class:`bool`
-        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-        register to guilds. Has no effect if `guild_ids` are never set or added to.
+        If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+        register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
     def decorator(func: Callable) -> SlashApplicationCommand:
@@ -3030,8 +3030,8 @@ def message_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     force_global: :class:`bool`
-        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-        register to guilds. Has no effect if `guild_ids` are never set or added to.
+        If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+        register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
     def decorator(func: Callable) -> MessageApplicationCommand:
@@ -3081,8 +3081,8 @@ def user_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     force_global: :class:`bool`
-        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-        register to guilds. Has no effect if `guild_ids` are never set or added to.
+        If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+        register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
     def decorator(func: Callable) -> UserApplicationCommand:
