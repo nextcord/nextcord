@@ -97,7 +97,10 @@ DISCORD_EPOCH = 1420070400000
 
 class _MissingSentinel:
     def __eq__(self, other):
-        return False
+        return self is other
+
+    def __hash__(self):
+        return id(self)
 
     def __bool__(self):
         return False
