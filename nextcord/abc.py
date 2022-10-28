@@ -560,6 +560,7 @@ class GuildChannel:
         - Guild roles
         - Channel overrides
         - Member overrides
+        - Timed-out members
 
         If a :class:`~nextcord.Role` is passed, then it checks the permissions
         someone with that role would have, which is essentially:
@@ -568,6 +569,9 @@ class GuildChannel:
         - The permissions of the role used as a parameter
         - The default role permission overwrites
         - The permission overwrites of the role used as a parameter
+
+        .. versionchanged:: 2.3
+            Only ``view_channel`` and ``read_message_history`` can be returned for timed-out members
 
         .. versionchanged:: 2.0
             The object passed in can now be a role object.
@@ -683,6 +687,11 @@ class GuildChannel:
         if not base.read_messages:
             denied = Permissions.all_channel()
             base.value &= ~denied.value
+
+        # if you are timed out then you lose all permissions except view_channel and read_message_history
+        if obj.communication_disabled_until is not None:
+            allowed = Permissions(view_channel=True, read_message_history=True)
+            base.value &= allowed.value
 
         return base
 
