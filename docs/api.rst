@@ -2961,7 +2961,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: creation_date
 
-        Sort forum posts by its creation date.
+        Sort forum posts by their creation date.
 
 
 Async Iterator
