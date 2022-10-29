@@ -2957,7 +2957,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: latest_activity
 
-        Sort forum posts by its activity.
+        Sort forum posts by their activity.
 
     .. attribute:: creation_date
 
