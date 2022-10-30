@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import sys
 import warnings
@@ -71,7 +70,6 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from .enums import AuditLogAction, InteractionResponseType
-    from .file import File
     from .types import (
         appinfo,
         audit_log,
@@ -485,7 +483,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -529,7 +527,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[int, str]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -562,7 +560,7 @@ class HTTPClient:
         content: Optional[str] = None,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -618,7 +616,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -653,7 +651,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[int, str]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -1114,7 +1112,7 @@ class HTTPClient:
         content: Optional[str] = None,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
@@ -1151,7 +1149,7 @@ class HTTPClient:
         content: Optional[str] = None,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,

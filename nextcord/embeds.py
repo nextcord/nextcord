@@ -114,7 +114,7 @@ class Embed:
 
     .. versionchanged:: 2.2
         ``Embed.Empty`` is now an alias for ``None`` for a non-breaking change, every field uses ``None``
-            and is typed as `Optional[]` over ``Embed.Empty``.
+            and is typed as ``Optional[...]`` over ``Embed.Empty``.
             This also means that you can no longer use ``len()`` on an empty field.
 
     Attributes

@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import collections
 import logging
 import signal
 import sys
@@ -57,13 +56,7 @@ import aiohttp
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import (
-    SlashApplicationCommand,
-    SlashApplicationSubcommand,
-    message_command,
-    slash_command,
-    user_command,
-)
+from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
@@ -564,7 +557,7 @@ class Client:
 
         The default error handler provided by the client.
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
         Check :func:`~nextcord.on_error` for more details.
         """
@@ -578,7 +571,7 @@ class Client:
 
         The default application command error handler provided by the bot.
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
 
         This only fires if you do not specify any listeners for command error.
@@ -1416,12 +1409,12 @@ class Client:
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|
 
-        Gets a :class:`.Template` from a nextcord.new URL or code.
+        Gets a :class:`.Template` from a discord.new URL or code.
 
         Parameters
         ----------
         code: Union[:class:`.Template`, :class:`str`]
-            The Discord Template Code or URL (must be a nextcord.new URL).
+            The Discord Template Code or URL (must be a discord.new URL).
 
         Raises
         ------
@@ -1883,7 +1876,6 @@ class Client:
             The view is not persistent. A persistent view has no timeout
             and all their components have an explicitly provided custom_id.
         """
-
         if not isinstance(view, View):
             raise TypeError(f"Expected an instance of View not {view.__class__!r}")
 
@@ -1893,6 +1885,40 @@ class Client:
             )
 
         self._connection.store_view(view, message_id)
+
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
+        """Removes a :class:`~nextcord.ui.View` from persistent listening.
+
+        This method should be used if a persistent view is set in a cog and
+        should be freed when the cog is unloaded to save memory.
+
+        .. versionadded:: 2.3
+
+        Parameters
+        ----------
+        view: :class:`nextcord.ui.View`
+            The view to remove from dispatching.
+        message_id: Optional[:class:`int`]
+            The message ID that the view is attached to. This is used to properly
+            remove the view from the view store.
+
+        Raises
+        ------
+        TypeError
+            A view was not passed.
+        ValueError
+            The view is not persistent. A persistent view has no timeout
+            and all their components have an explicitly provided custom_id.
+        """
+        if not isinstance(view, View):
+            raise TypeError(f"Expected an instance of View not {view.__class__.__name__}")
+
+        if not view.is_persistent():
+            raise ValueError(
+                "View is not persistent. Items need to have a custom_id set and View must have no timeout"
+            )
+
+        self._connection.remove_view(view, message_id)
 
     def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
         """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
@@ -1927,6 +1953,38 @@ class Client:
             )
 
         self._connection.store_modal(modal, user_id)
+
+    def remove_modal(self, modal: Modal) -> None:
+        """Removes a :class:`~nextcord.ui.Modal` from persistent listening.
+
+        This method should be used if a persistent modal is set in a cog and
+        should be freed when the cog is unloaded to save memory.
+
+        .. versionadded:: 2.3
+
+        Parameters
+        ----------
+        modal: :class:`nextcord.ui.Modal`
+            The modal to remove from dispatching.
+
+        Raises
+        ------
+        TypeError
+            A modal was not passed.
+        ValueError
+            The modal is not persistent. A persistent modal has a set
+            custom_id and all their components with a set custom_id
+            and a timeout set to None.
+        """
+        if not isinstance(modal, Modal):
+            raise TypeError(f"Expected an instance of Modal not {modal.__class__.__name__}")
+
+        if not modal.is_persistent():
+            raise ValueError(
+                "Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set"
+            )
+
+        self._connection.remove_modal(modal)
 
     @property
     def persistent_views(self) -> Sequence[View]:
@@ -1968,7 +2026,7 @@ class Client:
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
                 _log.debug(
-                    f"nextcord.Client: Interaction command not found, attempting to lazy load."
+                    "nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
                 # _log.debug(f"nextcord.Client: %s", interaction.data)
                 response_signature = (
@@ -1976,7 +2034,7 @@ class Client:
                     int(interaction.data["type"]),
                     interaction.guild_id,
                 )
-                _log.debug(f"nextcord.Client: %s", response_signature)
+                _log.debug("nextcord.Client: %s", response_signature)
                 do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
                     interaction.data["name"],
@@ -1988,7 +2046,7 @@ class Client:
                     )
                     if app_cmd.is_interaction_valid(interaction):
                         _log.debug(
-                            f"nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
+                            "nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
                             app_cmd.error_name,
                         )
                         app_cmd.parse_discord_response(self._connection, interaction.data)
@@ -2020,7 +2078,7 @@ class Client:
             # TODO: Is it really worth trying to lazy load with this?
             _log.debug("nextcord.Client: Autocomplete interaction received.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.debug(f"nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
+                _log.debug("nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
                 await app_cmd.call_autocomplete_from_interaction(interaction)  # type: ignore
             else:
                 raise ValueError(
@@ -2190,27 +2248,27 @@ class Client:
     ) -> None:
         """|coro|
         Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
-        global commands if the guild_id is `None`.
+        global commands if the guild_id is ``None``.
 
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
             Data to use when comparing local application commands to what Discord has. Should be a list of application
-            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`.
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``.
         guild_id: Optional[:class:`int`]
-            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
-            Defaults to `None`.
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
         associate_known: :class:`bool`
             If local commands that match a command already on Discord should be associated with each other.
-            Defaults to `True`
+            Defaults to ``True``.
         delete_unknown: :class:`bool`
-            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
-            Defaults to `True`
+            Defaults to ``True``.
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
-            Defaults to `True`
+            Defaults to ``True``.
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
         # there, and vice versa.
@@ -2241,18 +2299,18 @@ class Client:
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
-            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
+            Payload from ``HTTPClient.get_guild_commands`` or ``HTTPClient.get_global_commands`` to deploy with. If None,
             the payload will be retrieved from Discord.
         guild_id: Optional[:class:`int`]
-            Guild ID to deploy application commands to. If `None`, global commands are deployed to.
+            Guild ID to deploy application commands to. If ``None``, global commands are deployed to.
         associate_known: :class:`bool`
             If True, commands on Discord that pass a signature check and a deep check will be associated with locally
             added ApplicationCommand objects.
         delete_unknown: :class:`bool`
-            If `True`, commands on Discord that fail a signature check will be removed. If `update_known` is False,
+            If ``True``, commands on Discord that fail a signature check will be removed. If ``update_known`` is ``False``,
             commands that pass the signature check but fail the deep check will also be removed.
         update_known: :class:`bool`
-            If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
+            If ``True``, commands on Discord that pass a signature check but fail the deep check will be updated.
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
         # there, and vice versa.
@@ -2333,10 +2391,10 @@ class Client:
         ----------
         data: Optional[List[:class:`dict`]]
             Data to use when comparing local application commands to what Discord has. Should be a list of application
-            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``
         guild_id: Optional[:class:`int`]
-            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
-            Defaults to `None`.
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
         # there, and vice versa.
@@ -2354,8 +2412,8 @@ class Client:
         commands: :class:`BaseApplicationCommand`
             Application command to register. Multiple args are accepted.
         guild_id: Optional[:class:`int`]
-            ID of the guild to register the application commands to. If set to `None`, the commands will be registered
-            as global commands instead. Defaults to `None`.
+            ID of the guild to register the application commands to. If set to ``None``, the commands will be registered
+            as global commands instead. Defaults to ``None``.
         """
         for command in commands:
             await self._connection.register_application_command(command, guild_id=guild_id)
@@ -2372,8 +2430,8 @@ class Client:
         commands: :class:`BaseApplicationCommand`
             Application command to delete. Multiple args are accepted.
         guild_id: Optional[:class:`int`]
-            ID of the guild to delete the application commands from. If set to `None`, the commands will be deleted
-            from global commands instead. Defaults to `None`.
+            ID of the guild to delete the application commands from. If set to ``None``, the commands will be deleted
+            from global commands instead. Defaults to ``None``.
         """
         for command in commands:
             await self._connection.delete_application_command(command, guild_id=guild_id)
@@ -2531,8 +2589,8 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
+            If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+            register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
         def decorator(func: Callable):
@@ -2578,8 +2636,8 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
+            If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+            register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
         def decorator(func: Callable):
@@ -2633,8 +2691,8 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
+            If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+            register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
         def decorator(func: Callable):

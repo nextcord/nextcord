@@ -56,14 +56,7 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
 
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
-    from .channel import (
-        CategoryChannel,
-        ForumChannel,
-        PartialMessageable,
-        StageChannel,
-        TextChannel,
-        VoiceChannel,
-    )
+    from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .client import Client
     from .guild import Guild
     from .message import AllowedMentions

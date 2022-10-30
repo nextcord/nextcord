@@ -222,6 +222,7 @@ class Guild(Hashable):
         - ``AUTO_MODERATION``: Guild has set up auto moderation rules.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
         - ``COMMUNITY``: Guild is a community server.
+        - ``DEVELOPER_SUPPORT_SERVER``: Guild has been set as a support server on the App Directory.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
         - ``FEATURABLE``: Guild is able to be featured in Server Discovery.
         - ``INVITE_SPLASH``: Guild's invite page can have a special splash.
@@ -1179,7 +1180,7 @@ class Guild(Hashable):
             The new channel's topic.
         slowmode_delay: :class:`int`
             Specifies the slowmode rate limit for user in this channel, in seconds.
-            The maximum value possible is `21600`.
+            The maximum value possible is ``21600``.
         nsfw: :class:`bool`
             To mark the channel as NSFW or not.
         reason: Optional[:class:`str`]
@@ -1578,10 +1579,10 @@ class Guild(Hashable):
         to edit the guild.
 
         .. versionchanged:: 1.4
-            The `rules_channel` and `public_updates_channel` keyword-only parameters were added.
+            The ``rules_channel`` and ``public_updates_channel`` keyword-only parameters were added.
 
         .. versionchanged:: 2.0
-            The `discovery_splash` and `community` keyword-only parameters were added.
+            The ``discovery_splash`` and ``community`` keyword-only parameters were added.
 
         .. versionchanged:: 2.0
             The newly updated guild is returned.
@@ -1840,7 +1841,7 @@ class Guild(Hashable):
 
     # TODO: Remove Optional typing here when async iterators are refactored
     def fetch_members(
-        self, *, limit: int = 1000, after: Optional[SnowflakeTime] = None
+        self, *, limit: Optional[int] = 1000, after: Optional[SnowflakeTime] = None
     ) -> MemberIterator:
         """Retrieves an :class:`.AsyncIterator` that enables receiving the guild's members. In order to use this,
         :meth:`Intents.members` must be enabled.
@@ -2899,9 +2900,13 @@ class Guild(Hashable):
         delete_message_seconds: Optional[:class:`int`]
             The number of seconds worth of messages to delete from the user
             in the guild. The minimum is 0 and the maximum is 604800 (7 days).
+
+            .. versionadded:: 2.3
         delete_message_days: Optional[:class:`int`]
             The number of days worth of messages to delete from the user
             in the guild. The minimum is 0 and the maximum is 7.
+
+            .. deprecated:: 2.3
         reason: Optional[:class:`str`]
             The reason the user got banned.
 
@@ -3000,7 +3005,7 @@ class Guild(Hashable):
     def audit_logs(
         self,
         *,
-        limit: int = 100,
+        limit: Optional[int] = 100,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
         oldest_first: Optional[bool] = None,
@@ -3031,7 +3036,7 @@ class Guild(Hashable):
 
         Parameters
         ----------
-        limit: :class:`int`
+        limit: Optional[:class:`int`]
             The number of entries to retrieve. If ``None`` retrieve all entries.
         before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
             Retrieve entries before this date or entry.
@@ -3490,18 +3495,18 @@ class Guild(Hashable):
         ----------
         data: Optional[List[:class:`dict`]]
             Data to use when comparing local application commands to what Discord has. Should be a list of application
-            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`.
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``.
         associate_known: :class:`bool`
             If local commands that match a command already on Discord should be associated with each other.
-            Defaults to `True`
+            Defaults to ``True``.
         delete_unknown: :class:`bool`
-            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
-            Defaults to `True`
+            Defaults to ``True``.
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
-            Defaults to `True`
+            Defaults to ``True``.
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
         # there, and vice versa.
