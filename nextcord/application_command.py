@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 import warnings
 from inspect import Parameter, signature
 from typing import (
@@ -83,6 +84,13 @@ if TYPE_CHECKING:
     _CustomTypingMetaBase = Any
 else:
     _CustomTypingMetaBase = object
+
+if sys.version_info >= (3, 10):
+    from types import UnionType
+
+    # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
+else:
+    UnionType = None
 
 __all__ = (
     "CallbackWrapper",
@@ -1402,7 +1410,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             annotation_type = found_type
             annotation_choices = found_choices
-        elif typehint_origin in (Union, Optional, Annotated, None):
+        elif typehint_origin in (Union, Optional, Annotated, UnionType, None):
             # If the typehint base is Union, Optional, or not any grouping...
             found_type = MISSING
             found_channel_types: List[ChannelType] = []
@@ -3396,7 +3404,9 @@ def unpack_annotation(
         unpacked_type, unpacked_literal = unpack_annotation(located_annotation, annotated_list)
         type_ret.extend(unpacked_type)
         literal_ret.extend(unpacked_literal)
-    elif origin in (Union, Optional, Literal):
+    elif origin in (Union, UnionType, Optional, Literal):
+        # Note for someone refactoring this: UnionType (at this time) will be None on Python sub-3.10
+        # This doesn't matter for now since None is explicitly checked first, but may trip you up when modifying this.
         # for anno in typing.get_args(given_annotation):  # TODO: Once Python 3.10 is standard, use this.
         for anno in typing_extensions.get_args(given_annotation):
             unpacked_type, unpacked_literal = unpack_annotation(anno, annotated_list)
