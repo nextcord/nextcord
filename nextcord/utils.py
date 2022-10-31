@@ -37,7 +37,8 @@ import unicodedata
 import warnings
 from base64 import b64encode
 from bisect import bisect_left
-from inspect import isawaitable as _isawaitable, signature as _signature
+from inspect import isawaitable as _isawaitable
+from inspect import signature as _signature
 from operator import attrgetter
 from typing import (
     TYPE_CHECKING,
@@ -56,6 +57,7 @@ from typing import (
     Optional,
     Protocol,
     Sequence,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -72,6 +74,9 @@ except ModuleNotFoundError:
     HAS_ORJSON = False
 else:
     HAS_ORJSON = True
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 __all__ = (
@@ -151,6 +156,7 @@ else:
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 _Iter = Union[Iterator[T], AsyncIterator[T]]
+ArrayT = TypeVar("ArrayT", int, float, str)
 
 
 class CachedSlotProperty(Generic[T, T_co]):
@@ -186,18 +192,20 @@ class classproperty(Generic[T_co]):
     def __get__(self, instance: Optional[Any], owner: Type[Any]) -> T_co:
         return self.fget(owner)
 
-    def __set__(self, instance, value) -> None:
+    def __set__(self, instance: Any, value: Any) -> None:
         raise AttributeError("Cannot set attribute")
 
 
-def cached_slot_property(name: str) -> Callable[[Callable[[T], T_co]], CachedSlotProperty[T, T_co]]:
+def cached_slot_property(
+    name: str,
+) -> Callable[[Callable[[T], T_co]], CachedSlotProperty[T, T_co]]:
     def decorator(func: Callable[[T], T_co]) -> CachedSlotProperty[T, T_co]:
         return CachedSlotProperty(name, func)
 
     return decorator
 
 
-class SequenceProxy(collections.abc.Sequence, Generic[T_co]):
+class SequenceProxy(collections.abc.Sequence[T_co], Generic[T_co]):
     """Read-only proxy of a Sequence."""
 
     def __init__(self, proxied: Sequence[T_co]):
@@ -218,7 +226,7 @@ class SequenceProxy(collections.abc.Sequence, Generic[T_co]):
     def __reversed__(self) -> Iterator[T_co]:
         return reversed(self.__proxied)
 
-    def index(self, value: Any, *args, **kwargs) -> int:
+    def index(self, value: Any, *args: Any, **kwargs: Any) -> int:
         return self.__proxied.index(value, *args, **kwargs)
 
     def count(self, value: Any) -> int:
@@ -246,7 +254,7 @@ def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]:
     return None
 
 
-def copy_doc(original: Callable) -> Callable[[T], T]:
+def copy_doc(original: Callable[..., Any]) -> Callable[[T], T]:
     def decorator(overriden: T) -> T:
         overriden.__doc__ = original.__doc__
         overriden.__signature__ = _signature(original)  # type: ignore
@@ -255,7 +263,9 @@ def copy_doc(original: Callable) -> Callable[[T], T]:
     return decorator
 
 
-def deprecated(instead: Optional[str] = None) -> Callable[[Callable[[P], T]], Callable[[P], T]]:  # type: ignore
+def deprecated(
+    instead: Optional[str] = None,
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     def actual_decorator(func: Callable[[P], T]) -> Callable[[P], T]:  # type: ignore
         @functools.wraps(func)
         def decorated(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -557,7 +567,9 @@ async def maybe_coroutine(
         # yet we need a more specific type guard
 
 
-async def async_all(gen, *, check=_isawaitable):
+async def async_all(
+    gen: Iterable[Awaitable[T]], *, check: Callable[[Awaitable[T]], bool] = _isawaitable
+) -> bool:
     for elem in gen:
         if check(elem):
             elem = await elem
@@ -566,7 +578,9 @@ async def async_all(gen, *, check=_isawaitable):
     return True
 
 
-async def sane_wait_for(futures, *, timeout):
+async def sane_wait_for(
+    futures: Iterable[asyncio.Future[Any]], *, timeout: Optional[float]
+) -> Set[asyncio.Future[Any]]:
     ensured = [asyncio.ensure_future(fut) for fut in futures]
     done, pending = await asyncio.wait(ensured, timeout=timeout, return_when=asyncio.ALL_COMPLETED)
 
@@ -584,7 +598,7 @@ def get_slots(cls: Type[Any]) -> Iterator[str]:
             continue
 
 
-def compute_timedelta(dt: datetime.datetime):
+def compute_timedelta(dt: datetime.datetime) -> float:
     if dt.tzinfo is None:
         dt = dt.astimezone()
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -633,7 +647,7 @@ def valid_icon_size(size: int) -> bool:
     return not size & (size - 1) and 4096 >= size >= 16
 
 
-class SnowflakeList(array.array):
+class SnowflakeList(array.array[ArrayT], Generic[ArrayT]):
     """Internal data storage class to efficiently store a list of snowflakes.
 
     This should have the following characteristics:
@@ -652,7 +666,7 @@ class SnowflakeList(array.array):
         def __init__(self, data: Iterable[int], *, is_sorted: bool = False):
             ...
 
-    def __new__(cls, data: Iterable[int], *, is_sorted: bool = False):
+    def __new__(cls, data: Iterable[int], *, is_sorted: bool = False) -> Self:
         return array.array.__new__(cls, "Q", data if is_sorted else sorted(data))  # type: ignore
 
     def add(self, element: int) -> None:
@@ -746,7 +760,8 @@ _MARKDOWN_ESCAPE_SUBREGEX = "|".join(
 _MARKDOWN_ESCAPE_COMMON = r"^>(?:>>)?\s|\[.+\]\(.+\)"
 
 _MARKDOWN_ESCAPE_REGEX = re.compile(
-    rf"(?P<markdown>{_MARKDOWN_ESCAPE_SUBREGEX}|{_MARKDOWN_ESCAPE_COMMON})", re.MULTILINE
+    rf"(?P<markdown>{_MARKDOWN_ESCAPE_SUBREGEX}|{_MARKDOWN_ESCAPE_COMMON})",
+    re.MULTILINE,
 )
 
 _URL_REGEX = r"(?P<url><[^: >]+:\/[^ >]+>|(?:https?|steam):\/\/[^\s<]+[^<.,:;\"\'\]\s])"
@@ -1013,7 +1028,7 @@ def evaluate_annotation(
     cache: Dict[str, Any],
     *,
     implicit_str: bool = True,
-):
+) -> Any:
     if isinstance(tp, ForwardRef):
         tp = tp.__forward_arg__
         # ForwardRefs always evaluate their internals
@@ -1181,7 +1196,7 @@ def _trim_text(text: str, max_chars: int) -> str:
     return text
 
 
-def parse_docstring(func: Callable, max_chars: int = MISSING) -> Dict[str, Any]:
+def parse_docstring(func: Callable[..., Any], max_chars: int = MISSING) -> Dict[str, Any]:
     """Parses the docstring of a function into a dictionary.
 
     Parameters
