@@ -1788,7 +1788,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
@@ -1815,6 +1815,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list/set/whatever of guild ID's that the application command should register to.
+            If not passed and :attr:`Client.default_guild_ids` is set, then those default guild ids will 
+            be used instead. If both of those are unset, then the command will be a global command. Defaults to ``MISSING``.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2934,7 +2936,7 @@ def slash_command(
         Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
         localized description as the value.
     guild_ids: Optional[Iterable[:class:`int`]]
-        IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and :attr:`Client.default_guild_ids` is
+        IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
         set, then those default guild ids will be used instead. If both of those are unset, then the command will
         be a global command. Defaults to ``MISSING``.
     dm_permission: :class:`bool`
@@ -2989,7 +2991,7 @@ def message_command(
         Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
         name as the value
     guild_ids: Optional[Iterable[:class:`int`]]
-        IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and :attr:`Client.default_guild_ids` is
+        IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
         set, then those default guild ids will be used instead. If both of those are unset, then the command will
         be a global command. Defaults to ``MISSING``.
     dm_permission: :class:`bool`
@@ -3042,9 +3044,9 @@ def user_command(
         Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
         name as the value
     guild_ids: Optional[Iterable[:class:`int`]]
-        IDs of :class:`Guild`'s to add this command to. If set to :attr:`utils.MISSING` and :attr:`Client.default_guild_ids` is
+        IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
         set, then those default guild ids will be used instead. If both of those are unset, then the command will
-        be a global command. Defaults to `MISSING`.
+        be a global command. Defaults to ``MISSING``.
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.
