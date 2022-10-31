@@ -499,7 +499,7 @@ class Client:
     @property
     def default_guild_ids(self) -> List[int]:
         """List[:class:`int`] The default guild ids for all application commands.
-        
+
         .. versionadded:: 2.3
         """
         return self._default_guild_ids

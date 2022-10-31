@@ -1815,7 +1815,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list/set/whatever of guild ID's that the application command should register to.
-            If not passed and :attr:`Client.default_guild_ids` is set, then those default guild ids will 
+            If not passed and :attr:`Client.default_guild_ids` is set, then those default guild ids will
             be used instead. If both of those are unset, then the command will be a global command. Defaults to ``MISSING``.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
