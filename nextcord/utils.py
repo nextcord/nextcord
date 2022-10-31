@@ -37,8 +37,7 @@ import unicodedata
 import warnings
 from base64 import b64encode
 from bisect import bisect_left
-from inspect import isawaitable as _isawaitable
-from inspect import signature as _signature
+from inspect import isawaitable as _isawaitable, signature as _signature
 from operator import attrgetter
 from typing import (
     TYPE_CHECKING,
