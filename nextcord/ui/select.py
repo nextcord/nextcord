@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from ..types.components import SelectMenu as SelectMenuPayload
     from ..types.interactions import ComponentInteractionData
     from .view import View
+    from ..interactions import ClientT
 
 S = TypeVar("S", bound="Select")
 V = TypeVar("V", bound="View", covariant=True)
@@ -124,7 +125,7 @@ class Select(Item[V]):
         return self._underlying.custom_id
 
     @custom_id.setter
-    def custom_id(self, value: str):
+    def custom_id(self, value: str) -> None:
         if not isinstance(value, str):
             raise TypeError("custom_id must be None or str")
 
@@ -136,7 +137,7 @@ class Select(Item[V]):
         return self._underlying.placeholder
 
     @placeholder.setter
-    def placeholder(self, value: Optional[str]):
+    def placeholder(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("placeholder must be None or str")
 
@@ -148,7 +149,7 @@ class Select(Item[V]):
         return self._underlying.min_values
 
     @min_values.setter
-    def min_values(self, value: int):
+    def min_values(self, value: int) -> None:
         self._underlying.min_values = int(value)
 
     @property
@@ -157,7 +158,7 @@ class Select(Item[V]):
         return self._underlying.max_values
 
     @max_values.setter
-    def max_values(self, value: int):
+    def max_values(self, value: int) -> None:
         self._underlying.max_values = int(value)
 
     @property
@@ -166,7 +167,7 @@ class Select(Item[V]):
         return self._underlying.options
 
     @options.setter
-    def options(self, value: List[SelectOption]):
+    def options(self, value: List[SelectOption]) -> None:
         if not isinstance(value, list):
             raise TypeError("options must be a list of SelectOption")
         if not all(isinstance(obj, SelectOption) for obj in value):
@@ -182,7 +183,7 @@ class Select(Item[V]):
         description: Optional[str] = None,
         emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
         default: bool = False,
-    ):
+    ) -> None:
         """Adds an option to the select menu.
 
         To append a pre-existing :class:`nextcord.SelectOption` use the
@@ -221,7 +222,7 @@ class Select(Item[V]):
 
         self.append_option(option)
 
-    def append_option(self, option: SelectOption):
+    def append_option(self, option: SelectOption) -> None:
         """Appends an option to the select menu.
 
         Parameters
@@ -246,7 +247,7 @@ class Select(Item[V]):
         return self._underlying.disabled
 
     @disabled.setter
-    def disabled(self, value: bool):
+    def disabled(self, value: bool) -> None:
         self._underlying.disabled = bool(value)
 
     @property
@@ -296,7 +297,7 @@ def select(
     options: List[SelectOption] = MISSING,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
+) -> Callable[[ItemCallbackType[Select[V], ClientT]], ItemCallbackType[Select[V], ClientT]]:
     """A decorator that attaches a select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -331,7 +332,7 @@ def select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ItemCallbackType[Select[V]]) -> ItemCallbackType[Select[V]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
