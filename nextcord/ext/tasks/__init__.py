@@ -277,7 +277,7 @@ class Loop(Generic[LF]):
         .. versionadded:: 1.6
 
         Parameters
-        ------------
+        ----------
         \*args
             The arguments to use.
         \*\*kwargs
@@ -293,19 +293,19 @@ class Loop(Generic[LF]):
         r"""Starts the internal task in the event loop.
 
         Parameters
-        ------------
+        ----------
         \*args
             The arguments to use.
         \*\*kwargs
             The keyword arguments to use.
 
         Raises
-        --------
+        ------
         RuntimeError
             A task has already been launched and is running.
 
         Returns
-        ---------
+        -------
         :class:`asyncio.Task`
             The task that has been created.
         """
@@ -360,7 +360,7 @@ class Loop(Generic[LF]):
             returned like :meth:`start`.
 
         Parameters
-        ------------
+        ----------
         \*args
             The arguments to use.
         \*\*kwargs
@@ -386,12 +386,12 @@ class Loop(Generic[LF]):
         raises its own set of exceptions.
 
         Parameters
-        ------------
+        ----------
         \*exceptions: Type[:class:`BaseException`]
             An argument list of exception classes to handle.
 
         Raises
-        --------
+        ------
         TypeError
             An exception passed is either not a class or not inherited from :class:`BaseException`.
         """
@@ -417,12 +417,12 @@ class Loop(Generic[LF]):
         r"""Removes exception types from being handled during the reconnect logic.
 
         Parameters
-        ------------
+        ----------
         \*exceptions: Type[:class:`BaseException`]
             An argument list of exception classes to handle.
 
         Returns
-        ---------
+        -------
         :class:`bool`
             Whether all exceptions were successfully removed.
         """
@@ -471,12 +471,12 @@ class Loop(Generic[LF]):
         The coroutine must take no arguments (except ``self`` in a class context).
 
         Parameters
-        ------------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register before the loop runs.
 
         Raises
-        -------
+        ------
         TypeError
             The function was not a coroutine.
         """
@@ -499,12 +499,12 @@ class Loop(Generic[LF]):
             whether :meth:`is_being_cancelled` is ``True`` or not.
 
         Parameters
-        ------------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register after the loop finishes.
 
         Raises
-        -------
+        ------
         TypeError
             The function was not a coroutine.
         """
@@ -520,18 +520,18 @@ class Loop(Generic[LF]):
 
         The coroutine must take only one argument the exception raised (except ``self`` in a class context).
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
 
         .. versionadded:: 1.4
 
         Parameters
-        ------------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register in the event of an unhandled exception.
 
         Raises
-        -------
+        ------
         TypeError
             The function was not a coroutine.
         """
@@ -627,7 +627,7 @@ class Loop(Generic[LF]):
         .. versionadded:: 1.2
 
         Parameters
-        ------------
+        ----------
         seconds: :class:`float`
             The number of seconds between every iteration.
         minutes: :class:`float`
@@ -646,7 +646,7 @@ class Loop(Generic[LF]):
                 Duplicate times will be ignored, and only run once.
 
         Raises
-        -------
+        ------
         ValueError
             An invalid value was given.
         TypeError
@@ -698,7 +698,7 @@ def loop(
     optional reconnect logic. The decorator returns a :class:`Loop`.
 
     Parameters
-    ------------
+    ----------
     seconds: :class:`float`
         The number of seconds between every iteration.
     minutes: :class:`float`
@@ -735,7 +735,7 @@ def loop(
         defaults to :func:`asyncio.get_event_loop`.
 
     Raises
-    --------
+    ------
     ValueError
         An invalid value was given.
     TypeError

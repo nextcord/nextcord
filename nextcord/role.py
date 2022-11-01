@@ -62,7 +62,7 @@ class RoleTags:
     .. versionadded:: 1.6
 
     Attributes
-    ------------
+    ----------
     bot_id: Optional[:class:`int`]
         The bot's user ID that manages this role.
     integration_id: Optional[:class:`int`]
@@ -399,7 +399,7 @@ class Role(Hashable):
             The ``icon`` parameter now accepts :class:`Attachment`, and :class:`Asset`.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The new role name to change to.
         permissions: :class:`Permissions`
@@ -419,7 +419,7 @@ class Role(Hashable):
             The reason for editing this role. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to change the role.
         HTTPException
@@ -429,7 +429,7 @@ class Role(Hashable):
             role was asked to be moved.
 
         Returns
-        --------
+        -------
         :class:`Role`
             The newly edited role.
         """
@@ -476,12 +476,12 @@ class Role(Hashable):
         use this.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this role. Shows up on the audit log.
 
         Raises
-        --------
+        ------
         Forbidden
             You do not have permissions to delete the role.
         HTTPException

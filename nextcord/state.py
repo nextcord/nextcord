@@ -61,7 +61,6 @@ from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
-from .interactions import Interaction
 from .invite import Invite
 from .member import Member
 from .mentions import AllowedMentions
@@ -87,7 +86,6 @@ if TYPE_CHECKING:
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
-    from .message import MessageableChannel
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
     from .types.checks import ApplicationCheck, ApplicationHook
@@ -426,6 +424,12 @@ class ConnectionState:
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)
 
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
+        self._view_store.remove_view(view, message_id)
+
+    def remove_modal(self, modal: Modal) -> None:
+        self._modal_store.remove_modal(modal)
+
     def prevent_view_updates_for(self, message_id: Optional[int]) -> Optional[View]:
         return self._view_store.remove_message_tracking(message_id)  # type: ignore
 
@@ -649,7 +653,7 @@ class ConnectionState:
         command: :class:`BaseApplicationCommand`
             The command to add/update the state with.
         overwrite: :class:`bool`
-            If the library will let you add a command that overlaps with an existing command. Default `False`
+            If the library will let you add a command that overlaps with an existing command. Default ``False``.
         use_rollout: :class:`bool`
             If the command should be added to the state with its rollout guild IDs.
         pre_remove: :class:`bool`
@@ -748,7 +752,7 @@ class ConnectionState:
             If local commands that match a command already on Discord should be associated with each other.
             Defaults to ``True``
         delete_unknown: :class:`bool`
-            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
             Defaults to ``True``
@@ -790,8 +794,8 @@ class ConnectionState:
                         except Forbidden as e:
                             if ignore_forbidden:
                                 _log.warning(
-                                    f"nextcord.Client: Forbidden error for %s, is the applications.commands "
-                                    f"Oauth scope enabled? %s",
+                                    "nextcord.Client: Forbidden error for %s, is the applications.commands "
+                                    "Oauth scope enabled? %s",
                                     guild_id,
                                     e,
                                 )
@@ -820,27 +824,27 @@ class ConnectionState:
     ) -> None:
         """|coro|
         Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
-        global commands if the guild_id is `None`.
+        global commands if the guild_id is ``None``.
 
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
             Data to use when comparing local application commands to what Discord has. Should be a list of application
-            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`.
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``.
         guild_id: Optional[:class:`int`]
-            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
-            Defaults to `None`.
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
         associate_known: :class:`bool`
             If local commands that match a command already on Discord should be associated with each other.
-            Defaults to `True`
+            Defaults to ``True``.
         delete_unknown: :class:`bool`
-            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
-            Defaults to `True`
+            Defaults to ``True``.
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
-            Defaults to `True`
+            Defaults to ``True``.
 
         """
         _log.debug("Syncing commands to %s", guild_id)
@@ -883,18 +887,18 @@ class ConnectionState:
         Parameters
         ----------
         data: Optional[List[:class:`dict]]
-            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
+            Payload from ``HTTPClient.get_guild_commands`` or ``HTTPClient.get_global_commands`` to deploy with. If None,
             the payload will be retrieved from Discord.
         guild_id: Optional[:class:`int`]
-            Guild ID to deploy application commands to. If `None`, global commands are deployed to.
+            Guild ID to deploy application commands to. If ``None``, global commands are deployed to.
         associate_known: :class:`bool`
             If True, commands on Discord that pass a signature check and a deep check will be associated with locally
             added ApplicationCommand objects.
         delete_unknown: :class:`bool`
-            If `True`, commands on Discord that fail a signature check will be removed. If `update_known` is False,
+            If ``True``, commands on Discord that fail a signature check will be removed. If ``update_known`` is False,
             commands that pass the signature check but fail the deep check will also be removed.
         update_known: :class:`bool`
-            If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
+            If ``True``, commands on Discord that pass a signature check but fail the deep check will be updated.
         """
         if not associate_known and not delete_unknown and not update_known:
             # If everything is disabled, there is no point in doing anything.
@@ -1051,10 +1055,10 @@ class ConnectionState:
         ----------
         data: Optional[List[:class:`dict`]]
             Data to use when comparing local application commands to what Discord has. Should be a list of application
-            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``
         guild_id: Optional[:class:`int`]
-            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
-            Defaults to `None`.
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
         """
         if not data:
             if self.application_id is None:
@@ -1095,12 +1099,12 @@ class ConnectionState:
         command: :class:`BaseApplicationCommand`
             Application command to register.
         guild_id: Optional[:class:`int`]
-            ID of the guild to register the application commands to. If set to `None`, the commands will be registered
-            as global commands instead. Defaults to `None`.
+            ID of the guild to register the application commands to. If set to ``None``, the commands will be registered
+            as global commands instead. Defaults to ``None``.
         """
         payload: EditApplicationCommand = command.get_payload(guild_id)  # type: ignore
         _log.info(
-            f"nextcord.ConnectionState: Registering command with signature %s",
+            "nextcord.ConnectionState: Registering command with signature %s",
             command.get_signature(guild_id),
         )
 
@@ -1134,7 +1138,7 @@ class ConnectionState:
         command: :class:`ApplicationCommand`
             Application command to delete.
         guild_id: Optional[:class:`int`]
-            Guild ID to delete the application commands from. If `None`, the command is deleted from global.
+            Guild ID to delete the application commands from. If ``None``, the command is deleted from global.
         """
         if self.application_id is None:
             raise NotImplementedError("Could not get the current application id")

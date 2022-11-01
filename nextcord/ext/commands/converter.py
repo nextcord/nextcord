@@ -125,14 +125,14 @@ class Converter(Protocol[T_co]):
         properly propagate to the error handlers.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context that the argument is being used in.
         argument: :class:`str`
             The argument that is being converted.
 
         Raises
-        -------
+        ------
         :exc:`.CommandError`
             A generic exception occurred when converting the argument.
         :exc:`.BadArgument`
@@ -153,7 +153,7 @@ class IDConverter(Converter[T_co]):
 class ObjectConverter(IDConverter[nextcord.Object]):
     """Converts to a :class:`~nextcord.Object`.
 
-    The argument must follow the valid ID or mention formats (e.g. `<@80088516616269824>`).
+    The argument must follow the valid ID or mention formats (e.g. ``<@80088516616269824>``).
 
     .. versionadded:: 2.0
 
@@ -951,7 +951,7 @@ class clean_content(Converter[str]):
     This behaves similarly to :attr:`~nextcord.Message.clean_content`.
 
     Attributes
-    ------------
+    ----------
     fix_channel_mentions: :class:`bool`
         Whether to clean channel mentions.
     use_nicknames: :class:`bool`
@@ -1190,7 +1190,7 @@ async def run_converters(ctx: Context, converter, argument: str, param: inspect.
     .. versionadded:: 2.0
 
     Parameters
-    ------------
+    ----------
     ctx: :class:`Context`
         The invocation context to run the converters under.
     converter: Any
@@ -1201,12 +1201,12 @@ async def run_converters(ctx: Context, converter, argument: str, param: inspect.
         The parameter being converted. This is mainly for error reporting.
 
     Raises
-    -------
+    ------
     CommandError
         The converter failed to convert.
 
     Returns
-    --------
+    -------
     Any
         The resulting conversion.
     """

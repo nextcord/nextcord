@@ -12,6 +12,72 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p2p0:
+
+v2.2.0
+------
+
+This version comes with mostly quality of life features.
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+- Remove ``AutoModerationTriggerType.harmful_link`` as it is no longer supported by Discord due to it being always enabled (:issue:`809`).
+
+Deprecations
+~~~~~~~~~~~~
+
+- Deprecate the use of ``Embed.Empty`` as a value for :class:`Embed`'s missing fields (:issue:`753`). This means that you should begin to use and expect :data:`None` for:
+    - :attr:`Embed.title`
+    - :attr:`Embed.description`
+    - :attr:`Embed.url`
+    - :attr:`Embed.colour`
+    - :attr:`Embed.video`
+    - :attr:`Embed.provider`
+    - :attr:`Embed.author`
+    - :meth:`Embed.set_footer`
+    - :meth:`Embed.set_image`
+    - :meth:`Embed.set_thumbnail`
+    - :meth:`Embed.set_author`
+    - Each field in :attr:`Embed.fields`
+
+New Features
+~~~~~~~~~~~~
+
+- Add the ability to use :class:`Client` as a :class:`generic <typing.Generic>` type on :class:`Interaction` (:issue:`760`).
+- Add :attr:`File.force_close` to force close :class:`io.BufferedIOBase` files when :func:`File.close` is called (:issue:`752`).
+- Add :attr:`ChannelType.guild_directory` to represent a channel of guilds in a `Student Hub <https://support.discord.com/hc/en-us/articles/4406046651927-Discord-Student-Hubs-FAQ>`_ (:issue:`164`, :issue:`763`).
+- Add the ability to use :data:`None` as a value for missing :class:`Embed` fields (:issue:`753`).
+- Add helper functions and methods to help with parsing Discord mention syntax:
+    - :meth:`Client.parse_mentions`
+    - :meth:`Guild.parse_mentions`
+    - :meth:`Guild.parse_role_mentions`
+    - :meth:`Guild.parse_channel_mentions`
+    - :func:`utils.parse_raw_mentions`
+    - :func:`utils.parse_raw_role_mentions`
+    - :func:`utils.parse_raw_channel_mentions`
+- Add the ability to get a slash command (and sub command)'s mention (:issue:`791`). This adds:
+    - :meth:`SlashApplicationCommand.get_mention`
+    - :meth:`SlashApplicationSubcommand.get_mention`
+    - :attr:`SlashApplicationSubcommand.command_ids`
+- Add :class:`Range` to represent ``min_value`` and ``max_value``, and :class:`String` to represent ``min_length`` and ``max_length`` for slash command options (:issue:`590`, :issue:`766`).
+- Add :meth:`Client.get_interaction` to get an :class:`Interaction` with the data. This allows custom :class:`Interaction` subclasses to be used with a subclass of :class:`Client` (:issue:`757`, :issue:`803`).
+
+.. _vp2p1p1:
+
+v2.1.1
+------
+
+This version includes a few bug fixes backported from :ref:`vp2p2p0` as that includes breaking changes.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix issue where :attr:`Message.thread` does not check if :attr:`Message.guild` is an :class:`Object` before initialising, resulting in an error (:issue:`772`, :issue:`793`).
+- Fix slash command auto-sync needlessly syncing if ``options`` or ``channel_types`` are in a different order (:issue:`785`).
+- Fix message editing not sending empty list fields (``embeds``, ``components``, ...) (:issue:`796`).
+- Fix :func:`Client.delete_application_commands` not deleting guild commands when ``guild_id`` is passed (:issue:`792`).
+
 .. _vp2p1p0:
 
 v2.1.0
@@ -792,7 +858,7 @@ v1.2.0
 This update mainly brings performance improvements and various nitro boosting attributes (referred to in the API as "premium guilds").
 
 New Features
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 - Add :attr:`Guild.premium_tier` to query the guild's current nitro boost level.
 - Add :attr:`Guild.emoji_limit`, :attr:`Guild.bitrate_limit`, :attr:`Guild.filesize_limit` to query the new limits of a guild when taking into consideration boosting.
@@ -897,7 +963,7 @@ Bug Fixes
 - Tighten constraints of ``__eq__`` in :class:`Spotify` objects (:dpyissue:`2113`, :dpyissue:`2117`)
 
 ``discord.ext.commands``
-++++++++++++++++++++++++++
+++++++++++++++++++++++++
 
 - Fix lambda converters in a non-module context (e.g. ``eval``).
 - Use message creation time for reference time when computing cooldowns.
@@ -1061,7 +1127,7 @@ v0.14.1
 Bug fixes
 ~~~~~~~~~
 
-- Fix bug with `Reaction` not being visible at import.
+- Fix bug with ``Reaction`` not being visible at import.
     - This was also breaking the documentation.
 
 .. _v0p14p0:

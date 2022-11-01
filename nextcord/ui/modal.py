@@ -73,7 +73,7 @@ class Modal:
     .. versionadded:: 2.0
 
     Parameters
-    -----------
+    ----------
     title: :class:`str`
         The title of the modal.
     timeout: Optional[:class:`float`] = None
@@ -88,7 +88,7 @@ class Modal:
         handle the modal interaction outside of the callback.
 
     Attributes
-    ------------
+    ----------
     title: :class:`str`
         The title of the modal.
     timeout: Optional[:class:`float`]
@@ -189,12 +189,12 @@ class Modal:
         """Adds an item to the modal.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to add to the modal.
 
         Raises
-        --------
+        ------
         TypeError
             An :class:`Item` was not passed.
         ValueError
@@ -214,7 +214,7 @@ class Modal:
         """Removes an item from the modal.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to remove from the modal.
         """
@@ -265,7 +265,7 @@ class Modal:
         The default implementation prints the traceback to stderr.
 
         Parameters
-        -----------
+        ----------
         error: :class:`Exception`
             The exception that was raised.
         item: :class:`Item`
@@ -387,7 +387,7 @@ class Modal:
         or it times out.
 
         Returns
-        --------
+        -------
         :class:`bool`
             If ``True``, then the modal timed out. If ``False`` then
             the modal finished normally.

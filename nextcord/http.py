@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import sys
 import warnings
@@ -71,7 +70,6 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from .enums import AuditLogAction, InteractionResponseType
-    from .file import File
     from .types import (
         appinfo,
         audit_log,
@@ -485,7 +483,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -529,7 +527,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[int, str]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -562,7 +560,7 @@ class HTTPClient:
         content: Optional[str] = None,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -618,7 +616,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -653,7 +651,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[int, str]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -879,12 +877,12 @@ class HTTPClient:
         self,
         user_id: Snowflake,
         guild_id: Snowflake,
-        delete_message_days: int = 1,
+        delete_message_seconds: int = 86400,
         reason: Optional[str] = None,
     ) -> Response[None]:
         r = Route("PUT", "/guilds/{guild_id}/bans/{user_id}", guild_id=guild_id, user_id=user_id)
         params = {
-            "delete_message_days": delete_message_days,
+            "delete_message_seconds": delete_message_seconds,
         }
 
         return self.request(r, params=params, reason=reason)
@@ -1114,7 +1112,7 @@ class HTTPClient:
         content: Optional[str] = None,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
@@ -1151,7 +1149,7 @@ class HTTPClient:
         content: Optional[str] = None,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
@@ -2366,16 +2364,21 @@ class HTTPClient:
     def application_info(self) -> Response[appinfo.AppInfo]:
         return self.request(Route("GET", "/oauth2/applications/@me"))
 
+    @staticmethod
+    def format_websocket_url(url: str, encoding: str = "json", zlib: bool = True) -> str:
+        if zlib:
+            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
+        else:
+            value = "{url}?encoding={encoding}&v={version}"
+        return value.format(url=url, encoding=encoding, version=_API_VERSION)
+
     async def get_gateway(self, *, encoding: str = "json", zlib: bool = True) -> str:
         try:
             data = await self.request(Route("GET", "/gateway"))
         except HTTPException as exc:
             raise GatewayNotFound() from exc
-        if zlib:
-            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
-        else:
-            value = "{url}?encoding={encoding}&v={version}"
-        return value.format(url=data["url"], encoding=encoding, version=_API_VERSION)
+
+        return self.format_websocket_url(data["url"], encoding, zlib)
 
     async def get_bot_gateway(
         self, *, encoding: str = "json", zlib: bool = True
@@ -2385,13 +2388,7 @@ class HTTPClient:
         except HTTPException as exc:
             raise GatewayNotFound() from exc
 
-        if zlib:
-            value = "{url}?encoding={encoding}&v={version}&compress=zlib-stream"
-        else:
-            value = "{url}?encoding={encoding}&v={version}"
-        return data["shards"], value.format(
-            url=data["url"], encoding=encoding, version=_API_VERSION
-        )
+        return data["shards"], self.format_websocket_url(data["url"], encoding, zlib)
 
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
         return self.request(Route("GET", "/users/{user_id}", user_id=user_id))

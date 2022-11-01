@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import TYPE_CHECKING, Callable, Union, cast
+from typing import TYPE_CHECKING, Callable, Union
 
 import nextcord
 from nextcord.application_command import (
@@ -150,7 +150,7 @@ def check(predicate: "ApplicationCheck") -> AC:
         even if the original function was not a coroutine.
 
     Examples
-    ---------
+    --------
 
     Creating a basic check to see if the command invoker is you.
 
@@ -179,7 +179,7 @@ def check(predicate: "ApplicationCheck") -> AC:
             await interaction.response.send_message('Only you!')
 
     Parameters
-    -----------
+    ----------
     predicate: Callable[[:class:`~.Interaction`], :class:`bool`]
         The predicate to check if the command should be invoked.
     """
@@ -203,19 +203,19 @@ def check_any(*checks: "ApplicationCheck") -> AC:
         The ``predicate`` attribute for this function **is** a coroutine.
 
     Parameters
-    ------------
+    ----------
     \*checks: Callable[[:class:`~.Interaction`], :class:`bool`]
         An argument list of checks that have been decorated with
         the :func:`check` decorator.
 
     Raises
-    -------
+    ------
     TypeError
         A check passed has not been decorated with the :func:`check`
         decorator.
 
     Examples
-    ---------
+    --------
 
     Creating a basic check to see if it's the bot owner or
     the server owner:
@@ -282,12 +282,12 @@ def has_role(item: Union[int, str]) -> AC:
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
     Parameters
-    -----------
+    ----------
     item: Union[:class:`int`, :class:`str`]
         The name or ID of the role to check.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -316,7 +316,7 @@ def has_role(item: Union[int, str]) -> AC:
 def has_any_role(*items: Union[int, str]) -> AC:
     r"""A :func:`.check` that is added that checks if the member invoking the
     command has **any** of the roles specified. This means that if they have
-    one out of the three roles specified, then this check will return `True`.
+    one out of the three roles specified, then this check will return ``True``.
 
     Similar to :func:`.has_role`\, the names or IDs passed in must be exact.
 
@@ -325,12 +325,12 @@ def has_any_role(*items: Union[int, str]) -> AC:
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
     Parameters
-    -----------
+    ----------
     items: List[Union[:class:`str`, :class:`int`]]
         An argument list of names or IDs to check that the member has roles wise.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -366,12 +366,12 @@ def bot_has_role(item: Union[int, str]) -> AC:
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
     Parameters
-    -----------
+    ----------
     item: Union[:class:`int`, :class:`str`]
         The name or ID of the role to check.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -407,12 +407,12 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
     Both inherit from :exc:`.ApplicationCheckFailure`.
 
     Parameters
-    -----------
+    ----------
     *items: Union[:class:`str`, :class:`int`]
         An argument list of names or IDs to check that the bot has roles wise.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -454,12 +454,12 @@ def has_permissions(**perms: bool) -> AC:
     exception, :exc:`.ApplicationNoPrivateMessage`.
 
     Parameters
-    ------------
+    ----------
     perms: :class:`bool`
         An argument list of permissions to check for.
 
     Example
-    ---------
+    -------
 
     .. code-block:: python3
 
@@ -533,12 +533,12 @@ def has_guild_permissions(**perms: bool) -> AC:
     exception, :exc:`.ApplicationNoPrivateMessage`.
 
     Parameters
-    -----------
+    ----------
     perms: :class:`bool`
         An argument list of guild permissions to check for.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -600,7 +600,7 @@ def dm_only() -> AC:
     that is inherited from :exc:`.ApplicationCheckFailure`.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -627,7 +627,7 @@ def guild_only() -> AC:
     that is inherited from :exc:`.ApplicationCheckFailure`.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -658,7 +658,7 @@ def is_owner() -> AC:
     raise :exc:`.ApplicationCheckForBotOnly`.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -688,7 +688,7 @@ def is_nsfw() -> AC:
     that is derived from :exc:`.ApplicationCheckFailure`.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -716,7 +716,7 @@ def application_command_before_invoke(coro) -> AC:
     do not have to be within the same cog.
 
     Example
-    ---------
+    -------
 
     .. code-block:: python3
 

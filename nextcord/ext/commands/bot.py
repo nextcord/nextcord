@@ -36,7 +36,6 @@ import sys
 import traceback
 import types
 import warnings
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -107,7 +106,7 @@ def when_mentioned_or(*prefixes: str) -> Callable[[Union[Bot, AutoShardedBot], M
     These are meant to be passed into the :attr:`.Bot.command_prefix` attribute.
 
     Example
-    --------
+    -------
 
     .. code-block:: python3
 
@@ -127,7 +126,7 @@ def when_mentioned_or(*prefixes: str) -> Callable[[Union[Bot, AutoShardedBot], M
 
 
     See Also
-    ----------
+    --------
     :func:`.when_mentioned`
     """
 
@@ -265,7 +264,7 @@ class BotBase(GroupMixin):
 
         The default command error handler provided by the bot.
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
 
         This only fires if you do not specify any listeners for command error.
@@ -304,7 +303,7 @@ class BotBase(GroupMixin):
         :exc:`.CommandError`.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -324,7 +323,7 @@ class BotBase(GroupMixin):
         and :meth:`.check_once`.
 
         Parameters
-        -----------
+        ----------
         func
             The function that was used as a global check.
         call_once: :class:`bool`
@@ -344,7 +343,7 @@ class BotBase(GroupMixin):
         if the function is not in the global checks.
 
         Parameters
-        -----------
+        ----------
         func
             The function to remove from the global checks.
         call_once: :class:`bool`
@@ -384,7 +383,7 @@ class BotBase(GroupMixin):
         :exc:`.CommandError`.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -418,12 +417,12 @@ class BotBase(GroupMixin):
             :attr:`owner_ids` is not set.
 
         Parameters
-        -----------
+        ----------
         user: :class:`.abc.User`
             The user to check for.
 
         Returns
-        --------
+        -------
         :class:`bool`
             Whether the user is the owner.
         """
@@ -459,12 +458,12 @@ class BotBase(GroupMixin):
             then the hooks are not called.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the pre-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -492,12 +491,12 @@ class BotBase(GroupMixin):
             This makes it ideal for clean-up scenarios.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the post-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -513,14 +512,14 @@ class BotBase(GroupMixin):
         """The non decorator alternative to :meth:`.listen`.
 
         Parameters
-        -----------
+        ----------
         func: :ref:`coroutine <coroutine>`
             The function to call.
         name: :class:`str`
             The name of the event to listen for. Defaults to ``func.__name__``.
 
         Example
-        --------
+        -------
 
         .. code-block:: python3
 
@@ -545,7 +544,7 @@ class BotBase(GroupMixin):
         """Removes a listener from the pool of listeners.
 
         Parameters
-        -----------
+        ----------
         func
             The function that was used as a listener to remove.
         name: :class:`str`
@@ -569,7 +568,7 @@ class BotBase(GroupMixin):
         The functions being listened to must be a :ref:`coroutine <coroutine>`.
 
         Example
-        --------
+        -------
 
         .. code-block:: python3
 
@@ -586,7 +585,7 @@ class BotBase(GroupMixin):
         Would print one and two in an unspecified order.
 
         Raises
-        -------
+        ------
         TypeError
             The function being listened to is not a coroutine.
         """
@@ -610,7 +609,7 @@ class BotBase(GroupMixin):
             is already loaded.
 
         Parameters
-        -----------
+        ----------
         cog: :class:`.Cog`
             The cog to register to the bot.
         override: :class:`bool`
@@ -620,7 +619,7 @@ class BotBase(GroupMixin):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         TypeError
             The cog does not inherit from :class:`.Cog`.
         CommandError
@@ -657,14 +656,14 @@ class BotBase(GroupMixin):
         If the cog is not found, ``None`` is returned instead.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the cog you are requesting.
             This is equivalent to the name passed via keyword
             argument in class creation or the class name if unspecified.
 
         Returns
-        --------
+        -------
         Optional[:class:`Cog`]
             The cog that was requested. If not found, returns ``None``.
         """
@@ -679,7 +678,7 @@ class BotBase(GroupMixin):
         If no cog is found then this method has no effect.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the cog to remove.
 
@@ -790,7 +789,7 @@ class BotBase(GroupMixin):
                     asyncio.create_task(setup(self, **extras))
                 except RuntimeError:
                     raise RuntimeError(
-                        f"""
+                        """
                     Looks like you are attempting to load an asynchronous setup function incorrectly.
                     Please read our FAQ here:
                     https://docs.nextcord.dev/en/stable/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
@@ -825,7 +824,7 @@ class BotBase(GroupMixin):
         point must have a single argument, the ``bot``.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The extension name to load. It must be dot separated like
             regular Python imports if accessing a sub-module. e.g.
@@ -861,7 +860,7 @@ class BotBase(GroupMixin):
             .. versionadded:: 2.0.0
 
         Raises
-        --------
+        ------
         ExtensionNotFound
             The extension could not be imported.
             This is also raised if the name of the extension could not
@@ -899,7 +898,7 @@ class BotBase(GroupMixin):
         :meth:`~.Bot.load_extension`.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The extension name to unload. It must be dot separated like
             regular Python imports if accessing a sub-module. e.g.
@@ -912,7 +911,7 @@ class BotBase(GroupMixin):
             .. versionadded:: 1.7
 
         Raises
-        -------
+        ------
         ExtensionNotFound
             The name of the extension could not
             be resolved using the provided ``package`` parameter.
@@ -937,7 +936,7 @@ class BotBase(GroupMixin):
         the bot will roll-back to the prior working state.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The extension name to reload. It must be dot separated like
             regular Python imports if accessing a sub-module. e.g.
@@ -950,7 +949,7 @@ class BotBase(GroupMixin):
             .. versionadded:: 1.7
 
         Raises
-        -------
+        ------
         ExtensionNotLoaded
             The extension was not loaded.
         ExtensionNotFound
@@ -1004,7 +1003,7 @@ class BotBase(GroupMixin):
 
         .. note::
 
-            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/`stderr`).
+            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/:data:`~sys.stderr`).
 
         .. versionadded:: 2.1
 
@@ -1158,7 +1157,7 @@ class BotBase(GroupMixin):
 
         .. note::
 
-            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/`stderr`).
+            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/:data:`~sys.stderr`).
 
         .. versionadded:: 2.1
 
@@ -1251,12 +1250,12 @@ class BotBase(GroupMixin):
         with the message as a context.
 
         Parameters
-        -----------
+        ----------
         message: :class:`nextcord.Message`
             The message context to get the prefix of.
 
         Returns
-        --------
+        -------
         Union[List[:class:`str`], :class:`str`]
             A list of prefixes or a single prefix that the bot is
             listening for.
@@ -1298,7 +1297,7 @@ class BotBase(GroupMixin):
         invoked under :meth:`~.Bot.invoke`.
 
         Parameters
-        -----------
+        ----------
         message: :class:`nextcord.Message`
             The message to get the invocation context from.
         cls
@@ -1308,7 +1307,7 @@ class BotBase(GroupMixin):
             interface.
 
         Returns
-        --------
+        -------
         :class:`.Context`
             The invocation context. The type of this can change via the
             ``cls`` parameter.
@@ -1371,7 +1370,7 @@ class BotBase(GroupMixin):
         handles all the internal event dispatch mechanisms.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context to invoke.
         """
@@ -1408,7 +1407,7 @@ class BotBase(GroupMixin):
         call :meth:`~.Bot.get_context` or :meth:`~.Bot.invoke` if so.
 
         Parameters
-        -----------
+        ----------
         message: :class:`nextcord.Message`
             The message to process commands for.
         """
@@ -1417,6 +1416,39 @@ class BotBase(GroupMixin):
 
         ctx = await self.get_context(message)
         await self.invoke(ctx)
+
+    async def process_with_str(self, message: Message, content: str) -> None:
+        """|coro|
+
+        This function is like :meth:`.process_commands` except it
+        processes the provided message with different content.
+
+        This is useful if you want to execute multiple commands in
+        a single message.
+
+        Example
+        -------
+
+        .. code-block:: python3
+
+            @bot.event
+            async def on_message(message):
+                for msg in message.content.split(";"):
+                    await bot.process_with_str(message, msg)
+
+        Parameters
+        ----------
+        message: :class:`nextcord.Message`
+            The message to process commands for.
+        content: :class:`str`
+            The content to subsitute for the message's content.
+        """
+        old_content = message.content
+        message.content = content
+
+        await self.process_commands(message)
+
+        message.content = old_content
 
     async def on_message(self, message):
         await self.process_commands(message)
@@ -1428,7 +1460,7 @@ class BotBase(GroupMixin):
         and :meth:`.check_once`.
 
         Parameters
-        -----------
+        ----------
         func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
             The function that was used as a global application check.
         """
@@ -1442,7 +1474,7 @@ class BotBase(GroupMixin):
         if the function is not in the global checks.
 
         Parameters
-        -----------
+        ----------
         func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
             The function to remove from the global application checks.
         """
@@ -1468,7 +1500,7 @@ class BotBase(GroupMixin):
         :exc:`.ApplicationError`.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -1495,12 +1527,12 @@ class BotBase(GroupMixin):
             are not called.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the pre-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -1528,12 +1560,12 @@ class BotBase(GroupMixin):
             This makes it ideal for clean-up scenarios.
 
         Parameters
-        -----------
+        ----------
         coro: :ref:`coroutine`
             The coroutine to register as the post-invoke hook.
 
         Raises
-        -------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -1555,7 +1587,7 @@ class Bot(BotBase, nextcord.Client):
     to manage commands.
 
     Attributes
-    -----------
+    ----------
     command_prefix
         The command prefix is what the message content must contain initially
         to have a command invoked. This prefix could either be a string to

@@ -33,7 +33,6 @@ from typing import (
     Dict,
     Generator,
     List,
-    Optional,
     Tuple,
     Type,
     TypeVar,
@@ -41,7 +40,6 @@ from typing import (
 
 import nextcord.utils
 from nextcord.application_command import ClientCog, _cog_special_method
-from nextcord.interactions import Interaction
 
 from ._types import _BaseCommand
 
@@ -95,7 +93,7 @@ class CogMeta(type):
                 pass
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The cog name. By default, it is the name of the class with no modification.
     description: :class:`str`
@@ -241,7 +239,7 @@ class Cog(ClientCog, metaclass=CogMeta):
     def get_commands(self) -> List[Command]:
         r"""
         Returns
-        --------
+        -------
         List[:class:`.Command`]
             A :class:`list` of :class:`.Command`\s that are
             defined inside this cog.
@@ -286,7 +284,7 @@ class Cog(ClientCog, metaclass=CogMeta):
         """Returns a :class:`list` of (name, function) listener pairs that are defined in this cog.
 
         Returns
-        --------
+        -------
         List[Tuple[:class:`str`, :ref:`coroutine <coroutine>`]]
             The listeners defined in this cog.
         """
@@ -299,13 +297,13 @@ class Cog(ClientCog, metaclass=CogMeta):
         This is the cog equivalent of :meth:`.Bot.listen`.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The name of the event being listened to. If not provided, it
             defaults to the function's name.
 
         Raises
-        --------
+        ------
         TypeError
             The function is not a coroutine function or a string was not passed as
             the name.
@@ -394,8 +392,12 @@ class Cog(ClientCog, metaclass=CogMeta):
 
         This **must** be a coroutine.
 
+        .. note::
+
+            This is only called for prefix commands.
+
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context where the error happened.
         error: :class:`CommandError`
@@ -412,7 +414,7 @@ class Cog(ClientCog, metaclass=CogMeta):
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context.
         """
@@ -427,7 +429,7 @@ class Cog(ClientCog, metaclass=CogMeta):
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context.
         """

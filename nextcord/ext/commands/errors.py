@@ -165,7 +165,7 @@ class CommandNotFound(CommandError):
         Added :attr:`command_name` as a parameter.
 
     Attributes
-    -----------
+    ----------
     command_name: :class:`str`
         The command that was not found.
     """
@@ -182,7 +182,7 @@ class MissingRequiredArgument(UserInputError):
     This inherits from :exc:`UserInputError`
 
     Attributes
-    -----------
+    ----------
     param: :class:`inspect.Parameter`
         The argument that is missing.
     """
@@ -229,7 +229,7 @@ class CheckAnyFailure(CheckFailure):
     .. versionadded:: 1.3
 
     Attributes
-    ------------
+    ----------
     errors: List[:class:`CheckFailure`]
         A list of errors that were caught during execution.
     checks: List[Callable[[:class:`Context`], :class:`bool`]]
@@ -282,7 +282,7 @@ class ObjectNotFound(BadArgument):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The argument supplied by the caller that was not matched
     """
@@ -301,7 +301,7 @@ class MemberNotFound(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The member supplied by the caller that was not found
     """
@@ -319,7 +319,7 @@ class GuildNotFound(BadArgument):
     .. versionadded:: 1.7
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The guild supplied by the called that was not found
     """
@@ -338,7 +338,7 @@ class UserNotFound(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The user supplied by the caller that was not found
     """
@@ -356,7 +356,7 @@ class MessageNotFound(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The message supplied by the caller that was not found
     """
@@ -375,7 +375,7 @@ class ChannelNotReadable(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: Union[:class:`.abc.GuildChannel`, :class:`.Thread`]
         The channel supplied by the caller that was not readable
     """
@@ -393,7 +393,7 @@ class ChannelNotFound(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The channel supplied by the caller that was not found
     """
@@ -411,7 +411,7 @@ class ThreadNotFound(BadArgument):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The thread supplied by the caller that was not found
     """
@@ -429,7 +429,7 @@ class BadColourArgument(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The colour supplied by the caller that was not valid
     """
@@ -450,7 +450,7 @@ class RoleNotFound(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The role supplied by the caller that was not found
     """
@@ -481,7 +481,7 @@ class EmojiNotFound(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The emoji supplied by the caller that was not found
     """
@@ -500,7 +500,7 @@ class PartialEmojiConversionFailure(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The emoji supplied by the caller that did not match the regex
     """
@@ -518,7 +518,7 @@ class GuildStickerNotFound(BadArgument):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The sticker supplied by the caller that was not found
     """
@@ -554,7 +554,7 @@ class BadBoolArgument(BadArgument):
     .. versionadded:: 1.5
 
     Attributes
-    -----------
+    ----------
     argument: :class:`str`
         The boolean argument supplied by the caller that is not in the predefined list
     """
@@ -579,7 +579,7 @@ class CommandInvokeError(CommandError):
     This inherits from :exc:`CommandError`
 
     Attributes
-    -----------
+    ----------
     original: :exc:`Exception`
         The original exception that was raised. You can also get this via
         the ``__cause__`` attribute.
@@ -596,7 +596,7 @@ class CommandOnCooldown(CommandError):
     This inherits from :exc:`CommandError`
 
     Attributes
-    -----------
+    ----------
     cooldown: :class:`.Cooldown`
         A class with attributes ``rate`` and ``per`` similar to the
         :func:`.cooldown` decorator.
@@ -619,7 +619,7 @@ class MaxConcurrencyReached(CommandError):
     This inherits from :exc:`CommandError`.
 
     Attributes
-    ------------
+    ----------
     number: :class:`int`
         The maximum number of concurrent invokers allowed.
     per: :class:`.BucketType`
@@ -646,7 +646,7 @@ class MissingRole(CheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
         This is the parameter passed to :func:`~.commands.has_role`.
@@ -666,7 +666,7 @@ class BotMissingRole(CheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
         This is the parameter passed to :func:`~.commands.has_role`.
@@ -687,7 +687,7 @@ class MissingAnyRole(CheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the invoker is missing.
         These are the parameters passed to :func:`~.commands.has_any_role`.
@@ -716,7 +716,7 @@ class BotMissingAnyRole(CheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the bot's member is missing.
         These are the parameters passed to :func:`~.commands.has_any_role`.
@@ -745,7 +745,7 @@ class NSFWChannelRequired(CheckFailure):
     .. versionadded:: 1.1
 
     Parameters
-    -----------
+    ----------
     channel: Union[:class:`.abc.GuildChannel`, :class:`.Thread`]
         The channel that does not have NSFW enabled.
     """
@@ -762,7 +762,7 @@ class MissingPermissions(CheckFailure):
     This inherits from :exc:`CheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_permissions: List[:class:`str`]
         The required permissions that are missing.
     """
@@ -790,7 +790,7 @@ class BotMissingPermissions(CheckFailure):
     This inherits from :exc:`CheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_permissions: List[:class:`str`]
         The required permissions that are missing.
     """
@@ -818,7 +818,7 @@ class BadUnionArgument(UserInputError):
     This inherits from :exc:`UserInputError`
 
     Attributes
-    -----------
+    ----------
     param: :class:`inspect.Parameter`
         The parameter that failed being converted.
     converters: Tuple[Type, ``...``]
@@ -860,7 +860,7 @@ class BadLiteralArgument(UserInputError):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     param: :class:`inspect.Parameter`
         The parameter that failed being converted.
     literals: Tuple[Any, ``...``]
@@ -903,7 +903,7 @@ class UnexpectedQuoteError(ArgumentParsingError):
     This inherits from :exc:`ArgumentParsingError`.
 
     Attributes
-    ------------
+    ----------
     quote: :class:`str`
         The quote mark that was found inside the non-quoted string.
     """
@@ -920,7 +920,7 @@ class InvalidEndOfQuotedStringError(ArgumentParsingError):
     This inherits from :exc:`ArgumentParsingError`.
 
     Attributes
-    -----------
+    ----------
     char: :class:`str`
         The character found instead of the expected string.
     """
@@ -936,7 +936,7 @@ class ExpectedClosingQuoteError(ArgumentParsingError):
     This inherits from :exc:`ArgumentParsingError`.
 
     Attributes
-    -----------
+    ----------
     close_quote: :class:`str`
         The quote character expected.
     """
@@ -952,7 +952,7 @@ class ExtensionError(DiscordException):
     This inherits from :exc:`~nextcord.DiscordException`.
 
     Attributes
-    ------------
+    ----------
     name: :class:`str`
         The extension that had an error.
     """
@@ -1014,7 +1014,7 @@ class ExtensionFailed(ExtensionError):
     This inherits from :exc:`ExtensionError`
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The extension that had the error.
     original: :exc:`Exception`
@@ -1037,7 +1037,7 @@ class ExtensionNotFound(ExtensionError):
         Made the ``original`` attribute always None.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The extension that had the error.
     """
@@ -1089,7 +1089,7 @@ class TooManyFlags(FlagError):
     .. versionadded:: 2.0
 
     Attributes
-    ------------
+    ----------
     flag: :class:`~nextcord.ext.commands.Flag`
         The flag that received too many values.
     values: List[:class:`str`]
@@ -1112,7 +1112,7 @@ class BadFlagArgument(FlagError):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     flag: :class:`~nextcord.ext.commands.Flag`
         The flag that failed to convert.
     """
@@ -1135,7 +1135,7 @@ class MissingRequiredFlag(FlagError):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     flag: :class:`~nextcord.ext.commands.Flag`
         The required flag that was not found.
     """
@@ -1153,7 +1153,7 @@ class MissingFlagArgument(FlagError):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     flag: :class:`~nextcord.ext.commands.Flag`
         The flag that did not get a value.
     """

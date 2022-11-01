@@ -77,12 +77,12 @@ class PinsMixin:
             :attr:`.Message.reactions` data.
 
         Raises
-        -------
+        ------
         ~nextcord.HTTPException
             Retrieving the pinned messages failed.
 
         Returns
-        --------
+        -------
         List[:class:`~nextcord.Message`]
             The messages that are currently pinned.
         """

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
 import aiohttp
 
@@ -47,7 +47,6 @@ from .utils import MISSING
 
 if TYPE_CHECKING:
     from .activity import BaseActivity
-    from .enums import Status
     from .flags import MemberCacheFlags
     from .gateway import DiscordWebSocket
     from .mentions import AllowedMentions
@@ -233,7 +232,7 @@ class ShardInfo:
     .. versionadded:: 1.4
 
     Attributes
-    ------------
+    ----------
     id: :class:`int`
         The shard ID for this shard.
     shard_count: Optional[:class:`int`]
@@ -321,7 +320,7 @@ class AutoShardedClient(Client):
     0 to ``shard_count - 1``.
 
     Attributes
-    ------------
+    ----------
     shard_ids: Optional[List[:class:`int`]]
         An optional list of shard_ids to launch the shards with.
     """

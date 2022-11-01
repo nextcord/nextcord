@@ -63,7 +63,7 @@ class Colour:
              Returns the raw colour value.
 
     Attributes
-    ------------
+    ----------
     value: :class:`int`
         The raw integer colour value.
     """
@@ -146,7 +146,7 @@ class Colour:
         .. versionadded:: 1.6
 
         Parameters
-        ------------
+        ----------
         seed: Optional[Union[:class:`int`, :class:`str`, :class:`float`, :class:`bytes`, :class:`bytearray`]]
             The seed to initialize the RNG with. If ``None`` is passed the default RNG is used.
 

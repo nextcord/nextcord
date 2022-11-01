@@ -162,7 +162,7 @@ class AutoModerationActionMetadata:
 
         .. note::
 
-            The maximum value that can be used is `2419200` seconds (4 weeks)
+            The maximum value that can be used is ``2419200`` seconds (4 weeks)
     """
 
     __slots__ = ("channel_id", "duration_seconds")

@@ -79,7 +79,7 @@ class PartialEmoji(_EmojiTag, AssetMixin):
             Returns the emoji rendered for discord.
 
     Attributes
-    -----------
+    ----------
     name: Optional[:class:`str`]
         The custom emoji name, if applicable, or the unicode codepoint
         of the non-custom emoji. This can be ``None`` if the emoji
@@ -129,12 +129,12 @@ class PartialEmoji(_EmojiTag, AssetMixin):
         .. versionadded:: 2.0
 
         Parameters
-        ------------
+        ----------
         value: :class:`str`
             The string representation of an emoji.
 
         Returns
-        --------
+        -------
         :class:`PartialEmoji`
             The partial emoji from this string.
         """

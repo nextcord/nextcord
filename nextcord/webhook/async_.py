@@ -598,7 +598,7 @@ class PartialWebhookChannel(Hashable):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The partial channel's ID.
     name: :class:`str`
@@ -623,7 +623,7 @@ class PartialWebhookGuild(Hashable):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The partial guild's ID.
     name: :class:`str`
@@ -735,7 +735,7 @@ class WebhookMessage(Message):
             The edit is no longer in-place, instead the newly edited message is returned.
 
         Parameters
-        ------------
+        ----------
         content: Optional[:class:`str`]
             The content to edit the message with or ``None`` to clear it.
         embeds: List[:class:`Embed`]
@@ -773,7 +773,7 @@ class WebhookMessage(Message):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -786,7 +786,7 @@ class WebhookMessage(Message):
             There was no token associated with this webhook.
 
         Returns
-        --------
+        -------
         :class:`WebhookMessage`
             The newly edited message.
         """
@@ -813,7 +813,7 @@ class WebhookMessage(Message):
         Deletes the message.
 
         Parameters
-        -----------
+        ----------
         delay: Optional[:class:`float`]
             If provided, the number of seconds to wait before deleting the message.
             The waiting is done in the background and deletion failures are ignored.
@@ -991,7 +991,7 @@ class Webhook(BaseWebhook):
         Webhooks are now comparable and hashable.
 
     Attributes
-    ------------
+    ----------
     id: :class:`int`
         The webhook's ID
     type: :class:`WebhookType`
@@ -1051,7 +1051,7 @@ class Webhook(BaseWebhook):
         """Creates a partial :class:`Webhook`.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID of the webhook.
         token: :class:`str`
@@ -1069,7 +1069,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             A partial :class:`Webhook`.
             A partial webhook is just a webhook object with an ID and a token.
@@ -1089,7 +1089,7 @@ class Webhook(BaseWebhook):
         """Creates a partial :class:`Webhook` from a webhook URL.
 
         Parameters
-        ------------
+        ----------
         url: :class:`str`
             The URL of the webhook.
         session: :class:`aiohttp.ClientSession`
@@ -1105,12 +1105,12 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         InvalidArgument
             The URL is invalid.
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             A partial :class:`Webhook`.
             A partial webhook is just a webhook object with an ID and a token.
@@ -1168,13 +1168,13 @@ class Webhook(BaseWebhook):
             returned webhook does not contain any user information.
 
         Parameters
-        -----------
+        ----------
         prefer_auth: :class:`bool`
             Whether to use the bot token over the webhook token
             if available. Defaults to ``True``.
 
         Raises
-        -------
+        ------
         HTTPException
             Could not fetch the webhook
         NotFound
@@ -1183,7 +1183,7 @@ class Webhook(BaseWebhook):
             This webhook does not have a token associated with it.
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             The fetched webhook.
         """
@@ -1204,7 +1204,7 @@ class Webhook(BaseWebhook):
         Deletes this Webhook.
 
         Parameters
-        ------------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this webhook. Shows up on the audit log.
 
@@ -1216,7 +1216,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the webhook failed.
         NotFound
@@ -1257,7 +1257,7 @@ class Webhook(BaseWebhook):
             The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
-        ------------
+        ----------
         name: Optional[:class:`str`]
             The webhook's new default name.
         avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
@@ -1278,7 +1278,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the webhook failed.
         NotFound
@@ -1405,7 +1405,7 @@ class Webhook(BaseWebhook):
         ``embeds`` parameter, which must be a :class:`list` of :class:`Embed` objects to send.
 
         Parameters
-        ------------
+        ----------
         content: :class:`str`
             The content of the message to send.
         wait: :class:`bool`
@@ -1461,7 +1461,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        --------
+        ------
         HTTPException
             Sending the message failed.
         NotFound
@@ -1478,7 +1478,7 @@ class Webhook(BaseWebhook):
             attached with this webhook when giving it a view.
 
         Returns
-        ---------
+        -------
         Optional[:class:`WebhookMessage`]
             If ``wait`` is ``True`` then the message that was sent, otherwise ``None``.
         """
@@ -1556,12 +1556,12 @@ class Webhook(BaseWebhook):
         .. versionadded:: 2.0
 
         Parameters
-        ------------
+        ----------
         id: :class:`int`
             The message ID to look for.
 
         Raises
-        --------
+        ------
         ~nextcord.NotFound
             The specified message was not found.
         ~nextcord.Forbidden
@@ -1572,7 +1572,7 @@ class Webhook(BaseWebhook):
             There was no token associated with this webhook.
 
         Returns
-        --------
+        -------
         :class:`~nextcord.WebhookMessage`
             The message asked for.
         """
@@ -1615,7 +1615,7 @@ class Webhook(BaseWebhook):
             The edit is no longer in-place, instead the newly edited message is returned.
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to edit.
         content: Optional[:class:`str`]
@@ -1649,7 +1649,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -1663,7 +1663,7 @@ class Webhook(BaseWebhook):
             no state.
 
         Returns
-        --------
+        -------
         :class:`WebhookMessage`
             The newly edited webhook message.
         """
@@ -1718,12 +1718,12 @@ class Webhook(BaseWebhook):
         .. versionadded:: 1.6
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to delete.
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the message failed.
         Forbidden

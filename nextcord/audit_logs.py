@@ -433,7 +433,7 @@ class AuditLogEntry(Hashable):
         Audit log entries are now comparable and hashable.
 
     Attributes
-    -----------
+    ----------
     action: :class:`AuditLogAction`
         The action that was done.
     user: :class:`abc.User`
