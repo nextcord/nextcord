@@ -40,7 +40,6 @@ from typing import (
     Generator,
     Iterable,
     List,
-    Literal,
     Optional,
     Sequence,
     Set,
