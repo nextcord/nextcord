@@ -41,10 +41,10 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from ..interactions import ClientT
     from ..types.components import SelectMenu as SelectMenuPayload
     from ..types.interactions import ComponentInteractionData
     from .view import View
-    from ..interactions import ClientT
 
 S = TypeVar("S", bound="Select")
 V = TypeVar("V", bound="View", covariant=True)
