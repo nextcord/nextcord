@@ -2395,7 +2395,11 @@ class AutoShardedConnectionState(ConnectionState):
         key: Callable[[tuple[Guild, Future[list[Member]]]], int] = lambda g: g[0].shard_id
         guilds = sorted(processed, key=key)
         for shard_id, info in itertools.groupby(guilds, key=key):
-            children, futures = zip(*info)
+            children: Tuple[Guild]
+            futures: Tuple[Future]
+            # zip with `*` should, and will, return 2 tuples since every element is 2 length
+            # but pyright believes otherwise.
+            children, futures = zip(*info)  # type: ignore
             # 110 reqs/minute w/ 1 req/guild plus some buffer
             timeout = 61 * (len(children) / 110)
             try:
@@ -2408,7 +2412,7 @@ class AutoShardedConnectionState(ConnectionState):
                     len(guilds),
                 )
             for guild in children:
-                if guild.unavailable is False:  # type: ignore # pylance this is a guild :)
+                if guild.unavailable is False:
                     self.dispatch("guild_available", guild)
                 else:
                     self.dispatch("guild_join", guild)
