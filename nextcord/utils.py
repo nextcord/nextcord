@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import array
 import asyncio
-import collections.abc
 import datetime
 import functools
 import inspect
@@ -204,7 +203,7 @@ def cached_slot_property(
     return decorator
 
 
-class SequenceProxy(collections.abc.Sequence[T_co], Generic[T_co]):
+class SequenceProxy(Sequence[T_co], Generic[T_co]):
     """Read-only proxy of a Sequence."""
 
     def __init__(self, proxied: Sequence[T_co]):
