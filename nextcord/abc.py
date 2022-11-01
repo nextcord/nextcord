@@ -54,6 +54,7 @@ from .mentions import AllowedMentions
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
 from .sticker import GuildSticker, StickerItem
+from .types.components import Component as ComponentPayload
 from .utils import MISSING, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
 
@@ -87,7 +88,6 @@ if TYPE_CHECKING:
         OverwriteType,
         PermissionOverwrite as PermissionOverwritePayload,
     )
-    from .types.components import Component as ComponentPayload
     from .types.message import (
         AllowedMentions as AllowedMentionsPayload,
         MessageReference as MessageReferencePayload,
