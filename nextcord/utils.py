@@ -31,7 +31,6 @@ import inspect
 import json
 import re
 import sys
-import types
 import unicodedata
 import warnings
 from base64 import b64encode
@@ -70,8 +69,30 @@ try:
     import orjson
 except ModuleNotFoundError:
     HAS_ORJSON = False
+
+    def _to_json(obj: Any) -> str:
+        return json.dumps(obj, separators=(",", ":"), ensure_ascii=True)
+
+    from_json = json.loads
 else:
     HAS_ORJSON = True
+
+    def _to_json(obj: Any) -> str:
+        return orjson.dumps(obj).decode("utf-8")
+
+    from_json = orjson.loads
+
+
+PY_310 = sys.version_info >= (3, 10)
+
+
+if PY_310:
+    from types import UnionType  # type: ignore
+
+    # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
+else:
+    UnionType = None
+
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -527,21 +548,6 @@ async def _obj_to_base64_data(
         return _bytes_to_base64_data(await obj.read())
 
 
-if HAS_ORJSON:
-
-    def _to_json(obj: Any) -> str:
-        return orjson.dumps(obj).decode("utf-8")
-
-    _from_json = orjson.loads  # type: ignore
-
-else:
-
-    def _to_json(obj: Any) -> str:
-        return json.dumps(obj, separators=(",", ":"), ensure_ascii=True)
-
-    _from_json = json.loads
-
-
 def _parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
     reset_after: Optional[str] = request.headers.get("X-Ratelimit-Reset-After")
     if use_clock or not reset_after:
@@ -591,7 +597,7 @@ async def sane_wait_for(
 def get_slots(cls: Type[Any]) -> Iterator[str]:
     for mro in reversed(cls.__mro__):
         try:
-            yield from mro.__slots__  # type: ignore # handled below?
+            yield from mro.__slots__  # type: ignore # handled below
         except AttributeError:
             continue
 
@@ -1002,9 +1008,6 @@ def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
     return _chunk(iterator, max_size)
 
 
-PY_310 = sys.version_info >= (3, 10)
-
-
 def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
     params = []
     literal_cls = type(Literal[0])
@@ -1046,7 +1049,8 @@ def evaluate_annotation(
         is_literal = False
         args = tp.__args__
         if not hasattr(tp, "__origin__"):
-            if PY_310 and tp.__class__ is types.UnionType:  # type: ignore
+            # UnionType is None when not PY_310, but this checks anyway.
+            if PY_310 and tp.__class__ is UnionType:
                 converted = Union[args]  # type: ignore
                 return evaluate_annotation(converted, globals, locals, cache)
 
