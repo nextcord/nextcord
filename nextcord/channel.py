@@ -198,7 +198,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
     def _update(self, guild: Guild, data: TextChannelPayload) -> None:
         self.guild: Guild = guild
         self.name: str = data["name"]
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, "parent_id")
+        self.category_id: Optional[int] = utils.get_as_snowflake(data, "parent_id")
         self.topic: Optional[str] = data.get("topic")
         self.position: int = data["position"]
         self.nsfw: bool = data.get("nsfw", False)
@@ -209,7 +209,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         )
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
         self._type: int = data.get("type", self._type)
-        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
+        self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
         self._fill_overwrites(data)
 
     async def _get_channel(self):
@@ -610,7 +610,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
 
         from .webhook import Webhook
 
-        avatar_base64 = await utils._obj_to_base64_data(avatar)
+        avatar_base64 = await utils.obj_to_base64_data(avatar)
 
         data = await self._state.http.create_webhook(
             self.id, name=str(name), avatar=avatar_base64, reason=reason
@@ -904,7 +904,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     def _update(self, guild: Guild, data: ForumChannelPayload) -> None:
         self.guild = guild
         self.name = data["name"]
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, "parent_id")
+        self.category_id: Optional[int] = utils.get_as_snowflake(data, "parent_id")
         self.topic: Optional[str] = data.get("topic")
         self.position: int = data["position"]
         self.nsfw: bool = data.get("nsfw", False)
@@ -914,7 +914,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         self.default_auto_archive_duration: ThreadArchiveDuration = data.get(
             "default_auto_archive_duration", 1440
         )
-        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
+        self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
         self._fill_overwrites(data)
 
     async def _get_channel(self):
@@ -1319,7 +1319,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         self.video_quality_mode: VideoQualityMode = try_enum(
             VideoQualityMode, data.get("video_quality_mode", 1)
         )
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, "parent_id")
+        self.category_id: Optional[int] = utils.get_as_snowflake(data, "parent_id")
         self.position: int = data["position"]
         self.bitrate: int = data.get("bitrate")
         self.user_limit: int = data.get("user_limit")
@@ -1465,7 +1465,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
     def _update(self, guild: Guild, data: VoiceChannelPayload) -> None:
         VocalGuildChannel._update(self, guild, data)
-        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
+        self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
         self.nsfw: bool = data.get("nsfw", False)
 
     async def _get_channel(self):
@@ -2130,7 +2130,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
     def _update(self, guild: Guild, data: CategoryChannelPayload) -> None:
         self.guild: Guild = guild
         self.name: str = data["name"]
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, "parent_id")
+        self.category_id: Optional[int] = utils.get_as_snowflake(data, "parent_id")
         self.nsfw: bool = data.get("nsfw", False)
         self.position: int = data["position"]
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
@@ -2507,7 +2507,7 @@ class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         self._update_group(data)
 
     def _update_group(self, data: GroupChannelPayload) -> None:
-        self.owner_id: Optional[int] = utils._get_as_snowflake(data, "owner_id")
+        self.owner_id: Optional[int] = utils.get_as_snowflake(data, "owner_id")
         self._icon: Optional[str] = data.get("icon")
         self.name: Optional[str] = data.get("name")
         self.recipients: List[User] = [

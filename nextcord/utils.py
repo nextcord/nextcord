@@ -21,6 +21,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+
+# reportUnknownVariableType and reportUnknownMemberType:
+# array.array is poorly typed (SnowflakeList superclass)
+# pyright: strict, reportUnknownVariableType = false, reportUnknownMemberType = false
 from __future__ import annotations
 
 import array
@@ -50,9 +54,7 @@ from typing import (
     Iterator,
     List,
     Literal,
-    Mapping,
     Optional,
-    Protocol,
     Sequence,
     Set,
     Tuple,
@@ -68,19 +70,22 @@ from .file import File
 try:
     import orjson
 except ModuleNotFoundError:
-    HAS_ORJSON = False
+    _orjson_defined = False
 
-    def _to_json(obj: Any) -> str:
+    def to_json(obj: Any) -> str:
         return json.dumps(obj, separators=(",", ":"), ensure_ascii=True)
 
     from_json = json.loads
 else:
-    HAS_ORJSON = True
+    _orjson_defined = True
 
-    def _to_json(obj: Any) -> str:
+    def to_json(obj: Any) -> str:
         return orjson.dumps(obj).decode("utf-8")
 
     from_json = orjson.loads
+
+
+HAS_ORJSON = _orjson_defined
 
 
 PY_310 = sys.version_info >= (3, 10)
@@ -120,7 +125,7 @@ DISCORD_EPOCH = 1420070400000
 
 
 class _MissingSentinel:
-    def __eq__(self, other):
+    def __eq__(self, other: Any):
         return self is other
 
     def __hash__(self):
@@ -137,11 +142,11 @@ MISSING: Any = _MissingSentinel()
 
 
 class _cached_property:
-    def __init__(self, function):
+    def __init__(self, function: Callable[..., Any]):
         self.function = function
         self.__doc__ = getattr(function, "__doc__")
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance: Any, owner: Any):
         if instance is None:
             return self
 
@@ -163,11 +168,7 @@ if TYPE_CHECKING:
     from .permissions import Permissions
     from .template import Template
 
-    class _RequestLike(Protocol):
-        headers: Mapping[str, Any]
-
     P = ParamSpec("P")
-
 else:
     cached_property = _cached_property
 
@@ -502,11 +503,11 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     return None
 
 
-def _unique(iterable: Iterable[T]) -> List[T]:
+def unique(iterable: Iterable[T]) -> List[T]:
     return [x for x in dict.fromkeys(iterable)]
 
 
-def _get_as_snowflake(data: Any, key: str) -> Optional[int]:
+def get_as_snowflake(data: Any, key: str) -> Optional[int]:
     try:
         value = data[key]
     except KeyError:
@@ -535,9 +536,7 @@ def _bytes_to_base64_data(data: bytes) -> str:
     return fmt.format(mime=mime, data=b64)
 
 
-async def _obj_to_base64_data(
-    obj: Optional[Union[bytes, Attachment, Asset, File]]
-) -> Optional[str]:
+async def obj_to_base64_data(obj: Optional[Union[bytes, Attachment, Asset, File]]) -> Optional[str]:
     if obj is None:
         return obj
     if isinstance(obj, bytes):
@@ -548,7 +547,7 @@ async def _obj_to_base64_data(
         return _bytes_to_base64_data(await obj.read())
 
 
-def _parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
+def parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
     reset_after: Optional[str] = request.headers.get("X-Ratelimit-Reset-After")
     if use_clock or not reset_after:
         utc = datetime.timezone.utc
@@ -653,7 +652,7 @@ def valid_icon_size(size: int) -> bool:
 
 # Uncomment when https://github.com/python/cpython/issues/98658 is fixed.
 # class SnowflakeList(array.array[ArrayT], Generic[ArrayT]):
-class SnowflakeList(array.array):
+class SnowflakeList(array.array):  # pyright: ignore[reportMissingTypeArgument]
     """Internal data storage class to efficiently store a list of snowflakes.
 
     This should have the following characteristics:
@@ -691,7 +690,7 @@ class SnowflakeList(array.array):
 _IS_ASCII = re.compile(r"^[\x00-\x7f]+$")
 
 
-def _string_width(string: str, *, _IS_ASCII=_IS_ASCII) -> int:
+def string_width(string: str) -> int:
     """Returns string's width."""
     match = _IS_ASCII.match(string)
     if match:
@@ -799,7 +798,7 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
         The text with the markdown special characters removed.
     """
 
-    def replacement(match):
+    def replacement(match: re.Match[str]):
         groupdict = match.groupdict()
         return groupdict.get("url", "")
 
@@ -836,7 +835,7 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
 
     if not as_needed:
 
-        def replacement(match):
+        def replacement(match: re.Match[str]):
             groupdict = match.groupdict()
             is_url = groupdict.get("url")
             if is_url:
@@ -1148,7 +1147,7 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
     :class:`str`
         The formatted string.
     """
-    if not isinstance(dt, datetime.datetime):
+    if not isinstance(dt, datetime.datetime):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise InvalidArgument("'dt' must be of type 'datetime.datetime'")
     if style is None:
         return f"<t:{int(dt.timestamp())}>"

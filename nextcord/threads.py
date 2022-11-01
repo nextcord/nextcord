@@ -34,7 +34,7 @@ from .enums import ChannelType, try_enum
 from .errors import ClientException
 from .flags import ChannelFlags
 from .mixins import Hashable, PinsMixin
-from .utils import MISSING, _get_as_snowflake, parse_time
+from .utils import MISSING, get_as_snowflake, parse_time
 
 __all__ = (
     "Thread",
@@ -180,7 +180,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         self.owner_id = int(data["owner_id"])
         self.name = data["name"]
         self._type = try_enum(ChannelType, data["type"])
-        self.last_message_id = _get_as_snowflake(data, "last_message_id")
+        self.last_message_id = get_as_snowflake(data, "last_message_id")
         self.slowmode_delay = data.get("rate_limit_per_user", 0)
         self.message_count = data["message_count"]
         self.member_count = data["member_count"]
@@ -196,7 +196,7 @@ class Thread(Messageable, Hashable, PinsMixin):
 
     def _unroll_metadata(self, data: ThreadMetadata):
         self.archived = data["archived"]
-        self.archiver_id = _get_as_snowflake(data, "archiver_id")
+        self.archiver_id = get_as_snowflake(data, "archiver_id")
         self.auto_archive_duration = data["auto_archive_duration"]
         self.archive_timestamp = parse_time(data["archive_timestamp"])
         self.locked = data.get("locked", False)

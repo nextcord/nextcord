@@ -1518,7 +1518,7 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        icon_base64 = await utils._obj_to_base64_data(icon)
+        icon_base64 = await utils.obj_to_base64_data(icon)
 
         if code:
             data = await self.http.create_from_template(code, name, str(region), icon_base64)
@@ -2740,7 +2740,7 @@ class Client:
         """
 
         it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
-        return utils._unique(it)
+        return utils.unique(it)
 
     @overload
     def get_interaction(self, data) -> Interaction:

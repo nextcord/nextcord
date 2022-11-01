@@ -31,7 +31,7 @@ from .activity import BaseActivity, Spotify, create_activity
 from .enums import Status, try_enum
 from .invite import Invite
 from .user import BaseUser
-from .utils import _get_as_snowflake, resolve_invite, snowflake_time
+from .utils import get_as_snowflake, resolve_invite, snowflake_time
 
 if TYPE_CHECKING:
     import datetime
@@ -257,7 +257,7 @@ class Widget:
         self.members: List[WidgetMember] = []
         channels = {channel.id: channel for channel in self.channels}
         for member in data.get("members", []):
-            connected_channel = _get_as_snowflake(member, "channel_id")
+            connected_channel = get_as_snowflake(member, "channel_id")
             if connected_channel in channels:
                 connected_channel = channels[connected_channel]  # type: ignore
             elif connected_channel:

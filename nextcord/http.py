@@ -277,7 +277,7 @@ class HTTPClient:
         # some checking if it's a JSON request
         if "json" in kwargs:
             headers["Content-Type"] = "application/json"
-            kwargs["data"] = utils._to_json(kwargs.pop("json"))
+            kwargs["data"] = utils.to_json(kwargs.pop("json"))
 
         try:
             reason = kwargs.pop("reason")
@@ -331,9 +331,7 @@ class HTTPClient:
                         remaining = response.headers.get("X-Ratelimit-Remaining")
                         if remaining == "0" and response.status != 429:
                             # we've depleted our current bucket
-                            delta = utils._parse_ratelimit_header(
-                                response, use_clock=self.use_clock
-                            )
+                            delta = utils.parse_ratelimit_header(response, use_clock=self.use_clock)
                             _log.debug(
                                 "A rate limit bucket has been exhausted (bucket: %s, retry: %s).",
                                 bucket,
@@ -603,7 +601,7 @@ class HTTPClient:
                     "content_type": "application/octet-stream",
                 }
             )
-        form.append({"name": "payload_json", "value": utils._to_json(payload)})
+        form.append({"name": "payload_json", "value": utils.to_json(payload)})
 
         return form
 
@@ -2161,7 +2159,7 @@ class HTTPClient:
         form: List[Dict[str, Any]] = [
             {
                 "name": "payload_json",
-                "value": utils._to_json(payload),
+                "value": utils.to_json(payload),
             }
         ]
 
