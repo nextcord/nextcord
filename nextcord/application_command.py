@@ -746,8 +746,6 @@ class CallbackMixin:
             #  might be able to do something here.
             if option_class:
                 skip_counter = 1
-                # TODO: use typing.get_type_hints when 3.9 is standard
-                typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
                 # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
                 #  decorator going into effect before the class is instantiated, thus being a function at the time.
                 #  Try to look into fixing that in the future?
@@ -755,7 +753,32 @@ class CallbackMixin:
                 if self.parent_cog:
                     skip_counter += 1
 
-                for name, param in signature(self.callback).parameters.items():
+                # TODO: use typing.get_type_hints when 3.9 is standard
+                typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
+                callback_params = signature(self.callback).parameters
+                non_option_params = sum(
+                    # could be a self or interaction parameter
+                    param.annotation is param.empty
+                    # will always be an interaction parameter
+                    or issubclass(param.annotation, Interaction)
+                    # will always be a self parameter
+                    # TODO: use typing.Self when 3.11 is standard
+                    or param.annotation is typing_extensions.Self
+                    # will always be a self parameter
+                    or isinstance(param.annotation, typing.TypeVar)
+                    for param in list(callback_params.values())[:skip_counter]
+                )
+
+                if self.parent_cog is not None and non_option_params < 2:
+                    raise ValueError(
+                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition."
+                    )
+                elif non_option_params < 1:
+                    raise ValueError(
+                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition."
+                    )
+
+                for name, param in callback_params.items():
                     if skip_counter:
                         skip_counter -= 1
                     else:
