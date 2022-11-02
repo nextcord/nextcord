@@ -765,7 +765,7 @@ class CallbackMixin:
                     # TODO: use typing.Self when 3.11 is standard
                     or param.annotation is typing_extensions.Self
                     # will always be a self parameter
-                    or isinstance(param.annotation, typing.TypeVar)
+                    or isinstance(param.annotation, TypeVar)
                     for param in list(callback_params.values())[:skip_counter]
                 )
 
