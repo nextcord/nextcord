@@ -2142,7 +2142,7 @@ class Client:
             Added the ``search_locales`` keyword argument.
 
         .. versionchanged:: 2.3
-            Group/subcommand commands can now be retrieved with this method.
+            Subcommands/Subcommand groups can now be retrieved with this method.
 
         .. versionchanged:: 2.3
             Changed the signature from ``(qualified_name, type, guild_id, *, search_locales)`` to ``(*, type, qualified_name, guild_id, search_locales)``.
@@ -2153,17 +2153,17 @@ class Client:
         type: Union[:class:`int`, :class:`ApplicationCommandType`]
             Type of application command.
         qualified_name: :class:`str`
-            Full name of the application command. Capital sensitive.
-            Subcommand commands must be separated by a space, E.g, ``parent group subcommand``.
+            Full name of the application command. Case sensitive.
+            Subcommands must be separated by a space, E.g, ``parent group subcommand``.
         guild_id: Optional[:class:`int`]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
         search_locales: :class:`bool`
-            Whether to also search through the command's name locals. Defaults to ``False``.
+            Whether to also search through the command's name locales. Defaults to ``False``.
 
         Returns
         -------
         command: Optional[:class:`BaseApplicationCommand`, :class:`SlashApplicationSubcommand`]
-            Application Command with the given signature. If found else ``None`` is returned instead.
+            Application Command with the given signature. If no command with that signature is found, ``None`` is returned instead.
         """
         return self._connection.get_application_command_from_signature(
             type=type.value if isinstance(type, ApplicationCommandType) else type,
@@ -2230,7 +2230,7 @@ class Client:
                 raise TypeError(f"{FUNC} got an unexpected keyword argument '{kw}'")
 
         if len(args) > 3:
-            raise TypeError(f"{FUNC} takes 3 positional argument but {len(args)} were given")
+            raise TypeError(f"{FUNC} takes 3 positional arguments but {len(args)} were given")
         for index, arg in enumerate(args):
             if index in (0, 1):
                 if isinstance(arg, str):
