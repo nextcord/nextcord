@@ -45,7 +45,7 @@ __all__ = (
 
 
 if TYPE_CHECKING:
-    from ..interactions import Interaction
+    from ..interactions import ClientT, Interaction
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
     from ..types.interactions import (
@@ -421,19 +421,19 @@ class ModalStore:
         for k in to_remove:
             del self._modals[k]
 
-    def add_modal(self, modal: Modal, user_id: Optional[int] = None):
+    def add_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self.__verify_integrity()
 
         modal._start_listening_from_store(self)
         self._modals[(user_id, modal.custom_id)] = modal
 
-    def remove_modal(self, modal: Modal):
+    def remove_modal(self, modal: Modal) -> None:
         _modals = self._modals.copy()
         for key, value in _modals.items():
             if value is modal:
                 del self._modals[key]
 
-    def dispatch(self, custom_id: str, interaction: Interaction):
+    def dispatch(self, custom_id: str, interaction: Interaction[ClientT]) -> None:
         self.__verify_integrity()
 
         key = (interaction.user.id, custom_id)  # type: ignore
