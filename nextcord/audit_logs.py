@@ -534,7 +534,11 @@ class AuditLogEntry(Hashable):
                 channel_id = int(self.extra["channel_id"])
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
-            elif self.action is enums.AuditLogAction.auto_moderation_block_message:
+            elif (
+                self.action is enums.AuditLogAction.auto_moderation_block_message
+                or self.action is enums.AuditLogAction.auto_moderation_flag_to_channel
+                or self.action is enums.AuditLogAction.auto_moderation_user_communication_disabled
+            ):
                 channel_id = int(self.extra["channel_id"])
                 elems = {
                     "channel": (
