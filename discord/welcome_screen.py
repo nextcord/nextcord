@@ -37,9 +37,9 @@ from nextcord.welcome_screen import (
     WelcomeChannel,
     WelcomeScreen,
     _EmojiTag,
-    _get_as_snowflake,
     annotations,
     get,
+    get_as_snowflake,
     overload,
 )
 

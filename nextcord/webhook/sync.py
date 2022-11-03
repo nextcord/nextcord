@@ -113,7 +113,7 @@ class WebhookAdapter:
 
         if payload is not None:
             headers["Content-Type"] = "application/json"
-            to_send = utils._to_json(payload)
+            to_send = utils.to_json(payload)
 
         if auth_token is not None:
             headers["Authorization"] = f"Bot {auth_token}"
@@ -163,7 +163,7 @@ class WebhookAdapter:
 
                         remaining = response.headers.get("X-Ratelimit-Remaining")
                         if remaining == "0" and response.status_code != 429:
-                            delta = utils._parse_ratelimit_header(response)
+                            delta = utils.parse_ratelimit_header(response)
                             _log.debug(
                                 "Webhook ID %s has been pre-emptively rate limited, waiting %.2f seconds",
                                 webhook_id,

@@ -128,7 +128,7 @@ class AsyncWebhookAdapter:
 
         if payload is not None:
             headers["Content-Type"] = "application/json"
-            to_send = utils._to_json(payload)
+            to_send = utils.to_json(payload)
 
         if auth_token is not None:
             headers["Authorization"] = f"Bot {auth_token}"
@@ -170,7 +170,7 @@ class AsyncWebhookAdapter:
 
                         remaining = response.headers.get("X-Ratelimit-Remaining")
                         if remaining == "0" and response.status != 429:
-                            delta = utils._parse_ratelimit_header(response)
+                            delta = utils.parse_ratelimit_header(response)
                             _log.debug(
                                 "Webhook ID %s has been pre-emptively rate limited, waiting %.2f seconds",
                                 webhook_id,
@@ -419,7 +419,7 @@ class AsyncWebhookAdapter:
                         "content_type": "application/octet-stream",
                     }
                 )
-            multipart[0]["value"] = utils._to_json(payload)
+            multipart[0]["value"] = utils.to_json(payload)
             payload = None
 
         route = Route(
@@ -579,7 +579,7 @@ def handle_message_parameters(
                     "content_type": "application/octet-stream",
                 }
             )
-        multipart[0]["value"] = utils._to_json(payload)
+        multipart[0]["value"] = utils.to_json(payload)
         payload = None
 
     return ExecuteWebhookParameters(payload=payload, multipart=multipart, files=files)
@@ -873,8 +873,8 @@ class BaseWebhook(Hashable):
     def _update(self, data: WebhookPayload):
         self.id = int(data["id"])
         self.type = try_enum(WebhookType, int(data["type"]))
-        self.channel_id = utils._get_as_snowflake(data, "channel_id")
-        self.guild_id = utils._get_as_snowflake(data, "guild_id")
+        self.channel_id = utils.get_as_snowflake(data, "channel_id")
+        self.guild_id = utils.get_as_snowflake(data, "guild_id")
         self.name = data.get("name")
         self._avatar = data.get("avatar")
         self.token = data.get("token")
@@ -1295,7 +1295,7 @@ class Webhook(BaseWebhook):
             payload["name"] = str(name) if name is not None else None
 
         if avatar is not MISSING:
-            payload["avatar"] = await utils._obj_to_base64_data(avatar)
+            payload["avatar"] = await utils.obj_to_base64_data(avatar)
 
         adapter = async_context.get()
 

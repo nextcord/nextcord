@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 from .enums import VoiceRegion
 from .guild import Guild
-from .utils import MISSING, _obj_to_base64_data, parse_time
+from .utils import MISSING, obj_to_base64_data, parse_time
 
 __all__ = ("Template",)
 
@@ -210,7 +210,7 @@ class Template:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        icon_base64 = await _obj_to_base64_data(icon)
+        icon_base64 = await obj_to_base64_data(icon)
 
         region = region or VoiceRegion.us_west
         region_value = region.value
