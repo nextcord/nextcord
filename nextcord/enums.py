@@ -69,6 +69,7 @@ __all__ = (
     "AutoModerationTriggerType",
     "KeywordPresetType",
     "AutoModerationActionType",
+    "SortOrderType",
 )
 
 
@@ -718,6 +719,11 @@ class AutoModerationActionType(IntEnum):
     block_message = 1
     send_alert_message = 2
     timeout = 3
+
+
+class SortOrderType(IntEnum):
+    latest_activity = 0
+    creation_date = 1
 
 
 T = TypeVar("T")

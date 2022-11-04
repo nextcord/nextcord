@@ -47,7 +47,14 @@ from typing import (
 
 from . import abc, ui, utils
 from .asset import Asset
-from .enums import ChannelType, StagePrivacyLevel, VideoQualityMode, VoiceRegion, try_enum
+from .enums import (
+    ChannelType,
+    SortOrderType,
+    StagePrivacyLevel,
+    VideoQualityMode,
+    VoiceRegion,
+    try_enum,
+)
 from .errors import ClientException, InvalidArgument
 from .file import File
 from .flags import ChannelFlags
@@ -876,6 +883,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         The archive duration which threads from this channel inherit by default.
     last_message_id: :class:`int`
         The snowflake ID of the message starting the last thread in this channel.
+    default_sort_order: :class:`SortOrderType`
+        The default sort order type used to sort posts in forum channels.
+
+        .. versionadded:: 2.3
     """
 
     __slots__ = (
@@ -890,6 +901,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         "slowmode_delay",
         "default_auto_archive_duration",
         "last_message_id",
+        "default_sort_order",
         "_state",
         "_type",
         "_overwrites",
@@ -914,7 +926,12 @@ class ForumChannel(abc.GuildChannel, Hashable):
         self.default_auto_archive_duration: ThreadArchiveDuration = data.get(
             "default_auto_archive_duration", 1440
         )
+
         self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
+        if sort_order := data.get("default_sort_order"):
+            self.default_sort_order: Optional[SortOrderType] = try_enum(SortOrderType, sort_order)
+        else:
+            self.default_sort_order: Optional[SortOrderType] = None
         self._fill_overwrites(data)
 
     async def _get_channel(self):
@@ -988,6 +1005,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
+        default_sort_order: Optional[SortOrderType] = ...,
     ) -> ForumChannel:
         ...
 
@@ -1030,6 +1048,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         default_auto_archive_duration: :class:`int`
             The new default auto archive duration in minutes for threads created in this channel.
             Must be one of ``60``, ``1440``, ``4320``, or ``10080``.
+        default_sort_order: :class:`SortOrderType`
+            The default sort order type used to sort posts in forum channels.
+
+            .. versionadded:: 2.3
 
         Raises
         ------
