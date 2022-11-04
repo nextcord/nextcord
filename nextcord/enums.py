@@ -69,6 +69,7 @@ __all__ = (
     "AutoModerationTriggerType",
     "KeywordPresetType",
     "AutoModerationActionType",
+    "SortOrderType",
 )
 
 
