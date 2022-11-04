@@ -2603,6 +2603,38 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.1
 
+    .. attribute:: auto_moderation_flag_to_channel
+
+        A message was flagged by an auto moderation rule.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`Member` or :class:`User` whose message was flagged.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+        set to an unspecified proxy object with these three attributes:
+
+        - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the message was flagged.
+        - ``rule_name``: A :class:`str` with the name of the rule.
+        - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: auto_moderation_user_communication_disabled
+
+        A member was timed out by an auto moderation rule.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`Member` or :class:`User` who was timed out.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+        set to an unspecified proxy object with these three attributes:
+
+        - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the member was timed out.
+        - ``rule_name``: A :class:`str` with the name of the rule.
+        - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+        .. versionadded:: 2.3
+
 .. class:: AuditLogActionCategory
 
     Represents the category that the :class:`AuditLogAction` belongs to.

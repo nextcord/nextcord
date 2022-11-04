@@ -148,7 +148,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         *not* point to an existing or valid message.
     slowmode_delay: :class:`int`
         The number of seconds a member must wait between sending messages
-        in this channel. A value of `0` denotes that it is disabled.
+        in this channel. A value of ``0`` denotes that it is disabled.
         Bots and users with :attr:`~Permissions.manage_channels` or
         :attr:`~Permissions.manage_messages` bypass slowmode.
     flags: :class:`ChannelFlags`
@@ -205,7 +205,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
     def _update(self, guild: Guild, data: TextChannelPayload) -> None:
         self.guild: Guild = guild
         self.name: str = data["name"]
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, "parent_id")
+        self.category_id: Optional[int] = utils.get_as_snowflake(data, "parent_id")
         self.topic: Optional[str] = data.get("topic")
         self.position: int = data["position"]
         self.nsfw: bool = data.get("nsfw", False)
@@ -216,7 +216,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         )
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
         self._type: int = data.get("type", self._type)
-        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
+        self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
         self._fill_overwrites(data)
 
     async def _get_channel(self):
@@ -340,7 +340,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             category.
         slowmode_delay: :class:`int`
             Specifies the slowmode rate limit for user in this channel, in seconds.
-            A value of `0` disables slowmode. The maximum value possible is `21600`.
+            A value of ``0`` disables slowmode. The maximum value possible is ``21600``.
         type: :class:`ChannelType`
             Change the type of this text channel. Currently, only conversion between
             :attr:`ChannelType.text` and :attr:`ChannelType.news` is supported. This
@@ -617,7 +617,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
 
         from .webhook import Webhook
 
-        avatar_base64 = await utils._obj_to_base64_data(avatar)
+        avatar_base64 = await utils.obj_to_base64_data(avatar)
 
         data = await self._state.http.create_webhook(
             self.id, name=str(name), avatar=avatar_base64, reason=reason
@@ -916,7 +916,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     def _update(self, guild: Guild, data: ForumChannelPayload) -> None:
         self.guild = guild
         self.name = data["name"]
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, "parent_id")
+        self.category_id: Optional[int] = utils.get_as_snowflake(data, "parent_id")
         self.topic: Optional[str] = data.get("topic")
         self.position: int = data["position"]
         self.nsfw: bool = data.get("nsfw", False)
@@ -926,12 +926,12 @@ class ForumChannel(abc.GuildChannel, Hashable):
         self.default_auto_archive_duration: ThreadArchiveDuration = data.get(
             "default_auto_archive_duration", 1440
         )
-        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
+
+        self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
         if sort_order := data.get("default_sort_order"):
             self.default_sort_order: Optional[SortOrderType] = try_enum(SortOrderType, sort_order)
         else:
             self.default_sort_order: Optional[SortOrderType] = None
-
         self._fill_overwrites(data)
 
     async def _get_channel(self):
@@ -1039,7 +1039,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
             category.
         slowmode_delay: :class:`int`
             Specifies the slowmode rate limit for user in this channel, in seconds.
-            A value of `0` disables slowmode. The maximum value possible is `21600`.
+            A value of ``0`` disables slowmode. The maximum value possible is ``21600``.
         reason: Optional[:class:`str`]
             The reason for editing this channel. Shows up on the audit log.
         overwrites: :class:`Mapping`
@@ -1341,7 +1341,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         self.video_quality_mode: VideoQualityMode = try_enum(
             VideoQualityMode, data.get("video_quality_mode", 1)
         )
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, "parent_id")
+        self.category_id: Optional[int] = utils.get_as_snowflake(data, "parent_id")
         self.position: int = data["position"]
         self.bitrate: int = data.get("bitrate")
         self.user_limit: int = data.get("user_limit")
@@ -1487,7 +1487,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
     def _update(self, guild: Guild, data: VoiceChannelPayload) -> None:
         VocalGuildChannel._update(self, guild, data)
-        self.last_message_id: Optional[int] = utils._get_as_snowflake(data, "last_message_id")
+        self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
         self.nsfw: bool = data.get("nsfw", False)
 
     async def _get_channel(self):
@@ -2152,7 +2152,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
     def _update(self, guild: Guild, data: CategoryChannelPayload) -> None:
         self.guild: Guild = guild
         self.name: str = data["name"]
-        self.category_id: Optional[int] = utils._get_as_snowflake(data, "parent_id")
+        self.category_id: Optional[int] = utils.get_as_snowflake(data, "parent_id")
         self.nsfw: bool = data.get("nsfw", False)
         self.position: int = data["position"]
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
@@ -2529,7 +2529,7 @@ class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         self._update_group(data)
 
     def _update_group(self, data: GroupChannelPayload) -> None:
-        self.owner_id: Optional[int] = utils._get_as_snowflake(data, "owner_id")
+        self.owner_id: Optional[int] = utils.get_as_snowflake(data, "owner_id")
         self._icon: Optional[str] = data.get("icon")
         self.name: Optional[str] = data.get("name")
         self.recipients: List[User] = [

@@ -29,7 +29,6 @@ import asyncio
 import datetime
 import itertools
 import sys
-from functools import partial
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
 
@@ -50,7 +49,6 @@ __all__ = (
 
 if TYPE_CHECKING:
     from .abc import Snowflake
-    from .asset import Asset
     from .channel import DMChannel, StageChannel, VoiceChannel
     from .flags import PublicUserFlags
     from .guild import Guild
@@ -956,7 +954,7 @@ class Member(abc.Messageable, _UserTag):
         """
 
         if not atomic:
-            new_roles: list[Snowflake] = utils._unique(
+            new_roles: list[Snowflake] = utils.unique(
                 Object(id=r.id) for s in (self.roles[1:], roles) for r in s
             )
             await self.edit(roles=new_roles, reason=reason)

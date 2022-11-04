@@ -38,11 +38,11 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    cast,
     overload,
     runtime_checkable,
 )
 
-from . import utils
 from .context_managers import Typing
 from .enums import ChannelType
 from .errors import ClientException, InvalidArgument
@@ -54,6 +54,8 @@ from .mentions import AllowedMentions
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
 from .sticker import GuildSticker, StickerItem
+from .types.components import Component as ComponentPayload
+from .utils import MISSING, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
 
 __all__ = (
@@ -73,7 +75,7 @@ if TYPE_CHECKING:
     from .asset import Asset
     from .channel import CategoryChannel, DMChannel, GroupChannel, PartialMessageable, TextChannel
     from .client import Client
-    from .embeds import Embed
+    from .embeds import Embed, EmbedData
     from .enums import InviteTarget
     from .guild import Guild
     from .member import Member
@@ -86,22 +88,16 @@ if TYPE_CHECKING:
         OverwriteType,
         PermissionOverwrite as PermissionOverwritePayload,
     )
+    from .types.message import (
+        AllowedMentions as AllowedMentionsPayload,
+        MessageReference as MessageReferencePayload,
+    )
     from .ui.view import View
     from .user import ClientUser
 
     PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
-
-MISSING = utils.MISSING
-
-
-class _Undefined:
-    def __repr__(self) -> str:
-        return "see-below"
-
-
-_undefined: Any = _Undefined()
 
 
 @runtime_checkable
@@ -235,6 +231,7 @@ class GuildChannel:
     - :class:`~nextcord.VoiceChannel`
     - :class:`~nextcord.CategoryChannel`
     - :class:`~nextcord.StageChannel`
+    - :class:`~nextcord.ForumChannel`
 
     This ABC must also implement :class:`~nextcord.abc.Snowflake`.
 
@@ -311,7 +308,7 @@ class GuildChannel:
         payload = []
         for index, c in enumerate(channels):
             d: Dict[str, Any] = {"id": c.id, "position": index}
-            if parent_id is not _undefined and c.id == self.id:
+            if parent_id is not MISSING and c.id == self.id:
                 d.update(parent_id=parent_id, lock_permissions=lock_permissions)
             payload.append(d)
 
@@ -323,7 +320,7 @@ class GuildChannel:
         try:
             parent = options.pop("category")
         except KeyError:
-            parent_id = _undefined
+            parent_id = MISSING
         else:
             parent_id = parent and parent.id
 
@@ -358,7 +355,7 @@ class GuildChannel:
         try:
             position = options.pop("position")
         except KeyError:
-            if parent_id is not _undefined:
+            if parent_id is not MISSING:
                 if lock_permissions:
                     category = self.guild.get_channel(parent_id)
                     if category:
@@ -462,7 +459,7 @@ class GuildChannel:
     @property
     def created_at(self) -> datetime:
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return snowflake_time(self.id)
 
     def overwrites_for(self, obj: Union[Role, User]) -> PermissionOverwrite:
         """Returns the channel-specific overwrites for a member or a role.
@@ -570,6 +567,7 @@ class GuildChannel:
         - Guild roles
         - Channel overrides
         - Member overrides
+        - Timed-out members
 
         If a :class:`~nextcord.Role` is passed, then it checks the permissions
         someone with that role would have, which is essentially:
@@ -578,6 +576,9 @@ class GuildChannel:
         - The permissions of the role used as a parameter
         - The default role permission overwrites
         - The permission overwrites of the role used as a parameter
+
+        .. versionchanged:: 2.3
+            Only ``view_channel`` and ``read_message_history`` can be returned for timed-out members
 
         .. versionchanged:: 2.0
             The object passed in can now be a role object.
@@ -633,7 +634,7 @@ class GuildChannel:
             if obj.is_default():
                 return base
 
-            overwrite = utils.get(self._overwrites, type=_Overwrites.ROLE, id=obj.id)
+            overwrite = get(self._overwrites, type=_Overwrites.ROLE, id=obj.id)
             if overwrite is not None:
                 base.handle_overwrite(overwrite.allow, overwrite.deny)
 
@@ -694,6 +695,11 @@ class GuildChannel:
             denied = Permissions.all_channel()
             base.value &= ~denied.value
 
+        # if you are timed out then you lose all permissions except view_channel and read_message_history
+        if obj.communication_disabled_until is not None:
+            allowed = Permissions(view_channel=True, read_message_history=True)
+            base.value &= allowed.value
+
         return base
 
     async def delete(self, *, reason: Optional[str] = None) -> None:
@@ -725,7 +731,7 @@ class GuildChannel:
         self,
         target: Union[Member, Role],
         *,
-        overwrite: Optional[Union[PermissionOverwrite, _Undefined]] = ...,
+        overwrite: Optional[PermissionOverwrite] = ...,
         reason: Optional[str] = ...,
     ) -> None:
         ...
@@ -740,7 +746,7 @@ class GuildChannel:
     ) -> None:
         ...
 
-    async def set_permissions(self, target, *, overwrite=_undefined, reason=None, **permissions):
+    async def set_permissions(self, target, *, overwrite=MISSING, reason=None, **permissions):
         r"""|coro|
 
         Sets the channel specific permission overwrites for a target in the
@@ -818,7 +824,7 @@ class GuildChannel:
         else:
             raise InvalidArgument("target parameter must be either Member or Role")
 
-        if overwrite is _undefined:
+        if overwrite is MISSING:
             if len(permissions) == 0:
                 raise InvalidArgument("No overwrite provided.")
             try:
@@ -1108,12 +1114,14 @@ class GuildChannel:
             .. versionadded:: 2.0
 
         target_user: Optional[:class:`User`]
-            The user whose stream to display for this invite, required if `target_type` is `TargetType.stream`. The user must be streaming in the channel.
+            The user whose stream to display for this invite, required if ``target_type``
+            is :attr:`.InviteTarget.stream`. The user must be streaming in the channel.
 
             .. versionadded:: 2.0
 
         target_application_id:: Optional[:class:`int`]
-            The id of the embedded application for the invite, required if `target_type` is `TargetType.embedded_application`.
+            The id of the embedded application for the invite, required if ``target_type``
+            is :attr:`.InviteTarget.embedded_application`.
 
             .. versionadded:: 2.0
 
@@ -1199,13 +1207,13 @@ class Messageable:
         tts: bool = ...,
         embed: Embed = ...,
         file: File = ...,
-        stickers: Sequence[Union[GuildSticker, StickerItem]] = ...,
-        delete_after: float = ...,
-        nonce: Union[str, int] = ...,
-        allowed_mentions: AllowedMentions = ...,
-        reference: Union[Message, MessageReference, PartialMessage] = ...,
-        mention_author: bool = ...,
-        view: View = ...,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = ...,
+        delete_after: Optional[float] = ...,
+        nonce: Optional[Union[str, int]] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
+        mention_author: Optional[bool] = ...,
+        view: Optional[View] = ...,
     ) -> Message:
         ...
 
@@ -1217,13 +1225,13 @@ class Messageable:
         tts: bool = ...,
         embed: Embed = ...,
         files: List[File] = ...,
-        stickers: Sequence[Union[GuildSticker, StickerItem]] = ...,
-        delete_after: float = ...,
-        nonce: Union[str, int] = ...,
-        allowed_mentions: AllowedMentions = ...,
-        reference: Union[Message, MessageReference, PartialMessage] = ...,
-        mention_author: bool = ...,
-        view: View = ...,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = ...,
+        delete_after: Optional[float] = ...,
+        nonce: Optional[Union[str, int]] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
+        mention_author: Optional[bool] = ...,
+        view: Optional[View] = ...,
     ) -> Message:
         ...
 
@@ -1235,13 +1243,13 @@ class Messageable:
         tts: bool = ...,
         embeds: List[Embed] = ...,
         file: File = ...,
-        stickers: Sequence[Union[GuildSticker, StickerItem]] = ...,
-        delete_after: float = ...,
-        nonce: Union[str, int] = ...,
-        allowed_mentions: AllowedMentions = ...,
-        reference: Union[Message, MessageReference, PartialMessage] = ...,
-        mention_author: bool = ...,
-        view: View = ...,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = ...,
+        delete_after: Optional[float] = ...,
+        nonce: Optional[Union[str, int]] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
+        mention_author: Optional[bool] = ...,
+        view: Optional[View] = ...,
     ) -> Message:
         ...
 
@@ -1253,32 +1261,32 @@ class Messageable:
         tts: bool = ...,
         embeds: List[Embed] = ...,
         files: List[File] = ...,
-        stickers: Sequence[Union[GuildSticker, StickerItem]] = ...,
-        delete_after: float = ...,
-        nonce: Union[str, int] = ...,
-        allowed_mentions: AllowedMentions = ...,
-        reference: Union[Message, MessageReference, PartialMessage] = ...,
-        mention_author: bool = ...,
-        view: View = ...,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = ...,
+        delete_after: Optional[float] = ...,
+        nonce: Optional[Union[str, int]] = ...,
+        allowed_mentions: Optional[AllowedMentions] = ...,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
+        mention_author: Optional[bool] = ...,
+        view: Optional[View] = ...,
     ) -> Message:
         ...
 
     async def send(
         self,
-        content=None,
+        content: Optional[str] = None,
         *,
-        tts=None,
-        embed=None,
-        embeds=None,
-        file=None,
-        files=None,
-        stickers=None,
-        delete_after=None,
-        nonce=None,
-        allowed_mentions=None,
-        reference=None,
-        mention_author=None,
-        view=None,
+        tts: bool = False,
+        embed: Optional[Embed] = None,
+        embeds: Optional[List[Embed]] = None,
+        file: Optional[File] = None,
+        files: Optional[List[File]] = None,
+        stickers: Optional[Sequence[Union[GuildSticker, StickerItem]]] = None,
+        delete_after: Optional[float] = None,
+        nonce: Optional[Union[str, int]] = None,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        reference: Optional[Union[Message, MessageReference, PartialMessage]] = None,
+        mention_author: Optional[bool] = None,
+        view: Optional[View] = None,
     ):
         """|coro|
 
@@ -1310,7 +1318,7 @@ class Messageable:
             The file to upload.
         files: List[:class:`~nextcord.File`]
             A list of files to upload. Must be a maximum of 10.
-        nonce: :class:`int`
+        nonce: Union[:class:`int`, :class:`str`]
             The nonce to use for sending this message. If the message was successfully sent,
             then the message will have a nonce with this value.
         delete_after: :class:`float`
@@ -1373,45 +1381,50 @@ class Messageable:
         state = self._state
         content = str(content) if content is not None else None
 
+        embed_payload: Optional[EmbedData] = None
+        embeds_payload: Optional[List[EmbedData]] = None
+        stickers_payload: Optional[List[int]] = None
+        reference_payload: Optional[MessageReferencePayload] = None
+        allowed_mentions_payload: Optional[AllowedMentionsPayload] = None
+
         if embed is not None and embeds is not None:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
         if embed is not None:
-            embed = embed.to_dict()
+            embed_payload = embed.to_dict()
 
         elif embeds is not None:
-            embeds = [embed.to_dict() for embed in embeds]
+            embeds_payload = [em.to_dict() for em in embeds]
 
         if stickers is not None:
-            stickers = [sticker.id for sticker in stickers]
+            stickers_payload = [sticker.id for sticker in stickers]
 
         if allowed_mentions is not None:
             if state.allowed_mentions is not None:
-                allowed_mentions = state.allowed_mentions.merge(allowed_mentions).to_dict()
+                allowed_mentions_payload = state.allowed_mentions.merge(allowed_mentions).to_dict()
             else:
-                allowed_mentions = allowed_mentions.to_dict()
+                allowed_mentions_payload = allowed_mentions.to_dict()
         else:
-            allowed_mentions = state.allowed_mentions and state.allowed_mentions.to_dict()
+            allowed_mentions_payload = state.allowed_mentions and state.allowed_mentions.to_dict()
 
         if mention_author is not None:
-            allowed_mentions = allowed_mentions or AllowedMentions().to_dict()
-            allowed_mentions["replied_user"] = bool(mention_author)
+            allowed_mentions_payload = allowed_mentions_payload or AllowedMentions().to_dict()
+            allowed_mentions_payload["replied_user"] = bool(mention_author)
 
         if reference is not None:
             try:
-                reference = reference.to_message_reference_dict()
+                reference_payload = reference.to_message_reference_dict()
             except AttributeError:
                 raise InvalidArgument(
                     "reference parameter must be Message, MessageReference, or PartialMessage"
                 ) from None
 
+        components: Optional[List[ComponentPayload]] = None
         if view:
             if not hasattr(view, "__discord_ui_view__"):
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
-            components = view.to_components()
-        else:
-            components = None
+            components = cast(List[ComponentPayload], view.to_components())
 
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
@@ -1424,14 +1437,14 @@ class Messageable:
                 data = await state.http.send_files(
                     channel.id,
                     files=[file],
-                    allowed_mentions=allowed_mentions,
+                    allowed_mentions=allowed_mentions_payload,
                     content=content,
                     tts=tts,
-                    embed=embed,
-                    embeds=embeds,
+                    embed=embed_payload,
+                    embeds=embeds_payload,
                     nonce=nonce,
-                    message_reference=reference,
-                    stickers=stickers,
+                    message_reference=reference_payload,
+                    stickers=stickers_payload,
                     components=components,
                 )
             finally:
@@ -1447,12 +1460,12 @@ class Messageable:
                     files=files,
                     content=content,
                     tts=tts,
-                    embed=embed,
-                    embeds=embeds,
+                    embed=embed_payload,
+                    embeds=embeds_payload,
                     nonce=nonce,
-                    allowed_mentions=allowed_mentions,
-                    message_reference=reference,
-                    stickers=stickers,
+                    allowed_mentions=allowed_mentions_payload,
+                    message_reference=reference_payload,
+                    stickers=stickers_payload,
                     components=components,
                 )
             finally:
@@ -1463,12 +1476,12 @@ class Messageable:
                 channel.id,
                 content,
                 tts=tts,
-                embed=embed,
-                embeds=embeds,
+                embed=embed_payload,
+                embeds=embeds_payload,
                 nonce=nonce,
-                allowed_mentions=allowed_mentions,
-                message_reference=reference,
-                stickers=stickers,
+                allowed_mentions=allowed_mentions_payload,
+                message_reference=reference_payload,
+                stickers=stickers_payload,
                 components=components,
             )
 

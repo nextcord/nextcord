@@ -36,7 +36,6 @@ import sys
 import traceback
 import types
 import warnings
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -265,7 +264,7 @@ class BotBase(GroupMixin):
 
         The default command error handler provided by the bot.
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
 
         This only fires if you do not specify any listeners for command error.
@@ -790,7 +789,7 @@ class BotBase(GroupMixin):
                     asyncio.create_task(setup(self, **extras))
                 except RuntimeError:
                     raise RuntimeError(
-                        f"""
+                        """
                     Looks like you are attempting to load an asynchronous setup function incorrectly.
                     Please read our FAQ here:
                     https://docs.nextcord.dev/en/stable/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
@@ -1004,7 +1003,7 @@ class BotBase(GroupMixin):
 
         .. note::
 
-            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/`stderr`).
+            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/:data:`~sys.stderr`).
 
         .. versionadded:: 2.1
 
@@ -1158,7 +1157,7 @@ class BotBase(GroupMixin):
 
         .. note::
 
-            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/`stderr`).
+            By default, any exceptions found while loading will not be raised but will be printed to console (standard error/:data:`~sys.stderr`).
 
         .. versionadded:: 2.1
 

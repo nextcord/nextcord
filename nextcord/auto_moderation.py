@@ -36,7 +36,7 @@ from .enums import (
 from .errors import InvalidArgument
 from .mixins import Hashable
 from .object import Object
-from .utils import MISSING, _get_as_snowflake
+from .utils import MISSING, get_as_snowflake
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, Snowflake
@@ -162,7 +162,7 @@ class AutoModerationActionMetadata:
 
         .. note::
 
-            The maximum value that can be used is `2419200` seconds (4 weeks)
+            The maximum value that can be used is ``2419200`` seconds (4 weeks)
     """
 
     __slots__ = ("channel_id", "duration_seconds")
@@ -175,7 +175,7 @@ class AutoModerationActionMetadata:
 
     @classmethod
     def from_data(cls, data: ActionMetadataPayload):
-        channel_id = _get_as_snowflake(data, "channel_id")
+        channel_id = get_as_snowflake(data, "channel_id")
         channel = Object(id=channel_id) if channel_id is not None else None
         duration_seconds = data.get("duration_seconds")
 
@@ -521,14 +521,14 @@ class AutoModerationActionExecution:
     def __init__(self, *, data: ActionExecutionPayload, state: ConnectionState) -> None:
         self.guild_id: int = int(data["guild_id"])
         self.guild: Optional[Guild] = state._get_guild(self.guild_id)
-        self.channel_id: Optional[int] = _get_as_snowflake(data, "channel_id")
+        self.channel_id: Optional[int] = get_as_snowflake(data, "channel_id")
         if self.guild is not None and self.channel_id is not None:
             self.channel: Optional[GuildChannel] = self.guild.get_channel(self.channel_id)
         else:
             self.channel: Optional[GuildChannel] = None
-        self.message_id: Optional[int] = _get_as_snowflake(data, "message_id")
+        self.message_id: Optional[int] = get_as_snowflake(data, "message_id")
         self.message: Optional[Message] = state._get_message(self.message_id)
-        self.alert_system_message_id: Optional[int] = _get_as_snowflake(
+        self.alert_system_message_id: Optional[int] = get_as_snowflake(
             data, "alert_system_message_id"
         )
         self.alert_system_message: Optional[Message] = state._get_message(
