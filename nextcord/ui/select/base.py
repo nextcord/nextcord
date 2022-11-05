@@ -29,7 +29,6 @@ from collections import UserList
 import os
 from typing import TYPE_CHECKING, List, Optional, Tuple, Type, TypeVar, Union
 
-from ...channel import _channel_factory
 from ...components import SelectMenu
 from ...enums import ComponentType
 from ...guild import Guild
@@ -63,14 +62,15 @@ class SelectValuesBase(UserList):
         channels = resolved.get("channels", {})
         for value in values:
             if members.get(value) and guild:
+                members[value]["user"] = users[value]
                 self.append(Member(data=members[value], state=state, guild=guild))
             elif users.get(value):
                 self.append(User(data=users[value], state=state))
             elif roles.get(value) and guild:
                 self.append(Role(data=roles[value], state=state, guild=guild))
             elif channels.get(value) and guild:
-                ch_type, _ = _channel_factory(channels[value]["type"])
-                self.append(ch_type(data=channels[value], state=state, guild=guild)) # type: ignore            
+                channel = state.get_channel(int(value))
+                self.append(channel)
         
     @property
     def ids(self) -> List[int]:

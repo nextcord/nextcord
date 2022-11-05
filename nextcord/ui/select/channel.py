@@ -122,6 +122,7 @@ class ChannelSelect(SelectBase, Generic[V]):
             row=row,
         )
         self._selected_values: ChannelSelectValues = [] # type: ignore
+        self.channel_types: List[ChannelType] = channel_types
         self._underlying = ChannelSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.channel_select,
