@@ -51,7 +51,6 @@ from typing import (
 import typing_extensions
 from typing_extensions import Annotated
 
-from . import cog
 from .abc import GuildChannel
 from .channel import (
     CategoryChannel,
@@ -62,6 +61,7 @@ from .channel import (
     TextChannel,
     VoiceChannel,
 )
+from .cog import Cog, ClientCog
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
@@ -121,15 +121,6 @@ if TYPE_CHECKING:
     EllipsisType = ellipsis  # noqa: F821
 else:
     EllipsisType = type(Ellipsis)
-
-
-def _cog_special_method(func: FuncT) -> FuncT:
-    func.__cog_special_method__ = None
-    return func
-
-
-Cog = cog.Cog
-ClientCog = cog.ClientCog
 
 
 class CallbackWrapper:
