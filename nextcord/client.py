@@ -2545,7 +2545,7 @@ class Client:
         guild_ids: Optional[Iterable[:class:`int`]]
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
-            be a global command. Defaults to ``MISSING``.
+            be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2594,7 +2594,7 @@ class Client:
         guild_ids: Optional[Iterable[:class:`int`]]
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
-            be a global command. Defaults to ``MISSING``.
+            be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2651,7 +2651,7 @@ class Client:
         guild_ids: Optional[Iterable[:class:`int`]]
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
-            be a global command. Defaults to ``MISSING``.
+            be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
