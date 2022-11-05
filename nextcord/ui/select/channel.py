@@ -90,7 +90,7 @@ class ChannelSelect(SelectBase):
     channel_types: List[:class:`nextcord.ChannelType`]
         The types of channels that can be selected. If not given, all channel types are allowed.
     """
-    
+
     __item_repr_attributes__: Tuple[str, ...] = (
         "placeholder",
         "min_values",

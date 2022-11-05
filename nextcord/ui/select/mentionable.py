@@ -100,7 +100,7 @@ class MentionableSelect(SelectBase):
         For example, row=1 will show up before row=2. Defaults to ``None``, which is automatic
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
-    
+
     __item_repr_attributes__: Tuple[str, ...] = (
         "placeholder",
         "min_values",
