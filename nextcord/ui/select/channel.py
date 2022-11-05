@@ -25,11 +25,13 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
 
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
+from ...interactions import ClientT
 from ..item import ItemCallbackType
+from ..view import View
 from .base import SelectBase, SelectValuesBase
 from ...utils import MISSING
 
@@ -44,6 +46,7 @@ if TYPE_CHECKING:
 __all__ = ("ChannelSelect", "channel_select")
 
 S = TypeVar("S", bound="ChannelSelect")
+V = TypeVar("V", bound="View", covariant=True)
 
 
 class ChannelSelectValues(SelectValuesBase):
@@ -55,7 +58,7 @@ class ChannelSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, GuildChannel)]
 
 
-class ChannelSelect(SelectBase):
+class ChannelSelect(SelectBase, Generic[V]):
 
     """Represents a UI channel select menu.
 
@@ -166,7 +169,7 @@ def channel_select(
     disabled: bool = False,
     row: Optional[int] = None,
     channel_types: List[ChannelType] = MISSING,
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
+) -> Callable[[ItemCallbackType[ChannelSelect[V], ClientT]], ItemCallbackType[ChannelSelect[V], ClientT]]:
     """A decorator that attaches a channel select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing

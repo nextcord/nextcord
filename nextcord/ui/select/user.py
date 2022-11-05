@@ -25,15 +25,15 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import os
-from collections import UserList
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
 
 from ...components import UserSelectMenu
 from ...enums import ComponentType
+from ...interactions import ClientT
 from ...member import Member
 from ...user import User
 from ...utils import MISSING
+from ..view import View
 from ..item import ItemCallbackType
 from .base import SelectBase, SelectValuesBase
 
@@ -46,6 +46,7 @@ if TYPE_CHECKING:
 __all__ = ("UserSelect", "user_select")
 
 S = TypeVar("S", bound="UserSelect")
+V = TypeVar("V", bound="View", covariant=True)
 
 
 class UserSelectValues(SelectValuesBase):
@@ -60,7 +61,7 @@ class UserSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, User)]
 
 
-class UserSelect(SelectBase):
+class UserSelect(SelectBase, Generic[V]):
     """Represents a UI user select menu.
 
     This is usually represented as a drop down menu.
@@ -164,7 +165,7 @@ def user_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
+) -> Callable[[ItemCallbackType[UserSelect[V], ClientT]], ItemCallbackType[UserSelect[V], ClientT]]:
     """A decorator that attaches a user select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing

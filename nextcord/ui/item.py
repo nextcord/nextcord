@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, Type, TypeVar
 
-from ..interactions import Interaction
+from ..interactions import ClientT, Interaction
 
 __all__ = ("Item",)
 
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 I = TypeVar("I", bound="Item")
 V = TypeVar("V", bound="View", covariant=True)
-ItemCallbackType = Callable[[Any, I, Interaction], Coroutine[Any, Any, Any]]
+ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
 
 
 class Item(Generic[V]):

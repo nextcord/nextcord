@@ -26,14 +26,16 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Callable, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Callable, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
 from ...components import SelectMenu, SelectOption
 from ...emoji import Emoji
 from ...enums import ComponentType
+from ...interactions import ClientT
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
-from ..item import Item, ItemCallbackType
+from ..view import View
+from ..item import ItemCallbackType
 from .base import SelectBase
 
 __all__ = (
@@ -44,9 +46,9 @@ __all__ = (
 )
 
 S = TypeVar("S", bound="Select")
+V = TypeVar("V", bound="View", covariant=True)
 
-
-class Select(SelectBase):
+class Select(SelectBase, Generic[V]):
     """Represents a UI select menu.
 
     This is usually represented as a drop down menu.
@@ -125,7 +127,7 @@ class Select(SelectBase):
         return self._underlying.options
 
     @options.setter
-    def options(self, value: List[SelectOption]):
+    def options(self, value: List[SelectOption]) -> None:
         if not isinstance(value, list):
             raise TypeError("options must be a list of SelectOption")
         if not all(isinstance(obj, SelectOption) for obj in value):
@@ -141,7 +143,7 @@ class Select(SelectBase):
         description: Optional[str] = None,
         emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
         default: bool = False,
-    ):
+    ) -> None:
         """Adds an option to the select menu.
 
         To append a pre-existing :class:`nextcord.SelectOption` use the
@@ -180,7 +182,7 @@ class Select(SelectBase):
 
         self.append_option(option)
 
-    def append_option(self, option: SelectOption):
+    def append_option(self, option: SelectOption) -> None:
         """Appends an option to the select menu.
 
         Parameters
@@ -221,7 +223,7 @@ def select(
     options: List[SelectOption] = MISSING,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
+) -> Callable[[ItemCallbackType[Select[V], ClientT]], ItemCallbackType[Select[V], ClientT]]:
     """A decorator that attaches a select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing

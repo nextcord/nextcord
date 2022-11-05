@@ -25,14 +25,14 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import os
-from collections import UserList
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
 
 from ...components import RoleSelectMenu
 from ...enums import ComponentType
+from ...interactions import ClientT
 from ...state import ConnectionState
-from ...utils import MISSING, get
+from ...utils import MISSING
+from ..view import View
 from ..item import ItemCallbackType
 from .base import SelectBase, SelectValuesBase
 
@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 __all__ = ("RoleSelect", "role_select")
 
 S = TypeVar("S", bound="RoleSelect")
+V = TypeVar("V", bound="View", covariant=True)
 
 
 class RoleSelectValues(SelectValuesBase):
@@ -55,7 +56,7 @@ class RoleSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, Role)]
 
 
-class RoleSelect(SelectBase):
+class RoleSelect(SelectBase, Generic[V]):
 
     """Represents a UI role select menu.
 
@@ -160,7 +161,7 @@ def role_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
+) -> Callable[[ItemCallbackType[RoleSelect[V], ClientT]], ItemCallbackType[RoleSelect[V], ClientT]]:
     """A decorator that attaches a role select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing

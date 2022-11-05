@@ -25,12 +25,13 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import os
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
 
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
+from ...interactions import ClientT
 from ...utils import MISSING
+from ..view import View
 from ..item import ItemCallbackType
 from .base import SelectBase, SelectValuesBase
 
@@ -46,6 +47,7 @@ if TYPE_CHECKING:
 __all__ = ("MentionableSelect", "mentionable_select")
 
 S = TypeVar("S", bound="MentionableSelect")
+V = TypeVar("V", bound="View", covariant=True)
 
 
 class MentionableSelectValues(SelectValuesBase):
@@ -67,7 +69,7 @@ class MentionableSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, Role)]
 
 
-class MentionableSelect(SelectBase):
+class MentionableSelect(SelectBase, Generic[V]):
 
     """Represents a UI mentionable select menu.
 
@@ -172,7 +174,7 @@ def mentionable_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
+) -> Callable[[ItemCallbackType[MentionableSelect[V], ClientT]], ItemCallbackType[MentionableSelect[V], ClientT]]:
     """A decorator that attaches a mentionable select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
