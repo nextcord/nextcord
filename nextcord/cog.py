@@ -32,21 +32,8 @@ from .interactions import Interaction
 from .utils import MISSING
 
 if TYPE_CHECKING:
-    from .application_command import (
-        BaseApplicationCommand,
-        SlashApplicationCommand,
-        SlashApplicationSubcommand,
-    )
-
-    BaseApplicationCommandType = BaseApplicationCommand
-    SlashApplicationCommandType = SlashApplicationCommand
-    SlashApplicationSubcommandType = SlashApplicationSubcommand
-else:
-    # placeholders until nextcord.cog or nextcord.application_command is imported
-    # (they monkeypatch these variables to the correct types)
-    BaseApplicationCommandType = object()
-    SlashApplicationCommandType = object()
-    SlashApplicationSubcommandType = object()
+    from .application_command import BaseApplicationCommand
+    from .interactions import Interaction
 
 __all__ = (
     "CogMeta",
@@ -60,19 +47,6 @@ FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 def _cog_special_method(func: FuncT) -> FuncT:
     func.__cog_special_method__ = None
     return func
-
-
-def _replace_type_placeholders():
-    global BaseApplicationCommandType, SlashApplicationCommandType, SlashApplicationSubcommandType
-    from .application_command import (
-        BaseApplicationCommand,
-        SlashApplicationCommand,
-        SlashApplicationSubcommand,
-    )
-
-    BaseApplicationCommandType = BaseApplicationCommand
-    SlashApplicationCommandType = SlashApplicationCommand
-    SlashApplicationSubcommandType = SlashApplicationSubcommand
 
 
 class CogMeta(type):
@@ -164,6 +138,9 @@ class Cog(metaclass=CogMeta):
 
         After adding all of the application commands into the internal list,
         """
+        # circular imports
+        from .application_command import SlashApplicationCommand, SlashApplicationSubcommand, BaseApplicationCommand
+
         self.__cog_application_commands__ = []
         for base in reversed(self.__class__.__mro__):
             for _, value in base.__dict__.items():
@@ -171,17 +148,17 @@ class Cog(metaclass=CogMeta):
                 if is_static_method:
                     value = value.__func__
 
-                if isinstance(value, SlashApplicationCommandType):
+                if isinstance(value, SlashApplicationCommand):
                     value.parent_cog = self
                     value.from_callback(value.callback, call_children=False)
                     self.__cog_application_commands__.append(value)
-                elif isinstance(value, SlashApplicationSubcommandType):
+                elif isinstance(value, SlashApplicationSubcommand):
                     # As subcommands are part of a parent command and
                     #  not usable on their own, we don't add them to the command list, but do set the self_argument and
                     #  run them from the callback.
                     value.parent_cog = self
                     value.from_callback(value.callback, call_children=False)
-                elif isinstance(value, BaseApplicationCommandType):
+                elif isinstance(value, BaseApplicationCommand):
                     value.parent_cog = self
                     value.from_callback(value.callback)
                     self.__cog_application_commands__.append(value)

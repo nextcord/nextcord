@@ -32,8 +32,6 @@ from .bans import *
 from .channel import *
 from .client import *
 from .cog import *
-
-cog._replace_type_placeholders()
 from .colour import *
 from .components import *
 from .embeds import *

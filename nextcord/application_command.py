@@ -3464,9 +3464,3 @@ class String:
             raise TypeError("At least one of min or max must be set.")
 
         return Inner
-
-
-# we do this manually because cog._replace_type_placeholders imports this module
-cog.BaseApplicationCommandType = BaseApplicationCommand
-cog.SlashApplicationCommandType = SlashApplicationCommand
-cog.SlashApplicationSubcommandType = SlashApplicationSubcommand
