@@ -26,88 +26,45 @@ from __future__ import annotations
 
 import asyncio
 import os
-from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar
 
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
-from ...utils import MISSING, get
-from ..item import Item, ItemCallbackType
-from .base import SelectBase
+from ...utils import MISSING
+from ..item import ItemCallbackType
+from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from ...guild import Guild
     from ...member import Member
     from ...role import Role
+    from ...state import ConnectionState
     from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
+    from ...types.interactions import ComponentInteractionData
+    from ...user import User
 
 __all__ = ("MentionableSelect", "mentionable_select")
 
 S = TypeVar("S", bound="MentionableSelect")
 
 
-class MentionableSelectValues(UserList):
+class MentionableSelectValues(SelectValuesBase):
     """Represents the values of a :class:`MentionableSelect`."""
 
-    def get(self, guild: Guild) -> List[Union[Member, Role]]:
-        """A shortcut for getting all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
-
-        Mentionables that are not found in cache will not be returned.
-        To get all mentionables regardless of whether they are in cache or not, use :meth:`.fetch_mentionables`.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the mentionables from.
-
-        Returns
-        -------
-        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
-            A list of mentionables that have been selected by the user.
-        """
-        mentionables: List[Union[Member, Role]] = []
-        for id in self.data:
-            mentionable = guild.get_member(id) or guild.get_role(id)
-            if mentionable:
-                mentionables.append(mentionable)
-        return mentionables
-
-    async def fetch(self, guild: Guild) -> List[Union[Member, Role]]:
-        """A shortcut for fetching all :class:`nextcord.Member`'s and :class:`nextcord.Role`'s of :attr:`.values`.
-
-        Mentionables that are not found in cache will be fetched.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the mentionables from.
-
-        Raises
-        ------
-        :exc:`.HTTPException`
-            Fetching the mentionables failed.
-        :exc:`.Forbidden`
-            You do not have the proper permissions to fetch the mentionables.
-
-        Returns
-        -------
-        List[Union[:class:`nextcord.Member`, :class:`nextcord.Role`]]
-            A list of mentionables that have been selected by the user.
-        """
-        mentionables = self.get(guild)
-        if len(mentionables) == len(self.data):
-            return mentionables
-
-        mentionables: List[Union[Member, Role]] = []
-        guild_roles = None
-        for id in self.data:
-            mentionable = guild.get_member(id) or guild.get_role(id)
-            if not mentionable:
-                if not guild_roles:
-                    guild_roles = await guild.fetch_roles()
-                mentionable = get(guild_roles, id=id) or await guild.fetch_member(id)
-            mentionables.append(mentionable)
-        return mentionables
+    @property
+    def members(self) -> List[Member]:
+        """List[:class:`Member`]: A list of members that were selected."""
+        return [v for v in self.data if isinstance(v, Member)]
+    
+    @property
+    def users(self) -> List[User]:
+        """List[:class:`User`]: A list of users that were selected."""
+        return [v for v in self.data if isinstance(v, User)]
+    
+    @property
+    def roles(self) -> List[Role]:
+        """List[:class:`Role`]: A list of roles that were selected."""
+        return [v for v in self.data if isinstance(v, Role)]
 
 
 class MentionableSelect(SelectBase):
@@ -117,8 +74,7 @@ class MentionableSelect(SelectBase):
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`MentionableSelect.values`., :meth:`MentionableSelect.get_mentionables`
-    or :meth:`MentionableSelect.fetch_mentionables`.
+    use :attr:`MentionableSelect.values`.
 
     .. versionadded:: 2.3
 
@@ -162,8 +118,7 @@ class MentionableSelect(SelectBase):
         disabled: bool = False,
         row: Optional[int] = None,
     ) -> None:
-        Item.__init__(self)
-        self._selected_values: List[str] = []
+        self._selected_values: MentionableSelectValues = [] # type: ignore
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = MentionableSelectMenu._raw_construct(
@@ -179,7 +134,7 @@ class MentionableSelect(SelectBase):
     @property
     def values(self) -> MentionableSelectValues:
         """List[:class:`int`]: A list of mentionable ids that have been selected by the user."""
-        return MentionableSelectValues([int(id) for id in self._selected_values])
+        return self._selected_values
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:
         return self._underlying.to_dict()
@@ -193,6 +148,14 @@ class MentionableSelect(SelectBase):
             max_values=component.max_values,
             disabled=component.disabled,
             row=None,
+        )
+
+    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+        self._selected_values = MentionableSelectValues(
+            data.get("values", []),
+            data.get("resolved", {}),
+            state,
+            guild,
         )
 
 

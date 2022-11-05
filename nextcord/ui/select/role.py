@@ -27,80 +27,32 @@ from __future__ import annotations
 import asyncio
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
 from ...components import RoleSelectMenu
 from ...enums import ComponentType
+from ...state import ConnectionState
 from ...utils import MISSING, get
-from ..item import Item, ItemCallbackType
-from .base import SelectBase
+from ..item import ItemCallbackType
+from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from ...guild import Guild
     from ...role import Role
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
+    from ...types.interactions import ComponentInteractionData
 
 __all__ = ("RoleSelect", "role_select")
 
 S = TypeVar("S", bound="RoleSelect")
 
 
-class RoleSelectValues(UserList):
+class RoleSelectValues(SelectValuesBase):
     """Represents the values of a :class:`RoleSelect`."""
 
-    def get(self, guild: Guild) -> List[Role]:
-        """A shortcut for getting all :class:`nextcord.Role`'s of :attr:`.values`.
-
-        Roles that are not found in cache will not be returned.
-        To get all roles regardless of whether they are in cache or not, use :meth:`.fetch_roles`.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the roles from.
-
-        Returns
-        -------
-        List[:class:`nextcord.Role`]
-            A list of roles that were found.
-        """
-        roles: List[Role] = []
-        for id in self.data:
-            member = guild.get_role(id)
-            if member is not None:
-                roles.append(member)
-        return roles
-
-    async def fetch(self, guild: Guild) -> List[Role]:
-        """A shortcut for fetching all :class:`nextcord.Role`'s of :attr:`.values`.
-
-        Roles that are not found in cache will be fetched.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to fetch the roles from.
-
-        Raises
-        ------
-        :exc:`.HTTPException`
-            Retrieving the roles failed.
-
-        Returns
-        -------
-        List[:class:`nextcord.Role`]
-            A list of all roles that have been selected.
-        """
-        roles: List[Role] = self.get(guild)
-        if len(roles) == len(self.data):
-            return roles
-
-        guild_roles: List[Role] = await guild.fetch_roles()
-        for id in self.data:
-            role = get(guild_roles, id=id)
-            if role:
-                roles.append(role)
-        return roles
+    @property
+    def roles(self) -> List[Role]:
+        return [v for v in self.data if isinstance(v, Role)]
 
 
 class RoleSelect(SelectBase):
@@ -110,7 +62,7 @@ class RoleSelect(SelectBase):
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`RoleSelect.values`., :meth:`RoleSelect.get_roles` or :meth:`RoleSelect.fetch_roles`.
+    use :attr:`RoleSelect.values`.
 
     .. versionadded:: 2.3
 
@@ -154,8 +106,7 @@ class RoleSelect(SelectBase):
         disabled: bool = False,
         row: Optional[int] = None,
     ) -> None:
-        Item.__init__(self)
-        self._selected_values: List[str] = []
+        self._selected_values: RoleSelectValues = [] # type: ignore
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = RoleSelectMenu._raw_construct(
@@ -171,7 +122,7 @@ class RoleSelect(SelectBase):
     @property
     def values(self) -> RoleSelectValues:
         """List[:class:`int`]: A list of role ids that have been selected by the user."""
-        return RoleSelectValues([int(id) for id in self._selected_values])
+        return self._selected_values
 
     def to_component_dict(self) -> RoleSelectMenuPayload:
         return self._underlying.to_dict()
@@ -185,6 +136,14 @@ class RoleSelect(SelectBase):
             max_values=component.max_values,
             disabled=component.disabled,
             row=None,
+        )
+        
+    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+        self._selected_values = RoleSelectValues(
+            data.get("values", []),
+            data.get("resolved", {}),
+            state,
+            guild,
         )
 
 

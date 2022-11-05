@@ -32,7 +32,7 @@ from typing_extensions import NotRequired
 from .channel import ChannelType
 from .components import Component, ComponentType
 from .embed import Embed
-from .member import Member
+from .member import Member, MemberWithUser
 from .role import Role
 from .snowflake import Snowflake
 from .user import User
@@ -175,11 +175,19 @@ class ApplicationCommandInteractionData(TypedDict):
     target_id: NotRequired[Snowflake]
 
 
+class ComponentInteractionResolved(TypedDict, total=False):
+    users: Dict[Snowflake, User]
+    members: Dict[Snowflake, MemberWithUser]
+    roles: Dict[Snowflake, Role]
+    channels: Dict[Snowflake, ApplicationCommandResolvedPartialChannel]
+
+
 class ComponentInteractionData(TypedDict):
     custom_id: str
     component_type: ComponentType
     values: NotRequired[List[str]]
     value: NotRequired[str]
+    resolved: NotRequired[ComponentInteractionResolved]
 
 
 class ModalSubmitActionRowInteractionData(TypedDict):

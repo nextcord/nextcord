@@ -29,6 +29,8 @@ from typing import TYPE_CHECKING, Optional, Tuple, Type, TypeVar
 
 from ..components import TextInput as TextInputComponent
 from ..enums import ComponentType, TextInputStyle
+from ..guild import Guild
+from ..state import ConnectionState
 from ..utils import MISSING
 from .item import Item
 
@@ -244,5 +246,5 @@ class TextInput(Item[V]):
     def refresh_component(self, text_input: TextInputComponent) -> None:
         self._underlying = text_input
 
-    def refresh_state(self, data: ComponentInteractionData) -> None:
+    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
         self._inputed_value = data.get("value", "")

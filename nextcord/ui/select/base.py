@@ -25,23 +25,56 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+from collections import UserList
 import os
-from typing import TYPE_CHECKING, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
+from ...channel import _channel_factory
 from ...components import SelectMenu
 from ...enums import ComponentType
+from ...guild import Guild
+from ...member import Member
+from ...role import Role
+from ...state import ConnectionState
+from ...user import User
 from ...utils import MISSING
 from ..item import Item
 
 __all__ = ("SelectBase",)
 
 if TYPE_CHECKING:
+    from ...abc import GuildChannel
     from ...types.components import SelectMenu as SelectMenuPayload
-    from ...types.interactions import ComponentInteractionData
+    from ...types.interactions import ComponentInteractionData, ComponentInteractionResolved
     from ..view import View
 
 S = TypeVar("S", bound="SelectBase")
 V = TypeVar("V", bound="View", covariant=True)
+
+
+class SelectValuesBase(UserList):
+    
+    def __init__(self, values: List[str], resolved: ComponentInteractionResolved, state: ConnectionState, guild: Optional[Guild]) -> None:
+        self.data: List[Union[Member, User, Role, GuildChannel]] = []
+        self._resolved = resolved
+        users = resolved.get("users", {})
+        members = resolved.get("members", {})
+        roles = resolved.get("roles", {})
+        channels = resolved.get("channels", {})
+        for value in values:
+            if members.get(value) and guild:
+                self.append(Member(data=members[value], state=state, guild=guild))
+            elif users.get(value):
+                self.append(User(data=users[value], state=state))
+            elif roles.get(value) and guild:
+                self.append(Role(data=roles[value], state=state, guild=guild))
+            elif channels.get(value) and guild:
+                ch_type, _ = _channel_factory(channels[value]["type"])
+                self.append(ch_type(data=channels[value], state=state, guild=guild)) # type: ignore            
+        
+    @property
+    def ids(self) -> List[int]:
+        return [o.id for o in self.data]
 
 
 class SelectBase(Item[V]):
@@ -176,7 +209,7 @@ class SelectBase(Item[V]):
     def refresh_component(self, component: SelectMenu) -> None:
         self._underlying = component
 
-    def refresh_state(self, data: ComponentInteractionData) -> None:
+    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
         self._selected_values = data.get("values", [])
 
     @classmethod

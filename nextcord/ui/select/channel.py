@@ -25,93 +25,34 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import os
-from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
-from ...utils import MISSING, get
-from ..item import Item, ItemCallbackType
-from .base import SelectBase
+from ..item import ItemCallbackType
+from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from ...abc import GuildChannel
     from ...enums import ChannelType
     from ...guild import Guild
-    from ...threads import Thread
+    from ...state import ConnectionState
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
+    from ...types.interactions import ComponentInteractionData
+    from ...utils import MISSING
 
 __all__ = ("ChannelSelect", "channel_select")
 
 S = TypeVar("S", bound="ChannelSelect")
 
 
-class ChannelSelectValues(UserList):
+class ChannelSelectValues(SelectValuesBase):
     """Represents the values of a :class:`ChannelSelect`."""
 
-    def get(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
-        """A shortcut for getting all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
-
-        Channels that are not found in cache will not be returned.
-        To get all channels regardless of whether they are in cache or not, use :meth:`.fetch_channels`.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the channels from.
-
-        Returns
-        -------
-        List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
-            A list of channels that have been selected by the user.
-        """
-        channels: List[Union[GuildChannel, Thread]] = []
-        for id in self.data:
-            channel = guild.get_channel_or_thread(id)
-            if channel is not None:
-                channels.append(channel)
-        return channels
-
-    async def fetch(self, guild: Guild) -> List[Union[GuildChannel, Thread]]:
-        """A shortcut for fetching all :class:`nextcord.abc.GuildChannel`'s of :attr:`.values`.
-
-        Channels that are not found in cache will be fetched.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the channels from.
-
-        Raises
-        ------
-        :exc:`.HTTPException`
-            Fetching the channels failed.
-        :exc:`.NotFound`
-            A channel was not found.
-        :exc:`.Forbidden`
-            You do not have the proper permissions to fetch a channel.
-        :exc:`.InvalidArgument`
-            The channel type is not supported.
-
-        Returns
-        -------
-        List[Union[:class:`nextcord.abc.GuildChannel`, :class:`nextcord.Thread`]]
-            A list of channels that have been selected by the user.
-        """
-        channels: List[Union[GuildChannel, Thread]] = []
-        guild_channels = None
-        for id in self.data:
-            channel = guild.get_channel_or_thread(id)
-            if channel is None:
-                if guild_channels is None:
-                    guild_channels = await guild.fetch_channels()
-                channel = get(guild_channels, id=id)
-                if channel:
-                    channels.append(channel)
-            else:
-                channels.append(channel)
-        return channels
+    @property
+    def channels(self) -> List[GuildChannel]:
+        """List[:class:`GuildChannel`]: The resolved channels."""
+        return [v for v in self.data if isinstance(v, GuildChannel)]
 
 
 class ChannelSelect(SelectBase):
@@ -121,8 +62,7 @@ class ChannelSelect(SelectBase):
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen,
-    use :attr:`ChannelSelect.values`., :meth:`ChannelSelect.get_channels`
-    or :meth:`ChannelSelect.fetch_channels`.
+    use :attr:`ChannelSelect.values`.
 
     .. versionadded:: 2.3
 
@@ -170,10 +110,15 @@ class ChannelSelect(SelectBase):
         row: Optional[int] = None,
         channel_types: List[ChannelType] = MISSING,
     ) -> None:
-        Item.__init__(self)
-        self._selected_values: List[str] = []
-        self._provided_custom_id = custom_id is not MISSING
-        custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
+        super().__init__(
+            custom_id=custom_id,
+            placeholder=placeholder,
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
+            row=row,
+        )
+        self._selected_values: ChannelSelectValues = [] # type: ignore
         self._underlying = ChannelSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.channel_select,
@@ -183,12 +128,11 @@ class ChannelSelect(SelectBase):
             disabled=disabled,
             channel_types=channel_types,
         )
-        self.row = row
 
     @property
     def values(self) -> ChannelSelectValues:
         """List[:class:`int`]: A list of channel ids that have been selected by the user."""
-        return ChannelSelectValues([int(id) for id in self._selected_values])
+        return self._selected_values
 
     def to_component_dict(self) -> ChannelSelectMenuPayload:
         return self._underlying.to_dict()
@@ -202,6 +146,14 @@ class ChannelSelect(SelectBase):
             max_values=component.max_values,
             disabled=component.disabled,
             row=None,
+        )
+        
+    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+        self._selected_values = ChannelSelectValues(
+            data.get("values", []),
+            data.get("resolved", {}),
+            state,
+            guild,
         )
 
 

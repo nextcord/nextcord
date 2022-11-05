@@ -27,79 +27,37 @@ from __future__ import annotations
 import asyncio
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
 from ...components import UserSelectMenu
 from ...enums import ComponentType
+from ...member import Member
+from ...user import User
 from ...utils import MISSING
-from ..item import Item, ItemCallbackType
-from .base import SelectBase
+from ..item import ItemCallbackType
+from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from ...guild import Guild
-    from ...member import Member
+    from ...state import ConnectionState
     from ...types.components import UserSelectMenu as UserSelectMenuPayload
+    from ...types.interactions import ComponentInteractionData
 
 __all__ = ("UserSelect", "user_select")
 
 S = TypeVar("S", bound="UserSelect")
 
 
-class UserSelectValues(UserList):
+class UserSelectValues(SelectValuesBase):
     """Represents the values of a :class:`UserSelect`."""
 
-    def get(self, guild: Guild) -> List[Member]:
-        """A shortcut for getting all :class:`nextcord.Member`'s of :attr:`.values`.
-
-        Users that are not found in cache will not be returned.
-        To get all members regardless of whether they are in cache or not, use :meth:`.fetch_members`.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to get the members from.
-
-        Returns
-        -------
-        List[:class:`nextcord.Member`]
-            A list of members that were found.
-        """
-        members: List[Member] = []
-        for id in self.data:
-            member = guild.get_member(id)
-            if member is not None:
-                members.append(member)
-        return members
-
-    async def fetch(self, guild: Guild) -> List[Member]:
-        """A shortcut for fetching all :class:`nextcord.Member`'s of :attr:`.values`.
-
-        Users that are not found in cache will be fetched.
-
-        Parameters
-        ----------
-        guild: :class:`nextcord.Guild`
-            The guild to fetch the members from.
-
-        Raises
-        ------
-        :exc:`.Forbidden`
-            You do not have access to the guild.
-        :exc:`.HTTPException`
-            Fetching a member failed.
-
-        Returns
-        -------
-        List[:class:`nextcord.Member`]
-            A list of all members that have been selected.
-        """
-        members: List[Member] = []
-        for id in self.data:
-            member = guild.get_member(id)
-            if member is None:
-                member = await guild.fetch_member(id)
-            members.append(member)
-        return members
+    @property
+    def members(self) -> List[Member]:
+        return [v for v in self.data if isinstance(v, Member)]
+    
+    @property
+    def users(self) -> List[User]:
+        return [v for v in self.data if isinstance(v, User)]
 
 
 class UserSelect(SelectBase):
@@ -107,8 +65,7 @@ class UserSelect(SelectBase):
 
     This is usually represented as a drop down menu.
 
-    In order to get the selected items that the user has chosen, use :attr:`UserSelect.values`,
-    :meth:`UserSelect.values.get` or :meth:`UserSelect.values.fetch`.
+    In order to get the selected items that the user has chosen, use :attr:`UserSelect.values`.
 
     .. versionadded:: 2.3
 
@@ -152,10 +109,15 @@ class UserSelect(SelectBase):
         disabled: bool = False,
         row: Optional[int] = None,
     ) -> None:
-        Item.__init__(self)
-        self._selected_values: List[str] = []
-        self._provided_custom_id = custom_id is not MISSING
-        custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
+        super().__init__(
+            custom_id=custom_id,
+            row=row,
+            placeholder=placeholder,
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
+        )
+        self._selected_values: UserSelectValues = [] # type: ignore
         self._underlying = UserSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.user_select,
@@ -169,7 +131,7 @@ class UserSelect(SelectBase):
     @property
     def values(self) -> UserSelectValues:
         """List[:class:`int`]: A list of user ids that have been selected by the user."""
-        return UserSelectValues([int(id) for id in self._selected_values])
+        return self._selected_values
 
     def to_component_dict(self) -> UserSelectMenuPayload:
         return self._underlying.to_dict()
@@ -183,6 +145,14 @@ class UserSelect(SelectBase):
             max_values=component.max_values,
             disabled=component.disabled,
             row=None,
+        )
+        
+    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+        self._selected_values = UserSelectValues(
+            data.get("values", []),
+            data.get("resolved", {}),
+            state,
+            guild,
         )
 
 

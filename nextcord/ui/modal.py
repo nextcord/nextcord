@@ -281,7 +281,7 @@ class Modal:
         for child in self.children:
             for component_data in _walk_component_interaction_data(data["components"]):
                 if component_data["custom_id"] == child.custom_id:  # type: ignore
-                    child.refresh_state(component_data)
+                    child.refresh_state(component_data, interaction._state, interaction.guild)
                     break
         try:
             if self.timeout:
