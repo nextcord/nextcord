@@ -323,8 +323,6 @@ class ConnectionState:
         else:
             self._messages: Optional[Deque[Message]] = None
 
-        self._non_persistent_views: List[View] = []
-
     def process_chunk_requests(
         self, guild_id: int, nonce: Optional[str], members: List[Member], complete: bool
     ) -> None:
@@ -420,23 +418,17 @@ class ConnectionState:
         return sticker
 
     def store_view(
-        self, view: View, message_id: Optional[int] = None, persistent: bool = True
+        self, view: View, message_id: Optional[int] = None
     ) -> None:
-        if persistent:
-            self._view_store.add_view(view, message_id)
-        else:
-            self._non_persistent_views.append(view)
+        self._view_store.add_view(view, message_id)
 
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)
 
     def remove_view(
-        self, view: View, message_id: Optional[int] = None, persistent: bool = True
+        self, view: View, message_id: Optional[int] = None
     ) -> None:
-        if persistent:
-            self._view_store.remove_view(view, message_id)
-        else:
-            self._non_persistent_views.remove(view)
+        self._view_store.remove_view(view, message_id)
 
     def remove_modal(self, modal: Modal) -> None:
         self._modal_store.remove_modal(modal)
@@ -445,7 +437,7 @@ class ConnectionState:
         return self._view_store.remove_message_tracking(message_id)  # type: ignore
 
     def views(self, persistent: bool = True) -> Sequence[View]:
-        return self._view_store.persistent_views if persistent else self._non_persistent_views
+        return self._view_store.views(persistent)
 
     @property
     def guilds(self) -> List[Guild]:

@@ -1880,11 +1880,10 @@ class Client:
         if not isinstance(view, View):
             raise TypeError(f"Expected an instance of View not {view.__class__!r}")
 
-        persistent = view.is_persistent()
-        if message_id is not None and persistent:
+        if message_id is not None and not view.is_persistent():
             raise ValueError("message_id parameter cannot be included for non-persistent views")
 
-        self._connection.store_view(view, message_id, persistent=persistent)
+        self._connection.store_view(view, message_id)
 
     def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
         """Removes a :class:`~nextcord.ui.View` from persistent listening or non-persistent
@@ -1915,8 +1914,7 @@ class Client:
         if not isinstance(view, View):
             raise TypeError(f"Expected an instance of View not {view.__class__.__name__}")
 
-        persistent = view.is_persistent()
-        if message_id is not None and persistent:
+        if message_id is not None and not view.is_persistent():
             raise ValueError("message_id parameter cannot be included for non-persistent views")
 
         self._connection.remove_view(view, message_id)
