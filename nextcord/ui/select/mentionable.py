@@ -118,9 +118,15 @@ class MentionableSelect(SelectBase):
         disabled: bool = False,
         row: Optional[int] = None,
     ) -> None:
+        super().__init__(
+            custom_id=custom_id,
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
+            row=row,
+            placeholder=placeholder,
+        )
         self._selected_values: MentionableSelectValues = [] # type: ignore
-        self._provided_custom_id = custom_id is not MISSING
-        custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = MentionableSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.mentionable_select,
@@ -129,7 +135,6 @@ class MentionableSelect(SelectBase):
             max_values=max_values,
             disabled=disabled,
         )
-        self.row = row
 
     @property
     def values(self) -> MentionableSelectValues:

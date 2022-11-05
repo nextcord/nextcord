@@ -220,13 +220,13 @@ class SelectMenuBase(Component):
     custom_id: :class:`str`
         The ID of the select menu that gets received during an interaction.
     disabled: :class:`bool`
-        Whether the select menu is disabled or not.
+        Whether the select menu is disabled or not. Defaults to ``False``.
     placeholder: Optional[:class:`str`]
         The placeholder of the select menu, if any.
     min_values: :class:`int`
-        The minimum number of values that must be chosen.
+        The minimum number of values that must be chosen. Defaults to 1.
     max_values: :class:`int`
-        The maximum number of values that can be chosen.
+        The maximum number of values that can be chosen. Defaults to 1.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -261,7 +261,7 @@ class SelectMenuBase(Component):
 
 
 class SelectMenu(SelectMenuBase):
-    """Represents a select menu from the Discord Bot UI Kit.
+    """Represents a string select menu from the Discord Bot UI Kit.
 
     A select menu is functionally the same as a dropdown, however
     on mobile it renders a bit differently.
@@ -310,6 +310,9 @@ class SelectMenu(SelectMenuBase):
             payload["options"] = [op.to_dict() for op in self.options]
 
         return payload
+
+
+StringSelectMenu = SelectMenu
 
 
 class UserSelectMenu(SelectMenuBase):

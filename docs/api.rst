@@ -1597,7 +1597,7 @@ of :class:`enum.Enum`.
         Represents a button component.
     .. attribute:: select
 
-        Represents a select component.
+        Represents a string select component.
     .. attribute:: text_input
 
         Represents a text input component.
