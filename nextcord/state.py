@@ -417,17 +417,13 @@ class ConnectionState:
         self._stickers[sticker_id] = sticker = GuildSticker(state=self, data=data)
         return sticker
 
-    def store_view(
-        self, view: View, message_id: Optional[int] = None
-    ) -> None:
+    def store_view(self, view: View, message_id: Optional[int] = None) -> None:
         self._view_store.add_view(view, message_id)
 
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)
 
-    def remove_view(
-        self, view: View, message_id: Optional[int] = None
-    ) -> None:
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
         self._view_store.remove_view(view, message_id)
 
     def remove_modal(self, modal: Modal) -> None:
