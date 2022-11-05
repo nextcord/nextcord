@@ -15,6 +15,8 @@ The gist:
 - Cogs are then registered with the :meth:`.Client.add_cog` call.
 - Cogs are subsequently removed with the :meth:`.Client.remove_cog` call.
 
+If you want to use :class:`ext.commands.Command` instead of/with application commands, use :class:`ext.commands.Cog` instead.
+
 Quick Example
 -------------
 
