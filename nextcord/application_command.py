@@ -61,7 +61,7 @@ from .channel import (
     TextChannel,
     VoiceChannel,
 )
-from .cog import Cog, ClientCog
+from .cog import ClientCog, Cog
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
