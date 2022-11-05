@@ -318,10 +318,9 @@ class Cog(metaclass=CogMeta):
 class ClientCog(Cog):
     """An alias of :class:`Cog` for backwards compatibility reasons."""
 
-    def __new__(cls, *args, **kwargs):
+    def __init_subclass__(cls, *args, **kwargs):
         warnings.warn(
             "nextcord.ClientCog is deprecated, use nextcord.Cog instead.",
             stacklevel=2,
             category=FutureWarning,
         )
-        return super().__new__(*args, **kwargs)
