@@ -98,6 +98,8 @@ class AutoModerationTriggerMetadata:
     mention_total_limit: Optional[:class:`int`]
         The maximum amount of mentions allowed in a messsage.
 
+        .. versionadded:: 2.3
+
         .. note::
 
             This is ``None`` and cannot be provided if the trigger type of this rule is not :attr:`AutoModerationTriggerType.mention_spam`.
