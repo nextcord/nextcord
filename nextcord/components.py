@@ -260,7 +260,7 @@ class SelectMenuBase(Component):
         return payload
 
 
-class SelectMenu(SelectMenuBase):
+class StringSelectMenu(SelectMenuBase):
     """Represents a string select menu from the Discord Bot UI Kit.
 
     A select menu is functionally the same as a dropdown, however
@@ -312,7 +312,7 @@ class SelectMenu(SelectMenuBase):
         return payload
 
 
-StringSelectMenu = SelectMenu
+SelectMenu = StringSelectMenu
 
 
 class UserSelectMenu(SelectMenuBase):
