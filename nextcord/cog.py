@@ -139,7 +139,11 @@ class Cog(metaclass=CogMeta):
         After adding all of the application commands into the internal list,
         """
         # circular imports
-        from .application_command import SlashApplicationCommand, SlashApplicationSubcommand, BaseApplicationCommand
+        from .application_command import (
+            BaseApplicationCommand,
+            SlashApplicationCommand,
+            SlashApplicationSubcommand,
+        )
 
         self.__cog_application_commands__ = []
         for base in reversed(self.__class__.__mro__):
