@@ -25,12 +25,13 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar, Union
 
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
 from ..item import ItemCallbackType
 from .base import SelectBase, SelectValuesBase
+from ...utils import MISSING
 
 if TYPE_CHECKING:
     from ...abc import GuildChannel
@@ -39,7 +40,6 @@ if TYPE_CHECKING:
     from ...state import ConnectionState
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
-    from ...utils import MISSING
 
 __all__ = ("ChannelSelect", "channel_select")
 
