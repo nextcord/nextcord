@@ -23,10 +23,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import annotations
+
 from typing import List, Literal, Optional, TypedDict, Union
 
 from typing_extensions import NotRequired
 
+from .emoji import DefaultReaction
 from .snowflake import Snowflake
 from .threads import ThreadArchiveDuration, ThreadMember, ThreadMetadata
 from .user import PartialUser
@@ -82,6 +85,7 @@ class ForumChannel(_ThreadedBaseChannel):
     default_sort_order: Optional[SortOrderType]
     default_reaction_emoji: NotRequired[Optional[DefaultReaction]]
     default_thread_rate_limit_per_user: NotRequired[int]
+    available_tags: NotRequired[List[ForumTag]]
 
 
 class NewsChannel(_ThreadedBaseChannel):
@@ -165,3 +169,11 @@ class StageInstance(TypedDict):
     topic: str
     privacy_level: PrivacyLevel
     discoverable_disabled: bool
+
+
+class ForumTag(TypedDict):
+    id: Optional[Snowflake]
+    name: str
+    moderated: bool
+    emoji_id: NotRequired[Optional[Snowflake]]
+    emoji_name: NotRequired[Optional[str]]

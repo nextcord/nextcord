@@ -51,6 +51,7 @@ from .flags import ChannelFlags
 from .invite import Invite
 from .iterators import HistoryIterator
 from .mentions import AllowedMentions
+from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
 from .sticker import GuildSticker, StickerItem
@@ -436,6 +437,13 @@ class GuildChannel:
                         "emoji_name": default_reaction.name,
                     }
                 )
+
+        try:
+            available_tags = options.pop("available_tags")
+        except KeyError:
+            pass
+        else:
+            options["available_tags"] = [tag.payload for tag in available_tags]
 
         if options:
             return await self._state.http.edit_channel(self.id, reason=reason, **options)

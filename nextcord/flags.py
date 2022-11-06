@@ -284,8 +284,13 @@ class ChannelFlags(BaseFlags):
 
     @flag_value
     def pinned(self):
-        """:class:`bool`: Returns ``True`` if the channel is pinned."""
-        return 1
+        """:class:`bool`: Returns ``True`` if the thread is pinned in its parent forum."""
+        return 1 << 1
+
+    @flag_value
+    def require_tag(self):
+        """:class:`bool`: Returns ``True`` if the forum channel requires tags for posts."""
+        return 1 << 4
 
 
 @fill_with_flags()

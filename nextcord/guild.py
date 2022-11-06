@@ -83,6 +83,7 @@ from .invite import Invite
 from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
+from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
 from .role import Role
 from .scheduled_events import EntityMetadata, ScheduledEvent
@@ -102,6 +103,7 @@ if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
+    from .channel import ForumTag
     from .enums import SortOrderType
     from .file import File
     from .message import Attachment
@@ -1454,6 +1456,7 @@ class Guild(Hashable):
         category: Optional[CategoryChannel] = None,
         default_thread_slowmode_delay: int = MISSING,
         default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = MISSING,
+        available_tags: List[ForumTag] = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
     ) -> ForumChannel:
@@ -1495,6 +1498,10 @@ class Guild(Hashable):
             The default reaction for threads created in this channel.
 
             .. versionadded:: 2.3
+        available_tags: List[:class:`ForumTag`]
+            The available tags for threads created in this channel.
+
+            .. versionadded:: 2.3
 
         Raises
         ------
@@ -1522,6 +1529,9 @@ class Guild(Hashable):
 
         if default_thread_slowmode_delay is not MISSING:
             options["default_thread_rate_limit_per_user"] = default_thread_slowmode_delay
+
+        if available_tags is not MISSING:
+            options["available_tags"] = [tag.payload for tag in available_tags]
 
         if default_reaction is not MISSING:
             if isinstance(default_reaction, str):
