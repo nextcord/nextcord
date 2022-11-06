@@ -23,12 +23,11 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
+from typing import Any, Callable, Coroutine, TypeVar, Union
 
-if TYPE_CHECKING:
-    from nextcord.application_command import ClientCog
+from nextcord.application_command import ClientCog
 
-    from ..interactions import Interaction
+from ..interactions import Interaction
 
 T = TypeVar("T")
 
