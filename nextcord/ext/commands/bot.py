@@ -646,7 +646,7 @@ class BotBase(GroupMixin):
 
         if isinstance(cog, Cog):
             cog = cog._inject(self)
-            self.__cogs[cog_name] = cog
+        self.__cogs[cog_name] = cog
 
         # TODO: This blind call to nextcord.Client is dumb.
         super().add_cog(cog)  # type: ignore
