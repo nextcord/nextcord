@@ -1001,6 +1001,7 @@ class HTTPClient:
             "flags",
             "default_sort_order",
             "default_thread_rate_limit_per_user",
+            "default_reaction_emoji",
         )
         payload = {k: v for k, v in options.items() if k in valid_keys}
         return self.request(r, reason=reason, json=payload)
@@ -1042,6 +1043,7 @@ class HTTPClient:
             "auto_archive_duration",
             "default_sort_order",
             "default_thread_rate_limit_per_user",
+            "default_reaction_emoji",
         )
         payload.update({k: v for k, v in options.items() if k in valid_keys and v is not None})
 

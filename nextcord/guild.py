@@ -1453,6 +1453,7 @@ class Guild(Hashable):
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
         category: Optional[CategoryChannel] = None,
         default_thread_slowmode_delay: int = MISSING,
+        default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
     ) -> ForumChannel:
@@ -1490,6 +1491,10 @@ class Guild(Hashable):
             Must be between ``0`` and ``21600``.
 
             .. versionadded:: 2.3
+        default_reaction: Optional[Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]]
+            The default reaction for threads created in this channel.
+
+            .. versionadded:: 2.3
 
         Raises
         ------
@@ -1517,6 +1522,23 @@ class Guild(Hashable):
 
         if default_thread_slowmode_delay is not MISSING:
             options["default_thread_rate_limit_per_user"] = default_thread_slowmode_delay
+
+        if default_reaction is not MISSING:
+            if isinstance(default_reaction, str):
+                default_reaction = PartialEmoji.from_str(default_reaction)
+
+            if default_reaction is None:
+                options["default_reaction_emoji"] = None
+            else:
+                options["default_reaction_emoji"] = (
+                    {
+                        "emoji_id": default_reaction.id,
+                    }
+                    if default_reaction.id is not None
+                    else {
+                        "emoji_name": default_reaction.name,
+                    }
+                )
 
         data = await self._create_channel(
             name,

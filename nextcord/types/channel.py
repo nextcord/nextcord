@@ -80,6 +80,7 @@ class ForumChannel(_ThreadedBaseChannel):
     topic: NotRequired[str]
     last_message_id: NotRequired[Optional[Snowflake]]
     default_sort_order: Optional[SortOrderType]
+    default_reaction_emoji: NotRequired[Optional[DefaultReaction]]
     default_thread_rate_limit_per_user: NotRequired[int]
 
 

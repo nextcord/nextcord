@@ -416,6 +416,27 @@ class GuildChannel:
         except KeyError:
             pass
 
+        try:
+            default_reaction = options.pop("default_reaction")
+        except KeyError:
+            pass
+        else:
+            if isinstance(default_reaction, str):
+                default_reaction = PartialEmoji.from_str(default_reaction)
+
+            if default_reaction is None:
+                options["default_reaction_emoji"] = None
+            else:
+                options["default_reaction_emoji"] = (
+                    {
+                        "emoji_id": default_reaction.id,
+                    }
+                    if default_reaction.id is not None
+                    else {
+                        "emoji_name": default_reaction.name,
+                    }
+                )
+
         if options:
             return await self._state.http.edit_channel(self.id, reason=reason, **options)
 
