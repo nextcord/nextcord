@@ -1273,8 +1273,8 @@ class ConnectionState:
         self.dispatch("message", message)
         if self._messages is not None:
             self._messages.append(message)
-        # we ensure that the channel is either a TextChannel, ForumChannel or Thread
-        if channel and channel.__class__ in (TextChannel, ForumChannel, Thread):
+        # we ensure that the channel is either a TextChannel, ForumChannel, Thread or VoiceChannel
+        if channel and channel.__class__ in (TextChannel, ForumChannel, Thread, VoiceChannel):
             channel.last_message_id = message.id  # type: ignore
 
     def parse_message_delete(self, data) -> None:
