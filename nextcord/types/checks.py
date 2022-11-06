@@ -36,7 +36,8 @@ if TYPE_CHECKING:
     MaybeCoro = Union[T, Coro[T]]
     CoroFunc = Callable[..., Coro[Any]]
     ApplicationCheck = Union[
-        Callable[[ClientCog, Interaction], MaybeCoro[bool]], Callable[[Interaction], MaybeCoro[bool]]
+        Callable[[ClientCog, Interaction], MaybeCoro[bool]],
+        Callable[[Interaction], MaybeCoro[bool]],
     ]
     ApplicationHook = Union[
         Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
