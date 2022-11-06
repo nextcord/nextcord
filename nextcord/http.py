@@ -1000,6 +1000,7 @@ class HTTPClient:
             "default_auto_archive_duration",
             "flags",
             "default_sort_order",
+            "default_thread_rate_limit_per_user",
         )
         payload = {k: v for k, v in options.items() if k in valid_keys}
         return self.request(r, reason=reason, json=payload)
@@ -1040,6 +1041,7 @@ class HTTPClient:
             "video_quality_mode",
             "auto_archive_duration",
             "default_sort_order",
+            "default_thread_rate_limit_per_user",
         )
         payload.update({k: v for k, v in options.items() if k in valid_keys and v is not None})
 

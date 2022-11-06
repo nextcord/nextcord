@@ -166,6 +166,12 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         The default auto archive duration in minutes for threads created in this channel.
 
         .. versionadded:: 2.0
+    default_thread_slowmode_delay: :class:`int`
+        The default amount of seconds a user has to wait
+        before creating another thread in this channel.
+        This is set on every new thread in this channel.
+
+        .. versionadded:: 2.3
     """
 
     __slots__ = (
@@ -183,6 +189,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         "last_message_id",
         "default_auto_archive_duration",
         "flags",
+        "default_thread_slowmode_delay",
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload):
@@ -218,6 +225,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
         self._type: int = data.get("type", self._type)
         self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
+        self.default_thread_slowmode_delay: int = data.get("default_thread_slowmode_delay", 0)
         self._fill_overwrites(data)
 
     async def _get_channel(self):
@@ -299,6 +307,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         type: ChannelType = ...,
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
+        default_thread_slowmode_delay: int = ...,
     ) -> Optional[TextChannel]:
         ...
 
@@ -354,6 +363,11 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         default_auto_archive_duration: :class:`int`
             The new default auto archive duration in minutes for threads created in this channel.
             Must be one of ``60``, ``1440``, ``4320``, or ``10080``.
+        default_thread_slowmode_delay: :class:`int`
+            The new default rate limit per user for threads created in this channel.
+            This sets a new default but does not change the rate limits of existing threads.
+
+            .. versionadded:: 2.3
 
         Raises
         ------
@@ -888,6 +902,12 @@ class ForumChannel(abc.GuildChannel, Hashable):
         The default sort order type used to sort posts in forum channels.
 
         .. versionadded:: 2.3
+    default_thread_slowmode_delay: :class:`int`
+        The default amount of seconds a user has to wait
+        before creating another thread in this channel.
+        This is set on every new thread in this channel.
+
+        .. versionadded:: 2.3
     """
 
     __slots__ = (
@@ -906,6 +926,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         "_state",
         "_type",
         "_overwrites",
+        "default_thread_slowmode_delay",
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload):
@@ -933,6 +954,11 @@ class ForumChannel(abc.GuildChannel, Hashable):
             self.default_sort_order: Optional[SortOrderType] = try_enum(SortOrderType, sort_order)
         else:
             self.default_sort_order: Optional[SortOrderType] = None
+
+        self.default_thread_slowmode_delay: Optional[int] = data.get(
+            "default_thread_slowmode_delay"
+        )
+
         self._fill_overwrites(data)
 
     async def _get_channel(self):
@@ -1007,6 +1033,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
         default_sort_order: Optional[SortOrderType] = ...,
+        default_thread_slowmode_delay: int = ...,
     ) -> ForumChannel:
         ...
 
@@ -1051,6 +1078,12 @@ class ForumChannel(abc.GuildChannel, Hashable):
             Must be one of ``60``, ``1440``, ``4320``, or ``10080``.
         default_sort_order: :class:`SortOrderType`
             The default sort order type used to sort posts in forum channels.
+
+            .. versionadded:: 2.3
+        default_thread_slowmode_delay: :class:`int`
+            The new default slowmode delay for threads created in this channel.
+            This is not retroactively applied to old posts.
+            Must be between ``0`` and ``21600``.
 
             .. versionadded:: 2.3
 

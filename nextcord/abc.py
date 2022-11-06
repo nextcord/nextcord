@@ -409,6 +409,13 @@ class GuildChannel:
                 raise InvalidArgument("type field must be of type ChannelType")
             options["type"] = ch_type.value
 
+        try:
+            options["default_thread_rate_limit_per_user"] = options.pop(
+                "default_thread_slowmode_delay"
+            )
+        except KeyError:
+            pass
+
         if options:
             return await self._state.http.edit_channel(self.id, reason=reason, **options)
 

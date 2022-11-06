@@ -1123,6 +1123,7 @@ class Guild(Hashable):
         slowmode_delay: int = MISSING,
         nsfw: bool = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        default_thread_slowmode_delay: int = MISSING,
     ) -> TextChannel:
         """|coro|
 
@@ -1214,6 +1215,9 @@ class Guild(Hashable):
 
         if nsfw is not MISSING:
             options["nsfw"] = nsfw
+
+        if default_thread_slowmode_delay is not MISSING:
+            options["default_thread_rate_limit_per_user"] = default_thread_slowmode_delay
 
         data = await self._create_channel(
             name,
@@ -1448,6 +1452,7 @@ class Guild(Hashable):
         position: int = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
         category: Optional[CategoryChannel] = None,
+        default_thread_slowmode_delay: int = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
     ) -> ForumChannel:
@@ -1479,6 +1484,11 @@ class Guild(Hashable):
         default_sort_order: Optional[:class:`SortOrderType`]
             The default sort order used to sort posts in this channel.
 
+            ,, versionadded:: 2.3
+        default_thread_slowmode_delay: :class:`int`
+            The default slowmode delay for threads created in this channel.
+            Must be between ``0`` and ``21600``.
+
             .. versionadded:: 2.3
 
         Raises
@@ -1504,6 +1514,9 @@ class Guild(Hashable):
 
         if default_sort_order is not MISSING:
             options["default_sort_order"] = default_sort_order.value
+
+        if default_thread_slowmode_delay is not MISSING:
+            options["default_thread_rate_limit_per_user"] = default_thread_slowmode_delay
 
         data = await self._create_channel(
             name,

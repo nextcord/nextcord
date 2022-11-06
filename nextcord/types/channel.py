@@ -62,31 +62,32 @@ class PartialChannel(_BaseChannel):
     type: ChannelType
 
 
-class TextChannel(_BaseGuildChannel):
+class _ThreadedBaseChannel(_BaseGuildChannel):
+    rate_limit_per_user: NotRequired[int]
+    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
+    default_thread_rate_limit_per_user: NotRequired[int]
+
+
+class TextChannel(_ThreadedBaseChannel):
     type: Literal[0]
     topic: NotRequired[str]
     last_message_id: NotRequired[Optional[Snowflake]]
     last_pin_timestamp: NotRequired[str]
-    rate_limit_per_user: NotRequired[int]
-    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
 
 
-class ForumChannel(_BaseGuildChannel):
+class ForumChannel(_ThreadedBaseChannel):
     type: Literal[15]
     topic: NotRequired[str]
     last_message_id: NotRequired[Optional[Snowflake]]
-    rate_limit_per_user: NotRequired[int]
-    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
     default_sort_order: Optional[SortOrderType]
+    default_thread_rate_limit_per_user: NotRequired[int]
 
 
-class NewsChannel(_BaseGuildChannel):
+class NewsChannel(_ThreadedBaseChannel):
     type: Literal[5]
     topic: NotRequired[str]
     last_message_id: NotRequired[Optional[Snowflake]]
     last_pin_timestamp: NotRequired[str]
-    rate_limit_per_user: NotRequired[int]
-    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
 
 
 VideoQualityMode = Literal[1, 2]
