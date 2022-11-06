@@ -190,7 +190,7 @@ class BotBase(GroupMixin):
 
         self.command_prefix = command_prefix if command_prefix is not MISSING else tuple()
         self.extra_events: Dict[str, List[CoroFunc]] = {}
-        self.__cogs: Dict[str, Cog] = {}
+        self.__cogs: Dict[str, nextcord.Cog] = {}
         self.__extensions: Dict[str, types.ModuleType] = {}
         self._checks: List[Check] = []
         self._check_once = []
@@ -598,7 +598,7 @@ class BotBase(GroupMixin):
 
     # cogs
 
-    def add_cog(self, cog: Cog, *, override: bool = False) -> None:
+    def add_cog(self, cog: nextcord.Cog, *, override: bool = False) -> None:
         """Adds a "cog" to the bot.
 
         A cog is a class that has its own event listeners and commands.
@@ -610,8 +610,13 @@ class BotBase(GroupMixin):
 
         Parameters
         ----------
-        cog: :class:`.Cog`
+        cog: :class:`nextcord.Cog`
             The cog to register to the bot.
+
+            .. versionchanged:: 2.3
+
+                :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
+
         override: :class:`bool`
             If a previously loaded cog with the same name should be ejected
             instead of raising an error.
@@ -621,15 +626,15 @@ class BotBase(GroupMixin):
         Raises
         ------
         TypeError
-            The cog does not inherit from :class:`.Cog`.
+            The cog does not inherit from :class:`nextcord.Cog`.
         CommandError
             An error happened during loading.
         .ClientException
             A cog with the same name is already loaded.
         """
 
-        if not isinstance(cog, Cog):
-            raise TypeError("cogs must derive from Cog")
+        if not isinstance(cog, nextcord.Cog):
+            raise TypeError("cogs must derive from nextcord.Cog")
 
         cog_name = cog.__cog_name__
         existing = self.__cogs.get(cog_name)
@@ -639,8 +644,10 @@ class BotBase(GroupMixin):
                 raise nextcord.ClientException(f"Cog named {cog_name!r} already loaded")
             self.remove_cog(cog_name)
 
-        cog = cog._inject(self)
-        self.__cogs[cog_name] = cog
+        if isinstance(cog, Cog):
+            cog = cog._inject(self)
+            self.__cogs[cog_name] = cog
+
         # TODO: This blind call to nextcord.Client is dumb.
         super().add_cog(cog)  # type: ignore
         # Info: To add the ability to use BaseApplicationCommands in Cogs, the Client has to be aware of cogs. For
@@ -650,7 +657,7 @@ class BotBase(GroupMixin):
         # Whatever warning that your IDE is giving about the above line of code is correct. When Bot + BotBase
         # inevitably get reworked, make me happy and fix this.
 
-    def get_cog(self, name: str) -> Optional[Cog]:
+    def get_cog(self, name: str) -> Optional[nextcord.Cog]:
         """Gets the cog instance requested.
 
         If the cog is not found, ``None`` is returned instead.
@@ -664,12 +671,17 @@ class BotBase(GroupMixin):
 
         Returns
         -------
-        Optional[:class:`Cog`]
+        Optional[:class:`nextcord.Cog`]
             The cog that was requested. If not found, returns ``None``.
+
+            .. versionchanged:: 2.3
+
+                :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
+
         """
         return self.__cogs.get(name)
 
-    def remove_cog(self, name: str) -> Optional[Cog]:
+    def remove_cog(self, name: str) -> Optional[nextcord.Cog]:
         """Removes a cog from the bot and returns it.
 
         All registered commands and event listeners that the
@@ -684,8 +696,13 @@ class BotBase(GroupMixin):
 
         Returns
         -------
-        Optional[:class:`.Cog`]
+        Optional[:class:`nextcord.Cog`]
              The cog that was removed. ``None`` if not found.
+
+             .. versionchanged:: 2.3
+
+                :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
+
         """
 
         cog = self.__cogs.pop(name, None)
@@ -695,7 +712,9 @@ class BotBase(GroupMixin):
         help_command = self._help_command
         if help_command and help_command.cog is cog:
             help_command.cog = None
-        cog._eject(self)
+
+        if isinstance(cog, Cog):
+            cog._eject(self)
 
         # TODO: This blind call to nextcord.Client is dumb.
         super().remove_cog(cog)  # type: ignore
@@ -704,8 +723,14 @@ class BotBase(GroupMixin):
         return cog
 
     @property
-    def cogs(self) -> Mapping[str, Cog]:
-        """Mapping[:class:`str`, :class:`Cog`]: A read-only mapping of cog name to cog."""
+    def cogs(self) -> Mapping[str, nextcord.Cog]:
+        """Mapping[:class:`str`, :class:`nextcord.Cog`]: A read-only mapping of cog name to cog.
+
+        .. versionchanged:: 2.3
+
+            :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
+
+        """
         return types.MappingProxyType(self.__cogs)
 
     # extensions
