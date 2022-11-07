@@ -25,8 +25,8 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from collections import UserList
 import os
+from collections import UserList
 from typing import TYPE_CHECKING, List, Optional, Tuple, Type, TypeVar, Union
 
 from ...components import SelectMenu
@@ -52,8 +52,13 @@ V = TypeVar("V", bound="View", covariant=True)
 
 
 class SelectValuesBase(UserList):
-    
-    def __init__(self, values: List[str], resolved: ComponentInteractionResolved, state: ConnectionState, guild: Optional[Guild]) -> None:
+    def __init__(
+        self,
+        values: List[str],
+        resolved: ComponentInteractionResolved,
+        state: ConnectionState,
+        guild: Optional[Guild],
+    ) -> None:
         self.data: List[Union[Member, User, Role, GuildChannel]] = []
         self._resolved = resolved
         users = resolved.get("users", {})
@@ -71,7 +76,7 @@ class SelectValuesBase(UserList):
             elif channels.get(value) and guild:
                 channel = state.get_channel(int(value))
                 self.append(channel)
-        
+
     @property
     def ids(self) -> List[int]:
         return [o.id for o in self.data]
@@ -209,7 +214,9 @@ class SelectBase(Item[V]):
     def refresh_component(self, component: SelectMenu) -> None:
         self._underlying = component
 
-    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         self._selected_values = data.get("values", [])
 
     @classmethod

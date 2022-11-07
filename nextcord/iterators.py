@@ -59,11 +59,10 @@ __all__ = (
 
 if TYPE_CHECKING:
     from .abc import Snowflake
-    from .audit_logs import AuditLogEntry
     from .guild import Guild
     from .member import Member
     from .message import Message
-    from .scheduled_events import ScheduledEvent, ScheduledEventUser
+    from .scheduled_events import ScheduledEvent, ScheduledEventUser  # noqa: F401
     from .threads import Thread
     from .types.audit_log import AuditLog as AuditLogPayload, AuditLogEntry as AuditLogEntryPayload
     from .types.guild import Ban as BanPayload, Guild as GuildPayload
@@ -243,7 +242,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
     """Iterator for receiving a channel's message history.
 
     The messages endpoint has two behaviours we care about here:
-    If ``before`` is specified, the messages endpoint returns the `limit`
+    If ``before`` is specified, the messages endpoint returns the ``limit``
     newest messages before ``before``, sorted with newest first. For filling over
     100 messages, update the ``before`` parameter to the oldest message received.
     Messages will be returned in order by time.
@@ -270,7 +269,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
         limit is an even number, this will return at most limit+1 messages.
     oldest_first: Optional[:class:`bool`]
         If set to ``True``, return messages in oldest->newest order. Defaults to
-        ``True`` if `after` is specified, otherwise ``False``.
+        ``True`` if ``after`` is specified, otherwise ``False``.
     """
 
     def __init__(self, messageable, limit, before=None, after=None, around=None, oldest_first=None):
@@ -614,7 +613,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
     newest guilds before ``before``, sorted with newest first. For filling over
     100 guilds, update the ``before`` parameter to the oldest guild received.
     Guilds will be returned in order by time.
-    If `after` is specified, it returns the ``limit`` oldest guilds after ``after``,
+    If ``after`` is specified, it returns the ``limit`` oldest guilds after ``after``,
     sorted with newest first. For filling over 100 guilds, update the ``after``
     parameter to the newest guild received, If guilds are not reversed, they
     will be out of order (99-0, 199-100, so on)

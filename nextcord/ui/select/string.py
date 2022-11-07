@@ -33,8 +33,8 @@ from ...enums import ComponentType
 from ...interactions import ClientT
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
-from ..view import View
 from ..item import ItemCallbackType
+from ..view import View
 from .base import SelectBase
 
 __all__ = (
@@ -261,7 +261,7 @@ def string_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ItemCallbackType[Select[V]]) -> ItemCallbackType[Select[V]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

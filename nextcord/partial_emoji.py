@@ -109,7 +109,7 @@ class PartialEmoji(_EmojiTag, AssetMixin):
     def from_dict(cls: Type[PE], data: Union[PartialEmojiPayload, Dict[str, Any]]) -> PE:
         return cls(
             animated=data.get("animated", False),
-            id=utils._get_as_snowflake(data, "id"),
+            id=utils.get_as_snowflake(data, "id"),
             name=data.get("name") or "",
         )
 

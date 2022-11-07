@@ -31,8 +31,8 @@ from ...components import MentionableSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...utils import MISSING
-from ..view import View
 from ..item import ItemCallbackType
+from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
@@ -57,12 +57,12 @@ class MentionableSelectValues(SelectValuesBase):
     def members(self) -> List[Member]:
         """List[:class:`Member`]: A list of members that were selected."""
         return [v for v in self.data if isinstance(v, Member)]
-    
+
     @property
     def users(self) -> List[User]:
         """List[:class:`User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
-    
+
     @property
     def roles(self) -> List[Role]:
         """List[:class:`Role`]: A list of roles that were selected."""
@@ -128,7 +128,7 @@ class MentionableSelect(SelectBase, Generic[V]):
             row=row,
             placeholder=placeholder,
         )
-        self._selected_values: MentionableSelectValues = [] # type: ignore
+        self._selected_values: MentionableSelectValues = []  # type: ignore
         self._underlying = MentionableSelectMenu._raw_construct(
             custom_id=self.custom_id,
             type=ComponentType.mentionable_select,
@@ -157,7 +157,9 @@ class MentionableSelect(SelectBase, Generic[V]):
             row=None,
         )
 
-    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         self._selected_values = MentionableSelectValues(
             data.get("values", []),
             data.get("resolved", {}),
@@ -174,7 +176,10 @@ def mentionable_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[MentionableSelect[V], ClientT]], ItemCallbackType[MentionableSelect[V], ClientT]]:
+) -> Callable[
+    [ItemCallbackType[MentionableSelect[V], ClientT]],
+    ItemCallbackType[MentionableSelect[V], ClientT],
+]:
     """A decorator that attaches a mentionable select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing

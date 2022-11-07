@@ -37,9 +37,9 @@ from nextcord.template import (
     VoiceRegion,
     _bytes_to_base64_data,
     _FriendlyHttpAttributeErrorHelper,
-    _get_as_snowflake,
     _PartialTemplateState,
     annotations,
+    get_as_snowflake,
     parse_time,
 )
 

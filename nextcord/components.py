@@ -548,9 +548,9 @@ class SelectOption:
         emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
         default: bool = False,
     ) -> None:
-        self.label = label
-        self.value = label if value is MISSING else value
-        self.description = description
+        self.label: str = label
+        self.value: str = label if value is MISSING else value
+        self.description: Optional[str] = description
 
         if emoji is not None:
             if isinstance(emoji, str):
@@ -562,8 +562,8 @@ class SelectOption:
                     f"Expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}"
                 )
 
-        self.emoji = emoji
-        self.default = default
+        self.emoji: Optional[PartialEmoji] = emoji
+        self.default: bool = default
 
     def __repr__(self) -> str:
         return (
