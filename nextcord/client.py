@@ -61,6 +61,7 @@ from .appinfo import AppInfo
 from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
+from .cog import Cog
 from .emoji import Emoji
 from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
 from .errors import *
@@ -92,7 +93,6 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand
     from .asset import Asset
     from .channel import DMChannel
-    from .cog import Cog
     from .enums import Locale
     from .file import File
     from .flags import MemberCacheFlags
