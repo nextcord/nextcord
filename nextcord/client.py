@@ -2567,7 +2567,7 @@ class Client:
         ----------
         cog: :class:`nextcord.Cog`
             The cog to register to the bot.
-        
+
         override: :class:`bool`
             If a previously loaded cog with the same name should be ejected
             instead of raising an error.
@@ -2604,7 +2604,7 @@ class Client:
         """Gets the cog instance requested.
 
         If the cog is not found, ``None`` is returned instead.
-        
+
         .. versionadded:: 2.3
 
         Parameters
@@ -2624,7 +2624,7 @@ class Client:
     def remove_cog(self, cog: Union[Cog, str]) -> Optional[Cog]:
         """Removes a cog from the client and returns it.
 
-        All registered commands that the cog has registered 
+        All registered commands that the cog has registered
         will be removed as well.
 
         If no cog is found then this method has no effect.
@@ -2642,11 +2642,8 @@ class Client:
         """
         stored_cog: Optional[Cog] = None
         if isinstance(cog, Cog):
-            for name, value in self.__cogs.items():
-                if value is cog:
-                    stored_cog = self.__cogs.pop(name)
-        else:
-            stored_cog = self.__cogs.pop(cog, None)
+            cog = cog.__cog_name__
+        stored_cog = self.__cogs.pop(cog, None)
 
         if stored_cog is None:
             return
