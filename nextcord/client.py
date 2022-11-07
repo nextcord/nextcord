@@ -2650,11 +2650,8 @@ class Client:
         """
         stored_cog: Optional[Cog] = None
         if isinstance(cog, Cog):
-            for name, value in self.__cogs.items():
-                if value is cog:
-                    stored_cog = self.__cogs.pop(name)
-        else:
-            stored_cog = self.__cogs.pop(cog, None)
+            cog = cog.__cog_name__
+        stored_cog = self.__cogs.pop(cog, None)
 
         if stored_cog is None:
             return
