@@ -19,7 +19,7 @@ isort = { cmd = "task lint isort", help = "Run isort" }
 lint = { cmd = "pre-commit run --all-files", help = "Check all files for linting errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Install the precommit hook" }
 pyright = { cmd = "dotenv -f task.env run -- pyright", help = "Run pyright" }
-slotscheck = { cmd = "python -m slotscheck --verbose -m nextcord", help = "Run slotscheck" }
+slotscheck = { cmd = "task lint slotscheck", help = "Run slotscheck" }
 
 
 [tool.slotscheck]
