@@ -265,7 +265,7 @@ class StringSelectMenu(SelectMenuBase):
 
     A select menu is functionally the same as a dropdown, however
     on mobile it renders a bit differently.
-    
+
     There is an alias for this class called :class:`SelectMenu`.
 
     .. note::
@@ -355,10 +355,7 @@ class UserSelectMenu(SelectMenuBase):
         self.type = ComponentType.user_select
 
     def to_dict(self) -> UserSelectMenuPayload:
-        payload: UserSelectMenuPayload = {
-            "type": self.type.value,
-            **super().to_dict()
-        }
+        payload: UserSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
 
         return payload
 
@@ -445,10 +442,7 @@ class MentionableSelectMenu(SelectMenuBase):
         self.type = ComponentType.mentionable_select
 
     def to_dict(self) -> MentionableSelectMenuPayload:
-        payload: MentionableSelectMenuPayload = {
-            "type": self.type.value,
-            **super().to_dict()
-        }
+        payload: MentionableSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
 
         return payload
 
@@ -496,10 +490,7 @@ class ChannelSelectMenu(SelectMenuBase):
         ]
 
     def to_dict(self) -> ChannelSelectMenuPayload:
-        payload: ChannelSelectMenuPayload = {
-            "type": self.type.value,
-            **super().to_dict()
-        }
+        payload: ChannelSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
         if self.channel_types:
             payload["channel_types"] = [t.value for t in self.channel_types]
 

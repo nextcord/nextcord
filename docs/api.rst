@@ -1618,7 +1618,7 @@ of :class:`enum.Enum`.
         Represents a mentionable select component.
 
         .. versionadded:: 2.3
-            
+
     .. attribute:: channel_select
 
         Represents a channel select component.

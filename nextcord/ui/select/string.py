@@ -47,13 +47,14 @@ __all__ = (
 S = TypeVar("S", bound="StringSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
+
 class StringSelect(SelectBase, Generic[V]):
     """Represents a UI string select menu.
 
     This is usually represented as a drop down menu.
 
     In order to get the selected items that the user has chosen, use :attr:`StringSelect.values`.
-    
+
     There is an alias for this class called :class:`Select`.
 
     .. versionadded:: 2.0
@@ -224,9 +225,11 @@ def string_select(
     options: List[SelectOption] = MISSING,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[StringSelect[V], ClientT]], ItemCallbackType[StringSelect[V], ClientT]]:
+) -> Callable[
+    [ItemCallbackType[StringSelect[V], ClientT]], ItemCallbackType[StringSelect[V], ClientT]
+]:
     """A decorator that attaches a string select menu to a component.
-    
+
     There is an alias for this function called ``select``.
 
     The function being decorated should have three parameters, ``self`` representing
