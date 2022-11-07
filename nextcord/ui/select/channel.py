@@ -30,10 +30,10 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
+from ...utils import MISSING
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
-from ...utils import MISSING
 
 if TYPE_CHECKING:
     from ...abc import GuildChannel
@@ -121,7 +121,7 @@ class ChannelSelect(SelectBase, Generic[V]):
             disabled=disabled,
             row=row,
         )
-        self._selected_values: ChannelSelectValues = [] # type: ignore
+        self._selected_values: ChannelSelectValues = []  # type: ignore
         self.channel_types: List[ChannelType] = channel_types
         self._underlying = ChannelSelectMenu._raw_construct(
             custom_id=custom_id,
@@ -151,8 +151,10 @@ class ChannelSelect(SelectBase, Generic[V]):
             disabled=component.disabled,
             row=None,
         )
-        
-    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         self._selected_values = ChannelSelectValues(
             data.get("values", []),
             data.get("resolved", {}),
@@ -170,7 +172,9 @@ def channel_select(
     disabled: bool = False,
     row: Optional[int] = None,
     channel_types: List[ChannelType] = MISSING,
-) -> Callable[[ItemCallbackType[ChannelSelect[V], ClientT]], ItemCallbackType[ChannelSelect[V], ClientT]]:
+) -> Callable[
+    [ItemCallbackType[ChannelSelect[V], ClientT]], ItemCallbackType[ChannelSelect[V], ClientT]
+]:
     """A decorator that attaches a channel select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing

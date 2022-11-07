@@ -32,8 +32,8 @@ from ...enums import ComponentType
 from ...interactions import ClientT
 from ...state import ConnectionState
 from ...utils import MISSING
-from ..view import View
 from ..item import ItemCallbackType
+from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
@@ -115,7 +115,7 @@ class RoleSelect(SelectBase, Generic[V]):
             row=row,
             placeholder=placeholder,
         )
-        self._selected_values: RoleSelectValues = [] # type: ignore
+        self._selected_values: RoleSelectValues = []  # type: ignore
         self._underlying = RoleSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.role_select,
@@ -143,8 +143,10 @@ class RoleSelect(SelectBase, Generic[V]):
             disabled=component.disabled,
             row=None,
         )
-        
-    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         self._selected_values = RoleSelectValues(
             data.get("values", []),
             data.get("resolved", {}),

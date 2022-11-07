@@ -33,8 +33,8 @@ from ...interactions import ClientT
 from ...member import Member
 from ...user import User
 from ...utils import MISSING
-from ..view import View
 from ..item import ItemCallbackType
+from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ class UserSelectValues(SelectValuesBase):
     @property
     def members(self) -> List[Member]:
         return [v for v in self.data if isinstance(v, Member)]
-    
+
     @property
     def users(self) -> List[User]:
         return [v for v in self.data if isinstance(v, User)]
@@ -118,7 +118,7 @@ class UserSelect(SelectBase, Generic[V]):
             max_values=max_values,
             disabled=disabled,
         )
-        self._selected_values: UserSelectValues = [] # type: ignore
+        self._selected_values: UserSelectValues = []  # type: ignore
         self._underlying = UserSelectMenu._raw_construct(
             custom_id=custom_id,
             type=ComponentType.user_select,
@@ -147,8 +147,10 @@ class UserSelect(SelectBase, Generic[V]):
             disabled=component.disabled,
             row=None,
         )
-        
-    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         self._selected_values = UserSelectValues(
             data.get("values", []),
             data.get("resolved", {}),
