@@ -2563,10 +2563,6 @@ class Client:
 
         A cog is a class that has its own commands.
 
-        .. versionchanged:: 2.3
-
-            This method is now documented.
-
         Parameters
         ----------
         cog: :class:`nextcord.Cog`
@@ -2632,10 +2628,6 @@ class Client:
         will be removed as well.
 
         If no cog is found then this method has no effect.
-
-        .. versionchanged:: 2.3
-
-            This method is now documented.
 
         Parameters
         ----------
