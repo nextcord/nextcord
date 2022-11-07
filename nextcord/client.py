@@ -30,6 +30,7 @@ import logging
 import signal
 import sys
 import traceback
+import types
 import warnings
 from typing import (
     TYPE_CHECKING,
@@ -40,6 +41,7 @@ from typing import (
     Generator,
     Iterable,
     List,
+    Mapping,
     Optional,
     Sequence,
     Set,
@@ -337,7 +339,7 @@ class Client:
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
         self._lazy_load_commands: bool = lazy_load_commands
-        self._client_cogs: Set[Cog] = set()
+        self.__cogs: Dict[str, Cog] = {}
         self._rollout_associate_known: bool = rollout_associate_known
         self._rollout_delete_unknown: bool = rollout_delete_unknown
         self._rollout_register_new: bool = rollout_register_new
@@ -480,6 +482,14 @@ class Client:
         .. versionadded:: 2.0
         """
         return self._connection.application_flags
+
+    @property
+    def cogs(self) -> Mapping[str, Cog]:
+        """Mapping[:class:`str`, :class:`nextcord.Cog`]: A read-only mapping of cog name to cog.
+
+        .. versionadded:: 2.3
+        """
+        return types.MappingProxyType(self.__cogs)
 
     def is_ready(self) -> bool:
         """:class:`bool`: Specifies if the client's internal cache is ready for use."""
@@ -2543,23 +2553,116 @@ class Client:
 
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
-        for cog in self._client_cogs:
+        for cog in self.__cogs.values():
             if to_register := cog.application_commands:
                 for cmd in to_register:
                     self.add_application_command(cmd, use_rollout=True, pre_remove=False)
 
-    def add_cog(self, cog: Cog) -> None:
-        # cog.process_app_cmds()
+    def add_cog(self, cog: Cog, *, override: bool = False) -> None:
+        """Adds a "cog" to the client.
+
+        A cog is a class that has its own commands.
+
+        .. versionchanged:: 2.3
+
+            This method is now documented.
+
+        Parameters
+        ----------
+        cog: :class:`nextcord.Cog`
+            The cog to register to the bot.
+        
+        override: :class:`bool`
+            If a previously loaded cog with the same name should be ejected
+            instead of raising an error.
+
+            .. versionadded:: 2.3
+
+        Raises
+        ------
+        TypeError
+            The cog does not inherit from :class:`Cog`.
+        CommandError
+            An error happened during loading.
+        ClientException
+            A cog with the same name is already loaded.
+        """
+
+        if not isinstance(cog, Cog):
+            raise TypeError("cogs must derive from nextcord.Cog")
+
+        cog_name = cog.__cog_name__
+        existing = self.__cogs.get(cog_name)
+
+        if existing is not None:
+            if not override:
+                raise ClientException(f"Cog named {cog_name!r} already loaded")
+            self.remove_cog(cog_name)
+
         for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
 
-        self._client_cogs.add(cog)
+        self.__cogs[cog_name] = cog
 
-    def remove_cog(self, cog: Cog) -> None:
-        for app_cmd in cog.application_commands:
+    def get_cog(self, name: str) -> Optional[Cog]:
+        """Gets the cog instance requested.
+
+        If the cog is not found, ``None`` is returned instead.
+        
+        .. versionadded:: 2.3
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The name of the cog you are requesting.
+            This is equivalent to the name passed via keyword
+            argument in class creation or the class name if unspecified.
+
+        Returns
+        -------
+        Optional[:class:`Cog`]
+            The cog that was requested. If not found, returns ``None``.
+        """
+        return self.__cogs.get(name)
+
+    def remove_cog(self, cog: Union[Cog, str]) -> Optional[Cog]:
+        """Removes a cog from the client and returns it.
+
+        All registered commands that the cog has registered 
+        will be removed as well.
+
+        If no cog is found then this method has no effect.
+
+        .. versionchanged:: 2.3
+
+            This method is now documented.
+
+        Parameters
+        ----------
+        name: Union[:class:`str`, :class:`Cog`]
+            Either the name of the cog to remove or the instance
+            of the cog to remove.
+
+        Returns
+        -------
+        Optional[:class:`nextcord.Cog`]
+             The cog that was removed. ``None`` if not found.
+        """
+        stored_cog: Optional[Cog] = None
+        if isinstance(cog, Cog):
+            for name, value in self.__cogs.items():
+                if value is cog:
+                    stored_cog = self.__cogs.pop(name)
+        else:
+            stored_cog = self.__cogs.pop(cog, None)
+
+        if stored_cog is None:
+            return
+
+        for app_cmd in stored_cog.application_commands:
             self._connection.remove_application_command(app_cmd)
 
-        self._client_cogs.discard(cog)
+        return stored_cog
 
     def user_command(
         self,

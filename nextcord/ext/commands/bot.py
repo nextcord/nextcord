@@ -167,6 +167,8 @@ _NonCallablePrefix = Union[str, Sequence[str]]
 
 
 class BotBase(GroupMixin):
+    __cogs: Dict[str, nextcord.Cog]
+
     def __init__(
         self,
         command_prefix: Union[
@@ -190,7 +192,6 @@ class BotBase(GroupMixin):
 
         self.command_prefix = command_prefix if command_prefix is not MISSING else tuple()
         self.extra_events: Dict[str, List[CoroFunc]] = {}
-        self.__cogs: Dict[str, nextcord.Cog] = {}
         self.__extensions: Dict[str, types.ModuleType] = {}
         self._checks: List[Check] = []
         self._check_once = []
@@ -633,20 +634,8 @@ class BotBase(GroupMixin):
             A cog with the same name is already loaded.
         """
 
-        if not isinstance(cog, nextcord.Cog):
-            raise TypeError("cogs must derive from nextcord.Cog")
-
-        cog_name = cog.__cog_name__
-        existing = self.__cogs.get(cog_name)
-
-        if existing is not None:
-            if not override:
-                raise nextcord.ClientException(f"Cog named {cog_name!r} already loaded")
-            self.remove_cog(cog_name)
-
         if isinstance(cog, Cog):
             cog = cog._inject(self)
-        self.__cogs[cog_name] = cog
 
         # TODO: This blind call to nextcord.Client is dumb.
         super().add_cog(cog)  # type: ignore
@@ -657,31 +646,7 @@ class BotBase(GroupMixin):
         # Whatever warning that your IDE is giving about the above line of code is correct. When Bot + BotBase
         # inevitably get reworked, make me happy and fix this.
 
-    def get_cog(self, name: str) -> Optional[nextcord.Cog]:
-        """Gets the cog instance requested.
-
-        If the cog is not found, ``None`` is returned instead.
-
-        Parameters
-        ----------
-        name: :class:`str`
-            The name of the cog you are requesting.
-            This is equivalent to the name passed via keyword
-            argument in class creation or the class name if unspecified.
-
-        Returns
-        -------
-        Optional[:class:`nextcord.Cog`]
-            The cog that was requested. If not found, returns ``None``.
-
-            .. versionchanged:: 2.3
-
-                :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
-
-        """
-        return self.__cogs.get(name)
-
-    def remove_cog(self, name: str) -> Optional[nextcord.Cog]:
+    def remove_cog(self, name: Union[str, nextcord.Cog]) -> Optional[nextcord.Cog]:
         """Removes a cog from the bot and returns it.
 
         All registered commands and event listeners that the
@@ -691,8 +656,17 @@ class BotBase(GroupMixin):
 
         Parameters
         ----------
-        name: :class:`str`
-            The name of the cog to remove.
+        name: Union[:class:`str`, :class:`nextcord.Cog`]
+            Either the name of the cog to remove or the instance
+            of the cog to remove.
+
+            .. versionchanged:: 2.3
+
+                You can now provide the instance of the cog to remove.
+
+            .. versionchanged:: 2.3
+
+                :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
 
         Returns
         -------
@@ -705,33 +679,21 @@ class BotBase(GroupMixin):
 
         """
 
-        cog = self.__cogs.pop(name, None)
-        if cog is None:
+        # TODO: This blind call to nextcord.Client is dumb.
+        actual_cog = super().remove_cog(name)  # type: ignore
+        # See Bot.add_cog() for the reason why.
+
+        if actual_cog is None:
             return
 
         help_command = self._help_command
-        if help_command and help_command.cog is cog:
+        if help_command and help_command.cog is actual_cog:
             help_command.cog = None
 
-        if isinstance(cog, Cog):
-            cog._eject(self)
+        if isinstance(actual_cog, Cog):
+            actual_cog._eject(self)
 
-        # TODO: This blind call to nextcord.Client is dumb.
-        super().remove_cog(cog)  # type: ignore
-        # See Bot.add_cog() for the reason why.
-
-        return cog
-
-    @property
-    def cogs(self) -> Mapping[str, nextcord.Cog]:
-        """Mapping[:class:`str`, :class:`nextcord.Cog`]: A read-only mapping of cog name to cog.
-
-        .. versionchanged:: 2.3
-
-            :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
-
-        """
-        return types.MappingProxyType(self.__cogs)
+        return actual_cog
 
     # extensions
 
