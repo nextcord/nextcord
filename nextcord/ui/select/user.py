@@ -120,14 +120,13 @@ class UserSelect(SelectBase, Generic[V]):
         )
         self._selected_values: UserSelectValues = [] # type: ignore
         self._underlying = UserSelectMenu._raw_construct(
-            custom_id=custom_id,
+            custom_id=self.custom_id,
             type=ComponentType.user_select,
-            placeholder=placeholder,
-            min_values=min_values,
-            max_values=max_values,
-            disabled=disabled,
+            placeholder=self.placeholder,
+            min_values=self.min_values,
+            max_values=self.max_values,
+            disabled=self.disabled,
         )
-        self.row = row
 
     @property
     def values(self) -> UserSelectValues:

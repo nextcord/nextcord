@@ -1604,15 +1604,26 @@ of :class:`enum.Enum`.
     .. attribute:: user_select
 
         Represents a user select component.
+
+        .. versionadded:: 2.3
+
     .. attribute:: role_select
 
         Represents a role select component.
+
+        .. versionadded:: 2.3
+
     .. attribute:: mentionable_select
 
         Represents a mentionable select component.
+
+        .. versionadded:: 2.3
+            
     .. attribute:: channel_select
 
         Represents a channel select component.
+
+        .. versionadded:: 2.3
 
 
 .. class:: ButtonStyle

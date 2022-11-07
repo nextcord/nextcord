@@ -130,12 +130,12 @@ class MentionableSelect(SelectBase, Generic[V]):
         )
         self._selected_values: MentionableSelectValues = [] # type: ignore
         self._underlying = MentionableSelectMenu._raw_construct(
-            custom_id=custom_id,
+            custom_id=self.custom_id,
             type=ComponentType.mentionable_select,
-            placeholder=placeholder,
-            min_values=min_values,
-            max_values=max_values,
-            disabled=disabled,
+            placeholder=self.placeholder,
+            min_values=self.min_values,
+            max_values=self.max_values,
+            disabled=self.disabled,
         )
 
     @property

@@ -25,7 +25,6 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import os
 from typing import Callable, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
 from ...components import SelectMenu, SelectOption
@@ -45,15 +44,17 @@ __all__ = (
     "string_select",
 )
 
-S = TypeVar("S", bound="Select")
+S = TypeVar("S", bound="StringSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
-class Select(SelectBase, Generic[V]):
-    """Represents a UI select menu.
+class StringSelect(SelectBase, Generic[V]):
+    """Represents a UI string select menu.
 
     This is usually represented as a drop down menu.
 
-    In order to get the selected items that the user has chosen, use :attr:`Select.values`.
+    In order to get the selected items that the user has chosen, use :attr:`StringSelect.values`.
+    
+    There is an alias for this class called :class:`Select`.
 
     .. versionadded:: 2.0
 
@@ -112,13 +113,13 @@ class Select(SelectBase, Generic[V]):
         self._selected_values: List[str] = []
         options = [] if options is MISSING else options
         self._underlying = SelectMenu._raw_construct(
-            custom_id=custom_id,
+            custom_id=self.custom_id,
             type=ComponentType.select,
-            placeholder=placeholder,
-            min_values=min_values,
-            max_values=max_values,
+            placeholder=self.placeholder,
+            min_values=self.min_values,
+            max_values=self.max_values,
+            disabled=self.disabled,
             options=options,
-            disabled=disabled,
         )
 
     @property
@@ -214,7 +215,7 @@ class Select(SelectBase, Generic[V]):
         )
 
 
-def select(
+def string_select(
     *,
     placeholder: Optional[str] = None,
     custom_id: str = MISSING,
@@ -223,8 +224,10 @@ def select(
     options: List[SelectOption] = MISSING,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[Select[V], ClientT]], ItemCallbackType[Select[V], ClientT]]:
-    """A decorator that attaches a select menu to a component.
+) -> Callable[[ItemCallbackType[StringSelect[V], ClientT]], ItemCallbackType[StringSelect[V], ClientT]]:
+    """A decorator that attaches a string select menu to a component.
+    
+    There is an alias for this function called ``select``.
 
     The function being decorated should have three parameters, ``self`` representing
     the :class:`nextcord.ui.View`, the :class:`nextcord.ui.Select` being pressed and
@@ -262,7 +265,7 @@ def select(
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
-        func.__discord_ui_model_type__ = Select
+        func.__discord_ui_model_type__ = StringSelect
         func.__discord_ui_model_kwargs__ = {
             "placeholder": placeholder,
             "custom_id": custom_id,
@@ -277,5 +280,5 @@ def select(
     return decorator
 
 
-StringSelect = Select
-string_select = select
+Select = StringSelect
+select = string_select

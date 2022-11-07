@@ -265,6 +265,8 @@ class StringSelectMenu(SelectMenuBase):
 
     A select menu is functionally the same as a dropdown, however
     on mobile it renders a bit differently.
+    
+    There is an alias for this class called :class:`SelectMenu`.
 
     .. note::
 
@@ -303,11 +305,11 @@ class StringSelectMenu(SelectMenuBase):
         ]
 
     def to_dict(self) -> SelectMenuPayload:
-        payload: SelectMenuPayload = super().to_dict()  # type: ignore
-
-        payload["type"] = self.type.value
-        if self.options:
-            payload["options"] = [op.to_dict() for op in self.options]
+        payload: SelectMenuPayload = {
+            "type": self.type.value,
+            "options": [op.to_dict() for op in self.options],
+            **super().to_dict(),
+        }
 
         return payload
 
@@ -353,8 +355,10 @@ class UserSelectMenu(SelectMenuBase):
         self.type = ComponentType.user_select
 
     def to_dict(self) -> UserSelectMenuPayload:
-        payload: UserSelectMenuPayload = super().to_dict()  # type: ignore
-        payload["type"] = self.type.value
+        payload: UserSelectMenuPayload = {
+            "type": self.type.value,
+            **super().to_dict()
+        }
 
         return payload
 
@@ -441,8 +445,10 @@ class MentionableSelectMenu(SelectMenuBase):
         self.type = ComponentType.mentionable_select
 
     def to_dict(self) -> MentionableSelectMenuPayload:
-        payload: MentionableSelectMenuPayload = super().to_dict()  # type: ignore
-        payload["type"] = self.type.value
+        payload: MentionableSelectMenuPayload = {
+            "type": self.type.value,
+            **super().to_dict()
+        }
 
         return payload
 
@@ -490,9 +496,10 @@ class ChannelSelectMenu(SelectMenuBase):
         ]
 
     def to_dict(self) -> ChannelSelectMenuPayload:
-        payload: ChannelSelectMenuPayload = super().to_dict()  # type: ignore
-
-        payload["type"] = self.type.value
+        payload: ChannelSelectMenuPayload = {
+            "type": self.type.value,
+            **super().to_dict()
+        }
         if self.channel_types:
             payload["channel_types"] = [t.value for t in self.channel_types]
 
