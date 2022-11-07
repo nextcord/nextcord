@@ -33,7 +33,6 @@ from typing import (
     Dict,
     Generator,
     List,
-    Optional,
     Tuple,
     Type,
     TypeVar,
@@ -41,7 +40,6 @@ from typing import (
 
 import nextcord.utils
 from nextcord.application_command import ClientCog, _cog_special_method
-from nextcord.interactions import Interaction
 
 from ._types import _BaseCommand
 

@@ -25,8 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import os
-from typing import Callable, Generic, List, Optional, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
 from ...components import SelectMenu, SelectOption
 from ...emoji import Emoji
@@ -34,8 +33,8 @@ from ...enums import ComponentType
 from ...interactions import ClientT
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
-from ..view import View
 from ..item import ItemCallbackType
+from ..view import View
 from .base import SelectBase
 
 __all__ = (
@@ -45,8 +44,13 @@ __all__ = (
     "string_select",
 )
 
+if TYPE_CHECKING:
+    from ...interactions import ClientT
+    from ..view import View
+
 S = TypeVar("S", bound="Select")
 V = TypeVar("V", bound="View", covariant=True)
+
 
 class Select(SelectBase, Generic[V]):
     """Represents a UI select menu.
@@ -258,7 +262,7 @@ def select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ItemCallbackType[Select[V]]) -> ItemCallbackType[Select[V]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

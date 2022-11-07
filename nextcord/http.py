@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import sys
 import warnings
@@ -71,7 +70,6 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from .enums import AuditLogAction, InteractionResponseType
-    from .file import File
     from .types import (
         appinfo,
         audit_log,
@@ -107,7 +105,7 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
     text = await response.text(encoding="utf-8")
     try:
         if response.headers["content-type"] == "application/json":
-            return utils._from_json(text)
+            return utils.from_json(text)
     except KeyError:
         # Thanks Cloudflare
         pass
@@ -279,7 +277,7 @@ class HTTPClient:
         # some checking if it's a JSON request
         if "json" in kwargs:
             headers["Content-Type"] = "application/json"
-            kwargs["data"] = utils._to_json(kwargs.pop("json"))
+            kwargs["data"] = utils.to_json(kwargs.pop("json"))
 
         try:
             reason = kwargs.pop("reason")
@@ -333,9 +331,7 @@ class HTTPClient:
                         remaining = response.headers.get("X-Ratelimit-Remaining")
                         if remaining == "0" and response.status != 429:
                             # we've depleted our current bucket
-                            delta = utils._parse_ratelimit_header(
-                                response, use_clock=self.use_clock
-                            )
+                            delta = utils.parse_ratelimit_header(response, use_clock=self.use_clock)
                             _log.debug(
                                 "A rate limit bucket has been exhausted (bucket: %s, retry: %s).",
                                 bucket,
@@ -485,7 +481,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -529,7 +525,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[int, str]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -562,7 +558,7 @@ class HTTPClient:
         content: Optional[str] = None,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -605,7 +601,7 @@ class HTTPClient:
                     "content_type": "application/octet-stream",
                 }
             )
-        form.append({"name": "payload_json", "value": utils._to_json(payload)})
+        form.append({"name": "payload_json", "value": utils.to_json(payload)})
 
         return form
 
@@ -618,7 +614,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -653,7 +649,7 @@ class HTTPClient:
         tts: bool = False,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[int, str]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
@@ -1002,6 +998,7 @@ class HTTPClient:
             "invitable",
             "default_auto_archive_duration",
             "flags",
+            "default_sort_order",
         )
         payload = {k: v for k, v in options.items() if k in valid_keys}
         return self.request(r, reason=reason, json=payload)
@@ -1041,6 +1038,7 @@ class HTTPClient:
             "rtc_region",
             "video_quality_mode",
             "auto_archive_duration",
+            "default_sort_order",
         )
         payload.update({k: v for k, v in options.items() if k in valid_keys and v is not None})
 
@@ -1114,7 +1112,7 @@ class HTTPClient:
         content: Optional[str] = None,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
@@ -1151,7 +1149,7 @@ class HTTPClient:
         content: Optional[str] = None,
         embed: Optional[embed.Embed] = None,
         embeds: Optional[List[embed.Embed]] = None,
-        nonce: Optional[str] = None,
+        nonce: Optional[Union[str, int]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
@@ -2163,7 +2161,7 @@ class HTTPClient:
         form: List[Dict[str, Any]] = [
             {
                 "name": "payload_json",
-                "value": utils._to_json(payload),
+                "value": utils.to_json(payload),
             }
         ]
 

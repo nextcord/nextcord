@@ -128,7 +128,7 @@ class TextInput(Item[V]):
         return self._underlying.style
 
     @style.setter
-    def style(self, value: TextInputStyle):
+    def style(self, value: TextInputStyle) -> None:
         self._underlying.style = value
 
     @property
@@ -137,7 +137,7 @@ class TextInput(Item[V]):
         return self._underlying.custom_id
 
     @custom_id.setter
-    def custom_id(self, value: Optional[str]):
+    def custom_id(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("custom_id must be None or str")
 
@@ -149,7 +149,7 @@ class TextInput(Item[V]):
         return self._underlying.label
 
     @label.setter
-    def label(self, value: str):
+    def label(self, value: str) -> None:
         if value is None:
             raise TypeError("label must cannot be None")
         self._underlying.label = str(value)
@@ -160,7 +160,7 @@ class TextInput(Item[V]):
         return self._underlying.min_length
 
     @min_length.setter
-    def min_length(self, value: int):
+    def min_length(self, value: int) -> None:
         self._underlying.min_length = value
 
     @property
@@ -169,7 +169,7 @@ class TextInput(Item[V]):
         return self._underlying.max_length
 
     @max_length.setter
-    def max_length(self, value: int):
+    def max_length(self, value: int) -> None:
         self._underlying.max_length = value
 
     @property
@@ -178,7 +178,7 @@ class TextInput(Item[V]):
         return self._underlying.required
 
     @required.setter
-    def required(self, value: Optional[bool]):
+    def required(self, value: Optional[bool]) -> None:
         if value is not None and not isinstance(value, bool):
             raise TypeError("required must be None or bool")
 
@@ -190,7 +190,7 @@ class TextInput(Item[V]):
         return self._underlying.value
 
     @default_value.setter
-    def default_value(self, value: Optional[str]):
+    def default_value(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("default_value must be None or str")
         self._underlying.value = value
@@ -209,7 +209,7 @@ class TextInput(Item[V]):
         return self._underlying.placeholder
 
     @placeholder.setter
-    def placeholder(self, value: Optional[str]):
+    def placeholder(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("placeholder must be None or str")
 
@@ -246,5 +246,7 @@ class TextInput(Item[V]):
     def refresh_component(self, text_input: TextInputComponent) -> None:
         self._underlying = text_input
 
-    def refresh_state(self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]) -> None:
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         self._inputed_value = data.get("value", "")
