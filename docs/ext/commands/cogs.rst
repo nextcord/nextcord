@@ -5,7 +5,7 @@
 Cogs
 ====
 
-:class:`~.commands.Cog` is like :class:`nextcord.Cog` except it adds support for :class:`~.commands.Command`
+:class:`~.commands.Cog` is similar to :class:`nextcord.Cog` except it adds support for :class:`~.commands.Command`
 and more special methods.
 
 It should be noted that cogs are typically used alongside with :ref:`ext_commands_extensions`.
