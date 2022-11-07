@@ -613,7 +613,7 @@ class ConnectionState:
         command: :class:`BaseApplicationCommand`
             The command to add/update the state with.
         overwrite: :class:`bool`
-            If the library will let you add a command that overlaps with an existing command. Default `False`
+            If the library will let you add a command that overlaps with an existing command. Default ``False``.
         use_rollout: :class:`bool`
             If the command should be added to the state with its rollout guild IDs.
         pre_remove: :class:`bool`
@@ -712,7 +712,7 @@ class ConnectionState:
             If local commands that match a command already on Discord should be associated with each other.
             Defaults to ``True``
         delete_unknown: :class:`bool`
-            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
             Defaults to ``True``
@@ -784,27 +784,27 @@ class ConnectionState:
     ) -> None:
         """|coro|
         Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
-        global commands if the guild_id is `None`.
+        global commands if the guild_id is ``None``.
 
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
             Data to use when comparing local application commands to what Discord has. Should be a list of application
-            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`.
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``.
         guild_id: Optional[:class:`int`]
-            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
-            Defaults to `None`.
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
         associate_known: :class:`bool`
             If local commands that match a command already on Discord should be associated with each other.
-            Defaults to `True`
+            Defaults to ``True``.
         delete_unknown: :class:`bool`
-            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
-            Defaults to `True`
+            Defaults to ``True``.
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
-            Defaults to `True`
+            Defaults to ``True``.
 
         """
         _log.debug("Syncing commands to %s", guild_id)
@@ -847,18 +847,18 @@ class ConnectionState:
         Parameters
         ----------
         data: Optional[List[:class:`dict]]
-            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
+            Payload from ``HTTPClient.get_guild_commands`` or ``HTTPClient.get_global_commands`` to deploy with. If None,
             the payload will be retrieved from Discord.
         guild_id: Optional[:class:`int`]
-            Guild ID to deploy application commands to. If `None`, global commands are deployed to.
+            Guild ID to deploy application commands to. If ``None``, global commands are deployed to.
         associate_known: :class:`bool`
             If True, commands on Discord that pass a signature check and a deep check will be associated with locally
             added ApplicationCommand objects.
         delete_unknown: :class:`bool`
-            If `True`, commands on Discord that fail a signature check will be removed. If `update_known` is False,
+            If ``True``, commands on Discord that fail a signature check will be removed. If ``update_known`` is False,
             commands that pass the signature check but fail the deep check will also be removed.
         update_known: :class:`bool`
-            If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
+            If ``True``, commands on Discord that pass a signature check but fail the deep check will be updated.
         """
         if not associate_known and not delete_unknown and not update_known:
             # If everything is disabled, there is no point in doing anything.
@@ -1002,10 +1002,10 @@ class ConnectionState:
         ----------
         data: Optional[List[:class:`dict`]]
             Data to use when comparing local application commands to what Discord has. Should be a list of application
-            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``
         guild_id: Optional[:class:`int`]
-            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
-            Defaults to `None`.
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
         """
         if not data:
             if self.application_id is None:
@@ -1046,8 +1046,8 @@ class ConnectionState:
         command: :class:`BaseApplicationCommand`
             Application command to register.
         guild_id: Optional[:class:`int`]
-            ID of the guild to register the application commands to. If set to `None`, the commands will be registered
-            as global commands instead. Defaults to `None`.
+            ID of the guild to register the application commands to. If set to ``None``, the commands will be registered
+            as global commands instead. Defaults to ``None``.
         """
         payload: EditApplicationCommand = command.get_payload(guild_id)  # type: ignore
         _log.info(
@@ -1085,7 +1085,7 @@ class ConnectionState:
         command: :class:`ApplicationCommand`
             Application command to delete.
         guild_id: Optional[:class:`int`]
-            Guild ID to delete the application commands from. If `None`, the command is deleted from global.
+            Guild ID to delete the application commands from. If ``None``, the command is deleted from global.
         """
         if self.application_id is None:
             raise NotImplementedError("Could not get the current application id")
@@ -1253,7 +1253,7 @@ class ConnectionState:
             except KeyError:
                 pass
             else:
-                self.application_id = utils._get_as_snowflake(application, "id")
+                self.application_id = utils.get_as_snowflake(application, "id")
                 # flags will always be present here
                 self.application_flags = ApplicationFlags._from_value(application["flags"])
 
@@ -1322,7 +1322,7 @@ class ConnectionState:
 
     def parse_message_reaction_add(self, data) -> None:
         emoji = data["emoji"]
-        emoji_id = utils._get_as_snowflake(emoji, "id")
+        emoji_id = utils.get_as_snowflake(emoji, "id")
         emoji = PartialEmoji.with_state(
             self, id=emoji_id, animated=emoji.get("animated", False), name=emoji["name"]
         )
@@ -1361,7 +1361,7 @@ class ConnectionState:
 
     def parse_message_reaction_remove(self, data) -> None:
         emoji = data["emoji"]
-        emoji_id = utils._get_as_snowflake(emoji, "id")
+        emoji_id = utils.get_as_snowflake(emoji, "id")
         emoji = PartialEmoji.with_state(self, id=emoji_id, name=emoji["name"])
         raw = RawReactionActionEvent(data, emoji, "REACTION_REMOVE")
         self.dispatch("raw_reaction_remove", raw)
@@ -1380,7 +1380,7 @@ class ConnectionState:
 
     def parse_message_reaction_remove_emoji(self, data) -> None:
         emoji = data["emoji"]
-        emoji_id = utils._get_as_snowflake(emoji, "id")
+        emoji_id = utils.get_as_snowflake(emoji, "id")
         emoji = PartialEmoji.with_state(self, id=emoji_id, name=emoji["name"])
         raw = RawReactionClearEmojiEvent(data, emoji)
         self.dispatch("raw_reaction_clear_emoji", raw)
@@ -1409,7 +1409,7 @@ class ConnectionState:
         self.dispatch("interaction", interaction)
 
     def parse_presence_update(self, data) -> None:
-        guild_id = utils._get_as_snowflake(data, "guild_id")
+        guild_id = utils.get_as_snowflake(data, "guild_id")
         # guild_id won't be None here
         guild = self._get_guild(guild_id)
         if guild is None:
@@ -1449,7 +1449,7 @@ class ConnectionState:
         self.dispatch("invite_delete", invite)
 
     def parse_channel_delete(self, data) -> None:
-        guild = self._get_guild(utils._get_as_snowflake(data, "guild_id"))
+        guild = self._get_guild(utils.get_as_snowflake(data, "guild_id"))
         channel_id = int(data["id"])
         if guild is not None:
             channel = guild.get_channel(channel_id)
@@ -1468,7 +1468,7 @@ class ConnectionState:
             self.dispatch("private_channel_update", old_channel, channel)
             return
 
-        guild_id = utils._get_as_snowflake(data, "guild_id")
+        guild_id = utils.get_as_snowflake(data, "guild_id")
         guild = self._get_guild(guild_id)
         if guild is not None:
             channel = guild.get_channel(channel_id)
@@ -1491,7 +1491,7 @@ class ConnectionState:
             )
             return
 
-        guild_id = utils._get_as_snowflake(data, "guild_id")
+        guild_id = utils.get_as_snowflake(data, "guild_id")
         guild = self._get_guild(guild_id)
         if guild is not None:
             # the factory can't be a DMChannel or GroupChannel here
@@ -2071,8 +2071,8 @@ class ConnectionState:
             )
 
     def parse_voice_state_update(self, data) -> None:
-        guild = self._get_guild(utils._get_as_snowflake(data, "guild_id"))
-        channel_id = utils._get_as_snowflake(data, "channel_id")
+        guild = self._get_guild(utils.get_as_snowflake(data, "guild_id"))
+        channel_id = utils.get_as_snowflake(data, "channel_id")
         flags = self.member_cache_flags
         # self.user is *always* cached when this is called
         self_id = self.user.id  # type: ignore
@@ -2160,7 +2160,7 @@ class ConnectionState:
         return self.get_user(user_id)
 
     def get_reaction_emoji(self, data) -> Union[Emoji, PartialEmoji]:
-        emoji_id = utils._get_as_snowflake(data, "id")
+        emoji_id = utils.get_as_snowflake(data, "id")
 
         if not emoji_id:
             return data["name"]
@@ -2395,7 +2395,11 @@ class AutoShardedConnectionState(ConnectionState):
         key: Callable[[tuple[Guild, Future[list[Member]]]], int] = lambda g: g[0].shard_id
         guilds = sorted(processed, key=key)
         for shard_id, info in itertools.groupby(guilds, key=key):
-            children, futures = zip(*info)
+            children: Tuple[Guild]
+            futures: Tuple[Future]
+            # zip with `*` should, and will, return 2 tuples since every element is 2 length
+            # but pyright believes otherwise.
+            children, futures = zip(*info)  # type: ignore
             # 110 reqs/minute w/ 1 req/guild plus some buffer
             timeout = 61 * (len(children) / 110)
             try:
@@ -2408,7 +2412,7 @@ class AutoShardedConnectionState(ConnectionState):
                     len(guilds),
                 )
             for guild in children:
-                if guild.unavailable is False:  # type: ignore # pylance this is a guild :)
+                if guild.unavailable is False:
                     self.dispatch("guild_available", guild)
                 else:
                     self.dispatch("guild_join", guild)
@@ -2444,7 +2448,7 @@ class AutoShardedConnectionState(ConnectionState):
             except KeyError:
                 pass
             else:
-                self.application_id = utils._get_as_snowflake(application, "id")
+                self.application_id = utils.get_as_snowflake(application, "id")
                 self.application_flags = ApplicationFlags._from_value(application["flags"])
 
         for guild_data in data["guilds"]:

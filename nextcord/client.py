@@ -568,7 +568,7 @@ class Client:
 
         The default error handler provided by the client.
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
         Check :func:`~nextcord.on_error` for more details.
         """
@@ -582,7 +582,7 @@ class Client:
 
         The default application command error handler provided by the bot.
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
 
         This only fires if you do not specify any listeners for command error.
@@ -1529,7 +1529,7 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        icon_base64 = await utils._obj_to_base64_data(icon)
+        icon_base64 = await utils.obj_to_base64_data(icon)
 
         if code:
             data = await self.http.create_from_template(code, name, str(region), icon_base64)
@@ -2259,27 +2259,27 @@ class Client:
     ) -> None:
         """|coro|
         Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
-        global commands if the guild_id is `None`.
+        global commands if the guild_id is ``None``.
 
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
             Data to use when comparing local application commands to what Discord has. Should be a list of application
-            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`.
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``.
         guild_id: Optional[:class:`int`]
-            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
-            Defaults to `None`.
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
         associate_known: :class:`bool`
             If local commands that match a command already on Discord should be associated with each other.
-            Defaults to `True`
+            Defaults to ``True``.
         delete_unknown: :class:`bool`
-            If commands on Discord that don't match a local command should be deleted. Defaults to `True`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
         update_known: :class:`bool`
             If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
-            Defaults to `True`
+            Defaults to ``True``.
         register_new: :class:`bool`
             If a local command that doesn't have a basic match on Discord should be added to Discord.
-            Defaults to `True`
+            Defaults to ``True``.
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
         # there, and vice versa.
@@ -2310,18 +2310,18 @@ class Client:
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
-            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
+            Payload from ``HTTPClient.get_guild_commands`` or ``HTTPClient.get_global_commands`` to deploy with. If None,
             the payload will be retrieved from Discord.
         guild_id: Optional[:class:`int`]
-            Guild ID to deploy application commands to. If `None`, global commands are deployed to.
+            Guild ID to deploy application commands to. If ``None``, global commands are deployed to.
         associate_known: :class:`bool`
             If True, commands on Discord that pass a signature check and a deep check will be associated with locally
             added ApplicationCommand objects.
         delete_unknown: :class:`bool`
-            If `True`, commands on Discord that fail a signature check will be removed. If `update_known` is False,
+            If ``True``, commands on Discord that fail a signature check will be removed. If ``update_known`` is ``False``,
             commands that pass the signature check but fail the deep check will also be removed.
         update_known: :class:`bool`
-            If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
+            If ``True``, commands on Discord that pass a signature check but fail the deep check will be updated.
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
         # there, and vice versa.
@@ -2402,10 +2402,10 @@ class Client:
         ----------
         data: Optional[List[:class:`dict`]]
             Data to use when comparing local application commands to what Discord has. Should be a list of application
-            command data from Discord. If left as `None`, it will be fetched if needed. Defaults to `None`
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``
         guild_id: Optional[:class:`int`]
-            ID of the guild to sync application commands with. If set to `None`, global commands will be synced instead.
-            Defaults to `None`.
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
         """
         # All this does is passthrough to connection state. All documentation updates should also be updated
         # there, and vice versa.
@@ -2423,8 +2423,8 @@ class Client:
         commands: :class:`BaseApplicationCommand`
             Application command to register. Multiple args are accepted.
         guild_id: Optional[:class:`int`]
-            ID of the guild to register the application commands to. If set to `None`, the commands will be registered
-            as global commands instead. Defaults to `None`.
+            ID of the guild to register the application commands to. If set to ``None``, the commands will be registered
+            as global commands instead. Defaults to ``None``.
         """
         for command in commands:
             await self._connection.register_application_command(command, guild_id=guild_id)
@@ -2441,8 +2441,8 @@ class Client:
         commands: :class:`BaseApplicationCommand`
             Application command to delete. Multiple args are accepted.
         guild_id: Optional[:class:`int`]
-            ID of the guild to delete the application commands from. If set to `None`, the commands will be deleted
-            from global commands instead. Defaults to `None`.
+            ID of the guild to delete the application commands from. If set to ``None``, the commands will be deleted
+            from global commands instead. Defaults to ``None``.
         """
         for command in commands:
             await self._connection.delete_application_command(command, guild_id=guild_id)
@@ -2682,8 +2682,8 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
+            If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+            register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
         def decorator(func: Callable):
@@ -2729,8 +2729,8 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
+            If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+            register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
         def decorator(func: Callable):
@@ -2784,8 +2784,8 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
+            If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+            register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
         def decorator(func: Callable):
@@ -2833,7 +2833,7 @@ class Client:
         """
 
         it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
-        return utils._unique(it)
+        return utils.unique(it)
 
     @overload
     def get_interaction(self, data) -> Interaction:

@@ -153,7 +153,7 @@ class IDConverter(Converter[T_co]):
 class ObjectConverter(IDConverter[nextcord.Object]):
     """Converts to a :class:`~nextcord.Object`.
 
-    The argument must follow the valid ID or mention formats (e.g. `<@80088516616269824>`).
+    The argument must follow the valid ID or mention formats (e.g. ``<@80088516616269824>``).
 
     .. versionadded:: 2.0
 
@@ -351,7 +351,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
         if not match:
             raise MessageNotFound(argument)
         data = match.groupdict()
-        channel_id = nextcord.utils._get_as_snowflake(data, "channel_id")
+        channel_id = nextcord.utils.get_as_snowflake(data, "channel_id")
         message_id = int(data["message_id"])
         guild_id = data.get("guild_id")
         if guild_id is None:

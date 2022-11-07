@@ -66,7 +66,7 @@ class Team:
         self.id: int = int(data["id"])
         self.name: str = data["name"]
         self._icon: Optional[str] = data["icon"]
-        self.owner_id: Optional[int] = utils._get_as_snowflake(data, "owner_user_id")
+        self.owner_id: Optional[int] = utils.get_as_snowflake(data, "owner_user_id")
         self.members: List[TeamMember] = [
             TeamMember(self, self._state, member) for member in data["members"]
         ]

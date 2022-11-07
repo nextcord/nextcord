@@ -211,8 +211,8 @@ class Interaction(Hashable, Generic[ClientT]):
         self.data: Optional[InteractionData] = data.get("data")
         self.token: str = data["token"]
         self.version: int = data["version"]
-        self.channel_id: Optional[int] = utils._get_as_snowflake(data, "channel_id")
-        self.guild_id: Optional[int] = utils._get_as_snowflake(data, "guild_id")
+        self.channel_id: Optional[int] = utils.get_as_snowflake(data, "channel_id")
+        self.guild_id: Optional[int] = utils.get_as_snowflake(data, "guild_id")
         self.application_id: int = int(data["application_id"])
         self.locale: Optional[str] = data.get("locale")
         self.guild_locale: Optional[str] = data.get("guild_locale")

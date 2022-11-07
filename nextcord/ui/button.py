@@ -40,9 +40,9 @@ __all__ = (
 
 if TYPE_CHECKING:
     from ..emoji import Emoji
+    from ..interactions import ClientT
     from ..types.components import ButtonComponent as ButtonComponentPayload
     from .view import View
-
 
 B = TypeVar("B", bound="Button")
 V = TypeVar("V", bound="View", covariant=True)
@@ -134,7 +134,7 @@ class Button(Item[V]):
         return self._underlying.style
 
     @style.setter
-    def style(self, value: ButtonStyle):
+    def style(self, value: ButtonStyle) -> None:
         self._underlying.style = value
 
     @property
@@ -146,7 +146,7 @@ class Button(Item[V]):
         return self._underlying.custom_id
 
     @custom_id.setter
-    def custom_id(self, value: Optional[str]):
+    def custom_id(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("custom_id must be None or str")
 
@@ -158,7 +158,7 @@ class Button(Item[V]):
         return self._underlying.url
 
     @url.setter
-    def url(self, value: Optional[str]):
+    def url(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("url must be None or str")
         self._underlying.url = value
@@ -169,7 +169,7 @@ class Button(Item[V]):
         return self._underlying.disabled
 
     @disabled.setter
-    def disabled(self, value: bool):
+    def disabled(self, value: bool) -> None:
         self._underlying.disabled = bool(value)
 
     @property
@@ -178,7 +178,7 @@ class Button(Item[V]):
         return self._underlying.label
 
     @label.setter
-    def label(self, value: Optional[str]):
+    def label(self, value: Optional[str]) -> None:
         self._underlying.label = str(value) if value is not None else value
 
     @property
@@ -187,7 +187,7 @@ class Button(Item[V]):
         return self._underlying.emoji
 
     @emoji.setter
-    def emoji(self, value: Optional[Union[str, Emoji, PartialEmoji]]):  # type: ignore
+    def emoji(self, value: Optional[Union[str, Emoji, PartialEmoji]]) -> None:  # type: ignore
         if value is not None:
             if isinstance(value, str):
                 self._underlying.emoji = PartialEmoji.from_str(value)
@@ -239,7 +239,7 @@ def button(
     style: ButtonStyle = ButtonStyle.secondary,
     emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
+) -> Callable[[ItemCallbackType[Button[V], ClientT]], ItemCallbackType[Button[V], ClientT]]:
     """A decorator that attaches a button to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -276,7 +276,7 @@ def button(
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ItemCallbackType[Button[V]]) -> ItemCallbackType[Button[V]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Button function must be a coroutine function")
 

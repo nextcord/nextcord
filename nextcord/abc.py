@@ -54,6 +54,7 @@ from .mentions import AllowedMentions
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
 from .sticker import GuildSticker, StickerItem
+from .types.components import Component as ComponentPayload
 from .utils import MISSING, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
 
@@ -87,7 +88,6 @@ if TYPE_CHECKING:
         OverwriteType,
         PermissionOverwrite as PermissionOverwritePayload,
     )
-    from .types.components import Component as ComponentPayload
     from .types.message import (
         AllowedMentions as AllowedMentionsPayload,
         MessageReference as MessageReferencePayload,
@@ -343,6 +343,13 @@ class GuildChannel:
         else:
             options["video_quality_mode"] = int(video_quality_mode)
 
+        try:
+            default_sort_order = options.pop("default_sort_order")
+        except KeyError:
+            pass
+        else:
+            options["default_sort_order"] = default_sort_order.value
+
         lock_permissions = options.pop("sync_permissions", False)
 
         try:
@@ -560,6 +567,7 @@ class GuildChannel:
         - Guild roles
         - Channel overrides
         - Member overrides
+        - Timed-out members
 
         If a :class:`~nextcord.Role` is passed, then it checks the permissions
         someone with that role would have, which is essentially:
@@ -568,6 +576,9 @@ class GuildChannel:
         - The permissions of the role used as a parameter
         - The default role permission overwrites
         - The permission overwrites of the role used as a parameter
+
+        .. versionchanged:: 2.3
+            Only ``view_channel`` and ``read_message_history`` can be returned for timed-out members
 
         .. versionchanged:: 2.0
             The object passed in can now be a role object.
@@ -683,6 +694,11 @@ class GuildChannel:
         if not base.read_messages:
             denied = Permissions.all_channel()
             base.value &= ~denied.value
+
+        # if you are timed out then you lose all permissions except view_channel and read_message_history
+        if obj.communication_disabled_until is not None:
+            allowed = Permissions(view_channel=True, read_message_history=True)
+            base.value &= allowed.value
 
         return base
 
@@ -1098,12 +1114,14 @@ class GuildChannel:
             .. versionadded:: 2.0
 
         target_user: Optional[:class:`User`]
-            The user whose stream to display for this invite, required if `target_type` is `TargetType.stream`. The user must be streaming in the channel.
+            The user whose stream to display for this invite, required if ``target_type``
+            is :attr:`.InviteTarget.stream`. The user must be streaming in the channel.
 
             .. versionadded:: 2.0
 
         target_application_id:: Optional[:class:`int`]
-            The id of the embedded application for the invite, required if `target_type` is `TargetType.embedded_application`.
+            The id of the embedded application for the invite, required if ``target_type``
+            is :attr:`.InviteTarget.embedded_application`.
 
             .. versionadded:: 2.0
 

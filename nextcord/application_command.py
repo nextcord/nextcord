@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 import warnings
 from inspect import Parameter, signature
 from typing import (
@@ -84,6 +85,13 @@ if TYPE_CHECKING:
     _CustomTypingMetaBase = Any
 else:
     _CustomTypingMetaBase = object
+
+if sys.version_info >= (3, 10):
+    from types import UnionType
+
+    # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
+else:
+    UnionType = None
 
 __all__ = (
     "CallbackWrapper",
@@ -421,12 +429,15 @@ class BaseCommandOption(ApplicationCommandOption):
 
 
 class OptionConverter(_CustomTypingMetaBase):
-    def __init__(self, option_type: Union[type, ApplicationCommandOptionType] = str) -> None:
-        """Based on, in basic functionality, the ``ext.commands`` Converter. Users subclass this and use convert to
-        provide custom "typings" for slash commands.
+    """Based on, in basic functionality, the ``ext.commands`` Converter. Users subclass this and use convert to
+    provide custom "typings" for slash commands.
 
-        The ``convert`` method MUST be overridden to convert the value from Discord to the desired value.
-        The ``modify`` method MAY be overridden to modify the :class:`BaseCommandOption`.
+    The ``convert`` method MUST be overridden to convert the value from Discord to the desired value.
+    The ``modify`` method MAY be overridden to modify the :class:`BaseCommandOption`.
+    """
+
+    def __init__(self, option_type: Union[type, ApplicationCommandOptionType] = str) -> None:
+        """Initializes the converter.
 
         Parameters
         ----------
@@ -487,7 +498,7 @@ class CallbackMixin:
 
         Parameters
         ----------
-        callback: Optional[Callable]
+        callback: Optional[:data:`~typing.Callable`]
             Callback to create options from and invoke. If provided, it must be a coroutine function.
         parent_cog: Optional[:class:`Cog`]
             Class that the callback resides on. Will be passed into the callback if provided.
@@ -599,12 +610,12 @@ class CallbackMixin:
         callback: Optional[Callable] = None,
         option_class: Optional[Type[BaseCommandOption]] = BaseCommandOption,
     ) -> None:
-        """Creates objects of type `option_class` with the parameters of the function, and stores them in
+        """Creates objects of type ``option_class`` with the parameters of the function, and stores them in
         the options attribute.
 
         Parameters
         ----------
-        callback: Optional[Callable]
+        callback: Optional[:data:`~typing.Callable`]
             Callback to create options from. Must be a coroutine function.
         option_class: Optional[Type[:class:`BaseCommandOption`]]
             Class to create the options using. Should either be or subclass :class:`BaseCommandOption`. Defaults
@@ -633,8 +644,6 @@ class CallbackMixin:
             #  might be able to do something here.
             if option_class:
                 skip_counter = 1
-                # TODO: use typing.get_type_hints when 3.9 is standard
-                typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
                 # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
                 #  decorator going into effect before the class is instantiated, thus being a function at the time.
                 #  Try to look into fixing that in the future?
@@ -642,7 +651,32 @@ class CallbackMixin:
                 if self.parent_cog:
                     skip_counter += 1
 
-                for name, param in signature(self.callback).parameters.items():
+                # TODO: use typing.get_type_hints when 3.9 is standard
+                typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
+                callback_params = signature(self.callback).parameters
+                non_option_params = sum(
+                    # could be a self or interaction parameter
+                    param.annotation is param.empty
+                    # will always be an interaction parameter
+                    or issubclass(param.annotation, Interaction)
+                    # will always be a self parameter
+                    # TODO: use typing.Self when 3.11 is standard
+                    or param.annotation is typing_extensions.Self
+                    # will always be a self parameter
+                    or isinstance(param.annotation, TypeVar)
+                    for param in list(callback_params.values())[:skip_counter]
+                )
+
+                if self.parent_cog is not None and non_option_params < 2:
+                    raise ValueError(
+                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition."
+                    )
+                elif non_option_params < 1:
+                    raise ValueError(
+                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition."
+                    )
+
+                for name, param in callback_params.items():
                     if skip_counter:
                         skip_counter -= 1
                     else:
@@ -858,7 +892,7 @@ class AutocompleteOptionMixin:
 
         Parameters
         ----------
-        autocomplete_callback: `Callable`
+        autocomplete_callback: Optional[:data:`~typing.Callable`]
             Callback to create options from and invoke. If provided, it must be a coroutine function.
         parent_cog: Optional[:class:`Cog`]
             Class that the callback resides on. Will be passed into the callback if provided.
@@ -1099,11 +1133,11 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         A list of choices that a user must choose.
         If a :class:`dict` is given, the keys are what the users are able to see, the values are what is sent back
         to the bot.
-        Otherwise, it is treated as an `Iterable` where what the user sees and is sent back to the bot are the same.
+        Otherwise, it is treated as an :class:`~collections.abc.Iterable` where what the user sees and is sent back to the bot are the same.
     choice_localizations: Dict[:class:`str`, Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]]
         A dictionary of choice display names as the keys, and dictionaries of locale: localized name as the values.
     channel_types: List[:class:`ChannelType`]
-        List of `ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
+        List of :class:`ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
         typed as :class:`GuildChannel` for this to function.
     min_value: Union[:class:`int`, :class:`float`]
         Minimum integer or floating point value the user is allowed to input. The parameter must be typed as an
@@ -1122,9 +1156,9 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
 
         .. versionadded:: 2.1
     autocomplete: :class:`bool`
-        If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
+        If this parameter has an autocomplete function decorated for it. If unset, it will automatically be ``True``
         if an autocomplete function for it is found.
-    autocomplete_callback: Optional[:class:`Callable`]
+    autocomplete_callback: Optional[:data:`~typing.Callable`]
         The function that will be used to autocomplete this parameter. If not specified, it will be looked for
         using the :meth:`~SlashApplicationCommand.on_autocomplete` decorator.
     default: Any
@@ -1295,7 +1329,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             annotation_type = found_type
             annotation_choices = found_choices
-        elif typehint_origin in (Union, Optional, Annotated, None):
+        elif typehint_origin in (Union, Optional, Annotated, UnionType, None):
             # If the typehint base is Union, Optional, or not any grouping...
             found_type = MISSING
             found_channel_types: List[ChannelType] = []
@@ -1711,6 +1745,19 @@ class SlashCommandMixin(CallbackMixin):
 
 
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
+    """Base class for all application commands.
+
+    Attributes
+    ----------
+    checks: List[Union[Callable[[:class:`ClientCog`, :class:`Interaction`], MaybeCoro[:class:`bool`]], Callable[[:class:`Interaction`], MaybeCoro[:class:`bool`]]]]
+        A list of predicates that verifies if the command could be executed
+        with the given :class:`Interaction` as the sole parameter. If an exception
+        is necessary to be thrown to signal failure, then one inherited from
+        :exc:`.ApplicationError` should be used. Note that if the checks fail then
+        :exc:`.ApplicationCheckFailure` exception is raised to the :func:`.on_application_command_error`
+        event.
+    """
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -1743,7 +1790,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list/set/whatever of guild ID's that the application command should register to.
@@ -2138,7 +2185,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
             Parameters
             ----------
-            inter_options: :class`dict`
+            inter_options: :class:`dict`
                 Command option data from the interaction.
             cmd_options: :class:`dict`
                 Command option data from the local command.
@@ -2291,6 +2338,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
 
 class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, CallbackWrapperMixin):
+    """Class representing a subcommand or subcommand group of a slash command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2525,6 +2574,8 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
 
 class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
+    """Class representing a slash command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2554,7 +2605,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2689,6 +2740,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
 
 class UserApplicationCommand(BaseApplicationCommand):
+    """Class representing a user context menu command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2711,7 +2764,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized name as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2763,6 +2816,8 @@ class UserApplicationCommand(BaseApplicationCommand):
 
 
 class MessageApplicationCommand(BaseApplicationCommand):
+    """Class representing a message context menu command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2785,7 +2840,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized name as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2873,8 +2928,8 @@ def slash_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     force_global: :class:`bool`
-        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-        register to guilds. Has no effect if `guild_ids` are never set or added to.
+        If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+        register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
     def decorator(func: Callable) -> SlashApplicationCommand:
@@ -2926,8 +2981,8 @@ def message_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     force_global: :class:`bool`
-        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-        register to guilds. Has no effect if `guild_ids` are never set or added to.
+        If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+        register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
     def decorator(func: Callable) -> MessageApplicationCommand:
@@ -2977,8 +3032,8 @@ def user_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     force_global: :class:`bool`
-        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-        register to guilds. Has no effect if `guild_ids` are never set or added to.
+        If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+        register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
     def decorator(func: Callable) -> UserApplicationCommand:
@@ -3268,7 +3323,9 @@ def unpack_annotation(
         unpacked_type, unpacked_literal = unpack_annotation(located_annotation, annotated_list)
         type_ret.extend(unpacked_type)
         literal_ret.extend(unpacked_literal)
-    elif origin in (Union, Optional, Literal):
+    elif origin in (Union, UnionType, Optional, Literal):
+        # Note for someone refactoring this: UnionType (at this time) will be None on Python sub-3.10
+        # This doesn't matter for now since None is explicitly checked first, but may trip you up when modifying this.
         # for anno in typing.get_args(given_annotation):  # TODO: Once Python 3.10 is standard, use this.
         for anno in typing_extensions.get_args(given_annotation):
             unpacked_type, unpacked_literal = unpack_annotation(anno, annotated_list)

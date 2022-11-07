@@ -45,10 +45,10 @@ from nextcord.activity import (
     Spotify,
     Streaming,
     Union,
-    _get_as_snowflake,
     annotations,
     create_activity,
     datetime,
+    get_as_snowflake,
     overload,
     try_enum,
 )

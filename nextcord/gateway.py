@@ -481,7 +481,7 @@ class DiscordWebSocket:
             self._buffer = bytearray()
 
         self.log_receive(msg)
-        message: Dict[str, Any] = utils._from_json(msg)
+        message: Dict[str, Any] = utils.from_json(msg)
 
         _log.debug("For Shard ID %s: WebSocket Event: %s", self.shard_id, msg)
         event = message.get("t")
@@ -662,7 +662,7 @@ class DiscordWebSocket:
 
     async def send_as_json(self, data: Any) -> None:
         try:
-            await self.send(utils._to_json(data))
+            await self.send(utils.to_json(data))
         except RuntimeError as exc:
             if not self._can_handle_close():
                 raise ConnectionClosed(self.socket, shard_id=self.shard_id) from exc
@@ -670,7 +670,7 @@ class DiscordWebSocket:
     async def send_heartbeat(self, data: Any) -> None:
         # This bypasses the rate limit handling code since it has a higher priority
         try:
-            await self.socket.send_str(utils._to_json(data))
+            await self.socket.send_str(utils.to_json(data))
         except RuntimeError as exc:
             if not self._can_handle_close():
                 raise ConnectionClosed(self.socket, shard_id=self.shard_id) from exc
@@ -697,7 +697,7 @@ class DiscordWebSocket:
             "d": {"activities": activities, "afk": False, "since": since, "status": status},
         }
 
-        sent = utils._to_json(payload)
+        sent = utils.to_json(payload)
         _log.debug('Sending "%s" to change status', sent)
         await self.send(sent)
 
@@ -827,7 +827,7 @@ class DiscordVoiceWebSocket:
 
     async def send_as_json(self, data: Any) -> None:
         _log.debug("Sending voice websocket frame: %s.", data)
-        await self.ws.send_str(utils._to_json(data))
+        await self.ws.send_str(utils.to_json(data))
 
     send_heartbeat = send_as_json
 
@@ -977,7 +977,7 @@ class DiscordVoiceWebSocket:
         # This exception is handled up the chain
         msg = await asyncio.wait_for(self.ws.receive(), timeout=30.0)
         if msg.type is aiohttp.WSMsgType.TEXT:
-            await self.received_message(utils._from_json(msg.data))
+            await self.received_message(utils.from_json(msg.data))
         elif msg.type is aiohttp.WSMsgType.ERROR:
             _log.debug("Received %s", msg)
             raise ConnectionClosed(self.ws, shard_id=None) from msg.data
