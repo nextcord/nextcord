@@ -72,7 +72,7 @@ class StringSelect(SelectBase, Generic[V]):
     max_values: :class:`int`
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
-    options: List[:class:`SelectOption`]
+    options: List[:class:`.SelectOption`]
         A list of options that can be selected in this menu.
     disabled: :class:`bool`
         Whether the select is disabled or not.
@@ -125,7 +125,7 @@ class StringSelect(SelectBase, Generic[V]):
 
     @property
     def options(self) -> List[SelectOption]:
-        """List[:class:`SelectOption`]: A list of options that can be selected in this menu."""
+        """List[:class:`.SelectOption`]: A list of options that can be selected in this menu."""
         return self._underlying.options
 
     @options.setter
@@ -148,7 +148,7 @@ class StringSelect(SelectBase, Generic[V]):
     ) -> None:
         """Adds an option to the select menu.
 
-        To append a pre-existing :class:`SelectOption` use the
+        To append a pre-existing :class:`.SelectOption` use the
         :meth:`append_option` method instead.
 
         Parameters
@@ -189,7 +189,7 @@ class StringSelect(SelectBase, Generic[V]):
 
         Parameters
         ----------
-        option: :class:`SelectOption`
+        option: :class:`.SelectOption`
             The option to append to the select menu.
 
         Raises
@@ -258,7 +258,7 @@ def string_select(
     max_values: :class:`int`
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
-    options: List[:class:`SelectOption`]
+    options: List[:class:`.SelectOption`]
         A list of options that can be selected in this menu.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
@@ -285,4 +285,4 @@ def string_select(
 
 Select = StringSelect
 select = string_select
-"""alias of :func:`string_select`."""
+"""alias of :func:`string_select`"""
