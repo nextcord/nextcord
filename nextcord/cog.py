@@ -28,7 +28,6 @@ import inspect
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Optional, Tuple, Type, TypeVar
 
-from .interactions import Interaction
 from .utils import MISSING
 
 if TYPE_CHECKING:
