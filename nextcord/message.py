@@ -614,7 +614,9 @@ class MessageInteraction(Hashable):
         self.type: int = data["type"]
         self.name: str = data["name"]
         if "member" in data and guild is not None:
-            self.user = Member(state=self._state, guild=guild, data={**data["member"], "user": data["user"]})  # type: ignore
+            self.user = Member(
+                state=self._state, guild=guild, data={**data["member"], "user": data["user"]}
+            )
         else:
             self.user = self._state.create_user(data=data["user"])
 

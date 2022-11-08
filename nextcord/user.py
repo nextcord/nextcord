@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from .message import Attachment, Message
     from .state import ConnectionState
     from .types.channel import DMChannel as DMChannelPayload
-    from .types.user import User as UserPayload
+    from .types.user import PartialUser as PartialUserPayload, User as UserPayload
 
 
 __all__ = (
@@ -84,7 +84,9 @@ class BaseUser(_UserTag):
         _accent_colour: Optional[str]
         _public_flags: int
 
-    def __init__(self, *, state: ConnectionState, data: UserPayload) -> None:
+    def __init__(
+        self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
+    ) -> None:
         self._state = state
         self._update(data)
 
@@ -106,7 +108,7 @@ class BaseUser(_UserTag):
     def __hash__(self) -> int:
         return self.id >> 22
 
-    def _update(self, data: UserPayload) -> None:
+    def _update(self, data: Union[PartialUserPayload, UserPayload]) -> None:
         self.name = data["username"]
         self.id = int(data["id"])
         self.discriminator = data["discriminator"]
@@ -442,7 +444,9 @@ class User(BaseUser, abc.Messageable):
 
     __slots__ = ("_stored",)
 
-    def __init__(self, *, state: ConnectionState, data: UserPayload) -> None:
+    def __init__(
+        self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
+    ) -> None:
         super().__init__(state=state, data=data)
         self._stored: bool = False
 

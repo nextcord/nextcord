@@ -98,6 +98,7 @@ MISSING = utils.MISSING
 
 if TYPE_CHECKING:
     import datetime
+    from typing import cast
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
@@ -109,6 +110,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .template import Template
     from .types.auto_moderation import AutoModerationRuleCreate
+    from .types.channel import GuildChannel as GuildChannelPayload
     from .types.guild import (
         Ban as BanPayload,
         Guild as GuildPayload,
@@ -2001,7 +2003,10 @@ class Guild(Hashable):
         if ch_type in (ChannelType.group, ChannelType.private):
             raise InvalidData("Channel ID resolved to a private channel")
 
-        guild_id = int(data.get("guild_id"))
+        if TYPE_CHECKING:
+            data = cast(GuildChannelPayload, data)
+
+        guild_id = int(data["guild_id"])
         if self.id != guild_id:
             raise InvalidData("Guild ID resolved to a different guild")
 

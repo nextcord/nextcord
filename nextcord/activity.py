@@ -869,7 +869,7 @@ def create_activity(
         return Game(**data)
     elif game_type is ActivityType.custom:
         try:
-            name = data.pop("name")
+            name = data.pop("name")  # pyright: ignore[reportGeneralTypeIssues]
         except KeyError:
             return Activity(**data)
         else:
