@@ -27,9 +27,6 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements-dev.txt
 
-      - name: Run pre-commit
-        uses: pre-commit/action@v3.0.0
-
   pyright:
     runs-on: ubuntu-latest
     strategy:
