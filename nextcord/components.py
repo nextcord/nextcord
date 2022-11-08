@@ -266,7 +266,7 @@ class StringSelectMenu(SelectMenuBase):
     A select menu is functionally the same as a dropdown, however
     on mobile it renders a bit differently.
 
-    There is an alias for this class called :class:`SelectMenu`.
+    There is an alias for this class called ``SelectMenu``.
 
     .. note::
 
