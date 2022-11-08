@@ -27,7 +27,7 @@ from __future__ import annotations
 import asyncio
 from typing import Callable, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
-from ...components import StringSelectMenu, SelectOption
+from ...components import SelectOption, StringSelectMenu
 from ...emoji import Emoji
 from ...enums import ComponentType
 from ...interactions import ClientT
