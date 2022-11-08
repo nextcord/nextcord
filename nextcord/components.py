@@ -68,6 +68,11 @@ class Component:
     - :class:`ActionRow`
     - :class:`Button`
     - :class:`SelectMenu`
+    - :class:`TextInput`
+    - :class:`UserSelectMenu`
+    - :class:`ChannelSelectMenu`
+    - :class:`RoleSelectMenu`
+    - :class:`MentionableSelectMenu`
 
     This class is abstract and cannot be instantiated.
 
