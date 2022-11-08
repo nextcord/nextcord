@@ -233,8 +233,8 @@ def string_select(
     There is an alias for this function called ``select``.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`ui.View`, the :class:`ui.Select` being pressed and
-    the :class:`Interaction` you receive.
+    the :class:`.ui.View`, the :class:`.ui.Select` being pressed and
+    the :class:`.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
     use :attr:`Select.values`.

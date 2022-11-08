@@ -170,8 +170,8 @@ def user_select(
     """A decorator that attaches a user select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`ui.View`, the :class:`ui.UserSelect` being pressed and
-    the :class:`Interaction` you receive.
+    the :class:`.ui.View`, the :class:`.ui.UserSelect` being pressed and
+    the :class:`.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
     use :attr:`UserSelect.values`.
