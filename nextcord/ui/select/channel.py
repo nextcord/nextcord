@@ -121,7 +121,7 @@ class ChannelSelect(SelectBase, Generic[V]):
             disabled=disabled,
             row=row,
         )
-        self._selected_values: ChannelSelectValues = []  # type: ignore
+        self._selected_values: ChannelSelectValues = ChannelSelectValues()
         self.channel_types: List[ChannelType] = channel_types
         self._underlying = ChannelSelectMenu._raw_construct(
             custom_id=self.custom_id,
@@ -155,7 +155,7 @@ class ChannelSelect(SelectBase, Generic[V]):
     def refresh_state(
         self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
     ) -> None:
-        self._selected_values = ChannelSelectValues(
+        self._selected_values = ChannelSelectValues.construct(
             data.get("values", []),
             data.get("resolved", {}),
             state,

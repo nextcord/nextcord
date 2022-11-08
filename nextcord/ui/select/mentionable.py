@@ -128,7 +128,7 @@ class MentionableSelect(SelectBase, Generic[V]):
             row=row,
             placeholder=placeholder,
         )
-        self._selected_values: MentionableSelectValues = []  # type: ignore
+        self._selected_values: MentionableSelectValues = MentionableSelectValues()
         self._underlying = MentionableSelectMenu._raw_construct(
             custom_id=self.custom_id,
             type=ComponentType.mentionable_select,
@@ -160,7 +160,7 @@ class MentionableSelect(SelectBase, Generic[V]):
     def refresh_state(
         self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
     ) -> None:
-        self._selected_values = MentionableSelectValues(
+        self._selected_values = MentionableSelectValues.construct(
             data.get("values", []),
             data.get("resolved", {}),
             state,

@@ -118,7 +118,7 @@ class UserSelect(SelectBase, Generic[V]):
             max_values=max_values,
             disabled=disabled,
         )
-        self._selected_values: UserSelectValues = []  # type: ignore
+        self._selected_values: UserSelectValues = UserSelectValues()
         self._underlying = UserSelectMenu._raw_construct(
             custom_id=self.custom_id,
             type=ComponentType.user_select,
@@ -150,7 +150,7 @@ class UserSelect(SelectBase, Generic[V]):
     def refresh_state(
         self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
     ) -> None:
-        self._selected_values = UserSelectValues(
+        self._selected_values = UserSelectValues.construct(
             data.get("values", []),
             data.get("resolved", {}),
             state,

@@ -52,15 +52,18 @@ V = TypeVar("V", bound="View", covariant=True)
 
 
 class SelectValuesBase(UserList):
-    def __init__(
-        self,
+    def __init__(self):
+        self.data: List[Union[Member, User, Role, GuildChannel]] = []
+    
+    @classmethod
+    def construct(
+        cls,
         values: List[str],
         resolved: ComponentInteractionResolved,
         state: ConnectionState,
         guild: Optional[Guild],
-    ) -> None:
-        self.data: List[Union[Member, User, Role, GuildChannel]] = []
-        self._resolved = resolved
+    ):
+        instance = cls()
         users = resolved.get("users", {})
         members = resolved.get("members", {})
         roles = resolved.get("roles", {})
@@ -68,14 +71,15 @@ class SelectValuesBase(UserList):
         for value in values:
             if members.get(value) and guild:
                 members[value]["user"] = users[value]
-                self.append(Member(data=members[value], state=state, guild=guild))
+                instance.append(Member(data=members[value], state=state, guild=guild))
             elif users.get(value):
-                self.append(User(data=users[value], state=state))
+                instance.append(User(data=users[value], state=state))
             elif roles.get(value) and guild:
-                self.append(Role(data=roles[value], state=state, guild=guild))
+                instance.append(Role(data=roles[value], state=state, guild=guild))
             elif channels.get(value) and guild:
                 channel = state.get_channel(int(value))
-                self.append(channel)
+                instance.append(channel)
+        return instance
 
     @property
     def ids(self) -> List[int]:
