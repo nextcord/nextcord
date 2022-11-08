@@ -3932,15 +3932,6 @@ Button
     :members:
     :inherited-members:
 
-SelectMenu
-~~~~~~~~~~
-
-.. attributetable:: SelectMenu
-
-.. autoclass:: SelectMenu()
-    :members:
-    :inherited-members:
-
 
 DeletedReferencedMessage
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4740,6 +4731,10 @@ StringSelect
     :inherited-members:
 
 .. autofunction:: nextcord.ui.string_select
+
+.. autoclass:: nextcord.ui.Select
+
+.. autofunction:: nextcord.ui.select
 
 UserSelect
 ~~~~~~~~~~

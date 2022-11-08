@@ -27,7 +27,7 @@ from __future__ import annotations
 import asyncio
 from typing import Callable, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
-from ...components import SelectMenu, SelectOption
+from ...components import StringSelectMenu, SelectOption
 from ...emoji import Emoji
 from ...enums import ComponentType
 from ...interactions import ClientT
@@ -55,7 +55,7 @@ class StringSelect(SelectBase, Generic[V]):
 
     In order to get the selected items that the user has chosen, use :attr:`StringSelect.values`.
 
-    There is an alias for this class called :class:`Select`.
+    There is an alias for this class called ``Select``.
 
     .. versionadded:: 2.0
 
@@ -113,7 +113,7 @@ class StringSelect(SelectBase, Generic[V]):
         )
         self._selected_values: List[str] = []
         options = [] if options is MISSING else options
-        self._underlying = SelectMenu._raw_construct(
+        self._underlying = StringSelectMenu._raw_construct(
             custom_id=self.custom_id,
             type=ComponentType.select,
             placeholder=self.placeholder,
@@ -204,7 +204,7 @@ class StringSelect(SelectBase, Generic[V]):
         self._underlying.options.append(option)
 
     @classmethod
-    def from_component(cls: Type[S], component: SelectMenu) -> S:
+    def from_component(cls: Type[S], component: StringSelectMenu) -> S:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,
@@ -233,11 +233,11 @@ def string_select(
     There is an alias for this function called ``select``.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`.ui.View`, the :class:`.ui.Select` being pressed and
+    the :class:`.ui.View`, the :class:`.ui.StringSelect` being pressed and
     the :class:`.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`Select.values`.
+    use :attr:`StringSelect.values`.
 
     Parameters
     ----------
@@ -285,3 +285,4 @@ def string_select(
 
 Select = StringSelect
 select = string_select
+"""alias of :func:`string_select`."""

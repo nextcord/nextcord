@@ -50,8 +50,12 @@ class Item(Generic[V]):
     The current UI items supported are:
 
     - :class:`nextcord.ui.Button`
-    - :class:`nextcord.ui.Select`
+    - :class:`nextcord.ui.StringSelect`
     - :class:`nextcord.ui.TextInput`
+    - :class:`nextcord.ui.UserSelect`
+    - :class:`nextcord.ui.ChannelSelect`
+    - :class:`nextcord.ui.RoleSelect`
+    - :class:`nextcord.ui.MentionableSelect`
 
     .. versionadded:: 2.0
     """
