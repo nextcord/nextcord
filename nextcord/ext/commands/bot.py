@@ -167,7 +167,7 @@ _NonCallablePrefix = Union[str, Sequence[str]]
 
 
 class BotBase(GroupMixin):
-    __cogs: Dict[str, nextcord.Cog]
+    _cogs: Dict[str, nextcord.Cog]
 
     def __init__(
         self,
@@ -252,7 +252,7 @@ class BotBase(GroupMixin):
             except Exception:
                 pass
 
-        for cog in tuple(self.__cogs):
+        for cog in tuple(self._cogs):
             try:
                 self.remove_cog(cog)
             except Exception:
@@ -700,7 +700,7 @@ class BotBase(GroupMixin):
     def _remove_module_references(self, name: str) -> None:
         # find all references to the module
         # remove the cogs registered from the module
-        for cogname, cog in self.__cogs.copy().items():
+        for cogname, cog in self._cogs.copy().items():
             if _is_submodule(name, cog.__module__):
                 self.remove_cog(cogname)
 

@@ -339,7 +339,7 @@ class Client:
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
         self._lazy_load_commands: bool = lazy_load_commands
-        self.__cogs: Dict[str, Cog] = {}
+        self._cogs: Dict[str, Cog] = {}
         self._rollout_associate_known: bool = rollout_associate_known
         self._rollout_delete_unknown: bool = rollout_delete_unknown
         self._rollout_register_new: bool = rollout_register_new
@@ -489,7 +489,7 @@ class Client:
 
         .. versionadded:: 2.3
         """
-        return types.MappingProxyType(self.__cogs)
+        return types.MappingProxyType(self._cogs)
 
     def is_ready(self) -> bool:
         """:class:`bool`: Specifies if the client's internal cache is ready for use."""
@@ -2553,7 +2553,7 @@ class Client:
 
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
-        for cog in self.__cogs.values():
+        for cog in self._cogs.values():
             if to_register := cog.application_commands:
                 for cmd in to_register:
                     self.add_application_command(cmd, use_rollout=True, pre_remove=False)
@@ -2588,7 +2588,7 @@ class Client:
             raise TypeError("cogs must derive from nextcord.Cog")
 
         cog_name = cog.__cog_name__
-        existing = self.__cogs.get(cog_name)
+        existing = self._cogs.get(cog_name)
 
         if existing is not None:
             if not override:
@@ -2598,7 +2598,7 @@ class Client:
         for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
 
-        self.__cogs[cog_name] = cog
+        self._cogs[cog_name] = cog
 
     def get_cog(self, name: str) -> Optional[Cog]:
         """Gets the cog instance requested.
@@ -2619,7 +2619,7 @@ class Client:
         Optional[:class:`Cog`]
             The cog that was requested. If not found, returns ``None``.
         """
-        return self.__cogs.get(name)
+        return self._cogs.get(name)
 
     def remove_cog(self, cog: Union[Cog, str]) -> Optional[Cog]:
         """Removes a cog from the client and returns it.
@@ -2643,7 +2643,7 @@ class Client:
         stored_cog: Optional[Cog] = None
         if isinstance(cog, Cog):
             cog = cog.__cog_name__
-        stored_cog = self.__cogs.pop(cog, None)
+        stored_cog = self._cogs.pop(cog, None)
 
         if stored_cog is None:
             return
