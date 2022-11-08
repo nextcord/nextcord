@@ -4730,16 +4730,16 @@ TextInput
     :members:
     :inherited-members:
 
-Select
-~~~~~~
+StringSelect
+~~~~~~~~~~~~
 
-.. attributetable:: nextcord.ui.Select
+.. attributetable:: nextcord.ui.StringSelect
 
-.. autoclass:: nextcord.ui.Select
+.. autoclass:: nextcord.ui.StringSelect
     :members:
     :inherited-members:
 
-.. autofunction:: nextcord.ui.select
+.. autofunction:: nextcord.ui.string_select
 
 UserSelect
 ~~~~~~~~~~

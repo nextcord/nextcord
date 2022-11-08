@@ -90,7 +90,7 @@ class ChannelSelect(SelectBase, Generic[V]):
         like to control the relative positioning of the row then passing an index is advised.
         For example, row=1 will show up before row=2. Defaults to ``None``, which is automatic
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
-    channel_types: List[:class:`nextcord.ChannelType`]
+    channel_types: List[:class:`ChannelType`]
         The types of channels that can be selected. If not given, all channel types are allowed.
     """
 
@@ -178,12 +178,11 @@ def channel_select(
     """A decorator that attaches a channel select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.ChannelSelect` being pressed and
-    the :class:`nextcord.Interaction` you receive.
+    the :class:`ui.View`, the :class:`ui.ChannelSelect` being pressed and
+    the :class:`Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`ChannelSelect.values`., :attr:`ChannelSelect.get_channels`
-    or :attr:`ChannelSelect.fetch_channels`.
+    use :attr:`ChannelSelect.values`.
 
     .. versionadded:: 2.3
 
@@ -208,7 +207,7 @@ def channel_select(
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
-    channel_types: List[:class:`nextcord.ChannelType`]
+    channel_types: List[:class:`ChannelType`]
         A list of channel types that can be selected in this menu.
     """
 

@@ -183,12 +183,11 @@ def mentionable_select(
     """A decorator that attaches a mentionable select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.MentionableSelect` being pressed and
-    the :class:`nextcord.Interaction` you receive.
+    the :class:`ui.View`, the :class:`ui.MentionableSelect` being pressed and
+    the :class:`Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`MentionableSelect.values`., :attr:`MentionableSelect.get_mentionables`
-    or :attr:`MentionableSelect.fetch_mentionables`.
+    use :attr:`MentionableSelect.values`.
 
     .. versionadded:: 2.3
 
