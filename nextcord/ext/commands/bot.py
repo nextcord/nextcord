@@ -252,12 +252,6 @@ class BotBase(GroupMixin):
             except Exception:
                 pass
 
-        for cog in tuple(self._cogs):
-            try:
-                self.remove_cog(cog)
-            except Exception:
-                pass
-
         await super().close()  # type: ignore
 
     async def on_command_error(self, context: Context, exception: errors.CommandError) -> None:

@@ -799,6 +799,12 @@ class Client:
                 # if an error happens during disconnects, disregard it.
                 pass
 
+        for cog in tuple(self._cogs):
+            try:
+                self.remove_cog(cog)
+            except Exception:
+                pass
+
         if self.ws is not None and self.ws.open:
             await self.ws.close(code=1000)
 
