@@ -489,7 +489,7 @@ class ChannelSelectMenu(SelectMenuBase):
         ]
 
     def to_dict(self) -> ChannelSelectMenuPayload:
-        payload: ChannelSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
+        payload: ChannelSelectMenuPayload = {"type": self.type.value, **super().to_dict()}  # type: ignore -- fixed in pyright 1.1.278
         if self.channel_types:
             payload["channel_types"] = [t.value for t in self.channel_types]
 
