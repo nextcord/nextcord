@@ -268,7 +268,7 @@ Shown below is an example of a simple command running in a cog:
 Context menu commands can also be made in cogs using the :meth:`nextcord.user_command` or :meth:`nextcord.message_command` decorators.
 
 
-Default Guild Ids
+Default Guild IDs
 -----------------
 
 If you would like for all of your application commands to have the same guild ids unless explicitly stated, then you can set the ``default_guild_ids`` keyword argument in :class:`nextcord.ext.commands.Bot` and :class:`nextcord.ext.commands.AutoShardedBot`!
