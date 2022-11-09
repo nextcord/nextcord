@@ -1663,6 +1663,7 @@ class Bot(BotBase, nextcord.Client):
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
+        default_guild_ids: Optional[List[int]] = None,
         owner_id: Optional[int] = None,
         owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
@@ -1694,6 +1695,7 @@ class Bot(BotBase, nextcord.Client):
             rollout_register_new=rollout_register_new,
             rollout_update_known=rollout_update_known,
             rollout_all_guilds=rollout_all_guilds,
+            default_guild_ids=default_guild_ids,
         )
 
         BotBase.__init__(
@@ -1750,6 +1752,7 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
+        default_guild_ids: Optional[List[int]] = None,
         owner_id: Optional[int] = None,
         owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
@@ -1782,6 +1785,7 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
             rollout_register_new=rollout_register_new,
             rollout_update_known=rollout_update_known,
             rollout_all_guilds=rollout_all_guilds,
+            default_guild_ids=default_guild_ids,
         )
 
         BotBase.__init__(

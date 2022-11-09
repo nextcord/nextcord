@@ -29,6 +29,7 @@ from typing import List, Literal, TypedDict, Union
 
 from typing_extensions import NotRequired
 
+from .channel import ChannelType
 from .emoji import PartialEmoji
 
 ComponentType = Literal[1, 2, 3, 4]
@@ -59,14 +60,34 @@ class SelectOption(TypedDict):
     emoji: NotRequired[PartialEmoji]
 
 
-class SelectMenu(TypedDict):
-    type: Literal[3]
+class SelectMenuBase(TypedDict):
     custom_id: str
-    options: List[SelectOption]
     placeholder: NotRequired[str]
     min_values: NotRequired[int]
     max_values: NotRequired[int]
     disabled: NotRequired[bool]
+
+
+class SelectMenu(SelectMenuBase):
+    type: Literal[3]
+    options: List[SelectOption]
+
+
+class UserSelectMenu(SelectMenuBase):
+    type: Literal[5]
+
+
+class RoleSelectMenu(SelectMenuBase):
+    type: Literal[6]
+
+
+class MentionableSelectMenu(SelectMenuBase):
+    type: Literal[7]
+
+
+class ChannelSelectMenu(SelectMenuBase):
+    type: Literal[8]
+    channel_types: NotRequired[List[ChannelType]]
 
 
 class TextInputComponent(TypedDict):

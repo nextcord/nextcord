@@ -356,6 +356,7 @@ class AutoShardedClient(Client):
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
+        default_guild_ids: Optional[List[int]] = None,
     ) -> None:
         self.shard_ids: Optional[List[int]] = shard_ids
         super().__init__(
@@ -383,6 +384,7 @@ class AutoShardedClient(Client):
             rollout_register_new=rollout_register_new,
             rollout_update_known=rollout_update_known,
             rollout_all_guilds=rollout_all_guilds,
+            default_guild_ids=default_guild_ids,
         )
 
         if self.shard_ids is not None:

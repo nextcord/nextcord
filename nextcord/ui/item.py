@@ -33,6 +33,8 @@ __all__ = ("Item",)
 if TYPE_CHECKING:
     from ..components import Component
     from ..enums import ComponentType
+    from ..guild import Guild
+    from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
     from ..types.interactions import ComponentInteractionData
     from .view import View
@@ -48,8 +50,12 @@ class Item(Generic[V]):
     The current UI items supported are:
 
     - :class:`nextcord.ui.Button`
-    - :class:`nextcord.ui.Select`
+    - :class:`nextcord.ui.StringSelect`
     - :class:`nextcord.ui.TextInput`
+    - :class:`nextcord.ui.UserSelect`
+    - :class:`nextcord.ui.ChannelSelect`
+    - :class:`nextcord.ui.RoleSelect`
+    - :class:`nextcord.ui.MentionableSelect`
 
     .. versionadded:: 2.0
     """
@@ -74,7 +80,9 @@ class Item(Generic[V]):
     def refresh_component(self, component: Component) -> None:
         return None
 
-    def refresh_state(self, data: ComponentInteractionData) -> None:
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         return None
 
     @classmethod
