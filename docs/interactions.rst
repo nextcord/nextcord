@@ -271,7 +271,7 @@ Context menu commands can also be made in cogs using the :meth:`nextcord.user_co
 Default Guild IDs
 -----------------
 
-If you would like for all of your application commands to have the same guild ids unless explicitly stated, then you can set the ``default_guild_ids`` keyword argument in :class:`nextcord.ext.commands.Bot` and :class:`nextcord.ext.commands.AutoShardedBot`!
+If you would like for all of your application commands to have the same guild ids unless explicitly stated, then you can set the ``default_guild_ids`` keyword argument in :class:`~nextcord.Client`, :class:`~nextcord.ext.commands.Bot`, or :class:`~nextcord.ext.commands.AutoShardedBot`!
 
 Here's an example of this:
 
