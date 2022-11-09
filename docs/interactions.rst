@@ -286,4 +286,3 @@ Here's an example of this:
     @bot.slash_command(guild_ids=None)
     async def bye_global(interaction: nextcord.Interaction):
         await interaction.response.send_message("Goodbye everyone!")
-
