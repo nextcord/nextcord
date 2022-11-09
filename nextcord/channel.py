@@ -2870,8 +2870,8 @@ class ForumTag:
         .. warning::
 
             This should not *really* be passed when constructing this manually.
-
             This is only documented here for the sake of completeness.
+
     name: :class:`str`
         The name of the tag.
     moderated: :class:`bool`
