@@ -1131,7 +1131,7 @@ class HTTPClient:
             "name": name,
             "auto_archive_duration": auto_archive_duration,
             "rate_limit_per_user": rate_limit_per_user,
-            "applie_tags": applied_tag_ids or [],
+            "applied_tags": applied_tag_ids or [],
         }
         msg_payload = self.get_message_payload(
             content=content,
