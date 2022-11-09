@@ -1,7 +1,7 @@
 .. currentmodule:: nextcord
 
 API Reference
-===============
+=============
 
 The following section outlines the API of nextcord.
 
@@ -14,7 +14,7 @@ The following section outlines the API of nextcord.
     nextcord.
 
 Version Related Info
----------------------
+--------------------
 
 There are two main ways to query version information about the library. For guarantees, check :ref:`version_guarantees`.
 
@@ -31,10 +31,10 @@ There are two main ways to query version information about the library. For guar
     off of :pep:`440`.
 
 Clients
---------
+-------
 
 Client
-~~~~~~~
+~~~~~~
 
 .. attributetable:: Client
 
@@ -58,7 +58,7 @@ Client
         :async-for:
 
 AutoShardedClient
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. attributetable:: AutoShardedClient
 
@@ -66,10 +66,10 @@ AutoShardedClient
     :members:
 
 Application Info
-------------------
+----------------
 
 AppInfo
-~~~~~~~~
+~~~~~~~
 
 .. attributetable:: AppInfo
 
@@ -77,7 +77,7 @@ AppInfo
     :members:
 
 PartialAppInfo
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. attributetable:: PartialAppInfo
 
@@ -85,7 +85,7 @@ PartialAppInfo
     :members:
 
 Team
-~~~~~
+~~~~
 
 .. attributetable:: Team
 
@@ -93,7 +93,7 @@ Team
     :members:
 
 TeamMember
-~~~~~~~~~~~
+~~~~~~~~~~
 
 .. attributetable:: TeamMember
 
@@ -101,10 +101,10 @@ TeamMember
     :members:
 
 Voice Related
----------------
+-------------
 
 VoiceClient
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: VoiceClient
 
@@ -113,7 +113,7 @@ VoiceClient
     :exclude-members: connect, on_voice_state_update, on_voice_server_update
 
 VoiceProtocol
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. attributetable:: VoiceProtocol
 
@@ -121,7 +121,7 @@ VoiceProtocol
     :members:
 
 AudioSource
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: AudioSource
 
@@ -129,7 +129,7 @@ AudioSource
     :members:
 
 PCMAudio
-~~~~~~~~~
+~~~~~~~~
 
 .. attributetable:: PCMAudio
 
@@ -137,7 +137,7 @@ PCMAudio
     :members:
 
 FFmpegAudio
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: FFmpegAudio
 
@@ -145,7 +145,7 @@ FFmpegAudio
     :members:
 
 FFmpegPCMAudio
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. attributetable:: FFmpegPCMAudio
 
@@ -153,7 +153,7 @@ FFmpegPCMAudio
     :members:
 
 FFmpegOpusAudio
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. attributetable:: FFmpegOpusAudio
 
@@ -161,7 +161,7 @@ FFmpegOpusAudio
     :members:
 
 PCMVolumeTransformer
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: PCMVolumeTransformer
 
@@ -169,7 +169,7 @@ PCMVolumeTransformer
     :members:
 
 Opus Library
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. autofunction:: nextcord.opus.load_opus
 
@@ -1242,7 +1242,7 @@ Utility Functions
 .. _discord-api-enums:
 
 Enumerations
--------------
+------------
 
 The API provides some enumerations for certain types of strings to avoid the API
 from being stringly typed in case the strings change in the future.
@@ -1597,7 +1597,33 @@ of :class:`enum.Enum`.
         Represents a button component.
     .. attribute:: select
 
-        Represents a select component.
+        Represents a string select component.
+    .. attribute:: text_input
+
+        Represents a text input component.
+    .. attribute:: user_select
+
+        Represents a user select component.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: role_select
+
+        Represents a role select component.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: mentionable_select
+
+        Represents a mentionable select component.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: channel_select
+
+        Represents a channel select component.
+
+        .. versionadded:: 2.3
 
 
 .. class:: ButtonStyle
@@ -2603,6 +2629,38 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.1
 
+    .. attribute:: auto_moderation_flag_to_channel
+
+        A message was flagged by an auto moderation rule.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`Member` or :class:`User` whose message was flagged.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+        set to an unspecified proxy object with these three attributes:
+
+        - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the message was flagged.
+        - ``rule_name``: A :class:`str` with the name of the rule.
+        - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: auto_moderation_user_communication_disabled
+
+        A member was timed out by an auto moderation rule.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`Member` or :class:`User` who was timed out.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+        set to an unspecified proxy object with these three attributes:
+
+        - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the member was timed out.
+        - ``rule_name``: A :class:`str` with the name of the rule.
+        - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+        .. versionadded:: 2.3
+
 .. class:: AuditLogActionCategory
 
     Represents the category that the :class:`AuditLogAction` belongs to.
@@ -2909,6 +2967,12 @@ of :class:`enum.Enum`.
 
         This rule checks if content contains words from Discord pre-defined wordsets.
 
+    .. attribute:: mention_spam
+
+        This rule checks if the number of mentions in the message is more than the maximum allowed.
+
+        .. versionadded:: 2.3
+
 .. class:: KeywordPresetType
 
     Represents the type of a keyword preset auto moderation rule.
@@ -2949,9 +3013,23 @@ of :class:`enum.Enum`.
 
             This action type can only be used with the :attr:`Permissions.moderate_members` permission.
 
+.. class:: SortOrderType
+
+    .. versionadded:: 2.3
+
+    The default sort order type used to sort posts in a :class:`ForumChannel`.
+
+    .. attribute:: latest_activity
+
+        Sort forum posts by their activity.
+
+    .. attribute:: creation_date
+
+        Sort forum posts by their creation date.
+
 
 Async Iterator
-----------------
+--------------
 
 Some API functions return an "async iterator". An async iterator is something that is
 capable of being used in an :ref:`async for statement <py:async for>`.
@@ -3082,14 +3160,14 @@ Certain utilities make working with async iterators easier, detailed below.
 .. _discord-api-audit-logs:
 
 Audit Log Data
-----------------
+--------------
 
 Working with :meth:`Guild.audit_logs` is a complicated process with a lot of machinery
 involved. The library attempts to make it easy to use and friendly. To accomplish
 this goal, it must make use of a couple of data classes that aid in this goal.
 
 AuditLogEntry
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. attributetable:: AuditLogEntry
 
@@ -3097,7 +3175,7 @@ AuditLogEntry
     :members:
 
 AuditLogChanges
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. attributetable:: AuditLogChanges
 
@@ -3146,7 +3224,7 @@ AuditLogChanges
         +----------------------------------------+--------------------------------------------------+
 
 AuditLogDiff
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: AuditLogDiff
 
@@ -3648,12 +3726,12 @@ AuditLogDiff
    I'm not sure how to about porting these
 
 Webhook Support
-------------------
+---------------
 
 nextcord offers support for creating, editing, and executing webhooks through the :class:`Webhook` class.
 
 Webhook
-~~~~~~~~~
+~~~~~~~
 
 .. attributetable:: Webhook
 
@@ -3662,7 +3740,7 @@ Webhook
     :inherited-members:
 
 WebhookMessage
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. attributetable:: WebhookMessage
 
@@ -3670,7 +3748,7 @@ WebhookMessage
     :members:
 
 SyncWebhook
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: SyncWebhook
 
@@ -3679,7 +3757,7 @@ SyncWebhook
     :inherited-members:
 
 SyncWebhookMessage
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: SyncWebhookMessage
 
@@ -3689,7 +3767,7 @@ SyncWebhookMessage
 .. _discord_api_abcs:
 
 Abstract Base Classes
------------------------
+---------------------
 
 An :term:`abstract base class` (also known as an ``abc``) is a class that models can inherit
 to get their behaviour. **Abstract base classes should not be instantiated**.
@@ -3699,7 +3777,7 @@ This library has a module related to abstract base classes, in which all the ABC
 :class:`typing.Protocol`.
 
 Snowflake
-~~~~~~~~~~
+~~~~~~~~~
 
 .. attributetable:: nextcord.abc.Snowflake
 
@@ -3707,7 +3785,7 @@ Snowflake
     :members:
 
 User
-~~~~~
+~~~~
 
 .. attributetable:: nextcord.abc.User
 
@@ -3715,7 +3793,7 @@ User
     :members:
 
 PrivateChannel
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. attributetable:: nextcord.abc.PrivateChannel
 
@@ -3723,7 +3801,7 @@ PrivateChannel
     :members:
 
 GuildChannel
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: nextcord.abc.GuildChannel
 
@@ -3731,7 +3809,7 @@ GuildChannel
     :members:
 
 Messageable
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: nextcord.abc.Messageable
 
@@ -3746,7 +3824,7 @@ Messageable
         :async-with:
 
 Connectable
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: nextcord.abc.Connectable
 
@@ -3755,7 +3833,7 @@ Connectable
 .. _discord_api_models:
 
 Discord Models
----------------
+--------------
 
 Models are classes that are received from Discord and are not meant to be created by
 the user of the library.
@@ -3780,7 +3858,7 @@ the user of the library.
 
 
 ClientUser
-~~~~~~~~~~~~
+~~~~~~~~~~
 
 .. attributetable:: ClientUser
 
@@ -3789,7 +3867,7 @@ ClientUser
     :inherited-members:
 
 User
-~~~~~
+~~~~
 
 .. attributetable:: User
 
@@ -3805,7 +3883,7 @@ User
         :async-with:
 
 Attachment
-~~~~~~~~~~~
+~~~~~~~~~~
 
 .. attributetable:: Attachment
 
@@ -3829,43 +3907,9 @@ Message
 .. autoclass:: Message()
     :members:
 
-Component
-~~~~~~~~~~
-
-.. attributetable:: Component
-
-.. autoclass:: Component()
-    :members:
-
-ActionRow
-~~~~~~~~~~
-
-.. attributetable:: ActionRow
-
-.. autoclass:: ActionRow()
-    :members:
-
-Button
-~~~~~~~
-
-.. attributetable:: Button
-
-.. autoclass:: Button()
-    :members:
-    :inherited-members:
-
-SelectMenu
-~~~~~~~~~~~
-
-.. attributetable:: SelectMenu
-
-.. autoclass:: SelectMenu()
-    :members:
-    :inherited-members:
-
 
 DeletedReferencedMessage
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: DeletedReferencedMessage
 
@@ -3874,7 +3918,7 @@ DeletedReferencedMessage
 
 
 Reaction
-~~~~~~~~~
+~~~~~~~~
 
 .. attributetable:: Reaction
 
@@ -3886,7 +3930,7 @@ Reaction
         :async-for:
 
 Guild
-~~~~~~
+~~~~~
 
 .. attributetable:: Guild
 
@@ -3917,7 +3961,7 @@ Guild
 
 
 Integration
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. autoclass:: Integration()
     :members:
@@ -3935,7 +3979,7 @@ Integration
     :members:
 
 Interaction
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: Interaction
 
@@ -3943,7 +3987,7 @@ Interaction
     :members:
 
 InteractionResponse
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: InteractionResponse
 
@@ -3951,7 +3995,7 @@ InteractionResponse
     :members:
 
 InteractionMessage
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: InteractionMessage
 
@@ -3960,7 +4004,7 @@ InteractionMessage
     :inherited-members:
 
 PartialInteractionMessage
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: PartialInteractionMessage
 
@@ -3993,7 +4037,7 @@ Member
         :async-with:
 
 Spotify
-~~~~~~~~
+~~~~~~~
 
 .. attributetable:: Spotify
 
@@ -4001,7 +4045,7 @@ Spotify
     :members:
 
 VoiceState
-~~~~~~~~~~~
+~~~~~~~~~~
 
 .. attributetable:: VoiceState
 
@@ -4018,7 +4062,7 @@ Emoji
     :inherited-members:
 
 PartialEmoji
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: PartialEmoji
 
@@ -4027,7 +4071,7 @@ PartialEmoji
     :inherited-members:
 
 Role
-~~~~~
+~~~~
 
 .. attributetable:: Role
 
@@ -4035,7 +4079,7 @@ Role
     :members:
 
 RoleTags
-~~~~~~~~~~
+~~~~~~~~
 
 .. attributetable:: RoleTags
 
@@ -4043,7 +4087,7 @@ RoleTags
     :members:
 
 PartialMessageable
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: PartialMessageable
 
@@ -4052,7 +4096,7 @@ PartialMessageable
     :inherited-members:
 
 TextChannel
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: TextChannel
 
@@ -4068,7 +4112,7 @@ TextChannel
         :async-with:
 
 Thread
-~~~~~~~~
+~~~~~~
 
 .. attributetable:: Thread
 
@@ -4084,7 +4128,7 @@ Thread
         :async-with:
 
 ThreadMember
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: ThreadMember
 
@@ -4092,7 +4136,7 @@ ThreadMember
     :members:
 
 VoiceChannel
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: VoiceChannel
 
@@ -4101,7 +4145,7 @@ VoiceChannel
     :inherited-members:
 
 StageChannel
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: StageChannel
 
@@ -4111,7 +4155,7 @@ StageChannel
 
 
 StageInstance
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. attributetable:: StageInstance
 
@@ -4119,7 +4163,7 @@ StageInstance
     :members:
 
 CategoryChannel
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. attributetable:: CategoryChannel
 
@@ -4169,7 +4213,7 @@ ForumChannel
     :inherited-members:
 
 PartialInviteGuild
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: PartialInviteGuild
 
@@ -4177,7 +4221,7 @@ PartialInviteGuild
     :members:
 
 PartialInviteChannel
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: PartialInviteChannel
 
@@ -4185,7 +4229,7 @@ PartialInviteChannel
     :members:
 
 Invite
-~~~~~~~
+~~~~~~
 
 .. attributetable:: Invite
 
@@ -4193,7 +4237,7 @@ Invite
     :members:
 
 Template
-~~~~~~~~~
+~~~~~~~~
 
 .. attributetable:: Template
 
@@ -4201,7 +4245,7 @@ Template
     :members:
 
 WidgetChannel
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. attributetable:: WidgetChannel
 
@@ -4209,7 +4253,7 @@ WidgetChannel
     :members:
 
 WidgetMember
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: WidgetMember
 
@@ -4218,7 +4262,7 @@ WidgetMember
     :inherited-members:
 
 Widget
-~~~~~~~
+~~~~~~
 
 .. attributetable:: Widget
 
@@ -4226,7 +4270,7 @@ Widget
     :members:
 
 StickerPack
-~~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: StickerPack
 
@@ -4234,7 +4278,7 @@ StickerPack
     :members:
 
 StickerItem
-~~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: StickerItem
 
@@ -4242,7 +4286,7 @@ StickerItem
     :members:
 
 Sticker
-~~~~~~~~~~~~~~~
+~~~~~~~
 
 .. attributetable:: Sticker
 
@@ -4250,7 +4294,7 @@ Sticker
     :members:
 
 StandardSticker
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. attributetable:: StandardSticker
 
@@ -4258,7 +4302,7 @@ StandardSticker
     :members:
 
 GuildSticker
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: GuildSticker
 
@@ -4266,7 +4310,7 @@ GuildSticker
     :members:
 
 RawTypingEvent
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. attributetable:: RawTypingEvent
 
@@ -4274,7 +4318,7 @@ RawTypingEvent
     :members:
 
 RawMessageDeleteEvent
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: RawMessageDeleteEvent
 
@@ -4282,7 +4326,7 @@ RawMessageDeleteEvent
     :members:
 
 RawBulkMessageDeleteEvent
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: RawBulkMessageDeleteEvent
 
@@ -4290,7 +4334,7 @@ RawBulkMessageDeleteEvent
     :members:
 
 RawMessageUpdateEvent
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: RawMessageUpdateEvent
 
@@ -4298,7 +4342,7 @@ RawMessageUpdateEvent
     :members:
 
 RawReactionActionEvent
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: RawReactionActionEvent
 
@@ -4306,7 +4350,7 @@ RawReactionActionEvent
     :members:
 
 RawReactionClearEvent
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: RawReactionClearEvent
 
@@ -4314,7 +4358,7 @@ RawReactionClearEvent
     :members:
 
 RawReactionClearEmojiEvent
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: RawReactionClearEmojiEvent
 
@@ -4322,7 +4366,7 @@ RawReactionClearEmojiEvent
     :members:
 
 RawIntegrationDeleteEvent
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: RawIntegrationDeleteEvent
 
@@ -4330,7 +4374,7 @@ RawIntegrationDeleteEvent
     :members:
 
 PartialWebhookGuild
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: PartialWebhookGuild
 
@@ -4338,7 +4382,7 @@ PartialWebhookGuild
     :members:
 
 PartialWebhookChannel
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: PartialWebhookChannel
 
@@ -4379,7 +4423,7 @@ AutoModerationActionExecution
 .. _discord_api_data:
 
 Data Classes
---------------
+------------
 
 Some classes are just there to be data containers, this lists them.
 
@@ -4394,7 +4438,7 @@ dynamic attributes in mind.
 
 
 Object
-~~~~~~~
+~~~~~~
 
 .. attributetable:: Object
 
@@ -4402,7 +4446,7 @@ Object
     :members:
 
 Embed
-~~~~~~
+~~~~~
 
 .. attributetable:: Embed
 
@@ -4410,7 +4454,7 @@ Embed
     :members:
 
 AllowedMentions
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. attributetable:: AllowedMentions
 
@@ -4418,7 +4462,7 @@ AllowedMentions
     :members:
 
 MessageReference
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. attributetable:: MessageReference
 
@@ -4426,7 +4470,7 @@ MessageReference
     :members:
 
 PartialMessage
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. attributetable:: PartialMessage
 
@@ -4434,7 +4478,7 @@ PartialMessage
     :members:
 
 SelectOption
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: SelectOption
 
@@ -4442,7 +4486,7 @@ SelectOption
     :members:
 
 Intents
-~~~~~~~~~~
+~~~~~~~
 
 .. attributetable:: Intents
 
@@ -4450,7 +4494,7 @@ Intents
     :members:
 
 MemberCacheFlags
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. attributetable:: MemberCacheFlags
 
@@ -4458,7 +4502,7 @@ MemberCacheFlags
     :members:
 
 ApplicationFlags
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. attributetable:: ApplicationFlags
 
@@ -4466,7 +4510,7 @@ ApplicationFlags
     :members:
 
 File
-~~~~~
+~~~~
 
 .. attributetable:: File
 
@@ -4482,7 +4526,7 @@ Colour
     :members:
 
 BaseActivity
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. attributetable:: BaseActivity
 
@@ -4490,7 +4534,7 @@ BaseActivity
     :members:
 
 Activity
-~~~~~~~~~
+~~~~~~~~
 
 .. attributetable:: Activity
 
@@ -4498,7 +4542,7 @@ Activity
     :members:
 
 Game
-~~~~~
+~~~~
 
 .. attributetable:: Game
 
@@ -4506,7 +4550,7 @@ Game
     :members:
 
 Streaming
-~~~~~~~~~~~
+~~~~~~~~~
 
 .. attributetable:: Streaming
 
@@ -4514,7 +4558,7 @@ Streaming
     :members:
 
 CustomActivity
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. attributetable:: CustomActivity
 
@@ -4522,7 +4566,7 @@ CustomActivity
     :members:
 
 Permissions
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 .. attributetable:: Permissions
 
@@ -4530,7 +4574,7 @@ Permissions
     :members:
 
 PermissionOverwrite
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: PermissionOverwrite
 
@@ -4538,7 +4582,7 @@ PermissionOverwrite
     :members:
 
 ShardInfo
-~~~~~~~~~~~
+~~~~~~~~~
 
 .. attributetable:: ShardInfo
 
@@ -4546,7 +4590,7 @@ ShardInfo
     :members:
 
 SystemChannelFlags
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. attributetable:: SystemChannelFlags
 
@@ -4604,12 +4648,12 @@ AutoModerationAction
 .. _discord_ui_kit:
 
 Bot UI Kit
--------------
+----------
 
 The library has helpers to help create component-based UIs.
 
 View
-~~~~~~~
+~~~~
 
 .. attributetable:: nextcord.ui.View
 
@@ -4617,7 +4661,7 @@ View
     :members:
 
 Modal
-~~~~~~~
+~~~~~
 
 .. attributetable:: nextcord.ui.Modal
 
@@ -4625,7 +4669,7 @@ Modal
     :members:
 
 Item
-~~~~~~~
+~~~~
 
 .. attributetable:: nextcord.ui.Item
 
@@ -4633,7 +4677,7 @@ Item
     :members:
 
 Button
-~~~~~~~
+~~~~~~
 
 .. attributetable:: nextcord.ui.Button
 
@@ -4644,7 +4688,7 @@ Button
 .. autofunction:: nextcord.ui.button
 
 TextInput
-~~~~~~~~~~
+~~~~~~~~~
 
 .. attributetable:: nextcord.ui.TextInput
 
@@ -4652,16 +4696,64 @@ TextInput
     :members:
     :inherited-members:
 
-Select
-~~~~~~~
+StringSelect
+~~~~~~~~~~~~
 
-.. attributetable:: nextcord.ui.Select
+.. attributetable:: nextcord.ui.StringSelect
 
-.. autoclass:: nextcord.ui.Select
+.. autoclass:: nextcord.ui.StringSelect
     :members:
     :inherited-members:
 
+.. autofunction:: nextcord.ui.string_select
+
+.. autoclass:: nextcord.ui.Select
+
 .. autofunction:: nextcord.ui.select
+
+UserSelect
+~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.UserSelect
+
+.. autoclass:: nextcord.ui.UserSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.user_select
+
+RoleSelect
+~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.RoleSelect
+
+.. autoclass:: nextcord.ui.RoleSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.role_select
+
+MentionableSelect
+~~~~~~~~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.MentionableSelect
+
+.. autoclass:: nextcord.ui.MentionableSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.mentionable_select
+
+ChannelSelect
+~~~~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.ChannelSelect
+
+.. autoclass:: nextcord.ui.ChannelSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.channel_select
 
 Application Commands
 --------------------
@@ -4861,7 +4953,7 @@ Cogs
     :members:
 
 Exceptions
-------------
+----------
 
 The following exceptions are thrown by the library.
 
@@ -4907,7 +4999,7 @@ The following exceptions are thrown by the library.
 .. autoexception:: ApplicationCommandOptionMissing
 
 Exception Hierarchy
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. exception_hierarchy::
 

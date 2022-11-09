@@ -433,7 +433,7 @@ class AuditLogEntry(Hashable):
         Audit log entries are now comparable and hashable.
 
     Attributes
-    -----------
+    ----------
     action: :class:`AuditLogAction`
         The action that was done.
     user: :class:`abc.User`
@@ -534,7 +534,11 @@ class AuditLogEntry(Hashable):
                 channel_id = int(self.extra["channel_id"])
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
-            elif self.action is enums.AuditLogAction.auto_moderation_block_message:
+            elif (
+                self.action is enums.AuditLogAction.auto_moderation_block_message
+                or self.action is enums.AuditLogAction.auto_moderation_flag_to_channel
+                or self.action is enums.AuditLogAction.auto_moderation_user_communication_disabled
+            ):
                 channel_id = int(self.extra["channel_id"])
                 elems = {
                     "channel": (
@@ -555,8 +559,8 @@ class AuditLogEntry(Hashable):
         # into meaningful data when requested
         self._changes = data.get("changes", [])
 
-        self.user = self._get_member(utils._get_as_snowflake(data, "user_id"))  # type: ignore
-        self._target_id = utils._get_as_snowflake(data, "target_id")
+        self.user = self._get_member(utils.get_as_snowflake(data, "user_id"))  # type: ignore
+        self._target_id = utils.get_as_snowflake(data, "target_id")
 
     def _get_member(self, user_id: int) -> Union[Member, User, None]:
         return self.guild.get_member(user_id) or self._users.get(user_id)

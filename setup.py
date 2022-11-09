@@ -44,12 +44,12 @@ with open("README.rst") as f:
 extras_require = {
     "voice": ["PyNaCl>=1.3.0,<1.5"],
     "docs": [
-        "sphinx>=5.0.1,<6",
+        "sphinx==5.2.3",
         "sphinxcontrib_trio==1.1.2",
         "sphinxcontrib-websupport",
         "typing_extensions>=4.2.0, <5",
     ],
-    "speed": ["orjson>=3.5.4", "aiodns>=1.1", "Brotli", "cchardet"],
+    "speed": ["orjson>=3.5.4", "aiohttp[speedups]"],
 }
 
 packages = [

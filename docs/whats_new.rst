@@ -858,7 +858,7 @@ v1.2.0
 This update mainly brings performance improvements and various nitro boosting attributes (referred to in the API as "premium guilds").
 
 New Features
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 - Add :attr:`Guild.premium_tier` to query the guild's current nitro boost level.
 - Add :attr:`Guild.emoji_limit`, :attr:`Guild.bitrate_limit`, :attr:`Guild.filesize_limit` to query the new limits of a guild when taking into consideration boosting.
@@ -963,7 +963,7 @@ Bug Fixes
 - Tighten constraints of ``__eq__`` in :class:`Spotify` objects (:dpyissue:`2113`, :dpyissue:`2117`)
 
 ``discord.ext.commands``
-++++++++++++++++++++++++++
+++++++++++++++++++++++++
 
 - Fix lambda converters in a non-module context (e.g. ``eval``).
 - Use message creation time for reference time when computing cooldowns.
@@ -1127,7 +1127,7 @@ v0.14.1
 Bug fixes
 ~~~~~~~~~
 
-- Fix bug with `Reaction` not being visible at import.
+- Fix bug with ``Reaction`` not being visible at import.
     - This was also breaking the documentation.
 
 .. _v0p14p0:

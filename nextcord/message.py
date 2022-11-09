@@ -141,7 +141,7 @@ class Attachment(Hashable):
         Attachment can now be casted to :class:`str` and is hashable.
 
     Attributes
-    ------------
+    ----------
     id: :class:`int`
         The attachment ID.
     size: :class:`int`
@@ -216,7 +216,7 @@ class Attachment(Hashable):
         Saves this attachment into a file-like object.
 
         Parameters
-        -----------
+        ----------
         fp: Union[:class:`io.BufferedIOBase`, :class:`os.PathLike`, :class:`str`]
             The file-like object to save this attachment to or the filename
             to use. If a filename is passed then a file is created with that
@@ -233,14 +233,14 @@ class Attachment(Hashable):
             on some types of attachments.
 
         Raises
-        --------
+        ------
         HTTPException
             Saving the attachment failed.
         NotFound
             The attachment was deleted.
 
         Returns
-        --------
+        -------
         :class:`int`
             The number of bytes written.
         """
@@ -262,7 +262,7 @@ class Attachment(Hashable):
         .. versionadded:: 1.1
 
         Parameters
-        -----------
+        ----------
         use_cached: :class:`bool`
             Whether to use :attr:`proxy_url` rather than :attr:`url` when downloading
             the attachment. This will allow attachments to be saved after deletion
@@ -306,7 +306,7 @@ class Attachment(Hashable):
         .. versionadded:: 1.3
 
         Parameters
-        -----------
+        ----------
         filename: Optional[:class:`str`]
             The filename to use for the file. If not specified then the filename
             of the attachment is used instead.
@@ -429,7 +429,7 @@ class MessageReference:
         This class can now be constructed by users.
 
     Attributes
-    -----------
+    ----------
     message_id: Optional[:class:`int`]
         The id of the message referenced.
     channel_id: :class:`int`
@@ -474,9 +474,9 @@ class MessageReference:
     @classmethod
     def with_state(cls: Type[MR], state: ConnectionState, data: MessageReferencePayload) -> MR:
         self = cls.__new__(cls)
-        self.message_id = utils._get_as_snowflake(data, "message_id")
+        self.message_id = utils.get_as_snowflake(data, "message_id")
         self.channel_id = int(data.pop("channel_id"))
-        self.guild_id = utils._get_as_snowflake(data, "guild_id")
+        self.guild_id = utils.get_as_snowflake(data, "guild_id")
         self.fail_if_not_exists = data.get("fail_if_not_exists", True)
         self._state = state
         self.resolved = None
@@ -581,7 +581,7 @@ class MessageInteraction(Hashable):
             Returns the message interaction's hash.
 
     Attributes
-    -----------
+    ----------
     data: Dict[:class:`str`, Any]
         The raw data from the interaction.
     id: :class:`int`
@@ -646,7 +646,7 @@ class Message(Hashable):
             Returns the message's hash.
 
     Attributes
-    -----------
+    ----------
     tts: :class:`bool`
         Specifies if the message was done with text-to-speech.
         This can only be accurately received in :func:`on_message` due to
@@ -798,7 +798,7 @@ class Message(Hashable):
     ):
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
-        self.webhook_id: Optional[int] = utils._get_as_snowflake(data, "webhook_id")
+        self.webhook_id: Optional[int] = utils.get_as_snowflake(data, "webhook_id")
         self.reactions: List[Reaction] = [
             Reaction(message=self, data=d) for d in data.get("reactions", [])
         ]
@@ -831,7 +831,7 @@ class Message(Hashable):
             self.guild = channel.guild  # type: ignore
         except AttributeError:
             if getattr(channel, "type", None) not in (ChannelType.group, ChannelType.private):
-                self.guild = state._get_guild(utils._get_as_snowflake(data, "guild_id"))
+                self.guild = state._get_guild(utils.get_as_snowflake(data, "guild_id"))
             else:
                 self.guild = None
 
@@ -1082,7 +1082,7 @@ class Message(Hashable):
         if self.guild is None:
             return []
         it = filter(None, map(self.guild.get_channel, self.raw_channel_mentions))
-        return utils._unique(it)
+        return utils.unique(it)
 
     @utils.cached_slot_property("_cs_clean_content")
     def clean_content(self) -> str:
@@ -1303,7 +1303,7 @@ class Message(Hashable):
             Added the new ``delay`` keyword-only parameter.
 
         Parameters
-        -----------
+        ----------
         delay: Optional[:class:`float`]
             If provided, the number of seconds to wait in the background
             before deleting the message. If the deletion fails then it is silently ignored.
@@ -1413,7 +1413,7 @@ class Message(Hashable):
             The ``suppress`` keyword-only parameter was added.
 
         Parameters
-        -----------
+        ----------
         content: Optional[:class:`str`]
             The new content to replace the message with.
             Could be ``None`` to remove the content.
@@ -1459,7 +1459,7 @@ class Message(Hashable):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -1469,7 +1469,7 @@ class Message(Hashable):
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
 
         Returns
-        --------
+        -------
         :class:`Message`
             The edited message.
         """
@@ -1548,7 +1548,7 @@ class Message(Hashable):
         permission is also needed.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have the proper permissions to publish this message.
         HTTPException
@@ -1566,14 +1566,14 @@ class Message(Hashable):
         this in a non-private channel context.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for pinning the message. Shows up on the audit log.
 
             .. versionadded:: 1.4
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to pin the message.
         NotFound
@@ -1595,14 +1595,14 @@ class Message(Hashable):
         this in a non-private channel context.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for unpinning the message. Shows up on the audit log.
 
             .. versionadded:: 1.4
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to unpin the message.
         NotFound
@@ -1626,12 +1626,12 @@ class Message(Hashable):
         emoji, the :attr:`~Permissions.add_reactions` permission is required.
 
         Parameters
-        ------------
+        ----------
         emoji: Union[:class:`Emoji`, :class:`Reaction`, :class:`PartialEmoji`, :class:`str`]
             The emoji to react with.
 
         Raises
-        --------
+        ------
         HTTPException
             Adding the reaction failed.
         Forbidden
@@ -1661,14 +1661,14 @@ class Message(Hashable):
         the :class:`abc.Snowflake` abc.
 
         Parameters
-        ------------
+        ----------
         emoji: Union[:class:`Emoji`, :class:`Reaction`, :class:`PartialEmoji`, :class:`str`]
             The emoji to remove.
         member: :class:`abc.Snowflake`
             The member for which to remove the reaction.
 
         Raises
-        --------
+        ------
         HTTPException
             Removing the reaction failed.
         Forbidden
@@ -1698,12 +1698,12 @@ class Message(Hashable):
         .. versionadded:: 1.3
 
         Parameters
-        -----------
+        ----------
         emoji: Union[:class:`Emoji`, :class:`Reaction`, :class:`PartialEmoji`, :class:`str`]
             The emoji to clear.
 
         Raises
-        --------
+        ------
         HTTPException
             Clearing the reaction failed.
         Forbidden
@@ -1725,7 +1725,7 @@ class Message(Hashable):
         You need the :attr:`~Permissions.manage_messages` permission to use this.
 
         Raises
-        --------
+        ------
         HTTPException
             Removing the reactions failed.
         Forbidden
@@ -1748,7 +1748,7 @@ class Message(Hashable):
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the thread.
         auto_archive_duration: :class:`int`
@@ -1756,7 +1756,7 @@ class Message(Hashable):
             If not provided, the channel's default auto archive duration is used.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to create a thread.
         HTTPException
@@ -1765,7 +1765,7 @@ class Message(Hashable):
             This message does not have guild info attached.
 
         Returns
-        --------
+        -------
         :class:`.Thread`
             The created thread.
         """
@@ -1792,7 +1792,7 @@ class Message(Hashable):
         .. versionadded:: 1.6
 
         Raises
-        --------
+        ------
         ~nextcord.HTTPException
             Sending the message failed.
         ~nextcord.Forbidden
@@ -1802,7 +1802,7 @@ class Message(Hashable):
             you specified both ``file`` and ``files``.
 
         Returns
-        ---------
+        -------
         :class:`.Message`
             The message that was sent.
         """
@@ -1823,7 +1823,7 @@ class Message(Hashable):
             .. versionadded:: 1.7
 
         Returns
-        ---------
+        -------
         :class:`~nextcord.MessageReference`
             The reference to this message.
         """
@@ -1872,7 +1872,7 @@ class PartialMessage(Hashable):
             Returns the partial message's hash.
 
     Attributes
-    -----------
+    ----------
     channel: Union[:class:`TextChannel`, :class:`Thread`, :class:`DMChannel`]
         The channel associated with this partial message.
     id: :class:`int`
@@ -1937,7 +1937,7 @@ class PartialMessage(Hashable):
         Fetches the partial message to a full :class:`Message`.
 
         Raises
-        --------
+        ------
         NotFound
             The message was not found.
         Forbidden
@@ -1946,7 +1946,7 @@ class PartialMessage(Hashable):
             Retrieving the message failed.
 
         Returns
-        --------
+        -------
         :class:`Message`
             The full message.
         """
@@ -1965,7 +1965,7 @@ class PartialMessage(Hashable):
             :class:`nextcord.Message` is returned instead of ``None`` if an edit took place.
 
         Parameters
-        -----------
+        ----------
         content: Optional[:class:`str`]
             The new content to replace the message with.
             Could be ``None`` to remove the content.
@@ -2000,7 +2000,7 @@ class PartialMessage(Hashable):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         NotFound
             The message was not found.
         HTTPException
@@ -2012,7 +2012,7 @@ class PartialMessage(Hashable):
             You specified both ``embed`` and ``embeds``.
 
         Returns
-        ---------
+        -------
         Optional[:class:`Message`]
             The message that was edited.
         """

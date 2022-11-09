@@ -45,7 +45,7 @@ class Team:
     """Represents an application team for a bot provided by Discord.
 
     Attributes
-    -------------
+    ----------
     id: :class:`int`
         The team ID.
     name: :class:`str`
@@ -66,7 +66,7 @@ class Team:
         self.id: int = int(data["id"])
         self.name: str = data["name"]
         self._icon: Optional[str] = data["icon"]
-        self.owner_id: Optional[int] = utils._get_as_snowflake(data, "owner_user_id")
+        self.owner_id: Optional[int] = utils.get_as_snowflake(data, "owner_user_id")
         self.members: List[TeamMember] = [
             TeamMember(self, self._state, member) for member in data["members"]
         ]
@@ -111,7 +111,7 @@ class TeamMember(BaseUser):
     .. versionadded:: 1.3
 
     Attributes
-    -------------
+    ----------
     name: :class:`str`
         The team member's username.
     id: :class:`int`

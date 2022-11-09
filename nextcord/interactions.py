@@ -56,14 +56,7 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
 
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
-    from .channel import (
-        CategoryChannel,
-        ForumChannel,
-        PartialMessageable,
-        StageChannel,
-        TextChannel,
-        VoiceChannel,
-    )
+    from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .client import Client
     from .guild import Guild
     from .message import AllowedMentions
@@ -94,7 +87,7 @@ class InteractionAttached(dict):
     This is used to store information about an :class:`Interaction`. This is useful if you want to save some data from a :meth:`ApplicationCommand.application_command_before_invoke` to use later in the callback.
 
     Example
-    ---------
+    -------
 
     .. code-block:: python3
 
@@ -146,7 +139,7 @@ class Interaction(Hashable, Generic[ClientT]):
         :class:`Interaction` is now hashable.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The interaction's ID.
     type: :class:`InteractionType`
@@ -218,8 +211,8 @@ class Interaction(Hashable, Generic[ClientT]):
         self.data: Optional[InteractionData] = data.get("data")
         self.token: str = data["token"]
         self.version: int = data["version"]
-        self.channel_id: Optional[int] = utils._get_as_snowflake(data, "channel_id")
-        self.guild_id: Optional[int] = utils._get_as_snowflake(data, "guild_id")
+        self.channel_id: Optional[int] = utils.get_as_snowflake(data, "channel_id")
+        self.guild_id: Optional[int] = utils.get_as_snowflake(data, "guild_id")
         self.application_id: int = int(data["application_id"])
         self.locale: Optional[str] = data.get("locale")
         self.guild_locale: Optional[str] = data.get("guild_locale")
@@ -352,14 +345,14 @@ class Interaction(Hashable, Generic[ClientT]):
         Repeated calls to this will return a cached value.
 
         Raises
-        -------
+        ------
         HTTPException
             Fetching the original response message failed.
         ClientException
             The channel for the message could not be resolved.
 
         Returns
-        --------
+        -------
         InteractionMessage
             The original interaction response message.
         """
@@ -406,7 +399,7 @@ class Interaction(Hashable, Generic[ClientT]):
         the message sent was ephemeral.
 
         Parameters
-        ------------
+        ----------
         content: Optional[:class:`str`]
             The content to edit the message with or ``None`` to clear it.
         embeds: List[:class:`Embed`]
@@ -431,7 +424,7 @@ class Interaction(Hashable, Generic[ClientT]):
             the view is removed.
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -442,7 +435,7 @@ class Interaction(Hashable, Generic[ClientT]):
             The length of ``embeds`` was invalid.
 
         Returns
-        --------
+        -------
         :class:`InteractionMessage`
             The newly edited message.
         """
@@ -484,13 +477,13 @@ class Interaction(Hashable, Generic[ClientT]):
         you do not want to fetch the message and save an HTTP request.
 
         Parameters
-        -----------
+        ----------
         delay: Optional[:class:`float`]
             If provided, the number of seconds to wait before deleting the message.
             The waiting is done in the background and deletion failures are ignored.
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the message failed.
         Forbidden
@@ -539,7 +532,7 @@ class Interaction(Hashable, Generic[ClientT]):
         via :attr:`Interaction.followup` using :class:`Webhook.send` instead.
 
         Raises
-        --------
+        ------
         HTTPException
             Sending the message failed.
         NotFound
@@ -663,7 +656,7 @@ class InteractionResponse:
         and a secondary action will be done later.
 
         Parameters
-        -----------
+        ----------
         ephemeral: :class:`bool`
             Indicates whether the deferred message will eventually be ephemeral.
             This only applies for interactions of type :attr:`InteractionType.application_command` or when ``with_message`` is True
@@ -675,7 +668,7 @@ class InteractionResponse:
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Deferring the interaction failed.
         InteractionResponded
@@ -711,7 +704,7 @@ class InteractionResponse:
         This should rarely be used.
 
         Raises
-        -------
+        ------
         HTTPException
             Ponging the interaction failed.
         InteractionResponded
@@ -746,7 +739,7 @@ class InteractionResponse:
             name-value pair, where the display name and the value Discord sends back are the same.
 
         Raises
-        -------
+        ------
         HTTPException
             Sending the message failed.
         InteractionResponded
@@ -790,7 +783,7 @@ class InteractionResponse:
         Responds to this interaction by sending a message.
 
         Parameters
-        -----------
+        ----------
         content: Optional[:class:`str`]
             The content of the message to send.
         embeds: List[:class:`Embed`]
@@ -821,7 +814,7 @@ class InteractionResponse:
             See :meth:`.abc.Messageable.send` for more information.
 
         Raises
-        -------
+        ------
         HTTPException
             Sending the message failed.
         NotFound
@@ -838,7 +831,7 @@ class InteractionResponse:
             This interaction has already been responded to before.
 
         Returns
-        --------
+        -------
         :class:`PartialInteractionMessage`
             An object supporting only the :meth:`~PartialInteractionMessage.edit` and :meth:`~PartialInteractionMessage.delete`
             operations. To fetch the :class:`InteractionMessage` you may use :meth:`PartialInteractionMessage.fetch`
@@ -931,7 +924,7 @@ class InteractionResponse:
             be displayed on the user's screen.
 
         Raises
-        -------
+        ------
         HTTPException
             Sending the modal failed.
         InteractionResponded
@@ -972,7 +965,7 @@ class InteractionResponse:
         component or modal submit interaction originated from.
 
         Parameters
-        -----------
+        ----------
         content: Optional[:class:`str`]
             The new content to replace the message with. ``None`` removes the content.
         embeds: List[:class:`Embed`]
@@ -998,7 +991,7 @@ class InteractionResponse:
 
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         InvalidArgument
@@ -1009,7 +1002,7 @@ class InteractionResponse:
             This interaction has already been responded to before.
 
         Returns
-        --------
+        -------
         Optional[:class:`Message`]
             The message that was edited, or None if the :attr:`Interaction.message` is not found
             (this may happen if the interaction occurred in a :class:`Thread`).
@@ -1132,7 +1125,7 @@ class _InteractionMessageMixin:
         Edits the message.
 
         Parameters
-        ------------
+        ----------
         content: Optional[:class:`str`]
             The content to edit the message with or ``None`` to clear it.
         embeds: List[:class:`Embed`]
@@ -1161,7 +1154,7 @@ class _InteractionMessageMixin:
             then it is silently ignored.
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -1172,7 +1165,7 @@ class _InteractionMessageMixin:
             The length of ``embeds`` was invalid.
 
         Returns
-        ---------
+        -------
         :class:`InteractionMessage`
             The newly edited message.
         """
@@ -1198,7 +1191,7 @@ class _InteractionMessageMixin:
         Deletes the message.
 
         Parameters
-        -----------
+        ----------
         delay: Optional[:class:`float`]
             If provided, the number of seconds to wait before deleting the message.
             The waiting is done in the background and deletion failures are ignored.
@@ -1263,14 +1256,14 @@ class PartialInteractionMessage(_InteractionMessageMixin):
         Repeated calls to this will return a cached value.
 
         Raises
-        -------
+        ------
         HTTPException
             Fetching the original response message failed.
         ClientException
             The channel for the message could not be resolved.
 
         Returns
-        --------
+        -------
         InteractionMessage
             The original interaction response message.
         """

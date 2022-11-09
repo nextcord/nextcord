@@ -1,6 +1,8 @@
 """
 The MIT License (MIT)
-Copyright (c) 2021-present tag-epic
+
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -25,22 +27,22 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
 
 if TYPE_CHECKING:
     from nextcord.application_command import ClientCog
-    from nextcord.errors import ApplicationError
 
     from ..interactions import Interaction
 
-T = TypeVar("T")
+    T = TypeVar("T")
 
-Coro = Coroutine[Any, Any, T]
-MaybeCoro = Union[T, Coro[T]]
-CoroFunc = Callable[..., Coro[Any]]
-ApplicationCheck = Union[
-    Callable[[ClientCog, Interaction], MaybeCoro[bool]], Callable[[Interaction], MaybeCoro[bool]]
-]
-ApplicationHook = Union[
-    Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
-]
-ApplicationErrorCallback = Union[
-    Callable[[ClientCog, Interaction, Exception], Coro[Any]],
-    Callable[[Interaction, Exception], Coro[Any]],
-]
+    Coro = Coroutine[Any, Any, T]
+    MaybeCoro = Union[T, Coro[T]]
+    CoroFunc = Callable[..., Coro[Any]]
+    ApplicationCheck = Union[
+        Callable[[ClientCog, Interaction], MaybeCoro[bool]],
+        Callable[[Interaction], MaybeCoro[bool]],
+    ]
+    ApplicationHook = Union[
+        Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
+    ]
+    ApplicationErrorCallback = Union[
+        Callable[[ClientCog, Interaction, Exception], Coro[Any]],
+        Callable[[Interaction, Exception], Coro[Any]],
+    ]

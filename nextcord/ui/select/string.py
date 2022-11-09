@@ -25,41 +25,42 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import os
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Callable, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
-from ..components import SelectMenu, SelectOption
-from ..emoji import Emoji
-from ..enums import ComponentType
-from ..partial_emoji import PartialEmoji
-from ..utils import MISSING
-from .item import Item, ItemCallbackType
+from ...components import SelectOption, StringSelectMenu
+from ...emoji import Emoji
+from ...enums import ComponentType
+from ...interactions import ClientT
+from ...partial_emoji import PartialEmoji
+from ...utils import MISSING
+from ..item import ItemCallbackType
+from ..view import View
+from .base import SelectBase
 
 __all__ = (
     "Select",
     "select",
+    "StringSelect",
+    "string_select",
 )
 
-if TYPE_CHECKING:
-    from ..types.components import SelectMenu as SelectMenuPayload
-    from ..types.interactions import ComponentInteractionData
-    from .view import View
-
-S = TypeVar("S", bound="Select")
+S = TypeVar("S", bound="StringSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
 
-class Select(Item[V]):
-    """Represents a UI select menu.
+class StringSelect(SelectBase, Generic[V]):
+    """Represents a UI string select menu.
 
     This is usually represented as a drop down menu.
 
-    In order to get the selected items that the user has chosen, use :attr:`Select.values`.
+    In order to get the selected items that the user has chosen, use :attr:`StringSelect.values`.
+
+    There is an alias for this class called ``Select``.
 
     .. versionadded:: 2.0
 
     Parameters
-    ------------
+    ----------
     custom_id: :class:`str`
         The ID of the select menu that gets received during an interaction.
         If not given then one is generated for you.
@@ -71,7 +72,7 @@ class Select(Item[V]):
     max_values: :class:`int`
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
-    options: List[:class:`nextcord.SelectOption`]
+    options: List[:class:`.SelectOption`]
         A list of options that can be selected in this menu.
     disabled: :class:`bool`
         Whether the select is disabled or not.
@@ -102,71 +103,33 @@ class Select(Item[V]):
         disabled: bool = False,
         row: Optional[int] = None,
     ) -> None:
-        super().__init__()
-        self._selected_values: List[str] = []
-        self._provided_custom_id = custom_id is not MISSING
-        custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
-        options = [] if options is MISSING else options
-        self._underlying = SelectMenu._raw_construct(
+        super().__init__(
             custom_id=custom_id,
-            type=ComponentType.select,
-            placeholder=placeholder,
             min_values=min_values,
             max_values=max_values,
-            options=options,
             disabled=disabled,
+            row=row,
+            placeholder=placeholder,
         )
-        self.row = row
-
-    @property
-    def custom_id(self) -> str:
-        """:class:`str`: The ID of the select menu that gets received during an interaction."""
-        return self._underlying.custom_id
-
-    @custom_id.setter
-    def custom_id(self, value: str):
-        if not isinstance(value, str):
-            raise TypeError("custom_id must be None or str")
-
-        self._underlying.custom_id = value
-
-    @property
-    def placeholder(self) -> Optional[str]:
-        """Optional[:class:`str`]: The placeholder text that is shown if nothing is selected, if any."""
-        return self._underlying.placeholder
-
-    @placeholder.setter
-    def placeholder(self, value: Optional[str]):
-        if value is not None and not isinstance(value, str):
-            raise TypeError("placeholder must be None or str")
-
-        self._underlying.placeholder = value
-
-    @property
-    def min_values(self) -> int:
-        """:class:`int`: The minimum number of items that must be chosen for this select menu."""
-        return self._underlying.min_values
-
-    @min_values.setter
-    def min_values(self, value: int):
-        self._underlying.min_values = int(value)
-
-    @property
-    def max_values(self) -> int:
-        """:class:`int`: The maximum number of items that must be chosen for this select menu."""
-        return self._underlying.max_values
-
-    @max_values.setter
-    def max_values(self, value: int):
-        self._underlying.max_values = int(value)
+        self._selected_values: List[str] = []
+        options = [] if options is MISSING else options
+        self._underlying = StringSelectMenu._raw_construct(
+            custom_id=self.custom_id,
+            type=ComponentType.select,
+            placeholder=self.placeholder,
+            min_values=self.min_values,
+            max_values=self.max_values,
+            disabled=self.disabled,
+            options=options,
+        )
 
     @property
     def options(self) -> List[SelectOption]:
-        """List[:class:`nextcord.SelectOption`]: A list of options that can be selected in this menu."""
+        """List[:class:`.SelectOption`]: A list of options that can be selected in this menu."""
         return self._underlying.options
 
     @options.setter
-    def options(self, value: List[SelectOption]):
+    def options(self, value: List[SelectOption]) -> None:
         if not isinstance(value, list):
             raise TypeError("options must be a list of SelectOption")
         if not all(isinstance(obj, SelectOption) for obj in value):
@@ -182,14 +145,14 @@ class Select(Item[V]):
         description: Optional[str] = None,
         emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
         default: bool = False,
-    ):
+    ) -> None:
         """Adds an option to the select menu.
 
-        To append a pre-existing :class:`nextcord.SelectOption` use the
+        To append a pre-existing :class:`.SelectOption` use the
         :meth:`append_option` method instead.
 
         Parameters
-        -----------
+        ----------
         label: :class:`str`
             The label of the option. This is displayed to users.
             Can only be up to 100 characters.
@@ -206,7 +169,7 @@ class Select(Item[V]):
             Whether this option is selected by default.
 
         Raises
-        -------
+        ------
         ValueError
             The number of options exceeds 25.
         """
@@ -221,16 +184,16 @@ class Select(Item[V]):
 
         self.append_option(option)
 
-    def append_option(self, option: SelectOption):
+    def append_option(self, option: SelectOption) -> None:
         """Appends an option to the select menu.
 
         Parameters
-        -----------
-        option: :class:`nextcord.SelectOption`
+        ----------
+        option: :class:`.SelectOption`
             The option to append to the select menu.
 
         Raises
-        -------
+        ------
         ValueError
             The number of options exceeds 25.
         """
@@ -240,35 +203,8 @@ class Select(Item[V]):
 
         self._underlying.options.append(option)
 
-    @property
-    def disabled(self) -> bool:
-        """:class:`bool`: Whether the select is disabled or not."""
-        return self._underlying.disabled
-
-    @disabled.setter
-    def disabled(self, value: bool):
-        self._underlying.disabled = bool(value)
-
-    @property
-    def values(self) -> List[str]:
-        """List[:class:`str`]: A list of values that have been selected by the user."""
-        return self._selected_values
-
-    @property
-    def width(self) -> int:
-        return 5
-
-    def to_component_dict(self) -> SelectMenuPayload:
-        return self._underlying.to_dict()
-
-    def refresh_component(self, component: SelectMenu) -> None:
-        self._underlying = component
-
-    def refresh_state(self, data: ComponentInteractionData) -> None:
-        self._selected_values = data.get("values", [])
-
     @classmethod
-    def from_component(cls: Type[S], component: SelectMenu) -> S:
+    def from_component(cls: Type[S], component: StringSelectMenu) -> S:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,
@@ -279,15 +215,8 @@ class Select(Item[V]):
             row=None,
         )
 
-    @property
-    def type(self) -> ComponentType:
-        return self._underlying.type
 
-    def is_dispatchable(self) -> bool:
-        return True
-
-
-def select(
+def string_select(
     *,
     placeholder: Optional[str] = None,
     custom_id: str = MISSING,
@@ -296,18 +225,22 @@ def select(
     options: List[SelectOption] = MISSING,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
-    """A decorator that attaches a select menu to a component.
+) -> Callable[
+    [ItemCallbackType[StringSelect[V], ClientT]], ItemCallbackType[StringSelect[V], ClientT]
+]:
+    """A decorator that attaches a string select menu to a component.
+
+    There is an alias for this function called ``select``.
 
     The function being decorated should have three parameters, ``self`` representing
-    the :class:`nextcord.ui.View`, the :class:`nextcord.ui.Select` being pressed and
-    the :class:`nextcord.Interaction` you receive.
+    the :class:`.ui.View`, the :class:`.ui.StringSelect` being pressed and
+    the :class:`.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`Select.values`.
+    use :attr:`StringSelect.values`.
 
     Parameters
-    ------------
+    ----------
     placeholder: Optional[:class:`str`]
         The placeholder text that is shown if nothing is selected, if any.
     custom_id: :class:`str`
@@ -325,17 +258,17 @@ def select(
     max_values: :class:`int`
         The maximum number of items that must be chosen for this select menu.
         Defaults to 1 and must be between 1 and 25.
-    options: List[:class:`nextcord.SelectOption`]
+    options: List[:class:`.SelectOption`]
         A list of options that can be selected in this menu.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ItemCallbackType[Select[V]]) -> ItemCallbackType[Select[V]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
-        func.__discord_ui_model_type__ = Select
+        func.__discord_ui_model_type__ = StringSelect
         func.__discord_ui_model_kwargs__ = {
             "placeholder": placeholder,
             "custom_id": custom_id,
@@ -348,3 +281,8 @@ def select(
         return func
 
     return decorator
+
+
+Select = StringSelect
+select = string_select
+"""alias of :func:`string_select`"""

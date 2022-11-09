@@ -45,6 +45,8 @@ from typing import (
     Tuple,
 )
 
+from typing_extensions import Self
+
 from ..components import (
     ActionRow as ActionRowComponent,
     Button as ButtonComponent,
@@ -58,7 +60,7 @@ from .item import Item, ItemCallbackType
 __all__ = ("View",)
 
 if TYPE_CHECKING:
-    from ..interactions import Interaction
+    from ..interactions import ClientT, Interaction
     from ..message import Message
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
@@ -138,7 +140,7 @@ class View:
     .. versionadded:: 2.0
 
     Parameters
-    -----------
+    ----------
     timeout: Optional[:class:`float`]
         Timeout in seconds from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
@@ -148,7 +150,7 @@ class View:
         handle view interactions outside of the callback.
 
     Attributes
-    ------------
+    ----------
     timeout: Optional[:class:`float`]
         Timeout from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
@@ -244,14 +246,14 @@ class View:
         converted into a :class:`View` first.
 
         Parameters
-        -----------
+        ----------
         message: :class:`nextcord.Message`
             The message with components to convert into a view.
         timeout: Optional[:class:`float`]
             The timeout of the converted view.
 
         Returns
-        --------
+        -------
         :class:`View`
             The converted view. This always returns a :class:`View` and not
             one of its subclasses.
@@ -274,16 +276,16 @@ class View:
         """
         return self.__timeout_expiry
 
-    def add_item(self, item: Item) -> None:
+    def add_item(self, item: Item[Self]) -> None:
         """Adds an item to the view.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to add to the view.
 
         Raises
-        --------
+        ------
         TypeError
             An :class:`Item` was not passed.
         ValueError
@@ -306,7 +308,7 @@ class View:
         """Removes an item from the view.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to remove from the view.
         """
@@ -340,12 +342,12 @@ class View:
             is considered a failure and :meth:`on_error` is called.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`~nextcord.Interaction`
             The interaction that occurred.
 
         Returns
-        ---------
+        -------
         :class:`bool`
             Whether the view children's callbacks should be called.
         """
@@ -367,7 +369,7 @@ class View:
         The default implementation prints the traceback to stderr.
 
         Parameters
-        -----------
+        ----------
         error: :class:`Exception`
             The exception that was raised.
         item: :class:`Item`
@@ -487,7 +489,7 @@ class View:
         or it times out.
 
         Returns
-        --------
+        -------
         :class:`bool`
             If ``True``, then the view timed out. If ``False`` then
             the view finished normally.
@@ -523,7 +525,7 @@ class ViewStore:
         for k in to_remove:
             del self._views[k]
 
-    def add_view(self, view: View, message_id: Optional[int] = None):
+    def add_view(self, view: View, message_id: Optional[int] = None) -> None:
         self.__verify_integrity()
 
         view._start_listening_from_store(self)
@@ -534,17 +536,19 @@ class ViewStore:
         if message_id is not None:
             self._synced_message_views[message_id] = view
 
-    def remove_view(self, view: View):
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
         for item in view.children:
             if item.is_dispatchable():
-                self._views.pop((item.type.value, item.custom_id), None)  # type: ignore
+                self._views.pop((item.type.value, message_id, item.custom_id), None)  # type: ignore
 
         for key, value in self._synced_message_views.items():
             if value.id == view.id:
                 del self._synced_message_views[key]
                 break
 
-    def dispatch(self, component_type: int, custom_id: str, interaction: Interaction):
+    def dispatch(
+        self, component_type: int, custom_id: str, interaction: Interaction[ClientT]
+    ) -> None:
         self.__verify_integrity()
         message_id: Optional[int] = interaction.message and interaction.message.id
         key = (component_type, message_id, custom_id)
@@ -555,16 +559,16 @@ class ViewStore:
             return
 
         view, item = value
-        item.refresh_state(interaction.data)  # type: ignore
+        item.refresh_state(interaction.data, interaction._state, interaction.guild)  # type: ignore
         view._dispatch_item(item, interaction)
 
-    def is_message_tracked(self, message_id: int):
+    def is_message_tracked(self, message_id: int) -> bool:
         return message_id in self._synced_message_views
 
     def remove_message_tracking(self, message_id: int) -> Optional[View]:
         return self._synced_message_views.pop(message_id, None)
 
-    def update_from_message(self, message_id: int, components: List[ComponentPayload]):
+    def update_from_message(self, message_id: int, components: List[ComponentPayload]) -> None:
         # pre-req: is_message_tracked == true
         view = self._synced_message_views[message_id]
         view.refresh([_component_factory(d) for d in components])

@@ -1,7 +1,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
 Copyright (c) 2021-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -26,6 +26,8 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 from typing import List, Literal, Optional, TypedDict, Union
+
+from typing_extensions import NotRequired
 
 from .auto_moderation import (
     AutoModerationAction,
@@ -314,17 +316,14 @@ class AuditEntryInfo(TypedDict):
     auto_moderation_rule_trigger_type: str
 
 
-class _AuditLogEntryOptional(TypedDict, total=False):
-    changes: List[AuditLogChange]
-    options: AuditEntryInfo
-    reason: str
-
-
-class AuditLogEntry(_AuditLogEntryOptional):
+class AuditLogEntry(TypedDict):
     target_id: Optional[str]
     user_id: Optional[Snowflake]
     id: Snowflake
     action_type: AuditLogEvent
+    changes: NotRequired[List[AuditLogChange]]
+    options: NotRequired[AuditEntryInfo]
+    reason: NotRequired[str]
 
 
 class AuditLog(TypedDict):

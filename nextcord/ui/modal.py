@@ -45,7 +45,7 @@ __all__ = (
 
 
 if TYPE_CHECKING:
-    from ..interactions import Interaction
+    from ..interactions import ClientT, Interaction
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
     from ..types.interactions import (
@@ -73,7 +73,7 @@ class Modal:
     .. versionadded:: 2.0
 
     Parameters
-    -----------
+    ----------
     title: :class:`str`
         The title of the modal.
     timeout: Optional[:class:`float`] = None
@@ -88,7 +88,7 @@ class Modal:
         handle the modal interaction outside of the callback.
 
     Attributes
-    ------------
+    ----------
     title: :class:`str`
         The title of the modal.
     timeout: Optional[:class:`float`]
@@ -189,12 +189,12 @@ class Modal:
         """Adds an item to the modal.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to add to the modal.
 
         Raises
-        --------
+        ------
         TypeError
             An :class:`Item` was not passed.
         ValueError
@@ -214,7 +214,7 @@ class Modal:
         """Removes an item from the modal.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to remove from the modal.
         """
@@ -265,7 +265,7 @@ class Modal:
         The default implementation prints the traceback to stderr.
 
         Parameters
-        -----------
+        ----------
         error: :class:`Exception`
             The exception that was raised.
         item: :class:`Item`
@@ -281,7 +281,7 @@ class Modal:
         for child in self.children:
             for component_data in _walk_component_interaction_data(data["components"]):
                 if component_data["custom_id"] == child.custom_id:  # type: ignore
-                    child.refresh_state(component_data)
+                    child.refresh_state(component_data, interaction._state, interaction.guild)
                     break
         try:
             if self.timeout:
@@ -387,7 +387,7 @@ class Modal:
         or it times out.
 
         Returns
-        --------
+        -------
         :class:`bool`
             If ``True``, then the modal timed out. If ``False`` then
             the modal finished normally.
@@ -421,19 +421,19 @@ class ModalStore:
         for k in to_remove:
             del self._modals[k]
 
-    def add_modal(self, modal: Modal, user_id: Optional[int] = None):
+    def add_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self.__verify_integrity()
 
         modal._start_listening_from_store(self)
         self._modals[(user_id, modal.custom_id)] = modal
 
-    def remove_modal(self, modal: Modal):
+    def remove_modal(self, modal: Modal) -> None:
         _modals = self._modals.copy()
         for key, value in _modals.items():
             if value is modal:
                 del self._modals[key]
 
-    def dispatch(self, custom_id: str, interaction: Interaction):
+    def dispatch(self, custom_id: str, interaction: Interaction[ClientT]) -> None:
         self.__verify_integrity()
 
         key = (interaction.user.id, custom_id)  # type: ignore

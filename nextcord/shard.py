@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
 import aiohttp
 
@@ -47,7 +47,6 @@ from .utils import MISSING
 
 if TYPE_CHECKING:
     from .activity import BaseActivity
-    from .enums import Status
     from .flags import MemberCacheFlags
     from .gateway import DiscordWebSocket
     from .mentions import AllowedMentions
@@ -233,7 +232,7 @@ class ShardInfo:
     .. versionadded:: 1.4
 
     Attributes
-    ------------
+    ----------
     id: :class:`int`
         The shard ID for this shard.
     shard_count: Optional[:class:`int`]
@@ -321,7 +320,7 @@ class AutoShardedClient(Client):
     0 to ``shard_count - 1``.
 
     Attributes
-    ------------
+    ----------
     shard_ids: Optional[List[:class:`int`]]
         An optional list of shard_ids to launch the shards with.
     """
@@ -357,6 +356,7 @@ class AutoShardedClient(Client):
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
+        default_guild_ids: Optional[List[int]] = None,
     ) -> None:
         self.shard_ids: Optional[List[int]] = shard_ids
         super().__init__(
@@ -384,6 +384,7 @@ class AutoShardedClient(Client):
             rollout_register_new=rollout_register_new,
             rollout_update_known=rollout_update_known,
             rollout_all_guilds=rollout_all_guilds,
+            default_guild_ids=default_guild_ids,
         )
 
         if self.shard_ids is not None:

@@ -31,7 +31,7 @@ from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
-from .utils import MISSING, _obj_to_base64_data, parse_time
+from .utils import MISSING, obj_to_base64_data, parse_time
 
 __all__: Tuple[str, ...] = (
     "EntityMetadata",
@@ -412,7 +412,7 @@ class ScheduledEvent(Hashable):
             payload["status"] = status.value
 
         if image is not MISSING:
-            payload["image"] = await _obj_to_base64_data(image)
+            payload["image"] = await obj_to_base64_data(image)
 
         if not payload:
             return self
@@ -462,7 +462,7 @@ class ScheduledEvent(Hashable):
             A snowflake id to end with, useful for chunks of usersby default None
 
         Yields
-        -------
+        ------
         :class:`ScheduledEventUser`
             A full event user object
         """

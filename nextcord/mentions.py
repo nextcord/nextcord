@@ -57,7 +57,7 @@ class AllowedMentions:
     via :meth:`abc.Messageable.send` for more fine-grained control.
 
     Attributes
-    ------------
+    ----------
     everyone: :class:`bool`
         Whether to allow everyone and here mentions. Defaults to ``True``.
     users: Union[:class:`bool`, List[:class:`abc.Snowflake`]]

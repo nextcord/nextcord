@@ -31,7 +31,7 @@ from .asset import Asset
 from .colour import Colour
 from .enums import DefaultAvatar
 from .flags import PublicUserFlags
-from .utils import MISSING, _obj_to_base64_data, snowflake_time
+from .utils import MISSING, obj_to_base64_data, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -265,7 +265,7 @@ class BaseUser(_UserTag):
         """Checks if the user is mentioned in the specified message.
 
         Parameters
-        -----------
+        ----------
         message: :class:`Message`
             The message to check if you're mentioned in.
 
@@ -303,7 +303,7 @@ class ClientUser(BaseUser):
             Returns the user's name with discriminator.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The user's username.
     id: :class:`int`
@@ -376,7 +376,7 @@ class ClientUser(BaseUser):
             The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
-        -----------
+        ----------
         username: :class:`str`
             The new username you wish to change to.
         avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
@@ -391,7 +391,7 @@ class ClientUser(BaseUser):
             Wrong image format passed for ``avatar``.
 
         Returns
-        ---------
+        -------
         :class:`ClientUser`
             The newly edited client user.
         """
@@ -399,7 +399,7 @@ class ClientUser(BaseUser):
         if username is not MISSING:
             payload["username"] = username
         if avatar is not MISSING:
-            payload["avatar"] = await _obj_to_base64_data(avatar)
+            payload["avatar"] = await obj_to_base64_data(avatar)
 
         data: UserPayload = await self._state.http.edit_profile(payload)
         return ClientUser(state=self._state, data=data)
@@ -427,7 +427,7 @@ class User(BaseUser, abc.Messageable):
             Returns the user's name with discriminator.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The user's username.
     id: :class:`int`

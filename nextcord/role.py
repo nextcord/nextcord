@@ -31,7 +31,7 @@ from .colour import Colour
 from .errors import InvalidArgument
 from .mixins import Hashable
 from .permissions import Permissions
-from .utils import MISSING, _get_as_snowflake, _obj_to_base64_data, snowflake_time
+from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
 
 __all__ = (
     "RoleTags",
@@ -62,7 +62,7 @@ class RoleTags:
     .. versionadded:: 1.6
 
     Attributes
-    ------------
+    ----------
     bot_id: Optional[:class:`int`]
         The bot's user ID that manages this role.
     integration_id: Optional[:class:`int`]
@@ -76,8 +76,8 @@ class RoleTags:
     )
 
     def __init__(self, data: RoleTagPayload):
-        self.bot_id: Optional[int] = _get_as_snowflake(data, "bot_id")
-        self.integration_id: Optional[int] = _get_as_snowflake(data, "integration_id")
+        self.bot_id: Optional[int] = get_as_snowflake(data, "bot_id")
+        self.integration_id: Optional[int] = get_as_snowflake(data, "integration_id")
         # NOTE: The API returns "null" for this if it's valid, which corresponds to None.
         # This is different from other fields where "null" means "not there".
         # So in this case, a value of None is the same as True.
@@ -399,7 +399,7 @@ class Role(Hashable):
             The ``icon`` parameter now accepts :class:`Attachment`, and :class:`Asset`.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The new role name to change to.
         permissions: :class:`Permissions`
@@ -419,7 +419,7 @@ class Role(Hashable):
             The reason for editing this role. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to change the role.
         HTTPException
@@ -429,7 +429,7 @@ class Role(Hashable):
             role was asked to be moved.
 
         Returns
-        --------
+        -------
         :class:`Role`
             The newly edited role.
         """
@@ -462,7 +462,7 @@ class Role(Hashable):
             if isinstance(icon, str):
                 payload["unicode_emoji"] = icon
             else:
-                payload["icon"] = await _obj_to_base64_data(icon)
+                payload["icon"] = await obj_to_base64_data(icon)
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         return Role(guild=self.guild, data=data, state=self._state)
@@ -476,12 +476,12 @@ class Role(Hashable):
         use this.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this role. Shows up on the audit log.
 
         Raises
-        --------
+        ------
         Forbidden
             You do not have permissions to delete the role.
         HTTPException

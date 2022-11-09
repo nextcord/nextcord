@@ -26,20 +26,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, Type, TypeVar
 
-from ..interactions import Interaction
+from ..interactions import ClientT, Interaction
 
 __all__ = ("Item",)
 
 if TYPE_CHECKING:
     from ..components import Component
     from ..enums import ComponentType
+    from ..guild import Guild
+    from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
     from ..types.interactions import ComponentInteractionData
     from .view import View
 
 I = TypeVar("I", bound="Item")
 V = TypeVar("V", bound="View", covariant=True)
-ItemCallbackType = Callable[[Any, I, Interaction], Coroutine[Any, Any, Any]]
+ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
 
 
 class Item(Generic[V]):
@@ -48,8 +50,12 @@ class Item(Generic[V]):
     The current UI items supported are:
 
     - :class:`nextcord.ui.Button`
-    - :class:`nextcord.ui.Select`
+    - :class:`nextcord.ui.StringSelect`
     - :class:`nextcord.ui.TextInput`
+    - :class:`nextcord.ui.UserSelect`
+    - :class:`nextcord.ui.ChannelSelect`
+    - :class:`nextcord.ui.RoleSelect`
+    - :class:`nextcord.ui.MentionableSelect`
 
     .. versionadded:: 2.0
     """
@@ -74,7 +80,9 @@ class Item(Generic[V]):
     def refresh_component(self, component: Component) -> None:
         return None
 
-    def refresh_state(self, data: ComponentInteractionData) -> None:
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         return None
 
     @classmethod
@@ -100,7 +108,7 @@ class Item(Generic[V]):
         return self._row
 
     @row.setter
-    def row(self, value: Optional[int]):
+    def row(self, value: Optional[int]) -> None:
         if value is None:
             self._row = None
         elif 5 > value >= 0:
@@ -125,7 +133,7 @@ class Item(Generic[V]):
         This can be overridden by subclasses.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The interaction that triggered this UI item.
         """

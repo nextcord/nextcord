@@ -73,7 +73,7 @@ class Emoji(_EmojiTag, AssetMixin):
             Returns the emoji rendered for discord.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The name of the emoji.
     id: :class:`int`
@@ -198,12 +198,12 @@ class Emoji(_EmojiTag, AssetMixin):
         do this.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this emoji. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You are not allowed to delete emojis.
         HTTPException
@@ -226,7 +226,7 @@ class Emoji(_EmojiTag, AssetMixin):
             The newly updated emoji is returned.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The new emoji name.
         roles: Optional[List[:class:`~nextcord.abc.Snowflake`]]
@@ -235,14 +235,14 @@ class Emoji(_EmojiTag, AssetMixin):
             The reason for editing this emoji. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You are not allowed to edit emojis.
         HTTPException
             An error occurred editing the emoji.
 
         Returns
-        --------
+        -------
         :class:`Emoji`
             The newly updated emoji.
         """
