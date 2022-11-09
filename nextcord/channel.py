@@ -1040,16 +1040,22 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
     @property
     def available_tags(self) -> List[ForumTag]:
-        """List[:class:`ForumTag`]: Returns all the tags available in this channel."""
+        """List[:class:`ForumTag`]: Returns all the tags available in this channel.
+
+        .. versionadded:: 2.3
+        """
 
         return list(self._available_tags.values())
 
     def get_tag(self, id: int, /) -> Optional[ForumTag]:
         """Returns a tag from this channel by its ID.
 
+        .. versionadded:: 2.3
+
         Parameters
         ----------
         id: :class:`int`
+            The ID of the tag to get from cache.
 
         Returns
         -------
