@@ -339,6 +339,8 @@ class Thread(Messageable, Hashable, PinsMixin):
     def applied_tags(self) -> Optional[List[ForumTag]]:
         """Optional[List[:class:`ForumTag`]]: A list of tags applied to this thread.
 
+        This is ``None`` if the parent channel was not found in cache.
+
         .. versionadded:: 2.3
         """
 
