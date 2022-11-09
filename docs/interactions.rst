@@ -266,3 +266,24 @@ Shown below is an example of a simple command running in a cog:
             await interaction.response.send_message("Hello I am a slash command in a cog!")
 
 Context menu commands can also be made in cogs using the :meth:`nextcord.user_command` or :meth:`nextcord.message_command` decorators.
+
+
+Default Guild Ids
+-----------------
+
+If you would like for all of your application commands to have the same guild ids unless explicitly stated, then you can set the ``default_guild_ids`` keyword argument in :class:`nextcord.ext.commands.Bot` and :class:`nextcord.ext.commands.AutoShardedBot`!
+
+Here's an example of this:
+
+.. code-block:: python3
+
+    bot = commands.Bot(..., default_guild_ids=[TESTING_GUILD_ID])
+
+    @bot.slash_command()
+    async def bye(interaction: nextcord.Interaction):
+        await interaction.response.send_message(f"Goodbye {bot.default_guild_ids}!")
+
+    @bot.slash_command(guild_ids=None)
+    async def bye_global(interaction: nextcord.Interaction):
+        await interaction.response.send_message("Goodbye everyone!")
+
