@@ -131,6 +131,10 @@ class Thread(Messageable, Hashable, PinsMixin):
         This is ``None`` if the thread was created before January 9th, 2021.
 
         .. versionadded:: 2.0
+    applied_tag_ids: List[:class:`int`]
+        A list of tag IDs that have been applied to this thread.
+
+        .. versionadded:: 2.3
     """
 
     __slots__ = (
