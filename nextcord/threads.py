@@ -337,6 +337,11 @@ class Thread(Messageable, Hashable, PinsMixin):
 
     @property
     def applied_tags(self) -> Optional[List[ForumTag]]:
+        """Optional[List[:class:`ForumTag`]]: A list of tags applied to this thread.
+
+        .. versionadded:: 2.3
+        """
+
         if self.parent is None:
             return None
 
