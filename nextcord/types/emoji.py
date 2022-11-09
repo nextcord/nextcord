@@ -25,8 +25,6 @@ DEALINGS IN THE SOFTWARE.
 
 from typing import Optional, TypedDict
 
-from typing_extensions import NotRequired
-
 from .snowflake import Snowflake, SnowflakeList
 from .user import User
 
@@ -50,6 +48,6 @@ class EditEmoji(TypedDict):
     roles: Optional[SnowflakeList]
 
 
-class DefaultReaction(TypedDict):
-    emoji_id: NotRequired[Optional[Snowflake]]
-    emoji_name: NotRequired[Optional[str]]
+class DefaultReaction(TypedDict, total=False):
+    emoji_id: Optional[Snowflake]
+    emoji_name: Optional[str]
