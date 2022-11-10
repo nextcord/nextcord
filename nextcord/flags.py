@@ -486,6 +486,14 @@ class PublicUserFlags(BaseFlags):
         """
         return UserFlags.known_spammer.value
 
+    @flag_value
+    def active_developer(self):
+        """:class:`bool`: Returns ``True`` if the user is a Known Spammer.
+
+        .. versionadded:: 2.0
+        """
+        return UserFlags.active_developer.value
+
     def all(self) -> List[UserFlags]:
         """List[:class:`UserFlags`]: Returns all public flags the user has."""
         return [public_flag for public_flag in UserFlags if self._has_flag(public_flag.value)]
