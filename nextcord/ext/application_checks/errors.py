@@ -61,11 +61,11 @@ class ApplicationCheckAnyFailure(ApplicationCheckFailure):
 
     def __init__(
         self,
-        checks: List[ApplicationCheckFailure],
-        errors: List[Callable[[Interaction], bool]],
+        checks: List[Callable[[Interaction], bool]],
+        errors: List[ApplicationCheckFailure],
     ) -> None:
-        self.checks: List[ApplicationCheckFailure] = checks
-        self.errors: List[Callable[[Interaction], bool]] = errors
+        self.checks: List[Callable[[Interaction], bool]] = checks
+        self.errors: List[ApplicationCheckFailure] = errors
         super().__init__("You do not have permission to run this command.")
 
 
