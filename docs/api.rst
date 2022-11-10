@@ -1499,6 +1499,10 @@ of :class:`enum.Enum`.
 
         The user is a Known Spammer.
 
+    .. attribute:: active_developer
+
+        The user is an Acive Developer.
+
 .. class:: ActivityType
 
     Specifies the type of :class:`Activity`. This is used to check how to
