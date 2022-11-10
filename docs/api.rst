@@ -1501,7 +1501,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: active_developer
 
-        The user is an Acive Developer.
+        The user is an Active Developer.
 
 .. class:: ActivityType
 
