@@ -488,9 +488,9 @@ class PublicUserFlags(BaseFlags):
 
     @flag_value
     def active_developer(self):
-        """:class:`bool`: Returns ``True`` if the user is a Known Spammer.
+        """:class:`bool`: Returns ``True`` if the user is a Active Developer
 
-        .. versionadded:: 2.0
+        .. versionadded:: 2.4
         """
         return UserFlags.active_developer.value
 
