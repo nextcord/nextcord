@@ -12,6 +12,18 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p3p1:
+
+v2.3.1
+------
+
+This is a bugfix release to resolve an import error.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix an import error when importing ``nextcord.ui``.
+
 .. _vp2p3p0:
 
 v2.3.0
