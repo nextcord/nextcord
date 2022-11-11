@@ -55,7 +55,7 @@ class MentionableSelectValues(SelectValuesBase):
 
     @property
     def members(self) -> List[Member]:
-        """List[:class:`Member`]: A list of members that were selected."""
+        """List[:class:`.Member`]: A list of members that were selected."""
         return [v for v in self.data if isinstance(v, Member)]
 
     @property
