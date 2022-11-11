@@ -760,7 +760,8 @@ class CallbackMixin:
                     # could be a self or interaction parameter
                     param.annotation is param.empty
                     # will always be an interaction parameter
-                    or isinstance(param.annotation, type) and issubclass(param.annotation, Interaction)
+                    or isinstance(param.annotation, type)
+                    and issubclass(param.annotation, Interaction)
                     # will always be a self parameter
                     # TODO: use typing.Self when 3.11 is standard
                     or param.annotation is typing_extensions.Self
