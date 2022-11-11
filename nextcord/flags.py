@@ -488,7 +488,7 @@ class PublicUserFlags(BaseFlags):
 
     @flag_value
     def active_developer(self):
-        """:class:`bool`: Returns ``True`` if the user is a Active Developer
+        """:class:`bool`: Returns ``True`` if the user is a Active Developer.
 
         .. versionadded:: 2.4
         """

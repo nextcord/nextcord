@@ -1498,7 +1498,6 @@ of :class:`enum.Enum`.
     .. attribute:: known_spammer
 
         The user is a Known Spammer.
-
     .. attribute:: active_developer
 
         The user is an Active Developer.
