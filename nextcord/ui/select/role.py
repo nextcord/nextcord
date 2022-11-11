@@ -53,7 +53,7 @@ class RoleSelectValues(SelectValuesBase):
 
     @property
     def roles(self) -> List[Role]:
-        """List[:class:`.Role`]: The roles that are in the select."""
+        """List[:class:`.Role`]: The roles that were selected."""
         return [v for v in self.data if isinstance(v, Role)]
 
 
