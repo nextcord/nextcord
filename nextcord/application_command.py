@@ -756,12 +756,14 @@ class CallbackMixin:
                 # TODO: use typing.get_type_hints when 3.9 is standard
                 typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
                 callback_params = dict(signature(self.callback).parameters)
-                
+
                 for name, param in callback_params.copy().items():
                     if isinstance(param.annotation, str):
                         # Thank you Disnake for the guidance to use this.
-                        callback_params[name] = param.replace(annotation=typehints.get(name, param.empty))
-                
+                        callback_params[name] = param.replace(
+                            annotation=typehints.get(name, param.empty)
+                        )
+
                 non_option_params = sum(
                     # could be a self or interaction parameter
                     param.annotation is param.empty
