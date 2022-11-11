@@ -12,6 +12,19 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p3p2:
+
+v2.3.2
+------
+
+This is a bugfix release to resolve false positive argument checking.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix false positives with application command arguments being incorrect (:issue:`901`).
+
+
 .. _vp2p3p1:
 
 v2.3.1
