@@ -50,8 +50,8 @@ from .errors import *
 if TYPE_CHECKING:
     from typing import Callable
 
-    from nextcord.member import Member
     from nextcord.interactions import Interaction
+    from nextcord.member import Member
     from nextcord.message import PartialMessageableChannel
     from nextcord.user import User
 
@@ -232,7 +232,7 @@ class MemberConverter(IDConverter[nextcord.Member]):
         return members[0]
 
     async def convert(self, ctx: Union[Context, Interaction], argument: str) -> nextcord.Member:
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -293,7 +293,7 @@ class UserConverter(IDConverter[nextcord.User]):
         result = None
         state = ctx._state
 
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -374,7 +374,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
 
     @staticmethod
     def _resolve_channel(ctx: Union[Context, Interaction], guild_id, channel_id) -> Optional[PartialMessageableChannel]:
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -412,7 +412,7 @@ class MessageConverter(IDConverter[nextcord.Message]):
 
     async def convert(self, ctx: Union[Context, Interaction], argument: str) -> nextcord.Message:
         guild_id, message_id, channel_id = PartialMessageConverter._get_id_matches(ctx, argument)
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -450,7 +450,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
 
     @staticmethod
     def _resolve_channel(ctx: Union[Context, Interaction], argument: str, attribute: str, type: Type[CT]) -> CT:
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -746,7 +746,7 @@ class InviteConverter(Converter[nextcord.Invite]):
     """
 
     async def convert(self, ctx: Union[Context, Interaction], argument: str) -> nextcord.Invite:
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -772,7 +772,7 @@ class GuildConverter(IDConverter[nextcord.Guild]):
         match = self._get_id_match(argument)
         result = None
 
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -809,7 +809,7 @@ class EmojiConverter(IDConverter[nextcord.Emoji]):
             r"<a?:[a-zA-Z0-9\_]{1,32}:([0-9]{15,20})>$", argument
         )
         result = None
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -852,7 +852,7 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
     async def convert(self, ctx: Union[Context, Interaction], argument: str) -> nextcord.PartialEmoji:
         match = re.match(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>$", argument)
 
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -889,7 +889,7 @@ class GuildStickerConverter(IDConverter[nextcord.GuildSticker]):
     async def convert(self, ctx: Union[Context, Interaction], argument: str) -> nextcord.GuildSticker:
         match = self._get_id_match(argument)
         result = None
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -941,7 +941,7 @@ class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
     async def convert(self, ctx: Union[Context, Interaction], argument: str) -> nextcord.ScheduledEvent:
         match = self._get_id_match(argument)
         result = None
-        if isinstance(ctx, Interaction):
+        if isinstance(ctx, nextcord.Interaction):
             bot = ctx.client
         else:
             bot = ctx.bot
@@ -1037,10 +1037,10 @@ class clean_content(Converter[str]):
         else:
 
             def resolve_member(id: int) -> str:
-                if isinstance(ctx, Context):
-                    m = _utils_get(msg.mentions, id=id) or ctx.bot.get_user(id)
-                else:
+                if isinstance(ctx, nextcord.Interaction):
                     m = _utils_get(msg.mentions, id=id) or ctx.client.get_user(id)
+                else:
+                    m = _utils_get(msg.mentions, id=id) or ctx.bot.get_user(id)
                 return f"@{m.name}" if m else "@deleted-user"
 
             def resolve_role(id: int) -> str:
