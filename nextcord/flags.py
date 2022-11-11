@@ -1254,3 +1254,8 @@ class ApplicationFlags(BaseFlags):
     def application_command_badge(self):
         """:class:`bool`: Returns ``True`` if the application has registered global application commands."""
         return 1 << 23
+
+    @flag_value
+    def active(self):
+        """:class:`bool`: Returns ``True`` if the application is considered active. This means that it has had any global command executed in the past 30 days."""
+        return 1 << 24
