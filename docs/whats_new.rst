@@ -12,6 +12,65 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p3p0:
+
+v2.3.0
+------
+
+This version includes support for small changes recently made by Discord, and many type annotation improvements.
+
+Deprecations
+~~~~~~~~~~~~
+
+- Deprecate the use of ``delete_message_days`` in :meth:`Guild.ban` and :meth:`Member.ban` in favour of ``delete_message_seconds`` (:issue:`813:`).
+
+New Features
+~~~~~~~~~~~~
+
+- Add ``delete_message_seconds`` in :meth:`Guild.ban` and :meth:`Member.ban` (:issue:`800`, :issue:`813`).
+- Add support for :func:`hash` and ``==`` with :class:`str` or :class:`int` depending on the type of enum (:issue:`801`).
+- Add :meth:`Client.remove_view` and :meth:`Client.remove_modal` to remove views and modals from persistent listening (:issue:`425`, :issue:`820`).
+- Add support for `PEP 604 <https://peps.python.org/pep-0604/>`__ unions (``X | Y``) for application command annotations (:issue:`853`).
+- Add the new audit log actions for auto moderation execution actions (:issue:`817`, :issue:`873`).
+    - :attr:`AuditLogAction.auto_moderation_flag_to_channel`
+    - :attr:`AuditLogAction.auto_moderation_user_communication_disabled`
+- Add ``default_sort_order`` in forum channels (:issue:`838`):
+    - :class:`SortOrderType`
+    - :attr:`ForumChannel.default_sort_order`
+    - ``default_sort_order`` in :meth:`Guild.create_forum_channel`
+    - ``default_sort_order`` in :meth:`ForumChannel.edit`
+- Add the ``mention_total_limit`` trigger option (:issue:`810`, :issue:`837`):
+    - :attr:`AutoModerationTriggerMetadata.mention_total_limit`
+    - :attr:`AutoModerationTriggerType.mention_spam`
+- Add ``default_guild_ids`` as a parameter to :class:`Client` (and subclasses) for a default scope of guilds for all application commands. (:issue:`395`, :issue:`833`)
+- Add auto-populating select menus (channel, mentionable, role, user) (:issue:`847`, :issue:`848`):
+    - :attr:`ComponentType.user_select`
+    - :attr:`ComponentType.role_select`
+    - :attr:`ComponentType.mentionable_select`
+    - :attr:`ComponentType.channel_select`
+    - :class:`ui.UserSelect`
+    - :func:`ui.user_select`
+    - :class:`ui.RoleSelect`
+    - :func:`ui.role_select`
+    - :class:`ui.MentionableSelect`
+    - :func:`ui.mentionable_select`
+    - :class:`ui.ChannelSelect`
+    - :func:`ui.channel_select`
+- |commands| Add :meth:`Bot.process_with_str <nextcord.ext.commands.Bot.process_with_str>` (:issue:`24`, :issue:`823`).
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix an error being raised if an application command is named ``state`` (:issue:`814`).
+- Fix an issue where two application commands with the same name, type and scope could be registered (:issue:`812`).
+- Fix an error when a user does not provide integer input to autocomplete (Discord bug) (:issue:`835`).
+- Handle timeouts within :meth:`abc.GuildChannel.permissions_for` (:issue:`852`, :issue:`858`).
+- Fix issues with support for Python 3.11 (:issue:`866`, :issue:`867`).
+- Fix import errors with `nextcord.types.checks` (:issue:`888`).
+- Fix pyright strict issues with :meth:`ui.View.add_item` (:issue:`769`, :issue:`806`).
+- Add `py.typed` files to `nextcord.ext.*` packages to tell type checkers that types are inline (:issue:`770`, :issue:`822`).
+- Fix pyright strict issues with :func:`abc.Messageable.send` (:issue:`771`, :issue:`805`).
+
 .. _vp2p2p0:
 
 v2.2.0
