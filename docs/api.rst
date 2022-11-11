@@ -4722,6 +4722,10 @@ UserSelect
 
 .. autofunction:: nextcord.ui.user_select
 
+.. autoclass:: nextcord.ui.UserSelectValues
+    :members:
+    :inherited-members:
+
 RoleSelect
 ~~~~~~~~~~
 
@@ -4732,6 +4736,10 @@ RoleSelect
     :inherited-members:
 
 .. autofunction:: nextcord.ui.role_select
+
+.. autoclass:: nextcord.ui.RoleSelectValues
+    :members:
+    :inherited-members:
 
 MentionableSelect
 ~~~~~~~~~~~~~~~~~
@@ -4744,6 +4752,10 @@ MentionableSelect
 
 .. autofunction:: nextcord.ui.mentionable_select
 
+.. autoclass:: nextcord.ui.MentionableSelectValues
+    :members:
+    :inherited-members:
+
 ChannelSelect
 ~~~~~~~~~~~~~
 
@@ -4754,6 +4766,10 @@ ChannelSelect
     :inherited-members:
 
 .. autofunction:: nextcord.ui.channel_select
+
+.. autoclass:: nextcord.ui.ChannelSelectValues
+    :members:
+    :inherited-members:
 
 Application Commands
 --------------------

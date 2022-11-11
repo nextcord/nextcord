@@ -43,18 +43,18 @@ if TYPE_CHECKING:
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("ChannelSelect", "channel_select")
+__all__ = ("ChannelSelect", "channel_select", "ChannelSelectValues")
 
 S = TypeVar("S", bound="ChannelSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
 
 class ChannelSelectValues(SelectValuesBase):
-    """Represents the values of a :class:`ChannelSelect`."""
+    """Represents the values of a :class:`.ui.ChannelSelect`."""
 
     @property
     def channels(self) -> List[GuildChannel]:
-        """List[:class:`GuildChannel`]: The resolved channels."""
+        """List[:class:`.abc.GuildChannel`]: The resolved channels."""
         return [v for v in self.data if isinstance(v, GuildChannel)]
 
 
@@ -135,7 +135,7 @@ class ChannelSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> ChannelSelectValues:
-        """List[:class:`int`]: A list of channel ids that have been selected by the user."""
+        """:class:`.ui.ChannelSelectValues`: A list of resolved :class:`.abc.GuildChannel` that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> ChannelSelectMenuPayload:
