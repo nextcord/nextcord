@@ -755,12 +755,23 @@ class CallbackMixin:
 
                 # TODO: use typing.get_type_hints when 3.9 is standard
                 typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
-                callback_params = signature(self.callback).parameters
+                callback_params = dict(signature(self.callback).parameters)
+
+                for name, param in callback_params.copy().items():
+                    if isinstance(param.annotation, str):
+                        # Thank you Disnake for the guidance to use this.
+                        callback_params[name] = param.replace(
+                            annotation=typehints.get(name, param.empty)
+                        )
+
                 non_option_params = sum(
                     # could be a self or interaction parameter
                     param.annotation is param.empty
                     # will always be an interaction parameter
-                    or issubclass(param.annotation, Interaction)
+                    or (
+                        isinstance(param.annotation, type)
+                        and issubclass(param.annotation, Interaction)
+                    )
                     # will always be a self parameter
                     # TODO: use typing.Self when 3.11 is standard
                     or param.annotation is typing_extensions.Self
@@ -782,10 +793,6 @@ class CallbackMixin:
                     if skip_counter:
                         skip_counter -= 1
                     else:
-                        if isinstance(param.annotation, str):
-                            # Thank you Disnake for the guidance to use this.
-                            param = param.replace(annotation=typehints.get(name, param.empty))
-
                         arg = option_class(param, self, parent_cog=self.parent_cog)  # type: ignore
                         # this is a mixin, so `self` would be odd here
 

@@ -60,6 +60,7 @@ packages = [
     "nextcord.ext.application_checks",
     "nextcord.ext.commands",
     "nextcord.ext.tasks",
+    "nextcord.ui.select",
     # Compat
     "discord",
     "discord.types",
