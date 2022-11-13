@@ -473,6 +473,7 @@ class UserFlags(IntEnum):
     verified_bot_developer = 131072
     discord_certified_moderator = 262144
     known_spammer = 1048576
+    active_developer = 4194304
 
 
 class ActivityType(IntEnum):
