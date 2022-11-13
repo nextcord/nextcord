@@ -39,7 +39,6 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Type,
     TypeVar,
     Union,
     overload,
@@ -79,6 +78,8 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import Snowflake, SnowflakeTime
     from .embeds import Embed
     from .guild import Guild, GuildChannel as GuildChannelType
@@ -2408,8 +2409,8 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         return f"<DMChannel id={self.id} recipient={self.recipient!r}>"
 
     @classmethod
-    def _from_message(cls: Type[DMC], state: ConnectionState, channel_id: int) -> DMC:
-        self: DMC = cls.__new__(cls)
+    def _from_message(cls, state: ConnectionState, channel_id: int) -> Self:
+        self = cls.__new__(cls)
         self._state = state
         self.id = channel_id
         self.recipient = None

@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
@@ -36,6 +36,8 @@ from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ...guild import Guild
     from ...member import Member
     from ...role import Role
@@ -46,7 +48,6 @@ if TYPE_CHECKING:
 
 __all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
 
-S = TypeVar("S", bound="MentionableSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
 
@@ -147,7 +148,7 @@ class MentionableSelect(SelectBase, Generic[V]):
         return self._underlying.to_dict()
 
     @classmethod
-    def from_component(cls: Type[S], component: MentionableSelectMenu) -> S:
+    def from_component(cls, component: MentionableSelectMenu) -> Self:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,

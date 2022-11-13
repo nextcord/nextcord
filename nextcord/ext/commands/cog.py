@@ -25,18 +25,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    Generator,
-    List,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator, List, Tuple, TypeVar
 
 import nextcord.utils
 from nextcord.application_command import ClientCog, _cog_special_method
@@ -44,6 +33,8 @@ from nextcord.application_command import ClientCog, _cog_special_method
 from ._types import _BaseCommand
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .bot import BotBase
     from .context import Context
     from .core import Command
@@ -124,7 +115,7 @@ class CogMeta(type):
     __cog_commands__: List[Command]
     __cog_listeners__: List[Tuple[str, str]]
 
-    def __new__(cls: Type[CogMeta], *args: Any, **kwargs: Any) -> CogMeta:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         name, bases, attrs = args
         attrs["__cog_name__"] = kwargs.pop("name", name)
         attrs["__cog_settings__"] = kwargs.pop("command_attrs", {})
@@ -205,7 +196,7 @@ class Cog(ClientCog, metaclass=CogMeta):
     __cog_commands__: ClassVar[List[Command]]
     __cog_listeners__: ClassVar[List[Tuple[str, str]]]
 
-    def __new__(cls: Type[CogT], *args: Any, **kwargs: Any) -> CogT:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         # For issue 426, we need to store a copy of the command objects
         # since we modify them to inject `self` to them.
         # To do this, we need to interfere with the Cog creation process.
@@ -234,7 +225,7 @@ class Cog(ClientCog, metaclass=CogMeta):
                 parent.remove_command(command.name)  # type: ignore
                 parent.add_command(command)  # type: ignore
 
-        return self  # type: ignore
+        return self
 
     def get_commands(self) -> List[Command]:
         r"""
@@ -435,7 +426,7 @@ class Cog(ClientCog, metaclass=CogMeta):
         """
         pass
 
-    def _inject(self: CogT, bot: BotBase) -> CogT:
+    def _inject(self, bot: BotBase) -> Self:
         cls = self.__class__
 
         # realistically, the only thing that can cause loading errors
