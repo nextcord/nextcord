@@ -977,20 +977,24 @@ class GuildChannel:
 
         .. versionadded:: 1.7
 
+        .. versionchanged:: 2.4
+
+            ``beginning``, ``end``, ``before``, ``after`` and ``reason`` now accept ``None``.
+
         Parameters
         ----------
-        beginning: :class:`bool`
+        beginning: Optional[:class:`bool`]
             Whether to move the channel to the beginning of the
             channel list (or category if given).
             This is mutually exclusive with ``end``, ``before``, and ``after``.
-        end: :class:`bool`
+        end: Optional[:class:`bool`]
             Whether to move the channel to the end of the
             channel list (or category if given).
             This is mutually exclusive with ``beginning``, ``before``, and ``after``.
-        before: :class:`~nextcord.abc.Snowflake`
+        before: Optional[:class:`~nextcord.abc.Snowflake`]
             The channel that should be before our current channel.
             This is mutually exclusive with ``beginning``, ``end``, and ``after``.
-        after: :class:`~nextcord.abc.Snowflake`
+        after: Optional[:class:`~nextcord.abc.Snowflake`]
             The channel that should be after our current channel.
             This is mutually exclusive with ``beginning``, ``end``, and ``before``.
         offset: :class:`int`
@@ -1006,7 +1010,7 @@ class GuildChannel:
             This parameter is ignored if moving a category channel.
         sync_permissions: :class:`bool`
             Whether to sync the permissions with the category (if given).
-        reason: :class:`str`
+        reason: Optional[:class:`str`]
             The reason for the move.
 
         Raises
