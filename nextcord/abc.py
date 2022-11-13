@@ -906,10 +906,10 @@ class GuildChannel:
         self,
         *,
         beginning: bool,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: Optional[str] = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = None,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
@@ -918,10 +918,10 @@ class GuildChannel:
         self,
         *,
         end: bool,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: str = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = None,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
@@ -930,10 +930,10 @@ class GuildChannel:
         self,
         *,
         before: Snowflake,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: str = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = None,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
@@ -942,14 +942,25 @@ class GuildChannel:
         self,
         *,
         after: Snowflake,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: str = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = None,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
-    async def move(self, **kwargs) -> None:
+    async def move(
+        self,
+        *,
+        beginning: Optional[bool] = None,
+        end: Optional[bool] = None,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
+        offset: int = 0,
+        category: Optional[Snowflake] = None,
+        sync_permissions: bool = False,
+        reason: Optional[str] = None,
+    ) -> None:
         """|coro|
 
         A rich interface to help move a channel relative to other channels.
@@ -1008,21 +1019,14 @@ class GuildChannel:
             Moving the channel failed.
         """
 
-        if not kwargs:
-            return
-
-        beginning, end = kwargs.get("beginning"), kwargs.get("end")
-        before, after = kwargs.get("before"), kwargs.get("after")
-        offset = kwargs.get("offset", 0)
         if sum(bool(a) for a in (beginning, end, before, after)) > 1:
             raise InvalidArgument("Only one of [before, after, end, beginning] can be used.")
 
         bucket = self._sorting_bucket
-        parent_id = kwargs.get("category", MISSING)
         # fmt: off
         channels: List[GuildChannel]
-        if parent_id not in (MISSING, None):
-            parent_id = parent_id.id
+        if category is not None:
+            parent_id = category.id
             channels = [
                 ch
                 for ch in self.guild.channels
@@ -1030,6 +1034,7 @@ class GuildChannel:
                 and ch.category_id == parent_id
             ]
         else:
+            parent_id = None
             channels = [
                 ch
                 for ch in self.guild.channels
@@ -1062,12 +1067,11 @@ class GuildChannel:
 
         channels.insert(max((index + offset), 0), self)
         payload = []
-        lock_permissions = kwargs.get("sync_permissions", False)
-        reason = kwargs.get("reason")
+
         for index, channel in enumerate(channels):
             d = {"id": channel.id, "position": index}
-            if parent_id is not MISSING and channel.id == self.id:
-                d.update(parent_id=parent_id, lock_permissions=lock_permissions)
+            if parent_id is not None and channel.id == self.id:
+                d.update(parent_id=parent_id, lock_permissions=sync_permissions)
             payload.append(d)
 
         await self._state.http.bulk_channel_update(self.guild.id, payload, reason=reason)
