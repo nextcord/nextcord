@@ -2745,8 +2745,11 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         nsfw: :class:`bool`
             If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
             only usable in NSFW channels.
+
             .. note::
+
                 Due to a discord limitation, this can only be set for the parent command for subcommands.
+
 
             .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
@@ -3081,8 +3084,11 @@ def slash_command(
     nsfw: :class:`bool`
         If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
         only usable in NSFW channels.
+
         .. note::
+
             Due to a discord limitation, this can only be set for the parent command for subcommands.
+
 
         .. versionadded:: 2.4
     force_global: :class:`bool`
