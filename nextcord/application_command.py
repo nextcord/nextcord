@@ -1919,7 +1919,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
             being usable in Non NSFW channels.
 
-            .. versionadded:: 2.1
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2748,7 +2748,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             .. note::
                 Due to a discord limitation, this can only be set for the parent command for subcommands.
 
-            .. versionadded:: 2.1
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2914,7 +2914,7 @@ class UserApplicationCommand(BaseApplicationCommand):
             If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
             being usable in Non NSFW channels.
 
-            .. versionadded:: 2.1
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2997,7 +2997,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
             If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
             being usable in Non NSFW channels.
 
-            .. versionadded:: 2.1
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -3084,7 +3084,7 @@ def slash_command(
         .. note::
             Due to a discord limitation, this can only be set for the parent command for subcommands.
 
-        .. versionadded:: 2.1
+        .. versionadded:: 2.4
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3146,7 +3146,7 @@ def message_command(
         If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
         being usable in Non NSFW channels.
 
-        .. versionadded:: 2.1
+        .. versionadded:: 2.4
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3206,7 +3206,7 @@ def user_command(
         If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
         being usable in Non NSFW channels.
 
-        .. versionadded:: 2.1
+        .. versionadded:: 2.4
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
