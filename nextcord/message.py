@@ -474,9 +474,9 @@ class MessageReference:
     @classmethod
     def with_state(cls: Type[MR], state: ConnectionState, data: MessageReferencePayload) -> MR:
         self = cls.__new__(cls)
-        self.message_id = utils._get_as_snowflake(data, "message_id")
+        self.message_id = utils.get_as_snowflake(data, "message_id")
         self.channel_id = int(data.pop("channel_id"))
-        self.guild_id = utils._get_as_snowflake(data, "guild_id")
+        self.guild_id = utils.get_as_snowflake(data, "guild_id")
         self.fail_if_not_exists = data.get("fail_if_not_exists", True)
         self._state = state
         self.resolved = None
@@ -798,7 +798,7 @@ class Message(Hashable):
     ):
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
-        self.webhook_id: Optional[int] = utils._get_as_snowflake(data, "webhook_id")
+        self.webhook_id: Optional[int] = utils.get_as_snowflake(data, "webhook_id")
         self.reactions: List[Reaction] = [
             Reaction(message=self, data=d) for d in data.get("reactions", [])
         ]
@@ -831,7 +831,7 @@ class Message(Hashable):
             self.guild = channel.guild  # type: ignore
         except AttributeError:
             if getattr(channel, "type", None) not in (ChannelType.group, ChannelType.private):
-                self.guild = state._get_guild(utils._get_as_snowflake(data, "guild_id"))
+                self.guild = state._get_guild(utils.get_as_snowflake(data, "guild_id"))
             else:
                 self.guild = None
 
@@ -1082,7 +1082,7 @@ class Message(Hashable):
         if self.guild is None:
             return []
         it = filter(None, map(self.guild.get_channel, self.raw_channel_mentions))
-        return utils._unique(it)
+        return utils.unique(it)
 
     @utils.cached_slot_property("_cs_clean_content")
     def clean_content(self) -> str:

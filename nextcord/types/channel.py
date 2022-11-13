@@ -32,6 +32,7 @@ from .threads import ThreadArchiveDuration, ThreadMember, ThreadMetadata
 from .user import PartialUser
 
 OverwriteType = Literal[0, 1]
+SortOrderType = Literal[0, 1]
 
 
 class PermissionOverwrite(TypedDict):
@@ -76,6 +77,7 @@ class ForumChannel(_BaseGuildChannel):
     last_message_id: NotRequired[Optional[Snowflake]]
     rate_limit_per_user: NotRequired[int]
     default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
+    default_sort_order: Optional[SortOrderType]
 
 
 class NewsChannel(_BaseGuildChannel):

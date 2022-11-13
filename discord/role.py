@@ -43,8 +43,8 @@ from nextcord.role import (
     RoleTags,
     TypeVar,
     Union,
-    _get_as_snowflake,
     annotations,
+    get_as_snowflake,
     overload,
     snowflake_time,
 )

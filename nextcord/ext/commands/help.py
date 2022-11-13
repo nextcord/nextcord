@@ -606,7 +606,7 @@ class HelpCommand:
             The maximum width of the commands.
         """
 
-        as_lengths = (nextcord.utils._string_width(c.name) for c in commands)
+        as_lengths = (nextcord.utils.string_width(c.name) for c in commands)
         return max(as_lengths, default=0)
 
     def get_destination(self):
@@ -971,7 +971,7 @@ class DefaultHelpCommand(HelpCommand):
         self.paginator.add_line(heading)
         max_size = max_size or self.get_max_size(commands)
 
-        get_width = nextcord.utils._string_width
+        get_width = nextcord.utils.string_width
         for command in commands:
             name = command.name
             width = max_size - (get_width(name) - len(name))

@@ -49,7 +49,7 @@ extras_require = {
         "sphinxcontrib-websupport",
         "typing_extensions>=4.2.0, <5",
     ],
-    "speed": ["orjson>=3.5.4", "aiodns>=1.1", "Brotli", "cchardet"],
+    "speed": ["orjson>=3.5.4", "aiohttp[speedups]"],
 }
 
 packages = [
@@ -60,6 +60,7 @@ packages = [
     "nextcord.ext.application_checks",
     "nextcord.ext.commands",
     "nextcord.ext.tasks",
+    "nextcord.ui.select",
     # Compat
     "discord",
     "discord.types",
