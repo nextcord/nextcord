@@ -907,7 +907,7 @@ class GuildChannel:
         *,
         beginning: bool,
         offset: int = ...,
-        category: Optional[Snowflake] = None,
+        category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
     ) -> None:
@@ -919,7 +919,7 @@ class GuildChannel:
         *,
         end: bool,
         offset: int = ...,
-        category: Optional[Snowflake] = None,
+        category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
     ) -> None:
@@ -931,7 +931,7 @@ class GuildChannel:
         *,
         before: Snowflake,
         offset: int = ...,
-        category: Optional[Snowflake] = None,
+        category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
     ) -> None:
@@ -943,7 +943,7 @@ class GuildChannel:
         *,
         after: Snowflake,
         offset: int = ...,
-        category: Optional[Snowflake] = None,
+        category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
     ) -> None:
@@ -957,7 +957,7 @@ class GuildChannel:
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
         offset: int = 0,
-        category: Optional[Snowflake] = None,
+        category: Optional[Snowflake] = MISSING,
         sync_permissions: bool = False,
         reason: Optional[str] = None,
     ) -> None:
@@ -1029,7 +1029,7 @@ class GuildChannel:
         bucket = self._sorting_bucket
         # fmt: off
         channels: List[GuildChannel]
-        if category is not None:
+        if category not in (MISSING, None):
             parent_id = category.id
             channels = [
                 ch
@@ -1073,8 +1073,8 @@ class GuildChannel:
         payload = []
 
         for index, channel in enumerate(channels):
-            d = {"id": channel.id, "position": index}
-            if parent_id is not None and channel.id == self.id:
+            d: dict[str, Any] = {"id": channel.id, "position": index}
+            if category is not MISSING and channel.id == self.id:
                 d.update(parent_id=parent_id, lock_permissions=sync_permissions)
             payload.append(d)
 
