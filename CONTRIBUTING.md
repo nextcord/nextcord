@@ -6,7 +6,7 @@ The following is a set of guidelines for contributing to the repository. These a
 
 ## This is too much to read! I want to ask a question
 
-Generally speaking questions are better suited in our resources below.
+Generally asking questions are better suited in our resources below.
 
 - [The official support server](https://discord.gg/ZebatWssCB)
 - [The FAQ in the documentation](https://nextcord.readthedocs.io/en/latest/faq.html)
