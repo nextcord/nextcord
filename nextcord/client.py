@@ -2739,7 +2739,6 @@ class Client:
 
                 Due to a discord limitation, this can only be set for the parent command for subcommands.
 
-
             .. versionadded:: 2.4
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still

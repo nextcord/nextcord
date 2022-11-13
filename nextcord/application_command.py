@@ -2750,7 +2750,6 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
                 Due to a discord limitation, this can only be set for the parent command for subcommands.
 
-
             .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
@@ -3088,7 +3087,6 @@ def slash_command(
         .. note::
 
             Due to a discord limitation, this can only be set for the parent command for subcommands.
-
 
         .. versionadded:: 2.4
     force_global: :class:`bool`
