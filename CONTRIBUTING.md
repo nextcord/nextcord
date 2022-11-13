@@ -34,7 +34,7 @@ If the bug report is missing this information then it'll take us longer to fix t
 
 Submitting a pull request is fairly simple, just make sure it focuses on a single aspect and doesn't manage to have scope creep and it's probably good to go. It would be incredibly lovely if the style is consistent to that found in the project.
 
-Please use the following to get your contributions up to spec
+Please use the following to get your contributions up to spec:
 
 - [Dependencies](#installing-development-dependencies-locally)
 - [Code Style](#code-style)
@@ -60,13 +60,13 @@ If you would like these to run automatically, you can use `task precommit` to in
 
 ## Type Annotations
 
-Mafic uses [Pyright](https://github.com/microsoft/pyright) for type checking. To use it, run `task pyright` in the root directory of the project, or `python -m task pyright` (`py -m` etc) if that does not work.
+Nextcord uses [Pyright](https://github.com/microsoft/pyright) for type checking. To use it, run `task pyright` in the root directory of the project, or `python -m task pyright` (`py -m` etc) if that does not work.
 
 If type annotations are new to you, here is a [guide](https://decorator-factory.github.io/typing-tips/) to help you with it.
 
 ## Commits
 
-Mafic follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) style. This means that your commit messages and PR titles should be formatted in a specific way. This is to help us generate changelogs and release notes, whilst also helping us review your pull requests as we can see what each commit does.
+Nextcord follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) style. This means that your commit messages and PR titles should be formatted in a specific way. This is to help us generate changelogs and release notes, whilst also helping us review your pull requests as we can see what each commit does.
 
 Your commit messages should be in the present (imperative, 2nd person) tense, such as `Add`, not `Added`.
 
@@ -144,7 +144,7 @@ Nextcord uses [Sphinx](https://www.sphinx-doc.org/en/master/) for documentation 
 
 To install the documentation dependencies, run `pip install -r docs/requirements.txt` in the root of the project.
 
-To build the docs, run `make html` (`./make html` on Windows, requires [Make](https://www.gnu.org/software/make/) on linux). If you don't have make, you can use `python -m sphinx -b html docs docs/_build/html` instead) in the `docs` directory.
+To build the docs, run `make html` (`./make html` on Windows, requires [Make](https://www.gnu.org/software/make/) on Linux). If you don't have make, you can use `python -m sphinx -b html docs docs/_build/html` instead) in the `docs` directory.
 
 To view the docs, open `docs/_build/html/index.html` in your browser, or run a development server with `python -m http.server --directory docs/_build/html` and open `localhost:8000` in your browser.
 
@@ -252,9 +252,9 @@ We use [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDic
 
 These are stored in `nextcord/types`, where the file name relates to the `nextcord/` filename.
 
-These are python representations of Discord payloads found in the [Discord API docs](https://discord.dev). [`typing_extensions.NotRequired`](https://peps.python.org/pep-0655/) is used for keys which are omitted, represented by `name?` in the Discord docs. [`typing.Optional`](https://docs.python.org/3/library/typing.html#typing.Optional) is used for keys which may be `null` (`None`), represented by `?type` in the Discord docs.
+These are Python representations of Discord payloads found in the [Discord API docs](https://discord.dev). [`typing_extensions.NotRequired`](https://peps.python.org/pep-0655/) is used for keys which are omitted, represented by `name?` in the Discord docs. [`typing.Optional`](https://docs.python.org/3/library/typing.html#typing.Optional) is used for keys which may be `null` (`None`), represented by `?type` in the Discord docs.
 
-`nextcord.types.snowflake.Snowflake` is used for snowflakes, which are Discord IDs.
+`nextcord.types.snowflake.Snowflake` is used for Snowflakes, which are Discord IDs.
 
 ### Typed Payloads Example
 
