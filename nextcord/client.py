@@ -2613,8 +2613,8 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Not-NSFW channels.
+            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+            only usable in NSFW channels.
 
             .. versionadded:: 2.4
         force_global: :class:`bool`
@@ -2669,8 +2669,8 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Not-NSFW channels.
+            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+            only usable in NSFW channels.
 
             .. versionadded:: 2.4
         force_global: :class:`bool`
@@ -2732,8 +2732,8 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Non NSFW channels.
+            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+            only usable in NSFW channels.
             .. note::
                 Due to a discord limitation, this can only be set for the parent command for subcommands.
 

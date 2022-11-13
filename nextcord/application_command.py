@@ -1916,8 +1916,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Non NSFW channels.
+            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+            only usable in NSFW channels.
 
             .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
@@ -2743,8 +2743,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Non NSFW channels.
+            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+            only usable in NSFW channels.
             .. note::
                 Due to a discord limitation, this can only be set for the parent command for subcommands.
 
@@ -2911,8 +2911,8 @@ class UserApplicationCommand(BaseApplicationCommand):
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Non NSFW channels.
+            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+            only usable in NSFW channels.
 
             .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
@@ -2994,8 +2994,8 @@ class MessageApplicationCommand(BaseApplicationCommand):
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-            being usable in Non NSFW channels.
+            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+            only usable in NSFW channels.
 
             .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
@@ -3079,8 +3079,8 @@ def slash_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     nsfw: :class:`bool`
-        If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-        being usable in Non NSFW channels.
+        If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+        only usable in NSFW channels.
         .. note::
             Due to a discord limitation, this can only be set for the parent command for subcommands.
 
@@ -3143,8 +3143,8 @@ def message_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     nsfw: :class:`bool`
-        If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-        being usable in Non NSFW channels.
+        If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+        only usable in NSFW channels.
 
         .. versionadded:: 2.4
     force_global: :class:`bool`
@@ -3203,8 +3203,8 @@ def user_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     nsfw: :class:`bool`
-        If the command should be usable in NSFW channels or not. Setting to ``True`` will disable the command from
-        being usable in Non NSFW channels.
+        If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
+        only usable in NSFW channels.
 
         .. versionadded:: 2.4
     force_global: :class:`bool`
