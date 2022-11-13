@@ -1502,6 +1502,8 @@ of :class:`enum.Enum`.
 
         The user is an Active Developer.
 
+        .. versionadded:: 2.4
+
 .. class:: ActivityType
 
     Specifies the type of :class:`Activity`. This is used to check how to

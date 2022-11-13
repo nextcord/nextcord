@@ -1257,5 +1257,8 @@ class ApplicationFlags(BaseFlags):
 
     @flag_value
     def active(self):
-        """:class:`bool`: Returns ``True`` if the application is considered active. This means that it has had any global command executed in the past 30 days."""
+        """:class:`bool`: Returns ``True`` if the application is considered active. This means that it has had any global command executed in the past 30 days.
+
+        .. versionadded:: 2.4
+        """
         return 1 << 24
