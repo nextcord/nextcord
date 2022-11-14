@@ -1313,10 +1313,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         if file is not None:
             files = [file]
 
-        if applied_tags is not None:
-            applied_tag_ids = [str(tag.id) for tag in applied_tags if tag.id is not None]
-        else:
+        if applied_tags is None:
             applied_tag_ids = []
+        else:
+            applied_tag_ids = [str(tag.id) for tag in applied_tags if tag.id is not None]
 
         if files is not None:
             if not all(isinstance(file, File) for file in files):
