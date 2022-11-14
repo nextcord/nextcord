@@ -274,3 +274,23 @@ class AutoModerationActionExecution(TypedDict):
     content: NotRequired[str]
     matched_content: NotRequired[Optional[str]]
 ```
+
+## Gateway Events
+
+[Gateway events](https://discord.com/developers/docs/topics/gateway-events#receive-events) are stored in `nextcord/state.py` as async methods of `ConnectionState`. These are named `parse_{event}` where event is the lowercase name of Discord's event name.
+
+Client events are dispatched via `ConnectionState.dispatch`, which is a wrapper around `Client.dispatch`. The event name is the end-user event name, but without the `on_` prefix.
+
+Documentation for events are in `api.rst`, below `.. _discord-api-events:`/`Event Reference`.
+
+## Gateway Events Example
+
+Here is a simple example of [`AUTO_MODERATION_RULE_CREATE`](https://discord.com/developers/docs/topics/gateway-events#auto-moderation-rule-create):
+
+```python
+def parse_auto_moderation_rule_create(self, data) -> None:
+    self.dispatch(
+        "auto_moderation_rule_create",
+        AutoModerationRule(data=data, state=self),
+    )
+```
