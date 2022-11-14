@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, List, Optional, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, TypeVar, Union
 
 from ...components import SelectMenu
 from ...enums import ComponentType
@@ -42,12 +42,13 @@ from ..item import Item
 __all__ = ("SelectBase",)
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ...abc import GuildChannel
     from ...types.components import SelectMenu as SelectMenuPayload
     from ...types.interactions import ComponentInteractionData, ComponentInteractionResolved
     from ..view import View
 
-S = TypeVar("S", bound="SelectBase")
 V = TypeVar("V", bound="View", covariant=True)
 
 
@@ -224,7 +225,7 @@ class SelectBase(Item[V]):
         self._selected_values = data.get("values", [])
 
     @classmethod
-    def from_component(cls: Type[S], component: SelectMenu) -> S:
+    def from_component(cls, component: SelectMenu) -> Self:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,

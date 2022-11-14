@@ -30,7 +30,7 @@ import datetime
 import itertools
 import sys
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 
 from . import abc, utils
 from .activity import ActivityTypes, create_activity
@@ -48,6 +48,8 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import Snowflake
     from .channel import DMChannel, StageChannel, VoiceChannel
     from .flags import PublicUserFlags
@@ -197,9 +199,6 @@ def flatten_user(cls):
     return cls
 
 
-M = TypeVar("M", bound="Member")
-
-
 @flatten_user
 class Member(abc.Messageable, _UserTag):
     """Represents a Discord member to a :class:`Guild`.
@@ -322,7 +321,7 @@ class Member(abc.Messageable, _UserTag):
         return hash(self._user)
 
     @classmethod
-    def _from_message(cls: Type[M], *, message: Message, data: MemberPayload) -> M:
+    def _from_message(cls, *, message: Message, data: MemberPayload) -> Self:
         author = message.author
         data["user"] = author._to_minimal_user_json()  # type: ignore
         return cls(data=data, guild=message.guild, state=message._state)  # type: ignore
@@ -337,8 +336,8 @@ class Member(abc.Messageable, _UserTag):
 
     @classmethod
     def _try_upgrade(
-        cls: Type[M], *, data: UserWithMemberPayload, guild: Guild, state: ConnectionState
-    ) -> Union[User, M]:
+        cls, *, data: UserWithMemberPayload, guild: Guild, state: ConnectionState
+    ) -> Union[User, Member]:
         # A User object with a 'member' key
         try:
             member_data = data.pop("member")
@@ -349,8 +348,8 @@ class Member(abc.Messageable, _UserTag):
             return cls(data=member_data, guild=guild, state=state)  # type: ignore
 
     @classmethod
-    def _copy(cls: Type[M], member: M) -> M:
-        self: M = cls.__new__(cls)  # to bypass __init__
+    def _copy(cls, member: Self) -> Self:
+        self = cls.__new__(cls)  # to bypass __init__
 
         self._roles = utils.SnowflakeList(member._roles, is_sorted=True)
         self.joined_at = member.joined_at

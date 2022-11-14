@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type
 
 import aiohttp
 
@@ -46,12 +46,12 @@ from .state import AutoShardedConnectionState
 from .utils import MISSING
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .activity import BaseActivity
     from .flags import MemberCacheFlags
     from .gateway import DiscordWebSocket
     from .mentions import AllowedMentions
-
-    EI = TypeVar("EI", bound="EventItem")
 
 __all__ = (
     "AutoShardedClient",
@@ -78,12 +78,12 @@ class EventItem:
         self.shard: Optional["Shard"] = shard
         self.error: Optional[Exception] = error
 
-    def __lt__(self: EI, other: EI) -> bool:
+    def __lt__(self, other: Self) -> bool:
         if not isinstance(other, EventItem):
             return NotImplemented
         return self.type < other.type
 
-    def __eq__(self: EI, other: EI) -> bool:
+    def __eq__(self, other: Self) -> bool:
         if not isinstance(other, EventItem):
             return NotImplemented
         return self.type == other.type

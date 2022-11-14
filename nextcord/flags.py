@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from functools import reduce
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     ClassVar,
@@ -42,6 +43,9 @@ from typing import (
 
 from .enums import UserFlags
 
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
 __all__ = (
     "SystemChannelFlags",
     "MessageFlags",
@@ -52,7 +56,6 @@ __all__ = (
     "ChannelFlags",
 )
 
-FV = TypeVar("FV", bound="flag_value")
 BF = TypeVar("BF", bound="BaseFlags")
 
 
@@ -62,7 +65,7 @@ class flag_value:
         self.__doc__ = func.__doc__
 
     @overload
-    def __get__(self: FV, instance: None, owner: Type[BF]) -> FV:
+    def __get__(self, instance: None, owner: Type[BF]) -> Self:
         ...
 
     @overload
@@ -549,7 +552,7 @@ class Intents(BaseFlags):
             setattr(self, key, value)
 
     @classmethod
-    def all(cls: Type[Intents]) -> Intents:
+    def all(cls) -> Self:
         """A factory method that creates a :class:`Intents` with everything enabled."""
         self = cls.__new__(cls)
         add_bits: Callable[[int, int], int] = lambda a, b: a | b
@@ -557,14 +560,14 @@ class Intents(BaseFlags):
         return self
 
     @classmethod
-    def none(cls: Type[Intents]) -> Intents:
+    def none(cls) -> Self:
         """A factory method that creates a :class:`Intents` with everything disabled."""
         self = cls.__new__(cls)
         self.value = self.DEFAULT_VALUE
         return self
 
     @classmethod
-    def default(cls: Type[Intents]) -> Intents:
+    def default(cls) -> Self:
         """A factory method that creates a :class:`Intents` with everything enabled
         except :attr:`presences`, :attr:`members`, and :attr:`message_content`.
         """
@@ -1090,7 +1093,7 @@ class MemberCacheFlags(BaseFlags):
             setattr(self, key, value)
 
     @classmethod
-    def all(cls: Type[MemberCacheFlags]) -> MemberCacheFlags:
+    def all(cls) -> Self:
         """A factory method that creates a :class:`MemberCacheFlags` with everything enabled."""
         bits = max(cls.VALID_FLAGS.values()).bit_length()
         value = (1 << bits) - 1
@@ -1099,7 +1102,7 @@ class MemberCacheFlags(BaseFlags):
         return self
 
     @classmethod
-    def none(cls: Type[MemberCacheFlags]) -> MemberCacheFlags:
+    def none(cls) -> Self:
         """A factory method that creates a :class:`MemberCacheFlags` with everything disabled."""
         self = cls.__new__(cls)
         self.value = self.DEFAULT_VALUE
@@ -1131,7 +1134,7 @@ class MemberCacheFlags(BaseFlags):
         return 2
 
     @classmethod
-    def from_intents(cls: Type[MemberCacheFlags], intents: Intents) -> MemberCacheFlags:
+    def from_intents(cls, intents: Intents) -> Self:
         """A factory method that creates a :class:`MemberCacheFlags` based on
         the currently selected :class:`Intents`.
 
