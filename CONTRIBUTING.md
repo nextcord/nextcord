@@ -146,9 +146,7 @@ Nextcord uses [Sphinx](https://www.sphinx-doc.org/en/master/) for documentation 
 
 To install the documentation dependencies, run `pip install -r docs/requirements.txt` in the root of the project.
 
-To build the docs, run `make html` (`./make html` on Windows, requires [Make](https://www.gnu.org/software/make/) on Linux. If you don't have make, you can use `python -m sphinx -b html docs docs/_build/html` instead) in the `docs` directory.
-
-To view the docs, open `docs/_build/html/index.html` in your browser, or run a development server with `python -m http.server --directory docs/_build/html` and open `localhost:8000` in your browser.
+To build the docs that will autocompile on file changes, run `task docs` then open `http://localhost:8069` in your browser.
 
 ### Versioning
 
