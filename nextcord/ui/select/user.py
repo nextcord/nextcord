@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...components import UserSelectMenu
 from ...enums import ComponentType
@@ -38,26 +38,29 @@ from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ...guild import Guild
     from ...state import ConnectionState
     from ...types.components import UserSelectMenu as UserSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("UserSelect", "user_select")
+__all__ = ("UserSelect", "user_select", "UserSelectValues")
 
-S = TypeVar("S", bound="UserSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
 
 class UserSelectValues(SelectValuesBase):
-    """Represents the values of a :class:`UserSelect`."""
+    """Represents the values of a :class:`.ui.UserSelect`."""
 
     @property
     def members(self) -> List[Member]:
+        """List[:class:`.Member`]: A list of members that were selected."""
         return [v for v in self.data if isinstance(v, Member)]
 
     @property
     def users(self) -> List[User]:
+        """List[:class:`.User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
 
 
@@ -130,14 +133,14 @@ class UserSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> UserSelectValues:
-        """List[:class:`int`]: A list of user ids that have been selected by the user."""
+        """:class:`.ui.UserSelectValues`: A list of Union[:class:`.Member`, :class:`.User`] that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> UserSelectMenuPayload:
         return self._underlying.to_dict()
 
     @classmethod
-    def from_component(cls: Type[S], component: UserSelectMenu) -> S:
+    def from_component(cls, component: UserSelectMenu) -> Self:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,

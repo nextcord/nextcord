@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Type, TypeVar, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from .appinfo import PartialAppInfo
 from .asset import Asset
@@ -40,6 +40,8 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import GuildChannel
     from .guild import Guild
     from .state import ConnectionState
@@ -215,9 +217,6 @@ class PartialInviteGuild:
         return Asset._from_guild_image(self._state, self.id, self._splash, path="splashes")
 
 
-I = TypeVar("I", bound="Invite")
-
-
 class Invite(Hashable):
     r"""Represents a Discord :class:`Guild` or :class:`abc.GuildChannel` invite.
 
@@ -387,7 +386,7 @@ class Invite(Hashable):
         )
 
     @classmethod
-    def from_incomplete(cls: Type[I], *, state: ConnectionState, data: InvitePayload) -> I:
+    def from_incomplete(cls, *, state: ConnectionState, data: InvitePayload) -> Self:
         guild: Optional[Union[Guild, PartialInviteGuild]]
         try:
             guild_data = data["guild"]
@@ -411,7 +410,7 @@ class Invite(Hashable):
         return cls(state=state, data=data, guild=guild, channel=channel)
 
     @classmethod
-    def from_gateway(cls: Type[I], *, state: ConnectionState, data: GatewayInvitePayload) -> I:
+    def from_gateway(cls, *, state: ConnectionState, data: GatewayInvitePayload) -> Self:
         guild_id: Optional[int] = get_as_snowflake(data, "guild_id")
         guild: Optional[Union[Guild, Object]] = state._get_guild(guild_id)
         channel_id = int(data["channel_id"])

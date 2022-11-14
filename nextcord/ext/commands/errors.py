@@ -33,7 +33,6 @@ if TYPE_CHECKING:
 
     from nextcord.abc import GuildChannel
     from nextcord.threads import Thread
-    from nextcord.types.snowflake import Snowflake, SnowflakeList
 
     from .context import Context
     from .converter import Converter
@@ -652,8 +651,8 @@ class MissingRole(CheckFailure):
         This is the parameter passed to :func:`~.commands.has_role`.
     """
 
-    def __init__(self, missing_role: Snowflake) -> None:
-        self.missing_role: Snowflake = missing_role
+    def __init__(self, missing_role: Union[str, int]) -> None:
+        self.missing_role: Union[str, int] = missing_role
         message = f"Role {missing_role!r} is required to run this command."
         super().__init__(message)
 
@@ -672,8 +671,8 @@ class BotMissingRole(CheckFailure):
         This is the parameter passed to :func:`~.commands.has_role`.
     """
 
-    def __init__(self, missing_role: Snowflake) -> None:
-        self.missing_role: Snowflake = missing_role
+    def __init__(self, missing_role: Union[str, int]) -> None:
+        self.missing_role: Union[str, int] = missing_role
         message = f"Bot requires the role {missing_role!r} to run this command"
         super().__init__(message)
 
@@ -693,8 +692,8 @@ class MissingAnyRole(CheckFailure):
         These are the parameters passed to :func:`~.commands.has_any_role`.
     """
 
-    def __init__(self, missing_roles: SnowflakeList) -> None:
-        self.missing_roles: SnowflakeList = missing_roles
+    def __init__(self, missing_roles: List[Union[str, int]]) -> None:
+        self.missing_roles: List[Union[str, int]] = missing_roles
 
         missing = [f"'{role}'" for role in missing_roles]
 
@@ -723,8 +722,8 @@ class BotMissingAnyRole(CheckFailure):
 
     """
 
-    def __init__(self, missing_roles: SnowflakeList) -> None:
-        self.missing_roles: SnowflakeList = missing_roles
+    def __init__(self, missing_roles: List[Union[str, int]]) -> None:
+        self.missing_roles: List[Union[str, int]] = missing_roles
 
         missing = [f"'{role}'" for role in missing_roles]
 
