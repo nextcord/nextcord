@@ -41,6 +41,7 @@ Please use the following to get your contributions up to spec:
 - [Type Annotations](#type-annotations)
 - [Commits](#commits)
 - [Documentation](#documentation)
+- [Gateway Events](#gateway-events)
 
 ## Installing Development Dependencies Locally
 
