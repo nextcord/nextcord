@@ -20,11 +20,11 @@ Please try your best not to ask questions in our issue tracker. Most of them don
 Please be aware of the following things when filing bug reports.
 
 1. Don't open duplicate issues. Please search your issue to see if it has been asked already. Duplicate issues will be closed.
-2. When filing a bug about exceptions or tracebacks, please include the *complete* traceback. Without the complete traceback the issue might be **unsolvable** and you will be asked to provide more information.
+2. When filing a bug about exceptions, please include the *complete* traceback. Without the complete traceback the issue might be **unsolvable** and you will be asked to provide more information.
 3. Make sure to provide enough information to make the issue workable. The issue template will generally walk you through the process but they are enumerated here as well:
     - A **summary** of your bug report. This is generally a quick sentence or two to describe the issue in human terms.
     - Guidance on **how to reproduce the issue**. Ideally, this should have a small code sample that allows us to run and see the issue for ourselves to debug. **Please make sure that the token is not displayed**. If you cannot provide a code snippet, then let us know what the steps were, how often it happens, etc.
-    - Tell us **what you expected to happen**. That way we can meet that expectation.
+    - Tell us **what you expected to happen**, that way we can meet that expectation.
     - Tell us **what actually happens**. What ends up happening in reality? It's not helpful to say "it fails" or "it doesn't work". Say *how* it failed, do you get an exception? Does it hang? How are the expectations different from reality?
     - Tell us **information about your environment**. What version of nextcord are you using? How was it installed? What operating system are you running on? These are valuable questions and information that we use.
 
@@ -114,6 +114,7 @@ Co-Authored-By: Some Person <email@example.com>
 - **refactor**: A code change that neither fixes a bug nor adds a feature
 - **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
 - **test**: Adding missing tests or correcting existing tests
+- **chore**: Other miscellaneous changes which do not affect users
 
 ### Scope
 
@@ -144,7 +145,7 @@ Nextcord uses [Sphinx](https://www.sphinx-doc.org/en/master/) for documentation 
 
 To install the documentation dependencies, run `pip install -r docs/requirements.txt` in the root of the project.
 
-To build the docs, run `make html` (`./make html` on Windows, requires [Make](https://www.gnu.org/software/make/) on Linux). If you don't have make, you can use `python -m sphinx -b html docs docs/_build/html` instead) in the `docs` directory.
+To build the docs, run `make html` (`./make html` on Windows, requires [Make](https://www.gnu.org/software/make/) on Linux. If you don't have make, you can use `python -m sphinx -b html docs docs/_build/html` instead) in the `docs` directory.
 
 To view the docs, open `docs/_build/html/index.html` in your browser, or run a development server with `python -m http.server --directory docs/_build/html` and open `localhost:8000` in your browser.
 
@@ -183,7 +184,7 @@ class Client:
 
 ### Operations
 
-We use [`.. container:: operations`](https://docutils.sourceforge.io/docs/ref/rst/directives.html#container) to describe special methods. This should be below the summary, and above the attributes.
+We use [`.. container:: operations`](https://docutils.sourceforge.io/docs/ref/rst/directives.html#container) to describe special methods. This should be below the summary and above the attributes.
 
 #### Operations Example
 
