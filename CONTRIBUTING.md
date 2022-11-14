@@ -107,6 +107,7 @@ Co-Authored-By: Some Person <email@example.com>
 `<type>` is one of the following:
 
 - **build**: Changes that affect the build system or external dependencies
+- **chore**: Other miscellaneous changes which do not affect users
 - **ci**: Changes to our CI configuration files and scripts such as GitHub Actions
 - **docs**: Documentation only changes
 - **feat**: A new feature
@@ -115,7 +116,7 @@ Co-Authored-By: Some Person <email@example.com>
 - **refactor**: A code change that neither fixes a bug nor adds a feature
 - **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
 - **test**: Adding missing tests or correcting existing tests
-- **chore**: Other miscellaneous changes which do not affect users
+- **typing**: Changes that affect type annotations
 
 ### Scope
 
