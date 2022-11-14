@@ -422,12 +422,11 @@ class GuildChannel:
         except KeyError:
             pass
         else:
-            if isinstance(default_reaction, str):
-                default_reaction = PartialEmoji.from_str(default_reaction)
-
             if default_reaction is None:
                 options["default_reaction_emoji"] = None
             else:
+                if isinstance(default_reaction, str):
+                    default_reaction = PartialEmoji.from_str(default_reaction)
                 options["default_reaction_emoji"] = (
                     {
                         "emoji_id": default_reaction.id,

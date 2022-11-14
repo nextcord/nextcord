@@ -975,10 +975,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         self.default_reaction: Optional[PartialEmoji]
 
         reaction = data.get("default_reaction_emoji")
-        if reaction is not None:
-            self.default_reaction = PartialEmoji.from_reaction(reaction)
-        else:
+        if reaction is None:
             self.default_reaction = None
+        else:
+            self.default_reaction = PartialEmoji.from_reaction(reaction)
 
         self._fill_overwrites(data)
 
