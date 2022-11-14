@@ -175,7 +175,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         before creating another thread in this channel.
         This is set on every new thread in this channel.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 2.4
     """
 
     __slots__ = (
@@ -371,7 +371,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             The new default rate limit per user for threads created in this channel.
             This sets a new default but does not change the rate limits of existing threads.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -911,11 +911,11 @@ class ForumChannel(abc.GuildChannel, Hashable):
         before creating another thread in this channel.
         This is set on every new thread in this channel.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 2.4
     default_reaction: Optional[:class:`PartialEmoji`]
         The emoji that is used to add a reaction to every post in this forum.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 2.4
     """
 
     __slots__ = (
@@ -1042,7 +1042,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     def available_tags(self) -> List[ForumTag]:
         """List[:class:`ForumTag`]: Returns all the tags available in this channel.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 2.4
         """
 
         return list(self._available_tags.values())
@@ -1050,7 +1050,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     def get_tag(self, id: int, /) -> Optional[ForumTag]:
         """Returns a tag from this channel by its ID.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 2.4
 
         Parameters
         ----------
@@ -1139,15 +1139,15 @@ class ForumChannel(abc.GuildChannel, Hashable):
             This is not retroactively applied to old posts.
             Must be between ``0`` and ``21600``.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 2.4
         available_tags: List[:class:`ForumTag`]
             The new list of tags available in this channel.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 2.4
         default_reaction: Optional[Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]]
             The new default reaction for threads created in this channel.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -1253,7 +1253,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         applied_tags: Optional[List[:class:`ForumTag`]]
             A list of tags to apply to the thread.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -2848,7 +2848,7 @@ def _threaded_guild_channel_factory(channel_type: int):
 class ForumTag:
     """Represents a tag in a forum channel that can be used to filter posts.
 
-    .. versionadded:: 2.3
+    .. versionadded:: 2.4
 
     Attributes
     ----------

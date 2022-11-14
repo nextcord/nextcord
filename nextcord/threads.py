@@ -134,7 +134,7 @@ class Thread(Messageable, Hashable, PinsMixin):
     applied_tag_ids: List[:class:`int`]
         A list of tag IDs that have been applied to this thread.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 2.4
     """
 
     __slots__ = (
@@ -341,7 +341,7 @@ class Thread(Messageable, Hashable, PinsMixin):
 
         This is ``None`` if the parent channel was not found in cache.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 2.4
         """
 
         if self.parent is None:
@@ -636,7 +636,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         applied_tags: List[:class:`ForumTag`]
             The new tags to apply to this thread.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 2.4
 
         Raises
         ------

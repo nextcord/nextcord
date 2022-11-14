@@ -1493,15 +1493,15 @@ class Guild(Hashable):
             The default slowmode delay for threads created in this channel.
             Must be between ``0`` and ``21600``.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 2.4
         default_reaction: Optional[Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]]
             The default reaction for threads created in this channel.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 2.4
         available_tags: List[:class:`ForumTag`]
             The available tags for threads created in this channel.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 2.4
 
         Raises
         ------
