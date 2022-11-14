@@ -65,10 +65,10 @@ class PartialChannel(_BaseChannel):
     type: ChannelType
 
 
-class _ThreadedBaseChannel(_BaseGuildChannel):
-    rate_limit_per_user: NotRequired[int]
-    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
-    default_thread_rate_limit_per_user: NotRequired[int]
+class _ThreadedBaseChannel(_BaseGuildChannel, total=False):
+    rate_limit_per_user: int
+    default_auto_archive_duration: ThreadArchiveDuration
+    default_thread_rate_limit_per_user: int
 
 
 class TextChannel(_ThreadedBaseChannel):
