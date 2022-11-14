@@ -978,7 +978,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         if reaction is None:
             self.default_reaction = None
         else:
-            self.default_reaction = PartialEmoji.from_reaction(reaction)
+            self.default_reaction = PartialEmoji.from_default_reaction(reaction)
 
         self._fill_overwrites(data)
 
@@ -2910,7 +2910,7 @@ class ForumTag:
             id=int(data["id"]) if data["id"] is not None else None,
             name=data["name"],
             moderated=data["moderated"],
-            emoji=PartialEmoji.from_reaction(data),
+            emoji=PartialEmoji.from_default_reaction(data),
         )
 
     def __repr__(self) -> str:

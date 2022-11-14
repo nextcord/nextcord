@@ -115,7 +115,7 @@ class PartialEmoji(_EmojiTag, AssetMixin):
         )
 
     @classmethod
-    def from_reaction(cls, data: DefaultReaction) -> Self:
+    def from_default_reaction(cls, data: DefaultReaction) -> Self:
         return cls(
             id=utils.get_as_snowflake(data, "emoji_id"),
             name=data.get("emoji_name") or "",
