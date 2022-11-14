@@ -1029,7 +1029,7 @@ class GuildChannel:
         bucket = self._sorting_bucket
         # fmt: off
         channels: List[GuildChannel]
-        if category not in (MISSING, None):
+        if category:
             parent_id = category.id
             channels = [
                 ch
