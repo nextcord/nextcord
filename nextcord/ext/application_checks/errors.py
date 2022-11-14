@@ -28,7 +28,6 @@ from nextcord.channel import PartialMessageable
 from nextcord.errors import ApplicationCheckFailure
 from nextcord.interactions import Interaction
 from nextcord.threads import Thread
-from nextcord.types.snowflake import Snowflake, SnowflakeList
 
 __all__ = (
     "ApplicationCheckAnyFailure",
@@ -94,8 +93,8 @@ class ApplicationMissingRole(ApplicationCheckFailure):
         This is the parameter passed to :func:`~.application_checks.has_role`.
     """
 
-    def __init__(self, missing_role: Snowflake) -> None:
-        self.missing_role: Snowflake = missing_role
+    def __init__(self, missing_role: Union[str, int]) -> None:
+        self.missing_role: Union[str, int] = missing_role
         message = f"Role {missing_role!r} is required to run this command."
         super().__init__(message)
 
@@ -113,8 +112,8 @@ class ApplicationMissingAnyRole(ApplicationCheckFailure):
         These are the parameters passed to :func:`has_any_role`.
     """
 
-    def __init__(self, missing_roles: SnowflakeList) -> None:
-        self.missing_roles: SnowflakeList = missing_roles
+    def __init__(self, missing_roles: List[Union[str, int]]) -> None:
+        self.missing_roles: List[Union[str, int]] = missing_roles
 
         missing = [f"'{role}'" for role in missing_roles]
 
@@ -141,8 +140,8 @@ class ApplicationBotMissingRole(ApplicationCheckFailure):
         This is the parameter passed to :func:`has_role`.
     """
 
-    def __init__(self, missing_role: Snowflake) -> None:
-        self.missing_role: Snowflake = missing_role
+    def __init__(self, missing_role: Union[str, int]) -> None:
+        self.missing_role: Union[str, int] = missing_role
         message = f"Bot requires the role {missing_role!r} to run this command"
         super().__init__(message)
 
@@ -163,8 +162,8 @@ class ApplicationBotMissingAnyRole(ApplicationCheckFailure):
 
     """
 
-    def __init__(self, missing_roles: SnowflakeList) -> None:
-        self.missing_roles: SnowflakeList = missing_roles
+    def __init__(self, missing_roles: List[Union[str, int]]) -> None:
+        self.missing_roles: List[Union[str, int]] = missing_roles
 
         missing = [f"'{role}'" for role in missing_roles]
 
@@ -265,7 +264,7 @@ class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
     """
 
     def __init__(self, channel: Optional[Union[GuildChannel, Thread, PartialMessageable]]) -> None:
-        self.channel = channel
+        self.channel: Optional[Union[GuildChannel, Thread, PartialMessageable]] = channel
         super().__init__(f"Channel '{channel}' needs to be NSFW for this command to work.")
 
 
