@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-present Rapptz
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2022-present tag-epic
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -25,7 +26,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Dict, Optional, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from . import utils
 from .asset import Asset, AssetMixin
@@ -36,7 +37,10 @@ __all__ = ("PartialEmoji",)
 if TYPE_CHECKING:
     from datetime import datetime
 
+    from typing_extensions import Self
+
     from .state import ConnectionState
+    from .types.emoji import DefaultReaction
     from .types.message import PartialEmoji as PartialEmojiPayload
 
 
@@ -47,9 +51,6 @@ class _EmojiTag:
 
     def _to_partial(self) -> PartialEmoji:
         raise NotImplementedError
-
-
-PE = TypeVar("PE", bound="PartialEmoji")
 
 
 class PartialEmoji(_EmojiTag, AssetMixin):
@@ -106,7 +107,7 @@ class PartialEmoji(_EmojiTag, AssetMixin):
         self._state: Optional[ConnectionState] = None
 
     @classmethod
-    def from_dict(cls: Type[PE], data: Union[PartialEmojiPayload, Dict[str, Any]]) -> PE:
+    def from_dict(cls, data: Union[PartialEmojiPayload, Dict[str, Any]]) -> Self:
         return cls(
             animated=data.get("animated", False),
             id=utils.get_as_snowflake(data, "id"),
@@ -114,7 +115,14 @@ class PartialEmoji(_EmojiTag, AssetMixin):
         )
 
     @classmethod
-    def from_str(cls: Type[PE], value: str) -> PE:
+    def from_default_reaction(cls, data: DefaultReaction) -> Self:
+        return cls(
+            id=utils.get_as_snowflake(data, "emoji_id"),
+            name=data.get("emoji_name") or "",
+        )
+
+    @classmethod
+    def from_str(cls, value: str) -> Self:
         """Converts a Discord string representation of an emoji to a :class:`PartialEmoji`.
 
         The formats accepted are:
@@ -161,13 +169,13 @@ class PartialEmoji(_EmojiTag, AssetMixin):
 
     @classmethod
     def with_state(
-        cls: Type[PE],
+        cls,
         state: ConnectionState,
         *,
         name: str,
         animated: bool = False,
         id: Optional[int] = None,
-    ) -> PE:
+    ) -> Self:
         self = cls(name=name, animated=animated, id=id)
         self._state = state
         return self

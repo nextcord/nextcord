@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
@@ -36,6 +36,8 @@ from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ...abc import GuildChannel
     from ...enums import ChannelType
     from ...guild import Guild
@@ -45,7 +47,6 @@ if TYPE_CHECKING:
 
 __all__ = ("ChannelSelect", "channel_select", "ChannelSelectValues")
 
-S = TypeVar("S", bound="ChannelSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
 
@@ -142,7 +143,7 @@ class ChannelSelect(SelectBase, Generic[V]):
         return self._underlying.to_dict()
 
     @classmethod
-    def from_component(cls: Type[S], component: ChannelSelectMenu) -> S:
+    def from_component(cls, component: ChannelSelectMenu) -> Self:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,

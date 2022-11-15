@@ -83,6 +83,7 @@ from .invite import Invite
 from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
+from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
 from .role import Role
 from .scheduled_events import EntityMetadata, ScheduledEvent
@@ -102,6 +103,7 @@ if TYPE_CHECKING:
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
+    from .channel import ForumTag
     from .enums import SortOrderType
     from .file import File
     from .message import Attachment
@@ -1123,6 +1125,7 @@ class Guild(Hashable):
         slowmode_delay: int = MISSING,
         nsfw: bool = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        default_thread_slowmode_delay: int = MISSING,
     ) -> TextChannel:
         """|coro|
 
@@ -1214,6 +1217,9 @@ class Guild(Hashable):
 
         if nsfw is not MISSING:
             options["nsfw"] = nsfw
+
+        if default_thread_slowmode_delay is not MISSING:
+            options["default_thread_rate_limit_per_user"] = default_thread_slowmode_delay
 
         data = await self._create_channel(
             name,
@@ -1448,6 +1454,9 @@ class Guild(Hashable):
         position: int = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
         category: Optional[CategoryChannel] = None,
+        default_thread_slowmode_delay: int = MISSING,
+        default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = MISSING,
+        available_tags: List[ForumTag] = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
     ) -> ForumChannel:
@@ -1480,6 +1489,19 @@ class Guild(Hashable):
             The default sort order used to sort posts in this channel.
 
             .. versionadded:: 2.3
+        default_thread_slowmode_delay: :class:`int`
+            The default slowmode delay for threads created in this channel.
+            Must be between ``0`` and ``21600``.
+
+            .. versionadded:: 2.4
+        default_reaction: Optional[Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]]
+            The default reaction for threads created in this channel.
+
+            .. versionadded:: 2.4
+        available_tags: List[:class:`ForumTag`]
+            The available tags for threads created in this channel.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -1504,6 +1526,29 @@ class Guild(Hashable):
 
         if default_sort_order is not MISSING:
             options["default_sort_order"] = default_sort_order.value
+
+        if default_thread_slowmode_delay is not MISSING:
+            options["default_thread_rate_limit_per_user"] = default_thread_slowmode_delay
+
+        if available_tags is not MISSING:
+            options["available_tags"] = [tag.payload for tag in available_tags]
+
+        if default_reaction is not MISSING:
+            if isinstance(default_reaction, str):
+                default_reaction = PartialEmoji.from_str(default_reaction)
+
+            if default_reaction is None:
+                options["default_reaction_emoji"] = None
+            else:
+                options["default_reaction_emoji"] = (
+                    {
+                        "emoji_id": default_reaction.id,
+                    }
+                    if default_reaction.id is not None
+                    else {
+                        "emoji_name": default_reaction.name,
+                    }
+                )
 
         data = await self._create_channel(
             name,

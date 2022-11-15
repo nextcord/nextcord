@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from . import abc
 from .asset import Asset
@@ -35,6 +35,8 @@ from .utils import MISSING, obj_to_base64_data, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
+
+    from typing_extensions import Self
 
     from .channel import DMChannel
     from .file import File
@@ -49,8 +51,6 @@ __all__ = (
     "User",
     "ClientUser",
 )
-
-BU = TypeVar("BU", bound="BaseUser")
 
 
 class _UserTag:
@@ -118,7 +118,7 @@ class BaseUser(_UserTag):
         self.system = data.get("system", False)
 
     @classmethod
-    def _copy(cls: Type[BU], user: BU) -> BU:
+    def _copy(cls, user: Self) -> Self:
         self = cls.__new__(cls)  # bypass __init__
 
         self.name = user.name

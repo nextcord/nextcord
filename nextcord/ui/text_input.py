@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Optional, Tuple, TypeVar
 
 from ..components import TextInput as TextInputComponent
 from ..enums import ComponentType, TextInputStyle
@@ -37,12 +37,13 @@ from .item import Item
 __all__ = ("TextInput",)
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ..types.components import TextInputComponent as TextInputComponentPayload
     from ..types.interactions import ComponentInteractionData
     from .view import View
 
 
-T = TypeVar("T", bound="TextInput")
 V = TypeVar("V", bound="View", covariant=True)
 
 
@@ -220,7 +221,7 @@ class TextInput(Item[V]):
         return 5
 
     @classmethod
-    def from_component(cls: Type[T], text_input: TextInputComponent) -> T:
+    def from_component(cls, text_input: TextInputComponent) -> Self:
         return cls(
             style=text_input.style,
             custom_id=text_input.custom_id,
