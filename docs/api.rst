@@ -4650,6 +4650,14 @@ AutoModerationAction
 .. autoclass:: AutoModerationAction
     :members:
 
+ForumTag
+~~~~~~~~
+
+.. attributetable:: ForumTag
+
+.. autoclass:: ForumTag
+    :members:
+
 .. _discord_ui_kit:
 
 Bot UI Kit

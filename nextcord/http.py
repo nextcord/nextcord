@@ -1000,6 +1000,10 @@ class HTTPClient:
             "default_auto_archive_duration",
             "flags",
             "default_sort_order",
+            "default_thread_rate_limit_per_user",
+            "default_reaction_emoji",
+            "available_tags",
+            "applied_tags",
         )
         payload = {k: v for k, v in options.items() if k in valid_keys}
         return self.request(r, reason=reason, json=payload)
@@ -1040,6 +1044,9 @@ class HTTPClient:
             "video_quality_mode",
             "auto_archive_duration",
             "default_sort_order",
+            "default_thread_rate_limit_per_user",
+            "default_reaction_emoji",
+            "available_tags",
         )
         payload.update({k: v for k, v in options.items() if k in valid_keys and v is not None})
 
@@ -1117,12 +1124,14 @@ class HTTPClient:
         allowed_mentions: Optional[message.AllowedMentions] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        applied_tag_ids: Optional[List[str]] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
             "name": name,
             "auto_archive_duration": auto_archive_duration,
             "rate_limit_per_user": rate_limit_per_user,
+            "applied_tags": applied_tag_ids or [],
         }
         msg_payload = self.get_message_payload(
             content=content,
@@ -1155,6 +1164,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
+        applied_tag_ids: Optional[List[str]] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
@@ -1162,6 +1172,7 @@ class HTTPClient:
             "auto_archive_duration": auto_archive_duration,
             "rate_limit_per_user": rate_limit_per_user,
             "attachments": attachments or [],
+            "applied_tags": applied_tag_ids or [],
         }
         form = self.get_message_multipart_form(
             payload=payload,
