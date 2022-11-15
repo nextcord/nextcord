@@ -1488,7 +1488,7 @@ class Guild(Hashable):
         default_sort_order: Optional[:class:`SortOrderType`]
             The default sort order used to sort posts in this channel.
 
-            ,, versionadded:: 2.3
+            .. versionadded:: 2.3
         default_thread_slowmode_delay: :class:`int`
             The default slowmode delay for threads created in this channel.
             Must be between ``0`` and ``21600``.
