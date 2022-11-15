@@ -24,8 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Union, Optional
-
+from typing import TYPE_CHECKING, List, Optional, Union
 
 __all__ = ("AllowedMentions",)
 
