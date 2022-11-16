@@ -1765,7 +1765,7 @@ class SlashCommandMixin(CallbackMixin):
         interaction: Interaction,
         option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ) -> Dict[str, Any]:
-        interaction.data = cast(InteractionData, interaction.data)
+        interaction.data = cast("InteractionData", interaction.data)
 
         if option_data is None:
             option_data = interaction.data.get("options")
