@@ -2344,7 +2344,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 for (
                     inter_opt_name,
                     inter_opt,
-                ) in all_inter_options_copy:  # Should only contain optionals now.
+                ) in all_inter_options_copy.items():  # Should only contain optionals now.
                     if our_opt := all_our_options_copy.get(inter_opt_name):
                         if not (
                             inter_opt["name"] == our_opt["name"]
