@@ -34,9 +34,10 @@ from .enums import (
     try_enum,
 )
 from .errors import InvalidArgument
+from .missing import MISSING, MissingOr
 from .mixins import Hashable
 from .object import Object
-from .utils import MISSING, get_as_snowflake
+from .utils import get_as_snowflake
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, Snowflake
@@ -404,13 +405,13 @@ class AutoModerationRule(Hashable):
     async def edit(
         self,
         *,
-        name: str = MISSING,
-        event_type: AutoModerationEventType = MISSING,
-        trigger_metadata: AutoModerationTriggerMetadata = MISSING,
-        actions: List[AutoModerationAction] = MISSING,
-        enabled: bool = MISSING,
-        exempt_roles: List[Snowflake] = MISSING,
-        exempt_channels: List[Snowflake] = MISSING,
+        name: MissingOr[str] = MISSING,
+        event_type: MissingOr[AutoModerationEventType] = MISSING,
+        trigger_metadata: MissingOr[AutoModerationTriggerMetadata] = MISSING,
+        actions: MissingOr[List[AutoModerationAction]] = MISSING,
+        enabled: MissingOr[bool] = MISSING,
+        exempt_roles: MissingOr[List[Snowflake]] = MISSING,
+        exempt_channels: MissingOr[List[Snowflake]] = MISSING,
         reason: Optional[str] = None,
     ) -> AutoModerationRule:
         """Modify the current auto moderation rule.

@@ -60,13 +60,13 @@ from .file import File
 from .flags import ChannelFlags
 from .iterators import ArchivedThreadIterator
 from .mentions import AllowedMentions
+from .missing import MISSING, MissingOr
 from .mixins import Hashable, PinsMixin
 from .object import Object
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
 from .stage_instance import StageInstance
 from .threads import Thread
-from .utils import MISSING
 
 __all__ = (
     "TextChannel",
@@ -458,7 +458,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         self,
         *,
         limit: Optional[int] = 100,
-        check: Callable[[Message], bool] = MISSING,
+        check: MissingOr[Callable[[Message], bool]] = MISSING,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
         around: Optional[SnowflakeTime] = None,
@@ -736,7 +736,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         *,
         name: str,
         message: Optional[Snowflake] = None,
-        auto_archive_duration: ThreadArchiveDuration = MISSING,
+        auto_archive_duration: MissingOr[ThreadArchiveDuration] = MISSING,
         type: Optional[ChannelType] = None,
         reason: Optional[str] = None,
     ) -> Thread:
@@ -1191,7 +1191,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         self,
         *,
         name: str,
-        auto_archive_duration: ThreadArchiveDuration = MISSING,
+        auto_archive_duration: MissingOr[ThreadArchiveDuration] = MISSING,
         slowmode_delay: int = 0,
         content: Optional[str] = None,
         embed: Optional[Embed] = None,
@@ -1790,7 +1790,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         self,
         *,
         limit: Optional[int] = 100,
-        check: Callable[[Message], bool] = MISSING,
+        check: MissingOr[Callable[[Message], bool]] = MISSING,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
         around: Optional[SnowflakeTime] = None,
@@ -2046,7 +2046,7 @@ class StageChannel(VocalGuildChannel):
         self,
         *,
         topic: str,
-        privacy_level: StagePrivacyLevel = MISSING,
+        privacy_level: MissingOr[StagePrivacyLevel] = MISSING,
         reason: Optional[str] = None,
     ) -> StageInstance:
         """|coro|

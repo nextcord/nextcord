@@ -52,12 +52,13 @@ from .file import File
 from .flags import MessageFlags
 from .guild import Guild
 from .member import Member
+from .missing import MISSING, MissingOr
 from .mixins import Hashable
 from .partial_emoji import PartialEmoji
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
-from .utils import MISSING, escape_mentions
+from .utils import escape_mentions
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -291,8 +292,8 @@ class Attachment(Hashable):
     async def to_file(
         self,
         *,
-        filename: Optional[str] = MISSING,
-        description: Optional[str] = MISSING,
+        filename: MissingOr[Optional[str]] = MISSING,
+        description: MissingOr[Optional[str]] = MISSING,
         use_cached: bool = False,
         spoiler: bool = False,
         force_close: bool = True,
@@ -1393,16 +1394,16 @@ class Message(Hashable):
 
     async def edit(
         self,
-        content: Optional[str] = MISSING,
-        embed: Optional[Embed] = MISSING,
-        embeds: List[Embed] = MISSING,
-        attachments: List[Attachment] = MISSING,
-        suppress: bool = MISSING,
+        content: MissingOr[Optional[str]] = MISSING,
+        embed: MissingOr[Optional[Embed]] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        attachments: MissingOr[List[Attachment]] = MISSING,
+        suppress: MissingOr[bool] = MISSING,
         delete_after: Optional[float] = None,
-        allowed_mentions: Optional[AllowedMentions] = MISSING,
-        view: Optional[View] = MISSING,
-        file: Optional[File] = MISSING,
-        files: Optional[List[File]] = MISSING,
+        allowed_mentions: MissingOr[Optional[AllowedMentions]] = MISSING,
+        view: MissingOr[Optional[View]] = MISSING,
+        file: MissingOr[Optional[File]] = MISSING,
+        files: MissingOr[Optional[List[File]]] = MISSING,
     ) -> Message:
         """|coro|
 
@@ -1735,7 +1736,7 @@ class Message(Hashable):
         await self._state.http.clear_reactions(self.channel.id, self.id)
 
     async def create_thread(
-        self, *, name: str, auto_archive_duration: ThreadArchiveDuration = MISSING
+        self, *, name: str, auto_archive_duration: MissingOr[ThreadArchiveDuration] = MISSING
     ) -> Thread:
         """|coro|
 

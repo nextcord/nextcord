@@ -34,7 +34,7 @@ from itertools import groupby
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from ..components import Component
-from ..utils import MISSING
+from ..missing import MISSING, MissingOr
 from .item import Item
 from .view import _component_to_item, _ViewWeights, _walk_all_components
 
@@ -109,7 +109,7 @@ class Modal:
         title: str,
         *,
         timeout: Optional[float] = None,
-        custom_id: str = MISSING,
+        custom_id: MissingOr[str] = MISSING,
         auto_defer: bool = True,
     ):
         self.title = title

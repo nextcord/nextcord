@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
-from ...utils import MISSING
+from ...missing import MISSING, MissingOr
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
@@ -114,7 +114,7 @@ class MentionableSelect(SelectBase, Generic[V]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: MissingOr[str] = MISSING,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
@@ -172,7 +172,7 @@ class MentionableSelect(SelectBase, Generic[V]):
 def mentionable_select(
     *,
     placeholder: Optional[str] = None,
-    custom_id: str = MISSING,
+    custom_id: MissingOr[str] = MISSING,
     min_values: int = 1,
     max_values: int = 1,
     disabled: bool = False,

@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
-from ...utils import MISSING
+from ...missing import MISSING, MissingOr
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
@@ -106,13 +106,13 @@ class ChannelSelect(SelectBase, Generic[V]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: MissingOr[str] = MISSING,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
         disabled: bool = False,
         row: Optional[int] = None,
-        channel_types: List[ChannelType] = MISSING,
+        channel_types: MissingOr[List[ChannelType]] = MISSING,
     ) -> None:
         super().__init__(
             custom_id=custom_id,
@@ -123,7 +123,7 @@ class ChannelSelect(SelectBase, Generic[V]):
             row=row,
         )
         self._selected_values: ChannelSelectValues = ChannelSelectValues()
-        self.channel_types: List[ChannelType] = channel_types
+        self.channel_types: MissingOr[List[ChannelType]] = channel_types
         self._underlying = ChannelSelectMenu._raw_construct(
             custom_id=self.custom_id,
             type=ComponentType.channel_select,
@@ -167,12 +167,12 @@ class ChannelSelect(SelectBase, Generic[V]):
 def channel_select(
     *,
     placeholder: Optional[str] = None,
-    custom_id: str = MISSING,
+    custom_id: MissingOr[str] = MISSING,
     min_values: int = 1,
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-    channel_types: List[ChannelType] = MISSING,
+    channel_types: MissingOr[List[ChannelType]] = MISSING,
 ) -> Callable[
     [ItemCallbackType[ChannelSelect[V], ClientT]], ItemCallbackType[ChannelSelect[V], ClientT]
 ]:

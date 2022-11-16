@@ -29,8 +29,9 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type
 
 from .enums import ExpireBehaviour, try_enum
 from .errors import InvalidArgument
+from .missing import MISSING, MissingOr
 from .user import User
-from .utils import MISSING, get_as_snowflake, parse_time
+from .utils import get_as_snowflake, parse_time
 
 __all__ = (
     "IntegrationAccount",
@@ -221,9 +222,9 @@ class StreamIntegration(Integration):
     async def edit(
         self,
         *,
-        expire_behaviour: ExpireBehaviour = MISSING,
-        expire_grace_period: int = MISSING,
-        enable_emoticons: bool = MISSING,
+        expire_behaviour: MissingOr[ExpireBehaviour] = MISSING,
+        expire_grace_period: MissingOr[int] = MISSING,
+        enable_emoticons: MissingOr[bool] = MISSING,
     ) -> None:
         """|coro|
 

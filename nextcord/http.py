@@ -45,6 +45,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 from urllib.parse import quote as _uriquote
 
@@ -62,7 +63,7 @@ from .errors import (
 )
 from .file import File
 from .gateway import DiscordClientWebSocketResponse
-from .utils import MISSING
+from .missing import MISSING, MissingOr
 
 _log = logging.getLogger(__name__)
 
@@ -216,7 +217,7 @@ class HTTPClient:
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
         self.connector = connector
-        self.__session: aiohttp.ClientSession = MISSING  # filled in static_login
+        self.__session: MissingOr[aiohttp.ClientSession] = MISSING  # filled in static_login
         self._locks: weakref.WeakValueDictionary = weakref.WeakValueDictionary()
         self._global_over: asyncio.Event = asyncio.Event()
         self._global_over.set()
@@ -230,12 +231,15 @@ class HTTPClient:
         self.user_agent: str = user_agent.format(__version__, sys.version_info, aiohttp.__version__)
 
     def recreate(self) -> None:
-        if self.__session.closed:
+        if self.__session and self.__session.closed:
             self.__session = aiohttp.ClientSession(
                 connector=self.connector, ws_response_class=DiscordClientWebSocketResponse
             )
 
     async def ws_connect(self, url: str, *, compress: int = 0) -> Any:
+        if not self.__session:
+            return
+
         kwargs = {
             "proxy_auth": self.proxy_auth,
             "proxy": self.proxy,
@@ -258,6 +262,9 @@ class HTTPClient:
         form: Optional[Iterable[Dict[str, Any]]] = None,
         **kwargs: Any,
     ) -> Any:
+        if not self.__session:
+            return
+
         bucket = route.bucket
         method = route.method
         url = route.url
@@ -411,7 +418,9 @@ class HTTPClient:
             raise RuntimeError("Unreachable code in HTTP handling")
 
     async def get_from_cdn(self, url: str) -> bytes:
-        async with self.__session.get(url) as resp:
+        session = cast(aiohttp.ClientSession, self.__session)
+
+        async with session.get(url) as resp:
             if resp.status == 200:
                 return await resp.read()
             elif resp.status == 404:
@@ -2485,8 +2494,8 @@ class HTTPClient:
         guild_id: Snowflake,
         event_id: Snowflake,
         *,
-        limit: int = MISSING,
-        with_member: bool = MISSING,
+        limit: MissingOr[int] = MISSING,
+        with_member: MissingOr[bool] = MISSING,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
     ) -> Response[List[scheduled_events.ScheduledEventUser]]:

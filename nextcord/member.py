@@ -39,8 +39,8 @@ from .colour import Colour
 from .enums import Status, try_enum
 from .object import Object
 from .permissions import Permissions
+from .missing import MISSING, MissingOr
 from .user import BaseUser, User, _UserTag
-from .utils import MISSING
 
 __all__ = (
     "VoiceState",
@@ -704,14 +704,14 @@ class Member(abc.Messageable, _UserTag):
     async def edit(
         self,
         *,
-        nick: Optional[str] = MISSING,
-        mute: bool = MISSING,
-        deafen: bool = MISSING,
-        suppress: bool = MISSING,
-        roles: List[abc.Snowflake] = MISSING,
-        voice_channel: Optional[VocalGuildChannel] = MISSING,
+        nick: MissingOr[Optional[str]] = MISSING,
+        mute: MissingOr[bool] = MISSING,
+        deafen: MissingOr[bool] = MISSING,
+        suppress: MissingOr[bool] = MISSING,
+        roles: MissingOr[List[abc.Snowflake]] = MISSING,
+        voice_channel: MissingOr[Optional[VocalGuildChannel]] = MISSING,
         reason: Optional[str] = None,
-        timeout: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
+        timeout: MissingOr[Optional[Union[datetime.datetime, datetime.timedelta]]] = MISSING,
     ) -> Optional[Member]:
         """|coro|
 

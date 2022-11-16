@@ -28,7 +28,8 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 from .enums import VoiceRegion
 from .guild import Guild
-from .utils import MISSING, obj_to_base64_data, parse_time
+from .missing import MISSING, MissingOr
+from .utils import obj_to_base64_data, parse_time
 
 __all__ = ("Template",)
 
@@ -254,8 +255,8 @@ class Template:
     async def edit(
         self,
         *,
-        name: str = MISSING,
-        description: Optional[str] = MISSING,
+        name: MissingOr[str] = MISSING,
+        description: MissingOr[Optional[str]] = MISSING,
     ) -> Template:
         """|coro|
 

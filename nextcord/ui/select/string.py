@@ -32,7 +32,7 @@ from ...emoji import Emoji
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...partial_emoji import PartialEmoji
-from ...utils import MISSING
+from ...missing import MISSING, MissingOr
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase
@@ -97,11 +97,11 @@ class StringSelect(SelectBase, Generic[V]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: MissingOr[str] = MISSING,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
-        options: List[SelectOption] = MISSING,
+        options: MissingOr[List[SelectOption]] = MISSING,
         disabled: bool = False,
         row: Optional[int] = None,
     ) -> None:
@@ -143,7 +143,7 @@ class StringSelect(SelectBase, Generic[V]):
         self,
         *,
         label: str,
-        value: str = MISSING,
+        value: MissingOr[str] = MISSING,
         description: Optional[str] = None,
         emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
         default: bool = False,
@@ -221,10 +221,10 @@ class StringSelect(SelectBase, Generic[V]):
 def string_select(
     *,
     placeholder: Optional[str] = None,
-    custom_id: str = MISSING,
+    custom_id: MissingOr[str] = MISSING,
     min_values: int = 1,
     max_values: int = 1,
-    options: List[SelectOption] = MISSING,
+    options: MissingOr[List[SelectOption]] = MISSING,
     disabled: bool = False,
     row: Optional[int] = None,
 ) -> Callable[

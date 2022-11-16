@@ -36,7 +36,7 @@ from ...member import Member
 from ...role import Role
 from ...state import ConnectionState
 from ...user import User
-from ...utils import MISSING
+from ...missing import MISSING, MissingOr
 from ..item import Item
 
 __all__ = ("SelectBase",)
@@ -132,7 +132,7 @@ class SelectBase(Item[V]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: MissingOr[str] = MISSING,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
