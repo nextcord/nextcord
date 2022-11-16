@@ -89,6 +89,7 @@ class AutoModerationTriggerMetadata:
 
             The flavor of regex used is Rust flavor and has no guarantees of working with
             the ``re`` module.
+            Each regex pattern must be 75 characters or less.
 
     presets: List[:class:`KeywordPresetType`]
         A list of Discord pre-defined wordsets which will be searched for in content.
