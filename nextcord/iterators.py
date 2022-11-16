@@ -168,7 +168,7 @@ class _MappedAsyncIterator(_AsyncIterator[T]):
 
 
 class _FilteredAsyncIterator(_AsyncIterator[T]):
-    def __init__(self, iterator, predicate):
+    def __init__(self, iterator, predicate: _Func[T, Any]):
         self.iterator = iterator
 
         if predicate is None:
@@ -227,7 +227,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
 
             if self.guild is None or isinstance(self.guild, Object):
                 for element in reversed(data):
-                    await self.users.put(User(state=self.state, data=element))  # type: ignore
+                    await self.users.put(User(state=self.state, data=element))
             else:
                 for element in reversed(data):
                     member_id = int(element["id"])
@@ -235,7 +235,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
                     if member is not None:
                         await self.users.put(member)
                     else:
-                        await self.users.put(User(state=self.state, data=element))  # type: ignore
+                        await self.users.put(User(state=self.state, data=element))
 
 
 class HistoryIterator(_AsyncIterator["Message"]):
@@ -306,7 +306,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
             elif self.limit == 101:
                 self.limit = 100  # Thanks discord
 
-            self._retrieve_messages = self._retrieve_messages_around_strategy  # type: ignore
+            self._retrieve_messages = self._retrieve_messages_around_strategy
             if self.before and self.after:
                 # lambda type ignores are as before/after/around are optional but exist here
                 self._filter = lambda m: self.after.id < int(m["id"]) < self.before.id  # type: ignore
@@ -316,11 +316,11 @@ class HistoryIterator(_AsyncIterator["Message"]):
                 self._filter = lambda m: self.after.id < int(m["id"])  # type: ignore
         else:
             if self.reverse:
-                self._retrieve_messages = self._retrieve_messages_after_strategy  # type: ignore
+                self._retrieve_messages = self._retrieve_messages_after_strategy
                 if self.before:
                     self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
             else:
-                self._retrieve_messages = self._retrieve_messages_before_strategy  # type: ignore
+                self._retrieve_messages = self._retrieve_messages_before_strategy
                 if self.after and self.after != OLDEST_OBJECT:
                     self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
 
@@ -653,12 +653,12 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
         if self.before:
             self.reverse = True
-            self._retrieve_guilds = self._retrieve_guilds_before_strategy  # type: ignore
+            self._retrieve_guilds = self._retrieve_guilds_before_strategy
             if self.after:
                 self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
         else:
             self.reverse = False
-            self._retrieve_guilds = self._retrieve_guilds_after_strategy  # type: ignore
+            self._retrieve_guilds = self._retrieve_guilds_after_strategy
 
     async def next(self) -> Guild:
         if self.guilds.empty():
@@ -723,8 +723,12 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
 
 class MemberIterator(_AsyncIterator["Member"]):
-    def __init__(self, guild, limit=1000, after=None):
-
+    def __init__(
+        self,
+        guild: Guild,
+        limit: Optional[int] = 1000,
+        after: Optional[Union[Snowflake, datetime.datetime]] = None,
+    ):
         if isinstance(after, datetime.datetime):
             after = Object(id=time_snowflake(after, high=True))
 
