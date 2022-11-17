@@ -2316,7 +2316,9 @@ class Guild(Hashable):
 
         return result
 
-    async def create_template(self, *, name: str, description: MissingOr[str] = MISSING) -> Template:
+    async def create_template(
+        self, *, name: str, description: MissingOr[str] = MISSING
+    ) -> Template:
         """|coro|
 
         Creates a template for the guild.
@@ -3168,7 +3170,10 @@ class Guild(Hashable):
         return Widget(state=self._state, data=data)
 
     async def edit_widget(
-        self, *, enabled: MissingOr[bool] = MISSING, channel: MissingOr[Optional[Snowflake]] = MISSING
+        self,
+        *,
+        enabled: MissingOr[bool] = MISSING,
+        channel: MissingOr[Optional[Snowflake]] = MISSING,
     ) -> None:
         """|coro|
 

@@ -33,10 +33,10 @@ from ...components import SelectMenu
 from ...enums import ComponentType
 from ...guild import Guild
 from ...member import Member
+from ...missing import MISSING, MissingOr
 from ...role import Role
 from ...state import ConnectionState
 from ...user import User
-from ...missing import MISSING, MissingOr
 from ..item import Item
 
 __all__ = ("SelectBase",)

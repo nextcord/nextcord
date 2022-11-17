@@ -1182,7 +1182,9 @@ def _trim_text(text: str, max_chars: int) -> str:
     return text
 
 
-def parse_docstring(func: Callable[..., Any], max_chars: MissingOr[int] = MISSING) -> Dict[str, Any]:
+def parse_docstring(
+    func: Callable[..., Any], max_chars: MissingOr[int] = MISSING
+) -> Dict[str, Any]:
     """Parses the docstring of a function into a dictionary.
 
     Parameters

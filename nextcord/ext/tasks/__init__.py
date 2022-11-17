@@ -128,10 +128,10 @@ class Loop(Generic[LF]):
             raise ValueError("count must be greater than 0 or None.")
 
         self.change_interval(
-            seconds=seconds if seconds is not MISSING else 0, 
-            minutes=minutes if minutes is not MISSING else 0, 
-            hours=hours if hours is not MISSING else 0, 
-            time=time
+            seconds=seconds if seconds is not MISSING else 0,
+            minutes=minutes if minutes is not MISSING else 0,
+            hours=hours if hours is not MISSING else 0,
+            time=time,
         )
         self._last_iteration_failed = False
         self._last_iteration: MissingOr[datetime.datetime] = MISSING
@@ -572,9 +572,7 @@ class Loop(Generic[LF]):
             self._time_index = 0
             if self._current_loop == 0:
                 # if we're at the last index on the first iteration, we need to sleep until tomorrow
-                return datetime.datetime.combine(
-                    utcnow() + datetime.timedelta(days=1), time[0]
-                )
+                return datetime.datetime.combine(utcnow() + datetime.timedelta(days=1), time[0])
 
         next_time = time[self._time_index]
 

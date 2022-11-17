@@ -35,8 +35,8 @@ import logging
 import re
 import threading
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, overload
 from types import ModuleType
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, overload
 from urllib.parse import quote as urlquote
 
 from .. import utils
@@ -559,7 +559,12 @@ class SyncWebhook(BaseWebhook):
 
     @classmethod
     def partial(
-        cls, id: int, token: str, *, session: MissingOr[Session] = MISSING, bot_token: Optional[str] = None
+        cls,
+        id: int,
+        token: str,
+        *,
+        session: MissingOr[Session] = MISSING,
+        bot_token: Optional[str] = None,
     ) -> SyncWebhook:
         """Creates a partial :class:`Webhook`.
 

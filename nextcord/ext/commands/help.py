@@ -31,7 +31,7 @@ import re
 from typing import TYPE_CHECKING
 
 import nextcord.utils
-from nextcord.missing import MISSING, MissingOr
+from nextcord.missing import MISSING
 
 from .core import Command, Group
 from .errors import CommandError

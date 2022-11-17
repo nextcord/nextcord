@@ -30,8 +30,8 @@ from typing import TYPE_CHECKING, Optional, Tuple, TypeVar
 from ..components import TextInput as TextInputComponent
 from ..enums import ComponentType, TextInputStyle
 from ..guild import Guild
-from ..state import ConnectionState
 from ..missing import MISSING, MissingOr
+from ..state import ConnectionState
 from .item import Item
 
 __all__ = ("TextInput",)

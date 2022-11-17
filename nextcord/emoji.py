@@ -214,7 +214,11 @@ class Emoji(_EmojiTag, AssetMixin):
         await self._state.http.delete_custom_emoji(self.guild.id, self.id, reason=reason)
 
     async def edit(
-        self, *, name: MissingOr[str] = MISSING, roles: MissingOr[List[Snowflake]] = MISSING, reason: Optional[str] = None
+        self,
+        *,
+        name: MissingOr[str] = MISSING,
+        roles: MissingOr[List[Snowflake]] = MISSING,
+        reason: Optional[str] = None,
     ) -> Emoji:
         r"""|coro|
 

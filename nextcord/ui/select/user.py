@@ -31,8 +31,8 @@ from ...components import UserSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...member import Member
-from ...user import User
 from ...missing import MISSING, MissingOr
+from ...user import User
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase

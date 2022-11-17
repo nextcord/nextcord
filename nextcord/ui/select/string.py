@@ -31,8 +31,8 @@ from ...components import SelectOption, StringSelectMenu
 from ...emoji import Emoji
 from ...enums import ComponentType
 from ...interactions import ClientT
-from ...partial_emoji import PartialEmoji
 from ...missing import MISSING, MissingOr
+from ...partial_emoji import PartialEmoji
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase

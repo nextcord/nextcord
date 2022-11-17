@@ -37,9 +37,9 @@ from .activity import ActivityTypes, create_activity
 from .asset import Asset
 from .colour import Colour
 from .enums import Status, try_enum
+from .missing import MISSING, MissingOr
 from .object import Object
 from .permissions import Permissions
-from .missing import MISSING, MissingOr
 from .user import BaseUser, User, _UserTag
 
 __all__ = (

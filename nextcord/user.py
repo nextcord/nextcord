@@ -357,7 +357,7 @@ class ClientUser(BaseUser):
         self,
         *,
         username: MissingOr[str] = MISSING,
-        avatar: MissingOr[Optional[Union[bytes, Asset, Attachment, File]] ]= MISSING,
+        avatar: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
     ) -> ClientUser:
         """|coro|
 
