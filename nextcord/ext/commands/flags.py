@@ -41,9 +41,11 @@ from typing import (
     Tuple,
     Type,
     Union,
+    cast,
 )
 
-from nextcord.utils import MISSING, maybe_coroutine, resolve_annotation
+from nextcord.missing import MISSING, MissingOr
+from nextcord.utils import maybe_coroutine, resolve_annotation
 
 from .converter import run_converters
 from .errors import (
@@ -95,13 +97,13 @@ class Flag:
         Whether multiple given values overrides the previous value.
     """
 
-    name: str = MISSING
+    name: MissingOr[str] = MISSING
     aliases: List[str] = field(default_factory=list)
-    attribute: str = MISSING
-    annotation: Any = MISSING
-    default: Any = MISSING
-    max_args: int = MISSING
-    override: bool = MISSING
+    attribute: MissingOr[str] = MISSING
+    annotation: MissingOr[Any] = MISSING
+    default: MissingOr[Any] = MISSING
+    max_args: MissingOr[int] = MISSING
+    override: MissingOr[bool] = MISSING
     cast_to_dict: bool = False
 
     @property
@@ -115,11 +117,11 @@ class Flag:
 
 def flag(
     *,
-    name: str = MISSING,
-    aliases: List[str] = MISSING,
-    default: Any = MISSING,
-    max_args: int = MISSING,
-    override: bool = MISSING,
+    name: MissingOr[str] = MISSING,
+    aliases: MissingOr[List[str]] = MISSING,
+    default: MissingOr[Any] = MISSING,
+    max_args: MissingOr[int] = MISSING,
+    override: MissingOr[bool] = MISSING,
 ) -> Any:
     """Override default functionality and parameters of the underlying :class:`FlagConverter`
     class attributes.
@@ -142,7 +144,11 @@ def flag(
         Whether multiple given values overrides the previous value. The default
         value depends on the annotation given.
     """
-    return Flag(name=name, aliases=aliases, default=default, max_args=max_args, override=override)
+    kwargs = {"name": name, "default": default, "max_args": max_args, "override": override}
+    if aliases is not MISSING:
+        kwargs["aliases"] = aliases
+
+    return Flag(**kwargs)
 
 
 def validate_flag_name(name: str, forbidden: Set[str]):
@@ -280,9 +286,9 @@ class FlagsMeta(type):
         bases: Tuple[type, ...],
         attrs: Dict[str, Any],
         *,
-        case_insensitive: bool = MISSING,
-        delimiter: str = MISSING,
-        prefix: str = MISSING,
+        case_insensitive: MissingOr[bool] = MISSING,
+        delimiter: MissingOr[str] = MISSING,
+        prefix: MissingOr[str] = MISSING,
     ):
         attrs["__commands_is_flag__"] = True
 
@@ -328,8 +334,9 @@ class FlagsMeta(type):
             attrs["__commands_flag_prefix__"] = prefix
 
         case_insensitive = attrs.setdefault("__commands_flag_case_insensitive__", False)
-        delimiter = attrs.setdefault("__commands_flag_delimiter__", ":")
-        prefix = attrs.setdefault("__commands_flag_prefix__", "")
+        # pyright cannot infer that these variables should not be MISSING by this point
+        delimiter = cast(str, attrs.setdefault("__commands_flag_delimiter__", ":"))
+        prefix = cast(str, attrs.setdefault("__commands_flag_prefix__", ""))
 
         for flag_name, flag in get_flags(attrs, global_ns, local_ns).items():
             flags[flag_name] = flag
@@ -495,6 +502,9 @@ class FlagConverter(metaclass=FlagsMeta):
 
     def __iter__(self) -> Iterator[Tuple[str, Any]]:
         for flag in self.__class__.__commands_flags__.values():
+            if flag.name is MISSING or flag.attribute is MISSING:
+                continue
+
             yield (flag.name, getattr(self, flag.attribute))
 
     @classmethod
@@ -502,6 +512,9 @@ class FlagConverter(metaclass=FlagsMeta):
         self = cls.__new__(cls)
         flags = cls.__commands_flags__
         for flag in flags.values():
+            if flag.attribute is MISSING:
+                continue
+
             if callable(flag.default):
                 default = await maybe_coroutine(flag.default, ctx)
                 setattr(self, flag.attribute, default)
@@ -514,6 +527,7 @@ class FlagConverter(metaclass=FlagsMeta):
             [
                 f"{flag.attribute}={getattr(self, flag.attribute)!r}"
                 for flag in self.get_flags().values()
+                if flag.attribute is not MISSING
             ]
         )
         return f"<{self.__class__.__name__} {pairs}>"
@@ -537,7 +551,7 @@ class FlagConverter(metaclass=FlagsMeta):
                 key = aliases[key]
 
             flag = flags.get(key)
-            if last_position and last_flag is not None:
+            if last_position and last_flag is not None and last_flag.name is not MISSING:
                 value = argument[last_position : begin - 1].lstrip()
                 if not value:
                     raise MissingFlagArgument(last_flag)
@@ -553,7 +567,7 @@ class FlagConverter(metaclass=FlagsMeta):
             last_flag = flag
 
         # Add the remaining string to the last available flag
-        if last_position and last_flag is not None:
+        if last_position and last_flag is not None and last_flag.name is not MISSING:
             value = argument[last_position:].strip()
             if not value:
                 raise MissingFlagArgument(last_flag)
@@ -600,6 +614,9 @@ class FlagConverter(metaclass=FlagsMeta):
 
         self = cls.__new__(cls)
         for name, flag in flags.items():
+            if flag.attribute is MISSING:
+                continue
+
             try:
                 values = arguments[name]
             except KeyError:
@@ -613,7 +630,7 @@ class FlagConverter(metaclass=FlagsMeta):
                         setattr(self, flag.attribute, flag.default)
                     continue
 
-            if flag.max_args > 0 and len(values) > flag.max_args:
+            if flag.max_args is not MISSING and flag.max_args > 0 and len(values) > flag.max_args:
                 if flag.override:
                     values = values[-flag.max_args :]
                 else:

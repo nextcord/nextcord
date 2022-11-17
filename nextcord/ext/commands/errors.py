@@ -27,6 +27,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Type, Union
 
 from nextcord.errors import ClientException, DiscordException
+from nextcord.missing import MISSING
 
 if TYPE_CHECKING:
     from inspect import Parameter
@@ -1118,6 +1119,10 @@ class BadFlagArgument(FlagError):
 
     def __init__(self, flag: Flag) -> None:
         self.flag: Flag = flag
+
+        if flag.annotation is MISSING:
+            return
+
         try:
             name = flag.annotation.__name__
         except AttributeError:

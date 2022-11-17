@@ -31,6 +31,7 @@ import re
 from typing import TYPE_CHECKING
 
 import nextcord.utils
+from nextcord.missing import MISSING, MissingOr
 
 from .core import Command, Group
 from .errors import CommandError
@@ -334,7 +335,8 @@ class HelpCommand:
         self.command_attrs = attrs = options.pop("command_attrs", {})
         attrs.setdefault("name", "help")
         attrs.setdefault("help", "Shows this message")
-        self.context: Context = nextcord.utils.MISSING
+        # there is no way we can change the type hint of this parameter and keep everything else working properly
+        self.context: Context = MISSING  # type: ignore
         self._command_impl = _HelpCommandImpl(self, **self.command_attrs)
 
     def copy(self):
