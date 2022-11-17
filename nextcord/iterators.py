@@ -389,7 +389,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
         """Retrieve messages and update next parameters."""
         raise NotImplementedError
 
-    async def _retrieve_messages_before_strategy(self, retrieve: int):
+    async def _retrieve_messages_before_strategy(self, retrieve: int) -> List[MessagePayload]:
         """Retrieve messages using before parameter."""
         before = self.before.id if self.before else None
         data: List[MessagePayload] = await self.state.http.logs_from(
@@ -401,7 +401,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
             self.before = Object(id=int(data[-1]["id"]))
         return data
 
-    async def _retrieve_messages_after_strategy(self, retrieve: int):
+    async def _retrieve_messages_after_strategy(self, retrieve: int) -> List[MessagePayload]:
         """Retrieve messages using after parameter."""
         after = self.after.id if self.after else None
         data: List[MessagePayload] = await self.state.http.logs_from(
@@ -738,7 +738,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         """Retrieve guilds and update next parameters."""
         raise NotImplementedError
 
-    async def _retrieve_guilds_before_strategy(self, retrieve: int):
+    async def _retrieve_guilds_before_strategy(self, retrieve: int) -> List[GuildPayload]:
         """Retrieve guilds using before parameter."""
         before = self.before.id if self.before else None
         data: List[GuildPayload] = await self.bot.http.get_guilds(retrieve, before=before)
@@ -748,7 +748,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
             self.before = Object(id=int(data[0]["id"]))
         return data
 
-    async def _retrieve_guilds_after_strategy(self, retrieve: int):
+    async def _retrieve_guilds_after_strategy(self, retrieve: int) -> List[GuildPayload]:
         """Retrieve guilds using after parameter."""
         after = self.after.id if self.after else None
         data: List[GuildPayload] = await self.bot.http.get_guilds(retrieve, after=after)
