@@ -79,7 +79,11 @@ if TYPE_CHECKING:
     from .abc import Snowflake
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
-    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
+    from .types.interactions import (
+        ApplicationCommand as ApplicationCommandPayload,
+        ApplicationCommandInteractionDataOption,
+        InteractionData,
+    )
 
     _CustomTypingMetaBase = Any
 else:
@@ -336,7 +340,7 @@ class ApplicationCommandOption:
         ret: List[Dict[str, Union[str, int, float, dict, None]]] = []
         for display_name, value in choices.items():
             # Discord returns the names as strings, might as well do it here so payload comparison is easy.
-            temp: Dict[str, Union[str, int, float, dict, None]] = {
+            temp = {
                 "name": str(display_name),
                 "value": value,
             }
@@ -755,12 +759,23 @@ class CallbackMixin:
 
                 # TODO: use typing.get_type_hints when 3.9 is standard
                 typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
-                callback_params = signature(self.callback).parameters
+                callback_params = dict(signature(self.callback).parameters)
+
+                for name, param in callback_params.copy().items():
+                    if isinstance(param.annotation, str):
+                        # Thank you Disnake for the guidance to use this.
+                        callback_params[name] = param.replace(
+                            annotation=typehints.get(name, param.empty)
+                        )
+
                 non_option_params = sum(
                     # could be a self or interaction parameter
                     param.annotation is param.empty
                     # will always be an interaction parameter
-                    or issubclass(param.annotation, Interaction)
+                    or (
+                        isinstance(param.annotation, type)
+                        and issubclass(param.annotation, Interaction)
+                    )
                     # will always be a self parameter
                     # TODO: use typing.Self when 3.11 is standard
                     or param.annotation is typing_extensions.Self
@@ -782,10 +797,6 @@ class CallbackMixin:
                     if skip_counter:
                         skip_counter -= 1
                     else:
-                        if isinstance(param.annotation, str):
-                            # Thank you Disnake for the guidance to use this.
-                            param = param.replace(annotation=typehints.get(name, param.empty))
-
                         arg = option_class(param, self, parent_cog=self.parent_cog)  # type: ignore
                         # this is a mixin, so `self` would be odd here
 
@@ -1691,11 +1702,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         elif self.type is ApplicationCommandOptionType.mentionable:
             user_role_list: List[Union[User, Member, Role]] = get_users_from_interaction(
                 state, interaction
-            ) + get_roles_from_interaction(
-                state, interaction
-            )  # pyright: ignore
-            # pyright is so sure that you cant add role + user | member
-            # when the resulting type is right
+            ) + get_roles_from_interaction(state, interaction)
             mentionables = {mentionable.id: mentionable for mentionable in user_role_list}
             value = mentionables[int(value)]
 
@@ -1756,13 +1763,12 @@ class SlashCommandMixin(CallbackMixin):
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: Optional[List[Dict[str, Any]]] = None,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ) -> Dict[str, Any]:
-        # interaction.data = cast(, interaction.data)
+        interaction.data = cast("InteractionData", interaction.data)
 
         if option_data is None:
-            # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})  # type: ignore
+            option_data = interaction.data.get("options")
 
             if not option_data:
                 raise ValueError("Discord did not provide us any options data")
@@ -1774,7 +1780,7 @@ class SlashCommandMixin(CallbackMixin):
                 uncalled_args.pop(arg_data["name"])
                 kwargs[self.options[arg_data["name"]].functional_name] = await self.options[
                     arg_data["name"]
-                ].handle_value(state, arg_data["value"], interaction)
+                ].handle_value(state, arg_data.get("value"), interaction)
             else:
                 # TODO: Handle this better.
                 raise ApplicationCommandOptionMissing(
@@ -1792,21 +1798,20 @@ class SlashCommandMixin(CallbackMixin):
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: Optional[List[Dict[str, Any]]] = None,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ):
         if option_data is None:
             if interaction.data is None:
                 raise ValueError("Discord did not provide us interaction data")
 
-            # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})  # type: ignore
+            option_data = interaction.data.get("options")
 
             if not option_data:
                 raise ValueError("Discord did not provide us any options data")
 
         if self.children:
             await self.children[option_data[0]["name"]].call_slash(
-                state, interaction, option_data[0].get("options", {})
+                state, interaction, option_data[0].get("options")
             )
         else:
             kwargs = await self.get_slash_kwargs(state, interaction, option_data)
@@ -1871,7 +1876,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
@@ -1898,6 +1903,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list/set/whatever of guild ID's that the application command should register to.
+            If not passed and :attr:`Client.default_guild_ids` is set, then those default guild ids will
+            be used instead. If both of those are unset, then the command will be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -1921,6 +1928,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Dict[Union[str, Locale], str]
         ] = description_localizations
         self.guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
+        self.use_default_guild_ids: bool = guild_ids is MISSING and not force_global
         self.dm_permission: Optional[bool] = dm_permission
         self.default_member_permissions: Optional[
             Union[Permissions, int]
@@ -2334,7 +2342,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 for (
                     inter_opt_name,
                     inter_opt,
-                ) in all_inter_options_copy:  # Should only contain optionals now.
+                ) in all_inter_options_copy.items():  # Should only contain optionals now.
                     if our_opt := all_our_options_copy.get(inter_opt_name):
                         if not (
                             inter_opt["name"] == our_opt["name"]
@@ -2515,7 +2523,10 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         )
 
     async def call(
-        self, state: ConnectionState, interaction: Interaction, option_data: List[dict]
+        self,
+        state: ConnectionState,
+        interaction: Interaction,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]],
     ) -> None:
         """|coro|
         Calls the callback via the given :class:`Interaction`, using the given :class:`ConnectionState` to get resolved
@@ -2530,9 +2541,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         option_data: List[:class:`dict`]
             List of raw option data from Discord.
         """
-        if self.children:
+        if self.children and option_data is not None:
             await self.children[option_data[0]["name"]].call(
-                state, interaction, option_data[0].get("options", {})
+                state, interaction, option_data[0].get("options")
             )
         else:
             await self.call_slash(state, interaction, option_data)
@@ -3001,7 +3012,7 @@ def slash_command(
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-    guild_ids: Optional[Iterable[int]] = None,
+    guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     force_global: bool = False,
@@ -3022,8 +3033,10 @@ def slash_command(
     description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
         Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
         localized description as the value.
-    guild_ids: Iterable[:class:`int`]
-        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    guild_ids: Optional[Iterable[:class:`int`]]
+        IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+        set, then those default guild ids will be used instead. If both of those are unset, then the command will
+        be a global command.
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.
@@ -3060,7 +3073,7 @@ def message_command(
     name: Optional[str] = None,
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-    guild_ids: Optional[Iterable[int]] = None,
+    guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     force_global: bool = False,
@@ -3075,8 +3088,10 @@ def message_command(
     name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
         Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
         name as the value
-    guild_ids: Iterable[:class:`int`]
-        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    guild_ids: Optional[Iterable[:class:`int`]]
+        IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+        set, then those default guild ids will be used instead. If both of those are unset, then the command will
+        be a global command.
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.
@@ -3111,7 +3126,7 @@ def user_command(
     name: Optional[str] = None,
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-    guild_ids: Optional[Iterable[int]] = None,
+    guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     force_global: bool = False,
@@ -3126,8 +3141,10 @@ def user_command(
     name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
         Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
         name as the value
-    guild_ids: Iterable[:class:`int`]
-        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    guild_ids: Optional[Iterable[:class:`int`]]
+        IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+        set, then those default guild ids will be used instead. If both of those are unset, then the command will
+        be a global command.
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.

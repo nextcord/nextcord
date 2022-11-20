@@ -40,7 +40,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    TypeVar,
     Union,
 )
 
@@ -64,6 +63,8 @@ __all__ = (
 
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .context import Context
 
 
@@ -451,9 +452,6 @@ async def convert_flag(ctx, argument: str, flag: Flag, annotation: Any = None) -
         raise BadFlagArgument(flag) from e
 
 
-F = TypeVar("F", bound="FlagConverter")
-
-
 class FlagConverter(metaclass=FlagsMeta):
     """A converter that allows for a user-friendly flag syntax.
 
@@ -500,8 +498,8 @@ class FlagConverter(metaclass=FlagsMeta):
             yield (flag.name, getattr(self, flag.attribute))
 
     @classmethod
-    async def _construct_default(cls: Type[F], ctx: Context) -> F:
-        self: F = cls.__new__(cls)
+    async def _construct_default(cls, ctx: Context) -> Self:
+        self = cls.__new__(cls)
         flags = cls.__commands_flags__
         for flag in flags.values():
             if callable(flag.default):
@@ -571,7 +569,7 @@ class FlagConverter(metaclass=FlagsMeta):
         return result
 
     @classmethod
-    async def convert(cls: Type[F], ctx: Context, argument: str) -> F:
+    async def convert(cls, ctx: Context, argument: str) -> Self:
         """|coro|
 
         The method that actually converters an argument to the flag mapping.
@@ -600,7 +598,7 @@ class FlagConverter(metaclass=FlagsMeta):
         arguments = cls.parse_flags(argument)
         flags = cls.__commands_flags__
 
-        self: F = cls.__new__(cls)
+        self = cls.__new__(cls)
         for name, flag in flags.items():
             try:
                 values = arguments[name]

@@ -1498,6 +1498,11 @@ of :class:`enum.Enum`.
     .. attribute:: known_spammer
 
         The user is a Known Spammer.
+    .. attribute:: active_developer
+
+        The user is an Active Developer.
+
+        .. versionadded:: 2.4
 
 .. class:: ActivityType
 
@@ -1597,7 +1602,33 @@ of :class:`enum.Enum`.
         Represents a button component.
     .. attribute:: select
 
-        Represents a select component.
+        Represents a string select component.
+    .. attribute:: text_input
+
+        Represents a text input component.
+    .. attribute:: user_select
+
+        Represents a user select component.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: role_select
+
+        Represents a role select component.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: mentionable_select
+
+        Represents a mentionable select component.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: channel_select
+
+        Represents a channel select component.
+
+        .. versionadded:: 2.3
 
 
 .. class:: ButtonStyle
@@ -2941,6 +2972,12 @@ of :class:`enum.Enum`.
 
         This rule checks if content contains words from Discord pre-defined wordsets.
 
+    .. attribute:: mention_spam
+
+        This rule checks if the number of mentions in the message is more than the maximum allowed.
+
+        .. versionadded:: 2.3
+
 .. class:: KeywordPresetType
 
     Represents the type of a keyword preset auto moderation rule.
@@ -3875,40 +3912,6 @@ Message
 .. autoclass:: Message()
     :members:
 
-Component
-~~~~~~~~~
-
-.. attributetable:: Component
-
-.. autoclass:: Component()
-    :members:
-
-ActionRow
-~~~~~~~~~
-
-.. attributetable:: ActionRow
-
-.. autoclass:: ActionRow()
-    :members:
-
-Button
-~~~~~~
-
-.. attributetable:: Button
-
-.. autoclass:: Button()
-    :members:
-    :inherited-members:
-
-SelectMenu
-~~~~~~~~~~
-
-.. attributetable:: SelectMenu
-
-.. autoclass:: SelectMenu()
-    :members:
-    :inherited-members:
-
 
 DeletedReferencedMessage
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4647,6 +4650,14 @@ AutoModerationAction
 .. autoclass:: AutoModerationAction
     :members:
 
+ForumTag
+~~~~~~~~
+
+.. attributetable:: ForumTag
+
+.. autoclass:: ForumTag
+    :members:
+
 .. _discord_ui_kit:
 
 Bot UI Kit
@@ -4698,16 +4709,76 @@ TextInput
     :members:
     :inherited-members:
 
-Select
-~~~~~~
+StringSelect
+~~~~~~~~~~~~
 
-.. attributetable:: nextcord.ui.Select
+.. attributetable:: nextcord.ui.StringSelect
 
-.. autoclass:: nextcord.ui.Select
+.. autoclass:: nextcord.ui.StringSelect
     :members:
     :inherited-members:
 
+.. autofunction:: nextcord.ui.string_select
+
+.. autoclass:: nextcord.ui.Select
+
 .. autofunction:: nextcord.ui.select
+
+UserSelect
+~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.UserSelect
+
+.. autoclass:: nextcord.ui.UserSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.user_select
+
+.. autoclass:: nextcord.ui.UserSelectValues
+    :members:
+
+RoleSelect
+~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.RoleSelect
+
+.. autoclass:: nextcord.ui.RoleSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.role_select
+
+.. autoclass:: nextcord.ui.RoleSelectValues
+    :members:
+
+MentionableSelect
+~~~~~~~~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.MentionableSelect
+
+.. autoclass:: nextcord.ui.MentionableSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.mentionable_select
+
+.. autoclass:: nextcord.ui.MentionableSelectValues
+    :members:
+
+ChannelSelect
+~~~~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.ChannelSelect
+
+.. autoclass:: nextcord.ui.ChannelSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.channel_select
+
+.. autoclass:: nextcord.ui.ChannelSelectValues
+    :members:
 
 Application Commands
 --------------------

@@ -60,6 +60,7 @@ packages = [
     "nextcord.ext.application_checks",
     "nextcord.ext.commands",
     "nextcord.ext.tasks",
+    "nextcord.ui.select",
     # Compat
     "discord",
     "discord.types",
@@ -96,6 +97,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Framework :: AsyncIO",
         "Framework :: aiohttp",
         "Topic :: Internet",

@@ -473,6 +473,7 @@ class UserFlags(IntEnum):
     verified_bot_developer = 131072
     discord_certified_moderator = 262144
     known_spammer = 1048576
+    active_developer = 4194304
 
 
 class ActivityType(IntEnum):
@@ -644,7 +645,12 @@ class ComponentType(IntEnum):
     action_row = 1
     button = 2
     select = 3
+    string_select = 3
     text_input = 4
+    user_select = 5
+    role_select = 6
+    mentionable_select = 7
+    channel_select = 8
 
 
 class ButtonStyle(IntEnum):
@@ -707,6 +713,7 @@ class AutoModerationTriggerType(IntEnum):
     keyword = 1
     spam = 3
     keyword_preset = 4
+    mention_spam = 5
 
 
 class KeywordPresetType(IntEnum):

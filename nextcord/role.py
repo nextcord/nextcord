@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from .asset import Asset
 from .colour import Colour
@@ -40,6 +40,8 @@ __all__ = (
 
 if TYPE_CHECKING:
     import datetime
+
+    from typing_extensions import Self
 
     from .file import File
     from .guild import Guild
@@ -101,9 +103,6 @@ class RoleTags:
             f"<RoleTags bot_id={self.bot_id} integration_id={self.integration_id} "
             f"premium_subscriber={self.is_premium_subscriber()}>"
         )
-
-
-R = TypeVar("R", bound="Role")
 
 
 class Role(Hashable):
@@ -201,7 +200,7 @@ class Role(Hashable):
     def __repr__(self) -> str:
         return f"<Role id={self.id} name={self.name!r}>"
 
-    def __lt__(self: R, other: R) -> bool:
+    def __lt__(self, other: Self) -> bool:
         if not isinstance(other, Role) or not isinstance(self, Role):
             return NotImplemented
 
@@ -222,16 +221,16 @@ class Role(Hashable):
 
         return False
 
-    def __le__(self: R, other: R) -> bool:
+    def __le__(self, other: Self) -> bool:
         r = Role.__lt__(other, self)
         if r is NotImplemented:
             return NotImplemented
         return not r
 
-    def __gt__(self: R, other: R) -> bool:
+    def __gt__(self, other: Self) -> bool:
         return Role.__lt__(other, self)
 
-    def __ge__(self: R, other: R) -> bool:
+    def __ge__(self, other: Self) -> bool:
         r = Role.__lt__(self, other)
         if r is NotImplemented:
             return NotImplemented
