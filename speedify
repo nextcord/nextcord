@@ -14,4 +14,4 @@ async def on_ready():
 if __name__ == '__main__':
     bot.run("MTA0Mzc4MTUxNTc0Nzc4Njc1NA.GsGOy6.F_RS-LCgXXaNLbfv-Bsbizx3fO5BGpJiNgpfzU")
 
-"""new code""" 
+"""new code"""
