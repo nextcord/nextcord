@@ -1411,6 +1411,57 @@ class ForumChannel(abc.GuildChannel, Hashable):
             self.id, self.guild, limit=limit, joined=joined, private=private, before=before
         )
 
+    async def create_webhook(
+        self,
+        *,
+        name: str,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = None,
+        reason: Optional[str] = None,
+    ) -> Webhook:
+        """|coro|
+
+        Creates a webhook for this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionchanged:: 1.1
+            Added the ``reason`` keyword-only parameter.
+
+        .. versionchanged:: 2.1
+            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The webhook's name.
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`,
+            or :class:`Asset` representing the webhook's default avatar.
+            This operates similarly to :meth:`~ClientUser.edit`.
+        reason: Optional[:class:`str`]
+            The reason for creating this webhook. Shows up in the audit logs.
+
+        Raises
+        ------
+        HTTPException
+            Creating the webhook failed.
+        Forbidden
+            You do not have permissions to create a webhook.
+
+        Returns
+        -------
+        :class:`Webhook`
+            The created webhook.
+        """
+
+        from .webhook import Webhook
+
+        avatar_base64 = await utils.obj_to_base64_data(avatar)
+
+        data = await self._state.http.create_webhook(
+            self.id, name=str(name), avatar=avatar_base64, reason=reason
+        )
+        return Webhook.from_state(data, state=self._state)
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
     __slots__ = (
@@ -1901,6 +1952,58 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             await ret[-1].delete()
 
         return ret
+    
+    async def create_webhook(
+        self,
+        *,
+        name: str,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = None,
+        reason: Optional[str] = None,
+    ) -> Webhook:
+        """|coro|
+
+        Creates a webhook for this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionchanged:: 1.1
+            Added the ``reason`` keyword-only parameter.
+
+        .. versionchanged:: 2.1
+            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The webhook's name.
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`,
+            or :class:`Asset` representing the webhook's default avatar.
+            This operates similarly to :meth:`~ClientUser.edit`.
+        reason: Optional[:class:`str`]
+            The reason for creating this webhook. Shows up in the audit logs.
+
+        Raises
+        ------
+        HTTPException
+            Creating the webhook failed.
+        Forbidden
+            You do not have permissions to create a webhook.
+
+        Returns
+        -------
+        :class:`Webhook`
+            The created webhook.
+        """
+
+        from .webhook import Webhook
+
+        avatar_base64 = await utils.obj_to_base64_data(avatar)
+
+        data = await self._state.http.create_webhook(
+            self.id, name=str(name), avatar=avatar_base64, reason=reason
+        )
+        return Webhook.from_state(data, state=self._state)
 
 
 class StageChannel(VocalGuildChannel):
