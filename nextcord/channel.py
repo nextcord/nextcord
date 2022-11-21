@@ -1420,15 +1420,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
     ) -> Webhook:
         """|coro|
 
-        Creates a webhook for this channel.
+        ..versionadded:: 2.3.2
+            Creates a webhook for this channel.
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
-
-        .. versionchanged:: 1.1
-            Added the ``reason`` keyword-only parameter.
-
-        .. versionchanged:: 2.1
-            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -1462,7 +1457,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
             self.id, name=str(name), avatar=avatar_base64, reason=reason
         )
         return Webhook.from_state(data, state=self._state)
-
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
     __slots__ = (
@@ -1953,7 +1947,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             await ret[-1].delete()
 
         return ret
-
+    
     async def create_webhook(
         self,
         *,
@@ -1963,15 +1957,10 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     ) -> Webhook:
         """|coro|
 
-        Creates a webhook for this channel.
+        ..versionadded:: 2.3.2
+            Creates a webhook for this channel.
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
-
-        .. versionchanged:: 1.1
-            Added the ``reason`` keyword-only parameter.
-
-        .. versionchanged:: 2.1
-            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
