@@ -1458,6 +1458,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         )
         return Webhook.from_state(data, state=self._state)
 
+
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
     __slots__ = (
         "name",
@@ -1947,7 +1948,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             await ret[-1].delete()
 
         return ret
-    
+
     async def create_webhook(
         self,
         *,
