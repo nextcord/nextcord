@@ -1496,7 +1496,7 @@ of :class:`enum.Enum`.
 
         The user is a Discord Certified Moderator.
     .. attribute:: http_interactions_bot
-    
+
         The user is a bot which receives interactions over HTTP.
     .. attribute:: known_spammer
 
