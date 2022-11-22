@@ -22,7 +22,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import Any, TypeVar, Union
+from typing import Any, Type, TypeVar, Union
 
 T = TypeVar("T")
 
@@ -44,4 +44,14 @@ class _MissingSentinel:
 
 
 MISSING = _MissingSentinel()
+
+
+def __new__(cls: Type[_MissingSentinel]) -> _MissingSentinel:
+    return MISSING
+
+
+_MissingSentinel.__new__ = __new__
+del __new__
+
+
 MissingOr = Union[T, _MissingSentinel]
