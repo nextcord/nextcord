@@ -472,6 +472,7 @@ class UserFlags(IntEnum):
     verified_bot = 1 << 16
     verified_bot_developer = 1 << 17
     discord_certified_moderator = 1 << 18
+    http_interactions_bot = 1 << 19
     known_spammer = 1 << 20
     active_developer = 1 << 22
 
