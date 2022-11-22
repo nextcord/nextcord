@@ -1957,10 +1957,9 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     ) -> Webhook:
         """|coro|
 
-        ..versionadded:: 2.3.2
-            Creates a webhook for this channel.
-
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        ..versionadded:: 2.4
 
         Parameters
         ----------
