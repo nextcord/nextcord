@@ -66,6 +66,7 @@ if TYPE_CHECKING:
     import importlib.machinery
 
     import aiohttp
+    from typing_extensions import ParamSpec
 
     from nextcord.activity import BaseActivity
     from nextcord.enums import Status
@@ -75,6 +76,8 @@ if TYPE_CHECKING:
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from ._types import Check, CoroFunc
+
+    P = ParamSpec("P")
 
 __all__ = (
     "when_mentioned",
@@ -167,6 +170,8 @@ _NonCallablePrefix = Union[str, Sequence[str]]
 
 
 class BotBase(GroupMixin):
+    extra_events: Dict[str, List[CoroFunc]]
+
     def __init__(
         self,
         command_prefix: Union[
@@ -189,7 +194,6 @@ class BotBase(GroupMixin):
         )
 
         self.command_prefix = command_prefix if command_prefix is not MISSING else tuple()
-        self.extra_events: Dict[str, List[CoroFunc]] = {}
         self.__cogs: Dict[str, Cog] = {}
         self.__extensions: Dict[str, types.ModuleType] = {}
         self._checks: List[Check] = []
@@ -236,12 +240,11 @@ class BotBase(GroupMixin):
 
     # internal helpers
 
+    # kept in since BotBase isn't a direct subclass of client and thus doesn't know
+    # about inheriting this method
     def dispatch(self, event_name: str, *args: Any, **kwargs: Any) -> None:
         # super() will resolve to Client
         super().dispatch(event_name, *args, **kwargs)  # type: ignore
-        ev = "on_" + event_name
-        for event in self.extra_events.get(ev, []):
-            self._schedule_event(event, ev, *args, **kwargs)  # type: ignore
 
     @nextcord.utils.copy_doc(nextcord.Client.close)
     async def close(self) -> None:
@@ -505,96 +508,6 @@ class BotBase(GroupMixin):
 
         self._after_invoke = coro
         return coro
-
-    # listener registration
-
-    def add_listener(self, func: CoroFunc, name: str = MISSING) -> None:
-        """The non decorator alternative to :meth:`.listen`.
-
-        Parameters
-        ----------
-        func: :ref:`coroutine <coroutine>`
-            The function to call.
-        name: :class:`str`
-            The name of the event to listen for. Defaults to ``func.__name__``.
-
-        Example
-        -------
-
-        .. code-block:: python3
-
-            async def on_ready(): pass
-            async def my_message(message): pass
-
-            bot.add_listener(on_ready)
-            bot.add_listener(my_message, 'on_message')
-
-        """
-        name = func.__name__ if name is MISSING else name
-
-        if not asyncio.iscoroutinefunction(func):
-            raise TypeError("Listeners must be coroutines")
-
-        if name in self.extra_events:
-            self.extra_events[name].append(func)
-        else:
-            self.extra_events[name] = [func]
-
-    def remove_listener(self, func: CoroFunc, name: str = MISSING) -> None:
-        """Removes a listener from the pool of listeners.
-
-        Parameters
-        ----------
-        func
-            The function that was used as a listener to remove.
-        name: :class:`str`
-            The name of the event we want to remove. Defaults to
-            ``func.__name__``.
-        """
-
-        name = func.__name__ if name is MISSING else name
-
-        if name in self.extra_events:
-            try:
-                self.extra_events[name].remove(func)
-            except ValueError:
-                pass
-
-    def listen(self, name: str = MISSING) -> Callable[[CFT], CFT]:
-        """A decorator that registers another function as an external
-        event listener. Basically this allows you to listen to multiple
-        events from different places e.g. such as :func:`.on_ready`
-
-        The functions being listened to must be a :ref:`coroutine <coroutine>`.
-
-        Example
-        -------
-
-        .. code-block:: python3
-
-            @bot.listen()
-            async def on_message(message):
-                print('one')
-
-            # in some other file...
-
-            @bot.listen('on_message')
-            async def my_message(message):
-                print('two')
-
-        Would print one and two in an unspecified order.
-
-        Raises
-        ------
-        TypeError
-            The function being listened to is not a coroutine.
-        """
-
-        def decorator(func: CFT) -> CFT:
-            self.add_listener(func, name)
-            return func
-
-        return decorator
 
     # cogs
 

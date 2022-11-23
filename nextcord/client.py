@@ -97,13 +97,14 @@ if TYPE_CHECKING:
     from .message import Attachment, Message
     from .permissions import Permissions
     from .scheduled_events import ScheduledEvent
+    from .types.checks import CoroFunc
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .voice_client import VoiceProtocol
 
 
 __all__ = ("Client",)
 
-Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
+Coro = TypeVar("Coro", bound=CoroFunc)
 InterT = TypeVar("InterT", bound="Interaction")
 
 
@@ -306,6 +307,7 @@ class Client:
         self.ws: DiscordWebSocket = None  # type: ignore
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
+        self.extra_events: Dict[str, List[CoroFunc]] = {}
 
         self.shard_id: Optional[int] = shard_id
         self.shard_count: Optional[int] = shard_count
@@ -567,6 +569,9 @@ class Client:
         except AttributeError:
             pass
         else:
+            self._schedule_event(coro, method, *args, **kwargs)
+
+        for coro in self.extra_events.get(event, []):
             self._schedule_event(coro, method, *args, **kwargs)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
@@ -1267,7 +1272,7 @@ class Client:
         listeners.append((future, check))
         return asyncio.wait_for(future, timeout)
 
-    # event registration
+    # event/listener registration
 
     def event(self, coro: Coro) -> Coro:
         """A decorator that registers an event to listen to.
@@ -1297,6 +1302,94 @@ class Client:
         setattr(self, coro.__name__, coro)
         _log.debug("%s has successfully been registered as an event", coro.__name__)
         return coro
+
+    def add_listener(self, func: CoroFunc, name: str = MISSING) -> None:
+        """The non decorator alternative to :meth:`.listen`.
+
+        Parameters
+        ----------
+        func: :ref:`coroutine <coroutine>`
+            The function to call.
+        name: :class:`str`
+            The name of the event to listen for. Defaults to ``func.__name__``.
+
+        Example
+        -------
+
+        .. code-block:: python3
+
+            async def on_ready(): pass
+            async def my_message(message): pass
+
+            bot.add_listener(on_ready)
+            bot.add_listener(my_message, 'on_message')
+
+        """
+        name = func.__name__ if name is MISSING else name
+
+        if not asyncio.iscoroutinefunction(func):
+            raise TypeError("Listeners must be coroutines")
+
+        if name in self.extra_events:
+            self.extra_events[name].append(func)
+        else:
+            self.extra_events[name] = [func]
+
+    def remove_listener(self, func: CoroFunc, name: str = MISSING) -> None:
+        """Removes a listener from the pool of listeners.
+
+        Parameters
+        ----------
+        func
+            The function that was used as a listener to remove.
+        name: :class:`str`
+            The name of the event we want to remove. Defaults to
+            ``func.__name__``.
+        """
+
+        name = func.__name__ if name is MISSING else name
+
+        if name in self.extra_events:
+            try:
+                self.extra_events[name].remove(func)
+            except ValueError:
+                pass
+
+    def listen(self, name: str = MISSING) -> Callable[[Coro], Coro]:
+        """A decorator that registers another function as an external
+        event listener. Basically this allows you to listen to multiple
+        events from different places e.g. such as :func:`.on_ready`
+
+        The functions being listened to must be a :ref:`coroutine <coroutine>`.
+
+        Example
+        -------
+
+        .. code-block:: python3
+
+            @bot.listen()
+            async def on_message(message):
+                print('one')
+
+            # in some other file...
+
+            @bot.listen('on_message')
+            async def my_message(message):
+                print('two')
+
+        Would print one and two in an unspecified order.
+
+        Raises
+        ------
+        TypeError
+            The function being listened to is not a coroutine.
+        """
+
+        def decorator(func: Coro) -> Coro:
+            self.add_listener(func, name)
+            return func
+
+        return decorator
 
     async def change_presence(
         self,
