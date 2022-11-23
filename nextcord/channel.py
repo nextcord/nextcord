@@ -1419,6 +1419,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         reason: Optional[str] = None,
     ) -> Webhook:
         """|coro|
+        Creates a webhook for this channel.
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
