@@ -223,8 +223,10 @@ class Guild(Hashable):
 
         They are currently as follows:
 
+        - ``ANIMATED_BANNER``: Guild can upload an animated banner.
         - ``ANIMATED_ICON``: Guild can upload an animated icon.
         - ``AUTO_MODERATION``: Guild has set up auto moderation rules.
+        - ``APPLICATION_COMMAND_PERMISSIONS_V2``: Guild is using the old permissions configuration behavior.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
         - ``COMMUNITY``: Guild is a community server.
         - ``DEVELOPER_SUPPORT_SERVER``: Guild has been set as a support server on the App Directory.
