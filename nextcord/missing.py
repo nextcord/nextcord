@@ -44,6 +44,7 @@ class _MissingSentinel:
 
 
 MISSING = _MissingSentinel()
+"""A sentinel that indicates that a variable has not been set."""
 
 
 def __new__(cls: Type[_MissingSentinel]) -> _MissingSentinel:
@@ -55,3 +56,4 @@ del __new__
 
 
 MissingOr = Union[T, _MissingSentinel]
+"""A union that represents a variable that could be MISSING or another type."""
