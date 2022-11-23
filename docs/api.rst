@@ -1498,6 +1498,8 @@ of :class:`enum.Enum`.
     .. attribute:: bot_http_interactions
 
         The user is a bot that uses only HTTP interactions and is shown in the online member list.
+        
+        .. versionadded:: 2.4
     .. attribute:: known_spammer
 
         The user is a Known Spammer.
