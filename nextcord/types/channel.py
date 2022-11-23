@@ -23,10 +23,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import annotations
+
 from typing import List, Literal, Optional, TypedDict, Union
 
 from typing_extensions import NotRequired
 
+from .emoji import DefaultReaction
 from .snowflake import Snowflake
 from .threads import ThreadArchiveDuration, ThreadMember, ThreadMetadata
 from .user import PartialUser
@@ -62,31 +65,34 @@ class PartialChannel(_BaseChannel):
     type: ChannelType
 
 
-class TextChannel(_BaseGuildChannel):
+class _ThreadedBaseChannel(_BaseGuildChannel, total=False):
+    rate_limit_per_user: int
+    default_auto_archive_duration: ThreadArchiveDuration
+    default_thread_rate_limit_per_user: int
+
+
+class TextChannel(_ThreadedBaseChannel):
     type: Literal[0]
     topic: NotRequired[str]
     last_message_id: NotRequired[Optional[Snowflake]]
     last_pin_timestamp: NotRequired[str]
-    rate_limit_per_user: NotRequired[int]
-    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
 
 
-class ForumChannel(_BaseGuildChannel):
+class ForumChannel(_ThreadedBaseChannel):
     type: Literal[15]
     topic: NotRequired[str]
     last_message_id: NotRequired[Optional[Snowflake]]
-    rate_limit_per_user: NotRequired[int]
-    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
     default_sort_order: Optional[SortOrderType]
+    default_reaction_emoji: NotRequired[Optional[DefaultReaction]]
+    default_thread_rate_limit_per_user: NotRequired[int]
+    available_tags: NotRequired[List[ForumTag]]
 
 
-class NewsChannel(_BaseGuildChannel):
+class NewsChannel(_ThreadedBaseChannel):
     type: Literal[5]
     topic: NotRequired[str]
     last_message_id: NotRequired[Optional[Snowflake]]
     last_pin_timestamp: NotRequired[str]
-    rate_limit_per_user: NotRequired[int]
-    default_auto_archive_duration: NotRequired[ThreadArchiveDuration]
 
 
 VideoQualityMode = Literal[1, 2]
@@ -163,3 +169,11 @@ class StageInstance(TypedDict):
     topic: str
     privacy_level: PrivacyLevel
     discoverable_disabled: bool
+
+
+class ForumTag(TypedDict):
+    id: Optional[Snowflake]
+    name: str
+    moderated: bool
+    emoji_id: NotRequired[Optional[Snowflake]]
+    emoji_name: NotRequired[Optional[str]]

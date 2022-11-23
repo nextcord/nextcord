@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
@@ -36,6 +36,8 @@ from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ...guild import Guild
     from ...member import Member
     from ...role import Role
@@ -44,28 +46,27 @@ if TYPE_CHECKING:
     from ...types.interactions import ComponentInteractionData
     from ...user import User
 
-__all__ = ("MentionableSelect", "mentionable_select")
+__all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
 
-S = TypeVar("S", bound="MentionableSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
 
 class MentionableSelectValues(SelectValuesBase):
-    """Represents the values of a :class:`MentionableSelect`."""
+    """Represents the values of a :class:`.ui.MentionableSelect`."""
 
     @property
     def members(self) -> List[Member]:
-        """List[:class:`Member`]: A list of members that were selected."""
+        """List[:class:`.Member`]: A list of members that were selected."""
         return [v for v in self.data if isinstance(v, Member)]
 
     @property
     def users(self) -> List[User]:
-        """List[:class:`User`]: A list of users that were selected."""
+        """List[:class:`.User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
 
     @property
     def roles(self) -> List[Role]:
-        """List[:class:`Role`]: A list of roles that were selected."""
+        """List[:class:`.Role`]: A list of roles that were selected."""
         return [v for v in self.data if isinstance(v, Role)]
 
 
@@ -140,14 +141,14 @@ class MentionableSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> MentionableSelectValues:
-        """List[:class:`int`]: A list of mentionable ids that have been selected by the user."""
+        """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`.User`, :class:`.Role`] that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:
         return self._underlying.to_dict()
 
     @classmethod
-    def from_component(cls: Type[S], component: MentionableSelectMenu) -> S:
+    def from_component(cls, component: MentionableSelectMenu) -> Self:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,

@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
@@ -36,6 +36,8 @@ from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ...abc import GuildChannel
     from ...enums import ChannelType
     from ...guild import Guild
@@ -43,18 +45,17 @@ if TYPE_CHECKING:
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("ChannelSelect", "channel_select")
+__all__ = ("ChannelSelect", "channel_select", "ChannelSelectValues")
 
-S = TypeVar("S", bound="ChannelSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
 
 class ChannelSelectValues(SelectValuesBase):
-    """Represents the values of a :class:`ChannelSelect`."""
+    """Represents the values of a :class:`.ui.ChannelSelect`."""
 
     @property
     def channels(self) -> List[GuildChannel]:
-        """List[:class:`GuildChannel`]: The resolved channels."""
+        """List[:class:`.abc.GuildChannel`]: The resolved channels."""
         return [v for v in self.data if isinstance(v, GuildChannel)]
 
 
@@ -135,14 +136,14 @@ class ChannelSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> ChannelSelectValues:
-        """List[:class:`int`]: A list of channel ids that have been selected by the user."""
+        """:class:`.ui.ChannelSelectValues`: A list of resolved :class:`.abc.GuildChannel` that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> ChannelSelectMenuPayload:
         return self._underlying.to_dict()
 
     @classmethod
-    def from_component(cls: Type[S], component: ChannelSelectMenu) -> S:
+    def from_component(cls, component: ChannelSelectMenu) -> Self:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,

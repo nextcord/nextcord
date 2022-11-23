@@ -51,6 +51,7 @@ from .flags import ChannelFlags
 from .invite import Invite
 from .iterators import HistoryIterator
 from .mentions import AllowedMentions
+from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
 from .sticker import GuildSticker, StickerItem
@@ -71,6 +72,8 @@ T = TypeVar("T", bound=VoiceProtocol)
 
 if TYPE_CHECKING:
     from datetime import datetime
+
+    from typing_extensions import Self
 
     from .asset import Asset
     from .channel import CategoryChannel, DMChannel, GroupChannel, PartialMessageable, TextChannel
@@ -406,6 +409,40 @@ class GuildChannel:
             if not isinstance(ch_type, ChannelType):
                 raise InvalidArgument("type field must be of type ChannelType")
             options["type"] = ch_type.value
+
+        try:
+            options["default_thread_rate_limit_per_user"] = options.pop(
+                "default_thread_slowmode_delay"
+            )
+        except KeyError:
+            pass
+
+        try:
+            default_reaction = options.pop("default_reaction")
+        except KeyError:
+            pass
+        else:
+            if default_reaction is None:
+                options["default_reaction_emoji"] = None
+            else:
+                if isinstance(default_reaction, str):
+                    default_reaction = PartialEmoji.from_str(default_reaction)
+                options["default_reaction_emoji"] = (
+                    {
+                        "emoji_id": default_reaction.id,
+                    }
+                    if default_reaction.id is not None
+                    else {
+                        "emoji_name": default_reaction.name,
+                    }
+                )
+
+        try:
+            available_tags = options.pop("available_tags")
+        except KeyError:
+            pass
+        else:
+            options["available_tags"] = [tag.payload for tag in available_tags]
 
         if options:
             return await self._state.http.edit_channel(self.id, reason=reason, **options)
@@ -746,7 +783,13 @@ class GuildChannel:
     ) -> None:
         ...
 
-    async def set_permissions(self, target, *, overwrite=MISSING, reason=None, **permissions):
+    async def set_permissions(
+        self,
+        target: Union[Member, Role],
+        *,
+        reason: Optional[str] = None,
+        **kwargs: Any,
+    ):
         r"""|coro|
 
         Sets the channel specific permission overwrites for a target in the
@@ -816,6 +859,8 @@ class GuildChannel:
         """
 
         http = self._state.http
+        overwrite: Optional[PermissionOverwrite] = kwargs.pop("overwrite", MISSING)
+        permissions: Dict[str, bool] = kwargs
 
         if isinstance(target, User):
             perm_type = _Overwrites.MEMBER
@@ -842,18 +887,18 @@ class GuildChannel:
         elif isinstance(overwrite, PermissionOverwrite):
             (allow, deny) = overwrite.pair()
             await http.edit_channel_permissions(
-                self.id, target.id, allow.value, deny.value, perm_type, reason=reason
+                self.id, target.id, str(allow.value), str(deny.value), perm_type, reason=reason
             )
         else:
             raise InvalidArgument("Invalid overwrite type provided.")
 
     async def _clone_impl(
-        self: GCH,
+        self,
         base_attrs: Dict[str, Any],
         *,
         name: Optional[str] = None,
         reason: Optional[str] = None,
-    ) -> GCH:
+    ) -> Self:
         base_attrs["permission_overwrites"] = [x._asdict() for x in self._overwrites]
         base_attrs["parent_id"] = self.category_id
         base_attrs["name"] = name or self.name
@@ -868,7 +913,7 @@ class GuildChannel:
         self.guild._channels[obj.id] = obj  # type: ignore
         return obj
 
-    async def clone(self: GCH, *, name: Optional[str] = None, reason: Optional[str] = None) -> GCH:
+    async def clone(self, *, name: Optional[str] = None, reason: Optional[str] = None) -> Self:
         """|coro|
 
         Clones this channel. This creates a channel with the same properties

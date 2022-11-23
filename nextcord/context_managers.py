@@ -30,6 +30,8 @@ from typing import TYPE_CHECKING, Optional, Type, TypeVar
 if TYPE_CHECKING:
     from types import TracebackType
 
+    from typing_extensions import Self
+
     from .abc import Messageable
 
     TypingT = TypeVar("TypingT", bound="Typing")
@@ -62,7 +64,7 @@ class Typing:
             await typing(channel.id)
             await asyncio.sleep(5)
 
-    def __enter__(self: TypingT) -> TypingT:
+    def __enter__(self) -> Self:
         self.task: asyncio.Task = self.loop.create_task(self.do_typing())
         self.task.add_done_callback(_typing_done_callback)
         return self
@@ -75,7 +77,7 @@ class Typing:
     ) -> None:
         self.task.cancel()
 
-    async def __aenter__(self: TypingT) -> TypingT:
+    async def __aenter__(self) -> Self:
         self._channel = channel = await self.messageable._get_channel()
         await channel._state.http.send_typing(channel.id)
         return self.__enter__()

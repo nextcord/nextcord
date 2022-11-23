@@ -24,13 +24,15 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar
 
 from ..interactions import ClientT, Interaction
 
 __all__ = ("Item",)
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ..components import Component
     from ..enums import ComponentType
     from ..guild import Guild
@@ -86,7 +88,7 @@ class Item(Generic[V]):
         return None
 
     @classmethod
-    def from_component(cls: Type[I], component: Component) -> I:
+    def from_component(cls, component: Component) -> Self:
         return cls()
 
     @property

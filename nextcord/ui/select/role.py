@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...components import RoleSelectMenu
 from ...enums import ComponentType
@@ -37,22 +37,24 @@ from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ...guild import Guild
     from ...role import Role
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("RoleSelect", "role_select")
+__all__ = ("RoleSelect", "role_select", "RoleSelectValues")
 
-S = TypeVar("S", bound="RoleSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
 
 class RoleSelectValues(SelectValuesBase):
-    """Represents the values of a :class:`RoleSelect`."""
+    """Represents the values of a :class:`.ui.RoleSelect`."""
 
     @property
     def roles(self) -> List[Role]:
+        """List[:class:`.Role`]: The roles that were selected."""
         return [v for v in self.data if isinstance(v, Role)]
 
 
@@ -127,14 +129,14 @@ class RoleSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> RoleSelectValues:
-        """List[:class:`int`]: A list of role ids that have been selected by the user."""
+        """:class:`.ui.RoleSelectValues`: A list of :class:`.Role` that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> RoleSelectMenuPayload:
         return self._underlying.to_dict()
 
     @classmethod
-    def from_component(cls: Type[S], component: RoleSelectMenu) -> S:
+    def from_component(cls, component: RoleSelectMenu) -> Self:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,
