@@ -104,7 +104,7 @@ if TYPE_CHECKING:
 
 __all__ = ("Client",)
 
-Coro = TypeVar("Coro", bound=CoroFunc)
+Coro = TypeVar("Coro", bound="CoroFunc")
 InterT = TypeVar("InterT", bound="Interaction")
 
 
