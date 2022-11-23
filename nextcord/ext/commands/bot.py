@@ -66,7 +66,6 @@ if TYPE_CHECKING:
     import importlib.machinery
 
     import aiohttp
-    from typing_extensions import ParamSpec
 
     from nextcord.activity import BaseActivity
     from nextcord.enums import Status
@@ -76,8 +75,6 @@ if TYPE_CHECKING:
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from ._types import Check, CoroFunc
-
-    P = ParamSpec("P")
 
 __all__ = (
     "when_mentioned",
@@ -508,6 +505,16 @@ class BotBase(GroupMixin):
 
         self._after_invoke = coro
         return coro
+
+    # listener registration
+
+    @nextcord.utils.copy_doc(nextcord.Client.add_listener)
+    def add_listener(self, func: CoroFunc, name: str = MISSING) -> None:
+        super().add_listener(func, name)  # type: ignore
+
+    @nextcord.utils.copy_doc(nextcord.Client.remove_listener)
+    def remove_listener(self, func: CoroFunc, name: str = MISSING) -> None:
+        super().remove_listener(func, name)  # type: ignore
 
     # cogs
 
