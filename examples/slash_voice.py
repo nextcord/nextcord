@@ -78,11 +78,9 @@ class Music(commands.Cog):
                 await self.join(interaction, channel=interaction.user.voice.channel)
             else:
                 await interaction.send("You are not connected to a voice channel.")
-                raise commands.CommandError(
-                    "Author not connected to a voice channel.")
+                raise commands.CommandError("Author not connected to a voice channel.")
         source = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio(query))
-        self.voiceClient.play(source, after=lambda e: print(
-            f"Player error: {e}") if e else None)
+        self.voiceClient.play(source, after=lambda e: print(f"Player error: {e}") if e else None)
 
         await interaction.send(f"Now playing: {query}")
 
@@ -95,13 +93,11 @@ class Music(commands.Cog):
                 await self.join(interaction, channel=interaction.user.voice.channel)
             else:
                 await interaction.send("You are not connected to a voice channel.")
-                raise commands.CommandError(
-                    "Author not connected to a voice channel.")
+                raise commands.CommandError("Author not connected to a voice channel.")
         async with interaction.typing():
             player = await YTDLSource.from_url(url, loop=self.bot.loop)
             self.voiceClient.play(
-                player, after=lambda e: print(
-                    f"Player error: {e}") if e else None
+                player, after=lambda e: print(f"Player error: {e}") if e else None
             )
 
         await interaction.send(f"Now playing: {player.title}")
@@ -115,15 +111,13 @@ class Music(commands.Cog):
                 await self.join(interaction, channel=interaction.user.voice.channel)
             else:
                 await interaction.send("You are not connected to a voice channel.")
-                raise commands.CommandError(
-                    "Author not connected to a voice channel.")
+                raise commands.CommandError("Author not connected to a voice channel.")
         elif self.voiceClient.is_playing():
             self.voiceClient.stop()
         async with interaction.channel.typing():
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
             self.voiceClient.play(
-                player, after=lambda e: print(
-                    f"Player error: {e}") if e else None
+                player, after=lambda e: print(f"Player error: {e}") if e else None
             )
 
         await interaction.send(f"Now playing: {player.title}")
