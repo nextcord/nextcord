@@ -769,13 +769,13 @@ class MemberIterator(_AsyncIterator["Member"]):
         if isinstance(after, datetime.datetime):
             after = Object(id=time_snowflake(after, high=True))
 
-        self.guild = guild
-        self.limit = limit
-        self.after = after or OLDEST_OBJECT
+        self.retrieve: int
+        self.guild: Guild = guild
+        self.limit: int = limit
+        self.after: Object = after or OLDEST_OBJECT
 
-        self.state = self.guild._state
-        self.get_members = self.state.http.get_members
-        self.members = asyncio.Queue()
+        self.state: ConnectionState = self.guild._state
+        self.members: asyncio.Queue[Member] = asyncio.Queue()
 
     async def next(self) -> Member:
         if self.members.empty():
