@@ -771,8 +771,8 @@ class MemberIterator(_AsyncIterator["Member"]):
 
         self.retrieve: int
         self.guild: Guild = guild
-        self.limit: int = limit
-        self.after: Object = after or OLDEST_OBJECT
+        self.limit: Optional[int] = limit
+        self.after: Snowflake = after or OLDEST_OBJECT
 
         self.state: ConnectionState = self.guild._state
         self.members: asyncio.Queue[Member] = asyncio.Queue()
