@@ -177,7 +177,7 @@ class StringView:
                 next_char = self.get()
                 valid_eof = not next_char or next_char.isspace()
                 if not valid_eof:
-                    raise InvalidEndOfQuotedStringError(next_char)
+                    raise InvalidEndOfQuotedStringError(next_char or "")
 
                 # we're quoted so it's okay
                 return "".join(result)

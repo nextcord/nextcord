@@ -1495,6 +1495,11 @@ of :class:`enum.Enum`.
     .. attribute:: discord_certified_moderator
 
         The user is a Discord Certified Moderator.
+    .. attribute:: bot_http_interactions
+
+        The user is a bot that uses only HTTP interactions and is shown in the online member list.
+
+        .. versionadded:: 2.4
     .. attribute:: known_spammer
 
         The user is a Known Spammer.
@@ -4648,6 +4653,14 @@ AutoModerationAction
 .. attributetable:: AutoModerationAction
 
 .. autoclass:: AutoModerationAction
+    :members:
+
+ForumTag
+~~~~~~~~
+
+.. attributetable:: ForumTag
+
+.. autoclass:: ForumTag
     :members:
 
 .. _discord_ui_kit:

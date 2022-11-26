@@ -259,7 +259,7 @@ class Widget:
         for member in data.get("members", []):
             connected_channel = get_as_snowflake(member, "channel_id")
             if connected_channel in channels:
-                connected_channel = channels[connected_channel]  # type: ignore
+                connected_channel = channels[connected_channel]
             elif connected_channel:
                 connected_channel = WidgetChannel(id=connected_channel, name="", position=0)
 

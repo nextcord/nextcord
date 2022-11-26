@@ -242,7 +242,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
 
             if self.guild is None or isinstance(self.guild, Object):
                 for element in reversed(data):
-                    await self.users.put(User(state=self.state, data=element))  # type: ignore
+                    await self.users.put(User(state=self.state, data=element))
             else:
                 for element in reversed(data):
                     member_id = int(element["id"])
@@ -250,7 +250,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
                     if member is not None:
                         await self.users.put(member)
                     else:
-                        await self.users.put(User(state=self.state, data=element))  # type: ignore
+                        await self.users.put(User(state=self.state, data=element))
 
 
 class HistoryIterator(_AsyncIterator["Message"]):
@@ -760,19 +760,22 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
 
 class MemberIterator(_AsyncIterator["Member"]):
-    def __init__(self, guild: Guild, limit: int = 1000, after: Optional[SnowflakeTime] = None):
-
-        after_obj: Object = OLDEST_OBJECT
+    def __init__(
+        self,
+        guild: Guild,
+        limit: Optional[int] = 1000,
+        after: Optional[Union[Snowflake, datetime.datetime]] = None,
+    ):
         if isinstance(after, datetime.datetime):
-            after_obj = Object(id=time_snowflake(after, high=True))
+            after = Object(id=time_snowflake(after, high=True))
 
-        self.retrieve: int
-        self.guild: Guild = guild
-        self.limit: int = limit
-        self.after: Object = after_obj
+        self.guild = guild
+        self.limit = limit
+        self.after = after or OLDEST_OBJECT
 
-        self.state: ConnectionState = self.guild._state
-        self.members: asyncio.Queue[Member] = asyncio.Queue()
+        self.state = self.guild._state
+        self.get_members = self.state.http.get_members
+        self.members = asyncio.Queue()
 
     async def next(self) -> Member:
         if self.members.empty():

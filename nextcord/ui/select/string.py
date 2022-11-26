@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Generic, List, Optional, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar, Union
 
 from ...components import SelectOption, StringSelectMenu
 from ...emoji import Emoji
@@ -37,6 +37,9 @@ from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase
 
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
 __all__ = (
     "Select",
     "select",
@@ -44,7 +47,6 @@ __all__ = (
     "string_select",
 )
 
-S = TypeVar("S", bound="StringSelect")
 V = TypeVar("V", bound="View", covariant=True)
 
 
@@ -204,7 +206,7 @@ class StringSelect(SelectBase, Generic[V]):
         self._underlying.options.append(option)
 
     @classmethod
-    def from_component(cls: Type[S], component: StringSelectMenu) -> S:
+    def from_component(cls, component: StringSelectMenu) -> Self:
         return cls(
             custom_id=component.custom_id,
             placeholder=component.placeholder,

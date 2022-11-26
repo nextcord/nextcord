@@ -79,7 +79,11 @@ if TYPE_CHECKING:
     from .abc import Snowflake
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
-    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
+    from .types.interactions import (
+        ApplicationCommand as ApplicationCommandPayload,
+        ApplicationCommandInteractionDataOption,
+        InteractionData,
+    )
 
     _CustomTypingMetaBase = Any
 else:
@@ -336,7 +340,7 @@ class ApplicationCommandOption:
         ret: List[Dict[str, Union[str, int, float, dict, None]]] = []
         for display_name, value in choices.items():
             # Discord returns the names as strings, might as well do it here so payload comparison is easy.
-            temp: Dict[str, Union[str, int, float, dict, None]] = {
+            temp = {
                 "name": str(display_name),
                 "value": value,
             }
@@ -1698,11 +1702,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         elif self.type is ApplicationCommandOptionType.mentionable:
             user_role_list: List[Union[User, Member, Role]] = get_users_from_interaction(
                 state, interaction
-            ) + get_roles_from_interaction(
-                state, interaction
-            )  # pyright: ignore
-            # pyright is so sure that you cant add role + user | member
-            # when the resulting type is right
+            ) + get_roles_from_interaction(state, interaction)
             mentionables = {mentionable.id: mentionable for mentionable in user_role_list}
             value = mentionables[int(value)]
 
@@ -1763,13 +1763,12 @@ class SlashCommandMixin(CallbackMixin):
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: Optional[List[Dict[str, Any]]] = None,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ) -> Dict[str, Any]:
-        # interaction.data = cast(, interaction.data)
+        interaction.data = cast("InteractionData", interaction.data)
 
         if option_data is None:
-            # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})  # type: ignore
+            option_data = interaction.data.get("options")
 
             if not option_data:
                 raise ValueError("Discord did not provide us any options data")
@@ -1781,7 +1780,7 @@ class SlashCommandMixin(CallbackMixin):
                 uncalled_args.pop(arg_data["name"])
                 kwargs[self.options[arg_data["name"]].functional_name] = await self.options[
                     arg_data["name"]
-                ].handle_value(state, arg_data["value"], interaction)
+                ].handle_value(state, arg_data.get("value"), interaction)
             else:
                 # TODO: Handle this better.
                 raise ApplicationCommandOptionMissing(
@@ -1799,21 +1798,20 @@ class SlashCommandMixin(CallbackMixin):
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: Optional[List[Dict[str, Any]]] = None,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ):
         if option_data is None:
             if interaction.data is None:
                 raise ValueError("Discord did not provide us interaction data")
 
-            # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})  # type: ignore
+            option_data = interaction.data.get("options")
 
             if not option_data:
                 raise ValueError("Discord did not provide us any options data")
 
         if self.children:
             await self.children[option_data[0]["name"]].call_slash(
-                state, interaction, option_data[0].get("options", {})
+                state, interaction, option_data[0].get("options")
             )
         else:
             kwargs = await self.get_slash_kwargs(state, interaction, option_data)
@@ -2344,7 +2342,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 for (
                     inter_opt_name,
                     inter_opt,
-                ) in all_inter_options_copy:  # Should only contain optionals now.
+                ) in all_inter_options_copy.items():  # Should only contain optionals now.
                     if our_opt := all_our_options_copy.get(inter_opt_name):
                         if not (
                             inter_opt["name"] == our_opt["name"]
@@ -2525,7 +2523,10 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         )
 
     async def call(
-        self, state: ConnectionState, interaction: Interaction, option_data: List[dict]
+        self,
+        state: ConnectionState,
+        interaction: Interaction,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]],
     ) -> None:
         """|coro|
         Calls the callback via the given :class:`Interaction`, using the given :class:`ConnectionState` to get resolved
@@ -2540,9 +2541,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         option_data: List[:class:`dict`]
             List of raw option data from Discord.
         """
-        if self.children:
+        if self.children and option_data is not None:
             await self.children[option_data[0]["name"]].call(
-                state, interaction, option_data[0].get("options", {})
+                state, interaction, option_data[0].get("options")
             )
         else:
             await self.call_slash(state, interaction, option_data)
