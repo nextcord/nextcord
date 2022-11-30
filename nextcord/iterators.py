@@ -167,7 +167,7 @@ class _ChunkedAsyncIterator(_AsyncIterator[List[T]]):
         return ret
 
 
-if t.TYPE_CHECKING:
+if TYPE_CHECKING:
 
     class _MappedAsyncIterator(Generic[T, OT], _AsyncIterator[OT]):
         def __init__(self, iterator: _AsyncIterator[T], func: _Func[T, OT]) -> None:
