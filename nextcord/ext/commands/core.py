@@ -320,7 +320,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             raise TypeError("Name of a command must be a string.")
         self.name: str = name
 
-        self._callback = func
+        self.callback = func
         self.enabled: bool = kwargs.get("enabled", True)
 
         help_doc = kwargs.get("help")
