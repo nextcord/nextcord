@@ -433,19 +433,17 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         Callable[Concatenate[CogT, ContextT, P], Coro[T]],
         Callable[Concatenate[ContextT, P], Coro[T]],
     ]:
-        # May require adding ContextT to the Generic of Command
-        return self._callback  # type: ignore
+        return self._callback
 
     @callback.setter
     def callback(
         self,
         function: Union[
-            Callable[Concatenate[CogT, Context, P], Coro[T]],
-            Callable[Concatenate[Context, P], Coro[T]],
+            Callable[Concatenate[CogT, Context[Any], P], Coro[T]],
+            Callable[Concatenate[Context[Any], P], Coro[T]],
         ],
     ) -> None:
-        # pyright freaks out when I change the annotation above to use ContextT instead of Context
-        self._callback = function  # type: ignore
+        self._callback = function
         unwrap = unwrap_function(function)
         self.module = unwrap.__module__
 
