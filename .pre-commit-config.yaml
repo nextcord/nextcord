@@ -3,6 +3,8 @@
 ci:
   autofix_commit_msg: |
     style: auto fixes from pre-commit hooks
+  autoupdate_commit_msg: |
+    ci(pre-commit): autoupdate hook versions
 
 repos:
   - repo: https://github.com/PyCQA/autoflake
