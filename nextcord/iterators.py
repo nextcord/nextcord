@@ -167,29 +167,15 @@ class _ChunkedAsyncIterator(_AsyncIterator[List[T]]):
         return ret
 
 
-if TYPE_CHECKING:
+class _MappedAsyncIterator(_AsyncIterator[OT], Generic[T, OT]):
+    def __init__(self, iterator: _AsyncIterator[T], func: _Func[T, OT]) -> None:
+        self.iterator: _AsyncIterator[T] = iterator
+        self.func: _Func[T, Any] = func
 
-    class _MappedAsyncIterator(Generic[T, OT], _AsyncIterator[OT]):
-        def __init__(self, iterator: _AsyncIterator[T], func: _Func[T, OT]) -> None:
-            self.iterator: _AsyncIterator[T] = iterator
-            self.func: _Func[T, Any] = func
-
-        async def next(self) -> OT:
-            # this raises NoMoreItems and will propagate appropriately
-            item = await self.iterator.next()
-            return await maybe_coroutine(self.func, item)
-
-else:
-
-    class _MappedAsyncIterator(_AsyncIterator):
-        def __init__(self, iterator, func):
-            self.iterator = iterator
-            self.func = func
-
-        async def next(self):
-            # this raises NoMoreItems and will propagate appropriately
-            item = await self.iterator.next()
-            return await maybe_coroutine(self.func, item)
+    async def next(self) -> OT:
+        # this raises NoMoreItems and will propagate appropriately
+        item = await self.iterator.next()
+        return await maybe_coroutine(self.func, item)
 
 
 class _FilteredAsyncIterator(_AsyncIterator[T]):
