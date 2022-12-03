@@ -439,7 +439,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     @callback.setter
     def callback(
         self,
-        function: Union[t
+        function: Union[
             Callable[Concatenate[CogT, Context, P], Coro[T]],
             Callable[Concatenate[Context, P], Coro[T]],
         ],
