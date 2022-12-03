@@ -167,7 +167,7 @@ class _ChunkedAsyncIterator(_AsyncIterator[List[T]]):
         return ret
 
 
-class _MappedAsyncIterator(Generic[T, OT], _AsyncIterator[OT]):
+class _MappedAsyncIterator(_AsyncIterator[OT], Generic[T, OT]):
     def __init__(self, iterator: _AsyncIterator[T], func: _Func[T, OT]) -> None:
         self.iterator: _AsyncIterator[T] = iterator
         self.func: _Func[T, Any] = func
