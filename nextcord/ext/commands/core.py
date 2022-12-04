@@ -320,7 +320,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             raise TypeError("Name of a command must be a string.")
         self.name: str = name
 
-        # pyright complains that ContextT is incompatible with plain Context
+        # ContextT is incompatible with normal Context
         self.callback = func  # pyright: ignore
         self.enabled: bool = kwargs.get("enabled", True)
 
