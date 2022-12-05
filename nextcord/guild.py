@@ -248,7 +248,7 @@ class Guild(Hashable):
         - ``WELCOME_SCREEN_ENABLED``: Guild has enabled the welcome screen.
 
     premium_tier: :class:`int`
-        The premium tier for this guild. Corresponds to "Nitro Server" in the official UI.
+        The premium tier for this guild. Corresponds to "Boost Level" in the official UI.
         The number goes from 0 to 3 inclusive.
     premium_subscription_count: :class:`int`
         The number of "boosts" this guild currently has.
