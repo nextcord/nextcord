@@ -20,7 +20,7 @@ lint = { cmd = "pre-commit run --all-files", help = "Check all files for linting
 precommit = { cmd = "pre-commit install --install-hooks", help = "Install the precommit hook" }
 pyright = { cmd = "dotenv -f task.env run -- python -m pyright", help = "Run pyright" }
 slotscheck = { cmd = "python -m slotscheck --verbose -m nextcord", help = "Run slotscheck" }
-codemod = { cmd = "python3 -m libcst.tool codemod autotyping.AutotypeCommand nextcord --safe", help = "Refactor code to add automatic type annotations" }
+autotyping = { cmd = "python3 -m libcst.tool codemod autotyping.AutotypeCommand nextcord --safe", help = "Refactor code to add automatic type annotations" }
 
 
 [tool.slotscheck]
