@@ -7,7 +7,7 @@ bot = commands.Bot()
 
 
 @bot.slash_command(guild_ids=[TESTING_GUILD_ID], description="main command")
-async def main(interaction: Interaction):
+async def main(interaction: Interaction) -> None:
     """
     This is the main slash command that will be the prefix of all commands below.
     This will never get called since it has subcommands.
@@ -16,7 +16,7 @@ async def main(interaction: Interaction):
 
 
 @main.subcommand(description="Subcommand 1")
-async def sub1(interaction: Interaction):
+async def sub1(interaction: Interaction) -> None:
     """
     This is a subcommand of the '/main' slash command.
     It will appear in the menu as '/main sub1'.
@@ -25,7 +25,7 @@ async def sub1(interaction: Interaction):
 
 
 @main.subcommand(description="Subcommand 2")
-async def sub2(interaction: Interaction):
+async def sub2(interaction: Interaction) -> None:
     """
     This is another subcommand of the '/main' slash command.
     It will appear in the menu as '/main sub2'.
@@ -34,7 +34,7 @@ async def sub2(interaction: Interaction):
 
 
 @main.subcommand(description="main_group subcommand group")
-async def main_group(interaction: Interaction):
+async def main_group(interaction: Interaction) -> None:
     """
     This is a subcommand group of the '/main' slash command.
     All subcommands of this group will be prefixed with '/main main_group'.
@@ -44,7 +44,7 @@ async def main_group(interaction: Interaction):
 
 
 @main_group.subcommand(description="Subcommand group subcommand 1")
-async def subsub1(interaction: Interaction):
+async def subsub1(interaction: Interaction) -> None:
     """
     This is a subcommand of the '/main main_group' subcommand group.
     It will appear in the menu as '/main main_group subsub1'.
@@ -53,7 +53,7 @@ async def subsub1(interaction: Interaction):
 
 
 @main_group.subcommand(description="Subcommand group subcommand 2")
-async def subsub2(interaction: Interaction):
+async def subsub2(interaction: Interaction) -> None:
     """
     This is another subcommand of the '/main main_group' subcommand group.
     It will appear in the menu as '/main main_group subsub2'.

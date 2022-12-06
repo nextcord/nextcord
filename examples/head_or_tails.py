@@ -15,7 +15,7 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()
-async def headortails(ctx, answer):
+async def headortails(ctx, answer) -> None:
     if random.choice(["heads", "tails"]) == answer:
         await ctx.reply("Congratulations")
     else:

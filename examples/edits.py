@@ -5,10 +5,10 @@ from nextcord.ext import commands
 
 
 class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    async def on_message_edit(self, before, after):
+    async def on_message_edit(self, before, after) -> None:
         msg = f"**{before.author}** edited their message:\n{before.content} -> {after.content}"
         await before.channel.send(msg)
 
@@ -19,7 +19,7 @@ bot = Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()
-async def editme(ctx):
+async def editme(ctx) -> None:
     msg = await ctx.send("10")
     await asyncio.sleep(3.0)
     await msg.edit(content="40")

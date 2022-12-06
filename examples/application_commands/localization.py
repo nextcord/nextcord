@@ -22,7 +22,7 @@ bot = commands.Bot()
     },
     guild_ids=[TESTING_GUILD_ID],
 )
-async def hello_command(interaction: Interaction):
+async def hello_command(interaction: Interaction) -> None:
     if interaction.locale == "de":
         await interaction.response.send_message("Hallo Welt!")
     elif interaction.locale == "fr":
@@ -79,7 +79,7 @@ async def choose_colour_command(
             },
         },
     ),
-):
+) -> None:
     if interaction.locale == "en-US":
         await interaction.response.send_message(f"You chose **`{colour}`** color")
     elif interaction.locale == "de":

@@ -8,12 +8,12 @@ bot = commands.Bot()
 
 # command will be global if guild_ids is not specified
 @bot.slash_command(guild_ids=[TESTING_GUILD_ID], description="Ping command")
-async def ping(interaction: Interaction):
+async def ping(interaction: Interaction) -> None:
     await interaction.response.send_message("Pong!")
 
 
 @bot.slash_command(guild_ids=[TESTING_GUILD_ID], description="Repeats your message")
-async def echo(interaction: Interaction, arg: str = SlashOption(description="Message")):
+async def echo(interaction: Interaction, arg: str = SlashOption(description="Message")) -> None:
     await interaction.response.send_message(arg)
 
 
@@ -21,7 +21,7 @@ async def echo(interaction: Interaction, arg: str = SlashOption(description="Mes
 async def enter_a_number(
     interaction: Interaction,
     number: int = SlashOption(description="Your number", required=False),
-):
+) -> None:
     if not number:
         await interaction.response.send_message("No number was specified!", ephemeral=True)
     else:

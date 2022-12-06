@@ -35,20 +35,20 @@ class attributetable_item(nodes.Part, nodes.Element):
     pass
 
 
-def visit_attributetable_node(self, node):
+def visit_attributetable_node(self, node) -> None:
     class_ = node["python-class"]
     self.body.append(f'<div class="py-attribute-table" data-move-to-id="{class_}">')
 
 
-def visit_attributetablecolumn_node(self, node):
+def visit_attributetablecolumn_node(self, node) -> None:
     self.body.append(self.starttag(node, "div", CLASS="py-attribute-table-column"))
 
 
-def visit_attributetabletitle_node(self, node):
+def visit_attributetabletitle_node(self, node) -> None:
     self.body.append(self.starttag(node, "span"))
 
 
-def visit_attributetablebadge_node(self, node):
+def visit_attributetablebadge_node(self, node) -> None:
     attributes = {
         "class": "py-attribute-table-badge",
         "title": node["badge-type"],
@@ -56,27 +56,27 @@ def visit_attributetablebadge_node(self, node):
     self.body.append(self.starttag(node, "span", **attributes))
 
 
-def visit_attributetable_item_node(self, node):
+def visit_attributetable_item_node(self, node) -> None:
     self.body.append(self.starttag(node, "li", CLASS="py-attribute-table-entry"))
 
 
-def depart_attributetable_node(self, node):
+def depart_attributetable_node(self, node) -> None:
     self.body.append("</div>")
 
 
-def depart_attributetablecolumn_node(self, node):
+def depart_attributetablecolumn_node(self, node) -> None:
     self.body.append("</div>")
 
 
-def depart_attributetabletitle_node(self, node):
+def depart_attributetabletitle_node(self, node) -> None:
     self.body.append("</span>")
 
 
-def depart_attributetablebadge_node(self, node):
+def depart_attributetablebadge_node(self, node) -> None:
     self.body.append("</span>")
 
 
-def depart_attributetable_item_node(self, node):
+def depart_attributetable_item_node(self, node) -> None:
     self.body.append("</li>")
 
 
@@ -178,7 +178,7 @@ class TableElement(NamedTuple):
     badge: Optional[attributetablebadge]
 
 
-def process_attributetable(app, doctree, fromdocname):
+def process_attributetable(app, doctree, fromdocname) -> None:
     env = app.builder.env
 
     lookup = build_lookup_table(env)
@@ -281,7 +281,7 @@ def class_results_to_node(key, elements):
     return attributetablecolumn("", title, ul)
 
 
-def setup(app):
+def setup(app) -> None:
     app.add_directive("attributetable", PyAttributeTable)
     app.add_node(attributetable, html=(visit_attributetable_node, depart_attributetable_node))
     app.add_node(

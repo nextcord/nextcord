@@ -10,7 +10,7 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()
-async def guess(ctx):
+async def guess(ctx) -> None:
     await ctx.send("Guess a number between 1 and 10.")
 
 

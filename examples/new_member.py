@@ -4,10 +4,10 @@ from nextcord.ext import commands
 
 
 class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    async def on_member_join(self, member):
+    async def on_member_join(self, member) -> None:
         guild = member.guild
         if guild.system_channel is not None:
             to_send = f"Welcome {member.mention} to {guild.name}!"

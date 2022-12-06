@@ -2,7 +2,7 @@ import nextcord
 
 
 class MyInteraction(nextcord.Interaction):
-    async def send_embed(self, *, title: str, description: str):
+    async def send_embed(self, *, title: str, description: str) -> None:
         """Easily send a basic embed."""
         embed: nextcord.Embed = nextcord.Embed(
             title=title,
@@ -25,7 +25,7 @@ TESTING_GUILD_ID = 123456789  # Replace with your testing guild id
 
 
 @client.slash_command(guild_ids=[TESTING_GUILD_ID])
-async def create_embed(interaction: MyInteraction, title: str, description: str):
+async def create_embed(interaction: MyInteraction, title: str, description: str) -> None:
     await interaction.send_embed(title=title, description=description)
 
 

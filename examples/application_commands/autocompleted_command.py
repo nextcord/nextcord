@@ -20,13 +20,13 @@ async def your_favorite_dog(
         name="dog",
         description="Choose the best dog from this autocompleted list!",
     ),
-):
+) -> None:
     # sends the autocompleted result
     await interaction.response.send_message(f"Your favorite dog is {dog}!")
 
 
 @your_favorite_dog.on_autocomplete("dog")
-async def favorite_dog(interaction: Interaction, dog: str):
+async def favorite_dog(interaction: Interaction, dog: str) -> None:
     if not dog:
         # send the full autocomplete list
         await interaction.response.send_autocomplete(list_of_dog_breeds)

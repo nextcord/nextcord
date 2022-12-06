@@ -15,7 +15,7 @@ class NitpickFileIgnorer(logging.Filter):
         return True
 
 
-def setup(app: Sphinx):
+def setup(app: Sphinx) -> None:
     app.add_config_value("nitpick_ignore_files", [], "")
     f = NitpickFileIgnorer(app)
     sphinx_logging.getLogger("sphinx.transforms.post_transforms").logger.addFilter(f)

@@ -10,7 +10,7 @@ bot = commands.Bot(command_prefix="$", description="Nothing to see here!", inten
 
 # the `hidden` keyword argument hides it from the help command.
 @bot.group(hidden=True)
-async def secret(ctx):
+async def secret(ctx) -> None:
     """What is this "secret" you speak of?"""
     if ctx.invoked_subcommand is None:
         await ctx.send("Shh!", delete_after=5)
@@ -46,7 +46,7 @@ def create_overwrites(ctx, *objects):
 # it is best to lock it to be guild-only.
 @secret.command()
 @commands.guild_only()
-async def text(ctx, name: str, *objects: typing.Union[nextcord.Role, nextcord.Member]):
+async def text(ctx, name: str, *objects: typing.Union[nextcord.Role, nextcord.Member]) -> None:
     """This makes a text channel with a specified name
     that is only visible to roles or members that are specified.
     """
@@ -63,7 +63,7 @@ async def text(ctx, name: str, *objects: typing.Union[nextcord.Role, nextcord.Me
 
 @secret.command()
 @commands.guild_only()
-async def voice(ctx, name: str, *objects: typing.Union[nextcord.Role, nextcord.Member]):
+async def voice(ctx, name: str, *objects: typing.Union[nextcord.Role, nextcord.Member]) -> None:
     """This does the same thing as the `text` subcommand
     but instead creates a voice channel.
     """
@@ -77,7 +77,7 @@ async def voice(ctx, name: str, *objects: typing.Union[nextcord.Role, nextcord.M
 
 @secret.command()
 @commands.guild_only()
-async def emoji(ctx, emoji: nextcord.PartialEmoji, *roles: nextcord.Role):
+async def emoji(ctx, emoji: nextcord.PartialEmoji, *roles: nextcord.Role) -> None:
     """This clones a specified emoji that only specified roles
     are allowed to use.
     """

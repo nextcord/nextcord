@@ -11,34 +11,34 @@ from nextcord.ext import application_checks, commands
 # For this example the custom_id is prefixed with the name of the bot.
 # Note that custom_ids can only be up to 100 characters long.
 class PersistentView(nextcord.ui.View):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(timeout=None)
 
     @nextcord.ui.button(
         label="Green", style=nextcord.ButtonStyle.green, custom_id="persistent_view:green"
     )
-    async def green(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+    async def green(self, button: nextcord.ui.Button, interaction: nextcord.Interaction) -> None:
         await interaction.response.send_message("This is green.", ephemeral=True)
 
     @nextcord.ui.button(
         label="Red", style=nextcord.ButtonStyle.red, custom_id="persistent_view:red"
     )
-    async def red(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+    async def red(self, button: nextcord.ui.Button, interaction: nextcord.Interaction) -> None:
         await interaction.response.send_message("This is red.", ephemeral=True)
 
     @nextcord.ui.button(
         label="Grey", style=nextcord.ButtonStyle.grey, custom_id="persistent_view:grey"
     )
-    async def grey(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+    async def grey(self, button: nextcord.ui.Button, interaction: nextcord.Interaction) -> None:
         await interaction.response.send_message("This is grey.", ephemeral=True)
 
 
 class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.persistent_views_added = False
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         if not self.persistent_views_added:
             # Register the persistent view for listening here.
             # Note that this does not send the view to any message.
@@ -56,7 +56,7 @@ bot = Bot()
 
 @bot.slash_command()
 @application_checks.is_owner()
-async def prepare(interaction):
+async def prepare(interaction) -> None:
     """Starts a persistent view."""
     # In order for a persistent view to be listened to, it needs to be sent to an actual message.
     # Call this method once just to store it somewhere.

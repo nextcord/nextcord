@@ -3,10 +3,10 @@ from nextcord.ext import commands
 
 
 class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    async def on_message_delete(self, message: nextcord.Message):
+    async def on_message_delete(self, message: nextcord.Message) -> None:
         msg = f"{message.author} has deleted the message: {message.content}"
         await message.channel.send(msg)
 
@@ -17,7 +17,7 @@ bot = Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()
-async def deleteme(ctx):
+async def deleteme(ctx) -> None:
     msg = await ctx.send("I will delete myself now...")
     await msg.delete()
 

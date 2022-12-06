@@ -6,7 +6,7 @@ from nextcord.ext import commands
 # that the user can choose. The callback function
 # of this class is called when the user changes their choice
 class Dropdown(nextcord.ui.Select):
-    def __init__(self):
+    def __init__(self) -> None:
 
         # Set the options that will be presented inside the dropdown
         options = [
@@ -31,7 +31,7 @@ class Dropdown(nextcord.ui.Select):
             options=options,
         )
 
-    async def callback(self, interaction: nextcord.Interaction):
+    async def callback(self, interaction: nextcord.Interaction) -> None:
         # Use the interaction object to send a response message containing
         # the user's favourite colour or choice. The self object refers to the
         # Select object, and the values attribute gets a list of the user's
@@ -40,7 +40,7 @@ class Dropdown(nextcord.ui.Select):
 
 
 class DropdownView(nextcord.ui.View):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # Adds the dropdown to our view object.
@@ -51,7 +51,7 @@ bot = commands.Bot()
 
 
 @bot.slash_command()
-async def colour(interaction):
+async def colour(interaction) -> None:
     """Sends a message with our dropdown containing colours"""
 
     # Create the view containing our dropdown

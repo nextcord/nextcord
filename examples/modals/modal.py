@@ -5,7 +5,7 @@ TESTING_GUILD_ID = 123456798  # Replace with your testing guild id
 
 
 class Pet(nextcord.ui.Modal):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             "Your pet",
             timeout=5 * 60,  # 5 minutes
@@ -44,7 +44,7 @@ bot = commands.Bot()
     description="Describe your favourite pet",
     guild_ids=[TESTING_GUILD_ID],
 )
-async def send(interaction: nextcord.Interaction):
+async def send(interaction: nextcord.Interaction) -> None:
     modal = Pet()
     await interaction.response.send_modal(modal)
 

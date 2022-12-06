@@ -8,7 +8,7 @@ from nextcord.ext import commands
 # The ['TicTacToe'] bit is for type hinting purposes to tell your IDE or linter
 # what the type of `self.view` is. It is not required.
 class TicTacToeButton(nextcord.ui.Button["TicTacToe"]):
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int) -> None:
         # A label is required, but we don't need one so a zero-width space is used
         # The row parameter tells the View which row to place the button under.
         # A View can only contain up to 5 rows -- each row can only have 5 buttons.
@@ -19,7 +19,7 @@ class TicTacToeButton(nextcord.ui.Button["TicTacToe"]):
 
     # This function is called whenever this particular button is pressed
     # This is part of the "meat" of the game logic
-    async def callback(self, interaction: nextcord.Interaction):
+    async def callback(self, interaction: nextcord.Interaction) -> None:
         assert self.view is not None
         view: TicTacToe = self.view
         state = view.board[self.y][self.x]
@@ -67,7 +67,7 @@ class TicTacToe(nextcord.ui.View):
     O = 1
     Tie = 2
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.current_player = self.X
         self.board = [
@@ -124,7 +124,7 @@ bot = commands.Bot()
 
 
 @bot.slash_command()
-async def tic(interaction):
+async def tic(interaction) -> None:
     """Starts a tic-tac-toe game with yourself."""
     await interaction.send("Tic Tac Toe: X goes first", view=TicTacToe())
 

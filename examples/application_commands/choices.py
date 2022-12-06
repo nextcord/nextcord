@@ -15,7 +15,7 @@ async def choose_a_number(
         description="The number you want",
         choices={"one": 1, "two": 2, "three": 3},
     ),
-):
+) -> None:
     await interaction.response.send_message(f"You chose {number}!")
 
 
@@ -23,7 +23,7 @@ async def choose_a_number(
 async def hi(
     interaction: Interaction,
     member: nextcord.Member = SlashOption(name="user", description="User to say hi to"),
-):
+) -> None:
     await interaction.response.send_message(f"{interaction.user} just said hi to {member.mention}")
 
 

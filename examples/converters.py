@@ -12,7 +12,7 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()
-async def userinfo(ctx, user: nextcord.User):
+async def userinfo(ctx, user: nextcord.User) -> None:
     # In the command signature above, you can see that the `user`
     # parameter is typehinted to `nextcord.User`. This means that
     # during command invocation we will attempt to convert
@@ -76,7 +76,7 @@ class ChannelOrMemberConverter(commands.Converter):
 
 
 @bot.command()
-async def notify(ctx, target: ChannelOrMemberConverter):
+async def notify(ctx, target: ChannelOrMemberConverter) -> None:
     # This command signature utilises the custom converter written above
     # What will happen during command invocation is that the `target` above will be passed to
     # the `argument` parameter of the `ChannelOrMemberConverter.convert` method and
@@ -86,7 +86,7 @@ async def notify(ctx, target: ChannelOrMemberConverter):
 
 
 @bot.command()
-async def ignore(ctx, target: typing.Union[nextcord.Member, nextcord.TextChannel]):
+async def ignore(ctx, target: typing.Union[nextcord.Member, nextcord.TextChannel]) -> None:
     # This command signature utilises the `typing.Union` typehint.
     # The `commands` framework attempts a conversion of each type in this Union *in order*.
     # So, it will attempt to convert whatever is passed to `target` to a `nextcord.Member` instance.
