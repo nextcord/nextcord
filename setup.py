@@ -72,7 +72,7 @@ packages = [
 
 setup(
     name="nextcord",
-    author="tag-epic & Rapptz",
+    author="Nextcord Developers & Rapptz",
     url="https://github.com/nextcord/nextcord",
     project_urls={
         "Documentation": "https://docs.nextcord.dev/",
