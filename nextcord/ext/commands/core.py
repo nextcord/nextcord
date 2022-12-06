@@ -320,7 +320,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             raise TypeError("Name of a command must be a string.")
         self.name: str = name
 
-        self._callback = func
+        # ContextT is incompatible with normal Context
+        self.callback = func  # pyright: ignore
         self.enabled: bool = kwargs.get("enabled", True)
 
         help_doc = kwargs.get("help")
@@ -433,8 +434,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         Callable[Concatenate[CogT, ContextT, P], Coro[T]],
         Callable[Concatenate[ContextT, P], Coro[T]],
     ]:
-        # May require adding ContextT to the Generic of Command
-        return self._callback  # type: ignore
+        return self._callback
 
     @callback.setter
     def callback(
