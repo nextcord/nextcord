@@ -133,7 +133,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         subcommand_passed: Optional[str] = None,
         command_failed: bool = False,
         current_parameter: Optional[inspect.Parameter] = None,
-    ):
+    ) -> None:
         self.message: Message = message
         self.bot: BotT = bot
         self.args: List[Any] = args or []

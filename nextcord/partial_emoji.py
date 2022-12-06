@@ -100,7 +100,7 @@ class PartialEmoji(_EmojiTag, AssetMixin):
     if TYPE_CHECKING:
         id: Optional[int]
 
-    def __init__(self, *, name: str, animated: bool = False, id: Optional[int] = None):
+    def __init__(self, *, name: str, animated: bool = False, id: Optional[int] = None) -> None:
         self.animated = animated
         self.name = name
         self.id = id
@@ -187,7 +187,7 @@ class PartialEmoji(_EmojiTag, AssetMixin):
             return f"<a:{self.name}:{self.id}>"
         return f"<:{self.name}:{self.id}>"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<{self.__class__.__name__} animated={self.animated} name={self.name!r} id={self.id}>"
         )

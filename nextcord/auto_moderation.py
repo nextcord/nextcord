@@ -188,7 +188,7 @@ class AutoModerationActionMetadata:
 
     def __init__(
         self, *, channel: Optional[Snowflake] = None, duration_seconds: Optional[int] = None
-    ):
+    ) -> None:
         self.channel_id: Optional[int] = channel.id if channel is not None else None
         self.duration_seconds: Optional[int] = duration_seconds
 
@@ -338,7 +338,7 @@ class AutoModerationRule(Hashable):
         "exempt_channels",
     )
 
-    def __init__(self, *, data: AutoModerationRulePayload, state: ConnectionState):
+    def __init__(self, *, data: AutoModerationRulePayload, state: ConnectionState) -> None:
         self._state = state
         self.id: int = int(data["id"])
         self.guild_id: int = int(data["guild_id"])

@@ -36,13 +36,13 @@ if TYPE_CHECKING:
 
 
 class _FakeBool:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "True"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return other is True
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return True
 
 
@@ -88,7 +88,7 @@ class AllowedMentions:
         users: Union[bool, List[Snowflake]] = default,
         roles: Union[bool, List[Snowflake]] = default,
         replied_user: bool = default,
-    ):
+    ) -> None:
         self.everyone = everyone
         self.users = users
         self.roles = roles

@@ -77,7 +77,7 @@ class RoleTags:
         "_premium_subscriber",
     )
 
-    def __init__(self, data: RoleTagPayload):
+    def __init__(self, data: RoleTagPayload) -> None:
         self.bot_id: Optional[int] = get_as_snowflake(data, "bot_id")
         self.integration_id: Optional[int] = get_as_snowflake(data, "integration_id")
         # NOTE: The API returns "null" for this if it's valid, which corresponds to None.
@@ -188,7 +188,7 @@ class Role(Hashable):
         "_state",
     )
 
-    def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload):
+    def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload) -> None:
         self.guild: Guild = guild
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
@@ -236,7 +236,7 @@ class Role(Hashable):
             return NotImplemented
         return not r
 
-    def _update(self, data: RolePayload):
+    def _update(self, data: RolePayload) -> None:
         self.name: str = data["name"]
         self._permissions: int = int(data.get("permissions", 0))
         self.position: int = data.get("position", 0)

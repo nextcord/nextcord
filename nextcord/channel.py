@@ -107,7 +107,7 @@ if TYPE_CHECKING:
     from .webhook import Webhook
 
 
-async def _single_delete_strategy(messages: Iterable[Message]):
+async def _single_delete_strategy(messages: Iterable[Message]) -> None:
     for m in messages:
         await m.delete()
 
@@ -196,7 +196,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         "default_thread_slowmode_delay",
     )
 
-    def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload):
+    def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self._type: int = data["type"]
@@ -939,7 +939,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         "default_reaction",
     )
 
-    def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload):
+    def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self._type: int = data["type"]
@@ -1434,7 +1434,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         state: ConnectionState,
         guild: Guild,
         data: Union[VoiceChannelPayload, StageChannelPayload],
-    ):
+    ) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self._update(guild, data)
@@ -2255,7 +2255,9 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         "flags",
     )
 
-    def __init__(self, *, state: ConnectionState, guild: Guild, data: CategoryChannelPayload):
+    def __init__(
+        self, *, state: ConnectionState, guild: Guild, data: CategoryChannelPayload
+    ) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self._update(guild, data)
@@ -2358,7 +2360,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
 
     @utils.copy_doc(abc.GuildChannel.move)
-    async def move(self, **kwargs):
+    async def move(self, **kwargs) -> None:
         kwargs.pop("category", None)
         await super().move(**kwargs)
 
@@ -2504,7 +2506,7 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
 
     __slots__ = ("id", "recipient", "me", "_state")
 
-    def __init__(self, *, me: ClientUser, state: ConnectionState, data: DMChannelPayload):
+    def __init__(self, *, me: ClientUser, state: ConnectionState, data: DMChannelPayload) -> None:
         self._state: ConnectionState = state
         self.recipient: Optional[User] = state.store_user(data["recipients"][0])  # type: ignore
         self.me: ClientUser = me
@@ -2636,7 +2638,9 @@ class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
 
     __slots__ = ("id", "recipients", "owner_id", "owner", "_icon", "name", "me", "_state")
 
-    def __init__(self, *, me: ClientUser, state: ConnectionState, data: GroupChannelPayload):
+    def __init__(
+        self, *, me: ClientUser, state: ConnectionState, data: GroupChannelPayload
+    ) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self.me: ClientUser = me
@@ -2772,7 +2776,7 @@ class PartialMessageable(abc.Messageable, Hashable):
         The channel type associated with this partial messageable, if given.
     """
 
-    def __init__(self, state: ConnectionState, id: int, type: Optional[ChannelType] = None):
+    def __init__(self, state: ConnectionState, id: int, type: Optional[ChannelType] = None) -> None:
         self._state: ConnectionState = state
         self._channel: Object = Object(id=id)
         self.id: int = id

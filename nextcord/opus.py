@@ -330,7 +330,7 @@ class OpusError(DiscordException):
         The error code returned.
     """
 
-    def __init__(self, code: int):
+    def __init__(self, code: int) -> None:
         self.code: int = code
         msg = _lib.opus_strerror(self.code).decode("utf-8")
         _log.info('"%s" has happened', msg)
@@ -361,7 +361,7 @@ class _OpusStruct:
 
 
 class Encoder(_OpusStruct):
-    def __init__(self, application: int = APPLICATION_AUDIO):
+    def __init__(self, application: int = APPLICATION_AUDIO) -> None:
         _OpusStruct.get_opus_version()
 
         self.application: int = application
@@ -427,7 +427,7 @@ class Encoder(_OpusStruct):
 
 
 class Decoder(_OpusStruct):
-    def __init__(self):
+    def __init__(self) -> None:
         _OpusStruct.get_opus_version()
 
         self._state: DecoderStruct = self._create_state()

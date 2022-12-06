@@ -209,7 +209,7 @@ class CallbackWrapper:
 
 
 class CallbackWrapperMixin:
-    def __init__(self, callback: Optional[Union[Callable, CallbackWrapper]]):
+    def __init__(self, callback: Optional[Union[Callable, CallbackWrapper]]) -> None:
         """Adds very basic callback wrapper support.
 
         If you are a normal user, you shouldn't be using this.
@@ -292,7 +292,7 @@ class ApplicationCommandOption:
         min_length: Optional[int] = None,
         max_length: Optional[int] = None,
         autocomplete: Optional[bool] = None,
-    ):
+    ) -> None:
         self.type: Optional[ApplicationCommandOptionType] = cmd_type
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
@@ -423,7 +423,7 @@ class BaseCommandOption(ApplicationCommandOption):
         parameter: Parameter,
         command: Union[BaseApplicationCommand, SlashApplicationSubcommand],
         parent_cog: Optional[ClientCog] = None,
-    ):
+    ) -> None:
         ApplicationCommandOption.__init__(self)
         self.parameter: Parameter = parameter
         self.command: Union[BaseApplicationCommand, SlashApplicationSubcommand] = command
@@ -488,7 +488,7 @@ class OptionConverter(_CustomTypingMetaBase):
 class Mentionable(OptionConverter):
     """When a parameter is typehinted with this, it allows users to select both roles and members."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(ApplicationCommandOptionType.mentionable)
 
     async def convert(self, interaction: Interaction, value: Any) -> Any:
@@ -593,7 +593,9 @@ class CallbackMixin:
     name: Optional[str]
     options: Dict[str, BaseCommandOption]
 
-    def __init__(self, callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = None):
+    def __init__(
+        self, callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = None
+    ) -> None:
         """Contains code specific for adding callback support to a command class.
 
         If you are a normal user, you shouldn't be using this.
@@ -1000,7 +1002,7 @@ class AutocompleteOptionMixin:
         self,
         autocomplete_callback: Optional[Callable] = None,
         parent_cog: Optional[ClientCog] = None,
-    ):
+    ) -> None:
         """Contains code for providing autocomplete support, specifically for options.
 
         If you are a normal user, you shouldn't be using this.
@@ -1059,7 +1061,7 @@ class AutocompleteCommandMixin:
     children: Dict[str, SlashApplicationSubcommand]
     _state: ConnectionState
 
-    def __init__(self, parent_cog: Optional[ClientCog] = None):
+    def __init__(self, parent_cog: Optional[ClientCog] = None) -> None:
         """Contains code for providing autocomplete support, specifically for application commands.
 
         If you are a normal user, you shouldn't be using this.
@@ -1303,7 +1305,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         autocomplete_callback: Optional[Callable] = None,
         default: Any = MISSING,
         verify: bool = True,
-    ):
+    ) -> None:
         super().__init__(
             name=name,
             name_localizations=name_localizations,
@@ -1382,7 +1384,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         parameter: Parameter,
         command: Union[SlashApplicationCommand, SlashApplicationSubcommand],
         parent_cog: Optional[ClientCog] = None,
-    ):
+    ) -> None:
         BaseCommandOption.__init__(self, parameter, command, parent_cog)
         SlashOption.__init__(self)
         # We subclassed SlashOption because we must handle all attributes it has.
@@ -1582,7 +1584,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             return DEFAULT_SLASH_DESCRIPTION
 
     @description.setter
-    def description(self, value: str):
+    def description(self, value: str) -> None:
         self._description = value
 
     def get_type(
@@ -1722,7 +1724,7 @@ class SlashCommandMixin(CallbackMixin):
         qualified_name: str
         _children: Dict[str, SlashApplicationSubcommand]
 
-    def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]):
+    def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]) -> None:
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
         self.options: Dict[str, SlashCommandOption] = {}
         self._parsed_docstring: Optional[Dict[str, Any]] = None
@@ -1881,7 +1883,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
-    ):
+    ) -> None:
         """Base application command class that all specific application command classes should subclass. All common
         behavior should be here, with subclasses either adding on or overriding specific aspects of this class.
 
@@ -1959,7 +1961,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         return self._description or DEFAULT_SLASH_DESCRIPTION
 
     @description.setter
-    def description(self, new_description: str):
+    def description(self, new_description: str) -> None:
         self._description = new_description
 
     @property
@@ -2464,7 +2466,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand, None] = None,
         parent_cog: Optional[ClientCog] = None,
         inherit_hooks: bool = False,
-    ):
+    ) -> None:
         """Slash Application Subcommand, supporting additional subcommands and autocomplete.
 
         Parameters
@@ -2704,7 +2706,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
-    ):
+    ) -> None:
         """Represents a Slash Application Command built from the given callback, able to be registered to multiple
         guilds or globally.
 
@@ -2758,7 +2760,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         return super().description  # Required to grab the correct description function.
 
     @description.setter
-    def description(self, new_desc: str):
+    def description(self, new_desc: str) -> None:
         self._description = new_desc
 
     def get_payload(self, guild_id: Optional[int]):
@@ -2792,7 +2794,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         callback: Optional[Callable] = None,
         option_class: Type[SlashCommandOption] = SlashCommandOption,
         call_children: bool = True,
-    ):
+    ) -> None:
         BaseApplicationCommand.from_callback(self, callback=callback, option_class=option_class)
         SlashCommandMixin.from_callback(self, callback=callback)
         AutocompleteCommandMixin.from_autocomplete(self)
@@ -2868,7 +2870,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
-    ):
+    ) -> None:
         """Represents a User Application Command that will give the user to the given callback, able to be registered to
         multiple guilds or globally.
 
@@ -2916,7 +2918,7 @@ class UserApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("UserApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: Interaction):
+    async def call(self, state: ConnectionState, interaction: Interaction) -> None:
         await self.invoke_callback_with_hooks(
             state, interaction, args=(get_users_from_interaction(state, interaction)[0],)
         )
@@ -2925,7 +2927,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         self,
         callback: Optional[Callable] = None,
         option_class: Optional[Type[BaseCommandOption]] = None,
-    ):
+    ) -> None:
         super().from_callback(callback, option_class=option_class)
         CallbackWrapperMixin.modify(self)
 
@@ -2944,7 +2946,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
-    ):
+    ) -> None:
         """Represents a Message Application Command that will give the message to the given callback, able to be
         registered to multiple guilds or globally.
 
@@ -2992,7 +2994,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("MessageApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: Interaction):
+    async def call(self, state: ConnectionState, interaction: Interaction) -> None:
         await self.invoke_callback_with_hooks(
             state, interaction, args=(get_messages_from_interaction(state, interaction)[0],)
         )
@@ -3001,7 +3003,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         self,
         callback: Optional[Callable] = None,
         option_class: Optional[Type[BaseCommandOption]] = None,
-    ):
+    ) -> None:
         super().from_callback(callback, option_class=option_class)
         CallbackWrapperMixin.modify(self)
 
@@ -3518,13 +3520,13 @@ class Range:
         ],
     ) -> Type[Union[int, float]]:
         class Inner(Range, OptionConverter):
-            def __init__(self):
+            def __init__(self) -> None:
                 super().__init__(option_type=type(self.min or self.max))
 
             async def convert(self, interaction: Interaction, value: Any) -> Any:
                 return value
 
-            def modify(self, option: SlashCommandOption):
+            def modify(self, option: SlashCommandOption) -> None:
                 if self.min and option.min_value is None:
                     option.min_value = self.min
                 if self.max and option.max_value is None:
@@ -3593,13 +3595,13 @@ class String:
         ],
     ) -> Type[int]:
         class Inner(String, OptionConverter):
-            def __init__(self):
+            def __init__(self) -> None:
                 super().__init__(option_type=str)
 
             async def convert(self, interaction: Interaction, value: Any) -> Any:
                 return value
 
-            def modify(self, option: SlashCommandOption):
+            def modify(self, option: SlashCommandOption) -> None:
                 if self.min and option.min_length is None:
                     option.min_length = self.min
                 if self.max and option.max_length is None:

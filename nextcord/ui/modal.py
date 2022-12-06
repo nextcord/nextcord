@@ -111,7 +111,7 @@ class Modal:
         timeout: Optional[float] = None,
         custom_id: str = MISSING,
         auto_defer: bool = True,
-    ):
+    ) -> None:
         self.title = title
         self.timeout = timeout
         self._provided_custom_id = custom_id is not MISSING
@@ -233,7 +233,7 @@ class Modal:
         self.children.clear()
         self.__weights.clear()
 
-    async def callback(self, interaction: Interaction):
+    async def callback(self, interaction: Interaction) -> None:
         """|coro|
 
         The callback that is called when the user press the submit button.
@@ -307,14 +307,14 @@ class Modal:
             self.__timeout_expiry = time.monotonic() + self.timeout
             self.__timeout_task = loop.create_task(self.__timeout_task_impl())
 
-    def _dispatch_timeout(self):
+    def _dispatch_timeout(self) -> None:
         if self.__stopped.done():
             return
 
         asyncio.create_task(self.on_timeout(), name=f"discord-ui-modal-timeout-{self.id}")
         self.__stopped.set_result(True)
 
-    def _dispatch(self, interaction: Interaction):
+    def _dispatch(self, interaction: Interaction) -> None:
         if self.__stopped.done():
             return
 
@@ -322,7 +322,7 @@ class Modal:
             self._scheduled_task(interaction), name=f"discord-ui-modal-dispatch-{self.id}"
         )
 
-    def refresh(self, components: List[Component]):
+    def refresh(self, components: List[Component]) -> None:
         # This is pretty hacky at the moment
         # fmt: off
         old_state: Dict[Tuple[int, str], Item] = {
@@ -396,7 +396,7 @@ class Modal:
 
 
 class ModalStore:
-    def __init__(self, state: ConnectionState):
+    def __init__(self, state: ConnectionState) -> None:
         # (user_id, custom_id): Modal
         self._modals: Dict[Tuple[int | None, str], Modal] = {}
         self._state: ConnectionState = state
@@ -412,7 +412,7 @@ class ModalStore:
         # fmt: on
         return list(modals.values())
 
-    def __verify_integrity(self):
+    def __verify_integrity(self) -> None:
         to_remove: List[Tuple[int | None, str]] = []
         for (k, modal) in self._modals.items():
             if modal.is_finished():

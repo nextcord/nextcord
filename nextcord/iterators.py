@@ -97,7 +97,7 @@ class _AsyncIterator(AsyncIterator[T]):
         raise NotImplementedError
 
     def get(self, **attrs: T) -> Awaitable[Optional[T]]:
-        def predicate(elem: T):
+        def predicate(elem: T) -> bool:
             for attr, val in attrs.items():
                 nested = attr.split("__")
                 obj = elem
@@ -201,7 +201,7 @@ class _FilteredAsyncIterator(_AsyncIterator[T]):
 class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
     def __init__(
         self, message: Message, emoji: str, limit: int = 100, after: Optional[Snowflake] = None
-    ):
+    ) -> None:
         self.message: Message = message
         self.limit: int = limit
         self.after: Optional[Snowflake] = after
@@ -295,7 +295,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
         after: Optional[SnowflakeTime] = None,
         around: Optional[SnowflakeTime] = None,
         oldest_first: Optional[bool] = None,
-    ):
+    ) -> None:
 
         if isinstance(before, datetime.datetime):
             before = Object(id=time_snowflake(before, high=False))
@@ -457,7 +457,7 @@ class BanIterator(_AsyncIterator["BanEntry"]):
         limit: Optional[int] = None,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ):
+    ) -> None:
         self.guild: Guild = guild
         self.limit: Optional[int] = limit
         self.before: Optional[Snowflake] = before
@@ -535,7 +535,7 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         oldest_first: Optional[bool] = None,
         user_id: Optional[int] = None,
         action_type: Optional[AuditLogAction] = None,
-    ):
+    ) -> None:
         if isinstance(before, datetime.datetime):
             before = Object(id=time_snowflake(before, high=False))
         if isinstance(after, datetime.datetime):
@@ -599,7 +599,7 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         self.retrieve = r
         return r > 0
 
-    async def _fill(self):
+    async def _fill(self) -> None:
         if self._get_retrieve():
             data = await self._strategy(self.retrieve)
             if len(data) < 100:
@@ -669,7 +669,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         limit: Optional[int],
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
-    ):
+    ) -> None:
         self.retrieve: int
 
         if isinstance(before, datetime.datetime):
@@ -765,7 +765,7 @@ class MemberIterator(_AsyncIterator["Member"]):
         guild: Guild,
         limit: Optional[int] = 1000,
         after: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ):
+    ) -> None:
         if isinstance(after, datetime.datetime):
             after = Object(id=time_snowflake(after, high=True))
 
@@ -826,7 +826,7 @@ class ArchivedThreadIterator(_AsyncIterator["Thread"]):
         joined: bool,
         private: bool,
         before: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ):
+    ) -> None:
         self.channel_id: int = channel_id
         self.guild: Guild = guild
         self.limit: Optional[int] = limit
@@ -910,7 +910,7 @@ class ArchivedThreadIterator(_AsyncIterator["Thread"]):
 
 
 class ScheduledEventIterator(_AsyncIterator["ScheduledEvent"]):
-    def __init__(self, guild: Guild, with_users: bool = False):
+    def __init__(self, guild: Guild, with_users: bool = False) -> None:
         self.guild: Guild = guild
         self.with_users: bool = with_users
 
@@ -953,7 +953,7 @@ class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
         limit: Optional[int] = None,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ):
+    ) -> None:
         self.guild: Guild = guild
         self.event: ScheduledEvent = event
         self.with_member: bool = with_member

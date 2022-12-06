@@ -78,7 +78,7 @@ __all__ = (
 
 
 class CheckWrapper(CallbackWrapper):
-    def __init__(self, callback: Union[Callable, CallbackWrapper], predicate):
+    def __init__(self, callback: Union[Callable, CallbackWrapper], predicate) -> None:
         super().__init__(callback)
 
         if not asyncio.iscoroutinefunction(predicate):
@@ -94,7 +94,7 @@ class CheckWrapper(CallbackWrapper):
     def __call__(self, *args, **kwargs):
         return self.predicate(*args, **kwargs)
 
-    def modify(self, app_cmd: BaseApplicationCommand):
+    def modify(self, app_cmd: BaseApplicationCommand) -> None:
         app_cmd.checks.append(self.predicate)
 
 
@@ -755,7 +755,7 @@ def application_command_before_invoke(coro) -> AC:
     """
 
     class BeforeInvokeModifier(CallbackWrapper):
-        def modify(self, app_cmd: BaseApplicationCommand):
+        def modify(self, app_cmd: BaseApplicationCommand) -> None:
             app_cmd._callback_before_invoke = coro
 
     def decorator(
@@ -774,7 +774,7 @@ def application_command_after_invoke(coro) -> AC:
     """
 
     class AfterInvokeModifier(CallbackWrapper):
-        def modify(self, app_cmd: BaseApplicationCommand):
+        def modify(self, app_cmd: BaseApplicationCommand) -> None:
             app_cmd._callback_after_invoke = coro
 
     def decorator(

@@ -95,7 +95,7 @@ def _component_to_item(component: Component) -> Item:
 class _ViewWeights:
     __slots__ = ("weights",)
 
-    def __init__(self, children: List[Item]):
+    def __init__(self, children: List[Item]) -> None:
         self.weights: List[int] = [0, 0, 0, 0, 0]
 
         key: Callable[[Item[Any]], int] = lambda i: sys.maxsize if i.row is None else i.row
@@ -177,7 +177,7 @@ class View:
 
         cls.__view_children_items__ = children
 
-    def __init__(self, *, timeout: Optional[float] = 180.0, auto_defer: bool = True):
+    def __init__(self, *, timeout: Optional[float] = 180.0, auto_defer: bool = True) -> None:
         self.timeout = timeout
         self.auto_defer = auto_defer
         self.children: List[Item] = []
@@ -409,14 +409,14 @@ class View:
             self.__timeout_expiry = time.monotonic() + self.timeout
             self.__timeout_task = loop.create_task(self.__timeout_task_impl())
 
-    def _dispatch_timeout(self):
+    def _dispatch_timeout(self) -> None:
         if self.__stopped.done():
             return
 
         asyncio.create_task(self.on_timeout(), name=f"discord-ui-view-timeout-{self.id}")
         self.__stopped.set_result(True)
 
-    def _dispatch_item(self, item: Item, interaction: Interaction):
+    def _dispatch_item(self, item: Item, interaction: Interaction) -> None:
         if self.__stopped.done():
             return
 
@@ -424,7 +424,7 @@ class View:
             self._scheduled_task(item, interaction), name=f"discord-ui-view-dispatch-{self.id}"
         )
 
-    def refresh(self, components: List[Component]):
+    def refresh(self, components: List[Component]) -> None:
         # fmt: off
         old_state: Dict[str, Item[Any]] = {
             item.custom_id: item  # type: ignore
@@ -498,7 +498,7 @@ class View:
 
 
 class ViewStore:
-    def __init__(self, state: ConnectionState):
+    def __init__(self, state: ConnectionState) -> None:
         # (component_type, message_id, custom_id): (View, Item)
         self._views: Dict[Tuple[int, Optional[int], str], Tuple[View, Item]] = {}
         # message_id: View
@@ -516,7 +516,7 @@ class ViewStore:
         # fmt: on
         return list(views.values())
 
-    def __verify_integrity(self):
+    def __verify_integrity(self) -> None:
         to_remove: List[Tuple[int, Optional[int], str]] = []
         for (k, (view, _)) in self._views.items():
             if view.is_finished():
