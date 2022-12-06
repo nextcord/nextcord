@@ -232,7 +232,7 @@ class Guild(Hashable):
         - ``DEVELOPER_SUPPORT_SERVER``: Guild has been set as a support server on the App Directory.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
         - ``FEATURABLE``: Guild is able to be featured in Server Discovery.
-        - ``INVITE_DISABLED``: Guild has paused invites, preventing new users from joining.
+        - ``INVITES_DISABLED``: Guild has paused invites, preventing new users from joining.
         - ``INVITE_SPLASH``: Guild's invite page can have a special splash.
         - ``MEMBER_VERIFICATION_GATE_ENABLED``: Guild has Membership Screening enabled.
         - ``MONETIZATION_ENABLED``: Guild has enabled monetization.
