@@ -114,7 +114,7 @@ class TeamMember(BaseUser):
             TeamMembershipState, data["membership_state"]
         )
         self.permissions: List[str] = data["permissions"]
-        super().__init__(state=state, data=data["user"])  # type: ignore
+        super().__init__(state=state, data=data["user"])
 
     def __repr__(self) -> str:
         return (

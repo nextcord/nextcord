@@ -11,6 +11,7 @@ from .member import Member
 from .role import Role
 from .scheduled_events import ScheduledEvent
 from .snowflake import Snowflake
+from .sticker import GuildSticker
 from .threads import Thread
 from .user import User
 from .voice import GuildVoiceState
@@ -117,6 +118,7 @@ class Guild(_BaseGuildPreview):
     max_members: NotRequired[int]
     premium_subscription_count: NotRequired[int]
     max_video_channel_users: NotRequired[int]
+    stickers: NotRequired[List[GuildSticker]]
 
 
 class InviteGuild(Guild, total=False):

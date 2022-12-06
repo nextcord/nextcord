@@ -23,3 +23,8 @@ class Emoji(PartialEmoji, total=False):
 class EditEmoji(TypedDict):
     name: str
     roles: Optional[SnowflakeList]
+
+
+class DefaultReaction(TypedDict, total=False):
+    emoji_id: Optional[Snowflake]
+    emoji_name: Optional[str]

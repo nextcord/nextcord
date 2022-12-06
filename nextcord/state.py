@@ -71,7 +71,7 @@ if TYPE_CHECKING:
     from .types.message import Message as MessagePayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
-    from .types.user import User as UserPayload
+    from .types.user import PartialUser as PartialUserPayload, User as UserPayload
     from .voice_client import VoiceProtocol
 
     T = TypeVar("T")
@@ -245,8 +245,8 @@ class ConnectionState:
         self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
 
         if not intents.members or member_cache_flags._empty:
-            self.store_user = self.create_user  # type: ignore
-            self.deref_user = self.deref_user_no_intents  # type: ignore
+            self.store_user = self.create_user
+            self.deref_user = self.deref_user_no_intents
 
         self.parsers = parsers = {}
         for attr, func in inspect.getmembers(self):
@@ -373,7 +373,7 @@ class ConnectionState:
     def deref_user(self, user_id: int) -> None:
         self._users.pop(user_id, None)
 
-    def create_user(self, data: UserPayload) -> User:
+    def create_user(self, data: Union[PartialUserPayload, UserPayload]) -> User:
         return User(state=self, data=data)
 
     def deref_user_no_intents(self, user_id: int) -> None:
@@ -1250,8 +1250,8 @@ class ConnectionState:
         self.dispatch("message", message)
         if self._messages is not None:
             self._messages.append(message)
-        # we ensure that the channel is either a TextChannel, ForumChannel or Thread
-        if channel and channel.__class__ in (TextChannel, ForumChannel, Thread):
+        # we ensure that the channel is either a TextChannel, ForumChannel, Thread or VoiceChannel
+        if channel and channel.__class__ in (TextChannel, ForumChannel, Thread, VoiceChannel):
             channel.last_message_id = message.id  # type: ignore
 
     def parse_message_delete(self, data) -> None:

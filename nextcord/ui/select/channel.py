@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
+from ...abc import GuildChannel
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
@@ -16,7 +17,6 @@ from .base import SelectBase, SelectValuesBase
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ...abc import GuildChannel
     from ...enums import ChannelType
     from ...guild import Guild
     from ...state import ConnectionState

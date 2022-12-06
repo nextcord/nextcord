@@ -795,7 +795,7 @@ class DiscordVoiceWebSocket:
         self.loop: asyncio.AbstractEventLoop = loop
         self._keep_alive: Optional[VoiceKeepAliveHandler] = None
         self._close_code: Optional[int] = None
-        self.secret_key: Optional[str] = None
+        self.secret_key: Optional[List[int]] = None
         self._hook: Optional[Callable[..., Awaitable[None]]] = (
             hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
         )
@@ -947,7 +947,7 @@ class DiscordVoiceWebSocket:
 
     async def load_secret_key(self, data: Dict[str, Any]) -> None:
         _log.info("received secret key for voice connection")
-        self.secret_key = self._connection.secret_key = data.get("secret_key")
+        self.secret_key = self._connection.secret_key = data["secret_key"]
         await self.speak()
         await self.speak(SpeakingState.none)
 

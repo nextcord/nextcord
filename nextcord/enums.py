@@ -208,9 +208,9 @@ class VoiceRegion(StrEnum):
 
 class SpeakingState(IntEnum):
     none = 0
-    voice = 1
-    soundshare = 2
-    priority = 4
+    voice = 1 << 0
+    soundshare = 1 << 1
+    priority = 1 << 2
 
     def __str__(self):
         return self.name
@@ -432,25 +432,26 @@ class AuditLogAction(IntEnum):
 
 
 class UserFlags(IntEnum):
-    staff = 1
-    partner = 2
-    hypesquad = 4
-    bug_hunter = 8
-    mfa_sms = 16
-    premium_promo_dismissed = 32
-    hypesquad_bravery = 64
-    hypesquad_brilliance = 128
-    hypesquad_balance = 256
-    early_supporter = 512
-    team_user = 1024
-    system = 4096
-    has_unread_urgent_messages = 8192
-    bug_hunter_level_2 = 16384
-    verified_bot = 65536
-    verified_bot_developer = 131072
-    discord_certified_moderator = 262144
-    known_spammer = 1048576
-    active_developer = 4194304
+    staff = 1 << 0
+    partner = 1 << 1
+    hypesquad = 1 << 2
+    bug_hunter = 1 << 3
+    mfa_sms = 1 << 4
+    premium_promo_dismissed = 1 << 5
+    hypesquad_bravery = 1 << 6
+    hypesquad_brilliance = 1 << 7
+    hypesquad_balance = 1 << 8
+    early_supporter = 1 << 9
+    team_user = 1 << 10
+    system = 1 << 12
+    has_unread_urgent_messages = 1 << 13
+    bug_hunter_level_2 = 1 << 14
+    verified_bot = 1 << 16
+    verified_bot_developer = 1 << 17
+    discord_certified_moderator = 1 << 18
+    bot_http_interactions = 1 << 19
+    known_spammer = 1 << 20
+    active_developer = 1 << 22
 
 
 class ActivityType(IntEnum):

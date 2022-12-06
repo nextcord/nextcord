@@ -294,7 +294,7 @@ class StringSelectMenu(SelectMenuBase):
             "type": self.type.value,
             "options": [op.to_dict() for op in self.options],
             **super().to_dict(),
-        }  # type: ignore -- fixed in pyright 1.1.278
+        }
 
         return payload
 
@@ -340,7 +340,7 @@ class UserSelectMenu(SelectMenuBase):
         self.type = ComponentType.user_select
 
     def to_dict(self) -> UserSelectMenuPayload:
-        payload: UserSelectMenuPayload = {"type": self.type.value, **super().to_dict()}  # type: ignore -- fixed in pyright 1.1.278
+        payload: UserSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
 
         return payload
 
@@ -383,7 +383,7 @@ class RoleSelectMenu(SelectMenuBase):
         self.type = ComponentType.role_select
 
     def to_dict(self) -> RoleSelectMenuPayload:
-        payload: RoleSelectMenuPayload = {"type": self.type.value, **super().to_dict()}  # type: ignore -- fixed in pyright 1.1.278
+        payload: RoleSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
 
         return payload
 
@@ -426,7 +426,7 @@ class MentionableSelectMenu(SelectMenuBase):
         self.type = ComponentType.mentionable_select
 
     def to_dict(self) -> MentionableSelectMenuPayload:
-        payload: MentionableSelectMenuPayload = {"type": self.type.value, **super().to_dict()}  # type: ignore -- fixed in pyright 1.1.278
+        payload: MentionableSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
 
         return payload
 
@@ -474,7 +474,7 @@ class ChannelSelectMenu(SelectMenuBase):
         ]
 
     def to_dict(self) -> ChannelSelectMenuPayload:
-        payload: ChannelSelectMenuPayload = {"type": self.type.value, **super().to_dict()}  # type: ignore -- fixed in pyright 1.1.278
+        payload: ChannelSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
         if self.channel_types:
             payload["channel_types"] = [t.value for t in self.channel_types]
 

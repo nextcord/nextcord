@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .state import ConnectionState
+    from .types.emoji import DefaultReaction
     from .types.message import PartialEmoji as PartialEmojiPayload
 
 
@@ -88,6 +89,13 @@ class PartialEmoji(_EmojiTag, AssetMixin):
             animated=data.get("animated", False),
             id=utils.get_as_snowflake(data, "id"),
             name=data.get("name") or "",
+        )
+
+    @classmethod
+    def from_default_reaction(cls, data: DefaultReaction) -> Self:
+        return cls(
+            id=utils.get_as_snowflake(data, "emoji_id"),
+            name=data.get("emoji_name") or "",
         )
 
     @classmethod
