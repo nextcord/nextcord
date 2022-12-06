@@ -1,0 +1,8 @@
+# List of modules that contain codemods inside of them.
+modules:
+  - "libcst.codemod.commands"
+  - "autotyping"
+# Absolute or relative path of the repository root, used for providing
+# full-repo metadata. Relative paths should be specified with this file
+# location as the base.
+repo_root: "."

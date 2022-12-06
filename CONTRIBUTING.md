@@ -65,6 +65,8 @@ Nextcord uses [Pyright](https://github.com/microsoft/pyright) for type checking.
 
 If type annotations are new to you, here is a [guide](https://decorator-factory.github.io/typing-tips/) to help you with it.
 
+We include [Autotyping](https://pypi.org/project/autotyping/) via `task codemod` to help you with type annotations. This will automatically add repetitive annotations such as `None` returns and `__str__` annotations.
+
 ## Commits
 
 Nextcord follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) style. This means that your commit messages and PR titles should be formatted in a specific way. This is to help us generate changelogs and release notes, whilst also helping us review your pull requests as we can see what each commit does.
