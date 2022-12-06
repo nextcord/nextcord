@@ -4,19 +4,19 @@ from sphinx.writers.html5 import HTML5Translator
 
 
 class DPYHTML5Translator(HTML5Translator):
-    def visit_section(self, node) -> None:
+    def visit_section(self, node):
         self.section_level += 1
         self.body.append(self.starttag(node, "section"))
 
-    def depart_section(self, node) -> None:
+    def depart_section(self, node):
         self.section_level -= 1
         self.body.append("</section>\n")
 
-    def visit_table(self, node) -> None:
+    def visit_table(self, node):
         self.body.append('<div class="table-wrapper">')
         super().visit_table(node)
 
-    def depart_table(self, node) -> None:
+    def depart_table(self, node):
         super().depart_table(node)
         self.body.append("</div>")
 
@@ -50,13 +50,13 @@ class DPYStandaloneHTMLBuilder(StandaloneHTMLBuilder):
             self.handle_page("genindex", genindexcontext, "genindex.html")
 
 
-def add_custom_jinja2(app) -> None:
+def add_custom_jinja2(app):
     env = app.builder.templates.environment
     env.tests["prefixedwith"] = str.startswith
     env.tests["suffixedwith"] = str.endswith
 
 
-def add_builders(app) -> None:
+def add_builders(app):
     """This is necessary because RTD injects their own for some reason."""
     app.set_translator("html", DPYHTML5Translator, override=True)
     app.add_builder(DPYStandaloneHTMLBuilder, override=True)
@@ -75,6 +75,6 @@ def add_builders(app) -> None:
         app.add_builder(new_builder, override=True)
 
 
-def setup(app) -> None:
+def setup(app):
     add_builders(app)
     app.connect("builder-inited", add_custom_jinja2)

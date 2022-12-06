@@ -28,7 +28,7 @@ ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
 
 class YTDLSource(nextcord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume: float = 0.5) -> None:
+    def __init__(self, source, *, data, volume=0.5):
         super().__init__(source, volume)
 
         self.data = data
@@ -37,7 +37,7 @@ class YTDLSource(nextcord.PCMVolumeTransformer):
         self.url = data.get("url")
 
     @classmethod
-    async def from_url(cls, url, *, loop=None, stream: bool = False):
+    async def from_url(cls, url, *, loop=None, stream=False):
         loop = loop or asyncio.get_event_loop()
         data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
 
@@ -50,7 +50,7 @@ class YTDLSource(nextcord.PCMVolumeTransformer):
 
 
 class Music(commands.Cog):
-    def __init__(self, bot) -> None:
+    def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
@@ -63,7 +63,7 @@ class Music(commands.Cog):
         await channel.connect()
 
     @commands.command()
-    async def play(self, ctx, *, query) -> None:
+    async def play(self, ctx, *, query):
         """Plays a file from the local filesystem"""
 
         source = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio(query))
@@ -72,7 +72,7 @@ class Music(commands.Cog):
         await ctx.send(f"Now playing: {query}")
 
     @commands.command()
-    async def yt(self, ctx, *, url) -> None:
+    async def yt(self, ctx, *, url):
         """Plays from a URL (almost anything youtube_dl supports)"""
 
         async with ctx.typing():
@@ -84,7 +84,7 @@ class Music(commands.Cog):
         await ctx.send(f"Now playing: {player.title}")
 
     @commands.command()
-    async def stream(self, ctx, *, url) -> None:
+    async def stream(self, ctx, *, url):
         """Streams from a URL (same as yt, but doesn't predownload)"""
 
         async with ctx.typing():
@@ -106,7 +106,7 @@ class Music(commands.Cog):
         await ctx.send(f"Changed volume to {volume}%")
 
     @commands.command()
-    async def stop(self, ctx) -> None:
+    async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
 
         await ctx.voice_client.disconnect()

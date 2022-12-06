@@ -10,7 +10,7 @@ class Counter(nextcord.ui.View):
     # When it hits 5, the counter button is disabled and it turns green.
     # note: The name of the function does not matter to the library
     @nextcord.ui.button(label="0", style=nextcord.ButtonStyle.red)
-    async def count(self, button: nextcord.ui.Button, interaction: nextcord.Interaction) -> None:
+    async def count(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         number = int(button.label) if button.label else 0
         if number >= 4:
             button.style = nextcord.ButtonStyle.green
@@ -25,7 +25,7 @@ bot = commands.Bot()
 
 
 @bot.slash_command()
-async def counter(interaction) -> None:
+async def counter(interaction):
     """Starts a counter for pressing."""
     await interaction.send("Press!", view=Counter())
 

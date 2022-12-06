@@ -5,7 +5,7 @@ from nextcord.ext import commands
 
 
 class MyContext(commands.Context):
-    async def tick(self, value) -> None:
+    async def tick(self, value):
         # reacts to the message with an emoji
         # depending on whether value is True or False
         # if its True, it'll add a green check mark
@@ -22,7 +22,7 @@ class MyContext(commands.Context):
 
 
 class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     async def get_context(self, message: nextcord.Message, *, cls=MyContext):
@@ -38,7 +38,7 @@ bot = Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()
-async def guess(ctx, number: int) -> None:
+async def guess(ctx, number: int):
     """Guess a random number from 1 to 6."""
     # explained in a previous example, this gives you
     # a random number from 1-6

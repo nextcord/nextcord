@@ -38,7 +38,7 @@ target_folder = Path("nextcord")
 alias_folder = Path("discord")
 
 
-def scan_dir(folder) -> None:
+def scan_dir(folder):
     for file in folder.glob("*"):
         unprefixed = str(file)[len("nextcord") + 1 :]
         should_ignore = False

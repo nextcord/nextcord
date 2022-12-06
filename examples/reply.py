@@ -7,7 +7,7 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()
-async def hello(ctx) -> None:
+async def hello(ctx):
     await ctx.reply("Hello!")
 
 

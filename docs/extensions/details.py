@@ -11,20 +11,20 @@ class summary(nodes.General, nodes.Element):
     pass
 
 
-def visit_details_node(self, node) -> None:
+def visit_details_node(self, node):
     self.body.append(self.starttag(node, "details", CLASS=node.attributes.get("class", "")))
 
 
-def visit_summary_node(self, node) -> None:
+def visit_summary_node(self, node):
     self.body.append(self.starttag(node, "summary", CLASS=node.attributes.get("summary-class", "")))
     self.body.append(node.rawsource)
 
 
-def depart_details_node(self, node) -> None:
+def depart_details_node(self, node):
     self.body.append("</details>\n")
 
 
-def depart_summary_node(self, node) -> None:
+def depart_summary_node(self, node):
     self.body.append("</summary>")
 
 
@@ -57,7 +57,7 @@ class DetailsDirective(Directive):
         return [node]
 
 
-def setup(app) -> None:
+def setup(app):
     app.add_node(details, html=(visit_details_node, depart_details_node))
     app.add_node(summary, html=(visit_summary_node, depart_summary_node))
     app.add_directive("details", DetailsDirective)

@@ -17,18 +17,18 @@ bot = commands.Bot(command_prefix="$", description=description, intents=intents)
 
 
 @bot.event
-async def on_ready() -> None:
+async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
 
 
 @bot.command()
-async def add(ctx, left: int, right: int) -> None:
+async def add(ctx, left: int, right: int):
     """Adds two numbers together."""
     await ctx.send(left + right)
 
 
 @bot.command()
-async def roll(ctx, dice: str) -> None:
+async def roll(ctx, dice: str):
     """Rolls a dice in NdN format."""
     try:
         rolls, limit = map(int, dice.split("d"))
@@ -41,26 +41,26 @@ async def roll(ctx, dice: str) -> None:
 
 
 @bot.command(description="For when you wanna settle the score some other way")
-async def choose(ctx, *choices: str) -> None:
+async def choose(ctx, *choices: str):
     """Chooses between multiple choices."""
     await ctx.send(random.choice(choices))
 
 
 @bot.command()
-async def repeat(ctx, times: int, content: str = "repeating...") -> None:
+async def repeat(ctx, times: int, content="repeating..."):
     """Repeats a message multiple times."""
     for _ in range(times):
         await ctx.send(content)
 
 
 @bot.command()
-async def joined(ctx, member: nextcord.Member) -> None:
+async def joined(ctx, member: nextcord.Member):
     """Says when a member joined."""
     await ctx.send(f"{member.name} joined in {member.joined_at}")
 
 
 @bot.group()
-async def cool(ctx) -> None:
+async def cool(ctx):
     """Says if a user is cool.
 
     In reality this just checks if a subcommand is being invoked.
@@ -70,7 +70,7 @@ async def cool(ctx) -> None:
 
 
 @cool.command(name="bot")
-async def _bot(ctx) -> None:
+async def _bot(ctx):
     """Is the bot cool?"""
     await ctx.send("Yes, the bot is cool.")
 

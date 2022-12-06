@@ -14,7 +14,7 @@ TESTING_GUILD_ID = 123456798  # Replace with your testing guild id
 # For this example the custom_id is prefixed with the name of the bot.
 # Note that custom_ids can only be up to 100 characters long.
 class FeedbackModal(nextcord.ui.Modal):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__(
             title="Feedback",
             custom_id="persistent_modal:feedback",
@@ -47,7 +47,7 @@ class FeedbackModal(nextcord.ui.Modal):
         )
         self.add_item(self.improve)
 
-    async def callback(self, interaction: nextcord.Interaction) -> None:
+    async def callback(self, interaction: nextcord.Interaction):
         await interaction.send(
             f"Feedback from {interaction.user.mention}:\n"
             f"Rating: {self.rating.value}\n"
@@ -57,11 +57,11 @@ class FeedbackModal(nextcord.ui.Modal):
 
 
 class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.persistent_modals_added = False
 
-    async def on_ready(self) -> None:
+    async def on_ready(self):
         if not self.persistent_modals_added:
             # Register the persistent modal for listening here.
             # Note that this does not display the modal to the user.
@@ -80,7 +80,7 @@ bot = Bot()
     description="Send your feedback to the bot developer!",
     guild_ids=[TESTING_GUILD_ID],
 )
-async def feedback(interaction: nextcord.Interaction) -> None:
+async def feedback(interaction: nextcord.Interaction):
     await interaction.response.send_modal(FeedbackModal())
 
 
