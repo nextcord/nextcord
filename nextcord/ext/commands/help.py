@@ -126,7 +126,7 @@ class Paginator:
     def _linesep_len(self):
         return len(self.linesep)
 
-    def add_line(self, line="", *, empty=False):
+    def add_line(self, line: str = "", *, empty: bool = False):
         """Adds a line to the current page.
 
         If the line exceeds the :attr:`max_size` then an exception
@@ -539,7 +539,11 @@ class HelpCommand:
         return f'Command "{command.qualified_name}" has no subcommands.'
 
     async def filter_commands(
-        self, commands, *, sort=False, key: Optional[Callable[[Command[Any, Any, Any]], str]] = None
+        self,
+        commands,
+        *,
+        sort: bool = False,
+        key: Optional[Callable[[Command[Any, Any, Any]], str]] = None,
     ):
         """|coro|
 

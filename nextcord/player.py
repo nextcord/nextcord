@@ -380,7 +380,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         bitrate: int = 128,
         codec: Optional[str] = None,
         executable: str = "ffmpeg",
-        pipe=False,
+        pipe: bool = False,
         stderr=None,
         before_options=None,
         options=None,
