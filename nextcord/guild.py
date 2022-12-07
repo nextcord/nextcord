@@ -592,6 +592,14 @@ class Guild(Hashable):
         return self._large
 
     @property
+    def invites_paused(self) -> bool:
+        """:class:`bool`: Indicates if the guild's invites are paused.
+
+        .. versionadded:: 2.4
+        """
+        return "INVITES_DISABLED" in self.features.copy()
+
+    @property
     def voice_channels(self) -> List[VoiceChannel]:
         """List[:class:`VoiceChannel`]: A list of voice channels that belong to this guild.
 
