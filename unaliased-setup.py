@@ -56,6 +56,7 @@ packages = [
     "nextcord.webhook",
     "nextcord.ext.application_checks",
     "nextcord.ext.commands",
+    "nextcord.ext.slash_utils",
     "nextcord.ext.tasks",
 ]
 
