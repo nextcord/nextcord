@@ -1843,7 +1843,7 @@ class Guild(Hashable):
             else:
                 if "INVITES_DISABLED" in features:
                     features.remove("INVITES_DISABLED")
-            
+
             fields["features"] = features
 
         data = await http.edit_guild(self.id, reason=reason, **fields)
