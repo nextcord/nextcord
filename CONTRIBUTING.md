@@ -65,7 +65,7 @@ Nextcord uses [Pyright](https://github.com/microsoft/pyright) for type checking.
 
 If type annotations are new to you, here is a [guide](https://decorator-factory.github.io/typing-tips/) to help you with it.
 
-We include [Autotyping](https://pypi.org/project/autotyping/) via `task codemod` to help you with type annotations. This will automatically add repetitive annotations such as `None` returns and `__str__` annotations.
+We include [Autotyping](https://pypi.org/project/autotyping/) via `task codemod` to help you with type annotations. This will automatically add repetitive annotations such as `None` returns and `__str__` annotations. This is ran via `pre-commit` but is a good idea to run before in case any more typing issues arise.
 
 ## Commits
 
