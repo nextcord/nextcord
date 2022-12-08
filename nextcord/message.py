@@ -1269,6 +1269,9 @@ class Message(Hashable):
         if self.type is MessageType.guild_invite_reminder:
             return "Wondering who to invite?\nStart by inviting anyone who can help you build the server!"
 
+        if self.type is MessageType.role_subscription_purchase:
+            ...  # TODO: implement this
+
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
 
