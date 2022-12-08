@@ -87,7 +87,7 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import BaseApplicationCommand, ClientCog
+    from .application_command import BaseApplicationCommand, ClientCog, SlashApplicationSubcommand
     from .asset import Asset
     from .channel import DMChannel
     from .enums import Locale
@@ -2129,22 +2129,22 @@ class Client:
 
         .. versionadded:: 2.0
 
-        .. versionchanged:: 2.3
+        .. versionchanged:: 2.4
             it's no longer possible to pass ``None`` to the ``name`` parameter.
 
-        .. versionchanged:: 2.3
+        .. versionchanged:: 2.4
             Renamed the ``name`` parameter to ``qualified_name``.
 
-        .. versionchanged:: 2.3
+        .. versionchanged:: 2.4
             Renamed the ``cmd_type`` parameter to ``type``.
 
-        .. versionchanged:: 2.3
+        .. versionchanged:: 2.4
             Added the ``search_locales`` keyword argument.
 
-        .. versionchanged:: 2.3
+        .. versionchanged:: 2.4
             Subcommands/Subcommand groups can now be retrieved with this method.
 
-        .. versionchanged:: 2.3
+        .. versionchanged:: 2.4
             Changed the signature from ``(qualified_name, type, guild_id, *, search_locales)`` to ``(*, type, qualified_name, guild_id, search_locales)``.
             All parameters are now keyword-only.
 
@@ -2241,7 +2241,7 @@ class Client:
                 kwargs["guild_id"] = kwargs.get("guild_id", arg)
 
         # mimicking the python error
-        def ARGS_ERROR_MESSAGE(*required_arguments: str) -> str:
+        def _parse_args_errors(*required_arguments: str) -> str:
             base = f"{FUNC} missing {len(required_arguments)} required positional {'arguments' if len(required_arguments) > 1 else 'argument'}: "
             if len(required_arguments) == 1:
                 base += f"`{required_arguments[0]}`"
@@ -2257,14 +2257,13 @@ class Client:
 
             return base
 
-        MISSING_ARGS = []
+        missing_argument: List[str] = []
         for arg in REQUIRED_ARGS:
             if arg not in kwargs:
-                MISSING_ARGS.append(arg)
+                missing_argument.append(arg)
 
-        if MISSING_ARGS:
-            message = ARGS_ERROR_MESSAGE(*MISSING_ARGS)
-            raise TypeError(message)
+        if missing_argument:
+            raise TypeError(_parse_args_errors(*missing_argument))
 
         if args:
             params = [
