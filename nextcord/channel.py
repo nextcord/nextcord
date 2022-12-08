@@ -886,6 +886,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         .. versionadded:: 2.3
     default_forum_layout: :class:`ForumLayoutType`
         The default layout type used to display posts in forum channels.
+
+        .. versionadded:: 2.4
     default_thread_slowmode_delay: :class:`int`
         The default amount of seconds a user has to wait
         before creating another thread in this channel.
@@ -1122,6 +1124,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
             .. versionadded:: 2.3
         default_forum_layout: :class:`ForumLayoutType`
             The default layout type used to display posts in forum channels.
+
+            .. versionadded:: 2.4
         default_thread_slowmode_delay: :class:`int`
             The new default slowmode delay for threads created in this channel.
             This is not retroactively applied to old posts.

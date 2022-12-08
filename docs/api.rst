@@ -3037,6 +3037,24 @@ of :class:`enum.Enum`.
 
         Sort forum posts by their creation date.
 
+.. class:: ForumLayoutType
+
+    .. versionadded:: 2.4
+
+    The default layout type used to display posts in a :class:`ForumChannel`.
+
+    .. attribute:: default
+
+        A preferred forum layout hasn't been set by a server administrator.
+
+    .. attribute:: list
+
+        List View: display forum posts in a text-focused list.
+
+    .. attribute:: grid
+
+        Gallery View: display forum posts in a media-focused gallery.
+
 
 Async Iterator
 --------------
