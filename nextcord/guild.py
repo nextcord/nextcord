@@ -1656,7 +1656,7 @@ class Guild(Hashable):
             The ``icon``, ``banner``, ``splash``, ``discovery_splash``
             parameters now accept :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
-        .. versionadded:: 2.4
+        .. versionchanged:: 2.4
             The ``invites_disabled`` parameter has been added.
 
         Parameters
