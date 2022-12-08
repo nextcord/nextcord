@@ -2230,7 +2230,7 @@ def is_owner() -> Callable[[T], T]:
 
 
 def is_nsfw() -> Callable[[T], T]:
-    """A :func:`.check` that checks if the channel is "Age restriced".
+    """A :func:`.check` that checks if the channel is age restriced.
 
     This check raises a special exception, :exc:`.NSFWChannelRequired`
     that is derived from :exc:`.CheckFailure`.
