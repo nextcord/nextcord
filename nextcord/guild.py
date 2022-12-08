@@ -1165,7 +1165,7 @@ class Guild(Hashable):
             Specifies the slowmode rate limit for user in this channel, in seconds.
             The maximum value possible is ``21600``.
         nsfw: :class:`bool`
-            To mark the channel as NSFW or not.
+            To mark the channel as age restricted or not.
         reason: Optional[:class:`str`]
             The reason for creating this channel. Shows up on the audit log.
 

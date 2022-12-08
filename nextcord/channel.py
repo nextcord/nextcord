@@ -142,7 +142,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
 
         .. note::
 
-            To check if the channel or the guild of that channel are marked as NSFW, consider :meth:`is_nsfw` instead.
+            To check if the channel or the guild of that channel are marked as age restricted, consider :meth:`is_nsfw` instead.
     default_auto_archive_duration: :class:`int`
         The default auto archive duration in minutes for threads created in this channel.
 
@@ -244,7 +244,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         return [thread for thread in self.guild._threads.values() if thread.parent_id == self.id]
 
     def is_nsfw(self) -> bool:
-        """:class:`bool`: Checks if the channel is NSFW."""
+        """:class:`bool`: Checks if the channel is age restricted."""
         return self.nsfw
 
     def is_news(self) -> bool:
@@ -322,7 +322,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         position: :class:`int`
             The new channel's position.
         nsfw: :class:`bool`
-            To mark the channel as NSFW or not.
+            To mark the channel as age restricted or not.
         sync_permissions: :class:`bool`
             Whether to sync permissions with the channel's new or pre-existing
             category. Defaults to ``False``.
@@ -870,7 +870,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     position: :class:`int`
         The position in the channel list, where the first channel is ``0``.
     nsfw: :class:`bool`
-        If this channel is marked as NSFW.
+        If this channel is age restricted.
     slowmode_delay: :class:`int`
         The delay in seconds which members must wait between sending messages.
     flags: :class:`ChannelFlags`
@@ -991,7 +991,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         return [thread for thread in self.guild._threads.values() if thread.parent_id == self.id]
 
     def is_nsfw(self) -> bool:
-        """:class:`bool`: Checks if the channel is NSFW."""
+        """:class:`bool`: Checks if the channel is age restricted."""
         return self.nsfw
 
     @property
@@ -1085,7 +1085,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         position: :class:`int`
             The new channel's position.
         nsfw: :class:`bool`
-            To mark the channel as NSFW or not.
+            To mark the channel as age restricted or not.
         sync_permissions: :class:`bool`
             Whether to sync permissions with the channel's new or pre-existing
             category. Defaults to ``False``.
@@ -1548,7 +1548,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
         .. note::
 
-            To check if the channel or the guild of that channel are marked as NSFW, consider :meth:`is_nsfw` instead.
+            To check if the channel or the guild of that channel are marked as age restricted, consider :meth:`is_nsfw` instead.
 
         .. versionadded:: 2.1
     flags: :class:`ChannelFlags`
@@ -1590,7 +1590,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         return ChannelType.voice
 
     def is_nsfw(self) -> bool:
-        """:class:`bool`: Checks if the channel is NSFW."""
+        """:class:`bool`: Checks if the channel is age restricted."""
         return self.nsfw
 
     @property
@@ -2209,11 +2209,11 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         The position in the category list. This is a number that starts at 0. e.g. the
         top category is position 0.
     nsfw: :class:`bool`
-        If the channel is marked as "not safe for work".
+        If the channel is marked as age restricted.
 
         .. note::
 
-            To check if the channel or the guild of that channel are marked as NSFW, consider :meth:`is_nsfw` instead.
+            To check if the channel or the guild of that channel are marked as age restricted, consider :meth:`is_nsfw` instead.
     flags: :class:`ChannelFlags`
         Extra features of the channel.
 
@@ -2259,7 +2259,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         return ChannelType.category
 
     def is_nsfw(self) -> bool:
-        """:class:`bool`: Checks if the category is NSFW."""
+        """:class:`bool`: Checks if the category is age restricted."""
         return self.nsfw
 
     @utils.copy_doc(abc.GuildChannel.clone)
@@ -2306,7 +2306,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         position: :class:`int`
             The new category's position.
         nsfw: :class:`bool`
-            To mark the category as NSFW or not.
+            To mark the category as age restricted or not.
         reason: Optional[:class:`str`]
             The reason for editing this category. Shows up on the audit log.
         overwrites: :class:`Mapping`

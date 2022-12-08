@@ -2884,15 +2884,15 @@ of :class:`enum.Enum`.
 
     .. attribute:: explicit
 
-        The guild contains NSFW content.
+        The guild contains age restriced content.
 
     .. attribute:: safe
 
-        The guild does not contain any NSFW content.
+        The guild does not contain any age restriced content.
 
     .. attribute:: age_restricted
 
-        The guild may contain NSFW content.
+        The guild may contain age restriced content.
 
 .. class:: ScheduledEventEntityType
 

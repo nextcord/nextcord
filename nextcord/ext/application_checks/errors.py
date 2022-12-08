@@ -232,19 +232,19 @@ class ApplicationNotOwner(ApplicationCheckFailure):
 
 
 class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
-    """Exception raised when a channel does not have the required NSFW setting.
+    """Exception raised when a channel is not age restricted.
 
     This inherits from :exc:`~.ApplicationCheckFailure`.
 
     Parameters
     ----------
     channel: Optional[Union[:class:`.abc.GuildChannel`, :class:`.Thread`, :class:`PartialMessageable`]]
-        The channel that does not have NSFW enabled.
+        The channel is not age restricted.
     """
 
     def __init__(self, channel: Optional[Union[GuildChannel, Thread, PartialMessageable]]) -> None:
         self.channel: Optional[Union[GuildChannel, Thread, PartialMessageable]] = channel
-        super().__init__(f"Channel '{channel}' needs to be NSFW for this command to work.")
+        super().__init__(f"Channel '{channel}' must be age restricted to use this command to work.")
 
 
 class ApplicationCheckForBotOnly(ApplicationCheckFailure):

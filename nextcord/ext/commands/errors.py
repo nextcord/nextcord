@@ -715,7 +715,7 @@ class BotMissingAnyRole(CheckFailure):
 
 
 class NSFWChannelRequired(CheckFailure):
-    """Exception raised when a channel does not have the required NSFW setting.
+    """Exception raised when a channel is not age restricted.
 
     This inherits from :exc:`CheckFailure`.
 
@@ -724,12 +724,12 @@ class NSFWChannelRequired(CheckFailure):
     Parameters
     ----------
     channel: Union[:class:`.abc.GuildChannel`, :class:`.Thread`]
-        The channel that does not have NSFW enabled.
+        The channel is not age restricted
     """
 
     def __init__(self, channel: Union[GuildChannel, Thread]) -> None:
         self.channel: Union[GuildChannel, Thread] = channel
-        super().__init__(f"Channel '{channel}' needs to be NSFW for this command to work.")
+        super().__init__(f"Channel '{channel}' must be age restricted for this command to work.")
 
 
 class MissingPermissions(CheckFailure):

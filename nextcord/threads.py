@@ -355,9 +355,9 @@ class Thread(Messageable, Hashable, PinsMixin):
         return self._type is ChannelType.news_thread
 
     def is_nsfw(self) -> bool:
-        """:class:`bool`: Whether the thread is NSFW or not.
+        """:class:`bool`: Whether the thread is age restricted or not.
 
-        An NSFW thread is a thread that has a parent that is an NSFW channel,
+        An age restricted thread is a thread that has a parent that is an age restricted channel,
         i.e. :meth:`.TextChannel.is_nsfw` is ``True``.
         """
         parent = self.parent

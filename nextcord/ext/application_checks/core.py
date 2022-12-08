@@ -659,7 +659,7 @@ def is_owner() -> AC:
 
 
 def is_nsfw() -> AC:
-    """A :func:`.check` that checks if the channel is a NSFW channel.
+    """A :func:`.check` that checks if the channel is a age restricted channel.
 
     This check raises a special exception, :exc:`.ApplicationNSFWChannelRequired`
     that is derived from :exc:`.ApplicationCheckFailure`.
@@ -672,7 +672,7 @@ def is_nsfw() -> AC:
         @bot.slash_command()
         @application_checks.is_nsfw()
         async def ownercmd(interaction: Interaction):
-            await interaction.response.send_message('Only NSFW channels!')
+            await interaction.response.send_message('Only age restricted channels!')
     """
 
     def pred(interaction: Interaction) -> bool:

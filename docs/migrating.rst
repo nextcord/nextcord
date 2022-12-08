@@ -408,7 +408,7 @@ They will be enumerated here.
 - :meth:`Guild.audit_logs` to fetch the guild's audit logs.
 - :attr:`Message.webhook_id` to fetch the message's webhook ID.
 - :attr:`Message.activity` and :attr:`Message.application` for Rich Presence-related information.
-- :meth:`TextChannel.is_nsfw` to check if a text channel is NSFW.
+- :meth:`TextChannel.is_nsfw` to check if a text channel is age restricted.
 - :meth:`Colour.from_rgb` to construct a :class:`Colour` from RGB tuple.
 - :meth:`Guild.get_role` to get a role by its ID.
 
@@ -916,7 +916,7 @@ Along with this change, a couple of new checks were added.
     - This is actually powered by a different function, :meth:`~ext.commands.Bot.is_owner`.
     - You can set the owner ID yourself by setting :attr:`.Bot.owner_id`.
 
-- :func:`~ext.commands.is_nsfw` checks if the channel the command is in is an NSFW channel.
+- :func:`~ext.commands.is_nsfw` checks if the channel the command is in is an age restricted channel.
 
     - This is powered by the new :meth:`TextChannel.is_nsfw` method.
 
