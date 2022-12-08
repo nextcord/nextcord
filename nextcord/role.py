@@ -49,6 +49,8 @@ class RoleTags:
         The integration ID that manages the role.
     subscription_listing_id: Optional[:class:`int`]
         The id of this role's subscription sku and listing
+
+        .. versionadded:: 2.4
     """
 
     __slots__ = (
@@ -81,7 +83,10 @@ class RoleTags:
         return self._premium_subscriber is None
 
     def is_available_for_purchase(self) -> bool:
-        """:class:`bool`: Whether the role is available for purchase."""
+        """:class:`bool`: Whether the role is available for purchase.
+
+        .. versionadded:: 2.4
+        """
         return self._available_for_purchase is None
 
     def is_integration(self) -> bool:

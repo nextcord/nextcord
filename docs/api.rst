@@ -1440,6 +1440,12 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.1
 
+    .. attribute:: role_subscription_purchase
+
+        The system message denoting that a role subscription was purchased.
+
+        .. versionadded:: 2.4
+
 .. class:: UserFlags
 
     Represents Discord User flags.
