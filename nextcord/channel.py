@@ -26,6 +26,7 @@ from .asset import Asset
 from .emoji import Emoji
 from .enums import (
     ChannelType,
+    ForumLayoutType,
     SortOrderType,
     StagePrivacyLevel,
     VideoQualityMode,
@@ -883,6 +884,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         The default sort order type used to sort posts in forum channels.
 
         .. versionadded:: 2.3
+    default_forum_layout: :class:`ForumLayoutType`
+        The default layout type used to display posts in forum channels.
     default_thread_slowmode_delay: :class:`int`
         The default amount of seconds a user has to wait
         before creating another thread in this channel.
@@ -908,6 +911,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         "default_auto_archive_duration",
         "last_message_id",
         "default_sort_order",
+        "default_forum_layout",
         "_state",
         "_type",
         "_overwrites",
@@ -941,6 +945,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
             self.default_sort_order: Optional[SortOrderType] = try_enum(SortOrderType, sort_order)
         else:
             self.default_sort_order: Optional[SortOrderType] = None
+        if layout := data.get("default_forum_layout"):
+            self.default_forum_layout: Optional[ForumLayoutType] = try_enum(ForumLayoutType, layout)
+        else:
+            self.default_forum_layout: Optional[ForumLayoutType] = None
 
         self.default_thread_slowmode_delay: Optional[int] = data.get(
             "default_thread_slowmode_delay"
@@ -1058,6 +1066,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
         default_sort_order: Optional[SortOrderType] = ...,
+        default_forum_layout: Optional[ForumLayoutType] = ...,
         default_thread_slowmode_delay: int = ...,
         available_tags: List[ForumTag] = ...,
         default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = ...,
@@ -1111,6 +1120,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
             The default sort order type used to sort posts in forum channels.
 
             .. versionadded:: 2.3
+        default_forum_layout: :class:`ForumLayoutType`
+            The default layout type used to display posts in forum channels.
         default_thread_slowmode_delay: :class:`int`
             The new default slowmode delay for threads created in this channel.
             This is not retroactively applied to old posts.

@@ -711,6 +711,12 @@ class SortOrderType(IntEnum):
     creation_date = 1
 
 
+class ForumLayoutType(IntEnum):
+    default = 0
+    list = 1
+    grid = 2
+
+
 T = TypeVar("T")
 
 
