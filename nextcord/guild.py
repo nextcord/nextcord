@@ -597,7 +597,7 @@ class Guild(Hashable):
 
         .. versionadded:: 2.4
         """
-        return "INVITES_DISABLED" in self.features.copy()
+        return "INVITES_DISABLED" in self.features
 
     @property
     def voice_channels(self) -> List[VoiceChannel]:
