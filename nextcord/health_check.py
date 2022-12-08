@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 from warnings import warn
 
 from pkg_resources import DistributionNotFound, get_distribution

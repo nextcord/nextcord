@@ -52,14 +52,17 @@ packages = [
     "nextcord",
     "nextcord.types",
     "nextcord.ui",
+    "nextcord.ui.select",
     "nextcord.webhook",
+    "nextcord.ext.application_checks",
     "nextcord.ext.commands",
+    "nextcord.ext.slash_utils",
     "nextcord.ext.tasks",
 ]
 
 setup(
     name="nextcord-unaliased",
-    author="tag-epic & Rapptz",
+    author="Nextcord Developers & Rapptz",
     url="https://github.com/nextcord/nextcord",
     project_urls={
         "Documentation": "https://nextcord.readthedocs.io/en/latest/",
