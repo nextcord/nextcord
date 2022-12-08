@@ -592,7 +592,7 @@ class Guild(Hashable):
         return self._large
 
     @property
-    def invites_paused(self) -> bool:
+    def invites_disabled(self) -> bool:
         """:class:`bool`: Indicates if the guild's invites are paused.
 
         .. versionadded:: 2.4
