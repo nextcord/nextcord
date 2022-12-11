@@ -558,13 +558,13 @@ class Client:
                 if found_enum:
                     _log.warning(
                         'Nextcord function "%s" is calling dispatch using string "%s" instead of %s at '
-                        "line %s of %s.\n%s",
+                        "line %s of %s. %s",
                         frame.function,
                         event,
                         found_enum,
                         frame.lineno,
                         frame.filename,
-                        "\n".join(frame.code_context).rstrip(),
+                        ("\n" + "\n".join(frame.code_context).rstrip()) if frame.code_context else "",
                     )
                 else:
                     _log.warning(
@@ -574,7 +574,7 @@ class Client:
                         event,
                         frame.lineno,
                         frame.filename,
-                        "\n".join(frame.code_context).rstrip(),
+                        ("\n" + "\n".join(frame.code_context).rstrip()) if frame.code_context else "",
                     )
 
         self._dispatch_to_listeners(event, *args, **kwargs)
