@@ -584,7 +584,6 @@ class Client:
             # For backwards compatibility.
             self._dispatch_to_listeners(event.value, *args, **kwargs)
 
-
     def _dispatch_to_listeners(self, event: Union[str, Enum], *args: Any, **kwargs: Any):
         _log.debug("Dispatching event %s to listeners.", event)
 
