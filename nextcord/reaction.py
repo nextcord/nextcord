@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union, AsyncIterator
 
-from .iterators import ReactionIterator
+from .iterators import reaction_iterator
 
 __all__ = ("Reaction",)
 
@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from .message import Message
     from .partial_emoji import PartialEmoji
     from .types.message import Reaction as ReactionPayload
+    from .user import User
+    from .member import Member
 
 
 class Reaction:
@@ -144,7 +146,7 @@ class Reaction:
 
     def users(
         self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
-    ) -> ReactionIterator:
+    ) -> AsyncIterator[Union[User, Member]]:
         """Returns an :class:`AsyncIterator` representing the users that have reacted to the message.
 
         The ``after`` parameter must represent a member
@@ -197,4 +199,4 @@ class Reaction:
         if limit is None:
             limit = self.count
 
-        return ReactionIterator(self.message, emoji, limit, after)
+        return reaction_iterator(self.message, emoji, limit, after)

@@ -27,8 +27,8 @@ from .object import Object
 from .utils import maybe_coroutine, snowflake_time, time_snowflake
 
 __all__ = (
-    "ReactionIterator",
-    "HistoryIterator",
+    "reaction_iterator",
+    "history_iterator",
     "BanIterator",
     "AuditLogIterator",
     "GuildIterator",
@@ -176,62 +176,43 @@ class _FilteredAsyncIterator(_AsyncIterator[T]):
                 return item
 
 
-class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
-    def __init__(
-        self, message: Message, emoji: str, limit: int = 100, after: Optional[Snowflake] = None
-    ):
-        self.message: Message = message
-        self.limit: int = limit
-        self.after: Optional[Snowflake] = after
-        self.state: ConnectionState = message._state
-        self.emoji: str = emoji
-        self.guild: Optional[Guild] = message.guild
-        self.channel_id: int = message.channel.id
-        self.users: asyncio.Queue[Union[Member, User]] = asyncio.Queue()
+async def reaction_iterator(message: Message, emoji: str, limit: int = 100, after: Optional[Snowflake] = None):
+    state = message._state
 
-    async def next(self) -> Union[User, Member]:
-        if self.users.empty():
-            await self.fill_users()
+    while limit > 0:
+        retrieve: int = limit if limit <= 100 else 100
+        after_id: Optional[int] = after.id if after else None
 
-        try:
-            return self.users.get_nowait()
-        except asyncio.QueueEmpty:
-            raise NoMoreItems()
+        data: List[PartialUserPayload] = cast(
+            List[PartialUserPayload],
+            await state.http.get_reaction_users(
+                message.channel.id, message.id, emoji, retrieve, after=after_id
+            ),
+        )
+        # cast needed here because of list's invariance
 
-    async def fill_users(self) -> None:
-        # this is a hack because >circular imports<
-        from .user import User
+        if data:
+            limit -= retrieve
+            after = Object(id=int(data[-1]["id"]))
 
-        if self.limit > 0:
-            retrieve = self.limit if self.limit <= 100 else 100
-
-            after = self.after.id if self.after else None
-            data: List[PartialUserPayload] = cast(
-                List[PartialUserPayload],
-                await self.state.http.get_reaction_users(
-                    self.channel_id, self.message.id, self.emoji, retrieve, after=after
-                ),
-            )
-            # cast needed here because of list's invariance
-
-            if data:
-                self.limit -= retrieve
-                self.after = Object(id=int(data[-1]["id"]))
-
-            if self.guild is None or isinstance(self.guild, Object):
-                for element in reversed(data):
-                    await self.users.put(User(state=self.state, data=element))
+        for item in reversed(data):
+            user: Union[User, Member]
+            if message.guild is None or isinstance(message.guild, Object) or not (member := message.guild.get_member(int(item["id"]))):
+                user = User(state=state, data=item)
             else:
-                for element in reversed(data):
-                    member_id = int(element["id"])
-                    member = self.guild.get_member(member_id)
-                    if member is not None:
-                        await self.users.put(member)
-                    else:
-                        await self.users.put(User(state=self.state, data=element))
+                user = member
+
+            yield user
 
 
-class HistoryIterator(_AsyncIterator["Message"]):
+async def history_iterator(
+    messageable: Messageable,
+    limit: Optional[int],
+    before: Optional[SnowflakeTime] = None,
+    after: Optional[SnowflakeTime] = None,
+    around: Optional[SnowflakeTime] = None,
+    oldest_first: Optional[bool] = None,
+):
     """Iterator for receiving a channel's message history.
 
     The messages endpoint has two behaviours we care about here:
@@ -264,143 +245,67 @@ class HistoryIterator(_AsyncIterator["Message"]):
         If set to ``True``, return messages in oldest->newest order. Defaults to
         ``True`` if ``after`` is specified, otherwise ``False``.
     """
+    if isinstance(before, datetime.datetime):
+        before = Object(id=time_snowflake(before, high=False))
+    if isinstance(after, datetime.datetime):
+        after = Object(id=time_snowflake(after, high=True))
+    if isinstance(around, datetime.datetime):
+        around = Object(id=time_snowflake(around))
 
-    def __init__(
-        self,
-        messageable: Messageable,
-        limit: Optional[int],
-        before: Optional[SnowflakeTime] = None,
-        after: Optional[SnowflakeTime] = None,
-        around: Optional[SnowflakeTime] = None,
-        oldest_first: Optional[bool] = None,
-    ):
+    state = messageable._state
+    after = after or OLDEST_OBJECT
+    channel = await messageable._get_channel()
+    retrieve: int = 0
 
-        if isinstance(before, datetime.datetime):
-            before = Object(id=time_snowflake(before, high=False))
-        if isinstance(after, datetime.datetime):
-            after = Object(id=time_snowflake(after, high=True))
-        if isinstance(around, datetime.datetime):
-            around = Object(id=time_snowflake(around))
+    reverse: bool
+    if oldest_first is None:
+        reverse = after is not None
+    else:
+        reverse = oldest_first
 
-        self.reverse: bool
-        if oldest_first is None:
-            self.reverse = after is not None
+    if around:
+        if limit is None:
+            raise ValueError("history does not support around with limit=None")
+        if limit > 101:
+            raise ValueError("history max limit 101 when specifying around parameter")
+        elif limit == 101:
+            limit = 100  # Thanks discord
+
+    def get_retrieve():
+        if limit is None or limit > 100:
+            retrieve = 100
         else:
-            self.reverse = oldest_first
+            retrieve = limit
 
-        self.messageable: Messageable = messageable
-        self.limit: Optional[int] = limit
-        self.before: Optional[Snowflake] = before
-        self.after: Optional[Snowflake] = after or OLDEST_OBJECT
-        self.around: Optional[Snowflake] = around
+        return retrieve > 0
 
-        self._filter: Optional[Callable[[MessagePayload], bool]] = None  # message dict -> bool
+    while get_retrieve():
+        data: List[MessagePayload] = await state.http.logs_from(
+            channel.id, 
+            retrieve, 
+            before.id if before else None, 
+            after.id, 
+            around.id if around else None,
+        )
 
-        self.state: ConnectionState = self.messageable._state
-        self.messages: asyncio.Queue[Message] = asyncio.Queue()
-
-        if self.around:
-            if self.limit is None:
-                raise ValueError("history does not support around with limit=None")
-            if self.limit > 101:
-                raise ValueError("history max limit 101 when specifying around parameter")
-            elif self.limit == 101:
-                self.limit = 100  # Thanks discord
-
-            self._retrieve_messages = self._retrieve_messages_around_strategy
-            if self.before and self.after:
-                # lambda type ignores are as before/after/around are optional but exist here
-                self._filter = lambda m: self.after.id < int(m["id"]) < self.before.id  # type: ignore
-            elif self.before:
-                self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
-            elif self.after:
-                self._filter = lambda m: self.after.id < int(m["id"])  # type: ignore
-        else:
-            if self.reverse:
-                self._retrieve_messages = self._retrieve_messages_after_strategy
-                if self.before:
-                    self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
-            else:
-                self._retrieve_messages = self._retrieve_messages_before_strategy
-                if self.after and self.after != OLDEST_OBJECT:
-                    self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
-
-    async def next(self) -> Message:
-        if self.messages.empty():
-            await self.fill_messages()
-
-        try:
-            return self.messages.get_nowait()
-        except asyncio.QueueEmpty:
-            raise NoMoreItems()
-
-    def _get_retrieve(self):
-        l = self.limit
-        if l is None or l > 100:
-            r = 100
-        else:
-            r = l
-        self.retrieve = r
-        return r > 0
-
-    async def fill_messages(self) -> None:
-        if not hasattr(self, "channel"):
-            # do the required set up
-            channel = await self.messageable._get_channel()
-            self.channel = channel
-
-        if self._get_retrieve():
-            data = await self._retrieve_messages(self.retrieve)
+        if len(data):
+            if limit:
+                limit -= retrieve
             if len(data) < 100:
-                self.limit = 0  # terminate the infinite loop
+                limit = 0
 
-            if self.reverse:
-                data = reversed(data)
-            if self._filter:
-                data = filter(self._filter, data)
+            if before is not None:
+                before = Object(id=int(data[-1]["id"]))
+            if after is not None:
+                after = Object(id=int(data[0]["id"]))
+            if around is not None:
+                around = None
 
-            channel = self.channel
-            for element in data:
-                await self.messages.put(self.state.create_message(channel=channel, data=element))
+        if reverse:
+            data = list(reversed(data))
 
-    async def _retrieve_messages(self, retrieve: int) -> List[MessagePayload]:
-        """Retrieve messages and update next parameters."""
-        raise NotImplementedError
-
-    async def _retrieve_messages_before_strategy(self, retrieve: int) -> List[MessagePayload]:
-        """Retrieve messages using before parameter."""
-        before = self.before.id if self.before else None
-        data: List[MessagePayload] = await self.state.http.logs_from(
-            self.channel.id, retrieve, before=before
-        )
-        if len(data):
-            if self.limit is not None:
-                self.limit -= retrieve
-            self.before = Object(id=int(data[-1]["id"]))
-        return data
-
-    async def _retrieve_messages_after_strategy(self, retrieve: int) -> List[MessagePayload]:
-        """Retrieve messages using after parameter."""
-        after = self.after.id if self.after else None
-        data: List[MessagePayload] = await self.state.http.logs_from(
-            self.channel.id, retrieve, after=after
-        )
-        if len(data):
-            if self.limit is not None:
-                self.limit -= retrieve
-            self.after = Object(id=int(data[0]["id"]))
-        return data
-
-    async def _retrieve_messages_around_strategy(self, retrieve: int) -> List[MessagePayload]:
-        """Retrieve messages using around parameter."""
-        if self.around:
-            around = self.around.id if self.around else None
-            data: List[MessagePayload] = await self.state.http.logs_from(
-                self.channel.id, retrieve, around=around
-            )
-            self.around = None
-            return data
-        return []
+        for item in data:
+            yield state.create_message(channel=channel, data=item)
 
 
 class BanIterator(_AsyncIterator["BanEntry"]):
