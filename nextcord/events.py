@@ -9,6 +9,7 @@ from enum import Enum  # , StrEnum
 
 __all__ = (
     "ClientEvents",
+    "GatewayEvents",
     "StateEvents",
 )
 
@@ -18,6 +19,12 @@ class ClientEvents(Enum):
     """Dispatched when the client is disconnected from the Discord WS gateway, but may reconnect."""
     CLOSE = "close"
     """Dispatched when the client is specifically told to close."""
+
+
+class GatewayEvents(Enum):
+    SOCKET_RAW_RECEIVE = "socket_raw_receive"
+    SOCKET_EVENT_TYPE = "socket_event_type"
+    SOCKET_RAW_SEND = "socket_raw_send"
 
 
 class StateEvents(Enum):
