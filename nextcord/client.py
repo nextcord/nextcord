@@ -564,7 +564,9 @@ class Client:
                         found_enum,
                         frame.lineno,
                         frame.filename,
-                        ("\n" + "\n".join(frame.code_context).rstrip()) if frame.code_context else "",
+                        ("\n" + "\n".join(frame.code_context).rstrip())
+                        if frame.code_context
+                        else "",
                     )
                 else:
                     _log.warning(
@@ -574,7 +576,9 @@ class Client:
                         event,
                         frame.lineno,
                         frame.filename,
-                        ("\n" + "\n".join(frame.code_context).rstrip()) if frame.code_context else "",
+                        ("\n" + "\n".join(frame.code_context).rstrip())
+                        if frame.code_context
+                        else "",
                     )
 
         self._dispatch_to_listeners(event, *args, **kwargs)
