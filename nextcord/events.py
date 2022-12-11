@@ -8,10 +8,17 @@ from enum import Enum  # , StrEnum
 
 
 __all__ = (
+    "ApplicationCommandEvents",
     "ClientEvents",
     "GatewayEvents",
     "StateEvents",
 )
+
+
+class ApplicationCommandEvents(Enum):
+    APPLICATION_COMMAND_COMPLETION = "application_command_completion"
+    APPLICATION_COMMAND_ERROR = "application_command_error"
+
 
 
 class ClientEvents(Enum):
@@ -154,6 +161,7 @@ class StateEvents(Enum):
     SHARD_READY = "shard_ready"
     SHARD_CONNECT = "shard_connect"
     SHARD_RESUMED = "shard_resumed"
+    MESSAGE = "message"
 
 
 # TODO: State.py Line 1403 dispatches to the view store?

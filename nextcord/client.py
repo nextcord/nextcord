@@ -571,7 +571,7 @@ class Client:
                 else:
                     _log.warning(
                         'Nextcord function "%s" is calling dispatch using string "%s" at '
-                        "line %s of %s.\n%s",
+                        "line %s of %s. %s",
                         frame.function,
                         event,
                         frame.lineno,

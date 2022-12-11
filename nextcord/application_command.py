@@ -64,6 +64,7 @@ from .channel import (
 )
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
+from .events import ApplicationCommandEvents
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
@@ -891,7 +892,7 @@ class CallbackMixin:
         try:
             can_run = await self.can_run(interaction)
         except Exception as error:
-            state.dispatch("application_command_error", interaction, error)
+            state.dispatch(ApplicationCommandEvents.APPLICATION_COMMAND_ERROR, interaction, error)
             await self.invoke_error(interaction, error)
             return
 
@@ -910,13 +911,13 @@ class CallbackMixin:
                 await self(interaction, *args, **kwargs)
             except Exception as error:
                 state.dispatch(
-                    "application_command_error",
+                    ApplicationCommandEvents.APPLICATION_COMMAND_ERROR,
                     interaction,
                     ApplicationInvokeError(error),
                 )
                 await self.invoke_error(interaction, error)
             else:
-                state.dispatch("application_command_completion", interaction)
+                state.dispatch(ApplicationCommandEvents.APPLICATION_COMMAND_COMPLETION, interaction)
             finally:
                 if self._callback_after_invoke is not None:
                     await self._callback_after_invoke(interaction)  # type: ignore
