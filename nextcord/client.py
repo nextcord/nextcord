@@ -577,11 +577,16 @@ class Client:
                         "\n".join(frame.code_context).rstrip(),
                     )
 
-        _log.debug("Dispatching event %s", event)
+        self._dispatch_to_listeners(event, *args, **kwargs)
+        self._dispatch_to_function(event, *args, **kwargs)
+
         if isinstance(event, Enum):
-            method = "on_" + event.value
-        else:
-            method = "on_" + event
+            # For backwards compatibility.
+            self._dispatch_to_listeners(event.value, *args, **kwargs)
+
+
+    def _dispatch_to_listeners(self, event: Union[str, Enum], *args: Any, **kwargs: Any):
+        _log.debug("Dispatching event %s to listeners.", event)
 
         listeners = self._listeners.get(event)
         if listeners:
@@ -612,11 +617,18 @@ class Client:
                 for idx in reversed(removed):
                     del listeners[idx]
 
+    def _dispatch_to_function(self, event: Union[str, Enum], *args: Any, **kwargs: Any):
+        if isinstance(event, Enum):
+            method = "on_" + event.value
+        else:
+            method = "on_" + event
+
         try:
             coro = getattr(self, method)
         except AttributeError:
             pass
         else:
+            _log.debug("Dispatching event to local function %s.", method)
             self._schedule_event(coro, method, *args, **kwargs)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
