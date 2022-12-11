@@ -32,6 +32,7 @@ import signal
 import sys
 import traceback
 import warnings
+from enum import Enum
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -53,8 +54,6 @@ from typing import (
 )
 
 import aiohttp
-
-from enum import Enum
 
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
@@ -310,7 +309,9 @@ class Client:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
-        self._listeners: Dict[Union[str, Enum], List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
+        self._listeners: Dict[
+            Union[str, Enum], List[Tuple[asyncio.Future, Callable[..., bool]]]
+        ] = {}
 
         self.shard_id: Optional[int] = shard_id
         self.shard_count: Optional[int] = shard_count
@@ -542,7 +543,9 @@ class Client:
             if "super().dispatch" in frame.code_context[0]:
                 frame = inspect.getframeinfo(inspect.stack()[2][0])
 
-            if "nextcord" in frame.filename:  # TODO: Actually check if it's in the package for real?
+            if (
+                "nextcord" in frame.filename
+            ):  # TODO: Actually check if it's in the package for real?
                 found_enum = None
                 for enum_classes in [ClientEvents, StateEvents]:
                     try:
@@ -554,16 +557,24 @@ class Client:
 
                 if found_enum:
                     _log.warning(
-                        "Nextcord function \"%s\" is calling dispatch using string \"%s\" instead of %s at "
+                        'Nextcord function "%s" is calling dispatch using string "%s" instead of %s at '
                         "line %s of %s.\n%s",
-                        frame.function, event, found_enum, frame.lineno, frame.filename,
-                        "\n".join(frame.code_context).rstrip()
+                        frame.function,
+                        event,
+                        found_enum,
+                        frame.lineno,
+                        frame.filename,
+                        "\n".join(frame.code_context).rstrip(),
                     )
                 else:
                     _log.warning(
-                        "Nextcord function \"%s\" is calling dispatch using string \"%s\" at "
+                        'Nextcord function "%s" is calling dispatch using string "%s" at '
                         "line %s of %s.\n%s",
-                        frame.function, event, frame.lineno, frame.filename, "\n".join(frame.code_context).rstrip()
+                        frame.function,
+                        event,
+                        frame.lineno,
+                        frame.filename,
+                        "\n".join(frame.code_context).rstrip(),
                     )
 
         _log.debug("Dispatching event %s", event)

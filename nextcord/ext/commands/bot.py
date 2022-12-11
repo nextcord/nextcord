@@ -36,6 +36,7 @@ import sys
 import traceback
 import types
 import warnings
+from enum import Enum
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -52,8 +53,6 @@ from typing import (
     TypeVar,
     Union,
 )
-
-from enum import Enum
 
 import nextcord
 

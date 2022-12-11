@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
-from enum import Enum# , StrEnum
+from enum import Enum  # , StrEnum
+
 # While using the custom dpy/nc Enum would technically yield higher performance, these event enums should not be
 #  constantly instantiated and garbage collected, so the extra speed should be negligible compared to the possible
 #  usability concerns of using something that is called "Enum" but isn't actually the Enum from the Python library.
@@ -58,7 +59,7 @@ class StateEvents(Enum):
     RAW_REACTION_REMOVE = "raw_reaction_remove"
     """Dispatched when the state parses a reaction being removed from a message."""
     REACTION_REMOVE = "reaction_remove"
-    """Dispatched when the state parses a reaction being removed from a message in the cache and the unreacting user is 
+    """Dispatched when the state parses a reaction being removed from a message in the cache and the unreacting user is
     also in the cache.
     """
     RAW_REACTION_CLEAR_EMOJI = "raw_reaction_clear_emoji"
@@ -78,7 +79,7 @@ class StateEvents(Enum):
     GUILD_CHANNEL_DELETE = "guild_channel_delete"
     """Dispatched when the state parses a channel in a guild being deleted."""
     PRIVATE_CHANNEL_UPDATE = "private_channel_update"
-    """Dispatched when the state parses an update to a group DM. Since NC doesn't support user-bots, this should not 
+    """Dispatched when the state parses an update to a group DM. Since NC doesn't support user-bots, this should not
     be called unless Discord finally adds support for bots in group DMs.
     """
     GUILD_CHANNEL_UPDATE = "guild_channel_update"
@@ -146,8 +147,6 @@ class StateEvents(Enum):
     SHARD_READY = "shard_ready"
     SHARD_CONNECT = "shard_connect"
     SHARD_RESUMED = "shard_resumed"
-
-
 
 
 # TODO: State.py Line 1403 dispatches to the view store?
