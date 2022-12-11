@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...components import RoleSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
+from ...role import Role
 from ...state import ConnectionState
 from ...utils import MISSING
-from ...role import Role
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase

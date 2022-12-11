@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
-from ...utils import MISSING
 from ...member import Member
 from ...role import Role
 from ...user import User
+from ...utils import MISSING
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
