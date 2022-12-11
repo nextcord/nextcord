@@ -20,7 +20,6 @@ class ApplicationCommandEvents(Enum):
     APPLICATION_COMMAND_ERROR = "application_command_error"
 
 
-
 class ClientEvents(Enum):
     DISCONNECT = "disconnect"
     """Dispatched when the client is disconnected from the Discord WS gateway, but may reconnect."""
