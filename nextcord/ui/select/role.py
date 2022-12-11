@@ -10,6 +10,7 @@ from ...enums import ComponentType
 from ...interactions import ClientT
 from ...state import ConnectionState
 from ...utils import MISSING
+from ...role import Role
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
@@ -18,7 +19,6 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...guild import Guild
-    from ...role import Role
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 

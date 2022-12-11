@@ -9,6 +9,9 @@ from ...components import MentionableSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...utils import MISSING
+from ...member import Member
+from ...role import Role
+from ...user import User
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
@@ -17,12 +20,9 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...guild import Guild
-    from ...member import Member
-    from ...role import Role
     from ...state import ConnectionState
     from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
-    from ...user import User
 
 __all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
 
