@@ -57,6 +57,7 @@ from .channel import _channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, Status, try_enum
 from .errors import Forbidden
+from .events import StateEvents
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
@@ -1406,7 +1407,7 @@ class ConnectionState:
             # key exists if type is 5 etc
             self._modal_store.dispatch(custom_id, interaction)
 
-        self.dispatch("interaction", interaction)
+        self.dispatch(StateEvents.INTERACTION, interaction)
 
     def parse_presence_update(self, data) -> None:
         guild_id = utils.get_as_snowflake(data, "guild_id")

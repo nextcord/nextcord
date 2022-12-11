@@ -26,6 +26,7 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 import signal
 import sys
@@ -53,6 +54,8 @@ from typing import (
 
 import aiohttp
 
+from enum import Enum
+
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
@@ -62,6 +65,7 @@ from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
 from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
 from .errors import *
+from .events import ClientEvents, StateEvents
 from .flags import ApplicationFlags, Intents
 from .gateway import *
 from .guild import Guild
@@ -301,11 +305,12 @@ class Client:
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         default_guild_ids: Optional[List[int]] = None,
+        check_internal_dispatches: bool = True,
     ):
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
-        self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
+        self._listeners: Dict[Union[str, Enum], List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
 
         self.shard_id: Optional[int] = shard_id
         self.shard_count: Optional[int] = shard_count
@@ -352,6 +357,8 @@ class Client:
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
 
         self._default_guild_ids = default_guild_ids or []
+
+        self._check_internal_dispatches = check_internal_dispatches
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -529,9 +536,41 @@ class Client:
         # Schedules the task
         return asyncio.create_task(wrapped, name=f"nextcord: {event_name}")
 
-    def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
+    def dispatch(self, event: Union[str, Enum], *args: Any, **kwargs: Any) -> None:
+        if self._check_internal_dispatches and isinstance(event, str):
+            frame = inspect.getframeinfo(inspect.stack()[1][0])
+            if "super().dispatch" in frame.code_context[0]:
+                frame = inspect.getframeinfo(inspect.stack()[2][0])
+
+            if "nextcord" in frame.filename:  # TODO: Actually check if it's in the package for real?
+                found_enum = None
+                for enum_classes in [ClientEvents, StateEvents]:
+                    try:
+                        found_enum = enum_classes(event)
+                    except ValueError:
+                        pass
+                    else:
+                        break
+
+                if found_enum:
+                    _log.warning(
+                        "Nextcord function \"%s\" is calling dispatch using string \"%s\" instead of %s at "
+                        "line %s of %s.\n%s",
+                        frame.function, event, found_enum, frame.lineno, frame.filename,
+                        "\n".join(frame.code_context).rstrip()
+                    )
+                else:
+                    _log.warning(
+                        "Nextcord function \"%s\" is calling dispatch using string \"%s\" at "
+                        "line %s of %s.\n%s",
+                        frame.function, event, frame.lineno, frame.filename, "\n".join(frame.code_context).rstrip()
+                    )
+
         _log.debug("Dispatching event %s", event)
-        method = "on_" + event
+        if isinstance(event, Enum):
+            method = "on_" + event.value
+        else:
+            method = "on_" + event
 
         listeners = self._listeners.get(event)
         if listeners:

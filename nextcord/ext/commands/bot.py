@@ -53,6 +53,8 @@ from typing import (
     Union,
 )
 
+from enum import Enum
+
 import nextcord
 
 from . import errors
@@ -236,10 +238,14 @@ class BotBase(GroupMixin):
 
     # internal helpers
 
-    def dispatch(self, event_name: str, *args: Any, **kwargs: Any) -> None:
+    def dispatch(self, event_name: Union[str, Enum], *args: Any, **kwargs: Any) -> None:
         # super() will resolve to Client
         super().dispatch(event_name, *args, **kwargs)  # type: ignore
-        ev = "on_" + event_name
+        if isinstance(event_name, Enum):
+            ev = "on_" + event_name.value
+        else:
+            ev = "on_" + event_name
+
         for event in self.extra_events.get(ev, []):
             self._schedule_event(event, ev, *args, **kwargs)  # type: ignore
 
