@@ -9,6 +9,7 @@ from asyncio import Future
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     ClassVar,
     Dict,
@@ -57,7 +58,7 @@ from .errors import ClientException, InvalidArgument, InvalidData
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
-from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
+from .iterators import audit_log_iterator, ban_iterator, MemberIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
 from .partial_emoji import PartialEmoji
@@ -80,6 +81,7 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
+    from .audit_logs import AuditLogEntry
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
     from .enums import SortOrderType
@@ -2041,8 +2043,8 @@ class Guild(Hashable):
         limit: Optional[int] = 1000,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ) -> BanIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that enables receiving the destination's bans.
+    ) -> AsyncIterator[BanEntry]:
+        """Returns an async iterator that enables receiving the destination's bans.
 
         You must have the :attr:`~Permissions.ban_members` permission to get this information.
 
@@ -2058,11 +2060,6 @@ class Guild(Hashable):
             async for ban in guild.bans(limit=200):
                 if not ban.user.bot:
                     counter += 1
-
-        Flattening into a list: ::
-
-            bans = await guild.bans(limit=123).flatten()
-            # bans is now a list of BanEntry...
 
         All parameters are optional.
 
@@ -2091,7 +2088,7 @@ class Guild(Hashable):
             The ban with the ban data parsed.
         """
 
-        return BanIterator(self, limit=limit, before=before, after=after)
+        return ban_iterator(self, limit=limit, before=before, after=after)
 
     async def prune_members(
         self,
@@ -3047,8 +3044,8 @@ class Guild(Hashable):
         oldest_first: Optional[bool] = None,
         user: Optional[Snowflake] = None,
         action: Optional[AuditLogAction] = None,
-    ) -> AuditLogIterator:
-        """Returns an :class:`AsyncIterator` that enables receiving the guild's audit logs.
+    ) -> AsyncIterator[AuditLogEntry]:
+        """Returns an async iterator that enables receiving the guild's audit logs.
 
         You must have the :attr:`~Permissions.view_audit_log` permission to use this.
 
@@ -3067,7 +3064,7 @@ class Guild(Hashable):
 
         Getting entries made by a specific user: ::
 
-            entries = await guild.audit_logs(limit=None, user=guild.me).flatten()
+            entries = [entry async for entry in guild.audit_logs(limit=None, user=guild.me)]
             await channel.send(f'I made {len(entries)} moderation actions.')
 
         Parameters
@@ -3110,7 +3107,7 @@ class Guild(Hashable):
         if action:
             action = action.value
 
-        return AuditLogIterator(
+        return audit_log_iterator(
             self,
             before=before,
             after=after,
