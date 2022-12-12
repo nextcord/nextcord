@@ -147,7 +147,7 @@ class Reaction:
     def users(
         self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
     ) -> AsyncIterator[Union[User, Member]]:
-        """Returns an :class:`AsyncIterator` representing the users that have reacted to the message.
+        """Returns an async iterator representing the users that have reacted to the message.
 
         The ``after`` parameter must represent a member
         and meet the :class:`abc.Snowflake` abc.
@@ -160,13 +160,6 @@ class Reaction:
             # I do not actually recommend doing this.
             async for user in reaction.users():
                 await channel.send(f'{user} has reacted with {reaction.emoji}!')
-
-        Flattening into a list: ::
-
-            users = await reaction.users().flatten()
-            # users is now a list of User...
-            winner = random.choice(users)
-            await channel.send(f'{winner} has won the raffle.')
 
         Parameters
         ----------
