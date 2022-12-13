@@ -58,7 +58,7 @@ from .errors import ClientException, InvalidArgument, InvalidData
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
-from .iterators import audit_log_iterator, ban_iterator, MemberIterator, ScheduledEventIterator
+from .iterators import audit_log_iterator, ban_iterator, member_iterator, scheduled_event_iterator
 from .member import Member, VoiceState
 from .mixins import Hashable
 from .partial_emoji import PartialEmoji
@@ -1877,8 +1877,8 @@ class Guild(Hashable):
     # TODO: Remove Optional typing here when async iterators are refactored
     def fetch_members(
         self, *, limit: Optional[int] = 1000, after: Optional[SnowflakeTime] = None
-    ) -> MemberIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving the guild's members. In order to use this,
+    ) -> AsyncIterator[Member]:
+        """Retrieves an async iterator that enables receiving the guild's members. In order to use this,
         :meth:`Intents.members` must be enabled.
 
         .. note::
@@ -1918,17 +1918,12 @@ class Guild(Hashable):
 
             async for member in guild.fetch_members(limit=150):
                 print(member.name)
-
-        Flattening into a list ::
-
-            members = await guild.fetch_members(limit=150).flatten()
-            # members is now a list of Member...
         """
 
         if not self._state._intents.members:
             raise ClientException("Intents.members must be enabled to use this.")
 
-        return MemberIterator(self, limit=limit, after=after)
+        return member_iterator(self, limit=limit, after=after)
 
     async def fetch_member(self, member_id: int, /) -> Member:
         """|coro|
@@ -3314,8 +3309,8 @@ class Guild(Hashable):
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
-    def fetch_scheduled_events(self, *, with_users: bool = False) -> ScheduledEventIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving scheduled
+    def fetch_scheduled_events(self, *, with_users: bool = False) -> AsyncIterator[ScheduledEvent]:
+        """Retrieves an async iterator that enables receiving scheduled
         events on this guild
 
         .. note::
@@ -3349,13 +3344,8 @@ class Guild(Hashable):
 
             async for event in guild.fetch_scheduled_events():
                 print(event.name)
-
-        Flattening into a list ::
-
-            events = await guild.fetch_scheduled_events().flatten()
-            # events is now a list of ScheduledEvent...
         """
-        return ScheduledEventIterator(self, with_users=with_users)
+        return scheduled_event_iterator(self, with_users=with_users)
 
     def get_scheduled_event(self, event_id: int) -> Optional[ScheduledEvent]:
         """Get a scheduled event from cache by id.
