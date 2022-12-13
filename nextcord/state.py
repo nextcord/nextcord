@@ -2308,14 +2308,19 @@ class ConnectionState:
         )
 
     def parse_auto_moderation_rule_update(self, data) -> None:
-        self.dispatch(StateEvents.AUTO_MODERATION_RULE_UPDATE, AutoModerationRule(data=data, state=self))
+        self.dispatch(
+            StateEvents.AUTO_MODERATION_RULE_UPDATE, AutoModerationRule(data=data, state=self)
+        )
 
     def parse_auto_moderation_rule_delete(self, data) -> None:
-        self.dispatch(StateEvents.AUTO_MODERATION_RULE_DELETE, AutoModerationRule(data=data, state=self))
+        self.dispatch(
+            StateEvents.AUTO_MODERATION_RULE_DELETE, AutoModerationRule(data=data, state=self)
+        )
 
     def parse_auto_moderation_action_execution(self, data) -> None:
         self.dispatch(
-            StateEvents.AUTO_MODERATION_ACTION_EXECUTION, AutoModerationActionExecution(data=data, state=self)
+            StateEvents.AUTO_MODERATION_ACTION_EXECUTION,
+            AutoModerationActionExecution(data=data, state=self),
         )
 
 
