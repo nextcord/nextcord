@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union, AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator, Optional, Union
 
 from .iterators import reaction_iterator
 
@@ -11,11 +11,11 @@ __all__ = ("Reaction",)
 if TYPE_CHECKING:
     from .abc import Snowflake
     from .emoji import Emoji
+    from .member import Member
     from .message import Message
     from .partial_emoji import PartialEmoji
     from .types.message import Reaction as ReactionPayload
     from .user import User
-    from .member import Member
 
 
 class Reaction:

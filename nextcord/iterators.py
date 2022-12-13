@@ -4,16 +4,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import (
-    TYPE_CHECKING,
-    Awaitable,
-    Callable,
-    List,
-    Optional,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Awaitable, Callable, List, Optional, TypeVar, Union, cast
 
 from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationRule
@@ -51,7 +42,6 @@ if TYPE_CHECKING:
     )
     from .types.threads import Thread as ThreadPayload, ThreadPaginationPayload
     from .types.user import PartialUser as PartialUserPayload
-    from .user import User
 
 T = TypeVar("T")
 OT = TypeVar("OT")
@@ -59,7 +49,9 @@ OT = TypeVar("OT")
 OLDEST_OBJECT = Object(id=0)
 
 
-async def reaction_iterator(message: Message, emoji: str, limit: int = 100, after: Optional[Snowflake] = None):
+async def reaction_iterator(
+    message: Message, emoji: str, limit: int = 100, after: Optional[Snowflake] = None
+):
     from .user import User
 
     state = message._state
@@ -82,7 +74,11 @@ async def reaction_iterator(message: Message, emoji: str, limit: int = 100, afte
 
         for item in reversed(data):
             user: Union[User, Member]
-            if message.guild is None or isinstance(message.guild, Object) or not (member := message.guild.get_member(int(item["id"]))):
+            if (
+                message.guild is None
+                or isinstance(message.guild, Object)
+                or not (member := message.guild.get_member(int(item["id"])))
+            ):
                 user = User(state=state, data=item)
             else:
                 user = member
@@ -168,10 +164,10 @@ async def history_iterator(
 
     while get_retrieve():
         data: List[MessagePayload] = await state.http.logs_from(
-            channel.id, 
-            retrieve, 
-            before.id if before else None, 
-            converted_after.id, 
+            channel.id,
+            retrieve,
+            before.id if before else None,
+            converted_after.id,
             around.id if around else None,
         )
 
@@ -243,16 +239,13 @@ async def ban_iterator(
 
     while get_retrieve():
         data: List[BanPayload] = await state.http.get_bans(
-            guild.id, 
-            retrieve, 
-            before=before.id if before else None, 
-            after=converted_after.id
+            guild.id, retrieve, before=before.id if before else None, after=converted_after.id
         )
 
         if len(data):
             if limit:
                 limit -= len(data)
-            
+
             if before is not None:
                 before = Object(id=int(data[0]["user"]["id"]))
             if after is not None:
@@ -500,7 +493,9 @@ async def archived_thread_iterator(
 
     while has_more:
         limit = 50 if limit is None else max(limit, 50)
-        data: ThreadPaginationPayload = await endpoint(channel_id, before=converted_before, limit=limit)
+        data: ThreadPaginationPayload = await endpoint(
+            channel_id, before=converted_before, limit=limit
+        )
 
         # This stuff is obviously WIP because 'members' is always empty
         threads: List[ThreadPayload] = data.get("threads", [])
