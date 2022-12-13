@@ -154,54 +154,13 @@ class StateEvents(Enum):
     """Dispatched when the state parses a data that shows the bot being removed from a thread."""
     # Not a real Discord event, appears to be split from "Thread Members Update"
     THREAD_UPDATE = "thread_update"
-    """Dispatched when the state parses a thread being updated, such as the name being changed."""3
+    """Dispatched when the state parses a thread being updated, such as the name being changed."""
     TYPING = "typing"
     """Sent whenever a user starts typing in a channel that the bot can see."""
     USER_UPDATE = "user_update"
     """Dispatched when the state parses the a user being updated."""
     VOICE_STATE_UPDATE = "voice_state_update"
     WEBHOOKS_UPDATE = "webhooks_update"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # TODO: State.py Line 1403 dispatches to the view store?
