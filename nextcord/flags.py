@@ -480,7 +480,7 @@ class PublicUserFlags(BaseFlags):
 
     @flag_value
     def discord_certified_moderator(self):
-        """:class:`bool`: Returns ``True`` if the user is in the Discord Moderator Programs Alumni.
+        """:class:`bool`: Returns ``True`` if the user is a Discord Moderator Programs Alumni.
 
         Formally known as Discord Certified Moderator.
 
