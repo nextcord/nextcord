@@ -49,6 +49,7 @@ class StateEvents(Enum):
     """Dispatched when the state parses the initial Discord WS gateway connection data."""
 
     GUILD_AVAILABLE = "guild_available"
+    """Dispatched when a guild is available."""
     GUILD_CHANNEL_CREATE = "guild_channel_update"
     """Dispatched when the state parses the creation of a channel in a guild."""
     GUILD_CHANNEL_DELETE = "guild_channel_delete"
@@ -60,6 +61,7 @@ class StateEvents(Enum):
     GUILD_EMOJIS_UPDATE = "guild_emojis_update"
     GUILD_INTEGRATIONS_UPDATE = "guild_integrations_update"
     GUILD_JOIN = "guild_join"
+    """Dispatched when the bot joins a new guild."""
     GUILD_REMOVE = "guild_remove"
     GUILD_ROLE_CREATE = "guild_role_create"
     GUILD_ROLE_DELETE = "guild_role_delete"
