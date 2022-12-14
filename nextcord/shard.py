@@ -139,7 +139,9 @@ class Shard:
         self._dispatch(ShardEvents.SHARD_DISCONNECT, self.id)
 
     async def _handle_disconnect(self, e: Exception) -> None:
-        self._dispatch(ClientEvents.DISCONNECT)  # Using because Client already has a DISCONNECT event, should this
+        self._dispatch(
+            ClientEvents.DISCONNECT
+        )  # Using because Client already has a DISCONNECT event, should this
         #  also be in ShardEvents?
         self._dispatch(ShardEvents.SHARD_DISCONNECT, self.id)
         if not self._reconnect:

@@ -2,10 +2,7 @@
 
 from enum import Enum
 
-
-__all__ = (
-    "BotEvents",
-)
+__all__ = ("BotEvents",)
 
 
 class BotEvents(Enum):

@@ -2,7 +2,6 @@
 
 from enum import Enum
 
-
 __all__ = (
     "ApplicationCommandEvents",
     "ClientEvents",
