@@ -16,5 +16,6 @@ from .converter import *
 from .cooldowns import *
 from .core import *
 from .errors import *
+from .events import *
 from .flags import *
 from .help import *

@@ -60,6 +60,7 @@ from . import errors
 from .cog import Cog
 from .context import Context
 from .core import GroupMixin
+from .events import BotEvents
 from .help import DefaultHelpCommand, HelpCommand
 from .view import StringView
 
@@ -1380,7 +1381,7 @@ class BotBase(GroupMixin):
             The invocation context to invoke.
         """
         if ctx.command is not None:
-            self.dispatch("command", copy.copy(ctx))
+            self.dispatch(BotEvents.COMMAND, copy.copy(ctx))
             try:
                 if await self.can_run(ctx, call_once=True):
                     await ctx.command.invoke(ctx)
@@ -1389,10 +1390,10 @@ class BotBase(GroupMixin):
             except errors.CommandError as exc:
                 await ctx.command.dispatch_error(ctx, exc)
             else:
-                self.dispatch("command_completion", ctx)
+                self.dispatch(BotEvents.COMMAND_COMPLETION, ctx)
         elif ctx.invoked_with:
             exc = errors.CommandNotFound(ctx.invoked_with)
-            self.dispatch("command_error", ctx, exc)
+            self.dispatch(BotEvents.COMMAND_ERROR, ctx, exc)
 
     async def process_commands(self, message: Message) -> None:
         """|coro|

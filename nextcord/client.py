@@ -64,7 +64,7 @@ from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
 from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
 from .errors import *
-from .events import ClientEvents, StateEvents
+from .events import ApplicationCommandEvents, ClientEvents, StateEvents
 from .flags import ApplicationFlags, Intents
 from .gateway import *
 from .guild import Guild
@@ -547,7 +547,7 @@ class Client:
                 "nextcord" in frame.filename
             ):  # TODO: Actually check if it's in the package for real?
                 found_enum = None
-                for enum_classes in [ClientEvents, StateEvents]:
+                for enum_classes in [ApplicationCommandEvents, ClientEvents, StateEvents]:
                     try:
                         found_enum = enum_classes(event)
                     except ValueError:
@@ -776,7 +776,7 @@ class Client:
                     await self.ws.poll_event()
             except ReconnectWebSocket as e:
                 _log.info("Got a request to %s the websocket.", e.op)
-                self.dispatch("disconnect")
+                self.dispatch(ClientEvents.DISCONNECT)
 
                 # Only specify new gateway if resuming, otherwise use the default one
                 if e.resume:
@@ -804,7 +804,7 @@ class Client:
                 asyncio.TimeoutError,
             ) as exc:
 
-                self.dispatch("disconnect")
+                self.dispatch(ClientEvents.DISCONNECT)
                 if not reconnect:
                     await self.close()
                     if isinstance(exc, ConnectionClosed) and exc.code == 1000:
@@ -861,7 +861,7 @@ class Client:
 
         self._closed = True
 
-        self.dispatch("close")
+        self.dispatch(ClientEvents.CLOSE)
 
         for voice in self.voice_clients:
             try:

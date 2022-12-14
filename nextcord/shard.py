@@ -40,6 +40,7 @@ from .errors import (
     HTTPException,
     PrivilegedIntentsRequired,
 )
+from .events import ClientEvents, ShardEvents
 from .flags import Intents
 from .gateway import *
 from .state import AutoShardedConnectionState
@@ -135,11 +136,12 @@ class Shard:
 
     async def disconnect(self) -> None:
         await self.close()
-        self._dispatch("shard_disconnect", self.id)
+        self._dispatch(ShardEvents.SHARD_DISCONNECT, self.id)
 
     async def _handle_disconnect(self, e: Exception) -> None:
-        self._dispatch("disconnect")
-        self._dispatch("shard_disconnect", self.id)
+        self._dispatch(ClientEvents.DISCONNECT)  # Using because Client already has a DISCONNECT event, should this
+        #  also be in ShardEvents?
+        self._dispatch(ShardEvents.SHARD_DISCONNECT, self.id)
         if not self._reconnect:
             self._queue_put(EventItem(EventType.close, self, e))
             return
@@ -187,8 +189,8 @@ class Shard:
 
     async def reidentify(self, exc: ReconnectWebSocket) -> None:
         self._cancel_task()
-        self._dispatch("disconnect")
-        self._dispatch("shard_disconnect", self.id)
+        self._dispatch(ClientEvents.DISCONNECT)
+        self._dispatch(ShardEvents.SHARD_DISCONNECT, self.id)
         _log.info("Got a request to %s the websocket at Shard ID %s.", exc.op, self.id)
         try:
             coro = DiscordWebSocket.from_client(

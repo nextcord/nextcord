@@ -53,6 +53,7 @@ from .context import Context
 from .converter import Greedy, get_converter, run_converters
 from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMapping, MaxConcurrency
 from .errors import *
+from .events import BotEvents
 
 if TYPE_CHECKING:
     from typing_extensions import Concatenate, ParamSpec, Self, TypeGuard
@@ -574,7 +575,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                     wrapped = wrap_callback(local)
                     await wrapped(ctx, error)
         finally:
-            ctx.bot.dispatch("command_error", ctx, error)
+            ctx.bot.dispatch(BotEvents.COMMAND_ERROR, ctx, error)
 
     async def transform(self, ctx: Context, param: inspect.Parameter) -> Any:
         required = param.default is param.empty

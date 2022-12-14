@@ -1,16 +1,13 @@
 # SPDX-License-Identifier: MIT
 
-from enum import Enum  # , StrEnum
-
-# While using the custom dpy/nc Enum would technically yield higher performance, these event enums should not be
-#  constantly instantiated and garbage collected, so the extra speed should be negligible compared to the possible
-#  usability concerns of using something that is called "Enum" but isn't actually the Enum from the Python library.
+from enum import Enum
 
 
 __all__ = (
     "ApplicationCommandEvents",
     "ClientEvents",
     "GatewayEvents",
+    "ShardEvents",
     "StateEvents",
 )
 
@@ -31,6 +28,10 @@ class GatewayEvents(Enum):
     SOCKET_RAW_RECEIVE = "socket_raw_receive"
     SOCKET_EVENT_TYPE = "socket_event_type"
     SOCKET_RAW_SEND = "socket_raw_send"
+
+
+class ShardEvents(Enum):
+    SHARD_DISCONNECT = "shard_disconnect"
 
 
 class StateEvents(Enum):
