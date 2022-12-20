@@ -2215,7 +2215,7 @@ class Client:
         KWARG_DEPRECATION_MESSAGE = 'The keyword argument "{old}=" used in {name} is deprecated, please use "{new}=" instead.'
 
         kwargs_convert_table: Dict[str, Any] = {"name": "qualified_name", "cmd_type": "type"}
-        VALID_KWARGS = ("type", "qualified_name", "guild_id", "search_locales")
+        VALID_KWARGS = ("type", "qualified_name", "guild_id")
         for kw in kwargs.copy():
             if kw in kwargs_convert_table:
                 warnings.warn(
@@ -2241,7 +2241,7 @@ class Client:
                 kwargs["guild_id"] = kwargs.get("guild_id", arg)
 
         # mimicking the python error
-        def _parse_args_errors(*required_arguments: str) -> str:
+        def parse_args_errors(*required_arguments: str) -> str:
             base = f"{FUNC} missing {len(required_arguments)} required positional {'arguments' if len(required_arguments) > 1 else 'argument'}: "
             if len(required_arguments) == 1:
                 base += f"`{required_arguments[0]}`"
@@ -2263,7 +2263,7 @@ class Client:
                 missing_argument.append(arg)
 
         if missing_argument:
-            raise TypeError(_parse_args_errors(*missing_argument))
+            raise TypeError(parse_args_errors(*missing_argument))
 
         if args:
             params = [
