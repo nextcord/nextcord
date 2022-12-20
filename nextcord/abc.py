@@ -298,6 +298,13 @@ class GuildChannel:
     async def _edit(
         self, options: Dict[str, Any], reason: Optional[str]
     ) -> Optional[ChannelPayload]:
+        # API still calls it "nsfw" but we call it "age_restricted"
+        # so we need to convert it
+        try:
+            options["nsfw"] = options.pop("age_restricted")
+        except KeyError:
+            pass
+
         try:
             parent = options.pop("category")
         except KeyError:

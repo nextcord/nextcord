@@ -39,6 +39,7 @@ __all__ = (
     "ApplicationCommandType",
     "ApplicationCommandOptionType",
     "NSFWLevel",
+    "AgeRestrictionLevel",
     "ScheduledEventEntityType",
     "ScheduledEventPrivacyLevel",
     "ScheduledEventStatus",
@@ -658,11 +659,15 @@ class StagePrivacyLevel(IntEnum):
     guild_only = 2
 
 
-class NSFWLevel(IntEnum):
+class AgeRestrictionLevel(IntEnum):
     default = 0
     explicit = 1
     safe = 2
     age_restricted = 3
+
+
+# Alias
+NSFWLevel = AgeRestrictionLevel
 
 
 class ScheduledEventEntityType(IntEnum):

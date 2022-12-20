@@ -63,6 +63,7 @@ __all__ = (
     "guild_only",
     "is_owner",
     "is_nsfw",
+    "is_age_restricted",
     "has_guild_permissions",
     "bot_has_guild_permissions",
 )
@@ -2229,27 +2230,33 @@ def is_owner() -> Callable[[T], T]:
     return check(predicate)
 
 
-def is_nsfw() -> Callable[[T], T]:
+def is_age_restricted() -> Callable[[T], T]:
     """A :func:`.check` that checks if the channel is age restriced.
 
-    This check raises a special exception, :exc:`.NSFWChannelRequired`
+    This check raises a special exception, :exc:`.AgeRestrictedChannelRequired`
     that is derived from :exc:`.CheckFailure`.
 
-    .. versionchanged:: 1.1
-
-        Raise :exc:`.NSFWChannelRequired` instead of generic :exc:`.CheckFailure`.
-        DM channels will also now pass this check.
+    .. versionadded:: 2.5
     """
 
     def pred(ctx: Context) -> bool:
         ch = ctx.channel
         if ctx.guild is None or (
-            isinstance(ch, (nextcord.TextChannel, nextcord.Thread)) and ch.is_nsfw()
+            isinstance(ch, (nextcord.TextChannel, nextcord.Thread)) and ch.is_age_restricted()
         ):
             return True
-        raise NSFWChannelRequired(ch)  # type: ignore
+        raise AgeRestrictedChannelRequired(ch)  # type: ignore
 
     return check(pred)
+
+
+def is_nsfw() -> Callable[[T], T]:
+    """Alias for :func:`.is_age_restricted`.
+
+    .. versionchanged:: 2.5
+        This is now an alias for :func:`.is_age_restricted`.
+    """
+    return is_age_restricted()
 
 
 def cooldown(

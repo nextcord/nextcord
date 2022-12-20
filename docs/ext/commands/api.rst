@@ -328,6 +328,9 @@ Checks
 .. autofunction:: nextcord.ext.commands.is_nsfw(,)
     :decorator:
 
+.. autofunction:: nextcord.ext.commands.is_age_restricted(,)
+    :decorator:
+
 .. _ext_commands_api_context:
 
 Cooldown
@@ -576,7 +579,7 @@ Exceptions
 .. autoexception:: nextcord.ext.commands.BotMissingAnyRole
     :members:
 
-.. autoexception:: nextcord.ext.commands.NSFWChannelRequired
+.. autoexception:: nextcord.ext.commands.AgeRestrictedChannelRequired
     :members:
 
 .. autoexception:: nextcord.ext.commands.FlagError
@@ -669,7 +672,7 @@ Exception Hierarchy
                 - :exc:`~.commands.BotMissingRole`
                 - :exc:`~.commands.MissingAnyRole`
                 - :exc:`~.commands.BotMissingAnyRole`
-                - :exc:`~.commands.NSFWChannelRequired`
+                - :exc:`~.commands.AgeRestrictedChannelRequired`
             - :exc:`~.commands.DisabledCommand`
             - :exc:`~.commands.CommandInvokeError`
             - :exc:`~.commands.CommandOnCooldown`

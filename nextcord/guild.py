@@ -39,13 +39,13 @@ from .channel import (
 from .colour import Colour
 from .emoji import Emoji
 from .enums import (
+    AgeRestrictionLevel,
     AuditLogAction,
     AutoModerationEventType,
     AutoModerationTriggerType,
     ChannelType,
     ContentFilter,
     NotificationLevel,
-    NSFWLevel,
     ScheduledEventEntityType,
     ScheduledEventPrivacyLevel,
     VerificationLevel,
@@ -233,9 +233,17 @@ class Guild(Hashable):
         The preferred locale for the guild. Used when filtering Server Discovery
         results to a specific language.
     nsfw_level: :class:`NSFWLevel`
-        The guild's NSFW level.
+        This is an alias to :attr:`.age_restriction_level`.
 
         .. versionadded:: 2.0
+
+        .. versionchanged:: 2.5
+            This is now an alias to :attr:`.age_restriction_level` and returns :class:`AgeRestrictionLevel` instead of :class:`NSFWLevel`.
+
+    age_restrication_level: :class:`AgeRestrictionLevel`
+        The guild's age restriction level.
+
+        .. versionadded:: 2.5
 
     approximate_member_count: Optional[:class:`int`]
         The approximate number of members in the guild. This is ``None`` unless the guild is obtained
@@ -275,6 +283,7 @@ class Guild(Hashable):
         "premium_subscription_count",
         "preferred_locale",
         "nsfw_level",
+        "age_restrication_level",
         "_application_commands",
         "_members",
         "_channels",
@@ -487,7 +496,10 @@ class Guild(Hashable):
         self._public_updates_channel_id: Optional[int] = utils.get_as_snowflake(
             guild, "public_updates_channel_id"
         )
-        self.nsfw_level: NSFWLevel = try_enum(NSFWLevel, guild.get("nsfw_level", 0))
+        self.age_restrication_level: AgeRestrictionLevel = try_enum(
+            AgeRestrictionLevel, guild.get("nsfw_level", 0)
+        )
+        self.nsfw_level: AgeRestrictionLevel = self.age_restrication_level
         self.approximate_presence_count = guild.get("approximate_presence_count")
         self.approximate_member_count = guild.get("approximate_member_count")
 
@@ -1093,6 +1105,38 @@ class Guild(Hashable):
             **options,
         )
 
+    @overload
+    async def create_text_channel(
+        self,
+        name: str,
+        *,
+        reason: Optional[str] = ...,
+        category: Optional[CategoryChannel] = ...,
+        position: int = ...,
+        topic: str = ...,
+        slowmode_delay: int = ...,
+        age_restricted: bool = ...,
+        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = ...,
+        default_thread_slowmode_delay: int = ...,
+    ) -> TextChannel:
+        ...
+
+    @overload
+    async def create_text_channel(
+        self,
+        name: str,
+        *,
+        reason: Optional[str] = ...,
+        category: Optional[CategoryChannel] = ...,
+        position: int = ...,
+        topic: str = ...,
+        slowmode_delay: int = ...,
+        nsfw: bool = ...,
+        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = ...,
+        default_thread_slowmode_delay: int = ...,
+    ) -> TextChannel:
+        ...
+
     async def create_text_channel(
         self,
         name: str,
@@ -1103,6 +1147,7 @@ class Guild(Hashable):
         topic: str = MISSING,
         slowmode_delay: int = MISSING,
         nsfw: bool = MISSING,
+        age_restricted: bool = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
         default_thread_slowmode_delay: int = MISSING,
     ) -> TextChannel:
@@ -1165,7 +1210,14 @@ class Guild(Hashable):
             Specifies the slowmode rate limit for user in this channel, in seconds.
             The maximum value possible is ``21600``.
         nsfw: :class:`bool`
+            Alias for ``age_restricted``.
+
+            .. versionchanged:: 2.5
+                This is now an alias for ``age_restricted``.
+        age_restricted: :class:`bool`
             To mark the channel as age restricted or not.
+
+            .. versionadded:: 2.5
         reason: Optional[:class:`str`]
             The reason for creating this channel. Shows up on the audit log.
 
@@ -1194,8 +1246,9 @@ class Guild(Hashable):
         if slowmode_delay is not MISSING:
             options["rate_limit_per_user"] = slowmode_delay
 
-        if nsfw is not MISSING:
-            options["nsfw"] = nsfw
+        age_restricted = age_restricted if age_restricted is not MISSING else nsfw
+        if age_restricted is not MISSING:
+            options["nsfw"] = age_restricted
 
         if default_thread_slowmode_delay is not MISSING:
             options["default_thread_rate_limit_per_user"] = default_thread_slowmode_delay

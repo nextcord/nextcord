@@ -20,6 +20,7 @@ __all__ = (
     "ApplicationPrivateMessageOnly",
     "ApplicationNotOwner",
     "ApplicationNSFWChannelRequired",
+    "ApplicationAgeRestrictedChannelRequired",
     "ApplicationCheckForBotOnly",
 )
 
@@ -231,20 +232,28 @@ class ApplicationNotOwner(ApplicationCheckFailure):
     pass
 
 
-class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
+class ApplicationAgeRestrictedChannelRequired(ApplicationCheckFailure):
     """Exception raised when a channel is not age restricted.
 
     This inherits from :exc:`~.ApplicationCheckFailure`.
 
+    There is an alias for this called ``ApplicationNSFWChannelRequired``
+
+    .. versionchanged:: 2.5
+        Changed the name from ``ApplicationNSFWChannelRequired`` to :exc:`ApplicationAgeRestrictedChannelRequired`. ``ApplicationNSFWChannelRequired`` is now an alias.
+
     Parameters
     ----------
     channel: Optional[Union[:class:`.abc.GuildChannel`, :class:`.Thread`, :class:`PartialMessageable`]]
-        The channel is not age restricted.
+        The channel that is not age restricted.
     """
 
     def __init__(self, channel: Optional[Union[GuildChannel, Thread, PartialMessageable]]) -> None:
         self.channel: Optional[Union[GuildChannel, Thread, PartialMessageable]] = channel
         super().__init__(f"Channel '{channel}' must be age restricted to use this command to work.")
+
+
+ApplicationNSFWChannelRequired = ApplicationAgeRestrictedChannelRequired
 
 
 class ApplicationCheckForBotOnly(ApplicationCheckFailure):

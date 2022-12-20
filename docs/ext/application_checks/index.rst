@@ -67,6 +67,9 @@ Other Checks
 .. autofunction:: is_nsfw
     :decorator:
 
+.. autofunction:: is_age_restricted
+    :decorator:
+
 Hooks
 -----
 
@@ -128,7 +131,7 @@ Exceptions
 .. autoexception:: ApplicationNotOwner
     :members:
 
-.. autoexception:: ApplicationNSFWChannelRequired
+.. autoexception:: ApplicationAgeRestrictedChannelRequired
     :members:
 
 .. autoexception:: ApplicationCheckForBotOnly
@@ -151,5 +154,5 @@ Exception Hierarchy
             - :exc:`~.ApplicationBotMissingPermissions`
             - :exc:`~.ApplicationPrivateMessageOnly`
             - :exc:`~.ApplicationNotOwner`
-            - :exc:`~.ApplicationNSFWChannelRequired`
+            - :exc:`~.ApplicationAgeRestrictedChannelRequired`
             - :exc:`~.ApplicationCheckForBotOnly`

@@ -354,14 +354,20 @@ class Thread(Messageable, Hashable, PinsMixin):
         """
         return self._type is ChannelType.news_thread
 
-    def is_nsfw(self) -> bool:
+    def is_age_restricted(self) -> bool:
         """:class:`bool`: Whether the thread is age restricted or not.
 
         An age restricted thread is a thread that has a parent that is an age restricted channel,
-        i.e. :meth:`.TextChannel.is_nsfw` is ``True``.
+        i.e. :meth:`.TextChannel.is_age_restricted` is ``True``.
+
+        .. versionadded:: 2.5
         """
         parent = self.parent
-        return parent is not None and parent.is_nsfw()
+        return parent is not None and parent.is_age_restricted()
+
+    def is_nsfw(self) -> bool:
+        """:class:`bool`: Alias for :meth:`.is_age_restricted`."""
+        return self.is_age_restricted()
 
     def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
         """Handles permission resolution for the :class:`~nextcord.Member`

@@ -57,6 +57,7 @@ __all__ = (
     "MissingPermissions",
     "BotMissingPermissions",
     "NSFWChannelRequired",
+    "AgeRestrictedChannelRequired",
     "ConversionError",
     "BadUnionArgument",
     "BadLiteralArgument",
@@ -714,12 +715,16 @@ class BotMissingAnyRole(CheckFailure):
         super().__init__(message)
 
 
-class NSFWChannelRequired(CheckFailure):
+class AgeRestrictedChannelRequired(CheckFailure):
     """Exception raised when a channel is not age restricted.
 
     This inherits from :exc:`CheckFailure`.
 
-    .. versionadded:: 1.1
+    There is an alias for this called ``NSFWChannelRequired``.
+
+    .. versionadded:: 2.5
+    .. versionchanged:: 2.5
+        Renamed from ``NSFWChannelRequired`` to :exc:`AgeRestrictedChannelRequired`. ``NSFWChannelRequired`` is now an alias.
 
     Parameters
     ----------
@@ -730,6 +735,10 @@ class NSFWChannelRequired(CheckFailure):
     def __init__(self, channel: Union[GuildChannel, Thread]) -> None:
         self.channel: Union[GuildChannel, Thread] = channel
         super().__init__(f"Channel '{channel}' must be age restricted for this command to work.")
+
+
+# alias
+NSFWChannelRequired = AgeRestrictedChannelRequired
 
 
 class MissingPermissions(CheckFailure):
