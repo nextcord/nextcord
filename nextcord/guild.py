@@ -240,7 +240,7 @@ class Guild(Hashable):
         .. versionchanged:: 2.5
             This is now an alias to :attr:`.age_restriction_level` and returns :class:`AgeRestrictionLevel` instead of :class:`NSFWLevel`.
 
-    age_restrication_level: :class:`AgeRestrictionLevel`
+    age_restriction_level: :class:`AgeRestrictionLevel`
         The guild's age restriction level.
 
         .. versionadded:: 2.5
@@ -283,7 +283,7 @@ class Guild(Hashable):
         "premium_subscription_count",
         "preferred_locale",
         "nsfw_level",
-        "age_restrication_level",
+        "age_restriction_level",
         "_application_commands",
         "_members",
         "_channels",
@@ -496,10 +496,10 @@ class Guild(Hashable):
         self._public_updates_channel_id: Optional[int] = utils.get_as_snowflake(
             guild, "public_updates_channel_id"
         )
-        self.age_restrication_level: AgeRestrictionLevel = try_enum(
+        self.age_restriction_level: AgeRestrictionLevel = try_enum(
             AgeRestrictionLevel, guild.get("nsfw_level", 0)
         )
-        self.nsfw_level: AgeRestrictionLevel = self.age_restrication_level
+        self.nsfw_level: AgeRestrictionLevel = self.age_restriction_level
         self.approximate_presence_count = guild.get("approximate_presence_count")
         self.approximate_member_count = guild.get("approximate_member_count")
 
