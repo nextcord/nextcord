@@ -142,7 +142,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
 
         .. note::
 
-            To check if the channel or the guild of that channel are marked as age restricted, consider :meth:`is_nsfw` instead.
+            To check if the channel or the guild of that channel are age restricted, consider :meth:`is_nsfw` instead.
     default_auto_archive_duration: :class:`int`
         The default auto archive duration in minutes for threads created in this channel.
 
@@ -1548,7 +1548,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
         .. note::
 
-            To check if the channel or the guild of that channel are marked as age restricted, consider :meth:`is_nsfw` instead.
+            To check if the channel or the guild of that channel are age restricted, consider :meth:`is_nsfw` instead.
 
         .. versionadded:: 2.1
     flags: :class:`ChannelFlags`
@@ -2213,7 +2213,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
 
         .. note::
 
-            To check if the channel or the guild of that channel are marked as age restricted, consider :meth:`is_nsfw` instead.
+            To check if the channel or the guild of that channel are age restricted, consider :meth:`is_nsfw` instead.
     flags: :class:`ChannelFlags`
         Extra features of the channel.
 

@@ -659,7 +659,7 @@ def is_owner() -> AC:
 
 
 def is_nsfw() -> AC:
-    """A :func:`.check` that checks if the channel is a age restricted channel.
+    """A :func:`.check` that checks if the channel is age restricted.
 
     This check raises a special exception, :exc:`.ApplicationNSFWChannelRequired`
     that is derived from :exc:`.ApplicationCheckFailure`.

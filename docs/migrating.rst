@@ -916,7 +916,7 @@ Along with this change, a couple of new checks were added.
     - This is actually powered by a different function, :meth:`~ext.commands.Bot.is_owner`.
     - You can set the owner ID yourself by setting :attr:`.Bot.owner_id`.
 
-- :func:`~ext.commands.is_nsfw` checks if the channel the command is in is an age restricted channel.
+- :func:`~ext.commands.is_nsfw` checks if the channel the command is in is age restricted.
 
     - This is powered by the new :meth:`TextChannel.is_nsfw` method.
 
