@@ -64,7 +64,7 @@ class ForumChannel(_ThreadedBaseChannel):
     default_reaction_emoji: NotRequired[Optional[DefaultReaction]]
     default_thread_rate_limit_per_user: NotRequired[int]
     available_tags: NotRequired[List[ForumTag]]
-    default_forum_layout: ForumLayoutType
+    default_forum_layout: NotRequired[ForumLayoutType]
 
 
 class NewsChannel(_ThreadedBaseChannel):

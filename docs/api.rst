@@ -3039,21 +3039,21 @@ of :class:`enum.Enum`.
 
 .. class:: ForumLayoutType
 
-    .. versionadded:: 2.4
-
     The default layout type used to display posts in a :class:`ForumChannel`.
 
-    .. attribute:: default
+    .. versionadded:: 2.4
 
-        A preferred forum layout hasn't been set by a server administrator.
+    .. attribute:: not_set
+
+        No default has been set by channel administrators.
 
     .. attribute:: list
 
-        List View: display forum posts in a text-focused list.
+        Display posts as a list, more text focused.
 
-    .. attribute:: grid
+    .. attribute:: gallery
 
-        Gallery View: display forum posts in a media-focused gallery.
+        Display posts as a collection of posts with images, this is more image focused.
 
 
 Async Iterator

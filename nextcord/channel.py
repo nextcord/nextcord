@@ -884,8 +884,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         The default sort order type used to sort posts in forum channels.
 
         .. versionadded:: 2.3
-    default_forum_layout: :class:`ForumLayoutType`
-        The default layout type used to display posts in forum channels.
+    default_forum_layout: Optional[:class:`ForumLayoutType`]
+        The default layout type used to display posts in this forum.
 
         .. versionadded:: 2.4
     default_thread_slowmode_delay: :class:`int`
@@ -1068,7 +1068,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
         default_sort_order: Optional[SortOrderType] = ...,
-        default_forum_layout: Optional[ForumLayoutType] = ...,
+        default_forum_layout: ForumLayoutType = ...,
         default_thread_slowmode_delay: int = ...,
         available_tags: List[ForumTag] = ...,
         default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = ...,
@@ -1123,7 +1123,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
             .. versionadded:: 2.3
         default_forum_layout: :class:`ForumLayoutType`
-            The default layout type used to display posts in forum channels.
+            The default layout type used to display posts in.
 
             .. versionadded:: 2.4
         default_thread_slowmode_delay: :class:`int`

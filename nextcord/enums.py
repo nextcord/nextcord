@@ -712,9 +712,9 @@ class SortOrderType(IntEnum):
 
 
 class ForumLayoutType(IntEnum):
-    default = 0
+    not_set = 0
     list = 1
-    grid = 2
+    gallery = 2
 
 
 T = TypeVar("T")
