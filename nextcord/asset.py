@@ -228,7 +228,7 @@ class Asset(AssetMixin):
         # their hashes start with a_
         return cls(
             state,
-            url=f"{cls.BASE}/avatar-decorations/{user_id}/{decoration}.png",
+            url=f"{cls.BASE}/avatar-decorations/{user_id}/{decoration}.png?size=1024",
             key=decoration,
             animated=animated,
         )
