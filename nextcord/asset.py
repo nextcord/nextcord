@@ -223,9 +223,9 @@ class Asset(AssetMixin):
     @classmethod
     def _from_avatar_decoration(cls, state, user_id: int, decoration: str) -> Asset:
         animated = decoration.startswith("a_")
-        # format = "gif" if animated else "png"
-        # animated decorations are not supported yet?
-        # they're always returned as .png even if the hash starts with a_
+        # some decorations are animated but they are returned as an animated png, -
+        # - you can't get them as a gif (like stickers)
+        # their hashes start with a_
         return cls(
             state,
             url=f"{cls.BASE}/avatar-decorations/{user_id}/{decoration}.png",
