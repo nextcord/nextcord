@@ -247,7 +247,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     If the 429 response is a global ratelimit, then use :func:`on_global_http_ratelimit` instead.
 
-    .. versionadded:: 2.3
+    .. versionadded:: 2.4
 
     :param limit: The amount of requests that have been made under the bucket that the request correlates to.
     :type limit: :class:`int`
@@ -266,6 +266,8 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     If the 429 response is a non-global ratelimit or you want to track when the bucket expires,
     then use :func:`on_http_ratelimit` instead.
+
+    .. versionadded:: 2.4
 
     :param retry_after: The amount of time we have to wait before making another request.
     :type retry_after: :class:`float`
