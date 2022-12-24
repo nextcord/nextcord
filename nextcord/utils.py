@@ -1148,9 +1148,9 @@ def format_as_channel_name(s: str, include_hashtag: bool = False) -> str:
     """
 
     if include_hashtag:
-        return "#" + re.sub(_TEXT_CHANNEL_REGEX, '-', s).strip().lower()
+        return "#" + re.sub(_TEXT_CHANNEL_REGEX, "-", s).strip().lower()
     else:
-        return re.sub(_TEXT_CHANNEL_REGEX, '-', s).strip().lower()
+        return re.sub(_TEXT_CHANNEL_REGEX, "-", s).strip().lower()
 
 
 _TEXT_CHANNEL_REGEX = r"[^\w\s]+"
