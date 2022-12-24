@@ -1227,6 +1227,8 @@ Utility Functions
 
 .. autofunction:: nextcord.utils.parse_raw_channel_mentions
 
+.. autofunction:: nextcord.utils.format_as_channel_name
+
 .. autofunction:: nextcord.utils.resolve_invite
 
 .. autofunction:: nextcord.utils.resolve_template
