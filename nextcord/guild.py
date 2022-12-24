@@ -1697,6 +1697,8 @@ class Guild(Hashable):
         invites_disabled: :class:`bool`
             Whether the invites should be paused for the guild.
             This will prevent new users from joining said guild.
+            
+            .. versionadded:: 2.4
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
