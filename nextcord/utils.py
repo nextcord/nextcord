@@ -1131,6 +1131,30 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
     return f"<t:{int(dt.timestamp())}:{style}>"
 
 
+def format_as_channel_name(s: str, include_hashtag: bool = False) -> str:
+    """Strip a string of whitespace & special characters, like Discord does when creating a text channel.
+
+    Parameters
+    ----------
+    s: :class:`str`
+        The string to format.
+    include_hashtag: :class:`bool`
+        Whether or not to include the leading hashtag.
+
+    Returns
+    -------
+    :class:`str`
+        The formatted string.
+    """
+
+    if include_hashtag:
+        return "#" + re.sub(_TEXT_CHANNEL_REGEX, '-', s).strip().lower()
+    else:
+        return re.sub(_TEXT_CHANNEL_REGEX, '-', s).strip().lower()
+
+
+_TEXT_CHANNEL_REGEX = r"[^\w\s]+"
+
 _FUNCTION_DESCRIPTION_REGEX = re.compile(r"\A(?:.|\n)+?(?=\Z|\r?\n\r?\n)", re.MULTILINE)
 
 _ARG_NAME_SUBREGEX = r"(?:\\?\*)*(?P<name>[^\s:\-]+)"
