@@ -3347,7 +3347,7 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     return ret
 
 
-def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> type:
+def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> type:
     """Takes an annotation. If the origin is Annotated, it will attempt to resolve it using the given list of accepted
     types, going from the last type and working up to the first. If no matches to the given list is found, the last
     type specified in the Annotated typehint will be returned.
@@ -3366,6 +3366,9 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
     :class:`type`
         Resolved annotation.
     """
+    if resolve_list is None:
+        resolve_list = []
+
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
     origin = typing_extensions.get_origin(given_annotation)
     if origin is Annotated:
@@ -3386,7 +3389,7 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
 
 
 def unpack_annotation(
-    given_annotation: Any, annotated_list: List[type] = []
+    given_annotation: Any, annotated_list: Optional[List[type]]
 ) -> Tuple[List[type], list]:
     """Unpacks the given parameter annotation into its components.
 
@@ -3404,6 +3407,9 @@ def unpack_annotation(
         and a list of unpacked literal arguments.
 
     """
+    if annotated_list is None:
+        annotated_list = []
+
     type_ret = []
     literal_ret = []
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
