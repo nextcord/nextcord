@@ -540,7 +540,7 @@ class Client:
     def dispatch(self, event: Union[str, Enum], *args: Any, **kwargs: Any) -> None:
         if self._check_internal_dispatches and isinstance(event, str):
             frame = inspect.getframeinfo(inspect.stack()[1][0])
-            if "super().dispatch" in frame.code_context[0]:
+            if frame.code_context is not None and "super().dispatch" in frame.code_context[0]:
                 frame = inspect.getframeinfo(inspect.stack()[2][0])
 
             if (
