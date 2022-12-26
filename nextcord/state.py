@@ -1234,7 +1234,7 @@ class ConnectionState:
             pass
         else:
             # dispatch the event
-            self.call_handlers("ready")  # TODO: Figure out wtf this is? Is this the parsers?
+            self.call_handlers("ready")
             self.dispatch(StateEvents.READY)
         finally:
             self._ready_task = None
