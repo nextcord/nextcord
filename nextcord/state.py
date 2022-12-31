@@ -1374,6 +1374,8 @@ class ConnectionState:
 
     def parse_interaction_create(self, data) -> None:
         interaction = self._get_client().get_interaction(data=data)
+        if data["type"] == 2:  # application command
+            self.dispatch("application_command", interaction)
         if data["type"] == 3:  # interaction component
             custom_id = interaction.data["custom_id"]  # type: ignore
             component_type = interaction.data["component_type"]  # type: ignore

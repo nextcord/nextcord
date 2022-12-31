@@ -1202,6 +1202,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param execution: The object containing the execution information.
     :type execution: :class:`AutoModerationActionExecution`
 
+.. function:: on_application_command(interaction)
+
+    Called when an :class:`SlashApplicationCommand` is executed
+
+    .. versionadded:: 2.4
+    
+    :param interaction: The interaction object containing the command information.
+    :type interaction: :class:`Interaction`
+
 .. _discord-api-utils:
 
 Utility Functions
