@@ -1207,7 +1207,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     Called when an :class:`SlashApplicationCommand` is executed
 
     .. versionadded:: 2.4
-    
+
     :param interaction: The interaction object containing the command information.
     :type interaction: :class:`Interaction`
 
