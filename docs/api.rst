@@ -1204,7 +1204,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
 .. function:: on_application_command(interaction)
 
-    Called when an application command is executed
+    Called when an application command is executed.
 
     .. versionadded:: 2.4
 
