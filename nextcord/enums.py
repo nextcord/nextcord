@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 import enum
 from typing import Any, Dict, NamedTuple, Optional, Type, TypeVar
@@ -231,9 +208,9 @@ class VoiceRegion(StrEnum):
 
 class SpeakingState(IntEnum):
     none = 0
-    voice = 1
-    soundshare = 2
-    priority = 4
+    voice = 1 << 0
+    soundshare = 1 << 1
+    priority = 1 << 2
 
     def __str__(self):
         return self.name
@@ -455,25 +432,26 @@ class AuditLogAction(IntEnum):
 
 
 class UserFlags(IntEnum):
-    staff = 1
-    partner = 2
-    hypesquad = 4
-    bug_hunter = 8
-    mfa_sms = 16
-    premium_promo_dismissed = 32
-    hypesquad_bravery = 64
-    hypesquad_brilliance = 128
-    hypesquad_balance = 256
-    early_supporter = 512
-    team_user = 1024
-    system = 4096
-    has_unread_urgent_messages = 8192
-    bug_hunter_level_2 = 16384
-    verified_bot = 65536
-    verified_bot_developer = 131072
-    discord_certified_moderator = 262144
-    known_spammer = 1048576
-    active_developer = 4194304
+    staff = 1 << 0
+    partner = 1 << 1
+    hypesquad = 1 << 2
+    bug_hunter = 1 << 3
+    mfa_sms = 1 << 4
+    premium_promo_dismissed = 1 << 5
+    hypesquad_bravery = 1 << 6
+    hypesquad_brilliance = 1 << 7
+    hypesquad_balance = 1 << 8
+    early_supporter = 1 << 9
+    team_user = 1 << 10
+    system = 1 << 12
+    has_unread_urgent_messages = 1 << 13
+    bug_hunter_level_2 = 1 << 14
+    verified_bot = 1 << 16
+    verified_bot_developer = 1 << 17
+    discord_certified_moderator = 1 << 18
+    bot_http_interactions = 1 << 19
+    known_spammer = 1 << 20
+    active_developer = 1 << 22
 
 
 class ActivityType(IntEnum):
@@ -588,6 +566,11 @@ class Locale(StrEnum):
     """French | Français"""
     hr = "hr"
     """Croatian | Hrvatski"""
+    id = "id"
+    """Indonesian | Bahasa Indonesia
+
+    .. versionadded:: 2.4
+    """
     it = "it"
     """Italian | Italiano"""
     lt = "lt"
