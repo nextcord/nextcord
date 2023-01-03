@@ -1073,7 +1073,7 @@ class GuildChannel:
         payload = []
 
         for index, channel in enumerate(channels):
-            d: dict[str, Any] = {"id": channel.id, "position": index}
+            d: Dict[str, Any] = {"id": channel.id, "position": index}
             if category is not MISSING and channel.id == self.id:
                 d.update(parent_id=parent_id, lock_permissions=sync_permissions)
             payload.append(d)
