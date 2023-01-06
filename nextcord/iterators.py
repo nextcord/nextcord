@@ -282,11 +282,8 @@ class HistoryIterator(_AsyncIterator["Message"]):
         if isinstance(around, datetime.datetime):
             around = Object(id=time_snowflake(around))
 
-        self.reverse: bool
-        if oldest_first is None:
-            self.reverse = after is not None
-        else:
-            self.reverse = oldest_first
+        # Maintain compatibility with `None` being passed in for `oldest_first`
+        self.reverse: bool = bool(oldest_first)
 
         self.messageable: Messageable = messageable
         self.limit: Optional[int] = limit
