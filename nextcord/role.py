@@ -106,6 +106,9 @@ class RoleTags:
         return (
             f"<RoleTags bot_id={self.bot_id} integration_id={self.integration_id} "
             f"premium_subscriber={self.is_premium_subscriber()}>"
+            f"subscription_listing_id={self.subscription_listing_id}>"
+            f"available_for_purchase={self.is_available_for_purchase()}>"
+            f"guild_connections={self.has_guild_connections()}>"
         )
 
 
