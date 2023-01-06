@@ -4703,6 +4703,15 @@ ForumTag
 .. autoclass:: ForumTag
     :members:
 
+RoleConnectionMetadata
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: RoleConnectionMetadata
+
+.. autoclass:: RoleConnectionMetadata
+    :members:
+
+
 .. _discord_ui_kit:
 
 Bot UI Kit
