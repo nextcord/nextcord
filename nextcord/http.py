@@ -64,6 +64,7 @@ if TYPE_CHECKING:
         member,
         message,
         role,
+        role_connections,
         scheduled_events,
         sticker,
         template,
@@ -2568,3 +2569,27 @@ class HTTPClient:
             auto_moderation_rule_id=auto_moderation_rule_id,
         )
         return self.request(r, reason=reason)
+
+    def get_role_connection_metadata(
+        self, application_id: Snowflake
+    ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
+        r = Route(
+            "GET",
+            "/applications/{application_id}/role-connections/metadata",
+            application_id=application_id,
+        )
+        return self.request(r)
+
+    def update_role_connection_metadata(
+        self,
+        application_id: Snowflake,
+        data: List[role_connections.ApplicationRoleConnectionMetadata],
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
+        r = Route(
+            "PUT",
+            "/applications/{application_id}/role-connections/metadata",
+            application_id=application_id,
+        )
+        return self.request(r, json=data, reason=reason)
