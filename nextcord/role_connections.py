@@ -11,6 +11,8 @@ from .types.role_connections import (
     ApplicationRoleConnectionMetadata as RoleConnectionMetadataPayload,
 )
 
+__all__ = ("RoleConnectionMetadata",)
+
 
 class RoleConnectionMetadata:
     """Represents a role connection metadata object.
