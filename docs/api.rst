@@ -719,12 +719,17 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
 .. function:: on_thread_join(thread)
 
-    Called whenever a thread is joined or created. Note that from the API's perspective there is no way to
-    differentiate between a thread being created or the bot joining a thread.
+    Called whenever a thread is joined or created.
 
     Note that you can get the guild from :attr:`Thread.guild`.
 
     This requires :attr:`Intents.guilds` to be enabled.
+
+    .. note::
+
+        This event is also called when a thread is created. To differentiate,
+        use :func:`on_thread_create` instead. This is done to avoid a breaking change
+        in v2.
 
     .. versionadded:: 2.0
 
