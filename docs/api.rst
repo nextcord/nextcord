@@ -708,6 +708,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param last_pin: The latest message that was pinned as an aware datetime in UTC. Could be ``None``.
     :type last_pin: Optional[:class:`datetime.datetime`]
 
+.. function:: on_thread_create(thread)
+
+    Called when a thread is created.
+
+    .. versionadded:: 2.4
+
+    :param thread: The thread that got created.
+    :type thread: :class:`Thread`
+
 .. function:: on_thread_join(thread)
 
     Called whenever a thread is joined or created. Note that from the API's perspective there is no way to
