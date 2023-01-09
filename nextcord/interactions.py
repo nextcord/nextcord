@@ -601,6 +601,26 @@ class Interaction(Hashable, Generic[ClientT]):
         )
 
 
+class SlashApplicationCommand(Interaction):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+        super().__init__(data=data, state=state)
+
+
+class ApplicationAutocompleteInteraction(Interaction):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+        super().__init__(data=data, state=state)
+
+
+class ViewInteraction(Interaction):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+        super().__init__(data=data, state=state)
+
+
+class ModalSubmitInteraction(Interaction):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+        super().__init__(data=data, state=state)
+
+
 class InteractionResponse:
     """Represents a Discord interaction response.
 
