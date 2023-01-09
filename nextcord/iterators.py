@@ -49,7 +49,7 @@ if TYPE_CHECKING:
     from .scheduled_events import ScheduledEvent, ScheduledEventUser  # noqa: F401
     from .state import ConnectionState
     from .threads import Thread
-    from .types.audit_log import AuditLog as AuditLogPayload, AuditLogEntry as AuditLogEntryPayload
+    from .types.audit_log import AuditLog as AuditLogPayload
     from .types.guild import Ban as BanPayload, Guild as GuildPayload
     from .types.member import MemberWithUser
     from .types.message import Message as MessagePayload
@@ -519,11 +519,8 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         if isinstance(after, datetime.datetime):
             after = Object(id=time_snowflake(after, high=True))
 
-        self.reverse: bool
-        if oldest_first is None:
-            self.reverse = after is not None
-        else:
-            self.reverse = oldest_first
+        # Maintain compatibility with `None` being passed in for `oldest_first`
+        self.reverse: bool = bool(oldest_first)
 
         self.guild: Guild = guild
         self.loop: asyncio.AbstractEventLoop = guild._state.loop
@@ -531,25 +528,21 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         self.before: Optional[Snowflake] = before
         self.user_id: Optional[int] = user_id
         self.action_type: Optional[AuditLogAction] = action_type
-        self.after: Optional[Snowflake] = after or OLDEST_OBJECT
+        self.after: Optional[Snowflake] = after
         self._state: ConnectionState = guild._state
-
-        self._filter: Optional[Callable[[AuditLogEntryPayload], bool]] = None  # entry dict -> bool
 
         self.entries: asyncio.Queue[AuditLogEntry] = asyncio.Queue()
 
-        self._strategy = self._before_strategy
-        if self.after and self.after != OLDEST_OBJECT:
-            self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
-
-    async def _before_strategy(self, retrieve: int):
+    async def _get_logs(self, retrieve: int):
         before = self.before.id if self.before else None
+        after = self.after.id if self.after else None
         data: AuditLogPayload = await self._state.http.get_audit_logs(
             self.guild.id,
             limit=retrieve,
             user_id=self.user_id,
             action_type=self.action_type,
             before=before,
+            after=after,
         )
 
         entries = data.get("audit_log_entries", [])
@@ -579,15 +572,13 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
 
     async def _fill(self):
         if self._get_retrieve():
-            data = await self._strategy(self.retrieve)
+            data = await self._get_logs(self.retrieve)
             if len(data) < 100:
                 self.limit = 0  # terminate the infinite loop
 
             entries = data.get("audit_log_entries")
             if self.reverse:
                 entries = reversed(entries)
-            if self._filter:
-                entries = filter(self._filter, entries)
 
             state = self._state
 
