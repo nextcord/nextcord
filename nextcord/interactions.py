@@ -1344,3 +1344,8 @@ class InteractionMessage(_InteractionMessageMixin, Message):
     """
 
     pass
+
+
+class PartialInteractionOption:
+    def __init__(self) -> None:
+        pass
