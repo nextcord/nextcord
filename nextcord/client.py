@@ -37,13 +37,20 @@ from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
+from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion, try_enum
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
 from .guild import Guild
 from .http import HTTPClient
-from .interactions import Interaction
+from .interactions import (
+    Interaction,
+    SlashApplicationCommand,
+    ApplicationAutocompleteInteraction,
+    ViewInteraction,
+    ModalSubmitInteraction
+)
+
 from .invite import Invite
 from .iterators import GuildIterator
 from .mentions import AllowedMentions
@@ -2781,4 +2788,21 @@ class Client:
 
             This is synchronous due to how slash commands are implemented.
         """
+
+        # Get the interaction type
+        interaction_type: InteractionType = try_enum(InteractionType, data["type"])
+
+        if interaction_type == InteractionType.application_command:
+            return SlashApplicationCommand(data=data, state=self._connection)
+
+        elif interaction_type == InteractionType.application_command_autocomplete:
+            return ApplicationAutocompleteInteraction(data=data, state=self._connection)
+
+        elif interaction_type == InteractionType.component:
+            return ViewInteraction(data=data, state=self._connection)
+
+        elif interaction_type == InteractionType.modal_submit:
+            return ModalSubmitInteraction(data=data, state=self._connection)
+
+        # Return Base-/Custominteraction class if refined one wasn't found
         return cls(data=data, state=self._connection)

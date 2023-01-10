@@ -178,9 +178,6 @@ class Interaction(Hashable, Generic[ClientT]):
         # TODO: this is so janky, accessing a hidden double attribute
         self._original_message: Optional[InteractionMessage] = None
         self.attached = InteractionAttached()
-        self.application_command: Optional[
-            Union[SlashApplicationSubcommand, BaseApplicationCommand]
-        ] = None
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload):
@@ -254,11 +251,6 @@ class Interaction(Hashable, Generic[ClientT]):
     def is_expired(self) -> bool:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
         return utils.utcnow() > self.expires_at
-
-    def _set_application_command(
-        self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
-    ):
-        self.application_command = app_cmd
 
     @utils.cached_slot_property("_cs_channel")
     def channel(self) -> Optional[InteractionChannel]:
@@ -605,10 +597,41 @@ class SlashApplicationCommand(Interaction):
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
 
+        self.application_command: Optional[
+            Union[SlashApplicationSubcommand, BaseApplicationCommand]
+        ] = None
+
+    def _from_data(self, data: InteractionPayload):
+        super()._from_data(data=data)
+
+        self.app_command_name: str = self.data["name"] # type: ignore # Data should be present here
+        self.app_command_id: int = self.data["id"] # type: ignore # Data should be present here
+        
+    def _set_application_command(
+        self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
+    ):
+        self.application_command = app_cmd
+
 
 class ApplicationAutocompleteInteraction(Interaction):
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
+
+        self.application_command: Optional[
+            Union[SlashApplicationSubcommand, BaseApplicationCommand]
+        ] = None
+
+    def _from_data(self, data: InteractionPayload):
+        super()._from_data(data=data)
+
+        self.app_command_name: str = self.data["name"] # type: ignore # Data should be present here
+        self.app_command_id: int = self.data["id"] # type: ignore # Data should be present here
+
+    
+    def _set_application_command(
+        self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
+    ):
+        self.application_command = app_cmd
 
 
 class ViewInteraction(Interaction):
