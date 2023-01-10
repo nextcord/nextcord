@@ -16,6 +16,7 @@ import time
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, Union, overload
 from urllib.parse import quote as urlquote
+from weakref import WeakValueDictionary
 
 from .. import utils
 from ..channel import PartialMessageable
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
     from ..embeds import Embed
     from ..file import File
     from ..mentions import AllowedMentions
+    from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
 
     try:
@@ -70,8 +72,11 @@ class DeferredLock:
 
 
 class WebhookAdapter:
-    def __init__(self) -> None:
-        self._locks: Dict[Any, threading.Lock] = {}
+    def __init__(self):
+        self._locks: WeakValueDictionary[
+            Tuple[Optional[SnowflakeAlias], Optional[str]],
+            threading.Lock,
+        ] = WeakValueDictionary()
 
     def request(
         self,
