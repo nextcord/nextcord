@@ -655,6 +655,9 @@ class ApplicationAutocompleteInteraction(Interaction):
         for option in data:
             if "focused" in option:
                 self.focused_option = SlashOptionData(option)
+                options_collection.append(self.focused_option)
+                continue
+            
             options_collection.append(SlashOptionData(option))
 
         return options_collection
