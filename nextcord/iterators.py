@@ -270,14 +270,10 @@ async def audit_log_iterator(
         after = Object(id=time_snowflake(after, high=True))
 
     state = guild._state
-    after = after or OLDEST_OBJECT
+    after = after
     retrieve = 0
 
-    reverse: bool
-    if oldest_first is None:
-        reverse = after is not None
-    else:
-        reverse = oldest_first
+    reverse = bool(oldest_first)
 
     def get_retrieve():
         nonlocal retrieve
@@ -296,6 +292,7 @@ async def audit_log_iterator(
             user_id=user_id,
             action_type=action_type,
             before=before.id if before else None,
+            after=after.id if after else None,
         )
 
         entries = data.get("audit_log_entries", [])
@@ -310,7 +307,6 @@ async def audit_log_iterator(
 
         if reverse:
             entries = list(reversed(entries))
-        entries = list(filter(lambda m: int(m["id"]) > after.id, entries))
 
         auto_moderation_rules = {
             int(rule["id"]): AutoModerationRule(data=rule, state=state)
