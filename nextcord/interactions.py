@@ -604,9 +604,9 @@ class SlashApplicationCommand(Interaction):
     def _from_data(self, data: InteractionPayload):
         super()._from_data(data=data)
 
-        self.app_command_name: str = self.data["name"] # type: ignore # Data should be present here
-        self.app_command_id: int = self.data["id"] # type: ignore # Data should be present here
-        
+        self.app_command_name: str = self.data["name"]  # type: ignore # Data should be present here
+        self.app_command_id: int = self.data["id"]  # type: ignore # Data should be present here
+
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
     ):
@@ -624,10 +624,9 @@ class ApplicationAutocompleteInteraction(Interaction):
     def _from_data(self, data: InteractionPayload):
         super()._from_data(data=data)
 
-        self.app_command_name: str = self.data["name"] # type: ignore # Data should be present here
-        self.app_command_id: int = self.data["id"] # type: ignore # Data should be present here
+        self.app_command_name: str = self.data["name"]  # type: ignore # Data should be present here
+        self.app_command_id: int = self.data["id"]  # type: ignore # Data should be present here
 
-    
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
     ):

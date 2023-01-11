@@ -37,20 +37,26 @@ from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion, try_enum
+from .enums import (
+    ApplicationCommandType,
+    ChannelType,
+    InteractionType,
+    Status,
+    VoiceRegion,
+    try_enum,
+)
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
 from .guild import Guild
 from .http import HTTPClient
 from .interactions import (
-    Interaction,
-    SlashApplicationCommand,
     ApplicationAutocompleteInteraction,
+    Interaction,
+    ModalSubmitInteraction,
+    SlashApplicationCommand,
     ViewInteraction,
-    ModalSubmitInteraction
 )
-
 from .invite import Invite
 from .iterators import GuildIterator
 from .mentions import AllowedMentions
