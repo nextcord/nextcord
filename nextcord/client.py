@@ -51,11 +51,11 @@ from .gateway import *
 from .guild import Guild
 from .http import HTTPClient
 from .interactions import (
-    Interaction,
-    SlashApplicationInteraction,
     ApplicationAutocompleteInteraction,
+    Interaction,
+    ModalSubmitInteraction,
+    SlashApplicationInteraction,
     ViewInteraction,
-    ModalSubmitInteraction
 )
 from .invite import Invite
 from .iterators import GuildIterator
@@ -2773,14 +2773,14 @@ class Client:
         ...
 
     def get_interaction(
-        self, 
-        data, 
+        self,
+        data,
         *,
         slash_application_interaction: Type[InterT] = SlashApplicationInteraction,
         application_autocomplete_interaction: Type[InterT] = ApplicationAutocompleteInteraction,
         message_component_interaction: Type[InterT] = ViewInteraction,
-        modal_submit_interaction: Type[InterT] = ModalSubmitInteraction, 
-        cls: Type[InterT] = Interaction
+        modal_submit_interaction: Type[InterT] = ModalSubmitInteraction,
+        cls: Type[InterT] = Interaction,
     ) -> Union[Interaction, InterT]:
         """Returns an interaction for a gateway event.
 

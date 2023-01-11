@@ -604,11 +604,11 @@ class SlashApplicationInteraction(Interaction):
     def _from_data(self, data: InteractionPayload):
         super()._from_data(data=data)
 
-        self.app_command_name: str = self.data["name"] # type: ignore # Data should be present here
-        self.app_command_id: int = self.data["id"] # type: ignore # Data should be present here
-        
+        self.app_command_name: str = self.data["name"]  # type: ignore # Data should be present here
+        self.app_command_id: int = self.data["id"]  # type: ignore # Data should be present here
+
         try:
-            self.options: list = self._get_application_options(self.data["options"]) # type: ignore # Data should be present here
+            self.options: list = self._get_application_options(self.data["options"])  # type: ignore # Data should be present here
         except KeyError:
             self.options: list = []
 
@@ -640,10 +640,10 @@ class ApplicationAutocompleteInteraction(Interaction):
         self.app_command_id: int = self.data["id"]  # type: ignore # Data should be present here
 
         try:
-            self.options: list = self._get_application_options(self.data["options"]) # type: ignore # Data should be present here
+            self.options: list = self._get_application_options(self.data["options"])  # type: ignore # Data should be present here
         except KeyError:
             self.options: list = []
-    
+
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
     ):
@@ -657,7 +657,7 @@ class ApplicationAutocompleteInteraction(Interaction):
                 self.focused_option = SlashOptionData(option)
                 options_collection.append(self.focused_option)
                 continue
-            
+
             options_collection.append(SlashOptionData(option))
 
         return options_collection
