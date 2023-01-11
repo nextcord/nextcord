@@ -593,7 +593,7 @@ class Interaction(Hashable, Generic[ClientT]):
         )
 
 
-class SlashApplicationCommand(Interaction):
+class SlashApplicationInteraction(Interaction):
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
 
@@ -607,16 +607,28 @@ class SlashApplicationCommand(Interaction):
         self.app_command_name: str = self.data["name"] # type: ignore # Data should be present here
         self.app_command_id: int = self.data["id"] # type: ignore # Data should be present here
         
+        try:
+            self.options: list = self._get_application_options(self.data["options"]) # type: ignore # Data should be present here
+        except KeyError:
+            self.options: list = []
+
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
     ):
         self.application_command = app_cmd
 
+    def _get_application_options(self, data):
+        options_collection: list = []
+
+        for option in data:
+            options_collection.append(SlashOptionData(option))
+
+        return options_collection
+
 
 class ApplicationAutocompleteInteraction(Interaction):
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
-
         self.application_command: Optional[
             Union[SlashApplicationSubcommand, BaseApplicationCommand]
         ] = None
@@ -627,11 +639,25 @@ class ApplicationAutocompleteInteraction(Interaction):
         self.app_command_name: str = self.data["name"] # type: ignore # Data should be present here
         self.app_command_id: int = self.data["id"] # type: ignore # Data should be present here
 
+        try:
+            self.options: list = self._get_application_options(self.data["options"]) # type: ignore # Data should be present here
+        except KeyError:
+            self.options: list = []
     
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
     ):
         self.application_command = app_cmd
+
+    def _get_application_options(self, data):
+        options_collection: list = []
+
+        for option in data:
+            if "focused" in option:
+                self.focused_option = SlashOptionData(option)
+            options_collection.append(SlashOptionData(option))
+
+        return options_collection
 
 
 class ViewInteraction(Interaction):
@@ -1344,3 +1370,19 @@ class InteractionMessage(_InteractionMessageMixin, Message):
     """
 
     pass
+
+
+# Rename later?
+class SlashOptionData:
+    def __init__(self, data) -> None:
+        # Still missing `options?` Data from (view Discord Docs)
+        self.value = data["value"]
+        self.type = data["type"]
+        self.name = data["name"]
+
+        try:
+            self.focused = data["focused"]
+        except KeyError:
+            self.focused = False
+
+    # Needs dunder function to return Option name when referred to

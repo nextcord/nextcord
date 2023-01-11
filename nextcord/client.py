@@ -45,7 +45,7 @@ from .guild import Guild
 from .http import HTTPClient
 from .interactions import (
     Interaction,
-    SlashApplicationCommand,
+    SlashApplicationInteraction,
     ApplicationAutocompleteInteraction,
     ViewInteraction,
     ModalSubmitInteraction
@@ -2757,6 +2757,7 @@ class Client:
     def get_interaction(self, data) -> Interaction:
         ...
 
+    # may need to add new params to methods below
     @overload
     def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction:
         ...
@@ -2766,7 +2767,14 @@ class Client:
         ...
 
     def get_interaction(
-        self, data, *, cls: Type[InterT] = Interaction
+        self, 
+        data, 
+        *,
+        slash_application_interaction: Type[InterT] = SlashApplicationInteraction,
+        application_autocomplete_interaction: Type[InterT] = ApplicationAutocompleteInteraction,
+        message_component_interaction: Type[InterT] = ViewInteraction,
+        modal_submit_interaction: Type[InterT] = ModalSubmitInteraction, 
+        cls: Type[InterT] = Interaction
     ) -> Union[Interaction, InterT]:
         """Returns an interaction for a gateway event.
 
@@ -2788,21 +2796,20 @@ class Client:
 
             This is synchronous due to how slash commands are implemented.
         """
-
         # Get the interaction type
         interaction_type: InteractionType = try_enum(InteractionType, data["type"])
 
         if interaction_type == InteractionType.application_command:
-            return SlashApplicationCommand(data=data, state=self._connection)
+            return slash_application_interaction(data=data, state=self._connection)
 
         elif interaction_type == InteractionType.application_command_autocomplete:
-            return ApplicationAutocompleteInteraction(data=data, state=self._connection)
+            return application_autocomplete_interaction(data=data, state=self._connection)
 
         elif interaction_type == InteractionType.component:
-            return ViewInteraction(data=data, state=self._connection)
+            return message_component_interaction(data=data, state=self._connection)
 
         elif interaction_type == InteractionType.modal_submit:
-            return ModalSubmitInteraction(data=data, state=self._connection)
+            return modal_submit_interaction(data=data, state=self._connection)
 
         # Return Base-/Custominteraction class if refined one wasn't found
         return cls(data=data, state=self._connection)
