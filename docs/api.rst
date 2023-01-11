@@ -2801,8 +2801,8 @@ of :class:`enum.Enum`.
 
         Represents a sticker with a lottie image.
 
-    .. attribute:: 
-    
+    .. attribute::
+
         Represents a sticker with a GIF image.
 
         .. versionadded:: 2.4
