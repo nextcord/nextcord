@@ -566,6 +566,11 @@ class Locale(StrEnum):
     """French | Français"""
     hr = "hr"
     """Croatian | Hrvatski"""
+    id = "id"
+    """Indonesian | Bahasa Indonesia
+
+    .. versionadded:: 2.4
+    """
     it = "it"
     """Italian | Italiano"""
     lt = "lt"

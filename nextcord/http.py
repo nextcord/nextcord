@@ -1709,12 +1709,15 @@ class HTTPClient:
         guild_id: Snowflake,
         limit: int = 100,
         before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
         user_id: Optional[Snowflake] = None,
         action_type: Optional[AuditLogAction] = None,
     ) -> Response[audit_log.AuditLog]:
         params: Dict[str, Any] = {"limit": limit}
         if before:
             params["before"] = before
+        if after:
+            params["after"] = after
         if user_id:
             params["user_id"] = user_id
         if action_type:
