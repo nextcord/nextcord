@@ -2818,6 +2818,12 @@ of :class:`enum.Enum`.
     .. attribute:: embedded_application
 
         A stream invite that targets an embedded application.
+    
+    .. attribute:: role_subscription_purchase
+    
+        A stream invite that targets a channel that prompt users to buy roles.
+        
+        .. versionadded:: 2.4
 
 .. class:: VideoQualityMode
 
