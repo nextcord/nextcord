@@ -619,7 +619,7 @@ class ViewInteraction(Interaction):
     # Not necessary to call on init - super() calls it automatically
     def _from_data(self, data: InteractionPayload):
         super()._from_data(data=data)
-        
+
         message = data["message"]  # type: ignore # should be present here - not sure why its causing issues
         self.message = self._state._get_message(int(message["id"])) or Message(
             state=self._state, channel=self.channel, data=message  # type: ignore
