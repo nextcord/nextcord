@@ -509,6 +509,7 @@ class InviteTarget(IntEnum):
     unknown = 0
     stream = 1
     embedded_application = 2
+    role_subscription_purchase = 3
 
 
 class InteractionType(IntEnum):
