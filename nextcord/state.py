@@ -2301,8 +2301,11 @@ class ConnectionState:
         user = self.get_user(user_id)
 
         if guild is not None and user is not None:
-            entry = AuditLogEntry(auto_moderation_rules={}, users={user_id: user}, data=data, guild=guild)
+            entry = AuditLogEntry(
+                auto_moderation_rules={}, users={user_id: user}, data=data, guild=guild
+            )
             self.dispatch("audit_log_entry_create", entry)
+
 
 class AutoShardedConnectionState(ConnectionState):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
