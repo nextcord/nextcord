@@ -2819,7 +2819,7 @@ of :class:`enum.Enum`.
 
         A stream invite that targets an embedded application.
 
-    .. attribute:: role_subscription_purchase
+    .. attribute:: role_subscriptions_purchase
 
         A stream invite that targets a channel that prompt users to buy roles.
 
