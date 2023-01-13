@@ -624,7 +624,7 @@ class Intents(BaseFlags):
 
     @flag_value
     def moderation(self):
-        """:class:`bool`: Whether guild ban related events are enabled.
+        """:class:`bool`: Whether guild moderation related events are enabled.
 
         This corresponds to the following events:
 
