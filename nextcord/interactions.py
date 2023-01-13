@@ -666,7 +666,7 @@ class ViewInteraction(Interaction):
         if not self.response.is_done():
             return await self.response.edit_message(*args, **kwargs)
         if self.message is not None:
-            return await self.message.edit(*args, **kwargs)
+            return await self.followup.edit_message(self.message.id, *args, **kwargs)
         raise InvalidArgument(
             "Interaction.message is None, this method can only be used in "
             "response to a component or modal submit interaction."
@@ -686,7 +686,6 @@ class ModalSubmitInteraction(Interaction):
         self.message: Optional[Message]
         try:
             message = data["message"]
-            print("found a message")
             self.message = self._state._get_message(int(message["id"])) or Message(
                 state=self._state, channel=self.channel, data=message  # type: ignore
             )
@@ -728,7 +727,7 @@ class ModalSubmitInteraction(Interaction):
         if not self.response.is_done():
             return await self.response.edit_message(*args, **kwargs)
         if self.message is not None:
-            return await self.message.edit(*args, **kwargs)
+            return await self.followup.edit_message(self.message.id, *args, **kwargs)
         raise InvalidArgument(
             "Interaction.message is None, this method can only be used in "
             "response to a component or modal submit interaction."
@@ -1437,10 +1436,11 @@ class InteractionMessage(_InteractionMessageMixin, Message):
     pass
 
 
-# Rename later?
+# Rename or Relocate later?
 class SlashOptionData:
     def __init__(self, data) -> None:
         # Still missing `options?` Data from (view Discord Docs)
+        self.data = data
         self.value = data["value"]
         self.type = data["type"]
         self.name = data["name"]
@@ -1450,4 +1450,5 @@ class SlashOptionData:
         except KeyError:
             self.focused = False
 
-    # Needs dunder function to return Option name when referred to
+    def __repr__(self) -> str:
+        return self.value
