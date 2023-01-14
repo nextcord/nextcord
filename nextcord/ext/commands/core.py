@@ -682,7 +682,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         command = self
         # command.parent is type-hinted as GroupMixin some attributes are resolved via MRO
         while command.parent is not None:  # type: ignore
-            command = command.parent  # type: ignore
+            command = command.parent
             entries.append(command.name)  # type: ignore
 
         return " ".join(reversed(entries))
@@ -700,7 +700,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         entries = []
         command = self
         while command.parent is not None:  # type: ignore
-            command = command.parent  # type: ignore
+            command = command.parent
             entries.append(command)
 
         return entries
@@ -1639,12 +1639,8 @@ def command(
     if cls is MISSING:
         cls = Command
 
-    def decorator(
-        func: Union[
-            Callable[Concatenate[ContextT, P], Coro[Any]],
-            Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
-        ]
-    ) -> Union[Command[CogT, P, T], CommandT]:
+    # Type variables do not seem to nest within decorators.
+    def decorator(func: Any) -> Union[Command[CogT, P, T], CommandT]:
         if isinstance(func, Command):
             raise TypeError("Callback is already a command.")
 
