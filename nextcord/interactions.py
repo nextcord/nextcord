@@ -24,10 +24,14 @@ from .utils import snowflake_time
 from .webhook.async_ import Webhook, WebhookMessage, async_context, handle_message_parameters
 
 __all__ = (
+    "ApplicationAutocompleteInteraction",
     "Interaction",
     "InteractionMessage",
     "InteractionResponse",
+    "ModalSubmitInteraction",
     "PartialInteractionMessage",
+    "SlashApplicationInteraction",
+    "ViewInteraction",
 )
 
 if TYPE_CHECKING:
@@ -616,7 +620,6 @@ class ViewInteraction(Interaction):
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
 
-    # Not necessary to call on init - super() calls it automatically
     def _from_data(self, data: InteractionPayload):
         super()._from_data(data=data)
 
