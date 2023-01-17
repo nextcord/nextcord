@@ -2304,7 +2304,7 @@ class ConnectionState:
             entry = AuditLogEntry(
                 auto_moderation_rules={}, users={user_id: user}, data=data, guild=guild
             )
-            self.dispatch("audit_log_entry_create", entry)
+            self.dispatch("guild_audit_log_entry_create", entry)
 
 
 class AutoShardedConnectionState(ConnectionState):
