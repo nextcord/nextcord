@@ -594,9 +594,9 @@ class ApplicationCommandInteraction(Interaction):
     app_command_id: :class:`int`
         The application command ID that triggered the Interaction
     options: List[SlashOptionData]
-        The options 
-    """    
-   
+        The options
+    """
+
     __slots__: Tuple[str, ...] = (
         "id",
         "type",
@@ -623,7 +623,7 @@ class ApplicationCommandInteraction(Interaction):
         "_cs_followup",
         "_cs_channel",
     )
-   
+
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
 
@@ -714,7 +714,7 @@ class ApplicationAutocompleteInteraction(Interaction):
     focused_option: :class:`SlashOptionData`
         The option the callback is for
     """
-    
+
     __slots__: Tuple[str, ...] = (
         "id",
         "type",
@@ -742,7 +742,7 @@ class ApplicationAutocompleteInteraction(Interaction):
         "_cs_followup",
         "_cs_channel",
     )
-    
+
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
         self.application_command: Optional[
@@ -833,7 +833,7 @@ class ViewInteraction(Interaction):
     value: :class:`str`
         The value of the component that trgigered the interaction
     """
-    
+
     __slots__: Tuple[str, ...] = (
         "id",
         "type",
@@ -867,7 +867,9 @@ class ViewInteraction(Interaction):
         super()._from_data(data=data)
 
         message = data["message"]  # type: ignore # should be present here - not sure why its causing issues
-        self.message = self._state._get_message(int(message["id"])) or Message( # ---- check for and create correct message object ---- 
+        self.message = self._state._get_message(
+            int(message["id"])
+        ) or Message(  # ---- check for and create correct message object ----
             state=self._state, channel=self.channel, data=message  # type: ignore
         )
         self.component_id = self.data["custom_id"]  # type: ignore # self.data should be present here
@@ -970,8 +972,8 @@ class ModalSubmitInteraction(Interaction):
         The message the modal was called from
     modal_id: :class:`int`
         The ID of the modal that triggered the Interaction
-    """    
-    
+    """
+
     __slots__: Tuple[str, ...] = (
         "id",
         "type",
@@ -1008,13 +1010,13 @@ class ModalSubmitInteraction(Interaction):
         self.message: Optional[Message]
         try:
             message = data["message"]
-            self.message = self._state._get_message(int(message["id"])) or Message( # ---- check for and create correct message object ----
+            self.message = self._state._get_message(
+                int(message["id"])
+            ) or Message(  # ---- check for and create correct message object ----
                 state=self._state, channel=self.channel, data=message  # type: ignore
             )
         except KeyError:
             self.message = None
-
-        
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
         """|coro|

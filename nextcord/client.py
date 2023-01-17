@@ -52,9 +52,9 @@ from .guild import Guild
 from .http import HTTPClient
 from .interactions import (
     ApplicationAutocompleteInteraction,
+    ApplicationCommandInteraction,
     Interaction,
     ModalSubmitInteraction,
-    ApplicationCommandInteraction,
     ViewInteraction,
 )
 from .invite import Invite
@@ -98,7 +98,7 @@ InterT = TypeVar("InterT", bound="Interaction")
 
 AppInterT = TypeVar("AppInterT", bound="ApplicationCommandInteraction")
 AutoAppInterT = TypeVar("AutoAppInterT", bound="ApplicationAutocompleteInteraction")
-ViewInterT = TypeVar("ViewInterT", bound = "ViewInteraction")
+ViewInterT = TypeVar("ViewInterT", bound="ViewInteraction")
 ModalInterT = TypeVar("ModalInterT", bound="ModalSubmitInteraction")
 
 
@@ -2782,7 +2782,9 @@ class Client:
         data,
         *,
         application_interactions: Type[AppInterT] = ApplicationCommandInteraction,
-        application_autocomplete_interaction: Type[AutoAppInterT] = ApplicationAutocompleteInteraction,
+        application_autocomplete_interaction: Type[
+            AutoAppInterT
+        ] = ApplicationAutocompleteInteraction,
         message_component_interaction: Type[ViewInterT] = ViewInteraction,
         modal_submit_interaction: Type[ModalInterT] = ModalSubmitInteraction,
         cls: Type[InterT] = Interaction,
