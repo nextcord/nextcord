@@ -54,7 +54,7 @@ from .interactions import (
     ApplicationAutocompleteInteraction,
     Interaction,
     ModalSubmitInteraction,
-    SlashApplicationInteraction,
+    ApplicationCommandInteraction,
     ViewInteraction,
 )
 from .invite import Invite
@@ -95,6 +95,11 @@ __all__ = ("Client",)
 
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 InterT = TypeVar("InterT", bound="Interaction")
+
+AppInterT = TypeVar("AppInterT", bound="ApplicationCommandInteraction")
+AutoAppInterT = TypeVar("AutoAppInterT", bound="ApplicationAutocompleteInteraction")
+ViewInterT = TypeVar("ViewInterT", bound = "ViewInteraction")
+ModalInterT = TypeVar("ModalInterT", bound="ModalSubmitInteraction")
 
 
 _log = logging.getLogger(__name__)
@@ -2776,10 +2781,10 @@ class Client:
         self,
         data,
         *,
-        slash_application_interaction: Type[InterT] = SlashApplicationInteraction,
-        application_autocomplete_interaction: Type[InterT] = ApplicationAutocompleteInteraction,
-        message_component_interaction: Type[InterT] = ViewInteraction,
-        modal_submit_interaction: Type[InterT] = ModalSubmitInteraction,
+        application_interactions: Type[AppInterT] = ApplicationCommandInteraction,
+        application_autocomplete_interaction: Type[AutoAppInterT] = ApplicationAutocompleteInteraction,
+        message_component_interaction: Type[ViewInterT] = ViewInteraction,
+        modal_submit_interaction: Type[ModalInterT] = ModalSubmitInteraction,
         cls: Type[InterT] = Interaction,
     ) -> Union[Interaction, InterT]:
         """Returns an interaction for a gateway event.
@@ -2806,7 +2811,7 @@ class Client:
         interaction_type: InteractionType = try_enum(InteractionType, data["type"])
 
         if interaction_type == InteractionType.application_command:
-            return slash_application_interaction(data=data, state=self._connection)
+            return application_interactions(data=data, state=self._connection)
 
         elif interaction_type == InteractionType.application_command_autocomplete:
             return application_autocomplete_interaction(data=data, state=self._connection)

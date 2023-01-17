@@ -30,7 +30,7 @@ __all__ = (
     "InteractionResponse",
     "ModalSubmitInteraction",
     "PartialInteractionMessage",
-    "SlashApplicationInteraction",
+    "ApplicationCommandInteraction",
     "ViewInteraction",
 )
 
@@ -96,7 +96,7 @@ class InteractionAttached(dict):
 
 
 class Interaction(Hashable, Generic[ClientT]):
-    """Represents a Discord interaction.
+    """Represents the base class for all Discord interactions.
 
     An interaction happens when a user does an action that needs to
     be notified. Current examples are slash commands and components.
@@ -138,8 +138,6 @@ class Interaction(Hashable, Generic[ClientT]):
         The application ID that the interaction was for.
     user: Optional[Union[:class:`User`, :class:`Member`]]
         The user or member that sent the interaction.
-    message: Optional[:class:`Message`]
-        The message that sent this interaction.
     token: :class:`str`
         The token to continue the interaction. These are valid
         for 15 minutes.
@@ -147,8 +145,6 @@ class Interaction(Hashable, Generic[ClientT]):
         The raw interaction data.
     attached: :class:`InteractionAttached`
         The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
-    application_command: Optional[:class:`ApplicationCommand`]
-        The application command that handled the interaction.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -158,13 +154,11 @@ class Interaction(Hashable, Generic[ClientT]):
         "channel_id",
         "data",
         "application_id",
-        "message",
         "user",
         "locale",
         "guild_locale",
         "token",
         "version",
-        "application_command",
         "attached",
         "_permissions",
         "_app_permissions",
@@ -546,7 +540,90 @@ class Interaction(Hashable, Generic[ClientT]):
         )
 
 
-class SlashApplicationInteraction(Interaction):
+class ApplicationCommandInteraction(Interaction):
+    """Represents the base class for all Discord interactions.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interactions are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the interaction's hash.
+
+    .. versionadded:: 2.0
+
+    .. versionchanged:: 2.1
+        :class:`Interaction` is now hashable.
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    guild_id: Optional[:class:`int`]
+        The guild ID the interaction was sent from.
+    channel_id: Optional[:class:`int`]
+        The channel ID the interaction was sent from.
+    locale: Optional[:class:`str`]
+        The users locale.
+    guild_locale: Optional[:class:`str`]
+        The guilds preferred locale, if invoked in a guild.
+    application_id: :class:`int`
+        The application ID that the interaction was for.
+    user: Optional[Union[:class:`User`, :class:`Member`]]
+        The user or member that sent the interaction.
+    token: :class:`str`
+        The token to continue the interaction. These are valid
+        for 15 minutes.
+    data: :class:`dict`
+        The raw application command specific interaction data.
+    attached: :class:`InteractionAttached`
+        The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
+    application_command: Union[SlashApplicationSubcommand, BaseApplicationCommand]
+        The application command that triggered the interaction
+    app_command_name: :class:`str`
+        The name of the application command that triggered the interaction
+    app_command_id: :class:`int`
+        The application command ID that triggered the Interaction
+    options: List[SlashOptionData]
+        The options 
+    """    
+   
+    __slots__: Tuple[str, ...] = (
+        "id",
+        "type",
+        "guild_id",
+        "channel_id",
+        "data",
+        "application_id",
+        "user",
+        "locale",
+        "guild_locale",
+        "token",
+        "version",
+        "attached",
+        "application_command",
+        "app_command_name",
+        "app_command_id",
+        "options",
+        "_permissions",
+        "_app_permissions",
+        "_state",
+        "_session",
+        "_original_message",
+        "_cs_response",
+        "_cs_followup",
+        "_cs_channel",
+    )
+   
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
 
@@ -580,6 +657,92 @@ class SlashApplicationInteraction(Interaction):
 
 
 class ApplicationAutocompleteInteraction(Interaction):
+    """Represents the base class for all Discord interactions.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interactions are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the interaction's hash.
+
+    .. versionadded:: 2.0
+
+    .. versionchanged:: 2.1
+        :class:`Interaction` is now hashable.
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    guild_id: Optional[:class:`int`]
+        The guild ID the interaction was sent from.
+    channel_id: Optional[:class:`int`]
+        The channel ID the interaction was sent from.
+    locale: Optional[:class:`str`]
+        The users locale.
+    guild_locale: Optional[:class:`str`]
+        The guilds preferred locale, if invoked in a guild.
+    application_id: :class:`int`
+        The application ID that the interaction was for.
+    user: Optional[Union[:class:`User`, :class:`Member`]]
+        The user or member that sent the interaction.
+    token: :class:`str`
+        The token to continue the interaction. These are valid
+        for 15 minutes.
+    data: :class:`dict`
+        The raw application autocomplete specific interaction data.
+    attached: :class:`InteractionAttached`
+        The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
+    application_command: Union[SlashApplicationSubcommand, BaseApplicationCommand]
+        The application command that triggered the interaction
+    app_command_name: :class:`str`
+        The name of the application command that triggered the interaction
+    app_command_id: :class:`int`
+        The application command ID that triggered the Interaction
+    options: List[SlashOptionData]
+        The options
+    focused_option: :class:`SlashOptionData`
+        The option the callback is for
+    """
+    
+    __slots__: Tuple[str, ...] = (
+        "id",
+        "type",
+        "guild_id",
+        "channel_id",
+        "data",
+        "application_id",
+        "user",
+        "locale",
+        "guild_locale",
+        "token",
+        "version",
+        "attached",
+        "application_command",
+        "app_command_name",
+        "app_command_id",
+        "options",
+        "focused_option",
+        "_permissions",
+        "_app_permissions",
+        "_state",
+        "_session",
+        "_original_message",
+        "_cs_response",
+        "_cs_followup",
+        "_cs_channel",
+    )
+    
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
         self.application_command: Optional[
@@ -617,6 +780,86 @@ class ApplicationAutocompleteInteraction(Interaction):
 
 
 class ViewInteraction(Interaction):
+    """Represents the base class for all Discord interactions.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interactions are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the interaction's hash.
+
+    .. versionadded:: 2.0
+
+    .. versionchanged:: 2.1
+        :class:`Interaction` is now hashable.
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    guild_id: Optional[:class:`int`]
+        The guild ID the interaction was sent from.
+    channel_id: Optional[:class:`int`]
+        The channel ID the interaction was sent from.
+    locale: Optional[:class:`str`]
+        The users locale.
+    guild_locale: Optional[:class:`str`]
+        The guilds preferred locale, if invoked in a guild.
+    application_id: :class:`int`
+        The application ID that the interaction was for.
+    user: Optional[Union[:class:`User`, :class:`Member`]]
+        The user or member that sent the interaction.
+    token: :class:`str`
+        The token to continue the interaction. These are valid
+        for 15 minutes.
+    data: :class:`dict`
+        The raw View specific interaction data.
+    attached: :class:`InteractionAttached`
+        The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
+    message: :class:`Message`
+        The message the component is attached to
+    component_id: :class:`int`
+        The ID of the component that triggered the Interaction
+    value: :class:`str`
+        The value of the component that trgigered the interaction
+    """
+    
+    __slots__: Tuple[str, ...] = (
+        "id",
+        "type",
+        "guild_id",
+        "channel_id",
+        "data",
+        "application_id",
+        "user",
+        "locale",
+        "guild_locale",
+        "token",
+        "version",
+        "attached",
+        "message",
+        "component_id",
+        "value",
+        "_permissions",
+        "_app_permissions",
+        "_state",
+        "_session",
+        "_original_message",
+        "_cs_response",
+        "_cs_followup",
+        "_cs_channel",
+    )
+
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
 
@@ -624,10 +867,10 @@ class ViewInteraction(Interaction):
         super()._from_data(data=data)
 
         message = data["message"]  # type: ignore # should be present here - not sure why its causing issues
-        self.message = self._state._get_message(int(message["id"])) or Message(
+        self.message = self._state._get_message(int(message["id"])) or Message( # ---- check for and create correct message object ---- 
             state=self._state, channel=self.channel, data=message  # type: ignore
         )
-        self.custom_id = self.data["custom_id"]  # type: ignore # self.data should be present here
+        self.component_id = self.data["custom_id"]  # type: ignore # self.data should be present here
 
         try:
             self.value = self.data["values"]  # type: ignore # self.data should be present here
@@ -677,23 +920,101 @@ class ViewInteraction(Interaction):
 
 
 class ModalSubmitInteraction(Interaction):
+    """Represents the base class for all Discord interactions.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interactions are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the interaction's hash.
+
+    .. versionadded:: 2.0
+
+    .. versionchanged:: 2.1
+        :class:`Interaction` is now hashable.
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    guild_id: Optional[:class:`int`]
+        The guild ID the interaction was sent from.
+    channel_id: Optional[:class:`int`]
+        The channel ID the interaction was sent from.
+    locale: Optional[:class:`str`]
+        The users locale.
+    guild_locale: Optional[:class:`str`]
+        The guilds preferred locale, if invoked in a guild.
+    application_id: :class:`int`
+        The application ID that the interaction was for.
+    user: Optional[Union[:class:`User`, :class:`Member`]]
+        The user or member that sent the interaction.
+    token: :class:`str`
+        The token to continue the interaction. These are valid
+        for 15 minutes.
+    data: :class:`dict`
+        The raw Modal specific interaction data.
+    attached: :class:`InteractionAttached`
+        The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
+    message: :class:`Message`
+        The message the modal was called from
+    modal_id: :class:`int`
+        The ID of the modal that triggered the Interaction
+    """    
+    
+    __slots__: Tuple[str, ...] = (
+        "id",
+        "type",
+        "guild_id",
+        "channel_id",
+        "data",
+        "application_id",
+        "user",
+        "locale",
+        "guild_locale",
+        "token",
+        "version",
+        "attached",
+        "modal_id",
+        "message",
+        "_permissions",
+        "_app_permissions",
+        "_state",
+        "_session",
+        "_original_message",
+        "_cs_response",
+        "_cs_followup",
+        "_cs_channel",
+    )
+
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
 
     def _from_data(self, data: InteractionPayload):
         super()._from_data(data=data)
 
-        self.custom_id = self.data["custom_id"]  # type: ignore # self.data should be present here
-        self.components = self.data["components"]  # type: ignore # self.data should be present here
+        self.modal_id = self.data["custom_id"]  # type: ignore # self.data should be present here
 
         self.message: Optional[Message]
         try:
             message = data["message"]
-            self.message = self._state._get_message(int(message["id"])) or Message(
+            self.message = self._state._get_message(int(message["id"])) or Message( # ---- check for and create correct message object ----
                 state=self._state, channel=self.channel, data=message  # type: ignore
             )
         except KeyError:
             self.message = None
+
+        
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
         """|coro|
@@ -1439,8 +1760,10 @@ class InteractionMessage(_InteractionMessageMixin, Message):
     pass
 
 
-# Rename or Relocate later?
+# Lives here - can't go into application_commands.py due to circular import
 class SlashOptionData:
+    """Class description"""
+
     def __init__(self, data) -> None:
         # Still missing `options?` Data from (view Discord Docs)
         self.data = data
