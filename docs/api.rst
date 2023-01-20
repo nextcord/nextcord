@@ -244,6 +244,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 .. function:: on_http_ratelimit(limit, remaining, reset_after, bucket, scope)
 
     Called when a HTTP request in progress either exhausts its bucket or gets a 429 response.
+    For more information on how a ratelimit bucket is defined, check out the [Discord API Docs](https://discord.dev/topics/rate-limits).
 
     If the 429 response is a global ratelimit, then use :func:`on_global_http_ratelimit` instead.
 
