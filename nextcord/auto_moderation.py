@@ -80,6 +80,8 @@ class AutoModerationTriggerMetadata:
     regex_patterns: Optional[List[:class:`str`]]
         A list of regex patterns which will be matched with content.
 
+        .. versionadded:: 2.4
+
         .. note::
 
             This is ``None`` and cannot be provided if the trigger type of the rule is not
