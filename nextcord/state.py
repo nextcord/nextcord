@@ -2305,6 +2305,8 @@ class ConnectionState:
                 auto_moderation_rules={}, users={user_id: user}, data=data, guild=guild
             )
             self.dispatch("guild_audit_log_entry_create", entry)
+        else:
+            _log.debug("guild_audit_log_entry_create wasn't dispatched because the guild (%s) and/or user (%s) are None!", repr(guild), repr(user))
 
 
 class AutoShardedConnectionState(ConnectionState):
