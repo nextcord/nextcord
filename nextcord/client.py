@@ -2770,25 +2770,66 @@ class Client:
 
     # may need to add new params to methods below
     @overload
-    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction:
+    def get_interaction(
+        self, 
+        data, 
+        *,
+        application_interaction: Type[ApplicationCommandInteraction],
+        application_autocomplete_interaction: Type[ApplicationAutocompleteInteraction],
+        message_component_interaction: Type[ViewInteraction],
+        modal_submit_interaction: Type[ModalSubmitInteraction],
+        cls: Type[Interaction]
+    ) -> Union[
+        ApplicationCommandInteraction, 
+        ApplicationAutocompleteInteraction,
+        ViewInteraction,
+        ModalSubmitInteraction,
+        Interaction 
+    ]:
         ...
 
     @overload
-    def get_interaction(self, data, *, cls: Type[InterT]) -> InterT:
+    def get_interaction(
+        self, 
+        data, 
+        *,
+        application_interaction: Type[AppInterT],
+        application_autocomplete_interaction: Type[AutoAppInterT],
+        message_component_interaction: Type[ViewInterT],
+        modal_submit_interaction: Type[ModalInterT],
+        cls: Type[InterT]
+    ) -> Union[
+        AppInterT, 
+        AutoAppInterT,
+        ViewInterT,
+        ModalInterT,
+        InterT
+    ]:
         ...
 
     def get_interaction(
         self,
         data,
         *,
-        application_interactions: Type[AppInterT] = ApplicationCommandInteraction,
+        application_interaction: Type[AppInterT] = ApplicationCommandInteraction,
         application_autocomplete_interaction: Type[
             AutoAppInterT
         ] = ApplicationAutocompleteInteraction,
         message_component_interaction: Type[ViewInterT] = ViewInteraction,
         modal_submit_interaction: Type[ModalInterT] = ModalSubmitInteraction,
         cls: Type[InterT] = Interaction,
-    ) -> Union[Interaction, InterT]:
+    ) -> Union[
+        ApplicationCommandInteraction, 
+        AppInterT, 
+        ApplicationAutocompleteInteraction,
+        AutoAppInterT,
+        ViewInteraction,
+        ViewInterT,
+        ModalSubmitInteraction,
+        ModalInterT,
+        Interaction, 
+        InterT
+    ]:
         """Returns an interaction for a gateway event.
 
         Parameters
@@ -2813,7 +2854,7 @@ class Client:
         interaction_type: InteractionType = try_enum(InteractionType, data["type"])
 
         if interaction_type == InteractionType.application_command:
-            return application_interactions(data=data, state=self._connection)
+            return application_interaction(data=data, state=self._connection)
 
         elif interaction_type == InteractionType.application_command_autocomplete:
             return application_autocomplete_interaction(data=data, state=self._connection)
