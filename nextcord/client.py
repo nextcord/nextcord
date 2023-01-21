@@ -2771,40 +2771,34 @@ class Client:
     # may need to add new params to methods below
     @overload
     def get_interaction(
-        self, 
-        data, 
+        self,
+        data,
         *,
         application_interaction: Type[ApplicationCommandInteraction],
         application_autocomplete_interaction: Type[ApplicationAutocompleteInteraction],
         message_component_interaction: Type[ViewInteraction],
         modal_submit_interaction: Type[ModalSubmitInteraction],
-        cls: Type[Interaction]
+        cls: Type[Interaction],
     ) -> Union[
-        ApplicationCommandInteraction, 
+        ApplicationCommandInteraction,
         ApplicationAutocompleteInteraction,
         ViewInteraction,
         ModalSubmitInteraction,
-        Interaction 
+        Interaction,
     ]:
         ...
 
     @overload
     def get_interaction(
-        self, 
-        data, 
+        self,
+        data,
         *,
         application_interaction: Type[AppInterT],
         application_autocomplete_interaction: Type[AutoAppInterT],
         message_component_interaction: Type[ViewInterT],
         modal_submit_interaction: Type[ModalInterT],
-        cls: Type[InterT]
-    ) -> Union[
-        AppInterT, 
-        AutoAppInterT,
-        ViewInterT,
-        ModalInterT,
-        InterT
-    ]:
+        cls: Type[InterT],
+    ) -> Union[AppInterT, AutoAppInterT, ViewInterT, ModalInterT, InterT]:
         ...
 
     def get_interaction(
@@ -2819,16 +2813,16 @@ class Client:
         modal_submit_interaction: Type[ModalInterT] = ModalSubmitInteraction,
         cls: Type[InterT] = Interaction,
     ) -> Union[
-        ApplicationCommandInteraction, 
-        AppInterT, 
+        ApplicationCommandInteraction,
+        AppInterT,
         ApplicationAutocompleteInteraction,
         AutoAppInterT,
         ViewInteraction,
         ViewInterT,
         ModalSubmitInteraction,
         ModalInterT,
-        Interaction, 
-        InterT
+        Interaction,
+        InterT,
     ]:
         """Returns an interaction for a gateway event.
 

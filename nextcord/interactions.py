@@ -678,7 +678,7 @@ class ApplicationAutocompleteInteraction(ApplicationCommandInteraction):
 
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
-        
+
         self.application_command: Optional[
             Union[SlashApplicationSubcommand, BaseApplicationCommand]
         ] = None
@@ -869,11 +869,9 @@ class ModalSubmitInteraction(Interaction):
         self.message: Optional[Message]
         try:
             message = data["message"]
-            
+
             # TODO: Check for an create correct message type
-            self.message = self._state._get_message(
-                int(message["id"])
-            ) or Message(
+            self.message = self._state._get_message(int(message["id"])) or Message(
                 state=self._state, channel=self.channel, data=message  # type: ignore
             )
         except KeyError:
