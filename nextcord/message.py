@@ -57,6 +57,7 @@ if TYPE_CHECKING:
         MessageApplication as MessageApplicationPayload,
         MessageReference as MessageReferencePayload,
         Reaction as ReactionPayload,
+        RoleSubscriptionData as RoleSubscriptionDataPayload,
     )
     from .types.threads import Thread as ThreadPayload, ThreadArchiveDuration
     from .types.user import User as UserPayload
@@ -72,6 +73,7 @@ __all__ = (
     "MessageReference",
     "DeletedReferencedMessage",
     "MessageInteraction",
+    "MessageRoleSubscription",
 )
 
 
@@ -606,6 +608,39 @@ class MessageInteraction(Hashable):
         return utils.snowflake_time(self.id)
 
 
+class MessageRoleSubscription:
+    """Represents a message's role subscription information.
+
+    This is accessed through the :attr:`Message.role_subscription` attribute if the :attr:`Message.type` is :attr:`MessageType.role_subscription_purchase`.
+
+    .. versionadded:: 2.4
+
+    Attributes
+    -----------
+    role_subscription_listing_id: :class:`int`
+        The ID of the SKU and listing that the user is subscribed to.
+    tier_name: :class:`str`
+        The name of the tier that the user is subscribed to.
+    total_months_subscribed: :class:`int`
+        The cumulative number of months that the user has been subscribed for.
+    is_renewal: :class:`bool`
+        Whether this notification is for a renewal rather than a new purchase.
+    """
+
+    __slots__ = (
+        "role_subscription_listing_id",
+        "tier_name",
+        "total_months_subscribed",
+        "is_renewal",
+    )
+
+    def __init__(self, data: RoleSubscriptionDataPayload) -> None:
+        self.role_subscription_listing_id: int = int(data["role_subscription_listing_id"])
+        self.tier_name: str = data["tier_name"]
+        self.total_months_subscribed: int = data["total_months_subscribed"]
+        self.is_renewal: bool = data["is_renewal"]
+
+
 @flatten_handlers
 class Message(Hashable):
     r"""Represents a message from Discord.
@@ -723,6 +758,10 @@ class Message(Hashable):
         The guild that the message belongs to, if applicable.
     interaction: Optional[:class:`MessageInteraction`]
         The interaction data of a message, if applicable.
+    role_subscription: Optional[:class:`MessageRoleSubscription`]
+        The role subscription data of a message, if applicable.
+
+        .. versionadded:: 2.4
     """
 
     __slots__ = (
@@ -757,6 +796,7 @@ class Message(Hashable):
         "stickers",
         "components",
         "guild",
+        "role_subscription",
     )
 
     if TYPE_CHECKING:
@@ -850,6 +890,11 @@ class Message(Hashable):
         self.interaction: Optional[MessageInteraction] = (
             MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
             if "interaction" in data
+            else None
+        )
+        self.role_subscription: Optional[MessageRoleSubscription] = (
+            MessageRoleSubscription(data=data["role_subscription_data"])
+            if "role_subscription_data" in data
             else None
         )
 
