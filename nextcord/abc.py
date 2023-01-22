@@ -929,10 +929,10 @@ class GuildChannel:
         self,
         *,
         beginning: bool,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: Optional[str] = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = ...,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
@@ -941,10 +941,10 @@ class GuildChannel:
         self,
         *,
         end: bool,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: str = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = ...,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
@@ -953,10 +953,10 @@ class GuildChannel:
         self,
         *,
         before: Snowflake,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: str = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = ...,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
@@ -965,14 +965,25 @@ class GuildChannel:
         self,
         *,
         after: Snowflake,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: str = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = ...,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
-    async def move(self, **kwargs) -> None:
+    async def move(
+        self,
+        *,
+        beginning: Optional[bool] = None,
+        end: Optional[bool] = None,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
+        offset: int = 0,
+        category: Optional[Snowflake] = MISSING,
+        sync_permissions: bool = False,
+        reason: Optional[str] = None,
+    ) -> None:
         """|coro|
 
         A rich interface to help move a channel relative to other channels.
@@ -989,20 +1000,24 @@ class GuildChannel:
 
         .. versionadded:: 1.7
 
+        .. versionchanged:: 2.4
+
+            ``beginning``, ``end``, ``before``, ``after`` and ``reason`` now accept ``None``.
+
         Parameters
         ----------
-        beginning: :class:`bool`
+        beginning: Optional[:class:`bool`]
             Whether to move the channel to the beginning of the
             channel list (or category if given).
             This is mutually exclusive with ``end``, ``before``, and ``after``.
-        end: :class:`bool`
+        end: Optional[:class:`bool`]
             Whether to move the channel to the end of the
             channel list (or category if given).
             This is mutually exclusive with ``beginning``, ``before``, and ``after``.
-        before: :class:`~nextcord.abc.Snowflake`
+        before: Optional[:class:`~nextcord.abc.Snowflake`]
             The channel that should be before our current channel.
             This is mutually exclusive with ``beginning``, ``end``, and ``after``.
-        after: :class:`~nextcord.abc.Snowflake`
+        after: Optional[:class:`~nextcord.abc.Snowflake`]
             The channel that should be after our current channel.
             This is mutually exclusive with ``beginning``, ``end``, and ``before``.
         offset: :class:`int`
@@ -1018,7 +1033,7 @@ class GuildChannel:
             This parameter is ignored if moving a category channel.
         sync_permissions: :class:`bool`
             Whether to sync the permissions with the category (if given).
-        reason: :class:`str`
+        reason: Optional[:class:`str`]
             The reason for the move.
 
         Raises
@@ -1031,21 +1046,14 @@ class GuildChannel:
             Moving the channel failed.
         """
 
-        if not kwargs:
-            return
-
-        beginning, end = kwargs.get("beginning"), kwargs.get("end")
-        before, after = kwargs.get("before"), kwargs.get("after")
-        offset = kwargs.get("offset", 0)
         if sum(bool(a) for a in (beginning, end, before, after)) > 1:
             raise InvalidArgument("Only one of [before, after, end, beginning] can be used.")
 
         bucket = self._sorting_bucket
-        parent_id = kwargs.get("category", MISSING)
         # fmt: off
         channels: List[GuildChannel]
-        if parent_id not in (MISSING, None):
-            parent_id = parent_id.id
+        if category:
+            parent_id = category.id
             channels = [
                 ch
                 for ch in self.guild.channels
@@ -1053,6 +1061,7 @@ class GuildChannel:
                 and ch.category_id == parent_id
             ]
         else:
+            parent_id = None
             channels = [
                 ch
                 for ch in self.guild.channels
@@ -1085,12 +1094,11 @@ class GuildChannel:
 
         channels.insert(max((index + offset), 0), self)
         payload = []
-        lock_permissions = kwargs.get("sync_permissions", False)
-        reason = kwargs.get("reason")
+
         for index, channel in enumerate(channels):
-            d = {"id": channel.id, "position": index}
-            if parent_id is not MISSING and channel.id == self.id:
-                d.update(parent_id=parent_id, lock_permissions=lock_permissions)
+            d: Dict[str, Any] = {"id": channel.id, "position": index}
+            if category is not MISSING and channel.id == self.id:
+                d.update(parent_id=parent_id, lock_permissions=sync_permissions)
             payload.append(d)
 
         await self._state.http.bulk_channel_update(self.guild.id, payload, reason=reason)
