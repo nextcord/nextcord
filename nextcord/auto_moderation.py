@@ -90,7 +90,7 @@ class AutoModerationTriggerMetadata:
         .. warning::
 
             The flavor of regex used is Rust flavor and has no guarantees of working with
-            the ``re`` module.
+            the :mod:`re` module.
             Each regex pattern must be 75 characters or less.
 
     presets: List[:class:`KeywordPresetType`]
