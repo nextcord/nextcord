@@ -2774,8 +2774,8 @@ class Client:
     # may need to add new params to methods below
     @overload
     def get_interaction(
-        self, 
-        data, 
+        self,
+        data,
         *,
         application_interaction: Type[ApplicationCommandInteraction],
         application_autocomplete_interaction: Type[ApplicationAutocompleteInteraction],
@@ -2783,7 +2783,7 @@ class Client:
         modal_submit_interaction: Type[ModalSubmitInteraction],
         cls: Type[Interaction],
     ) -> Union[
-        ApplicationCommandInteraction, 
+        ApplicationCommandInteraction,
         ApplicationAutocompleteInteraction,
         ViewInteraction,
         ModalSubmitInteraction,
