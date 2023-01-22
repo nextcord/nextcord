@@ -96,7 +96,7 @@ class InteractionAttached(dict):
 
 
 class Interaction(Hashable, Generic[ClientT]):
-    """Represents the base class for all Discord interactions.
+    """The base class for all Discord interactions.
 
     An interaction happens when a user does an action that needs to
     be notified. Current examples are slash commands and components.
