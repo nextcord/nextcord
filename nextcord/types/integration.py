@@ -34,7 +34,7 @@ class PartialIntegration(TypedDict):
     account: IntegrationAccount
 
 
-IntegrationType = Literal["twitch", "youtube", "discord"]
+IntegrationType = Literal["twitch", "youtube", "discord", "guild_subscription"]
 
 
 class BaseIntegration(PartialIntegration):
