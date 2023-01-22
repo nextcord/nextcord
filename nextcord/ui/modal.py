@@ -302,13 +302,12 @@ class Modal:
 
     def refresh(self, components: List[Component]):
         # This is pretty hacky at the moment
-        # fmt: off
         old_state: Dict[Tuple[int, str], Item] = {
-            (item.type.value, item.custom_id): item
+            (item.type.value, item.custom_id): item  # type: ignore
+            # TODO: refactor this to explicitly type custom_id
             for item in self.children
             if item.is_dispatchable()
         }
-        # fmt: on
         children: List[Item] = []
         for component in _walk_all_components(components):
             try:

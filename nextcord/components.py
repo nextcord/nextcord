@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, ClassVar, List, Literal, Optional, Tuple, TypeVar, Union, cast
 
 from .enums import ButtonStyle, ComponentType, TextInputStyle, try_enum
 from .partial_emoji import PartialEmoji, _EmojiTag
@@ -85,7 +85,7 @@ class Component:
                 setattr(self, slot, value)
         return self
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> ComponentPayload:
         raise NotImplementedError
 
 
@@ -116,9 +116,9 @@ class ActionRow(Component):
 
     def to_dict(self) -> ActionRowPayload:
         return {
-            "type": int(self.type),
+            "type": cast(Literal[1], int(self.type)),
             "components": [child.to_dict() for child in self.children],
-        }  # type: ignore
+        }
 
 
 class Button(Component):
