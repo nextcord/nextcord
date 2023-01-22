@@ -1314,8 +1314,18 @@ class Message(Hashable):
         if self.type is MessageType.guild_invite_reminder:
             return "Wondering who to invite?\nStart by inviting anyone who can help you build the server!"
 
-        if self.type is MessageType.role_subscription_purchase:
-            ...  # TODO: implement this
+        if (
+            self.type is MessageType.role_subscription_purchase
+            and self.role_subscription is not None
+        ):
+            tier_name = self.role_subscription.tier_name
+            total_months_subscribed = self.role_subscription.total_months_subscribed
+            months = f"{total_months_subscribed} month{'s' if total_months_subscribed != 1 else ''}"
+            if self.role_subscription.is_renewal:
+                # TODO: figure this out.
+                return ""
+
+            return f"{self.author.name} joined {tier_name} and has been a subscriber of {self.guild} for {months}"
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
