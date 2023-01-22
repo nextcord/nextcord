@@ -2589,7 +2589,7 @@ class Client:
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
-        nsfw: Optional[bool] = None,
+        nsfw: bool = False,
         force_global: bool = False,
     ):
         """Creates a User context command from the decorated function.
@@ -2613,8 +2613,7 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-            only usable in NSFW channels.
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
         force_global: :class:`bool`
@@ -2645,7 +2644,7 @@ class Client:
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
-        nsfw: Optional[bool] = None,
+        nsfw: bool = False,
         force_global: bool = False,
     ):
         """Creates a Message context command from the decorated function.
@@ -2669,8 +2668,7 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-            only usable in NSFW channels.
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
         force_global: :class:`bool`
@@ -2701,7 +2699,7 @@ class Client:
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
-        nsfw: Optional[bool] = None,
+        nsfw: bool = False,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
     ):
@@ -2732,12 +2730,7 @@ class Client:
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-            only usable in NSFW channels.
-
-            .. note::
-
-                Due to a discord limitation, this can only be set for the parent command for subcommands.
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
         force_global: :class:`bool`

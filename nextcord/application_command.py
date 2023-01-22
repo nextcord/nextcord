@@ -1881,7 +1881,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
-        nsfw: Optional[bool] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ):
@@ -1916,8 +1916,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-            only usable in NSFW channels.
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
@@ -1941,7 +1940,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self.default_member_permissions: Optional[
             Union[Permissions, int]
         ] = default_member_permissions
-        self.nsfw: Optional[bool] = nsfw
+        self.nsfw: bool = nsfw
 
         self.force_global: bool = force_global
 
@@ -2712,7 +2711,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
-        nsfw: Optional[bool] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ):
@@ -2743,12 +2742,11 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-            only usable in NSFW channels.
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. note::
 
-                Due to a discord limitation, this can only be set for the parent command for subcommands.
+                Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
 
             .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
@@ -2887,7 +2885,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
-        nsfw: Optional[bool] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ):
@@ -2913,8 +2911,7 @@ class UserApplicationCommand(BaseApplicationCommand):
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-            only usable in NSFW channels.
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
@@ -2970,7 +2967,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
-        nsfw: Optional[bool] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ):
@@ -2996,8 +2993,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
         nsfw: :class:`bool`
-            If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-            only usable in NSFW channels.
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
@@ -3050,7 +3046,7 @@ def slash_command(
     guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
-    nsfw: Optional[bool] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
@@ -3081,12 +3077,11 @@ def slash_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     nsfw: :class:`bool`
-        If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-        only usable in NSFW channels.
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
         .. note::
 
-            Due to a discord limitation, this can only be set for the parent command for subcommands.
+            Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
 
         .. versionadded:: 2.4
     force_global: :class:`bool`
@@ -3122,7 +3117,7 @@ def message_command(
     guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
-    nsfw: Optional[bool] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
@@ -3147,8 +3142,7 @@ def message_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     nsfw: :class:`bool`
-        If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-        only usable in NSFW channels.
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
         .. versionadded:: 2.4
     force_global: :class:`bool`
@@ -3182,7 +3176,7 @@ def user_command(
     guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
-    nsfw: Optional[bool] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
@@ -3207,8 +3201,7 @@ def user_command(
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
     nsfw: :class:`bool`
-        If the command should be usable in NSFW channels or not. Setting to ``True`` will make the command
-        only usable in NSFW channels.
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
         .. versionadded:: 2.4
     force_global: :class:`bool`
