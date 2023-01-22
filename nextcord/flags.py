@@ -219,6 +219,22 @@ class SystemChannelFlags(BaseFlags):
         """
         return 8
 
+    @flag_value
+    def role_subscription_purchase_notifications(self):
+        """:class:`bool`: Returns ``True`` if the system channel is used for role subscription purchase notifications.
+
+        .. versionadded:: 2.4
+        """
+        return 16
+
+    @flag_value
+    def role_subscription_purchase_notification_replies(self):
+        """:class:`bool`: Returns ``True`` if the button to reply with a sticker to role subscription purchase notifications is shown.
+
+        .. versionadded:: 2.4
+        """
+        return 32
+
 
 @fill_with_flags()
 class ChannelFlags(BaseFlags):
