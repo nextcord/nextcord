@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
-from ...interactions import ClientT
+from ...interactions.base import ClientT
 from ...member import Member
 from ...role import Role
 from ...user import User

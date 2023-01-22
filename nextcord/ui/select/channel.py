@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...abc import GuildChannel
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
-from ...interactions import ClientT
+from ...interactions.base import ClientT
 from ...utils import MISSING
 from ..item import ItemCallbackType
 from ..view import View

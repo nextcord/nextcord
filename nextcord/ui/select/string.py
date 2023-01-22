@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...components import SelectOption, StringSelectMenu
 from ...emoji import Emoji
 from ...enums import ComponentType
-from ...interactions import ClientT
+from ...interactions.base import ClientT
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
 from ..item import ItemCallbackType

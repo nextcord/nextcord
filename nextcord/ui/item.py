@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar
 
-from ..interactions import ClientT, Interaction
+from ..interactions.base import ClientT, Interaction
 
 __all__ = ("Item",)
 

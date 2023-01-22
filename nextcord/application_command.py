@@ -44,6 +44,7 @@ from .enums import ApplicationCommandOptionType, ApplicationCommandType, Channel
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
 from .interactions.application_interactions import ApplicationCommandInteraction, ApplicationAutocompleteInteraction
+from .interactions.base import Interaction
 from .member import Member
 from .message import Attachment, Message
 from .permissions import Permissions
@@ -527,7 +528,7 @@ class ClientCog:
         return getattr(method.__func__, "__cog_special_method__", method)
 
     @_cog_special_method
-    def cog_application_command_check(self, interaction: ApplicationCommandInteraction) -> bool:
+    def cog_application_command_check(self, interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction]) -> bool:
         """A special method that registers as a :func:`.ext.application_checks.check`
         for every application command and subcommand in this cog.
 
@@ -537,7 +538,7 @@ class ClientCog:
         return True
 
     @_cog_special_method
-    async def cog_application_command_before_invoke(self, interaction: ApplicationCommandInteraction) -> None:
+    async def cog_application_command_before_invoke(self, interaction: Interaction) -> None:
         """A special method that acts as a cog local pre-invoke hook.
 
         This is similar to :meth:`.ApplicationCommand.before_invoke`.
@@ -552,7 +553,7 @@ class ClientCog:
         pass
 
     @_cog_special_method
-    async def cog_application_command_after_invoke(self, interaction: ApplicationCommandInteraction) -> None:
+    async def cog_application_command_after_invoke(self, interaction: Interaction) -> None:
         """A special method that acts as a cog local post-invoke hook.
 
         This is similar to :meth:`.Command.after_invoke`.
@@ -637,7 +638,7 @@ class CallbackMixin:
             return None
 
         return ClientCog._get_overridden_method(
-            self.parent_cog.cog_application_command_before_invoke
+            self.parent_cog.cog_application_command_before_invoke 
         )
 
     @property

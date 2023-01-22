@@ -50,13 +50,10 @@ from .flags import ApplicationFlags, Intents
 from .gateway import *
 from .guild import Guild
 from .http import HTTPClient
-from .interactions import (
-    ApplicationAutocompleteInteraction,
-    ApplicationCommandInteraction,
-    Interaction,
-    ModalSubmitInteraction,
-    ViewInteraction,
-)
+from .interactions.application_interactions import ApplicationAutocompleteInteraction, ApplicationCommandInteraction
+from .interactions.base import Interaction
+from .interactions.message_component_interaction import ViewInteraction
+from .interactions.modal_submit_interaction import ModalSubmitInteraction
 from .invite import Invite
 from .iterators import GuildIterator
 from .mentions import AllowedMentions
@@ -577,7 +574,7 @@ class Client:
         traceback.print_exc()
 
     async def on_application_command_error(
-        self, interaction: Interaction, exception: ApplicationError
+        self, interaction: ApplicationCommandInteraction, exception: ApplicationError
     ) -> None:
         """|coro|
 
@@ -2014,10 +2011,10 @@ class Client:
         """
         return [event for guild in self.guilds for event in guild.scheduled_events]
 
-    async def on_interaction(self, interaction: Interaction):
+    async def on_interaction(self, interaction: Union[ApplicationAutocompleteInteraction, ApplicationCommandInteraction]):
         await self.process_application_commands(interaction)
 
-    async def process_application_commands(self, interaction: Interaction) -> None:
+    async def process_application_commands(self, interaction: Union[ApplicationAutocompleteInteraction, ApplicationCommandInteraction]) -> None:
         """|coro|
         Processes the data in the given interaction and calls associated applications or autocomplete if possible.
         Lazy-loads commands if enabled.
@@ -2765,7 +2762,13 @@ class Client:
         return utils.unique(it)
 
     @overload
-    def get_interaction(self, data) -> Interaction:
+    def get_interaction(self, data) -> Union[
+        ApplicationCommandInteraction, 
+        ApplicationAutocompleteInteraction,
+        ViewInteraction,
+        ModalSubmitInteraction,
+        Interaction,
+    ]:
         ...
 
     # may need to add new params to methods below
@@ -2778,33 +2781,27 @@ class Client:
         application_autocomplete_interaction: Type[ApplicationAutocompleteInteraction],
         message_component_interaction: Type[ViewInteraction],
         modal_submit_interaction: Type[ModalSubmitInteraction],
-        cls: Type[Interaction]
+        cls: Type[Interaction],
     ) -> Union[
         ApplicationCommandInteraction, 
         ApplicationAutocompleteInteraction,
         ViewInteraction,
         ModalSubmitInteraction,
-        Interaction 
+        Interaction,
     ]:
         ...
 
     @overload
     def get_interaction(
-        self, 
-        data, 
+        self,
+        data,
         *,
         application_interaction: Type[AppInterT],
         application_autocomplete_interaction: Type[AutoAppInterT],
         message_component_interaction: Type[ViewInterT],
         modal_submit_interaction: Type[ModalInterT],
-        cls: Type[InterT]
-    ) -> Union[
-        AppInterT, 
-        AutoAppInterT,
-        ViewInterT,
-        ModalInterT,
-        InterT
-    ]:
+        cls: Type[InterT],
+    ) -> Union[AppInterT, AutoAppInterT, ViewInterT, ModalInterT, InterT]:
         ...
 
     def get_interaction(
@@ -2819,16 +2816,16 @@ class Client:
         modal_submit_interaction: Type[ModalInterT] = ModalSubmitInteraction,
         cls: Type[InterT] = Interaction,
     ) -> Union[
-        ApplicationCommandInteraction, 
-        AppInterT, 
+        ApplicationCommandInteraction,
+        AppInterT,
         ApplicationAutocompleteInteraction,
         AutoAppInterT,
         ViewInteraction,
         ViewInterT,
         ModalSubmitInteraction,
         ModalInterT,
-        Interaction, 
-        InterT
+        Interaction,
+        InterT,
     ]:
         """Returns an interaction for a gateway event.
 
