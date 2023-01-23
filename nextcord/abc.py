@@ -1421,7 +1421,7 @@ class Messageable:
         channel = await self._get_channel()
         state = self._state
         content = str(content) if content is not None else None
-        flags: Optional[int] = flags.value if flags is not None else None
+        flag_value: Optional[int] = flags.value if flags is not None else None
 
         embed_payload: Optional[EmbedData] = None
         embeds_payload: Optional[List[EmbedData]] = None
@@ -1488,7 +1488,7 @@ class Messageable:
                     message_reference=reference_payload,
                     stickers=stickers_payload,
                     components=components,
-                    flags=flags,
+                    flags=flag_value,
                 )
             finally:
                 file.close()
@@ -1510,7 +1510,7 @@ class Messageable:
                     message_reference=reference_payload,
                     stickers=stickers_payload,
                     components=components,
-                    flags=flags,
+                    flags=flag_value,
                 )
             finally:
                 for f in files:
@@ -1527,7 +1527,7 @@ class Messageable:
                 message_reference=reference_payload,
                 stickers=stickers_payload,
                 components=components,
-                flags=flags,
+                flags=flag_value,
             )
 
         ret = state.create_message(channel=channel, data=data)
