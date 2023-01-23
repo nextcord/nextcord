@@ -521,9 +521,9 @@ class HTTPClient:
 
         if stickers is not None:
             payload["sticker_ids"] = stickers
-        
+
         if flags is not None:
-            payload['flags'] = flags
+            payload["flags"] = flags
 
         return payload
 
