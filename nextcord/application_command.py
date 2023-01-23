@@ -3437,31 +3437,9 @@ def unpack_annotation(
     return type_ret, literal_ret
 
 
-class Range:
-    """An annotation helper for defining slash command ``min_value`` and ``max_value`` parameters.
-
-    .. versionadded:: 2.2
-
-    .. container:: operations
-
-        .. describe:: Range[x, y]
-
-            Creates a range from ``x`` to ``y``.
-
-        .. describe:: Range[x] | Range[..., x]
-
-            Create a range up to ``x``.
-
-        .. describe:: Range[x, ...]
-
-            Create a range from ``x``.
-    """
-
-    min: ClassVar[Optional[Union[int, float]]]
-    max: ClassVar[Optional[Union[int, float]]]
-
+class RangeMeta(type):
     @overload
-    def __class_getitem__(
+    def __getitem__(
         cls,
         value: Union[
             int,
@@ -3473,7 +3451,7 @@ class Range:
         ...
 
     @overload
-    def __class_getitem__(
+    def __getitem__(
         cls,
         value: Union[
             float,
@@ -3484,7 +3462,7 @@ class Range:
     ) -> Type[float]:
         ...
 
-    def __class_getitem__(
+    def __getitem__(
         cls,
         value: Union[
             int,
@@ -3538,30 +3516,32 @@ class Range:
         return Inner
 
 
-class String:
-    """An annotation helper for defining slash command ``min_length`` and ``max_length`` parameters.
+class Range(metaclass=RangeMeta):
+    """An annotation helper for defining slash command ``min_value`` and ``max_value`` parameters.
 
     .. versionadded:: 2.2
 
     .. container:: operations
 
-        .. describe:: String[x, y]
+        .. describe:: Range[x, y]
 
-            Creates a range of string length from ``x`` to ``y``.
+            Creates a range from ``x`` to ``y``.
 
-        .. describe:: String[x] | String[..., x]
+        .. describe:: Range[x] | Range[..., x]
 
-            Create a range of string length up to ``x``.
+            Create a range up to ``x``.
 
-        .. describe:: String[x, ...]
+        .. describe:: Range[x, ...]
 
-            Create a range of string length from ``x``.
+            Create a range from ``x``.
     """
 
-    min: ClassVar[Optional[int]]
-    max: ClassVar[Optional[int]]
+    min: ClassVar[Optional[Union[int, float]]]
+    max: ClassVar[Optional[Union[int, float]]]
 
-    def __class_getitem__(
+
+class StringMeta(type):
+    def __getitem__(
         cls,
         value: Union[
             int,
@@ -3569,7 +3549,7 @@ class String:
             Tuple[int, EllipsisType],
             Tuple[EllipsisType, int],
         ],
-    ) -> Type[int]:
+    ) -> Type[str]:
         class Inner(String, OptionConverter):
             def __init__(self):
                 super().__init__(option_type=str)
@@ -3611,3 +3591,27 @@ class String:
             raise TypeError("At least one of min or max must be set.")
 
         return Inner
+
+
+class String(metaclass=StringMeta):
+    """An annotation helper for defining slash command ``min_length`` and ``max_length`` parameters.
+
+    .. versionadded:: 2.2
+
+    .. container:: operations
+
+        .. describe:: String[x, y]
+
+            Creates a range of string length from ``x`` to ``y``.
+
+        .. describe:: String[x] | String[..., x]
+
+            Create a range of string length up to ``x``.
+
+        .. describe:: String[x, ...]
+
+            Create a range of string length from ``x``.
+    """
+
+    min: ClassVar[Optional[int]]
+    max: ClassVar[Optional[int]]
