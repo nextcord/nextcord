@@ -492,6 +492,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        flags: Optional[int] = None,
     ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -520,6 +521,9 @@ class HTTPClient:
 
         if stickers is not None:
             payload["sticker_ids"] = stickers
+        
+        if flags is not None:
+            payload['flags'] = flags
 
         return payload
 
@@ -536,6 +540,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        flags: Optional[int] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
         payload = self.get_message_payload(
@@ -548,6 +553,7 @@ class HTTPClient:
             message_reference=message_reference,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
 
         return self.request(r, json=payload)
@@ -570,6 +576,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
+        flags: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         form: List[Dict[str, Any]] = []
 
@@ -584,6 +591,7 @@ class HTTPClient:
             message_reference=message_reference,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
 
         if message_key is not None:
@@ -626,6 +634,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
+        flags: Optional[int] = None,
     ) -> Response[message.Message]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -643,6 +652,7 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             attachments=attachments,
+            flags=flags,
         )
         return self.request(route, form=form, files=files)
 
@@ -660,6 +670,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        flags: Optional[int] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
         return self.send_multipart_helper(
@@ -674,6 +685,7 @@ class HTTPClient:
             message_reference=message_reference,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
 
     def delete_message(
