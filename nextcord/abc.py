@@ -1436,7 +1436,7 @@ class Messageable:
             flags = MessageFlags()
         if suppress_embeds is True:
             flags.suppress_embeds = True
-            
+
         flag_value: Optional[int] = flags.value if flags is not None else None
 
         embed_payload: Optional[EmbedData] = None
