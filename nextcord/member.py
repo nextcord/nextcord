@@ -15,6 +15,7 @@ from .asset import Asset
 from .colour import Colour
 from .enums import Status, try_enum
 from .object import Object
+from .flags import PublicUserFlags, MemberFlags
 from .permissions import Permissions
 from .user import BaseUser, User, _UserTag
 from .utils import MISSING
@@ -29,7 +30,6 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake
     from .channel import DMChannel, StageChannel, VoiceChannel
-    from .flags import PublicUserFlags
     from .guild import Guild
     from .message import Message
     from .role import Role
@@ -227,6 +227,10 @@ class Member(abc.Messageable, _UserTag):
     premium_since: Optional[:class:`datetime.datetime`]
         An aware datetime object that specifies the date and time in UTC when the member used their
         "Nitro boost" on the guild, if available. This could be ``None``.
+    flags: :class:`MemberFlags`
+        The flags applied on this user.
+
+        .. versionadded:: 2.4
     """
 
     __slots__ = (
@@ -237,6 +241,7 @@ class Member(abc.Messageable, _UserTag):
         "guild",
         "pending",
         "nick",
+        "flags",
         "_client_status",
         "_user",
         "_state",
@@ -278,6 +283,7 @@ class Member(abc.Messageable, _UserTag):
         self._timeout: Optional[datetime.datetime] = utils.parse_time(
             data.get("communication_disabled_until")
         )
+        self.flags = MemberFlags._from_value(data['flags'])
 
     def __str__(self) -> str:
         return str(self._user)
