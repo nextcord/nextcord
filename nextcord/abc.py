@@ -1246,6 +1246,7 @@ class Messageable:
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1265,6 +1266,7 @@ class Messageable:
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1284,6 +1286,7 @@ class Messageable:
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1303,6 +1306,7 @@ class Messageable:
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1323,6 +1327,7 @@ class Messageable:
         mention_author: Optional[bool] = None,
         view: Optional[View] = None,
         flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ):
         """|coro|
 
@@ -1397,7 +1402,12 @@ class Messageable:
             The message flags being set for this message.
             Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
 
-            ..versionadded:: 2.4
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+            This cannot be set with ``flags``.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -1410,7 +1420,8 @@ class Messageable:
             you specified both ``file`` and ``files``,
             or you specified both ``embed`` and ``embeds``,
             or the ``reference`` object is not a :class:`~nextcord.Message`,
-            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`.
+            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`,
+            or you specified ``flags`` and ``suppress_embeds``.
 
         Returns
         -------
@@ -1421,6 +1432,11 @@ class Messageable:
         channel = await self._get_channel()
         state = self._state
         content = str(content) if content is not None else None
+        if flags is None:
+            flags = MessageFlags()
+        if suppress_embeds is True:
+            flags.suppress_embeds = True
+            
         flag_value: Optional[int] = flags.value if flags is not None else None
 
         embed_payload: Optional[EmbedData] = None
