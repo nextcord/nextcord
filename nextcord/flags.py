@@ -1250,6 +1250,7 @@ class ApplicationFlags(BaseFlags):
         """
         return 1 << 24
 
+
 @fill_with_flags()
 class MemberFlags(BaseFlags):
     r"""Wraps up Discord's Member Flags.
@@ -1270,32 +1271,33 @@ class MemberFlags(BaseFlags):
             Returns an iterator of ``(name, value)`` pairs. This allows it
             to be, for example, constructed as a dict or a list of pairs.
             Note that aliases are not shown.
-    
+
     .. versionadded:: 2.4"""
+
     @flag_value
     def did_rejoin(self):
         """:class:`bool`: Whether this member rejoined this guild.
-        
+
         .. versionadded:: 2.4"""
         return 1 << 0
-    
+
     @flag_value
     def completed_onboarding(self):
         """:class:`bool`: Whether this member has completed Onboarding.
-        
+
         .. versionadded:: 2.4"""
         return 1 << 1
-    
+
     @flag_value
     def bypass_verification(self):
         """:class:`bool`: Whether this member has bypassed verification.
-        
+
         .. versionadded:: 2.4"""
         return 1 << 2
-    
+
     @flag_value
     def started_onboarding(self):
         """:class:`bool`: Whether this member has started onboarding.
-        
+
         .. versionadded:: 2.4"""
         return 1 << 3

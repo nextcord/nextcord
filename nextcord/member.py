@@ -14,8 +14,8 @@ from .activity import ActivityTypes, create_activity
 from .asset import Asset
 from .colour import Colour
 from .enums import Status, try_enum
+from .flags import MemberFlags, PublicUserFlags
 from .object import Object
-from .flags import PublicUserFlags, MemberFlags
 from .permissions import Permissions
 from .user import BaseUser, User, _UserTag
 from .utils import MISSING
@@ -283,7 +283,7 @@ class Member(abc.Messageable, _UserTag):
         self._timeout: Optional[datetime.datetime] = utils.parse_time(
             data.get("communication_disabled_until")
         )
-        self.flags = MemberFlags._from_value(data['flags'])
+        self.flags = MemberFlags._from_value(data["flags"])
 
     def __str__(self) -> str:
         return str(self._user)
