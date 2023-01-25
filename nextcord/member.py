@@ -817,9 +817,9 @@ class Member(abc.Messageable, _UserTag):
 
         if roles is not MISSING:
             payload["roles"] = tuple(r.id for r in roles)
-        
+
         if flags is not MISSING:
-            payload['flags'] = flags.value
+            payload["flags"] = flags.value
 
         if isinstance(timeout, datetime.timedelta):
             payload["communication_disabled_until"] = (utils.utcnow() + timeout).isoformat()
