@@ -695,6 +695,7 @@ class Member(abc.Messageable, _UserTag):
         voice_channel: Optional[VocalGuildChannel] = MISSING,
         reason: Optional[str] = None,
         timeout: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
+        flags: MemberFlags = MISSING,
     ) -> Optional[Member]:
         """|coro|
 
@@ -751,6 +752,11 @@ class Member(abc.Messageable, _UserTag):
             Set this to None to disable their timeout.
 
             .. versionadded:: 2.0
+        flags: :class:`MemberFlags`
+            The flags applied on this user.
+            Currently only :attr:`MemberFlags.bypass_verification` can be applied.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -811,6 +817,9 @@ class Member(abc.Messageable, _UserTag):
 
         if roles is not MISSING:
             payload["roles"] = tuple(r.id for r in roles)
+        
+        if flags is not MISSING:
+            payload['flags'] = flags.value
 
         if isinstance(timeout, datetime.timedelta):
             payload["communication_disabled_until"] = (utils.utcnow() + timeout).isoformat()
