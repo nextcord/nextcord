@@ -1421,7 +1421,7 @@ class Messageable:
             or you specified both ``embed`` and ``embeds``,
             or the ``reference`` object is not a :class:`~nextcord.Message`,
             :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`,
-            or you specified ``flags`` and ``suppress_embeds``.
+            or you specified both ``flags`` and ``suppress_embeds``.
 
         Returns
         -------
