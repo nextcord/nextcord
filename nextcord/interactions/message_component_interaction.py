@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Tuple
 
-from .base import Interaction
-from ..message import Message
 from ..errors import InvalidArgument
+from ..message import Message
+from .base import Interaction
 
 __all__ = ("ViewInteraction",)
 
 if TYPE_CHECKING:
-    from ..types.interactions import Interaction as InteractionPayload, InteractionData
     from ..state import ConnectionState
+    from ..types.interactions import Interaction as InteractionPayload
 
 
 class ViewInteraction(Interaction):

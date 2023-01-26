@@ -43,7 +43,10 @@ from .channel import (
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
-from .interactions.application_interactions import ApplicationCommandInteraction, ApplicationAutocompleteInteraction
+from .interactions.application_interactions import (
+    ApplicationAutocompleteInteraction,
+    ApplicationCommandInteraction,
+)
 from .interactions.base import Interaction
 from .member import Member
 from .message import Attachment, Message
@@ -528,7 +531,9 @@ class ClientCog:
         return getattr(method.__func__, "__cog_special_method__", method)
 
     @_cog_special_method
-    def cog_application_command_check(self, interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction]) -> bool:
+    def cog_application_command_check(
+        self, interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction]
+    ) -> bool:
         """A special method that registers as a :func:`.ext.application_checks.check`
         for every application command and subcommand in this cog.
 
@@ -638,7 +643,7 @@ class CallbackMixin:
             return None
 
         return ClientCog._get_overridden_method(
-            self.parent_cog.cog_application_command_before_invoke 
+            self.parent_cog.cog_application_command_before_invoke
         )
 
     @property
@@ -906,13 +911,17 @@ class CallbackMixin:
                 if (after_invoke := state._application_command_after_invoke) is not None:
                     await after_invoke(interaction)  # type: ignore
 
-    async def invoke_callback(self, interaction: ApplicationCommandInteraction, *args, **kwargs) -> None:
+    async def invoke_callback(
+        self, interaction: ApplicationCommandInteraction, *args, **kwargs
+    ) -> None:
         """|coro|
         Invokes the callback, injecting ``self`` if available.
         """
         await self(interaction, *args, **kwargs)
 
-    async def invoke_error(self, interaction: ApplicationCommandInteraction, error: Exception) -> None:
+    async def invoke_error(
+        self, interaction: ApplicationCommandInteraction, error: Exception
+    ) -> None:
         """|coro|
         Invokes the error handler if available.
         """
@@ -1054,7 +1063,9 @@ class AutocompleteCommandMixin:
         # method, thus we have to hold the decorated autocomplete callbacks temporarily until then.
         self._temp_autocomplete_callbacks: Dict[str, Callable] = {}
 
-    async def call_autocomplete_from_interaction(self, interaction: ApplicationAutocompleteInteraction) -> None:
+    async def call_autocomplete_from_interaction(
+        self, interaction: ApplicationAutocompleteInteraction
+    ) -> None:
         """|coro|
         Calls the autocomplete callback with the given interaction.
         """
@@ -2405,7 +2416,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """
         await self.call(self._state, interaction)  # type: ignore
 
-    async def call(self, state: ConnectionState, interaction: ApplicationCommandInteraction) -> None:
+    async def call(
+        self, state: ConnectionState, interaction: ApplicationCommandInteraction
+    ) -> None:
         """|coro|
         Calls the callback via the given :class:`Interaction`, using the given :class:`ConnectionState` to get resolved
         objects if needed and available.
@@ -2768,7 +2781,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
         return ret
 
-    async def call(self, state: ConnectionState, interaction: ApplicationCommandInteraction) -> None:
+    async def call(
+        self, state: ConnectionState, interaction: ApplicationCommandInteraction
+    ) -> None:
         if interaction.data is None:
             raise ValueError("Discord did not provide us interaction data")
 
@@ -3237,7 +3252,8 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
 
 
 def get_users_from_interaction(
-    state: ConnectionState, interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction]
+    state: ConnectionState,
+    interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
 ) -> List[Union[User, Member]]:
     """Tries to get a list of resolved :class:`User` objects from the interaction data.
 
@@ -3294,7 +3310,8 @@ def get_users_from_interaction(
 
 
 def get_messages_from_interaction(
-    state: ConnectionState, interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction]
+    state: ConnectionState,
+    interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
 ) -> List[Message]:
     """Tries to get a list of resolved :class:`Message` objects from the interaction data.
 
@@ -3329,7 +3346,10 @@ def get_messages_from_interaction(
     return ret
 
 
-def get_roles_from_interaction(state: ConnectionState, interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction]) -> List[Role]:
+def get_roles_from_interaction(
+    state: ConnectionState,
+    interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
+) -> List[Role]:
     """Tries to get a list of resolved :class:`Role` objects from the interaction .data
 
     Parameters

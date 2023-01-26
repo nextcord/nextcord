@@ -23,7 +23,6 @@ __all__ = (
 
 
 if TYPE_CHECKING:
-    from ..interactions.base import ClientT
     from ..interactions.modal_submit_interaction import ModalSubmitInteraction
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload

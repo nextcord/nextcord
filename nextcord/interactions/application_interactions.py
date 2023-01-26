@@ -4,16 +4,16 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from .base import Interaction
 
-__all__ = (
-    "ApplicationCommandInteraction",
-    "ApplicationAutocompleteInteraction"
-)
+__all__ = ("ApplicationCommandInteraction", "ApplicationAutocompleteInteraction")
 
 if TYPE_CHECKING:
-    from ..application_command import BaseApplicationCommand, SlashApplicationSubcommand
-    from ..types.interactions import Interaction as InteractionPayload, InteractionData
+    from ..application_command import (
+        BaseApplicationCommand,
+        SlashApplicationSubcommand,
+        SlashOptionData,
+    )
     from ..state import ConnectionState
-    from ..application_command import SlashOptionData
+    from ..types.interactions import Interaction as InteractionPayload
 
 
 class ApplicationCommandInteraction(Interaction):
@@ -49,7 +49,7 @@ class ApplicationCommandInteraction(Interaction):
         "application_command",
         "app_command_name",
         "app_command_id",
-        "options"
+        "options",
     )
 
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
@@ -66,7 +66,7 @@ class ApplicationCommandInteraction(Interaction):
         self.app_command_id: int = self.data["id"]  # type: ignore # self.data should be present here
 
         try:
-            self.options: List[SlashOptionData] = self._get_application_options(self.data["options"])  # type: ignore # Data should be defined here 
+            self.options: List[SlashOptionData] = self._get_application_options(self.data["options"])  # type: ignore # Data should be defined here
         except KeyError:
             self.options: List[SlashOptionData] = []
 
@@ -82,7 +82,7 @@ class ApplicationCommandInteraction(Interaction):
             options_collection.append(SlashOptionData(option))
 
         return options_collection
-    
+
 
 class ApplicationAutocompleteInteraction(ApplicationCommandInteraction):
     """Represents the interaction for Autocompletes.
@@ -123,5 +123,5 @@ class ApplicationAutocompleteInteraction(ApplicationCommandInteraction):
         for option in self.options:
             if option.focused:
                 return option
-            
+
         return None

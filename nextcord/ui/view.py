@@ -38,7 +38,6 @@ from .item import Item, ItemCallbackType
 __all__ = ("View",)
 
 if TYPE_CHECKING:
-    from ..interactions.base import ClientT
     from ..interactions.message_component_interaction import ViewInteraction
     from ..message import Message
     from ..state import ConnectionState
@@ -525,9 +524,7 @@ class ViewStore:
                 del self._synced_message_views[key]
                 break
 
-    def dispatch(
-        self, component_type: int, custom_id: str, interaction: ViewInteraction
-    ) -> None:
+    def dispatch(self, component_type: int, custom_id: str, interaction: ViewInteraction) -> None:
         self.__verify_integrity()
         message_id: Optional[int] = interaction.message and interaction.message.id
         key = (component_type, message_id, custom_id)

@@ -23,18 +23,11 @@ from ..user import ClientUser, User
 from ..utils import snowflake_time
 from ..webhook.async_ import Webhook, WebhookMessage, async_context, handle_message_parameters
 
-__all__ = (
-    "Interaction",
-    "InteractionMessage",
-    "InteractionResponse",
-    "PartialInteractionMessage"
-)
+__all__ = ("Interaction", "InteractionMessage", "InteractionResponse", "PartialInteractionMessage")
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
-    from .message_component_interaction import ViewInteraction
-    from .modal_submit_interaction import ModalSubmitInteraction
     from ..channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from ..client import Client
     from ..guild import Guild
@@ -44,6 +37,8 @@ if TYPE_CHECKING:
     from ..types.interactions import Interaction as InteractionPayload, InteractionData
     from ..ui.modal import Modal
     from ..ui.view import View
+    from .message_component_interaction import ViewInteraction
+    from .modal_submit_interaction import ModalSubmitInteraction
 
     InteractionChannel = Union[
         VoiceChannel,
@@ -921,9 +916,13 @@ class InteractionResponse:
 
         parent = self._parent
         state = parent._state
-        
+
         if isinstance(parent, (ViewInteraction, ModalSubmitInteraction)):
-            msg = parent.message if isinstance(parent, (ViewInteraction, ModalSubmitInteraction)) else None
+            msg = (
+                parent.message
+                if isinstance(parent, (ViewInteraction, ModalSubmitInteraction))
+                else None
+            )
             message_id = msg.id if msg else None
         else:
             msg = None

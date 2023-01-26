@@ -50,7 +50,10 @@ from .flags import ApplicationFlags, Intents
 from .gateway import *
 from .guild import Guild
 from .http import HTTPClient
-from .interactions.application_interactions import ApplicationAutocompleteInteraction, ApplicationCommandInteraction
+from .interactions.application_interactions import (
+    ApplicationAutocompleteInteraction,
+    ApplicationCommandInteraction,
+)
 from .interactions.base import Interaction
 from .interactions.message_component_interaction import ViewInteraction
 from .interactions.modal_submit_interaction import ModalSubmitInteraction
@@ -2011,10 +2014,14 @@ class Client:
         """
         return [event for guild in self.guilds for event in guild.scheduled_events]
 
-    async def on_interaction(self, interaction: Union[ApplicationAutocompleteInteraction, ApplicationCommandInteraction]):
+    async def on_interaction(
+        self, interaction: Union[ApplicationAutocompleteInteraction, ApplicationCommandInteraction]
+    ):
         await self.process_application_commands(interaction)
 
-    async def process_application_commands(self, interaction: Union[ApplicationAutocompleteInteraction, ApplicationCommandInteraction]) -> None:
+    async def process_application_commands(
+        self, interaction: Union[ApplicationAutocompleteInteraction, ApplicationCommandInteraction]
+    ) -> None:
         """|coro|
         Processes the data in the given interaction and calls associated applications or autocomplete if possible.
         Lazy-loads commands if enabled.
@@ -2762,8 +2769,10 @@ class Client:
         return utils.unique(it)
 
     @overload
-    def get_interaction(self, data) -> Union[
-        ApplicationCommandInteraction, 
+    def get_interaction(
+        self, data
+    ) -> Union[
+        ApplicationCommandInteraction,
         ApplicationAutocompleteInteraction,
         ViewInteraction,
         ModalSubmitInteraction,
