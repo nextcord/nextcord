@@ -938,8 +938,8 @@ class CallbackMixin:
         return callback
 
     def before_invoke(
-        self, coro: Callable[[ApplicationCommandInteraction], Coroutine]
-    ) -> Callable[[ApplicationCommandInteraction], Coroutine]:
+        self, coro: Callable[[Interaction], Coroutine]
+    ) -> Callable[[Interaction], Coroutine]:
         """Sets the callback that should be run before the command callback is invoked.
 
         Parameters
@@ -956,8 +956,8 @@ class CallbackMixin:
         return coro
 
     def after_invoke(
-        self, coro: Callable[[ApplicationCommandInteraction], Coroutine]
-    ) -> Callable[[ApplicationCommandInteraction], Coroutine]:
+        self, coro: Callable[[Interaction], Coroutine]
+    ) -> Callable[[Interaction], Coroutine]:
         """Sets the callback that should be run after the command callback is invoked.
 
         Parameters

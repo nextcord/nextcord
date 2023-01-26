@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ..emoji import Emoji
-    from ..interactions import ClientT
+    from ..interactions.base import ClientT
     from ..types.components import ButtonComponent as ButtonComponentPayload
     from .view import View
 

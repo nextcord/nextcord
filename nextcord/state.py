@@ -1377,11 +1377,13 @@ class ConnectionState:
         if data["type"] == 3:  # interaction component
             custom_id = interaction.data["custom_id"]  # type: ignore
             component_type = interaction.data["component_type"]  # type: ignore
-            self._view_store.dispatch(component_type, custom_id, interaction)
+            self._view_store.dispatch(component_type, custom_id, interaction)  # type: ignore 
+            # Some Interaction types incompatible with this method -> accounted for via if-statement
         if data["type"] == 5:  # modal submit
             custom_id = interaction.data["custom_id"]  # type: ignore
             # key exists if type is 5 etc
-            self._modal_store.dispatch(custom_id, interaction)
+            self._modal_store.dispatch(custom_id, interaction)  # type: ignore
+            # Some Interaction types incompatible with this method -> accounted for via if-statement
 
         self.dispatch("interaction", interaction)
 
