@@ -1291,7 +1291,7 @@ class MemberFlags(BaseFlags):
         return 1 << 1
 
     @flag_value
-    def bypass_verification(self):
+    def bypasses_verification(self):
         """:class:`bool`: Whether this member has bypassed verification.
 
         .. versionadded:: 2.4
