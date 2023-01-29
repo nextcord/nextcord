@@ -1253,7 +1253,7 @@ class ApplicationFlags(BaseFlags):
 
 @fill_with_flags()
 class MemberFlags(BaseFlags):
-    r"""Wraps up Discord's Member Flags.
+    """Wraps up Discord's Member Flags.
 
     .. container:: operations
 
