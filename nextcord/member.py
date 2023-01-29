@@ -283,7 +283,7 @@ class Member(abc.Messageable, _UserTag):
         self._timeout: Optional[datetime.datetime] = utils.parse_time(
             data.get("communication_disabled_until")
         )
-        self.flags = MemberFlags._from_value(data["flags"])
+        self.flags: MemberFlags = MemberFlags._from_value(data["flags"])
 
     def __str__(self) -> str:
         return str(self._user)
