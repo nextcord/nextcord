@@ -1285,7 +1285,7 @@ class MemberFlags(BaseFlags):
 
     @flag_value
     def completed_onboarding(self):
-        """:class:`bool`: Whether this member has completed Onboarding.
+        """:class:`bool`: Whether this member has completed onboarding.
 
         .. versionadded:: 2.4
         """
