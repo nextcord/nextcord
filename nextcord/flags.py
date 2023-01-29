@@ -1277,32 +1277,20 @@ class MemberFlags(BaseFlags):
 
     @flag_value
     def did_rejoin(self):
-        """:class:`bool`: Whether this member rejoined this guild.
-
-        .. versionadded:: 2.4
-        """
+        """:class:`bool`: Whether this member rejoined this guild."""
         return 1 << 0
 
     @flag_value
     def completed_onboarding(self):
-        """:class:`bool`: Whether this member has completed onboarding.
-
-        .. versionadded:: 2.4
-        """
+        """:class:`bool`: Whether this member has completed onboarding."""
         return 1 << 1
 
     @flag_value
     def bypasses_verification(self):
-        """:class:`bool`: Whether this member is exempt from the guild's verification requirements.
-
-        .. versionadded:: 2.4
-        """
+        """:class:`bool`: Whether this member is exempt from the guild's verification requirements."""
         return 1 << 2
 
     @flag_value
     def started_onboarding(self):
-        """:class:`bool`: Whether this member has started onboarding.
-
-        .. versionadded:: 2.4
-        """
+        """:class:`bool`: Whether this member has started onboarding."""
         return 1 << 3
