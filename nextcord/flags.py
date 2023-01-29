@@ -1293,7 +1293,7 @@ class MemberFlags(BaseFlags):
 
     @flag_value
     def bypasses_verification(self):
-        """:class:`bool`: Whether this member has bypassed verification.
+        """:class:`bool`: Whether this member is exempt from the guild's verification requirements.
 
         .. versionadded:: 2.4
         """
