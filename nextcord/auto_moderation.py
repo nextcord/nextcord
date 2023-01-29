@@ -78,7 +78,7 @@ class AutoModerationTriggerMetadata:
             This is ``None`` and cannot be provided if the trigger type of the rule is not
             :attr:`AutoModerationTriggerType.keyword`.
     regex_patterns: Optional[List[:class:`str`]]
-        A list of regex patterns which will be matched with content.
+        A list of regex patterns which will be matched with content. Can only be up to 10 patterns.
 
         .. versionadded:: 2.4
 
