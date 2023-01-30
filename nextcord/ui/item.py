@@ -13,6 +13,7 @@ V = TypeVar("V", bound="View", covariant=True)
 
 if TYPE_CHECKING:
     from typing_extensions import Self
+
     ItemCallbackType = Callable[[Any, I, base.Interaction[base.ClientT]], Coroutine[Any, Any, Any]]
 
     from ..components import Component

@@ -17,12 +17,12 @@ from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from typing_extensions import Self
-    
-    from ..item import ItemCallbackType
+
     from ...guild import Guild
     from ...state import ConnectionState
     from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
+    from ..item import ItemCallbackType
 
 __all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
 

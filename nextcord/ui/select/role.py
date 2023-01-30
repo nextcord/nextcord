@@ -17,10 +17,10 @@ from .base import SelectBase, SelectValuesBase
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ..item import ItemCallbackType
     from ...guild import Guild
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
+    from ..item import ItemCallbackType
 
 __all__ = ("RoleSelect", "role_select", "RoleSelectValues")
 

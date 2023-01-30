@@ -19,10 +19,10 @@ __all__ = (
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .item import ItemCallbackType
     from ..emoji import Emoji
     from ..interactions.base import ClientT
     from ..types.components import ButtonComponent as ButtonComponentPayload
+    from .item import ItemCallbackType
     from .view import View
 
 V = TypeVar("V", bound="View", covariant=True)

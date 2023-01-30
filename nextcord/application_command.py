@@ -1326,11 +1326,11 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
 
 class SlashOptionData:
     """A class that contains data for an application command option.
-    
+
     These classes are only created for options that a user defined.
-    Thus, application command options that are not required, and weren't 
+    Thus, application command options that are not required, and weren't
     given a value by a user will not have a dedicated instance of this class.
-    
+
     This class is for data recieving only! To create slash options, use :class:`SlashOption`.
 
     Parameters

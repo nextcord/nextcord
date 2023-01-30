@@ -37,11 +37,11 @@ from ..components import (
 __all__ = ("View",)
 
 if TYPE_CHECKING:
-    from .item import Item, ItemCallbackType
     from ..interactions.message_component_interaction import ViewInteraction
     from ..message import Message
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
+    from .item import Item, ItemCallbackType
 
 _log = logging.getLogger(__name__)
 

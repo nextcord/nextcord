@@ -15,13 +15,13 @@ from .base import SelectBase, SelectValuesBase
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ...interactions.base import ClientT
-    from ..item import ItemCallbackType
     from ...enums import ChannelType
     from ...guild import Guild
+    from ...interactions.base import ClientT
     from ...state import ConnectionState
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
+    from ..item import ItemCallbackType
 
 __all__ = ("ChannelSelect", "channel_select", "ChannelSelectValues")
 

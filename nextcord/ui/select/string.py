@@ -15,8 +15,9 @@ from ..view import View
 from .base import SelectBase
 
 if TYPE_CHECKING:
-    from ..item import ItemCallbackType
     from typing_extensions import Self
+
+    from ..item import ItemCallbackType
 
 __all__ = (
     "Select",
