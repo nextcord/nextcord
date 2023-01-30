@@ -11,11 +11,11 @@ from ...enums import ComponentType
 from ...interactions.base import ClientT
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
-from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase
 
 if TYPE_CHECKING:
+    from ..item import ItemCallbackType
     from typing_extensions import Self
 
 __all__ = (

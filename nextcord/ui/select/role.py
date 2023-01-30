@@ -11,13 +11,13 @@ from ...interactions.base import ClientT
 from ...role import Role
 from ...state import ConnectionState
 from ...utils import MISSING
-from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from ..item import ItemCallbackType
     from ...guild import Guild
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData

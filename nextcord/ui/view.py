@@ -33,11 +33,11 @@ from ..components import (
     TextInput as TextComponent,
     _component_factory,
 )
-from .item import Item, ItemCallbackType
 
 __all__ = ("View",)
 
 if TYPE_CHECKING:
+    from .item import Item, ItemCallbackType
     from ..interactions.message_component_interaction import ViewInteraction
     from ..message import Message
     from ..state import ConnectionState

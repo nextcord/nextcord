@@ -12,13 +12,13 @@ from ...member import Member
 from ...role import Role
 from ...user import User
 from ...utils import MISSING
-from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from typing_extensions import Self
-
+    
+    from ..item import ItemCallbackType
     from ...guild import Guild
     from ...state import ConnectionState
     from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload

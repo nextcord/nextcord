@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Callable, Optional, Tuple, TypeVar, Union
 from ..components import Button as ButtonComponent
 from ..enums import ButtonStyle, ComponentType
 from ..partial_emoji import PartialEmoji, _EmojiTag
-from .item import Item, ItemCallbackType
+from .item import Item
 
 __all__ = (
     "Button",
@@ -19,6 +19,7 @@ __all__ = (
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from .item import ItemCallbackType
     from ..emoji import Emoji
     from ..interactions.base import ClientT
     from ..types.components import ButtonComponent as ButtonComponentPayload
