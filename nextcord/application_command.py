@@ -3389,7 +3389,7 @@ def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] =
 
 
 def unpack_annotation(
-    given_annotation: Any, annotated_list: Optional[List[type]]
+    given_annotation: Any, annotated_list: Optional[List[type]] = None
 ) -> Tuple[List[type], list]:
     """Unpacks the given parameter annotation into its components.
 
