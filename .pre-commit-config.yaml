@@ -71,4 +71,4 @@ repos:
         additional_dependencies:
           - autotyping==22.9.0
           - black==22.6.0
-          - libcst==0.4.7
+          - libcst==0.4.9
