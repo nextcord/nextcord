@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator, List, Tuple, TypeVar
 
 import nextcord.utils
@@ -33,6 +34,7 @@ from nextcord.application_command import ClientCog, _cog_special_method
 from ._types import _BaseCommand
 
 if TYPE_CHECKING:
+    from typing import Union
     from typing_extensions import Self
 
     from .bot import BotBase
@@ -278,14 +280,14 @@ class Cog(ClientCog, metaclass=CogMeta):
         return [(name, getattr(self, method_name)) for name, method_name in self.__cog_listeners__]
 
     @classmethod
-    def listener(cls, name: str = MISSING) -> Callable[[FuncT], FuncT]:
+    def listener(cls, name: Union[str, Enum] = MISSING) -> Callable[[FuncT], FuncT]:
         """A decorator that marks a function as a listener.
 
         This is the cog equivalent of :meth:`.Bot.listen`.
 
         Parameters
         ----------
-        name: :class:`str`
+        name: Union[:class:`str`, :class:`Enum`]
             The name of the event being listened to. If not provided, it
             defaults to the function's name.
 
@@ -296,7 +298,7 @@ class Cog(ClientCog, metaclass=CogMeta):
             the name.
         """
 
-        if name is not MISSING and not isinstance(name, str):
+        if name is not MISSING and not isinstance(name, (str, Enum)):
             raise TypeError(
                 f"Cog.listener expected str but received {name.__class__.__name__!r} instead."
             )

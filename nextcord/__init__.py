@@ -37,6 +37,7 @@ from .embeds import *
 from .emoji import *
 from .enums import *
 from .errors import *
+from .events import *
 from .file import *
 from .flags import *
 from .guild import *

@@ -580,9 +580,8 @@ class Client:
                         if frame.code_context
                         else "",
                     )
-
         self._dispatch_to_listeners(event, *args, **kwargs)
-        self._dispatch_to_function(event, *args, **kwargs)
+        self._dispatch_to_function(event, *args, **kwargs)  # TODO: Backwards compat I think?
 
         if isinstance(event, Enum):
             # For backwards compatibility.
