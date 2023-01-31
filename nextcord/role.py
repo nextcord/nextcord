@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -69,12 +47,19 @@ class RoleTags:
         The bot's user ID that manages this role.
     integration_id: Optional[:class:`int`]
         The integration ID that manages the role.
+    subscription_listing_id: Optional[:class:`int`]
+        The ID of the subscription listing that manages the role.
+
+        .. versionadded:: 2.4
     """
 
     __slots__ = (
         "bot_id",
         "integration_id",
         "_premium_subscriber",
+        "subscription_listing_id",
+        "_available_for_purchase",
+        "_guild_connections",
     )
 
     def __init__(self, data: RoleTagPayload) -> None:
@@ -85,6 +70,11 @@ class RoleTags:
         # So in this case, a value of None is the same as True.
         # Which means we would need a different sentinel.
         self._premium_subscriber: Optional[Any] = data.get("premium_subscriber", MISSING)
+        self.subscription_listing_id: Optional[int] = get_as_snowflake(
+            data, "subscription_listing_id"
+        )
+        self._available_for_purchase: Optional[Any] = data.get("available_for_purchase", MISSING)
+        self._guild_connections: Optional[Any] = data.get("guild_connections", MISSING)
 
     def is_bot_managed(self) -> bool:
         """:class:`bool`: Whether the role is associated with a bot."""
@@ -98,10 +88,27 @@ class RoleTags:
         """:class:`bool`: Whether the role is managed by an integration."""
         return self.integration_id is not None
 
+    def is_available_for_purchase(self) -> bool:
+        """:class:`bool`: Whether the role is available for purchase.
+
+        .. versionadded:: 2.4
+        """
+        return self._available_for_purchase is None
+
+    def has_guild_connections(self) -> bool:
+        """:class:`bool`: Whether the role is a guild's linked role.
+
+        .. versionadded:: 2.4
+        """
+        return self._guild_connections is None
+
     def __repr__(self) -> str:
         return (
             f"<RoleTags bot_id={self.bot_id} integration_id={self.integration_id} "
             f"premium_subscriber={self.is_premium_subscriber()}>"
+            f"subscription_listing_id={self.subscription_listing_id}>"
+            f"available_for_purchase={self.is_available_for_purchase()}>"
+            f"guild_connections={self.has_guild_connections()}>"
         )
 
 

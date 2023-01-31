@@ -81,7 +81,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "nextcord"
-copyright = "2015-2021, Rapptz, 2021-present TAG-Epic"
+copyright = "2015-2021, Rapptz, 2021-present Nextcord Developers"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -322,7 +322,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "nextcord", "nextcord Documentation", ["Rapptz"], 1)]
+man_pages = [("index", "nextcord", "nextcord Documentation", ["Rapptz", "Nextcord Developers"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -338,7 +338,7 @@ texinfo_documents = [
         "index",
         "nextcord",
         "nextcord Documentation",
-        "Rapptz",
+        "Rapptz & Nextcord Developers",
         "nextcord",
         "One line description of project.",
         "Miscellaneous",

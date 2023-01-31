@@ -1,8 +1,8 @@
 """
-nextcord.ext.dpy
-~~~~~~~~~~~~~~~~
-An extension module to replicate parts of Discord.py.
-:copyright: (c) 2022-present tag-epic
+nextcord.ext.slash_utils
+~~~~~~~~~~~~~~~~~~~~~~~~
+An extension module to provide utilities for slash commands.
+:copyright: (c) 2022-present Nextcord Developers
 :license: MIT, see LICENSE for more details.
 """
 
