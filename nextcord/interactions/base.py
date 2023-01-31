@@ -37,8 +37,8 @@ if TYPE_CHECKING:
     from ..types.interactions import Interaction as InteractionPayload, InteractionData
     from ..ui.modal import Modal
     from ..ui.view import View
-    from .message_component_interaction import ViewInteraction
-    from .modal_submit_interaction import ModalSubmitInteraction
+    from .message_component import ViewInteraction
+    from .modal_submit import ModalSubmitInteraction
 
     InteractionChannel = Union[
         VoiceChannel,

@@ -50,13 +50,13 @@ from .flags import ApplicationFlags, Intents
 from .gateway import *
 from .guild import Guild
 from .http import HTTPClient
-from .interactions.application_interactions import (
+from .interactions.application import (
     ApplicationAutocompleteInteraction,
     ApplicationCommandInteraction,
 )
 from .interactions.base import Interaction
-from .interactions.message_component_interaction import ViewInteraction
-from .interactions.modal_submit_interaction import ModalSubmitInteraction
+from .interactions.message_component import ViewInteraction
+from .interactions.modal_submit import ModalSubmitInteraction
 from .invite import Invite
 from .iterators import GuildIterator
 from .mentions import AllowedMentions

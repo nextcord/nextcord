@@ -9,7 +9,7 @@ Interactions collection for the Discord API
 :license: MIT, see LICENSE for more details.
 """
 
-from .application_interactions import *
+from .application import *
 from .base import *
-from .message_component_interaction import *
-from .modal_submit_interaction import *
+from .message_component import *
+from .modal_submit import *

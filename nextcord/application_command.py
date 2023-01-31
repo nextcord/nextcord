@@ -43,7 +43,7 @@ from .channel import (
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
-from .interactions.application_interactions import (
+from .interactions.application import (
     ApplicationAutocompleteInteraction,
     ApplicationCommandInteraction,
 )

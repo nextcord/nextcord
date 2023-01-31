@@ -37,7 +37,7 @@ from ..components import (
 __all__ = ("View",)
 
 if TYPE_CHECKING:
-    from ..interactions.message_component_interaction import ViewInteraction
+    from ..interactions.message_component import ViewInteraction
     from ..message import Message
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
