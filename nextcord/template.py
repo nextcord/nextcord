@@ -29,7 +29,7 @@ class _FriendlyHttpAttributeErrorHelper:
 
 
 class _PartialTemplateState:
-    def __init__(self, *, state):
+    def __init__(self, *, state) -> None:
         self.__state = state
         self.http = _FriendlyHttpAttributeErrorHelper()
 

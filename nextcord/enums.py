@@ -56,17 +56,17 @@ class UnknownEnumValue(NamedTuple):
     name: str
     value: Any
 
-    def __str__(self):
+    def __str__(self) -> str:
         if isinstance(self.value, str):
             return self.value
         return self.name
 
-    def __int__(self):
+    def __int__(self) -> int:
         if isinstance(self.value, int):
             return self.value
         raise TypeError(f"{self.name}.{self.value} cannot be converted to an int")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.name}.{self.value!r}>"
 
     def __le__(self, other):
@@ -123,14 +123,14 @@ class Enum(enum.Enum):
 class IntEnum(int, Enum):
     """An enum that supports comparing and hashing as an int."""
 
-    def __int__(self):
+    def __int__(self) -> int:
         return self.value
 
 
 class StrEnum(str, Enum):
     """An enum that supports comparing and hashing as a string."""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 
@@ -148,7 +148,7 @@ class ChannelType(IntEnum):
     guild_directory = 14
     forum = 15
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -212,7 +212,7 @@ class SpeakingState(IntEnum):
     soundshare = 1 << 1
     priority = 1 << 2
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -223,7 +223,7 @@ class VerificationLevel(IntEnum):
     high = 3
     highest = 4
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -232,7 +232,7 @@ class ContentFilter(IntEnum):
     no_role = 1
     all_members = 2
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -253,7 +253,7 @@ class DefaultAvatar(IntEnum):
     orange = 3
     red = 4
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 

@@ -306,7 +306,7 @@ class Guild(Hashable):
         3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=104857600),
     }
 
-    def __init__(self, *, data: GuildPayload, state: ConnectionState):
+    def __init__(self, *, data: GuildPayload, state: ConnectionState) -> None:
         self._channels: Dict[int, GuildChannel] = {}
         self._members: Dict[int, Member] = {}
         self._scheduled_events: Dict[int, ScheduledEvent] = {}
@@ -3325,7 +3325,7 @@ class Guild(Hashable):
         channel: Optional[VocalGuildChannel],
         self_mute: bool = False,
         self_deaf: bool = False,
-    ):
+    ) -> None:
         """|coro|
 
         Changes client's voice state in the guild.

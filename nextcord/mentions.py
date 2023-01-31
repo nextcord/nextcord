@@ -52,7 +52,7 @@ class AllowedMentions:
         users: Optional[Union[bool, List[Snowflake]]] = None,
         roles: Optional[Union[bool, List[Snowflake]]] = None,
         replied_user: Optional[bool] = None,
-    ):
+    ) -> None:
         self.everyone = everyone
         self.users = users
         self.roles = roles

@@ -62,7 +62,7 @@ class Reaction:
         message: Message,
         data: ReactionPayload,
         emoji: Optional[Union[PartialEmoji, Emoji, str]] = None,
-    ):
+    ) -> None:
         self.message: Message = message
         self.emoji: Union[PartialEmoji, Emoji, str] = emoji or message._state.get_reaction_emoji(
             data["emoji"]

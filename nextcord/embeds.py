@@ -19,7 +19,7 @@ EmptyEmbed = None
 
 
 class EmbedProxy:
-    def __init__(self, layer: Dict[str, Any]):
+    def __init__(self, layer: Dict[str, Any]) -> None:
         self.__dict__.update(layer)
 
     def __len__(self) -> int:
@@ -148,7 +148,7 @@ class Embed:
         url: Optional[Any] = None,
         description: Optional[Any] = None,
         timestamp: Optional[datetime.datetime] = None,
-    ):
+    ) -> None:
 
         self.colour = colour if colour is not None else color
         self.title = title

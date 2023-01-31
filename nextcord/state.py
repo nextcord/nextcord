@@ -936,7 +936,7 @@ class ConnectionState:
 
     async def delete_unknown_application_commands(
         self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
-    ):
+    ) -> None:
         warnings.warn(
             ".delete_unknown_application_commands is deprecated, use .deploy_application_commands and set "
             "kwargs in it instead.",
@@ -1776,7 +1776,7 @@ class ConnectionState:
     def is_guild_evicted(self, guild) -> bool:
         return guild.id not in self._guilds
 
-    async def chunk_guild(self, guild, *, wait=True, cache=None):
+    async def chunk_guild(self, guild, *, wait: bool = True, cache=None):
         if cache is None:
             cache = self.member_cache_flags.joined
         request = self._chunk_requests.get(guild.id)
@@ -1790,7 +1790,7 @@ class ConnectionState:
             return await request.wait()
         return request.get_future()
 
-    async def _chunk_and_dispatch(self, guild, unavailable):
+    async def _chunk_and_dispatch(self, guild, unavailable) -> None:
         try:
             await asyncio.wait_for(self.chunk_guild(guild), timeout=60.0)
         except asyncio.TimeoutError:

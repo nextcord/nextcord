@@ -110,7 +110,7 @@ class ActionRow(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: ComponentPayload):
+    def __init__(self, data: ComponentPayload) -> None:
         self.type: ComponentType = try_enum(ComponentType, data["type"])
         self.children: List[Component] = [_component_factory(d) for d in data.get("components", [])]
 
@@ -161,7 +161,7 @@ class Button(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: ButtonComponentPayload):
+    def __init__(self, data: ButtonComponentPayload) -> None:
         self.type: ComponentType = try_enum(ComponentType, data["type"])
         self.style: ButtonStyle = try_enum(ButtonStyle, data["style"])
         self.custom_id: Optional[str] = data.get("custom_id")
@@ -224,7 +224,7 @@ class SelectMenuBase(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: SelectMenuBasePayload):
+    def __init__(self, data: SelectMenuBasePayload) -> None:
         self.custom_id: str = data["custom_id"]
         self.disabled: bool = data.get("disabled", False)
         self.placeholder: Optional[str] = data.get("placeholder")
@@ -282,7 +282,7 @@ class StringSelectMenu(SelectMenuBase):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: SelectMenuPayload):
+    def __init__(self, data: SelectMenuPayload) -> None:
         super().__init__(data)
         self.type = ComponentType.select
         self.options: List[SelectOption] = [
@@ -335,7 +335,7 @@ class UserSelectMenu(SelectMenuBase):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: UserSelectMenuPayload):
+    def __init__(self, data: UserSelectMenuPayload) -> None:
         super().__init__(data)
         self.type = ComponentType.user_select
 
@@ -378,7 +378,7 @@ class RoleSelectMenu(SelectMenuBase):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: RoleSelectMenuPayload):
+    def __init__(self, data: RoleSelectMenuPayload) -> None:
         super().__init__(data)
         self.type = ComponentType.role_select
 
@@ -421,7 +421,7 @@ class MentionableSelectMenu(SelectMenuBase):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: MentionableSelectMenuPayload):
+    def __init__(self, data: MentionableSelectMenuPayload) -> None:
         super().__init__(data)
         self.type = ComponentType.mentionable_select
 
@@ -466,7 +466,7 @@ class ChannelSelectMenu(SelectMenuBase):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: ChannelSelectMenuPayload):
+    def __init__(self, data: ChannelSelectMenuPayload) -> None:
         super().__init__(data)
         self.type = ComponentType.channel_select
         self.channel_types: List[ChannelType] = [
@@ -602,7 +602,7 @@ class TextInput(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: TextInputComponentPayload):
+    def __init__(self, data: TextInputComponentPayload) -> None:
         self.type: ComponentType = try_enum(ComponentType, data["type"])
         self.style: TextInputStyle = try_enum(
             TextInputStyle,
