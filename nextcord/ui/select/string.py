@@ -11,13 +11,13 @@ from ...enums import ComponentType
 from ...interactions.base import ClientT
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
+from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ..item import ItemCallbackType
 
 __all__ = (
     "Select",

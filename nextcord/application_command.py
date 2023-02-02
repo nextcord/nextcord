@@ -1324,45 +1324,6 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         return True
 
 
-class SlashOptionData:
-    """A class that contains data for an application command option.
-
-    These classes are only created for options that a user defined.
-    Thus, application command options that are not required, and weren't
-    given a value by a user will not have a dedicated instance of this class.
-
-    This class is for data recieving only! To create slash options, use :class:`SlashOption`.
-
-    Parameters
-    ----------
-    data: :class: Dict[Union[`str`, `int`, `bool`]]
-        The raw data for an option.
-    value: Union[`str`, `int`, `float`, `bool`]
-        Returns the user input value.
-    type: :class:`int`
-        The type of the application command option. This indicates what value the option accepts as an input
-    name: :class:`str`
-        The name of this option
-    focused: :class:`bool`
-        Whether the user is currently creating an input for this option. This is useful for :meth:`on_autocomplete`
-    """
-
-    def __init__(self, data) -> None:
-        # Still missing `options?` Data from (view Discord Docs)
-        self.data: dict = data
-        self.value: Union[str, int, float, bool] = data["value"]
-        self.type: int = data["type"]
-        self.name: str = data["name"]
-
-        try:
-            self.focused = data["focused"]
-        except KeyError:
-            self.focused = False
-
-    def __repr__(self) -> str:
-        return str(self.value)
-
-
 class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin):
     command: Union[SlashApplicationCommand, SlashApplicationSubcommand]
     option_types: Dict[type, ApplicationCommandOptionType] = {

@@ -11,6 +11,7 @@ from ...interactions.base import ClientT
 from ...role import Role
 from ...state import ConnectionState
 from ...utils import MISSING
+from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
@@ -20,7 +21,6 @@ if TYPE_CHECKING:
     from ...guild import Guild
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
-    from ..item import ItemCallbackType
 
 __all__ = ("RoleSelect", "role_select", "RoleSelectValues")
 

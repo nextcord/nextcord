@@ -12,6 +12,7 @@ from ...member import Member
 from ...role import Role
 from ...user import User
 from ...utils import MISSING
+from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
@@ -22,7 +23,6 @@ if TYPE_CHECKING:
     from ...state import ConnectionState
     from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
-    from ..item import ItemCallbackType
 
 __all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
 

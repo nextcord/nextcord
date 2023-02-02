@@ -4,17 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar
 
-from ..interactions import base
+from ..interactions.base import ClientT, Interaction
 
 __all__ = ("Item",)
 
-I = TypeVar("I", bound="Item")
-V = TypeVar("V", bound="View", covariant=True)
-
 if TYPE_CHECKING:
     from typing_extensions import Self
-
-    ItemCallbackType = Callable[[Any, I, base.Interaction[base.ClientT]], Coroutine[Any, Any, Any]]
 
     from ..components import Component
     from ..enums import ComponentType
@@ -23,6 +18,10 @@ if TYPE_CHECKING:
     from ..types.components import Component as ComponentPayload
     from ..types.interactions import ComponentInteractionData
     from .view import View
+
+I = TypeVar("I", bound="Item")
+V = TypeVar("V", bound="View", covariant=True)
+ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
 
 
 class Item(Generic[V]):
@@ -106,7 +105,7 @@ class Item(Generic[V]):
         """Optional[:class:`View`]: The underlying view for this item."""
         return self._view
 
-    async def callback(self, interaction: base.Interaction):
+    async def callback(self, interaction: Interaction):
         """|coro|
 
         The callback associated with this UI item.

@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...abc import GuildChannel
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
+from ...interactions.base import ClientT
 from ...utils import MISSING
+from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
@@ -17,11 +19,9 @@ if TYPE_CHECKING:
 
     from ...enums import ChannelType
     from ...guild import Guild
-    from ...interactions.base import ClientT
     from ...state import ConnectionState
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
-    from ..item import ItemCallbackType
 
 __all__ = ("ChannelSelect", "channel_select", "ChannelSelectValues")
 

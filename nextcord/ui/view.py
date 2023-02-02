@@ -33,6 +33,7 @@ from ..components import (
     TextInput as TextComponent,
     _component_factory,
 )
+from .item import Item, ItemCallbackType
 
 __all__ = ("View",)
 
@@ -41,7 +42,6 @@ if TYPE_CHECKING:
     from ..message import Message
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
-    from .item import Item, ItemCallbackType
 
 _log = logging.getLogger(__name__)
 

@@ -11,6 +11,7 @@ from ...interactions.base import ClientT
 from ...member import Member
 from ...user import User
 from ...utils import MISSING
+from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
@@ -21,7 +22,6 @@ if TYPE_CHECKING:
     from ...state import ConnectionState
     from ...types.components import UserSelectMenu as UserSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
-    from ..item import ItemCallbackType
 
 __all__ = ("UserSelect", "user_select", "UserSelectValues")
 
