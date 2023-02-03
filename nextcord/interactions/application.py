@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from .base import Interaction
 
-__all__ = ("ApplicationCommandInteraction", "ApplicationAutocompleteInteraction")
+__all__ = ("ApplicationCommandInteraction", "ApplicationAutocompleteInteraction", "SlashOptionData")
 
 if TYPE_CHECKING:
     from ..application_command import (

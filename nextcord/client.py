@@ -55,7 +55,7 @@ from .interactions.application import (
     ApplicationCommandInteraction,
 )
 from .interactions.base import Interaction
-from .interactions.message_component import ViewInteraction
+from .interactions.message_component import MessageComponentInteraction
 from .interactions.modal_submit import ModalSubmitInteraction
 from .invite import Invite
 from .iterators import GuildIterator
@@ -98,7 +98,7 @@ InterT = TypeVar("InterT", bound="Interaction")
 
 AppInterT = TypeVar("AppInterT", bound="ApplicationCommandInteraction")
 AutoAppInterT = TypeVar("AutoAppInterT", bound="ApplicationAutocompleteInteraction")
-ViewInterT = TypeVar("ViewInterT", bound="ViewInteraction")
+ViewInterT = TypeVar("ViewInterT", bound="MessageComponentInteraction")
 ModalInterT = TypeVar("ModalInterT", bound="ModalSubmitInteraction")
 
 
@@ -2774,7 +2774,7 @@ class Client:
     ) -> Union[
         ApplicationCommandInteraction,
         ApplicationAutocompleteInteraction,
-        ViewInteraction,
+        MessageComponentInteraction,
         ModalSubmitInteraction,
         Interaction,
     ]:
@@ -2788,13 +2788,13 @@ class Client:
         *,
         application_interaction: Type[ApplicationCommandInteraction],
         application_autocomplete_interaction: Type[ApplicationAutocompleteInteraction],
-        message_component_interaction: Type[ViewInteraction],
+        message_component_interaction: Type[MessageComponentInteraction],
         modal_submit_interaction: Type[ModalSubmitInteraction],
         cls: Type[Interaction],
     ) -> Union[
         ApplicationCommandInteraction,
         ApplicationAutocompleteInteraction,
-        ViewInteraction,
+        MessageComponentInteraction,
         ModalSubmitInteraction,
         Interaction,
     ]:
@@ -2821,7 +2821,7 @@ class Client:
         application_autocomplete_interaction: Type[
             AutoAppInterT
         ] = ApplicationAutocompleteInteraction,
-        message_component_interaction: Type[ViewInterT] = ViewInteraction,
+        message_component_interaction: Type[ViewInterT] = MessageComponentInteraction,
         modal_submit_interaction: Type[ModalInterT] = ModalSubmitInteraction,
         cls: Type[InterT] = Interaction,
     ) -> Union[
@@ -2829,7 +2829,7 @@ class Client:
         AppInterT,
         ApplicationAutocompleteInteraction,
         AutoAppInterT,
-        ViewInteraction,
+        MessageComponentInteraction,
         ViewInterT,
         ModalSubmitInteraction,
         ModalInterT,

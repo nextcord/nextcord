@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from ..types.interactions import Interaction as InteractionPayload, InteractionData
     from ..ui.modal import Modal
     from ..ui.view import View
-    from .message_component import ViewInteraction
+    from .message_component import MessageComponentInteraction
     from .modal_submit import ModalSubmitInteraction
 
     InteractionChannel = Union[
@@ -917,10 +917,10 @@ class InteractionResponse:
         parent = self._parent
         state = parent._state
 
-        if isinstance(parent, (ViewInteraction, ModalSubmitInteraction)):
+        if isinstance(parent, (MessageComponentInteraction, ModalSubmitInteraction)):
             msg = (
                 parent.message
-                if isinstance(parent, (ViewInteraction, ModalSubmitInteraction))
+                if isinstance(parent, (MessageComponentInteraction, ModalSubmitInteraction))
                 else None
             )
             message_id = msg.id if msg else None

@@ -6,14 +6,14 @@ from ..errors import InvalidArgument
 from ..message import Message
 from .base import Interaction
 
-__all__ = ("ViewInteraction",)
+__all__ = ("MessageComponentInteraction",)
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.interactions import Interaction as InteractionPayload
 
 
-class ViewInteraction(Interaction):
+class MessageComponentInteraction(Interaction):
     """Represents the interaction for all messsage components.
 
     This interaction is get's triggered by :class:`nextcord.ui.View`
