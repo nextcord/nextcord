@@ -1701,10 +1701,11 @@ class SlashCommandMixin(CallbackMixin):
         command_ids: Dict[Optional[int], int]
         qualified_name: str
         _children: Dict[str, SlashApplicationSubcommand]
+        _options: Dict[str, SlashCommandOption]
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]) -> None:
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
-        self.options: Dict[str, SlashCommandOption] = {}
+        self._options: Dict[str, SlashCommandOption] = {}
         self._parsed_docstring: Optional[Dict[str, Any]] = None
         self._children: Dict[str, SlashApplicationSubcommand] = {}
 
@@ -1716,6 +1717,15 @@ class SlashCommandMixin(CallbackMixin):
             ``.children`` is now a read-only property.
         """
         return self._children
+
+    @property
+    def options(self) -> Dict[str, SlashCommandOption]:
+        """Returns the options of the command.
+
+        .. versionchanged:: 2.3
+            ``.options`` is now a read-only property.
+        """
+        return self._options
 
     @property
     def description(self) -> str:
@@ -1754,11 +1764,11 @@ class SlashCommandMixin(CallbackMixin):
                 raise ValueError("Discord did not provide us any options data")
 
         kwargs = {}
-        uncalled_args = self.options.copy()
+        uncalled_args = self._options.copy()
         for arg_data in option_data:
             if arg_data["name"] in uncalled_args:
                 uncalled_args.pop(arg_data["name"])
-                kwargs[self.options[arg_data["name"]].functional_name] = await self.options[
+                kwargs[self.options[arg_data["name"]].functional_name] = await self._options[
                     arg_data["name"]
                 ].handle_value(state, arg_data.get("value"), interaction)
             else:
@@ -1921,7 +1931,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         Dict[Optional[:class:`int`], :class:`int`]:
             Command IDs that this application command currently has. Schema: {Guild ID (None for global): command ID}
         """
-        self.options: Dict[str, ApplicationCommandOption] = {}
+        self._options: Dict[str, ApplicationCommandOption] = {}
 
     # Simple-ish getter + setter methods.
 
