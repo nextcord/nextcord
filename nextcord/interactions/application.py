@@ -39,8 +39,15 @@ class SlashOptionData:
         Whether the user is currently creating an input for this option. This is useful for :meth:`on_autocomplete`
     """
 
+    __slots__: Tuple[str, ...] = (
+        "data",
+        "value",
+        "type",
+        "name",
+        "focused"
+    )
+
     def __init__(self, data) -> None:
-        # Still missing `options?` Data from (view Discord Docs)
         self.data: dict = data
         self.value: Union[str, int, float, bool] = data["value"]
         self.type: int = data["type"]
@@ -115,9 +122,14 @@ class ApplicationCommandInteraction(Interaction):
         self.application_command = app_cmd
 
     def _get_application_options(self, data):
+        options = data
+
+        while "options" in options[0]:
+            options = options[0]["options"]
+
         options_collection: List[SlashOptionData] = []
 
-        for option in data:
+        for option in options:
             options_collection.append(SlashOptionData(option))
 
         return options_collection
@@ -148,7 +160,7 @@ class ApplicationAutocompleteInteraction(ApplicationCommandInteraction):
         The option the callback is for.
     """
 
-    # __slots__: Tuple[str, ...] = ("focused_option", )
+    __slots__: Tuple[str, ...] = ("focused_option", )
 
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)
