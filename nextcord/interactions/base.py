@@ -129,7 +129,7 @@ class Interaction(Hashable, Generic[ClientT]):
         The token to continue the interaction. These are valid
         for 15 minutes.
     data: :class:`dict`
-        The raw interaction data.
+        The raw data for an option. See https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-data for more information.
     attached: :class:`InteractionAttached`
         The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
     """
