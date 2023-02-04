@@ -1705,7 +1705,7 @@ class SlashCommandMixin(CallbackMixin):
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]) -> None:
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
-        self._options: Dict[str, SlashCommandOption] = {}
+        self._options = {}
         self._parsed_docstring: Optional[Dict[str, Any]] = None
         self._children: Dict[str, SlashApplicationSubcommand] = {}
 
