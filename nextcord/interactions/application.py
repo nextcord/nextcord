@@ -123,10 +123,20 @@ class ApplicationCommandInteraction(Interaction):
 
     def _get_application_options(self, data):
         options = data
+        
+        if len(options) == 0:
+            # return empty list if no options exist
+            return []
 
+        # iterate through options to get inputs
         while "options" in options[0]:
             options = options[0]["options"]
+            
+            if len(options) == 0:
+                # return empty list if no options exist 
+                return []
 
+        # If we are here, then the user provided an input for some options
         options_collection: List[SlashOptionData] = []
 
         for option in options:
@@ -159,8 +169,6 @@ class ApplicationAutocompleteInteraction(ApplicationCommandInteraction):
     focused_option: :class:`SlashOptionData`
         The option the callback is for.
     """
-
-    __slots__: Tuple[str, ...] = ("focused_option", )
 
     def __init__(self, *, data: InteractionPayload, state: ConnectionState):
         super().__init__(data=data, state=state)

@@ -2842,8 +2842,29 @@ class Client:
         ----------
         data
             The data direct from the gateway.
+        application_interaction
+            The factory class that will be used to create the interaction for application
+            interactions. By default, this is :class:`ApplicationCommandInteraction`. Should
+            a custom class be provided, it should be a sublcass of :class:`ApplicationCommandInteraction`
+        application_autocomplete_interaction
+            The factory class that will be used to create the interaction for 
+            application autocomplete interactions. By default this is
+            :class:`ApplicationAutocompleteInteraction`. Should a custom class
+            be provided, it should be a subclass of 
+            :class:`ApplicationAutocompleteInteraction`
+        message_component_interaction
+            The factory class that will be used to create the interaction for
+            message components. By default this is :class:`MessageComponentInteraction`.
+            Should a custom class be provided, it should be a subclass of 
+            :class:`MessageComponentInteraction`.
+        modal_submit_interaction
+            The factory class that will be used to create the interaction for
+            modals submits. By default this is :class:`ModalSubmitInteraction`.
+            Should a custom class be provided, it should be a subclass of
+            :class:`ModalSubmitInteraction`
         cls
-            The factory class that will be used to create the interaction.
+            The factory class that will be used to create the interaction if the
+            interaction type was not recognized.
             By default, this is :py:class:`Interaction`. Should a custom
             class be provided, it should be a subclass of :py:class:`Interaction`.
 
@@ -2856,6 +2877,15 @@ class Client:
 
             This is synchronous due to how slash commands are implemented.
         """
+        # check if they are creating custom interaction subclasses
+        if cls != Interaction:
+            warnings.warn(
+                "The 'cls' parameter was given a custom Interaction object. "
+                "This parameter only gets used if the interaction type wasn't recognized.",
+                stacklevel=2,
+                category=FutureWarning
+            )
+
         # Get the interaction type
         interaction_type: InteractionType = try_enum(InteractionType, data["type"])
 
@@ -2871,5 +2901,5 @@ class Client:
         elif interaction_type == InteractionType.modal_submit:
             return modal_submit_interaction(data=data, state=self._connection)
 
-        # Return Base-/Custominteraction class if refined one wasn't found
+        # Return Base-/Custominteraction class if refined one wasn't identified
         return cls(data=data, state=self._connection)
