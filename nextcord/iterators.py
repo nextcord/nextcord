@@ -24,6 +24,7 @@ from .auto_moderation import AutoModerationRule
 from .bans import BanEntry
 from .errors import NoMoreItems
 from .object import Object
+from .types.user import PartialUser as PartialUserPayload
 from .utils import maybe_coroutine, snowflake_time, time_snowflake
 
 __all__ = (
@@ -58,7 +59,6 @@ if TYPE_CHECKING:
         ScheduledEventUser as ScheduledEventUserPayload,
     )
     from .types.threads import Thread as ThreadPayload, ThreadPaginationPayload
-    from .types.user import PartialUser as PartialUserPayload
     from .user import User
 
 T = TypeVar("T")
