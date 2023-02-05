@@ -241,6 +241,38 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param shard_id: The shard ID that has disconnected.
     :type shard_id: :class:`int`
 
+.. function:: on_http_ratelimit(limit, remaining, reset_after, bucket, scope)
+
+    Called when a HTTP request in progress either exhausts its bucket or gets a 429 response.
+    For more information on how a ratelimit bucket is defined, check out the [Discord API Docs](https://discord.dev/topics/rate-limits).
+
+    If the 429 response is a global ratelimit, then use :func:`on_global_http_ratelimit` instead.
+
+    .. versionadded:: 2.4
+
+    :param limit: The amount of requests that have been made under the bucket that the request correlates to.
+    :type limit: :class:`int`
+    :param remaining: The amount of remaining requests that can be made under the bucket that the request correlates to.
+    :type remaining: :class:`int`
+    :param reset_after: The amount of time we have to wait before making another request under the same bucket.
+    :type reset_after: :class:`float`
+    :param bucket: The hash correlating to the bucket of the request from Discord. This hash denotes the rate limit being encountered.
+    :type bucket: :class:`str`
+    :param scope: If we get a 429, the scope of the 429 response. This value can either be "user" (rate limit relating to the user) or "shared" (rate limit relating to a resource).
+    :type scope: Optional[:class:`str`]
+
+.. function:: on_global_http_ratelimit(retry_after)
+
+    Called when a HTTP request in progress gets a 429 response and the scope is global.
+
+    If the 429 response is a non-global ratelimit or you want to track when the bucket expires,
+    then use :func:`on_http_ratelimit` instead.
+
+    .. versionadded:: 2.4
+
+    :param retry_after: The amount of time we have to wait before making another request.
+    :type retry_after: :class:`float`
+
 .. function:: on_ready()
 
     Called when the client is done preparing the data received from Discord. Usually after login is successful
@@ -708,14 +740,28 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param last_pin: The latest message that was pinned as an aware datetime in UTC. Could be ``None``.
     :type last_pin: Optional[:class:`datetime.datetime`]
 
+.. function:: on_thread_create(thread)
+
+    Called when a thread is created.
+
+    .. versionadded:: 2.4
+
+    :param thread: The thread that got created.
+    :type thread: :class:`Thread`
+
 .. function:: on_thread_join(thread)
 
-    Called whenever a thread is joined or created. Note that from the API's perspective there is no way to
-    differentiate between a thread being created or the bot joining a thread.
+    Called whenever a thread is joined or created.
 
     Note that you can get the guild from :attr:`Thread.guild`.
 
     This requires :attr:`Intents.guilds` to be enabled.
+
+    .. note::
+
+        This event is also called when a thread is created. To differentiate,
+        use :func:`on_thread_create` instead. This is done to avoid a breaking change
+        in v2.
 
     .. versionadded:: 2.0
 

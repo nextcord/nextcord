@@ -64,7 +64,7 @@ EventListener = namedtuple("EventListener", "predicate event result future")  # 
 
 
 class GatewayRatelimiter:
-    def __init__(self, count: int = 110, per: float = 60.0):
+    def __init__(self, count: int = 110, per: float = 60.0) -> None:
         # The default is 110 to give room for at least 10 heartbeats per minute
         self.max = count
         self.remaining = count
@@ -110,7 +110,7 @@ class GatewayRatelimiter:
 
 
 class KeepAliveHandler(threading.Thread):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         ws: DiscordWebSocket = kwargs.pop("ws")  # will fail at `_main_thread_id` anyway
         interval: Optional[float] = kwargs.pop("interval", None)
         shard_id: Optional[int] = kwargs.pop("shard_id", None)
@@ -193,7 +193,7 @@ class KeepAliveHandler(threading.Thread):
 
 
 class VoiceKeepAliveHandler(KeepAliveHandler):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.recent_ack_latencies = deque(maxlen=20)
         self.msg = "Keeping shard ID %s voice websocket alive with timestamp %s."
@@ -790,7 +790,7 @@ class DiscordVoiceWebSocket:
         loop: asyncio.AbstractEventLoop,
         *,
         hook: Optional[Callable[..., Awaitable[None]]] = None,
-    ):
+    ) -> None:
         self.ws: DiscordClientWebSocketResponse = socket
         self.loop: asyncio.AbstractEventLoop = loop
         self._keep_alive: Optional[VoiceKeepAliveHandler] = None

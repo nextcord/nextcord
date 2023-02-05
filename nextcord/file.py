@@ -100,7 +100,7 @@ class File:
         description: Optional[str] = None,
         spoiler: bool = False,
         force_close: bool = False,
-    ):
+    ) -> None:
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
                 raise ValueError(f"File buffer {fp!r} must be seekable and readable")

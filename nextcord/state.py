@@ -936,7 +936,7 @@ class ConnectionState:
 
     async def delete_unknown_application_commands(
         self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
-    ):
+    ) -> None:
         warnings.warn(
             ".delete_unknown_application_commands is deprecated, use .deploy_application_commands and set "
             "kwargs in it instead.",
@@ -1517,6 +1517,16 @@ class ConnectionState:
         has_thread = guild.get_thread(thread.id)
         guild._add_thread(thread)
         if not has_thread:
+            # `newly_created` is documented outside of a thread's fields:
+            # https://discord.dev/topics/gateway-events#thread-create
+            if data.get("newly_created", False):
+                if isinstance(thread.parent, ForumChannel):
+                    thread.parent.last_message_id = thread.id
+
+                self.dispatch("thread_create", thread)
+
+            # Avoid an unnecessary breaking change right now by dispatching `thread_join` for
+            # threads that were already created.
             self.dispatch("thread_join", thread)
 
     def parse_thread_update(self, data) -> None:
@@ -1768,7 +1778,7 @@ class ConnectionState:
     def is_guild_evicted(self, guild) -> bool:
         return guild.id not in self._guilds
 
-    async def chunk_guild(self, guild, *, wait=True, cache=None):
+    async def chunk_guild(self, guild, *, wait: bool = True, cache=None):
         if cache is None:
             cache = self.member_cache_flags.joined
         request = self._chunk_requests.get(guild.id)
@@ -1782,7 +1792,7 @@ class ConnectionState:
             return await request.wait()
         return request.get_future()
 
-    async def _chunk_and_dispatch(self, guild, unavailable):
+    async def _chunk_and_dispatch(self, guild, unavailable) -> None:
         try:
             await asyncio.wait_for(self.chunk_guild(guild), timeout=60.0)
         except asyncio.TimeoutError:
