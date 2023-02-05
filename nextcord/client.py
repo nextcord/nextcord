@@ -1986,6 +1986,11 @@ class Client:
         self._connection.remove_modal(modal)
 
     @property
+    def all_views(self) -> Sequence[View]:
+        """Sequence[:class:`.View`] A sequence of all views added to the client."""
+        return self._connection.all_views()
+
+    @property
     def persistent_views(self) -> Sequence[View]:
         """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
 

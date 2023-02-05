@@ -505,8 +505,12 @@ class ViewStore:
         self._synced_message_views: Dict[int, View] = {}
         self._state: ConnectionState = state
 
+    def all_views(self) -> Sequence[View]:
+        views = [v for (v, _) in self._views.values()]
+        return views
+
     def views(self, persistent: bool = True) -> Sequence[View]:
-        views = [view for (view, _) in self._views.values()]
+        views = self.all_views()
 
         # I'm not sure if there is a better way to do this
         check: Callable[[View], bool]
