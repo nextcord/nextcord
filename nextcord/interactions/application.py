@@ -7,10 +7,7 @@ from .base import Interaction
 __all__ = ("ApplicationCommandInteraction", "ApplicationAutocompleteInteraction", "SlashOptionData")
 
 if TYPE_CHECKING:
-    from ..application_command import (
-        BaseApplicationCommand,
-        SlashApplicationSubcommand,
-    )
+    from ..application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from ..state import ConnectionState
     from ..types.interactions import Interaction as InteractionPayload
 
@@ -39,13 +36,7 @@ class SlashOptionData:
         Whether the user is currently creating an input for this option. This is useful for :meth:`on_autocomplete`
     """
 
-    __slots__: Tuple[str, ...] = (
-        "data",
-        "value",
-        "type",
-        "name",
-        "focused"
-    )
+    __slots__: Tuple[str, ...] = ("data", "value", "type", "name", "focused")
 
     def __init__(self, data) -> None:
         self.data: dict = data
@@ -98,14 +89,14 @@ class ApplicationCommandInteraction(Interaction):
         "options",
     )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
         super().__init__(data=data, state=state)
 
         self.application_command: Optional[
             Union[SlashApplicationSubcommand, BaseApplicationCommand]
         ] = None
 
-    def _from_data(self, data: InteractionPayload):
+    def _from_data(self, data: InteractionPayload) -> None:
         super()._from_data(data=data)
 
         self.app_command_name: str = self.data["name"]  # type: ignore # self.data should be present here
@@ -118,12 +109,12 @@ class ApplicationCommandInteraction(Interaction):
 
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
-    ):
+    ) -> None:
         self.application_command = app_cmd
 
     def _get_application_options(self, data):
         options = data
-        
+
         if len(options) == 0:
             # return empty list if no options exist
             return []
@@ -131,9 +122,9 @@ class ApplicationCommandInteraction(Interaction):
         # iterate through options to get inputs
         while "options" in options[0]:
             options = options[0]["options"]
-            
+
             if len(options) == 0:
-                # return empty list if no options exist 
+                # return empty list if no options exist
                 return []
 
         # If we are here, then the user provided an input for some options
@@ -170,7 +161,7 @@ class ApplicationAutocompleteInteraction(ApplicationCommandInteraction):
         The option the callback is for.
     """
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
         super().__init__(data=data, state=state)
 
         self.application_command: Optional[

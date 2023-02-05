@@ -2912,7 +2912,9 @@ class UserApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("UserApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: ApplicationCommandInteraction) -> None:
+    async def call(
+        self, state: ConnectionState, interaction: ApplicationCommandInteraction
+    ) -> None:
         await self.invoke_callback_with_hooks(
             state, interaction, args=(get_users_from_interaction(state, interaction)[0],)
         )
@@ -2988,7 +2990,9 @@ class MessageApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("MessageApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: ApplicationCommandInteraction) -> None:
+    async def call(
+        self, state: ConnectionState, interaction: ApplicationCommandInteraction
+    ) -> None:
         await self.invoke_callback_with_hooks(
             state, interaction, args=(get_messages_from_interaction(state, interaction)[0],)
         )

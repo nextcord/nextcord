@@ -2847,14 +2847,14 @@ class Client:
                 def __init__(self, *, data: InteractionPayload, state: ConnectionState):
                     super().__init__(data=data, state=state)
                     # Followup with any additional properties or methods you wish to add
-            
-            
+
+
             # Utilize your new custom interaction class in your code:
-                    
+
             class Client(nextcord.Client):
                 def get_interaction(self, data):
                     return super().get_interaction(data, application_interaction=CustomApplicationCommandInteraction)
-        
+
             # or
 
             class Bot(nextcord.ext.commands.Bot):
@@ -2865,12 +2865,12 @@ class Client:
 
             class Bot(nextcord.ext.commands.Bot):
                 return super().get_interaction(
-                    data, 
+                    data,
                     application_interaction=CustomApplicationCommandInteraction,
                     application_autocomplete_interaction=CustomApplicationAutocompleteInteraction,
                     message_component_interaction=MessageComponentInteraction,
                     modal_submit_interaction=CustomModalSubmitInteraction,
-                    
+
                     # If you want a custom Interaction object to fall back to if interaction type wasn't recognized:
                     cls=CustomInteraction
                 )
@@ -2887,15 +2887,15 @@ class Client:
             interactions. By default, this is :class:`ApplicationCommandInteraction`. Should
             a custom class be provided, it should be a sublcass of :class:`ApplicationCommandInteraction`
         application_autocomplete_interaction
-            The factory class that will be used to create the interaction for 
+            The factory class that will be used to create the interaction for
             application autocomplete interactions. By default this is
             :class:`ApplicationAutocompleteInteraction`. Should a custom class
-            be provided, it should be a subclass of 
+            be provided, it should be a subclass of
             :class:`ApplicationAutocompleteInteraction`
         message_component_interaction
             The factory class that will be used to create the interaction for
             message components. By default this is :class:`MessageComponentInteraction`.
-            Should a custom class be provided, it should be a subclass of 
+            Should a custom class be provided, it should be a subclass of
             :class:`MessageComponentInteraction`.
         modal_submit_interaction
             The factory class that will be used to create the interaction for
@@ -2930,7 +2930,7 @@ class Client:
                 "The 'cls' parameter was given a custom Interaction object. "
                 "This parameter only gets used if the interaction type wasn't recognized.",
                 stacklevel=2,
-                category=FutureWarning
+                category=FutureWarning,
             )
 
         # Get the interaction type

@@ -48,10 +48,10 @@ class MessageComponentInteraction(Interaction):
         "value",
     )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
         super().__init__(data=data, state=state)
 
-    def _from_data(self, data: InteractionPayload):
+    def _from_data(self, data: InteractionPayload) -> None:
         super()._from_data(data=data)
 
         message = data["message"]  # type: ignore # should be present here - not sure why its causing issues

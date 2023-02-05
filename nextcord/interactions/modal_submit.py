@@ -45,10 +45,10 @@ class ModalSubmitInteraction(Interaction):
         "message",
     )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
         super().__init__(data=data, state=state)
 
-    def _from_data(self, data: InteractionPayload):
+    def _from_data(self, data: InteractionPayload) -> None:
         super()._from_data(data=data)
 
         self.modal_id = self.data["custom_id"]  # type: ignore # self.data should be present here

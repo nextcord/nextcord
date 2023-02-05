@@ -338,7 +338,9 @@ class View:
         """
         pass
 
-    async def on_error(self, error: Exception, item: Item, interaction: MessageComponentInteraction) -> None:
+    async def on_error(
+        self, error: Exception, item: Item, interaction: MessageComponentInteraction
+    ) -> None:
         """|coro|
 
         A callback that is called when an item's callback or :meth:`interaction_check`
@@ -524,7 +526,9 @@ class ViewStore:
                 del self._synced_message_views[key]
                 break
 
-    def dispatch(self, component_type: int, custom_id: str, interaction: MessageComponentInteraction) -> None:
+    def dispatch(
+        self, component_type: int, custom_id: str, interaction: MessageComponentInteraction
+    ) -> None:
         self.__verify_integrity()
         message_id: Optional[int] = interaction.message and interaction.message.id
         key = (component_type, message_id, custom_id)
