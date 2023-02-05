@@ -2838,6 +2838,45 @@ class Client:
     ]:
         """Returns an interaction for a gateway event.
 
+        Examples
+        --------
+        Example for a custom application command interactions class ::
+
+            class CustomApplicationCommandInteraction(nextcord.ApplicationCommandInteraction):
+                def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+                    super().__init__(data=data, state=state)
+                    # Followup with any additional properties or methods you wish to add
+            
+            
+            # Utilize your new custom interaction class in your code:
+                    
+            class Client(nextcord.Client):
+                def get_interaction(self, data):
+                    return super().get_interaction(data, application_interaction=CustomApplicationCommandInteraction)
+        
+            # or
+
+            class Bot(nextcord.ext.commands.Bot):
+                def get_interaction(self, data):
+                    return super().get_interaction(data, application_interaction=CustomApplicationCommandInteraction)
+
+        The above concept goes for all interaction types: ::
+
+            class Bot(nextcord.ext.commands.Bot):
+                return super().get_interaction(
+                    data, 
+                    application_interaction=CustomApplicationCommandInteraction,
+                    application_autocomplete_interaction=CustomApplicationAutocompleteInteraction,
+                    message_component_interaction=MessageComponentInteraction,
+                    modal_submit_interaction=CustomModalSubmitInteraction,
+                    
+                    # If you want a custom Interaction object to fall back to if interaction type wasn't recognized:
+                    cls=CustomInteraction
+                )
+
+        Custom interaction classes must be set to each parameter manually. Unspecified parameters
+        continue to use Nextcord's default interaction subclasses.
+
         Parameters
         ----------
         data
@@ -2864,7 +2903,8 @@ class Client:
             :class:`ModalSubmitInteraction`
         cls
             The factory class that will be used to create the interaction if the
-            interaction type was not recognized.
+            interaction type was not recognized. You shouldn't need to define
+            this parameter, you should use the other parameters instead.
             By default, this is :py:class:`Interaction`. Should a custom
             class be provided, it should be a subclass of :py:class:`Interaction`.
 
@@ -2876,6 +2916,12 @@ class Client:
         .. note::
 
             This is synchronous due to how slash commands are implemented.
+
+        Warns
+        --------
+        ~FutureWarning
+            Warns when the cls parameter is redefined to a custom class. This serves as a warning
+            in the event that defining this parameter was a mistake, and other parameters were to be defined instead.
         """
         # check if they are creating custom interaction subclasses
         if cls != Interaction:
