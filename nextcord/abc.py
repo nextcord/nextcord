@@ -1434,8 +1434,8 @@ class Messageable:
         content = str(content) if content is not None else None
         if flags is None:
             flags = MessageFlags()
-        if suppress_embeds is True:
-            flags.suppress_embeds = True
+        if suppress_embeds is not None:
+            flags.suppress_embeds = suppress_embeds
 
         flag_value: int = flags.value
 
