@@ -57,9 +57,9 @@ class RoleConnectionMetadata:
         self.type: RoleConnectionMetadataType = type
         self.key: str = key
         self.name: str = name
-        self.name_localizations = name_localizations
-        self.description = description
-        self.description_localizations = description_localizations
+        self.name_localizations: Optional[Dict[str, str]] = name_localizations
+        self.description: str = description
+        self.description_localizations: Optional[Dict[str, str]] = description_localizations
 
     @classmethod
     def from_data(cls, data: RoleConnectionMetadataPayload) -> Self:
@@ -81,5 +81,5 @@ class RoleConnectionMetadata:
             ("description", self.description),
             ("description_localizations", self.description_localizations),
         )
-        resolved = " ".join("%s=%r" % t for t in attrs)
+        resolved = " ".join(f"{name}={value!r}" for name, value in attrs)
         return f"{type(self).__name__} {resolved}"

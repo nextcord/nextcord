@@ -15,4 +15,4 @@ class ApplicationRoleConnectionMetadata(TypedDict):
     name: str
     name_localizations: NotRequired[Dict[str, str]]
     description: str
-    description_localizations: NotRequired[dict[str, str]]
+    description_localizations: NotRequired[Dict[str, str]]
