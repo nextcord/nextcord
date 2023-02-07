@@ -588,7 +588,6 @@ class SelectOption:
 
 
 class TextInput(Component):
-
     __slots__: Tuple[str, ...] = (
         "style",
         "custom_id",

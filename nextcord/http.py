@@ -2169,7 +2169,6 @@ class HTTPClient:
         embeds: Optional[List[embed.Embed]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
     ):
-
         payload: Dict[str, Any] = {}
         if content:
             payload["content"] = content
