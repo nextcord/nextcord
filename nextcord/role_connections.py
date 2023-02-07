@@ -53,7 +53,7 @@ class RoleConnectionMetadata:
         name_localizations: Optional[Dict[str, str]],
         description: str,
         description_localizations: Optional[Dict[str, str]],
-    ):
+    ) -> None:
         self.type: RoleConnectionMetadataType = type
         self.key: str = key
         self.name: str = name
