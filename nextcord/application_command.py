@@ -560,14 +560,10 @@ class ClientCog:
 
         This **must** be a coroutine.
 
-        .. note::
-
-            This is only called for prefix commands.
-
         Parameters
         ----------
         interaction: :class:`.Interaction`
-            The invocation context where the error happened.
+            The Interaction where the error happened.
         error: :class:`ApplicationError`
             The error that happened.
         """
