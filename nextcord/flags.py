@@ -376,7 +376,7 @@ class MessageFlags(BaseFlags):
 
         .. versionadded:: 2.4
         """
-        return 1 << 9
+        return 1 << 12
 
 
 @fill_with_flags()
