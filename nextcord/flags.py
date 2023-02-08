@@ -348,6 +348,36 @@ class MessageFlags(BaseFlags):
         """
         return 1 << 6
 
+    @flag_value
+    def loading(self) -> int:
+        """:class:`bool`: Returns ``True`` if the source message is loading.
+
+        This is represented in the UI as "bot is thinking...".
+
+        .. versionadded:: 2.4
+        """
+        return 1 << 7
+
+    @flag_value
+    def failed_to_mention_roles(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message failed to mention some roles in a thread.
+
+        This means that those members were not added.
+
+        .. versionadded:: 2.4
+        """
+        return 1 << 8
+
+    @flag_value
+    def suppress_notifications(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message does not trigger notifications.
+
+        These are sent via `@silent` message prefixes in the UI.
+
+        .. versionadded:: 2.4
+        """
+        return 1 << 9
+
 
 @fill_with_flags()
 class PublicUserFlags(BaseFlags):
