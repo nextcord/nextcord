@@ -30,6 +30,7 @@ class AppInfo(BaseAppInfo):
     privacy_policy_url: NotRequired[str]
     hook: NotRequired[bool]
     max_participants: NotRequired[int]
+    role_connections_verification_url: NotRequired[str]
 
 
 class PartialAppInfo(BaseAppInfo, total=False):

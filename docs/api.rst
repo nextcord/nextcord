@@ -3084,6 +3084,46 @@ of :class:`enum.Enum`.
         Sort forum posts by their creation date.
 
 
+###### Application Role Connection Metadata Type
+
+| Type                           | Value | Description                                                                                                                            |
+| ------------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| INTEGER_LESS_THAN_OR_EQUAL     | 1     | the metadata value (`integer`) is less than or equal to the guild's configured value (`integer`)                                       |
+| INTEGER_GREATER_THAN_OR_EQUAL  | 2     | the metadata value (`integer`) is greater than or equal to the guild's configured value (`integer`)                                    |
+| INTEGER_EQUAL                  | 3     | the metadata value (`integer`) is equal to the guild's configured value (`integer`)                                                    |
+| INTEGER_NOT_EQUAL              | 4     | the metadata value (`integer`) is not equal to the guild's configured value (`integer`)                                                |
+| DATETIME_LESS_THAN_OR_EQUAL    | 5     | the metadata value (`ISO8601 string`) is less than or equal to the guild's configured value (`integer`; `days before current date`)    |
+| DATETIME_GREATER_THAN_OR_EQUAL | 6     | the metadata value (`ISO8601 string`) is greater than or equal to the guild's configured value (`integer`; `days before current date`) |
+| BOOLEAN_EQUAL                  | 7     | the metadata value (`integer`) is equal to the guild's configured value (`integer`; `1`)                                               |
+| BOOLEAN_NOT_EQUAL              | 8     | the metadata value (`integer`) is not equal to the guild's configured value (`integer`; `1`)                                           |
+
+.. class:: RoleConnectionMetadataType
+
+    Represents the type of comparison a role connection metadata record will use.
+
+    .. versionadded:: 2.4
+
+    .. attribute:: integer_less_than_or_equal
+    .. attribute:: datetime_less_than_or_equal
+
+        The metadata value must be less than or equal to the guild's configured value.
+
+    .. attribute:: integer_greater_than_or_equal
+    .. attribute:: datetime_greater_than_or_equal
+
+        The metadata value must be greater than or equal to the guild's configured value.
+
+    .. attribute:: integer_equal
+    .. attribute:: boolean_equal
+
+        The metadata value must be equal to the guild's configured value.
+
+    .. attribute:: integer_not_equal
+    .. attribute:: boolean_not_equal
+
+        The metadata value must be not equal to the guild's configured value.
+
+
 Async Iterator
 --------------
 
@@ -4708,6 +4748,15 @@ ForumTag
 
 .. autoclass:: ForumTag
     :members:
+
+RoleConnectionMetadata
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: RoleConnectionMetadata
+
+.. autoclass:: RoleConnectionMetadata
+    :members:
+
 
 .. _discord_ui_kit:
 

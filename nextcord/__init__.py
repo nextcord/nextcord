@@ -53,6 +53,7 @@ from .player import *
 from .raw_models import *
 from .reaction import *
 from .role import *
+from .role_connections import *
 from .scheduled_events import *
 from .shard import *
 from .stage_instance import *
