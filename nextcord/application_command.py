@@ -41,7 +41,12 @@ from .channel import (
     VoiceChannel,
 )
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
-from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
+from .errors import (
+    ApplicationCheckFailure,
+    ApplicationCommandOptionMissing,
+    ApplicationError,
+    ApplicationInvokeError,
+)
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
@@ -510,6 +515,13 @@ class ClientCog:
                     value.from_callback(value.callback)
                     self.__cog_application_commands__.append(value)
 
+    def has_error_handler(self) -> bool:
+        """:class:`bool`: Checks whether the cog has an error handler.
+
+        .. versionadded:: 2.4
+        """
+        return not hasattr(self.cog_application_command_error.__func__, "__cog_special_method__")
+
     @property
     def application_commands(self) -> List[BaseApplicationCommand]:
         """Provides the list of application commands in this cog. Subcommands are not included."""
@@ -535,6 +547,31 @@ class ClientCog:
         ``interaction``, to represent the :class:`.Interaction`.
         """
         return True
+
+    @_cog_special_method
+    async def cog_application_command_error(
+        self, interaction: Interaction, error: ApplicationError
+    ) -> None:
+        """A special method that is called whenever an error
+        is dispatched inside this cog.
+
+        This is similar to :func:`.on_application_command_error` except only applying
+        to the commands inside this cog.
+
+        This **must** be a coroutine.
+
+        .. note::
+
+            This is only called for prefix commands.
+
+        Parameters
+        ----------
+        interaction: :class:`.Interaction`
+            The invocation context where the error happened.
+        error: :class:`ApplicationError`
+            The error that happened.
+        """
+        pass
 
     @_cog_special_method
     async def cog_application_command_before_invoke(self, interaction: Interaction) -> None:
@@ -588,7 +625,6 @@ class CallbackMixin:
         self.callback: Optional[Callable] = callback
         self._callback_before_invoke: Optional[ApplicationHook] = None
         self._callback_after_invoke: Optional[ApplicationHook] = None
-        self.error_callback: Optional[Callable] = None
         self.checks: List[ApplicationCheck] = []
         if self.callback:
             if isinstance(callback, CallbackWrapper):
@@ -598,6 +634,13 @@ class CallbackMixin:
                 raise TypeError(f"{self.error_name} Callback must be a coroutine")
 
         self.parent_cog = parent_cog
+
+        if self.parent_cog:
+            self.error_callback: Optional[Callable] = self.parent_cog._get_overridden_method(
+                self.parent_cog.cog_application_command_error
+            )
+        else:
+            self.error_callback: Optional[Callable] = None
 
     def __call__(self, interaction: Interaction, *args, **kwargs):
         """Invokes the callback, injecting ``self`` if available."""
@@ -721,6 +764,12 @@ class CallbackMixin:
 
         if self.name is None:
             self.name = self.callback.__name__
+
+        if self.error_callback is None:
+            if self.parent_cog:
+                self.error_callback = self.parent_cog._get_overridden_method(
+                    self.parent_cog.cog_application_command_error
+                )
 
         try:
             if not asyncio.iscoroutinefunction(self.callback):
@@ -917,11 +966,10 @@ class CallbackMixin:
         """|coro|
         Invokes the error handler if available.
         """
-        if self.has_error_handler() and self.error_callback is not None:
-            if self.parent_cog:
-                await self.error_callback(self.parent_cog, interaction, error)
-            else:
-                await self.error_callback(interaction, error)
+        if (
+            self.has_error_handler() and self.error_callback is not None
+        ):  # TODO Why is this here? self.has_error_handler does the same as the second check
+            await self.error_callback(interaction, error)
 
     def error(self, callback: ApplicationErrorCallback) -> Callable:
         """Decorates a function, setting it as a callback to be called when a :class:`ApplicationError` or any of

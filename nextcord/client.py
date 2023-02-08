@@ -574,10 +574,12 @@ class Client:
         if interaction.application_command and interaction.application_command.has_error_handler():
             return
 
-        # TODO implement cog error handling
-        # cog = context.cog
-        # if cog and cog.has_error_handler():
-        #     return
+        if interaction.application_command == None:
+            return # Not supposed to ever happen
+
+        cog = interaction.application_command.parent_cog
+        if cog and cog.has_error_handler():
+            return
 
         print(f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr)
         traceback.print_exception(
