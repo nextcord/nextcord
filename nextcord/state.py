@@ -2307,9 +2307,8 @@ class ConnectionState:
             self.dispatch("guild_audit_log_entry_create", entry)
         else:
             _log.debug(
-                "guild_audit_log_entry_create wasn't dispatched because the guild (%s) and/or user (%s) are None!",
-                repr(guild),
-                repr(user),
+                "guild_audit_log_entry_create wasn't dispatched because the guild (%r) and/or user (%r) are None!",
+                guild, user
             )
 
 
