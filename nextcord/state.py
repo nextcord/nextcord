@@ -28,6 +28,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
+from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
@@ -2303,6 +2304,23 @@ class ConnectionState:
         self.dispatch(
             "auto_moderation_action_execution", AutoModerationActionExecution(data=data, state=self)
         )
+
+    def parse_guild_audit_log_entry_create(self, data) -> None:
+        guild = self._get_guild(int(data["guild_id"]))
+        user_id = int(data["user_id"])
+        user = self.get_user(user_id)
+
+        if guild is not None and user is not None:
+            entry = AuditLogEntry(
+                auto_moderation_rules={}, users={user_id: user}, data=data, guild=guild
+            )
+            self.dispatch("guild_audit_log_entry_create", entry)
+        else:
+            _log.debug(
+                "guild_audit_log_entry_create wasn't dispatched because the guild (%r) and/or user (%r) are None!",
+                guild,
+                user,
+            )
 
 
 class AutoShardedConnectionState(ConnectionState):
