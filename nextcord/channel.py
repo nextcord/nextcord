@@ -943,14 +943,14 @@ class ForumChannel(abc.GuildChannel, Hashable):
         )
 
         self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
+        self.default_forum_layout: ForumLayoutType = try_enum(
+            ForumLayoutType, data.get("default_forum_layout", 0)
+        )
+
         if sort_order := data.get("default_sort_order"):
             self.default_sort_order: Optional[SortOrderType] = try_enum(SortOrderType, sort_order)
         else:
             self.default_sort_order: Optional[SortOrderType] = None
-        if layout := data.get("default_forum_layout"):
-            self.default_forum_layout: Optional[ForumLayoutType] = try_enum(ForumLayoutType, layout)
-        else:
-            self.default_forum_layout: Optional[ForumLayoutType] = None
 
         self.default_thread_slowmode_delay: Optional[int] = data.get(
             "default_thread_slowmode_delay"
