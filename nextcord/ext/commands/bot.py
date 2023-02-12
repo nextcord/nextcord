@@ -409,7 +409,6 @@ class BotBase(GroupMixin):
         elif self.owner_ids:
             return user.id in self.owner_ids
         else:
-
             app = await self.application_info()  # type: ignore
             if app.team:
                 self.owner_ids = ids = {m.id for m in app.team.members}
