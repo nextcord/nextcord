@@ -574,7 +574,7 @@ class Client:
         if interaction.application_command and interaction.application_command.has_error_handler():
             return
 
-        if interaction.application_command == None:
+        if interaction.application_command is None:
             return  # Not supposed to ever happen
 
         cog = interaction.application_command.parent_cog
