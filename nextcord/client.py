@@ -578,7 +578,7 @@ class Client:
             return  # Not supposed to ever happen
 
         cog = interaction.application_command.parent_cog
-        if cog and cog.has_error_handler():
+        if cog and cog.has_application_command_error_handler():
             return
 
         print(f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr)

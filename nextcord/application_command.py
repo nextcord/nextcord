@@ -515,8 +515,8 @@ class ClientCog:
                     value.from_callback(value.callback)
                     self.__cog_application_commands__.append(value)
 
-    def has_error_handler(self) -> bool:
-        """:class:`bool`: Checks whether the cog has an error handler.
+    def has_application_command_error_handler(self) -> bool:
+        """:class:`bool`: Checks whether the cog has an error handler for application commands.
 
         .. versionadded:: 2.4
         """
