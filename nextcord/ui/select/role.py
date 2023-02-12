@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...components import RoleSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
+from ...role import Role
 from ...state import ConnectionState
 from ...utils import MISSING
 from ..item import ItemCallbackType
@@ -18,7 +19,6 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...guild import Guild
-    from ...role import Role
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 

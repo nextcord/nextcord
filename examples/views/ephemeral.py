@@ -4,7 +4,6 @@ from nextcord.ext import commands
 
 # Define a simple View that gives us a counter button
 class Counter(nextcord.ui.View):
-
     # Define the actual button
     # When pressed, this increments the number displayed until it hits 5.
     # When it hits 5, the counter button is disabled and it turns green.

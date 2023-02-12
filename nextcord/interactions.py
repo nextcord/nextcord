@@ -83,11 +83,11 @@ class InteractionAttached(dict):
             await interaction.response.send_message(data)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.__dict__ = self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<InteractionAttached {super().__repr__()}>"
 
 
@@ -172,7 +172,7 @@ class Interaction(Hashable, Generic[ClientT]):
         "_cs_channel",
     )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
         # TODO: this is so janky, accessing a hidden double attribute
@@ -183,7 +183,7 @@ class Interaction(Hashable, Generic[ClientT]):
         ] = None
         self._from_data(data)
 
-    def _from_data(self, data: InteractionPayload):
+    def _from_data(self, data: InteractionPayload) -> None:
         self.id: int = int(data["id"])
         self.type: InteractionType = try_enum(InteractionType, data["type"])
         self.data: Optional[InteractionData] = data.get("data")
@@ -257,7 +257,7 @@ class Interaction(Hashable, Generic[ClientT]):
 
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
-    ):
+    ) -> None:
         self.application_command = app_cmd
 
     @utils.cached_slot_property("_cs_channel")
@@ -476,7 +476,7 @@ class Interaction(Hashable, Generic[ClientT]):
 
         if delay is not None:
 
-            async def inner_call(delay: float = delay):
+            async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
                 try:
                     await delete_func
@@ -614,7 +614,7 @@ class InteractionResponse:
         "_parent",
     )
 
-    def __init__(self, parent: Interaction):
+    def __init__(self, parent: Interaction) -> None:
         self._parent: Interaction = parent
         self._responded: bool = False
 
@@ -1061,7 +1061,7 @@ class InteractionResponse:
 class _InteractionMessageState:
     __slots__ = ("_parent", "_interaction")
 
-    def __init__(self, interaction: Interaction, parent: ConnectionState):
+    def __init__(self, interaction: Interaction, parent: ConnectionState) -> None:
         self._interaction: Interaction = interaction
         self._parent: ConnectionState = parent
 
@@ -1223,7 +1223,7 @@ class PartialInteractionMessage(_InteractionMessageMixin):
         :class:`Interaction` that it is associated with but not that of the full :class:`InteractionMessage`.
     """
 
-    def __init__(self, state: _InteractionMessageState):
+    def __init__(self, state: _InteractionMessageState) -> None:
         self._state = state
 
     async def fetch(self) -> InteractionMessage:
@@ -1270,7 +1270,7 @@ class PartialInteractionMessage(_InteractionMessageMixin):
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state._interaction.guild
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
 
     def __eq__(self, other: object) -> bool:

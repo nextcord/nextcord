@@ -200,24 +200,24 @@ class Guild(Hashable):
 
         They are currently as follows:
 
+        - ``ANIMATED_BANNER``: Guild can upload an animated banner.
         - ``ANIMATED_ICON``: Guild can upload an animated icon.
         - ``AUTO_MODERATION``: Guild has set up auto moderation rules.
+        - ``APPLICATION_COMMAND_PERMISSIONS_V2``: Guild is using the old permissions configuration behavior.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
         - ``COMMUNITY``: Guild is a community server.
         - ``DEVELOPER_SUPPORT_SERVER``: Guild has been set as a support server on the App Directory.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
         - ``FEATURABLE``: Guild is able to be featured in Server Discovery.
+        - ``INVITES_DISABLED``: Guild has paused invites, preventing new users from joining.
         - ``INVITE_SPLASH``: Guild's invite page can have a special splash.
         - ``MEMBER_VERIFICATION_GATE_ENABLED``: Guild has Membership Screening enabled.
         - ``MONETIZATION_ENABLED``: Guild has enabled monetization.
-        - ``MORE_EMOJI``: Guild has increased custom emoji slots.
         - ``MORE_STICKERS``: Guild has increased custom sticker slots.
         - ``NEWS``: Guild can create news channels.
         - ``PARTNERED``: Guild is a partnered server.
         - ``PREVIEW_ENABLED``: Guild can be viewed before being accepted via Membership Screening.
-        - ``PRIVATE_THREADS``: Guild has access to create private threads.
-        - ``SEVEN_DAY_THREAD_ARCHIVE``: Guild has access to the seven day archive time for threads.
-        - ``THREE_DAY_THREAD_ARCHIVE``: Guild has access to the three day archive time for threads.
+        - ``ROLE_ICONS``: Guild is able to set role icons.
         - ``TICKETED_EVENTS_ENABLED``: Guild has enabled ticketed events.
         - ``VANITY_URL``: Guild can have a vanity invite URL (e.g. discord.gg/discord-api).
         - ``VERIFIED``: Guild is a verified server.
@@ -306,7 +306,7 @@ class Guild(Hashable):
         3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=104857600),
     }
 
-    def __init__(self, *, data: GuildPayload, state: ConnectionState):
+    def __init__(self, *, data: GuildPayload, state: ConnectionState) -> None:
         self._channels: Dict[int, GuildChannel] = {}
         self._members: Dict[int, Member] = {}
         self._scheduled_events: Dict[int, ScheduledEvent] = {}
@@ -567,6 +567,14 @@ class Guild(Hashable):
             except AttributeError:
                 return len(self._members) >= 250
         return self._large
+
+    @property
+    def invites_disabled(self) -> bool:
+        """:class:`bool`: Indicates if the guild's invites are paused.
+
+        .. versionadded:: 2.4
+        """
+        return "INVITES_DISABLED" in self.features
 
     @property
     def voice_channels(self) -> List[VoiceChannel]:
@@ -1603,6 +1611,7 @@ class Guild(Hashable):
         preferred_locale: str = MISSING,
         rules_channel: Optional[TextChannel] = MISSING,
         public_updates_channel: Optional[TextChannel] = MISSING,
+        invites_disabled: bool = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1623,6 +1632,9 @@ class Guild(Hashable):
         .. versionchanged:: 2.1
             The ``icon``, ``banner``, ``splash``, ``discovery_splash``
             parameters now accept :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
+        .. versionchanged:: 2.4
+            The ``invites_disabled`` parameter has been added.
 
         Parameters
         ----------
@@ -1682,6 +1694,11 @@ class Guild(Hashable):
             The new channel that is used for public updates from Discord. This is only available to
             guilds that contain ``PUBLIC`` in :attr:`Guild.features`. Could be ``None`` for no
             public updates channel.
+        invites_disabled: :class:`bool`
+            Whether the invites should be paused for the guild.
+            This will prevent new users from joining said guild.
+
+            .. versionadded:: 2.4
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
@@ -1802,6 +1819,17 @@ class Guild(Hashable):
                     raise InvalidArgument(
                         "community field requires both rules_channel and public_updates_channel fields to be provided"
                     )
+
+            fields["features"] = features
+
+        if invites_disabled is not MISSING:
+            features = self.features.copy()
+
+            if invites_disabled:
+                features.append("INVITES_DISABLED")
+            else:
+                if "INVITES_DISABLED" in features:
+                    features.remove("INVITES_DISABLED")
 
             fields["features"] = features
 
@@ -2866,7 +2894,6 @@ class Guild(Hashable):
 
         role_positions: List[RolePositionUpdate] = []
         for role, position in positions.items():
-
             payload: RolePositionUpdate = {"id": role.id, "position": position}
 
             role_positions.append(payload)
@@ -3297,7 +3324,7 @@ class Guild(Hashable):
         channel: Optional[VocalGuildChannel],
         self_mute: bool = False,
         self_deaf: bool = False,
-    ):
+    ) -> None:
         """|coro|
 
         Changes client's voice state in the guild.

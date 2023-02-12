@@ -10,6 +10,7 @@ import weakref
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     ClassVar,
     Coroutine,
     Dict,
@@ -64,6 +65,7 @@ if TYPE_CHECKING:
         member,
         message,
         role,
+        role_connections,
         scheduled_events,
         sticker,
         template,
@@ -190,6 +192,7 @@ class HTTPClient:
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         unsync_clock: bool = True,
+        dispatch: Callable,
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
         self.connector = connector
@@ -202,6 +205,7 @@ class HTTPClient:
         self.proxy: Optional[str] = proxy
         self.proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
         self.use_clock: bool = not unsync_clock
+        self._dispatch: Callable = dispatch
 
         user_agent = "DiscordBot (https://github.com/nextcord/nextcord/ {0}) Python/{1[0]}.{1[1]} aiohttp/{2}"
         self.user_agent: str = user_agent.format(__version__, sys.version_info, aiohttp.__version__)
@@ -306,7 +310,12 @@ class HTTPClient:
                         data = await json_or_text(response)
 
                         # check if we have rate limit header information
-                        remaining = response.headers.get("X-Ratelimit-Remaining")
+                        is_global = bool(response.headers.get("X-RateLimit-Global", False))
+
+                        limit = response.headers.get("X-RateLimit-Limit", "")
+                        remaining = response.headers.get("X-Ratelimit-Remaining", "")
+
+                        bucket = response.headers.get("X-RateLimit-Bucket")
                         if remaining == "0" and response.status != 429:
                             # we've depleted our current bucket
                             delta = utils.parse_ratelimit_header(response, use_clock=self.use_clock)
@@ -314,6 +323,14 @@ class HTTPClient:
                                 "A rate limit bucket has been exhausted (bucket: %s, retry: %s).",
                                 bucket,
                                 delta,
+                            )
+                            self._dispatch(
+                                "http_ratelimit",
+                                int(limit),
+                                int(remaining),
+                                delta,
+                                bucket,
+                                response.headers.get("X-RateLimit-Scope"),
                             )
                             maybe_lock.defer()
                             self.loop.call_later(delta, lock.release)
@@ -336,13 +353,25 @@ class HTTPClient:
                             _log.warning(fmt, retry_after, bucket)
 
                             # check if it's a global rate limit
-                            is_global = data.get("global", False)
                             if is_global:
                                 _log.warning(
                                     "Global rate limit has been hit. Retrying in %.2f seconds.",
                                     retry_after,
                                 )
+                                self._dispatch(
+                                    "global_http_ratelimit",
+                                    retry_after,
+                                )
                                 self._global_over.clear()
+                            else:
+                                self._dispatch(
+                                    "http_ratelimit",
+                                    int(limit),
+                                    int(remaining),
+                                    retry_after,
+                                    bucket,
+                                    response.headers.get("X-RateLimit-Scope"),
+                                )
 
                             await asyncio.sleep(retry_after)
                             _log.debug("Done sleeping for the rate limit. Retrying...")
@@ -1710,12 +1739,15 @@ class HTTPClient:
         guild_id: Snowflake,
         limit: int = 100,
         before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
         user_id: Optional[Snowflake] = None,
         action_type: Optional[AuditLogAction] = None,
     ) -> Response[audit_log.AuditLog]:
         params: Dict[str, Any] = {"limit": limit}
         if before:
             params["before"] = before
+        if after:
+            params["after"] = after
         if user_id:
             params["user_id"] = user_id
         if action_type:
@@ -2139,7 +2171,6 @@ class HTTPClient:
         embeds: Optional[List[embed.Embed]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
     ):
-
         payload: Dict[str, Any] = {}
         if content:
             payload["content"] = content
@@ -2569,3 +2600,27 @@ class HTTPClient:
             auto_moderation_rule_id=auto_moderation_rule_id,
         )
         return self.request(r, reason=reason)
+
+    def get_role_connection_metadata(
+        self, application_id: Snowflake
+    ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
+        r = Route(
+            "GET",
+            "/applications/{application_id}/role-connections/metadata",
+            application_id=application_id,
+        )
+        return self.request(r)
+
+    def update_role_connection_metadata(
+        self,
+        application_id: Snowflake,
+        data: List[role_connections.ApplicationRoleConnectionMetadata],
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
+        r = Route(
+            "PUT",
+            "/applications/{application_id}/role-connections/metadata",
+            application_id=application_id,
+        )
+        return self.request(r, json=data, reason=reason)

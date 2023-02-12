@@ -161,7 +161,7 @@ def hooked_wrapped_callback(command, ctx, coro):
 
 
 class _CaseInsensitiveDict(dict):
-    def __contains__(self, k):
+    def __contains__(self, k) -> bool:
         return super().__contains__(k.casefold())
 
     def __delitem__(self, k):
@@ -176,7 +176,7 @@ class _CaseInsensitiveDict(dict):
     def pop(self, k, default=None):
         return super().pop(k.casefold(), default)
 
-    def __setitem__(self, k, v):
+    def __setitem__(self, k, v) -> None:
         super().__setitem__(k.casefold(), v)
 
 
@@ -289,7 +289,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             Callable[Concatenate[ContextT, P], Coro[T]],
         ],
         **kwargs: Any,
-    ):
+    ) -> None:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Callback must be a coroutine.")
 
@@ -682,7 +682,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         command = self
         # command.parent is type-hinted as GroupMixin some attributes are resolved via MRO
         while command.parent is not None:  # type: ignore
-            command = command.parent  # type: ignore
+            command = command.parent
             entries.append(command.name)  # type: ignore
 
         return " ".join(reversed(entries))
@@ -700,7 +700,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         entries = []
         command = self
         while command.parent is not None:  # type: ignore
-            command = command.parent  # type: ignore
+            command = command.parent
             entries.append(command)
 
         return entries
@@ -1639,12 +1639,8 @@ def command(
     if cls is MISSING:
         cls = Command
 
-    def decorator(
-        func: Union[
-            Callable[Concatenate[ContextT, P], Coro[Any]],
-            Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
-        ]
-    ) -> Union[Command[CogT, P, T], CommandT]:
+    # Type variables do not seem to nest within decorators.
+    def decorator(func: Any) -> Union[Command[CogT, P, T], CommandT]:
         if isinstance(func, Command):
             raise TypeError("Callback is already a command.")
 
@@ -1969,7 +1965,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
             await ctx.send('You are cool indeed')
     """
 
-    def predicate(ctx):
+    def predicate(ctx) -> bool:
         if ctx.guild is None:
             raise NoPrivateMessage()
 
@@ -1999,7 +1995,7 @@ def bot_has_role(item: int) -> Callable[[T], T]:
         instead of generic :exc:`.CheckFailure`
     """
 
-    def predicate(ctx):
+    def predicate(ctx) -> bool:
         if ctx.guild is None:
             raise NoPrivateMessage()
 
@@ -2029,7 +2025,7 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
         instead of generic checkfailure
     """
 
-    def predicate(ctx):
+    def predicate(ctx) -> bool:
         if ctx.guild is None:
             raise NoPrivateMessage()
 

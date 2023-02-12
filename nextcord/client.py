@@ -278,7 +278,7 @@ class Client:
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         default_guild_ids: Optional[List[int]] = None,
-    ):
+    ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
@@ -293,6 +293,7 @@ class Client:
             proxy_auth=proxy_auth,
             unsync_clock=assume_unsync_clock,
             loop=self.loop,
+            dispatch=self.dispatch,
         )
 
         self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}
@@ -715,7 +716,6 @@ class Client:
                 aiohttp.ClientError,
                 asyncio.TimeoutError,
             ) as exc:
-
                 self.dispatch("disconnect")
                 if not reconnect:
                     await self.close()
@@ -845,14 +845,14 @@ class Client:
         except NotImplementedError:
             pass
 
-        async def runner():
+        async def runner() -> None:
             try:
                 await self.start(*args, **kwargs)
             finally:
                 if not self.is_closed():
                     await self.close()
 
-        def stop_loop_on_completion(f):
+        def stop_loop_on_completion(f) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(runner(), loop=loop)
@@ -1229,7 +1229,7 @@ class Client:
         future = self.loop.create_future()
         if check is None:
 
-            def _check(*args):
+            def _check(*args) -> bool:
                 return True
 
             check = _check
@@ -1280,7 +1280,7 @@ class Client:
         *,
         activity: Optional[BaseActivity] = None,
         status: Optional[Status] = None,
-    ):
+    ) -> None:
         """|coro|
 
         Changes the client's presence.
@@ -1996,7 +1996,7 @@ class Client:
         """
         return [event for guild in self.guilds for event in guild.scheduled_events]
 
-    async def on_interaction(self, interaction: Interaction):
+    async def on_interaction(self, interaction: Interaction) -> None:
         await self.process_application_commands(interaction)
 
     async def process_application_commands(self, interaction: Interaction) -> None:

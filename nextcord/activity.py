@@ -100,7 +100,7 @@ class BaseActivity:
 
     __slots__ = ("_created_at",)
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self._created_at: Optional[float] = kwargs.pop("created_at", None)
 
     @property
@@ -196,7 +196,7 @@ class Activity(BaseActivity):
         "buttons",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.state: Optional[str] = kwargs.pop("state", None)
         self.details: Optional[str] = kwargs.pop("details", None)
@@ -345,7 +345,7 @@ class Game(BaseActivity):
 
     __slots__ = ("name", "_end", "_start")
 
-    def __init__(self, name: str, **extra):
+    def __init__(self, name: str, **extra) -> None:
         super().__init__(**extra)
         self.name: str = name
 
@@ -459,7 +459,7 @@ class Streaming(BaseActivity):
 
     __slots__ = ("platform", "name", "game", "url", "details", "assets")
 
-    def __init__(self, *, name: Optional[str], url: str, **extra: Any):
+    def __init__(self, *, name: Optional[str], url: str, **extra: Any) -> None:
         super().__init__(**extra)
         self.platform: Optional[str] = name
         self.name: Optional[str] = extra.pop("details", name)
@@ -554,7 +554,7 @@ class Spotify:
         "_created_at",
     )
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         self._state: str = data.pop("state", "")
         self._details: str = data.pop("details", "")
         self._timestamps: Dict[str, int] = data.pop("timestamps", {})
@@ -746,7 +746,7 @@ class CustomActivity(BaseActivity):
         _connection_state: Optional[ConnectionState] = None,
         emoji: Optional[PartialEmoji] = None,
         **extra: Any,
-    ):
+    ) -> None:
         super().__init__(**extra)
         self._state = _connection_state
         self.name: Optional[str] = name

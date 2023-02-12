@@ -207,7 +207,7 @@ class VoiceClient(VoiceProtocol):
     ip: str
     port: int
 
-    def __init__(self, client: Client, channel: abc.Connectable):
+    def __init__(self, client: Client, channel: abc.Connectable) -> None:
         if not has_nacl:
             raise RuntimeError("PyNaCl library needed in order to use voice")
 
@@ -253,7 +253,7 @@ class VoiceClient(VoiceProtocol):
         """:class:`ClientUser`: The user connected to voice (i.e. ourselves)."""
         return self._state.user  # type: ignore # [should exist]
 
-    def checked_add(self, attr, value, limit):
+    def checked_add(self, attr, value, limit) -> None:
         val = getattr(self, attr)
         if val + value > limit:
             setattr(self, attr, 0)

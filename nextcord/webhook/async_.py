@@ -7,6 +7,7 @@ import json
 import logging
 import re
 from contextvars import ContextVar
+from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,6 +17,7 @@ from typing import (
     NamedTuple,
     Optional,
     Tuple,
+    Type,
     Union,
     overload,
 )
@@ -61,7 +63,7 @@ MISSING = utils.MISSING
 
 
 class AsyncDeferredLock:
-    def __init__(self, lock: asyncio.Lock):
+    def __init__(self, lock: asyncio.Lock) -> None:
         self.lock = lock
         self.delta: Optional[float] = None
 
@@ -72,14 +74,19 @@ class AsyncDeferredLock:
     def delay_by(self, delta: float) -> None:
         self.delta = delta
 
-    async def __aexit__(self, type, value, traceback):
+    async def __aexit__(
+        self,
+        type: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         if self.delta:
             await asyncio.sleep(self.delta)
         self.lock.release()
 
 
 class AsyncWebhookAdapter:
-    def __init__(self):
+    def __init__(self) -> None:
         self._locks: Dict[Any, asyncio.Lock] = {}
 
     async def request(
@@ -585,11 +592,11 @@ class PartialWebhookChannel(Hashable):
 
     __slots__ = ("id", "name")
 
-    def __init__(self, *, data):
+    def __init__(self, *, data) -> None:
         self.id = int(data["id"])
         self.name = data["name"]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PartialWebhookChannel name={self.name!r} id={self.id}>"
 
 
@@ -610,13 +617,13 @@ class PartialWebhookGuild(Hashable):
 
     __slots__ = ("id", "name", "_icon", "_state")
 
-    def __init__(self, *, data, state):
+    def __init__(self, *, data, state) -> None:
         self._state = state
         self.id = int(data["id"])
         self.name = data["name"]
         self._icon = data["icon"]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PartialWebhookGuild name={self.name!r} id={self.id}>"
 
     @property
@@ -637,7 +644,9 @@ class _FriendlyHttpAttributeErrorHelper:
 class _WebhookState:
     __slots__ = ("_parent", "_webhook")
 
-    def __init__(self, webhook: Any, parent: Optional[Union[ConnectionState, _WebhookState]]):
+    def __init__(
+        self, webhook: Any, parent: Optional[Union[ConnectionState, _WebhookState]]
+    ) -> None:
         self._webhook: Any = webhook
 
         self._parent: Optional[ConnectionState]
@@ -808,7 +817,7 @@ class WebhookMessage(Message):
 
         if delay is not None:
 
-            async def inner_call(delay: float = delay):
+            async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
                 try:
                     await self._state._webhook.delete_message(self.id)
@@ -841,14 +850,14 @@ class BaseWebhook(Hashable):
         data: WebhookPayload,
         token: Optional[str] = None,
         state: Optional[ConnectionState] = None,
-    ):
+    ) -> None:
         self.auth_token: Optional[str] = token
         self._state: Union[ConnectionState, _WebhookState] = state or _WebhookState(
             self, parent=state
         )
         self._update(data)
 
-    def _update(self, data: WebhookPayload):
+    def _update(self, data: WebhookPayload) -> None:
         self.id = int(data["id"])
         self.type = try_enum(WebhookType, int(data["type"]))
         self.channel_id = utils.get_as_snowflake(data, "channel_id")
@@ -1010,11 +1019,11 @@ class Webhook(BaseWebhook):
         session: aiohttp.ClientSession,
         token: Optional[str] = None,
         state=None,
-    ):
+    ) -> None:
         super().__init__(data, token, state)
         self.session = session
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Webhook id={self.id!r}>"
 
     @property
