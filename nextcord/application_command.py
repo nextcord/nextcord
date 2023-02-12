@@ -2142,8 +2142,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 #  the default (True) to ensure payload parity for comparisons.
                 ret["dm_permission"] = True
 
-        if self.nsfw:
-            ret["nsfw"] = self.nsfw
+        ret["nsfw"] = self.nsfw
 
         return ret
 
