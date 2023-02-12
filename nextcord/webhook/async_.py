@@ -88,7 +88,7 @@ class AsyncDeferredLock:
 
 
 class AsyncWebhookAdapter:
-    def __init__(self):
+    def __init__(self) -> None:
         self._locks: WeakValueDictionary[
             Tuple[Optional[SnowflakeAlias], Optional[str]],
             asyncio.Lock,
