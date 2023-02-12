@@ -884,7 +884,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         The default sort order type used to sort posts in forum channels.
 
         .. versionadded:: 2.3
-    default_forum_layout: Optional[:class:`ForumLayoutType`]
+    default_forum_layout: :class:`ForumLayoutType`
         The default layout type used to display posts in this forum.
 
         .. versionadded:: 2.4
