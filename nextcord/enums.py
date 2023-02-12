@@ -47,6 +47,7 @@ __all__ = (
     "KeywordPresetType",
     "AutoModerationActionType",
     "SortOrderType",
+    "ForumLayoutType",
 )
 
 
