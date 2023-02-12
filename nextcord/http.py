@@ -977,6 +977,7 @@ class HTTPClient:
             "default_auto_archive_duration",
             "flags",
             "default_sort_order",
+            "default_forum_layout",
             "default_thread_rate_limit_per_user",
             "default_reaction_emoji",
             "available_tags",
