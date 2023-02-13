@@ -1405,7 +1405,6 @@ class Messageable:
             .. versionadded:: 2.4
         suppress_embeds: Optional[:class:`bool`]
             Whether to suppress embeds on this message.
-            This cannot be set with ``flags``.
 
             .. versionadded:: 2.4
 
@@ -1437,7 +1436,7 @@ class Messageable:
         if suppress_embeds is not None:
             flags.suppress_embeds = suppress_embeds
 
-        flag_value: int = flags.value
+        flag_value: int = flags.value if flags.value is not 0 else None
 
         embed_payload: Optional[EmbedData] = None
         embeds_payload: Optional[List[EmbedData]] = None
