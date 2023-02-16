@@ -333,6 +333,13 @@ class GuildChannel:
         else:
             options["default_sort_order"] = default_sort_order.value
 
+        try:
+            default_forum_layout = options.pop("default_forum_layout")
+        except KeyError:
+            pass
+        else:
+            options["default_forum_layout"] = default_forum_layout.value
+
         lock_permissions = options.pop("sync_permissions", False)
 
         try:

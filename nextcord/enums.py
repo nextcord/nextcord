@@ -48,6 +48,7 @@ __all__ = (
     "AutoModerationActionType",
     "SortOrderType",
     "RoleConnectionMetadataType",
+    "ForumLayoutType",
 )
 
 
@@ -728,6 +729,12 @@ class RoleConnectionMetadataType(IntEnum):
     datetime_greater_than_or_equal = 6
     boolean_equal = 7
     boolean_not_equal = 8
+
+
+class ForumLayoutType(IntEnum):
+    not_set = 0
+    list = 1
+    gallery = 2
 
 
 T = TypeVar("T")

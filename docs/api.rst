@@ -3089,6 +3089,24 @@ of :class:`enum.Enum`.
 
         Sort forum posts by their creation date.
 
+.. class:: ForumLayoutType
+
+    The default layout type used to display posts in a :class:`ForumChannel`.
+
+    .. versionadded:: 2.4
+
+    .. attribute:: not_set
+
+        No default has been set by channel administrators.
+
+    .. attribute:: list
+
+        Display posts as a list, more text focused.
+
+    .. attribute:: gallery
+
+        Display posts as a collection of posts with images, this is more image focused.
+
 
 ###### Application Role Connection Metadata Type
 
