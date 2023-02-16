@@ -761,11 +761,10 @@ class CallbackMixin:
         if self.name is None:
             self.name = self.callback.__name__
 
-        if self.error_callback is None:
-            if self.parent_cog:
-                self.error_callback = self.parent_cog._get_overridden_method(
-                    self.parent_cog.cog_application_command_error
-                )
+        if self.error_callback is None and self.parent_cog:
+            self.error_callback = self.parent_cog._get_overridden_method(
+                self.parent_cog.cog_application_command_error
+            )
 
         try:
             if not asyncio.iscoroutinefunction(self.callback):
