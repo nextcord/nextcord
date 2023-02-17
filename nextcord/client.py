@@ -2034,7 +2034,7 @@ class Client:
                     int(interaction.data["type"]),
                     interaction.guild_id,
                 )
-                _log.debug(f"nextcord.Client: %s", debug_response_signature)
+                _log.debug("nextcord.Client: %s", debug_response_signature)
                 do_deploy = False
 
                 response_signature: Dict[str, Any] = {
