@@ -14,6 +14,7 @@ from .embeds import Embed
 from .enums import InteractionResponseType, InteractionType, try_enum
 from .errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from .file import File
+from .flags import MessageFlags
 from .member import Member
 from .message import Attachment, Message
 from .mixins import Hashable
@@ -497,9 +498,11 @@ class Interaction(Hashable, Generic[ClientT]):
         files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
-        ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: AllowedMentions = MISSING,
+        flags: Optional[MessageFlags] = None,
+        ephemeral: Optional[bool] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -545,6 +548,8 @@ class Interaction(Hashable, Generic[ClientT]):
                 ephemeral=ephemeral,
                 delete_after=delete_after,
                 allowed_mentions=allowed_mentions,
+                flags=flags,
+                suppress_embeds=suppress_embeds,
             )
         return await self.followup.send(
             content=content,  # type: ignore
@@ -557,6 +562,8 @@ class Interaction(Hashable, Generic[ClientT]):
             ephemeral=ephemeral,
             delete_after=delete_after,
             allowed_mentions=allowed_mentions,
+            flags=flags,
+            suppress_embeds=suppress_embeds,
         )
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
@@ -752,13 +759,20 @@ class InteractionResponse:
         files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
-        ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
+        flags: Optional[MessageFlags] = None,
+        ephemeral: Optional[bool] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> PartialInteractionMessage:
         """|coro|
 
         Responds to this interaction by sending a message.
+
+        .. versionchanged:: 2.4
+
+            ``ephemeral`` can now accept ``None`` to indicate that
+            ``flags`` should be used.
 
         Parameters
         ----------
@@ -790,6 +804,15 @@ class InteractionResponse:
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -843,8 +866,15 @@ class InteractionResponse:
         if content is not None:
             payload["content"] = str(content)
 
-        if ephemeral:
-            payload["flags"] = 64
+        if flags is None:
+            flags = MessageFlags()
+        if suppress_embeds is not None:
+            flags.suppress_embeds = suppress_embeds
+        if ephemeral is not None:
+            flags.ephemeral = ephemeral
+
+        if flags.value != 0:
+            payload["flags"] = flags.value
 
         if view is not MISSING:
             payload["components"] = view.to_components()
