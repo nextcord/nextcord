@@ -1142,6 +1142,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         applied_tag_ids: Optional[List[str]] = None,
+        flags: Optional[int] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
@@ -1158,6 +1159,7 @@ class HTTPClient:
             allowed_mentions=allowed_mentions,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
         if msg_payload != {}:
             payload["message"] = msg_payload
@@ -1182,6 +1184,7 @@ class HTTPClient:
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
         applied_tag_ids: Optional[List[str]] = None,
+        flags: Optional[int] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
@@ -1203,6 +1206,7 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             attachments=attachments,
+            flags=flags,
         )
         params = {"use_nested_fields": "true"}
         route = Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id)

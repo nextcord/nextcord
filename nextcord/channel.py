@@ -34,7 +34,7 @@ from .enums import (
 )
 from .errors import ClientException, InvalidArgument
 from .file import File
-from .flags import ChannelFlags
+from .flags import ChannelFlags, MessageFlags
 from .iterators import ArchivedThreadIterator
 from .mentions import AllowedMentions
 from .mixins import Hashable, PinsMixin
@@ -1182,6 +1182,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         view: Optional[ui.View] = None,
         reason: Optional[str] = None,
         applied_tags: Optional[List[ForumTag]] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> Thread:
         """|coro|
 
@@ -1230,6 +1232,13 @@ class ForumChannel(abc.GuildChannel, Hashable):
         applied_tags: Optional[List[:class:`ForumTag`]]
             A list of tags to apply to the thread.
 
+            .. versionadded:: 2.4
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
             .. versionadded:: 2.4
 
         Raises
@@ -1295,6 +1304,13 @@ class ForumChannel(abc.GuildChannel, Hashable):
         else:
             applied_tag_ids = [str(tag.id) for tag in applied_tags if tag.id is not None]
 
+        if flags is None:
+            flags = MessageFlags()
+        if suppress_embeds is not None:
+            flags.suppress_embeds = suppress_embeds
+
+        flag_value: Optional[int] = flags.value if flags.value != 0 else None
+
         if files is not None:
             if not all(isinstance(file, File) for file in files):
                 raise TypeError("Files parameter must be a list of type File")
@@ -1315,6 +1331,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
                     components=components,  # type: ignore
                     applied_tag_ids=applied_tag_ids,
                     reason=reason,
+                    flags=flag_value,
                 )
             finally:
                 for f in files:
@@ -1333,6 +1350,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
                 components=components,  # type: ignore
                 applied_tag_ids=applied_tag_ids,
                 reason=reason,
+                flags=flag_value,
             )
 
         if view:
