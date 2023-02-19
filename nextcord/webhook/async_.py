@@ -30,6 +30,7 @@ from ..asset import Asset
 from ..channel import PartialMessageable
 from ..enums import WebhookType, try_enum
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
+from ..flags import MessageFlags
 from ..http import Route
 from ..message import Attachment, Message
 from ..mixins import Hashable
@@ -479,7 +480,6 @@ def handle_message_parameters(
     username: str = MISSING,
     avatar_url: Any = MISSING,
     tts: bool = False,
-    ephemeral: bool = False,
     file: File = MISSING,
     files: List[File] = MISSING,
     attachments: List[Attachment] = MISSING,
@@ -488,6 +488,9 @@ def handle_message_parameters(
     view: Optional[View] = MISSING,
     allowed_mentions: Optional[AllowedMentions] = MISSING,
     previous_allowed_mentions: Optional[AllowedMentions] = None,
+    ephemeral: Optional[bool] = None,
+    flags: Optional[MessageFlags] = None,
+    suppress_embeds: Optional[bool] = None,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -528,8 +531,16 @@ def handle_message_parameters(
         payload["avatar_url"] = str(avatar_url)
     if username:
         payload["username"] = username
-    if ephemeral:
-        payload["flags"] = 64
+
+    if flags is None:
+        flags = MessageFlags()
+    if suppress_embeds is not None:
+        flags.suppress_embeds = suppress_embeds
+    if ephemeral is not None:
+        flags.ephemeral = ephemeral
+
+    if flags.value != 0:
+        payload["flags"] = flags.value
 
     if allowed_mentions:
         if previous_allowed_mentions is not None:
@@ -1326,7 +1337,6 @@ class Webhook(BaseWebhook):
         username: str = MISSING,
         avatar_url: Union[Asset, str] = MISSING,
         tts: bool = MISSING,
-        ephemeral: bool = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
         embed: Embed = MISSING,
@@ -1336,6 +1346,9 @@ class Webhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: Literal[True],
         delete_after: Optional[float] = None,
+        ephemeral: Optional[bool] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> WebhookMessage:
         ...
 
@@ -1347,7 +1360,6 @@ class Webhook(BaseWebhook):
         username: str = MISSING,
         avatar_url: Union[Asset, str] = MISSING,
         tts: bool = MISSING,
-        ephemeral: bool = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
         embed: Embed = MISSING,
@@ -1357,6 +1369,9 @@ class Webhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: Literal[False] = ...,
         delete_after: Optional[float] = None,
+        ephemeral: Optional[bool] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> None:
         ...
 
@@ -1367,7 +1382,6 @@ class Webhook(BaseWebhook):
         username: str = MISSING,
         avatar_url: Union[Asset, str] = MISSING,
         tts: bool = False,
-        ephemeral: bool = False,
         file: File = MISSING,
         files: List[File] = MISSING,
         embed: Embed = MISSING,
@@ -1377,6 +1391,9 @@ class Webhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: bool = False,
         delete_after: Optional[float] = None,
+        ephemeral: Optional[bool] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1390,6 +1407,11 @@ class Webhook(BaseWebhook):
         If the ``embed`` parameter is provided, it must be of type :class:`Embed` and
         it must be a rich embed type. You cannot mix the ``embed`` parameter with the
         ``embeds`` parameter, which must be a :class:`list` of :class:`Embed` objects to send.
+
+        .. versionchanged:: 2.4
+
+            ``ephemeral`` can now accept ``None`` to indicate that
+            ``flags`` should be used.
 
         Parameters
         ----------
@@ -1446,6 +1468,15 @@ class Webhook(BaseWebhook):
             The thread to send this webhook to.
 
             .. versionadded:: 2.0
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -1505,6 +1536,8 @@ class Webhook(BaseWebhook):
             view=view,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
+            flags=flags,
+            suppress_embeds=suppress_embeds,
         )
         adapter = async_context.get()
         thread_id: Optional[int] = None

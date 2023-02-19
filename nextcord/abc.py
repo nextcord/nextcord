@@ -25,7 +25,7 @@ from .context_managers import Typing
 from .enums import ChannelType
 from .errors import ClientException, InvalidArgument
 from .file import File
-from .flags import ChannelFlags
+from .flags import ChannelFlags, MessageFlags
 from .invite import Invite
 from .iterators import HistoryIterator
 from .mentions import AllowedMentions
@@ -1254,6 +1254,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1272,6 +1274,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1290,6 +1294,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1308,6 +1314,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1327,6 +1335,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = None,
         mention_author: Optional[bool] = None,
         view: Optional[View] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ):
         """|coro|
 
@@ -1397,6 +1407,15 @@ class Messageable:
             A list of stickers to upload. Must be a maximum of 3.
 
             .. versionadded:: 2.0
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -1409,7 +1428,7 @@ class Messageable:
             you specified both ``file`` and ``files``,
             or you specified both ``embed`` and ``embeds``,
             or the ``reference`` object is not a :class:`~nextcord.Message`,
-            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`.
+            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`
 
         Returns
         -------
@@ -1420,6 +1439,12 @@ class Messageable:
         channel = await self._get_channel()
         state = self._state
         content = str(content) if content is not None else None
+        if flags is None:
+            flags = MessageFlags()
+        if suppress_embeds is not None:
+            flags.suppress_embeds = suppress_embeds
+
+        flag_value: Optional[int] = flags.value if flags.value != 0 else None
 
         embed_payload: Optional[EmbedData] = None
         embeds_payload: Optional[List[EmbedData]] = None
@@ -1486,6 +1511,7 @@ class Messageable:
                     message_reference=reference_payload,
                     stickers=stickers_payload,
                     components=components,
+                    flags=flag_value,
                 )
             finally:
                 file.close()
@@ -1507,6 +1533,7 @@ class Messageable:
                     message_reference=reference_payload,
                     stickers=stickers_payload,
                     components=components,
+                    flags=flag_value,
                 )
             finally:
                 for f in files:
@@ -1523,6 +1550,7 @@ class Messageable:
                 message_reference=reference_payload,
                 stickers=stickers_payload,
                 components=components,
+                flags=flag_value,
             )
 
         ret = state.create_message(channel=channel, data=data)
