@@ -1419,8 +1419,7 @@ class Messageable:
             you specified both ``file`` and ``files``,
             or you specified both ``embed`` and ``embeds``,
             or the ``reference`` object is not a :class:`~nextcord.Message`,
-            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`,
-            or you specified both ``flags`` and ``suppress_embeds``.
+            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`
 
         Returns
         -------
