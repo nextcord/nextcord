@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class MessageComponentInteraction(Interaction):
     """Represents the interaction for all messsage components.
 
-    This interaction is get's triggered by :class:`nextcord.ui.View`
+    This interaction gets triggered by a :class:`nextcord.ui.View`.
 
     .. container:: operations
 
