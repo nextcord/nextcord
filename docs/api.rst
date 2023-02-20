@@ -1248,6 +1248,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param execution: The object containing the execution information.
     :type execution: :class:`AutoModerationActionExecution`
 
+.. function:: on_guild_audit_log_entry_create(entry)
+
+    Called when an :class:`AuditLogEntry` is created.
+
+    .. versionadded:: 2.4
+
+    :param entry: The entry that was created.
+    :type entry: :class:`AuditLogEntry`
+
 .. _discord-api-utils:
 
 Utility Functions
@@ -3106,20 +3115,6 @@ of :class:`enum.Enum`.
     .. attribute:: gallery
 
         Display posts as a collection of posts with images, this is more image focused.
-
-
-###### Application Role Connection Metadata Type
-
-| Type                           | Value | Description                                                                                                                            |
-| ------------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| INTEGER_LESS_THAN_OR_EQUAL     | 1     | the metadata value (`integer`) is less than or equal to the guild's configured value (`integer`)                                       |
-| INTEGER_GREATER_THAN_OR_EQUAL  | 2     | the metadata value (`integer`) is greater than or equal to the guild's configured value (`integer`)                                    |
-| INTEGER_EQUAL                  | 3     | the metadata value (`integer`) is equal to the guild's configured value (`integer`)                                                    |
-| INTEGER_NOT_EQUAL              | 4     | the metadata value (`integer`) is not equal to the guild's configured value (`integer`)                                                |
-| DATETIME_LESS_THAN_OR_EQUAL    | 5     | the metadata value (`ISO8601 string`) is less than or equal to the guild's configured value (`integer`; `days before current date`)    |
-| DATETIME_GREATER_THAN_OR_EQUAL | 6     | the metadata value (`ISO8601 string`) is greater than or equal to the guild's configured value (`integer`; `days before current date`) |
-| BOOLEAN_EQUAL                  | 7     | the metadata value (`integer`) is equal to the guild's configured value (`integer`; `1`)                                               |
-| BOOLEAN_NOT_EQUAL              | 8     | the metadata value (`integer`) is not equal to the guild's configured value (`integer`; `1`)                                           |
 
 .. class:: RoleConnectionMetadataType
 
