@@ -426,7 +426,9 @@ class ScheduledEvent(Hashable):
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
     ) -> AsyncIterator[ScheduledEventUser]:
-        """Fetch the users that are interested, returns an async iterator.
+        """|asynciter|
+        
+        Fetch the users that are interested, returns an async iterator.
 
         Parameters
         ----------

@@ -147,7 +147,9 @@ class Reaction:
     def users(
         self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
     ) -> AsyncIterator[Union[User, Member]]:
-        """Returns an async iterator representing the users that have reacted to the message.
+        """|asynciter|
+        
+        Returns an async iterator representing the users that have reacted to the message.
 
         The ``after`` parameter must represent a member
         and meet the :class:`abc.Snowflake` abc.

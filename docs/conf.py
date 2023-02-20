@@ -65,6 +65,9 @@ rst_prolog = """
 .. |maybecoro| replace:: This function *could be a* |coroutine_link|_.
 .. |coroutine_link| replace:: *coroutine*
 .. _coroutine_link: https://docs.python.org/3/library/asyncio-task.html#coroutine
+.. |asynciter| replace:: This function returns an |async_iterator_link|_.
+.. |async_iterator_link| replace:: *async iterator*
+.. _async_iterator_link: https://docs.python.org/3/glossary.html#term-asynchronous-iterator
 """
 
 # Add any paths that contain templates here, relative to this directory.

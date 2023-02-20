@@ -1906,7 +1906,9 @@ class Guild(Hashable):
     def fetch_members(
         self, *, limit: Optional[int] = 1000, after: Optional[SnowflakeTime] = None
     ) -> AsyncIterator[Member]:
-        """Retrieves an async iterator that enables receiving the guild's members. In order to use this,
+        """|asynciter|
+        
+        Returns an async iterator that enables receiving the guild's members. In order to use this,
         :meth:`Intents.members` must be enabled.
 
         .. note::
@@ -2067,7 +2069,9 @@ class Guild(Hashable):
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
     ) -> AsyncIterator[BanEntry]:
-        """Returns an async iterator that enables receiving the destination's bans.
+        """|asynciter|
+        
+        Returns an async iterator that enables receiving the destination's bans.
 
         You must have the :attr:`~Permissions.ban_members` permission to get this information.
 
@@ -3067,7 +3071,9 @@ class Guild(Hashable):
         user: Optional[Snowflake] = None,
         action: Optional[AuditLogAction] = None,
     ) -> AsyncIterator[AuditLogEntry]:
-        """Returns an async iterator that enables receiving the guild's audit logs.
+        """|asynciter|
+        
+        Returns an async iterator that enables receiving the guild's audit logs.
 
         You must have the :attr:`~Permissions.view_audit_log` permission to use this.
 
@@ -3337,8 +3343,10 @@ class Guild(Hashable):
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
     def fetch_scheduled_events(self, *, with_users: bool = False) -> AsyncIterator[ScheduledEvent]:
-        """Retrieves an async iterator that enables receiving scheduled
-        events on this guild
+        """|asynciter|
+        
+        Returns an async iterator that enables receiving scheduled
+        events on this guild.
 
         .. note::
 
