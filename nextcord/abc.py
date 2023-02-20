@@ -1633,7 +1633,7 @@ class Messageable:
         oldest_first: Optional[bool] = None,
     ) -> AsyncIterator[Message]:
         """|asynciter|
-        
+
         Returns an async iterator that enables receiving the destination's message history.
 
         You must have :attr:`~nextcord.Permissions.read_message_history` permissions to use this.

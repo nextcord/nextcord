@@ -1384,7 +1384,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         before: Optional[Union[Snowflake, datetime.datetime]] = None,
     ) -> AsyncIterator[Thread]:
         """|asynciter|
-        
+
         Returns an async iterator that iterates over all archived threads in the guild.
 
         You must have :attr:`~Permissions.read_message_history` to use this.
