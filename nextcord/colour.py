@@ -53,7 +53,7 @@ class Colour:
 
     __slots__ = ("value",)
 
-    def __init__(self, value: int):
+    def __init__(self, value: int) -> None:
         if not isinstance(value, int):
             raise TypeError(f"Expected int parameter, received {value.__class__.__name__} instead.")
 

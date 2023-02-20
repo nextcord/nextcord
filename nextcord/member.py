@@ -103,11 +103,13 @@ class VoiceState:
         "suppress",
     )
 
-    def __init__(self, *, data: VoiceStatePayload, channel: Optional[VocalGuildChannel] = None):
+    def __init__(
+        self, *, data: VoiceStatePayload, channel: Optional[VocalGuildChannel] = None
+    ) -> None:
         self.session_id: str = data.get("session_id")
         self._update(data, channel)
 
-    def _update(self, data: VoiceStatePayload, channel: Optional[VocalGuildChannel]):
+    def _update(self, data: VoiceStatePayload, channel: Optional[VocalGuildChannel]) -> None:
         self.self_mute: bool = data.get("self_mute", False)
         self.self_deaf: bool = data.get("self_deaf", False)
         self.self_stream: bool = data.get("self_stream", False)
@@ -261,7 +263,9 @@ class Member(abc.Messageable, _UserTag):
         accent_color: Optional[Colour]
         accent_colour: Optional[Colour]
 
-    def __init__(self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState):
+    def __init__(
+        self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
+    ) -> None:
         self._state: ConnectionState = state
         self._user: User = state.store_user(data["user"])
         self.guild: Guild = guild

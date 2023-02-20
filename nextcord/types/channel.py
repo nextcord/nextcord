@@ -13,6 +13,7 @@ from .user import PartialUser
 
 OverwriteType = Literal[0, 1]
 SortOrderType = Literal[0, 1]
+ForumLayoutType = Literal[0, 1, 2]
 
 
 class PermissionOverwrite(TypedDict):
@@ -63,6 +64,7 @@ class ForumChannel(_ThreadedBaseChannel):
     default_reaction_emoji: NotRequired[Optional[DefaultReaction]]
     default_thread_rate_limit_per_user: NotRequired[int]
     available_tags: NotRequired[List[ForumTag]]
+    default_forum_layout: NotRequired[ForumLayoutType]
 
 
 class NewsChannel(_ThreadedBaseChannel):

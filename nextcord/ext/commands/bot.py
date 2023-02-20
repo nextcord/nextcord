@@ -160,7 +160,7 @@ class BotBase(GroupMixin):
         owner_ids: Optional[Iterable[int]],
         strip_after_prefix: bool,
         case_insensitive: bool,
-    ):
+    ) -> None:
         super().__init__(
             case_insensitive=case_insensitive,
         )
@@ -409,7 +409,6 @@ class BotBase(GroupMixin):
         elif self.owner_ids:
             return user.id in self.owner_ids
         else:
-
             app = await self.application_info()  # type: ignore
             if app.team:
                 self.owner_ids = ids = {m.id for m in app.team.members}
@@ -1427,7 +1426,7 @@ class BotBase(GroupMixin):
 
         message.content = old_content
 
-    async def on_message(self, message):
+    async def on_message(self, message) -> None:
         await self.process_commands(message)
 
     def add_application_command_check(self, func: ApplicationCheck) -> None:
@@ -1664,7 +1663,7 @@ class Bot(BotBase, nextcord.Client):
         owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
         case_insensitive: bool = False,
-    ):
+    ) -> None:
         nextcord.Client.__init__(
             self,
             max_messages=max_messages,
@@ -1753,7 +1752,7 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
         owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
         case_insensitive: bool = False,
-    ):
+    ) -> None:
         nextcord.AutoShardedClient.__init__(
             self,
             max_messages=max_messages,

@@ -12,6 +12,18 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p3p3:
+
+v2.3.3
+------
+
+This is (almost) a bugfix release to resolve a crash with GIF stickers.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix a crash when resolving a GIF sticker (:issue:`969`).
+
 .. _vp2p3p2:
 
 v2.3.2

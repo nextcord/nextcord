@@ -74,7 +74,7 @@ class PartialInviteChannel:
 
     __slots__ = ("id", "name", "type")
 
-    def __init__(self, data: InviteChannelPayload):
+    def __init__(self, data: InviteChannelPayload) -> None:
         self.id: int = int(data["id"])
         self.name: str = data["name"]
         self.type: ChannelType = try_enum(ChannelType, data["type"])
@@ -146,7 +146,7 @@ class PartialInviteGuild:
         "description",
     )
 
-    def __init__(self, state: ConnectionState, data: InviteGuildPayload, id: int):
+    def __init__(self, state: ConnectionState, data: InviteGuildPayload, id: int) -> None:
         self._state: ConnectionState = state
         self.id: int = id
         self.name: str = data["name"]
@@ -324,7 +324,7 @@ class Invite(Hashable):
         data: InvitePayload | VanityInvitePayload,
         guild: Optional[Union[PartialInviteGuild, Guild]] = None,
         channel: Optional[Union[PartialInviteChannel, GuildChannel]] = None,
-    ):
+    ) -> None:
         self._state: ConnectionState = state
         self.max_age: Optional[int] = data.get("max_age")
         self.code: Optional[str] = data.get("code")
@@ -460,7 +460,7 @@ class Invite(Hashable):
         """
         return self.BASE + "/" + self.code if self.code else ""
 
-    async def delete(self, *, reason: Optional[str] = None):
+    async def delete(self, *, reason: Optional[str] = None) -> None:
         """|coro|
 
         Revokes the instant invite.

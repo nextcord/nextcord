@@ -11,6 +11,7 @@ from .auto_moderation import AutoModerationRule
 from .bans import BanEntry
 from .object import Object
 from .utils import snowflake_time, time_snowflake
+from .types.user import PartialUser as PartialUserPayload
 
 __all__ = (
     "reaction_iterator",
@@ -41,7 +42,7 @@ if TYPE_CHECKING:
         ScheduledEventUser as ScheduledEventUserPayload,
     )
     from .types.threads import Thread as ThreadPayload, ThreadPaginationPayload
-    from .types.user import PartialUser as PartialUserPayload
+    from .user import User
 
 T = TypeVar("T")
 OT = TypeVar("OT")
