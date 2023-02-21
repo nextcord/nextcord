@@ -1344,7 +1344,7 @@ class Client:
         after: Optional[SnowflakeTime] = None,
     ) -> AsyncIterator[Guild]:
         """|asynciter|
-        
+
         Returns an async iterator that enables receiving your guilds.
 
         .. note::

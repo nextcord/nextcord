@@ -148,7 +148,7 @@ class Reaction:
         self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
     ) -> AsyncIterator[Union[User, Member]]:
         """|asynciter|
-        
+
         Returns an async iterator representing the users that have reacted to the message.
 
         The ``after`` parameter must represent a member
