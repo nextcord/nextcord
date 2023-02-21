@@ -396,7 +396,6 @@ class BaseCommandOption(ApplicationCommandOption):
         self,
         parameter: Parameter,
         command: Union[BaseApplicationCommand, SlashApplicationSubcommand],
-
         parent_cog: Optional[Cog] = None,
     ) -> None:
         ApplicationCommandOption.__init__(self)
@@ -474,8 +473,9 @@ class CallbackMixin:
     name: Optional[str]
     options: Dict[str, BaseCommandOption]
 
-    def __init__(self, callback: Optional[Callable] = None, parent_cog: Optional[Cog] = None) -> None:
-
+    def __init__(
+        self, callback: Optional[Callable] = None, parent_cog: Optional[Cog] = None
+    ) -> None:
         """Contains code specific for adding callback support to a command class.
 
         If you are a normal user, you shouldn't be using this.
