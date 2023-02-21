@@ -485,9 +485,7 @@ async def archived_thread_iterator(
 
     while has_more:
         limit = 50 if limit is None else max(limit, 50)
-        data = await endpoint(
-            channel_id, before=converted_before, limit=limit
-        )
+        data = await endpoint(channel_id, before=converted_before, limit=limit)
 
         # This stuff is obviously WIP because 'members' is always empty
         threads: List[ThreadPayload] = data.get("threads", [])
