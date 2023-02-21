@@ -765,12 +765,16 @@ class CallbackMixin:
                 )
 
                 if self.parent_cog is not None and non_option_params < 2:
-                    raise ValueError(
-                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition."
+                    warnings.warn(
+                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition.",
+                        stacklevel=2,
+                        category=UserWarning,
                     )
                 elif non_option_params < 1:
-                    raise ValueError(
-                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition."
+                    warnings.warn(
+                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition.",
+                        stacklevel=2,
+                        category=UserWarning,
                     )
 
                 for name, param in callback_params.items():
