@@ -315,10 +315,6 @@ async def audit_log_iterator(
         users = {int(user["id"]): state.create_user(user) for user in data.get("users", [])}
 
         for item in entries:
-            # TODO: remove this if statement later
-            if item["action_type"] is None:
-                continue
-
             yield AuditLogEntry(
                 data=item,
                 auto_moderation_rules=auto_moderation_rules,
@@ -489,7 +485,7 @@ async def archived_thread_iterator(
 
     while has_more:
         limit = 50 if limit is None else max(limit, 50)
-        data: ThreadPaginationPayload = await endpoint(
+        data = await endpoint(
             channel_id, before=converted_before, limit=limit
         )
 
@@ -499,10 +495,9 @@ async def archived_thread_iterator(
             yield Thread(guild=guild, state=state, data=item)
 
         has_more = data.get("has_more", False)
-        if limit is not None:
-            limit -= len(threads)
-            if limit <= 0:
-                has_more = False
+        limit -= len(threads)
+        if limit <= 0:
+            has_more = False
 
         if has_more:
             converted_before = update_before(threads[-1])
@@ -565,8 +560,7 @@ async def scheduled_event_user_iterator(
 
             if before is not None:
                 before = Object(id=int(data[0]["user"]["id"]))
-            if after is not None:
-                after = Object(id=int(data[-1]["user"]["id"]))
+            after = Object(id=int(data[-1]["user"]["id"]))
 
         for item in reversed(data):
             yield event._update_user(item)
