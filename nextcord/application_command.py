@@ -25,6 +25,7 @@ from typing import (
     Union,
     cast,
     overload,
+    _GenericAlias,
 )
 
 import typing_extensions
@@ -755,6 +756,11 @@ class CallbackMixin:
                     or (
                         isinstance(param.annotation, type)
                         and issubclass(param.annotation, Interaction)
+                    )
+                    # will always be an interaction parameter (generic with the outermost type being Interaction)
+                    or (
+                        isinstance(param.annotation, _GenericAlias)
+                        and param.annotation.__origin__ is Interaction
                     )
                     # will always be a self parameter
                     # TODO: use typing.Self when 3.11 is standard
