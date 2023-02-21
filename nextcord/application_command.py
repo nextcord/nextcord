@@ -94,6 +94,7 @@ __all__ = (
     "Mentionable",
     "Range",
     "String",
+    "MissingApplicationCommandParametersWarning",
 )
 
 _log = logging.getLogger(__name__)
@@ -567,6 +568,23 @@ class ClientCog:
         pass
 
 
+class MissingApplicationCommandParametersWarning(UserWarning):
+    """Warning category raised when creating a slash command from a callback when it appears
+    the self and/or interaction parameter is missing based on the given type annotations.
+
+    This warning can be silenced using :func:`warnings.simplefilter`.
+
+    .. code-block:: python3
+
+        import warnings
+        from nextcord import MissingApplicationCommandParametersWarning
+
+        warnings.simplefilter("ignore", MissingApplicationCommandParametersWarning)
+    """
+
+    pass
+
+
 class CallbackMixin:
     name: Optional[str]
     options: Dict[str, BaseCommandOption]
@@ -767,14 +785,14 @@ class CallbackMixin:
                 if self.parent_cog is not None and non_option_params < 2:
                     warnings.warn(
                         f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition.",
-                        stacklevel=2,
-                        category=UserWarning,
+                        stacklevel=0,
+                        category=MissingApplicationCommandParametersWarning,
                     )
                 elif non_option_params < 1:
                     warnings.warn(
                         f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition.",
-                        stacklevel=2,
-                        category=UserWarning,
+                        stacklevel=0,
+                        category=MissingApplicationCommandParametersWarning,
                     )
 
                 for name, param in callback_params.items():
