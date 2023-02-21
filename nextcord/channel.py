@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Rapptz
-Copyright (c) 2022-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -49,6 +26,7 @@ from .asset import Asset
 from .emoji import Emoji
 from .enums import (
     ChannelType,
+    ForumLayoutType,
     SortOrderType,
     StagePrivacyLevel,
     VideoQualityMode,
@@ -57,7 +35,7 @@ from .enums import (
 )
 from .errors import ClientException, InvalidArgument
 from .file import File
-from .flags import ChannelFlags
+from .flags import ChannelFlags, MessageFlags
 from .iterators import ArchivedThreadIterator
 from .mentions import AllowedMentions
 from .mixins import Hashable, PinsMixin
@@ -107,7 +85,7 @@ if TYPE_CHECKING:
     from .webhook import Webhook
 
 
-async def _single_delete_strategy(messages: Iterable[Message]):
+async def _single_delete_strategy(messages: Iterable[Message]) -> None:
     for m in messages:
         await m.delete()
 
@@ -196,7 +174,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         "default_thread_slowmode_delay",
     )
 
-    def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload):
+    def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self._type: int = data["type"]
@@ -906,6 +884,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         The default sort order type used to sort posts in forum channels.
 
         .. versionadded:: 2.3
+    default_forum_layout: :class:`ForumLayoutType`
+        The default layout type used to display posts in this forum.
+
+        .. versionadded:: 2.4
     default_thread_slowmode_delay: :class:`int`
         The default amount of seconds a user has to wait
         before creating another thread in this channel.
@@ -931,6 +913,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         "default_auto_archive_duration",
         "last_message_id",
         "default_sort_order",
+        "default_forum_layout",
         "_state",
         "_type",
         "_overwrites",
@@ -939,7 +922,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         "default_reaction",
     )
 
-    def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload):
+    def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self._type: int = data["type"]
@@ -960,6 +943,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         )
 
         self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
+        self.default_forum_layout: ForumLayoutType = try_enum(
+            ForumLayoutType, data.get("default_forum_layout", 0)
+        )
+
         if sort_order := data.get("default_sort_order"):
             self.default_sort_order: Optional[SortOrderType] = try_enum(SortOrderType, sort_order)
         else:
@@ -1081,6 +1068,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
         default_sort_order: Optional[SortOrderType] = ...,
+        default_forum_layout: ForumLayoutType = ...,
         default_thread_slowmode_delay: int = ...,
         available_tags: List[ForumTag] = ...,
         default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = ...,
@@ -1134,6 +1122,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
             The default sort order type used to sort posts in forum channels.
 
             .. versionadded:: 2.3
+        default_forum_layout: :class:`ForumLayoutType`
+            The default layout type used to display posts in.
+
+            .. versionadded:: 2.4
         default_thread_slowmode_delay: :class:`int`
             The new default slowmode delay for threads created in this channel.
             This is not retroactively applied to old posts.
@@ -1205,6 +1197,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         view: Optional[ui.View] = None,
         reason: Optional[str] = None,
         applied_tags: Optional[List[ForumTag]] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> Thread:
         """|coro|
 
@@ -1253,6 +1247,13 @@ class ForumChannel(abc.GuildChannel, Hashable):
         applied_tags: Optional[List[:class:`ForumTag`]]
             A list of tags to apply to the thread.
 
+            .. versionadded:: 2.4
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
             .. versionadded:: 2.4
 
         Raises
@@ -1318,6 +1319,13 @@ class ForumChannel(abc.GuildChannel, Hashable):
         else:
             applied_tag_ids = [str(tag.id) for tag in applied_tags if tag.id is not None]
 
+        if flags is None:
+            flags = MessageFlags()
+        if suppress_embeds is not None:
+            flags.suppress_embeds = suppress_embeds
+
+        flag_value: Optional[int] = flags.value if flags.value != 0 else None
+
         if files is not None:
             if not all(isinstance(file, File) for file in files):
                 raise TypeError("Files parameter must be a list of type File")
@@ -1338,6 +1346,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
                     components=components,  # type: ignore
                     applied_tag_ids=applied_tag_ids,
                     reason=reason,
+                    flags=flag_value,
                 )
             finally:
                 for f in files:
@@ -1356,6 +1365,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
                 components=components,  # type: ignore
                 applied_tag_ids=applied_tag_ids,
                 reason=reason,
+                flags=flag_value,
             )
 
         if view:
@@ -1411,6 +1421,54 @@ class ForumChannel(abc.GuildChannel, Hashable):
             self.id, self.guild, limit=limit, joined=joined, private=private, before=before
         )
 
+    async def create_webhook(
+        self,
+        *,
+        name: str,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = None,
+        reason: Optional[str] = None,
+    ) -> Webhook:
+        """|coro|
+
+        Creates a webhook for this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionadded:: 2.4
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The webhook's name.
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`,
+            or :class:`Asset` representing the webhook's default avatar.
+            This operates similarly to :meth:`~ClientUser.edit`.
+        reason: Optional[:class:`str`]
+            The reason for creating this webhook. Shows up in the audit logs.
+
+        Raises
+        ------
+        HTTPException
+            Creating the webhook failed.
+        Forbidden
+            You do not have permissions to create a webhook.
+
+        Returns
+        -------
+        :class:`Webhook`
+            The created webhook.
+        """
+
+        from .webhook import Webhook
+
+        avatar_base64 = await utils.obj_to_base64_data(avatar)
+
+        data = await self._state.http.create_webhook(
+            self.id, name=str(name), avatar=avatar_base64, reason=reason
+        )
+        return Webhook.from_state(data, state=self._state)
+
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
     __slots__ = (
@@ -1434,7 +1492,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         state: ConnectionState,
         guild: Guild,
         data: Union[VoiceChannelPayload, StageChannelPayload],
-    ):
+    ) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self._update(guild, data)
@@ -1902,6 +1960,54 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
         return ret
 
+    async def create_webhook(
+        self,
+        *,
+        name: str,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = None,
+        reason: Optional[str] = None,
+    ) -> Webhook:
+        """|coro|
+
+        Creates a webhook for this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionadded:: 2.4
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The webhook's name.
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`,
+            or :class:`Asset` representing the webhook's default avatar.
+            This operates similarly to :meth:`~ClientUser.edit`.
+        reason: Optional[:class:`str`]
+            The reason for creating this webhook. Shows up in the audit logs.
+
+        Raises
+        ------
+        HTTPException
+            Creating the webhook failed.
+        Forbidden
+            You do not have permissions to create a webhook.
+
+        Returns
+        -------
+        :class:`Webhook`
+            The created webhook.
+        """
+
+        from .webhook import Webhook
+
+        avatar_base64 = await utils.obj_to_base64_data(avatar)
+
+        data = await self._state.http.create_webhook(
+            self.id, name=str(name), avatar=avatar_base64, reason=reason
+        )
+        return Webhook.from_state(data, state=self._state)
+
 
 class StageChannel(VocalGuildChannel):
     """Represents a Discord guild stage channel.
@@ -2255,7 +2361,9 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         "flags",
     )
 
-    def __init__(self, *, state: ConnectionState, guild: Guild, data: CategoryChannelPayload):
+    def __init__(
+        self, *, state: ConnectionState, guild: Guild, data: CategoryChannelPayload
+    ) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self._update(guild, data)
@@ -2358,7 +2466,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
 
     @utils.copy_doc(abc.GuildChannel.move)
-    async def move(self, **kwargs):
+    async def move(self, **kwargs) -> None:
         kwargs.pop("category", None)
         await super().move(**kwargs)
 
@@ -2504,7 +2612,7 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
 
     __slots__ = ("id", "recipient", "me", "_state")
 
-    def __init__(self, *, me: ClientUser, state: ConnectionState, data: DMChannelPayload):
+    def __init__(self, *, me: ClientUser, state: ConnectionState, data: DMChannelPayload) -> None:
         self._state: ConnectionState = state
         self.recipient: Optional[User] = state.store_user(data["recipients"][0])  # type: ignore
         self.me: ClientUser = me
@@ -2636,7 +2744,9 @@ class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
 
     __slots__ = ("id", "recipients", "owner_id", "owner", "_icon", "name", "me", "_state")
 
-    def __init__(self, *, me: ClientUser, state: ConnectionState, data: GroupChannelPayload):
+    def __init__(
+        self, *, me: ClientUser, state: ConnectionState, data: GroupChannelPayload
+    ) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self.me: ClientUser = me
@@ -2772,7 +2882,7 @@ class PartialMessageable(abc.Messageable, Hashable):
         The channel type associated with this partial messageable, if given.
     """
 
-    def __init__(self, state: ConnectionState, id: int, type: Optional[ChannelType] = None):
+    def __init__(self, state: ConnectionState, id: int, type: Optional[ChannelType] = None) -> None:
         self._state: ConnectionState = state
         self._channel: Object = Object(id=id)
         self.id: int = id
