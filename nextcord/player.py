@@ -557,7 +557,7 @@ class FFmpegOpusAudio(FFmpegAudio):
     def _probe_codec_native(
         source, executable: str = "ffmpeg"
     ) -> Tuple[Optional[str], Optional[int]]:
-        exe = executable[:2] + "probe" if executable in ("ffmpeg", "avconv") else executable
+        exe = executable[:-4] + "probe" if executable.endswith(("ffmpeg", "avconv")) else executable
         args = [
             exe,
             "-v",
