@@ -1,40 +1,21 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from .enums import VoiceRegion
 from .guild import Guild
-from .utils import MISSING, _bytes_to_base64_data, parse_time
+from .utils import MISSING, obj_to_base64_data, parse_time
 
 __all__ = ("Template",)
 
 if TYPE_CHECKING:
     import datetime
 
+    from .asset import Asset
+    from .file import File
+    from .message import Attachment
     from .state import ConnectionState
     from .types.template import Template as TemplatePayload
     from .user import User
@@ -48,7 +29,7 @@ class _FriendlyHttpAttributeErrorHelper:
 
 
 class _PartialTemplateState:
-    def __init__(self, *, state):
+    def __init__(self, *, state) -> None:
         self.__state = state
         self.http = _FriendlyHttpAttributeErrorHelper()
 
@@ -93,7 +74,7 @@ class Template:
     .. versionadded:: 1.4
 
     Attributes
-    -----------
+    ----------
     code: :class:`str`
         The template code.
     uses: :class:`int`
@@ -169,13 +150,19 @@ class Template:
         )
 
     async def create_guild(
-        self, name: str, region: Optional[VoiceRegion] = None, icon: Any = None
+        self,
+        name: str,
+        region: Optional[VoiceRegion] = None,
+        icon: Optional[Union[bytes, Asset, Attachment, File]] = None,
     ) -> Guild:
         """|coro|
 
         Creates a :class:`.Guild` using the template.
 
         Bot accounts in more than 10 guilds are not allowed to create guilds.
+
+        .. versionchanged:: 2.1
+            The ``icon`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -184,9 +171,9 @@ class Template:
         region: :class:`.VoiceRegion`
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
-        icon: :class:`bytes`
-            The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
-            for more details on what is expected.
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the icon. See :meth:`.ClientUser.edit` for more details on what is expected.
 
         Raises
         ------
@@ -201,13 +188,14 @@ class Template:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is not None:
-            icon = _bytes_to_base64_data(icon)
+        icon_base64 = await obj_to_base64_data(icon)
 
         region = region or VoiceRegion.us_west
         region_value = region.value
 
-        data = await self._state.http.create_from_template(self.code, name, region_value, icon)
+        data = await self._state.http.create_from_template(
+            self.code, name, region_value, icon_base64
+        )
         return Guild(data=data, state=self._state)
 
     async def sync(self) -> Template:
@@ -224,7 +212,7 @@ class Template:
             The template is no longer edited in-place, instead it is returned.
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the template failed.
         Forbidden
@@ -233,7 +221,7 @@ class Template:
             This template does not exist.
 
         Returns
-        --------
+        -------
         :class:`Template`
             The newly edited template.
         """
@@ -260,14 +248,14 @@ class Template:
             The template is no longer edited in-place, instead it is returned.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The template's new name.
         description: Optional[:class:`str`]
             The template's new description.
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the template failed.
         Forbidden
@@ -276,7 +264,7 @@ class Template:
             This template does not exist.
 
         Returns
-        --------
+        -------
         :class:`Template`
             The newly edited template.
         """
@@ -301,7 +289,7 @@ class Template:
         .. versionadded:: 1.7
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the template failed.
         Forbidden

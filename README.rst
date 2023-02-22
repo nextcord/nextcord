@@ -93,17 +93,17 @@ Quick Example
 
 .. code:: py
 
+    import nextcord
     from nextcord.ext import commands
 
 
-    bot = commands.Bot(command_prefix='$')
+    bot = commands.Bot()
 
-    @bot.command()
-    async def ping(ctx):
-        await ctx.reply('Pong!')
+    @bot.slash_command(description="Replies with pong!")
+    async def ping(interaction: nextcord.Interaction):
+        await interaction.send("Pong!", ephemeral=True)
 
-    bot.run('token')
-
+    bot.run("token")
 
 You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 

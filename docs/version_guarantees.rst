@@ -5,6 +5,7 @@ Version Guarantees
 
 Nextcord does not follow semantic versioning exactly, the main difference is that breaking changes may also be made on minor version bumps (similar to Python's scheme).
 The reason for this is the Discord API lacks guarantees on breaking changes per API version, so library breaking changes unfortunately have to be made to match.
+Breaking changes that are not forced by Discord will be deprecated but not removed in a minor version (special cases apply, such as low impact changes).
 
 However, any breaking changes will always be marked as such in the release notes/changelogs.
 

@@ -1,52 +1,16 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Type, TypeVar, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 __all__ = ("AllowedMentions",)
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import Snowflake
     from .types.message import AllowedMentions as AllowedMentionsPayload
-
-
-class _FakeBool:
-    def __repr__(self):
-        return "True"
-
-    def __eq__(self, other):
-        return other is True
-
-    def __bool__(self):
-        return True
-
-
-default: Any = _FakeBool()
-
-A = TypeVar("A", bound="AllowedMentions")
 
 
 class AllowedMentions:
@@ -57,7 +21,7 @@ class AllowedMentions:
     via :meth:`abc.Messageable.send` for more fine-grained control.
 
     Attributes
-    ------------
+    ----------
     everyone: :class:`bool`
         Whether to allow everyone and here mentions. Defaults to ``True``.
     users: Union[:class:`bool`, List[:class:`abc.Snowflake`]]
@@ -84,18 +48,18 @@ class AllowedMentions:
     def __init__(
         self,
         *,
-        everyone: bool = default,
-        users: Union[bool, List[Snowflake]] = default,
-        roles: Union[bool, List[Snowflake]] = default,
-        replied_user: bool = default,
-    ):
+        everyone: Optional[bool] = None,
+        users: Optional[Union[bool, List[Snowflake]]] = None,
+        roles: Optional[Union[bool, List[Snowflake]]] = None,
+        replied_user: Optional[bool] = None,
+    ) -> None:
         self.everyone = everyone
         self.users = users
         self.roles = roles
         self.replied_user = replied_user
 
     @classmethod
-    def all(cls: Type[A]) -> A:
+    def all(cls) -> Self:
         """A factory method that returns a :class:`AllowedMentions` with all fields explicitly set to ``True``
 
         .. versionadded:: 1.5
@@ -103,7 +67,7 @@ class AllowedMentions:
         return cls(everyone=True, users=True, roles=True, replied_user=True)
 
     @classmethod
-    def none(cls: Type[A]) -> A:
+    def none(cls) -> Self:
         """A factory method that returns a :class:`AllowedMentions` with all fields set to ``False``
 
         .. versionadded:: 1.5
@@ -114,20 +78,20 @@ class AllowedMentions:
         parse = []
         data = {}
 
-        if self.everyone:
+        if self.everyone or self.everyone is None:
             parse.append("everyone")
 
-        if self.users == True:
+        if self.users is True or self.users is None:
             parse.append("users")
-        elif self.users != False:
+        elif self.users:
             data["users"] = [x.id for x in self.users]
 
-        if self.roles == True:
+        if self.roles is True or self.users is None:
             parse.append("roles")
-        elif self.roles != False:
+        elif self.roles:
             data["roles"] = [x.id for x in self.roles]
 
-        if self.replied_user:
+        if self.replied_user or self.replied_user is None:
             data["replied_user"] = True
 
         data["parse"] = parse
@@ -137,16 +101,20 @@ class AllowedMentions:
         # Creates a new AllowedMentions by merging from another one.
         # Merge is done by using the 'self' values unless explicitly
         # overridden by the 'other' values.
-        everyone = self.everyone if other.everyone is default else other.everyone
-        users = self.users if other.users is default else other.users
-        roles = self.roles if other.roles is default else other.roles
-        replied_user = self.replied_user if other.replied_user is default else other.replied_user
+        everyone = self.everyone if other.everyone is None else other.everyone
+        users = self.users if other.users is None else other.users
+        roles = self.roles if other.roles is None else other.roles
+        replied_user = self.replied_user if other.replied_user is None else other.replied_user
         return AllowedMentions(
             everyone=everyone, roles=roles, users=users, replied_user=replied_user
         )
 
     def __repr__(self) -> str:
+        everyone = self.everyone if self.everyone is not None else True
+        users = self.users if self.users is not None else True
+        roles = self.roles if self.roles is not None else True
+        replied_user = self.replied_user if self.replied_user is not None else True
         return (
-            f"{self.__class__.__name__}(everyone={self.everyone}, "
-            f"users={self.users}, roles={self.roles}, replied_user={self.replied_user})"
+            f"{self.__class__.__name__}(everyone={everyone}, "
+            f"users={users}, roles={roles}, replied_user={replied_user})"
         )

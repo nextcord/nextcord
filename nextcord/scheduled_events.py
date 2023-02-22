@@ -1,37 +1,15 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .abc import Snowflake
 from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
 from .mixins import Hashable
-from .utils import MISSING, _bytes_to_base64_data, parse_time
+from .utils import MISSING, obj_to_base64_data, parse_time
 
 __all__: Tuple[str, ...] = (
     "EntityMetadata",
@@ -44,8 +22,10 @@ if TYPE_CHECKING:
 
     from .abc import GuildChannel
     from .enums import ScheduledEventEntityType, ScheduledEventStatus
+    from .file import File
     from .guild import Guild
     from .member import Member
+    from .message import Attachment
     from .state import ConnectionState
     from .types.scheduled_events import (
         ScheduledEvent as ScheduledEventPayload,
@@ -333,12 +313,15 @@ class ScheduledEvent(Hashable):
         description: str = MISSING,
         type: ScheduledEventEntityType = MISSING,
         status: ScheduledEventStatus = MISSING,
-        reason: str = MISSING,
-        image: Optional[bytes] = MISSING,
+        reason: Optional[str] = None,
+        image: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
     ) -> ScheduledEvent:
         """|coro|
 
         Edit the scheduled event.
+
+        .. versionchanged:: 2.1
+            The ``image`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
         Parameters
         ----------
@@ -360,6 +343,8 @@ class ScheduledEvent(Hashable):
             The new type for the event.
         status: :class:`ScheduledEventStatus`
             The new status for the event.
+        reason: Optional[:class:`str`]
+            The reason for editing this scheduled event. Shows up in the audit logs.
 
             .. note::
 
@@ -367,16 +352,16 @@ class ScheduledEvent(Hashable):
                 scheduled -> active ;
                 active -> completed ;
                 scheduled -> canceled
-        image: Optional[:class:`bytes`]
-            A :term:`py:bytes-like object` representing the cover image.
-            Could be ``None`` to denote removal of the cover image.
+        image: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the cover image. Could be ``None`` to denote removal of the cover image.
 
         Returns
         -------
         :class:`ScheduledEvent`
             The updated event object.
         """
-        payload: dict = {}
+        payload: Dict[str, Any] = {}
         if channel is not MISSING:
             payload["channel_id"] = channel.id
 
@@ -405,10 +390,7 @@ class ScheduledEvent(Hashable):
             payload["status"] = status.value
 
         if image is not MISSING:
-            if image is None:
-                payload["image"] = image
-            else:
-                payload["image"] = _bytes_to_base64_data(image)
+            payload["image"] = await obj_to_base64_data(image)
 
         if not payload:
             return self
@@ -458,7 +440,7 @@ class ScheduledEvent(Hashable):
             A snowflake id to end with, useful for chunks of usersby default None
 
         Yields
-        -------
+        ------
         :class:`ScheduledEventUser`
             A full event user object
         """

@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -30,7 +8,18 @@ import inspect
 import sys
 import traceback
 from collections.abc import Sequence
-from typing import Any, Awaitable, Callable, Generic, List, Optional, Type, TypeVar, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Generic,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import aiohttp
 
@@ -41,10 +30,10 @@ from nextcord.utils import MISSING, utcnow
 __all__ = ("loop",)
 
 T = TypeVar("T")
-_func = Callable[..., Awaitable[Any]]
+_func = Callable[..., Coroutine[Any, Any, Any]]
 LF = TypeVar("LF", bound=_func)
 FT = TypeVar("FT", bound=_func)
-ET = TypeVar("ET", bound=Callable[[Any, BaseException], Awaitable[Any]])
+ET = TypeVar("ET", bound=Callable[[Any, BaseException], Coroutine[Any, Any, Any]])
 
 
 class SleepHandle:
@@ -277,7 +266,7 @@ class Loop(Generic[LF]):
         .. versionadded:: 1.6
 
         Parameters
-        ------------
+        ----------
         \*args
             The arguments to use.
         \*\*kwargs
@@ -293,19 +282,19 @@ class Loop(Generic[LF]):
         r"""Starts the internal task in the event loop.
 
         Parameters
-        ------------
+        ----------
         \*args
             The arguments to use.
         \*\*kwargs
             The keyword arguments to use.
 
         Raises
-        --------
+        ------
         RuntimeError
             A task has already been launched and is running.
 
         Returns
-        ---------
+        -------
         :class:`asyncio.Task`
             The task that has been created.
         """
@@ -360,7 +349,7 @@ class Loop(Generic[LF]):
             returned like :meth:`start`.
 
         Parameters
-        ------------
+        ----------
         \*args
             The arguments to use.
         \*\*kwargs
@@ -386,12 +375,12 @@ class Loop(Generic[LF]):
         raises its own set of exceptions.
 
         Parameters
-        ------------
+        ----------
         \*exceptions: Type[:class:`BaseException`]
             An argument list of exception classes to handle.
 
         Raises
-        --------
+        ------
         TypeError
             An exception passed is either not a class or not inherited from :class:`BaseException`.
         """
@@ -417,12 +406,12 @@ class Loop(Generic[LF]):
         r"""Removes exception types from being handled during the reconnect logic.
 
         Parameters
-        ------------
+        ----------
         \*exceptions: Type[:class:`BaseException`]
             An argument list of exception classes to handle.
 
         Returns
-        ---------
+        -------
         :class:`bool`
             Whether all exceptions were successfully removed.
         """
@@ -452,8 +441,7 @@ class Loop(Generic[LF]):
         """
         return not bool(self._task.done()) if self._task is not MISSING else False
 
-    async def _error(self, *args: Any) -> None:
-        exception: Exception = args[-1]
+    async def _error(self, exception: BaseException) -> None:
         print(
             f"Unhandled exception in internal background task {self.coro.__name__!r}.",
             file=sys.stderr,
@@ -471,12 +459,12 @@ class Loop(Generic[LF]):
         The coroutine must take no arguments (except ``self`` in a class context).
 
         Parameters
-        ------------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register before the loop runs.
 
         Raises
-        -------
+        ------
         TypeError
             The function was not a coroutine.
         """
@@ -499,12 +487,12 @@ class Loop(Generic[LF]):
             whether :meth:`is_being_cancelled` is ``True`` or not.
 
         Parameters
-        ------------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register after the loop finishes.
 
         Raises
-        -------
+        ------
         TypeError
             The function was not a coroutine.
         """
@@ -520,25 +508,25 @@ class Loop(Generic[LF]):
 
         The coroutine must take only one argument the exception raised (except ``self`` in a class context).
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
 
         .. versionadded:: 1.4
 
         Parameters
-        ------------
+        ----------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register in the event of an unhandled exception.
 
         Raises
-        -------
+        ------
         TypeError
             The function was not a coroutine.
         """
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError(f"Expected coroutine function, received {coro.__class__.__name__!r}.")
 
-        self._error = coro  # type: ignore
+        self._error = coro  # type: ignore  # `self` messes with the type checker
         return coro
 
     def _get_next_sleep_time(self) -> datetime.datetime:
@@ -627,7 +615,7 @@ class Loop(Generic[LF]):
         .. versionadded:: 1.2
 
         Parameters
-        ------------
+        ----------
         seconds: :class:`float`
             The number of seconds between every iteration.
         minutes: :class:`float`
@@ -646,7 +634,7 @@ class Loop(Generic[LF]):
                 Duplicate times will be ignored, and only run once.
 
         Raises
-        -------
+        ------
         ValueError
             An invalid value was given.
         TypeError
@@ -698,7 +686,7 @@ def loop(
     optional reconnect logic. The decorator returns a :class:`Loop`.
 
     Parameters
-    ------------
+    ----------
     seconds: :class:`float`
         The number of seconds between every iteration.
     minutes: :class:`float`
@@ -735,7 +723,7 @@ def loop(
         defaults to :func:`asyncio.get_event_loop`.
 
     Raises
-    --------
+    ------
     ValueError
         An invalid value was given.
     TypeError

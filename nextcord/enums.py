@@ -1,34 +1,13 @@
-"""
-The MIT License (MIT)
+# SPDX-License-Identifier: MIT
 
-Copyright (c) 2015-present Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
-
-import types
-from collections import namedtuple
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type, TypeVar
+import enum
+from typing import Any, Dict, NamedTuple, Optional, Type, TypeVar
 
 __all__ = (
     "Enum",
+    "IntEnum",
+    "StrEnum",
+    "UnknownEnumValue",
     "ChannelType",
     "MessageType",
     "VoiceRegion",
@@ -63,125 +42,101 @@ __all__ = (
     "ScheduledEventEntityType",
     "ScheduledEventPrivacyLevel",
     "ScheduledEventStatus",
+    "AutoModerationEventType",
+    "AutoModerationTriggerType",
+    "KeywordPresetType",
+    "AutoModerationActionType",
+    "SortOrderType",
+    "RoleConnectionMetadataType",
+    "ForumLayoutType",
 )
 
 
-def _create_value_cls(name, comparable):
-    # TODO: rework this, type checkers hate it
-    cls = namedtuple("_EnumValue_" + name, "name value")  # type: ignore
-    cls.__repr__ = lambda self: f"<{name}.{self.name}: {self.value!r}>"  # type: ignore
-    cls.__str__ = lambda self: f"{name}.{self.name}"  # type: ignore
-    if comparable:
-        cls.__le__ = lambda self, other: isinstance(other, self.__class__) and self.value <= other.value  # type: ignore
-        cls.__ge__ = lambda self, other: isinstance(other, self.__class__) and self.value >= other.value  # type: ignore
-        cls.__lt__ = lambda self, other: isinstance(other, self.__class__) and self.value < other.value  # type: ignore
-        cls.__gt__ = lambda self, other: isinstance(other, self.__class__) and self.value > other.value  # type: ignore
-    return cls
+class UnknownEnumValue(NamedTuple):
+    """Proxy for the underlying name and value of an attribute not known to the Enum."""
 
+    name: str
+    value: Any
 
-def _is_descriptor(obj):
-    return hasattr(obj, "__get__") or hasattr(obj, "__set__") or hasattr(obj, "__delete__")
+    def __str__(self) -> str:
+        if isinstance(self.value, str):
+            return self.value
+        return self.name
 
+    def __int__(self) -> int:
+        if isinstance(self.value, int):
+            return self.value
+        raise TypeError(f"{self.name}.{self.value} cannot be converted to an int")
 
-class EnumMeta(type):
-    if TYPE_CHECKING:
-        __name__: ClassVar[str]
-        _enum_member_names_: ClassVar[List[str]]
-        _enum_member_map_: ClassVar[Dict[str, Any]]
-        _enum_value_map_: ClassVar[Dict[Any, Any]]
+    def __repr__(self) -> str:
+        return f"<{self.name}.{self.value!r}>"
 
-    def __new__(cls, name, bases, attrs, *, comparable: bool = False):
-        value_mapping = {}
-        member_mapping = {}
-        member_names = []
-
-        value_cls = _create_value_cls(name, comparable)
-        for key, value in list(attrs.items()):
-            is_descriptor = _is_descriptor(value)
-            if key[0] == "_" and not is_descriptor:
-                continue
-
-            # Special case classmethod to just pass through
-            if isinstance(value, classmethod):
-                continue
-
-            if is_descriptor:
-                setattr(value_cls, key, value)
-                del attrs[key]
-                continue
-
-            try:
-                new_value = value_mapping[value]
-            except KeyError:
-                new_value = value_cls(name=key, value=value)
-                value_mapping[value] = new_value
-                member_names.append(key)
-
-            member_mapping[key] = new_value
-            attrs[key] = new_value
-
-        attrs["_enum_value_map_"] = value_mapping
-        attrs["_enum_member_map_"] = member_mapping
-        attrs["_enum_member_names_"] = member_names
-        attrs["_enum_value_cls_"] = value_cls
-        actual_cls = super().__new__(cls, name, bases, attrs)
-        value_cls._actual_enum_cls_ = actual_cls  # type: ignore
-        return actual_cls
-
-    def __iter__(cls):
-        return (cls._enum_member_map_[name] for name in cls._enum_member_names_)
-
-    def __reversed__(cls):
-        return (cls._enum_member_map_[name] for name in reversed(cls._enum_member_names_))
-
-    def __len__(cls):
-        return len(cls._enum_member_names_)
-
-    def __repr__(cls):
-        return f"<enum {cls.__name__}>"
-
-    @property
-    def __members__(cls):
-        return types.MappingProxyType(cls._enum_member_map_)
-
-    def __call__(cls, value):
+    def __le__(self, other):
         try:
-            return cls._enum_value_map_[value]
-        except (KeyError, TypeError):
-            raise ValueError(f"{value!r} is not a valid {cls.__name__}")
-
-    def __getitem__(cls, key):
-        return cls._enum_member_map_[key]
-
-    def __setattr__(cls, name, value):
-        raise TypeError("Enums are immutable.")
-
-    def __delattr__(cls, attr):
-        raise TypeError("Enums are immutable")
-
-    def __instancecheck__(self, instance):
-        # isinstance(x, Y)
-        # -> __instancecheck__(Y, x)
-        try:
-            return instance._actual_enum_cls_ is self
+            return self.value <= other.value
         except AttributeError:
-            return False
+            return self.value <= other
+
+    def __ge__(self, other):
+        try:
+            return self.value >= other.value
+        except AttributeError:
+            return self.value >= other
+
+    def __lt__(self, other):
+        try:
+            return self.value < other.value
+        except AttributeError:
+            return self.value < other
+
+    def __gt__(self, other):
+        try:
+            return self.value > other.value
+        except AttributeError:
+            return self.value > other
+
+    def __eq__(self, other):
+        try:
+            return self.value == other.value
+        except AttributeError:
+            return self.value == other
+
+    def __ne__(self, other):
+        try:
+            return self.value != other.value
+        except AttributeError:
+            return self.value != other
+
+    def __hash__(self):
+        return hash(self.value)
 
 
-if TYPE_CHECKING:
-    from enum import Enum
-else:
+class Enum(enum.Enum):
+    """An enum that supports trying for unknown values."""
 
-    class Enum(metaclass=EnumMeta):
-        @classmethod
-        def try_value(cls, value):
-            try:
-                return cls._enum_value_map_[value]
-            except (KeyError, TypeError):
-                return value
+    @classmethod
+    def try_value(cls, value):
+        try:
+            return cls(value)
+        except ValueError:
+            return value
 
 
-class ChannelType(Enum):
+class IntEnum(int, Enum):
+    """An enum that supports comparing and hashing as an int."""
+
+    def __int__(self) -> int:
+        return self.value
+
+
+class StrEnum(str, Enum):
+    """An enum that supports comparing and hashing as a string."""
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class ChannelType(IntEnum):
     text = 0
     private = 1
     voice = 2
@@ -192,12 +147,14 @@ class ChannelType(Enum):
     public_thread = 11
     private_thread = 12
     stage_voice = 13
+    guild_directory = 14
+    forum = 15
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
-class MessageType(Enum):
+class MessageType(IntEnum):
     default = 0
     recipient_add = 1
     recipient_remove = 2
@@ -222,9 +179,10 @@ class MessageType(Enum):
     thread_starter_message = 21
     guild_invite_reminder = 22
     context_menu_command = 23
+    auto_moderation_action = 24
 
 
-class VoiceRegion(Enum):
+class VoiceRegion(StrEnum):
     us_west = "us-west"
     us_east = "us-east"
     us_south = "us-south"
@@ -249,44 +207,38 @@ class VoiceRegion(Enum):
     vip_us_west = "vip-us-west"
     vip_amsterdam = "vip-amsterdam"
 
-    def __str__(self):
-        return self.value
 
-
-class SpeakingState(Enum):
+class SpeakingState(IntEnum):
     none = 0
-    voice = 1
-    soundshare = 2
-    priority = 4
+    voice = 1 << 0
+    soundshare = 1 << 1
+    priority = 1 << 2
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def __int__(self):
-        return self.value
 
-
-class VerificationLevel(Enum, comparable=True):
+class VerificationLevel(IntEnum):
     none = 0
     low = 1
     medium = 2
     high = 3
     highest = 4
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
-class ContentFilter(Enum, comparable=True):
+class ContentFilter(IntEnum):
     disabled = 0
     no_role = 1
     all_members = 2
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
-class Status(Enum):
+class Status(StrEnum):
     online = "online"
     offline = "offline"
     idle = "idle"
@@ -294,11 +246,8 @@ class Status(Enum):
     do_not_disturb = "dnd"
     invisible = "invisible"
 
-    def __str__(self):
-        return self.value
 
-
-class DefaultAvatar(Enum):
+class DefaultAvatar(IntEnum):
     blurple = 0
     grey = 1
     gray = 1
@@ -306,123 +255,135 @@ class DefaultAvatar(Enum):
     orange = 3
     red = 4
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
-class NotificationLevel(Enum, comparable=True):
+class NotificationLevel(IntEnum):
     all_messages = 0
     only_mentions = 1
 
 
-class AuditLogActionCategory(Enum):
+class AuditLogActionCategory(IntEnum):
     create = 1
     delete = 2
     update = 3
 
 
-class AuditLogAction(Enum):
+class AuditLogAction(IntEnum):
     # fmt: off
-    guild_update             = 1
-    channel_create           = 10
-    channel_update           = 11
-    channel_delete           = 12
-    overwrite_create         = 13
-    overwrite_update         = 14
-    overwrite_delete         = 15
-    kick                     = 20
-    member_prune             = 21
-    ban                      = 22
-    unban                    = 23
-    member_update            = 24
-    member_role_update       = 25
-    member_move              = 26
-    member_disconnect        = 27
-    bot_add                  = 28
-    role_create              = 30
-    role_update              = 31
-    role_delete              = 32
-    invite_create            = 40
-    invite_update            = 41
-    invite_delete            = 42
-    webhook_create           = 50
-    webhook_update           = 51
-    webhook_delete           = 52
-    emoji_create             = 60
-    emoji_update             = 61
-    emoji_delete             = 62
-    message_delete           = 72
-    message_bulk_delete      = 73
-    message_pin              = 74
-    message_unpin            = 75
-    integration_create       = 80
-    integration_update       = 81
-    integration_delete       = 82
-    stage_instance_create    = 83
-    stage_instance_update    = 84
-    stage_instance_delete    = 85
-    sticker_create           = 90
-    sticker_update           = 91
-    sticker_delete           = 92
-    scheduled_event_create   = 100
-    scheduled_event_update   = 101
-    scheduled_event_delete   = 102
-    thread_create            = 110
-    thread_update            = 111
-    thread_delete            = 112
+    guild_update                                = 1
+    channel_create                              = 10
+    channel_update                              = 11
+    channel_delete                              = 12
+    overwrite_create                            = 13
+    overwrite_update                            = 14
+    overwrite_delete                            = 15
+    kick                                        = 20
+    member_prune                                = 21
+    ban                                         = 22
+    unban                                       = 23
+    member_update                               = 24
+    member_role_update                          = 25
+    member_move                                 = 26
+    member_disconnect                           = 27
+    bot_add                                     = 28
+    role_create                                 = 30
+    role_update                                 = 31
+    role_delete                                 = 32
+    invite_create                               = 40
+    invite_update                               = 41
+    invite_delete                               = 42
+    webhook_create                              = 50
+    webhook_update                              = 51
+    webhook_delete                              = 52
+    emoji_create                                = 60
+    emoji_update                                = 61
+    emoji_delete                                = 62
+    message_delete                              = 72
+    message_bulk_delete                         = 73
+    message_pin                                 = 74
+    message_unpin                               = 75
+    integration_create                          = 80
+    integration_update                          = 81
+    integration_delete                          = 82
+    stage_instance_create                       = 83
+    stage_instance_update                       = 84
+    stage_instance_delete                       = 85
+    sticker_create                              = 90
+    sticker_update                              = 91
+    sticker_delete                              = 92
+    scheduled_event_create                      = 100
+    scheduled_event_update                      = 101
+    scheduled_event_delete                      = 102
+    thread_create                               = 110
+    thread_update                               = 111
+    thread_delete                               = 112
+    auto_moderation_rule_create                 = 140
+    auto_moderation_rule_update                 = 141
+    auto_moderation_rule_delete                 = 142
+    auto_moderation_block_message               = 143
+    auto_moderation_flag_to_channel             = 144
+    auto_moderation_user_communication_disabled = 145
     # fmt: on
 
     @property
     def category(self) -> Optional[AuditLogActionCategory]:
         # fmt: off
         lookup: Dict[AuditLogAction, Optional[AuditLogActionCategory]] = {
-            AuditLogAction.guild_update:           AuditLogActionCategory.update,
-            AuditLogAction.channel_create:         AuditLogActionCategory.create,
-            AuditLogAction.channel_update:         AuditLogActionCategory.update,
-            AuditLogAction.channel_delete:         AuditLogActionCategory.delete,
-            AuditLogAction.overwrite_create:       AuditLogActionCategory.create,
-            AuditLogAction.overwrite_update:       AuditLogActionCategory.update,
-            AuditLogAction.overwrite_delete:       AuditLogActionCategory.delete,
-            AuditLogAction.kick:                   None,
-            AuditLogAction.member_prune:           None,
-            AuditLogAction.ban:                    None,
-            AuditLogAction.unban:                  None,
-            AuditLogAction.member_update:          AuditLogActionCategory.update,
-            AuditLogAction.member_role_update:     AuditLogActionCategory.update,
-            AuditLogAction.member_move:            None,
-            AuditLogAction.member_disconnect:      None,
-            AuditLogAction.bot_add:                None,
-            AuditLogAction.role_create:            AuditLogActionCategory.create,
-            AuditLogAction.role_update:            AuditLogActionCategory.update,
-            AuditLogAction.role_delete:            AuditLogActionCategory.delete,
-            AuditLogAction.invite_create:          AuditLogActionCategory.create,
-            AuditLogAction.invite_update:          AuditLogActionCategory.update,
-            AuditLogAction.invite_delete:          AuditLogActionCategory.delete,
-            AuditLogAction.webhook_create:         AuditLogActionCategory.create,
-            AuditLogAction.webhook_update:         AuditLogActionCategory.update,
-            AuditLogAction.webhook_delete:         AuditLogActionCategory.delete,
-            AuditLogAction.emoji_create:           AuditLogActionCategory.create,
-            AuditLogAction.emoji_update:           AuditLogActionCategory.update,
-            AuditLogAction.emoji_delete:           AuditLogActionCategory.delete,
-            AuditLogAction.message_delete:         AuditLogActionCategory.delete,
-            AuditLogAction.message_bulk_delete:    AuditLogActionCategory.delete,
-            AuditLogAction.message_pin:            None,
-            AuditLogAction.message_unpin:          None,
-            AuditLogAction.integration_create:     AuditLogActionCategory.create,
-            AuditLogAction.integration_update:     AuditLogActionCategory.update,
-            AuditLogAction.integration_delete:     AuditLogActionCategory.delete,
-            AuditLogAction.stage_instance_create:  AuditLogActionCategory.create,
-            AuditLogAction.stage_instance_update:  AuditLogActionCategory.update,
-            AuditLogAction.stage_instance_delete:  AuditLogActionCategory.delete,
-            AuditLogAction.sticker_create:         AuditLogActionCategory.create,
-            AuditLogAction.sticker_update:         AuditLogActionCategory.update,
-            AuditLogAction.sticker_delete:         AuditLogActionCategory.delete,
-            AuditLogAction.scheduled_event_create: AuditLogActionCategory.create,
-            AuditLogAction.scheduled_event_update: AuditLogActionCategory.update,
-            AuditLogAction.scheduled_event_delete: AuditLogActionCategory.delete,
-            AuditLogAction.thread_create:          AuditLogActionCategory.create,
-            AuditLogAction.thread_update:          AuditLogActionCategory.update,
-            AuditLogAction.thread_delete:          AuditLogActionCategory.delete,
+            AuditLogAction.guild_update:                                AuditLogActionCategory.update,
+            AuditLogAction.channel_create:                              AuditLogActionCategory.create,
+            AuditLogAction.channel_update:                              AuditLogActionCategory.update,
+            AuditLogAction.channel_delete:                              AuditLogActionCategory.delete,
+            AuditLogAction.overwrite_create:                            AuditLogActionCategory.create,
+            AuditLogAction.overwrite_update:                            AuditLogActionCategory.update,
+            AuditLogAction.overwrite_delete:                            AuditLogActionCategory.delete,
+            AuditLogAction.kick:                                        None,
+            AuditLogAction.member_prune:                                None,
+            AuditLogAction.ban:                                         None,
+            AuditLogAction.unban:                                       None,
+            AuditLogAction.member_update:                               AuditLogActionCategory.update,
+            AuditLogAction.member_role_update:                          AuditLogActionCategory.update,
+            AuditLogAction.member_move:                                 None,
+            AuditLogAction.member_disconnect:                           None,
+            AuditLogAction.bot_add:                                     None,
+            AuditLogAction.role_create:                                 AuditLogActionCategory.create,
+            AuditLogAction.role_update:                                 AuditLogActionCategory.update,
+            AuditLogAction.role_delete:                                 AuditLogActionCategory.delete,
+            AuditLogAction.invite_create:                               AuditLogActionCategory.create,
+            AuditLogAction.invite_update:                               AuditLogActionCategory.update,
+            AuditLogAction.invite_delete:                               AuditLogActionCategory.delete,
+            AuditLogAction.webhook_create:                              AuditLogActionCategory.create,
+            AuditLogAction.webhook_update:                              AuditLogActionCategory.update,
+            AuditLogAction.webhook_delete:                              AuditLogActionCategory.delete,
+            AuditLogAction.emoji_create:                                AuditLogActionCategory.create,
+            AuditLogAction.emoji_update:                                AuditLogActionCategory.update,
+            AuditLogAction.emoji_delete:                                AuditLogActionCategory.delete,
+            AuditLogAction.message_delete:                              AuditLogActionCategory.delete,
+            AuditLogAction.message_bulk_delete:                         AuditLogActionCategory.delete,
+            AuditLogAction.message_pin:                                 None,
+            AuditLogAction.message_unpin:                               None,
+            AuditLogAction.integration_create:                          AuditLogActionCategory.create,
+            AuditLogAction.integration_update:                          AuditLogActionCategory.update,
+            AuditLogAction.integration_delete:                          AuditLogActionCategory.delete,
+            AuditLogAction.stage_instance_create:                       AuditLogActionCategory.create,
+            AuditLogAction.stage_instance_update:                       AuditLogActionCategory.update,
+            AuditLogAction.stage_instance_delete:                       AuditLogActionCategory.delete,
+            AuditLogAction.sticker_create:                              AuditLogActionCategory.create,
+            AuditLogAction.sticker_update:                              AuditLogActionCategory.update,
+            AuditLogAction.sticker_delete:                              AuditLogActionCategory.delete,
+            AuditLogAction.scheduled_event_create:                      AuditLogActionCategory.create,
+            AuditLogAction.scheduled_event_update:                      AuditLogActionCategory.update,
+            AuditLogAction.scheduled_event_delete:                      AuditLogActionCategory.delete,
+            AuditLogAction.thread_create:                               AuditLogActionCategory.create,
+            AuditLogAction.thread_update:                               AuditLogActionCategory.update,
+            AuditLogAction.thread_delete:                               AuditLogActionCategory.delete,
+            AuditLogAction.auto_moderation_rule_create:                 AuditLogActionCategory.create,
+            AuditLogAction.auto_moderation_rule_update:                 AuditLogActionCategory.update,
+            AuditLogAction.auto_moderation_rule_delete:                 AuditLogActionCategory.delete,
+            AuditLogAction.auto_moderation_block_message:               None,
+            AuditLogAction.auto_moderation_flag_to_channel:             None,
+            AuditLogAction.auto_moderation_user_communication_disabled: None,
         }
         # fmt: on
         return lookup[self]
@@ -460,30 +421,42 @@ class AuditLogAction(Enum):
             return "event"
         elif v < 113:
             return "thread"
+        elif v < 122:
+            return "application_command_or_integration"
+        elif v < 140:
+            return None
+        elif v == 143:
+            return "user"
+        elif v < 143:
+            return "auto_moderation_rule"
+        else:
+            return None
 
 
-class UserFlags(Enum):
-    staff = 1
-    partner = 2
-    hypesquad = 4
-    bug_hunter = 8
-    mfa_sms = 16
-    premium_promo_dismissed = 32
-    hypesquad_bravery = 64
-    hypesquad_brilliance = 128
-    hypesquad_balance = 256
-    early_supporter = 512
-    team_user = 1024
-    system = 4096
-    has_unread_urgent_messages = 8192
-    bug_hunter_level_2 = 16384
-    verified_bot = 65536
-    verified_bot_developer = 131072
-    discord_certified_moderator = 262144
-    known_spammer = 1048576
+class UserFlags(IntEnum):
+    staff = 1 << 0
+    partner = 1 << 1
+    hypesquad = 1 << 2
+    bug_hunter = 1 << 3
+    mfa_sms = 1 << 4
+    premium_promo_dismissed = 1 << 5
+    hypesquad_bravery = 1 << 6
+    hypesquad_brilliance = 1 << 7
+    hypesquad_balance = 1 << 8
+    early_supporter = 1 << 9
+    team_user = 1 << 10
+    system = 1 << 12
+    has_unread_urgent_messages = 1 << 13
+    bug_hunter_level_2 = 1 << 14
+    verified_bot = 1 << 16
+    verified_bot_developer = 1 << 17
+    discord_certified_moderator = 1 << 18
+    bot_http_interactions = 1 << 19
+    known_spammer = 1 << 20
+    active_developer = 1 << 22
 
 
-class ActivityType(Enum):
+class ActivityType(IntEnum):
     unknown = -1
     playing = 0
     streaming = 1
@@ -492,22 +465,19 @@ class ActivityType(Enum):
     custom = 4
     competing = 5
 
-    def __int__(self):
-        return self.value
 
-
-class TeamMembershipState(Enum):
+class TeamMembershipState(IntEnum):
     invited = 1
     accepted = 2
 
 
-class WebhookType(Enum):
+class WebhookType(IntEnum):
     incoming = 1
     channel_follower = 2
     application = 3
 
 
-class ExpireBehaviour(Enum):
+class ExpireBehaviour(IntEnum):
     remove_role = 0
     kick = 1
 
@@ -515,15 +485,16 @@ class ExpireBehaviour(Enum):
 ExpireBehavior = ExpireBehaviour
 
 
-class StickerType(Enum):
+class StickerType(IntEnum):
     standard = 1
     guild = 2
 
 
-class StickerFormatType(Enum):
+class StickerFormatType(IntEnum):
     png = 1
     apng = 2
     lottie = 3
+    gif = 4
 
     @property
     def file_extension(self) -> str:
@@ -532,18 +503,19 @@ class StickerFormatType(Enum):
             StickerFormatType.png: 'png',
             StickerFormatType.apng: 'png',
             StickerFormatType.lottie: 'json',
+            StickerFormatType.gif: 'gif',
         }
         # fmt: on
         return lookup[self]
 
 
-class InviteTarget(Enum):
+class InviteTarget(IntEnum):
     unknown = 0
     stream = 1
     embedded_application = 2
 
 
-class InteractionType(Enum):
+class InteractionType(IntEnum):
     ping = 1
     application_command = 2
     component = 3
@@ -551,7 +523,7 @@ class InteractionType(Enum):
     modal_submit = 5
 
 
-class InteractionResponseType(Enum):
+class InteractionResponseType(IntEnum):
     pong = 1
     # ack = 2 (deprecated)
     # channel_message = 3 (deprecated)
@@ -563,13 +535,13 @@ class InteractionResponseType(Enum):
     modal = 9
 
 
-class ApplicationCommandType(Enum):
+class ApplicationCommandType(IntEnum):
     chat_input = 1
     user = 2
     message = 3
 
 
-class ApplicationCommandOptionType(Enum):
+class ApplicationCommandOptionType(IntEnum):
     sub_command = 1
     sub_command_group = 2
     string = 3
@@ -583,7 +555,7 @@ class ApplicationCommandOptionType(Enum):
     attachment = 11
 
 
-class Locale(Enum):
+class Locale(StrEnum):
     da = "da"
     """Danish | Dansk"""
     de = "de"
@@ -598,6 +570,11 @@ class Locale(Enum):
     """French | Français"""
     hr = "hr"
     """Croatian | Hrvatski"""
+    id = "id"
+    """Indonesian | Bahasa Indonesia
+
+    .. versionadded:: 2.4
+    """
     it = "it"
     """Italian | Italiano"""
     lt = "lt"
@@ -645,29 +622,25 @@ class Locale(Enum):
     ko = "ko"
     """Korean | 한국어"""
 
-    def __str__(self):
-        return self.value
 
-
-class VideoQualityMode(Enum):
+class VideoQualityMode(IntEnum):
     auto = 1
     full = 2
 
-    def __int__(self):
-        return self.value
 
-
-class ComponentType(Enum):
+class ComponentType(IntEnum):
     action_row = 1
     button = 2
     select = 3
+    string_select = 3
     text_input = 4
+    user_select = 5
+    role_select = 6
+    mentionable_select = 7
+    channel_select = 8
 
-    def __int__(self):
-        return self.value
 
-
-class ButtonStyle(Enum):
+class ButtonStyle(IntEnum):
     primary = 1
     secondary = 2
     success = 3
@@ -682,39 +655,36 @@ class ButtonStyle(Enum):
     red = 4
     url = 5
 
-    def __int__(self):
-        return self.value
 
-
-class TextInputStyle(Enum):
+class TextInputStyle(IntEnum):
     short = 1
     paragraph = 2
 
 
-class StagePrivacyLevel(Enum):
+class StagePrivacyLevel(IntEnum):
     public = 1
     closed = 2
     guild_only = 2
 
 
-class NSFWLevel(Enum, comparable=True):
+class NSFWLevel(IntEnum):
     default = 0
     explicit = 1
     safe = 2
     age_restricted = 3
 
 
-class ScheduledEventEntityType(Enum):
+class ScheduledEventEntityType(IntEnum):
     stage_instance = 1
     voice = 2
     external = 3
 
 
-class ScheduledEventPrivacyLevel(Enum):
+class ScheduledEventPrivacyLevel(IntEnum):
     guild_only = 2
 
 
-class ScheduledEventStatus(Enum):
+class ScheduledEventStatus(IntEnum):
     scheduled = 1
     active = 2
     completed = 3
@@ -722,13 +692,52 @@ class ScheduledEventStatus(Enum):
     cancelled = 4
 
 
+class AutoModerationEventType(IntEnum):
+    message_send = 1
+
+
+class AutoModerationTriggerType(IntEnum):
+    keyword = 1
+    spam = 3
+    keyword_preset = 4
+    mention_spam = 5
+
+
+class KeywordPresetType(IntEnum):
+    profanity = 1
+    sexual_content = 2
+    slurs = 3
+
+
+class AutoModerationActionType(IntEnum):
+    block_message = 1
+    send_alert_message = 2
+    timeout = 3
+
+
+class SortOrderType(IntEnum):
+    latest_activity = 0
+    creation_date = 1
+
+
+class RoleConnectionMetadataType(IntEnum):
+    integer_less_than_or_equal = 1
+    integer_greater_than_or_equal = 2
+    integer_equal = 3
+    integer_not_equal = 4
+    datetime_less_than_or_equal = 5
+    datetime_greater_than_or_equal = 6
+    boolean_equal = 7
+    boolean_not_equal = 8
+
+
+class ForumLayoutType(IntEnum):
+    not_set = 0
+    list = 1
+    gallery = 2
+
+
 T = TypeVar("T")
-
-
-def create_unknown_value(cls: Type[T], val: Any) -> T:
-    value_cls = cls._enum_value_cls_  # type: ignore
-    name = f"unknown_{val}"
-    return value_cls(name=name, value=val)
 
 
 def try_enum(cls: Type[T], val: Any) -> T:
@@ -738,6 +747,6 @@ def try_enum(cls: Type[T], val: Any) -> T:
     """
 
     try:
-        return cls._enum_value_map_[val]  # type: ignore
-    except (KeyError, TypeError, AttributeError):
-        return create_unknown_value(cls, val)
+        return cls(val)
+    except ValueError:
+        return UnknownEnumValue(name=f"unknown_{val}", value=val)  # type: ignore

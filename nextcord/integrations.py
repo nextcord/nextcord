@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -30,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type
 from .enums import ExpireBehaviour, try_enum
 from .errors import InvalidArgument
 from .user import User
-from .utils import MISSING, _get_as_snowflake, parse_time
+from .utils import MISSING, get_as_snowflake, parse_time
 
 __all__ = (
     "IntegrationAccount",
@@ -59,7 +37,7 @@ class IntegrationAccount:
     .. versionadded:: 1.4
 
     Attributes
-    -----------
+    ----------
     id: :class:`str`
         The account ID.
     name: :class:`str`
@@ -82,7 +60,7 @@ class Integration:
     .. versionadded:: 1.4
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The integration ID.
     name: :class:`str`
@@ -115,7 +93,7 @@ class Integration:
         self._state = guild._state
         self._from_data(data)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={self.id} name={self.name!r}>"
 
     def _from_data(self, data: IntegrationPayload) -> None:
@@ -137,14 +115,14 @@ class Integration:
         do this.
 
         Parameters
-        -----------
+        ----------
         reason: :class:`str`
             The reason the integration was deleted. Shows up on the audit log.
 
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permission to delete the integration.
         HTTPException
@@ -203,7 +181,7 @@ class StreamIntegration(Integration):
         self.expire_behaviour: ExpireBehaviour = try_enum(ExpireBehaviour, data["expire_behavior"])
         self.expire_grace_period: int = data["expire_grace_period"]
         self.synced_at: datetime.datetime = parse_time(data["synced_at"])
-        self._role_id: Optional[int] = _get_as_snowflake(data, "role_id")
+        self._role_id: Optional[int] = get_as_snowflake(data, "role_id")
         self.syncing: bool = data["syncing"]
         self.enable_emoticons: bool = data["enable_emoticons"]
         self.subscriber_count: int = data["subscriber_count"]
@@ -233,7 +211,7 @@ class StreamIntegration(Integration):
         do this.
 
         Parameters
-        -----------
+        ----------
         expire_behaviour: :class:`ExpireBehaviour`
             The behaviour when an integration subscription lapses. Aliased to ``expire_behavior`` as well.
         expire_grace_period: :class:`int`
@@ -242,7 +220,7 @@ class StreamIntegration(Integration):
             Where emoticons should be synced for this integration (currently twitch only).
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permission to edit the integration.
         HTTPException
@@ -276,7 +254,7 @@ class StreamIntegration(Integration):
         do this.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permission to sync the integration.
         HTTPException
@@ -316,7 +294,7 @@ class IntegrationApplication:
         "user",
     )
 
-    def __init__(self, *, data: IntegrationApplicationPayload, state):
+    def __init__(self, *, data: IntegrationApplicationPayload, state) -> None:
         self.id: int = int(data["id"])
         self.name: str = data["name"]
         self.icon: Optional[str] = data["icon"]

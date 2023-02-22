@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -45,6 +23,8 @@ from typing import (
     Tuple,
 )
 
+from typing_extensions import Self
+
 from ..components import (
     ActionRow as ActionRowComponent,
     Button as ButtonComponent,
@@ -58,7 +38,7 @@ from .item import Item, ItemCallbackType
 __all__ = ("View",)
 
 if TYPE_CHECKING:
-    from ..interactions import Interaction
+    from ..interactions import ClientT, Interaction
     from ..message import Message
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
@@ -93,7 +73,7 @@ def _component_to_item(component: Component) -> Item:
 class _ViewWeights:
     __slots__ = ("weights",)
 
-    def __init__(self, children: List[Item]):
+    def __init__(self, children: List[Item]) -> None:
         self.weights: List[int] = [0, 0, 0, 0, 0]
 
         key: Callable[[Item[Any]], int] = lambda i: sys.maxsize if i.row is None else i.row
@@ -138,7 +118,7 @@ class View:
     .. versionadded:: 2.0
 
     Parameters
-    -----------
+    ----------
     timeout: Optional[:class:`float`]
         Timeout in seconds from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
@@ -148,7 +128,7 @@ class View:
         handle view interactions outside of the callback.
 
     Attributes
-    ------------
+    ----------
     timeout: Optional[:class:`float`]
         Timeout from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
@@ -175,7 +155,7 @@ class View:
 
         cls.__view_children_items__ = children
 
-    def __init__(self, *, timeout: Optional[float] = 180.0, auto_defer: bool = True):
+    def __init__(self, *, timeout: Optional[float] = 180.0, auto_defer: bool = True) -> None:
         self.timeout = timeout
         self.auto_defer = auto_defer
         self.children: List[Item] = []
@@ -244,14 +224,14 @@ class View:
         converted into a :class:`View` first.
 
         Parameters
-        -----------
+        ----------
         message: :class:`nextcord.Message`
             The message with components to convert into a view.
         timeout: Optional[:class:`float`]
             The timeout of the converted view.
 
         Returns
-        --------
+        -------
         :class:`View`
             The converted view. This always returns a :class:`View` and not
             one of its subclasses.
@@ -274,16 +254,16 @@ class View:
         """
         return self.__timeout_expiry
 
-    def add_item(self, item: Item) -> None:
+    def add_item(self, item: Item[Self]) -> None:
         """Adds an item to the view.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to add to the view.
 
         Raises
-        --------
+        ------
         TypeError
             An :class:`Item` was not passed.
         ValueError
@@ -306,7 +286,7 @@ class View:
         """Removes an item from the view.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to remove from the view.
         """
@@ -340,12 +320,12 @@ class View:
             is considered a failure and :meth:`on_error` is called.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`~nextcord.Interaction`
             The interaction that occurred.
 
         Returns
-        ---------
+        -------
         :class:`bool`
             Whether the view children's callbacks should be called.
         """
@@ -367,7 +347,7 @@ class View:
         The default implementation prints the traceback to stderr.
 
         Parameters
-        -----------
+        ----------
         error: :class:`Exception`
             The exception that was raised.
         item: :class:`Item`
@@ -407,14 +387,14 @@ class View:
             self.__timeout_expiry = time.monotonic() + self.timeout
             self.__timeout_task = loop.create_task(self.__timeout_task_impl())
 
-    def _dispatch_timeout(self):
+    def _dispatch_timeout(self) -> None:
         if self.__stopped.done():
             return
 
         asyncio.create_task(self.on_timeout(), name=f"discord-ui-view-timeout-{self.id}")
         self.__stopped.set_result(True)
 
-    def _dispatch_item(self, item: Item, interaction: Interaction):
+    def _dispatch_item(self, item: Item, interaction: Interaction) -> None:
         if self.__stopped.done():
             return
 
@@ -422,7 +402,7 @@ class View:
             self._scheduled_task(item, interaction), name=f"discord-ui-view-dispatch-{self.id}"
         )
 
-    def refresh(self, components: List[Component]):
+    def refresh(self, components: List[Component]) -> None:
         # fmt: off
         old_state: Dict[str, Item[Any]] = {
             item.custom_id: item  # type: ignore
@@ -487,7 +467,7 @@ class View:
         or it times out.
 
         Returns
-        --------
+        -------
         :class:`bool`
             If ``True``, then the view timed out. If ``False`` then
             the view finished normally.
@@ -496,7 +476,7 @@ class View:
 
 
 class ViewStore:
-    def __init__(self, state: ConnectionState):
+    def __init__(self, state: ConnectionState) -> None:
         # (component_type, message_id, custom_id): (View, Item)
         self._views: Dict[Tuple[int, Optional[int], str], Tuple[View, Item]] = {}
         # message_id: View
@@ -514,16 +494,16 @@ class ViewStore:
         # fmt: on
         return list(views.values())
 
-    def __verify_integrity(self):
+    def __verify_integrity(self) -> None:
         to_remove: List[Tuple[int, Optional[int], str]] = []
-        for (k, (view, _)) in self._views.items():
+        for k, (view, _) in self._views.items():
             if view.is_finished():
                 to_remove.append(k)
 
         for k in to_remove:
             del self._views[k]
 
-    def add_view(self, view: View, message_id: Optional[int] = None):
+    def add_view(self, view: View, message_id: Optional[int] = None) -> None:
         self.__verify_integrity()
 
         view._start_listening_from_store(self)
@@ -534,17 +514,19 @@ class ViewStore:
         if message_id is not None:
             self._synced_message_views[message_id] = view
 
-    def remove_view(self, view: View):
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
         for item in view.children:
             if item.is_dispatchable():
-                self._views.pop((item.type.value, item.custom_id), None)  # type: ignore
+                self._views.pop((item.type.value, message_id, item.custom_id), None)  # type: ignore
 
         for key, value in self._synced_message_views.items():
             if value.id == view.id:
                 del self._synced_message_views[key]
                 break
 
-    def dispatch(self, component_type: int, custom_id: str, interaction: Interaction):
+    def dispatch(
+        self, component_type: int, custom_id: str, interaction: Interaction[ClientT]
+    ) -> None:
         self.__verify_integrity()
         message_id: Optional[int] = interaction.message and interaction.message.id
         key = (component_type, message_id, custom_id)
@@ -555,16 +537,16 @@ class ViewStore:
             return
 
         view, item = value
-        item.refresh_state(interaction.data)  # type: ignore
+        item.refresh_state(interaction.data, interaction._state, interaction.guild)  # type: ignore
         view._dispatch_item(item, interaction)
 
-    def is_message_tracked(self, message_id: int):
+    def is_message_tracked(self, message_id: int) -> bool:
         return message_id in self._synced_message_views
 
     def remove_message_tracking(self, message_id: int) -> Optional[View]:
         return self._synced_message_views.pop(message_id, None)
 
-    def update_from_message(self, message_id: int, components: List[ComponentPayload]):
+    def update_from_message(self, message_id: int, components: List[ComponentPayload]) -> None:
         # pre-req: is_message_tracked == true
         view = self._synced_message_views[message_id]
         view.refresh([_component_factory(d) for d in components])

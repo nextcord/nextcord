@@ -1,27 +1,5 @@
+# SPDX-License-Identifier: MIT
 """
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-
-
 Some documentation to refer to:
 
 - Our main web socket (mWS) sends opcode 4 with a guild ID and channel ID.
@@ -99,7 +77,7 @@ class VoiceProtocol:
     .. _Lavalink: https://github.com/freyacodes/Lavalink
 
     Parameters
-    ------------
+    ----------
     client: :class:`Client`
         The client (or its subclasses) that started the connection request.
     channel: :class:`abc.Connectable`
@@ -117,7 +95,7 @@ class VoiceProtocol:
         has changed. This corresponds to ``VOICE_STATE_UPDATE``.
 
         Parameters
-        ------------
+        ----------
         data: :class:`dict`
             The raw `voice state payload`__.
 
@@ -134,7 +112,7 @@ class VoiceProtocol:
         This corresponds to ``VOICE_SERVER_UPDATE``.
 
         Parameters
-        ------------
+        ----------
         data: :class:`dict`
             The raw `voice server update payload`__.
 
@@ -159,7 +137,7 @@ class VoiceProtocol:
         The order that these two are called is unspecified.
 
         Parameters
-        ------------
+        ----------
         timeout: :class:`float`
             The timeout for the connection.
         reconnect: :class:`bool`
@@ -175,7 +153,7 @@ class VoiceProtocol:
         See :meth:`cleanup`.
 
         Parameters
-        ------------
+        ----------
         force: :class:`bool`
             Whether the disconnection was forced.
         """
@@ -202,14 +180,14 @@ class VoiceClient(VoiceProtocol):
     e.g. :meth:`VoiceChannel.connect`.
 
     Warning
-    --------
+    -------
     In order to use PCM based AudioSources, you must have the opus library
     installed on your system and loaded through :func:`opus.load_opus`.
     Otherwise, your AudioSources must be opus encoded (e.g. using :class:`FFmpegOpusAudio`)
     or the library will not be able to transmit audio.
 
     Attributes
-    -----------
+    ----------
     session_id: :class:`str`
         The voice connection session ID.
     token: :class:`str`
@@ -229,7 +207,7 @@ class VoiceClient(VoiceProtocol):
     ip: str
     port: int
 
-    def __init__(self, client: Client, channel: abc.Connectable):
+    def __init__(self, client: Client, channel: abc.Connectable) -> None:
         if not has_nacl:
             raise RuntimeError("PyNaCl library needed in order to use voice")
 
@@ -275,7 +253,7 @@ class VoiceClient(VoiceProtocol):
         """:class:`ClientUser`: The user connected to voice (i.e. ourselves)."""
         return self._state.user  # type: ignore # [should exist]
 
-    def checked_add(self, attr, value, limit):
+    def checked_add(self, attr, value, limit) -> None:
         val = getattr(self, attr)
         if val + value > limit:
             setattr(self, attr, 0)
@@ -515,7 +493,7 @@ class VoiceClient(VoiceProtocol):
         Moves you to a different voice channel.
 
         Parameters
-        -----------
+        ----------
         channel: :class:`abc.Snowflake`
             The channel to move to. Must be a voice channel.
         """
@@ -575,7 +553,7 @@ class VoiceClient(VoiceProtocol):
         passed, any caught exception will be displayed as if it were raised.
 
         Parameters
-        -----------
+        ----------
         source: :class:`AudioSource`
             The audio source we're reading from.
         after: Callable[[Optional[:class:`Exception`]], Any]
@@ -585,7 +563,7 @@ class VoiceClient(VoiceProtocol):
             If the function is a coroutine, it will be awaited when called.
 
         Raises
-        -------
+        ------
         ClientException
             Already playing audio or not connected.
         TypeError
@@ -664,7 +642,7 @@ class VoiceClient(VoiceProtocol):
             Indicates if ``data`` should be encoded into Opus.
 
         Raises
-        -------
+        ------
         ClientException
             You are not connected.
         opus.OpusError

@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -103,7 +81,7 @@ class AssetMixin:
             The asset was deleted.
 
         Returns
-        --------
+        -------
         :class:`int`
             The number of bytes written.
         """
@@ -124,6 +102,7 @@ class AssetMixin:
         filename: Optional[str] = MISSING,
         description: Optional[str] = None,
         spoiler: bool = False,
+        force_close: bool = True,
     ) -> File:
         """|coro|
 
@@ -133,7 +112,7 @@ class AssetMixin:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         filename: Optional[:class:`str`]
             The filename of the file. If not provided, then the filename from
             the asset's URL is used.
@@ -141,6 +120,14 @@ class AssetMixin:
             The description for the file.
         spoiler: :class:`bool`
             Whether the file is a spoiler.
+        force_close: :class:`bool`
+            Whether to forcibly close the bytes used to create the file
+            when ``.close()`` is called.
+            This will also make the file bytes unusable by flushing it from
+            memory after it is sent or used once.
+            Keep this enabled if you don't wish to reuse the same bytes.
+
+            .. versionadded:: 2.2
 
         Raises
         ------
@@ -164,7 +151,11 @@ class AssetMixin:
         data = await self.read()
         file_filename = filename if filename is not MISSING else yarl.URL(self.url).name
         return File(
-            io.BytesIO(data), filename=file_filename, description=description, spoiler=spoiler
+            io.BytesIO(data),
+            filename=file_filename,
+            description=description,
+            spoiler=spoiler,
+            force_close=force_close,
         )
 
 
@@ -203,7 +194,7 @@ class Asset(AssetMixin):
 
     BASE = "https://cdn.discordapp.com"
 
-    def __init__(self, state, *, url: str, key: str, animated: bool = False):
+    def __init__(self, state, *, url: str, key: str, animated: bool = False) -> None:
         self._state = state
         self._url = url
         self._animated = animated
@@ -319,7 +310,7 @@ class Asset(AssetMixin):
     def __len__(self) -> int:
         return len(self._url)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         shorten = self._url.replace(self.BASE, "")
         return f"<Asset url={shorten!r}>"
 
@@ -353,7 +344,7 @@ class Asset(AssetMixin):
         """Returns a new asset with the passed components replaced.
 
         Parameters
-        -----------
+        ----------
         size: :class:`int`
             The new size of the asset.
         format: :class:`str`
@@ -364,12 +355,12 @@ class Asset(AssetMixin):
             Must be either 'webp', 'jpeg', 'jpg', or 'png'.
 
         Raises
-        -------
+        ------
         InvalidArgument
             An invalid size or format was passed.
 
         Returns
-        --------
+        -------
         :class:`Asset`
             The newly updated asset.
         """
@@ -405,17 +396,17 @@ class Asset(AssetMixin):
         """Returns a new asset with the specified size.
 
         Parameters
-        ------------
+        ----------
         size: :class:`int`
             The new size of the asset.
 
         Raises
-        -------
+        ------
         InvalidArgument
             The asset had an invalid size.
 
         Returns
-        --------
+        -------
         :class:`Asset`
             The new updated asset.
         """
@@ -429,17 +420,17 @@ class Asset(AssetMixin):
         """Returns a new asset with the specified format.
 
         Parameters
-        ------------
+        ----------
         format: :class:`str`
             The new format of the asset.
 
         Raises
-        -------
+        ------
         InvalidArgument
             The asset had an invalid format.
 
         Returns
-        --------
+        -------
         :class:`Asset`
             The new updated asset.
         """
@@ -463,17 +454,17 @@ class Asset(AssetMixin):
         not animated. Otherwise, the asset is not changed.
 
         Parameters
-        ------------
+        ----------
         format: :class:`str`
             The new static format of the asset.
 
         Raises
-        -------
+        ------
         InvalidArgument
             The asset had an invalid format.
 
         Returns
-        --------
+        -------
         :class:`Asset`
             The new updated asset.
         """

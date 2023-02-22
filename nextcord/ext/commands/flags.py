@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -40,7 +18,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    TypeVar,
     Union,
 )
 
@@ -64,6 +41,8 @@ __all__ = (
 
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .context import Context
 
 
@@ -76,7 +55,7 @@ class Flag:
     do so. These cannot be constructed manually.
 
     Attributes
-    ------------
+    ----------
     name: :class:`str`
         The name of the flag.
     aliases: List[:class:`str`]
@@ -124,7 +103,7 @@ def flag(
     class attributes.
 
     Parameters
-    ------------
+    ----------
     name: :class:`str`
         The flag name. If not given, defaults to the attribute name.
     aliases: List[:class:`str`]
@@ -451,9 +430,6 @@ async def convert_flag(ctx, argument: str, flag: Flag, annotation: Any = None) -
         raise BadFlagArgument(flag) from e
 
 
-F = TypeVar("F", bound="FlagConverter")
-
-
 class FlagConverter(metaclass=FlagsMeta):
     """A converter that allows for a user-friendly flag syntax.
 
@@ -473,7 +449,7 @@ class FlagConverter(metaclass=FlagsMeta):
     .. versionadded:: 2.0
 
     Parameters
-    -----------
+    ----------
     case_insensitive: :class:`bool`
         A class parameter to toggle case insensitivity of the flag parsing.
         If ``True`` then flags are parsed in a case insensitive manner.
@@ -500,8 +476,8 @@ class FlagConverter(metaclass=FlagsMeta):
             yield (flag.name, getattr(self, flag.attribute))
 
     @classmethod
-    async def _construct_default(cls: Type[F], ctx: Context) -> F:
-        self: F = cls.__new__(cls)
+    async def _construct_default(cls, ctx: Context) -> Self:
+        self = cls.__new__(cls)
         flags = cls.__commands_flags__
         for flag in flags.values():
             if callable(flag.default):
@@ -571,7 +547,7 @@ class FlagConverter(metaclass=FlagsMeta):
         return result
 
     @classmethod
-    async def convert(cls: Type[F], ctx: Context, argument: str) -> F:
+    async def convert(cls, ctx: Context, argument: str) -> Self:
         """|coro|
 
         The method that actually converters an argument to the flag mapping.
@@ -586,21 +562,21 @@ class FlagConverter(metaclass=FlagsMeta):
             The argument to convert from.
 
         Raises
-        --------
+        ------
         FlagError
             A flag related parsing error.
         CommandError
             A command related error.
 
         Returns
-        --------
+        -------
         :class:`FlagConverter`
             The flag converter instance with all flags parsed.
         """
         arguments = cls.parse_flags(argument)
         flags = cls.__commands_flags__
 
-        self: F = cls.__new__(cls)
+        self = cls.__new__(cls)
         for name, flag in flags.items():
             try:
                 values = arguments[name]

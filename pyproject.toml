@@ -1,7 +1,7 @@
 # credit to https://github.com/disnakeDev/disnake/blob/master/pyproject.toml for config
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310"]
+target-version = ["py38", "py39", "py310", "py311"]
 
 
 [tool.isort]
@@ -18,8 +18,9 @@ docs = { cmd = "cd docs && sphinx-autobuild . _build/html --ignore _build --watc
 isort = { cmd = "task lint isort", help = "Run isort" }
 lint = { cmd = "pre-commit run --all-files", help = "Check all files for linting errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Install the precommit hook" }
-pyright = { cmd = "dotenv -f task.env run -- pyright", help = "Run pyright" }
+pyright = { cmd = "dotenv -f task.env run -- python -m pyright", help = "Run pyright" }
 slotscheck = { cmd = "python -m slotscheck --verbose -m nextcord", help = "Run slotscheck" }
+autotyping = { cmd = "task lint autotyping", help = "Refactor code to add automatic type annotations" }
 
 
 [tool.slotscheck]

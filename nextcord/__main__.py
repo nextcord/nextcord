@@ -1,26 +1,5 @@
-"""
-The MIT License (MIT)
+# SPDX-License-Identifier: MIT
 
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
 from __future__ import annotations
 
 import argparse
@@ -34,7 +13,7 @@ import pkg_resources
 import nextcord
 
 
-def show_version():
+def show_version() -> None:
     entries = []
 
     entries.append(
@@ -55,7 +34,7 @@ def show_version():
     print("\n".join(entries))
 
 
-def core(parser, args):
+def core(parser, args) -> None:
     if args.version:
         show_version()
 
@@ -182,7 +161,7 @@ _base_table.update((chr(i), None) for i in range(32))
 _translation_table = str.maketrans(_base_table)
 
 
-def to_path(parser, name, *, replace_spaces=False):
+def to_path(parser, name, *, replace_spaces: bool = False):
     if isinstance(name, Path):
         return name
 
@@ -220,7 +199,7 @@ def to_path(parser, name, *, replace_spaces=False):
     return Path(name)
 
 
-def newbot(parser, args):
+def newbot(parser, args) -> None:
     new_directory = to_path(parser, args.directory) / to_path(parser, args.name)
 
     # as a note exist_ok for Path is a 3.5+ only feature
@@ -262,7 +241,7 @@ def newbot(parser, args):
     print("successfully made bot at", new_directory)
 
 
-def newcog(parser, args):
+def newcog(parser, args) -> None:
     cog_dir = to_path(parser, args.directory)
     try:
         cog_dir.mkdir(exist_ok=True)
@@ -296,7 +275,7 @@ def newcog(parser, args):
         print("successfully made cog at", directory)
 
 
-def add_newbot_args(subparser):
+def add_newbot_args(subparser) -> None:
     parser = subparser.add_parser("newbot", help="creates a command bot project quickly")
     parser.set_defaults(func=newbot)
 
@@ -313,7 +292,7 @@ def add_newbot_args(subparser):
     )
 
 
-def add_newcog_args(subparser):
+def add_newcog_args(subparser) -> None:
     parser = subparser.add_parser("newcog", help="creates a new cog template quickly")
     parser.set_defaults(func=newcog)
 
@@ -345,7 +324,7 @@ def parse_args():
     return parser, parser.parse_args()
 
 
-def main():
+def main() -> None:
     parser, args = parse_args()
     args.func(parser, args)
 

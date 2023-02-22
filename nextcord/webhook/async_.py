@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -29,6 +7,7 @@ import json
 import logging
 import re
 from contextvars import ContextVar
+from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -38,10 +17,12 @@ from typing import (
     NamedTuple,
     Optional,
     Tuple,
+    Type,
     Union,
     overload,
 )
 from urllib.parse import quote as urlquote
+from weakref import WeakValueDictionary
 
 import aiohttp
 
@@ -50,6 +31,7 @@ from ..asset import Asset
 from ..channel import PartialMessageable
 from ..enums import WebhookType, try_enum
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
+from ..flags import MessageFlags
 from ..http import Route
 from ..message import Attachment, Message
 from ..mixins import Hashable
@@ -76,6 +58,7 @@ if TYPE_CHECKING:
     from ..mentions import AllowedMentions
     from ..state import ConnectionState
     from ..types.message import Message as MessagePayload
+    from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
     from ..ui.view import View
 
@@ -83,7 +66,7 @@ MISSING = utils.MISSING
 
 
 class AsyncDeferredLock:
-    def __init__(self, lock: asyncio.Lock):
+    def __init__(self, lock: asyncio.Lock) -> None:
         self.lock = lock
         self.delta: Optional[float] = None
 
@@ -94,15 +77,23 @@ class AsyncDeferredLock:
     def delay_by(self, delta: float) -> None:
         self.delta = delta
 
-    async def __aexit__(self, type, value, traceback):
+    async def __aexit__(
+        self,
+        type: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         if self.delta:
             await asyncio.sleep(self.delta)
         self.lock.release()
 
 
 class AsyncWebhookAdapter:
-    def __init__(self):
-        self._locks: Dict[Any, asyncio.Lock] = {}
+    def __init__(self) -> None:
+        self._locks: WeakValueDictionary[
+            Tuple[Optional[SnowflakeAlias], Optional[str]],
+            asyncio.Lock,
+        ] = WeakValueDictionary()
 
     async def request(
         self,
@@ -128,7 +119,7 @@ class AsyncWebhookAdapter:
 
         if payload is not None:
             headers["Content-Type"] = "application/json"
-            to_send = utils._to_json(payload)
+            to_send = utils.to_json(payload)
 
         if auth_token is not None:
             headers["Authorization"] = f"Bot {auth_token}"
@@ -170,7 +161,7 @@ class AsyncWebhookAdapter:
 
                         remaining = response.headers.get("X-Ratelimit-Remaining")
                         if remaining == "0" and response.status != 429:
-                            delta = utils._parse_ratelimit_header(response)
+                            delta = utils.parse_ratelimit_header(response)
                             _log.debug(
                                 "Webhook ID %s has been pre-emptively rate limited, waiting %.2f seconds",
                                 webhook_id,
@@ -419,7 +410,7 @@ class AsyncWebhookAdapter:
                         "content_type": "application/octet-stream",
                     }
                 )
-            multipart[0]["value"] = utils._to_json(payload)
+            multipart[0]["value"] = utils.to_json(payload)
             payload = None
 
         route = Route(
@@ -494,7 +485,6 @@ def handle_message_parameters(
     username: str = MISSING,
     avatar_url: Any = MISSING,
     tts: bool = False,
-    ephemeral: bool = False,
     file: File = MISSING,
     files: List[File] = MISSING,
     attachments: List[Attachment] = MISSING,
@@ -503,6 +493,9 @@ def handle_message_parameters(
     view: Optional[View] = MISSING,
     allowed_mentions: Optional[AllowedMentions] = MISSING,
     previous_allowed_mentions: Optional[AllowedMentions] = None,
+    ephemeral: Optional[bool] = None,
+    flags: Optional[MessageFlags] = None,
+    suppress_embeds: Optional[bool] = None,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -543,8 +536,16 @@ def handle_message_parameters(
         payload["avatar_url"] = str(avatar_url)
     if username:
         payload["username"] = username
-    if ephemeral:
-        payload["flags"] = 64
+
+    if flags is None:
+        flags = MessageFlags()
+    if suppress_embeds is not None:
+        flags.suppress_embeds = suppress_embeds
+    if ephemeral is not None:
+        flags.ephemeral = ephemeral
+
+    if flags.value != 0:
+        payload["flags"] = flags.value
 
     if allowed_mentions:
         if previous_allowed_mentions is not None:
@@ -579,7 +580,7 @@ def handle_message_parameters(
                     "content_type": "application/octet-stream",
                 }
             )
-        multipart[0]["value"] = utils._to_json(payload)
+        multipart[0]["value"] = utils.to_json(payload)
         payload = None
 
     return ExecuteWebhookParameters(payload=payload, multipart=multipart, files=files)
@@ -598,7 +599,7 @@ class PartialWebhookChannel(Hashable):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The partial channel's ID.
     name: :class:`str`
@@ -607,11 +608,11 @@ class PartialWebhookChannel(Hashable):
 
     __slots__ = ("id", "name")
 
-    def __init__(self, *, data):
+    def __init__(self, *, data) -> None:
         self.id = int(data["id"])
         self.name = data["name"]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PartialWebhookChannel name={self.name!r} id={self.id}>"
 
 
@@ -623,7 +624,7 @@ class PartialWebhookGuild(Hashable):
     .. versionadded:: 2.0
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The partial guild's ID.
     name: :class:`str`
@@ -632,13 +633,13 @@ class PartialWebhookGuild(Hashable):
 
     __slots__ = ("id", "name", "_icon", "_state")
 
-    def __init__(self, *, data, state):
+    def __init__(self, *, data, state) -> None:
         self._state = state
         self.id = int(data["id"])
         self.name = data["name"]
         self._icon = data["icon"]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PartialWebhookGuild name={self.name!r} id={self.id}>"
 
     @property
@@ -659,7 +660,9 @@ class _FriendlyHttpAttributeErrorHelper:
 class _WebhookState:
     __slots__ = ("_parent", "_webhook")
 
-    def __init__(self, webhook: Any, parent: Optional[Union[ConnectionState, _WebhookState]]):
+    def __init__(
+        self, webhook: Any, parent: Optional[Union[ConnectionState, _WebhookState]]
+    ) -> None:
         self._webhook: Any = webhook
 
         self._parent: Optional[ConnectionState]
@@ -735,7 +738,7 @@ class WebhookMessage(Message):
             The edit is no longer in-place, instead the newly edited message is returned.
 
         Parameters
-        ------------
+        ----------
         content: Optional[:class:`str`]
             The content to edit the message with or ``None`` to clear it.
         embeds: List[:class:`Embed`]
@@ -773,7 +776,7 @@ class WebhookMessage(Message):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -786,7 +789,7 @@ class WebhookMessage(Message):
             There was no token associated with this webhook.
 
         Returns
-        --------
+        -------
         :class:`WebhookMessage`
             The newly edited message.
         """
@@ -813,7 +816,7 @@ class WebhookMessage(Message):
         Deletes the message.
 
         Parameters
-        -----------
+        ----------
         delay: Optional[:class:`float`]
             If provided, the number of seconds to wait before deleting the message.
             The waiting is done in the background and deletion failures are ignored.
@@ -830,7 +833,7 @@ class WebhookMessage(Message):
 
         if delay is not None:
 
-            async def inner_call(delay: float = delay):
+            async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
                 try:
                     await self._state._webhook.delete_message(self.id)
@@ -863,18 +866,18 @@ class BaseWebhook(Hashable):
         data: WebhookPayload,
         token: Optional[str] = None,
         state: Optional[ConnectionState] = None,
-    ):
+    ) -> None:
         self.auth_token: Optional[str] = token
         self._state: Union[ConnectionState, _WebhookState] = state or _WebhookState(
             self, parent=state
         )
         self._update(data)
 
-    def _update(self, data: WebhookPayload):
+    def _update(self, data: WebhookPayload) -> None:
         self.id = int(data["id"])
         self.type = try_enum(WebhookType, int(data["type"]))
-        self.channel_id = utils._get_as_snowflake(data, "channel_id")
-        self.guild_id = utils._get_as_snowflake(data, "guild_id")
+        self.channel_id = utils.get_as_snowflake(data, "channel_id")
+        self.guild_id = utils.get_as_snowflake(data, "guild_id")
         self.name = data.get("name")
         self._avatar = data.get("avatar")
         self.token = data.get("token")
@@ -991,7 +994,7 @@ class Webhook(BaseWebhook):
         Webhooks are now comparable and hashable.
 
     Attributes
-    ------------
+    ----------
     id: :class:`int`
         The webhook's ID
     type: :class:`WebhookType`
@@ -1032,11 +1035,11 @@ class Webhook(BaseWebhook):
         session: aiohttp.ClientSession,
         token: Optional[str] = None,
         state=None,
-    ):
+    ) -> None:
         super().__init__(data, token, state)
         self.session = session
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Webhook id={self.id!r}>"
 
     @property
@@ -1051,7 +1054,7 @@ class Webhook(BaseWebhook):
         """Creates a partial :class:`Webhook`.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID of the webhook.
         token: :class:`str`
@@ -1069,7 +1072,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             A partial :class:`Webhook`.
             A partial webhook is just a webhook object with an ID and a token.
@@ -1089,7 +1092,7 @@ class Webhook(BaseWebhook):
         """Creates a partial :class:`Webhook` from a webhook URL.
 
         Parameters
-        ------------
+        ----------
         url: :class:`str`
             The URL of the webhook.
         session: :class:`aiohttp.ClientSession`
@@ -1105,12 +1108,12 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         InvalidArgument
             The URL is invalid.
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             A partial :class:`Webhook`.
             A partial webhook is just a webhook object with an ID and a token.
@@ -1168,13 +1171,13 @@ class Webhook(BaseWebhook):
             returned webhook does not contain any user information.
 
         Parameters
-        -----------
+        ----------
         prefer_auth: :class:`bool`
             Whether to use the bot token over the webhook token
             if available. Defaults to ``True``.
 
         Raises
-        -------
+        ------
         HTTPException
             Could not fetch the webhook
         NotFound
@@ -1183,7 +1186,7 @@ class Webhook(BaseWebhook):
             This webhook does not have a token associated with it.
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             The fetched webhook.
         """
@@ -1204,7 +1207,7 @@ class Webhook(BaseWebhook):
         Deletes this Webhook.
 
         Parameters
-        ------------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this webhook. Shows up on the audit log.
 
@@ -1216,7 +1219,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the webhook failed.
         NotFound
@@ -1245,7 +1248,7 @@ class Webhook(BaseWebhook):
         *,
         reason: Optional[str] = None,
         name: Optional[str] = MISSING,
-        avatar: Optional[bytes] = MISSING,
+        avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
         channel: Optional[Snowflake] = None,
         prefer_auth: bool = True,
     ) -> Webhook:
@@ -1253,12 +1256,16 @@ class Webhook(BaseWebhook):
 
         Edits this Webhook.
 
+        .. versionchanged:: 2.1
+            The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
-        ------------
+        ----------
         name: Optional[:class:`str`]
             The webhook's new default name.
-        avatar: Optional[:class:`bytes`]
-            A :term:`py:bytes-like object` representing the webhook's new default avatar.
+        avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the webhook's new default avatar.
         channel: Optional[:class:`abc.Snowflake`]
             The webhook's new channel. This requires an authenticated webhook.
 
@@ -1274,7 +1281,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the webhook failed.
         NotFound
@@ -1286,12 +1293,12 @@ class Webhook(BaseWebhook):
         if self.token is None and self.auth_token is None:
             raise InvalidArgument("This webhook does not have a token associated with it")
 
-        payload = {}
+        payload: Dict[str, Any] = {}
         if name is not MISSING:
             payload["name"] = str(name) if name is not None else None
 
         if avatar is not MISSING:
-            payload["avatar"] = utils._bytes_to_base64_data(avatar) if avatar is not None else None
+            payload["avatar"] = await utils.obj_to_base64_data(avatar)
 
         adapter = async_context.get()
 
@@ -1335,7 +1342,6 @@ class Webhook(BaseWebhook):
         username: str = MISSING,
         avatar_url: Union[Asset, str] = MISSING,
         tts: bool = MISSING,
-        ephemeral: bool = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
         embed: Embed = MISSING,
@@ -1345,6 +1351,9 @@ class Webhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: Literal[True],
         delete_after: Optional[float] = None,
+        ephemeral: Optional[bool] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> WebhookMessage:
         ...
 
@@ -1356,7 +1365,6 @@ class Webhook(BaseWebhook):
         username: str = MISSING,
         avatar_url: Union[Asset, str] = MISSING,
         tts: bool = MISSING,
-        ephemeral: bool = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
         embed: Embed = MISSING,
@@ -1366,6 +1374,9 @@ class Webhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: Literal[False] = ...,
         delete_after: Optional[float] = None,
+        ephemeral: Optional[bool] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> None:
         ...
 
@@ -1376,7 +1387,6 @@ class Webhook(BaseWebhook):
         username: str = MISSING,
         avatar_url: Union[Asset, str] = MISSING,
         tts: bool = False,
-        ephemeral: bool = False,
         file: File = MISSING,
         files: List[File] = MISSING,
         embed: Embed = MISSING,
@@ -1386,6 +1396,9 @@ class Webhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: bool = False,
         delete_after: Optional[float] = None,
+        ephemeral: Optional[bool] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1400,8 +1413,13 @@ class Webhook(BaseWebhook):
         it must be a rich embed type. You cannot mix the ``embed`` parameter with the
         ``embeds`` parameter, which must be a :class:`list` of :class:`Embed` objects to send.
 
+        .. versionchanged:: 2.4
+
+            ``ephemeral`` can now accept ``None`` to indicate that
+            ``flags`` should be used.
+
         Parameters
-        ------------
+        ----------
         content: :class:`str`
             The content of the message to send.
         wait: :class:`bool`
@@ -1455,9 +1473,18 @@ class Webhook(BaseWebhook):
             The thread to send this webhook to.
 
             .. versionadded:: 2.0
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+
+            .. versionadded:: 2.4
 
         Raises
-        --------
+        ------
         HTTPException
             Sending the message failed.
         NotFound
@@ -1474,7 +1501,7 @@ class Webhook(BaseWebhook):
             attached with this webhook when giving it a view.
 
         Returns
-        ---------
+        -------
         Optional[:class:`WebhookMessage`]
             If ``wait`` is ``True`` then the message that was sent, otherwise ``None``.
         """
@@ -1514,6 +1541,8 @@ class Webhook(BaseWebhook):
             view=view,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
+            flags=flags,
+            suppress_embeds=suppress_embeds,
         )
         adapter = async_context.get()
         thread_id: Optional[int] = None
@@ -1552,12 +1581,12 @@ class Webhook(BaseWebhook):
         .. versionadded:: 2.0
 
         Parameters
-        ------------
+        ----------
         id: :class:`int`
             The message ID to look for.
 
         Raises
-        --------
+        ------
         ~nextcord.NotFound
             The specified message was not found.
         ~nextcord.Forbidden
@@ -1568,7 +1597,7 @@ class Webhook(BaseWebhook):
             There was no token associated with this webhook.
 
         Returns
-        --------
+        -------
         :class:`~nextcord.WebhookMessage`
             The message asked for.
         """
@@ -1611,7 +1640,7 @@ class Webhook(BaseWebhook):
             The edit is no longer in-place, instead the newly edited message is returned.
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to edit.
         content: Optional[:class:`str`]
@@ -1645,7 +1674,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -1659,7 +1688,7 @@ class Webhook(BaseWebhook):
             no state.
 
         Returns
-        --------
+        -------
         :class:`WebhookMessage`
             The newly edited webhook message.
         """
@@ -1714,12 +1743,12 @@ class Webhook(BaseWebhook):
         .. versionadded:: 1.6
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to delete.
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the message failed.
         Forbidden

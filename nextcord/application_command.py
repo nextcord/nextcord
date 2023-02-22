@@ -1,43 +1,22 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 import asyncio
-import inspect
 import logging
-import typing
+import sys
 import warnings
 from inspect import Parameter, signature
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    ClassVar,
     Coroutine,
     Dict,
     Iterable,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
@@ -45,35 +24,55 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    overload,
 )
 
+import typing_extensions
+from typing_extensions import Annotated
+
 from .abc import GuildChannel
-from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
-from .errors import (
-    ApplicationCheckFailure,
-    ApplicationCommandOptionMissing,
-    ApplicationError,
-    ApplicationInvokeError,
+from .channel import (
+    CategoryChannel,
+    DMChannel,
+    ForumChannel,
+    GroupChannel,
+    StageChannel,
+    TextChannel,
+    VoiceChannel,
 )
+from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
+from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
 from .message import Attachment, Message
 from .permissions import Permissions
 from .role import Role
+from .threads import Thread
 from .types.interactions import ApplicationCommandInteractionData
-from .types.member import MemberWithUser
 from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
+    from .abc import Snowflake
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
-    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
+    from .types.interactions import (
+        ApplicationCommand as ApplicationCommandPayload,
+        ApplicationCommandInteractionDataOption,
+        InteractionData,
+    )
 
     _CustomTypingMetaBase = Any
 else:
     _CustomTypingMetaBase = object
+
+if sys.version_info >= (3, 10):
+    from types import UnionType
+
+    # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
+else:
+    UnionType = None
 
 __all__ = (
     "CallbackWrapper",
@@ -93,6 +92,8 @@ __all__ = (
     "message_command",
     "user_command",
     "Mentionable",
+    "Range",
+    "String",
 )
 
 _log = logging.getLogger(__name__)
@@ -104,6 +105,11 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+# As nextcord.types exist, we cannot import types
+if TYPE_CHECKING:
+    EllipsisType = ellipsis  # noqa: F821
+else:
+    EllipsisType = type(Ellipsis)
 
 
 def _cog_special_method(func: FuncT) -> FuncT:
@@ -181,7 +187,7 @@ class CallbackWrapper:
 
 
 class CallbackWrapperMixin:
-    def __init__(self, callback: Optional[Union[Callable, CallbackWrapper]]):
+    def __init__(self, callback: Optional[Union[Callable, CallbackWrapper]]) -> None:
         """Adds very basic callback wrapper support.
 
         If you are a normal user, you shouldn't be using this.
@@ -264,7 +270,7 @@ class ApplicationCommandOption:
         min_length: Optional[int] = None,
         max_length: Optional[int] = None,
         autocomplete: Optional[bool] = None,
-    ):
+    ) -> None:
         self.type: Optional[ApplicationCommandOptionType] = cmd_type
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
@@ -312,7 +318,7 @@ class ApplicationCommandOption:
         ret: List[Dict[str, Union[str, int, float, dict, None]]] = []
         for display_name, value in choices.items():
             # Discord returns the names as strings, might as well do it here so payload comparison is easy.
-            temp: Dict[str, Union[str, int, float, dict, None]] = {
+            temp = {
                 "name": str(display_name),
                 "value": value,
             }
@@ -333,7 +339,7 @@ class ApplicationCommandOption:
     def payload(self) -> dict:
         """:class:`dict`: Returns a dict payload made of the attributes of the option to be sent to Discord."""
         if self.type is None:
-            raise ValueError(f"The option type must be set before obtaining the payload.")
+            raise ValueError("The option type must be set before obtaining the payload.")
 
         # noinspection PyUnresolvedReferences
         ret: Dict[str, Any] = {
@@ -352,7 +358,11 @@ class ApplicationCommandOption:
 
         if self.channel_types:
             # noinspection PyUnresolvedReferences
-            ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
+            # When reading application commands from Discord, they return the channel types sorted.
+            # To prevent needless syncing and allow lazy loading, we need to sort them as well.
+            ret["channel_types"] = sorted(
+                [channel_type.value for channel_type in self.channel_types]
+            )
 
         if self.min_value is not None:
             ret["min_value"] = self.min_value
@@ -391,7 +401,7 @@ class BaseCommandOption(ApplicationCommandOption):
         parameter: Parameter,
         command: Union[BaseApplicationCommand, SlashApplicationSubcommand],
         parent_cog: Optional[ClientCog] = None,
-    ):
+    ) -> None:
         ApplicationCommandOption.__init__(self)
         self.parameter: Parameter = parameter
         self.command: Union[BaseApplicationCommand, SlashApplicationSubcommand] = command
@@ -399,14 +409,21 @@ class BaseCommandOption(ApplicationCommandOption):
         """Name of the kwarg in the function/method"""
         self.parent_cog: Optional[ClientCog] = parent_cog
 
+    @property
+    def error_name(self) -> str:
+        return f"{self.__class__.__name__} {self.name} of command {self.command.error_name}"
+
 
 class OptionConverter(_CustomTypingMetaBase):
-    def __init__(self, option_type: Union[type, ApplicationCommandOptionType] = str) -> None:
-        """Based on, in basic functionality, the ``ext.commands`` Converter. Users subclass this and use convert to
-        provide custom "typings" for slash commands.
+    """Based on, in basic functionality, the ``ext.commands`` Converter. Users subclass this and use convert to
+    provide custom "typings" for slash commands.
 
-        The ``convert`` method MUST be overridden to convert the value from Discord to the desired value.
-        The ``modify`` method MAY be overridden to modify the :class:`BaseCommandOption`.
+    The ``convert`` method MUST be overridden to convert the value from Discord to the desired value.
+    The ``modify`` method MAY be overridden to modify the :class:`BaseCommandOption`.
+    """
+
+    def __init__(self, option_type: Union[type, ApplicationCommandOptionType] = str) -> None:
+        """Initializes the converter.
 
         Parameters
         ----------
@@ -449,7 +466,7 @@ class OptionConverter(_CustomTypingMetaBase):
 class Mentionable(OptionConverter):
     """When a parameter is typehinted with this, it allows users to select both roles and members."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(ApplicationCommandOptionType.mentionable)
 
     async def convert(self, interaction: Interaction, value: Any) -> Any:
@@ -528,7 +545,7 @@ class ClientCog:
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
@@ -543,7 +560,7 @@ class ClientCog:
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
@@ -554,14 +571,16 @@ class CallbackMixin:
     name: Optional[str]
     options: Dict[str, BaseCommandOption]
 
-    def __init__(self, callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = None):
+    def __init__(
+        self, callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = None
+    ) -> None:
         """Contains code specific for adding callback support to a command class.
 
         If you are a normal user, you shouldn't be using this.
 
         Parameters
         ----------
-        callback: Optional[Callable]
+        callback: Optional[:data:`~typing.Callable`]
             Callback to create options from and invoke. If provided, it must be a coroutine function.
         parent_cog: Optional[:class:`ClientCog`]
             Class that the callback resides on. Will be passed into the callback if provided.
@@ -677,12 +696,12 @@ class CallbackMixin:
         callback: Optional[Callable] = None,
         option_class: Optional[Type[BaseCommandOption]] = BaseCommandOption,
     ) -> None:
-        """Creates objects of type `option_class` with the parameters of the function, and stores them in
+        """Creates objects of type ``option_class`` with the parameters of the function, and stores them in
         the options attribute.
 
         Parameters
         ----------
-        callback: Optional[Callable]
+        callback: Optional[:data:`~typing.Callable`]
             Callback to create options from. Must be a coroutine function.
         option_class: Optional[Type[:class:`BaseCommandOption`]]
             Class to create the options using. Should either be or subclass :class:`BaseCommandOption`. Defaults
@@ -710,25 +729,54 @@ class CallbackMixin:
             #  commands. While Discord doesn't support anything else having Options, we
             #  might be able to do something here.
             if option_class:
-                first_arg = True
-                typehints = typing.get_type_hints(self.callback)
+                skip_counter = 1
                 # Getting the callback with `self_skip = inspect.ismethod(self.callback)` was problematic due to the
                 #  decorator going into effect before the class is instantiated, thus being a function at the time.
                 #  Try to look into fixing that in the future?
                 #  If self.parent_cog isn't reliable enough, we can possibly check if the first parameter name is `self`
-                self_skip = bool(self.parent_cog)
-                for name, param in signature(self.callback).parameters.items():
-                    if first_arg:
-                        if not self_skip:
-                            first_arg = False
-                        else:
-                            self_skip = False
+                if self.parent_cog:
+                    skip_counter += 1
 
+                # TODO: use typing.get_type_hints when 3.9 is standard
+                typehints = typing_extensions.get_type_hints(self.callback, include_extras=True)
+                callback_params = dict(signature(self.callback).parameters)
+
+                for name, param in callback_params.copy().items():
+                    if isinstance(param.annotation, str):
+                        # Thank you Disnake for the guidance to use this.
+                        callback_params[name] = param.replace(
+                            annotation=typehints.get(name, param.empty)
+                        )
+
+                non_option_params = sum(
+                    # could be a self or interaction parameter
+                    param.annotation is param.empty
+                    # will always be an interaction parameter
+                    or (
+                        isinstance(param.annotation, type)
+                        and issubclass(param.annotation, Interaction)
+                    )
+                    # will always be a self parameter
+                    # TODO: use typing.Self when 3.11 is standard
+                    or param.annotation is typing_extensions.Self
+                    # will always be a self parameter
+                    or isinstance(param.annotation, TypeVar)
+                    for param in list(callback_params.values())[:skip_counter]
+                )
+
+                if self.parent_cog is not None and non_option_params < 2:
+                    raise ValueError(
+                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition."
+                    )
+                elif non_option_params < 1:
+                    raise ValueError(
+                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition."
+                    )
+
+                for name, param in callback_params.items():
+                    if skip_counter:
+                        skip_counter -= 1
                     else:
-                        if isinstance(param.annotation, str):
-                            # Thank you Disnake for the guidance to use this.
-                            param = param.replace(annotation=typehints.get(name, param.empty))
-
                         arg = option_class(param, self, parent_cog=self.parent_cog)  # type: ignore
                         # this is a mixin, so `self` would be odd here
 
@@ -738,7 +786,7 @@ class CallbackMixin:
                         self.options[arg.name] = arg
 
         except Exception as e:
-            _log.error(f"Error creating from callback %s: %s", self.error_name, e)
+            _log.error("Error creating from callback %s: %s", self.error_name, e)
             raise e
 
     async def can_run(self, interaction: Interaction) -> bool:
@@ -748,25 +796,25 @@ class CallbackMixin:
         inside the :attr:`~ApplicationCommand.checks` attribute, as well as all global and cog checks.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The interaction of the command currently being invoked.
 
         Raises
-        -------
+        ------
         :class:`ApplicationError`
             Any application command error that was raised during a check call will be propagated
             by this function.
 
         Returns
-        --------
+        -------
         :class:`bool`
             A boolean indicating if the command can be invoked.
         """
         # Global checks
         for check in interaction.client._connection._application_command_checks:
             try:
-                check_result = await maybe_coroutine(check, interaction)  # type: ignore
+                check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
@@ -804,11 +852,21 @@ class CallbackMixin:
         return True
 
     async def invoke_callback_with_hooks(
-        self, state: ConnectionState, interaction: Interaction, *args, **kwargs
+        self,
+        state: ConnectionState,
+        interaction: Interaction,
+        args: Optional[tuple] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """|coro|
         Invokes the callback with all hooks and checks.
         """
+
+        if not args:
+            args = ()
+        if not kwargs:
+            kwargs = {}
+
         interaction._set_application_command(self)  # type: ignore
         try:
             can_run = await self.can_run(interaction)
@@ -922,14 +980,14 @@ class AutocompleteOptionMixin:
         self,
         autocomplete_callback: Optional[Callable] = None,
         parent_cog: Optional[ClientCog] = None,
-    ):
+    ) -> None:
         """Contains code for providing autocomplete support, specifically for options.
 
         If you are a normal user, you shouldn't be using this.
 
         Parameters
         ----------
-        autocomplete_callback: `Callable`
+        autocomplete_callback: Optional[:data:`~typing.Callable`]
             Callback to create options from and invoke. If provided, it must be a coroutine function.
         parent_cog: Optional[:class:`ClientCog`]
             Class that the callback resides on. Will be passed into the callback if provided.
@@ -981,7 +1039,7 @@ class AutocompleteCommandMixin:
     children: Dict[str, SlashApplicationSubcommand]
     _state: ConnectionState
 
-    def __init__(self, parent_cog: Optional[ClientCog] = None):
+    def __init__(self, parent_cog: Optional[ClientCog] = None) -> None:
         """Contains code for providing autocomplete support, specifically for application commands.
 
         If you are a normal user, you shouldn't be using this.
@@ -1104,6 +1162,34 @@ class AutocompleteCommandMixin:
             raise ValueError(f'{self.error_name} kwarg "{arg_name}" for autocomplete not found.')
 
     def on_autocomplete(self, on_kwarg: str):
+        """Decorator that adds an autocomplete callback to the given kwarg.
+
+        .. code-block:: python3
+
+            @bot.slash_command()
+            async def your_favorite_dog(interaction: Interaction, dog: str):
+                await interaction.response.send_message(f"Your favorite dog is {dog}!")
+
+            @your_favorite_dog.on_autocomplete("dog")
+            async def favorite_dog(interaction: Interaction, dog: str):
+                if not dog:
+                    # send the full autocomplete list
+                    await interaction.response.send_autocomplete(list_of_dog_breeds)
+                    return
+                # send a list of nearest matches from the list of dog breeds
+                get_near_dog = [breed for breed in list_of_dog_breeds if breed.lower().startswith(dog.lower())]
+                await interaction.response.send_autocomplete(get_near_dog)
+
+        .. note::
+            To use inputs from other options inputted in the command, you can add them as arguments to the autocomplete
+            callback. The order of the arguments does not matter, but the names do.
+
+        Parameters
+        ----------
+        on_kwarg: :class:`str`
+            The slash command option to add the autocomplete callback to.
+        """
+
         def decorator(func: Callable):
             self._temp_autocomplete_callbacks[on_kwarg] = func
             return func
@@ -1142,11 +1228,11 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         A list of choices that a user must choose.
         If a :class:`dict` is given, the keys are what the users are able to see, the values are what is sent back
         to the bot.
-        Otherwise, it is treated as an `Iterable` where what the user sees and is sent back to the bot are the same.
+        Otherwise, it is treated as an :class:`~collections.abc.Iterable` where what the user sees and is sent back to the bot are the same.
     choice_localizations: Dict[:class:`str`, Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]]
         A dictionary of choice display names as the keys, and dictionaries of locale: localized name as the values.
     channel_types: List[:class:`ChannelType`]
-        List of `ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
+        List of :class:`ChannelType` enums, limiting the users choice to only those channel types. The parameter must be
         typed as :class:`GuildChannel` for this to function.
     min_value: Union[:class:`int`, :class:`float`]
         Minimum integer or floating point value the user is allowed to input. The parameter must be typed as an
@@ -1165,11 +1251,11 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
 
         .. versionadded:: 2.1
     autocomplete: :class:`bool`
-        If this parameter has an autocomplete function decorated for it. If unset, it will automatically be `True`
+        If this parameter has an autocomplete function decorated for it. If unset, it will automatically be ``True``
         if an autocomplete function for it is found.
-    autocomplete_callback: Optional[:class:`Callable`]
+    autocomplete_callback: Optional[:data:`~typing.Callable`]
         The function that will be used to autocomplete this parameter. If not specified, it will be looked for
-        using the :meth:`~SlashApplicationSubcommand.on_autocomplete` decorator.
+        using the :meth:`~SlashApplicationCommand.on_autocomplete` decorator.
     default: Any
         When required is not True and the user doesn't provide a value for this Option, this value is given instead.
     verify: :class:`bool`
@@ -1197,7 +1283,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
         autocomplete_callback: Optional[Callable] = None,
         default: Any = MISSING,
         verify: bool = True,
-    ):
+    ) -> None:
         super().__init__(
             name=name,
             name_localizations=name_localizations,
@@ -1230,13 +1316,21 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
 
 class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin):
     command: Union[SlashApplicationCommand, SlashApplicationSubcommand]
-    option_types = {
+    option_types: Dict[type, ApplicationCommandOptionType] = {
         str: ApplicationCommandOptionType.string,
         int: ApplicationCommandOptionType.integer,
         bool: ApplicationCommandOptionType.boolean,
         User: ApplicationCommandOptionType.user,
         Member: ApplicationCommandOptionType.user,
         GuildChannel: ApplicationCommandOptionType.channel,
+        CategoryChannel: ApplicationCommandOptionType.channel,
+        DMChannel: ApplicationCommandOptionType.channel,
+        ForumChannel: ApplicationCommandOptionType.channel,
+        GroupChannel: ApplicationCommandOptionType.channel,
+        StageChannel: ApplicationCommandOptionType.channel,
+        TextChannel: ApplicationCommandOptionType.channel,
+        VoiceChannel: ApplicationCommandOptionType.channel,
+        Thread: ApplicationCommandOptionType.channel,
         Role: ApplicationCommandOptionType.role,
         Mentionable: ApplicationCommandOptionType.mentionable,
         float: ApplicationCommandOptionType.number,
@@ -1244,12 +1338,31 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
     }
     """Maps Python annotations/typehints to Discord Application Command type values."""
 
+    channel_mapping: Dict[type, Tuple[ChannelType, ...]] = {
+        CategoryChannel: (ChannelType.category,),
+        DMChannel: (ChannelType.private,),
+        ForumChannel: (ChannelType.forum,),
+        GroupChannel: (ChannelType.group,),
+        StageChannel: (ChannelType.stage_voice,),
+        TextChannel: (
+            ChannelType.text,
+            ChannelType.news,
+        ),
+        Thread: (
+            ChannelType.news_thread,
+            ChannelType.public_thread,
+            ChannelType.private_thread,
+        ),
+        VoiceChannel: (ChannelType.voice,),
+    }
+    """Maps Python channel annotations/typehints to Discord ChannelType values."""
+
     def __init__(
         self,
         parameter: Parameter,
         command: Union[SlashApplicationCommand, SlashApplicationSubcommand],
         parent_cog: Optional[ClientCog] = None,
-    ):
+    ) -> None:
         BaseCommandOption.__init__(self, parameter, command, parent_cog)
         SlashOption.__init__(self)
         # We subclassed SlashOption because we must handle all attributes it has.
@@ -1265,26 +1378,127 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             cmd_arg_given = False
 
         self.name = cmd_arg.name or parameter.name
+        # Use the given name, or default to the parameter name.
+        # typehint_origin = typing.get_origin(parameter.annotation)  # TODO: Once Python 3.10 is standard, use this.
+        typehint_origin = typing_extensions.get_origin(parameter.annotation)
+
+        annotation_type: ApplicationCommandOptionType
+        annotation_required = True
+        annotation_choices: List[Union[str, int, float]] = []
+        annotation_channel_types: List[ChannelType] = []
+        annotation_converters: List[OptionConverter] = []
+
+        if typehint_origin is Literal:
+            # If they use the Literal typehint as their base. This currently should only support int, float, str, and
+            #  technically None for setting it to be optional.
+            found_type = MISSING
+            found_choices = []
+            # for lit in typing.get_args(parameter.annotation):  # TODO: Once Python 3.10 is standard, use this.
+            for lit in typing_extensions.get_args(parameter.annotation):
+                lit = unpack_annotated(lit, list(self.option_types.keys()))
+                lit_type = type(lit)
+                if lit is None:
+                    # If None is included, they want it to be optional. But we don't want None added to the choices.
+                    annotation_required = False
+
+                elif lit_type in (int, str, float):
+                    if found_type is MISSING:
+                        # If we haven't set the type of the annotation, set it.
+                        found_type = self.get_type(lit_type)
+                    elif self.get_type(lit_type) is not found_type:
+                        raise ValueError(
+                            f"{self.error_name} | Literal {lit} is incompatible with {found_type}"
+                        )
+                    found_choices.append(lit)
+
+                else:
+                    raise ValueError(
+                        f"{self.error_name} Invalid type for choices: {type(lit)}: {lit}"
+                    )
+
+            if found_type is MISSING:
+                raise NotImplementedError(
+                    "This behavior currently isn't handled in Nextcord. Please join the Nextcord Discord server and "
+                    "explain what you are doing to get this error and why we would support it."
+                )
+
+            annotation_type = found_type
+            annotation_choices = found_choices
+        elif typehint_origin in (Union, Optional, Annotated, UnionType, None):
+            # If the typehint base is Union, Optional, or not any grouping...
+            found_type = MISSING
+            found_channel_types: List[ChannelType] = []
+
+            if typehint_origin is None:
+                unpacked_annotations: List[type] = [
+                    parameter.annotation,
+                ]
+                literals: List[Annotated[OptionConverter, object]] = []
+            else:
+                unpacked_annotations, literals = unpack_annotation(
+                    parameter.annotation, list(self.option_types.keys())
+                )
+            # Make sure that all literals are only OptionConverters and nothing else.
+            for lit in literals:
+                if not isinstance(lit, OptionConverter) or lit is not None:
+                    raise ValueError(
+                        f"{self.error_name} You cannot use non-OptionConverter literals when the base annotation is "
+                        f"not Literal."
+                    )
+
+            # Pyright gets upset at appending these lists together, but not upset when .extend is used?
+            # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = unpacked_annotations + \
+            #                                                                              literals
+            grouped_annotations: List[
+                Union[type, Annotated[Optional[OptionConverter], object], Type[None]]
+            ] = []
+            grouped_annotations.extend(unpacked_annotations)
+            grouped_annotations.extend(literals)
+            # The only literals in this should be OptionConverters. Anything else should have triggered the ValueError.
+            for anno in grouped_annotations:
+                if isinstance(anno, object) and isinstance(anno, OptionConverter):
+                    # If the annotation is instantiated, add it to the converters and set the anno to the type it has.
+                    annotation_converters.append(anno)
+                    anno = anno.type
+                elif isinstance(anno, type) and issubclass(anno, OptionConverter):
+                    # If the annotation is NOT instantiated, instantiate it and do the above.
+                    made_converter = anno()
+                    annotation_converters.append(made_converter)
+                    anno = made_converter.type
+
+                if anno is None or anno is type(None):
+                    # If None is included, they want it to be optional. But we don't want None processed fully as anno.
+                    annotation_required = False
+                else:
+                    if found_type is MISSING:
+                        # If we haven't set the type of the annotation, set it.
+                        found_type = self.get_type(anno)
+                    elif self.get_type(anno) is not found_type:
+                        raise ValueError(
+                            f"{self.error_name} | Annotation {anno} is incompatible with {found_type} \n| {typehint_origin}\n| {parameter.annotation}\n| {grouped_annotations}"
+                        )
+
+                    if not (
+                        isinstance(anno, ApplicationCommandOptionType)
+                        or isinstance(anno, OptionConverter)
+                    ) and (channel_types := self.channel_mapping.get(anno)):
+                        found_channel_types.extend(channel_types)
+
+            annotation_type = found_type
+            if found_channel_types:
+                annotation_channel_types = found_channel_types
+        else:
+            raise ValueError(
+                f"{self.error_name} Invalid annotation origin: {typehint_origin} \n"
+                f"| {type(typehint_origin)} \n| {typing_extensions.get_origin(typehint_origin)} \n"
+                f"| {parameter.annotation}"
+            )
+
         self.name_localizations = cmd_arg.name_localizations
         self._description = cmd_arg.description
         self.description_localizations = cmd_arg.description_localizations
-        if cmd_arg.required is not None:  # If the user manually set it...
-            self.required = cmd_arg.required
-        elif type(None) in typing.get_args(
-            parameter.annotation
-        ):  # If it's typed as Optional/None...
-            self.required = False
-        elif cmd_arg.default is not MISSING:  # If the SlashOption has a default...
-            self.required = False
-        elif parameter.default is not parameter.empty and not cmd_arg_given:
-            # If a default was given AND it's not SlashOption...
-            self.required = False
-        else:  # Parameters in Python, by default, are required. While Discord defaults to not-required, this is Python.
-            self.required = True
-
-        self.choices = cmd_arg.choices
         self.choice_localizations = cmd_arg.choice_localizations
-        self.channel_types = cmd_arg.channel_types
+
         self.min_value = cmd_arg.min_value
         self.max_value = cmd_arg.max_value
         self.min_length = cmd_arg.min_length
@@ -1292,50 +1506,44 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         self.autocomplete = cmd_arg.autocomplete
         self.autocomplete_callback = cmd_arg.autocomplete_callback
         if self.autocomplete_callback and self.autocomplete is None:
+            # If they didn't explicitly enable autocomplete but did add an autocomplete callback...
             self.autocomplete = True
-
         if self.autocomplete_callback:
             if not asyncio.iscoroutinefunction(self.autocomplete_callback):
                 raise TypeError(
                     f"Given autocomplete callback for kwarg {self.functional_name} isn't a coroutine."
                 )
 
+        if cmd_arg.required is not None:
+            # If the user manually set if it's required...
+            self.required = cmd_arg.required
+        elif annotation_required is False:
+            # If the user annotated it as Optional or None...
+            self.required = False
+        elif cmd_arg.default is not MISSING:
+            # If the user provided a default in the SlashOption...
+            self.required = False
+        elif parameter.default is not parameter.empty and not cmd_arg_given:
+            # If the default isn't SlashOption, but was provided...
+            self.required = False
+        else:
+            # Unlike Discord, parameters in Python are required by default. With this being a Python library, we should
+            # remain intuitive by following that standard.
+            self.required = True
+
+        self.type = annotation_type
+        self.choices = cmd_arg.choices or annotation_choices or None
+        self.channel_types = cmd_arg.channel_types or annotation_channel_types or None
+        self.converters: List[OptionConverter] = annotation_converters
+
         if cmd_arg_given is False and parameter.default is not parameter.empty:
-            # If we weren't given a SlashOption, but we were given something else, set the default to that.
             self.default = parameter.default
         else:
-            # Else, just set the default to whatever cmd_arg is set to. Either None, or something set by the user.
-            self.default = cmd_arg.default
+            self.default = None if cmd_arg.default is MISSING else cmd_arg.default
 
-        if self.default is MISSING:
-            self.default = None
+        for converter in self.converters:
+            converter.modify(self)
 
-        self.converter: Optional[OptionConverter] = None
-
-        if isinstance(
-            parameter.annotation, OptionConverter
-        ):  # If annotated with an instantiated OptionConverter...
-            self.converter = parameter.annotation
-        elif inspect.isclass(parameter.annotation) and issubclass(
-            parameter.annotation, OptionConverter
-        ):
-            # If annotated with OptionConverter...
-            self.converter = parameter.annotation()
-        else:
-            for t in typing.get_args(parameter.annotation):
-                if issubclass(t, OptionConverter):
-                    # If annotated with OptionConverter inside of Optional...
-                    # Optional cannot have instantiated objects in it apparently?
-                    self.converter = t()
-                    break
-
-        if self.converter:
-            self.type: ApplicationCommandOptionType = self.get_type(self.converter)
-        else:
-            self.type = self.get_type(parameter.annotation)
-
-        if self.converter:
-            self.converter.modify(self)
         # noinspection PyProtectedMember
         if cmd_arg._verify:
             self.verify()
@@ -1354,30 +1562,40 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             return DEFAULT_SLASH_DESCRIPTION
 
     @description.setter
-    def description(self, value: str):
+    def description(self, value: str) -> None:
         self._description = value
 
-    def get_type(self, param_typing: Union[type, OptionConverter]) -> ApplicationCommandOptionType:
+    def get_type(
+        self,
+        param_typing: Union[type, OptionConverter, ApplicationCommandOptionType],
+    ) -> ApplicationCommandOptionType:
         if isinstance(param_typing, OptionConverter):
             if isinstance(param_typing.type, type):
                 param_typing = param_typing.type
             else:
                 return param_typing.type
+        elif isinstance(param_typing, ApplicationCommandOptionType):
+            return param_typing
 
         # noinspection PyTypeChecker,PyUnboundLocalVariable
         if param_typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
-        elif valid_type := self.option_types.get(param_typing, None):  # type: ignore
+        elif valid_type := self.option_types.get(param_typing, None):
             return valid_type
         elif (
-            type(None) in typing.get_args(param_typing)
-            and (inner_type := find(lambda t: t is not type(None), typing.get_args(param_typing)))
+            # type(None) in typing.get_args(param_typing)  # TODO: Once Python 3.10 is standard, use this
+            type(None) in typing_extensions.get_args(param_typing)
+            and (
+                inner_type := find(
+                    lambda t: t is not type(None), typing_extensions.get_args(param_typing)
+                )
+            )
             and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
         else:
             raise ValueError(
-                f"{self.command.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
+                f"{self.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
             )
 
     def verify(self) -> bool:
@@ -1443,9 +1661,15 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             value = interaction.guild.get_role(int(value))
         elif self.type is ApplicationCommandOptionType.integer:
-            value = int(value) if value != "" else None
+            try:
+                value = int(value)
+            except ValueError:
+                value = None
         elif self.type is ApplicationCommandOptionType.number:
-            value = float(value)
+            try:
+                value = float(value)
+            except ValueError:
+                value = None
         elif self.type is ApplicationCommandOptionType.attachment:
             try:
                 # this looks messy but is too much effort to handle
@@ -1458,28 +1682,40 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         elif self.type is ApplicationCommandOptionType.mentionable:
             user_role_list: List[Union[User, Member, Role]] = get_users_from_interaction(
                 state, interaction
-            ) + get_roles_from_interaction(
-                state, interaction
-            )  # pyright: ignore
-            # pyright is so sure that you cant add role + user | member
-            # when the resulting type is right
+            ) + get_roles_from_interaction(state, interaction)
             mentionables = {mentionable.id: mentionable for mentionable in user_role_list}
             value = mentionables[int(value)]
 
-        if self.converter:
-            return await self.converter.convert(interaction, value)
+        if self.converters:
+            ret = value
+            for converter in self.converters:
+                ret = await converter.convert(interaction, ret)
+            return ret
         else:
             return value
 
 
 class SlashCommandMixin(CallbackMixin):
-    _description: Optional[str]
+    if TYPE_CHECKING:
+        _description: Optional[str]
+        command_ids: Dict[Optional[int], int]
+        qualified_name: str
+        _children: Dict[str, SlashApplicationSubcommand]
 
-    def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]):
+    def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]) -> None:
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
         self.options: Dict[str, SlashCommandOption] = {}
-        self.children: Dict[str, SlashApplicationSubcommand] = {}
         self._parsed_docstring: Optional[Dict[str, Any]] = None
+        self._children: Dict[str, SlashApplicationSubcommand] = {}
+
+    @property
+    def children(self) -> Dict[str, SlashApplicationSubcommand]:
+        """Returns the sub-commands and sub-command groups of the command.
+
+        .. versionchanged:: 2.3
+            ``.children`` is now a read-only property.
+        """
+        return self._children
 
     @property
     def description(self) -> str:
@@ -1507,13 +1743,12 @@ class SlashCommandMixin(CallbackMixin):
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: Optional[List[Dict[str, Any]]] = None,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ) -> Dict[str, Any]:
-        # interaction.data = cast(, interaction.data)
+        interaction.data = cast("InteractionData", interaction.data)
 
         if option_data is None:
-            # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})  # type: ignore
+            option_data = interaction.data.get("options")
 
             if not option_data:
                 raise ValueError("Discord did not provide us any options data")
@@ -1525,7 +1760,7 @@ class SlashCommandMixin(CallbackMixin):
                 uncalled_args.pop(arg_data["name"])
                 kwargs[self.options[arg_data["name"]].functional_name] = await self.options[
                     arg_data["name"]
-                ].handle_value(state, arg_data["value"], interaction)
+                ].handle_value(state, arg_data.get("value"), interaction)
             else:
                 # TODO: Handle this better.
                 raise ApplicationCommandOptionMissing(
@@ -1543,28 +1778,75 @@ class SlashCommandMixin(CallbackMixin):
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: Optional[List[Dict[str, Any]]] = None,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ):
         if option_data is None:
             if interaction.data is None:
                 raise ValueError("Discord did not provide us interaction data")
 
-            # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})  # type: ignore
+            option_data = interaction.data.get("options")
 
             if not option_data:
                 raise ValueError("Discord did not provide us any options data")
 
         if self.children:
             await self.children[option_data[0]["name"]].call_slash(
-                state, interaction, option_data[0].get("options", {})
+                state, interaction, option_data[0].get("options")
             )
         else:
             kwargs = await self.get_slash_kwargs(state, interaction, option_data)
-            await self.invoke_callback_with_hooks(state, interaction, **kwargs)
+            await self.invoke_callback_with_hooks(state, interaction, kwargs=kwargs)
+
+    def get_mention(self, guild: Optional[Snowflake] = None) -> str:
+        """Returns a string that allows you to mention the slash command.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        guild: Optional[:class:`~abc.Snowflake`]
+            The :class:`Guild` of the command to mention. If ``None``, then the global command will be mentioned.
+
+        Returns
+        -------
+        :class:`str`
+            The string that allows you to mention the slash command.
+
+        Raises
+        ------
+        ValueError
+            If no guild was provided and the command is not registered globally, or the command is not registered
+            in the guild provided.
+        """
+        command_id = self.command_ids.get(guild.id if guild else None)
+        if command_id is None:
+            if None in self.command_ids:
+                command_id = self.command_ids[None]
+            elif guild is None:
+                raise ValueError(
+                    "No guild was passed to get_mention, but the command is not global."
+                )
+            else:
+                raise ValueError(
+                    "The command is not registered in the guild provided to get_mention."
+                )
+        return f"</{self.qualified_name}:{command_id}>"
 
 
 class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
+    """Base class for all application commands.
+
+    Attributes
+    ----------
+    checks: List[Union[Callable[[:class:`ClientCog`, :class:`Interaction`], MaybeCoro[:class:`bool`]], Callable[[:class:`Interaction`], MaybeCoro[:class:`bool`]]]]
+        A list of predicates that verifies if the command could be executed
+        with the given :class:`Interaction` as the sole parameter. If an exception
+        is necessary to be thrown to signal failure, then one inherited from
+        :exc:`.ApplicationError` should be used. Note that if the checks fail then
+        :exc:`.ApplicationCheckFailure` exception is raised to the :func:`.on_application_command_error`
+        event.
+    """
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -1574,12 +1856,13 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
-    ):
+    ) -> None:
         """Base application command class that all specific application command classes should subclass. All common
         behavior should be here, with subclasses either adding on or overriding specific aspects of this class.
 
@@ -1597,10 +1880,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list/set/whatever of guild ID's that the application command should register to.
+            If not passed and :attr:`Client.default_guild_ids` is set, then those default guild ids will
+            be used instead. If both of those are unset, then the command will be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -1608,6 +1893,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -1624,10 +1913,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Dict[Union[str, Locale], str]
         ] = description_localizations
         self.guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
+        self.use_default_guild_ids: bool = guild_ids is MISSING and not force_global
         self.dm_permission: Optional[bool] = dm_permission
         self.default_member_permissions: Optional[
             Union[Permissions, int]
         ] = default_member_permissions
+        self.nsfw: bool = nsfw
 
         self.force_global: bool = force_global
 
@@ -1641,12 +1932,20 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     # Simple-ish getter + setter methods.
 
     @property
+    def qualified_name(self) -> str:
+        """:class:`str`: Retrieves the fully qualified command name.
+
+        .. versionadded:: 2.1
+        """
+        return str(self.name)
+
+    @property
     def description(self) -> str:
         """The description the command should have in Discord. Should be 1-100 characters long."""
         return self._description or DEFAULT_SLASH_DESCRIPTION
 
     @description.setter
-    def description(self, new_description: str):
+    def description(self, new_description: str) -> None:
         self._description = new_description
 
     @property
@@ -1821,6 +2120,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 #  the default (True) to ensure payload parity for comparisons.
                 ret["dm_permission"] = True
 
+        ret["nsfw"] = self.nsfw
+
         return ret
 
     def parse_discord_response(
@@ -1882,6 +2183,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             "name_localizations",
             "description_localizations",
             "dm_permission",
+            "nsfw",
         ):
             _log.debug("Failed check dictionary values, not valid payload.")
             return False
@@ -1984,7 +2286,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
             Parameters
             ----------
-            inter_options: :class`dict`
+            inter_options: :class:`dict`
                 Command option data from the interaction.
             cmd_options: :class:`dict`
                 Command option data from the local command.
@@ -2029,7 +2331,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 for (
                     inter_opt_name,
                     inter_opt,
-                ) in all_inter_options_copy:  # Should only contain optionals now.
+                ) in all_inter_options_copy.items():  # Should only contain optionals now.
                     if our_opt := all_our_options_copy.get(inter_opt_name):
                         if not (
                             inter_opt["name"] == our_opt["name"]
@@ -2137,6 +2439,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
 
 class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, CallbackWrapperMixin):
+    """Class representing a subcommand or subcommand group of a slash command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2149,7 +2453,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand, None] = None,
         parent_cog: Optional[ClientCog] = None,
         inherit_hooks: bool = False,
-    ):
+    ) -> None:
         """Slash Application Subcommand, supporting additional subcommands and autocomplete.
 
         Parameters
@@ -2194,10 +2498,24 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self._inherit_hooks: bool = inherit_hooks
 
         self.options: Dict[str, SlashCommandOption] = {}
-        self.children: Dict[str, SlashApplicationSubcommand] = {}
+
+    @property
+    def qualified_name(self) -> str:
+        """:class:`str`: Retrieve the command name including all parents space separated.
+
+        An example of the output would be ``parent group subcommand``.
+
+        .. versionadded:: 2.1
+        """
+        return (
+            f"{self.parent_cmd.qualified_name} {self.name}" if self.parent_cmd else str(self.name)
+        )
 
     async def call(
-        self, state: ConnectionState, interaction: Interaction, option_data: List[dict]
+        self,
+        state: ConnectionState,
+        interaction: Interaction,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]],
     ) -> None:
         """|coro|
         Calls the callback via the given :class:`Interaction`, using the given :class:`ConnectionState` to get resolved
@@ -2212,9 +2530,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         option_data: List[:class:`dict`]
             List of raw option data from Discord.
         """
-        if self.children:
+        if self.children and option_data is not None:
             await self.children[option_data[0]["name"]].call(
-                state, interaction, option_data[0].get("options", {})
+                state, interaction, option_data[0].get("options")
             )
         else:
             await self.call_slash(state, interaction, option_data)
@@ -2333,7 +2651,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 parent_cog=self.parent_cog,
                 inherit_hooks=inherit_hooks,
             )
-            self.children[
+            self._children[
                 ret.name
                 or (func.callback.__name__ if isinstance(func, CallbackWrapper) else func.__name__)
             ] = ret
@@ -2349,8 +2667,19 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self.type = ApplicationCommandOptionType.sub_command_group
         return decorator
 
+    @property
+    def command_ids(self) -> Dict[Optional[int], int]:
+        """Dict[Optional[:class:`int`], :class:`int`]: Command IDs the parent command of this subcommand currently has.
+        Schema: {Guild ID (None for global): command ID}
+
+        .. versionadded:: 2.2
+        """
+        return self.parent_cmd.command_ids if self.parent_cmd else {}
+
 
 class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
+    """Class representing a slash command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2362,9 +2691,10 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
-    ):
+    ) -> None:
         """Represents a Slash Application Command built from the given callback, able to be registered to multiple
         guilds or globally.
 
@@ -2380,7 +2710,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2391,6 +2721,14 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. note::
+
+                Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2407,6 +2745,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             guild_ids=guild_ids,
             default_member_permissions=default_member_permissions,
             dm_permission=dm_permission,
+            nsfw=nsfw,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -2418,15 +2757,16 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         return super().description  # Required to grab the correct description function.
 
     @description.setter
-    def description(self, new_desc: str):
+    def description(self, new_desc: str) -> None:
         self._description = new_desc
 
     def get_payload(self, guild_id: Optional[int]):
         ret = super().get_payload(guild_id)
         if self.children:
             ret["options"] = [child.payload for child in self.children.values()]
-        else:
+        elif self.options:
             ret["options"] = [parameter.payload for parameter in self.options.values()]
+
         return ret
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
@@ -2451,7 +2791,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         callback: Optional[Callable] = None,
         option_class: Type[SlashCommandOption] = SlashCommandOption,
         call_children: bool = True,
-    ):
+    ) -> None:
         BaseApplicationCommand.from_callback(self, callback=callback, option_class=option_class)
         SlashCommandMixin.from_callback(self, callback=callback)
         AutocompleteCommandMixin.from_autocomplete(self)
@@ -2514,6 +2854,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
 
 class UserApplicationCommand(BaseApplicationCommand):
+    """Class representing a user context menu command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2523,9 +2865,10 @@ class UserApplicationCommand(BaseApplicationCommand):
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
-    ):
+    ) -> None:
         """Represents a User Application Command that will give the user to the given callback, able to be registered to
         multiple guilds or globally.
 
@@ -2536,7 +2879,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized name as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2547,6 +2890,10 @@ class UserApplicationCommand(BaseApplicationCommand):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2561,6 +2908,7 @@ class UserApplicationCommand(BaseApplicationCommand):
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -2573,21 +2921,23 @@ class UserApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("UserApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: Interaction):
+    async def call(self, state: ConnectionState, interaction: Interaction) -> None:
         await self.invoke_callback_with_hooks(
-            state, interaction, get_users_from_interaction(state, interaction)[0]
+            state, interaction, args=(get_users_from_interaction(state, interaction)[0],)
         )
 
     def from_callback(
         self,
         callback: Optional[Callable] = None,
         option_class: Optional[Type[BaseCommandOption]] = None,
-    ):
+    ) -> None:
         super().from_callback(callback, option_class=option_class)
         CallbackWrapperMixin.modify(self)
 
 
 class MessageApplicationCommand(BaseApplicationCommand):
+    """Class representing a message context menu command."""
+
     def __init__(
         self,
         name: Optional[str] = None,
@@ -2597,9 +2947,10 @@ class MessageApplicationCommand(BaseApplicationCommand):
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
-    ):
+    ) -> None:
         """Represents a Message Application Command that will give the message to the given callback, able to be
         registered to multiple guilds or globally.
 
@@ -2610,7 +2961,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the subcommand for users of specific locales. The locale code should be the key, with the
             localized name as the value.
-        callback: Callable
+        callback: :data:`~typing.Callable`
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
@@ -2621,6 +2972,10 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2635,6 +2990,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -2647,16 +3003,16 @@ class MessageApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("MessageApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: Interaction):
+    async def call(self, state: ConnectionState, interaction: Interaction) -> None:
         await self.invoke_callback_with_hooks(
-            state, interaction, get_messages_from_interaction(state, interaction)[0]
+            state, interaction, args=(get_messages_from_interaction(state, interaction)[0],)
         )
 
     def from_callback(
         self,
         callback: Optional[Callable] = None,
         option_class: Optional[Type[BaseCommandOption]] = None,
-    ):
+    ) -> None:
         super().from_callback(callback, option_class=option_class)
         CallbackWrapperMixin.modify(self)
 
@@ -2667,9 +3023,10 @@ def slash_command(
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-    guild_ids: Optional[Iterable[int]] = None,
+    guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
@@ -2688,8 +3045,10 @@ def slash_command(
     description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
         Description(s) of the subcommand for users of specific locales. The locale code should be the key, with the
         localized description as the value.
-    guild_ids: Iterable[:class:`int`]
-        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    guild_ids: Optional[Iterable[:class:`int`]]
+        IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+        set, then those default guild ids will be used instead. If both of those are unset, then the command will
+        be a global command.
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.
@@ -2697,9 +3056,17 @@ def slash_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
+    nsfw: :class:`bool`
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+        .. note::
+
+            Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
+
+        .. versionadded:: 2.4
     force_global: :class:`bool`
-        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-        register to guilds. Has no effect if `guild_ids` are never set or added to.
+        If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+        register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
     def decorator(func: Callable) -> SlashApplicationCommand:
@@ -2715,6 +3082,7 @@ def slash_command(
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             force_global=force_global,
         )
         return app_cmd
@@ -2726,9 +3094,10 @@ def message_command(
     name: Optional[str] = None,
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-    guild_ids: Optional[Iterable[int]] = None,
+    guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
@@ -2741,8 +3110,10 @@ def message_command(
     name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
         Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
         name as the value
-    guild_ids: Iterable[:class:`int`]
-        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    guild_ids: Optional[Iterable[:class:`int`]]
+        IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+        set, then those default guild ids will be used instead. If both of those are unset, then the command will
+        be a global command.
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.
@@ -2750,9 +3121,13 @@ def message_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
+    nsfw: :class:`bool`
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+        .. versionadded:: 2.4
     force_global: :class:`bool`
-        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-        register to guilds. Has no effect if `guild_ids` are never set or added to.
+        If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+        register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
     def decorator(func: Callable) -> MessageApplicationCommand:
@@ -2766,6 +3141,7 @@ def message_command(
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             force_global=force_global,
         )
         return app_cmd
@@ -2777,9 +3153,10 @@ def user_command(
     name: Optional[str] = None,
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-    guild_ids: Optional[Iterable[int]] = None,
+    guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
@@ -2792,8 +3169,10 @@ def user_command(
     name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
         Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
         name as the value
-    guild_ids: Iterable[:class:`int`]
-        IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+    guild_ids: Optional[Iterable[:class:`int`]]
+        IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+        set, then those default guild ids will be used instead. If both of those are unset, then the command will
+        be a global command.
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.
@@ -2801,9 +3180,13 @@ def user_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
+    nsfw: :class:`bool`
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+        .. versionadded:: 2.4
     force_global: :class:`bool`
-        If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-        register to guilds. Has no effect if `guild_ids` are never set or added to.
+        If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+        register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
     def decorator(func: Callable) -> UserApplicationCommand:
@@ -2817,6 +3200,7 @@ def user_command(
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             force_global=force_global,
         )
         return app_cmd
@@ -3016,3 +3400,279 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
             ret.append(role)
 
     return ret
+
+
+def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> type:
+    """Takes an annotation. If the origin is Annotated, it will attempt to resolve it using the given list of accepted
+    types, going from the last type and working up to the first. If no matches to the given list is found, the last
+    type specified in the Annotated typehint will be returned.
+
+    If the origin is not Annotated, the typehint will be returned as-is.
+
+    Parameters
+    ----------
+    given_annotation
+        Annotation to attempt to resolve.
+    resolve_list
+        List of types the annotation can resolve to.
+
+    Returns
+    -------
+    :class:`type`
+        Resolved annotation.
+    """
+    if resolve_list is None:
+        resolve_list = []
+
+    # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
+    origin = typing_extensions.get_origin(given_annotation)
+    if origin is Annotated:
+        located_annotation = MISSING
+        # arg_list = typing.get_args(given_annotation)  # TODO: Once Python 3.10 is standard, use this
+        arg_list = typing_extensions.get_args(given_annotation)
+        for arg in reversed(arg_list[1:]):
+            if arg in resolve_list or isinstance(arg, type) and issubclass(arg, OptionConverter):
+                located_annotation = arg
+                break
+
+        if located_annotation is MISSING:
+            located_annotation = arg_list[-1]
+
+        return located_annotation
+    else:
+        return given_annotation
+
+
+def unpack_annotation(
+    given_annotation: Any, annotated_list: Optional[List[type]] = None
+) -> Tuple[List[type], list]:
+    """Unpacks the given parameter annotation into its components.
+
+    Parameters
+    ----------
+    given_annotation: Any
+        Given annotation to unpack. Should be from ``parameter.annotation``
+    annotated_list: List[:class:`type`]
+        List that the ``Annotated`` annotation should attempt to resolve to, from the 2nd arg to the right.
+
+    Returns
+    -------
+    Tuple[List[:class:`type`], :class:`list`]
+        A list of unpacked type annotations,
+        and a list of unpacked literal arguments.
+
+    """
+    if annotated_list is None:
+        annotated_list = []
+
+    type_ret = []
+    literal_ret = []
+    # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
+    origin = typing_extensions.get_origin(given_annotation)
+    if origin is None:
+        # It doesn't have a fancy origin, just a normal type/object.
+        if isinstance(given_annotation, type):
+            type_ret.append(given_annotation)
+        else:
+            # If it's not a type and the origin is None, it's probably a literal.
+            literal_ret.append(given_annotation)
+
+    elif origin is Annotated:
+        located_annotation = unpack_annotated(given_annotation, annotated_list)
+
+        unpacked_type, unpacked_literal = unpack_annotation(located_annotation, annotated_list)
+        type_ret.extend(unpacked_type)
+        literal_ret.extend(unpacked_literal)
+    elif origin in (Union, UnionType, Optional, Literal):
+        # Note for someone refactoring this: UnionType (at this time) will be None on Python sub-3.10
+        # This doesn't matter for now since None is explicitly checked first, but may trip you up when modifying this.
+        # for anno in typing.get_args(given_annotation):  # TODO: Once Python 3.10 is standard, use this.
+        for anno in typing_extensions.get_args(given_annotation):
+            unpacked_type, unpacked_literal = unpack_annotation(anno, annotated_list)
+            type_ret.extend(unpacked_type)
+            literal_ret.extend(unpacked_literal)
+
+    else:
+        raise ValueError(f"Given Annotation {given_annotation} has an unhandled origin: {origin}")
+
+    return type_ret, literal_ret
+
+
+class RangeMeta(type):
+    @overload
+    def __getitem__(
+        cls,
+        value: Union[
+            int,
+            Tuple[int, int],
+            Tuple[int, EllipsisType],
+            Tuple[EllipsisType, int],
+        ],
+    ) -> Type[int]:
+        ...
+
+    @overload
+    def __getitem__(
+        cls,
+        value: Union[
+            float,
+            Tuple[float, float],
+            Tuple[float, EllipsisType],
+            Tuple[EllipsisType, float],
+        ],
+    ) -> Type[float]:
+        ...
+
+    def __getitem__(
+        cls,
+        value: Union[
+            int,
+            float,
+            Tuple[int, int],
+            Tuple[float, float],
+            Tuple[Union[int, float], EllipsisType],
+            Tuple[EllipsisType, Union[int, float]],
+        ],
+    ) -> Type[Union[int, float]]:
+        class Inner(Range, OptionConverter):
+            def __init__(self) -> None:
+                super().__init__(option_type=type(self.min or self.max))
+
+            async def convert(self, interaction: Interaction, value: Any) -> Any:
+                return value
+
+            def modify(self, option: SlashCommandOption) -> None:
+                if self.min and option.min_value is None:
+                    option.min_value = self.min
+                if self.max and option.max_value is None:
+                    option.max_value = self.max
+
+        if isinstance(value, tuple):
+            if len(value) != 2:
+                raise ValueError("Range can only take 1-2 arguments")
+
+            min_value = value[0]
+            max_value = value[1]
+        else:
+            min_value = None
+            max_value = value
+
+        if min_value is None or isinstance(min_value, EllipsisType):
+            Inner.min = None
+        elif isinstance(min_value, (int, float)):
+            Inner.min = min_value
+        else:
+            raise TypeError("Range min must be int or float.")
+
+        if isinstance(max_value, EllipsisType):
+            Inner.max = None
+        elif isinstance(max_value, (int, float)):
+            Inner.max = max_value
+        else:
+            raise TypeError("Range max must be int or float.")
+
+        if Inner.min is None and Inner.max is None:
+            raise TypeError("At least one of min or max must be set.")
+
+        return Inner
+
+
+class Range(metaclass=RangeMeta):
+    """An annotation helper for defining slash command ``min_value`` and ``max_value`` parameters.
+
+    .. versionadded:: 2.2
+
+    .. container:: operations
+
+        .. describe:: Range[x, y]
+
+            Creates a range from ``x`` to ``y``.
+
+        .. describe:: Range[x] | Range[..., x]
+
+            Create a range up to ``x``.
+
+        .. describe:: Range[x, ...]
+
+            Create a range from ``x``.
+    """
+
+    min: ClassVar[Optional[Union[int, float]]]
+    max: ClassVar[Optional[Union[int, float]]]
+
+
+class StringMeta(type):
+    def __getitem__(
+        cls,
+        value: Union[
+            int,
+            Tuple[int, int],
+            Tuple[int, EllipsisType],
+            Tuple[EllipsisType, int],
+        ],
+    ) -> Type[str]:
+        class Inner(String, OptionConverter):
+            def __init__(self) -> None:
+                super().__init__(option_type=str)
+
+            async def convert(self, interaction: Interaction, value: Any) -> Any:
+                return value
+
+            def modify(self, option: SlashCommandOption) -> None:
+                if self.min and option.min_length is None:
+                    option.min_length = self.min
+                if self.max and option.max_length is None:
+                    option.max_length = self.max
+
+        if isinstance(value, tuple):
+            if len(value) != 2:
+                raise ValueError("String can only take 1-2 arguments")
+
+            min_value = value[0]
+            max_value = value[1]
+        else:
+            min_value = None
+            max_value = value
+
+        if min_value is None or isinstance(min_value, EllipsisType):
+            Inner.min = None
+        elif isinstance(min_value, int):
+            Inner.min = min_value
+        else:
+            raise TypeError("String min must be int.")
+
+        if isinstance(max_value, EllipsisType):
+            Inner.max = None
+        elif isinstance(max_value, int):
+            Inner.max = max_value
+        else:
+            raise TypeError("String max must be int.")
+
+        if Inner.min is None and Inner.max is None:
+            raise TypeError("At least one of min or max must be set.")
+
+        return Inner
+
+
+class String(metaclass=StringMeta):
+    """An annotation helper for defining slash command ``min_length`` and ``max_length`` parameters.
+
+    .. versionadded:: 2.2
+
+    .. container:: operations
+
+        .. describe:: String[x, y]
+
+            Creates a range of string length from ``x`` to ``y``.
+
+        .. describe:: String[x] | String[..., x]
+
+            Create a range of string length up to ``x``.
+
+        .. describe:: String[x, ...]
+
+            Create a range of string length from ``x``.
+    """
+
+    min: ClassVar[Optional[int]]
+    max: ClassVar[Optional[int]]
