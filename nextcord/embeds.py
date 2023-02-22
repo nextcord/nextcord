@@ -326,7 +326,13 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_footer", {}))  # type: ignore
 
-    def set_footer(self, *, text: Optional[Any] = None, icon_url: Optional[Any] = None, icon_file: Optional[File] = None) -> Self:
+    def set_footer(
+        self,
+        *,
+        text: Optional[Any] = None,
+        icon_url: Optional[Any] = None,
+        icon_file: Optional[File] = None,
+    ) -> Self:
         """Sets the footer for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -542,7 +548,6 @@ class Embed:
         icon_url: Optional[:class:`str`]
             The URL of the author icon. Only HTTP(S) is supported.
         """
-        
 
         self._author = {
             "name": str(name),
@@ -556,7 +561,7 @@ class Embed:
 
         if icon_url is not None:
             self._author["icon_url"] = str(icon_url)
-        
+
         if isinstance(icon_file, File):
             self._local_files["author"] = icon_file
             self._author["icon_url"] = f"attachment://{icon_file.filename}"
