@@ -13,6 +13,12 @@ class File:
     r"""A parameter object used for :meth:`abc.Messageable.send`
     for sending file objects.
 
+    .. versionadded:: 2.4
+
+        You can now use nextcord.File as a context manager. This will
+        automatically call `close()` when the context manager exits scope.
+        When using the context manager, force_close will default to True.
+
     .. note::
 
         File objects are single use and are not meant to be reused in
@@ -47,6 +53,7 @@ class File:
         This will also make the file bytes unusable by flushing it from
         memory after it is sent once.
         Enable this if you don't wish to reuse the same bytes.
+        Defaults to True when using context manager.
 
         .. versionadded:: 2.2
 
@@ -138,12 +145,14 @@ class File:
             self.filename is not None and self.filename.startswith("SPOILER_")
         )
 
-    def __enter__(self):
+    def __enter__(self) -> File:
+        # Set force_close to true when using context manager
+        # and force_close was not provided to __init__
         if self.force_close is None:
             self.force_close = True
         return self
 
-    def __close__(self):
+    def __close__(self) -> None:
         self.close()
 
     def reset(self, *, seek: Union[int, bool] = True) -> None:
