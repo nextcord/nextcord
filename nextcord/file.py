@@ -90,7 +90,7 @@ class File:
         filename: Optional[str]
         description: Optional[str]
         spoiler: bool
-        force_close: bool
+        force_close: Optional[bool]
 
     def __init__(
         self,
@@ -99,7 +99,7 @@ class File:
         *,
         description: Optional[str] = None,
         spoiler: bool = False,
-        force_close: bool = False,
+        force_close: Optional[bool] = None,
     ) -> None:
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
@@ -137,6 +137,14 @@ class File:
         self.spoiler = spoiler or (
             self.filename is not None and self.filename.startswith("SPOILER_")
         )
+
+    def __enter__(self):
+        if self.force_close is None:
+            self.force_close = True
+        return self
+
+    def __close__(self):
+        self.close()
 
     def reset(self, *, seek: Union[int, bool] = True) -> None:
         # The `seek` parameter is needed because
