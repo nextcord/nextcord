@@ -312,8 +312,12 @@ class RawMemberRemoveEvent(_RawReprMixin):
         The guild ID where the member left from.
     guild: Optional[:class:`Guild`]
         The guild where the member left from.
+
+        .. versionadded:: 2.5
     user: :class:`User`
         The user that left the guild.
+
+        .. versionadded:: 2.5
     """
 
     __slots__ = ("guild_id", "user", "guild")
