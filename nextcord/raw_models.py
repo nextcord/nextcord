@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, List, Optional, Set
 from .user import User
 
 if TYPE_CHECKING:
+    from .guild import Guild
     from .member import Member
     from .message import Message
     from .partial_emoji import PartialEmoji
@@ -311,8 +312,9 @@ class RawMemberRemoveEvent(_RawReprMixin):
         The guild ID where the member left from.
     """
 
-    __slots__ = ("guild_id", "user")
+    __slots__ = ("guild_id", "user", "guild")
 
     def __init__(self, *, data: MemberRemoveEvent, state: ConnectionState) -> None:
         self.guild_id: int = int(data["guild_id"])
+        self.guild: Optional[Guild] = state._get_guild(int(data["guild_id"]))
         self.user: User = User(state=state, data=data["user"])
