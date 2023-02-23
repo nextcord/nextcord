@@ -5,10 +5,13 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, List, Optional, Set
 
+from .user import User
+
 if TYPE_CHECKING:
     from .member import Member
     from .message import Message
     from .partial_emoji import PartialEmoji
+    from .state import ConnectionState
     from .types.raw_models import (
         BulkMessageDeleteEvent,
         IntegrationDeleteEvent,
@@ -310,6 +313,6 @@ class RawMemberRemoveEvent(_RawReprMixin):
 
     __slots__ = ("guild_id", "user")
 
-    def __init__(self, data: MemberRemoveEvent) -> None:
+    def __init__(self, *, data: MemberRemoveEvent, state: ConnectionState) -> None:
         self.guild_id: int = int(data["guild_id"])
-        # FIXME: practically no data
+        self.user: User = User(state=state, data=data["user"])

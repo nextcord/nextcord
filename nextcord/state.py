@@ -1679,11 +1679,6 @@ class ConnectionState:
             except AttributeError:
                 pass
 
-            raw = RawMemberRemoveEvent(data)
-            user = User(state=self, data=data["user"])
-            raw.user = user
-            self.dispatch("raw_member_remove", raw)
-
             user_id = int(data["user"]["id"])
             member = guild.get_member(user_id)
             if member is not None:
@@ -1694,6 +1689,11 @@ class ConnectionState:
                 "GUILD_MEMBER_REMOVE referencing an unknown guild ID: %s. Discarding.",
                 data["guild_id"],
             )
+
+        raw = RawMemberRemoveEvent(data=data, state=self)
+        user = User(state=self, data=data["user"])
+        raw.user = user
+        self.dispatch("raw_member_remove", raw)
 
     def parse_guild_member_update(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
