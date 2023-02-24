@@ -18,11 +18,14 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Install Poetry
+      run: pipx install poetry
+
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt -r docs/requirements.txt
+      run: poetry install
+
     - name: Compile docs
       run: |
         cd docs
-        make html
+        poetry run make html
