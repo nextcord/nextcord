@@ -1691,8 +1691,6 @@ class ConnectionState:
             )
 
         raw = RawMemberRemoveEvent(data=data, state=self)
-        user = User(state=self, data=data["user"])
-        raw.user = user
         self.dispatch("raw_member_remove", raw)
 
     def parse_guild_member_update(self, data) -> None:
