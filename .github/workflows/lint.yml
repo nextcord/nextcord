@@ -27,7 +27,7 @@ jobs:
           cache: poetry
 
       - name: Install dependencies
-        run: poetry install --extras voice,docs,speed
+        run: poetry install --extras "voice docs speed"
 
       - name: Activate virtualenv
         run: source $(poetry env info --path)/bin/activate
@@ -64,17 +64,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Install Poetry
+      run: pipx install poetry
+
     - name: Set up python 3.8
       uses: actions/setup-python@v4
       with:
         python-version: 3.8
         cache: poetry
 
-    - name: Install Poetry
-      run: pipx install poetry
 
     - name: Install dependencies
-      run: poetry install --extras voice,docs,speed
+      run: poetry install --extras "voice docs speed"
 
     - name: Activate virtualenv
       run: source $(poetry env info --path)/bin/activate
