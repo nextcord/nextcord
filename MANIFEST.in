@@ -1,6 +1,0 @@
-include README.rst
-include LICENSE
-include requirements.txt
-include nextcord/bin/*.dll
-include nextcord/py.typed
-include discord/py.typed

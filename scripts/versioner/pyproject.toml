@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "versioner"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+packages = [
+    { include = "plugin.py" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+poetry = "^1.2"
+
+[tool.pyright]
+reportMissingTypeStubs = false
+useLibraryCodeForTypes = true
+reportPrivateUsage = false
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.plugins."poetry.application.plugin"]
+versioner = "plugin:VersionerPlugin"
