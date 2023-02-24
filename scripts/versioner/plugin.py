@@ -1,6 +1,8 @@
 import contextlib
+
 from poetry.console.application import Application
 from poetry.plugins.application_plugin import ApplicationPlugin
+
 
 def get_version(version: str):
     # append version identifier based on commit count
@@ -22,6 +24,7 @@ def get_version(version: str):
         if out:
             version += "+g" + out.decode("utf-8").strip()
     return version
+
 
 class VersionerPlugin(ApplicationPlugin):
     def activate(self, application: Application) -> None:
