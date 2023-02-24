@@ -17,14 +17,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install Poetry
+        run: pipx install poetry
+
       - name: Set up python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: poetry
-
-      - name: Install Poetry
-        run: pipx install poetry
 
       - name: Install dependencies
         run: poetry install --extras voice,docs,speed
