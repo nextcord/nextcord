@@ -77,8 +77,5 @@ jobs:
     - name: Install dependencies
       run: poetry install --extras "voice docs speed"
 
-    - name: Activate virtualenv
-      run: source $(poetry env info --path)/bin/activate
-
     - name: Run slotscheck
-      run: task slotscheck
+      run: $(poetry env info --path)/bin/task slotscheck
