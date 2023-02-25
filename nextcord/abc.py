@@ -1452,20 +1452,6 @@ class Messageable:
         reference_payload: Optional[MessageReferencePayload] = None
         allowed_mentions_payload: Optional[AllowedMentionsPayload] = None
 
-        if embed is not None and embeds is not None:
-            raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
-
-        local_embed_files: List[File] = []
-        if embed is not None:
-            embeds_payload = [embed.to_dict()]
-
-        if embeds is not None:
-            # Discord hangs on duplicate upload it seems
-            embeds_payload = []
-            for em in embeds:
-                local_embed_files.extend(set(em._local_files.values()))
-                embeds_payload.append(em.to_dict())
-
         if stickers is not None:
             stickers_payload = [sticker.id for sticker in stickers]
 
@@ -1499,31 +1485,26 @@ class Messageable:
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
 
-        if file:
-            files = [file]
+        if embed is not None and embeds is not None:
+            raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
-            if local_embed_files and files:
-                files.extend(local_embed_files)
-            elif local_embed_files:
-                files = local_embed_files
+        if embed is not None:
+            embeds =  [embed]
 
-            try:
-                data = await state.http.send_files(
-                    channel.id,
-                    files=[file],
-                    allowed_mentions=allowed_mentions_payload,
-                    content=content,
-                    tts=tts,
-                    embed=embed_payload,
-                    embeds=embeds_payload,
-                    nonce=nonce,
-                    message_reference=reference_payload,
-                    stickers=stickers_payload,
-                    components=components,
-                    flags=flag_value,
-                )
-            finally:
-                file.close()
+        if embeds is not None:
+            # Discord hangs on duplicate upload it seems
+            files = files or []
+            for em in embeds:
+                files.extend(set(em._local_files.values()))
+            embeds_payload = [em.to_dict() for em in embeds]
+
+        if file is not None:
+            if not isinstance(file, File):
+                raise TypeError(f"File parameter must be of type File not {file.__class__!r}")
+            if files:
+                files.append(file)
+            else:
+                files = [file]
 
         if files is not None:
             if not all(isinstance(file, File) for file in files):

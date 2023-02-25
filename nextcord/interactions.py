@@ -1048,13 +1048,19 @@ class InteractionResponse:
                 embeds = [embed]
 
         if embeds is not MISSING:
+            files = files or []
+            for em in embeds:
+                files.extend(set(em._local_files.values()))
             payload["embeds"] = [e.to_dict() for e in embeds]
 
         if file is not MISSING and files is not MISSING:
             raise InvalidArgument("Cannot mix file and files keyword arguments")
 
         if file is not MISSING:
-            files = [file]
+            if files:
+                files.append(file)
+            else:
+                files = [file]
 
         if files and not all(isinstance(f, File) for f in files):
             raise TypeError("Files parameter must be a list of type File")

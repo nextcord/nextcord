@@ -347,7 +347,7 @@ class Embed:
         icon_file: Optional[:class:`File`]
             A file to use for the image.
 
-            .. versionadded:: 2.1
+            .. versionadded:: 2.5
         """
         self._footer = {}
         if text is not None:
@@ -399,7 +399,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_image", {}))  # type: ignore
 
-    def set_image(self, url: Optional[Any], *, file: Optional[File] = None) -> Self:
+    def set_image(self, url: Optional[Any] = None, *, file: Optional[File] = None) -> Self:
         """Sets the image for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -415,7 +415,7 @@ class Embed:
         file: Optional[:class:`File`]
             A file to use for the image.
 
-            .. versionadded:: 2.1
+            .. versionadded:: 2.5
         """
         if url is None:
             try:
@@ -469,7 +469,7 @@ class Embed:
         file: Optional[:class:`File`]
             A file to use for the image.
 
-            .. versionadded:: 2.1
+            .. versionadded:: 2.5
         """
         if url is None:
             try:
@@ -547,6 +547,10 @@ class Embed:
             The URL for the author.
         icon_url: Optional[:class:`str`]
             The URL of the author icon. Only HTTP(S) is supported.
+        icon_file: Optional[:class:`File`]
+            A file to use for the image.
+
+            .. versionadded:: 2.5
         """
 
         self._author = {

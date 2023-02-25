@@ -1472,6 +1472,19 @@ class Message(Hashable):
                 payload["embeds"] = [embed.to_dict()]
         elif embeds is not MISSING:
             payload["embeds"] = [e.to_dict() for e in embeds]
+            files = files or []
+            for em in embeds:
+                files.extend(set(em._local_files.values()))
+
+        if file is not MISSING:
+            if file:
+                if files:
+                    files.append(file)
+                else:
+                    files = [file]
+                payload["files"] = files
+        elif files is not MISSING:
+            payload["files"] = files
 
         if suppress is not MISSING:
             flags = MessageFlags._from_value(self.flags.value)
@@ -1499,11 +1512,6 @@ class Message(Hashable):
                 payload["components"] = view.to_components()
             else:
                 payload["components"] = []
-
-        if file is not MISSING:
-            payload["files"] = [file]
-        elif files is not MISSING:
-            payload["files"] = files
 
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)
