@@ -1,14 +1,17 @@
-from nextcord import Intents, File, Embed
-from nextcord.ext import commands
 import logging
+
+from nextcord import Embed, File, Intents
+from nextcord.ext import commands
 
 logging.basicConfig(level=logging.DEBUG)
 
 bot = commands.Bot(intents=Intents.default(), command_prefix=commands.when_mentioned)
 
+
 @bot.event
 async def on_ready():
     print(bot.user)
+
 
 @bot.slash_command()
 async def test(ctx):
@@ -21,5 +24,6 @@ async def test(ctx):
     msg = await ctx.send(embeds=[es])
     es.set_image(file=file1)
     await msg.edit(embed=es)
+
 
 bot.run("OTc1MzM4NTUwMjg1NDM5MDE2.GWIudC.Cb4r4iCSAuf6c80qzY9DSdThAutdwqGfqNFd70")

@@ -522,7 +522,6 @@ def handle_message_parameters(
             files.extend(set(em._local_files.values()))
         payload["embeds"] = [e.to_dict() for e in embeds]
 
-
     if content is not MISSING:
         if content is not None:
             payload["content"] = str(content)

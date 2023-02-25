@@ -1489,7 +1489,7 @@ class Messageable:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
         if embed is not None:
-            embeds =  [embed]
+            embeds = [embed]
 
         if embeds is not None:
             # Discord hangs on duplicate upload it seems
