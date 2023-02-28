@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2022-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -36,7 +14,7 @@ from .enums import (
 from .errors import InvalidArgument
 from .mixins import Hashable
 from .object import Object
-from .utils import MISSING, _get_as_snowflake
+from .utils import MISSING, get_as_snowflake
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, Snowflake
@@ -95,9 +73,17 @@ class AutoModerationTriggerMetadata:
         .. warning::
 
             Wildcard syntax (`*`) is not supported here.
+    mention_total_limit: Optional[:class:`int`]
+        The maximum amount of mentions allowed in a messsage.
+
+        .. versionadded:: 2.3
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the trigger type of this rule is not :attr:`AutoModerationTriggerType.mention_spam`.
     """
 
-    __slots__ = ("keyword_filter", "presets", "allow_list")
+    __slots__ = ("keyword_filter", "presets", "allow_list", "mention_total_limit")
 
     def __init__(
         self,
@@ -105,10 +91,12 @@ class AutoModerationTriggerMetadata:
         keyword_filter: Optional[List[str]] = None,
         presets: Optional[List[KeywordPresetType]] = None,
         allow_list: Optional[List[str]] = None,
+        mention_total_limit: Optional[int] = None,
     ) -> None:
         self.keyword_filter: Optional[List[str]] = keyword_filter
         self.presets: Optional[List[KeywordPresetType]] = presets
         self.allow_list: Optional[List[str]] = allow_list
+        self.mention_total_limit: Optional[int] = mention_total_limit
 
     @classmethod
     def from_data(cls, data: TriggerMetadataPayload):
@@ -119,8 +107,14 @@ class AutoModerationTriggerMetadata:
             else None
         )
         allow_list = data.get("allow_list")
+        mention_total_limit = data.get("mention_total_limit")
 
-        return cls(keyword_filter=keyword_filter, presets=presets, allow_list=allow_list)
+        return cls(
+            keyword_filter=keyword_filter,
+            presets=presets,
+            allow_list=allow_list,
+            mention_total_limit=mention_total_limit,
+        )
 
     @property
     def payload(self) -> TriggerMetadataPayload:
@@ -134,6 +128,9 @@ class AutoModerationTriggerMetadata:
 
         if self.allow_list is not None:
             payload["allow_list"] = self.allow_list
+
+        if self.mention_total_limit is not None:
+            payload["mention_total_limit"] = self.mention_total_limit
 
         return payload
 
@@ -175,7 +172,7 @@ class AutoModerationActionMetadata:
 
     @classmethod
     def from_data(cls, data: ActionMetadataPayload):
-        channel_id = _get_as_snowflake(data, "channel_id")
+        channel_id = get_as_snowflake(data, "channel_id")
         channel = Object(id=channel_id) if channel_id is not None else None
         duration_seconds = data.get("duration_seconds")
 
@@ -521,14 +518,14 @@ class AutoModerationActionExecution:
     def __init__(self, *, data: ActionExecutionPayload, state: ConnectionState) -> None:
         self.guild_id: int = int(data["guild_id"])
         self.guild: Optional[Guild] = state._get_guild(self.guild_id)
-        self.channel_id: Optional[int] = _get_as_snowflake(data, "channel_id")
+        self.channel_id: Optional[int] = get_as_snowflake(data, "channel_id")
         if self.guild is not None and self.channel_id is not None:
             self.channel: Optional[GuildChannel] = self.guild.get_channel(self.channel_id)
         else:
             self.channel: Optional[GuildChannel] = None
-        self.message_id: Optional[int] = _get_as_snowflake(data, "message_id")
+        self.message_id: Optional[int] = get_as_snowflake(data, "message_id")
         self.message: Optional[Message] = state._get_message(self.message_id)
-        self.alert_system_message_id: Optional[int] = _get_as_snowflake(
+        self.alert_system_message_id: Optional[int] = get_as_snowflake(
             data, "alert_system_message_id"
         )
         self.alert_system_message: Optional[Message] = state._get_message(

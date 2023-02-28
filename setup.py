@@ -49,7 +49,7 @@ extras_require = {
         "sphinxcontrib-websupport",
         "typing_extensions>=4.2.0, <5",
     ],
-    "speed": ["orjson>=3.5.4", "aiodns>=1.1", "Brotli", "cchardet"],
+    "speed": ["orjson>=3.5.4", "aiohttp[speedups]"],
 }
 
 packages = [
@@ -60,6 +60,7 @@ packages = [
     "nextcord.ext.application_checks",
     "nextcord.ext.commands",
     "nextcord.ext.tasks",
+    "nextcord.ui.select",
     # Compat
     "discord",
     "discord.types",
@@ -71,7 +72,7 @@ packages = [
 
 setup(
     name="nextcord",
-    author="tag-epic & Rapptz",
+    author="Nextcord Developers & Rapptz",
     url="https://github.com/nextcord/nextcord",
     project_urls={
         "Documentation": "https://docs.nextcord.dev/",
@@ -96,6 +97,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Framework :: AsyncIO",
         "Framework :: aiohttp",
         "Topic :: Internet",

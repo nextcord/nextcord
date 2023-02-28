@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -38,8 +16,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Type,
-    TypeVar,
     Union,
     overload,
 )
@@ -62,6 +38,8 @@ from .threads import Thread
 from .utils import MISSING, escape_mentions
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
     from .channel import TextChannel
     from .components import Component
@@ -85,7 +63,6 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .user import User
 
-    MR = TypeVar("MR", bound="MessageReference")
     EmojiInputType = Union[Emoji, PartialEmoji, str]
 
 __all__ = (
@@ -472,18 +449,18 @@ class MessageReference:
         self.fail_if_not_exists: bool = fail_if_not_exists
 
     @classmethod
-    def with_state(cls: Type[MR], state: ConnectionState, data: MessageReferencePayload) -> MR:
+    def with_state(cls, state: ConnectionState, data: MessageReferencePayload) -> Self:
         self = cls.__new__(cls)
-        self.message_id = utils._get_as_snowflake(data, "message_id")
+        self.message_id = utils.get_as_snowflake(data, "message_id")
         self.channel_id = int(data.pop("channel_id"))
-        self.guild_id = utils._get_as_snowflake(data, "guild_id")
+        self.guild_id = utils.get_as_snowflake(data, "guild_id")
         self.fail_if_not_exists = data.get("fail_if_not_exists", True)
         self._state = state
         self.resolved = None
         return self
 
     @classmethod
-    def from_message(cls: Type[MR], message: Message, *, fail_if_not_exists: bool = True) -> MR:
+    def from_message(cls, message: Message, *, fail_if_not_exists: bool = True) -> Self:
         """Creates a :class:`MessageReference` from an existing :class:`~nextcord.Message`.
 
         .. versionadded:: 1.6
@@ -614,7 +591,9 @@ class MessageInteraction(Hashable):
         self.type: int = data["type"]
         self.name: str = data["name"]
         if "member" in data and guild is not None:
-            self.user = Member(state=self._state, guild=guild, data={**data["member"], "user": data["user"]})  # type: ignore
+            self.user = Member(
+                state=self._state, guild=guild, data={**data["member"], "user": data["user"]}
+            )
         else:
             self.user = self._state.create_user(data=data["user"])
 
@@ -798,7 +777,7 @@ class Message(Hashable):
     ):
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
-        self.webhook_id: Optional[int] = utils._get_as_snowflake(data, "webhook_id")
+        self.webhook_id: Optional[int] = utils.get_as_snowflake(data, "webhook_id")
         self.reactions: List[Reaction] = [
             Reaction(message=self, data=d) for d in data.get("reactions", [])
         ]
@@ -831,7 +810,7 @@ class Message(Hashable):
             self.guild = channel.guild  # type: ignore
         except AttributeError:
             if getattr(channel, "type", None) not in (ChannelType.group, ChannelType.private):
-                self.guild = state._get_guild(utils._get_as_snowflake(data, "guild_id"))
+                self.guild = state._get_guild(utils.get_as_snowflake(data, "guild_id"))
             else:
                 self.guild = None
 
@@ -1082,7 +1061,7 @@ class Message(Hashable):
         if self.guild is None:
             return []
         it = filter(None, map(self.guild.get_channel, self.raw_channel_mentions))
-        return utils._unique(it)
+        return utils.unique(it)
 
     @utils.cached_slot_property("_cs_clean_content")
     def clean_content(self) -> str:

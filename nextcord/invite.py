@@ -1,37 +1,15 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Type, TypeVar, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from .appinfo import PartialAppInfo
 from .asset import Asset
 from .enums import ChannelType, InviteTarget, VerificationLevel, try_enum
 from .mixins import Hashable
 from .object import Object
-from .utils import _get_as_snowflake, parse_time, snowflake_time
+from .utils import get_as_snowflake, parse_time, snowflake_time
 
 __all__ = (
     "PartialInviteChannel",
@@ -40,6 +18,8 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import GuildChannel
     from .guild import Guild
     from .state import ConnectionState
@@ -215,9 +195,6 @@ class PartialInviteGuild:
         return Asset._from_guild_image(self._state, self.id, self._splash, path="splashes")
 
 
-I = TypeVar("I", bound="Invite")
-
-
 class Invite(Hashable):
     r"""Represents a Discord :class:`Guild` or :class:`abc.GuildChannel` invite.
 
@@ -387,7 +364,7 @@ class Invite(Hashable):
         )
 
     @classmethod
-    def from_incomplete(cls: Type[I], *, state: ConnectionState, data: InvitePayload) -> I:
+    def from_incomplete(cls, *, state: ConnectionState, data: InvitePayload) -> Self:
         guild: Optional[Union[Guild, PartialInviteGuild]]
         try:
             guild_data = data["guild"]
@@ -411,8 +388,8 @@ class Invite(Hashable):
         return cls(state=state, data=data, guild=guild, channel=channel)
 
     @classmethod
-    def from_gateway(cls: Type[I], *, state: ConnectionState, data: GatewayInvitePayload) -> I:
-        guild_id: Optional[int] = _get_as_snowflake(data, "guild_id")
+    def from_gateway(cls, *, state: ConnectionState, data: GatewayInvitePayload) -> Self:
+        guild_id: Optional[int] = get_as_snowflake(data, "guild_id")
         guild: Optional[Union[Guild, Object]] = state._get_guild(guild_id)
         channel_id = int(data["channel_id"])
         if guild is not None:

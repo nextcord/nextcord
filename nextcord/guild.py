@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -83,6 +60,7 @@ from .invite import Invite
 from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
+from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
 from .role import Role
 from .scheduled_events import EntityMetadata, ScheduledEvent
@@ -98,16 +76,20 @@ MISSING = utils.MISSING
 
 if TYPE_CHECKING:
     import datetime
+    from typing import cast
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
+    from .channel import ForumTag
+    from .enums import SortOrderType
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
     from .state import ConnectionState
     from .template import Template
     from .types.auto_moderation import AutoModerationRuleCreate
+    from .types.channel import GuildChannel as GuildChannelPayload
     from .types.guild import (
         Ban as BanPayload,
         Guild as GuildPayload,
@@ -243,7 +225,7 @@ class Guild(Hashable):
         - ``WELCOME_SCREEN_ENABLED``: Guild has enabled the welcome screen.
 
     premium_tier: :class:`int`
-        The premium tier for this guild. Corresponds to "Nitro Server" in the official UI.
+        The premium tier for this guild. Corresponds to "Boost Level" in the official UI.
         The number goes from 0 to 3 inclusive.
     premium_subscription_count: :class:`int`
         The number of "boosts" this guild currently has.
@@ -491,7 +473,7 @@ class Guild(Hashable):
         )
         self.features: List[GuildFeature] = guild.get("features", [])
         self._splash: Optional[str] = guild.get("splash")
-        self._system_channel_id: Optional[int] = utils._get_as_snowflake(guild, "system_channel_id")
+        self._system_channel_id: Optional[int] = utils.get_as_snowflake(guild, "system_channel_id")
         self.description: Optional[str] = guild.get("description")
         self.max_presences: Optional[int] = guild.get("max_presences")
         self.max_members: Optional[int] = guild.get("max_members")
@@ -501,8 +483,8 @@ class Guild(Hashable):
         self._system_channel_flags: int = guild.get("system_channel_flags", 0)
         self.preferred_locale: Optional[str] = guild.get("preferred_locale")
         self._discovery_splash: Optional[str] = guild.get("discovery_splash")
-        self._rules_channel_id: Optional[int] = utils._get_as_snowflake(guild, "rules_channel_id")
-        self._public_updates_channel_id: Optional[int] = utils._get_as_snowflake(
+        self._rules_channel_id: Optional[int] = utils.get_as_snowflake(guild, "rules_channel_id")
+        self._public_updates_channel_id: Optional[int] = utils.get_as_snowflake(
             guild, "public_updates_channel_id"
         )
         self.nsfw_level: NSFWLevel = try_enum(NSFWLevel, guild.get("nsfw_level", 0))
@@ -524,8 +506,8 @@ class Guild(Hashable):
         self._sync(guild)
         self._large: Optional[bool] = None if member_count is None else self._member_count >= 250
 
-        self.owner_id: Optional[int] = utils._get_as_snowflake(guild, "owner_id")
-        self.afk_channel: Optional[VocalGuildChannel] = self.get_channel(utils._get_as_snowflake(guild, "afk_channel_id"))  # type: ignore
+        self.owner_id: Optional[int] = utils.get_as_snowflake(guild, "owner_id")
+        self.afk_channel: Optional[VocalGuildChannel] = self.get_channel(utils.get_as_snowflake(guild, "afk_channel_id"))  # type: ignore
 
         for obj in guild.get("voice_states", []):
             self._update_voice_state(obj, int(obj["channel_id"]))
@@ -1122,6 +1104,7 @@ class Guild(Hashable):
         slowmode_delay: int = MISSING,
         nsfw: bool = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        default_thread_slowmode_delay: int = MISSING,
     ) -> TextChannel:
         """|coro|
 
@@ -1213,6 +1196,9 @@ class Guild(Hashable):
 
         if nsfw is not MISSING:
             options["nsfw"] = nsfw
+
+        if default_thread_slowmode_delay is not MISSING:
+            options["default_thread_rate_limit_per_user"] = default_thread_slowmode_delay
 
         data = await self._create_channel(
             name,
@@ -1447,7 +1433,11 @@ class Guild(Hashable):
         position: int = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
         category: Optional[CategoryChannel] = None,
+        default_thread_slowmode_delay: int = MISSING,
+        default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = MISSING,
+        available_tags: List[ForumTag] = MISSING,
         reason: Optional[str] = None,
+        default_sort_order: SortOrderType = MISSING,
     ) -> ForumChannel:
         """|coro|
 
@@ -1474,6 +1464,23 @@ class Guild(Hashable):
             at 0. e.g. the top channel is position 0.
         reason: Optional[:class:`str`]
             The reason for creating this channel. Shows up on the audit log.
+        default_sort_order: Optional[:class:`SortOrderType`]
+            The default sort order used to sort posts in this channel.
+
+            .. versionadded:: 2.3
+        default_thread_slowmode_delay: :class:`int`
+            The default slowmode delay for threads created in this channel.
+            Must be between ``0`` and ``21600``.
+
+            .. versionadded:: 2.4
+        default_reaction: Optional[Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]]
+            The default reaction for threads created in this channel.
+
+            .. versionadded:: 2.4
+        available_tags: List[:class:`ForumTag`]
+            The available tags for threads created in this channel.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -1495,6 +1502,32 @@ class Guild(Hashable):
         }
         if position is not MISSING:
             options["position"] = position
+
+        if default_sort_order is not MISSING:
+            options["default_sort_order"] = default_sort_order.value
+
+        if default_thread_slowmode_delay is not MISSING:
+            options["default_thread_rate_limit_per_user"] = default_thread_slowmode_delay
+
+        if available_tags is not MISSING:
+            options["available_tags"] = [tag.payload for tag in available_tags]
+
+        if default_reaction is not MISSING:
+            if isinstance(default_reaction, str):
+                default_reaction = PartialEmoji.from_str(default_reaction)
+
+            if default_reaction is None:
+                options["default_reaction_emoji"] = None
+            else:
+                options["default_reaction_emoji"] = (
+                    {
+                        "emoji_id": default_reaction.id,
+                    }
+                    if default_reaction.id is not None
+                    else {
+                        "emoji_name": default_reaction.name,
+                    }
+                )
 
         data = await self._create_channel(
             name,
@@ -1689,16 +1722,16 @@ class Guild(Hashable):
             fields["afk_timeout"] = afk_timeout
 
         if icon is not MISSING:
-            fields["icon"] = await utils._obj_to_base64_data(icon)
+            fields["icon"] = await utils.obj_to_base64_data(icon)
 
         if banner is not MISSING:
-            fields["banner"] = await utils._obj_to_base64_data(banner)
+            fields["banner"] = await utils.obj_to_base64_data(banner)
 
         if splash is not MISSING:
-            fields["splash"] = await utils._obj_to_base64_data(splash)
+            fields["splash"] = await utils.obj_to_base64_data(splash)
 
         if discovery_splash is not MISSING:
-            fields["discovery_splash"] = await utils._obj_to_base64_data(discovery_splash)
+            fields["discovery_splash"] = await utils.obj_to_base64_data(discovery_splash)
 
         if default_notifications is not MISSING:
             if not isinstance(default_notifications, NotificationLevel):
@@ -1992,7 +2025,10 @@ class Guild(Hashable):
         if ch_type in (ChannelType.group, ChannelType.private):
             raise InvalidData("Channel ID resolved to a private channel")
 
-        guild_id = int(data.get("guild_id"))
+        if TYPE_CHECKING:
+            data = cast(GuildChannelPayload, data)
+
+        guild_id = int(data["guild_id"])
         if self.id != guild_id:
             raise InvalidData("Guild ID resolved to a different guild")
 
@@ -2586,7 +2622,7 @@ class Guild(Hashable):
         :class:`Emoji`
             The created emoji.
         """
-        img_base64 = await utils._obj_to_base64_data(image)
+        img_base64 = await utils.obj_to_base64_data(image)
 
         role_ids: SnowflakeList
         if roles:
@@ -2772,7 +2808,7 @@ class Guild(Hashable):
             if isinstance(icon, str):
                 fields["unicode_emoji"] = icon
             else:
-                fields["icon"] = await utils._obj_to_base64_data(icon)
+                fields["icon"] = await utils.obj_to_base64_data(icon)
 
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
         role = Role(guild=self, data=data, state=self._state)
@@ -3440,7 +3476,7 @@ class Guild(Hashable):
         if description is not MISSING:
             payload["description"] = description
         if image is not None:
-            payload["image"] = await utils._obj_to_base64_data(image)
+            payload["image"] = await utils.obj_to_base64_data(image)
 
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)
@@ -3766,7 +3802,7 @@ class Guild(Hashable):
             [int], Optional[Union[Member, User]]
         ] = lambda id: self.get_member(id) or self._state.get_user(id)
         it = filter(None, map(get_member_or_user, utils.parse_raw_mentions(text)))
-        return utils._unique(it)
+        return utils.unique(it)
 
     def parse_role_mentions(self, text: str) -> List[Role]:
         """Parses role mentions in a string and returns a list of :class:`Role` objects.
@@ -3789,7 +3825,7 @@ class Guild(Hashable):
             List of :class:`Role` objects that were mentioned in the string.
         """
         it = filter(None, map(self.get_role, utils.parse_raw_role_mentions(text)))
-        return utils._unique(it)
+        return utils.unique(it)
 
     def parse_channel_mentions(self, text: str) -> List[abc.GuildChannel]:
         """Parses channel mentions in a string and returns a list of :class:`~abc.GuildChannel` objects.
@@ -3812,4 +3848,4 @@ class Guild(Hashable):
             List of :class:`~abc.GuildChannel` objects that were mentioned in the string.
         """
         it = filter(None, map(self.get_channel, utils.parse_raw_channel_mentions(text)))
-        return utils._unique(it)
+        return utils.unique(it)

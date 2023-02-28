@@ -1,42 +1,10 @@
-"""
-The MIT License (MIT)
+# SPDX-License-Identifier: MIT
 
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
 from __future__ import annotations
 
 import asyncio
 import inspect
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    Generator,
-    List,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator, List, Tuple, TypeVar
 
 import nextcord.utils
 from nextcord.application_command import ClientCog, _cog_special_method
@@ -44,6 +12,8 @@ from nextcord.application_command import ClientCog, _cog_special_method
 from ._types import _BaseCommand
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .bot import BotBase
     from .context import Context
     from .core import Command
@@ -124,7 +94,7 @@ class CogMeta(type):
     __cog_commands__: List[Command]
     __cog_listeners__: List[Tuple[str, str]]
 
-    def __new__(cls: Type[CogMeta], *args: Any, **kwargs: Any) -> CogMeta:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         name, bases, attrs = args
         attrs["__cog_name__"] = kwargs.pop("name", name)
         attrs["__cog_settings__"] = kwargs.pop("command_attrs", {})
@@ -205,7 +175,7 @@ class Cog(ClientCog, metaclass=CogMeta):
     __cog_commands__: ClassVar[List[Command]]
     __cog_listeners__: ClassVar[List[Tuple[str, str]]]
 
-    def __new__(cls: Type[CogT], *args: Any, **kwargs: Any) -> CogT:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         # For issue 426, we need to store a copy of the command objects
         # since we modify them to inject `self` to them.
         # To do this, we need to interfere with the Cog creation process.
@@ -216,14 +186,10 @@ class Cog(ClientCog, metaclass=CogMeta):
         # r.e type ignore, type-checker complains about overriding a ClassVar
         self.__cog_commands__ = tuple(c._update_copy(cmd_attrs) for c in cls.__cog_commands__)  # type: ignore
 
-        lookup = {
-            cmd.qualified_name: cmd
-            for cmd in self.__cog_commands__  # type: ignore
-            # pyright cannot read class annotations i guess
-        }
+        lookup = {cmd.qualified_name: cmd for cmd in self.__cog_commands__}
 
         # Update the Command instances dynamically as well
-        for command in self.__cog_commands__:  # type: ignore
+        for command in self.__cog_commands__:
             setattr(self, command.callback.__name__, command)
             parent = command.parent
             if parent is not None:
@@ -234,7 +200,7 @@ class Cog(ClientCog, metaclass=CogMeta):
                 parent.remove_command(command.name)  # type: ignore
                 parent.add_command(command)  # type: ignore
 
-        return self  # type: ignore
+        return self
 
     def get_commands(self) -> List[Command]:
         r"""
@@ -435,7 +401,7 @@ class Cog(ClientCog, metaclass=CogMeta):
         """
         pass
 
-    def _inject(self: CogT, bot: BotBase) -> CogT:
+    def _inject(self, bot: BotBase) -> Self:
         cls = self.__class__
 
         # realistically, the only thing that can cause loading errors

@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -60,7 +38,7 @@ from .item import Item, ItemCallbackType
 __all__ = ("View",)
 
 if TYPE_CHECKING:
-    from ..interactions import Interaction
+    from ..interactions import ClientT, Interaction
     from ..message import Message
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
@@ -525,7 +503,7 @@ class ViewStore:
         for k in to_remove:
             del self._views[k]
 
-    def add_view(self, view: View, message_id: Optional[int] = None):
+    def add_view(self, view: View, message_id: Optional[int] = None) -> None:
         self.__verify_integrity()
 
         view._start_listening_from_store(self)
@@ -536,7 +514,7 @@ class ViewStore:
         if message_id is not None:
             self._synced_message_views[message_id] = view
 
-    def remove_view(self, view: View, message_id: Optional[int] = None):
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
         for item in view.children:
             if item.is_dispatchable():
                 self._views.pop((item.type.value, message_id, item.custom_id), None)  # type: ignore
@@ -546,7 +524,9 @@ class ViewStore:
                 del self._synced_message_views[key]
                 break
 
-    def dispatch(self, component_type: int, custom_id: str, interaction: Interaction):
+    def dispatch(
+        self, component_type: int, custom_id: str, interaction: Interaction[ClientT]
+    ) -> None:
         self.__verify_integrity()
         message_id: Optional[int] = interaction.message and interaction.message.id
         key = (component_type, message_id, custom_id)
@@ -557,16 +537,16 @@ class ViewStore:
             return
 
         view, item = value
-        item.refresh_state(interaction.data)  # type: ignore
+        item.refresh_state(interaction.data, interaction._state, interaction.guild)  # type: ignore
         view._dispatch_item(item, interaction)
 
-    def is_message_tracked(self, message_id: int):
+    def is_message_tracked(self, message_id: int) -> bool:
         return message_id in self._synced_message_views
 
     def remove_message_tracking(self, message_id: int) -> Optional[View]:
         return self._synced_message_views.pop(message_id, None)
 
-    def update_from_message(self, message_id: int, components: List[ComponentPayload]):
+    def update_from_message(self, message_id: int, components: List[ComponentPayload]) -> None:
         # pre-req: is_message_tracked == true
         view = self._synced_message_views[message_id]
         view.refresh([_component_factory(d) for d in components])

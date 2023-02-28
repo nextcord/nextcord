@@ -1,33 +1,11 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 import asyncio
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Optional, TypeVar
 
 from nextcord.enums import IntEnum
 
@@ -35,6 +13,8 @@ from ...abc import PrivateChannel
 from .errors import MaxConcurrencyReached
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ...message import Message
 
 __all__ = (
@@ -46,7 +26,6 @@ __all__ = (
 )
 
 C = TypeVar("C", bound="CooldownMapping")
-MC = TypeVar("MC", bound="MaxConcurrency")
 
 
 class BucketType(IntEnum):
@@ -221,7 +200,7 @@ class CooldownMapping:
         return self._type
 
     @classmethod
-    def from_cooldown(cls: Type[C], rate, per, type) -> C:
+    def from_cooldown(cls, rate, per, type) -> Self:
         return cls(Cooldown(rate, per), type)
 
     def _bucket_key(self, msg: Message) -> Any:
@@ -364,7 +343,7 @@ class MaxConcurrency:
         if not isinstance(per, BucketType):
             raise TypeError(f"max_concurrency 'per' must be of type BucketType not {type(per)!r}")
 
-    def copy(self: MC) -> MC:
+    def copy(self) -> Self:
         return self.__class__(self.number, per=self.per, wait=self.wait)
 
     def __repr__(self) -> str:

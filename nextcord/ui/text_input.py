@@ -1,46 +1,27 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Optional, Tuple, TypeVar
 
 from ..components import TextInput as TextInputComponent
 from ..enums import ComponentType, TextInputStyle
+from ..guild import Guild
+from ..state import ConnectionState
 from ..utils import MISSING
 from .item import Item
 
 __all__ = ("TextInput",)
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ..types.components import TextInputComponent as TextInputComponentPayload
     from ..types.interactions import ComponentInteractionData
     from .view import View
 
 
-T = TypeVar("T", bound="TextInput")
 V = TypeVar("V", bound="View", covariant=True)
 
 
@@ -126,7 +107,7 @@ class TextInput(Item[V]):
         return self._underlying.style
 
     @style.setter
-    def style(self, value: TextInputStyle):
+    def style(self, value: TextInputStyle) -> None:
         self._underlying.style = value
 
     @property
@@ -135,7 +116,7 @@ class TextInput(Item[V]):
         return self._underlying.custom_id
 
     @custom_id.setter
-    def custom_id(self, value: Optional[str]):
+    def custom_id(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("custom_id must be None or str")
 
@@ -147,7 +128,7 @@ class TextInput(Item[V]):
         return self._underlying.label
 
     @label.setter
-    def label(self, value: str):
+    def label(self, value: str) -> None:
         if value is None:
             raise TypeError("label must cannot be None")
         self._underlying.label = str(value)
@@ -158,7 +139,7 @@ class TextInput(Item[V]):
         return self._underlying.min_length
 
     @min_length.setter
-    def min_length(self, value: int):
+    def min_length(self, value: int) -> None:
         self._underlying.min_length = value
 
     @property
@@ -167,7 +148,7 @@ class TextInput(Item[V]):
         return self._underlying.max_length
 
     @max_length.setter
-    def max_length(self, value: int):
+    def max_length(self, value: int) -> None:
         self._underlying.max_length = value
 
     @property
@@ -176,7 +157,7 @@ class TextInput(Item[V]):
         return self._underlying.required
 
     @required.setter
-    def required(self, value: Optional[bool]):
+    def required(self, value: Optional[bool]) -> None:
         if value is not None and not isinstance(value, bool):
             raise TypeError("required must be None or bool")
 
@@ -188,7 +169,7 @@ class TextInput(Item[V]):
         return self._underlying.value
 
     @default_value.setter
-    def default_value(self, value: Optional[str]):
+    def default_value(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("default_value must be None or str")
         self._underlying.value = value
@@ -207,7 +188,7 @@ class TextInput(Item[V]):
         return self._underlying.placeholder
 
     @placeholder.setter
-    def placeholder(self, value: Optional[str]):
+    def placeholder(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("placeholder must be None or str")
 
@@ -218,7 +199,7 @@ class TextInput(Item[V]):
         return 5
 
     @classmethod
-    def from_component(cls: Type[T], text_input: TextInputComponent) -> T:
+    def from_component(cls, text_input: TextInputComponent) -> Self:
         return cls(
             style=text_input.style,
             custom_id=text_input.custom_id,
@@ -244,5 +225,7 @@ class TextInput(Item[V]):
     def refresh_component(self, text_input: TextInputComponent) -> None:
         self._underlying = text_input
 
-    def refresh_state(self, data: ComponentInteractionData) -> None:
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         self._inputed_value = data.get("value", "")

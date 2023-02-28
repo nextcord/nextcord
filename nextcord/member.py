@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -30,7 +7,7 @@ import datetime
 import itertools
 import sys
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 
 from . import abc, utils
 from .activity import ActivityTypes, create_activity
@@ -48,6 +25,8 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import Snowflake
     from .channel import DMChannel, StageChannel, VoiceChannel
     from .flags import PublicUserFlags
@@ -197,9 +176,6 @@ def flatten_user(cls):
     return cls
 
 
-M = TypeVar("M", bound="Member")
-
-
 @flatten_user
 class Member(abc.Messageable, _UserTag):
     """Represents a Discord member to a :class:`Guild`.
@@ -322,7 +298,7 @@ class Member(abc.Messageable, _UserTag):
         return hash(self._user)
 
     @classmethod
-    def _from_message(cls: Type[M], *, message: Message, data: MemberPayload) -> M:
+    def _from_message(cls, *, message: Message, data: MemberPayload) -> Self:
         author = message.author
         data["user"] = author._to_minimal_user_json()  # type: ignore
         return cls(data=data, guild=message.guild, state=message._state)  # type: ignore
@@ -337,8 +313,8 @@ class Member(abc.Messageable, _UserTag):
 
     @classmethod
     def _try_upgrade(
-        cls: Type[M], *, data: UserWithMemberPayload, guild: Guild, state: ConnectionState
-    ) -> Union[User, M]:
+        cls, *, data: UserWithMemberPayload, guild: Guild, state: ConnectionState
+    ) -> Union[User, Member]:
         # A User object with a 'member' key
         try:
             member_data = data.pop("member")
@@ -349,8 +325,8 @@ class Member(abc.Messageable, _UserTag):
             return cls(data=member_data, guild=guild, state=state)  # type: ignore
 
     @classmethod
-    def _copy(cls: Type[M], member: M) -> M:
-        self: M = cls.__new__(cls)  # to bypass __init__
+    def _copy(cls, member: Self) -> Self:
+        self = cls.__new__(cls)  # to bypass __init__
 
         self._roles = utils.SnowflakeList(member._roles, is_sorted=True)
         self.joined_at = member.joined_at
@@ -954,7 +930,7 @@ class Member(abc.Messageable, _UserTag):
         """
 
         if not atomic:
-            new_roles: list[Snowflake] = utils._unique(
+            new_roles: list[Snowflake] = utils.unique(
                 Object(id=r.id) for s in (self.roles[1:], roles) for r in s
             )
             await self.edit(roles=new_roles, reason=reason)

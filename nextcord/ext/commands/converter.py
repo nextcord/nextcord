@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -261,6 +239,9 @@ class MemberConverter(IDConverter[nextcord.Member]):
             if not result:
                 raise MemberNotFound(argument)
 
+        if not isinstance(result, nextcord.Member):
+            raise MemberNotFound(argument)
+
         return result
 
 
@@ -297,6 +278,9 @@ class UserConverter(IDConverter[nextcord.User]):
                     result = await ctx.bot.fetch_user(user_id)
                 except nextcord.HTTPException:
                     raise UserNotFound(argument) from None
+
+            if not isinstance(result, nextcord.User):
+                raise UserNotFound(argument)
 
             return result
 
@@ -351,7 +335,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
         if not match:
             raise MessageNotFound(argument)
         data = match.groupdict()
-        channel_id = nextcord.utils._get_as_snowflake(data, "channel_id")
+        channel_id = nextcord.utils.get_as_snowflake(data, "channel_id")
         message_id = int(data["message_id"])
         guild_id = data.get("guild_id")
         if guild_id is None:
@@ -1159,13 +1143,13 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
             if inspect.ismethod(converter.convert):
                 return await converter.convert(ctx, argument)
             else:
-                return await converter().convert(ctx, argument)  # type: ignore
+                return await converter().convert(ctx, argument)
         elif isinstance(converter, Converter):
             return await converter.convert(ctx, argument)  # type: ignore
     except CommandError:
         raise
     except Exception as exc:
-        raise ConversionError(converter, exc) from exc
+        raise ConversionError(converter, exc) from exc  # type: ignore
 
     try:
         return converter(argument)

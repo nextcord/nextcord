@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -258,6 +235,12 @@ class Client:
         Warning: While enabling this will prevent "ghost" commands on guilds with removed code references, rolling out
         to ALL guilds with anything other than a very small bot will likely cause it to get rate limited.
 
+    default_guild_ids: Optional[List[:class:`int`]]
+        The default guild ids for every application command set. If the application command doesn't have any explicit
+        guild ids set and this list is not empty, then the application command's guild ids will be set to this.
+        Defaults to ``None``.
+
+        .. versionadded:: 2.3
 
     Attributes
     ----------
@@ -294,6 +277,7 @@ class Client:
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
+        default_guild_ids: Optional[List[int]] = None,
     ):
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
@@ -343,6 +327,8 @@ class Client:
         self._rollout_update_known: bool = rollout_update_known
         self._rollout_all_guilds: bool = rollout_all_guilds
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
+
+        self._default_guild_ids = default_guild_ids or []
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -479,6 +465,14 @@ class Client:
         .. versionadded:: 2.0
         """
         return self._connection.application_flags
+
+    @property
+    def default_guild_ids(self) -> List[int]:
+        """List[:class:`int`] The default guild ids for all application commands.
+
+        .. versionadded:: 2.3
+        """
+        return self._default_guild_ids
 
     def is_ready(self) -> bool:
         """:class:`bool`: Specifies if the client's internal cache is ready for use."""
@@ -1518,7 +1512,7 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        icon_base64 = await utils._obj_to_base64_data(icon)
+        icon_base64 = await utils.obj_to_base64_data(icon)
 
         if code:
             data = await self.http.create_from_template(code, name, str(region), icon_base64)
@@ -2323,6 +2317,10 @@ class Client:
             If the command should be removed before adding it. This will clear all signatures from storage, including
             rollout ones.
         """
+        if command.use_default_guild_ids:
+            for id in self._default_guild_ids:
+                command.add_guild_rollout(id)
+
         self._connection.add_application_command(
             command, overwrite=overwrite, use_rollout=use_rollout, pre_remove=pre_remove
         )
@@ -2717,7 +2715,7 @@ class Client:
         name: Optional[str] = None,
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
@@ -2731,8 +2729,10 @@ class Client:
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
             name as the value
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will
+            be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2764,7 +2764,7 @@ class Client:
         name: Optional[str] = None,
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
@@ -2778,8 +2778,10 @@ class Client:
         name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
             name as the value
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will
+            be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2813,7 +2815,7 @@ class Client:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
@@ -2833,8 +2835,10 @@ class Client:
         description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
             Description(s) of the command for users of specific locales. The locale code should be the key, with the
             localized description as the value.
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will
+            be a global command.
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
@@ -2892,7 +2896,7 @@ class Client:
         """
 
         it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
-        return utils._unique(it)
+        return utils.unique(it)
 
     @overload
     def get_interaction(self, data) -> Interaction:

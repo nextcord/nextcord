@@ -1,40 +1,20 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from . import abc
 from .asset import Asset
 from .colour import Colour
 from .enums import DefaultAvatar
 from .flags import PublicUserFlags
-from .utils import MISSING, _obj_to_base64_data, snowflake_time
+from .utils import MISSING, obj_to_base64_data, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
+
+    from typing_extensions import Self
 
     from .channel import DMChannel
     from .file import File
@@ -42,15 +22,13 @@ if TYPE_CHECKING:
     from .message import Attachment, Message
     from .state import ConnectionState
     from .types.channel import DMChannel as DMChannelPayload
-    from .types.user import User as UserPayload
+    from .types.user import PartialUser as PartialUserPayload, User as UserPayload
 
 
 __all__ = (
     "User",
     "ClientUser",
 )
-
-BU = TypeVar("BU", bound="BaseUser")
 
 
 class _UserTag:
@@ -84,7 +62,9 @@ class BaseUser(_UserTag):
         _accent_colour: Optional[str]
         _public_flags: int
 
-    def __init__(self, *, state: ConnectionState, data: UserPayload) -> None:
+    def __init__(
+        self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
+    ) -> None:
         self._state = state
         self._update(data)
 
@@ -106,7 +86,7 @@ class BaseUser(_UserTag):
     def __hash__(self) -> int:
         return self.id >> 22
 
-    def _update(self, data: UserPayload) -> None:
+    def _update(self, data: Union[PartialUserPayload, UserPayload]) -> None:
         self.name = data["username"]
         self.id = int(data["id"])
         self.discriminator = data["discriminator"]
@@ -118,7 +98,7 @@ class BaseUser(_UserTag):
         self.system = data.get("system", False)
 
     @classmethod
-    def _copy(cls: Type[BU], user: BU) -> BU:
+    def _copy(cls, user: Self) -> Self:
         self = cls.__new__(cls)  # bypass __init__
 
         self.name = user.name
@@ -399,7 +379,7 @@ class ClientUser(BaseUser):
         if username is not MISSING:
             payload["username"] = username
         if avatar is not MISSING:
-            payload["avatar"] = await _obj_to_base64_data(avatar)
+            payload["avatar"] = await obj_to_base64_data(avatar)
 
         data: UserPayload = await self._state.http.edit_profile(payload)
         return ClientUser(state=self._state, data=data)
@@ -442,7 +422,9 @@ class User(BaseUser, abc.Messageable):
 
     __slots__ = ("_stored",)
 
-    def __init__(self, *, state: ConnectionState, data: UserPayload) -> None:
+    def __init__(
+        self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
+    ) -> None:
         super().__init__(state=state, data=data)
         self._stored: bool = False
 

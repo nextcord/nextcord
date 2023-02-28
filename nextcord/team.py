@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -66,7 +44,7 @@ class Team:
         self.id: int = int(data["id"])
         self.name: str = data["name"]
         self._icon: Optional[str] = data["icon"]
-        self.owner_id: Optional[int] = utils._get_as_snowflake(data, "owner_user_id")
+        self.owner_id: Optional[int] = utils.get_as_snowflake(data, "owner_user_id")
         self.members: List[TeamMember] = [
             TeamMember(self, self._state, member) for member in data["members"]
         ]
@@ -136,7 +114,7 @@ class TeamMember(BaseUser):
             TeamMembershipState, data["membership_state"]
         )
         self.permissions: List[str] = data["permissions"]
-        super().__init__(state=state, data=data["user"])  # type: ignore
+        super().__init__(state=state, data=data["user"])
 
     def __repr__(self) -> str:
         return (

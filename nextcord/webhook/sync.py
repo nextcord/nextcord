@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 # If you're wondering why this is essentially copy pasted from the async_.py
 # file, then it's due to needing two separate types to make the typing shenanigans
@@ -113,7 +91,7 @@ class WebhookAdapter:
 
         if payload is not None:
             headers["Content-Type"] = "application/json"
-            to_send = utils._to_json(payload)
+            to_send = utils.to_json(payload)
 
         if auth_token is not None:
             headers["Authorization"] = f"Bot {auth_token}"
@@ -163,7 +141,7 @@ class WebhookAdapter:
 
                         remaining = response.headers.get("X-Ratelimit-Remaining")
                         if remaining == "0" and response.status_code != 429:
-                            delta = utils._parse_ratelimit_header(response)
+                            delta = utils.parse_ratelimit_header(response)
                             _log.debug(
                                 "Webhook ID %s has been pre-emptively rate limited, waiting %.2f seconds",
                                 webhook_id,

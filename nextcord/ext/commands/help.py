@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -91,11 +69,17 @@ class Paginator:
             .. versionadded:: 1.7
     """
 
-    def __init__(self, prefix="```", suffix="```", max_size=2000, linesep="\n"):
-        self.prefix = prefix
-        self.suffix = suffix
-        self.max_size = max_size
-        self.linesep = linesep
+    def __init__(
+        self,
+        prefix: Optional[str] = "```",
+        suffix: Optional[str] = "```",
+        max_size: int = 2000,
+        linesep: str = "\n",
+    ):
+        self.prefix: Optional[str] = prefix
+        self.suffix: Optional[str] = suffix
+        self.max_size: int = max_size
+        self.linesep: str = linesep
         self.clear()
 
     def clear(self):
@@ -606,7 +590,7 @@ class HelpCommand:
             The maximum width of the commands.
         """
 
-        as_lengths = (nextcord.utils._string_width(c.name) for c in commands)
+        as_lengths = (nextcord.utils.string_width(c.name) for c in commands)
         return max(as_lengths, default=0)
 
     def get_destination(self):
@@ -971,7 +955,7 @@ class DefaultHelpCommand(HelpCommand):
         self.paginator.add_line(heading)
         max_size = max_size or self.get_max_size(commands)
 
-        get_width = nextcord.utils._string_width
+        get_width = nextcord.utils.string_width
         for command in commands:
             name = command.name
             width = max_size - (get_width(name) - len(name))

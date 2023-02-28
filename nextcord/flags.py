@@ -1,32 +1,10 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 from functools import reduce
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     ClassVar,
@@ -42,6 +20,9 @@ from typing import (
 
 from .enums import UserFlags
 
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
 __all__ = (
     "SystemChannelFlags",
     "MessageFlags",
@@ -52,7 +33,6 @@ __all__ = (
     "ChannelFlags",
 )
 
-FV = TypeVar("FV", bound="flag_value")
 BF = TypeVar("BF", bound="BaseFlags")
 
 
@@ -62,7 +42,7 @@ class flag_value:
         self.__doc__ = func.__doc__
 
     @overload
-    def __get__(self: FV, instance: None, owner: Type[BF]) -> FV:
+    def __get__(self, instance: None, owner: Type[BF]) -> Self:
         ...
 
     @overload
@@ -281,8 +261,13 @@ class ChannelFlags(BaseFlags):
 
     @flag_value
     def pinned(self):
-        """:class:`bool`: Returns ``True`` if the channel is pinned."""
-        return 1
+        """:class:`bool`: Returns ``True`` if the thread is pinned in its parent forum."""
+        return 1 << 1
+
+    @flag_value
+    def require_tag(self):
+        """:class:`bool`: Returns ``True`` if the forum channel requires tags for posts."""
+        return 1 << 4
 
 
 @fill_with_flags()
@@ -486,6 +471,14 @@ class PublicUserFlags(BaseFlags):
         """
         return UserFlags.known_spammer.value
 
+    @flag_value
+    def active_developer(self):
+        """:class:`bool`: Returns ``True`` if the user is an Active Developer.
+
+        .. versionadded:: 2.4
+        """
+        return UserFlags.active_developer.value
+
     def all(self) -> List[UserFlags]:
         """List[:class:`UserFlags`]: Returns all public flags the user has."""
         return [public_flag for public_flag in UserFlags if self._has_flag(public_flag.value)]
@@ -541,7 +534,7 @@ class Intents(BaseFlags):
             setattr(self, key, value)
 
     @classmethod
-    def all(cls: Type[Intents]) -> Intents:
+    def all(cls) -> Self:
         """A factory method that creates a :class:`Intents` with everything enabled."""
         self = cls.__new__(cls)
         add_bits: Callable[[int, int], int] = lambda a, b: a | b
@@ -549,14 +542,14 @@ class Intents(BaseFlags):
         return self
 
     @classmethod
-    def none(cls: Type[Intents]) -> Intents:
+    def none(cls) -> Self:
         """A factory method that creates a :class:`Intents` with everything disabled."""
         self = cls.__new__(cls)
         self.value = self.DEFAULT_VALUE
         return self
 
     @classmethod
-    def default(cls: Type[Intents]) -> Intents:
+    def default(cls) -> Self:
         """A factory method that creates a :class:`Intents` with everything enabled
         except :attr:`presences`, :attr:`members`, and :attr:`message_content`.
         """
@@ -1082,7 +1075,7 @@ class MemberCacheFlags(BaseFlags):
             setattr(self, key, value)
 
     @classmethod
-    def all(cls: Type[MemberCacheFlags]) -> MemberCacheFlags:
+    def all(cls) -> Self:
         """A factory method that creates a :class:`MemberCacheFlags` with everything enabled."""
         bits = max(cls.VALID_FLAGS.values()).bit_length()
         value = (1 << bits) - 1
@@ -1091,7 +1084,7 @@ class MemberCacheFlags(BaseFlags):
         return self
 
     @classmethod
-    def none(cls: Type[MemberCacheFlags]) -> MemberCacheFlags:
+    def none(cls) -> Self:
         """A factory method that creates a :class:`MemberCacheFlags` with everything disabled."""
         self = cls.__new__(cls)
         self.value = self.DEFAULT_VALUE
@@ -1123,7 +1116,7 @@ class MemberCacheFlags(BaseFlags):
         return 2
 
     @classmethod
-    def from_intents(cls: Type[MemberCacheFlags], intents: Intents) -> MemberCacheFlags:
+    def from_intents(cls, intents: Intents) -> Self:
         """A factory method that creates a :class:`MemberCacheFlags` based on
         the currently selected :class:`Intents`.
 
@@ -1246,3 +1239,11 @@ class ApplicationFlags(BaseFlags):
     def application_command_badge(self):
         """:class:`bool`: Returns ``True`` if the application has registered global application commands."""
         return 1 << 23
+
+    @flag_value
+    def active(self):
+        """:class:`bool`: Returns ``True`` if the application is considered active. This means that it has had any global command executed in the past 30 days.
+
+        .. versionadded:: 2.4
+        """
+        return 1 << 24

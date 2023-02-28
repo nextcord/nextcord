@@ -1,35 +1,16 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 import datetime
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, Union
 
 from . import utils
 from .colour import Colour
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 __all__ = ("Embed",)
 
@@ -51,8 +32,6 @@ class EmbedProxy:
     def __getattr__(self, _: str) -> None:
         return None
 
-
-E = TypeVar("E", bound="Embed")
 
 if TYPE_CHECKING:
     from nextcord.types.embed import Embed as EmbedData, EmbedType
@@ -200,7 +179,7 @@ class Embed:
         return None
 
     @classmethod
-    def from_dict(cls: Type[E], data: Mapping[str, Any]) -> E:
+    def from_dict(cls, data: Mapping[str, Any]) -> Self:
         """Converts a :class:`dict` to a :class:`Embed` provided it is in the
         format that Discord expects it to be in.
 
@@ -216,7 +195,7 @@ class Embed:
             The dictionary to convert into an embed.
         """
         # we are bypassing __init__ here since it doesn't apply here
-        self: E = cls.__new__(cls)
+        self = cls.__new__(cls)
 
         # fill in the basic fields
 
@@ -256,7 +235,7 @@ class Embed:
 
         return self
 
-    def copy(self: E) -> E:
+    def copy(self) -> Self:
         """Returns a shallow copy of the embed."""
         return self.__class__.from_dict(self.to_dict())
 
@@ -343,7 +322,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_footer", {}))  # type: ignore
 
-    def set_footer(self: E, *, text: Optional[Any] = None, icon_url: Optional[Any] = None) -> E:
+    def set_footer(self, *, text: Optional[Any] = None, icon_url: Optional[Any] = None) -> Self:
         """Sets the footer for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -366,7 +345,7 @@ class Embed:
 
         return self
 
-    def remove_footer(self: E) -> E:
+    def remove_footer(self) -> Self:
         """Clears embed's footer information.
 
         This function returns the class instance to allow for fluent-style
@@ -396,7 +375,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_image", {}))  # type: ignore
 
-    def set_image(self: E, url: Optional[Any]) -> E:
+    def set_image(self, url: Optional[Any]) -> Self:
         """Sets the image for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -438,7 +417,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_thumbnail", {}))  # type: ignore
 
-    def set_thumbnail(self: E, url: Optional[Any]) -> E:
+    def set_thumbnail(self, url: Optional[Any]) -> Self:
         """Sets the thumbnail for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -500,12 +479,12 @@ class Embed:
         return EmbedProxy(getattr(self, "_author", {}))  # type: ignore
 
     def set_author(
-        self: E,
+        self,
         *,
         name: Any,
         url: Optional[Any] = None,
         icon_url: Optional[Any] = None,
-    ) -> E:
+    ) -> Self:
         """Sets the author for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -533,7 +512,7 @@ class Embed:
 
         return self
 
-    def remove_author(self: E) -> E:
+    def remove_author(self) -> Self:
         """Clears embed's author information.
 
         This function returns the class instance to allow for fluent-style
@@ -558,7 +537,7 @@ class Embed:
         """
         return [EmbedProxy(d) for d in getattr(self, "_fields", [])]  # type: ignore
 
-    def add_field(self: E, *, name: Any, value: Any, inline: bool = True) -> E:
+    def add_field(self, *, name: Any, value: Any, inline: bool = True) -> Self:
         """Adds a field to the embed object.
 
         This function returns the class instance to allow for fluent-style
@@ -587,7 +566,7 @@ class Embed:
 
         return self
 
-    def insert_field_at(self: E, index: int, *, name: Any, value: Any, inline: bool = True) -> E:
+    def insert_field_at(self, index: int, *, name: Any, value: Any, inline: bool = True) -> Self:
         """Inserts a field before a specified index to the embed.
 
         This function returns the class instance to allow for fluent-style
@@ -620,7 +599,7 @@ class Embed:
 
         return self
 
-    def clear_fields(self: E) -> E:
+    def clear_fields(self) -> Self:
         """Removes all fields from this embed.
 
         This function returns the class instance to allow for fluent-style
@@ -633,7 +612,7 @@ class Embed:
 
         return self
 
-    def remove_field(self: E, index: int) -> E:
+    def remove_field(self, index: int) -> Self:
         """Removes a field at a specified index.
 
         If the index is invalid or out of bounds then the error is
@@ -659,7 +638,7 @@ class Embed:
 
         return self
 
-    def set_field_at(self: E, index: int, *, name: Any, value: Any, inline: bool = True) -> E:
+    def set_field_at(self, index: int, *, name: Any, value: Any, inline: bool = True) -> Self:
         """Modifies a field to the embed object.
 
         The index must point to a valid pre-existing field.

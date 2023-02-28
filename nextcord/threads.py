@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Rapptz
-Copyright (c) 2022-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -29,12 +6,13 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Union
 
+from . import channel
 from .abc import Messageable
 from .enums import ChannelType, try_enum
 from .errors import ClientException
 from .flags import ChannelFlags
 from .mixins import Hashable, PinsMixin
-from .utils import MISSING, _get_as_snowflake, parse_time
+from .utils import MISSING, get_as_snowflake, parse_time
 
 __all__ = (
     "Thread",
@@ -45,7 +23,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from .abc import Snowflake, SnowflakeTime
-    from .channel import CategoryChannel, TextChannel
+    from .channel import CategoryChannel, ForumChannel, ForumTag, TextChannel
     from .guild import Guild
     from .member import Member
     from .message import Message, PartialMessage
@@ -130,6 +108,10 @@ class Thread(Messageable, Hashable, PinsMixin):
         This is ``None`` if the thread was created before January 9th, 2021.
 
         .. versionadded:: 2.0
+    applied_tag_ids: List[:class:`int`]
+        A list of tag IDs that have been applied to this thread.
+
+        .. versionadded:: 2.4
     """
 
     __slots__ = (
@@ -154,6 +136,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         "archive_timestamp",
         "create_timestamp",
         "flags",
+        "applied_tag_ids",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload):
@@ -180,7 +163,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         self.owner_id = int(data["owner_id"])
         self.name = data["name"]
         self._type = try_enum(ChannelType, data["type"])
-        self.last_message_id = _get_as_snowflake(data, "last_message_id")
+        self.last_message_id = get_as_snowflake(data, "last_message_id")
         self.slowmode_delay = data.get("rate_limit_per_user", 0)
         self.message_count = data["message_count"]
         self.member_count = data["member_count"]
@@ -194,9 +177,13 @@ class Thread(Messageable, Hashable, PinsMixin):
         else:
             self.me = ThreadMember(self, member)
 
+        self.applied_tag_ids: List[int] = [
+            int(tag_id) for tag_id in data.get("applied_thread_tags", [])
+        ]
+
     def _unroll_metadata(self, data: ThreadMetadata):
         self.archived = data["archived"]
-        self.archiver_id = _get_as_snowflake(data, "archiver_id")
+        self.archiver_id = get_as_snowflake(data, "archiver_id")
         self.auto_archive_duration = data["auto_archive_duration"]
         self.archive_timestamp = parse_time(data["archive_timestamp"])
         self.locked = data.get("locked", False)
@@ -232,8 +219,8 @@ class Thread(Messageable, Hashable, PinsMixin):
         return self._type
 
     @property
-    def parent(self) -> Optional[TextChannel]:
-        """Optional[:class:`TextChannel`]: The parent channel this thread belongs to."""
+    def parent(self) -> Optional[Union[TextChannel, ForumChannel]]:
+        """Optional[Union[:class:`TextChannel`, :class:`ForumChannel`]]: The parent channel this thread belongs to."""
         return self.guild.get_channel(self.parent_id)  # type: ignore
 
     @property
@@ -324,6 +311,32 @@ class Thread(Messageable, Hashable, PinsMixin):
         .. versionadded:: 2.0
         """
         return f"https://discord.com/channels/{self.guild.id}/{self.id}"
+
+    @property
+    def applied_tags(self) -> Optional[List[ForumTag]]:
+        """Optional[List[:class:`ForumTag`]]: A list of tags applied to this thread.
+
+        This is ``None`` if the parent channel was not found in cache.
+
+        .. versionadded:: 2.4
+        """
+
+        if self.parent is None:
+            return None
+
+        parent = self.parent
+
+        if not isinstance(parent, channel.ForumChannel):
+            return None
+
+        tags: List[ForumTag] = []
+
+        for tag_id in self.applied_tag_ids:
+            tag = parent.get_tag(tag_id)
+            if tag is not None:
+                tags.append(tag)
+
+        return tags
 
     def is_private(self) -> bool:
         """:class:`bool`: Whether the thread is a private thread.
@@ -563,6 +576,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         slowmode_delay: int = MISSING,
         auto_archive_duration: ThreadArchiveDuration = MISSING,
         flags: ChannelFlags = MISSING,
+        applied_tags: List[ForumTag] = MISSING,
     ) -> Thread:
         """|coro|
 
@@ -596,6 +610,10 @@ class Thread(Messageable, Hashable, PinsMixin):
             The new channel flags to use for this thread.
 
             .. versionadded:: 2.1
+        applied_tags: List[:class:`ForumTag`]
+            The new tags to apply to this thread.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -624,6 +642,8 @@ class Thread(Messageable, Hashable, PinsMixin):
             payload["rate_limit_per_user"] = slowmode_delay
         if flags is not MISSING:
             payload["flags"] = flags.value
+        if applied_tags is not MISSING:
+            payload["applied_tags"] = [tag.id for tag in applied_tags]
 
         data = await self._state.http.edit_channel(self.id, **payload)
         # The data payload will always be a Thread payload

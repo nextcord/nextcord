@@ -1,37 +1,15 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from .asset import Asset
 from .colour import Colour
 from .errors import InvalidArgument
 from .mixins import Hashable
 from .permissions import Permissions
-from .utils import MISSING, _get_as_snowflake, _obj_to_base64_data, snowflake_time
+from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
 
 __all__ = (
     "RoleTags",
@@ -40,6 +18,8 @@ __all__ = (
 
 if TYPE_CHECKING:
     import datetime
+
+    from typing_extensions import Self
 
     from .file import File
     from .guild import Guild
@@ -76,8 +56,8 @@ class RoleTags:
     )
 
     def __init__(self, data: RoleTagPayload):
-        self.bot_id: Optional[int] = _get_as_snowflake(data, "bot_id")
-        self.integration_id: Optional[int] = _get_as_snowflake(data, "integration_id")
+        self.bot_id: Optional[int] = get_as_snowflake(data, "bot_id")
+        self.integration_id: Optional[int] = get_as_snowflake(data, "integration_id")
         # NOTE: The API returns "null" for this if it's valid, which corresponds to None.
         # This is different from other fields where "null" means "not there".
         # So in this case, a value of None is the same as True.
@@ -101,9 +81,6 @@ class RoleTags:
             f"<RoleTags bot_id={self.bot_id} integration_id={self.integration_id} "
             f"premium_subscriber={self.is_premium_subscriber()}>"
         )
-
-
-R = TypeVar("R", bound="Role")
 
 
 class Role(Hashable):
@@ -201,7 +178,7 @@ class Role(Hashable):
     def __repr__(self) -> str:
         return f"<Role id={self.id} name={self.name!r}>"
 
-    def __lt__(self: R, other: R) -> bool:
+    def __lt__(self, other: Self) -> bool:
         if not isinstance(other, Role) or not isinstance(self, Role):
             return NotImplemented
 
@@ -222,16 +199,16 @@ class Role(Hashable):
 
         return False
 
-    def __le__(self: R, other: R) -> bool:
+    def __le__(self, other: Self) -> bool:
         r = Role.__lt__(other, self)
         if r is NotImplemented:
             return NotImplemented
         return not r
 
-    def __gt__(self: R, other: R) -> bool:
+    def __gt__(self, other: Self) -> bool:
         return Role.__lt__(other, self)
 
-    def __ge__(self: R, other: R) -> bool:
+    def __ge__(self, other: Self) -> bool:
         r = Role.__lt__(self, other)
         if r is NotImplemented:
             return NotImplemented
@@ -462,7 +439,7 @@ class Role(Hashable):
             if isinstance(icon, str):
                 payload["unicode_emoji"] = icon
             else:
-                payload["icon"] = await _obj_to_base64_data(icon)
+                payload["icon"] = await obj_to_base64_data(icon)
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         return Role(guild=self.guild, data=data, state=self._state)

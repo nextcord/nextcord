@@ -1,32 +1,10 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type
 
 import aiohttp
 
@@ -46,12 +24,12 @@ from .state import AutoShardedConnectionState
 from .utils import MISSING
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .activity import BaseActivity
     from .flags import MemberCacheFlags
     from .gateway import DiscordWebSocket
     from .mentions import AllowedMentions
-
-    EI = TypeVar("EI", bound="EventItem")
 
 __all__ = (
     "AutoShardedClient",
@@ -78,12 +56,12 @@ class EventItem:
         self.shard: Optional["Shard"] = shard
         self.error: Optional[Exception] = error
 
-    def __lt__(self: EI, other: EI) -> bool:
+    def __lt__(self, other: Self) -> bool:
         if not isinstance(other, EventItem):
             return NotImplemented
         return self.type < other.type
 
-    def __eq__(self: EI, other: EI) -> bool:
+    def __eq__(self, other: Self) -> bool:
         if not isinstance(other, EventItem):
             return NotImplemented
         return self.type == other.type
@@ -356,6 +334,7 @@ class AutoShardedClient(Client):
         rollout_register_new: bool = True,
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
+        default_guild_ids: Optional[List[int]] = None,
     ) -> None:
         self.shard_ids: Optional[List[int]] = shard_ids
         super().__init__(
@@ -383,6 +362,7 @@ class AutoShardedClient(Client):
             rollout_register_new=rollout_register_new,
             rollout_update_known=rollout_update_known,
             rollout_all_guilds=rollout_all_guilds,
+            default_guild_ids=default_guild_ids,
         )
 
         if self.shard_ids is not None:

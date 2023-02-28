@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
@@ -55,7 +33,7 @@ from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMap
 from .errors import *
 
 if TYPE_CHECKING:
-    from typing_extensions import Concatenate, ParamSpec, TypeGuard
+    from typing_extensions import Concatenate, ParamSpec, Self, TypeGuard
 
     from nextcord.message import Message
 
@@ -288,7 +266,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     """
     __original_kwargs__: Dict[str, Any]
 
-    def __new__(cls: Type[CommandT], *args: Any, **kwargs: Any) -> CommandT:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         # if you're wondering why this is done, it's because we need to ensure
         # we have a complete original copy of **kwargs even for classes that
         # mess with it by popping before delegating to the subclass __init__.
@@ -320,7 +298,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             raise TypeError("Name of a command must be a string.")
         self.name: str = name
 
-        self.callback = func
+        # ContextT is incompatible with normal Context
+        self.callback = func  # pyright: ignore
         self.enabled: bool = kwargs.get("enabled", True)
 
         help_doc = kwargs.get("help")
@@ -430,8 +409,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     def callback(
         self,
     ) -> Union[
-        Callable[Concatenate[CogT, Context, P], Coro[T]],
-        Callable[Concatenate[Context, P], Coro[T]],
+        Callable[Concatenate[CogT, ContextT, P], Coro[T]],
+        Callable[Concatenate[ContextT, P], Coro[T]],
     ]:
         return self._callback
 
@@ -532,7 +511,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             pass
         return other
 
-    def copy(self: CommandT) -> CommandT:
+    def copy(self) -> Self:
         """Creates a copy of this command.
 
         Returns
@@ -543,7 +522,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         ret = self.__class__(self.callback, **self.__original_kwargs__)
         return self._ensure_assignment_on_copy(ret)
 
-    def _update_copy(self: CommandT, kwargs: Dict[str, Any]) -> CommandT:
+    def _update_copy(self, kwargs: Dict[str, Any]) -> Self:
         if kwargs:
             kw = kwargs.copy()
             kw.update(self.__original_kwargs__)
@@ -619,6 +598,15 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 else:
                     raise exc
         view.previous = previous
+
+        if argument is None:
+            if param.kind == param.VAR_POSITIONAL:
+                raise RuntimeError()
+            if required:
+                if self._is_typing_optional(param.annotation):
+                    return None
+                raise MissingRequiredArgument(param)
+            return param.default
 
         # type-checker fails to narrow argument
         return await run_converters(ctx, converter, argument, param)
@@ -1354,7 +1342,7 @@ class GroupMixin(Generic[CogT]):
     def command(
         self,
         name: str = ...,
-        cls: Type[Command[CogT, P, T]] = ...,
+        cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
         *args: Any,
         **kwargs: Any,
     ) -> Callable[
@@ -1372,7 +1360,7 @@ class GroupMixin(Generic[CogT]):
     def command(
         self,
         name: str = ...,
-        cls: Type[CommandT] = ...,
+        cls: Type[CommandT] = Command,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], CommandT]:
@@ -1407,7 +1395,7 @@ class GroupMixin(Generic[CogT]):
     def group(
         self,
         name: str = ...,
-        cls: Type[Group[CogT, P, T]] = ...,
+        cls: Type[Group[CogT, P, T]] = MISSING,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[
@@ -1425,7 +1413,7 @@ class GroupMixin(Generic[CogT]):
     def group(
         self,
         name: str = ...,
-        cls: Type[GroupT] = ...,
+        cls: Type[GroupT] = MISSING,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], GroupT]:
@@ -1450,7 +1438,7 @@ class GroupMixin(Generic[CogT]):
         def decorator(func: Callable[Concatenate[ContextT, P], Coro[Any]]) -> GroupT:
             kwargs.setdefault("parent", self)
             result = group(name=name, cls=cls, *args, **kwargs)(func)
-            self.add_command(result)
+            self.add_command(result)  # type: ignore
             return result  # type: ignore
 
         return decorator
@@ -1484,7 +1472,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
         GroupMixin.__init__(self, *args, **attrs)
         Command.__init__(self, *args, **attrs)  # type: ignore
 
-    def copy(self: GroupT) -> GroupT:
+    def copy(self) -> Self:
         """Creates a copy of this :class:`Group`.
 
         Returns
@@ -1575,7 +1563,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
 @overload
 def command(
     name: str = ...,
-    cls: Type[Command[CogT, P, T]] = ...,
+    cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
     **attrs: Any,
 ) -> Callable[
     [
@@ -1592,7 +1580,7 @@ def command(
 @overload
 def command(
     name: str = ...,
-    cls: Type[CommandT] = ...,
+    cls: Type[CommandT] = Command,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1607,12 +1595,14 @@ def command(
 
 
 def command(
-    name: str = MISSING, cls: Type[CommandT] = MISSING, **attrs: Any
+    name: str = MISSING,
+    cls: Union[Type[CommandT], Type[Command[CogT, P, T]]] = MISSING,
+    **attrs: Any,
 ) -> Callable[
     [
         Union[
+            Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
             Callable[Concatenate[ContextT, P], Coro[Any]],
-            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
         ]
     ],
     Union[Command[CogT, P, T], CommandT],
@@ -1647,18 +1637,18 @@ def command(
         If the function is not a coroutine or is already a command.
     """
     if cls is MISSING:
-        cls = Command  # type: ignore
+        cls = Command
 
     def decorator(
         func: Union[
             Callable[Concatenate[ContextT, P], Coro[Any]],
             Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
         ]
-    ) -> CommandT:
+    ) -> Union[Command[CogT, P, T], CommandT]:
         if isinstance(func, Command):
             raise TypeError("Callback is already a command.")
-        return cls(func, name=name, **attrs)  # type: ignore
-        # huge error i cannot comprehend
+
+        return cls(func, name=name, **attrs)
 
     return decorator
 
@@ -1666,7 +1656,23 @@ def command(
 @overload
 def group(
     name: str = ...,
-    cls: Type[Group[CogT, P, T]] = ...,
+    **attrs: Any,
+) -> Callable[
+    [
+        Union[
+            Callable[Concatenate[Cog, ContextT, P], Coro[T]],
+            Callable[Concatenate[ContextT, P], Coro[T]],
+        ]
+    ],
+    Group[Cog, P, T],
+]:
+    ...
+
+
+@overload
+def group(
+    name: str = ...,
+    cls: Type[Group[CogT, P, T]] = MISSING,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1683,7 +1689,7 @@ def group(
 @overload
 def group(
     name: str = ...,
-    cls: Type[GroupT] = ...,
+    cls: Type[GroupT] = MISSING,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1699,13 +1705,13 @@ def group(
 
 def group(
     name: str = MISSING,
-    cls: Type[GroupT] = MISSING,
+    cls: Union[Type[GroupT], Type[Group[CogT, P, T]]] = MISSING,
     **attrs: Any,
 ) -> Callable[
     [
         Union[
+            Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
             Callable[Concatenate[ContextT, P], Coro[Any]],
-            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
         ]
     ],
     Union[Group[CogT, P, T], GroupT],
@@ -1719,7 +1725,8 @@ def group(
         The ``cls`` parameter can now be passed.
     """
     if cls is MISSING:
-        cls = Group  # type: ignore
+        cls = Group
+
     return command(name=name, cls=cls, **attrs)  # type: ignore
 
 

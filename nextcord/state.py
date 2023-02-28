@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -95,7 +72,7 @@ if TYPE_CHECKING:
     from .types.message import Message as MessagePayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
-    from .types.user import User as UserPayload
+    from .types.user import PartialUser as PartialUserPayload, User as UserPayload
     from .voice_client import VoiceProtocol
 
     T = TypeVar("T")
@@ -269,8 +246,8 @@ class ConnectionState:
         self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
 
         if not intents.members or member_cache_flags._empty:
-            self.store_user = self.create_user  # type: ignore
-            self.deref_user = self.deref_user_no_intents  # type: ignore
+            self.store_user = self.create_user
+            self.deref_user = self.deref_user_no_intents
 
         self.parsers = parsers = {}
         for attr, func in inspect.getmembers(self):
@@ -397,7 +374,7 @@ class ConnectionState:
     def deref_user(self, user_id: int) -> None:
         self._users.pop(user_id, None)
 
-    def create_user(self, data: UserPayload) -> User:
+    def create_user(self, data: Union[PartialUserPayload, UserPayload]) -> User:
         return User(state=self, data=data)
 
     def deref_user_no_intents(self, user_id: int) -> None:
@@ -1306,7 +1283,7 @@ class ConnectionState:
             except KeyError:
                 pass
             else:
-                self.application_id = utils._get_as_snowflake(application, "id")
+                self.application_id = utils.get_as_snowflake(application, "id")
                 # flags will always be present here
                 self.application_flags = ApplicationFlags._from_value(application["flags"])
 
@@ -1326,8 +1303,8 @@ class ConnectionState:
         self.dispatch("message", message)
         if self._messages is not None:
             self._messages.append(message)
-        # we ensure that the channel is either a TextChannel, ForumChannel or Thread
-        if channel and channel.__class__ in (TextChannel, ForumChannel, Thread):
+        # we ensure that the channel is either a TextChannel, ForumChannel, Thread or VoiceChannel
+        if channel and channel.__class__ in (TextChannel, ForumChannel, Thread, VoiceChannel):
             channel.last_message_id = message.id  # type: ignore
 
     def parse_message_delete(self, data) -> None:
@@ -1375,7 +1352,7 @@ class ConnectionState:
 
     def parse_message_reaction_add(self, data) -> None:
         emoji = data["emoji"]
-        emoji_id = utils._get_as_snowflake(emoji, "id")
+        emoji_id = utils.get_as_snowflake(emoji, "id")
         emoji = PartialEmoji.with_state(
             self, id=emoji_id, animated=emoji.get("animated", False), name=emoji["name"]
         )
@@ -1414,7 +1391,7 @@ class ConnectionState:
 
     def parse_message_reaction_remove(self, data) -> None:
         emoji = data["emoji"]
-        emoji_id = utils._get_as_snowflake(emoji, "id")
+        emoji_id = utils.get_as_snowflake(emoji, "id")
         emoji = PartialEmoji.with_state(self, id=emoji_id, name=emoji["name"])
         raw = RawReactionActionEvent(data, emoji, "REACTION_REMOVE")
         self.dispatch("raw_reaction_remove", raw)
@@ -1433,7 +1410,7 @@ class ConnectionState:
 
     def parse_message_reaction_remove_emoji(self, data) -> None:
         emoji = data["emoji"]
-        emoji_id = utils._get_as_snowflake(emoji, "id")
+        emoji_id = utils.get_as_snowflake(emoji, "id")
         emoji = PartialEmoji.with_state(self, id=emoji_id, name=emoji["name"])
         raw = RawReactionClearEmojiEvent(data, emoji)
         self.dispatch("raw_reaction_clear_emoji", raw)
@@ -1462,7 +1439,7 @@ class ConnectionState:
         self.dispatch("interaction", interaction)
 
     def parse_presence_update(self, data) -> None:
-        guild_id = utils._get_as_snowflake(data, "guild_id")
+        guild_id = utils.get_as_snowflake(data, "guild_id")
         # guild_id won't be None here
         guild = self._get_guild(guild_id)
         if guild is None:
@@ -1502,7 +1479,7 @@ class ConnectionState:
         self.dispatch("invite_delete", invite)
 
     def parse_channel_delete(self, data) -> None:
-        guild = self._get_guild(utils._get_as_snowflake(data, "guild_id"))
+        guild = self._get_guild(utils.get_as_snowflake(data, "guild_id"))
         channel_id = int(data["id"])
         if guild is not None:
             channel = guild.get_channel(channel_id)
@@ -1521,7 +1498,7 @@ class ConnectionState:
             self.dispatch("private_channel_update", old_channel, channel)
             return
 
-        guild_id = utils._get_as_snowflake(data, "guild_id")
+        guild_id = utils.get_as_snowflake(data, "guild_id")
         guild = self._get_guild(guild_id)
         if guild is not None:
             channel = guild.get_channel(channel_id)
@@ -1544,7 +1521,7 @@ class ConnectionState:
             )
             return
 
-        guild_id = utils._get_as_snowflake(data, "guild_id")
+        guild_id = utils.get_as_snowflake(data, "guild_id")
         guild = self._get_guild(guild_id)
         if guild is not None:
             # the factory can't be a DMChannel or GroupChannel here
@@ -2124,8 +2101,8 @@ class ConnectionState:
             )
 
     def parse_voice_state_update(self, data) -> None:
-        guild = self._get_guild(utils._get_as_snowflake(data, "guild_id"))
-        channel_id = utils._get_as_snowflake(data, "channel_id")
+        guild = self._get_guild(utils.get_as_snowflake(data, "guild_id"))
+        channel_id = utils.get_as_snowflake(data, "channel_id")
         flags = self.member_cache_flags
         # self.user is *always* cached when this is called
         self_id = self.user.id  # type: ignore
@@ -2213,7 +2190,7 @@ class ConnectionState:
         return self.get_user(user_id)
 
     def get_reaction_emoji(self, data) -> Union[Emoji, PartialEmoji]:
-        emoji_id = utils._get_as_snowflake(data, "id")
+        emoji_id = utils.get_as_snowflake(data, "id")
 
         if not emoji_id:
             return data["name"]
@@ -2448,7 +2425,11 @@ class AutoShardedConnectionState(ConnectionState):
         key: Callable[[tuple[Guild, Future[list[Member]]]], int] = lambda g: g[0].shard_id
         guilds = sorted(processed, key=key)
         for shard_id, info in itertools.groupby(guilds, key=key):
-            children, futures = zip(*info)
+            children: Tuple[Guild]
+            futures: Tuple[Future]
+            # zip with `*` should, and will, return 2 tuples since every element is 2 length
+            # but pyright believes otherwise.
+            children, futures = zip(*info)  # type: ignore
             # 110 reqs/minute w/ 1 req/guild plus some buffer
             timeout = 61 * (len(children) / 110)
             try:
@@ -2461,7 +2442,7 @@ class AutoShardedConnectionState(ConnectionState):
                     len(guilds),
                 )
             for guild in children:
-                if guild.unavailable is False:  # type: ignore # pylance this is a guild :)
+                if guild.unavailable is False:
                     self.dispatch("guild_available", guild)
                 else:
                     self.dispatch("guild_join", guild)
@@ -2497,7 +2478,7 @@ class AutoShardedConnectionState(ConnectionState):
             except KeyError:
                 pass
             else:
-                self.application_id = utils._get_as_snowflake(application, "id")
+                self.application_id = utils.get_as_snowflake(application, "id")
                 self.application_flags = ApplicationFlags._from_value(application["flags"])
 
         for guild_data in data["guilds"]:

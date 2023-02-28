@@ -1495,9 +1495,19 @@ of :class:`enum.Enum`.
     .. attribute:: discord_certified_moderator
 
         The user is a Discord Certified Moderator.
+    .. attribute:: bot_http_interactions
+
+        The user is a bot that uses only HTTP interactions and is shown in the online member list.
+
+        .. versionadded:: 2.4
     .. attribute:: known_spammer
 
         The user is a Known Spammer.
+    .. attribute:: active_developer
+
+        The user is an Active Developer.
+
+        .. versionadded:: 2.4
 
 .. class:: ActivityType
 
@@ -1597,7 +1607,33 @@ of :class:`enum.Enum`.
         Represents a button component.
     .. attribute:: select
 
-        Represents a select component.
+        Represents a string select component.
+    .. attribute:: text_input
+
+        Represents a text input component.
+    .. attribute:: user_select
+
+        Represents a user select component.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: role_select
+
+        Represents a role select component.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: mentionable_select
+
+        Represents a mentionable select component.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: channel_select
+
+        Represents a channel select component.
+
+        .. versionadded:: 2.3
 
 
 .. class:: ButtonStyle
@@ -2603,6 +2639,38 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.1
 
+    .. attribute:: auto_moderation_flag_to_channel
+
+        A message was flagged by an auto moderation rule.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`Member` or :class:`User` whose message was flagged.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+        set to an unspecified proxy object with these three attributes:
+
+        - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the message was flagged.
+        - ``rule_name``: A :class:`str` with the name of the rule.
+        - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+        .. versionadded:: 2.3
+
+    .. attribute:: auto_moderation_user_communication_disabled
+
+        A member was timed out by an auto moderation rule.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
+        the :class:`Member` or :class:`User` who was timed out.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+        set to an unspecified proxy object with these three attributes:
+
+        - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the member was timed out.
+        - ``rule_name``: A :class:`str` with the name of the rule.
+        - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+        .. versionadded:: 2.3
+
 .. class:: AuditLogActionCategory
 
     Represents the category that the :class:`AuditLogAction` belongs to.
@@ -2909,6 +2977,12 @@ of :class:`enum.Enum`.
 
         This rule checks if content contains words from Discord pre-defined wordsets.
 
+    .. attribute:: mention_spam
+
+        This rule checks if the number of mentions in the message is more than the maximum allowed.
+
+        .. versionadded:: 2.3
+
 .. class:: KeywordPresetType
 
     Represents the type of a keyword preset auto moderation rule.
@@ -2948,6 +3022,20 @@ of :class:`enum.Enum`.
         .. note::
 
             This action type can only be used with the :attr:`Permissions.moderate_members` permission.
+
+.. class:: SortOrderType
+
+    .. versionadded:: 2.3
+
+    The default sort order type used to sort posts in a :class:`ForumChannel`.
+
+    .. attribute:: latest_activity
+
+        Sort forum posts by their activity.
+
+    .. attribute:: creation_date
+
+        Sort forum posts by their creation date.
 
 
 Async Iterator
@@ -3829,40 +3917,6 @@ Message
 .. autoclass:: Message()
     :members:
 
-Component
-~~~~~~~~~
-
-.. attributetable:: Component
-
-.. autoclass:: Component()
-    :members:
-
-ActionRow
-~~~~~~~~~
-
-.. attributetable:: ActionRow
-
-.. autoclass:: ActionRow()
-    :members:
-
-Button
-~~~~~~
-
-.. attributetable:: Button
-
-.. autoclass:: Button()
-    :members:
-    :inherited-members:
-
-SelectMenu
-~~~~~~~~~~
-
-.. attributetable:: SelectMenu
-
-.. autoclass:: SelectMenu()
-    :members:
-    :inherited-members:
-
 
 DeletedReferencedMessage
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4601,6 +4655,14 @@ AutoModerationAction
 .. autoclass:: AutoModerationAction
     :members:
 
+ForumTag
+~~~~~~~~
+
+.. attributetable:: ForumTag
+
+.. autoclass:: ForumTag
+    :members:
+
 .. _discord_ui_kit:
 
 Bot UI Kit
@@ -4652,16 +4714,76 @@ TextInput
     :members:
     :inherited-members:
 
-Select
-~~~~~~
+StringSelect
+~~~~~~~~~~~~
 
-.. attributetable:: nextcord.ui.Select
+.. attributetable:: nextcord.ui.StringSelect
 
-.. autoclass:: nextcord.ui.Select
+.. autoclass:: nextcord.ui.StringSelect
     :members:
     :inherited-members:
 
+.. autofunction:: nextcord.ui.string_select
+
+.. autoclass:: nextcord.ui.Select
+
 .. autofunction:: nextcord.ui.select
+
+UserSelect
+~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.UserSelect
+
+.. autoclass:: nextcord.ui.UserSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.user_select
+
+.. autoclass:: nextcord.ui.UserSelectValues
+    :members:
+
+RoleSelect
+~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.RoleSelect
+
+.. autoclass:: nextcord.ui.RoleSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.role_select
+
+.. autoclass:: nextcord.ui.RoleSelectValues
+    :members:
+
+MentionableSelect
+~~~~~~~~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.MentionableSelect
+
+.. autoclass:: nextcord.ui.MentionableSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.mentionable_select
+
+.. autoclass:: nextcord.ui.MentionableSelectValues
+    :members:
+
+ChannelSelect
+~~~~~~~~~~~~~
+
+.. attributetable:: nextcord.ui.ChannelSelect
+
+.. autoclass:: nextcord.ui.ChannelSelect
+    :members:
+    :inherited-members:
+
+.. autofunction:: nextcord.ui.channel_select
+
+.. autoclass:: nextcord.ui.ChannelSelectValues
+    :members:
 
 Application Commands
 --------------------

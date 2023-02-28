@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Rapptz
-Copyright (c) 2022-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -31,7 +8,7 @@ from .activity import BaseActivity, Spotify, create_activity
 from .enums import Status, try_enum
 from .invite import Invite
 from .user import BaseUser
-from .utils import _get_as_snowflake, resolve_invite, snowflake_time
+from .utils import get_as_snowflake, resolve_invite, snowflake_time
 
 if TYPE_CHECKING:
     import datetime
@@ -257,9 +234,9 @@ class Widget:
         self.members: List[WidgetMember] = []
         channels = {channel.id: channel for channel in self.channels}
         for member in data.get("members", []):
-            connected_channel = _get_as_snowflake(member, "channel_id")
+            connected_channel = get_as_snowflake(member, "channel_id")
             if connected_channel in channels:
-                connected_channel = channels[connected_channel]  # type: ignore
+                connected_channel = channels[connected_channel]
             elif connected_channel:
                 connected_channel = WidgetChannel(id=connected_channel, name="", position=0)
 

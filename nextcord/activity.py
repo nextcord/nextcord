@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -31,7 +9,7 @@ from .asset import Asset
 from .colour import Colour
 from .enums import ActivityType, try_enum
 from .partial_emoji import PartialEmoji
-from .utils import _get_as_snowflake
+from .utils import get_as_snowflake
 
 __all__ = (
     "BaseActivity",
@@ -225,7 +203,7 @@ class Activity(BaseActivity):
         self.timestamps: ActivityTimestamps = kwargs.pop("timestamps", {})
         self.assets: ActivityAssets = kwargs.pop("assets", {})
         self.party: ActivityParty = kwargs.pop("party", {})
-        self.application_id: Optional[int] = _get_as_snowflake(kwargs, "application_id")
+        self.application_id: Optional[int] = get_as_snowflake(kwargs, "application_id")
         self.name: Optional[str] = kwargs.pop("name", None)
         self.url: Optional[str] = kwargs.pop("url", None)
         self.flags: int = kwargs.pop("flags", 0)
@@ -869,7 +847,7 @@ def create_activity(
         return Game(**data)
     elif game_type is ActivityType.custom:
         try:
-            name = data.pop("name")
+            name = data.pop("name")  # pyright: ignore[reportGeneralTypeIssues]
         except KeyError:
             return Activity(**data)
         else:
