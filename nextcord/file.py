@@ -152,7 +152,7 @@ class File:
             self.force_close = True
         return self
 
-    def __close__(self, *_) -> None:
+    def __exit__(self, *_) -> None:
         self.close()
 
     def reset(self, *, seek: Union[int, bool] = True) -> None:
