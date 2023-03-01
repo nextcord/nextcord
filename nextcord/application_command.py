@@ -756,6 +756,11 @@ class CallbackMixin:
                         isinstance(param.annotation, type)
                         and issubclass(param.annotation, Interaction)
                     )
+                    # will always be an interaction parameter (generic with the outermost type being Interaction)
+                    or (
+                        (origin := typing_extensions.get_origin(param.annotation))
+                        and issubclass(origin, Interaction)
+                    )
                     # will always be a self parameter
                     # TODO: use typing.Self when 3.11 is standard
                     or param.annotation is typing_extensions.Self
