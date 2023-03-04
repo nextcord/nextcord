@@ -1,0 +1,61 @@
+# credit to https://github.com/disnakeDev/disnake/blob/master/pyproject.toml for config
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311"]
+
+
+[tool.isort]
+profile = "black"
+py_version = 38
+line_length = 100
+combine_as_imports = true
+filter_files = true
+
+
+[tool.taskipy.tasks]
+black = { cmd = "task lint black", help = "Run black" }
+docs = { cmd = "cd docs && sphinx-autobuild . _build/html --ignore _build --watch ../nextcord --port 8069", help = "Build the documentation on an autoreloading server."}
+isort = { cmd = "task lint isort", help = "Run isort" }
+lint = { cmd = "pre-commit run --all-files", help = "Check all files for linting errors" }
+precommit = { cmd = "pre-commit install --install-hooks", help = "Install the precommit hook" }
+pyright = { cmd = "dotenv -f task.env run -- python -m pyright", help = "Run pyright" }
+slotscheck = { cmd = "python -m slotscheck --verbose -m nextcord", help = "Run slotscheck" }
+autotyping = { cmd = "task lint autotyping", help = "Refactor code to add automatic type annotations" }
+
+
+[tool.slotscheck]
+strict-imports = true
+require-superclass = true
+require-subclass = false
+exclude-modules = '''
+(
+    ^nextcord\.types\.
+)
+'''
+
+
+[tool.pyright]
+typeCheckingMode = "basic"
+include = [  # TODO: add examples back once app cmd is fixed
+    "nextcord",
+    "docs",
+    "*.py",
+]
+pythonVersion = "3.8"
+
+# https://github.com/microsoft/pyright/blob/main/docs/configuration.md
+reportInvalidStringEscapeSequence = false
+reportPropertyTypeMismatch = true
+reportDuplicateImport = true
+reportUntypedFunctionDecorator = true
+reportUntypedClassDecorator = true
+reportUntypedBaseClass = true
+reportUntypedNamedTuple = true
+reportUnknownLambdaType = true
+reportInvalidTypeVarUse = true
+reportUnnecessaryCast = true
+reportSelfClsParameterName = true
+reportUnsupportedDunderAll = true
+reportUnusedVariable = true
+reportUnnecessaryComparison = true
+reportUnnecessaryTypeIgnoreComment = true

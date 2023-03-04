@@ -1,50 +1,27 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
-from .utils import snowflake_time, _get_as_snowflake, resolve_invite
-from .user import BaseUser
-from .activity import Activity, BaseActivity, Spotify, create_activity
-from .invite import Invite
+from .activity import BaseActivity, Spotify, create_activity
 from .enums import Status, try_enum
+from .invite import Invite
+from .user import BaseUser
+from .utils import get_as_snowflake, resolve_invite, snowflake_time
 
 if TYPE_CHECKING:
     import datetime
+
     from .state import ConnectionState
-    from .types.widget import (
-        WidgetMember as WidgetMemberPayload,
-        Widget as WidgetPayload,
-    )
+    from .types.widget import Widget as WidgetPayload, WidgetMember as WidgetMemberPayload
 
 __all__ = (
-    'WidgetChannel',
-    'WidgetMember',
-    'Widget',
+    "WidgetChannel",
+    "WidgetMember",
+    "Widget",
 )
+
 
 class WidgetChannel:
     """Represents a "partial" widget channel.
@@ -68,7 +45,7 @@ class WidgetChannel:
             Returns the partial channel's name.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The channel's ID.
     name: :class:`str`
@@ -76,7 +53,8 @@ class WidgetChannel:
     position: :class:`int`
         The channel's position
     """
-    __slots__ = ('id', 'name', 'position')
+
+    __slots__ = ("id", "name", "position")
 
     def __init__(self, id: int, name: str, position: int) -> None:
         self.id: int = id
@@ -87,17 +65,18 @@ class WidgetChannel:
         return self.name
 
     def __repr__(self) -> str:
-        return f'<WidgetChannel id={self.id} name={self.name!r} position={self.position!r}>'
+        return f"<WidgetChannel id={self.id} name={self.name!r} position={self.position!r}>"
 
     @property
     def mention(self) -> str:
         """:class:`str`: The string that allows you to mention the channel."""
-        return f'<#{self.id}>'
+        return f"<#{self.id}>"
 
     @property
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
         return snowflake_time(self.id)
+
 
 class WidgetMember(BaseUser):
     """Represents a "partial" member of the widget's guild.
@@ -118,10 +97,10 @@ class WidgetMember(BaseUser):
 
         .. describe:: str(x)
 
-            Returns the widget member's `name#discriminator`.
+            Returns the widget member's ``name#discriminator``.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The member's ID.
     name: :class:`str`
@@ -147,9 +126,17 @@ class WidgetMember(BaseUser):
     connected_channel: Optional[:class:`WidgetChannel`]
         Which channel the member is connected to.
     """
-    __slots__ = ('name', 'status', 'nick', 'avatar', 'discriminator',
-                 'id', 'bot', 'activity', 'deafened', 'suppress', 'muted',
-                 'connected_channel')
+
+    __slots__ = (
+        "status",
+        "nick",
+        "avatar",
+        "activity",
+        "deafened",
+        "suppress",
+        "muted",
+        "connected_channel",
+    )
 
     if TYPE_CHECKING:
         activity: Optional[Union[BaseActivity, Spotify]]
@@ -159,23 +146,23 @@ class WidgetMember(BaseUser):
         *,
         state: ConnectionState,
         data: WidgetMemberPayload,
-        connected_channel: Optional[WidgetChannel] = None
+        connected_channel: Optional[WidgetChannel] = None,
     ) -> None:
         super().__init__(state=state, data=data)
-        self.nick: Optional[str] = data.get('nick')
-        self.status: Status = try_enum(Status, data.get('status'))
-        self.deafened: Optional[bool] = data.get('deaf', False) or data.get('self_deaf', False)
-        self.muted: Optional[bool] = data.get('mute', False) or data.get('self_mute', False)
-        self.suppress: Optional[bool] = data.get('suppress', False)
+        self.nick: Optional[str] = data.get("nick")
+        self.status: Status = try_enum(Status, data.get("status"))
+        self.deafened: Optional[bool] = data.get("deaf", False) or data.get("self_deaf", False)
+        self.muted: Optional[bool] = data.get("mute", False) or data.get("self_mute", False)
+        self.suppress: Optional[bool] = data.get("suppress", False)
 
         try:
-            game = data['game']
+            game = data["game"]
         except KeyError:
             activity = None
         else:
             activity = create_activity(state, game)
 
-        self.activity: Optional[Union[BaseActivity, Spotify]] = activity
+        self.activity = activity
 
         self.connected_channel: Optional[WidgetChannel] = connected_channel
 
@@ -189,6 +176,7 @@ class WidgetMember(BaseUser):
     def display_name(self) -> str:
         """:class:`str`: Returns the member's display name."""
         return self.nick or self.name
+
 
 class Widget:
     """Represents a :class:`Guild` widget.
@@ -208,7 +196,7 @@ class Widget:
             Returns the widget's JSON URL.
 
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The guild's ID.
     name: :class:`str`
@@ -227,27 +215,30 @@ class Widget:
             retrieved is capped.
 
     """
-    __slots__ = ('_state', 'channels', '_invite', 'id', 'members', 'name')
+
+    __slots__ = ("_state", "channels", "_invite", "id", "members", "name")
 
     def __init__(self, *, state: ConnectionState, data: WidgetPayload) -> None:
         self._state = state
-        self._invite = data['instant_invite']
-        self.name: str = data['name']
-        self.id: int = int(data['id'])
+        self._invite = data["instant_invite"]
+        self.name: str = data["name"]
+        self.id: int = int(data["id"])
 
         self.channels: List[WidgetChannel] = []
-        for channel in data.get('channels', []):
-            _id = int(channel['id'])
-            self.channels.append(WidgetChannel(id=_id, name=channel['name'], position=channel['position']))
+        for channel in data.get("channels", []):
+            _id = int(channel["id"])
+            self.channels.append(
+                WidgetChannel(id=_id, name=channel["name"], position=channel["position"])
+            )
 
         self.members: List[WidgetMember] = []
         channels = {channel.id: channel for channel in self.channels}
-        for member in data.get('members', []):
-            connected_channel = _get_as_snowflake(member, 'channel_id')
+        for member in data.get("members", []):
+            connected_channel = get_as_snowflake(member, "channel_id")
             if connected_channel in channels:
-                connected_channel = channels[connected_channel]  # type: ignore
+                connected_channel = channels[connected_channel]
             elif connected_channel:
-                connected_channel = WidgetChannel(id=connected_channel, name='', position=0)
+                connected_channel = WidgetChannel(id=connected_channel, name="", position=0)
 
             self.members.append(WidgetMember(state=self._state, data=member, connected_channel=connected_channel))  # type: ignore
 
@@ -260,7 +251,7 @@ class Widget:
         return False
 
     def __repr__(self) -> str:
-        return f'<Widget id={self.id} name={self.name!r} invite_url={self.invite_url!r}>'
+        return f"<Widget id={self.id} name={self.name!r} invite_url={self.invite_url!r}>"
 
     @property
     def created_at(self) -> datetime.datetime:
@@ -285,14 +276,14 @@ class Widget:
         code is abstracted away.
 
         Parameters
-        -----------
+        ----------
         with_counts: :class:`bool`
             Whether to include count information in the invite. This fills the
             :attr:`Invite.approximate_member_count` and :attr:`Invite.approximate_presence_count`
             fields.
 
         Returns
-        --------
+        -------
         :class:`Invite`
             The invite from the widget's invite URL.
         """

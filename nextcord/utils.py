@@ -1,35 +1,29 @@
-"""
-The MIT License (MIT)
+# SPDX-License-Identifier: MIT
 
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# reportUnknownVariableType and reportUnknownMemberType:
+# array.array is poorly typed (SnowflakeList superclass)
+# pyright: strict, reportUnknownVariableType = false, reportUnknownMemberType = false
 from __future__ import annotations
 
 import array
 import asyncio
-import collections.abc
+import datetime
+import functools
 import inspect
+import json
+import re
+import sys
+import unicodedata
+import warnings
+from base64 import b64encode
+from bisect import bisect_left
+from inspect import isawaitable as _isawaitable, signature as _signature
+from operator import attrgetter
 from typing import (
+    TYPE_CHECKING,
     Any,
     AsyncIterator,
+    Awaitable,
     Callable,
     Dict,
     ForwardRef,
@@ -38,78 +32,99 @@ from typing import (
     Iterator,
     List,
     Literal,
-    Mapping,
     Optional,
-    Protocol,
     Sequence,
+    Set,
     Tuple,
     Type,
     TypeVar,
     Union,
     overload,
-    TYPE_CHECKING,
 )
-import unicodedata
-from base64 import b64encode
-from bisect import bisect_left
-import datetime
-import functools
-from inspect import isawaitable as _isawaitable, signature as _signature
-from operator import attrgetter
-import json
-import re
-import sys
-import types
-import warnings
 
 from .errors import InvalidArgument
+from .file import File
 
 try:
     import orjson
 except ModuleNotFoundError:
-    HAS_ORJSON = False
+    _orjson_defined = False
+
+    def to_json(obj: Any) -> str:
+        return json.dumps(obj, separators=(",", ":"), ensure_ascii=True)
+
+    from_json = json.loads
 else:
-    HAS_ORJSON = True
+    _orjson_defined = True
+
+    def to_json(obj: Any) -> str:
+        return orjson.dumps(obj).decode("utf-8")
+
+    from_json = orjson.loads
+
+
+HAS_ORJSON = _orjson_defined
+
+
+PY_310 = sys.version_info >= (3, 10)
+
+
+if PY_310:
+    from types import UnionType  # type: ignore
+
+    # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
+else:
+    UnionType = None
+
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 __all__ = (
-    'oauth_url',
-    'snowflake_time',
-    'time_snowflake',
-    'find',
-    'get',
-    'sleep_until',
-    'utcnow',
-    'remove_markdown',
-    'escape_markdown',
-    'escape_mentions',
-    'as_chunks',
-    'format_dt',
+    "oauth_url",
+    "snowflake_time",
+    "time_snowflake",
+    "find",
+    "get",
+    "sleep_until",
+    "utcnow",
+    "remove_markdown",
+    "escape_markdown",
+    "escape_mentions",
+    "parse_raw_mentions",
+    "parse_raw_role_mentions",
+    "parse_raw_channel_mentions",
+    "as_chunks",
+    "format_dt",
 )
 
 DISCORD_EPOCH = 1420070400000
 
 
 class _MissingSentinel:
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
+        return self is other
+
+    def __hash__(self):
+        return id(self)
+
+    def __bool__(self) -> bool:
         return False
 
-    def __bool__(self):
-        return False
-
-    def __repr__(self):
-        return '...'
+    def __repr__(self) -> str:
+        return "..."
 
 
 MISSING: Any = _MissingSentinel()
 
 
 class _cached_property:
-    def __init__(self, function):
+    def __init__(self, function: Callable[..., Any]) -> None:
         self.function = function
-        self.__doc__ = getattr(function, '__doc__')
+        self.__doc__ = getattr(function, "__doc__")
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance: Any, owner: Any):
         if instance is None:
             return self
 
@@ -124,31 +139,29 @@ if TYPE_CHECKING:
 
     from typing_extensions import ParamSpec
 
-    from .permissions import Permissions
     from .abc import Snowflake
+    from .asset import Asset
     from .invite import Invite
+    from .message import Attachment
+    from .permissions import Permissions
     from .template import Template
 
-    class _RequestLike(Protocol):
-        headers: Mapping[str, Any]
-
-
-    P = ParamSpec('P')
-
+    P = ParamSpec("P")
 else:
     cached_property = _cached_property
 
 
-T = TypeVar('T')
-T_co = TypeVar('T_co', covariant=True)
+T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
 _Iter = Union[Iterator[T], AsyncIterator[T]]
+ArrayT = TypeVar("ArrayT", int, float, str)
 
 
 class CachedSlotProperty(Generic[T, T_co]):
     def __init__(self, name: str, function: Callable[[T], T_co]) -> None:
         self.name = name
         self.function = function
-        self.__doc__ = getattr(function, '__doc__')
+        self.__doc__ = getattr(function, "__doc__")
 
     @overload
     def __get__(self, instance: None, owner: Type[T]) -> CachedSlotProperty[T, T_co]:
@@ -177,21 +190,23 @@ class classproperty(Generic[T_co]):
     def __get__(self, instance: Optional[Any], owner: Type[Any]) -> T_co:
         return self.fget(owner)
 
-    def __set__(self, instance, value) -> None:
-        raise AttributeError('cannot set attribute')
+    def __set__(self, instance: Any, value: Any) -> None:
+        raise AttributeError("Cannot set attribute")
 
 
-def cached_slot_property(name: str) -> Callable[[Callable[[T], T_co]], CachedSlotProperty[T, T_co]]:
+def cached_slot_property(
+    name: str,
+) -> Callable[[Callable[[T], T_co]], CachedSlotProperty[T, T_co]]:
     def decorator(func: Callable[[T], T_co]) -> CachedSlotProperty[T, T_co]:
         return CachedSlotProperty(name, func)
 
     return decorator
 
 
-class SequenceProxy(Generic[T_co], collections.abc.Sequence):
+class SequenceProxy(Sequence[T_co], Generic[T_co]):
     """Read-only proxy of a Sequence."""
 
-    def __init__(self, proxied: Sequence[T_co]):
+    def __init__(self, proxied: Sequence[T_co]) -> None:
         self.__proxied = proxied
 
     def __getitem__(self, idx: int) -> T_co:
@@ -209,7 +224,7 @@ class SequenceProxy(Generic[T_co], collections.abc.Sequence):
     def __reversed__(self) -> Iterator[T_co]:
         return reversed(self.__proxied)
 
-    def index(self, value: Any, *args, **kwargs) -> int:
+    def index(self, value: Any, *args: Any, **kwargs: Any) -> int:
         return self.__proxied.index(value, *args, **kwargs)
 
     def count(self, value: Any) -> int:
@@ -237,7 +252,7 @@ def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]:
     return None
 
 
-def copy_doc(original: Callable) -> Callable[[T], T]:
+def copy_doc(original: Callable[..., Any]) -> Callable[[T], T]:
     def decorator(overriden: T) -> T:
         overriden.__doc__ = original.__doc__
         overriden.__signature__ = _signature(original)  # type: ignore
@@ -246,18 +261,20 @@ def copy_doc(original: Callable) -> Callable[[T], T]:
     return decorator
 
 
-def deprecated(instead: Optional[str] = None) -> Callable[[Callable[[P], T]], Callable[[P], T]]:
-    def actual_decorator(func: Callable[[P], T]) -> Callable[[P], T]:
+def deprecated(
+    instead: Optional[str] = None,
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    def actual_decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
         def decorated(*args: P.args, **kwargs: P.kwargs) -> T:
-            warnings.simplefilter('always', DeprecationWarning)  # turn off filter
+            warnings.simplefilter("always", DeprecationWarning)  # turn off filter
             if instead:
                 fmt = "{0.__name__} is deprecated, use {1} instead."
             else:
-                fmt = '{0.__name__} is deprecated.'
+                fmt = "{0.__name__} is deprecated."
 
             warnings.warn(fmt.format(func, instead), stacklevel=3, category=DeprecationWarning)
-            warnings.simplefilter('default', DeprecationWarning)  # reset filter
+            warnings.simplefilter("default", DeprecationWarning)  # reset filter
             return func(*args, **kwargs)
 
         return decorated
@@ -278,7 +295,7 @@ def oauth_url(
     into guilds.
 
     Parameters
-    -----------
+    ----------
     client_id: Union[:class:`int`, :class:`str`]
         The client ID for your bot.
     permissions: :class:`~nextcord.Permissions`
@@ -298,34 +315,34 @@ def oauth_url(
         .. versionadded:: 2.0
 
     Returns
-    --------
+    -------
     :class:`str`
         The OAuth2 URL for inviting the bot into guilds.
     """
-    url = f'https://discord.com/oauth2/authorize?client_id={client_id}'
-    url += '&scope=' + '+'.join(scopes or ('bot',))
+    url = f"https://discord.com/oauth2/authorize?client_id={client_id}"
+    url += "&scope=" + "+".join(scopes or ("bot",))
     if permissions is not MISSING:
-        url += f'&permissions={permissions.value}'
+        url += f"&permissions={permissions.value}"
     if guild is not MISSING:
-        url += f'&guild_id={guild.id}'
+        url += f"&guild_id={guild.id}"
     if redirect_uri is not MISSING:
         from urllib.parse import urlencode
 
-        url += '&response_type=code&' + urlencode({'redirect_uri': redirect_uri})
+        url += "&response_type=code&" + urlencode({"redirect_uri": redirect_uri})
     if disable_guild_select:
-        url += '&disable_guild_select=true'
+        url += "&disable_guild_select=true"
     return url
 
 
 def snowflake_time(id: int) -> datetime.datetime:
     """
     Parameters
-    -----------
+    ----------
     id: :class:`int`
         The snowflake ID.
 
     Returns
-    --------
+    -------
     :class:`datetime.datetime`
         An aware datetime in UTC representing the creation time of the snowflake.
     """
@@ -343,7 +360,7 @@ def time_snowflake(dt: datetime.datetime, high: bool = False) -> int:
     to be inclusive, ``high=False`` to be exclusive
 
     Parameters
-    -----------
+    ----------
     dt: :class:`datetime.datetime`
         A datetime object to convert to a snowflake.
         If naive, the timezone is assumed to be local time.
@@ -351,12 +368,12 @@ def time_snowflake(dt: datetime.datetime, high: bool = False) -> int:
         Whether or not to set the lower 22 bit to high or low.
 
     Returns
-    --------
+    -------
     :class:`int`
         The snowflake representing the time given.
     """
     discord_millis = int(dt.timestamp() * 1000 - DISCORD_EPOCH)
-    return (discord_millis << 22) + (2 ** 22 - 1 if high else 0)
+    return (discord_millis << 22) + (2**22 - 1 if high else 0)
 
 
 def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
@@ -372,7 +389,7 @@ def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
     a valid entry.
 
     Parameters
-    -----------
+    ----------
     predicate
         A function that returns a boolean-like result.
     seq: :class:`collections.abc.Iterable`
@@ -415,7 +432,7 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     ``None`` is returned.
 
     Examples
-    ---------
+    --------
 
     Basic usage:
 
@@ -436,7 +453,7 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
         channel = nextcord.utils.get(client.get_all_channels(), guild__name='Cool', name='general')
 
     Parameters
-    -----------
+    ----------
     iterable
         An iterable to search through.
     \*\*attrs
@@ -464,11 +481,11 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     return None
 
 
-def _unique(iterable: Iterable[T]) -> List[T]:
+def unique(iterable: Iterable[T]) -> List[T]:
     return [x for x in dict.fromkeys(iterable)]
 
 
-def _get_as_snowflake(data: Any, key: str) -> Optional[int]:
+def get_as_snowflake(data: Any, key: str) -> Optional[int]:
     try:
         value = data[key]
     except KeyError:
@@ -477,61 +494,63 @@ def _get_as_snowflake(data: Any, key: str) -> Optional[int]:
         return value and int(value)
 
 
-def _get_mime_type_for_image(data: bytes):
-    if data.startswith(b'\x89\x50\x4E\x47\x0D\x0A\x1A\x0A'):
-        return 'image/png'
-    elif data[0:3] == b'\xff\xd8\xff' or data[6:10] in (b'JFIF', b'Exif'):
-        return 'image/jpeg'
-    elif data.startswith((b'\x47\x49\x46\x38\x37\x61', b'\x47\x49\x46\x38\x39\x61')):
-        return 'image/gif'
-    elif data.startswith(b'RIFF') and data[8:12] == b'WEBP':
-        return 'image/webp'
+def _get_mime_type_for_image(data: bytes) -> str:
+    if data.startswith(b"\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"):
+        return "image/png"
+    elif data[0:3] == b"\xff\xd8\xff" or data[6:10] in (b"JFIF", b"Exif"):
+        return "image/jpeg"
+    elif data.startswith((b"\x47\x49\x46\x38\x37\x61", b"\x47\x49\x46\x38\x39\x61")):
+        return "image/gif"
+    elif data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+        return "image/webp"
     else:
-        raise InvalidArgument('Unsupported image type given')
+        raise InvalidArgument("Unsupported image type given")
 
 
 def _bytes_to_base64_data(data: bytes) -> str:
-    fmt = 'data:{mime};base64,{data}'
+    fmt = "data:{mime};base64,{data}"
     mime = _get_mime_type_for_image(data)
-    b64 = b64encode(data).decode('ascii')
+    b64 = b64encode(data).decode("ascii")
     return fmt.format(mime=mime, data=b64)
 
 
-if HAS_ORJSON:
-
-    def _to_json(obj: Any) -> str:  # type: ignore
-        return orjson.dumps(obj).decode('utf-8')
-
-    _from_json = orjson.loads  # type: ignore
-
-else:
-
-    def _to_json(obj: Any) -> str:
-        return json.dumps(obj, separators=(',', ':'), ensure_ascii=True)
-
-    _from_json = json.loads
+async def obj_to_base64_data(obj: Optional[Union[bytes, Attachment, Asset, File]]) -> Optional[str]:
+    if obj is None:
+        return obj
+    if isinstance(obj, bytes):
+        return _bytes_to_base64_data(obj)
+    elif isinstance(obj, File):
+        return _bytes_to_base64_data(obj.fp.read())
+    else:
+        return _bytes_to_base64_data(await obj.read())
 
 
-def _parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
-    reset_after: Optional[str] = request.headers.get('X-Ratelimit-Reset-After')
+def parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
+    reset_after: Optional[str] = request.headers.get("X-Ratelimit-Reset-After")
     if use_clock or not reset_after:
         utc = datetime.timezone.utc
         now = datetime.datetime.now(utc)
-        reset = datetime.datetime.fromtimestamp(float(request.headers['X-Ratelimit-Reset']), utc)
+        reset = datetime.datetime.fromtimestamp(float(request.headers["X-Ratelimit-Reset"]), utc)
         return (reset - now).total_seconds()
     else:
         return float(reset_after)
 
 
-async def maybe_coroutine(f, *args, **kwargs):
+async def maybe_coroutine(
+    f: Callable[P, Union[T, Awaitable[T]]], *args: P.args, **kwargs: P.kwargs
+) -> T:
     value = f(*args, **kwargs)
     if _isawaitable(value):
         return await value
     else:
-        return value
+        return value  # type: ignore
+        # type ignored as `_isawaitable` provides `TypeGuard[Awaitable[Any]]`
+        # yet we need a more specific type guard
 
 
-async def async_all(gen, *, check=_isawaitable):
+async def async_all(
+    gen: Iterable[Awaitable[T]], *, check: Callable[[Awaitable[T]], bool] = _isawaitable
+) -> bool:
     for elem in gen:
         if check(elem):
             elem = await elem
@@ -540,7 +559,9 @@ async def async_all(gen, *, check=_isawaitable):
     return True
 
 
-async def sane_wait_for(futures, *, timeout):
+async def sane_wait_for(
+    futures: Iterable[Awaitable[T]], *, timeout: Optional[float]
+) -> Set[asyncio.Task[T]]:
     ensured = [asyncio.ensure_future(fut) for fut in futures]
     done, pending = await asyncio.wait(ensured, timeout=timeout, return_when=asyncio.ALL_COMPLETED)
 
@@ -553,12 +574,12 @@ async def sane_wait_for(futures, *, timeout):
 def get_slots(cls: Type[Any]) -> Iterator[str]:
     for mro in reversed(cls.__mro__):
         try:
-            yield from mro.__slots__
+            yield from mro.__slots__  # type: ignore # handled below
         except AttributeError:
             continue
 
 
-def compute_timedelta(dt: datetime.datetime):
+def compute_timedelta(dt: datetime.datetime) -> float:
     if dt.tzinfo is None:
         dt = dt.astimezone()
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -575,7 +596,7 @@ async def sleep_until(when: datetime.datetime, result: Optional[T] = None) -> Op
     .. versionadded:: 1.3
 
     Parameters
-    -----------
+    ----------
     when: :class:`datetime.datetime`
         The timestamp in which to sleep until. If the datetime is naive then
         it is assumed to be local time.
@@ -595,7 +616,7 @@ def utcnow() -> datetime.datetime:
     .. versionadded:: 2.0
 
     Returns
-    --------
+    -------
     :class:`datetime.datetime`
         The current aware datetime in UTC.
     """
@@ -607,7 +628,9 @@ def valid_icon_size(size: int) -> bool:
     return not size & (size - 1) and 4096 >= size >= 16
 
 
-class SnowflakeList(array.array):
+# Uncomment when https://github.com/python/cpython/issues/98658 is fixed.
+# class SnowflakeList(array.array[ArrayT], Generic[ArrayT]):
+class SnowflakeList(array.array):  # pyright: ignore[reportMissingTypeArgument]
     """Internal data storage class to efficiently store a list of snowflakes.
 
     This should have the following characteristics:
@@ -623,11 +646,11 @@ class SnowflakeList(array.array):
 
     if TYPE_CHECKING:
 
-        def __init__(self, data: Iterable[int], *, is_sorted: bool = False):
+        def __init__(self, data: Iterable[int], *, is_sorted: bool = False) -> None:
             ...
 
-    def __new__(cls, data: Iterable[int], *, is_sorted: bool = False):
-        return array.array.__new__(cls, 'Q', data if is_sorted else sorted(data))  # type: ignore
+    def __new__(cls, data: Iterable[int], *, is_sorted: bool = False) -> Self:
+        return array.array.__new__(cls, "Q", data if is_sorted else sorted(data))  # type: ignore
 
     def add(self, element: int) -> None:
         i = bisect_left(self, element)
@@ -642,16 +665,16 @@ class SnowflakeList(array.array):
         return i != len(self) and self[i] == element
 
 
-_IS_ASCII = re.compile(r'^[\x00-\x7f]+$')
+_IS_ASCII = re.compile(r"^[\x00-\x7f]+$")
 
 
-def _string_width(string: str, *, _IS_ASCII=_IS_ASCII) -> int:
+def string_width(string: str) -> int:
     """Returns string's width."""
     match = _IS_ASCII.match(string)
     if match:
         return match.endpos
 
-    UNICODE_WIDE_CHAR_TYPE = 'WFA'
+    UNICODE_WIDE_CHAR_TYPE = "WFA"
     func = unicodedata.east_asian_width
     return sum(2 if func(char) in UNICODE_WIDE_CHAR_TYPE else 1 for char in string)
 
@@ -661,21 +684,24 @@ def resolve_invite(invite: Union[Invite, str]) -> str:
     Resolves an invite from a :class:`~nextcord.Invite`, URL or code.
 
     Parameters
-    -----------
+    ----------
     invite: Union[:class:`~nextcord.Invite`, :class:`str`]
         The invite.
 
     Returns
-    --------
+    -------
     :class:`str`
         The invite code.
     """
     from .invite import Invite  # circular import
 
     if isinstance(invite, Invite):
+        if not invite.code:
+            raise NotImplementedError("Can not resolve the invite if the code is `None`")
+
         return invite.code
     else:
-        rx = r'(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)'
+        rx = r"(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)"
         m = re.match(rx, invite)
         if m:
             return m.group(1)
@@ -689,12 +715,12 @@ def resolve_template(code: Union[Template, str]) -> str:
     .. versionadded:: 1.4
 
     Parameters
-    -----------
+    ----------
     code: Union[:class:`~nextcord.Template`, :class:`str`]
         The code.
 
     Returns
-    --------
+    -------
     :class:`str`
         The template code.
     """
@@ -703,22 +729,27 @@ def resolve_template(code: Union[Template, str]) -> str:
     if isinstance(code, Template):
         return code.code
     else:
-        rx = r'(?:https?\:\/\/)?discord(?:\.new|(?:app)?\.com\/template)\/(.+)'
+        rx = r"(?:https?\:\/\/)?discord(?:\.new|(?:app)?\.com\/template)\/(.+)"
         m = re.match(rx, code)
         if m:
             return m.group(1)
     return code
 
 
-_MARKDOWN_ESCAPE_SUBREGEX = '|'.join(r'\{0}(?=([\s\S]*((?<!\{0})\{0})))'.format(c) for c in ('*', '`', '_', '~', '|'))
+_MARKDOWN_ESCAPE_SUBREGEX = "|".join(
+    r"\{0}(?=([\s\S]*((?<!\{0})\{0})))".format(c) for c in ("*", "`", "_", "~", "|")
+)
 
-_MARKDOWN_ESCAPE_COMMON = r'^>(?:>>)?\s|\[.+\]\(.+\)'
+_MARKDOWN_ESCAPE_COMMON = r"^>(?:>>)?\s|\[.+\]\(.+\)"
 
-_MARKDOWN_ESCAPE_REGEX = re.compile(fr'(?P<markdown>{_MARKDOWN_ESCAPE_SUBREGEX}|{_MARKDOWN_ESCAPE_COMMON})', re.MULTILINE)
+_MARKDOWN_ESCAPE_REGEX = re.compile(
+    rf"(?P<markdown>{_MARKDOWN_ESCAPE_SUBREGEX}|{_MARKDOWN_ESCAPE_COMMON})",
+    re.MULTILINE,
+)
 
-_URL_REGEX = r'(?P<url><[^: >]+:\/[^ >]+>|(?:https?|steam):\/\/[^\s<]+[^<.,:;\"\'\]\s])'
+_URL_REGEX = r"(?P<url><[^: >]+:\/[^ >]+>|(?:https?|steam):\/\/[^\s<]+[^<.,:;\"\'\]\s])"
 
-_MARKDOWN_STOCK_REGEX = fr'(?P<markdown>[_\\~|\*`]|{_MARKDOWN_ESCAPE_COMMON})'
+_MARKDOWN_STOCK_REGEX = rf"(?P<markdown>[_\\~|\*`]|{_MARKDOWN_ESCAPE_COMMON})"
 
 
 def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
@@ -731,7 +762,7 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
             if the input contains ``10 * 5`` then it will be converted into ``10  5``.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The text to remove markdown from.
     ignore_links: :class:`bool`
@@ -740,18 +771,18 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
         be left alone. Defaults to ``True``.
 
     Returns
-    --------
+    -------
     :class:`str`
         The text with the markdown special characters removed.
     """
 
-    def replacement(match):
+    def replacement(match: re.Match[str]):
         groupdict = match.groupdict()
-        return groupdict.get('url', '')
+        return groupdict.get("url", "")
 
     regex = _MARKDOWN_STOCK_REGEX
     if ignore_links:
-        regex = f'(?:{_URL_REGEX}|{regex})'
+        regex = f"(?:{_URL_REGEX}|{regex})"
     return re.sub(regex, replacement, text, 0, re.MULTILINE)
 
 
@@ -759,7 +790,7 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
     r"""A helper function that escapes Discord's markdown.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The text to escape markdown from.
     as_needed: :class:`bool`
@@ -775,27 +806,27 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
         Defaults to ``True``.
 
     Returns
-    --------
+    -------
     :class:`str`
         The text with the markdown special characters escaped with a slash.
     """
 
     if not as_needed:
 
-        def replacement(match):
+        def replacement(match: re.Match[str]):
             groupdict = match.groupdict()
-            is_url = groupdict.get('url')
+            is_url = groupdict.get("url")
             if is_url:
                 return is_url
-            return '\\' + groupdict['markdown']
+            return "\\" + groupdict["markdown"]
 
         regex = _MARKDOWN_STOCK_REGEX
         if ignore_links:
-            regex = f'(?:{_URL_REGEX}|{regex})'
+            regex = f"(?:{_URL_REGEX}|{regex})"
         return re.sub(regex, replacement, text, 0, re.MULTILINE)
     else:
-        text = re.sub(r'\\', r'\\\\', text)
-        return _MARKDOWN_ESCAPE_REGEX.sub(r'\\\1', text)
+        text = re.sub(r"\\", r"\\\\", text)
+        return _MARKDOWN_ESCAPE_REGEX.sub(r"\\\1", text)
 
 
 def escape_mentions(text: str) -> str:
@@ -812,16 +843,78 @@ def escape_mentions(text: str) -> str:
         class.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The text to escape mentions from.
 
     Returns
-    --------
+    -------
     :class:`str`
         The text with the mentions removed.
     """
-    return re.sub(r'@(everyone|here|[!&]?[0-9]{17,20})', '@\u200b\\1', text)
+    return re.sub(r"@(everyone|here|[!&]?[0-9]{17,20})", "@\u200b\\1", text)
+
+
+def parse_raw_mentions(text: str) -> List[int]:
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.User` IDs
+    matched with the syntax of ``<@user_id>`` or ``<@!user_id>``.
+
+    .. note::
+
+        This does not include role or channel mentions. See :func:`parse_raw_role_mentions`
+        and :func:`parse_raw_channel_mentions` for those.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    ----------
+    text: :class:`str`
+        The text to parse mentions from.
+
+    Returns
+    -------
+    List[:class:`int`]
+        A list of user IDs that were mentioned.
+    """
+    return [int(x) for x in re.findall(r"<@!?(\d{15,20})>", text)]
+
+
+def parse_raw_role_mentions(text: str) -> List[int]:
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.Role` IDs
+    matched with the syntax of ``<@&role_id>``.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    ----------
+    text: :class:`str`
+        The text to parse mentions from.
+
+    Returns
+    -------
+    List[:class:`int`]
+        A list of role IDs that were mentioned.
+    """
+    return [int(x) for x in re.findall(r"<@&(\d{15,20})>", text)]
+
+
+def parse_raw_channel_mentions(text: str) -> List[int]:
+    """A helper function that parses mentions from a string as an array of :class:`~nextcord.abc.GuildChannel` IDs
+    matched with the syntax of ``<#channel_id>``.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    ----------
+    text: :class:`str`
+        The text to parse mentions from.
+
+    Returns
+    -------
+    List[:class:`int`]
+        A list of channel IDs that were mentioned.
+    """
+    return [int(x) for x in re.findall(r"<#(\d{15,20})>", text)]
 
 
 def _chunk(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]:
@@ -880,19 +973,16 @@ def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
         The last chunk collected may not be as large as ``max_size``.
 
     Returns
-    --------
+    -------
     Union[:class:`Iterator`, :class:`AsyncIterator`]
         A new iterator which yields chunks of a given size.
     """
     if max_size <= 0:
-        raise ValueError('Chunk sizes must be greater than 0.')
+        raise ValueError("Chunk sizes must be greater than 0.")
 
     if isinstance(iterator, AsyncIterator):
         return _achunk(iterator, max_size)
     return _chunk(iterator, max_size)
-
-
-PY_310 = sys.version_info >= (3, 10)
 
 
 def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
@@ -918,7 +1008,7 @@ def evaluate_annotation(
     cache: Dict[str, Any],
     *,
     implicit_str: bool = True,
-):
+) -> Any:
     if isinstance(tp, ForwardRef):
         tp = tp.__forward_arg__
         # ForwardRefs always evaluate their internals
@@ -931,12 +1021,12 @@ def evaluate_annotation(
         cache[tp] = evaluated
         return evaluate_annotation(evaluated, globals, locals, cache)
 
-    if hasattr(tp, '__args__'):
+    if hasattr(tp, "__args__"):
         implicit_str = True
         is_literal = False
         args = tp.__args__
-        if not hasattr(tp, '__origin__'):
-            if PY_310 and tp.__class__ is types.UnionType:  # type: ignore
+        if not hasattr(tp, "__origin__"):
+            if PY_310 and tp.__class__ is UnionType:
                 converted = Union[args]  # type: ignore
                 return evaluate_annotation(converted, globals, locals, cache)
 
@@ -953,10 +1043,15 @@ def evaluate_annotation(
             implicit_str = False
             is_literal = True
 
-        evaluated_args = tuple(evaluate_annotation(arg, globals, locals, cache, implicit_str=implicit_str) for arg in args)
+        evaluated_args = tuple(
+            evaluate_annotation(arg, globals, locals, cache, implicit_str=implicit_str)
+            for arg in args
+        )
 
-        if is_literal and not all(isinstance(x, (str, int, bool, type(None))) for x in evaluated_args):
-            raise TypeError('Literal arguments must be of type str, int, bool, or NoneType.')
+        if is_literal and not all(
+            isinstance(x, (str, int, bool, type(None))) for x in evaluated_args
+        ):
+            raise TypeError("Literal arguments must be of type str, int, bool, or NoneType.")
 
         if evaluated_args == args:
             return tp
@@ -986,7 +1081,7 @@ def resolve_annotation(
     return evaluate_annotation(annotation, globalns, locals, cache)
 
 
-TimestampStyle = Literal['f', 'F', 'd', 'D', 't', 'T', 'R']
+TimestampStyle = Literal["f", "F", "d", "D", "t", "T", "R"]
 
 
 def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) -> str:
@@ -1018,22 +1113,22 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
     .. versionadded:: 2.0
 
     Parameters
-    -----------
+    ----------
     dt: :class:`datetime.datetime`
         The datetime to format.
     style: :class:`str`
         The style to format the datetime with.
 
     Returns
-    --------
+    -------
     :class:`str`
         The formatted string.
     """
-    if not isinstance(dt, datetime.datetime):
+    if not isinstance(dt, datetime.datetime):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise InvalidArgument("'dt' must be of type 'datetime.datetime'")
     if style is None:
-        return f'<t:{int(dt.timestamp())}>'
-    return f'<t:{int(dt.timestamp())}:{style}>'
+        return f"<t:{int(dt.timestamp())}>"
+    return f"<t:{int(dt.timestamp())}:{style}>"
 
 
 _FUNCTION_DESCRIPTION_REGEX = re.compile(r"\A(?:.|\n)+?(?=\Z|\r?\n\r?\n)", re.MULTILINE)
@@ -1046,53 +1141,54 @@ _ARG_TYPE_SUBREGEX = r"(?P<type>.+)"
 
 _GOOGLE_DOCSTRING_ARG_REGEX = re.compile(
     rf"^{_ARG_NAME_SUBREGEX}[ \t]*(?:\({_ARG_TYPE_SUBREGEX}\))?[ \t]*:[ \t]*{_ARG_DESCRIPTION_SUBREGEX}",
-    re.MULTILINE
+    re.MULTILINE,
 )
 
 _SPHINX_DOCSTRING_ARG_REGEX = re.compile(
     rf"^:param {_ARG_NAME_SUBREGEX}:[ \t]+{_ARG_DESCRIPTION_SUBREGEX}[ \t]*(?::type [^\s:]+:[ \t]+{_ARG_TYPE_SUBREGEX})?",
-    re.MULTILINE
+    re.MULTILINE,
 )
 
 _NUMPY_DOCSTRING_ARG_REGEX = re.compile(
     rf"^{_ARG_NAME_SUBREGEX}(?:[ \t]*:)?(?:[ \t]+{_ARG_TYPE_SUBREGEX})?[ \t]*\r?\n[ \t]+{_ARG_DESCRIPTION_SUBREGEX}",
-    re.MULTILINE
+    re.MULTILINE,
 )
+
 
 def _trim_text(text: str, max_chars: int) -> str:
     """Trims a string and adds an ellpsis if it exceeds the maximum length.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The string to trim.
     max_chars: :class:`int`
         The maximum number of characters to allow.
 
     Returns
-    --------
+    -------
     :class:`str`
         The trimmed string.
     """
     if len(text) > max_chars:
         # \u2026 = ellipsis
-        return text[:max_chars - 1] + "\u2026"
+        return text[: max_chars - 1] + "\u2026"
     return text
 
 
-def parse_docstring(func: Callable, max_chars: int = MISSING) -> Dict[str, Any]:
+def parse_docstring(func: Callable[..., Any], max_chars: int = MISSING) -> Dict[str, Any]:
     """Parses the docstring of a function into a dictionary.
 
     Parameters
-    ------------
-    func: :class:`Callable`
+    ----------
+    func: :data:`~typing.Callable`
         The function to parse the docstring of.
     max_chars: :class:`int`
         The maximum number of characters to allow in the descriptions.
         If MISSING, then there is no maximum.
 
     Returns
-    --------
+    -------
     :class:`Dict[str, Any]`
         The parsed docstring including the function description and
         descriptions of arguments.
@@ -1110,7 +1206,9 @@ def parse_docstring(func: Callable, max_chars: int = MISSING) -> Dict[str, Any]:
 
         # Extract the arguments
         # For Google-style, look only at the lines that are indented
-        section_lines = inspect.cleandoc("\n".join(line for line in docstring.splitlines() if line.startswith(("\t", "  "))))
+        section_lines = inspect.cleandoc(
+            "\n".join(line for line in docstring.splitlines() if line.startswith(("\t", "  ")))
+        )
         docstring_styles = [
             _GOOGLE_DOCSTRING_ARG_REGEX.finditer(section_lines),
             _SPHINX_DOCSTRING_ARG_REGEX.finditer(docstring),

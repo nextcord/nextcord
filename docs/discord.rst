@@ -3,14 +3,14 @@
 .. _discord-intro:
 
 Creating a Bot Account
-========================
+======================
 
 To work with the library and the Discord API in general, we must first create a Discord Bot account.
 
 Creating a Bot account is a pretty straightforward process.
 
 1. Make sure you're logged on to the `Discord website <https://discord.com>`_.
-2. Navigate to the `application page <https://discord.com/developers/applications>`_
+2. Navigate to the `Applications page <https://discord.com/developers/applications>`_.
 3. Click on the "New Application" button.
 
     .. image:: /images/discord_create_app_button.png
@@ -21,13 +21,13 @@ Creating a Bot account is a pretty straightforward process.
     .. image:: /images/discord_create_app_form.png
         :alt: The new application form filled in.
 
-5. Create a Bot User by navigating to the "Bot" tab and clicking "Add Bot".
+5. Create a Bot User account by navigating to the "Bot" tab and clicking "Add Bot".
 
     - Click "Yes, do it!" to continue.
 
     .. image:: /images/discord_create_bot_user.png
         :alt: The Add Bot button.
-6. Make sure that **Public Bot** is ticked if you want others to invite your bot.
+6. Make sure that **Public Bot** is ticked if you want other users to invite your bot.
 
     - You should also make sure that **Require OAuth2 Code Grant** is unchecked unless you
       are developing a service that needs it. If you're unsure, then **leave it unchecked**.
@@ -35,48 +35,53 @@ Creating a Bot account is a pretty straightforward process.
     .. image:: /images/discord_bot_user_options.png
         :alt: How the Bot User options should look like for most people.
 
-7. Copy the token using the "Copy" button.
+7. Get a generated token using the "Reset Token" button. You will have to confirm and enter a 2FA Code. 2FA is a requirement for making Bot Accounts.
 
-    - **This is not the Client Secret at the General Information page.**
+    - **This is not the Client Secret from the General Information page.**
 
     .. warning::
 
-        It should be worth noting that this token is essentially your bot's
-        password. You should **never** share this with someone else. In doing so,
+        It should be worth noting that your bot's token is essentially your bot's
+        password. You should **never** share this with anyone else. In doing so,
         someone can log in to your bot and do malicious things, such as leaving
-        servers, ban all members inside a server, or pinging everyone maliciously.
+        servers, banning all members inside a server, or mentioning everyone maliciously.
 
         The possibilities are endless, so **do not share this token.**
 
-        If you accidentally leaked your token, click the "Regenerate" button as soon
+        If you have accidentally leaked your token, click the "Reset Token" button as soon
         as possible. This revokes your old token and re-generates a new one.
         Now you need to use the new token to log in.
+
+8. After that, click the "Copy" button to copy your token.
+
+    .. image:: /images/discord_bot_copy_token.png
+        :alt: The revealed token and the new "Copy" button.
 
 And that's it. You now have a bot account and you can log in with that token.
 
 .. _discord_invite_bot:
 
 Inviting Your Bot
--------------------
+-----------------
 
 So you've made a Bot User but it's not actually in any server.
 
-If you want to invite your bot you must create an invite URL for it.
+If you want to invite your bot, you must create an invite URL for it.
 
-1. Make sure you're logged on to the `Discord website <https://discord.com>`_.
-2. Navigate to the `application page <https://discord.com/developers/applications>`_
+1. Make sure you're logged in to the `Discord website <https://discord.com>`_.
+2. Navigate to the `Application page <https://discord.com/developers/applications>`_
 3. Click on your bot's page.
 4. Go to the "OAuth2" tab.
 
     .. image:: /images/discord_oauth2.png
         :alt: How the OAuth2 page should look like.
 
-5. Tick the "bot" checkbox under "scopes".
+5. Tick the "bot" checkbox under "scopes". If you make use of Application Commands (Slash, Message and User Commands), also tick the "applications.commands" scope.
 
     .. image:: /images/discord_oauth2_scope.png
-        :alt: The scopes checkbox with "bot" ticked.
+        :alt: The scopes checkbox with "bot" and "applications.commands" ticked.
 
-6. Tick the permissions required for your bot to function under "Bot Permissions".
+6. Tick the permissions that your bot requires to function under "Bot Permissions".
 
     - Please be aware of the consequences of requiring your bot to have the "Administrator" permission.
 
@@ -90,7 +95,7 @@ If you want to invite your bot you must create an invite URL for it.
 
 .. note::
 
-    The person adding the bot needs "Manage Server" permissions to do so.
+    The person adding the bot needs the "Manage Server" permission to do so.
 
 If you want to generate this URL dynamically at run-time inside your bot and using the
 :class:`nextcord.Permissions` interface, you can use :func:`nextcord.utils.oauth_url`.

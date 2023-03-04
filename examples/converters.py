@@ -1,13 +1,14 @@
 # This example requires the 'members' privileged intent to use the Member converter.
 import typing
-import nextcord
 
+import nextcord
 from nextcord.ext import commands
 
 intents = nextcord.Intents.default()
 intents.members = True
+intents.message_content = True
 
-bot = commands.Bot(command_prefix='$', intents=intents)
+bot = commands.Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()
@@ -28,14 +29,16 @@ async def userinfo(ctx, user: nextcord.User):
     user_id = user.id
     username = user.name
     avatar = user.avatar.url
-    await ctx.send(f'User found: {user_id} -- {username}\n{avatar}')
+    await ctx.send(f"User found: {user_id} -- {username}\n{avatar}")
+
 
 @userinfo.error
 async def userinfo_error(ctx, error: commands.CommandError):
     # if the conversion above fails for any reason, it will raise `commands.BadArgument`
     # so we handle this in this error handler:
     if isinstance(error, commands.BadArgument):
-        return await ctx.send('Couldn\'t find that user.')
+        return await ctx.send("Couldn't find that user.")
+
 
 # Custom Converter here
 class ChannelOrMemberConverter(commands.Converter):
@@ -76,10 +79,11 @@ class ChannelOrMemberConverter(commands.Converter):
 async def notify(ctx, target: ChannelOrMemberConverter):
     # This command signature utilises the custom converter written above
     # What will happen during command invocation is that the `target` above will be passed to
-    # the `argument` parameter of the `ChannelOrMemberConverter.convert` method and 
+    # the `argument` parameter of the `ChannelOrMemberConverter.convert` method and
     # the conversion will go through the process defined there.
 
-    await target.send(f'Hello, {target.name}!')
+    await target.send(f"Hello, {target.name}!")
+
 
 @bot.command()
 async def ignore(ctx, target: typing.Union[nextcord.Member, nextcord.TextChannel]):
@@ -93,9 +97,12 @@ async def ignore(ctx, target: typing.Union[nextcord.Member, nextcord.TextChannel
 
     # To check the resulting type, `isinstance` is used
     if isinstance(target, nextcord.Member):
-        await ctx.send(f'Member found: {target.mention}, adding them to the ignore list.')
-    elif isinstance(target, nextcord.TextChannel): # this could be an `else` but for completeness' sake.
-        await ctx.send(f'Channel found: {target.mention}, adding it to the ignore list.')
+        await ctx.send(f"Member found: {target.mention}, adding them to the ignore list.")
+    elif isinstance(
+        target, nextcord.TextChannel
+    ):  # this could be an `else` but for completeness' sake.
+        await ctx.send(f"Channel found: {target.mention}, adding it to the ignore list.")
+
 
 # Built-in type converters.
 @bot.command()
@@ -103,8 +110,9 @@ async def multiply(ctx, number: int, maybe: bool):
     # We want an `int` and a `bool` parameter here.
     # `bool` is a slightly special case, as shown here:
     # See: https://nextcord.readthedocs.io/en/latest/ext/commands/commands.html#bool
-    if maybe is True:
+    if maybe:
         return await ctx.send(number * 2)
     await ctx.send(number * 5)
 
-bot.run('token')
+
+bot.run("token")

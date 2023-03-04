@@ -1,83 +1,67 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 import inspect
+import re
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Generic,
     Iterable,
+    List,
     Literal,
     Optional,
-    TYPE_CHECKING,
-    List,
     Protocol,
+    Tuple,
     Type,
     TypeVar,
-    Tuple,
     Union,
     runtime_checkable,
 )
 
 import nextcord
+
 from .errors import *
 
 if TYPE_CHECKING:
-    from .context import Context
+    from typing import Callable
+
+    from nextcord.member import Member
     from nextcord.message import PartialMessageableChannel
+    from nextcord.user import User
+
+    from .context import Context
 
 
 __all__ = (
-    'Converter',
-    'ObjectConverter',
-    'MemberConverter',
-    'UserConverter',
-    'MessageConverter',
-    'PartialMessageConverter',
-    'TextChannelConverter',
-    'InviteConverter',
-    'GuildConverter',
-    'RoleConverter',
-    'GameConverter',
-    'ColourConverter',
-    'ColorConverter',
-    'VoiceChannelConverter',
-    'StageChannelConverter',
-    'EmojiConverter',
-    'PartialEmojiConverter',
-    'CategoryChannelConverter',
-    'IDConverter',
-    'ThreadConverter',
-    'GuildChannelConverter',
-    'GuildStickerConverter',
-    'ScheduledEventConverter',
-    'clean_content',
-    'Greedy',
-    'run_converters',
+    "Converter",
+    "ObjectConverter",
+    "MemberConverter",
+    "UserConverter",
+    "MessageConverter",
+    "PartialMessageConverter",
+    "TextChannelConverter",
+    "InviteConverter",
+    "GuildConverter",
+    "RoleConverter",
+    "GameConverter",
+    "ColourConverter",
+    "ColorConverter",
+    "VoiceChannelConverter",
+    "StageChannelConverter",
+    "EmojiConverter",
+    "PartialEmojiConverter",
+    "CategoryChannelConverter",
+    "IDConverter",
+    "ThreadConverter",
+    "GuildChannelConverter",
+    "GuildStickerConverter",
+    "ScheduledEventConverter",
+    "clean_content",
+    "Greedy",
+    "run_converters",
 )
 
 
@@ -91,10 +75,10 @@ def _get_from_guilds(bot, getter, argument):
 
 
 _utils_get = nextcord.utils.get
-T = TypeVar('T')
-T_co = TypeVar('T_co', covariant=True)
-CT = TypeVar('CT', bound=nextcord.abc.GuildChannel)
-TT = TypeVar('TT', bound=nextcord.Thread)
+T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
+CT = TypeVar("CT", bound=nextcord.abc.GuildChannel)
+TT = TypeVar("TT", bound=nextcord.Thread)
 
 
 @runtime_checkable
@@ -119,23 +103,23 @@ class Converter(Protocol[T_co]):
         properly propagate to the error handlers.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context that the argument is being used in.
         argument: :class:`str`
             The argument that is being converted.
 
         Raises
-        -------
+        ------
         :exc:`.CommandError`
             A generic exception occurred when converting the argument.
         :exc:`.BadArgument`
             The converter failed to convert the argument.
         """
-        raise NotImplementedError('Derived classes need to implement this.')
+        raise NotImplementedError("Derived classes need to implement this.")
 
 
-_ID_REGEX = re.compile(r'([0-9]{15,20})$')
+_ID_REGEX = re.compile(r"([0-9]{15,20})$")
 
 
 class IDConverter(Converter[T_co]):
@@ -147,7 +131,7 @@ class IDConverter(Converter[T_co]):
 class ObjectConverter(IDConverter[nextcord.Object]):
     """Converts to a :class:`~nextcord.Object`.
 
-    The argument must follow the valid ID or mention formats (e.g. `<@80088516616269824>`).
+    The argument must follow the valid ID or mention formats (e.g. ``<@80088516616269824>``).
 
     .. versionadded:: 2.0
 
@@ -158,7 +142,9 @@ class ObjectConverter(IDConverter[nextcord.Object]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.Object:
-        match = self._get_id_match(argument) or re.match(r'<(?:@(?:!|&)?|#)([0-9]{15,20})>$', argument)
+        match = self._get_id_match(argument) or re.match(
+            r"<(?:@(?:!|&)?|#)([0-9]{15,20})>$", argument
+        )
 
         if match is None:
             raise ObjectNotFound(argument)
@@ -190,15 +176,16 @@ class MemberConverter(IDConverter[nextcord.Member]):
         optionally caching the result if :attr:`.MemberCacheFlags.joined` is enabled.
     """
 
-    async def query_member_named(self, guild, argument):
+    async def query_member_named(self, guild, argument: str):
         cache = guild._state.member_cache_flags.joined
-        if len(argument) > 5 and argument[-5] == '#':
-            username, _, discriminator = argument.rpartition('#')
+        if len(argument) > 5 and argument[-5] == "#":
+            username, _, discriminator = argument.rpartition("#")
             members = await guild.query_members(username, limit=100, cache=cache)
             return nextcord.utils.get(members, name=username, discriminator=discriminator)
         else:
             members = await guild.query_members(argument, limit=100, cache=cache)
-            return nextcord.utils.find(lambda m: m.name == argument or m.nick == argument, members)
+            finder: Callable[[Member], bool] = lambda m: m.name == argument or m.nick == argument
+            return nextcord.utils.find(finder, members)
 
     async def query_member_by_id(self, bot, guild, user_id):
         ws = bot._get_websocket(shard_id=guild.shard_id)
@@ -223,7 +210,7 @@ class MemberConverter(IDConverter[nextcord.Member]):
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.Member:
         bot = ctx.bot
-        match = self._get_id_match(argument) or re.match(r'<@!?([0-9]{15,20})>$', argument)
+        match = self._get_id_match(argument) or re.match(r"<@!?([0-9]{15,20})>$", argument)
         guild = ctx.guild
         result = None
         user_id = None
@@ -232,13 +219,13 @@ class MemberConverter(IDConverter[nextcord.Member]):
             if guild:
                 result = guild.get_member_named(argument)
             else:
-                result = _get_from_guilds(bot, 'get_member_named', argument)
+                result = _get_from_guilds(bot, "get_member_named", argument)
         else:
             user_id = int(match.group(1))
             if guild:
                 result = guild.get_member(user_id) or _utils_get(ctx.message.mentions, id=user_id)
             else:
-                result = _get_from_guilds(bot, 'get_member', user_id)
+                result = _get_from_guilds(bot, "get_member", user_id)
 
         if result is None:
             if guild is None:
@@ -251,6 +238,9 @@ class MemberConverter(IDConverter[nextcord.Member]):
 
             if not result:
                 raise MemberNotFound(argument)
+
+        if not isinstance(result, nextcord.Member):
+            raise MemberNotFound(argument)
 
         return result
 
@@ -276,7 +266,7 @@ class UserConverter(IDConverter[nextcord.User]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.User:
-        match = self._get_id_match(argument) or re.match(r'<@!?([0-9]{15,20})>$', argument)
+        match = self._get_id_match(argument) or re.match(r"<@!?([0-9]{15,20})>$", argument)
         result = None
         state = ctx._state
 
@@ -289,20 +279,25 @@ class UserConverter(IDConverter[nextcord.User]):
                 except nextcord.HTTPException:
                     raise UserNotFound(argument) from None
 
+            if not isinstance(result, nextcord.User):
+                raise UserNotFound(argument)
+
             return result
 
         arg = argument
 
         # Remove the '@' character if this is the first character from the argument
-        if arg[0] == '@':
+        if arg[0] == "@":
             # Remove first character
             arg = arg[1:]
 
         # check for discriminator if it exists,
-        if len(arg) > 5 and arg[-5] == '#':
+        if len(arg) > 5 and arg[-5] == "#":
             discrim = arg[-4:]
             name = arg[:-5]
-            predicate = lambda u: u.name == name and u.discriminator == discrim
+            predicate: Callable[[User], bool] = (
+                lambda u: u.name == name and u.discriminator == discrim
+            )
             result = nextcord.utils.find(predicate, state._users.values())
             if result is not None:
                 return result
@@ -330,22 +325,22 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
 
     @staticmethod
     def _get_id_matches(ctx, argument):
-        id_regex = re.compile(r'(?:(?P<channel_id>[0-9]{15,20})-)?(?P<message_id>[0-9]{15,20})$')
+        id_regex = re.compile(r"(?:(?P<channel_id>[0-9]{15,20})-)?(?P<message_id>[0-9]{15,20})$")
         link_regex = re.compile(
-            r'https?://(?:(ptb|canary|www)\.)?discord(?:app)?\.com/channels/'
-            r'(?P<guild_id>[0-9]{15,20}|@me)'
-            r'/(?P<channel_id>[0-9]{15,20})/(?P<message_id>[0-9]{15,20})/?$'
+            r"https?://(?:(ptb|canary|www)\.)?discord(?:app)?\.com/channels/"
+            r"(?P<guild_id>[0-9]{15,20}|@me)"
+            r"/(?P<channel_id>[0-9]{15,20})/(?P<message_id>[0-9]{15,20})/?$"
         )
         match = id_regex.match(argument) or link_regex.match(argument)
         if not match:
             raise MessageNotFound(argument)
         data = match.groupdict()
-        channel_id = nextcord.utils._get_as_snowflake(data, 'channel_id')
-        message_id = int(data['message_id'])
-        guild_id = data.get('guild_id')
+        channel_id = nextcord.utils.get_as_snowflake(data, "channel_id")
+        message_id = int(data["message_id"])
+        guild_id = data.get("guild_id")
         if guild_id is None:
             guild_id = ctx.guild and ctx.guild.id
-        elif guild_id == '@me':
+        elif guild_id == "@me":
             guild_id = None
         else:
             guild_id = int(guild_id)
@@ -358,7 +353,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
         if guild_id is not None:
             guild = ctx.bot.get_guild(guild_id)
             if guild is not None and channel_id is not None:
-                return guild._resolve_channel(channel_id)  # type: ignore
+                return guild._resolve_channel(channel_id)
             else:
                 return None
         else:
@@ -368,7 +363,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
         guild_id, message_id, channel_id = self._get_id_matches(ctx, argument)
         channel = self._resolve_channel(ctx, guild_id, channel_id)
         if not channel:
-            raise ChannelNotFound(channel_id)
+            raise ChannelNotFound(str(channel_id))
         return nextcord.PartialMessage(channel=channel, id=message_id)
 
 
@@ -394,13 +389,13 @@ class MessageConverter(IDConverter[nextcord.Message]):
             return message
         channel = PartialMessageConverter._resolve_channel(ctx, guild_id, channel_id)
         if not channel:
-            raise ChannelNotFound(channel_id)
+            raise ChannelNotFound(str(channel_id))
         try:
             return await channel.fetch_message(message_id)
         except nextcord.NotFound:
             raise MessageNotFound(argument)
         except nextcord.Forbidden:
-            raise ChannelNotReadable(channel)
+            raise ChannelNotReadable(channel)  # type: ignore  # weird type conflict
 
 
 class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
@@ -419,13 +414,13 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.abc.GuildChannel:
-        return self._resolve_channel(ctx, argument, 'channels', nextcord.abc.GuildChannel)
+        return self._resolve_channel(ctx, argument, "channels", nextcord.abc.GuildChannel)
 
     @staticmethod
     def _resolve_channel(ctx: Context, argument: str, attribute: str, type: Type[CT]) -> CT:
         bot = ctx.bot
 
-        match = IDConverter._get_id_match(argument) or re.match(r'<#([0-9]{15,20})>$', argument)
+        match = IDConverter._get_id_match(argument) or re.match(r"<#([0-9]{15,20})>$", argument)
         result = None
         guild = ctx.guild
 
@@ -443,9 +438,9 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         else:
             channel_id = int(match.group(1))
             if guild:
-                result = guild.get_channel(channel_id)
+                result = guild.get_channel(channel_id)  # type: ignore
             else:
-                result = _get_from_guilds(bot, 'get_channel', channel_id)
+                result = _get_from_guilds(bot, "get_channel", channel_id)
 
         if not isinstance(result, type):
             raise ChannelNotFound(argument)
@@ -454,9 +449,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
 
     @staticmethod
     def _resolve_thread(ctx: Context, argument: str, attribute: str, type: Type[TT]) -> TT:
-        bot = ctx.bot
-
-        match = IDConverter._get_id_match(argument) or re.match(r'<#([0-9]{15,20})>$', argument)
+        match = IDConverter._get_id_match(argument) or re.match(r"<#([0-9]{15,20})>$", argument)
         result = None
         guild = ctx.guild
 
@@ -468,7 +461,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         else:
             thread_id = int(match.group(1))
             if guild:
-                result = guild.get_thread(thread_id)
+                result = guild.get_thread(thread_id)  # type: ignore  # handled below
 
         if not result or not isinstance(result, type):
             raise ThreadNotFound(argument)
@@ -493,7 +486,9 @@ class TextChannelConverter(IDConverter[nextcord.TextChannel]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.TextChannel:
-        return GuildChannelConverter._resolve_channel(ctx, argument, 'text_channels', nextcord.TextChannel)
+        return GuildChannelConverter._resolve_channel(
+            ctx, argument, "text_channels", nextcord.TextChannel
+        )
 
 
 class VoiceChannelConverter(IDConverter[nextcord.VoiceChannel]):
@@ -513,7 +508,9 @@ class VoiceChannelConverter(IDConverter[nextcord.VoiceChannel]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.VoiceChannel:
-        return GuildChannelConverter._resolve_channel(ctx, argument, 'voice_channels', nextcord.VoiceChannel)
+        return GuildChannelConverter._resolve_channel(
+            ctx, argument, "voice_channels", nextcord.VoiceChannel
+        )
 
 
 class StageChannelConverter(IDConverter[nextcord.StageChannel]):
@@ -532,7 +529,9 @@ class StageChannelConverter(IDConverter[nextcord.StageChannel]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.StageChannel:
-        return GuildChannelConverter._resolve_channel(ctx, argument, 'stage_channels', nextcord.StageChannel)
+        return GuildChannelConverter._resolve_channel(
+            ctx, argument, "stage_channels", nextcord.StageChannel
+        )
 
 
 class CategoryChannelConverter(IDConverter[nextcord.CategoryChannel]):
@@ -552,7 +551,9 @@ class CategoryChannelConverter(IDConverter[nextcord.CategoryChannel]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.CategoryChannel:
-        return GuildChannelConverter._resolve_channel(ctx, argument, 'categories', nextcord.CategoryChannel)
+        return GuildChannelConverter._resolve_channel(
+            ctx, argument, "categories", nextcord.CategoryChannel
+        )
 
 
 class ThreadConverter(IDConverter[nextcord.Thread]):
@@ -570,7 +571,7 @@ class ThreadConverter(IDConverter[nextcord.Thread]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.Thread:
-        return GuildChannelConverter._resolve_thread(ctx, argument, 'threads', nextcord.Thread)
+        return GuildChannelConverter._resolve_thread(ctx, argument, "threads", nextcord.Thread)
 
 
 class ColourConverter(Converter[nextcord.Colour]):
@@ -599,10 +600,12 @@ class ColourConverter(Converter[nextcord.Colour]):
         Added support for ``rgb`` function and 3-digit hex shortcuts
     """
 
-    RGB_REGEX = re.compile(r'rgb\s*\((?P<r>[0-9]{1,3}%?)\s*,\s*(?P<g>[0-9]{1,3}%?)\s*,\s*(?P<b>[0-9]{1,3}%?)\s*\)')
+    RGB_REGEX = re.compile(
+        r"rgb\s*\((?P<r>[0-9]{1,3}%?)\s*,\s*(?P<g>[0-9]{1,3}%?)\s*,\s*(?P<b>[0-9]{1,3}%?)\s*\)"
+    )
 
     def parse_hex_number(self, argument):
-        arg = ''.join(i * 2 for i in argument) if len(argument) == 3 else argument
+        arg = "".join(i * 2 for i in argument) if len(argument) == 3 else argument
         try:
             value = int(arg, base=16)
             if not (0 <= value <= 0xFFFFFF):
@@ -613,7 +616,7 @@ class ColourConverter(Converter[nextcord.Colour]):
             return nextcord.Color(value=value)
 
     def parse_rgb_number(self, argument, number):
-        if number[-1] == '%':
+        if number[-1] == "%":
             value = int(number[:-1])
             if not (0 <= value <= 100):
                 raise BadColourArgument(argument)
@@ -629,29 +632,29 @@ class ColourConverter(Converter[nextcord.Colour]):
         if match is None:
             raise BadColourArgument(argument)
 
-        red = self.parse_rgb_number(argument, match.group('r'))
-        green = self.parse_rgb_number(argument, match.group('g'))
-        blue = self.parse_rgb_number(argument, match.group('b'))
+        red = self.parse_rgb_number(argument, match.group("r"))
+        green = self.parse_rgb_number(argument, match.group("g"))
+        blue = self.parse_rgb_number(argument, match.group("b"))
         return nextcord.Color.from_rgb(red, green, blue)
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.Colour:
-        if argument[0] == '#':
+        if argument[0] == "#":
             return self.parse_hex_number(argument[1:])
 
-        if argument[0:2] == '0x':
+        if argument[0:2] == "0x":
             rest = argument[2:]
             # Legacy backwards compatible syntax
-            if rest.startswith('#'):
+            if rest.startswith("#"):
                 return self.parse_hex_number(rest[1:])
             return self.parse_hex_number(rest)
 
         arg = argument.lower()
-        if arg[0:3] == 'rgb':
+        if arg[0:3] == "rgb":
             return self.parse_rgb(arg)
 
-        arg = arg.replace(' ', '_')
+        arg = arg.replace(" ", "_")
         method = getattr(nextcord.Colour, arg, None)
-        if arg.startswith('from_') or method is None or not inspect.ismethod(method):
+        if arg.startswith("from_") or method is None or not inspect.ismethod(method):
             raise BadColourArgument(arg)
         return method()
 
@@ -680,7 +683,7 @@ class RoleConverter(IDConverter[nextcord.Role]):
         if not guild:
             raise NoPrivateMessage()
 
-        match = self._get_id_match(argument) or re.match(r'<@&([0-9]{15,20})>$', argument)
+        match = self._get_id_match(argument) or re.match(r"<@&([0-9]{15,20})>$", argument)
         if match:
             result = guild.get_role(int(match.group(1)))
         else:
@@ -759,7 +762,9 @@ class EmojiConverter(IDConverter[nextcord.Emoji]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.Emoji:
-        match = self._get_id_match(argument) or re.match(r'<a?:[a-zA-Z0-9\_]{1,32}:([0-9]{15,20})>$', argument)
+        match = self._get_id_match(argument) or re.match(
+            r"<a?:[a-zA-Z0-9\_]{1,32}:([0-9]{15,20})>$", argument
+        )
         result = None
         bot = ctx.bot
         guild = ctx.guild
@@ -788,12 +793,17 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
 
     This is done by extracting the animated flag, name and ID from the emoji.
 
+    If the emoji is a unicode emoji, then the name is the unicode character.
+
     .. versionchanged:: 1.5
          Raise :exc:`.PartialEmojiConversionFailure` instead of generic :exc:`.BadArgument`
+
+    .. versionchanged:: 2.1
+        Add support for converting unicode emojis
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.PartialEmoji:
-        match = re.match(r'<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>$', argument)
+        match = re.match(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>$", argument)
 
         if match:
             emoji_animated = bool(match.group(1))
@@ -803,6 +813,10 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
             return nextcord.PartialEmoji.with_state(
                 ctx.bot._connection, animated=emoji_animated, name=emoji_name, id=emoji_id
             )
+
+        # If the emoji is a unicode emoji, then the name is the unicode character.
+        if re.match(r"^[\u0023-\u0039]?[\u00ae\u00a9\U00002000-\U0010ffff]+$", argument):
+            return nextcord.PartialEmoji.with_state(ctx.bot._connection, name=argument)
 
         raise PartialEmojiConversionFailure(argument)
 
@@ -847,13 +861,11 @@ class GuildStickerConverter(IDConverter[nextcord.GuildSticker]):
 
 
 _EVENT_INVITE_RE = re.compile(
-    r'(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)'
-    '?event=(\d+)'
+    r"(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)" "?event=(\d+)"
 )
 
 _EVENT_API_RE = re.compile(
-    r'(?:https?\:\/\/)?(?:(ptb|canary|www)\.)?discord'
-    r'(?:(?:app)?\.com\/events)\/(\d+)\/(\d+)'
+    r"(?:https?\:\/\/)?(?:(ptb|canary|www)\.)?discord" r"(?:(?:app)?\.com\/events)\/(\d+)\/(\d+)"
 )
 
 
@@ -872,9 +884,7 @@ class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
     .. versionadded:: 2.0
     """
 
-    async def convert(
-        self, ctx: Context, argument: str
-    ) -> nextcord.ScheduledEvent:
+    async def convert(self, ctx: Context, argument: str) -> nextcord.ScheduledEvent:
         match = self._get_id_match(argument)
         result = None
         bot = ctx.bot
@@ -901,6 +911,10 @@ class ScheduledEventConverter(IDConverter[nextcord.ScheduledEvent]):
                 result = bot.get_scheduled_event(event_id)
             else:
                 match = _EVENT_API_RE.match(argument)
+
+                if not match:
+                    raise ScheduledEventNotFound(argument)
+
                 guild_id = int(match.group(2))
                 guild = bot.get_guild(guild_id)
                 if guild is not None:
@@ -921,7 +935,7 @@ class clean_content(Converter[str]):
     This behaves similarly to :attr:`~nextcord.Message.clean_content`.
 
     Attributes
-    ------------
+    ----------
     fix_channel_mentions: :class:`bool`
         Whether to clean channel mentions.
     use_nicknames: :class:`bool`
@@ -953,38 +967,41 @@ class clean_content(Converter[str]):
         if ctx.guild:
 
             def resolve_member(id: int) -> str:
-                m = _utils_get(msg.mentions, id=id) or ctx.guild.get_member(id)
-                return f'@{m.display_name if self.use_nicknames else m.name}' if m else '@deleted-user'
+                m = _utils_get(msg.mentions, id=id) or ctx.guild.get_member(id)  # type: ignore
+                # [in a guild if we are here]
+                return (
+                    f"@{m.display_name if self.use_nicknames else m.name}" if m else "@deleted-user"
+                )
 
             def resolve_role(id: int) -> str:
-                r = _utils_get(msg.role_mentions, id=id) or ctx.guild.get_role(id)
-                return f'@{r.name}' if r else '@deleted-role'
+                r = _utils_get(msg.role_mentions, id=id) or ctx.guild.get_role(id)  # type: ignore
+                return f"@{r.name}" if r else "@deleted-role"
 
         else:
 
             def resolve_member(id: int) -> str:
                 m = _utils_get(msg.mentions, id=id) or ctx.bot.get_user(id)
-                return f'@{m.name}' if m else '@deleted-user'
+                return f"@{m.name}" if m else "@deleted-user"
 
             def resolve_role(id: int) -> str:
-                return '@deleted-role'
+                return "@deleted-role"
 
         if self.fix_channel_mentions and ctx.guild:
 
             def resolve_channel(id: int) -> str:
-                c = ctx.guild.get_channel(id)
-                return f'#{c.name}' if c else '#deleted-channel'
+                c = ctx.guild.get_channel(id)  # type: ignore
+                return f"#{c.name}" if c else "#deleted-channel"
 
         else:
 
             def resolve_channel(id: int) -> str:
-                return f'<#{id}>'
+                return f"<#{id}>"
 
         transforms = {
-            '@': resolve_member,
-            '@!': resolve_member,
-            '#': resolve_channel,
-            '@&': resolve_role,
+            "@": resolve_member,
+            "@!": resolve_member,
+            "#": resolve_channel,
+            "@&": resolve_role,
         }
 
         def repl(match: re.Match) -> str:
@@ -993,7 +1010,7 @@ class clean_content(Converter[str]):
             transformed = transforms[type](id)
             return transformed
 
-        result = re.sub(r'<(@[!&]?|#)([0-9]{15,20})>', repl, argument)
+        result = re.sub(r"<(@[!&]?|#)([0-9]{15,20})>", repl, argument)
         if self.escape_markdown:
             result = nextcord.utils.escape_markdown(result)
         elif self.remove_markdown:
@@ -1025,42 +1042,42 @@ class Greedy(List[T]):
     For more information, check :ref:`ext_commands_special_converters`.
     """
 
-    __slots__ = ('converter',)
+    __slots__ = ("converter",)
 
-    def __init__(self, *, converter: T):
+    def __init__(self, *, converter: T) -> None:
         self.converter = converter
 
-    def __repr__(self):
-        converter = getattr(self.converter, '__name__', repr(self.converter))
-        return f'Greedy[{converter}]'
+    def __repr__(self) -> str:
+        converter = getattr(self.converter, "__name__", repr(self.converter))
+        return f"Greedy[{converter}]"
 
     def __class_getitem__(cls, params: Union[Tuple[T], T]) -> Greedy[T]:
         if not isinstance(params, tuple):
             params = (params,)
         if len(params) != 1:
-            raise TypeError('Greedy[...] only takes a single argument')
+            raise TypeError("Greedy[...] only takes a single argument")
         converter = params[0]
 
-        origin = getattr(converter, '__origin__', None)
-        args = getattr(converter, '__args__', ())
+        origin = getattr(converter, "__origin__", None)
+        args = getattr(converter, "__args__", ())
 
         if not (callable(converter) or isinstance(converter, Converter) or origin is not None):
-            raise TypeError('Greedy[...] expects a type or a Converter instance.')
+            raise TypeError("Greedy[...] expects a type or a Converter instance.")
 
         if converter in (str, type(None)) or origin is Greedy:
-            raise TypeError(f'Greedy[{converter.__name__}] is invalid.')
+            raise TypeError(f"Greedy[{converter.__class__.__name__}] is invalid.")
 
         if origin is Union and type(None) in args:
-            raise TypeError(f'Greedy[{converter!r}] is invalid.')
+            raise TypeError(f"Greedy[{converter!r}] is invalid.")
 
         return cls(converter=converter)
 
 
 def _convert_to_bool(argument: str) -> bool:
     lowered = argument.lower()
-    if lowered in ('yes', 'y', 'true', 't', '1', 'enable', 'on'):
+    if lowered in ("yes", "y", "true", "t", "1", "enable", "on"):
         return True
-    elif lowered in ('no', 'n', 'false', 'f', '0', 'disable', 'off'):
+    elif lowered in ("no", "n", "false", "f", "0", "disable", "off"):
         return False
     else:
         raise BadBoolArgument(lowered)
@@ -1080,7 +1097,7 @@ _GenericAlias = type(List[T])
 
 
 def is_generic_type(tp: Any, *, _GenericAlias: Type = _GenericAlias) -> bool:
-    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)  # type: ignore
+    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)
 
 
 CONVERTER_MAPPING: Dict[Type[Any], Any] = {
@@ -1116,7 +1133,9 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
     except AttributeError:
         pass
     else:
-        if module is not None and (module.startswith('nextcord.') and not module.endswith('converter')):
+        if module is not None and (
+            module.startswith("nextcord.") and not module.endswith("converter")
+        ):
             converter = CONVERTER_MAPPING.get(converter, converter)
 
     try:
@@ -1126,11 +1145,11 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
             else:
                 return await converter().convert(ctx, argument)
         elif isinstance(converter, Converter):
-            return await converter.convert(ctx, argument)
+            return await converter.convert(ctx, argument)  # type: ignore
     except CommandError:
         raise
     except Exception as exc:
-        raise ConversionError(converter, exc) from exc
+        raise ConversionError(converter, exc) from exc  # type: ignore
 
     try:
         return converter(argument)
@@ -1155,7 +1174,7 @@ async def run_converters(ctx: Context, converter, argument: str, param: inspect.
     .. versionadded:: 2.0
 
     Parameters
-    ------------
+    ----------
     ctx: :class:`Context`
         The invocation context to run the converters under.
     converter: Any
@@ -1166,16 +1185,16 @@ async def run_converters(ctx: Context, converter, argument: str, param: inspect.
         The parameter being converted. This is mainly for error reporting.
 
     Raises
-    -------
+    ------
     CommandError
         The converter failed to convert.
 
     Returns
-    --------
+    -------
     Any
         The resulting conversion.
     """
-    origin = getattr(converter, '__origin__', None)
+    origin = getattr(converter, "__origin__", None)
 
     if origin is Union:
         errors = []

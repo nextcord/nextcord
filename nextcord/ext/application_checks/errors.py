@@ -1,39 +1,11 @@
-"""
-The MIT License (MIT)
-Copyright (c) 2021-present tag-epic
+# SPDX-License-Identifier: MIT
 
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
+from typing import Any, Callable, List, Optional, Union
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
-
+from nextcord.abc import GuildChannel
+from nextcord.channel import PartialMessageable
 from nextcord.errors import ApplicationCheckFailure
 from nextcord.interactions import Interaction
-from typing import (
-    Any,
-    Callable,
-    List,
-    Optional,
-    TYPE_CHECKING,
-    Union,
-)
-
-from nextcord.types.snowflake import Snowflake, SnowflakeList
-from nextcord.abc import GuildChannel
 from nextcord.threads import Thread
 
 __all__ = (
@@ -58,7 +30,7 @@ class ApplicationCheckAnyFailure(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`.
 
     Attributes
-    ------------
+    ----------
     errors: List[:class:`~.ApplicationCheckFailure`]
         A list of errors that were caught during execution.
     checks: List[Callable[[:class:`~.Interaction`], :class:`bool`]]
@@ -67,11 +39,11 @@ class ApplicationCheckAnyFailure(ApplicationCheckFailure):
 
     def __init__(
         self,
-        checks: List[ApplicationCheckFailure],
-        errors: List[Callable[[Interaction], bool]],
+        checks: List[Callable[[Interaction], bool]],
+        errors: List[ApplicationCheckFailure],
     ) -> None:
-        self.checks: List[ApplicationCheckFailure] = checks
-        self.errors: List[Callable[[Interaction], bool]] = errors
+        self.checks: List[Callable[[Interaction], bool]] = checks
+        self.errors: List[ApplicationCheckFailure] = errors
         super().__init__("You do not have permission to run this command.")
 
 
@@ -94,14 +66,14 @@ class ApplicationMissingRole(ApplicationCheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
         This is the parameter passed to :func:`~.application_checks.has_role`.
     """
 
-    def __init__(self, missing_role: Snowflake) -> None:
-        self.missing_role: Snowflake = missing_role
+    def __init__(self, missing_role: Union[str, int]) -> None:
+        self.missing_role: Union[str, int] = missing_role
         message = f"Role {missing_role!r} is required to run this command."
         super().__init__(message)
 
@@ -113,14 +85,14 @@ class ApplicationMissingAnyRole(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the invoker is missing.
         These are the parameters passed to :func:`has_any_role`.
     """
 
-    def __init__(self, missing_roles: SnowflakeList) -> None:
-        self.missing_roles: SnowflakeList = missing_roles
+    def __init__(self, missing_roles: List[Union[str, int]]) -> None:
+        self.missing_roles: List[Union[str, int]] = missing_roles
 
         missing = [f"'{role}'" for role in missing_roles]
 
@@ -141,14 +113,14 @@ class ApplicationBotMissingRole(ApplicationCheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_role: Union[:class:`str`, :class:`int`]
         The required role that is missing.
         This is the parameter passed to :func:`has_role`.
     """
 
-    def __init__(self, missing_role: Snowflake) -> None:
-        self.missing_role: Snowflake = missing_role
+    def __init__(self, missing_role: Union[str, int]) -> None:
+        self.missing_role: Union[str, int] = missing_role
         message = f"Bot requires the role {missing_role!r} to run this command"
         super().__init__(message)
 
@@ -162,15 +134,15 @@ class ApplicationBotMissingAnyRole(ApplicationCheckFailure):
     .. versionadded:: 1.1
 
     Attributes
-    -----------
+    ----------
     missing_roles: List[Union[:class:`str`, :class:`int`]]
         The roles that the bot's member is missing.
         These are the parameters passed to :func:`has_any_role`.
 
     """
 
-    def __init__(self, missing_roles: SnowflakeList) -> None:
-        self.missing_roles: SnowflakeList = missing_roles
+    def __init__(self, missing_roles: List[Union[str, int]]) -> None:
+        self.missing_roles: List[Union[str, int]] = missing_roles
 
         missing = [f"'{role}'" for role in missing_roles]
 
@@ -190,7 +162,7 @@ class ApplicationMissingPermissions(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_permissions: List[:class:`str`]
         The required permissions that are missing.
     """
@@ -218,7 +190,7 @@ class ApplicationBotMissingPermissions(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
 
     Attributes
-    -----------
+    ----------
     missing_permissions: List[:class:`str`]
         The required permissions that are missing.
     """
@@ -247,9 +219,7 @@ class ApplicationPrivateMessageOnly(ApplicationCheckFailure):
     """
 
     def __init__(self, message: Optional[str] = None) -> None:
-        super().__init__(
-            message or "This command can only be used in private messages."
-        )
+        super().__init__(message or "This command can only be used in private messages.")
 
 
 class ApplicationNotOwner(ApplicationCheckFailure):
@@ -267,16 +237,14 @@ class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`.
 
     Parameters
-    -----------
-    channel: Union[:class:`.abc.GuildChannel`, :class:`.Thread`]
+    ----------
+    channel: Optional[Union[:class:`.abc.GuildChannel`, :class:`.Thread`, :class:`PartialMessageable`]]
         The channel that does not have NSFW enabled.
     """
 
-    def __init__(self, channel: Union[GuildChannel, Thread]) -> None:
-        self.channel: Union[GuildChannel, Thread] = channel
-        super().__init__(
-            f"Channel '{channel}' needs to be NSFW for this command to work."
-        )
+    def __init__(self, channel: Optional[Union[GuildChannel, Thread, PartialMessageable]]) -> None:
+        self.channel: Optional[Union[GuildChannel, Thread, PartialMessageable]] = channel
+        super().__init__(f"Channel '{channel}' needs to be NSFW for this command to work.")
 
 
 class ApplicationCheckForBotOnly(ApplicationCheckFailure):
@@ -286,6 +254,4 @@ class ApplicationCheckForBotOnly(ApplicationCheckFailure):
     """
 
     def __init__(self) -> None:
-        super().__init__(
-            "This application check can only be used for ext.commands.Bot."
-        )
+        super().__init__("This application check can only be used for ext.commands.Bot.")

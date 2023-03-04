@@ -2,24 +2,24 @@
    :alt: Nextcord
 
 .. image:: https://img.shields.io/discord/881118111967883295?color=blue&label=discord
-   :target: https://discord.gg/ZebatWssCB
+   :target: https://discord.gg/nextcord
    :alt: Discord server invite
 .. image:: https://img.shields.io/pypi/v/nextcord.svg
-   :target: https://pypi.python.org/pypi/nextcord
+   :target: https://pypi.org/project/nextcord/
    :alt: PyPI version info
-.. image:: 	https://img.shields.io/pypi/dm/nextcord?color=informational&label=pypi%20downloads
-   :target: https://pypi.python.org/pypi/nextcord
+.. image:: https://img.shields.io/pypi/dm/nextcord?color=informational&label=pypi%20downloads
+   :target: https://pypi.org/project/nextcord/
    :alt: PyPI version info
 .. image:: https://img.shields.io/pypi/pyversions/nextcord.svg
-   :target: https://pypi.python.org/pypi/nextcord
+   :target: https://pypi.org/project/nextcord/
    :alt: PyPI supported Python versions
 .. image:: https://img.shields.io/readthedocs/nextcord
    :target: https://docs.nextcord.dev/
    :alt: Nextcord documentation
-   
+
 Nextcord
 --------
-   
+
 A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord written in Python.
 
 
@@ -93,17 +93,17 @@ Quick Example
 
 .. code:: py
 
+    import nextcord
     from nextcord.ext import commands
 
 
-    bot = commands.Bot(command_prefix='$')
+    bot = commands.Bot()
 
-    @bot.command()
-    async def ping(ctx):
-        await ctx.reply('Pong!')
+    @bot.slash_command(description="Replies with pong!")
+    async def ping(interaction: nextcord.Interaction):
+        await interaction.send("Pong!", ephemeral=True)
 
-    bot.run('token')
-
+    bot.run("token")
 
 You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
 
@@ -113,5 +113,5 @@ Links
 ------
 
 - `Documentation <https://docs.nextcord.dev/>`_
-- `Official Discord Server <https://discord.gg/ZebatWssCB>`_
+- `Official Discord Server <https://discord.gg/nextcord>`_
 - `Discord API <https://discord.gg/discord-api>`_

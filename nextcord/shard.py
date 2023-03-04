@@ -1,60 +1,39 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 import asyncio
 import logging
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type
 
 import aiohttp
 
-from .state import AutoShardedConnectionState
-from .client import Client
 from .backoff import ExponentialBackoff
-from .gateway import *
+from .client import Client
+from .enums import Status
 from .errors import (
     ClientException,
-    HTTPException,
-    GatewayNotFound,
     ConnectionClosed,
+    GatewayNotFound,
+    HTTPException,
     PrivilegedIntentsRequired,
 )
-
-from .enums import Status
-
-from typing import TYPE_CHECKING, Any, Callable, Tuple, Type, Optional, List, Dict, TypeVar
+from .flags import Intents
+from .gateway import *
+from .state import AutoShardedConnectionState
+from .utils import MISSING
 
 if TYPE_CHECKING:
-    from .gateway import DiscordWebSocket
-    from .activity import BaseActivity
-    from .enums import Status
+    from typing_extensions import Self
 
-    EI = TypeVar('EI', bound='EventItem')
+    from .activity import BaseActivity
+    from .flags import MemberCacheFlags
+    from .gateway import DiscordWebSocket
+    from .mentions import AllowedMentions
 
 __all__ = (
-    'AutoShardedClient',
-    'ShardInfo',
+    "AutoShardedClient",
+    "ShardInfo",
 )
 
 _log = logging.getLogger(__name__)
@@ -70,19 +49,19 @@ class EventType:
 
 
 class EventItem:
-    __slots__ = ('type', 'shard', 'error')
+    __slots__ = ("type", "shard", "error")
 
-    def __init__(self, etype: int, shard: Optional['Shard'], error: Optional[Exception]) -> None:
+    def __init__(self, etype: int, shard: Optional["Shard"], error: Optional[Exception]) -> None:
         self.type: int = etype
-        self.shard: Optional['Shard'] = shard
+        self.shard: Optional["Shard"] = shard
         self.error: Optional[Exception] = error
 
-    def __lt__(self: EI, other: EI) -> bool:
+    def __lt__(self, other: Self) -> bool:
         if not isinstance(other, EventItem):
             return NotImplemented
         return self.type < other.type
 
-    def __eq__(self: EI, other: EI) -> bool:
+    def __eq__(self, other: Self) -> bool:
         if not isinstance(other, EventItem):
             return NotImplemented
         return self.type == other.type
@@ -92,7 +71,12 @@ class EventItem:
 
 
 class Shard:
-    def __init__(self, ws: DiscordWebSocket, client: AutoShardedClient, queue_put: Callable[[EventItem], None]) -> None:
+    def __init__(
+        self,
+        ws: DiscordWebSocket,
+        client: AutoShardedClient,
+        queue_put: Callable[[EventItem], None],
+    ) -> None:
         self.ws: DiscordWebSocket = ws
         self._client: Client = client
         self._dispatch: Callable[..., None] = client.dispatch
@@ -129,11 +113,11 @@ class Shard:
 
     async def disconnect(self) -> None:
         await self.close()
-        self._dispatch('shard_disconnect', self.id)
+        self._dispatch("shard_disconnect", self.id)
 
     async def _handle_disconnect(self, e: Exception) -> None:
-        self._dispatch('disconnect')
-        self._dispatch('shard_disconnect', self.id)
+        self._dispatch("disconnect")
+        self._dispatch("shard_disconnect", self.id)
         if not self._reconnect:
             self._queue_put(EventItem(EventType.close, self, e))
             return
@@ -149,14 +133,16 @@ class Shard:
 
         if isinstance(e, ConnectionClosed):
             if e.code == 4014:
-                self._queue_put(EventItem(EventType.terminate, self, PrivilegedIntentsRequired(self.id)))
+                self._queue_put(
+                    EventItem(EventType.terminate, self, PrivilegedIntentsRequired(self.id))
+                )
                 return
             if e.code != 1000:
                 self._queue_put(EventItem(EventType.close, self, e))
                 return
 
         retry = self._backoff.delay()
-        _log.error('Attempting a reconnect for shard ID %s in %.2fs', self.id, retry, exc_info=e)
+        _log.error("Attempting a reconnect for shard ID %s in %.2fs", self.id, retry, exc_info=e)
         await asyncio.sleep(retry)
         self._queue_put(EventItem(EventType.reconnect, self, e))
 
@@ -179,9 +165,9 @@ class Shard:
 
     async def reidentify(self, exc: ReconnectWebSocket) -> None:
         self._cancel_task()
-        self._dispatch('disconnect')
-        self._dispatch('shard_disconnect', self.id)
-        _log.info('Got a request to %s the websocket at Shard ID %s.', exc.op, self.id)
+        self._dispatch("disconnect")
+        self._dispatch("shard_disconnect", self.id)
+        _log.info("Got a request to %s the websocket at Shard ID %s.", exc.op, self.id)
         try:
             coro = DiscordWebSocket.from_client(
                 self._client,
@@ -224,14 +210,14 @@ class ShardInfo:
     .. versionadded:: 1.4
 
     Attributes
-    ------------
+    ----------
     id: :class:`int`
         The shard ID for this shard.
     shard_count: Optional[:class:`int`]
         The shard count for this cluster. If this is ``None`` then the bot has not started yet.
     """
 
-    __slots__ = ('_parent', 'id', 'shard_count')
+    __slots__ = ("_parent", "id", "shard_count")
 
     def __init__(self, parent: Shard, shard_count: Optional[int]) -> None:
         self._parent: Shard = parent
@@ -312,7 +298,7 @@ class AutoShardedClient(Client):
     0 to ``shard_count - 1``.
 
     Attributes
-    ------------
+    ----------
     shard_ids: Optional[List[:class:`int`]]
         An optional list of shard_ids to launch the shards with.
     """
@@ -320,16 +306,72 @@ class AutoShardedClient(Client):
     if TYPE_CHECKING:
         _connection: AutoShardedConnectionState
 
-    def __init__(self, *args: Any, loop: Optional[asyncio.AbstractEventLoop] = None, **kwargs: Any) -> None:
-        kwargs.pop('shard_id', None)
-        self.shard_ids: Optional[List[int]] = kwargs.pop('shard_ids', None)
-        super().__init__(*args, loop=loop, **kwargs)
+    def __init__(
+        self,
+        *,
+        shard_ids: Optional[list[int]] = None,
+        max_messages: Optional[int] = 1000,
+        connector: Optional[aiohttp.BaseConnector] = None,
+        proxy: Optional[str] = None,
+        proxy_auth: Optional[aiohttp.BasicAuth] = None,
+        shard_id: Optional[int] = None,
+        shard_count: Optional[int] = None,
+        application_id: Optional[int] = None,
+        intents: Intents = Intents.default(),
+        member_cache_flags: MemberCacheFlags = MISSING,
+        chunk_guilds_at_startup: bool = MISSING,
+        status: Optional[Status] = None,
+        activity: Optional[BaseActivity] = None,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        heartbeat_timeout: float = 60.0,
+        guild_ready_timeout: float = 2.0,
+        assume_unsync_clock: bool = True,
+        enable_debug_events: bool = False,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        lazy_load_commands: bool = True,
+        rollout_associate_known: bool = True,
+        rollout_delete_unknown: bool = True,
+        rollout_register_new: bool = True,
+        rollout_update_known: bool = True,
+        rollout_all_guilds: bool = False,
+        default_guild_ids: Optional[List[int]] = None,
+    ) -> None:
+        self.shard_ids: Optional[List[int]] = shard_ids
+        super().__init__(
+            max_messages=max_messages,
+            connector=connector,
+            proxy=proxy,
+            proxy_auth=proxy_auth,
+            shard_id=shard_id,
+            shard_count=shard_count,
+            application_id=application_id,
+            intents=intents,
+            member_cache_flags=member_cache_flags,
+            chunk_guilds_at_startup=chunk_guilds_at_startup,
+            status=status,
+            activity=activity,
+            allowed_mentions=allowed_mentions,
+            heartbeat_timeout=heartbeat_timeout,
+            guild_ready_timeout=guild_ready_timeout,
+            assume_unsync_clock=assume_unsync_clock,
+            enable_debug_events=enable_debug_events,
+            loop=loop,
+            lazy_load_commands=lazy_load_commands,
+            rollout_associate_known=rollout_associate_known,
+            rollout_delete_unknown=rollout_delete_unknown,
+            rollout_register_new=rollout_register_new,
+            rollout_update_known=rollout_update_known,
+            rollout_all_guilds=rollout_all_guilds,
+            default_guild_ids=default_guild_ids,
+        )
 
         if self.shard_ids is not None:
             if self.shard_count is None:
-                raise ClientException('When passing manual shard_ids, you must provide a shard_count.')
+                raise ClientException(
+                    "When passing manual shard_ids, you must provide a shard_count."
+                )
             elif not isinstance(self.shard_ids, (list, tuple)):
-                raise ClientException('shard_ids parameter must be a list or a tuple.')
+                raise ClientException("shard_ids parameter must be a list or a tuple.")
 
         # instead of a single websocket, we have multiple
         # the key is the shard_id
@@ -338,20 +380,43 @@ class AutoShardedClient(Client):
         self._connection._get_client = lambda: self
         self.__queue = asyncio.PriorityQueue()
 
-    def _get_websocket(self, guild_id: Optional[int] = None, *, shard_id: Optional[int] = None) -> DiscordWebSocket:
+    def _get_websocket(
+        self, guild_id: Optional[int] = None, *, shard_id: Optional[int] = None
+    ) -> DiscordWebSocket:
         if shard_id is None:
             # guild_id won't be None if shard_id is None and shard_count won't be None here
             shard_id = (guild_id >> 22) % self.shard_count  # type: ignore
         return self.__shards[shard_id].ws
 
-    def _get_state(self, **options: Any) -> AutoShardedConnectionState:
+    def _get_state(
+        self,
+        max_messages: Optional[int],
+        application_id: Optional[int],
+        heartbeat_timeout: float,
+        guild_ready_timeout: float,
+        allowed_mentions: Optional[AllowedMentions],
+        activity: Optional[BaseActivity],
+        status: Optional[Status],
+        intents: Intents,
+        chunk_guilds_at_startup: bool,
+        member_cache_flags: MemberCacheFlags,
+    ) -> AutoShardedConnectionState:
         return AutoShardedConnectionState(
             dispatch=self.dispatch,
             handlers=self._handlers,
             hooks=self._hooks,
             http=self.http,
             loop=self.loop,
-            **options,
+            max_messages=max_messages,
+            application_id=application_id,
+            heartbeat_timeout=heartbeat_timeout,
+            guild_ready_timeout=guild_ready_timeout,
+            allowed_mentions=allowed_mentions,
+            activity=activity,
+            status=status,
+            intents=intents,
+            chunk_guilds_at_startup=chunk_guilds_at_startup,
+            member_cache_flags=member_cache_flags,
         )
 
     @property
@@ -363,7 +428,7 @@ class AutoShardedClient(Client):
         :attr:`latencies` property. Returns ``nan`` if there are no shards ready.
         """
         if not self.__shards:
-            return float('nan')
+            return float("nan")
         return sum(latency for _, latency in self.latencies) / len(self.__shards)
 
     @property
@@ -386,14 +451,19 @@ class AutoShardedClient(Client):
     @property
     def shards(self) -> Dict[int, ShardInfo]:
         """Mapping[int, :class:`ShardInfo`]: Returns a mapping of shard IDs to their respective info object."""
-        return {shard_id: ShardInfo(parent, self.shard_count) for shard_id, parent in self.__shards.items()}
+        return {
+            shard_id: ShardInfo(parent, self.shard_count)
+            for shard_id, parent in self.__shards.items()
+        }
 
     async def launch_shard(self, gateway: str, shard_id: int, *, initial: bool = False) -> None:
         try:
-            coro = DiscordWebSocket.from_client(self, initial=initial, gateway=gateway, shard_id=shard_id)
+            coro = DiscordWebSocket.from_client(
+                self, initial=initial, gateway=gateway, shard_id=shard_id
+            )
             ws = await asyncio.wait_for(coro, timeout=180.0)
         except Exception:
-            _log.exception('Failed to connect for shard_id: %s. Retrying...', shard_id)
+            _log.exception("Failed to connect for shard_id: %s. Retrying...", shard_id)
             await asyncio.sleep(5.0)
             return await self.launch_shard(gateway, shard_id)
 
@@ -429,7 +499,7 @@ class AutoShardedClient(Client):
                 if isinstance(item.error, ConnectionClosed):
                     if item.error.code != 1000:
                         raise item.error
-                    if item.error.code == 4014:
+                    if item.error.code == 4014:  # type: ignore # "false always"
                         raise PrivilegedIntentsRequired(item.shard.id) from None
                 return
             elif item.type in (EventType.identify, EventType.resume):
@@ -458,7 +528,9 @@ class AutoShardedClient(Client):
             except Exception:
                 pass
 
-        to_close = [asyncio.ensure_future(shard.close(), loop=self.loop) for shard in self.__shards.values()]
+        to_close = [
+            asyncio.ensure_future(shard.close(), loop=self.loop) for shard in self.__shards.values()
+        ]
         if to_close:
             await asyncio.wait(to_close)
 
@@ -470,7 +542,7 @@ class AutoShardedClient(Client):
         *,
         activity: Optional[BaseActivity] = None,
         status: Optional[Status] = None,
-        shard_id: int = None,
+        shard_id: Optional[int] = None,
     ) -> None:
         """|coro|
 
@@ -503,10 +575,10 @@ class AutoShardedClient(Client):
         """
 
         if status is None:
-            status_value = 'online'
+            status_value = "online"
             status_enum = Status.online
         elif status is Status.offline:
-            status_value = 'invisible'
+            status_value = "invisible"
             status_enum = Status.offline
         else:
             status_enum = status

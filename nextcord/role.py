@@ -1,54 +1,33 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, TypeVar, Union, overload, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from .asset import Asset
-from .utils import _bytes_to_base64_data
-from .permissions import Permissions
-from .errors import InvalidArgument
 from .colour import Colour
+from .errors import InvalidArgument
 from .mixins import Hashable
-from .utils import snowflake_time, _get_as_snowflake, MISSING
-from .file import File
+from .permissions import Permissions
+from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
 
 __all__ = (
-    'RoleTags',
-    'Role',
+    "RoleTags",
+    "Role",
 )
 
 if TYPE_CHECKING:
     import datetime
-    from .types.role import (
-        Role as RolePayload,
-        RoleTags as RoleTagPayload,
-    )
-    from .types.guild import RolePositionUpdate
+
+    from typing_extensions import Self
+
+    from .file import File
     from .guild import Guild
     from .member import Member
+    from .message import Attachment
     from .state import ConnectionState
+    from .types.guild import RolePositionUpdate
+    from .types.role import Role as RolePayload, RoleTags as RoleTagPayload
 
 
 class RoleTags:
@@ -63,27 +42,39 @@ class RoleTags:
     .. versionadded:: 1.6
 
     Attributes
-    ------------
+    ----------
     bot_id: Optional[:class:`int`]
         The bot's user ID that manages this role.
     integration_id: Optional[:class:`int`]
         The integration ID that manages the role.
+    subscription_listing_id: Optional[:class:`int`]
+        The ID of the subscription listing that manages the role.
+
+        .. versionadded:: 2.4
     """
 
     __slots__ = (
-        'bot_id',
-        'integration_id',
-        '_premium_subscriber',
+        "bot_id",
+        "integration_id",
+        "_premium_subscriber",
+        "subscription_listing_id",
+        "_available_for_purchase",
+        "_guild_connections",
     )
 
-    def __init__(self, data: RoleTagPayload):
-        self.bot_id: Optional[int] = _get_as_snowflake(data, 'bot_id')
-        self.integration_id: Optional[int] = _get_as_snowflake(data, 'integration_id')
+    def __init__(self, data: RoleTagPayload) -> None:
+        self.bot_id: Optional[int] = get_as_snowflake(data, "bot_id")
+        self.integration_id: Optional[int] = get_as_snowflake(data, "integration_id")
         # NOTE: The API returns "null" for this if it's valid, which corresponds to None.
         # This is different from other fields where "null" means "not there".
         # So in this case, a value of None is the same as True.
         # Which means we would need a different sentinel.
-        self._premium_subscriber: Optional[Any] = data.get('premium_subscriber', MISSING)
+        self._premium_subscriber: Optional[Any] = data.get("premium_subscriber", MISSING)
+        self.subscription_listing_id: Optional[int] = get_as_snowflake(
+            data, "subscription_listing_id"
+        )
+        self._available_for_purchase: Optional[Any] = data.get("available_for_purchase", MISSING)
+        self._guild_connections: Optional[Any] = data.get("guild_connections", MISSING)
 
     def is_bot_managed(self) -> bool:
         """:class:`bool`: Whether the role is associated with a bot."""
@@ -97,14 +88,28 @@ class RoleTags:
         """:class:`bool`: Whether the role is managed by an integration."""
         return self.integration_id is not None
 
+    def is_available_for_purchase(self) -> bool:
+        """:class:`bool`: Whether the role is available for purchase.
+
+        .. versionadded:: 2.4
+        """
+        return self._available_for_purchase is None
+
+    def has_guild_connections(self) -> bool:
+        """:class:`bool`: Whether the role is a guild's linked role.
+
+        .. versionadded:: 2.4
+        """
+        return self._guild_connections is None
+
     def __repr__(self) -> str:
         return (
-            f'<RoleTags bot_id={self.bot_id} integration_id={self.integration_id} '
-            f'premium_subscriber={self.is_premium_subscriber()}>'
+            f"<RoleTags bot_id={self.bot_id} integration_id={self.integration_id} "
+            f"premium_subscriber={self.is_premium_subscriber()}>"
+            f"subscription_listing_id={self.subscription_listing_id}>"
+            f"available_for_purchase={self.is_available_for_purchase()}>"
+            f"guild_connections={self.has_guild_connections()}>"
         )
-
-
-R = TypeVar('R', bound='Role')
 
 
 class Role(Hashable):
@@ -176,38 +181,38 @@ class Role(Hashable):
     """
 
     __slots__ = (
-        'id',
-        'name',
-        '_permissions',
-        '_colour',
-        'position',
-        'managed',
-        'mentionable',
-        'hoist',
-        'guild',
-        'tags',
-        '_icon',
-        '_state',
+        "id",
+        "name",
+        "_permissions",
+        "_colour",
+        "position",
+        "managed",
+        "mentionable",
+        "hoist",
+        "guild",
+        "tags",
+        "_icon",
+        "_state",
     )
 
-    def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload):
+    def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload) -> None:
         self.guild: Guild = guild
         self._state: ConnectionState = state
-        self.id: int = int(data['id'])
+        self.id: int = int(data["id"])
         self._update(data)
 
     def __str__(self) -> str:
         return self.name
 
     def __repr__(self) -> str:
-        return f'<Role id={self.id} name={self.name!r}>'
+        return f"<Role id={self.id} name={self.name!r}>"
 
-    def __lt__(self: R, other: R) -> bool:
+    def __lt__(self, other: Self) -> bool:
         if not isinstance(other, Role) or not isinstance(self, Role):
             return NotImplemented
 
         if self.guild != other.guild:
-            raise RuntimeError('cannot compare roles from two different guilds.')
+            raise RuntimeError("Cannot compare roles from two different guilds.")
 
         # the @everyone role is always the lowest role in hierarchy
         guild_id = self.guild.id
@@ -223,36 +228,36 @@ class Role(Hashable):
 
         return False
 
-    def __le__(self: R, other: R) -> bool:
+    def __le__(self, other: Self) -> bool:
         r = Role.__lt__(other, self)
         if r is NotImplemented:
             return NotImplemented
         return not r
 
-    def __gt__(self: R, other: R) -> bool:
+    def __gt__(self, other: Self) -> bool:
         return Role.__lt__(other, self)
 
-    def __ge__(self: R, other: R) -> bool:
+    def __ge__(self, other: Self) -> bool:
         r = Role.__lt__(self, other)
         if r is NotImplemented:
             return NotImplemented
         return not r
 
-    def _update(self, data: RolePayload):
-        self.name: str = data['name']
-        self._permissions: int = int(data.get('permissions', 0))
-        self.position: int = data.get('position', 0)
-        self._colour: int = data.get('color', 0)
-        self.hoist: bool = data.get('hoist', False)
-        self.managed: bool = data.get('managed', False)
-        self.mentionable: bool = data.get('mentionable', False)
-        self._icon: Optional[str] = data.get('icon', None)
+    def _update(self, data: RolePayload) -> None:
+        self.name: str = data["name"]
+        self._permissions: int = int(data.get("permissions", 0))
+        self.position: int = data.get("position", 0)
+        self._colour: int = data.get("color", 0)
+        self.hoist: bool = data.get("hoist", False)
+        self.managed: bool = data.get("managed", False)
+        self.mentionable: bool = data.get("mentionable", False)
+        self._icon: Optional[str] = data.get("icon", None)
         if self._icon is None:
-            self._icon: Optional[str] = data.get('unicode_emoji', None)
+            self._icon: Optional[str] = data.get("unicode_emoji", None)
         self.tags: Optional[RoleTags]
 
         try:
-            self.tags = RoleTags(data['tags'])
+            self.tags = RoleTags(data["tags"])
         except KeyError:
             self.tags = None
 
@@ -287,7 +292,11 @@ class Role(Hashable):
         .. versionadded:: 2.0
         """
         me = self.guild.me
-        return not self.is_default() and not self.managed and (me.top_role > self or me.id == self.guild.owner_id)
+        return (
+            not self.is_default()
+            and not self.managed
+            and (me.top_role > self or me.id == self.guild.owner_id)
+        )
 
     @property
     def permissions(self) -> Permissions:
@@ -313,9 +322,9 @@ class Role(Hashable):
     def mention(self) -> str:
         """:class:`str`: Returns a string that allows you to mention a role."""
         if self.id != self.guild.id:
-            return f'<@&{self.id}>'
+            return f"<@&{self.id}>"
         else:
-            return '@everyone'
+            return "@everyone"
 
     @property
     def members(self) -> List[Member]:
@@ -350,14 +359,18 @@ class Role(Hashable):
         http = self._state.http
 
         change_range = range(min(self.position, position), max(self.position, position) + 1)
-        roles = [r.id for r in self.guild.roles[1:] if r.position in change_range and r.id != self.id]
+        roles = [
+            r.id for r in self.guild.roles[1:] if r.position in change_range and r.id != self.id
+        ]
 
         if self.position > position:
             roles.insert(0, self.id)
         else:
             roles.append(self.id)
 
-        payload: List[RolePositionUpdate] = [{"id": z[0], "position": z[1]} for z in zip(roles, change_range)]
+        payload: List[RolePositionUpdate] = [
+            {"id": z[0], "position": z[1]} for z in zip(roles, change_range)
+        ]
         await http.move_role_position(self.guild.id, payload, reason=reason)
 
     async def edit(
@@ -371,7 +384,7 @@ class Role(Hashable):
         mentionable: bool = MISSING,
         position: int = MISSING,
         reason: Optional[str] = MISSING,
-        icon: Optional[Union[str, bytes, File]] = MISSING,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = MISSING,
     ) -> Optional[Role]:
         """|coro|
 
@@ -388,8 +401,11 @@ class Role(Hashable):
         .. versionchanged:: 2.0
             Edits are no longer in-place, the newly edited role is returned instead.
 
+        .. versionchanged:: 2.1
+            The ``icon`` parameter now accepts :class:`Attachment`, and :class:`Asset`.
+
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The new role name to change to.
         permissions: :class:`Permissions`
@@ -403,13 +419,13 @@ class Role(Hashable):
         position: :class:`int`
             The new role's position. This must be below your top role's
             position or it will fail.
-        icon: Union[:class:`str`, :class:`bytes`, :class:`File`]
+        icon: Optional[Union[:class:`str`, :class:`bytes`, :class:`File`, :class:`Asset`, :class:`Attachment`]]
             The role's icon image
         reason: Optional[:class:`str`]
             The reason for editing this role. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to change the role.
         HTTPException
@@ -419,7 +435,7 @@ class Role(Hashable):
             role was asked to be moved.
 
         Returns
-        --------
+        -------
         :class:`Role`
             The newly edited role.
         """
@@ -432,32 +448,27 @@ class Role(Hashable):
 
         if colour is not MISSING:
             if isinstance(colour, int):
-                payload['color'] = colour
+                payload["color"] = colour
             else:
-                payload['color'] = colour.value
+                payload["color"] = colour.value
 
         if name is not MISSING:
-            payload['name'] = name
+            payload["name"] = name
 
         if permissions is not MISSING:
-            payload['permissions'] = permissions.value
+            payload["permissions"] = permissions.value
 
         if hoist is not MISSING:
-            payload['hoist'] = hoist
+            payload["hoist"] = hoist
 
         if mentionable is not MISSING:
-            payload['mentionable'] = mentionable
+            payload["mentionable"] = mentionable
 
         if icon is not MISSING:
-            if icon is None:
-                payload['icon'] = icon
-            elif isinstance(icon, str):
-                payload['unicode_emoji'] = icon
-                payload['icon'] = None
-            elif isinstance(icon, File):
-                payload['icon'] = _bytes_to_base64_data(icon.fp.read())
+            if isinstance(icon, str):
+                payload["unicode_emoji"] = icon
             else:
-                payload['icon'] = _bytes_to_base64_data(icon)
+                payload["icon"] = await obj_to_base64_data(icon)
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         return Role(guild=self.guild, data=data, state=self._state)
@@ -471,12 +482,12 @@ class Role(Hashable):
         use this.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this role. Shows up on the audit log.
 
         Raises
-        --------
+        ------
         Forbidden
             You do not have permissions to delete the role.
         HTTPException

@@ -1,59 +1,39 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import List, Optional, Type, TypeVar, Union, TYPE_CHECKING
-from .asset import Asset
-from .utils import parse_time, snowflake_time, _get_as_snowflake
-from .object import Object
-from .mixins import Hashable
-from .enums import ChannelType, VerificationLevel, InviteTarget, try_enum
+from typing import TYPE_CHECKING, List, Optional, Union
+
 from .appinfo import PartialAppInfo
+from .asset import Asset
+from .enums import ChannelType, InviteTarget, VerificationLevel, try_enum
+from .mixins import Hashable
+from .object import Object
+from .utils import get_as_snowflake, parse_time, snowflake_time
 
 __all__ = (
-    'PartialInviteChannel',
-    'PartialInviteGuild',
-    'Invite',
+    "PartialInviteChannel",
+    "PartialInviteGuild",
+    "Invite",
 )
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from .abc import GuildChannel
+    from .guild import Guild
+    from .state import ConnectionState
+    from .types.channel import PartialChannel as InviteChannelPayload
     from .types.invite import (
+        GatewayInvite as GatewayInvitePayload,
         Invite as InvitePayload,
         InviteGuild as InviteGuildPayload,
-        GatewayInvite as GatewayInvitePayload,
+        VanityInvite as VanityInvitePayload,
     )
-    from .types.channel import (
-        PartialChannel as InviteChannelPayload,
-    )
-    from .state import ConnectionState
-    from .guild import Guild
-    from .abc import GuildChannel
     from .user import User
 
-    InviteGuildType = Union[Guild, 'PartialInviteGuild', Object]
-    InviteChannelType = Union[GuildChannel, 'PartialInviteChannel', Object]
+    InviteGuildType = Union[Guild, "PartialInviteGuild", Object]
+    InviteChannelType = Union[GuildChannel, "PartialInviteChannel", Object]
 
     import datetime
 
@@ -83,7 +63,7 @@ class PartialInviteChannel:
             Returns the partial channel's name.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The partial channel's name.
     id: :class:`int`
@@ -92,23 +72,23 @@ class PartialInviteChannel:
         The partial channel's type.
     """
 
-    __slots__ = ('id', 'name', 'type')
+    __slots__ = ("id", "name", "type")
 
-    def __init__(self, data: InviteChannelPayload):
-        self.id: int = int(data['id'])
-        self.name: str = data['name']
-        self.type: ChannelType = try_enum(ChannelType, data['type'])
+    def __init__(self, data: InviteChannelPayload) -> None:
+        self.id: int = int(data["id"])
+        self.name: str = data["name"]
+        self.type: ChannelType = try_enum(ChannelType, data["type"])
 
     def __str__(self) -> str:
         return self.name
 
     def __repr__(self) -> str:
-        return f'<PartialInviteChannel id={self.id} name={self.name} type={self.type!r}>'
+        return f"<PartialInviteChannel id={self.id} name={self.name} type={self.type!r}>"
 
     @property
     def mention(self) -> str:
         """:class:`str`: The string that allows you to mention the channel."""
-        return f'<#{self.id}>'
+        return f"<#{self.id}>"
 
     @property
     def created_at(self) -> datetime.datetime:
@@ -141,7 +121,7 @@ class PartialInviteGuild:
             Returns the partial guild's name.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The partial guild's name.
     id: :class:`int`
@@ -154,26 +134,38 @@ class PartialInviteGuild:
         The partial guild's description.
     """
 
-    __slots__ = ('_state', 'features', '_icon', '_banner', 'id', 'name', '_splash', 'verification_level', 'description')
+    __slots__ = (
+        "_state",
+        "features",
+        "_icon",
+        "_banner",
+        "id",
+        "name",
+        "_splash",
+        "verification_level",
+        "description",
+    )
 
-    def __init__(self, state: ConnectionState, data: InviteGuildPayload, id: int):
+    def __init__(self, state: ConnectionState, data: InviteGuildPayload, id: int) -> None:
         self._state: ConnectionState = state
         self.id: int = id
-        self.name: str = data['name']
-        self.features: List[str] = data.get('features', [])
-        self._icon: Optional[str] = data.get('icon')
-        self._banner: Optional[str] = data.get('banner')
-        self._splash: Optional[str] = data.get('splash')
-        self.verification_level: VerificationLevel = try_enum(VerificationLevel, data.get('verification_level'))
-        self.description: Optional[str] = data.get('description')
+        self.name: str = data["name"]
+        self.features: List[str] = data.get("features", [])
+        self._icon: Optional[str] = data.get("icon")
+        self._banner: Optional[str] = data.get("banner")
+        self._splash: Optional[str] = data.get("splash")
+        self.verification_level: VerificationLevel = try_enum(
+            VerificationLevel, data.get("verification_level")
+        )
+        self.description: Optional[str] = data.get("description")
 
     def __str__(self) -> str:
         return self.name
 
     def __repr__(self) -> str:
         return (
-            f'<{self.__class__.__name__} id={self.id} name={self.name!r} features={self.features} '
-            f'description={self.description!r}>'
+            f"<{self.__class__.__name__} id={self.id} name={self.name!r} features={self.features} "
+            f"description={self.description!r}>"
         )
 
     @property
@@ -193,17 +185,14 @@ class PartialInviteGuild:
         """Optional[:class:`Asset`]: Returns the guild's banner asset, if available."""
         if self._banner is None:
             return None
-        return Asset._from_guild_image(self._state, self.id, self._banner, path='banners')
+        return Asset._from_guild_image(self._state, self.id, self._banner, path="banners")
 
     @property
     def splash(self) -> Optional[Asset]:
         """Optional[:class:`Asset`]: Returns the guild's invite splash asset, if available."""
         if self._splash is None:
             return None
-        return Asset._from_guild_image(self._state, self.id, self._splash, path='splashes')
-
-
-I = TypeVar('I', bound='Invite')
+        return Asset._from_guild_image(self._state, self.id, self._splash, path="splashes")
 
 
 class Invite(Hashable):
@@ -232,30 +221,30 @@ class Invite(Hashable):
 
     The following table illustrates what methods will obtain the attributes:
 
-    +------------------------------------+------------------------------------------------------------+
-    |             Attribute              |                          Method                            |
-    +====================================+============================================================+
-    | :attr:`max_age`                    | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`   |
-    +------------------------------------+------------------------------------------------------------+
-    | :attr:`max_uses`                   | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`   |
-    +------------------------------------+------------------------------------------------------------+
-    | :attr:`created_at`                 | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`   |
-    +------------------------------------+------------------------------------------------------------+
-    | :attr:`temporary`                  | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`   |
-    +------------------------------------+------------------------------------------------------------+
-    | :attr:`uses`                       | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`   |
-    +------------------------------------+------------------------------------------------------------+
-    | :attr:`approximate_member_count`   | :meth:`Client.fetch_invite` with `with_counts` enabled     |
-    +------------------------------------+------------------------------------------------------------+
-    | :attr:`approximate_presence_count` | :meth:`Client.fetch_invite` with `with_counts` enabled     |
-    +------------------------------------+------------------------------------------------------------+
-    | :attr:`expires_at`                 | :meth:`Client.fetch_invite` with `with_expiration` enabled |
-    +------------------------------------+------------------------------------------------------------+
+    +------------------------------------+--------------------------------------------------------------+
+    |             Attribute              |                          Method                              |
+    +====================================+==============================================================+
+    | :attr:`max_age`                    | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`     |
+    +------------------------------------+--------------------------------------------------------------+
+    | :attr:`max_uses`                   | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`     |
+    +------------------------------------+--------------------------------------------------------------+
+    | :attr:`created_at`                 | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`     |
+    +------------------------------------+--------------------------------------------------------------+
+    | :attr:`temporary`                  | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`     |
+    +------------------------------------+--------------------------------------------------------------+
+    | :attr:`uses`                       | :meth:`abc.GuildChannel.invites`\, :meth:`Guild.invites`     |
+    +------------------------------------+--------------------------------------------------------------+
+    | :attr:`approximate_member_count`   | :meth:`Client.fetch_invite` with ``with_counts`` enabled     |
+    +------------------------------------+--------------------------------------------------------------+
+    | :attr:`approximate_presence_count` | :meth:`Client.fetch_invite` with ``with_counts`` enabled     |
+    +------------------------------------+--------------------------------------------------------------+
+    | :attr:`expires_at`                 | :meth:`Client.fetch_invite` with ``with_expiration`` enabled |
+    +------------------------------------+--------------------------------------------------------------+
 
     If it's not in the table above then it is available by all methods.
 
     Attributes
-    -----------
+    ----------
     max_age: :class:`int`
         How long before the invite expires in seconds.
         A value of ``0`` indicates that it doesn't expire.
@@ -284,7 +273,7 @@ class Invite(Hashable):
         This includes idle, dnd, online, and invisible members. Offline members are excluded.
     expires_at: Optional[:class:`datetime.datetime`]
         The expiration date of the invite. If the value is ``None`` when received through
-        `Client.fetch_invite` with `with_expiration` enabled, the invite will never expire.
+        :meth:`Client.fetch_invite` with ``with_expiration`` enabled, the invite will never expire.
 
         .. versionadded:: 2.0
 
@@ -307,75 +296,83 @@ class Invite(Hashable):
     """
 
     __slots__ = (
-        'max_age',
-        'code',
-        'guild',
-        'revoked',
-        'created_at',
-        'uses',
-        'temporary',
-        'max_uses',
-        'inviter',
-        'channel',
-        'target_user',
-        'target_type',
-        '_state',
-        'approximate_member_count',
-        'approximate_presence_count',
-        'target_application',
-        'expires_at',
+        "max_age",
+        "code",
+        "guild",
+        "revoked",
+        "created_at",
+        "uses",
+        "temporary",
+        "max_uses",
+        "inviter",
+        "channel",
+        "target_user",
+        "target_type",
+        "_state",
+        "approximate_member_count",
+        "approximate_presence_count",
+        "target_application",
+        "expires_at",
     )
 
-    BASE = 'https://discord.gg'
+    BASE = "https://discord.gg"
 
     def __init__(
         self,
         *,
         state: ConnectionState,
-        data: InvitePayload,
+        data: InvitePayload | VanityInvitePayload,
         guild: Optional[Union[PartialInviteGuild, Guild]] = None,
         channel: Optional[Union[PartialInviteChannel, GuildChannel]] = None,
-    ):
+    ) -> None:
         self._state: ConnectionState = state
-        self.max_age: Optional[int] = data.get('max_age')
-        self.code: str = data['code']
-        self.guild: Optional[InviteGuildType] = self._resolve_guild(data.get('guild'), guild)
-        self.revoked: Optional[bool] = data.get('revoked')
-        self.created_at: Optional[datetime.datetime] = parse_time(data.get('created_at'))
-        self.temporary: Optional[bool] = data.get('temporary')
-        self.uses: Optional[int] = data.get('uses')
-        self.max_uses: Optional[int] = data.get('max_uses')
-        self.approximate_presence_count: Optional[int] = data.get('approximate_presence_count')
-        self.approximate_member_count: Optional[int] = data.get('approximate_member_count')
+        self.max_age: Optional[int] = data.get("max_age")
+        self.code: Optional[str] = data.get("code")
+        self.guild: Optional[InviteGuildType] = self._resolve_guild(data.get("guild"), guild)
+        self.revoked: Optional[bool] = data.get("revoked")
+        self.created_at: Optional[datetime.datetime] = parse_time(data.get("created_at"))
+        self.temporary: Optional[bool] = data.get("temporary")
+        self.uses: Optional[int] = data.get("uses")
+        self.max_uses: Optional[int] = data.get("max_uses")
+        self.approximate_presence_count: Optional[int] = data.get("approximate_presence_count")
+        self.approximate_member_count: Optional[int] = data.get("approximate_member_count")
 
-        expires_at = data.get('expires_at', None)
-        self.expires_at: Optional[datetime.datetime] = parse_time(expires_at) if expires_at else None
+        expires_at = data.get("expires_at", None)
+        self.expires_at: Optional[datetime.datetime] = (
+            parse_time(expires_at) if expires_at else None
+        )
 
-        inviter_data = data.get('inviter')
-        self.inviter: Optional[User] = None if inviter_data is None else self._state.create_user(inviter_data)
+        inviter_data = data.get("inviter")
+        self.inviter: Optional[User] = (
+            None if inviter_data is None else self._state.create_user(inviter_data)
+        )
 
-        self.channel: Optional[InviteChannelType] = self._resolve_channel(data.get('channel'), channel)
+        self.channel: Optional[InviteChannelType] = self._resolve_channel(
+            data.get("channel"), channel
+        )
 
-        target_user_data = data.get('target_user')
-        self.target_user: Optional[User] = None if target_user_data is None else self._state.create_user(target_user_data)
+        target_user_data = data.get("target_user")
+        self.target_user: Optional[User] = (
+            None if target_user_data is None else self._state.create_user(target_user_data)
+        )
 
         self.target_type: InviteTarget = try_enum(InviteTarget, data.get("target_type", 0))
 
-        application = data.get('target_application')
+        application = data.get("target_application")
         self.target_application: Optional[PartialAppInfo] = (
             PartialAppInfo(data=application, state=state) if application else None
         )
 
     @classmethod
-    def from_incomplete(cls: Type[I], *, state: ConnectionState, data: InvitePayload) -> I:
+    def from_incomplete(cls, *, state: ConnectionState, data: InvitePayload) -> Self:
         guild: Optional[Union[Guild, PartialInviteGuild]]
         try:
-            guild_data = data['guild']
+            guild_data = data["guild"]
         except KeyError:
             # If we're here, then this is a group DM
             guild = None
         else:
-            guild_id = int(guild_data['id'])
+            guild_id = int(guild_data["id"])
             guild = state._get_guild(guild_id)
             if guild is None:
                 # If it's not cached, then it has to be a partial guild
@@ -383,7 +380,7 @@ class Invite(Hashable):
 
         # As far as I know, invites always need a channel
         # So this should never raise.
-        channel: Union[PartialInviteChannel, GuildChannel] = PartialInviteChannel(data['channel'])
+        channel: Union[PartialInviteChannel, GuildChannel] = PartialInviteChannel(data["channel"])
         if guild is not None and not isinstance(guild, PartialInviteGuild):
             # Upgrade the partial data if applicable
             channel = guild.get_channel(channel.id) or channel
@@ -391,12 +388,12 @@ class Invite(Hashable):
         return cls(state=state, data=data, guild=guild, channel=channel)
 
     @classmethod
-    def from_gateway(cls: Type[I], *, state: ConnectionState, data: GatewayInvitePayload) -> I:
-        guild_id: Optional[int] = _get_as_snowflake(data, 'guild_id')
+    def from_gateway(cls, *, state: ConnectionState, data: GatewayInvitePayload) -> Self:
+        guild_id: Optional[int] = get_as_snowflake(data, "guild_id")
         guild: Optional[Union[Guild, Object]] = state._get_guild(guild_id)
-        channel_id = int(data['channel_id'])
+        channel_id = int(data["channel_id"])
         if guild is not None:
-            channel = guild.get_channel(channel_id) or Object(id=channel_id)  # type: ignore
+            channel = guild.get_channel(channel_id) or Object(id=channel_id)
         else:
             guild = Object(id=guild_id) if guild_id is not None else None
             channel = Object(id=channel_id)
@@ -414,7 +411,7 @@ class Invite(Hashable):
         if data is None:
             return None
 
-        guild_id = int(data['id'])
+        guild_id = int(data["id"])
         return PartialInviteGuild(self._state, data, guild_id)
 
     def _resolve_channel(
@@ -435,25 +432,35 @@ class Invite(Hashable):
 
     def __repr__(self) -> str:
         return (
-            f'<Invite code={self.code!r} guild={self.guild!r} '
-            f'online={self.approximate_presence_count} '
-            f'members={self.approximate_member_count}>'
+            f"<Invite code={self.code!r} guild={self.guild!r} "
+            f"online={self.approximate_presence_count} "
+            f"members={self.approximate_member_count}>"
         )
 
     def __hash__(self) -> int:
         return hash(self.code)
 
     @property
-    def id(self) -> str:
-        """:class:`str`: Returns the proper code portion of the invite."""
+    def id(self) -> Optional[str]:
+        """Optional[:class:`str`]: Returns the proper code portion of the invite.
+
+        .. note::
+
+            This may be ``None`` if it is the vanity invite the code is not set.
+        """
         return self.code
 
     @property
     def url(self) -> str:
-        """:class:`str`: A property that retrieves the invite URL."""
-        return self.BASE + '/' + self.code
+        """:class:`str`: A property that retrieves the invite URL.
 
-    async def delete(self, *, reason: Optional[str] = None):
+        .. note::
+
+            This may be an empty string if it is the vanity URL and the code is not set
+        """
+        return self.BASE + "/" + self.code if self.code else ""
+
+    async def delete(self, *, reason: Optional[str] = None) -> None:
         """|coro|
 
         Revokes the instant invite.
@@ -461,12 +468,12 @@ class Invite(Hashable):
         You must have the :attr:`~Permissions.manage_channels` permission to do this.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this invite. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to revoke invites.
         NotFound
@@ -474,5 +481,8 @@ class Invite(Hashable):
         HTTPException
             Revoking the invite failed.
         """
+
+        if not self.code:
+            return
 
         await self._state.http.delete_invite(self.code, reason=reason)

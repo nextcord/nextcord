@@ -1,62 +1,35 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING, Type, TypeVar, Tuple
 import os
+from typing import TYPE_CHECKING, Optional, Tuple, TypeVar
 
-from .item import Item
-from ..enums import TextInputStyle, ComponentType
 from ..components import TextInput as TextInputComponent
+from ..enums import ComponentType, TextInputStyle
+from ..guild import Guild
+from ..state import ConnectionState
 from ..utils import MISSING
-from ..interactions import Interaction
+from .item import Item
 
-__all__ = ('TextInput',)
+__all__ = ("TextInput",)
 
 if TYPE_CHECKING:
-    from .view import View
+    from typing_extensions import Self
+
+    from ..types.components import TextInputComponent as TextInputComponentPayload
     from ..types.interactions import ComponentInteractionData
+    from .view import View
 
 
-T = TypeVar('T', bound='TextInput')
-V = TypeVar('V', bound='View', covariant=True)
-
-
-def _walk_all_components(components):
-    for item in components:
-        if item['type'] == 1:
-            yield from item['components']
-        else:
-            yield item
+V = TypeVar("V", bound="View", covariant=True)
 
 
 class TextInput(Item[V]):
     """Represent a UI text input.
-    
+
     .. versionadded:: 2.0
-    
+
     Parameters
     ----------
     label: :class:`str`
@@ -86,17 +59,17 @@ class TextInput(Item[V]):
     placeholder: Optional[:class:`str`]
         The text shown to the user when the text input is empty.
     """
-    
+
     __item_repr_attributes__: Tuple[str, ...] = (
-        'custom_id',
-        'label',
-        'style',
-        'min_length',
-        'max_length',
-        'required',
-        'default_value',
-        'value',
-        'placeholder',
+        "custom_id",
+        "label",
+        "style",
+        "min_length",
+        "max_length",
+        "required",
+        "default_value",
+        "value",
+        "placeholder",
     )
 
     def __init__(
@@ -106,12 +79,12 @@ class TextInput(Item[V]):
         style: TextInputStyle = TextInputStyle.short,
         custom_id: str = MISSING,
         row: Optional[int] = None,
-        min_length: int = 0,
-        max_length: int = 4000,
-        required: bool = None,
+        min_length: Optional[int] = 0,
+        max_length: Optional[int] = 4000,
+        required: Optional[bool] = None,
         default_value: Optional[str] = None,
         placeholder: Optional[str] = None,
-    ):
+    ) -> None:
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = TextInputComponent._raw_construct(
@@ -126,28 +99,28 @@ class TextInput(Item[V]):
             placeholder=placeholder,
         )
         self.row = row
-        self._inputed_value: str = None
+        self._inputed_value: Optional[str] = None
 
     @property
     def style(self) -> TextInputStyle:
-        """:class:`nextcord.TextInputStyle`: The style of the button."""
+        """:class:`nextcord.TextInputStyle`: The style of the text input."""
         return self._underlying.style
 
     @style.setter
-    def style(self, value: TextInputStyle):
+    def style(self, value: TextInputStyle) -> None:
         self._underlying.style = value
 
     @property
     def custom_id(self) -> Optional[str]:
-        """Optional[:class:`str`]: The ID of the button that gets received during an interaction."""
+        """Optional[:class:`str`]: The ID of the text input that gets received during an interaction."""
         return self._underlying.custom_id
 
     @custom_id.setter
-    def custom_id(self, value: Optional[str]):
+    def custom_id(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
-            raise TypeError('custom_id must be None or str')
+            raise TypeError("custom_id must be None or str")
 
-        self._underlying.custom_id = value
+        self._underlying.custom_id = value  # type: ignore
 
     @property
     def label(self) -> str:
@@ -155,54 +128,52 @@ class TextInput(Item[V]):
         return self._underlying.label
 
     @label.setter
-    def label(self, value: str):
+    def label(self, value: str) -> None:
         if value is None:
-            raise TypeError('label must cannot be None')
+            raise TypeError("label must cannot be None")
         self._underlying.label = str(value)
-    
+
     @property
-    def min_length(self) -> int:
+    def min_length(self) -> Optional[int]:
         """:class:`int`: The minimum input length for a text input"""
         return self._underlying.min_length
-    
+
     @min_length.setter
-    def min_length(self, value: int):
+    def min_length(self, value: int) -> None:
         self._underlying.min_length = value
-    
+
     @property
-    def max_length(self) -> int:
+    def max_length(self) -> Optional[int]:
         """:class:`int`: The maximum input length for a text input"""
         return self._underlying.max_length
-    
+
     @max_length.setter
-    def max_length(self, value: int):
+    def max_length(self, value: int) -> None:
         self._underlying.max_length = value
-    
+
     @property
-    def required(self) -> bool:
+    def required(self) -> Optional[bool]:
         """:class:`bool`: Whether this component is required to be filled"""
-        if self._underlying.required is not None:
-            return self._underlying.required
-        else:
-            return False
-    
+        return self._underlying.required
+
     @required.setter
-    def required(self, value: Optional[bool]):
+    def required(self, value: Optional[bool]) -> None:
         if value is not None and not isinstance(value, bool):
-            raise TypeError('required must be None or bool')
+            raise TypeError("required must be None or bool")
+
         self._underlying.required = value
-    
+
     @property
     def default_value(self) -> Optional[str]:
         """Optional[:class:`str`]: The value already in the text input when the user open the form."""
         return self._underlying.value
-    
+
     @default_value.setter
-    def default_value(self, value: Optional[str]):
+    def default_value(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
-            raise TypeError('default_value must be None or str')
+            raise TypeError("default_value must be None or str")
         self._underlying.value = value
-    
+
     @property
     def value(self) -> Optional[str]:
         """Optional[:class:`str`]: The value sent by the user.
@@ -210,24 +181,25 @@ class TextInput(Item[V]):
         ``TextInput.value`` is ``None`` when no interaction where received.
         """
         return self._inputed_value
-    
+
     @property
     def placeholder(self) -> Optional[str]:
         """Optional[:class:`str`]: The text shown to the user when the text input is empty."""
         return self._underlying.placeholder
-    
+
     @placeholder.setter
-    def placeholder(self, value: Optional[str]):
+    def placeholder(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
-            raise TypeError('placeholder must be None or str')
+            raise TypeError("placeholder must be None or str")
+
         self._underlying.placeholder = value
-    
+
     @property
     def width(self) -> int:
         return 5
 
     @classmethod
-    def from_component(cls: Type[T], text_input: TextInputComponent) -> T:
+    def from_component(cls, text_input: TextInputComponent) -> Self:
         return cls(
             style=text_input.style,
             custom_id=text_input.custom_id,
@@ -235,7 +207,7 @@ class TextInput(Item[V]):
             min_length=text_input.min_length,
             max_length=text_input.max_length,
             required=text_input.required,
-            value=text_input.value,
+            # value=text_input.value,  # FIXME: figure out what this was
             placeholder=text_input.placeholder,
             row=None,
         )
@@ -244,7 +216,7 @@ class TextInput(Item[V]):
     def type(self) -> ComponentType:
         return self._underlying.type
 
-    def to_component_dict(self):
+    def to_component_dict(self) -> TextInputComponentPayload:
         return self._underlying.to_dict()
 
     def is_dispatchable(self) -> bool:
@@ -253,9 +225,7 @@ class TextInput(Item[V]):
     def refresh_component(self, text_input: TextInputComponent) -> None:
         self._underlying = text_input
 
-    def refresh_state(self, interaction: Interaction) -> None:
-        data: ComponentInteractionData = interaction.data  # type: ignore
-        for component_data in _walk_all_components(data['components']):
-            if component_data['custom_id'] == self.custom_id:
-                self._inputed_value = component_data['value']
-                return
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
+        self._inputed_value = data.get("value", "")

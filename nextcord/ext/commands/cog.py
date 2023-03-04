@@ -1,50 +1,30 @@
-"""
-The MIT License (MIT)
+# SPDX-License-Identifier: MIT
 
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
 from __future__ import annotations
 
 import asyncio
 import inspect
-from nextcord.application_command import _cog_special_method
-from nextcord.interactions import Interaction
-import nextcord.utils
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator, List, Tuple, TypeVar
 
-from typing import Any, Callable, ClassVar, Dict, Generator, List, Optional, TYPE_CHECKING, Tuple, TypeVar, Type
+import nextcord.utils
+from nextcord.application_command import ClientCog, _cog_special_method
 
 from ._types import _BaseCommand
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .bot import BotBase
     from .context import Context
     from .core import Command
 
 __all__ = (
-    'CogMeta',
-    'Cog',
+    "CogMeta",
+    "Cog",
 )
 
-CogT = TypeVar('CogT', bound='Cog')
-FuncT = TypeVar('FuncT', bound=Callable[..., Any])
+CogT = TypeVar("CogT", bound="Cog")
+FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
 MISSING: Any = nextcord.utils.MISSING
 
@@ -83,7 +63,7 @@ class CogMeta(type):
                 pass
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The cog name. By default, it is the name of the class with no modification.
     description: :class:`str`
@@ -108,24 +88,27 @@ class CogMeta(type):
                 async def bar(self, ctx):
                     pass # hidden -> False
     """
+
     __cog_name__: str
     __cog_settings__: Dict[str, Any]
     __cog_commands__: List[Command]
     __cog_listeners__: List[Tuple[str, str]]
 
-    def __new__(cls: Type[CogMeta], *args: Any, **kwargs: Any) -> CogMeta:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         name, bases, attrs = args
-        attrs['__cog_name__'] = kwargs.pop('name', name)
-        attrs['__cog_settings__'] = kwargs.pop('command_attrs', {})
+        attrs["__cog_name__"] = kwargs.pop("name", name)
+        attrs["__cog_settings__"] = kwargs.pop("command_attrs", {})
 
-        description = kwargs.pop('description', None)
+        description = kwargs.pop("description", None)
         if description is None:
-            description = inspect.cleandoc(attrs.get('__doc__', ''))
-        attrs['__cog_description__'] = description
+            description = inspect.cleandoc(attrs.get("__doc__", ""))
+        attrs["__cog_description__"] = description
 
         commands = {}
         listeners = {}
-        no_bot_cog = 'Commands or listeners must not start with cog_ or bot_ (in method {0.__name__}.{1})'
+        no_bot_cog = (
+            "Commands or listeners must not start with cog_ or bot_ (in method {0.__name__}.{1})"
+        )
 
         new_cls = super().__new__(cls, name, bases, attrs, **kwargs)
         for base in reversed(new_cls.__mro__):
@@ -140,21 +123,23 @@ class CogMeta(type):
                     value = value.__func__
                 if isinstance(value, _BaseCommand):
                     if is_static_method:
-                        raise TypeError(f'Command in method {base}.{elem!r} must not be staticmethod.')
-                    if elem.startswith(('cog_', 'bot_')):
+                        raise TypeError(
+                            f"Command in method {base}.{elem!r} must not be staticmethod."
+                        )
+                    if elem.startswith(("cog_", "bot_")):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
                 elif asyncio.iscoroutinefunction(value):
                     try:
-                        getattr(value, '__cog_listener__')
+                        getattr(value, "__cog_listener__")
                     except AttributeError:
                         continue
                     else:
-                        if elem.startswith(('cog_', 'bot_')):
+                        if elem.startswith(("cog_", "bot_")):
                             raise TypeError(no_bot_cog.format(base, elem))
                         listeners[elem] = value
 
-        new_cls.__cog_commands__ = list(commands.values()) # this will be copied in Cog.__new__
+        new_cls.__cog_commands__ = list(commands.values())  # this will be copied in Cog.__new__
 
         listeners_as_list = []
         for listener in listeners.values():
@@ -174,7 +159,7 @@ class CogMeta(type):
         return cls.__cog_name__
 
 
-class Cog(nextcord.ClientCog, metaclass=CogMeta):
+class Cog(ClientCog, metaclass=CogMeta):
     """The base class that all cogs must inherit from.
 
     A cog is a collection of commands, listeners, and optional state to
@@ -184,12 +169,13 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
     When inheriting from this class, the options shown in :class:`CogMeta`
     are equally valid here.
     """
+
     __cog_name__: ClassVar[str]
     __cog_settings__: ClassVar[Dict[str, Any]]
     __cog_commands__: ClassVar[List[Command]]
     __cog_listeners__: ClassVar[List[Tuple[str, str]]]
 
-    def __new__(cls: Type[CogT], *args: Any, **kwargs: Any) -> CogT:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         # For issue 426, we need to store a copy of the command objects
         # since we modify them to inject `self` to them.
         # To do this, we need to interfere with the Cog creation process.
@@ -200,10 +186,7 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
         # r.e type ignore, type-checker complains about overriding a ClassVar
         self.__cog_commands__ = tuple(c._update_copy(cmd_attrs) for c in cls.__cog_commands__)  # type: ignore
 
-        lookup = {
-            cmd.qualified_name: cmd
-            for cmd in self.__cog_commands__
-        }
+        lookup = {cmd.qualified_name: cmd for cmd in self.__cog_commands__}
 
         # Update the Command instances dynamically as well
         for command in self.__cog_commands__:
@@ -222,7 +205,7 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
     def get_commands(self) -> List[Command]:
         r"""
         Returns
-        --------
+        -------
         List[:class:`.Command`]
             A :class:`list` of :class:`.Command`\s that are
             defined inside this cog.
@@ -256,6 +239,7 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
             A command or group from the cog.
         """
         from .core import GroupMixin
+
         for command in self.__cog_commands__:
             if command.parent is None:
                 yield command
@@ -266,7 +250,7 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
         """Returns a :class:`list` of (name, function) listener pairs that are defined in this cog.
 
         Returns
-        --------
+        -------
         List[Tuple[:class:`str`, :ref:`coroutine <coroutine>`]]
             The listeners defined in this cog.
         """
@@ -279,27 +263,29 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
         This is the cog equivalent of :meth:`.Bot.listen`.
 
         Parameters
-        ------------
+        ----------
         name: :class:`str`
             The name of the event being listened to. If not provided, it
             defaults to the function's name.
 
         Raises
-        --------
+        ------
         TypeError
             The function is not a coroutine function or a string was not passed as
             the name.
         """
 
         if name is not MISSING and not isinstance(name, str):
-            raise TypeError(f'Cog.listener expected str but received {name.__class__.__name__!r} instead.')
+            raise TypeError(
+                f"Cog.listener expected str but received {name.__class__.__name__!r} instead."
+            )
 
         def decorator(func: FuncT) -> FuncT:
             actual = func
             if isinstance(actual, staticmethod):
                 actual = actual.__func__
             if not asyncio.iscoroutinefunction(actual):
-                raise TypeError('Listener function must be a coroutine function.')
+                raise TypeError("Listener function must be a coroutine function.")
             actual.__cog_listener__ = True
             to_assign = name or actual.__name__
             try:
@@ -311,6 +297,7 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
             # to pick it up but the metaclass unfurls the function and
             # thus the assignments need to be on the actual function
             return func
+
         return decorator
 
     def has_error_handler(self) -> bool:
@@ -318,7 +305,7 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
 
         .. versionadded:: 1.7
         """
-        return not hasattr(self.cog_command_error.__func__, '__cog_special_method__')
+        return not hasattr(self.cog_command_error.__func__, "__cog_special_method__")
 
     @_cog_special_method
     def cog_unload(self) -> None:
@@ -371,8 +358,12 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
 
         This **must** be a coroutine.
 
+        .. note::
+
+            This is only called for prefix commands.
+
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context where the error happened.
         error: :class:`CommandError`
@@ -389,7 +380,7 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context.
         """
@@ -404,13 +395,13 @@ class Cog(nextcord.ClientCog, metaclass=CogMeta):
         This **must** be a coroutine.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context.
         """
         pass
 
-    def _inject(self: CogT, bot: BotBase) -> CogT:
+    def _inject(self, bot: BotBase) -> Self:
         cls = self.__class__
 
         # realistically, the only thing that can cause loading errors

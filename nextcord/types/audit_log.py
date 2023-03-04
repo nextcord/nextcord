@@ -1,43 +1,29 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 from typing import List, Literal, Optional, TypedDict, Union
 
-from .channel import ChannelType, VideoQualityMode, PermissionOverwrite
+from typing_extensions import NotRequired
+
+from .auto_moderation import (
+    AutoModerationAction,
+    AutoModerationEventType,
+    AutoModerationRule,
+    AutoModerationTriggerMetadata,
+    AutoModerationTriggerType,
+)
+from .channel import ChannelType, PermissionOverwrite, VideoQualityMode
 from .guild import (
+    DefaultMessageNotificationLevel,
+    ExplicitContentFilterLevel,
     MFALevel,
     VerificationLevel,
-    ExplicitContentFilterLevel,
-    DefaultMessageNotificationLevel
 )
 from .integration import IntegrationExpireBehavior, PartialIntegration
-from .snowflake import Snowflake
 from .role import Role
 from .scheduled_events import ScheduledEventEntityType
+from .snowflake import Snowflake
 from .threads import Thread
 from .user import User
 from .webhook import Webhook
@@ -90,36 +76,51 @@ AuditLogEvent = Literal[
     110,
     111,
     112,
+    140,
+    141,
+    142,
+    143,
 ]
 
 
 class _AuditLogChange_Str(TypedDict):
     key: Literal[
-        'name', 'description', 'preferred_locale', 'vanity_url_code', 'topic', 'code', 'allow', 'deny', 'permissions', 'tags'
+        "name",
+        "description",
+        "preferred_locale",
+        "vanity_url_code",
+        "topic",
+        "code",
+        "allow",
+        "deny",
+        "permissions",
+        "tags",
     ]
     new_value: str
     old_value: str
 
 
 class _AuditLogChange_AssetHash(TypedDict):
-    key: Literal['icon_hash', 'splash_hash', 'discovery_splash_hash', 'banner_hash', 'avatar_hash', 'asset']
+    key: Literal[
+        "icon_hash", "splash_hash", "discovery_splash_hash", "banner_hash", "avatar_hash", "asset"
+    ]
     new_value: str
     old_value: str
 
 
 class _AuditLogChange_Snowflake(TypedDict):
     key: Literal[
-        'id',
-        'owner_id',
-        'afk_channel_id',
-        'rules_channel_id',
-        'public_updates_channel_id',
-        'widget_channel_id',
-        'system_channel_id',
-        'application_id',
-        'channel_id',
-        'inviter_id',
-        'guild_id',
+        "id",
+        "owner_id",
+        "afk_channel_id",
+        "rules_channel_id",
+        "public_updates_channel_id",
+        "widget_channel_id",
+        "system_channel_id",
+        "application_id",
+        "channel_id",
+        "inviter_id",
+        "guild_id",
     ]
     new_value: Snowflake
     old_value: Snowflake
@@ -127,20 +128,21 @@ class _AuditLogChange_Snowflake(TypedDict):
 
 class _AuditLogChange_Bool(TypedDict):
     key: Literal[
-        'widget_enabled',
-        'nsfw',
-        'hoist',
-        'mentionable',
-        'temporary',
-        'deaf',
-        'mute',
-        'nick',
-        'enabled_emoticons',
-        'region',
-        'rtc_region',
-        'available',
-        'archived',
-        'locked',
+        "widget_enabled",
+        "nsfw",
+        "hoist",
+        "mentionable",
+        "temporary",
+        "deaf",
+        "mute",
+        "nick",
+        "enabled_emoticons",
+        "region",
+        "rtc_region",
+        "available",
+        "archived",
+        "locked",
+        "enabled",
     ]
     new_value: bool
     old_value: bool
@@ -148,80 +150,110 @@ class _AuditLogChange_Bool(TypedDict):
 
 class _AuditLogChange_Int(TypedDict):
     key: Literal[
-        'afk_timeout',
-        'auto_archive_duration',
-        'bitrate',
-        'color',
-        'default_auto_archive_duration',
-        'max_age',
-        'max_uses',
-        'position',
-        'prune_delete_days',
-        'rate_limit_per_user',
-        'user_limit',
+        "afk_timeout",
+        "auto_archive_duration",
+        "bitrate",
+        "color",
+        "default_auto_archive_duration",
+        "max_age",
+        "max_uses",
+        "position",
+        "prune_delete_days",
+        "rate_limit_per_user",
+        "user_limit",
     ]
     new_value: int
     old_value: int
 
 
 class _AuditLogChange_ListRole(TypedDict):
-    key: Literal['$add', '$remove']
+    key: Literal["$add", "$remove"]
     new_value: List[Role]
     old_value: List[Role]
 
 
+class _AuditLogChange_ListSnowflake(TypedDict):
+    key: Literal["exempt_roles", "exempt_channels"]
+    new_value: List[Snowflake]
+    old_value: List[Snowflake]
+
+
 class _AuditLogChange_MFALevel(TypedDict):
-    key: Literal['mfa_level']
+    key: Literal["mfa_level"]
     new_value: MFALevel
     old_value: MFALevel
 
 
 class _AuditLogChange_VerificationLevel(TypedDict):
-    key: Literal['verification_level']
+    key: Literal["verification_level"]
     new_value: VerificationLevel
     old_value: VerificationLevel
 
 
 class _AuditLogChange_ExplicitContentFilter(TypedDict):
-    key: Literal['explicit_content_filter']
+    key: Literal["explicit_content_filter"]
     new_value: ExplicitContentFilterLevel
     old_value: ExplicitContentFilterLevel
 
 
 class _AuditLogChange_DefaultMessageNotificationLevel(TypedDict):
-    key: Literal['default_message_notifications']
+    key: Literal["default_message_notifications"]
     new_value: DefaultMessageNotificationLevel
     old_value: DefaultMessageNotificationLevel
 
 
 class _AuditLogChange_ChannelType(TypedDict):
-    key: Literal['type']
+    key: Literal["type"]
     new_value: ChannelType
     old_value: ChannelType
 
 
 class _AuditLogChange_IntegrationExpireBehaviour(TypedDict):
-    key: Literal['expire_behavior']
+    key: Literal["expire_behavior"]
     new_value: IntegrationExpireBehavior
     old_value: IntegrationExpireBehavior
 
 
 class _AuditLogChange_VideoQualityMode(TypedDict):
-    key: Literal['video_quality_mode']
+    key: Literal["video_quality_mode"]
     new_value: VideoQualityMode
     old_value: VideoQualityMode
 
 
 class _AuditLogChange_Overwrites(TypedDict):
-    key: Literal['permission_overwrites']
+    key: Literal["permission_overwrites"]
     new_value: List[PermissionOverwrite]
     old_value: List[PermissionOverwrite]
 
 
 class _AuditLogChange_ScheduledEventEntityType(TypedDict):
-    key: Literal['entity_type']
+    key: Literal["entity_type"]
     new_value: ScheduledEventEntityType
     old_value: ScheduledEventEntityType
+
+
+class _AuditLogChange_AutoModerationTriggerType(TypedDict):
+    key: Literal["trigger_type"]
+    new_value: AutoModerationTriggerType
+    old_value: AutoModerationTriggerType
+
+
+class _AuditLogChange_AutoModerationEventType(TypedDict):
+    key: Literal["event_type"]
+    new_value: AutoModerationEventType
+    old_value: AutoModerationEventType
+
+
+class _AuditLogChange_AutoModerationActions(TypedDict):
+    key: Literal["actions"]
+    new_value: List[AutoModerationAction]
+    old_value: List[AutoModerationAction]
+
+
+class _AuditLogChange_AutoModerationTriggerMetadata(TypedDict):
+    key: Literal["trigger_metadata"]
+    new_value: AutoModerationTriggerMetadata
+    old_value: AutoModerationTriggerMetadata
 
 
 AuditLogChange = Union[
@@ -234,12 +266,17 @@ AuditLogChange = Union[
     _AuditLogChange_Int,
     _AuditLogChange_IntegrationExpireBehaviour,
     _AuditLogChange_ListRole,
+    _AuditLogChange_ListSnowflake,
     _AuditLogChange_MFALevel,
     _AuditLogChange_Overwrites,
     _AuditLogChange_Snowflake,
     _AuditLogChange_Str,
     _AuditLogChange_VerificationLevel,
     _AuditLogChange_VideoQualityMode,
+    _AuditLogChange_AutoModerationTriggerType,
+    _AuditLogChange_AutoModerationEventType,
+    _AuditLogChange_AutoModerationActions,
+    _AuditLogChange_AutoModerationTriggerMetadata,
 ]
 
 
@@ -250,21 +287,20 @@ class AuditEntryInfo(TypedDict):
     message_id: Snowflake
     count: str
     id: Snowflake
-    type: Literal['0', '1']
+    type: Literal["0", "1"]
     role_name: str
+    auto_moderation_rule_name: str
+    auto_moderation_rule_trigger_type: str
 
 
-class _AuditLogEntryOptional(TypedDict, total=False):
-    changes: List[AuditLogChange]
-    options: AuditEntryInfo
-    reason: str
-
-
-class AuditLogEntry(_AuditLogEntryOptional):
+class AuditLogEntry(TypedDict):
     target_id: Optional[str]
     user_id: Optional[Snowflake]
     id: Snowflake
     action_type: AuditLogEvent
+    changes: NotRequired[List[AuditLogChange]]
+    options: NotRequired[AuditEntryInfo]
+    reason: NotRequired[str]
 
 
 class AuditLog(TypedDict):
@@ -273,3 +309,4 @@ class AuditLog(TypedDict):
     audit_log_entries: List[AuditLogEntry]
     integrations: List[PartialIntegration]
     threads: List[Thread]
+    auto_moderation_rules: List[AutoModerationRule]

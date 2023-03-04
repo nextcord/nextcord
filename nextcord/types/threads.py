@@ -1,31 +1,12 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
+
 from typing import List, Literal, Optional, TypedDict
 
-from .snowflake import Snowflake
+from typing_extensions import NotRequired
+
+from .snowflake import Snowflake, SnowflakeList
 
 ThreadType = Literal[10, 11, 12]
 ThreadArchiveDuration = Literal[60, 1440, 4320, 10080]
@@ -38,25 +19,16 @@ class ThreadMember(TypedDict):
     flags: int
 
 
-class _ThreadMetadataOptional(TypedDict, total=False):
-    locked: bool
-    invitable: bool
-    create_timestamp: str
-
-
-class ThreadMetadata(_ThreadMetadataOptional):
+class ThreadMetadata(TypedDict):
     archived: bool
     auto_archive_duration: ThreadArchiveDuration
     archive_timestamp: str
+    locked: NotRequired[bool]
+    invitable: NotRequired[bool]
+    create_timestamp: NotRequired[str]
 
 
-class _ThreadOptional(TypedDict, total=False):
-    member: ThreadMember
-    last_message_id: Optional[Snowflake]
-    last_pin_timestamp: Optional[Snowflake]
-
-
-class Thread(_ThreadOptional):
+class Thread(TypedDict):
     id: Snowflake
     guild_id: Snowflake
     parent_id: Snowflake
@@ -67,6 +39,10 @@ class Thread(_ThreadOptional):
     message_count: int
     rate_limit_per_user: int
     thread_metadata: ThreadMetadata
+    member: NotRequired[ThreadMember]
+    last_message_id: NotRequired[Optional[Snowflake]]
+    last_pin_timestamp: NotRequired[Optional[Snowflake]]
+    applied_tags: NotRequired[SnowflakeList]
 
 
 class ThreadPaginationPayload(TypedDict):

@@ -101,7 +101,7 @@ The choices can be specified using ``choices`` in a :class:`~nextcord.SlashOptio
             The chosen number.
         """
         await interaction.response.send_message(f"You chose {number}!")
-    
+
 You can also specify a type annotation such as :class:`nextcord.Member`, :class:`nextcord.abc.GuildChannel`, or :class:`nextcord.Role`
 to make the command display a list of those types of objects.
 
@@ -148,8 +148,8 @@ As shown in the demonstration below you make a main slash command and build subc
         This will never get called since it has subcommands.
         """
         pass
-    
-    
+
+
     @main.subcommand(description="Subcommand 1")
     async def sub1(interaction: nextcord.Interaction):
         """
@@ -157,8 +157,8 @@ As shown in the demonstration below you make a main slash command and build subc
         It will appear in the menu as '/main sub1'.
         """
         await interaction.response.send_message("This is subcommand 1!")
-    
-    
+
+
     @main.subcommand(description="Subcommand 2")
     async def sub2(interaction: nextcord.Interaction):
         """
@@ -166,8 +166,8 @@ As shown in the demonstration below you make a main slash command and build subc
         It will appear in the menu as '/main sub2'.
         """
         await interaction.response.send_message("This is subcommand 2!")
-    
-    
+
+
     @main.subcommand()
     async def main_group(interaction: nextcord.Interaction):
         """
@@ -176,8 +176,8 @@ As shown in the demonstration below you make a main slash command and build subc
         This will never get called since it has subcommands.
         """
         pass
-    
-    
+
+
     @main_group.subcommand(description="Subcommand group subcommand 1")
     async def subsub1(interaction: nextcord.Interaction):
         """
@@ -185,8 +185,8 @@ As shown in the demonstration below you make a main slash command and build subc
         It will appear in the menu as '/main main_group subsub1'.
         """
         await interaction.response.send_message("This is a subcommand group's subcommand!")
-    
-    
+
+
     @main_group.subcommand(description="Subcommand group subcommand 2")
     async def subsub2(interaction: nextcord.Interaction):
         """
@@ -202,7 +202,7 @@ Context Menu Commands
 Context menu commands display commands in the Apps section of the right-click menu of a user or message.
 
 User Commands
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 Here is an example of a command that will say hi to a user that was right-clicked on.
 
@@ -214,7 +214,7 @@ Here is an example of a command that will say hi to a user that was right-clicke
         await interaction.response.send_message(f"Hello {member}!")
 
 Message Commands
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 Here is an example of a message command which sends the content of the right-clicked message as an ephemeral response to the user who invoked it.
 
@@ -266,3 +266,23 @@ Shown below is an example of a simple command running in a cog:
             await interaction.response.send_message("Hello I am a slash command in a cog!")
 
 Context menu commands can also be made in cogs using the :meth:`nextcord.user_command` or :meth:`nextcord.message_command` decorators.
+
+
+Default Guild IDs
+-----------------
+
+If you would like for all of your application commands to have the same guild ids unless explicitly stated, then you can set the ``default_guild_ids`` keyword argument in :class:`~nextcord.Client`, :class:`~nextcord.ext.commands.Bot`, or :class:`~nextcord.ext.commands.AutoShardedBot`!
+
+Here's an example of this:
+
+.. code-block:: python3
+
+    bot = commands.Bot(..., default_guild_ids=[TESTING_GUILD_ID])
+
+    @bot.slash_command()
+    async def bye(interaction: nextcord.Interaction):
+        await interaction.response.send_message(f"Goodbye {bot.default_guild_ids}!")
+
+    @bot.slash_command(guild_ids=None)
+    async def bye_global(interaction: nextcord.Interaction):
+        await interaction.response.send_message("Goodbye everyone!")

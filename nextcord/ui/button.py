@@ -1,50 +1,30 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Callable, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
 import asyncio
 import os
+from typing import TYPE_CHECKING, Callable, Optional, Tuple, TypeVar, Union
 
-
-from .item import Item, ItemCallbackType
+from ..components import Button as ButtonComponent
 from ..enums import ButtonStyle, ComponentType
 from ..partial_emoji import PartialEmoji, _EmojiTag
-from ..components import Button as ButtonComponent
+from .item import Item, ItemCallbackType
 
 __all__ = (
-    'Button',
-    'button',
+    "Button",
+    "button",
 )
 
 if TYPE_CHECKING:
-    from .view import View
-    from ..emoji import Emoji
+    from typing_extensions import Self
 
-B = TypeVar('B', bound='Button')
-V = TypeVar('V', bound='View', covariant=True)
+    from ..emoji import Emoji
+    from ..interactions import ClientT
+    from ..types.components import ButtonComponent as ButtonComponentPayload
+    from .view import View
+
+V = TypeVar("V", bound="View", covariant=True)
 
 
 class Button(Item[V]):
@@ -53,7 +33,7 @@ class Button(Item[V]):
     .. versionadded:: 2.0
 
     Parameters
-    ------------
+    ----------
     style: :class:`nextcord.ButtonStyle`
         The style of the button.
     custom_id: Optional[:class:`str`]
@@ -76,12 +56,12 @@ class Button(Item[V]):
     """
 
     __item_repr_attributes__: Tuple[str, ...] = (
-        'style',
-        'url',
-        'disabled',
-        'label',
-        'emoji',
-        'row',
+        "style",
+        "url",
+        "disabled",
+        "label",
+        "emoji",
+        "row",
     )
 
     def __init__(
@@ -94,10 +74,10 @@ class Button(Item[V]):
         url: Optional[str] = None,
         emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
         row: Optional[int] = None,
-    ):
+    ) -> None:
         super().__init__()
         if custom_id is not None and url is not None:
-            raise TypeError('cannot mix both url and custom_id with Button')
+            raise TypeError("Cannot mix both url and custom_id with Button")
 
         self._provided_custom_id = custom_id is not None
         if url is None and custom_id is None:
@@ -112,7 +92,9 @@ class Button(Item[V]):
             elif isinstance(emoji, _EmojiTag):
                 emoji = emoji._to_partial()
             else:
-                raise TypeError(f'expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}')
+                raise TypeError(
+                    f"Expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}"
+                )
 
         self._underlying = ButtonComponent._raw_construct(
             type=ComponentType.button,
@@ -131,7 +113,7 @@ class Button(Item[V]):
         return self._underlying.style
 
     @style.setter
-    def style(self, value: ButtonStyle):
+    def style(self, value: ButtonStyle) -> None:
         self._underlying.style = value
 
     @property
@@ -143,9 +125,9 @@ class Button(Item[V]):
         return self._underlying.custom_id
 
     @custom_id.setter
-    def custom_id(self, value: Optional[str]):
+    def custom_id(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
-            raise TypeError('custom_id must be None or str')
+            raise TypeError("custom_id must be None or str")
 
         self._underlying.custom_id = value
 
@@ -155,9 +137,9 @@ class Button(Item[V]):
         return self._underlying.url
 
     @url.setter
-    def url(self, value: Optional[str]):
+    def url(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
-            raise TypeError('url must be None or str')
+            raise TypeError("url must be None or str")
         self._underlying.url = value
 
     @property
@@ -166,7 +148,7 @@ class Button(Item[V]):
         return self._underlying.disabled
 
     @disabled.setter
-    def disabled(self, value: bool):
+    def disabled(self, value: bool) -> None:
         self._underlying.disabled = bool(value)
 
     @property
@@ -175,7 +157,7 @@ class Button(Item[V]):
         return self._underlying.label
 
     @label.setter
-    def label(self, value: Optional[str]):
+    def label(self, value: Optional[str]) -> None:
         self._underlying.label = str(value) if value is not None else value
 
     @property
@@ -184,19 +166,21 @@ class Button(Item[V]):
         return self._underlying.emoji
 
     @emoji.setter
-    def emoji(self, value: Optional[Union[str, Emoji, PartialEmoji]]):  # type: ignore
+    def emoji(self, value: Optional[Union[str, Emoji, PartialEmoji]]) -> None:  # type: ignore
         if value is not None:
             if isinstance(value, str):
                 self._underlying.emoji = PartialEmoji.from_str(value)
             elif isinstance(value, _EmojiTag):
                 self._underlying.emoji = value._to_partial()
             else:
-                raise TypeError(f'expected str, Emoji, or PartialEmoji, received {value.__class__} instead')
+                raise TypeError(
+                    f"Expected str, Emoji, or PartialEmoji, received {value.__class__} instead"
+                )
         else:
             self._underlying.emoji = None
 
     @classmethod
-    def from_component(cls: Type[B], button: ButtonComponent) -> B:
+    def from_component(cls, button: ButtonComponent) -> Self:
         return cls(
             style=button.style,
             label=button.label,
@@ -211,7 +195,7 @@ class Button(Item[V]):
     def type(self) -> ComponentType:
         return self._underlying.type
 
-    def to_component_dict(self):
+    def to_component_dict(self) -> ButtonComponentPayload:
         return self._underlying.to_dict()
 
     def is_dispatchable(self) -> bool:
@@ -234,7 +218,7 @@ def button(
     style: ButtonStyle = ButtonStyle.secondary,
     emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType], ItemCallbackType]:
+) -> Callable[[ItemCallbackType[Button[V], ClientT]], ItemCallbackType[Button[V], ClientT]]:
     """A decorator that attaches a button to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -250,7 +234,7 @@ def button(
         with it.
 
     Parameters
-    ------------
+    ----------
     label: Optional[:class:`str`]
         The label of the button, if any.
     custom_id: Optional[:class:`str`]
@@ -271,19 +255,19 @@ def button(
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ItemCallbackType[Button[V]]) -> ItemCallbackType[Button[V]]:
         if not asyncio.iscoroutinefunction(func):
-            raise TypeError('button function must be a coroutine function')
+            raise TypeError("Button function must be a coroutine function")
 
         func.__discord_ui_model_type__ = Button
         func.__discord_ui_model_kwargs__ = {
-            'style': style,
-            'custom_id': custom_id,
-            'url': None,
-            'disabled': disabled,
-            'label': label,
-            'emoji': emoji,
-            'row': row,
+            "style": style,
+            "custom_id": custom_id,
+            "url": None,
+            "disabled": disabled,
+            "label": label,
+            "emoji": emoji,
+            "row": row,
         }
         return func
 
