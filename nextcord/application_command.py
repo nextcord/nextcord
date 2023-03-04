@@ -911,8 +911,10 @@ class CallbackMixin:
 
                 if (after_invoke := state._application_command_after_invoke) is not None:
                     await self._invoke_hook_param_check(after_invoke, interaction)
-        
-    async def _invoke_hook_param_check(self, hook: ApplicationHook, interaction: Interaction) -> None:
+
+    async def _invoke_hook_param_check(
+        self, hook: ApplicationHook, interaction: Interaction
+    ) -> None:
         # invoke with self parameter if it exists
         if len(signature(hook).parameters) == 2:
             await hook(self.parent_cog, interaction)  # type: ignore
