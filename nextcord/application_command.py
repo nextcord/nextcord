@@ -918,8 +918,7 @@ class CallbackMixin:
         # invoke with self parameter if it exists
         if len(signature(hook).parameters) == 2:
             await hook(self.parent_cog, interaction)  # type: ignore
-        else:
-            await hook(interaction)  # type: ignore
+        await hook(interaction)  # type: ignore
 
     async def invoke_callback(self, interaction: Interaction, *args, **kwargs) -> None:
         """|coro|
