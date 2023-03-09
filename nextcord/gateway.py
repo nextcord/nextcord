@@ -907,7 +907,7 @@ class DiscordVoiceWebSocket:
         state.endpoint_ip = data["ip"]
 
         # Discover our external IP and port by asking our voice port.
-        # https://discord.com/developers/docs/topics/voice-connections#ip-discovery
+        # https://discord.dev/topics/voice-connections#ip-discovery
         packet = bytearray(74)
 
         # > = big-endian, H = unsigned short, I = unsigned int
