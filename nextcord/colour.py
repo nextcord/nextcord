@@ -282,7 +282,7 @@ class Colour:
 
         .. versionadded:: 1.5
         """
-        return cls(0x36393F)
+        return cls(0x313338)
 
     @classmethod
     def fuchsia(cls) -> Self:
