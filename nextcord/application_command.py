@@ -1677,7 +1677,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                     guild = state._guilds.get(int(guild_id))
                     if guild:
                         value = guild.get_member(user_id)
-                else:
+
+                if value is None:
+                    # Either we aren't in a guild or
+                    # the member object is not cached
                     value = state._users.get(user_id)
 
                 if value is None:
