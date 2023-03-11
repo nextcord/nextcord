@@ -30,6 +30,7 @@ from typing import (
 import typing_extensions
 from typing_extensions import Annotated
 
+import nextcord
 from .abc import GuildChannel
 from .channel import (
     CategoryChannel,
@@ -1659,7 +1660,23 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         elif self.type is ApplicationCommandOptionType.user:
             user_id = int(value)
             user_dict = {user.id: user for user in get_users_from_interaction(state, interaction)}
-            value = user_dict[user_id]
+            try:
+                value = user_dict[user_id]
+            except KeyError:
+                # By here the interaction data doesn't contain
+                # a full member/user object yet so fall back to bot cache
+                value = None
+                guild_id = interaction.data.get("guild_id")
+                if guild_id:
+                    guild = state._guilds.get(int(guild_id))
+                    if guild:
+                        value = guild.get_member(user_id)
+                else:
+                    value = state._user.get(user_id)
+
+                if value is None:
+                    # Fall back to a Object at-least
+                    value = nextcord.Object(id=user_id)
         elif self.type is ApplicationCommandOptionType.role:
             if interaction.guild is None:
                 raise TypeError("Unable to handle a Role type when guild is None")
