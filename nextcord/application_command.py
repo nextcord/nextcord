@@ -30,7 +30,7 @@ from typing import (
 import typing_extensions
 from typing_extensions import Annotated
 
-import nextcord
+from .object import Object
 from .abc import GuildChannel
 from .channel import (
     CategoryChannel,
@@ -1676,7 +1676,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
                 if value is None:
                     # Fall back to a Object at-least
-                    value = nextcord.Object(id=user_id)
+                    value = Object(id=user_id)
         elif self.type is ApplicationCommandOptionType.role:
             if interaction.guild is None:
                 raise TypeError("Unable to handle a Role type when guild is None")
