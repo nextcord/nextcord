@@ -745,7 +745,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             By default this creates a private thread if this is ``None``.
         invitable: :class:`bool`
             Whether non-moderators can add other non-moderators to this thread.
-            Only available for private threads and without message.
+            Only available for private threads and created without ``message``.
         reason: :class:`str`
             The reason for creating a new thread. Shows up on the audit log.
 
