@@ -879,7 +879,7 @@ class DiscordVoiceWebSocket:
                 "speaking": int(state),
                 "delay": 0,
                 "ssrc": self._connection.ssrc,
-            }
+            },
         }
 
         await self.send_as_json(payload)
