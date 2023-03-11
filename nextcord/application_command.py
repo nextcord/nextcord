@@ -30,7 +30,6 @@ from typing import (
 import typing_extensions
 from typing_extensions import Annotated
 
-from .object import Object
 from .abc import GuildChannel
 from .channel import (
     CategoryChannel,
@@ -47,6 +46,7 @@ from .guild import Guild
 from .interactions import Interaction
 from .member import Member
 from .message import Attachment, Message
+from .object import Object
 from .permissions import Permissions
 from .role import Role
 from .threads import Thread
