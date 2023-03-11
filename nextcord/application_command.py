@@ -1670,13 +1670,15 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 # By here the interaction data doesn't contain
                 # a full member/user object yet so fall back to bot cache
                 value = None
-                guild_id = interaction.data.get("guild_id")
+                data = interaction.data
+                data = cast(ApplicationCommandInteractionData, data)
+                guild_id = data.get("guild_id")
                 if guild_id:
                     guild = state._guilds.get(int(guild_id))
                     if guild:
                         value = guild.get_member(user_id)
                 else:
-                    value = state._user.get(user_id)
+                    value = state._users.get(user_id)
 
                 if value is None:
                     # Fall back to a Object at-least
