@@ -1190,6 +1190,10 @@ class AutocompleteCommandMixin:
             To use inputs from other options inputted in the command, you can add them as arguments to the autocomplete
             callback. The order of the arguments does not matter, but the names do.
 
+            If you are using :py:class:`nextcord.Member` or :py:class:`nextcord.user` typehints in
+            your autocompletes then just note that the objects provided can be both `None` and
+            :py:class:`nextcord.Object` depending on the data discord sends.
+
         Parameters
         ----------
         on_kwarg: :class:`str`
