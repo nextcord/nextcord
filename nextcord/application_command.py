@@ -1190,9 +1190,9 @@ class AutocompleteCommandMixin:
             To use inputs from other options inputted in the command, you can add them as arguments to the autocomplete
             callback. The order of the arguments does not matter, but the names do.
 
-            If you are using :py:class:`nextcord.Member` or :py:class:`nextcord.user` typehints in
+            If you are using :py:class:`nextcord.Member` or :py:class:`nextcord.User` typehints in
             your autocompletes then just note that the objects provided can be both `None` and
-            :py:class:`nextcord.Object` depending on the data discord sends.
+            :py:class:`nextcord.Object` depending on the data Discord sends.
 
         Parameters
         ----------
@@ -1670,12 +1670,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 # By here the interaction data doesn't contain
                 # a full member/user object yet so fall back to bot cache
                 value = None
-                data = interaction.data
-                data = cast(ApplicationCommandInteractionData, data)
-                guild_id = data.get("guild_id")
-                if guild_id:
-                    guild = state._guilds.get(int(guild_id))
-                    if guild:
+                data = cast(ApplicationCommandInteractionData, interaction.data)
+                if guild_id := data.get("guild_id"):
+                    if guild := state._guilds.get(int(guild_id)):
                         value = guild.get_member(user_id)
 
                 if value is None:
