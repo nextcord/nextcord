@@ -1680,9 +1680,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                     # the member object is not cached
                     value = state._users.get(user_id)
 
-                if value is None:
-                    # Fall back to a Object at-least
-                    value = Object(id=user_id)
+                    if value is None:
+                        # Fall back to a Object at-least
+                        value = Object(id=user_id)
         elif self.type is ApplicationCommandOptionType.role:
             if interaction.guild is None:
                 raise TypeError("Unable to handle a Role type when guild is None")
