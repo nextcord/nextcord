@@ -12,6 +12,19 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p4p1:
+
+v2.4.1
+------
+
+This version includes bug fixes for voice, backported from v2.5.0.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix an issue where the bot would not connect to a voice channel, referring to a breaking change by Discord (:issue:`1005`).
+- Fix audio not playing for stage channels (:issue:`1009`).
+
 .. _vp2p4p0:
 
 v2.4.0
