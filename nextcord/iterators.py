@@ -1,28 +1,6 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 # pyright: strict, reportPrivateUsage = false
+
 from __future__ import annotations
 
 import asyncio
@@ -46,6 +24,7 @@ from .auto_moderation import AutoModerationRule
 from .bans import BanEntry
 from .errors import NoMoreItems
 from .object import Object
+from .types.user import PartialUser as PartialUserPayload
 from .utils import maybe_coroutine, snowflake_time, time_snowflake
 
 __all__ = (
@@ -71,7 +50,7 @@ if TYPE_CHECKING:
     from .scheduled_events import ScheduledEvent, ScheduledEventUser  # noqa: F401
     from .state import ConnectionState
     from .threads import Thread
-    from .types.audit_log import AuditLog as AuditLogPayload, AuditLogEntry as AuditLogEntryPayload
+    from .types.audit_log import AuditLog as AuditLogPayload
     from .types.guild import Ban as BanPayload, Guild as GuildPayload
     from .types.member import MemberWithUser
     from .types.message import Message as MessagePayload
@@ -80,7 +59,6 @@ if TYPE_CHECKING:
         ScheduledEventUser as ScheduledEventUserPayload,
     )
     from .types.threads import Thread as ThreadPayload, ThreadPaginationPayload
-    from .types.user import PartialUser as PartialUserPayload
     from .user import User
 
 T = TypeVar("T")
@@ -97,7 +75,7 @@ class _AsyncIterator(AsyncIterator[T]):
         raise NotImplementedError
 
     def get(self, **attrs: T) -> Awaitable[Optional[T]]:
-        def predicate(elem: T):
+        def predicate(elem: T) -> bool:
             for attr, val in attrs.items():
                 nested = attr.split("__")
                 obj = elem
@@ -201,7 +179,7 @@ class _FilteredAsyncIterator(_AsyncIterator[T]):
 class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
     def __init__(
         self, message: Message, emoji: str, limit: int = 100, after: Optional[Snowflake] = None
-    ):
+    ) -> None:
         self.message: Message = message
         self.limit: int = limit
         self.after: Optional[Snowflake] = after
@@ -295,8 +273,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
         after: Optional[SnowflakeTime] = None,
         around: Optional[SnowflakeTime] = None,
         oldest_first: Optional[bool] = None,
-    ):
-
+    ) -> None:
         if isinstance(before, datetime.datetime):
             before = Object(id=time_snowflake(before, high=False))
         if isinstance(after, datetime.datetime):
@@ -457,7 +434,7 @@ class BanIterator(_AsyncIterator["BanEntry"]):
         limit: Optional[int] = None,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ):
+    ) -> None:
         self.guild: Guild = guild
         self.limit: Optional[int] = limit
         self.before: Optional[Snowflake] = before
@@ -535,17 +512,14 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         oldest_first: Optional[bool] = None,
         user_id: Optional[int] = None,
         action_type: Optional[AuditLogAction] = None,
-    ):
+    ) -> None:
         if isinstance(before, datetime.datetime):
             before = Object(id=time_snowflake(before, high=False))
         if isinstance(after, datetime.datetime):
             after = Object(id=time_snowflake(after, high=True))
 
-        self.reverse: bool
-        if oldest_first is None:
-            self.reverse = after is not None
-        else:
-            self.reverse = oldest_first
+        # Maintain compatibility with `None` being passed in for `oldest_first`
+        self.reverse: bool = bool(oldest_first)
 
         self.guild: Guild = guild
         self.loop: asyncio.AbstractEventLoop = guild._state.loop
@@ -553,25 +527,21 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         self.before: Optional[Snowflake] = before
         self.user_id: Optional[int] = user_id
         self.action_type: Optional[AuditLogAction] = action_type
-        self.after: Optional[Snowflake] = after or OLDEST_OBJECT
+        self.after: Optional[Snowflake] = after
         self._state: ConnectionState = guild._state
-
-        self._filter: Optional[Callable[[AuditLogEntryPayload], bool]] = None  # entry dict -> bool
 
         self.entries: asyncio.Queue[AuditLogEntry] = asyncio.Queue()
 
-        self._strategy = self._before_strategy
-        if self.after and self.after != OLDEST_OBJECT:
-            self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
-
-    async def _before_strategy(self, retrieve: int):
+    async def _get_logs(self, retrieve: int):
         before = self.before.id if self.before else None
+        after = self.after.id if self.after else None
         data: AuditLogPayload = await self._state.http.get_audit_logs(
             self.guild.id,
             limit=retrieve,
             user_id=self.user_id,
             action_type=self.action_type,
             before=before,
+            after=after,
         )
 
         entries = data.get("audit_log_entries", [])
@@ -599,17 +569,15 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         self.retrieve = r
         return r > 0
 
-    async def _fill(self):
+    async def _fill(self) -> None:
         if self._get_retrieve():
-            data = await self._strategy(self.retrieve)
+            data = await self._get_logs(self.retrieve)
             if len(data) < 100:
                 self.limit = 0  # terminate the infinite loop
 
             entries = data.get("audit_log_entries")
             if self.reverse:
                 entries = reversed(entries)
-            if self._filter:
-                entries = filter(self._filter, entries)
 
             state = self._state
 
@@ -669,7 +637,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         limit: Optional[int],
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
-    ):
+    ) -> None:
         self.retrieve: int
 
         if isinstance(before, datetime.datetime):
@@ -765,7 +733,7 @@ class MemberIterator(_AsyncIterator["Member"]):
         guild: Guild,
         limit: Optional[int] = 1000,
         after: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ):
+    ) -> None:
         if isinstance(after, datetime.datetime):
             after = Object(id=time_snowflake(after, high=True))
 
@@ -826,7 +794,7 @@ class ArchivedThreadIterator(_AsyncIterator["Thread"]):
         joined: bool,
         private: bool,
         before: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ):
+    ) -> None:
         self.channel_id: int = channel_id
         self.guild: Guild = guild
         self.limit: Optional[int] = limit
@@ -910,7 +878,7 @@ class ArchivedThreadIterator(_AsyncIterator["Thread"]):
 
 
 class ScheduledEventIterator(_AsyncIterator["ScheduledEvent"]):
-    def __init__(self, guild: Guild, with_users: bool = False):
+    def __init__(self, guild: Guild, with_users: bool = False) -> None:
         self.guild: Guild = guild
         self.with_users: bool = with_users
 
@@ -953,7 +921,7 @@ class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
         limit: Optional[int] = None,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ):
+    ) -> None:
         self.guild: Guild = guild
         self.event: ScheduledEvent = event
         self.with_member: bool = with_member

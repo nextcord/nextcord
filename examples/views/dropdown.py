@@ -7,7 +7,6 @@ from nextcord.ext import commands
 # of this class is called when the user changes their choice
 class Dropdown(nextcord.ui.Select):
     def __init__(self):
-
         # Set the options that will be presented inside the dropdown
         options = [
             nextcord.SelectOption(

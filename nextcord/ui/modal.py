@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -111,7 +89,7 @@ class Modal:
         timeout: Optional[float] = None,
         custom_id: str = MISSING,
         auto_defer: bool = True,
-    ):
+    ) -> None:
         self.title = title
         self.timeout = timeout
         self._provided_custom_id = custom_id is not MISSING
@@ -233,7 +211,7 @@ class Modal:
         self.children.clear()
         self.__weights.clear()
 
-    async def callback(self, interaction: Interaction):
+    async def callback(self, interaction: Interaction) -> None:
         """|coro|
 
         The callback that is called when the user press the submit button.
@@ -307,14 +285,14 @@ class Modal:
             self.__timeout_expiry = time.monotonic() + self.timeout
             self.__timeout_task = loop.create_task(self.__timeout_task_impl())
 
-    def _dispatch_timeout(self):
+    def _dispatch_timeout(self) -> None:
         if self.__stopped.done():
             return
 
         asyncio.create_task(self.on_timeout(), name=f"discord-ui-modal-timeout-{self.id}")
         self.__stopped.set_result(True)
 
-    def _dispatch(self, interaction: Interaction):
+    def _dispatch(self, interaction: Interaction) -> None:
         if self.__stopped.done():
             return
 
@@ -322,15 +300,14 @@ class Modal:
             self._scheduled_task(interaction), name=f"discord-ui-modal-dispatch-{self.id}"
         )
 
-    def refresh(self, components: List[Component]):
+    def refresh(self, components: List[Component]) -> None:
         # This is pretty hacky at the moment
-        # fmt: off
         old_state: Dict[Tuple[int, str], Item] = {
-            (item.type.value, item.custom_id): item
+            (item.type.value, item.custom_id): item  # type: ignore
+            # TODO: refactor this to explicitly type custom_id
             for item in self.children
             if item.is_dispatchable()
         }
-        # fmt: on
         children: List[Item] = []
         for component in _walk_all_components(components):
             try:
@@ -396,7 +373,7 @@ class Modal:
 
 
 class ModalStore:
-    def __init__(self, state: ConnectionState):
+    def __init__(self, state: ConnectionState) -> None:
         # (user_id, custom_id): Modal
         self._modals: Dict[Tuple[int | None, str], Modal] = {}
         self._state: ConnectionState = state
@@ -412,9 +389,9 @@ class ModalStore:
         # fmt: on
         return list(modals.values())
 
-    def __verify_integrity(self):
+    def __verify_integrity(self) -> None:
         to_remove: List[Tuple[int | None, str]] = []
-        for (k, modal) in self._modals.items():
+        for k, modal in self._modals.items():
             if modal.is_finished():
                 to_remove.append(k)
 

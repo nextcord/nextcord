@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -51,6 +28,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
+from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
@@ -960,7 +938,7 @@ class ConnectionState:
 
     async def delete_unknown_application_commands(
         self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
-    ):
+    ) -> None:
         warnings.warn(
             ".delete_unknown_application_commands is deprecated, use .deploy_application_commands and set "
             "kwargs in it instead.",
@@ -1539,6 +1517,16 @@ class ConnectionState:
         has_thread = guild.get_thread(thread.id)
         guild._add_thread(thread)
         if not has_thread:
+            # `newly_created` is documented outside of a thread's fields:
+            # https://discord.dev/topics/gateway-events#thread-create
+            if data.get("newly_created", False):
+                if isinstance(thread.parent, ForumChannel):
+                    thread.parent.last_message_id = thread.id
+
+                self.dispatch("thread_create", thread) # TODO: THIS RIGHT HERE.
+
+            # Avoid an unnecessary breaking change right now by dispatching `thread_join` for
+            # threads that were already created.
             self.dispatch(StateEvents.THREAD_JOIN, thread)
 
     def parse_thread_update(self, data) -> None:
@@ -1790,7 +1778,7 @@ class ConnectionState:
     def is_guild_evicted(self, guild) -> bool:
         return guild.id not in self._guilds
 
-    async def chunk_guild(self, guild, *, wait=True, cache=None):
+    async def chunk_guild(self, guild, *, wait: bool = True, cache=None):
         if cache is None:
             cache = self.member_cache_flags.joined
         request = self._chunk_requests.get(guild.id)
@@ -1804,7 +1792,7 @@ class ConnectionState:
             return await request.wait()
         return request.get_future()
 
-    async def _chunk_and_dispatch(self, guild, unavailable):
+    async def _chunk_and_dispatch(self, guild, unavailable) -> None:
         try:
             await asyncio.wait_for(self.chunk_guild(guild), timeout=60.0)
         except asyncio.TimeoutError:
@@ -2322,6 +2310,23 @@ class ConnectionState:
             StateEvents.AUTO_MODERATION_ACTION_EXECUTION,
             AutoModerationActionExecution(data=data, state=self),
         )
+
+    def parse_guild_audit_log_entry_create(self, data) -> None:
+        guild = self._get_guild(int(data["guild_id"]))
+        user_id = int(data["user_id"])
+        user = self.get_user(user_id)
+
+        if guild is not None and user is not None:
+            entry = AuditLogEntry(
+                auto_moderation_rules={}, users={user_id: user}, data=data, guild=guild
+            )
+            self.dispatch("guild_audit_log_entry_create", entry)
+        else:
+            _log.debug(
+                "guild_audit_log_entry_create wasn't dispatched because the guild (%r) and/or user (%r) are None!",
+                guild,
+                user,
+            )
 
 
 class AutoShardedConnectionState(ConnectionState):
