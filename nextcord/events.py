@@ -142,6 +142,7 @@ class StateEvents(Enum):
     STAGE_INSTANCE_CREATE = "stage_instance_create"
     STAGE_INSTANCE_DELETE = "stage_instance_delete"
     STAGE_INSTANCE_UPDATE = "stage_instance_update"
+    THREAD_CREATE = "thread_create"
     THREAD_DELETE = "thread_delete"
     """Dispatched when the state parses a thread being deleted."""
     THREAD_JOIN = "thread_join"
