@@ -218,7 +218,9 @@ class BotBase(GroupMixin):
     def dispatch(self, event_name: Union[str, Enum], *args: Any, **kwargs: Any) -> None:
         # super() will resolve to Client
         super().dispatch(event_name, *args, **kwargs)  # type: ignore
-        if isinstance(event_name, Enum):  # TODO: Does this double execute in some cases since Client does a dispatch?
+        if isinstance(
+            event_name, Enum
+        ):  # TODO: Does this double execute in some cases since Client does a dispatch?
             ev = event_name
         else:
             ev = "on_" + event_name
@@ -231,7 +233,6 @@ class BotBase(GroupMixin):
             compat_ev = "on_" + ev.value
             for event in self.extra_events.get(compat_ev, []):
                 self._schedule_event(event, compat_ev, *args, **kwargs)  # type: ignore
-
 
     @nextcord.utils.copy_doc(nextcord.Client.close)
     async def close(self) -> None:

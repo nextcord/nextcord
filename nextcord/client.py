@@ -565,7 +565,7 @@ class Client:
             # For backwards compatibility.
             self._dispatch_to_listeners(event.value, *args, **kwargs)
 
-    def _dispatch_to_listeners(self, event: Union[str, Enum], *args: Any, **kwargs: Any):
+    def _dispatch_to_listeners(self, event: Union[str, Enum], *args: Any, **kwargs: Any) -> None:
         _log.debug("Dispatching event %s to listeners.", event)
 
         listeners = self._listeners.get(event)
@@ -597,7 +597,7 @@ class Client:
                 for idx in reversed(removed):
                     del listeners[idx]
 
-    def _dispatch_to_function(self, event: Union[str, Enum], *args: Any, **kwargs: Any):
+    def _dispatch_to_function(self, event: Union[str, Enum], *args: Any, **kwargs: Any) -> None:
         if isinstance(event, Enum):
             method = "on_" + event.value
         else:

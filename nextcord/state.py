@@ -1523,7 +1523,7 @@ class ConnectionState:
                 if isinstance(thread.parent, ForumChannel):
                     thread.parent.last_message_id = thread.id
 
-                self.dispatch("thread_create", thread) # TODO: THIS RIGHT HERE.
+                self.dispatch("thread_create", thread)  # TODO: THIS RIGHT HERE.
 
             # Avoid an unnecessary breaking change right now by dispatching `thread_join` for
             # threads that were already created.

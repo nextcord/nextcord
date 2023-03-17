@@ -14,6 +14,7 @@ from ._types import _BaseCommand
 
 if TYPE_CHECKING:
     from typing import Union
+
     from typing_extensions import Self
 
     from .bot import BotBase
