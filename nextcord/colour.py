@@ -281,6 +281,9 @@ class Colour:
         This will appear transparent on Discord's dark theme.
 
         .. versionadded:: 1.5
+
+        .. versionchanged:: 2.5
+            Colour was replaced by the new dark theme colour on the UI. 
         """
         return cls(0x313338)
 
