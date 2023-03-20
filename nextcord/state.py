@@ -2307,7 +2307,7 @@ class ConnectionState:
 
     def parse_guild_audit_log_entry_create(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
-        user_id = int(data["user_id"]) if data["user_id"] != None else data["user_id"]
+        user_id = int(data["user_id"]) if data["user_id"] is not None else data["user_id"]
         user = self.get_user(user_id)
 
         if guild is not None and user is not None:
