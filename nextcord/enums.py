@@ -47,6 +47,8 @@ __all__ = (
     "KeywordPresetType",
     "AutoModerationActionType",
     "SortOrderType",
+    "RoleConnectionMetadataType",
+    "ForumLayoutType",
 )
 
 
@@ -492,6 +494,7 @@ class StickerFormatType(IntEnum):
     png = 1
     apng = 2
     lottie = 3
+    gif = 4
 
     @property
     def file_extension(self) -> str:
@@ -500,6 +503,7 @@ class StickerFormatType(IntEnum):
             StickerFormatType.png: 'png',
             StickerFormatType.apng: 'png',
             StickerFormatType.lottie: 'json',
+            StickerFormatType.gif: 'gif',
         }
         # fmt: on
         return lookup[self]
@@ -714,6 +718,23 @@ class AutoModerationActionType(IntEnum):
 class SortOrderType(IntEnum):
     latest_activity = 0
     creation_date = 1
+
+
+class RoleConnectionMetadataType(IntEnum):
+    integer_less_than_or_equal = 1
+    integer_greater_than_or_equal = 2
+    integer_equal = 3
+    integer_not_equal = 4
+    datetime_less_than_or_equal = 5
+    datetime_greater_than_or_equal = 6
+    boolean_equal = 7
+    boolean_not_equal = 8
+
+
+class ForumLayoutType(IntEnum):
+    not_set = 0
+    list = 1
+    gallery = 2
 
 
 T = TypeVar("T")

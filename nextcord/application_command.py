@@ -756,6 +756,11 @@ class CallbackMixin:
                         isinstance(param.annotation, type)
                         and issubclass(param.annotation, Interaction)
                     )
+                    # will always be an interaction parameter (generic with the outermost type being Interaction)
+                    or (
+                        (origin := typing_extensions.get_origin(param.annotation))
+                        and issubclass(origin, Interaction)
+                    )
                     # will always be a self parameter
                     # TODO: use typing.Self when 3.11 is standard
                     or param.annotation is typing_extensions.Self
@@ -1869,6 +1874,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -1902,6 +1908,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -1923,6 +1933,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self.default_member_permissions: Optional[
             Union[Permissions, int]
         ] = default_member_permissions
+        self.nsfw: bool = nsfw
 
         self.force_global: bool = force_global
 
@@ -2124,6 +2135,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 #  the default (True) to ensure payload parity for comparisons.
                 ret["dm_permission"] = True
 
+        ret["nsfw"] = self.nsfw
+
         return ret
 
     def parse_discord_response(
@@ -2185,6 +2198,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             "name_localizations",
             "description_localizations",
             "dm_permission",
+            "nsfw",
         ):
             _log.debug("Failed check dictionary values, not valid payload.")
             return False
@@ -2692,6 +2706,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2721,6 +2736,14 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. note::
+
+                Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2737,6 +2760,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             guild_ids=guild_ids,
             default_member_permissions=default_member_permissions,
             dm_permission=dm_permission,
+            nsfw=nsfw,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -2856,6 +2880,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2880,6 +2905,10 @@ class UserApplicationCommand(BaseApplicationCommand):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2894,6 +2923,7 @@ class UserApplicationCommand(BaseApplicationCommand):
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -2932,6 +2962,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2956,6 +2987,10 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2970,6 +3005,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -3005,6 +3041,7 @@ def slash_command(
     guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
@@ -3034,6 +3071,14 @@ def slash_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
+    nsfw: :class:`bool`
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+        .. note::
+
+            Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
+
+        .. versionadded:: 2.4
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3052,6 +3097,7 @@ def slash_command(
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             force_global=force_global,
         )
         return app_cmd
@@ -3066,6 +3112,7 @@ def message_command(
     guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
@@ -3089,6 +3136,10 @@ def message_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
+    nsfw: :class:`bool`
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+        .. versionadded:: 2.4
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3105,6 +3156,7 @@ def message_command(
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             force_global=force_global,
         )
         return app_cmd
@@ -3119,6 +3171,7 @@ def user_command(
     guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
@@ -3142,6 +3195,10 @@ def user_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
+    nsfw: :class:`bool`
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+        .. versionadded:: 2.4
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3158,6 +3215,7 @@ def user_command(
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             force_global=force_global,
         )
         return app_cmd
@@ -3359,7 +3417,7 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     return ret
 
 
-def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> type:
+def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> type:
     """Takes an annotation. If the origin is Annotated, it will attempt to resolve it using the given list of accepted
     types, going from the last type and working up to the first. If no matches to the given list is found, the last
     type specified in the Annotated typehint will be returned.
@@ -3378,6 +3436,9 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
     :class:`type`
         Resolved annotation.
     """
+    if resolve_list is None:
+        resolve_list = []
+
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
     origin = typing_extensions.get_origin(given_annotation)
     if origin is Annotated:
@@ -3398,7 +3459,7 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
 
 
 def unpack_annotation(
-    given_annotation: Any, annotated_list: List[type] = []
+    given_annotation: Any, annotated_list: Optional[List[type]] = None
 ) -> Tuple[List[type], list]:
     """Unpacks the given parameter annotation into its components.
 
@@ -3416,6 +3477,9 @@ def unpack_annotation(
         and a list of unpacked literal arguments.
 
     """
+    if annotated_list is None:
+        annotated_list = []
+
     type_ret = []
     literal_ret = []
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.

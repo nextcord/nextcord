@@ -1248,6 +1248,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param execution: The object containing the execution information.
     :type execution: :class:`AutoModerationActionExecution`
 
+.. function:: on_guild_audit_log_entry_create(entry)
+
+    Called when an :class:`AuditLogEntry` is created.
+
+    .. versionadded:: 2.4
+
+    :param entry: The entry that was created.
+    :type entry: :class:`AuditLogEntry`
+
 .. _discord-api-utils:
 
 Utility Functions
@@ -2847,6 +2856,12 @@ of :class:`enum.Enum`.
 
         Represents a sticker with a lottie image.
 
+    .. attribute:: gif
+
+        Represents a sticker with a GIF image.
+
+        .. versionadded:: 2.4
+
 .. class:: InviteTarget
 
     Represents the invite type for voice channel invites.
@@ -3082,6 +3097,50 @@ of :class:`enum.Enum`.
     .. attribute:: creation_date
 
         Sort forum posts by their creation date.
+
+.. class:: ForumLayoutType
+
+    The default layout type used to display posts in a :class:`ForumChannel`.
+
+    .. versionadded:: 2.4
+
+    .. attribute:: not_set
+
+        No default has been set by channel administrators.
+
+    .. attribute:: list
+
+        Display posts as a list, more text focused.
+
+    .. attribute:: gallery
+
+        Display posts as a collection of posts with images, this is more image focused.
+
+.. class:: RoleConnectionMetadataType
+
+    Represents the type of comparison a role connection metadata record will use.
+
+    .. versionadded:: 2.4
+
+    .. attribute:: integer_less_than_or_equal
+    .. attribute:: datetime_less_than_or_equal
+
+        The metadata value must be less than or equal to the guild's configured value.
+
+    .. attribute:: integer_greater_than_or_equal
+    .. attribute:: datetime_greater_than_or_equal
+
+        The metadata value must be greater than or equal to the guild's configured value.
+
+    .. attribute:: integer_equal
+    .. attribute:: boolean_equal
+
+        The metadata value must be equal to the guild's configured value.
+
+    .. attribute:: integer_not_equal
+    .. attribute:: boolean_not_equal
+
+        The metadata value must be not equal to the guild's configured value.
 
 
 Async Iterator
@@ -4708,6 +4767,15 @@ ForumTag
 
 .. autoclass:: ForumTag
     :members:
+
+RoleConnectionMetadata
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: RoleConnectionMetadata
+
+.. autoclass:: RoleConnectionMetadata
+    :members:
+
 
 .. _discord_ui_kit:
 

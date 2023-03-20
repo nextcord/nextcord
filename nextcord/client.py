@@ -716,7 +716,6 @@ class Client:
                 aiohttp.ClientError,
                 asyncio.TimeoutError,
             ) as exc:
-
                 self.dispatch("disconnect")
                 if not reconnect:
                     await self.close()
@@ -2567,6 +2566,7 @@ class Client:
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         force_global: bool = False,
     ):
         """Creates a User context command from the decorated function.
@@ -2589,6 +2589,10 @@ class Client:
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -2601,6 +2605,7 @@ class Client:
                 guild_ids=guild_ids,
                 dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
+                nsfw=nsfw,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2616,6 +2621,7 @@ class Client:
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         force_global: bool = False,
     ):
         """Creates a Message context command from the decorated function.
@@ -2638,6 +2644,10 @@ class Client:
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -2666,6 +2676,7 @@ class Client:
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
+        nsfw: bool = False,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
     ):
@@ -2695,6 +2706,10 @@ class Client:
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -2709,6 +2724,7 @@ class Client:
                 guild_ids=guild_ids,
                 dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
+                nsfw=nsfw,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
