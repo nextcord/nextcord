@@ -1720,10 +1720,10 @@ class SlashCommandMixin(CallbackMixin):
 
     @property
     def options(self) -> Dict[str, SlashCommandOption]:
-        """Returns the options of the command.
+        """Dict[:class:`str`, :class:`SlashCommandOption`]: Returns the options of the command.
 
-        .. versionchanged:: 2.3
-            ``.options`` is now a read-only property.
+        .. versionchanged:: 2.5
+            This is now a read-only property.
         """
         return self._options
 
