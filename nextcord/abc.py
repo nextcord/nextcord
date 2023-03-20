@@ -1229,6 +1229,7 @@ class Messageable:
     - :class:`~nextcord.DMChannel`
     - :class:`~nextcord.GroupChannel`
     - :class:`~nextcord.VoiceChannel`
+    - :class:`~nextcord.StageChannel`
     - :class:`~nextcord.User`
     - :class:`~nextcord.Member`
     - :class:`~nextcord.ext.commands.Context`

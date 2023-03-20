@@ -2017,7 +2017,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         return Webhook.from_state(data, state=self._state)
 
 
-class StageChannel(VocalGuildChannel):
+class StageChannel(VocalGuildChannel, abc.Messageable):
     """Represents a Discord guild stage channel.
 
     .. versionadded:: 1.7
