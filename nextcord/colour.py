@@ -283,7 +283,7 @@ class Colour:
         .. versionadded:: 1.5
 
         .. versionchanged:: 2.5
-            Colour was replaced by the new dark theme colour on the UI. 
+            Colour was replaced by the new dark theme colour on the UI.
         """
         return cls(0x313338)
 
