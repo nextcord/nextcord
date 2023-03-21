@@ -230,7 +230,7 @@ class Member(abc.Messageable, _UserTag):
     flags: :class:`MemberFlags`
         The flags applied on this user.
 
-        .. versionadded:: 2.4
+        .. versionadded:: 2.5
     """
 
     __slots__ = (
