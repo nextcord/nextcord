@@ -1272,7 +1272,7 @@ class MemberFlags(BaseFlags):
             to be, for example, constructed as a dict or a list of pairs.
             Note that aliases are not shown.
 
-    .. versionadded:: 2.4
+    .. versionadded:: 2.5
     """
 
     @flag_value
