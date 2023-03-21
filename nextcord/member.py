@@ -756,7 +756,7 @@ class Member(abc.Messageable, _UserTag):
             The flags applied on this user.
             Currently only :attr:`MemberFlags.bypasses_verification` can be applied.
 
-            .. versionadded:: 2.4
+            .. versionadded:: 2.5
 
         Raises
         ------
