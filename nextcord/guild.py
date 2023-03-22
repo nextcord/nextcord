@@ -1337,6 +1337,11 @@ class Guild(Hashable):
         position: int = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
         category: Optional[CategoryChannel] = None,
+        bitrate: Optional[int] = None,
+        user_limit: Optional[int] = None,
+        nsfw: Optional[bool] = None,
+        rtc_region: Optional[VoiceRegion] = MISSING,
+        video_quality_mode: Optional[VideoQualityMode] = None,
         reason: Optional[str] = None,
     ) -> StageChannel:
         """|coro|
@@ -1362,6 +1367,27 @@ class Guild(Hashable):
         position: :class:`int`
             The position in the channel list. This is a number that starts
             at 0. e.g. the top channel is position 0.
+        bitrate: Optional[:class:`int`]
+            The channel's preferred audio bitrate in bits per second.
+
+            .. versionadded:: 2.5
+        user_limit: :class:`int`
+            The channel's limit for number of members that can be in a voice channel.
+
+            .. versionadded:: 2.5
+        rtc_region: Optional[:class:`VoiceRegion`]
+            The region for the voice channel's voice communication.
+            A value of ``None`` indicates automatic voice region detection.
+
+            .. versionadded:: 2.5
+        nsfw: :class:`bool`
+            To mark the channel as NSFW or not.
+
+            .. versionadded:: 2.5
+        video_quality_mode: :class:`VideoQualityMode`
+            The camera video quality for the voice channel's participants.
+
+            .. versionadded:: 2.5
         reason: Optional[:class:`str`]
             The reason for creating this channel. Shows up on the audit log.
 
@@ -1385,6 +1411,21 @@ class Guild(Hashable):
         }
         if position is not MISSING:
             options["position"] = position
+
+        if bitrate is not None:
+            options["bitrate"] = bitrate
+
+        if user_limit is not None:
+            options["user_limit"] = user_limit
+
+        if rtc_region is not MISSING:
+            options["rtc_region"] = None if rtc_region is None else str(rtc_region)
+
+        if nsfw is not None:
+            options["nsfw"] = nsfw
+
+        if video_quality_mode is not None:
+            options["video_quality_mode"] = video_quality_mode.value
 
         data = await self._create_channel(
             name,
