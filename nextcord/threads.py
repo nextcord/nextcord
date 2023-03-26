@@ -178,7 +178,7 @@ class Thread(Messageable, Hashable, PinsMixin):
             self.me = ThreadMember(self, member)
 
         self.applied_tag_ids: List[int] = [
-            int(tag_id) for tag_id in data.get("applied_thread_tags", [])
+            int(tag_id) for tag_id in data.get("applied_tags", [])
         ]
 
     def _unroll_metadata(self, data: ThreadMetadata) -> None:
