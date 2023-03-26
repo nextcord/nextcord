@@ -552,8 +552,7 @@ class ClientCog:
     async def cog_application_command_error(
         self, interaction: Interaction, error: ApplicationError
     ) -> None:
-        """A special method that is called whenever an error
-        is dispatched inside this cog.
+        """A special method that is called whenever an error is dispatched inside this cog.
 
         This is similar to :func:`.on_application_command_error` except only applying
         to the commands inside this cog.
