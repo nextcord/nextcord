@@ -559,6 +559,8 @@ class ClientCog:
 
         This **must** be a coroutine.
 
+        .. versionadded:: 2.5
+
         Parameters
         ----------
         interaction: :class:`.Interaction`
