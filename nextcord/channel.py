@@ -956,7 +956,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
             "default_thread_slowmode_delay"
         )
         self._available_tags: Dict[int, ForumTag] = {
-            int(data["id"]): ForumTag.from_data(tag) for tag in data.get("available_tags", [])
+            int(tag["id"]): ForumTag.from_data(tag) for tag in data.get("available_tags", [])
         }
 
         self.default_reaction: Optional[PartialEmoji]
