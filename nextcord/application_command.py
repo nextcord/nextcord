@@ -518,7 +518,7 @@ class ClientCog:
     def has_application_command_error_handler(self) -> bool:
         """:class:`bool`: Checks whether the cog has an error handler for application commands.
 
-        .. versionadded:: 2.4
+        .. versionadded:: 2.5
         """
         return not hasattr(self.cog_application_command_error.__func__, "__cog_special_method__")
 
