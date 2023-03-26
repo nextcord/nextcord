@@ -3042,7 +3042,7 @@ class ForumTag:
     @property
     def payload(self) -> ForumTagPayload:
         data: ForumTagPayload = {
-            "id": str(self.id) if self.id is not None else None,
+            "id": str(self.id),
             "name": self.name,
             "moderated": self.moderated,
         }
