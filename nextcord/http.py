@@ -454,7 +454,7 @@ class HTTPClient:
 
         return data
 
-    def set_client_secret(self, client_secret: str):
+    def set_client_secret(self, client_secret: str) -> None:
         self.client_secret = client_secret
 
     def logout(self) -> Response[None]:

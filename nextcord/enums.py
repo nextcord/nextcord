@@ -626,6 +626,7 @@ class Locale(StrEnum):
 
 class OAuth2Scopes(StrEnum):
     """List of OAuth2 Scopes that Discord supports, mapped from a code-traceable name to the string Discord expects."""
+
     # https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-scopes
     activities_read = "activities.read"
     """Requires Discord approval."""

@@ -279,7 +279,7 @@ class Client:
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         default_guild_ids: Optional[List[int]] = None,
-        start_oauth_endpoint: bool = False
+        start_oauth_endpoint: bool = False,
     ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
@@ -554,7 +554,9 @@ class Client:
         else:
             self._schedule_event(coro, method, *args, **kwargs)
 
-    async def _client_oauth2_endpoint_override(self, redirect_uri, code: str, state: Optional[str]):
+    async def _client_oauth2_endpoint_override(
+        self, redirect_uri, code: str, state: Optional[str]
+    ) -> None:
         self.dispatch("oauth", redirect_uri, code, state)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
@@ -814,7 +816,9 @@ class Client:
         self._connection.clear()
         self.http.recreate()
 
-    async def start(self, token: str, *, reconnect: bool = True, client_secret: Optional[str] = None) -> None:
+    async def start(
+        self, token: str, *, reconnect: bool = True, client_secret: Optional[str] = None
+    ) -> None:
         """|coro|
 
         A shorthand coroutine for :meth:`login` + :meth:`connect`.
@@ -827,7 +831,9 @@ class Client:
         await self.login(token)
         if self._oauth_on_start:
             self.http.set_client_secret(client_secret)
-            self._oauth_site = await self._oauth.start(client_id=self.user.id, client_secret=client_secret)
+            self._oauth_site = await self._oauth.start(
+                client_id=self.user.id, client_secret=client_secret
+            )
 
         await self.connect(reconnect=reconnect)
 
@@ -2472,13 +2478,17 @@ class Client:
 
         return ret
 
-    async def on_oauth(self, redirect_uri, code: str, state: Optional[str]):
+    async def on_oauth(self, redirect_uri, code: str, state: Optional[str]) -> None:
         _log.critical("WE GOT IT IN CLIENT: %s %s %s", redirect_uri, code, state)
         _log.warning(
             "Preflight checklist:\n  CLIENT_ID: %s  \n  CLIENT_SECRET: %s\n  CODE: %s \n  URI: %s",
-            self.user.id, self.http.client_secret, code, redirect_uri
+            self.user.id,
+            self.http.client_secret,
+            code,
+            redirect_uri,
         )
         from aiohttp import ClientSession
+
         session: ClientSession = self.http._HTTPClient__session
         _log.critical("Attempting to grab token via code.")
         async with session.request(
@@ -2489,9 +2499,9 @@ class Client:
                 "client_secret": self.http.client_secret,
                 "grant_type": "authorization_code",
                 "code": code,
-                "redirect_uri": redirect_uri
+                "redirect_uri": redirect_uri,
             },
-            headers={'Content-Type': 'application/x-www-form-urlencoded'}
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         ) as token_response:
             # TODO: Add support for the Implicit and Client Credentials grant types.
             # TODO: Also add in support for refreshing tokens. Maybe automatic?
@@ -2503,21 +2513,23 @@ class Client:
         async with session.request(
             method="GET",
             url="https://discord.com/api/v10/users/@me/connections",
-            headers={"Authorization": f"{token_json['token_type']} {token_json['access_token']}"}
+            headers={"Authorization": f"{token_json['token_type']} {token_json['access_token']}"},
         ) as connections_response:
             _log.warning("CONNECTIONS RESPONSE: %s", connections_response)
             connections_json = await connections_response.json()
-            _log.warning("JSON Response: %s\nHeaders: %s", connections_json, connections_response.headers)
+            _log.warning(
+                "JSON Response: %s\nHeaders: %s", connections_json, connections_response.headers
+            )
             _log.warning(
                 "\nList of found connection types for OAuth'd user:\n    %s",
-                '\n    '.join([f'{conn["type"]} {conn["id"]}' for conn in connections_json])
+                "\n    ".join([f'{conn["type"]} {conn["id"]}' for conn in connections_json]),
             )
 
         _log.critical("Attempting to get the current user.")
         async with session.request(
             method="GET",
             url="https://discord.com/api/v10/users/@me",
-            headers={"Authorization": f"{token_json['token_type']} {token_json['access_token']}"}
+            headers={"Authorization": f"{token_json['token_type']} {token_json['access_token']}"},
         ) as user_response:
             _log.warning("CONNECTIONS RESPONSE: %s", user_response)
             user_json = await user_response.json()
