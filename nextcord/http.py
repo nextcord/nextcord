@@ -201,6 +201,7 @@ class HTTPClient:
         self._global_over: asyncio.Event = asyncio.Event()
         self._global_over.set()
         self.token: Optional[str] = None
+        self.client_secret: Optional[str] = None
         self.bot_token: bool = False
         self.proxy: Optional[str] = proxy
         self.proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
@@ -452,6 +453,9 @@ class HTTPClient:
             raise
 
         return data
+
+    def set_client_secret(self, client_secret: str):
+        self.client_secret = client_secret
 
     def logout(self) -> Response[None]:
         return self.request(Route("POST", "/auth/logout"))

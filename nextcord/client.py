@@ -47,6 +47,7 @@ from .interactions import Interaction
 from .invite import Invite
 from .iterators import GuildIterator
 from .mentions import AllowedMentions
+from .oauth import OAuth2Endpoint
 from .object import Object
 from .stage_instance import StageInstance
 from .state import ConnectionState
@@ -278,6 +279,7 @@ class Client:
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         default_guild_ids: Optional[List[int]] = None,
+        start_oauth_endpoint: bool = False
     ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
@@ -330,6 +332,11 @@ class Client:
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
 
         self._default_guild_ids = default_guild_ids or []
+
+        self._oauth = OAuth2Endpoint()
+        self._oauth_on_start = start_oauth_endpoint
+        self._oauth.on_oauth_endpoint = self._client_oauth2_endpoint_override
+        self._oauth_site = None
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -546,6 +553,9 @@ class Client:
             pass
         else:
             self._schedule_event(coro, method, *args, **kwargs)
+
+    async def _client_oauth2_endpoint_override(self, redirect_uri, code: str, state: Optional[str]):
+        self.dispatch("oauth", redirect_uri, code, state)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
         """|coro|
@@ -786,6 +796,10 @@ class Client:
             await self.ws.close(code=1000)
 
         await self.http.close()
+
+        if self._oauth_site:
+            await self._oauth_site.stop()
+
         self._ready.clear()
 
     def clear(self) -> None:
@@ -800,7 +814,7 @@ class Client:
         self._connection.clear()
         self.http.recreate()
 
-    async def start(self, token: str, *, reconnect: bool = True) -> None:
+    async def start(self, token: str, *, reconnect: bool = True, client_secret: Optional[str] = None) -> None:
         """|coro|
 
         A shorthand coroutine for :meth:`login` + :meth:`connect`.
@@ -811,6 +825,10 @@ class Client:
             An unexpected keyword argument was received.
         """
         await self.login(token)
+        if self._oauth_on_start:
+            self.http.set_client_secret(client_secret)
+            self._oauth_site = await self._oauth.start(client_id=self.user.id, client_secret=client_secret)
+
         await self.connect(reconnect=reconnect)
 
     def run(self, *args: Any, **kwargs: Any) -> None:
@@ -2453,6 +2471,59 @@ class Client:
                     ret[guild_id].add(command)
 
         return ret
+
+    async def on_oauth(self, redirect_uri, code: str, state: Optional[str]):
+        _log.critical("WE GOT IT IN CLIENT: %s %s %s", redirect_uri, code, state)
+        _log.warning(
+            "Preflight checklist:\n  CLIENT_ID: %s  \n  CLIENT_SECRET: %s\n  CODE: %s \n  URI: %s",
+            self.user.id, self.http.client_secret, code, redirect_uri
+        )
+        from aiohttp import ClientSession
+        session: ClientSession = self.http._HTTPClient__session
+        _log.critical("Attempting to grab token via code.")
+        async with session.request(
+            method="POST",
+            url="https://discord.com/api/v10/oauth2/token",
+            data={
+                "client_id": 209714688169213952,  # TODO: Allow custom supplied ID and self.user.id, Bot IDs don't always match Client ID's
+                "client_secret": self.http.client_secret,
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect_uri
+            },
+            headers={'Content-Type': 'application/x-www-form-urlencoded'}
+        ) as token_response:
+            # TODO: Add support for the Implicit and Client Credentials grant types.
+            # TODO: Also add in support for refreshing tokens. Maybe automatic?
+            _log.warning("TOKEN RESPONSE: %s", token_response)
+            token_json = await token_response.json()
+            _log.warning("JSON Response: %s\nHeaders: %s", token_json, token_response.headers)
+
+        _log.critical("Attempting to grab connections.")
+        async with session.request(
+            method="GET",
+            url="https://discord.com/api/v10/users/@me/connections",
+            headers={"Authorization": f"{token_json['token_type']} {token_json['access_token']}"}
+        ) as connections_response:
+            _log.warning("CONNECTIONS RESPONSE: %s", connections_response)
+            connections_json = await connections_response.json()
+            _log.warning("JSON Response: %s\nHeaders: %s", connections_json, connections_response.headers)
+            _log.warning(
+                "\nList of found connection types for OAuth'd user:\n    %s",
+                '\n    '.join([f'{conn["type"]} {conn["id"]}' for conn in connections_json])
+            )
+
+        _log.critical("Attempting to get the current user.")
+        async with session.request(
+            method="GET",
+            url="https://discord.com/api/v10/users/@me",
+            headers={"Authorization": f"{token_json['token_type']} {token_json['access_token']}"}
+        ) as user_response:
+            _log.warning("CONNECTIONS RESPONSE: %s", user_response)
+            user_json = await user_response.json()
+            _log.warning("JSON Response: %s\nHeaders: %s", user_json, user_response.headers)
+
+        _log.critical("DONE.")
 
     async def on_connect(self) -> None:
         self.add_all_application_commands()

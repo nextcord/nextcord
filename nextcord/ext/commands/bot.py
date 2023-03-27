@@ -1659,6 +1659,7 @@ class Bot(BotBase, nextcord.Client):
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         default_guild_ids: Optional[List[int]] = None,
+        start_oauth_endpoint: bool = False,
         owner_id: Optional[int] = None,
         owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
@@ -1691,6 +1692,7 @@ class Bot(BotBase, nextcord.Client):
             rollout_update_known=rollout_update_known,
             rollout_all_guilds=rollout_all_guilds,
             default_guild_ids=default_guild_ids,
+            start_oauth_endpoint=start_oauth_endpoint,
         )
 
         BotBase.__init__(

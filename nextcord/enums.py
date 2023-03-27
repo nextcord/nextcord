@@ -29,6 +29,7 @@ __all__ = (
     "StickerFormatType",
     "InviteTarget",
     "Locale",
+    "OAuth2Scopes",
     "VideoQualityMode",
     "ComponentType",
     "ButtonStyle",
@@ -621,6 +622,35 @@ class Locale(StrEnum):
     """Chinese, Taiwan | 繁體中文"""
     ko = "ko"
     """Korean | 한국어"""
+
+
+class OAuth2Scopes(StrEnum):
+    """List of OAuth2 Scopes that Discord supports, mapped from a code-traceable name to the string Discord expects."""
+    # https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-scopes
+    activities_read = "activities.read"
+    """Requires Discord approval."""
+    activities_write = "activities.write"
+    """Requires Discord approval."""
+    applications_builds_read = "applications.builds.read"
+    # TODO: Fill in the rest.
+    bot = "bot"
+    connections = "connections"
+    email = "email"
+    gdm_join = "gdm.join"
+    """Allows your bot to put user(s) in a Group DM. Does NOT allow the bot into the Group DM."""
+    guilds = "guilds"
+    guilds_join = "guilds.join"
+    guilds_members_read = "guilds.members.read"
+    identify = "identify"
+    messages_read = "messages.read"
+    """For local RPC server API access."""
+    relationships_read = "relationships.read"
+    """Requires Discord approval."""
+    # TODO: This is a little weird, swapping . for _ isn't always going to be perfect since they also
+    #  use _ legitimately. Might need to change strats, but what's the likelihood of
+    #  both "role_conn.write" and "roll.conn_write" or some variation of that existing?
+    role_connections_write = "role_connections.write"
+    """THIS IS WHY THIS FEATURE EXISTS IN NC!"""  # TODO: Write an actual description.
 
 
 class VideoQualityMode(IntEnum):
