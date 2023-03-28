@@ -830,7 +830,9 @@ class Client:
         """
         await self.login(token)
         if self._oauth_on_start:
-            self.http.set_client_secret(client_secret)
+            if client_secret is not None:
+                self.http.set_client_secret(client_secret)
+
             self._oauth_site = await self._oauth.start()
 
         await self.connect(reconnect=reconnect)

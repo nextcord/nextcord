@@ -4,6 +4,7 @@ import asyncio
 import logging
 
 from aiohttp import web
+from aiohttp.typedefs import Handler, StreamResponse
 
 _log = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ __all__ = (
 )
 
 
-OAUTH_RESPONSE_TEMPLATE = """
+ROLE_CONN_RESPONSE_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -36,32 +37,14 @@ class RoleConnVerifyEndpoint:
 
     def middleware(self, route: str):
         @web.middleware
-        async def role_conn_endpoint_middleware(request: web.Request, handler):
+        async def role_conn_endpoint_middleware(request: web.Request, handler: Handler) -> StreamResponse:
             if request.path.startswith(route) and request.method == "GET":
                 _log.debug("Received oauth on url %s", request.url)
-                # if request.rel_url.query.get("code"):
-                #     _log.debug("Query has code, executing on_oauth_endpoint and sending positive response.")
-                #     # TODO: Should this made into a task or try/except so errors don't affect the response, or
-                #     #  should erroring make a 50X error appear like it does currently?
-                #     await self.on_role_conn_verify_endpoint(
-                #         # request.url.with_query(None).human_repr(),
-                #         # request.rel_url.query["code"],
-                #         # request.rel_url.query.get("state", None)
-                #     )
-                #     # TODO: Look into a better way of handling this, allowing custom responses? Maybe put them inside
-                #     #  __init__ as kwargs?
-                #     return web.Response(
-                #         body=OAUTH_RESPONSE_TEMPLATE.format(
-                #             "OAuth Accepted.", "<h1>👍 OAuth Received 👍</h1><h1>Close Whenever</h1>"
-                #         ), content_type="text/html"
-                #     )
-                # else:
-                #     _log.debug("Query doesn't have code, sending negative response.")
-                #     return web.Response(
-                #         body=OAUTH_RESPONSE_TEMPLATE.format(
-                #             "OAuth Accepted.", "<h1>👎 No Oauth 👎</h1><h1>Close Whenever</h1>"
-                #         ), content_type="text/html"
-                #     )
+                return web.Response(
+                    body=ROLE_CONN_RESPONSE_TEMPLATE.format(
+                        "Nothing Accepted.", "<h1>👍 Nothing Received 👍</h1><h1>Close Whenever</h1>"
+                    ), content_type="text/html"
+                )
             else:
                 _log.debug("Ignoring request %s %s", request.method, request.url)
                 resp = await handler(request)
@@ -70,7 +53,6 @@ class RoleConnVerifyEndpoint:
         return role_conn_endpoint_middleware
 
     async def on_role_conn_verify_endpoint(self) -> None:
-        # _log.critical("%s %s, %s", redirect_uri, code, state)
         pass
 
     async def start(

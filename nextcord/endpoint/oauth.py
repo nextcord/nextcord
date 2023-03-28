@@ -5,6 +5,7 @@ import logging
 from typing import List, Optional
 
 from aiohttp import web
+from aiohttp.typedefs import Handler, StreamResponse
 from yarl import URL
 
 from ..enums import OAuth2Scopes
@@ -40,7 +41,7 @@ class OAuth2Endpoint:
 
     def middleware(self, route: str):
         @web.middleware
-        async def oauth_endpoint_middleware(request: web.Request, handler):
+        async def oauth_endpoint_middleware(request: web.Request, handler: Handler) -> StreamResponse:
             if request.path.startswith(route) and request.method == "GET":
                 _log.debug("Received oauth on url %s", request.url)
                 if request.rel_url.query.get("code"):
