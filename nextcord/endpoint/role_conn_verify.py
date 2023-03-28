@@ -82,5 +82,5 @@ def role_conn_metadata_generator(
                 key = key.value
 
             ret["description_localizations"][key] = value
-    cast(ApplicationRoleConnectionMetadata, ret)  # Pyright plz.
+    ret = cast(ApplicationRoleConnectionMetadata, ret)  # Pyright plz.
     return ret
