@@ -5,7 +5,8 @@ import logging
 from typing import List, Optional
 
 from aiohttp import web
-from aiohttp.typedefs import Handler, StreamResponse
+from aiohttp.typedefs import Handler
+from aiohttp.web import StreamResponse
 from yarl import URL
 
 from ..enums import OAuth2Scopes

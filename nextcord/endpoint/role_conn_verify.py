@@ -4,7 +4,8 @@ import asyncio
 import logging
 
 from aiohttp import web
-from aiohttp.typedefs import Handler, StreamResponse
+from aiohttp.typedefs import Handler
+from aiohttp.web import StreamResponse
 
 _log = logging.getLogger(__name__)
 
