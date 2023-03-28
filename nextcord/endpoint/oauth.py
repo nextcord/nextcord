@@ -41,7 +41,9 @@ class OAuth2Endpoint:
 
     def middleware(self, route: str):
         @web.middleware
-        async def oauth_endpoint_middleware(request: web.Request, handler: Handler) -> StreamResponse:
+        async def oauth_endpoint_middleware(
+            request: web.Request, handler: Handler
+        ) -> StreamResponse:
             if request.path.startswith(route) and request.method == "GET":
                 _log.debug("Received oauth on url %s", request.url)
                 if request.rel_url.query.get("code"):

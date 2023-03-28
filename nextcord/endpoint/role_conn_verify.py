@@ -37,13 +37,16 @@ class RoleConnVerifyEndpoint:
 
     def middleware(self, route: str):
         @web.middleware
-        async def role_conn_endpoint_middleware(request: web.Request, handler: Handler) -> StreamResponse:
+        async def role_conn_endpoint_middleware(
+            request: web.Request, handler: Handler
+        ) -> StreamResponse:
             if request.path.startswith(route) and request.method == "GET":
                 _log.debug("Received oauth on url %s", request.url)
                 return web.Response(
                     body=ROLE_CONN_RESPONSE_TEMPLATE.format(
                         "Nothing Accepted.", "<h1>👍 Nothing Received 👍</h1><h1>Close Whenever</h1>"
-                    ), content_type="text/html"
+                    ),
+                    content_type="text/html",
                 )
             else:
                 _log.debug("Ignoring request %s %s", request.method, request.url)
