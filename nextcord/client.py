@@ -2476,34 +2476,6 @@ class Client:
 
         return ret
 
-    # async def on_oauth(self, redirect_uri, code: str, state: Optional[str]):
-    #     _log.critical("WE GOT IT IN CLIENT: %s %s %s", redirect_uri, code, state)
-    #     _log.warning(
-    #         "Preflight checklist:\n  CLIENT_ID: %s  \n  CLIENT_SECRET: %s\n  CODE: %s \n  URI: %s",
-    #         self.user.id, self.http.client_secret, code, redirect_uri
-    #     )
-    #     # TODO: Add support for the Implicit and Client Credentials grant types.
-    #     # TODO: Also add in support for refreshing tokens. Maybe automatic?
-    #
-    #     token_json = await self.http.get_oauth_access_token(
-    #         209714688169213952,
-    #         code,
-    #         redirect_uri
-    #     )
-    #     _log.warning("TOKEN JSON: %s", token_json)
-    #
-    #     user_json = await self.http.get_current_user(token_json["token_type"], token_json["access_token"])
-    #     _log.warning("USER JSON: %s", user_json)
-    #
-    #     connections_json = await self.http.get_user_connections(token_json["token_type"], token_json["access_token"])
-    #     _log.warning(connections_json)
-    #     _log.warning(
-    #         "\nList of found connection types for OAuth'd user %s:\n    %s", user_json["username"],
-    #         '\n    '.join([f'{conn["type"]} {conn["id"]}' for conn in connections_json])
-    #     )
-    #
-    #     _log.critical("DONE.")
-
     async def on_connect(self) -> None:
         self.add_all_application_commands()
         await self.sync_application_commands(
