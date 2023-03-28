@@ -279,7 +279,7 @@ class Client:
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         default_guild_ids: Optional[List[int]] = None,
-        start_oauth_endpoint: bool = False
+        start_oauth_endpoint: bool = False,
     ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
@@ -554,7 +554,9 @@ class Client:
         else:
             self._schedule_event(coro, method, *args, **kwargs)
 
-    async def _client_oauth2_endpoint_override(self, redirect_uri, code: str, state: Optional[str]):
+    async def _client_oauth2_endpoint_override(
+        self, redirect_uri, code: str, state: Optional[str]
+    ) -> None:
         self.dispatch("oauth", redirect_uri, code, state)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
@@ -814,7 +816,9 @@ class Client:
         self._connection.clear()
         self.http.recreate()
 
-    async def start(self, token: str, *, reconnect: bool = True, client_secret: Optional[str] = None) -> None:
+    async def start(
+        self, token: str, *, reconnect: bool = True, client_secret: Optional[str] = None
+    ) -> None:
         """|coro|
 
         A shorthand coroutine for :meth:`login` + :meth:`connect`.

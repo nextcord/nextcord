@@ -498,7 +498,7 @@ class HTTPClient:
 
         return data
 
-    def set_client_secret(self, client_secret: str):
+    def set_client_secret(self, client_secret: str) -> None:
         self.client_secret = client_secret
 
     async def get_oauth_access_token(

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from aiohttp import web
-from typing import List, Optional
-from yarl import URL
-
 import asyncio
 import logging
+from typing import List, Optional
+
+from aiohttp import web
+from yarl import URL
 
 from ..enums import OAuth2Scopes
-
 
 _log = logging.getLogger(__name__)
 
@@ -17,7 +16,6 @@ __all__ = (
     "OAuth2Endpoint",
     "oauth_url_request_generator",
 )
-
 
 
 OAUTH_RESPONSE_TEMPLATE = """
@@ -36,9 +34,8 @@ OAUTH_RESPONSE_TEMPLATE = """
 """
 
 
-
 class OAuth2Endpoint:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def middleware(self, route: str):
@@ -76,7 +73,7 @@ class OAuth2Endpoint:
 
         return oauth_endpoint_middleware
 
-    async def on_oauth_endpoint(self, redirect_uri: str, code: str, state: Optional[str]):
+    async def on_oauth_endpoint(self, redirect_uri: str, code: str, state: Optional[str]) -> None:
         _log.critical("%s %s, %s", redirect_uri, code, state)
 
     async def start(
@@ -117,18 +114,20 @@ class OAuth2Endpoint:
 
 
 def oauth_url_request_generator(
-        redirect_uri: str,
-        client_id: int,
-        scopes: List[OAuth2Scopes],
-        state: str,
-        base_url: str = "https://discord.com/api/oauth2/authorize",
+    redirect_uri: str,
+    client_id: int,
+    scopes: List[OAuth2Scopes],
+    state: str,
+    base_url: str = "https://discord.com/api/oauth2/authorize",
 ):
     ret = URL(base_url)
     ret = ret.with_query(
         {
-            "redirect_uri": redirect_uri, "client_id": str(client_id),
+            "redirect_uri": redirect_uri,
+            "client_id": str(client_id),
             "scope": " ".join([scope.value for scope in scopes]),
-            "state": state, "response_type": "code"
+            "state": state,
+            "response_type": "code",
         }
     )
     return ret
