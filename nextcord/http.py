@@ -2751,3 +2751,30 @@ class HTTPClient:
             application_id=application_id,
         )
         return self.request(r, json=data, reason=reason)
+
+    def get_user_role_connection(
+        self,
+        application_id: Snowflake,
+        auth_type: Optional[str] = "Bot",
+        auth_token: Optional[str] = None,
+    ) -> Response[role_connections.ApplicationRoleConnection]:
+        r = Route(
+            "GET",
+            "/users/@me/applications/{application_id}/role-connection",
+            application_id=application_id
+        )
+        return self.request(r, auth_type=auth_type, auth_token=auth_token)
+
+    def update_user_role_connection(
+        self,
+        application_id: Snowflake,
+        data: Dict[str, str],
+        auth_type: Optional[str] = "Bot",
+        auth_token: Optional[str] = None,
+    ) -> Response[Dict[str, str]]:
+        r = Route(
+            "PUT",
+            "/users/@me/applications/{application_id}/role-connection",
+            application_id=application_id
+        )
+        return self.request(r, json=data, auth_type=auth_type, auth_token=auth_token)

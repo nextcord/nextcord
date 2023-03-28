@@ -1,11 +1,16 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 
 from aiohttp import web
 from aiohttp.typedefs import Handler
 from aiohttp.web import StreamResponse
+from typing import Dict, Optional, Union
+
+from .base import BaseEndpoint, BaseMiddleware
+
+from ..enums import ApplicationRoleConnectionMetadataType, Locale
+from ..types.role_connections import ApplicationRoleConnectionMetadata
 
 _log = logging.getLogger(__name__)
 
@@ -32,67 +37,48 @@ ROLE_CONN_RESPONSE_TEMPLATE = """
 """
 
 
-class RoleConnVerifyEndpoint:
-    def __init__(self) -> None:
-        pass
+class RoleConnVerifyEndpoint(BaseMiddleware, BaseEndpoint):
+    def __init__(self):
+        BaseMiddleware.__init__(self, route="/endpoint/verify-user")
+        BaseEndpoint.__init__(self, [self.middleware])
 
-    def middleware(self, route: str):
-        @web.middleware
-        async def role_conn_endpoint_middleware(
-            request: web.Request, handler: Handler
-        ) -> StreamResponse:
-            if request.path.startswith(route) and request.method == "GET":
-                _log.debug("Received oauth on url %s", request.url)
-                return web.Response(
-                    body=ROLE_CONN_RESPONSE_TEMPLATE.format(
-                        "Nothing Accepted.", "<h1>👍 Nothing Received 👍</h1><h1>Close Whenever</h1>"
-                    ),
-                    content_type="text/html",
-                )
-            else:
-                _log.debug("Ignoring request %s %s", request.method, request.url)
-                resp = await handler(request)
-                return resp
-
-        return role_conn_endpoint_middleware
-
-    async def on_role_conn_verify_endpoint(self) -> None:
-        pass
-
-    async def start(
-        self, *, route: str = "/endpoint/oauth2", host: str = "0.0.0.0", port: int = 8080
-    ) -> web.TCPSite:
-        app = web.Application(middlewares=[self.middleware(route)])
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, host, port)
-        await site.start()
-        _log.info("%s listening on %s on route %s", self.__class__.__name__, site.name, route)
-        return site
-
-    def run(
-        self,
-        *,
-        route: str = "/endpoint/oauth2",
-        host: str = "0.0.0.0",
-        port: int = 8080,
-        loop: asyncio.AbstractEventLoop | None = None,
-    ) -> None:
-        loop = loop or asyncio.new_event_loop()
-        task = loop.create_task(self.start(route=route, host=host, port=port))
-        try:
-            loop.run_forever()
-        except KeyboardInterrupt:
-            _log.debug("KeyboardInterrupt encountered, stopping loop.")
-            if task.done():
-                site = task.result()
-                loop.run_until_complete(site.stop())
-            else:
-                task.cancel()
-            loop.run_until_complete(asyncio.sleep(0.25))
+    async def on_middleware_match(self, request: web.Request, handler: Handler) -> StreamResponse:
+        return web.Response(
+            body=ROLE_CONN_RESPONSE_TEMPLATE.format(
+                "Nothing Accepted.", "<h1>👍 Nothing received but this works! 👍</h1><h1>Close Whenever</h1>"
+            ),
+            content_type="text/html",
+        )
 
 
-def role_conn_metadata_generator(arg1) -> dict:
-    ret = {}
+def role_conn_metadata_generator(
+        value_type: Union[ApplicationRoleConnectionMetadataType, int],
+        key: str,
+        name: str,
+        description: str,
+        name_localizations: Optional[Dict[Union[str, Locale], str]] = None,
+        description_localizations: Optional[Dict[Union[str, Locale], str]] = None,
+) -> ApplicationRoleConnectionMetadata:
+    ret = {
+        "type": value_type.value if isinstance(value_type, ApplicationRoleConnectionMetadataType) else value_type,
+        "key": key,
+        "name": name,
+        "description": description,
+    }
+    if name_localizations is not None:
+        ret["name_localizations"] = {}
+        for key, value in name_localizations.items():
+            if isinstance(key, Locale):
+                key = key.value
+
+            ret["name_localizations"][key] = value
+
+    if description_localizations is not None:
+        ret["description_localizations"] = {}
+        for key, value in name_localizations.items():
+            if isinstance(key, Locale):
+                key = key.value
+
+            ret["description_localizations"][key] = value
 
     return ret

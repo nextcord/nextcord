@@ -16,3 +16,9 @@ class ApplicationRoleConnectionMetadata(TypedDict):
     name_localizations: NotRequired[Dict[str, str]]
     description: str
     description_localizations: NotRequired[Dict[str, str]]
+
+
+class ApplicationRoleConnection(TypedDict):
+    platform_name: NotRequired[str]
+    platform_username: NotRequired[str]
+    metadata: Dict[str, ApplicationRoleConnectionMetadata]

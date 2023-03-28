@@ -30,6 +30,8 @@ from typing import (
 
 import aiohttp
 
+from aiohttp import web
+
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
@@ -37,8 +39,8 @@ from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .endpoint import OAuth2Endpoint
-from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
+from .endpoint import oauth_url_request_generator, UnifiedEndpoint
+from .enums import ApplicationCommandType, ChannelType, InteractionType, OAuth2Scopes, Status, VoiceRegion
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
@@ -279,7 +281,7 @@ class Client:
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         default_guild_ids: Optional[List[int]] = None,
-        start_oauth_endpoint: bool = False,
+        start_endpoint: bool = False,
     ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
@@ -333,10 +335,11 @@ class Client:
 
         self._default_guild_ids = default_guild_ids or []
 
-        self._oauth = OAuth2Endpoint()
-        self._oauth_on_start = start_oauth_endpoint
-        self._oauth.on_oauth_endpoint = self._client_oauth2_endpoint_override
-        self._oauth_site = None
+        self.endpoint = UnifiedEndpoint()
+        self._endpoint_on_start = start_endpoint
+        self.endpoint.oauth2.on_oauth_endpoint = self._client_oauth2_endpoint_override
+        self.endpoint.role_conn.on_middleware_match = self._role_conn_override
+        self._endpoint_site = None
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -557,7 +560,21 @@ class Client:
     async def _client_oauth2_endpoint_override(
         self, redirect_uri, code: str, state: Optional[str]
     ) -> None:
-        self.dispatch("oauth", redirect_uri, code, state)
+        # TODO: Swap to a better constant?
+        if state == "role_conn_redirect":
+            self.dispatch("role_conn_verify", redirect_uri, code, state)
+        else:
+            self.dispatch("oauth", redirect_uri, code, state)
+
+    def _role_conn_override(self, request: web.Request, handler):
+        uri = request.rel_url.with_path(self.endpoint.oauth2.route)
+        url = oauth_url_request_generator(
+            redirect_uri=uri.human_repr(),
+            client_id=self._connection.application_id,
+            scopes=[OAuth2Scopes.identify, OAuth2Scopes.role_connections_write],
+            state="role_conn_redirect",  # TODO: Swap to a better constant?
+        )
+        raise web.HTTPFound(url)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
         """|coro|
@@ -799,8 +816,8 @@ class Client:
 
         await self.http.close()
 
-        if self._oauth_site:
-            await self._oauth_site.stop()
+        if self._endpoint_site:
+            await self._endpoint_site.stop()
 
         self._ready.clear()
 
@@ -829,11 +846,11 @@ class Client:
             An unexpected keyword argument was received.
         """
         await self.login(token)
-        if self._oauth_on_start:
+        if self._endpoint_on_start:
             if client_secret is not None:
                 self.http.set_client_secret(client_secret)
 
-            self._oauth_site = await self._oauth.start()
+            self._endpoint_site = await self.endpoint.start()
 
         await self.connect(reconnect=reconnect)
 

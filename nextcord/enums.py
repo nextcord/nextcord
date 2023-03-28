@@ -650,7 +650,7 @@ class OAuth2Scopes(StrEnum):
     """Requires Discord approval."""
     # TODO: This is a little weird, swapping . for _ isn't always going to be perfect since they also
     #  use _ legitimately. Might need to change strats, but what's the likelihood of
-    #  both "role_conn.write" and "roll.conn_write" or some variation of that existing?
+    #  both "role_conn.write" and "role.conn_write" or some variation of that existing?
     role_connections_write = "role_connections.write"
     """THIS IS WHY THIS FEATURE EXISTS IN NC!"""  # TODO: Write an actual description.
 
