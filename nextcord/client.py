@@ -573,14 +573,18 @@ class Client:
             self.dispatch("oauth", redirect_uri, code, state)
 
     def _role_conn_override(self, request: web.Request, handler):
-        uri = request.rel_url.with_path(self.endpoint.oauth2.route)
-        url = oauth_url_request_generator(
-            redirect_uri=uri.human_repr(),
-            client_id=self._connection.application_id,
-            scopes=[OAuth2Scopes.identify, OAuth2Scopes.role_connections_write],
-            state="role_conn_redirect",  # TODO: Swap to a better constant?
-        )
-        raise web.HTTPFound(url)
+        if self._connection.application_id is None:
+            _log.warning("Tried to redirect for an incoming role connection, but application_id is unavailable.")
+            raise web.HTTPServerError()
+        else:
+            uri = request.rel_url.with_path(self.endpoint.oauth2.route)
+            url = oauth_url_request_generator(
+                redirect_uri=uri.human_repr(),
+                client_id=self._connection.application_id,
+                scopes=[OAuth2Scopes.identify, OAuth2Scopes.role_connections_write],
+                state="role_conn_redirect",  # TODO: Swap to a better constant?
+            )
+            raise web.HTTPFound(url)
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
         """|coro|

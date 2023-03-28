@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, cast
 
 from aiohttp import web
 from aiohttp.typedefs import Handler
@@ -77,10 +77,10 @@ def role_conn_metadata_generator(
 
     if description_localizations is not None:
         ret["description_localizations"] = {}
-        for key, value in name_localizations.items():
+        for key, value in description_localizations.items():
             if isinstance(key, Locale):
                 key = key.value
 
             ret["description_localizations"][key] = value
-
+    cast(ApplicationRoleConnectionMetadata, ret)  # Pyright plz.
     return ret

@@ -33,7 +33,7 @@ class BaseEndpoint:
         *,
         host: str = "0.0.0.0",
         port: int = 8080,
-        loop: asyncio.AbstractEventLoop | None = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         loop = loop or asyncio.new_event_loop()
         task = loop.create_task(self.start(host=host, port=port))
@@ -51,15 +51,15 @@ class BaseEndpoint:
 
 class BaseMiddleware:
     def __init__(self, method: str = "GET", route: str = "/endpoint/default") -> None:
-        self._method: Optional[str] = method
-        self._route: Optional[str] = route
+        self._method: str = method
+        self._route: str = route
 
     @property
-    def method(self) -> Optional[str]:
+    def method(self) -> str:
         return self._method
 
     @property
-    def route(self) -> Optional[str]:
+    def route(self) -> str:
         return self._route
 
     def middleware(self):
