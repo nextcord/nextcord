@@ -1,12 +1,10 @@
 import asyncio
 import logging
+from typing import Optional
 
 from aiohttp import web
 from aiohttp.typedefs import Handler
 from aiohttp.web import StreamResponse
-
-from typing import Optional
-
 
 _log = logging.getLogger(__name__)
 
@@ -18,15 +16,10 @@ __all__ = (
 
 
 class BaseEndpoint:
-    def __init__(self, middlewares: list):
+    def __init__(self, middlewares: list) -> None:
         self.middlewares = middlewares
 
-    async def start(
-        self,
-        *,
-        host: str = "0.0.0.0",
-        port: int = 8080
-    ) -> web.TCPSite:
+    async def start(self, *, host: str = "0.0.0.0", port: int = 8080) -> web.TCPSite:
         app = web.Application(middlewares=self.middlewares)
         runner = web.AppRunner(app)
         await runner.setup()
@@ -57,7 +50,7 @@ class BaseEndpoint:
 
 
 class BaseMiddleware:
-    def __init__(self, method: str = "GET", route: str = "/endpoint/default"):
+    def __init__(self, method: str = "GET", route: str = "/endpoint/default") -> None:
         self._method: Optional[str] = method
         self._route: Optional[str] = route
 
@@ -71,9 +64,7 @@ class BaseMiddleware:
 
     def middleware(self):
         @web.middleware
-        async def route_middleware(
-            request: web.Request, handler: Handler
-        ) -> StreamResponse:
+        async def route_middleware(request: web.Request, handler: Handler) -> StreamResponse:
             if request.path.startswith(self.route) and request.method == self.method:
                 return await self.on_middleware_match(request, handler)
             else:
@@ -83,9 +74,5 @@ class BaseMiddleware:
 
         return route_middleware
 
-    async def on_middleware_match(
-        self, request: web.Request, handler: Handler
-    ) -> StreamResponse:
+    async def on_middleware_match(self, request: web.Request, handler: Handler) -> StreamResponse:
         raise NotImplementedError
-
-

@@ -8,9 +8,8 @@ from aiohttp.typedefs import Handler
 from aiohttp.web import StreamResponse
 from yarl import URL
 
-from .base import BaseEndpoint, BaseMiddleware
-
 from ..enums import OAuth2Scopes
+from .base import BaseEndpoint, BaseMiddleware
 
 _log = logging.getLogger(__name__)
 
@@ -38,17 +37,13 @@ OAUTH_RESPONSE_TEMPLATE = """
 
 
 class OAuth2Endpoint(BaseMiddleware, BaseEndpoint):
-    def __init__(self):
+    def __init__(self) -> None:
         BaseMiddleware.__init__(self, route="/endpoint/oauth2")
         BaseEndpoint.__init__(self, [self.middleware])
 
-    async def on_middleware_match(
-        self, request: web.Request, handler: Handler
-    ) -> StreamResponse:
+    async def on_middleware_match(self, request: web.Request, handler: Handler) -> StreamResponse:
         if request.rel_url.query.get("code"):
-            _log.debug(
-                "Query has code, executing on_oauth_endpoint and sending positive response."
-            )
+            _log.debug("Query has code, executing on_oauth_endpoint and sending positive response.")
             # TODO: Should this made into a task or try/except so errors don't affect the response, or
             #  should erroring make a 50X error appear like it does currently?
             await self.on_oauth_endpoint(

@@ -29,7 +29,6 @@ from typing import (
 )
 
 import aiohttp
-
 from aiohttp import web
 
 from . import utils
@@ -39,8 +38,15 @@ from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .endpoint import oauth_url_request_generator, UnifiedEndpoint
-from .enums import ApplicationCommandType, ChannelType, InteractionType, OAuth2Scopes, Status, VoiceRegion
+from .endpoint import UnifiedEndpoint, oauth_url_request_generator
+from .enums import (
+    ApplicationCommandType,
+    ChannelType,
+    InteractionType,
+    OAuth2Scopes,
+    Status,
+    VoiceRegion,
+)
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *

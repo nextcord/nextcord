@@ -2761,7 +2761,7 @@ class HTTPClient:
         r = Route(
             "GET",
             "/users/@me/applications/{application_id}/role-connection",
-            application_id=application_id
+            application_id=application_id,
         )
         return self.request(r, auth_type=auth_type, auth_token=auth_token)
 
@@ -2775,6 +2775,6 @@ class HTTPClient:
         r = Route(
             "PUT",
             "/users/@me/applications/{application_id}/role-connection",
-            application_id=application_id
+            application_id=application_id,
         )
         return self.request(r, json=data, auth_type=auth_type, auth_token=auth_token)
