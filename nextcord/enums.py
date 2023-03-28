@@ -30,6 +30,7 @@ __all__ = (
     "InviteTarget",
     "Locale",
     "OAuth2Scopes",
+    "ApplicationRoleConnectionMetadataType",
     "VideoQualityMode",
     "ComponentType",
     "ButtonStyle",
@@ -651,6 +652,18 @@ class OAuth2Scopes(StrEnum):
     #  both "role_conn.write" and "roll.conn_write" or some variation of that existing?
     role_connections_write = "role_connections.write"
     """THIS IS WHY THIS FEATURE EXISTS IN NC!"""  # TODO: Write an actual description.
+
+
+class ApplicationRoleConnectionMetadataType(IntEnum):
+    # TODO: Shorten this name? It's the name Discord gives it, but the heck is the length?
+    integer_less_than_or_equal = 1
+    integer_greater_than_or_equal = 2
+    integer_equal = 3
+    integer_not_equal = 4
+    datetime_less_than_or_equal = 5
+    datetime_greater_than_or_equal = 6
+    boolean_equal = 7
+    boolean_not_equal = 8
 
 
 class VideoQualityMode(IntEnum):

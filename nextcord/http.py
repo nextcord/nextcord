@@ -87,7 +87,7 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
         if response.headers["content-type"] == "application/json":
             return utils.from_json(text)
     except KeyError:
-        # Thanks Cloudflare
+        # Thanks, Cloudflare
         pass
 
     return text
@@ -238,8 +238,37 @@ class HTTPClient:
         *,
         files: Optional[Sequence[File]] = None,
         form: Optional[Iterable[Dict[str, Any]]] = None,
+        auth_type: Optional[str] = "Bot",
+        auth_token: Optional[str] = None,
         **kwargs: Any,
     ) -> Any:
+        """|coro|
+        Makes a request to Discord with the given authentication (if any), taking note of rate limits and auto-retrying
+        if they are hit.
+
+        Parameters
+        ----------
+        route: :class:`Route`
+            API route to make the request on + the method.
+        files: Optional[Sequence[:class:`File`]]
+            Iterable list of files to send to Discord.
+        form: Optional[Iterable[Dict[:class:`str`, Any]]]
+            TODO: Figure out from smarter people what a "form" is.
+        auth_type: Optional[str]
+            Type of authentication used to access Discord. If ``None``, no authentication will be used.
+        auth_token: Optional[str]
+            Token used for authentication. If ``auth_type`` is ``"Bot"`` and this is ``None``, the currently running
+            bots token will be used if available.
+        kwargs: Any
+            Additional keyword arguments to provide ``ClientSession.request()``. Note that some arguments may be
+            modified or overridden.
+
+        Returns
+        -------
+        Any
+            Generally returns JSON of some type, often a dictionary or a list of dicts, but could return text.
+            Text is typically only encountered as part of an error.
+        """
         bucket = route.bucket
         method = route.method
         url = route.url
@@ -251,12 +280,27 @@ class HTTPClient:
                 self._locks[bucket] = lock
 
         # header creation
+        # TODO: Think about making a "headers" kwarg and have this extend it? Obliterating user provided
+        #  headers doesn't seem nice.
         headers: Dict[str, str] = {
             "User-Agent": self.user_agent,
         }
 
-        if self.token is not None:
-            headers["Authorization"] = "Bot " + self.token
+        # if self.token is not None:
+        #     headers["Authorization"] = "Bot " + self.token
+        # if self.token is not None:
+        #     headers["Authorization"] = "Bot " + self.token
+
+        if auth_type == "Bot" and auth_token is None and self.token is not None:
+            auth_token = self.token
+
+        if auth_type is None:
+            pass
+        else:
+            _log.critical("Using custom auth stuff!")
+            headers["Authorization"] = f"{auth_type} {auth_token}"
+
+
         # some checking if it's a JSON request
         if "json" in kwargs:
             headers["Content-Type"] = "application/json"
@@ -456,6 +500,56 @@ class HTTPClient:
 
     def set_client_secret(self, client_secret: str):
         self.client_secret = client_secret
+
+    async def get_oauth_access_token(
+            self,
+            client_id: int,
+            code: str,
+            redirect_uri: str
+    ) -> dict:
+        """|coro|
+        Takes an access code and exchanges it for the user's access token.
+
+        Parameters
+        ----------
+        client_id: :class:`int`
+            Client/Application ID of the bot. Beware, older bots have differing user and application IDs.
+        code: :class:`str`
+            Access code
+        redirect_uri
+
+        Returns
+        -------
+        TODO: Make an actual typeddict for this.
+        """
+        # This doesn't appear to use normal ratelimiting, so ``self.request`` shouldn't be used?
+        async with self.__session.post(
+            url=f"https://discord.com/api/v{_DEFAULT_API_VERSION}/oauth2/token",
+            data={
+                "client_id": client_id,
+                "client_secret": self.client_secret,
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect_uri
+            },
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        ) as response:
+            data = await response.json()
+            if 300 > response.status >= 200:
+                # _log.debug("%s %s has received %s", method, url, data)
+                return data
+            elif response.status == 403:
+                raise Forbidden(response, data)
+            elif response.status == 404:
+                raise NotFound(response, data)
+            elif response.status >= 500:
+                raise DiscordServerError(response, data)
+            else:
+                raise HTTPException(response, data)
+
+
+    async def refresh_oauth_token(self):
+        pass  # TODO
 
     def logout(self) -> Response[None]:
         return self.request(Route("POST", "/auth/logout"))
@@ -2436,6 +2530,17 @@ class HTTPClient:
 
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
         return self.request(Route("GET", "/users/{user_id}", user_id=user_id))
+
+    def get_current_user(self, auth_type: str = "Bot", auth_token: Optional[str] = None) -> Response:
+        # TODO: Think about using this in ``static_login`` ?
+        return self.request(Route("GET", "/users/@me"), auth_type=auth_type, auth_token=auth_token)
+
+    def get_user_connections(self, auth_type: str = "Bot", auth_token: Optional[str] = None) -> Response:
+        """Returns a list of connection objects. Used with OAuth."""
+        # TODO: Type the return properly.
+        # While "get_user" has an ID given to it to get info about a specific user, this doesn't.
+        #  This uses the name Discord gave this endpoint, but is slightly confusing IMO?
+        return self.request(Route("GET", "/users/@me/connections"), auth_type=auth_type, auth_token=auth_token)
 
     def get_guild_events(
         self, guild_id: Snowflake, with_user_count: bool
