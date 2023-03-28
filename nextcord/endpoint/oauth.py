@@ -44,27 +44,31 @@ class OAuth2Endpoint:
             if request.path.startswith(route) and request.method == "GET":
                 _log.debug("Received oauth on url %s", request.url)
                 if request.rel_url.query.get("code"):
-                    _log.debug("Query has code, executing on_oauth_endpoint and sending positive response.")
+                    _log.debug(
+                        "Query has code, executing on_oauth_endpoint and sending positive response."
+                    )
                     # TODO: Should this made into a task or try/except so errors don't affect the response, or
                     #  should erroring make a 50X error appear like it does currently?
                     await self.on_oauth_endpoint(
                         request.url.with_query(None).human_repr(),
                         request.rel_url.query["code"],
-                        request.rel_url.query.get("state", None)
+                        request.rel_url.query.get("state", None),
                     )
                     # TODO: Look into a better way of handling this, allowing custom responses? Maybe put them inside
                     #  __init__ as kwargs?
                     return web.Response(
                         body=OAUTH_RESPONSE_TEMPLATE.format(
                             "OAuth Accepted.", "<h1>👍 OAuth Received 👍</h1><h1>Close Whenever</h1>"
-                        ), content_type="text/html"
+                        ),
+                        content_type="text/html",
                     )
                 else:
                     _log.debug("Query doesn't have code, sending negative response.")
                     return web.Response(
                         body=OAUTH_RESPONSE_TEMPLATE.format(
                             "OAuth Accepted.", "<h1>👎 No Oauth 👎</h1><h1>Close Whenever</h1>"
-                        ), content_type="text/html"
+                        ),
+                        content_type="text/html",
                     )
             else:
                 _log.debug("Ignoring request %s %s", request.method, request.url)
@@ -77,11 +81,7 @@ class OAuth2Endpoint:
         _log.critical("%s %s, %s", redirect_uri, code, state)
 
     async def start(
-            self,
-            *,
-            route: str = "/endpoint/oauth2",
-            host: str = "0.0.0.0",
-            port: int = 8080
+        self, *, route: str = "/endpoint/oauth2", host: str = "0.0.0.0", port: int = 8080
     ) -> web.TCPSite:
         app = web.Application(middlewares=[self.middleware(route)])
         runner = web.AppRunner(app)
@@ -92,13 +92,13 @@ class OAuth2Endpoint:
         return site
 
     def run(
-            self,
-            *,
-            route: str = "/endpoint/oauth2",
-            host: str = "0.0.0.0",
-            port: int = 8080,
-            loop: asyncio.AbstractEventLoop | None = None
-    ):
+        self,
+        *,
+        route: str = "/endpoint/oauth2",
+        host: str = "0.0.0.0",
+        port: int = 8080,
+        loop: asyncio.AbstractEventLoop | None = None,
+    ) -> None:
         loop = loop or asyncio.new_event_loop()
         task = loop.create_task(self.start(route=route, host=host, port=port))
         try:

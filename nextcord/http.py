@@ -300,7 +300,6 @@ class HTTPClient:
             _log.critical("Using custom auth stuff!")
             headers["Authorization"] = f"{auth_type} {auth_token}"
 
-
         # some checking if it's a JSON request
         if "json" in kwargs:
             headers["Content-Type"] = "application/json"
@@ -501,12 +500,7 @@ class HTTPClient:
     def set_client_secret(self, client_secret: str) -> None:
         self.client_secret = client_secret
 
-    async def get_oauth_access_token(
-            self,
-            client_id: int,
-            code: str,
-            redirect_uri: str
-    ) -> dict:
+    async def get_oauth_access_token(self, client_id: int, code: str, redirect_uri: str) -> dict:
         """|coro|
         Takes an access code and exchanges it for the user's access token.
 
@@ -530,9 +524,9 @@ class HTTPClient:
                 "client_secret": self.client_secret,
                 "grant_type": "authorization_code",
                 "code": code,
-                "redirect_uri": redirect_uri
+                "redirect_uri": redirect_uri,
             },
-            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         ) as response:
             data = await response.json()
             if 300 > response.status >= 200:
@@ -547,8 +541,7 @@ class HTTPClient:
             else:
                 raise HTTPException(response, data)
 
-
-    async def refresh_oauth_token(self):
+    async def refresh_oauth_token(self) -> None:
         pass  # TODO
 
     def logout(self) -> Response[None]:
@@ -2531,16 +2524,22 @@ class HTTPClient:
     def get_user(self, user_id: Snowflake) -> Response[user.User]:
         return self.request(Route("GET", "/users/{user_id}", user_id=user_id))
 
-    def get_current_user(self, auth_type: str = "Bot", auth_token: Optional[str] = None) -> Response:
+    def get_current_user(
+        self, auth_type: str = "Bot", auth_token: Optional[str] = None
+    ) -> Response:
         # TODO: Think about using this in ``static_login`` ?
         return self.request(Route("GET", "/users/@me"), auth_type=auth_type, auth_token=auth_token)
 
-    def get_user_connections(self, auth_type: str = "Bot", auth_token: Optional[str] = None) -> Response:
+    def get_user_connections(
+        self, auth_type: str = "Bot", auth_token: Optional[str] = None
+    ) -> Response:
         """Returns a list of connection objects. Used with OAuth."""
         # TODO: Type the return properly.
         # While "get_user" has an ID given to it to get info about a specific user, this doesn't.
         #  This uses the name Discord gave this endpoint, but is slightly confusing IMO?
-        return self.request(Route("GET", "/users/@me/connections"), auth_type=auth_type, auth_token=auth_token)
+        return self.request(
+            Route("GET", "/users/@me/connections"), auth_type=auth_type, auth_token=auth_token
+        )
 
     def get_guild_events(
         self, guild_id: Snowflake, with_user_count: bool

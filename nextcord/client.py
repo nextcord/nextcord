@@ -37,6 +37,7 @@ from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
+from .endpoint import OAuth2Endpoint
 from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
 from .errors import *
 from .flags import ApplicationFlags, Intents
@@ -47,7 +48,6 @@ from .interactions import Interaction
 from .invite import Invite
 from .iterators import GuildIterator
 from .mentions import AllowedMentions
-from .endpoint import OAuth2Endpoint
 from .object import Object
 from .stage_instance import StageInstance
 from .state import ConnectionState

@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-from aiohttp import web
-from typing import List, Optional
-from yarl import URL
-
 import asyncio
 import logging
 
-from ..enums import ApplicationRoleConnectionMetadataType
-
+from aiohttp import web
 
 _log = logging.getLogger(__name__)
 
@@ -17,7 +12,6 @@ __all__ = (
     "RoleConnVerifyEndpoint",
     "role_conn_metadata_generator",
 )
-
 
 
 OAUTH_RESPONSE_TEMPLATE = """
@@ -36,9 +30,8 @@ OAUTH_RESPONSE_TEMPLATE = """
 """
 
 
-
 class RoleConnVerifyEndpoint:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def middleware(self, route: str):
@@ -76,16 +69,12 @@ class RoleConnVerifyEndpoint:
 
         return role_conn_endpoint_middleware
 
-    async def on_role_conn_verify_endpoint(self):
+    async def on_role_conn_verify_endpoint(self) -> None:
         # _log.critical("%s %s, %s", redirect_uri, code, state)
         pass
 
     async def start(
-            self,
-            *,
-            route: str = "/endpoint/oauth2",
-            host: str = "0.0.0.0",
-            port: int = 8080
+        self, *, route: str = "/endpoint/oauth2", host: str = "0.0.0.0", port: int = 8080
     ) -> web.TCPSite:
         app = web.Application(middlewares=[self.middleware(route)])
         runner = web.AppRunner(app)
@@ -96,13 +85,13 @@ class RoleConnVerifyEndpoint:
         return site
 
     def run(
-            self,
-            *,
-            route: str = "/endpoint/oauth2",
-            host: str = "0.0.0.0",
-            port: int = 8080,
-            loop: asyncio.AbstractEventLoop | None = None
-    ):
+        self,
+        *,
+        route: str = "/endpoint/oauth2",
+        host: str = "0.0.0.0",
+        port: int = 8080,
+        loop: asyncio.AbstractEventLoop | None = None,
+    ) -> None:
         loop = loop or asyncio.new_event_loop()
         task = loop.create_task(self.start(route=route, host=host, port=port))
         try:
@@ -117,9 +106,7 @@ class RoleConnVerifyEndpoint:
             loop.run_until_complete(asyncio.sleep(0.25))
 
 
-def role_conn_metadata_generator(
-        arg1
-) -> dict:
+def role_conn_metadata_generator(arg1) -> dict:
     ret = {}
 
     return ret
