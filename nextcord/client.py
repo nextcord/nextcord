@@ -574,7 +574,9 @@ class Client:
 
     def _role_conn_override(self, request: web.Request, handler):
         if self._connection.application_id is None:
-            _log.warning("Tried to redirect for an incoming role connection, but application_id is unavailable.")
+            _log.warning(
+                "Tried to redirect for an incoming role connection, but application_id is unavailable."
+            )
             raise web.HTTPServerError()
         else:
             uri = request.rel_url.with_path(self.endpoint.oauth2.route)
