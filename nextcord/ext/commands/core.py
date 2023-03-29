@@ -1342,7 +1342,7 @@ class GroupMixin(Generic[CogT]):
     def command(
         self,
         name: str = ...,
-        cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
+        cls: Type[Command[CogT, P, T]] = Command,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[
@@ -1563,7 +1563,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
 @overload
 def command(
     name: str = ...,
-    cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
+    cls: Type[Command[CogT, P, T]] = Command,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1656,11 +1656,11 @@ def group(
 ) -> Callable[
     [
         Union[
-            Callable[Concatenate[Cog, ContextT, P], Coro[T]],
+            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
             Callable[Concatenate[ContextT, P], Coro[T]],
         ]
     ],
-    Group[Cog, P, T],
+    Group[CogT, P, T],
 ]:
     ...
 
