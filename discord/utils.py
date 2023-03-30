@@ -13,6 +13,7 @@ from nextcord.utils import (
     _URL_REGEX,
     DISCORD_EPOCH,
     HAS_ORJSON,
+    HAS_UJSON,
     MISSING,
     PY_310,
     TYPE_CHECKING,

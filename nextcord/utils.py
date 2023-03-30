@@ -50,10 +50,22 @@ try:
 except ModuleNotFoundError:
     _orjson_defined = False
 
-    def to_json(obj: Any) -> str:
-        return json.dumps(obj, separators=(",", ":"), ensure_ascii=True)
+    try:
+        import ujson
+    except ModuleNotFoundError:
+        _ujson_defined = False
 
-    from_json = json.loads
+        def to_json(obj: Any) -> str:
+            return json.dumps(obj, separators=(",", ":"), ensure_ascii=True)
+
+        from_json = json.loads
+    else:
+        _ujson_defined = True
+
+        def to_json(obj: Any) -> str:
+            return ujson.dumps(obj, ensure_ascii=True)
+
+        from_json = ujson.loads
 else:
     _orjson_defined = True
 
@@ -64,6 +76,8 @@ else:
 
 
 HAS_ORJSON = _orjson_defined
+
+HAS_UJSON = _ujson_defined
 
 
 PY_310 = sys.version_info >= (3, 10)
