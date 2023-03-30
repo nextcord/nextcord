@@ -49,7 +49,11 @@ extras_require = {
         "sphinxcontrib-websupport",
         "typing_extensions>=4.2.0, <5",
     ],
-    "speed": ["orjson>=3.5.4; python_implementation == 'CPython'", "ujson>=5.7.0; python_implementation != 'CPython'", "aiohttp[speedups]"],
+    "speed": [
+        "orjson>=3.5.4; python_implementation == 'CPython'",
+        "ujson>=5.7.0; python_implementation != 'CPython'",
+        "aiohttp[speedups]",
+    ],
 }
 
 packages = [
