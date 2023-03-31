@@ -223,8 +223,7 @@ class GuildChannel:
     guild: :class:`~nextcord.Guild`
         The guild the channel belongs to.
     position: :class:`int`
-        The position in the channel list. This is a number that starts at 0.
-        e.g. the top channel is position 0.
+        The position in the channel list.
     """
 
     __slots__ = ()
