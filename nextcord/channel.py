@@ -1757,6 +1757,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             The new channel's bitrate.
         user_limit: :class:`int`
             The new channel's user limit.
+
+            This must be a number between ``0`` and ``99``. ``0`` indicates no limit.
         position: :class:`int`
             The new channel's position.
         sync_permissions: :class:`bool`
@@ -2252,6 +2254,7 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         rtc_region: Optional[VoiceRegion] = ...,
         video_quality_mode: VideoQualityMode = ...,
         flags: ChannelFlags = ...,
+        user_limit: int = ...,
         reason: Optional[str] = ...,
     ) -> Optional[StageChannel]:
         ...
@@ -2298,6 +2301,13 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
             The camera video quality for the stage channel's participants.
 
             .. versionadded:: 2.0
+        user_limit: :class:`int`
+            The maximum number of users allowed in the stage channel.
+
+            This must be between ``0`` and ``10,000``. A value of ``0`` indicates
+            no limit.
+
+            .. versionadded:: 2.5
 
         Raises
         ------
