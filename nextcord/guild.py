@@ -479,6 +479,9 @@ class Guild(Hashable):
         self.max_presences: Optional[int] = guild.get("max_presences")
         self.max_members: Optional[int] = guild.get("max_members")
         self.max_video_channel_users: Optional[int] = guild.get("max_video_channel_users")
+        self.max_stage_video_channel_users: Optional[int] = guild.get(
+            "max_stage_video_channel_users"
+        )
         self.premium_tier: int = guild.get("premium_tier", 0)
         self.premium_subscription_count: int = guild.get("premium_subscription_count") or 0
         self._system_channel_flags: int = guild.get("system_channel_flags", 0)
