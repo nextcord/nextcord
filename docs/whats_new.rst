@@ -12,6 +12,18 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p4p2:
+
+v2.4.2
+------
+
+This version fixes a crash when receiving a ``GUILD_AUDIT_LOG_ENTRY_CREATE`` event without a ``user_id``.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix a crash when receiving a ``GUILD_AUDIT_LOG_ENTRY_CREATE`` event without a ``user_id`` (:issue:`1014`).
+
 .. _vp2p4p1:
 
 v2.4.1
