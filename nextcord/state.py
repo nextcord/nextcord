@@ -2314,7 +2314,7 @@ class ConnectionState:
         else:
             users = {user_id: user}
 
-        if guild is not None and user is not None:
+        if guild is not None:
             entry = AuditLogEntry(auto_moderation_rules={}, users=users, data=data, guild=guild)
             self.dispatch("guild_audit_log_entry_create", entry)
         else:
