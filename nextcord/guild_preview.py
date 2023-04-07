@@ -8,6 +8,8 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.guild import GuildPreview as GuildPreviewPayload
 
+__all__ = ("GuildPreview",)
+
 
 class GuildPreview:
     """Represents a Discord guild preview.
