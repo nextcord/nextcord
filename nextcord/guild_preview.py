@@ -50,7 +50,7 @@ class GuildPreview:
     )
 
     def __init__(self, *, data: GuildPreviewPayload, state: ConnectionState) -> None:
-        self._state = state
+        self._state: ConnectionState = state
         self.id = int(data["id"])
         self.name: str = data["name"]
         self._icon: Optional[str] = data.get("icon")
