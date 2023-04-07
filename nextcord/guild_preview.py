@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
@@ -23,10 +22,10 @@ class GuildPreview:
         "approximate_member_count",
         "approximate_presence_count",
         "description",
-        "stickers"
+        "stickers",
     )
 
-    def __init__(self, *, data: GuildPreviewPayload, state: ConnectionState):
+    def __init__(self, *, data: GuildPreviewPayload, state: ConnectionState) -> None:
         self._state = state
         self.id = int(data["id"])
         self.name: str = data["name"]
@@ -62,4 +61,6 @@ class GuildPreview:
         if not self._discovery_splash:
             return None
 
-        return Asset._from_guild_image(self._state, self.id, self._discovery_splash, "discovery-splashes")
+        return Asset._from_guild_image(
+            self._state, self.id, self._discovery_splash, "discovery-splashes"
+        )
