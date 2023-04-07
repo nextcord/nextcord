@@ -69,6 +69,7 @@ class _BaseGuildPreview(UnavailableGuild):
     emojis: List[Emoji]
     features: List[GuildFeature]
     description: Optional[str]
+    stickers: List[GuildSticker]
 
 
 class _GuildPreviewUnique(TypedDict):
