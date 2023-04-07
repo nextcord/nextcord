@@ -1469,6 +1469,25 @@ class Client:
         return Guild(data=data, state=self._connection)
 
     async def fetch_guild_preview(self, guild_id: int, /) -> GuildPreview:
+        """|coro|
+        
+        Fetches a :class:`.GuildPreview` from an ID.
+
+        Parameters
+        ----------
+        guild_id: :class:`int`
+            The guild's ID to fetch from.
+
+        Raises
+        ------
+        :exc:`.NotFound`
+            The guild provided is unknown.
+
+        Returns
+        -------
+        :class:`.GuildPreview`
+            The guild preview from the ID
+        """
         data = await self.http.get_guild_preview(guild_id)
         return GuildPreview(data=data, state=self._connection)
 

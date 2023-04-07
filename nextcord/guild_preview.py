@@ -11,6 +11,27 @@ if TYPE_CHECKING:
 
 
 class GuildPreview:
+    """Represents a Discord guild preview.
+    
+    Attributes
+    ----------
+    id: :class:`int`
+        The guild's ID
+    name: :class:`str`
+        The guild name.
+    emojis: List[:class:`Emoji`]
+        All emojis that the guild owns.
+    features: List[:class:`str`]
+        The features the guild has access to.
+    approximate_member_count: :class:`int`
+        The approximate amount of members in the guild.
+    approximate_presence_count: :class:`int`
+        The approximate amount of presences for the guild.
+    description: Optional[:class:`str`]
+        The guild's description.
+    stickers: List[:class:`GuildSticker`]
+        All the stickers that the guild owns.
+    """
     __slots__ = (
         "_state",
         "id",
@@ -45,6 +66,7 @@ class GuildPreview:
 
     @property
     def icon(self) -> Optional[Asset]:
+        """Optional[:class:`Asset`]: Returns the guild's icon asset, if avaliable."""
         if not self._icon:
             return None
 
@@ -52,6 +74,7 @@ class GuildPreview:
 
     @property
     def splash(self) -> Optional[Asset]:
+        """Optional[:class:`Asset`]: Returns the guild's invite splash asset, if avaliable."""
         if not self._splash:
             return None
 
@@ -59,6 +82,7 @@ class GuildPreview:
 
     @property
     def discovery_splash(self) -> Optional[Asset]:
+        """Optional[:class:`Asset`]: Returns the guild's discovery splash asset, if avaliable."""
         if not self._discovery_splash:
             return None
 
