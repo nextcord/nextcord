@@ -85,7 +85,9 @@ class Emoji(_EmojiTag, AssetMixin):
         "available",
     )
 
-    def __init__(self, *, guild: Union[Guild, GuildPreview], state: ConnectionState, data: EmojiPayload) -> None:
+    def __init__(
+        self, *, guild: Union[Guild, GuildPreview], state: ConnectionState, data: EmojiPayload
+    ) -> None:
         self.guild_id: int = guild.id
         self._state: ConnectionState = state
         self._from_data(data)
