@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Optional
 
 from .asset import Asset
+from .emoji import Emoji
+from .sticker import GuildSticker
 
 if TYPE_CHECKING:
     from .state import ConnectionState
@@ -20,8 +22,6 @@ class GuildPreview:
         The guild's ID
     name: :class:`str`
         The guild name.
-    emojis: List[:class:`Emoji`]
-        All emojis that the guild owns.
     features: List[:class:`str`]
         The features the guild has access to.
     approximate_member_count: :class:`int`
@@ -30,8 +30,6 @@ class GuildPreview:
         The approximate amount of presences for the guild.
     description: Optional[:class:`str`]
         The guild's description.
-    stickers: List[:class:`GuildSticker`]
-        All the stickers that the guild owns.
     """
 
     __slots__ = (
@@ -41,12 +39,12 @@ class GuildPreview:
         "_icon",
         "_splash",
         "_discovery_splash",
-        "emojis",
+        "_emojis",
         "features",
         "approximate_member_count",
         "approximate_presence_count",
         "description",
-        "stickers",
+        "_stickers",
     )
 
     def __init__(self, *, data: GuildPreviewPayload, state: ConnectionState) -> None:
@@ -56,15 +54,31 @@ class GuildPreview:
         self._icon: Optional[str] = data.get("icon")
         self._splash: Optional[str] = data.get("splash")
         self._discovery_splash: Optional[str] = data.get("discovery_splash")
-        self.emojis = data["emojis"]
+        self._emojis = data["emojis"]
         self.features = data["features"]
         self.approximate_member_count = data["approximate_member_count"]
         self.approximate_presence_count = data["approximate_presence_count"]
         self.description = data.get("description") or None
-        self.stickers = data["stickers"]
+        self._stickers = data["stickers"]
 
     def __repr__(self) -> str:
         return f"<GuildPreview id={self.id!r} name={self.name!r}>"
+
+    @property
+    def emojis(self) -> List[Emoji]:
+        """List[:class:`Emoji`]: All the emojis that the guild owns, if any."""
+        if self._emojis:
+            return list(Emoji(guild=self, state=self._state, data=emoji) for emoji in self._emojis)
+        else:
+            return []
+
+    @property
+    def stickers(self) -> List[GuildSticker]:
+        """List[:class:`GuildSticker`]: All the stickers that the guild owns, if any."""
+        if self._emojis:
+            return list(GuildSticker(state=self._state, data=sticker) for sticker in self._stickers)
+        else:
+            return []
 
     @property
     def icon(self) -> Optional[Asset]:
