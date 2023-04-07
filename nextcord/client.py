@@ -1470,7 +1470,7 @@ class Client:
 
     async def fetch_guild_preview(self, guild_id: int, /) -> GuildPreview:
         """|coro|
-        
+
         Fetches a :class:`.GuildPreview` from an ID.
 
         Parameters

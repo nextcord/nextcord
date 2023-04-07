@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 class GuildPreview:
     """Represents a Discord guild preview.
-    
+
     Attributes
     ----------
     id: :class:`int`
@@ -31,6 +31,7 @@ class GuildPreview:
     stickers: List[:class:`GuildSticker`]
         All the stickers that the guild owns.
     """
+
     __slots__ = (
         "_state",
         "id",
