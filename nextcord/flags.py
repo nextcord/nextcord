@@ -354,7 +354,7 @@ class MessageFlags(BaseFlags):
 
         This is represented in the UI as "bot is thinking...".
 
-        .. versionadded:: 2.4
+        .. versionadded:: 2.5
         """
         return 1 << 7
 
@@ -364,7 +364,7 @@ class MessageFlags(BaseFlags):
 
         This means that those members were not added.
 
-        .. versionadded:: 2.4
+        .. versionadded:: 2.5
         """
         return 1 << 8
 
@@ -374,7 +374,7 @@ class MessageFlags(BaseFlags):
 
         These are sent via `@silent` message prefixes in the UI.
 
-        .. versionadded:: 2.4
+        .. versionadded:: 2.5
         """
         return 1 << 12
 
