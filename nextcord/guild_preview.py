@@ -44,13 +44,12 @@ class GuildPreview:
         "_splash",
         "_discovery_splash",
         "_emojis",
-        "emojis"
-        "features",
+        "emojis" "features",
         "approximate_member_count",
         "approximate_presence_count",
         "description",
         "_stickers",
-        "stickers"
+        "stickers",
     )
 
     def __init__(self, *, data: GuildPreviewPayload, state: ConnectionState) -> None:
@@ -69,20 +68,14 @@ class GuildPreview:
 
         if self._emojis:
             self.emojis: List[Emoji] = [
-                Emoji(
-                    guild=self, state=self._state, data=emoji
-                )
-                for emoji in self._emojis
+                Emoji(guild=self, state=self._state, data=emoji) for emoji in self._emojis
             ]
         else:
             self.emojis: List[Emoji] = []
 
         if self._stickers:
             self.stickers: List[GuildSticker] = [
-                GuildSticker(
-                    state=self._state, data=sticker
-                )
-                for sticker in self._stickers
+                GuildSticker(state=self._state, data=sticker) for sticker in self._stickers
             ]
 
     def __repr__(self) -> str:
