@@ -8,9 +8,7 @@ from .sticker import GuildSticker
 
 if TYPE_CHECKING:
     from .state import ConnectionState
-    from .types.emoji import Emoji as EmojiPayload
     from .types.guild import GuildFeature, GuildPreview as GuildPreviewPayload
-    from .types.sticker import GuildSticker as GuildStickerPayload
 
 __all__ = ("GuildPreview",)
 
@@ -45,12 +43,10 @@ class GuildPreview:
         "_icon",
         "_splash",
         "_discovery_splash",
-        "_emojis",
         "emojis" "features",
         "approximate_member_count",
         "approximate_presence_count",
         "description",
-        "_stickers",
         "stickers",
     )
 
@@ -61,24 +57,25 @@ class GuildPreview:
         self._icon: Optional[str] = data.get("icon")
         self._splash: Optional[str] = data.get("splash")
         self._discovery_splash: Optional[str] = data.get("discovery_splash")
-        self._emojis: List[EmojiPayload] = data["emojis"]
         self.features: List[GuildFeature] = data["features"]
         self.approximate_member_count: int = data["approximate_member_count"]
         self.approximate_presence_count: int = data["approximate_presence_count"]
         self.description: Optional[str] = data["description"] or None
-        self._stickers: List[GuildStickerPayload] = data["stickers"]
-
-        if self._emojis:
-            self.emojis: List[Emoji] = [
-                Emoji(guild=self, state=self._state, data=emoji) for emoji in self._emojis
-            ]
-        else:
-            self.emojis: List[Emoji] = []
-
-        if self._stickers:
-            self.stickers: List[GuildSticker] = [
-                GuildSticker(state=self._state, data=sticker) for sticker in self._stickers
-            ]
+        self.emojis: List[Emoji] = [
+            Emoji(
+                guild=self,
+                state=self._state,
+                data=emoji
+            )
+            for emoji in data["emojis"]
+        ]
+        self.stickers: List[GuildSticker] = [
+            GuildSticker(
+                state=self._state,
+                data=sticker
+            )
+            for sticker in data["stickers"]
+        ]
 
     def __repr__(self) -> str:
         return f"<GuildPreview id={self.id!r} name={self.name!r}>"
