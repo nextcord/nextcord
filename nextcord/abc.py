@@ -224,6 +224,9 @@ class GuildChannel:
         The guild the channel belongs to.
     position: :class:`int`
         The position in the channel list.
+
+        .. note::
+            Due to API inconsistencies, the position may not mirror the correct UI ordering
     """
 
     __slots__ = ()
