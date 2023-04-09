@@ -30,6 +30,10 @@ class GuildPreview:
         The approximate amount of presences for the guild.
     description: Optional[:class:`str`]
         The guild's description.
+    emojis: List[:class:`Emoji`]
+        All the emojis that the guild owns, if any.
+    stickers: List[:class:`GuildSticker`]
+        All the stickers that the guild owns, if any.
     """
 
     __slots__ = (
@@ -40,11 +44,13 @@ class GuildPreview:
         "_splash",
         "_discovery_splash",
         "_emojis",
+        "emojis"
         "features",
         "approximate_member_count",
         "approximate_presence_count",
         "description",
         "_stickers",
+        "stickers"
     )
 
     def __init__(self, *, data: GuildPreviewPayload, state: ConnectionState) -> None:
@@ -61,24 +67,26 @@ class GuildPreview:
         self.description = data.get("description") or None
         self._stickers = data["stickers"]
 
+        if self._emojis:
+            self.emojis: List[Emoji] = [
+                Emoji(
+                    guild=self, state=self._state, data=emoji
+                )
+                for emoji in self._emojis
+            ]
+        else:
+            self.emojis: List[Emoji] = []
+
+        if self._stickers:
+            self.stickers: List[GuildSticker] = [
+                GuildSticker(
+                    state=self._state, data=sticker
+                )
+                for sticker in self._stickers
+            ]
+
     def __repr__(self) -> str:
         return f"<GuildPreview id={self.id!r} name={self.name!r}>"
-
-    @property
-    def emojis(self) -> List[Emoji]:
-        """List[:class:`Emoji`]: All the emojis that the guild owns, if any."""
-        if self._emojis:
-            return list(Emoji(guild=self, state=self._state, data=emoji) for emoji in self._emojis)
-        else:
-            return []
-
-    @property
-    def stickers(self) -> List[GuildSticker]:
-        """List[:class:`GuildSticker`]: All the stickers that the guild owns, if any."""
-        if self._emojis:
-            return list(GuildSticker(state=self._state, data=sticker) for sticker in self._stickers)
-        else:
-            return []
 
     @property
     def icon(self) -> Optional[Asset]:
