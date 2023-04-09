@@ -43,7 +43,7 @@ class GuildPreview:
         "_icon",
         "_splash",
         "_discovery_splash",
-        "emojis", 
+        "emojis",
         "features",
         "approximate_member_count",
         "approximate_presence_count",
