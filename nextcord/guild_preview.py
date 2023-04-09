@@ -62,19 +62,10 @@ class GuildPreview:
         self.approximate_presence_count: int = data["approximate_presence_count"]
         self.description: Optional[str] = data["description"] or None
         self.emojis: List[Emoji] = [
-            Emoji(
-                guild=self,
-                state=self._state,
-                data=emoji
-            )
-            for emoji in data["emojis"]
+            Emoji(guild=self, state=self._state, data=emoji) for emoji in data["emojis"]
         ]
         self.stickers: List[GuildSticker] = [
-            GuildSticker(
-                state=self._state,
-                data=sticker
-            )
-            for sticker in data["stickers"]
+            GuildSticker(state=self._state, data=sticker) for sticker in data["stickers"]
         ]
 
     def __repr__(self) -> str:
