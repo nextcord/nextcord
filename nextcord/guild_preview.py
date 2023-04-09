@@ -43,7 +43,8 @@ class GuildPreview:
         "_icon",
         "_splash",
         "_discovery_splash",
-        "emojis" "features",
+        "emojis", 
+        "features",
         "approximate_member_count",
         "approximate_presence_count",
         "description",
@@ -60,7 +61,7 @@ class GuildPreview:
         self.features: List[GuildFeature] = data["features"]
         self.approximate_member_count: int = data["approximate_member_count"]
         self.approximate_presence_count: int = data["approximate_presence_count"]
-        self.description: Optional[str] = data["description"] or None
+        self.description: Optional[str] = data.get("description")
         self.emojis: List[Emoji] = [
             Emoji(guild=self, state=self._state, data=emoji) for emoji in data["emojis"]
         ]
