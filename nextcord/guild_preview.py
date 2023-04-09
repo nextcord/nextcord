@@ -8,7 +8,9 @@ from .sticker import GuildSticker
 
 if TYPE_CHECKING:
     from .state import ConnectionState
-    from .types.guild import GuildPreview as GuildPreviewPayload
+    from .types.emoji import Emoji as EmojiPayload
+    from .types.guild import GuildFeature, GuildPreview as GuildPreviewPayload
+    from .types.sticker import GuildSticker as GuildStickerPayload
 
 __all__ = ("GuildPreview",)
 
@@ -54,17 +56,17 @@ class GuildPreview:
 
     def __init__(self, *, data: GuildPreviewPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
-        self.id = int(data["id"])
-        self.name = data["name"]
+        self.id: int = int(data["id"])
+        self.name: str = data["name"]
         self._icon: Optional[str] = data.get("icon")
         self._splash: Optional[str] = data.get("splash")
         self._discovery_splash: Optional[str] = data.get("discovery_splash")
-        self._emojis = data["emojis"]
-        self.features = data["features"]
-        self.approximate_member_count = data["approximate_member_count"]
-        self.approximate_presence_count = data["approximate_presence_count"]
-        self.description = data.get("description") or None
-        self._stickers = data["stickers"]
+        self._emojis: List[EmojiPayload] = data["emojis"]
+        self.features: List[GuildFeature] = data["features"]
+        self.approximate_member_count: int = data["approximate_member_count"]
+        self.approximate_presence_count: int = data["approximate_presence_count"]
+        self.description: Optional[str] = data["description"] or None
+        self._stickers: List[GuildStickerPayload] = data["stickers"]
 
         if self._emojis:
             self.emojis: List[Emoji] = [
