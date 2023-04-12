@@ -2105,6 +2105,9 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         super()._update(guild, data)
         self.topic: Optional[str] = data.get("topic")
 
+    async def _get_channel(self):
+        return self
+
     @property
     def requesting_to_speak(self) -> List[Member]:
         """List[:class:`Member`]: A list of members who are requesting to speak in the stage channel."""

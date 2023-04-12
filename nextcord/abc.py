@@ -54,7 +54,15 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .asset import Asset
-    from .channel import CategoryChannel, DMChannel, GroupChannel, PartialMessageable, TextChannel
+    from .channel import (
+        CategoryChannel,
+        DMChannel,
+        GroupChannel,
+        PartialMessageable,
+        StageChannel,
+        TextChannel,
+        VoiceChannel,
+    )
     from .client import Client
     from .embeds import Embed, EmbedData
     from .enums import InviteTarget
@@ -76,7 +84,9 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .user import ClientUser
 
-    PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
+    PartialMessageableChannel = Union[
+        TextChannel, Thread, DMChannel, PartialMessageable, VoiceChannel, StageChannel
+    ]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
 
