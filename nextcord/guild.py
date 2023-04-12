@@ -250,6 +250,11 @@ class Guild(Hashable):
         with ``with_counts=True``.
 
         .. versionadded:: 2.0
+
+    max_stage_video_channel_users: Optional[:class:`int`]
+        The maximum amount of users in a stage channel when video is being broadcasted.
+
+        .. versionadded:: 2.5
     """
 
     __slots__ = (
