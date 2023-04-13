@@ -1197,7 +1197,7 @@ class ApplicationFlags(BaseFlags):
     def application_auto_moderation_rule_create(self):
         """:class:`bool`: Returns ``True`` if the application uses the Auto Moderation API.
 
-        .. versionadded::
+        .. versionadded:: 2.5
         """
         return 1 << 6
 
