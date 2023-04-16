@@ -3737,7 +3737,7 @@ class Guild(Hashable):
             The actions to execute when this rule is triggered.
         trigger_type: :class:`AutoModerationTriggerType`
             The type of content that triggers this rule.
-        trigger_metadata: Optinal[:class:`AutoModerationTriggerMetadata`]
+        trigger_metadata: Optional[:class:`AutoModerationTriggerMetadata`]
             The additional data to use to determine if this rule has been triggered.
         enabled: Optional[:class:`bool`]
             If this rule should be enabled.
