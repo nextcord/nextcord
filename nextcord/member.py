@@ -707,7 +707,7 @@ class Member(abc.Messageable, _UserTag):
         voice_channel: Optional[VocalGuildChannel] = MISSING,
         reason: Optional[str] = None,
         timeout: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
-        flags: Optional[MemberFlags] = MISSING,
+        flags: MemberFlags = MISSING,
         bypass_verification: bool = MISSING,
     ) -> Optional[Member]:
         """|coro|
@@ -767,7 +767,7 @@ class Member(abc.Messageable, _UserTag):
             Set this to None to disable their timeout.
 
             .. versionadded:: 2.0
-        flags: Optional[:class:`~nextcord.MemberFlags`]
+        flags: :class:`~nextcord.MemberFlags`
             The flags to set for this member.
             Currently only :class:`~nextcord.MemberFlags.bypasses_verification` is able to be set.
 
@@ -851,15 +851,13 @@ class Member(abc.Messageable, _UserTag):
                 f"not {timeout.__class__.__name__}"
             )
 
-        if flags is None:
+        if flags is MISSING:
             flags = MemberFlags()
         if bypass_verification is not MISSING:
             flags.bypasses_verification = bypass_verification
 
-        flag_value: Optional[int] = flags.value if flags.value != 0 else None
-
-        if flag_value is not None:
-            payload["flags"] = flag_value
+        if flags.value != 0:
+            payload["flags"] = flags.value
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
