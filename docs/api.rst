@@ -912,6 +912,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     - nickname
     - roles
     - pending
+    - flags
 
     This requires :attr:`Intents.members` to be enabled.
 
@@ -4726,6 +4727,14 @@ PublicUserFlags
 .. attributetable:: PublicUserFlags
 
 .. autoclass:: PublicUserFlags()
+    :members:
+
+MemberFlags
+~~~~~~~~~~~
+
+.. attributetable:: MemberFlags
+
+.. autoclass:: MemberFlags()
     :members:
 
 ChannelFlags

@@ -14,6 +14,7 @@ from .activity import ActivityTypes, create_activity
 from .asset import Asset
 from .colour import Colour
 from .enums import Status, try_enum
+from .flags import MemberFlags
 from .object import Object
 from .permissions import Permissions
 from .user import BaseUser, User, _UserTag
@@ -244,6 +245,7 @@ class Member(abc.Messageable, _UserTag):
         "_state",
         "_avatar",
         "_timeout",
+        "_flags",
     )
 
     if TYPE_CHECKING:
@@ -282,6 +284,7 @@ class Member(abc.Messageable, _UserTag):
         self._timeout: Optional[datetime.datetime] = utils.parse_time(
             data.get("communication_disabled_until")
         )
+        self._flags = data.get("flags", 0)
 
     def __str__(self) -> str:
         return str(self._user)
@@ -314,6 +317,7 @@ class Member(abc.Messageable, _UserTag):
         self.nick = data.get("nick", None)
         self.pending = data.get("pending", False)
         self._timeout = utils.parse_time(data.get("communication_disabled_until"))
+        self._flags = data.get("flags", 0)
 
     @classmethod
     def _try_upgrade(
@@ -343,6 +347,7 @@ class Member(abc.Messageable, _UserTag):
         self._state = member._state
         self._avatar = member._avatar
         self._timeout = member._timeout
+        self._flags = member._flags
 
         # Reference will not be copied unless necessary by PRESENCE_UPDATE
         # See below
@@ -370,6 +375,7 @@ class Member(abc.Messageable, _UserTag):
         self._roles = utils.SnowflakeList(map(int, data["roles"]))
         self._avatar = data.get("avatar")
         self._timeout = utils.parse_time(data.get("communication_disabled_until"))
+        self._flags = data.get("flags", 0)
 
     def _presence_update(
         self, data: PartialPresenceUpdate, user: UserPayload
@@ -544,6 +550,14 @@ class Member(abc.Messageable, _UserTag):
         if self.activities:
             return self.activities[0]
 
+    @property
+    def flags(self) -> MemberFlags:
+        """:class:`MemberFlags`: Returns the member's flags.
+
+        .. versionadded:: 2.5
+        """
+        return MemberFlags._from_value(self._flags)
+
     def mentioned_in(self, message: Message) -> bool:
         """Checks if the member is mentioned in the specified message.
 
@@ -693,6 +707,8 @@ class Member(abc.Messageable, _UserTag):
         voice_channel: Optional[VocalGuildChannel] = MISSING,
         reason: Optional[str] = None,
         timeout: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
+        flags: Optional[MemberFlags] = MISSING,
+        bypass_verification: bool = MISSING,
     ) -> Optional[Member]:
         """|coro|
 
@@ -700,21 +716,23 @@ class Member(abc.Messageable, _UserTag):
 
         Depending on the parameter passed, this requires different permissions listed below:
 
-        +---------------+--------------------------------------+
-        |   Parameter   |              Permission              |
-        +---------------+--------------------------------------+
-        | nick          | :attr:`Permissions.manage_nicknames` |
-        +---------------+--------------------------------------+
-        | mute          | :attr:`Permissions.mute_members`     |
-        +---------------+--------------------------------------+
-        | deafen        | :attr:`Permissions.deafen_members`   |
-        +---------------+--------------------------------------+
-        | roles         | :attr:`Permissions.manage_roles`     |
-        +---------------+--------------------------------------+
-        | voice_channel | :attr:`Permissions.move_members`     |
-        +---------------+--------------------------------------+
-        | timeout       | :attr:`Permissions.moderate_members` |
-        +---------------+--------------------------------------+
+        +---------------------+--------------------------------------+
+        |      Parameter      |              Permission              |
+        +---------------------+--------------------------------------+
+        | nick                | :attr:`Permissions.manage_nicknames` |
+        +---------------------+--------------------------------------+
+        | mute                | :attr:`Permissions.mute_members`     |
+        +---------------------+--------------------------------------+
+        | deafen              | :attr:`Permissions.deafen_members`   |
+        +---------------------+--------------------------------------+
+        | roles               | :attr:`Permissions.manage_roles`     |
+        +---------------------+--------------------------------------+
+        | voice_channel       | :attr:`Permissions.move_members`     |
+        +---------------------+--------------------------------------+
+        | timeout             | :attr:`Permissions.moderate_members` |
+        +---------------------+--------------------------------------+
+        | bypass_verification | :attr:`Permissions.moderate_members` |
+        +---------------------+--------------------------------------+
 
         All parameters are optional.
 
@@ -749,6 +767,15 @@ class Member(abc.Messageable, _UserTag):
             Set this to None to disable their timeout.
 
             .. versionadded:: 2.0
+        flags: Optional[:class:`~nextcord.MemberFlags`]
+            The flags to set for this member.
+            Currently only :class:`~nextcord.MemberFlags.bypasses_verification` is able to be set.
+
+            .. versionadded:: 2.5
+        bypass_verification: :class:`bool`
+            Indicates if the member should be allowed to bypass the guild verification requirements.
+
+            .. versionadded:: 2.5
 
         Raises
         ------
@@ -823,6 +850,16 @@ class Member(abc.Messageable, _UserTag):
                 "Timeout must be a `datetime.datetime` or `datetime.timedelta`"
                 f"not {timeout.__class__.__name__}"
             )
+
+        if flags is None:
+            flags = MemberFlags()
+        if bypass_verification is not MISSING:
+            flags.bypasses_verification = bypass_verification
+
+        flag_value: Optional[int] = flags.value if flags.value != 0 else None
+
+        if flag_value is not None:
+            payload["flags"] = flag_value
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
