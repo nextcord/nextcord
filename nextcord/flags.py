@@ -27,6 +27,7 @@ __all__ = (
     "SystemChannelFlags",
     "MessageFlags",
     "PublicUserFlags",
+    "MemberFlags",
     "Intents",
     "MemberCacheFlags",
     "ApplicationFlags",
