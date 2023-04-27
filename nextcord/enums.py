@@ -254,6 +254,7 @@ class DefaultAvatar(IntEnum):
     green = 2
     orange = 3
     red = 4
+    pink = 6
 
     def __str__(self) -> str:
         return self.name

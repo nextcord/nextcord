@@ -48,6 +48,7 @@ class BaseUser(_UserTag):
         "system",
         "_public_flags",
         "_state",
+        "global_name",
     )
 
     if TYPE_CHECKING:
@@ -56,6 +57,7 @@ class BaseUser(_UserTag):
         discriminator: str
         bot: bool
         system: bool
+        global_name: str
         _state: ConnectionState
         _avatar: Optional[str]
         _banner: Optional[str]
@@ -96,6 +98,7 @@ class BaseUser(_UserTag):
         self._public_flags = data.get("public_flags", 0)
         self.bot = data.get("bot", False)
         self.system = data.get("system", False)
+        self.global_name = data["global_name"]
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -118,7 +121,8 @@ class BaseUser(_UserTag):
             "username": self.name,
             "id": self.id,
             "avatar": self._avatar,
-            "discriminator": self.discriminator,
+            "global_name": self.global_name,
+            "discriminator": self.discriminator,  # TODO: possibly remove this?
             "bot": self.bot,
         }
 
@@ -143,8 +147,11 @@ class BaseUser(_UserTag):
         """:class:`Asset`: Returns the default avatar for a given user.
 
         This is calculated by the user's discriminator.
+
+        ..versionchanged:: 2.5
+            Indexes avatar using ID instead of discriminator.
         """
-        return Asset._from_default_avatar(self._state, int(self.discriminator) % len(DefaultAvatar))
+        return Asset._from_default_avatar(self._state, (self.id >> 6) % len(DefaultAvatar))
 
     @property
     def display_avatar(self) -> Asset:
@@ -288,6 +295,10 @@ class ClientUser(BaseUser):
         The user's username.
     id: :class:`int`
         The user's unique ID.
+    global_name: :class:`str`
+        The user's display name. Defaults to the user's username.
+
+        .. versionadded: 2.5
     discriminator: :class:`str`
         The user's discriminator. This is given when the username has conflicts.
     bot: :class:`bool`
@@ -318,8 +329,9 @@ class ClientUser(BaseUser):
 
     def __repr__(self) -> str:
         return (
-            f"<ClientUser id={self.id} name={self.name!r} discriminator={self.discriminator!r}"
-            f" bot={self.bot} verified={self.verified} mfa_enabled={self.mfa_enabled}>"
+            f"<ClientUser id={self.id} name={self.name!r} global_name={self.global_name}"
+            f" discriminator={self.discriminator!r} bot={self.bot} verified={self.verified}"
+            f" mfa_enabled={self.mfa_enabled}>"
         )
 
     def _update(self, data: UserPayload) -> None:
@@ -412,6 +424,10 @@ class User(BaseUser, abc.Messageable):
         The user's username.
     id: :class:`int`
         The user's unique ID.
+    global_name: :class:`str`
+        The user's default name. Defaults to the user's username
+
+        ..versionadded: 2.5
     discriminator: :class:`str`
         The user's discriminator. This is given when the username has conflicts.
     bot: :class:`bool`
@@ -429,7 +445,10 @@ class User(BaseUser, abc.Messageable):
         self._stored: bool = False
 
     def __repr__(self) -> str:
-        return f"<User id={self.id} name={self.name!r} discriminator={self.discriminator!r} bot={self.bot}>"
+        return (
+            f"<User id={self.id} name={self.name!r} global_name={self.global_name}"
+            f"discriminator={self.discriminator!r} bot={self.bot}>"
+        )
 
     def __del__(self) -> None:
         try:

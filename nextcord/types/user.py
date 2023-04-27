@@ -10,6 +10,7 @@ class PartialUser(TypedDict):
     username: str
     discriminator: str
     avatar: Optional[str]
+    global_name: str
 
 
 PremiumType = Literal[0, 1, 2]
