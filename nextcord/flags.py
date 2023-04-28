@@ -502,30 +502,9 @@ class MemberFlags(BaseFlags):
         .. describe:: x != y
 
             Checks if two MemberFlags are not equal.
-
-        .. describe:: x | y, x |= y
-
-            Returns a MemberFlags instance with all enabled flags from
-            both x and y.
-
-        .. describe:: x & y, x &= y
-
-            Returns a MemberFlags instance with only flags enabled on
-            both x and y.
-
-        .. describe:: x ^ y, x ^= y
-
-            Returns a MemberFlags instance with only flags enabled on
-            only one of x or y, not on both.
-
-        .. describe:: ~x
-
-            Returns a MemberFlags instance with all flags inverted from x.
-
         .. describe:: hash(x)
 
             Return the flag's hash.
-
         .. describe:: iter(x)
 
             Returns an iterator of ``(name, value)`` pairs. This allows it
