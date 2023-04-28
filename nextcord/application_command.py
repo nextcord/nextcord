@@ -817,7 +817,7 @@ class CallbackMixin:
             A boolean indicating if the command can be invoked.
         """
         # Global checks
-        for check in interaction.client._connection._application_command_checks:
+        for check in interaction.client._application_command_checks:
             try:
                 check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
@@ -887,8 +887,8 @@ class CallbackMixin:
             if (before_invoke := self.cog_before_invoke) is not None:
                 await before_invoke(interaction)  # type: ignore
 
-            if (before_invoke := state._application_command_before_invoke) is not None:
-                await before_invoke(interaction)  # type: ignore
+            if (before_invoke := interaction.client._application_command_before_invoke) is not None:
+                await before_invoke(interaction)
 
             try:
                 # await self.invoke_callback(interaction, *args, **kwargs)
@@ -909,8 +909,10 @@ class CallbackMixin:
                 if (after_invoke := self.cog_after_invoke) is not None:
                     await after_invoke(interaction)  # type: ignore
 
-                if (after_invoke := state._application_command_after_invoke) is not None:
-                    await after_invoke(interaction)  # type: ignore
+                if (
+                    after_invoke := interaction.client._application_command_after_invoke
+                ) is not None:
+                    await after_invoke(interaction)
 
     async def invoke_callback(self, interaction: Interaction, *args, **kwargs) -> None:
         """|coro|

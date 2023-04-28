@@ -65,7 +65,6 @@ if TYPE_CHECKING:
     from .http import HTTPClient
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
-    from .types.checks import ApplicationCheck, ApplicationHook
     from .types.emoji import Emoji as EmojiPayload
     from .types.guild import Guild as GuildPayload
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
@@ -253,11 +252,6 @@ class ConnectionState:
         for attr, func in inspect.getmembers(self):
             if attr.startswith("parse_"):
                 parsers[attr[6:].upper()] = func
-
-        # Global application command checks
-        self._application_command_checks: List[ApplicationCheck] = []
-        self._application_command_before_invoke: Optional[ApplicationHook] = None
-        self._application_command_after_invoke: Optional[ApplicationHook] = None
 
         self.clear()
 

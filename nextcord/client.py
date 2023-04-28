@@ -63,6 +63,8 @@ from .webhook import Webhook
 from .widget import Widget
 
 if TYPE_CHECKING:
+    from nextcord.types.checks import ApplicationCheck, ApplicationHook
+
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand, ClientCog
     from .asset import Asset
@@ -76,7 +78,6 @@ if TYPE_CHECKING:
     from .scheduled_events import ScheduledEvent
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .voice_client import VoiceProtocol
-
 
 __all__ = ("Client",)
 
@@ -330,6 +331,11 @@ class Client:
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
 
         self._default_guild_ids = default_guild_ids or []
+
+        # Global application command checks
+        self._application_command_checks: List[ApplicationCheck] = []
+        self._application_command_before_invoke: Optional[ApplicationHook] = None
+        self._application_command_after_invoke: Optional[ApplicationHook] = None
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -2799,3 +2805,125 @@ class Client:
             This is synchronous due to how slash commands are implemented.
         """
         return cls(data=data, state=self._connection)
+
+    # Application Command Global Checks
+
+    def add_application_command_check(self, func: ApplicationCheck) -> None:
+        """Adds a global application command check to the client.
+
+        This is the non-decorator interface to :meth:`.application_command_check`.
+
+        Parameters
+        ----------
+        func: Callable[[:class:`~nextcord.Interaction`], ``MaybeCoro[bool]``]]
+            The function that was used as a global application check.
+        """
+        self._application_command_checks.append(func)
+
+    def remove_application_command_check(self, func: ApplicationCheck) -> None:
+        """Removes a global application command check from the client.
+
+        This function is idempotent and will not raise an exception
+        if the function is not in the global checks.
+
+        Parameters
+        ----------
+        func: Callable[[:class:`~nextcord.Interaction`], ``MaybeCoro[bool]``]]
+            The function to remove from the global application checks.
+        """
+
+        try:
+            self._application_command_checks.remove(func)
+        except ValueError:
+            pass
+
+    def application_command_check(self, func: ApplicationCheck) -> ApplicationCheck:
+        """A decorator that adds a global applications command check to the client.
+
+        A global check is similar to a :func:`~nextcord.ext.application_checks.check` that is applied
+        on a per command basis except it is run before any command checks
+        have been verified and applies to every application command the client has.
+
+        .. note::
+
+            This function can either be a regular function or a coroutine.
+
+        Similar to a application command :func:`~nextcord.ext.application_checks.check`, this takes a single parameter
+        of type :class:`.Interaction` and can only raise exceptions inherited from
+        :exc:`.ApplicationError`.
+
+        Example
+        -------
+
+        .. code-block:: python3
+
+            @client.application_command_check
+            def check_commands(interaction: Interaction) -> bool:
+                return interaction.application_command.qualified_name in allowed_commands
+
+        """
+        return self.add_application_command_check(func)  # type: ignore
+
+    def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+        """A decorator that registers a coroutine as a pre-invoke hook.
+
+        A pre-invoke hook is called directly before the command is
+        called. This makes it a useful function to set up database
+        connections or any type of set up required.
+
+        This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
+        .. note::
+
+            The :meth:`~nextcord.Client.application_command_before_invoke` and :meth:`~nextcord.Client.application_command_after_invoke`
+            hooks are only called if all checks pass without error. If any check fails, then the hooks
+            are not called.
+
+        Parameters
+        ----------
+        coro: :ref:`coroutine <coroutine>`
+            The coroutine to register as the pre-invoke hook.
+
+        Raises
+        ------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError("The pre-invoke hook must be a coroutine.")
+
+        self._application_command_before_invoke = coro
+        return coro
+
+    def application_command_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+        r"""A decorator that registers a coroutine as a post-invoke hook.
+
+        A post-invoke hook is called directly after the command is
+        called. This makes it a useful function to clean-up database
+        connections or any type of clean up required. There may only be
+        one global post-invoke hook.
+
+        This post-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
+        .. note::
+
+            Similar to :meth:`~nextcord.Client.application_command_before_invoke`, this is not called unless
+            checks succeed. This hook is, however, **always** called regardless of the internal command
+            callback raising an error (i.e. :exc:`.ApplicationInvokeError`\).
+            This makes it ideal for clean-up scenarios.
+
+        Parameters
+        ----------
+        coro: :ref:`coroutine`
+            The coroutine to register as the post-invoke hook.
+
+        Raises
+        ------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError("The post-invoke hook must be a coroutine.")
+
+        self._application_command_after_invoke = coro
+        return coro
