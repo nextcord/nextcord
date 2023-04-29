@@ -523,7 +523,7 @@ class AuditLogEntry(Hashable):
         if channel_id and self.action:
             elems["channel"] = self.guild.get_channel(channel_id) or Object(id=channel_id)
             
-        if not self.extra:
+        if type(self.extra) is dict:
             self.extra = type("_AuditLogProxy", (), elems)() # type: ignore
 
         # this key is not present when the above is present, typically.
