@@ -283,7 +283,7 @@ AuditLogChange = Union[
 class AuditEntryInfo(TypedDict):
     delete_member_days: str
     members_removed: str
-    channel_id: Optional[Snowflake]
+    channel_id: Snowflake
     message_id: Snowflake
     count: str
     id: Snowflake
