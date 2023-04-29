@@ -524,7 +524,7 @@ class AuditLogEntry(Hashable):
             elems["channel"] = self.guild.get_channel_or_thread(channel_id) or Object(id=channel_id)
             
         if type(self.extra) is dict:
-            self.extra = type("_AuditLogProxy", (), elems)() # type: ignore
+            self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
 
         # this key is not present when the above is present, typically.
         # It's a list of { new_value: a, old_value: b, key: c }
