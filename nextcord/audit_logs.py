@@ -522,9 +522,9 @@ class AuditLogEntry(Hashable):
         # this just gets automatically filled in if present, this way prevents crashes if channel_id is None
         if channel_id and self.action:
             elems["channel"] = self.guild.get_channel(channel_id) or Object(id=channel_id)
-            
+
         if type(self.extra) is dict:
-            self.extra = type("_AuditLogProxy", (), elems)() # type: ignore
+            self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
 
         # this key is not present when the above is present, typically.
         # It's a list of { new_value: a, old_value: b, key: c }
