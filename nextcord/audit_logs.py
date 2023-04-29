@@ -462,8 +462,11 @@ class AuditLogEntry(Hashable):
 
         # this key is technically not usually present
         self.reason = data.get("reason")
-        self.extra = data.get("options")  # type: ignore
+        self.extra = data.get("options", {})  # type: ignore
         # I gave up trying to fix this
+
+        elems: Dict[str, Any] = {}
+        channel_id = int(self.extra["channel_id"]) if self.extra.get("channel_id", None) else None
 
         if isinstance(self.action, enums.AuditLogAction) and self.extra:
             if self.action is enums.AuditLogAction.member_prune:
@@ -475,26 +478,19 @@ class AuditLogEntry(Hashable):
                 self.action is enums.AuditLogAction.member_move
                 or self.action is enums.AuditLogAction.message_delete
             ):
-                channel_id = int(self.extra["channel_id"])
                 elems = {
                     "count": int(self.extra["count"]),
-                    "channel": self.guild.get_channel(channel_id) or Object(id=channel_id),
                 }
-                self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
             elif self.action is enums.AuditLogAction.member_disconnect:
                 # The member disconnect action has a dict with some information
                 elems = {
                     "count": int(self.extra["count"]),
                 }
-                self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
             elif self.action.name.endswith("pin"):
                 # the pin actions have a dict with some information
-                channel_id = int(self.extra["channel_id"])
                 elems = {
-                    "channel": self.guild.get_channel(channel_id) or Object(id=channel_id),
                     "message_id": int(self.extra["message_id"]),
                 }
-                self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
             elif self.action.name.startswith("overwrite_"):
                 # the overwrite_ actions have a dict with some information
                 instance_id = int(self.extra["id"])
@@ -510,25 +506,25 @@ class AuditLogEntry(Hashable):
             elif self.action.name.startswith("stage_instance"):
                 channel_id = int(self.extra["channel_id"])
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
-                self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
             elif (
                 self.action is enums.AuditLogAction.auto_moderation_block_message
                 or self.action is enums.AuditLogAction.auto_moderation_flag_to_channel
                 or self.action is enums.AuditLogAction.auto_moderation_user_communication_disabled
             ):
-                channel_id = int(self.extra["channel_id"]) if self.extra["channel_id"] else None
                 elems = {
-                    "channel": (
-                        self.guild.get_channel_or_thread(channel_id) or Object(id=channel_id) \
-                            if channel_id else None
-                    ),
                     "rule_name": self.extra["auto_moderation_rule_name"],
                     "rule_trigger_type": enums.try_enum(
                         enums.AutoModerationTriggerType,
                         int(self.extra["auto_moderation_rule_trigger_type"]),
                     ),
                 }
-                self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
+
+        # this just gets automatically filled in if present, this way prevents crashes if channel_id is None
+        if channel_id and self.action:
+            elems["channel"] = self.guild.get_channel(channel_id) or Object(id=channel_id)
+            
+        if not self.extra:
+            self.extra = type("_AuditLogProxy", (), elems)() # type: ignore
 
         # this key is not present when the above is present, typically.
         # It's a list of { new_value: a, old_value: b, key: c }
