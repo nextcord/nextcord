@@ -475,10 +475,10 @@ class AuditLogEntry(Hashable):
                 self.action is enums.AuditLogAction.member_move
                 or self.action is enums.AuditLogAction.message_delete
             ):
-                channel_id = int(self.extra["channel_id"])
+                channel_id = int(self.extra["channel_id"]) if self.extra["channel_id"] else None
                 elems = {
                     "count": int(self.extra["count"]),
-                    "channel": self.guild.get_channel(channel_id) or Object(id=channel_id),
+                    "channel": self.guild.get_channel(channel_id) or Object(id=channel_id) if channel_id else None,
                 }
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
             elif self.action is enums.AuditLogAction.member_disconnect:
@@ -489,9 +489,9 @@ class AuditLogEntry(Hashable):
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
             elif self.action.name.endswith("pin"):
                 # the pin actions have a dict with some information
-                channel_id = int(self.extra["channel_id"])
+                channel_id = int(self.extra["channel_id"]) if self.extra["channel_id"] else None
                 elems = {
-                    "channel": self.guild.get_channel(channel_id) or Object(id=channel_id),
+                    "channel": self.guild.get_channel(channel_id) or Object(id=channel_id) if channel_id else None,
                     "message_id": int(self.extra["message_id"]),
                 }
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
@@ -508,18 +508,19 @@ class AuditLogEntry(Hashable):
                         role.name = self.extra.get("role_name")  # type: ignore
                     self.extra = role  # type: ignore
             elif self.action.name.startswith("stage_instance"):
-                channel_id = int(self.extra["channel_id"])
-                elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
+                channel_id = int(self.extra["channel_id"]) if self.extra["channel_id"] else None
+                elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id) if channel_id else None}
                 self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
             elif (
                 self.action is enums.AuditLogAction.auto_moderation_block_message
                 or self.action is enums.AuditLogAction.auto_moderation_flag_to_channel
                 or self.action is enums.AuditLogAction.auto_moderation_user_communication_disabled
             ):
-                channel_id = int(self.extra["channel_id"])
+                channel_id = int(self.extra["channel_id"]) if self.extra["channel_id"] else None
                 elems = {
                     "channel": (
-                        self.guild.get_channel_or_thread(channel_id) or Object(id=channel_id)
+                        self.guild.get_channel_or_thread(channel_id) or Object(id=channel_id) \
+                            if channel_id else None
                     ),
                     "rule_name": self.extra["auto_moderation_rule_name"],
                     "rule_trigger_type": enums.try_enum(
