@@ -7,4 +7,4 @@ An extension module to provide utilities for slash commands.
 """
 
 
-from .slash import describe
+from .slash import describe, rename
