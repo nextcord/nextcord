@@ -7,8 +7,8 @@ import logging
 import sys
 import warnings
 from datetime import datetime
+from types import TracebackType
 from typing import (
-    Type,
     TYPE_CHECKING,
     Any,
     Callable,
@@ -21,6 +21,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
     TypeVar,
     Union,
 )
@@ -41,7 +42,6 @@ from .errors import (
 from .file import File
 from .gateway import DiscordClientWebSocketResponse
 from .utils import MISSING
-from types import TracebackType
 
 _log = logging.getLogger(__name__)
 
