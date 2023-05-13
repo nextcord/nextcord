@@ -268,7 +268,7 @@ class Client:
         allowed_mentions: Optional[AllowedMentions] = None,
         heartbeat_timeout: float = 60.0,
         guild_ready_timeout: float = 2.0,
-        assume_unsync_clock: bool = True,
+        # assume_unsync_clock: bool = True,
         enable_debug_events: bool = False,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         lazy_load_commands: bool = True,
@@ -291,7 +291,7 @@ class Client:
             connector,
             proxy=proxy,
             proxy_auth=proxy_auth,
-            unsync_clock=assume_unsync_clock,
+            # unsync_clock=assume_unsync_clock,
             loop=self.loop,
             dispatch=self.dispatch,
         )
@@ -320,6 +320,8 @@ class Client:
         self._ready: asyncio.Event = asyncio.Event()
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
+        self._token: str | None = None
+
         self._lazy_load_commands: bool = lazy_load_commands
         self._client_cogs: Set[ClientCog] = set()
         self._rollout_associate_known: bool = rollout_associate_known
@@ -328,7 +330,6 @@ class Client:
         self._rollout_update_known: bool = rollout_update_known
         self._rollout_all_guilds: bool = rollout_all_guilds
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
-
         self._default_guild_ids = default_guild_ids or []
 
         if VoiceClient.warn_nacl:
@@ -647,7 +648,9 @@ class Client:
                 f"The token provided was of type {type(token)} but was expected to be str"
             )
 
-        data = await self.http.static_login(token.strip())
+        self._token = token.strip()
+        data = await self.http.static_login(f"Bot {self._token}")
+
         self._connection.user = ClientUser(state=self._connection, data=data)
 
     async def connect(self, *, reconnect: bool = True) -> None:

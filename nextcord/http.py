@@ -7,6 +7,7 @@ import logging
 import sys
 import warnings
 import weakref
+from datetime import datetime
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -93,7 +94,7 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
     return text
 
 
-_DEFAULT_API_VERSION = 10
+_DEFAULT_API_VERSION: Literal[10] = 10
 
 _API_VERSION: Literal[9, 10] = _DEFAULT_API_VERSION
 
@@ -155,25 +156,222 @@ class Route:
         return f"{self.channel_id}:{self.guild_id}:{self.path}"
 
 
-class MaybeUnlock:
-    def __init__(self, lock: asyncio.Lock) -> None:
-        self.lock: asyncio.Lock = lock
-        self._unlock: bool = True
+class RateLimitMigrating(BaseException):
+    ...
 
-    def __enter__(self) -> Self:
-        return self
 
-    def defer(self) -> None:
-        self._unlock = False
+class RateLimit:
+    def __init__(self, time_offset: float = 0.3) -> None:
+        """Used to time gate a large batch of requests to only occur X every Y seconds. Used via ``async with``
 
-    def __exit__(
-        self,
-        exc_type: Optional[Type[BE]],
-        exc: Optional[BE],
-        traceback: Optional[TracebackType],
-    ) -> None:
-        if self._unlock:
-            self.lock.release()
+        NOT THREAD SAFE.
+
+        Parameters
+        ----------
+        time_offset: :class:`float`
+            Number in seconds to increase all timers by. Used for lag compensation.
+        """
+        self.limit: int = 1
+        """Maximum amount of requests before requests have to wait for the rate limit to reset."""
+        self.remaining: int = 1
+        """Remaining amount of requests before requests have to wait for the rate limit to reset."""
+        self.reset: datetime | None = None
+        """Datetime that the bucket roughly will be reset at."""
+        self.reset_after: float = 1.0
+        """Amount of seconds roughly until the rate limit will be reset."""
+        self.bucket: str | None = None
+        """Name of the bucket, if it has one."""
+
+        self._time_offset: float = time_offset
+        """Number in seconds to increase all timers by. Used for lag compensation."""
+        self._first_update: bool = True
+        """If the next update to be ran will be the first."""
+        self._reset_remaining_task: asyncio.Task | None = None
+        """Holds the task object for resetting the remaining count."""
+        self._on_reset_event: asyncio.Event = asyncio.Event()
+        """Used to indicate when the rate limit is ready to be acquired."""
+        self._on_reset_event.set()
+        self._deny: bool = False
+        """Set to error all acquiring requests with a 404 value error."""
+        self._migrating: str | None = None
+        """When this RateLimit is being deprecated and acquiring requests need to migrate to a different RateLimit, this 
+        variable should be set to the different RateLimit/buckets string name.
+        """
+
+    async def update(self, response: aiohttp.ClientResponse) -> None:
+        """Updates the rate limit with information found in the response. Specifically the headers."""
+
+        if (response.headers.get("X-RateLimit-Global") or response.headers.get("x-ratelimit-global")) in (True, "true"):
+            # The response is intended for the global rate limit, not a regular rate limit.
+            return
+
+        if response.status == 404:
+            self._deny = True
+
+        # Updates the limit if it exists.
+        x_limit = response.headers.get("X-RateLimit-Limit")
+        self.limit = 1 if x_limit is None else int(x_limit)
+
+        # Updates the remaining left if it exists, being pessimistic.
+        x_remaining = response.headers.get("X-RateLimit-Remaining")
+
+        if x_remaining is None:
+            self.remaining = 1
+        elif self._first_update:
+            self.remaining = int(x_remaining)
+        else:
+            # If requests come back out of order, it's possible that we could get a wrong amount remaining.
+            # It's best to be pessimistic and assume it cannot go back up unless the reset task occurs.
+            self.remaining = int(x_remaining) if int(x_remaining) < self.remaining else self.remaining
+
+        # Updates the datetime of the reset.
+        x_reset = response.headers.get("X-RateLimit-Reset")
+        if x_reset is not None:
+            self.reset = datetime.utcfromtimestamp(float(x_reset))
+
+        # Updates the reset-after count, being pessimistic.
+        x_reset_after = response.headers.get("X-RateLimit-Reset-After")
+        if x_reset_after is not None:
+            x_reset_after = float(x_reset_after) + self._time_offset
+            if self.reset_after is None:
+                self.reset_after = x_reset_after
+            else:
+                self.reset_after = x_reset_after if self.reset_after < x_reset_after else self.reset_after
+
+        # Updates the bucket name. The bucket name not existing as fine, as ``None`` is desired for that.
+        x_bucket = response.headers.get("X-RateLimit-Bucket")
+        self.bucket = x_bucket
+
+        if not self._reset_remaining_task or self._reset_remaining_task.done():
+            self.start_reset_task()
+
+        # If for whatever reason we have requests remaining but the reset event isn't set, set it.
+        if 0 < self.remaining and not self._on_reset_event.is_set():
+            _log.debug("Bucket %s updated with remaining %s, setting reset event.", self.bucket, self.remaining)
+            self._on_reset_event.set()
+
+        # If this is our first update, indicate that all future updates aren't the first.
+        if self._first_update:
+            self._first_update = False
+
+        _log.debug(
+            "Bucket %s updated with limit %s, remaining %s, reset %s, and reset_after %s seconds.",
+            self.bucket, self.limit, self.remaining, self.reset, self.reset_after,
+        )
+
+    def start_reset_task(self):
+        """Starts the reset task, non-blocking."""
+        loop = asyncio.get_running_loop()
+        _log.debug("Bucket %s will reset after %s seconds.", self.bucket, self.reset_after)
+        self._reset_remaining_task = loop.create_task(self.reset_remaining(self.reset_after))
+
+    async def reset_remaining(self, time: float) -> None:
+        """|coro|
+        Sleeps for the specified amount of time, then resets the remaining request count to the limit.
+
+        Parameters
+        ----------
+        time: :class:`float`
+            Amount of time to sleep until the request count is reset to the limit. ``time_offset`` is not added to
+            this number.
+        """
+        await asyncio.sleep(time)
+        self.remaining = self.limit
+        self._on_reset_event.set()
+        _log.debug("Bucket %s is reset.", self.bucket)
+
+    @property
+    def migrating(self) -> str | None:
+        """If not ``None``, this indicates what bucket acquiring requests should migrate to."""
+        return self._migrating
+
+    def migrate_to(self, bucket: str) -> None:
+        """Signals to acquiring requests, both present and future, that they need to migrate to a new bucket."""
+        self._migrating = bucket
+        self.remaining = self.limit
+        self._on_reset_event.set()
+        _log.debug("Bucket %s is deprecated and acquiring requests will migrate to a new bucket.", bucket)
+
+    async def __aenter__(self) -> None:
+        await self.acquire()
+        return None
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.release()
+
+    def locked(self) -> bool:
+        return self.remaining <= 0
+
+    async def acquire(self) -> bool:
+        # If no more requests can be made but the event is set, clear it.
+        if self.remaining <= 0 and self._on_reset_event.is_set():
+            _log.info("Bucket %s has hit the remaining limit of %s, locking until reset.", self.bucket, self.limit)
+            self._on_reset_event.clear()
+
+        # Waits in a loop for the event to be set, clearing the event as needed and looping.
+        while not self._on_reset_event.is_set():
+            _log.debug("Bucket %s is not set, waiting for it to be set.", self.bucket)
+            await self._on_reset_event.wait()
+
+            if self.remaining <= 0 and self._on_reset_event.is_set():
+                _log.info(
+                    "Bucket %s has hit the remaining limit of %s, locking until reset.", self.bucket, self.limit
+                )
+                self._on_reset_event.clear()
+
+        if self.migrating:
+            raise RateLimitMigrating(f"This RateLimit is deprecated, you need to migrate to bucket {self.migrating}")
+        elif self._deny:
+            raise ValueError("This request path 404'd and is now denied.")
+
+        _log.debug("Continuing with request.")
+        self.remaining -= 1
+        return True
+
+    def release(self) -> None:
+        # Basically a placeholder, could probably be removed ;)
+        pass
+
+
+class GlobalRateLimit(RateLimit):
+    """
+    Represents the global rate limit, and thus has to have slightly modified behavior.
+
+    Still not thread safe.
+    """
+
+    async def acquire(self) -> bool:
+        ret = await super().acquire()
+        # As updates are little weird, it's best to start the reset task as soon as the first request has acquired.
+        if not self._reset_remaining_task or self._reset_remaining_task.done():
+            self.start_reset_task()
+
+        return ret
+
+    async def update(self, response: aiohttp.ClientResponse) -> None:
+        if (
+                response.headers.get("X-RateLimit-Global") or response.headers.get("x-ratelimit-global")
+        ) not in (True, "true"):
+            # The response is intended for the regular rate limit, not a global rate limit.
+            return
+
+        if response.status == 429:
+            # Oh dear, we hit the rate limit.
+            _log.warning("Global rate limit 429 encountered, setting remaining to 0.")
+            self.remaining = 0
+            data = await response.json()
+            _log.critical(data)
+            if response.headers.get("X-RateLimit-Scope") == "global":
+                if (retry_after := data.get("retry_after")) or (retry_after := response.headers.get("Retry-After")):
+                    _log.debug("Got global retry_after, resetting global after %s seconds", retry_after)
+                    self.reset_after = float(retry_after) + self._time_offset
+                    if self._reset_remaining_task and not self._reset_remaining_task.done():
+                        self._reset_remaining_task.cancel()
+
+                    self.start_reset_task()
+
+            self._on_reset_event.clear()
+            _log.critical("Cleared global ratelimit, waiting for reset.")
 
 
 # For some reason, the Discord voice websocket expects this header to be
@@ -182,49 +380,135 @@ aiohttp.hdrs.WEBSOCKET = "websocket"  # type: ignore
 
 
 class HTTPClient:
-    """Represents an HTTP client sending HTTP requests to the Discord API."""
+    """Represents an HTTP client sending HTTP requests to the Discord API.
+
+    Also, not thread safe.
+    """
 
     def __init__(
         self,
         connector: Optional[aiohttp.BaseConnector] = None,
         *,
+        default_max_per_second: int = 50,
+        time_offset: float = 0.2,
+        default_auth: Optional[str] = None,
         proxy: Optional[str] = None,
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
-        unsync_clock: bool = True,
         dispatch: Callable,
     ) -> None:
-        self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
-        self.connector = connector
+        """
+
+        Parameters
+        ----------
+        connector
+        default_max_per_second: :class:`int`
+            Maximum amount of requests per second per authorization.
+
+            Discord by default only allows 50 requests per second, but if your bot has had its maximum increased, then
+            increase this parameter.
+        time_offset: :class:`float`
+            Amount of seconds added to all ratelimit timers for lag compensation.
+
+            Due to latency and Discord servers not perfectly time synced, having no offset can cause 429's to occur even
+            with us following the reported X-RateLimit-Reset-After.
+
+            Increasing will protect from erroneous 429s but will slow bucket resets, lowering max theoretical speed.
+
+            Decreasing will hasten bucket resets and increase max theoretical speed but may cause 429s.
+        default_auth: Optional[:class:`str`]
+            Default string to use in the Authorization header if it's not manually provided.
+        proxy
+        proxy_auth
+        loop
+        dispatch
+        """
         self.__session: aiohttp.ClientSession = MISSING  # filled in static_login
-        self._locks: weakref.WeakValueDictionary = weakref.WeakValueDictionary()
-        self._global_over: asyncio.Event = asyncio.Event()
-        self._global_over.set()
-        self.token: Optional[str] = None
-        self.bot_token: bool = False
-        self.proxy: Optional[str] = proxy
-        self.proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
-        self.use_clock: bool = not unsync_clock
-        self._dispatch: Callable = dispatch
+        self._connector = connector
+        self._default_max_per_second = default_max_per_second
+        """Maximum amount of requests per second per authorization."""
+        self._time_offset = time_offset
+        """Amount of seconds added to all ratelimit timers for lag compensation."""
+        self._default_auth = None
+        # For consistency with possible future changes to set_default_auth.
+        self._set_default_auth(default_auth)
+        self._proxy = proxy
+        self._proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
+        # loop is truthy by default it seems, so this works.
+        self._loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
+        self._dispatch = dispatch
 
         user_agent = "DiscordBot (https://github.com/nextcord/nextcord/ {0}) Python/{1[0]}.{1[1]} aiohttp/{2}"
-        self.user_agent: str = user_agent.format(__version__, sys.version_info, aiohttp.__version__)
+        self._user_agent: str = user_agent.format(__version__, sys.version_info, aiohttp.__version__)
+
+        self._buckets: dict[str, RateLimit] = {}
+        """{"Discord bucket name": RateLimit}"""
+        self._global_rate_limits: dict[str | None, RateLimit] = {}
+        """{"Auth string": RateLimit}, None for auth-less ratelimit."""
+        self._url_rate_limits: dict[tuple[str, str, str | None], RateLimit] = {}
+        """{("METHOD", "route", "auth string"): RateLimit} auth string may be None to indicate auth-less."""
+        # TODO: Is this worth keeping? May reduce errors, thus cloudflare bannability.
+        self._url_deny_list: set[tuple[str, str, str | None]] = set()
+        """{("METHOD", "route", "auth string"), ...} 
+        
+        Paths that result in a 404. These will immediately error if a request is made to them.
+        """
+
+    def _make_global_rate_limit(self, auth: str | None, max_per_second: int) -> GlobalRateLimit:
+        rate_limit = GlobalRateLimit()
+        rate_limit.limit = max_per_second
+        rate_limit.remaining = max_per_second
+        rate_limit.reset_after = 1 + self._time_offset
+        rate_limit.bucket = f"Global {auth if auth else 'Unauthorized'}"
+
+        self._global_rate_limits[auth] = rate_limit
+        return rate_limit
+
+    def _make_url_rate_limit(self, method: str, path: str, auth: str | None) -> RateLimit:
+        ret = RateLimit()
+        self._url_rate_limits[(method, path, auth)] = ret
+        return ret
+
+    def _set_url_rate_limit(self, method: str, path: str, auth: str | None, rate_limit: RateLimit) -> None:
+        self._url_rate_limits[(method, path, auth)] = rate_limit
+
+    def _get_url_rate_limit(self, method: str, path: str, auth: str | None) -> RateLimit | None:
+        return self._url_rate_limits.get((method, path, auth), None)
+
+    def _add_url_deny(self, method: str, path: str, auth: str | None) -> None:
+        self._url_deny_list.add((method, path, auth))
+
+    def _check_url_deny(self, method: str, path: str, auth: str | None) -> bool:
+        return (method, path, auth) in self._url_deny_list
+
+    def _set_default_auth(self, auth: str) -> None:
+        self._default_auth = auth
+
+    def _make_headers(self, original_headers: dict[str, str]) -> dict[str, str]:
+        ret = original_headers.copy()
+        if "Authorization" not in ret and self._default_auth:
+            ret["Authorization"] = self._default_auth
+
+        if "User-Agent" not in ret and self._user_agent:
+            ret["User-Agent"] = self._user_agent
+
+        return ret
 
     def recreate(self) -> None:
         if self.__session.closed:
             self.__session = aiohttp.ClientSession(
-                connector=self.connector, ws_response_class=DiscordClientWebSocketResponse
+                connector=self._connector, ws_response_class=DiscordClientWebSocketResponse
             )
 
     async def ws_connect(self, url: str, *, compress: int = 0) -> Any:
         kwargs = {
-            "proxy_auth": self.proxy_auth,
-            "proxy": self.proxy,
+            "proxy_auth": self._proxy_auth,
+            "proxy": self._proxy,
             "max_msg_size": 0,
             "timeout": 30.0,
             "autoclose": False,
             "headers": {
-                "User-Agent": self.user_agent,
+                "User-Agent": self._user_agent,
             },
             "compress": compress,
         }
@@ -239,28 +523,39 @@ class HTTPClient:
         form: Optional[Iterable[Dict[str, Any]]] = None,
         **kwargs: Any,
     ) -> Any:
-        bucket = route.bucket
-        method = route.method
-        url = route.url
+        if not self.__session:
+            self.__session = aiohttp.ClientSession(
+                connector=self._connector,
+                ws_response_class=DiscordClientWebSocketResponse
+            )
 
-        lock = self._locks.get(bucket)
-        if lock is None:
-            lock = asyncio.Lock()
-            if bucket is not None:
-                self._locks[bucket] = lock
+        # bucket = route.bucket
+        # method = route.method
+        # url = route.url
+        #
+        # lock = self._locks.get(bucket)
+        # if lock is None:
+        #     lock = asyncio.Lock()
+        #     if bucket is not None:
+        #         self._locks[bucket] = lock
+        #
+        # # header creation
+        # headers: Dict[str, str] = {
+        #     "User-Agent": self.user_agent,
+        # }
 
-        # header creation
-        headers: Dict[str, str] = {
-            "User-Agent": self.user_agent,
-        }
 
-        if self.token is not None:
-            headers["Authorization"] = "Bot " + self.token
-        # some checking if it's a JSON request
-        if "json" in kwargs:
-            headers["Content-Type"] = "application/json"
-            kwargs["data"] = utils.to_json(kwargs.pop("json"))
 
+        headers = self._make_headers(kwargs.get("headers", {}))
+        #
+        # if self.token is not None:
+        #     headers["Authorization"] = "Bot " + self.token
+        # # some checking if it's a JSON request
+        # if "json" in kwargs:
+        #     headers["Content-Type"] = "application/json"
+        #     kwargs["data"] = utils.to_json(kwargs.pop("json"))
+        #
+        # TODO: Look into integrating this better?
         try:
             reason = kwargs.pop("reason")
         except KeyError:
@@ -269,152 +564,162 @@ class HTTPClient:
             if reason:
                 headers["X-Audit-Log-Reason"] = _uriquote(reason, safe="/ ")
 
-        kwargs["headers"] = headers
+        auth = headers.get("Authorization")
 
-        # Proxy support
-        if self.proxy is not None:
-            kwargs["proxy"] = self.proxy
-        if self.proxy_auth is not None:
-            kwargs["proxy_auth"] = self.proxy_auth
+        # TODO: I can't actually add this because NotFound cannot take None. I'd have to modify that to work, which
+        #  is another breaking change.
+        # if self._check_url_deny(route.method, route.path, auth):
+        #     raise NotFound(None, "The given path has already resulted in a 404 and was added to the deny list.")
 
-        if not self._global_over.is_set():
-            # wait until the global lock is complete
-            await self._global_over.wait()
+        # If a global rate limit for this authorization doesn't exist yet, make it.
+        if not (global_rate_limit := self._global_rate_limits.get(auth)):
+            global_rate_limit = self._make_global_rate_limit(auth, self._default_max_per_second)
 
-        response: Optional[aiohttp.ClientResponse] = None
-        data: Optional[Union[Dict[str, Any], str]] = None
-        await lock.acquire()
-        with MaybeUnlock(lock) as maybe_lock:
-            for tries in range(5):
-                if files:
-                    for f in files:
-                        f.reset(seek=tries)
+        # If a rate limit for this url path doesn't exist yet, make it.
+        if not (url_rate_limit := self._get_url_rate_limit(route.method, route.path, auth)):
+            url_rate_limit = self._make_url_rate_limit(route.method, route.path, auth)
 
-                if form:
-                    form_data = aiohttp.FormData(quote_fields=False)
-                    for params in form:
-                        form_data.add_field(**params)
-                    kwargs["data"] = form_data
+        max_retry_count = 5
+        rate_limit_path = (route.method, route.path, auth)  # Only use this for logging.
+        ret: Any | None = None
+        response: aiohttp.ClientResponse | None = None
 
-                try:
-                    async with self.__session.request(method, url, **kwargs) as response:
-                        _log.debug(
-                            "%s %s with %s has returned %s",
-                            method,
-                            url,
-                            kwargs.get("data"),
-                            response.status,
-                        )
+        # The loop is to allow migration to a different RateLimit if needed.
+        # If we hit this loop retry_count times, something is wrong. Either we're migrating buckets way too much, 429s
+        #  keep getting hit, or something is internally wrong.
+        # while 0 <= retry_count:
+        for retry_count in range(max_retry_count):  # To prevent infinite loops.
+            should_retry = False
+            # for tries in range(5):
+            try:
+                async with global_rate_limit:
+                    async with url_rate_limit:
+                        # TODO: Figure out why this is required.
+                        if files:
+                            for f in files:
+                                f.reset(seek=retry_count)
 
-                        # even errors have text involved in them so this is safe to call
-                        data = await json_or_text(response)
+                        # TODO: I feel like this can be handled more gracefully.
+                        if form:
+                            form_data = aiohttp.FormData(quote_fields=False)
+                            for params in form:
+                                form_data.add_field(**params)
+                            kwargs["data"] = form_data
 
-                        # check if we have rate limit header information
-                        is_global = bool(response.headers.get("X-RateLimit-Global", False))
-
-                        limit = response.headers.get("X-RateLimit-Limit", "")
-                        remaining = response.headers.get("X-Ratelimit-Remaining", "")
-
-                        bucket = response.headers.get("X-RateLimit-Bucket")
-                        if remaining == "0" and response.status != 429:
-                            # we've depleted our current bucket
-                            delta = utils.parse_ratelimit_header(response, use_clock=self.use_clock)
+                        async with self.__session.request(
+                            method=route.method,
+                            url=route.url,
+                            headers=headers,
+                            proxy=self._proxy,
+                            proxy_auth=self._proxy_auth,
+                            **kwargs
+                        ) as response:
                             _log.debug(
-                                "A rate limit bucket has been exhausted (bucket: %s, retry: %s).",
-                                bucket,
-                                delta,
+                                "%s %s with %s has returned %s",
+                                route.method,
+                                route.url,
+                                kwargs.get("data"),
+                                response.status,
                             )
-                            self._dispatch(
-                                "http_ratelimit",
-                                int(limit),
-                                int(remaining),
-                                delta,
-                                bucket,
-                                response.headers.get("X-RateLimit-Scope"),
-                            )
-                            maybe_lock.defer()
-                            self.loop.call_later(delta, lock.release)
+                            await url_rate_limit.update(response)
+                            await global_rate_limit.update(response)
 
-                        # the request was successful so just return the text/json
-                        if 300 > response.status >= 200:
-                            _log.debug("%s %s has received %s", method, url, data)
-                            return data
-
-                        # we are being rate limited
-                        if response.status == 429:
-                            if not response.headers.get("Via") or isinstance(data, str):
-                                # Banned by Cloudflare more than likely.
-                                raise HTTPException(response, data)
-
-                            fmt = 'We are being rate limited. Retrying in %.2f seconds. Handled under the bucket "%s"'
-
-                            # sleep a bit
-                            retry_after: float = data["retry_after"]
-                            _log.warning(fmt, retry_after, bucket)
-
-                            # check if it's a global rate limit
-                            if is_global:
-                                _log.warning(
-                                    "Global rate limit has been hit. Retrying in %.2f seconds.",
-                                    retry_after,
+                            if url_rate_limit.bucket is not None and \
+                                    url_rate_limit.bucket in self._buckets and \
+                                    self._buckets[url_rate_limit.bucket] is not url_rate_limit:
+                                # If the current RateLimit bucket name exists, but the stored RateLimit is not the
+                                #  current RateLimit, finish up and signal that the current bucket should be migrated
+                                #  to the stored one.
+                                _log.debug(
+                                    "Route %s with bucket %s already exists, migrating other possible requests to "
+                                    "that bucket.", rate_limit_path, url_rate_limit.bucket
                                 )
-                                self._dispatch(
-                                    "global_http_ratelimit",
-                                    retry_after,
-                                )
-                                self._global_over.clear()
-                            else:
-                                self._dispatch(
-                                    "http_ratelimit",
-                                    int(limit),
-                                    int(remaining),
-                                    retry_after,
-                                    bucket,
-                                    response.headers.get("X-RateLimit-Scope"),
-                                )
+                                correct_rate_limit = self._buckets[url_rate_limit.bucket]
+                                self._set_url_rate_limit(route.method, route.path, auth, correct_rate_limit)
+                                # Update the correct RateLimit object with our findings.
+                                await correct_rate_limit.update(response)
+                                # Signals to all requests waiting to acquire to migrate.
+                                url_rate_limit.migrate_to(correct_rate_limit.bucket)
+                            elif url_rate_limit.bucket is not None:
+                                self._buckets[url_rate_limit.bucket] = url_rate_limit
 
-                            await asyncio.sleep(retry_after)
-                            _log.debug("Done sleeping for the rate limit. Retrying...")
+                            # even errors have text involved in them so this is safe to call
+                            ret = await json_or_text(response)
 
-                            # release the global lock now that the
-                            # global rate limit has passed
-                            if is_global:
-                                self._global_over.set()
-                                _log.debug("Global rate limit is now over.")
+                            # self._dispatch(
+                            #     "http_ratelimit",  # TODO: Uhhhhhhhhhhh
+                            #     int(limit),
+                            #     int(remaining),
+                            #     delta,
+                            #     bucket,
+                            #     response.headers.get("X-RateLimit-Scope"),
+                            # )
 
-                            continue
+                            if response.status >= 400:
+                                if response.status in {500, 502, 504}:
+                                    await asyncio.sleep(1 + retry_count * 2)
+                                elif response.status == 401:
+                                    _log.warning(
+                                        "Path %s resulted in error 401, rejected authorization?", rate_limit_path
+                                    )
+                                    raise HTTPException(response, ret)
+                                elif response.status == 403:
+                                    _log.warning(
+                                        "Path %s resulted in error 403, check your permissions?", rate_limit_path
+                                    )
+                                    raise Forbidden(response, ret)
+                                # TODO: Is this still viable to keep?
+                                elif response.status == 404:
+                                    _log.warning(
+                                        "Path %s resulted in error 404, added to deny list. Check your path?",
+                                        rate_limit_path
+                                    )
+                                    self._add_url_deny(route.method, route.path, auth)
+                                    raise NotFound(response, ret)
+                                elif response.status == 429:
+                                    _log.warning(
+                                        "Path %s resulted in error 429, rate limit exceeded. Retrying.", rate_limit_path
+                                    )
+                                    should_retry = True
+                                elif response.status >= 500:
+                                    raise DiscordServerError(response, ret)
+                                else:
+                                    raise HTTPException(response, ret)
 
-                        # we've received a 500, 502, or 504, unconditional retry
-                        if response.status in {500, 502, 504}:
-                            await asyncio.sleep(1 + tries * 2)
-                            continue
+            # This is handling exceptions from the request
+            except OSError as e:
+                # Connection reset by peer
+                if retry_count < max_retry_count - 1 and e.errno in (54, 10054):
+                    await asyncio.sleep(1 + retry_count * 2)
+                    continue
 
-                        # the usual error cases
-                        if response.status == 403:
-                            raise Forbidden(response, data)
-                        elif response.status == 404:
-                            raise NotFound(response, data)
-                        elif response.status >= 500:
-                            raise DiscordServerError(response, data)
-                        else:
-                            raise HTTPException(response, data)
+                raise
 
-                # This is handling exceptions from the request
-                except OSError as e:
-                    # Connection reset by peer
-                    if tries < 4 and e.errno in (54, 10054):
-                        await asyncio.sleep(1 + tries * 2)
-                        continue
-                    raise
+            except RateLimitMigrating:
+                url_rate_limit = self._buckets.get(url_rate_limit.migrating)
+                if url_rate_limit is None:
+                    # This means we have an internal issue that we need to fix.
+                    raise ValueError(
+                        "RateLimit said to migrate, but the RateLimit to migrate was not found? This is an internal "
+                        "Nextcord error and should be reported!"
+                    )
 
-            if response is not None:
-                # We've run out of retries, raise.
-                if response.status >= 500:
-                    raise DiscordServerError(response, data)
+            else:
+                if not should_retry:
+                    break
 
-                raise HTTPException(response, data)
+            if retry_count == max_retry_count - 1:
+                _log.error(
+                    "Retry count for %s %s %s hit 0 or less, either something is wrong with Discord or Nextcord.",
+                    route.method, route.url, auth
+                )
+                if response is not None:
+                    if response.status >= 500:
+                        raise DiscordServerError(response, ret)
 
-            raise RuntimeError("Unreachable code in HTTP handling")
+                    raise HTTPException(response, ret)
+
+        return ret
 
     async def get_from_cdn(self, url: str) -> bytes:
         async with self.__session.get(url) as resp:
@@ -435,18 +740,14 @@ class HTTPClient:
 
     # login management
 
-    async def static_login(self, token: str) -> user.User:
-        # Necessary to get aiohttp to stop complaining about session creation
-        self.__session = aiohttp.ClientSession(
-            connector=self.connector, ws_response_class=DiscordClientWebSocketResponse
-        )
-        old_token = self.token
-        self.token = token
+    async def static_login(self, auth: str) -> user.User:
+        # TODO: Change this? This is literally just fetching /users/@me AKA "Get Current User", and is totally
+        #  usable with OAuth2. This doesn't actually have anything to do with logging in.
+        self._set_default_auth(auth)
 
         try:
             data = await self.request(Route("GET", "/users/@me"))
         except HTTPException as exc:
-            self.token = old_token
             if exc.status == 401:
                 raise LoginFailure("Improper token has been passed.") from exc
             raise
@@ -454,6 +755,7 @@ class HTTPClient:
         return data
 
     def logout(self) -> Response[None]:
+        # TODO: Is this only for user bots? Can we get rid of it?
         return self.request(Route("POST", "/auth/logout"))
 
     # Group functionality
