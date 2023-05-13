@@ -481,7 +481,7 @@ class HTTPClient:
     def _check_url_deny(self, method: str, path: str, auth: str | None) -> bool:
         return (method, path, auth) in self._url_deny_list
 
-    def _set_default_auth(self, auth: str) -> None:
+    def _set_default_auth(self, auth: str | None) -> None:
         self._default_auth = auth
 
     def _make_headers(self, original_headers: dict[str, str]) -> dict[str, str]:
@@ -529,32 +529,8 @@ class HTTPClient:
                 ws_response_class=DiscordClientWebSocketResponse
             )
 
-        # bucket = route.bucket
-        # method = route.method
-        # url = route.url
-        #
-        # lock = self._locks.get(bucket)
-        # if lock is None:
-        #     lock = asyncio.Lock()
-        #     if bucket is not None:
-        #         self._locks[bucket] = lock
-        #
-        # # header creation
-        # headers: Dict[str, str] = {
-        #     "User-Agent": self.user_agent,
-        # }
-
-
-
         headers = self._make_headers(kwargs.get("headers", {}))
-        #
-        # if self.token is not None:
-        #     headers["Authorization"] = "Bot " + self.token
-        # # some checking if it's a JSON request
-        # if "json" in kwargs:
-        #     headers["Content-Type"] = "application/json"
-        #     kwargs["data"] = utils.to_json(kwargs.pop("json"))
-        #
+
         # TODO: Look into integrating this better?
         try:
             reason = kwargs.pop("reason")
@@ -638,8 +614,14 @@ class HTTPClient:
                                 self._set_url_rate_limit(route.method, route.path, auth, correct_rate_limit)
                                 # Update the correct RateLimit object with our findings.
                                 await correct_rate_limit.update(response)
-                                # Signals to all requests waiting to acquire to migrate.
-                                url_rate_limit.migrate_to(correct_rate_limit.bucket)
+                                if correct_rate_limit.bucket:
+                                    # Signals to all requests waiting to acquire to migrate.
+                                    url_rate_limit.migrate_to(correct_rate_limit.bucket)
+                                else:
+                                    raise ValueError(
+                                        "Migrating to bucket %s, but correct_rate_limit.bucket is falsey. This is "
+                                        "likely an internal Nextcord issue and should be reported."
+                                    )
                             elif url_rate_limit.bucket is not None:
                                 self._buckets[url_rate_limit.bucket] = url_rate_limit
 
@@ -696,13 +678,19 @@ class HTTPClient:
                 raise
 
             except RateLimitMigrating:
-                url_rate_limit = self._buckets.get(url_rate_limit.migrating)
-                if url_rate_limit is None:
-                    # This means we have an internal issue that we need to fix.
+                if url_rate_limit.migrating is None:
                     raise ValueError(
-                        "RateLimit said to migrate, but the RateLimit to migrate was not found? This is an internal "
-                        "Nextcord error and should be reported!"
+                        "RateLimitMigrating raised, but RateLimit.migrating is None. This is an internal Nextcord "
+                        "error and should be reported!"
                     )
+                else:
+                    url_rate_limit = self._buckets.get(url_rate_limit.migrating)
+                    if url_rate_limit is None:
+                        # This means we have an internal issue that we need to fix.
+                        raise ValueError(
+                            "RateLimit said to migrate, but the RateLimit to migrate was not found? This is an "
+                            "internal Nextcord error and should be reported!"
+                        )
 
             else:
                 if not should_retry:
