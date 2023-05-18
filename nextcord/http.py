@@ -164,16 +164,16 @@ class IncorrectBucket(DiscordException):
 
 
 class RateLimit:
+    """Used to time gate a large batch of requests to only occur X every Y seconds. Used via ``async with``
+
+   NOT THREAD SAFE.
+
+   Parameters
+   ----------
+   time_offset: :class:`float`
+       Number in seconds to increase all timers by. Used for lag compensation.
+   """
     def __init__(self, time_offset: float = 0.3) -> None:
-        """Used to time gate a large batch of requests to only occur X every Y seconds. Used via ``async with``
-
-        NOT THREAD SAFE.
-
-        Parameters
-        ----------
-        time_offset: :class:`float`
-            Number in seconds to increase all timers by. Used for lag compensation.
-        """
         self.limit: int = 1
         """Maximum amount of requests before requests have to wait for the rate limit to reset."""
         self.remaining: int = 1
@@ -208,9 +208,7 @@ class RateLimit:
     async def update(self, response: aiohttp.ClientResponse) -> None:
         """Updates the rate limit with information found in the response. Specifically the headers."""
 
-        if (
-            response.headers.get("X-RateLimit-Global") or response.headers.get("x-ratelimit-global")
-        ) in (True, "true"):
+        if response.headers.get("X-RateLimit-Global") == "true":
             # The response is intended for the global rate limit, not a regular rate limit.
             return
 
@@ -261,7 +259,7 @@ class RateLimit:
                 self.reset_after = x_reset_after
             else:
                 if self.reset_after < x_reset_after:
-                    _log.info(
+                    _log.debug(
                         "Bucket %s: Reset after time increased, adapting reset time.", self.bucket
                     )
                     self.reset_after = x_reset_after
@@ -405,9 +403,7 @@ class GlobalRateLimit(RateLimit):
         return ret
 
     async def update(self, response: aiohttp.ClientResponse) -> None:
-        if (
-            response.headers.get("X-RateLimit-Global") or response.headers.get("x-ratelimit-global")
-        ) not in (True, "true"):
+        if response.headers.get("X-RateLimit-Global") != "true":
             # The response is intended for the regular rate limit, not a global rate limit.
             return
 
@@ -446,6 +442,30 @@ class HTTPClient:
     """Represents an HTTP client sending HTTP requests to the Discord API.
 
     Also, not thread safe.
+
+    Parameters
+    ----------
+    connector
+    default_max_per_second: :class:`int`
+        Maximum amount of requests per second per authorization.
+
+        Discord by default only allows 50 requests per second, but if your bot has had its maximum increased, then
+        increase this parameter.
+    time_offset: :class:`float`
+        Amount of seconds added to all ratelimit timers for lag compensation.
+
+        Due to latency and Discord servers not perfectly time synced, having no offset can cause 429's to occur even
+        with us following the reported X-RateLimit-Reset-After.
+
+        Increasing will protect from erroneous 429s but will slow bucket resets, lowering max theoretical speed.
+
+        Decreasing will hasten bucket resets and increase max theoretical speed but may cause 429s.
+    default_auth: Optional[:class:`str`]
+        Default string to use in the Authorization header if it's not manually provided.
+    proxy
+    proxy_auth
+    loop
+    dispatch
     """
 
     def __init__(
@@ -453,39 +473,13 @@ class HTTPClient:
         connector: Optional[aiohttp.BaseConnector] = None,
         *,
         default_max_per_second: int = 50,
-        time_offset: float = 0.2,
+        time_offset: float = 0.0,
         default_auth: Optional[str] = None,
         proxy: Optional[str] = None,
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         dispatch: Callable,
     ) -> None:
-        """
-
-        Parameters
-        ----------
-        connector
-        default_max_per_second: :class:`int`
-            Maximum amount of requests per second per authorization.
-
-            Discord by default only allows 50 requests per second, but if your bot has had its maximum increased, then
-            increase this parameter.
-        time_offset: :class:`float`
-            Amount of seconds added to all ratelimit timers for lag compensation.
-
-            Due to latency and Discord servers not perfectly time synced, having no offset can cause 429's to occur even
-            with us following the reported X-RateLimit-Reset-After.
-
-            Increasing will protect from erroneous 429s but will slow bucket resets, lowering max theoretical speed.
-
-            Decreasing will hasten bucket resets and increase max theoretical speed but may cause 429s.
-        default_auth: Optional[:class:`str`]
-            Default string to use in the Authorization header if it's not manually provided.
-        proxy
-        proxy_auth
-        loop
-        dispatch
-        """
         # TODO: Think about adding ratelimit_multiplier? Would reduce the internal RateLimit.limit by that
         #  float (such as 0.7) and could allow people to run multiple NC bots/processes on the same token while avoiding
         #  ratelimit issues. Could also help with replit-style scenarios.
