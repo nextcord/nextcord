@@ -166,13 +166,14 @@ class IncorrectBucket(DiscordException):
 class RateLimit:
     """Used to time gate a large batch of requests to only occur X every Y seconds. Used via ``async with``
 
-   NOT THREAD SAFE.
+    NOT THREAD SAFE.
 
-   Parameters
-   ----------
-   time_offset: :class:`float`
-       Number in seconds to increase all timers by. Used for lag compensation.
-   """
+    Parameters
+    ----------
+    time_offset: :class:`float`
+        Number in seconds to increase all timers by. Used for lag compensation.
+    """
+
     def __init__(self, time_offset: float = 0.3) -> None:
         self.limit: int = 1
         """Maximum amount of requests before requests have to wait for the rate limit to reset."""
