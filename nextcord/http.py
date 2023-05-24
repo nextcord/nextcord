@@ -528,7 +528,9 @@ class HTTPClient:
 
     def _make_global_rate_limit(self, auth: str | None, max_per_second: int) -> GlobalRateLimit:
         _log.debug(
-            "Creating global ratelimit for auth %s with max per second %s.", _get_logging_auth(auth), max_per_second
+            "Creating global ratelimit for auth %s with max per second %s.",
+            _get_logging_auth(auth),
+            max_per_second,
         )
         rate_limit = GlobalRateLimit()
         rate_limit.limit = max_per_second
@@ -540,7 +542,9 @@ class HTTPClient:
         return rate_limit
 
     def _make_url_rate_limit(self, method: str, route: Route, auth: str | None) -> RateLimit:
-        _log.debug("Making URL rate limit for %s %s %s", method, route.bucket, _get_logging_auth(auth))
+        _log.debug(
+            "Making URL rate limit for %s %s %s", method, route.bucket, _get_logging_auth(auth)
+        )
         ret = RateLimit()
         self._url_rate_limits[(method, route.bucket, auth)] = ret
         return ret
@@ -636,7 +640,7 @@ class HTTPClient:
         rate_limit_path = (
             route.method,
             route.bucket,
-            _get_logging_auth(auth)
+            _get_logging_auth(auth),
         )  # Only use this for logging.
         ret: Any | None = None
         response: aiohttp.ClientResponse | None = None
