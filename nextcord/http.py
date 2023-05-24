@@ -536,7 +536,7 @@ class HTTPClient:
         rate_limit.limit = max_per_second
         rate_limit.remaining = max_per_second
         rate_limit.reset_after = 1 + self._time_offset
-        rate_limit.bucket = f"Global {auth if auth else 'Unauthorized'}"
+        rate_limit.bucket = f"Global {_get_logging_auth(auth) if auth else 'Unauthorized'}"
 
         self._global_rate_limits[auth] = rate_limit
         return rate_limit
