@@ -130,6 +130,15 @@ def _modify_api_version(version: Literal[9, 10]):
     Route.BASE = f"https://discord.com/api/v{version}"
 
 
+def _get_logging_auth(auth: str | None) -> str:
+    if auth is None:
+        return "None"
+    elif len(auth) < 12:  # This shouldn't ever occur, but whatever.
+        return "[redacted]"
+    else:
+        return f"{auth[:12]}[redacted]"
+
+
 class Route:
     BASE: ClassVar[str] = f"https://discord.com/api/v{_DEFAULT_API_VERSION}"
 
@@ -518,8 +527,8 @@ class HTTPClient:
         """
 
     def _make_global_rate_limit(self, auth: str | None, max_per_second: int) -> GlobalRateLimit:
-        _log.info(
-            "Creating global ratelimit for auth %s with max per second %s.", auth, max_per_second
+        _log.debug(
+            "Creating global ratelimit for auth %s with max per second %s.", _get_logging_auth(auth), max_per_second
         )
         rate_limit = GlobalRateLimit()
         rate_limit.limit = max_per_second
@@ -531,7 +540,7 @@ class HTTPClient:
         return rate_limit
 
     def _make_url_rate_limit(self, method: str, route: Route, auth: str | None) -> RateLimit:
-        _log.info("Making URL rate limit for %s %s %s", method, route.bucket, auth)
+        _log.debug("Making URL rate limit for %s %s %s", method, route.bucket, _get_logging_auth(auth))
         ret = RateLimit()
         self._url_rate_limits[(method, route.bucket, auth)] = ret
         return ret
@@ -624,7 +633,11 @@ class HTTPClient:
             url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
 
         max_retry_count = 5
-        rate_limit_path = (route.method, route.bucket, auth)  # Only use this for logging.
+        rate_limit_path = (
+            route.method,
+            route.bucket,
+            _get_logging_auth(auth)
+        )  # Only use this for logging.
         ret: Any | None = None
         response: aiohttp.ClientResponse | None = None
 
@@ -697,7 +710,7 @@ class HTTPClient:
                                     )
                                     await url_rate_limit.update(response)
                                 else:
-                                    _log.info(
+                                    _log.debug(
                                         "Route %s was given a different bucket, making a new one: %s",
                                         rate_limit_path,
                                         e,
