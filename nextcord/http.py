@@ -357,7 +357,7 @@ class RateLimit:
     async def acquire(self) -> bool:
         # If no more requests can be made but the event is set, clear it.
         if self.remaining <= 0 and self._on_reset_event.is_set():
-            _log.info(
+            _log.debug(
                 "Bucket %s: Hit the remaining request limit of %s, locking until reset.",
                 self.bucket,
                 self.limit,
@@ -372,7 +372,7 @@ class RateLimit:
             await self._on_reset_event.wait()
 
             if self.remaining <= 0 and self._on_reset_event.is_set():
-                _log.info(
+                _log.debug(
                     "Bucket %s: Hit the remaining limit of %s, locking until reset.",
                     self.bucket,
                     self.limit,
@@ -532,7 +532,7 @@ class HTTPClient:
             _get_logging_auth(auth),
             max_per_second,
         )
-        rate_limit = GlobalRateLimit()
+        rate_limit = GlobalRateLimit(time_offset=self._time_offset)
         rate_limit.limit = max_per_second
         rate_limit.remaining = max_per_second
         rate_limit.reset_after = 1 + self._time_offset
@@ -545,7 +545,7 @@ class HTTPClient:
         _log.debug(
             "Making URL rate limit for %s %s %s", method, route.bucket, _get_logging_auth(auth)
         )
-        ret = RateLimit()
+        ret = RateLimit(time_offset=self._time_offset)
         self._url_rate_limits[(method, route.bucket, auth)] = ret
         return ret
 
@@ -757,15 +757,6 @@ class HTTPClient:
                             # even errors have text involved in them so this is safe to call
                             ret = await json_or_text(response)
 
-                            # self._dispatch(
-                            #     "http_ratelimit",  # TODO: Uhhhhhhhhhhh
-                            #     int(limit),
-                            #     int(remaining),
-                            #     delta,
-                            #     bucket,
-                            #     response.headers.get("X-RateLimit-Scope"),
-                            # )
-
                             if response.status >= 400:
                                 # >= 500 was considered, but stuff like 501 and 505+ are not good to retry on.
                                 if response.status in {500, 502, 504}:
@@ -799,6 +790,14 @@ class HTTPClient:
                                     _log.warning(
                                         "Path %s resulted in error 429, rate limit exceeded. Retrying.",
                                         rate_limit_path,
+                                    )
+                                    self._dispatch(
+                                        "http_ratelimit",
+                                        url_rate_limit.limit,
+                                        url_rate_limit.remaining,
+                                        url_rate_limit.reset_after,
+                                        url_rate_limit.bucket,
+                                        response.headers.get("X-RateLimit-Scope")
                                     )
                                     should_retry = True
                                 elif response.status >= 500:
