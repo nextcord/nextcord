@@ -797,7 +797,7 @@ class HTTPClient:
                                         url_rate_limit.remaining,
                                         url_rate_limit.reset_after,
                                         url_rate_limit.bucket,
-                                        response.headers.get("X-RateLimit-Scope")
+                                        response.headers.get("X-RateLimit-Scope"),
                                     )
                                     should_retry = True
                                 elif response.status >= 500:
