@@ -567,10 +567,7 @@ class HTTPClient:
         self._default_auth = auth
 
     def _make_headers(
-            self,
-            original_headers: dict[str, str],
-            *,
-            auth: str | None = None
+        self, original_headers: dict[str, str], *, auth: str | None = None
     ) -> dict[str, str]:
         ret = original_headers.copy()
         if "Authorization" not in ret and self._default_auth:
@@ -887,7 +884,9 @@ class HTTPClient:
 
         return data
 
-    async def exchange_access_code(self, *, client_id: int, client_secret: str, code: str, redirect_uri: str):
+    async def exchange_access_code(
+        self, *, client_id: int, client_secret: str, code: str, redirect_uri: str
+    ):
         # TODO: Look into how viable this function is here.
         # This doesn't actually have hard ratelimits it seems? Not in the headers at least. The default bucket should
         #  keep it at 1 every 1 second.
