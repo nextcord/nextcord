@@ -566,10 +566,15 @@ class HTTPClient:
     def _set_default_auth(self, auth: str | None) -> None:
         self._default_auth = auth
 
-    def _make_headers(self, original_headers: dict[str, str]) -> dict[str, str]:
+    def _make_headers(
+            self,
+            original_headers: dict[str, str],
+            *,
+            auth: str | None = None
+    ) -> dict[str, str]:
         ret = original_headers.copy()
         if "Authorization" not in ret and self._default_auth:
-            ret["Authorization"] = self._default_auth
+            ret["Authorization"] = self._default_auth if auth is None else auth
 
         if "User-Agent" not in ret and self._user_agent:
             ret["User-Agent"] = self._user_agent
@@ -603,6 +608,7 @@ class HTTPClient:
         *,
         files: Optional[Sequence[File]] = None,
         form: Optional[Iterable[Dict[str, Any]]] = None,
+        auth: Optional[str] = None,
         **kwargs: Any,
     ) -> Any:
         if not self.__session:
@@ -610,7 +616,7 @@ class HTTPClient:
                 connector=self._connector, ws_response_class=DiscordClientWebSocketResponse
             )
 
-        headers = self._make_headers(kwargs.get("headers", {}))
+        headers = self._make_headers(kwargs.pop("headers", {}), auth=auth)
 
         # TODO: Look into integrating this better?
         try:
@@ -880,6 +886,22 @@ class HTTPClient:
             raise
 
         return data
+
+    async def exchange_access_code(self, *, client_id: int, client_secret: str, code: str, redirect_uri: str):
+        # TODO: Look into how viable this function is here.
+        # This doesn't actually have hard ratelimits it seems? Not in the headers at least. The default bucket should
+        #  keep it at 1 every 1 second.
+        data = {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": redirect_uri,
+        }
+        return await self.request(Route("POST", "/oauth2/token"), data=data)
+
+    async def get_current_user(self, *, auth: str | None = None):
+        return await self.request(Route("GET", "/users/@me"), auth=auth)
 
     def logout(self) -> Response[None]:
         # TODO: Is this only for user bots? Can we get rid of it?
