@@ -8,9 +8,8 @@ from .snowflake import Snowflake
 class PartialUser(TypedDict):
     id: Snowflake
     username: str
-    discriminator: str
+    discriminator: Optional[str]
     avatar: Optional[str]
-    global_name: str
 
 
 PremiumType = Literal[0, 1, 2]
@@ -26,3 +25,4 @@ class User(PartialUser, total=False):
     flags: int
     premium_type: PremiumType
     public_flags: int
+    global_name: Optional[str]

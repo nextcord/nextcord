@@ -249,7 +249,8 @@ class Member(abc.Messageable, _UserTag):
     if TYPE_CHECKING:
         name: str
         id: int
-        discriminator: str
+        global_name: Optional[str]
+        discriminator: Optional[str]
         bot: bool
         system: bool
         created_at: datetime.datetime
@@ -288,7 +289,8 @@ class Member(abc.Messageable, _UserTag):
 
     def __repr__(self) -> str:
         return (
-            f"<Member id={self._user.id} name={self._user.name!r} discriminator={self._user.discriminator!r}"
+            f"<Member id={self._user.id} name={self._user.name!r} global_name={self._user.global_name!r}"
+            f" discriminator={self._user.discriminator!r}"
             f" bot={self._user.bot} nick={self.nick!r} guild={self.guild!r}>"
         )
 

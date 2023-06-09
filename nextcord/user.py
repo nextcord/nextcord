@@ -49,20 +49,22 @@ class BaseUser(_UserTag):
         "_public_flags",
         "_state",
         "global_name",
+        "_discriminator",
     )
 
     if TYPE_CHECKING:
         name: str
         id: int
-        discriminator: str
+        discriminator: Optional[str]
         bot: bool
         system: bool
-        global_name: str
+        global_name: Optional[str]
         _state: ConnectionState
         _avatar: Optional[str]
         _banner: Optional[str]
         _accent_colour: Optional[str]
         _public_flags: int
+        _discriminator: Optional[str]
 
     def __init__(
         self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
@@ -72,8 +74,8 @@ class BaseUser(_UserTag):
 
     def __repr__(self) -> str:
         return (
-            f"<BaseUser id={self.id} name={self.name!r} discriminator={self.discriminator!r}"
-            f" bot={self.bot} system={self.system}>"
+            f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            f" discriminator={self.discriminator!r} bot={self.bot} system={self.system}>"
         )
 
     def __str__(self) -> str:
@@ -91,14 +93,16 @@ class BaseUser(_UserTag):
     def _update(self, data: Union[PartialUserPayload, UserPayload]) -> None:
         self.name = data["username"]
         self.id = int(data["id"])
-        self.discriminator = data["discriminator"]
+        self._discriminator = data.get("discriminator")
         self._avatar = data["avatar"]
         self._banner = data.get("banner", None)
         self._accent_colour = data.get("accent_color", None)
         self._public_flags = data.get("public_flags", 0)
         self.bot = data.get("bot", False)
         self.system = data.get("system", False)
-        self.global_name = data["global_name"]
+        self.global_name = data.get("global_name", None)
+
+        self.discriminator = self.discriminator if not self._discriminator == "0" else None
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -296,11 +300,16 @@ class ClientUser(BaseUser):
     id: :class:`int`
         The user's unique ID.
     global_name: :class:`str`
-        The user's display name. Defaults to the user's username.
+        The user's display name. If any.
 
         .. versionadded: 2.5
     discriminator: :class:`str`
-        The user's discriminator. This is given when the username has conflicts.
+        The user's discriminator.
+
+        .. warning::
+          This field is deprecated, and will only return if the user has not yet migrated to the
+          new [username](https://dis.gd/usernames) update.
+        ..deprecated:: 2.6
     bot: :class:`bool`
         Specifies if the user is a bot account.
     system: :class:`bool`
@@ -329,7 +338,7 @@ class ClientUser(BaseUser):
 
     def __repr__(self) -> str:
         return (
-            f"<ClientUser id={self.id} name={self.name!r} global_name={self.global_name}"
+            f"<ClientUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
             f" discriminator={self.discriminator!r} bot={self.bot} verified={self.verified}"
             f" mfa_enabled={self.mfa_enabled}>"
         )
@@ -425,11 +434,16 @@ class User(BaseUser, abc.Messageable):
     id: :class:`int`
         The user's unique ID.
     global_name: :class:`str`
-        The user's default name. Defaults to the user's username
+        The user's default name. If any.
 
-        ..versionadded: 2.5
+        ..versionadded: 2.6
     discriminator: :class:`str`
-        The user's discriminator. This is given when the username has conflicts.
+        The user's discriminator.
+
+        .. warning::
+          This field is deprecated, and will only return if the user has not yet migrated to the
+          new [username](https://dis.gd/usernames) update.
+        .. deprecated:: 2.6
     bot: :class:`bool`
         Specifies if the user is a bot account.
     system: :class:`bool`
@@ -446,7 +460,7 @@ class User(BaseUser, abc.Messageable):
 
     def __repr__(self) -> str:
         return (
-            f"<User id={self.id} name={self.name!r} global_name={self.global_name}"
+            f"<User id={self.id} name={self.name!r} global_name={self.global_name!r}"
             f"discriminator={self.discriminator!r} bot={self.bot}>"
         )
 

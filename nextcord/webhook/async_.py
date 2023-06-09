@@ -1140,6 +1140,7 @@ class Webhook(BaseWebhook):
             "guild_id": channel.guild.id,
             "user": {
                 "username": user.name,
+                "global_name": user.global_name,
                 "discriminator": user.discriminator,
                 "id": user.id,
                 "avatar": user._avatar,

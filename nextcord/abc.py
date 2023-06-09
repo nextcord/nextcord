@@ -117,6 +117,8 @@ class User(Snowflake, Protocol):
     ----------
     name: :class:`str`
         The user's username.
+    global_name: :class:`str`
+        The user's global name. Defaults to the username.
     discriminator: :class:`str`
         The user's discriminator.
     avatar: :class:`~nextcord.Asset`
@@ -128,6 +130,7 @@ class User(Snowflake, Protocol):
     __slots__ = ()
 
     name: str
+    global_name: str
     discriminator: str
     avatar: Asset
     bot: bool
