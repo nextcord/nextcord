@@ -961,7 +961,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
             "default_thread_slowmode_delay"
         )
         self._available_tags: Dict[int, ForumTag] = {
-            int(data["id"]): ForumTag.from_data(tag) for tag in data.get("available_tags", [])
+            int(tag["id"]): ForumTag.from_data(tag) for tag in data.get("available_tags", [])
         }
 
         self.default_reaction: Optional[PartialEmoji]
@@ -3042,7 +3042,7 @@ class ForumTag:
     @property
     def payload(self) -> ForumTagPayload:
         data: ForumTagPayload = {
-            "id": str(self.id) if self.id is not None else None,
+            "id": str(self.id),
             "name": self.name,
             "moderated": self.moderated,
         }
