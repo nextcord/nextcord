@@ -164,7 +164,13 @@ class View:
 
         cls.__view_children_items__ = children
 
-    def __init__(self, *, timeout: Optional[float] = 180.0, auto_defer: bool = True, prevent_update: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        timeout: Optional[float] = 180.0,
+        auto_defer: bool = True,
+        prevent_update: bool = True,
+    ) -> None:
         self.timeout = timeout
         self.auto_defer = auto_defer
         self.prevent_update = True if timeout else prevent_update
