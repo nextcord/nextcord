@@ -1554,7 +1554,7 @@ class Messageable:
             )
 
         ret = state.create_message(channel=channel, data=data)
-        if view:
+        if view and view.prevent_update:
             state.store_view(view, ret.id)
 
         if delete_after is not None:
