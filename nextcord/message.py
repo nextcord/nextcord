@@ -1508,7 +1508,7 @@ class Message(Hashable):
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)
 
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, self.id)
 
         if delete_after is not None:
@@ -2060,6 +2060,6 @@ class PartialMessage(Hashable):
         if fields:
             # data isn't unbound
             msg = self._state.create_message(channel=self.channel, data=data)  # type: ignore
-            if view and not view.is_finished():
+            if view and not view.is_finished() and view.prevent_update:
                 self._state.store_view(view, self.id)
             return msg
