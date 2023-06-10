@@ -2307,13 +2307,15 @@ class ConnectionState:
 
     def parse_guild_audit_log_entry_create(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
-        user_id = int(data["user_id"])
+        user_id = None if data.get("user_id") is None else int(data["user_id"])
         user = self.get_user(user_id)
+        if user_id is None or user is None:
+            users = {}
+        else:
+            users = {user_id: user}
 
-        if guild is not None and user is not None:
-            entry = AuditLogEntry(
-                auto_moderation_rules={}, users={user_id: user}, data=data, guild=guild
-            )
+        if guild is not None:
+            entry = AuditLogEntry(auto_moderation_rules={}, users=users, data=data, guild=guild)
             self.dispatch("guild_audit_log_entry_create", entry)
         else:
             _log.debug(
