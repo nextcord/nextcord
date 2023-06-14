@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 # If you're wondering why this is essentially copy pasted from the async_.py
 # file, then it's due to needing two separate types to make the typing shenanigans
@@ -35,20 +13,10 @@ import logging
 import re
 import threading
 import time
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    overload,
-)
+from types import TracebackType
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, Union, overload
 from urllib.parse import quote as urlquote
+from weakref import WeakValueDictionary
 
 from .. import utils
 from ..channel import PartialMessageable
@@ -69,6 +37,7 @@ if TYPE_CHECKING:
     from ..embeds import Embed
     from ..file import File
     from ..mentions import AllowedMentions
+    from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
 
     try:
@@ -80,7 +49,7 @@ MISSING = utils.MISSING
 
 
 class DeferredLock:
-    def __init__(self, lock: threading.Lock):
+    def __init__(self, lock: threading.Lock) -> None:
         self.lock = lock
         self.delta: Optional[float] = None
 
@@ -91,15 +60,23 @@ class DeferredLock:
     def delay_by(self, delta: float) -> None:
         self.delta = delta
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(
+        self,
+        type: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         if self.delta:
             time.sleep(self.delta)
         self.lock.release()
 
 
 class WebhookAdapter:
-    def __init__(self):
-        self._locks: Dict[Any, threading.Lock] = {}
+    def __init__(self) -> None:
+        self._locks: WeakValueDictionary[
+            Tuple[Optional[SnowflakeAlias], Optional[str]],
+            threading.Lock,
+        ] = WeakValueDictionary()
 
     def request(
         self,
@@ -125,7 +102,7 @@ class WebhookAdapter:
 
         if payload is not None:
             headers["Content-Type"] = "application/json"
-            to_send = utils._to_json(payload)
+            to_send = utils.to_json(payload)
 
         if auth_token is not None:
             headers["Authorization"] = f"Bot {auth_token}"
@@ -175,7 +152,7 @@ class WebhookAdapter:
 
                         remaining = response.headers.get("X-Ratelimit-Remaining")
                         if remaining == "0" and response.status_code != 429:
-                            delta = utils._parse_ratelimit_header(response)
+                            delta = utils.parse_ratelimit_header(response)
                             _log.debug(
                                 "Webhook ID %s has been pre-emptively rate limited, waiting %.2f seconds",
                                 webhook_id,
@@ -424,7 +401,7 @@ class SyncWebhookMessage(Message):
         """Edits the message.
 
         Parameters
-        ------------
+        ----------
         content: Optional[:class:`str`]
             The content to edit the message with or ``None`` to clear it.
         embeds: List[:class:`Embed`]
@@ -445,7 +422,7 @@ class SyncWebhookMessage(Message):
             See :meth:`.abc.Messageable.send` for more information.
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -458,7 +435,7 @@ class SyncWebhookMessage(Message):
             There was no token associated with this webhook.
 
         Returns
-        --------
+        -------
         :class:`SyncWebhookMessage`
             The newly edited message.
         """
@@ -477,7 +454,7 @@ class SyncWebhookMessage(Message):
         """Deletes the message.
 
         Parameters
-        -----------
+        ----------
         delay: Optional[:class:`float`]
             If provided, the number of seconds to wait before deleting the message.
             This blocks the thread.
@@ -520,7 +497,7 @@ class SyncWebhook(BaseWebhook):
         Webhooks are now comparable and hashable.
 
     Attributes
-    ------------
+    ----------
     id: :class:`int`
         The webhook's ID
     type: :class:`WebhookType`
@@ -557,11 +534,11 @@ class SyncWebhook(BaseWebhook):
 
     def __init__(
         self, data: WebhookPayload, session: Session, token: Optional[str] = None, state=None
-    ):
+    ) -> None:
         super().__init__(data, token, state)
         self.session = session
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Webhook id={self.id!r}>"
 
     @property
@@ -576,7 +553,7 @@ class SyncWebhook(BaseWebhook):
         """Creates a partial :class:`Webhook`.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID of the webhook.
         token: :class:`str`
@@ -591,7 +568,7 @@ class SyncWebhook(BaseWebhook):
             involving the webhook.
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             A partial :class:`Webhook`.
             A partial webhook is just a webhook object with an ID and a token.
@@ -617,7 +594,7 @@ class SyncWebhook(BaseWebhook):
         """Creates a partial :class:`Webhook` from a webhook URL.
 
         Parameters
-        ------------
+        ----------
         url: :class:`str`
             The URL of the webhook.
         session: :class:`requests.Session`
@@ -630,12 +607,12 @@ class SyncWebhook(BaseWebhook):
             involving the webhook.
 
         Raises
-        -------
+        ------
         InvalidArgument
             The URL is invalid.
 
         Returns
-        --------
+        -------
         :class:`Webhook`
             A partial :class:`Webhook`.
             A partial webhook is just a webhook object with an ID and a token.
@@ -670,13 +647,13 @@ class SyncWebhook(BaseWebhook):
             returned webhook does not contain any user information.
 
         Parameters
-        -----------
+        ----------
         prefer_auth: :class:`bool`
             Whether to use the bot token over the webhook token
             if available. Defaults to ``True``.
 
         Raises
-        -------
+        ------
         HTTPException
             Could not fetch the webhook
         NotFound
@@ -685,7 +662,7 @@ class SyncWebhook(BaseWebhook):
             This webhook does not have a token associated with it.
 
         Returns
-        --------
+        -------
         :class:`SyncWebhook`
             The fetched webhook.
         """
@@ -704,7 +681,7 @@ class SyncWebhook(BaseWebhook):
         """Deletes this Webhook.
 
         Parameters
-        ------------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this webhook. Shows up on the audit log.
 
@@ -714,7 +691,7 @@ class SyncWebhook(BaseWebhook):
             if available. Defaults to ``True``.
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the webhook failed.
         NotFound
@@ -743,18 +720,21 @@ class SyncWebhook(BaseWebhook):
         *,
         reason: Optional[str] = None,
         name: Optional[str] = MISSING,
-        avatar: Optional[bytes] = MISSING,
+        avatar: Optional[Union[bytes, File]] = MISSING,
         channel: Optional[Snowflake] = None,
         prefer_auth: bool = True,
     ) -> SyncWebhook:
         """Edits this Webhook.
 
+        .. versionchanged:: 2.1
+            The ``avatar`` parameter now accepts :class:`File`.
+
         Parameters
-        ------------
+        ----------
         name: Optional[:class:`str`]
             The webhook's new default name.
-        avatar: Optional[:class:`bytes`]
-            A :term:`py:bytes-like object` representing the webhook's new default avatar.
+        avatar: Optional[Union[:class:`bytes`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File` representing the webhook's new default avatar.
         channel: Optional[:class:`abc.Snowflake`]
             The webhook's new channel. This requires an authenticated webhook.
         reason: Optional[:class:`str`]
@@ -766,7 +746,7 @@ class SyncWebhook(BaseWebhook):
             if available. Defaults to ``True``.
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the webhook failed.
         NotFound
@@ -776,19 +756,24 @@ class SyncWebhook(BaseWebhook):
             or it tried editing a channel without authentication.
 
         Returns
-        --------
+        -------
         :class:`SyncWebhook`
             The newly edited webhook.
         """
         if self.token is None and self.auth_token is None:
             raise InvalidArgument("This webhook does not have a token associated with it")
 
-        payload = {}
+        payload: Dict[str, Any] = {}
         if name is not MISSING:
             payload["name"] = str(name) if name is not None else None
 
         if avatar is not MISSING:
-            payload["avatar"] = utils._bytes_to_base64_data(avatar) if avatar is not None else None
+            if avatar is None:
+                payload["avatar"] = avatar
+            elif isinstance(avatar, bytes):
+                payload["avatar"] = utils._bytes_to_base64_data(avatar)
+            else:
+                payload["avatar"] = utils._bytes_to_base64_data(avatar.fp.read())
 
         adapter: WebhookAdapter = _get_webhook_adapter()
 
@@ -887,7 +872,7 @@ class SyncWebhook(BaseWebhook):
         ``embeds`` parameter, which must be a :class:`list` of :class:`Embed` objects to send.
 
         Parameters
-        ------------
+        ----------
         content: :class:`str`
             The content of the message to send.
         wait: :class:`bool`
@@ -924,7 +909,7 @@ class SyncWebhook(BaseWebhook):
             .. versionadded:: 2.0
 
         Raises
-        --------
+        ------
         HTTPException
             Sending the message failed.
         NotFound
@@ -939,7 +924,7 @@ class SyncWebhook(BaseWebhook):
             There was no token associated with this webhook.
 
         Returns
-        ---------
+        -------
         Optional[:class:`SyncWebhookMessage`]
             If ``wait`` is ``True`` then the message that was sent, otherwise ``None``.
         """
@@ -989,12 +974,12 @@ class SyncWebhook(BaseWebhook):
         .. versionadded:: 2.0
 
         Parameters
-        ------------
+        ----------
         id: :class:`int`
             The message ID to look for.
 
         Raises
-        --------
+        ------
         ~nextcord.NotFound
             The specified message was not found.
         ~nextcord.Forbidden
@@ -1005,7 +990,7 @@ class SyncWebhook(BaseWebhook):
             There was no token associated with this webhook.
 
         Returns
-        --------
+        -------
         :class:`~nextcord.SyncWebhookMessage`
             The message asked for.
         """
@@ -1042,7 +1027,7 @@ class SyncWebhook(BaseWebhook):
         .. versionadded:: 1.6
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to edit.
         content: Optional[:class:`str`]
@@ -1064,7 +1049,7 @@ class SyncWebhook(BaseWebhook):
             See :meth:`.abc.Messageable.send` for more information.
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -1114,12 +1099,12 @@ class SyncWebhook(BaseWebhook):
         .. versionadded:: 1.6
 
         Parameters
-        ------------
+        ----------
         message_id: :class:`int`
             The message ID to delete.
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the message failed.
         Forbidden

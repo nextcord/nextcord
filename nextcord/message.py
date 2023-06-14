@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -38,8 +16,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Type,
-    TypeVar,
     Union,
     overload,
 )
@@ -62,6 +38,8 @@ from .threads import Thread
 from .utils import MISSING, escape_mentions
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
     from .channel import TextChannel
     from .components import Component
@@ -70,6 +48,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.components import Component as ComponentPayload
     from .types.embed import Embed as EmbedPayload
+    from .types.interactions import MessageInteraction as MessageInteractionPayload
     from .types.member import Member as MemberPayload, UserWithMember as UserWithMemberPayload
     from .types.message import (
         Attachment as AttachmentPayload,
@@ -84,7 +63,6 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .user import User
 
-    MR = TypeVar("MR", bound="MessageReference")
     EmojiInputType = Union[Emoji, PartialEmoji, str]
 
 __all__ = (
@@ -93,6 +71,7 @@ __all__ = (
     "PartialMessage",
     "MessageReference",
     "DeletedReferencedMessage",
+    "MessageInteraction",
 )
 
 
@@ -139,7 +118,7 @@ class Attachment(Hashable):
         Attachment can now be casted to :class:`str` and is hashable.
 
     Attributes
-    ------------
+    ----------
     id: :class:`int`
         The attachment ID.
     size: :class:`int`
@@ -180,7 +159,7 @@ class Attachment(Hashable):
         "description",
     )
 
-    def __init__(self, *, data: AttachmentPayload, state: ConnectionState):
+    def __init__(self, *, data: AttachmentPayload, state: ConnectionState) -> None:
         self.id: int = int(data["id"])
         self.size: int = data["size"]
         self.height: Optional[int] = data.get("height")
@@ -214,7 +193,7 @@ class Attachment(Hashable):
         Saves this attachment into a file-like object.
 
         Parameters
-        -----------
+        ----------
         fp: Union[:class:`io.BufferedIOBase`, :class:`os.PathLike`, :class:`str`]
             The file-like object to save this attachment to or the filename
             to use. If a filename is passed then a file is created with that
@@ -231,14 +210,14 @@ class Attachment(Hashable):
             on some types of attachments.
 
         Raises
-        --------
+        ------
         HTTPException
             Saving the attachment failed.
         NotFound
             The attachment was deleted.
 
         Returns
-        --------
+        -------
         :class:`int`
             The number of bytes written.
         """
@@ -260,7 +239,7 @@ class Attachment(Hashable):
         .. versionadded:: 1.1
 
         Parameters
-        -----------
+        ----------
         use_cached: :class:`bool`
             Whether to use :attr:`proxy_url` rather than :attr:`url` when downloading
             the attachment. This will allow attachments to be saved after deletion
@@ -294,6 +273,7 @@ class Attachment(Hashable):
         description: Optional[str] = MISSING,
         use_cached: bool = False,
         spoiler: bool = False,
+        force_close: bool = True,
     ) -> File:
         """|coro|
 
@@ -303,7 +283,7 @@ class Attachment(Hashable):
         .. versionadded:: 1.3
 
         Parameters
-        -----------
+        ----------
         filename: Optional[:class:`str`]
             The filename to use for the file. If not specified then the filename
             of the attachment is used instead.
@@ -327,6 +307,14 @@ class Attachment(Hashable):
             Whether the file is a spoiler.
 
             .. versionadded:: 1.4
+        force_close: :class:`bool`
+            Whether to forcibly close the bytes used to create the file
+            when ``.close()`` is called.
+            This will also make the file bytes unusable by flushing it from
+            memory after it is sent or used once.
+            Keep this enabled if you don't wish to reuse the same bytes.
+
+           .. versionadded:: 2.2
 
         Raises
         ------
@@ -347,7 +335,11 @@ class Attachment(Hashable):
         file_filename = filename if filename is not MISSING else self.filename
         file_description = description if description is not MISSING else self.description
         return File(
-            io.BytesIO(data), filename=file_filename, description=file_description, spoiler=spoiler
+            io.BytesIO(data),
+            filename=file_filename,
+            description=file_description,
+            spoiler=spoiler,
+            force_close=force_close,
         )
 
     def to_dict(self) -> AttachmentPayload:
@@ -382,7 +374,7 @@ class DeletedReferencedMessage:
 
     __slots__ = ("_parent",)
 
-    def __init__(self, parent: MessageReference):
+    def __init__(self, parent: MessageReference) -> None:
         self._parent: MessageReference = parent
 
     def __repr__(self) -> str:
@@ -414,7 +406,7 @@ class MessageReference:
         This class can now be constructed by users.
 
     Attributes
-    -----------
+    ----------
     message_id: Optional[:class:`int`]
         The id of the message referenced.
     channel_id: :class:`int`
@@ -448,7 +440,7 @@ class MessageReference:
         channel_id: int,
         guild_id: Optional[int] = None,
         fail_if_not_exists: bool = True,
-    ):
+    ) -> None:
         self._state: Optional[ConnectionState] = None
         self.resolved: Optional[Union[Message, DeletedReferencedMessage]] = None
         self.message_id: Optional[int] = message_id
@@ -457,18 +449,18 @@ class MessageReference:
         self.fail_if_not_exists: bool = fail_if_not_exists
 
     @classmethod
-    def with_state(cls: Type[MR], state: ConnectionState, data: MessageReferencePayload) -> MR:
+    def with_state(cls, state: ConnectionState, data: MessageReferencePayload) -> Self:
         self = cls.__new__(cls)
-        self.message_id = utils._get_as_snowflake(data, "message_id")
+        self.message_id = utils.get_as_snowflake(data, "message_id")
         self.channel_id = int(data.pop("channel_id"))
-        self.guild_id = utils._get_as_snowflake(data, "guild_id")
+        self.guild_id = utils.get_as_snowflake(data, "guild_id")
         self.fail_if_not_exists = data.get("fail_if_not_exists", True)
         self._state = state
         self.resolved = None
         return self
 
     @classmethod
-    def from_message(cls: Type[MR], message: Message, *, fail_if_not_exists: bool = True) -> MR:
+    def from_message(cls, message: Message, *, fail_if_not_exists: bool = True) -> Self:
         """Creates a :class:`MessageReference` from an existing :class:`~nextcord.Message`.
 
         .. versionadded:: 1.6
@@ -543,6 +535,77 @@ def flatten_handlers(cls):
     return cls
 
 
+class MessageInteraction(Hashable):
+    """Represents a message's interaction data.
+
+    A message's interaction data is a property of a message when the message
+    is a response to an interaction from any bot.
+
+    .. versionadded:: 2.1
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two message interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interaction messages are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the message interaction's hash.
+
+    Attributes
+    ----------
+    data: Dict[:class:`str`, Any]
+        The raw data from the interaction.
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    name: :class:`str`
+        The name of the application command.
+    user: Union[:class:`User`, :class:`Member`]
+        The :class:`User` who invoked the interaction or :class:`Member` if the interaction
+        occurred in a guild.
+    """
+
+    __slots__ = (
+        "_state",
+        "data",
+        "id",
+        "type",
+        "name",
+        "user",
+    )
+
+    def __init__(
+        self, *, data: MessageInteractionPayload, guild: Optional[Guild], state: ConnectionState
+    ) -> None:
+        self._state: ConnectionState = state
+
+        self.data: MessageInteractionPayload = data
+        self.id: int = int(data["id"])
+        self.type: int = data["type"]
+        self.name: str = data["name"]
+        if "member" in data and guild is not None:
+            self.user = Member(
+                state=self._state, guild=guild, data={**data["member"], "user": data["user"]}
+            )
+        else:
+            self.user = self._state.create_user(data=data["user"])
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={self.id} type={self.type} name={self.name} user={self.user!r}>"
+
+    @property
+    def created_at(self) -> datetime.datetime:
+        """:class:`datetime.datetime`: The interaction's creation time in UTC."""
+        return utils.snowflake_time(self.id)
+
+
 @flatten_handlers
 class Message(Hashable):
     r"""Represents a message from Discord.
@@ -562,7 +625,7 @@ class Message(Hashable):
             Returns the message's hash.
 
     Attributes
-    -----------
+    ----------
     tts: :class:`bool`
         Specifies if the message was done with text-to-speech.
         This can only be accurately received in :func:`on_message` due to
@@ -656,12 +719,10 @@ class Message(Hashable):
         A list of components in the message.
 
         .. versionadded:: 2.0
-    thread: Optional[:class:`Thread`]
-        The thread created from a message, if any.
-
-        .. versionadded:: 2.0
     guild: Optional[:class:`Guild`]
         The guild that the message belongs to, if applicable.
+    interaction: Optional[:class:`MessageInteraction`]
+        The interaction data of a message, if applicable.
     """
 
     __slots__ = (
@@ -680,6 +741,7 @@ class Message(Hashable):
         "mention_everyone",
         "embeds",
         "id",
+        "interaction",
         "mentions",
         "author",
         "attachments",
@@ -712,10 +774,10 @@ class Message(Hashable):
         state: ConnectionState,
         channel: MessageableChannel,
         data: MessagePayload,
-    ):
+    ) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
-        self.webhook_id: Optional[int] = utils._get_as_snowflake(data, "webhook_id")
+        self.webhook_id: Optional[int] = utils.get_as_snowflake(data, "webhook_id")
         self.reactions: List[Reaction] = [
             Reaction(message=self, data=d) for d in data.get("reactions", [])
         ]
@@ -748,12 +810,12 @@ class Message(Hashable):
             self.guild = channel.guild  # type: ignore
         except AttributeError:
             if getattr(channel, "type", None) not in (ChannelType.group, ChannelType.private):
-                self.guild = state._get_guild(utils._get_as_snowflake(data, "guild_id"))
+                self.guild = state._get_guild(utils.get_as_snowflake(data, "guild_id"))
             else:
                 self.guild = None
 
         if thread_data := data.get("thread"):
-            if not self.thread and self.guild:
+            if not self.thread and isinstance(self.guild, Guild):
                 self.guild._store_thread(thread_data)
 
         try:
@@ -784,6 +846,12 @@ class Message(Hashable):
                 getattr(self, f"_handle_{handler}")(data[handler])
             except KeyError:
                 continue
+
+        self.interaction: Optional[MessageInteraction] = (
+            MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
+            if "interaction" in data
+            else None
+        )
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
@@ -848,7 +916,7 @@ class Message(Hashable):
         del self.reactions[index]
         return reaction
 
-    def _update(self, data):
+    def _update(self, data) -> None:
         # In an update scheme, 'author' key has to be handled before 'member'
         # otherwise they overwrite each other which is undesirable.
         # Since there's no good way to do this we have to iterate over every
@@ -951,7 +1019,7 @@ class Message(Hashable):
                 if role is not None:
                     self.role_mentions.append(role)
 
-    def _handle_components(self, components: List[ComponentPayload]):
+    def _handle_components(self, components: List[ComponentPayload]) -> None:
         self.components = [_component_factory(d) for d in components]
 
     def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
@@ -972,28 +1040,28 @@ class Message(Hashable):
         This allows you to receive the user IDs of mentioned users
         even in a private message context.
         """
-        return [int(x) for x in re.findall(r"<@!?([0-9]{15,20})>", self.content)]
+        return utils.parse_raw_mentions(self.content)
 
     @utils.cached_slot_property("_cs_raw_channel_mentions")
     def raw_channel_mentions(self) -> List[int]:
         """List[:class:`int`]: A property that returns an array of channel IDs matched with
         the syntax of ``<#channel_id>`` in the message content.
         """
-        return [int(x) for x in re.findall(r"<#([0-9]{15,20})>", self.content)]
+        return utils.parse_raw_channel_mentions(self.content)
 
     @utils.cached_slot_property("_cs_raw_role_mentions")
     def raw_role_mentions(self) -> List[int]:
         """List[:class:`int`]: A property that returns an array of role IDs matched with
         the syntax of ``<@&role_id>`` in the message content.
         """
-        return [int(x) for x in re.findall(r"<@&([0-9]{15,20})>", self.content)]
+        return utils.parse_raw_role_mentions(self.content)
 
     @utils.cached_slot_property("_cs_channel_mentions")
     def channel_mentions(self) -> List[GuildChannel]:
         if self.guild is None:
             return []
         it = filter(None, map(self.guild.get_channel, self.raw_channel_mentions))
-        return utils._unique(it)
+        return utils.unique(it)
 
     @utils.cached_slot_property("_cs_clean_content")
     def clean_content(self) -> str:
@@ -1067,7 +1135,10 @@ class Message(Hashable):
     @property
     def thread(self) -> Optional[Thread]:
         """Optional[:class:`Thread`]: The thread started from this message. None if no thread was started."""
-        return self.guild and self.guild.get_thread(self.id)
+        if not isinstance(self.guild, Guild):
+            return None
+
+        return self.guild.get_thread(self.id)
 
     def is_system(self) -> bool:
         """:class:`bool`: Whether the message is a system message.
@@ -1211,7 +1282,7 @@ class Message(Hashable):
             Added the new ``delay`` keyword-only parameter.
 
         Parameters
-        -----------
+        ----------
         delay: Optional[:class:`float`]
             If provided, the number of seconds to wait in the background
             before deleting the message. If the deletion fails then it is silently ignored.
@@ -1227,7 +1298,7 @@ class Message(Hashable):
         """
         if delay is not None:
 
-            async def delete(delay: float):
+            async def delete(delay: float) -> None:
                 await asyncio.sleep(delay)
                 try:
                     await self._state.http.delete_message(self.channel.id, self.id)
@@ -1321,7 +1392,7 @@ class Message(Hashable):
             The ``suppress`` keyword-only parameter was added.
 
         Parameters
-        -----------
+        ----------
         content: Optional[:class:`str`]
             The new content to replace the message with.
             Could be ``None`` to remove the content.
@@ -1367,7 +1438,7 @@ class Message(Hashable):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -1377,7 +1448,7 @@ class Message(Hashable):
             You specified both ``embed`` and ``embeds`` or ``file`` and ``files``.
 
         Returns
-        --------
+        -------
         :class:`Message`
             The edited message.
         """
@@ -1456,7 +1527,7 @@ class Message(Hashable):
         permission is also needed.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have the proper permissions to publish this message.
         HTTPException
@@ -1474,14 +1545,14 @@ class Message(Hashable):
         this in a non-private channel context.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for pinning the message. Shows up on the audit log.
 
             .. versionadded:: 1.4
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to pin the message.
         NotFound
@@ -1503,14 +1574,14 @@ class Message(Hashable):
         this in a non-private channel context.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for unpinning the message. Shows up on the audit log.
 
             .. versionadded:: 1.4
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to unpin the message.
         NotFound
@@ -1534,12 +1605,12 @@ class Message(Hashable):
         emoji, the :attr:`~Permissions.add_reactions` permission is required.
 
         Parameters
-        ------------
+        ----------
         emoji: Union[:class:`Emoji`, :class:`Reaction`, :class:`PartialEmoji`, :class:`str`]
             The emoji to react with.
 
         Raises
-        --------
+        ------
         HTTPException
             Adding the reaction failed.
         Forbidden
@@ -1569,14 +1640,14 @@ class Message(Hashable):
         the :class:`abc.Snowflake` abc.
 
         Parameters
-        ------------
+        ----------
         emoji: Union[:class:`Emoji`, :class:`Reaction`, :class:`PartialEmoji`, :class:`str`]
             The emoji to remove.
         member: :class:`abc.Snowflake`
             The member for which to remove the reaction.
 
         Raises
-        --------
+        ------
         HTTPException
             Removing the reaction failed.
         Forbidden
@@ -1606,12 +1677,12 @@ class Message(Hashable):
         .. versionadded:: 1.3
 
         Parameters
-        -----------
+        ----------
         emoji: Union[:class:`Emoji`, :class:`Reaction`, :class:`PartialEmoji`, :class:`str`]
             The emoji to clear.
 
         Raises
-        --------
+        ------
         HTTPException
             Clearing the reaction failed.
         Forbidden
@@ -1633,7 +1704,7 @@ class Message(Hashable):
         You need the :attr:`~Permissions.manage_messages` permission to use this.
 
         Raises
-        --------
+        ------
         HTTPException
             Removing the reactions failed.
         Forbidden
@@ -1656,7 +1727,7 @@ class Message(Hashable):
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The name of the thread.
         auto_archive_duration: :class:`int`
@@ -1664,7 +1735,7 @@ class Message(Hashable):
             If not provided, the channel's default auto archive duration is used.
 
         Raises
-        -------
+        ------
         Forbidden
             You do not have permissions to create a thread.
         HTTPException
@@ -1673,7 +1744,7 @@ class Message(Hashable):
             This message does not have guild info attached.
 
         Returns
-        --------
+        -------
         :class:`.Thread`
             The created thread.
         """
@@ -1700,7 +1771,7 @@ class Message(Hashable):
         .. versionadded:: 1.6
 
         Raises
-        --------
+        ------
         ~nextcord.HTTPException
             Sending the message failed.
         ~nextcord.Forbidden
@@ -1710,7 +1781,7 @@ class Message(Hashable):
             you specified both ``file`` and ``files``.
 
         Returns
-        ---------
+        -------
         :class:`.Message`
             The message that was sent.
         """
@@ -1731,7 +1802,7 @@ class Message(Hashable):
             .. versionadded:: 1.7
 
         Returns
-        ---------
+        -------
         :class:`~nextcord.MessageReference`
             The reference to this message.
         """
@@ -1780,7 +1851,7 @@ class PartialMessage(Hashable):
             Returns the partial message's hash.
 
     Attributes
-    -----------
+    ----------
     channel: Union[:class:`TextChannel`, :class:`Thread`, :class:`DMChannel`]
         The channel associated with this partial message.
     id: :class:`int`
@@ -1802,7 +1873,7 @@ class PartialMessage(Hashable):
     to_reference = Message.to_reference
     to_message_reference_dict = Message.to_message_reference_dict
 
-    def __init__(self, *, channel: PartialMessageableChannel, id: int):
+    def __init__(self, *, channel: PartialMessageableChannel, id: int) -> None:
         if channel.type not in (
             ChannelType.text,
             ChannelType.news,
@@ -1845,7 +1916,7 @@ class PartialMessage(Hashable):
         Fetches the partial message to a full :class:`Message`.
 
         Raises
-        --------
+        ------
         NotFound
             The message was not found.
         Forbidden
@@ -1854,7 +1925,7 @@ class PartialMessage(Hashable):
             Retrieving the message failed.
 
         Returns
-        --------
+        -------
         :class:`Message`
             The full message.
         """
@@ -1873,7 +1944,7 @@ class PartialMessage(Hashable):
             :class:`nextcord.Message` is returned instead of ``None`` if an edit took place.
 
         Parameters
-        -----------
+        ----------
         content: Optional[:class:`str`]
             The new content to replace the message with.
             Could be ``None`` to remove the content.
@@ -1908,7 +1979,7 @@ class PartialMessage(Hashable):
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         NotFound
             The message was not found.
         HTTPException
@@ -1920,7 +1991,7 @@ class PartialMessage(Hashable):
             You specified both ``embed`` and ``embeds``.
 
         Returns
-        ---------
+        -------
         Optional[:class:`Message`]
             The message that was edited.
         """

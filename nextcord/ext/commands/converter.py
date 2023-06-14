@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -125,14 +103,14 @@ class Converter(Protocol[T_co]):
         properly propagate to the error handlers.
 
         Parameters
-        -----------
+        ----------
         ctx: :class:`.Context`
             The invocation context that the argument is being used in.
         argument: :class:`str`
             The argument that is being converted.
 
         Raises
-        -------
+        ------
         :exc:`.CommandError`
             A generic exception occurred when converting the argument.
         :exc:`.BadArgument`
@@ -153,7 +131,7 @@ class IDConverter(Converter[T_co]):
 class ObjectConverter(IDConverter[nextcord.Object]):
     """Converts to a :class:`~nextcord.Object`.
 
-    The argument must follow the valid ID or mention formats (e.g. `<@80088516616269824>`).
+    The argument must follow the valid ID or mention formats (e.g. ``<@80088516616269824>``).
 
     .. versionadded:: 2.0
 
@@ -261,6 +239,9 @@ class MemberConverter(IDConverter[nextcord.Member]):
             if not result:
                 raise MemberNotFound(argument)
 
+        if not isinstance(result, nextcord.Member):
+            raise MemberNotFound(argument)
+
         return result
 
 
@@ -297,6 +278,9 @@ class UserConverter(IDConverter[nextcord.User]):
                     result = await ctx.bot.fetch_user(user_id)
                 except nextcord.HTTPException:
                     raise UserNotFound(argument) from None
+
+            if not isinstance(result, nextcord.User):
+                raise UserNotFound(argument)
 
             return result
 
@@ -351,7 +335,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
         if not match:
             raise MessageNotFound(argument)
         data = match.groupdict()
-        channel_id = nextcord.utils._get_as_snowflake(data, "channel_id")
+        channel_id = nextcord.utils.get_as_snowflake(data, "channel_id")
         message_id = int(data["message_id"])
         guild_id = data.get("guild_id")
         if guild_id is None:
@@ -411,7 +395,7 @@ class MessageConverter(IDConverter[nextcord.Message]):
         except nextcord.NotFound:
             raise MessageNotFound(argument)
         except nextcord.Forbidden:
-            raise ChannelNotReadable(channel)  # type: ignore weird type conflict
+            raise ChannelNotReadable(channel)  # type: ignore  # weird type conflict
 
 
 class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
@@ -477,7 +461,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
         else:
             thread_id = int(match.group(1))
             if guild:
-                result = guild.get_thread(thread_id)  # type: ignore handled below
+                result = guild.get_thread(thread_id)  # type: ignore  # handled below
 
         if not result or not isinstance(result, type):
             raise ThreadNotFound(argument)
@@ -809,8 +793,13 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
 
     This is done by extracting the animated flag, name and ID from the emoji.
 
+    If the emoji is a unicode emoji, then the name is the unicode character.
+
     .. versionchanged:: 1.5
          Raise :exc:`.PartialEmojiConversionFailure` instead of generic :exc:`.BadArgument`
+
+    .. versionchanged:: 2.1
+        Add support for converting unicode emojis
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.PartialEmoji:
@@ -824,6 +813,10 @@ class PartialEmojiConverter(Converter[nextcord.PartialEmoji]):
             return nextcord.PartialEmoji.with_state(
                 ctx.bot._connection, animated=emoji_animated, name=emoji_name, id=emoji_id
             )
+
+        # If the emoji is a unicode emoji, then the name is the unicode character.
+        if re.match(r"^[\u0023-\u0039]?[\u00ae\u00a9\U00002000-\U0010ffff]+$", argument):
+            return nextcord.PartialEmoji.with_state(ctx.bot._connection, name=argument)
 
         raise PartialEmojiConversionFailure(argument)
 
@@ -942,7 +935,7 @@ class clean_content(Converter[str]):
     This behaves similarly to :attr:`~nextcord.Message.clean_content`.
 
     Attributes
-    ------------
+    ----------
     fix_channel_mentions: :class:`bool`
         Whether to clean channel mentions.
     use_nicknames: :class:`bool`
@@ -1051,10 +1044,10 @@ class Greedy(List[T]):
 
     __slots__ = ("converter",)
 
-    def __init__(self, *, converter: T):
+    def __init__(self, *, converter: T) -> None:
         self.converter = converter
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         converter = getattr(self.converter, "__name__", repr(self.converter))
         return f"Greedy[{converter}]"
 
@@ -1150,13 +1143,13 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
             if inspect.ismethod(converter.convert):
                 return await converter.convert(ctx, argument)
             else:
-                return await converter().convert(ctx, argument)  # type: ignore
+                return await converter().convert(ctx, argument)
         elif isinstance(converter, Converter):
             return await converter.convert(ctx, argument)  # type: ignore
     except CommandError:
         raise
     except Exception as exc:
-        raise ConversionError(converter, exc) from exc
+        raise ConversionError(converter, exc) from exc  # type: ignore
 
     try:
         return converter(argument)
@@ -1181,7 +1174,7 @@ async def run_converters(ctx: Context, converter, argument: str, param: inspect.
     .. versionadded:: 2.0
 
     Parameters
-    ------------
+    ----------
     ctx: :class:`Context`
         The invocation context to run the converters under.
     converter: Any
@@ -1192,12 +1185,12 @@ async def run_converters(ctx: Context, converter, argument: str, param: inspect.
         The parameter being converted. This is mainly for error reporting.
 
     Raises
-    -------
+    ------
     CommandError
         The converter failed to convert.
 
     Returns
-    --------
+    -------
     Any
         The resulting conversion.
     """

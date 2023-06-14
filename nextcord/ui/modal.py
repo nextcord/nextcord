@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -31,7 +9,7 @@ import time
 import traceback
 from functools import partial
 from itertools import groupby
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from ..components import Component
 from ..utils import MISSING
@@ -45,9 +23,24 @@ __all__ = (
 
 
 if TYPE_CHECKING:
-    from ..interactions import Interaction
+    from ..interactions import ClientT, Interaction
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
+    from ..types.interactions import (
+        ComponentInteractionData,
+        ModalSubmitComponentInteractionData,
+        ModalSubmitInteractionData,
+    )
+
+
+def _walk_component_interaction_data(
+    components: List[ModalSubmitComponentInteractionData],
+) -> Iterator[ComponentInteractionData]:
+    for item in components:
+        if "components" in item:
+            yield from item["components"]  # type: ignore
+        else:
+            yield item
 
 
 class Modal:
@@ -58,7 +51,7 @@ class Modal:
     .. versionadded:: 2.0
 
     Parameters
-    -----------
+    ----------
     title: :class:`str`
         The title of the modal.
     timeout: Optional[:class:`float`] = None
@@ -73,7 +66,9 @@ class Modal:
         handle the modal interaction outside of the callback.
 
     Attributes
-    ------------
+    ----------
+    title: :class:`str`
+        The title of the modal.
     timeout: Optional[:class:`float`]
         Timeout from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
@@ -81,6 +76,10 @@ class Modal:
         The list of children attached to this modal.
     custom_id: :class:`str`
         The ID of the modal that gets received during an interaction.
+    auto_defer: :class:`bool` = True
+        Whether or not to automatically defer the modal when the callback completes
+        without responding to the interaction. Set this to ``False`` if you want to
+        handle the modal interaction outside of the callback.
     """
 
     def __init__(
@@ -90,7 +89,7 @@ class Modal:
         timeout: Optional[float] = None,
         custom_id: str = MISSING,
         auto_defer: bool = True,
-    ):
+    ) -> None:
         self.title = title
         self.timeout = timeout
         self._provided_custom_id = custom_id is not MISSING
@@ -168,12 +167,12 @@ class Modal:
         """Adds an item to the modal.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to add to the modal.
 
         Raises
-        --------
+        ------
         TypeError
             An :class:`Item` was not passed.
         ValueError
@@ -193,7 +192,7 @@ class Modal:
         """Removes an item from the modal.
 
         Parameters
-        -----------
+        ----------
         item: :class:`Item`
             The item to remove from the modal.
         """
@@ -212,7 +211,7 @@ class Modal:
         self.children.clear()
         self.__weights.clear()
 
-    async def callback(self, interaction: Interaction):
+    async def callback(self, interaction: Interaction) -> None:
         """|coro|
 
         The callback that is called when the user press the submit button.
@@ -244,7 +243,7 @@ class Modal:
         The default implementation prints the traceback to stderr.
 
         Parameters
-        -----------
+        ----------
         error: :class:`Exception`
             The exception that was raised.
         item: :class:`Item`
@@ -256,8 +255,12 @@ class Modal:
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
     async def _scheduled_task(self, interaction: Interaction):
-        for children in self.children:
-            children.refresh_state(interaction)
+        data: ModalSubmitInteractionData = interaction.data  # type: ignore
+        for child in self.children:
+            for component_data in _walk_component_interaction_data(data["components"]):
+                if component_data["custom_id"] == child.custom_id:  # type: ignore
+                    child.refresh_state(component_data, interaction._state, interaction.guild)
+                    break
         try:
             if self.timeout:
                 self.__timeout_expiry = time.monotonic() + self.timeout
@@ -282,14 +285,14 @@ class Modal:
             self.__timeout_expiry = time.monotonic() + self.timeout
             self.__timeout_task = loop.create_task(self.__timeout_task_impl())
 
-    def _dispatch_timeout(self):
+    def _dispatch_timeout(self) -> None:
         if self.__stopped.done():
             return
 
-        self.__stopped.set_result(True)
         asyncio.create_task(self.on_timeout(), name=f"discord-ui-modal-timeout-{self.id}")
+        self.__stopped.set_result(True)
 
-    def _dispatch(self, interaction: Interaction):
+    def _dispatch(self, interaction: Interaction) -> None:
         if self.__stopped.done():
             return
 
@@ -297,15 +300,14 @@ class Modal:
             self._scheduled_task(interaction), name=f"discord-ui-modal-dispatch-{self.id}"
         )
 
-    def refresh(self, components: List[Component]):
+    def refresh(self, components: List[Component]) -> None:
         # This is pretty hacky at the moment
-        # fmt: off
         old_state: Dict[Tuple[int, str], Item] = {
-            (item.type.value, item.custom_id): item
+            (item.type.value, item.custom_id): item  # type: ignore
+            # TODO: refactor this to explicitly type custom_id
             for item in self.children
             if item.is_dispatchable()
         }
-        # fmt: on
         children: List[Item] = []
         for component in _walk_all_components(components):
             try:
@@ -362,7 +364,7 @@ class Modal:
         or it times out.
 
         Returns
-        --------
+        -------
         :class:`bool`
             If ``True``, then the modal timed out. If ``False`` then
             the modal finished normally.
@@ -371,7 +373,7 @@ class Modal:
 
 
 class ModalStore:
-    def __init__(self, state: ConnectionState):
+    def __init__(self, state: ConnectionState) -> None:
         # (user_id, custom_id): Modal
         self._modals: Dict[Tuple[int | None, str], Modal] = {}
         self._state: ConnectionState = state
@@ -387,28 +389,28 @@ class ModalStore:
         # fmt: on
         return list(modals.values())
 
-    def __verify_integrity(self):
+    def __verify_integrity(self) -> None:
         to_remove: List[Tuple[int | None, str]] = []
-        for (k, modal) in self._modals.items():
+        for k, modal in self._modals.items():
             if modal.is_finished():
                 to_remove.append(k)
 
         for k in to_remove:
             del self._modals[k]
 
-    def add_modal(self, modal: Modal, user_id: Optional[int] = None):
+    def add_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self.__verify_integrity()
 
         modal._start_listening_from_store(self)
         self._modals[(user_id, modal.custom_id)] = modal
 
-    def remove_modal(self, modal: Modal):
+    def remove_modal(self, modal: Modal) -> None:
         _modals = self._modals.copy()
         for key, value in _modals.items():
             if value is modal:
                 del self._modals[key]
 
-    def dispatch(self, custom_id: str, interaction: Interaction):
+    def dispatch(self, custom_id: str, interaction: Interaction[ClientT]) -> None:
         self.__verify_integrity()
 
         key = (interaction.user.id, custom_id)  # type: ignore

@@ -32,7 +32,9 @@ class Bot(commands.Bot):
         return await super().get_context(message, cls=cls)
 
 
-bot = Bot(command_prefix="$")
+intents = nextcord.Intents.default()
+intents.message_content = True
+bot = Bot(command_prefix="$", intents=intents)
 
 
 @bot.command()

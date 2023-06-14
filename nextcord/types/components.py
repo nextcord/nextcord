@@ -1,34 +1,15 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 from typing import List, Literal, TypedDict, Union
 
+from typing_extensions import NotRequired
+
+from .channel import ChannelType
 from .emoji import PartialEmoji
 
-ComponentType = Literal[1, 2, 3]
+ComponentType = Literal[1, 2, 3, 4]
 ButtonStyle = Literal[1, 2, 3, 4, 5]
 TextInputStyle = Literal[1, 2]
 
@@ -38,56 +19,64 @@ class ActionRow(TypedDict):
     components: List[Component]
 
 
-class _ButtonComponentOptional(TypedDict, total=False):
-    custom_id: str
-    url: str
-    disabled: bool
-    emoji: PartialEmoji
-    label: str
-
-
-class ButtonComponent(_ButtonComponentOptional):
+class ButtonComponent(TypedDict):
     type: Literal[2]
     style: ButtonStyle
+    custom_id: NotRequired[str]
+    url: NotRequired[str]
+    disabled: NotRequired[bool]
+    emoji: NotRequired[PartialEmoji]
+    label: NotRequired[str]
 
 
-class _SelectMenuOptional(TypedDict, total=False):
-    placeholder: str
-    min_values: int
-    max_values: int
-    disabled: bool
-
-
-class _SelectOptionsOptional(TypedDict, total=False):
-    description: str
-    emoji: PartialEmoji
-
-
-class SelectOption(_SelectOptionsOptional):
+class SelectOption(TypedDict):
     label: str
     value: str
     default: bool
+    description: NotRequired[str]
+    emoji: NotRequired[PartialEmoji]
 
 
-class SelectMenu(_SelectMenuOptional):
-    type: Literal[3]
+class SelectMenuBase(TypedDict):
     custom_id: str
+    placeholder: NotRequired[str]
+    min_values: NotRequired[int]
+    max_values: NotRequired[int]
+    disabled: NotRequired[bool]
+
+
+class SelectMenu(SelectMenuBase):
+    type: Literal[3]
     options: List[SelectOption]
 
 
-class _TextInputComponentOptional(TypedDict, total=False):
-    min_length: int
-    max_length: int
-    required: bool
-    value: str
-    placeholder: str
+class UserSelectMenu(SelectMenuBase):
+    type: Literal[5]
 
 
-class TextInputComponent(_TextInputComponentOptional):
+class RoleSelectMenu(SelectMenuBase):
+    type: Literal[6]
+
+
+class MentionableSelectMenu(SelectMenuBase):
+    type: Literal[7]
+
+
+class ChannelSelectMenu(SelectMenuBase):
+    type: Literal[8]
+    channel_types: NotRequired[List[ChannelType]]
+
+
+class TextInputComponent(TypedDict):
     type: Literal[4]
     custom_id: str
     style: TextInputStyle
     label: str
+    min_length: NotRequired[int]
+    max_length: NotRequired[int]
+    required: NotRequired[bool]
+    value: NotRequired[str]
+    placeholder: NotRequired[str]
 
 
 Component = Union[ActionRow, ButtonComponent, SelectMenu, TextInputComponent]

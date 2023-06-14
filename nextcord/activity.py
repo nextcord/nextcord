@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -31,7 +9,7 @@ from .asset import Asset
 from .colour import Colour
 from .enums import ActivityType, try_enum
 from .partial_emoji import PartialEmoji
-from .utils import _get_as_snowflake
+from .utils import get_as_snowflake
 
 __all__ = (
     "BaseActivity",
@@ -122,7 +100,7 @@ class BaseActivity:
 
     __slots__ = ("_created_at",)
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self._created_at: Optional[float] = kwargs.pop("created_at", None)
 
     @property
@@ -153,7 +131,7 @@ class Activity(BaseActivity):
     - :class:`Streaming`
 
     Attributes
-    ------------
+    ----------
     application_id: Optional[:class:`int`]
         The application ID of the game.
     name: Optional[:class:`str`]
@@ -218,14 +196,14 @@ class Activity(BaseActivity):
         "buttons",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.state: Optional[str] = kwargs.pop("state", None)
         self.details: Optional[str] = kwargs.pop("details", None)
         self.timestamps: ActivityTimestamps = kwargs.pop("timestamps", {})
         self.assets: ActivityAssets = kwargs.pop("assets", {})
         self.party: ActivityParty = kwargs.pop("party", {})
-        self.application_id: Optional[int] = _get_as_snowflake(kwargs, "application_id")
+        self.application_id: Optional[int] = get_as_snowflake(kwargs, "application_id")
         self.name: Optional[str] = kwargs.pop("name", None)
         self.url: Optional[str] = kwargs.pop("url", None)
         self.flags: int = kwargs.pop("flags", 0)
@@ -355,19 +333,19 @@ class Game(BaseActivity):
             Returns the game's name.
 
     Parameters
-    -----------
+    ----------
     name: :class:`str`
         The game's name.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The game's name.
     """
 
     __slots__ = ("name", "_end", "_start")
 
-    def __init__(self, name: str, **extra):
+    def __init__(self, name: str, **extra) -> None:
         super().__init__(**extra)
         self.name: str = name
 
@@ -458,7 +436,7 @@ class Streaming(BaseActivity):
             Returns the stream's name.
 
     Attributes
-    -----------
+    ----------
     platform: Optional[:class:`str`]
         Where the user is streaming from (ie. YouTube, Twitch).
 
@@ -481,7 +459,7 @@ class Streaming(BaseActivity):
 
     __slots__ = ("platform", "name", "game", "url", "details", "assets")
 
-    def __init__(self, *, name: Optional[str], url: str, **extra: Any):
+    def __init__(self, *, name: Optional[str], url: str, **extra: Any) -> None:
         super().__init__(**extra)
         self.platform: Optional[str] = name
         self.name: Optional[str] = extra.pop("details", name)
@@ -576,7 +554,7 @@ class Spotify:
         "_created_at",
     )
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         self._state: str = data.pop("state", "")
         self._details: str = data.pop("details", "")
         self._timestamps: Dict[str, int] = data.pop("timestamps", {})
@@ -752,7 +730,7 @@ class CustomActivity(BaseActivity):
     .. versionadded:: 1.3
 
     Attributes
-    -----------
+    ----------
     name: Optional[:class:`str`]
         The custom activity's name.
     emoji: Optional[:class:`PartialEmoji`]
@@ -768,7 +746,7 @@ class CustomActivity(BaseActivity):
         _connection_state: Optional[ConnectionState] = None,
         emoji: Optional[PartialEmoji] = None,
         **extra: Any,
-    ):
+    ) -> None:
         super().__init__(**extra)
         self._state = _connection_state
         self.name: Optional[str] = name
@@ -869,7 +847,7 @@ def create_activity(
         return Game(**data)
     elif game_type is ActivityType.custom:
         try:
-            name = data.pop("name")
+            name = data.pop("name")  # pyright: ignore[reportGeneralTypeIssues]
         except KeyError:
             return Activity(**data)
         else:

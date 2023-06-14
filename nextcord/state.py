@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -31,6 +8,7 @@ import inspect
 import itertools
 import logging
 import os
+import warnings
 from collections import OrderedDict, deque
 from typing import (
     TYPE_CHECKING,
@@ -50,14 +28,16 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
+from .audit_logs import AuditLogEntry
+from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
 from .enums import ChannelType, Status, try_enum
+from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
-from .interactions import Interaction
 from .invite import Invite
 from .member import Member
 from .mentions import AllowedMentions
@@ -77,27 +57,30 @@ from .user import ClientUser, User
 if TYPE_CHECKING:
     from asyncio import Future
 
-    from .abc import PrivateChannel
-    from .application_command import ApplicationCommand
+    from .abc import MessageableChannel, PrivateChannel
+    from .application_command import BaseApplicationCommand
     from .client import Client
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
-    from .message import MessageableChannel
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
     from .types.checks import ApplicationCheck, ApplicationHook
     from .types.emoji import Emoji as EmojiPayload
     from .types.guild import Guild as GuildPayload
+    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.message import Message as MessagePayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
-    from .types.user import User as UserPayload
+    from .types.user import PartialUser as PartialUserPayload, User as UserPayload
     from .voice_client import VoiceProtocol
 
     T = TypeVar("T")
     CS = TypeVar("CS", bound="ConnectionState")
     Channel = Union[GuildChannel, VocalGuildChannel, PrivateChannel, PartialMessageable]
+
+
+MISSING = utils.MISSING
 
 
 class ChunkRequest:
@@ -172,11 +155,20 @@ class ConnectionState:
         hooks: Dict[str, Callable],
         http: HTTPClient,
         loop: asyncio.AbstractEventLoop,
-        **options: Any,
+        max_messages: Optional[int] = 1000,
+        application_id: Optional[int] = None,
+        heartbeat_timeout: float = 60.0,
+        guild_ready_timeout: float = 2.0,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        activity: Optional[BaseActivity] = None,
+        status: Optional[Status] = None,
+        intents: Intents = Intents.default(),
+        chunk_guilds_at_startup: bool = MISSING,
+        member_cache_flags: MemberCacheFlags = MISSING,
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = loop
         self.http: HTTPClient = http
-        self.max_messages: Optional[int] = options.get("max_messages", 1000)
+        self.max_messages: Optional[int] = max_messages
         if self.max_messages is not None and self.max_messages <= 0:
             self.max_messages = 1000
 
@@ -185,13 +177,11 @@ class ConnectionState:
         self.hooks: Dict[str, Callable] = hooks
         self.shard_count: Optional[int] = None
         self._ready_task: Optional[asyncio.Task] = None
-        self.application_id: Optional[int] = utils._get_as_snowflake(options, "application_id")
-        self.heartbeat_timeout: float = options.get("heartbeat_timeout", 60.0)
-        self.guild_ready_timeout: float = options.get("guild_ready_timeout", 2.0)
+        self.application_id: Optional[int] = application_id
+        self.heartbeat_timeout: float = heartbeat_timeout
+        self.guild_ready_timeout: float = guild_ready_timeout
         if self.guild_ready_timeout < 0:
             raise ValueError("guild_ready_timeout cannot be negative")
-
-        allowed_mentions = options.get("allowed_mentions")
 
         if allowed_mentions is not None and not isinstance(allowed_mentions, AllowedMentions):
             raise TypeError("allowed_mentions parameter must be AllowedMentions")
@@ -199,64 +189,65 @@ class ConnectionState:
         self.allowed_mentions: Optional[AllowedMentions] = allowed_mentions
         self._chunk_requests: Dict[Union[int, str], ChunkRequest] = {}
 
-        activity = options.get("activity", None)
-        if activity:
+        if activity is not None:
             if not isinstance(activity, BaseActivity):
                 raise TypeError("activity parameter must derive from BaseActivity.")
 
-            activity = activity.to_dict()
+            raw_activity = activity.to_dict()
+        else:
+            raw_activity = activity
 
-        status = options.get("status", None)
         if status:
             if status is Status.offline:
-                status = "invisible"
+                raw_status = "invisible"
             else:
-                status = str(status)
-
-        intents = options.get("intents", None)
-        if intents is not None:
-            if not isinstance(intents, Intents):
-                raise TypeError(f"intents parameter must be Intent not {type(intents)!r}")
+                raw_status = str(status)
         else:
-            intents = Intents.default()
+            raw_status = None
+
+        if not isinstance(intents, Intents):
+            raise TypeError(f"intents parameter must be Intent not {type(intents)!r}")
 
         if not intents.guilds:
             _log.warning("Guilds intent seems to be disabled. This may cause state related issues.")
 
-        self._chunk_guilds: bool = options.get("chunk_guilds_at_startup", intents.members)
+        if chunk_guilds_at_startup is MISSING:
+            chunk_guilds_at_startup = intents.members
+
+        self._chunk_guilds: bool = chunk_guilds_at_startup
 
         # Ensure these two are set properly
         if not intents.members and self._chunk_guilds:
             raise ValueError("Intents.members must be enabled to chunk guilds at startup.")
 
-        cache_flags = options.get("member_cache_flags", None)
-        if cache_flags is None:
-            cache_flags = MemberCacheFlags.from_intents(intents)
+        if member_cache_flags is MISSING:
+            member_cache_flags = MemberCacheFlags.from_intents(intents)
         else:
-            if not isinstance(cache_flags, MemberCacheFlags):
+            if not isinstance(member_cache_flags, MemberCacheFlags):
                 raise TypeError(
-                    f"member_cache_flags parameter must be MemberCacheFlags not {type(cache_flags)!r}"
+                    "member_cache_flags parameter must be MemberCacheFlags "
+                    f"not {type(member_cache_flags)!r}"
                 )
 
-            cache_flags._verify_intents(intents)
+            member_cache_flags._verify_intents(intents)
 
-        self.member_cache_flags: MemberCacheFlags = cache_flags
-        self._activity: Optional[ActivityPayload] = activity
-        self._status: Optional[str] = status
+        self.member_cache_flags: MemberCacheFlags = member_cache_flags
+        self._activity: Optional[ActivityPayload] = raw_activity
+        self._status: Optional[str] = raw_status
         self._intents: Intents = intents
         # A set of all application command objects available. Set because duplicates should not exist.
-        self._application_commands: Set[ApplicationCommand] = set()
+        self._application_commands: Set[BaseApplicationCommand] = set()
         # A dictionary of all available unique command signatures. Compiled at runtime because needing to iterate
         # through all application commands would take far more time. If memory is problematic, perhaps this can go?
         self._application_command_signatures: Dict[
-            Tuple[str, int, Optional[int]], ApplicationCommand
+            Tuple[Optional[str], int, Optional[int]], BaseApplicationCommand
         ] = {}
         # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
-        self._application_command_ids: Dict[int, ApplicationCommand] = {}
+        self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
 
-        if not intents.members or cache_flags._empty:
-            self.store_user = self.create_user  # type: ignore
-            self.deref_user = self.deref_user_no_intents  # type: ignore
+        if not intents.members or member_cache_flags._empty:
+            self.store_user = self.create_user
+            self.deref_user = self.deref_user_no_intents
 
         self.parsers = parsers = {}
         for attr, func in inspect.getmembers(self):
@@ -290,6 +281,8 @@ class ConnectionState:
         self._guilds: Dict[int, Guild] = {}
         # TODO: Why aren't the above and stuff below application_commands declared in __init__?
         self._application_commands = set()
+        # Thought about making these two weakref.WeakValueDictionary's, but the bot could theoretically be holding on
+        # to them in a dev-defined, which would desync the bot from itself.
         self._application_command_signatures = {}
         self._application_command_ids = {}
         if views:
@@ -381,7 +374,7 @@ class ConnectionState:
     def deref_user(self, user_id: int) -> None:
         self._users.pop(user_id, None)
 
-    def create_user(self, data: UserPayload) -> User:
+    def create_user(self, data: Union[PartialUserPayload, UserPayload]) -> User:
         return User(state=self, data=data)
 
     def deref_user_no_intents(self, user_id: int) -> None:
@@ -407,6 +400,12 @@ class ConnectionState:
 
     def store_modal(self, modal: Modal, user_id: Optional[int] = None) -> None:
         self._modal_store.add_modal(modal, user_id)
+
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
+        self._view_store.remove_view(view, message_id)
+
+    def remove_modal(self, modal: Modal) -> None:
+        self._modal_store.remove_modal(modal)
 
     def prevent_view_updates_for(self, message_id: Optional[int]) -> Optional[View]:
         return self._view_store.remove_message_tracking(message_id)  # type: ignore
@@ -523,31 +522,35 @@ class ConnectionState:
         try:
             guild = self._get_guild(int(data["guild_id"]))
         except KeyError:
-            channel = DMChannel._from_message(self, channel_id)
-            guild = None
+            channel = self.get_channel(channel_id)
+
+            if channel is None:
+                channel = DMChannel._from_message(self, channel_id)
+
+            guild = getattr(channel, "guild", None)
         else:
             channel = guild and guild._resolve_channel(channel_id)
 
         return channel or PartialMessageable(state=self, id=channel_id), guild
 
     @property
-    def application_commands(self) -> Set[ApplicationCommand]:
+    def application_commands(self) -> Set[BaseApplicationCommand]:
         """Gets a copy of the ApplicationCommand object set. If the original is given out and modified, massive desyncs
         may occur. This should be used internally as well if size-changed-during-iteration is a worry.
         """
         return self._application_commands.copy()
 
-    def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
+    def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
         return self._application_command_ids.get(command_id, None)
 
     def get_application_command_from_signature(
-        self, name: str, cmd_type: int, guild_id: Optional[int]
-    ) -> Optional[ApplicationCommand]:
+        self, name: Optional[str], cmd_type: int, guild_id: Optional[int]
+    ) -> Optional[BaseApplicationCommand]:
         return self._application_command_signatures.get((name, cmd_type, guild_id), None)
 
     def get_guild_application_commands(
         self, guild_id: Optional[int] = None, rollout: bool = False
-    ) -> List[ApplicationCommand]:
+    ) -> List[BaseApplicationCommand]:
         """Gets all commands that have the given guild ID. If guild_id is None, all guild commands are returned. if
         rollout is True, guild_ids_to_rollout is used.
         """
@@ -561,7 +564,9 @@ class ConnectionState:
                 ret.append(app_cmd)
         return ret
 
-    def get_global_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+    def get_global_application_commands(
+        self, rollout: bool = False
+    ) -> List[BaseApplicationCommand]:
         """Gets all commands that are registered globally. If rollout is True, is_global is used."""
         ret = []
         for app_cmd in self.application_commands:
@@ -570,9 +575,31 @@ class ConnectionState:
         return ret
 
     def add_application_command(
-        self, command: ApplicationCommand, overwrite: bool = False, use_rollout: bool = False
+        self,
+        command: BaseApplicationCommand,
+        *,
+        overwrite: bool = False,
+        use_rollout: bool = False,
+        pre_remove: bool = True,
     ) -> None:
-        """If this is called multiple times for the same command, it should be handled and update listings properly."""
+        """Adds the command to the state and updates the state with any changes made to the command.
+        Removes all existing references, then adds them.
+        Safe to call multiple times on the same application command.
+
+        Parameters
+        ----------
+        command: :class:`BaseApplicationCommand`
+            The command to add/update the state with.
+        overwrite: :class:`bool`
+            If the library will let you add a command that overlaps with an existing command. Default ``False``.
+        use_rollout: :class:`bool`
+            If the command should be added to the state with its rollout guild IDs.
+        pre_remove: :class:`bool`
+            If the command should be removed before adding it. This will clear all signatures from storage, including
+            rollout ones.
+        """
+        if pre_remove:
+            self.remove_application_command(command)
         signature_set = (
             command.get_rollout_signatures() if use_rollout else command.get_signatures()
         )
@@ -589,6 +616,9 @@ class ConnectionState:
             else:
                 self._application_command_signatures[signature] = command
         for command_id in command.command_ids.values():
+            # PyCharm flags found_command as it "might be referenced before assignment", but that can't happen due to it
+            #  being in an AND statement.
+            # noinspection PyUnboundLocalVariable
             if (
                 not overwrite
                 and (found_command := self._application_command_ids.get(command_id, None))
@@ -602,22 +632,185 @@ class ConnectionState:
         # TODO: Add the command to guilds. Should it? Check if it does in the Guild add.
         self._application_commands.add(command)
 
-    def remove_application_command(self, command: ApplicationCommand):
+    def remove_application_command(self, command: BaseApplicationCommand) -> None:
+        """Removes the command and all signatures + associated IDs from the state.
+        Safe to call with commands that aren't in the state.
+
+        Parameters
+        ----------
+        command: :class:`BaseApplicationCommand`
+            the command to remove from the state.
+        """
         signature_set = command.get_rollout_signatures()
         for signature in signature_set:
             self._application_command_signatures.pop(signature, None)
         for cmd_id in command.command_ids.values():
             self._application_command_ids.pop(cmd_id, None)
-        self._application_commands.remove(command)
+        self._application_commands.discard(command)
 
     def add_all_rollout_signatures(self) -> None:
         """This adds all command signatures for rollouts to the signature cache."""
         for command in self._application_commands:
             self.add_application_command(command, use_rollout=True)
 
-    async def deploy_application_commands(
+    async def sync_all_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[Dict[Optional[int], List[ApplicationCommandPayload]]] = None,
+        *,
+        use_rollout: bool = True,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
+        ignore_forbidden: bool = True,
+    ):
+        """|coro|
+
+        Syncs all application commands with Discord. Will sync global commands if any commands added are global, and
+        syncs with all guilds that have an application command targeting them.
+
+        This may call Discord many times depending on how different guilds you have local commands for, and how many
+        commands Discord needs to be updated or added, which may cause your bot to be rate limited or even Cloudflare
+        banned in VERY extreme cases.
+
+        This may incur high CPU usage depending on how many commands you have and how complex they are, which may cause
+        your bot to halt while it checks local commands against the existing commands that Discord has.
+
+        For a more targeted version of this method, see :func:`Client.sync_application_commands`
+
+        Parameters
+        ----------
+        data: Optional[Dict[Optional[:class:`int`], List[:class:`dict`]]]
+            Data to use when comparing local application commands to what Discord has. The key should be the
+            :class:`int` guild ID (`None` for global) corresponding to the value list of application command payloads
+            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to ``None``
+        use_rollout: :class:`bool`
+            If the rollout guild IDs of commands should be used. Defaults to ``True``
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to ``True``
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to ``True``
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to ``True``
+        ignore_forbidden: :class:`bool`
+            If this command should raise an :class:`errors.Forbidden` exception when the bot encounters a guild where
+            it doesn't have permissions to view application commands.
+            Defaults to ``True``
+        """
+        _log.debug("Beginning sync of all application commands.")
+        self._get_client().add_all_application_commands()
+        if data is None:
+            data = {}
+        else:
+            data = data.copy()
+
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        for app_cmd in self.application_commands:
+            self.add_application_command(command=app_cmd, use_rollout=use_rollout)
+
+            if app_cmd.is_global and None not in data:
+                data[None] = await self.http.get_global_commands(self.application_id)
+                _log.debug("Fetched global application command data.")
+
+            if app_cmd.is_guild:
+                for guild_id in app_cmd.guild_ids_to_rollout if use_rollout else app_cmd.guild_ids:
+                    if guild_id not in data:
+                        try:
+                            data[guild_id] = await self.http.get_guild_commands(
+                                self.application_id, guild_id
+                            )
+                            _log.debug(
+                                "Fetched guild application command data for guild ID %s", guild_id
+                            )
+                        except Forbidden as e:
+                            if ignore_forbidden:
+                                _log.warning(
+                                    "nextcord.Client: Forbidden error for %s, is the applications.commands "
+                                    "Oauth scope enabled? %s",
+                                    guild_id,
+                                    e,
+                                )
+                            else:
+                                raise e
+
+        for guild_id in data:
+            _log.debug("Running sync for %s", "global" if guild_id is None else f"Guild {guild_id}")
+            await self.sync_application_commands(
+                data=data[guild_id],
+                guild_id=guild_id,
+                associate_known=associate_known,
+                delete_unknown=delete_unknown,
+                update_known=update_known,
+                register_new=register_new,
+            )
+
+    async def sync_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
+    ) -> None:
+        """|coro|
+        Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
+        global commands if the guild_id is ``None``.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to ``True``.
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to ``True``.
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to ``True``.
+
+        """
+        _log.debug("Syncing commands to %s", guild_id)
+
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        if not data:
+            if guild_id:
+                data = await self.http.get_guild_commands(self.application_id, guild_id)
+            else:
+                data = await self.http.get_global_commands(self.application_id)
+
+        await self.discover_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+        )
+        if register_new:
+            await self.register_new_application_commands(data=data, guild_id=guild_id)
+
+        _log.debug("Command sync with Guild %s finished.", guild_id)
+
+    async def discover_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
         guild_id: Optional[int] = None,
         associate_known: bool = True,
         delete_unknown: bool = True,
@@ -632,18 +825,18 @@ class ConnectionState:
         Parameters
         ----------
         data: Optional[List[:class:`dict]]
-            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to deploy with. If None,
+            Payload from ``HTTPClient.get_guild_commands`` or ``HTTPClient.get_global_commands`` to deploy with. If None,
             the payload will be retrieved from Discord.
         guild_id: Optional[:class:`int`]
-            Guild ID to deploy application commands to. If `None`, global commands are deployed to.
+            Guild ID to deploy application commands to. If ``None``, global commands are deployed to.
         associate_known: :class:`bool`
             If True, commands on Discord that pass a signature check and a deep check will be associated with locally
             added ApplicationCommand objects.
         delete_unknown: :class:`bool`
-            If `True`, commands on Discord that fail a signature check will be removed. If `update_known` is False,
+            If ``True``, commands on Discord that fail a signature check will be removed. If ``update_known`` is False,
             commands that pass the signature check but fail the deep check will also be removed.
         update_known: :class:`bool`
-            If `True`, commands on Discord that pass a signature check but fail the deep check will be updated.
+            If ``True``, commands on Discord that pass a signature check but fail the deep check will be updated.
         """
         if not associate_known and not delete_unknown and not update_known:
             # If everything is disabled, there is no point in doing anything.
@@ -655,43 +848,46 @@ class ConnectionState:
         if not data:
             if guild_id:
                 # we do not care about typeddict specificity here
-                data = await self.http.get_guild_commands(self.application_id, guild_id)  # type: ignore
+                data = await self.http.get_guild_commands(self.application_id, guild_id)
             else:
-                data = await self.http.get_global_commands(self.application_id)  # type: ignore
+                data = await self.http.get_global_commands(self.application_id)
 
         if data is None:
             raise NotImplementedError("Could not get application commands from Discord.")
 
         for raw_response in data:
-            fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else temp
-            response_signature = (raw_response["name"], int(raw_response["type"]), fixed_guild_id)
+            fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else None
+            payload_type = raw_response["type"] if "type" in raw_response else 1
+
+            response_signature = (raw_response["name"], int(payload_type), fixed_guild_id)
             if app_cmd := self.get_application_command_from_signature(*response_signature):
-                if app_cmd.check_against_raw_payload(raw_response, guild_id):
+                if app_cmd.is_payload_valid(raw_response, guild_id):
                     if associate_known:
                         _log.debug(
-                            f"nextcord.ConnectionState: Command with signature {response_signature} associated "
-                            f"with added command."
+                            "nextcord.ConnectionState: Command with signature %s associated with added command.",
+                            response_signature,
                         )
-                        # app_cmd.parse_discord_response(self, int(raw_response["id"]), guild_id)
                         app_cmd.parse_discord_response(self, raw_response)
-                        self.add_application_command(app_cmd)
+                        self.add_application_command(app_cmd, use_rollout=True)
+
                 elif update_known:
-                    _log.info(
-                        f"nextcord.ConnectionState: Command with signature {response_signature} found but failed "
-                        f"deep check, updating."
+                    _log.debug(
+                        "nextcord.ConnectionState: Command with signature %s found but failed deep check, updating.",
+                        response_signature,
                     )
                     await self.register_application_command(app_cmd, guild_id)
                 elif delete_unknown:
-                    _log.info(
-                        f"nextcord.ConnectionState: Command with signature {response_signature} found but failed "
-                        f"deep check, removing."
+                    _log.debug(
+                        "nextcord.ConnectionState: Command with signature %s found but failed deep check, removing.",
+                        response_signature,
                     )
                     # TODO: Re-examine how worthwhile this is.
                     await self.delete_application_command(app_cmd, guild_id)
+
             elif delete_unknown:
-                _log.info(
-                    f"nextcord.ConnectionState: Unknown command with signature {response_signature} failed "
-                    f"signature check, removing."
+                _log.debug(
+                    "nextcord.ConnectionState: Command with signature %s found but failed deep check, removing.",
+                    response_signature,
                 )
                 if guild_id:
                     await self.http.delete_guild_command(
@@ -700,23 +896,37 @@ class ConnectionState:
                 else:
                     await self.http.delete_global_command(self.application_id, raw_response["id"])
 
-    async def associate_application_commands(
-        self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
+    async def deploy_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        *,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
     ) -> None:
-        """|coro|
-        Associates known signatures with data that matches what Discord has. Rollout signatures should be added
-        before this method is called.
-        Non-trivial CPU usage, consider using the check function if you want association, deletes, and/or updates at
-        the same time.
+        warnings.warn(
+            ".deploy_application_commands is deprecated, use .discover_application_commands instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+        await self.discover_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+        )
 
-        Parameters
-        ----------
-        data: Optional[List[:class:`dict`]]
-            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to associate with. If None,
-            the payload will be retrieved from Discord.
-        guild_id: Optional[:class:`int`]
-            Guild ID to associate application commands to. If `None`, global commands are associated.
-        """
+    async def associate_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
+    ) -> None:
+        warnings.warn(
+            ".associate_application_commands is deprecated, use .deploy_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self.deploy_application_commands(
             data=data,
             guild_id=guild_id,
@@ -726,23 +936,14 @@ class ConnectionState:
         )
 
     async def delete_unknown_application_commands(
-        self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
-    ):
-        """|coro|
-        Deletes unknown signatures found on Discord that don't match what the bot has. Rollout signatures should be
-        added before this method is called.
-        Non-trivial CPU usage, consider using the check function if you want deletes, association, and/or updates at
-        the same time.
-
-        Parameters
-        ----------
-        data: Optional[List[:class:`dict`]]
-            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to delete from. If None,
-            the payload will be retrieved from Discord.
-        guild_id: Optional[:class:`int`]
-            Guild ID to delete unknown application commands from. If `None`, global commands are deleted from.
-
-        """
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
+    ) -> None:
+        warnings.warn(
+            ".delete_unknown_application_commands is deprecated, use .deploy_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self.deploy_application_commands(
             data=data,
             guild_id=guild_id,
@@ -752,21 +953,14 @@ class ConnectionState:
         )
 
     async def update_application_commands(
-        self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
     ) -> None:
-        """|coro|
-        Updates application commands with a matching signature on Discord, but fails a deep check. Rollout signatures
-        should be added before this method is called. Non-trivia CPU usage, consider using the check function if you
-        want updates, association, and/or deletes at the same time.
-
-        Parameters
-        ----------
-        data: Optional[List[:class:`dict`]]
-            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to update from. If None,
-            the payload will be retrieved from Discord.
-        guild_id: Optional[:class:`int`]
-            Guild ID to update application commands for. If `None`, global commands are updated.
-        """
+        warnings.warn(
+            ".update_application_commands is deprecated, use .deploy_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self.deploy_application_commands(
             data=data,
             guild_id=guild_id,
@@ -776,7 +970,7 @@ class ConnectionState:
         )
 
     async def register_new_application_commands(
-        self, data: Optional[List[dict]] = None, guild_id: Optional[int] = None
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
     ) -> None:
         """|coro|
         Registers locally added application commands that don't match a signature that Discord has registered for
@@ -785,17 +979,20 @@ class ConnectionState:
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
-            Payload from `HTTPClient.get_guild_commands` or `HTTPClient.get_global_commands` to check against. If None,
-            the payload will be retrieved from Discord.
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``
         guild_id: Optional[:class:`int`]
-            Guild ID to register new application commands to. If `None`, global commands are registered.
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
         """
         if not data:
+            if self.application_id is None:
+                raise TypeError("Could not get the current application id")
+
             if guild_id:
-                # type ignore as we do not care about typeddict specificity
-                data = await self.http.get_guild_commands(self.application_id, guild_id)  # type: ignore
+                data = await self.http.get_guild_commands(self.application_id, guild_id)
             else:
-                data = await self.http.get_global_commands(self.application_id)  # type: ignore
+                data = await self.http.get_global_commands(self.application_id)
 
         if data is None:
             raise NotImplementedError("Could not get application commands from Discord.")
@@ -803,7 +1000,7 @@ class ConnectionState:
         data_signatures = [
             (
                 raw_response["name"],
-                int(raw_response["type"]),
+                int(raw_response["type"] if "type" in raw_response else 1),
                 int(temp) if (temp := raw_response.get("guild_id", None)) else temp,
             )
             for raw_response in data
@@ -817,39 +1014,45 @@ class ConnectionState:
                 await self.register_application_command(app_cmd, guild_id)
 
     async def register_application_command(
-        self, command: ApplicationCommand, guild_id: Optional[int] = None
+        self, command: BaseApplicationCommand, guild_id: Optional[int] = None
     ) -> None:
         """|coro|
-        Registers the given application command either for a specific guild or globally.
+        Registers the given application command either for a specific guild or globally and adds the command to the bot.
 
         Parameters
         ----------
-        command: :class:`ApplicationCommand`
+        command: :class:`BaseApplicationCommand`
             Application command to register.
         guild_id: Optional[:class:`int`]
-            Guild ID to register the application commands to. If `None`, the command is registered globally.
+            ID of the guild to register the application commands to. If set to ``None``, the commands will be registered
+            as global commands instead. Defaults to ``None``.
         """
-        payload = command.get_guild_payload(guild_id) if guild_id else command.global_payload
+        payload: EditApplicationCommand = command.get_payload(guild_id)  # type: ignore
         _log.info(
-            f"nextcord.ConnectionState: Registering command with signature {command.get_signature(guild_id)}"
+            "nextcord.ConnectionState: Registering command with signature %s",
+            command.get_signature(guild_id),
         )
 
         if self.application_id is None:
-            raise NotImplementedError("Could not get the current application id")
+            raise TypeError("Could not get the current application's id")
 
-        # type ignores, more typeddict specificity issues
-        if guild_id:
-            raw_response = await self.http.upsert_guild_command(
-                self.application_id, guild_id, payload  # type: ignore
-            )
-        else:
-            raw_response = await self.http.upsert_global_command(self.application_id, payload)
+        try:
+            if guild_id:
+                raw_response = await self.http.upsert_guild_command(
+                    self.application_id, guild_id, payload
+                )
+            else:
+                raw_response = await self.http.upsert_global_command(self.application_id, payload)
+
+        except Exception as e:
+            _log.error("Error registering command %s: %s", command.error_name, e)
+            raise e
         # response_id = int(raw_response["id"])
-        command.parse_discord_response(self, raw_response)  # type: ignore
-        self.add_application_command(command)
+        command.parse_discord_response(self, raw_response)
+        self.add_application_command(command, pre_remove=False)
 
     async def delete_application_command(
-        self, command: ApplicationCommand, guild_id: Optional[int] = None
+        self, command: BaseApplicationCommand, guild_id: Optional[int] = None
     ) -> None:
         """|coro|
         Deletes the given application from Discord for the given guild ID or globally, then removes the signature and
@@ -860,21 +1063,47 @@ class ConnectionState:
         command: :class:`ApplicationCommand`
             Application command to delete.
         guild_id: Optional[:class:`int`]
-            Guild ID to delete the application commands from. If `None`, the command is deleted from global.
+            Guild ID to delete the application commands from. If ``None``, the command is deleted from global.
         """
         if self.application_id is None:
             raise NotImplementedError("Could not get the current application id")
 
-        if guild_id:
-            await self.http.delete_guild_command(
-                self.application_id, guild_id, command.command_ids[guild_id]
-            )
-        else:
-            await self.http.delete_global_command(
-                self.application_id, command.command_ids[guild_id]
-            )
-        self._application_command_ids.pop(command.command_ids[guild_id], None)
-        self._application_command_signatures.pop(command.get_signature(guild_id))
+        try:
+            if guild_id:
+                await self.http.delete_guild_command(
+                    self.application_id, guild_id, command.command_ids[guild_id]
+                )
+            else:
+                await self.http.delete_global_command(
+                    self.application_id, command.command_ids[guild_id]
+                )
+
+            self._application_command_ids.pop(command.command_ids[guild_id], None)
+            self._application_command_signatures.pop(command.get_signature(guild_id), None)
+
+        except KeyError:
+            if guild_id:
+                _log.error(
+                    "Could not globally unregister command %s "
+                    "as it is not registered in the provided guild.",
+                    command.error_name,
+                )
+                raise KeyError(
+                    "This command cannot be globally unregistered, "
+                    "as it is not registered in the provided guild."
+                )
+            else:
+                _log.error(
+                    "Could not globally unregister command %s as it is not a global command.",
+                    command.error_name,
+                )
+                raise KeyError(
+                    "This command cannot be globally unregistered, as it is not a global command."
+                )
+
+        except Exception as e:
+            _log.error("Error unregistering command %s: %s", command.error_name, e)
+            raise e
 
     # async def register_bulk_application_commands(self) -> None:
     #     # TODO: Using Bulk upsert seems to delete all commands
@@ -1002,7 +1231,7 @@ class ConnectionState:
             except KeyError:
                 pass
             else:
-                self.application_id = utils._get_as_snowflake(application, "id")
+                self.application_id = utils.get_as_snowflake(application, "id")
                 # flags will always be present here
                 self.application_flags = ApplicationFlags._from_value(application["flags"])
 
@@ -1022,8 +1251,8 @@ class ConnectionState:
         self.dispatch("message", message)
         if self._messages is not None:
             self._messages.append(message)
-        # we ensure that the channel is either a TextChannel or Thread
-        if channel and channel.__class__ in (TextChannel, Thread):
+        # we ensure that the channel is either a TextChannel, ForumChannel, Thread or VoiceChannel
+        if channel and channel.__class__ in (TextChannel, ForumChannel, Thread, VoiceChannel):
             channel.last_message_id = message.id  # type: ignore
 
     def parse_message_delete(self, data) -> None:
@@ -1071,7 +1300,7 @@ class ConnectionState:
 
     def parse_message_reaction_add(self, data) -> None:
         emoji = data["emoji"]
-        emoji_id = utils._get_as_snowflake(emoji, "id")
+        emoji_id = utils.get_as_snowflake(emoji, "id")
         emoji = PartialEmoji.with_state(
             self, id=emoji_id, animated=emoji.get("animated", False), name=emoji["name"]
         )
@@ -1110,7 +1339,7 @@ class ConnectionState:
 
     def parse_message_reaction_remove(self, data) -> None:
         emoji = data["emoji"]
-        emoji_id = utils._get_as_snowflake(emoji, "id")
+        emoji_id = utils.get_as_snowflake(emoji, "id")
         emoji = PartialEmoji.with_state(self, id=emoji_id, name=emoji["name"])
         raw = RawReactionActionEvent(data, emoji, "REACTION_REMOVE")
         self.dispatch("raw_reaction_remove", raw)
@@ -1129,7 +1358,7 @@ class ConnectionState:
 
     def parse_message_reaction_remove_emoji(self, data) -> None:
         emoji = data["emoji"]
-        emoji_id = utils._get_as_snowflake(emoji, "id")
+        emoji_id = utils.get_as_snowflake(emoji, "id")
         emoji = PartialEmoji.with_state(self, id=emoji_id, name=emoji["name"])
         raw = RawReactionClearEmojiEvent(data, emoji)
         self.dispatch("raw_reaction_clear_emoji", raw)
@@ -1145,7 +1374,7 @@ class ConnectionState:
                     self.dispatch("reaction_clear_emoji", reaction)
 
     def parse_interaction_create(self, data) -> None:
-        interaction = Interaction(data=data, state=self)
+        interaction = self._get_client().get_interaction(data=data)
         if data["type"] == 3:  # interaction component
             custom_id = interaction.data["custom_id"]  # type: ignore
             component_type = interaction.data["component_type"]  # type: ignore
@@ -1158,7 +1387,7 @@ class ConnectionState:
         self.dispatch("interaction", interaction)
 
     def parse_presence_update(self, data) -> None:
-        guild_id = utils._get_as_snowflake(data, "guild_id")
+        guild_id = utils.get_as_snowflake(data, "guild_id")
         # guild_id won't be None here
         guild = self._get_guild(guild_id)
         if guild is None:
@@ -1198,7 +1427,7 @@ class ConnectionState:
         self.dispatch("invite_delete", invite)
 
     def parse_channel_delete(self, data) -> None:
-        guild = self._get_guild(utils._get_as_snowflake(data, "guild_id"))
+        guild = self._get_guild(utils.get_as_snowflake(data, "guild_id"))
         channel_id = int(data["id"])
         if guild is not None:
             channel = guild.get_channel(channel_id)
@@ -1217,7 +1446,7 @@ class ConnectionState:
             self.dispatch("private_channel_update", old_channel, channel)
             return
 
-        guild_id = utils._get_as_snowflake(data, "guild_id")
+        guild_id = utils.get_as_snowflake(data, "guild_id")
         guild = self._get_guild(guild_id)
         if guild is not None:
             channel = guild.get_channel(channel_id)
@@ -1240,7 +1469,7 @@ class ConnectionState:
             )
             return
 
-        guild_id = utils._get_as_snowflake(data, "guild_id")
+        guild_id = utils.get_as_snowflake(data, "guild_id")
         guild = self._get_guild(guild_id)
         if guild is not None:
             # the factory can't be a DMChannel or GroupChannel here
@@ -1287,6 +1516,16 @@ class ConnectionState:
         has_thread = guild.get_thread(thread.id)
         guild._add_thread(thread)
         if not has_thread:
+            # `newly_created` is documented outside of a thread's fields:
+            # https://discord.dev/topics/gateway-events#thread-create
+            if data.get("newly_created", False):
+                if isinstance(thread.parent, ForumChannel):
+                    thread.parent.last_message_id = thread.id
+
+                self.dispatch("thread_create", thread)
+
+            # Avoid an unnecessary breaking change right now by dispatching `thread_join` for
+            # threads that were already created.
             self.dispatch("thread_join", thread)
 
     def parse_thread_update(self, data) -> None:
@@ -1538,7 +1777,7 @@ class ConnectionState:
     def is_guild_evicted(self, guild) -> bool:
         return guild.id not in self._guilds
 
-    async def chunk_guild(self, guild, *, wait=True, cache=None):
+    async def chunk_guild(self, guild, *, wait: bool = True, cache=None):
         if cache is None:
             cache = self.member_cache_flags.joined
         request = self._chunk_requests.get(guild.id)
@@ -1552,7 +1791,7 @@ class ConnectionState:
             return await request.wait()
         return request.get_future()
 
-    async def _chunk_and_dispatch(self, guild, unavailable):
+    async def _chunk_and_dispatch(self, guild, unavailable) -> None:
         try:
             await asyncio.wait_for(self.chunk_guild(guild), timeout=60.0)
         except asyncio.TimeoutError:
@@ -1820,8 +2059,8 @@ class ConnectionState:
             )
 
     def parse_voice_state_update(self, data) -> None:
-        guild = self._get_guild(utils._get_as_snowflake(data, "guild_id"))
-        channel_id = utils._get_as_snowflake(data, "channel_id")
+        guild = self._get_guild(utils.get_as_snowflake(data, "guild_id"))
+        channel_id = utils.get_as_snowflake(data, "channel_id")
         flags = self.member_cache_flags
         # self.user is *always* cached when this is called
         self_id = self.user.id  # type: ignore
@@ -1909,7 +2148,7 @@ class ConnectionState:
         return self.get_user(user_id)
 
     def get_reaction_emoji(self, data) -> Union[Emoji, PartialEmoji]:
-        emoji_id = utils._get_as_snowflake(data, "id")
+        emoji_id = utils.get_as_snowflake(data, "id")
 
         if not emoji_id:
             return data["name"]
@@ -1951,7 +2190,7 @@ class ConnectionState:
     def create_message(
         self,
         *,
-        channel: Union[TextChannel, Thread, DMChannel, GroupChannel, PartialMessageable],
+        channel: MessageableChannel,
         data: MessagePayload,
     ) -> Message:
         return Message(state=self, channel=channel, data=data)
@@ -2049,6 +2288,42 @@ class ConnectionState:
                 data["guild_id"],
             )
 
+    def parse_auto_moderation_rule_create(self, data) -> None:
+        self.dispatch(
+            "auto_moderation_rule_create",
+            AutoModerationRule(data=data, state=self),
+        )
+
+    def parse_auto_moderation_rule_update(self, data) -> None:
+        self.dispatch("auto_moderation_rule_update", AutoModerationRule(data=data, state=self))
+
+    def parse_auto_moderation_rule_delete(self, data) -> None:
+        self.dispatch("auto_moderation_rule_delete", AutoModerationRule(data=data, state=self))
+
+    def parse_auto_moderation_action_execution(self, data) -> None:
+        self.dispatch(
+            "auto_moderation_action_execution", AutoModerationActionExecution(data=data, state=self)
+        )
+
+    def parse_guild_audit_log_entry_create(self, data) -> None:
+        guild = self._get_guild(int(data["guild_id"]))
+        user_id = None if data.get("user_id") is None else int(data["user_id"])
+        user = self.get_user(user_id)
+        if user_id is None or user is None:
+            users = {}
+        else:
+            users = {user_id: user}
+
+        if guild is not None:
+            entry = AuditLogEntry(auto_moderation_rules={}, users=users, data=data, guild=guild)
+            self.dispatch("guild_audit_log_entry_create", entry)
+        else:
+            _log.debug(
+                "guild_audit_log_entry_create wasn't dispatched because the guild (%r) and/or user (%r) are None!",
+                guild,
+                user,
+            )
+
 
 class AutoShardedConnectionState(ConnectionState):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -2127,7 +2402,11 @@ class AutoShardedConnectionState(ConnectionState):
         key: Callable[[tuple[Guild, Future[list[Member]]]], int] = lambda g: g[0].shard_id
         guilds = sorted(processed, key=key)
         for shard_id, info in itertools.groupby(guilds, key=key):
-            children, futures = zip(*info)
+            children: Tuple[Guild]
+            futures: Tuple[Future]
+            # zip with `*` should, and will, return 2 tuples since every element is 2 length
+            # but pyright believes otherwise.
+            children, futures = zip(*info)  # type: ignore
             # 110 reqs/minute w/ 1 req/guild plus some buffer
             timeout = 61 * (len(children) / 110)
             try:
@@ -2140,7 +2419,7 @@ class AutoShardedConnectionState(ConnectionState):
                     len(guilds),
                 )
             for guild in children:
-                if guild.unavailable is False:  # type: ignore pylance this is a guild :)
+                if guild.unavailable is False:
                     self.dispatch("guild_available", guild)
                 else:
                     self.dispatch("guild_join", guild)
@@ -2176,7 +2455,7 @@ class AutoShardedConnectionState(ConnectionState):
             except KeyError:
                 pass
             else:
-                self.application_id = utils._get_as_snowflake(application, "id")
+                self.application_id = utils.get_as_snowflake(application, "id")
                 self.application_flags = ApplicationFlags._from_value(application["flags"])
 
         for guild_data in data["guilds"]:

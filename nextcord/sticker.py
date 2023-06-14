@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -78,7 +56,7 @@ class StickerPack(Hashable):
            Checks if the sticker pack is not equal to another sticker pack.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The name of the sticker pack.
     description: :class:`str`
@@ -190,7 +168,7 @@ class StickerItem(_StickerTag):
            Checks if the sticker item is not equal to another sticker item.
 
     Attributes
-    -----------
+    ----------
     name: :class:`str`
         The sticker's name.
     id: :class:`int`
@@ -203,7 +181,7 @@ class StickerItem(_StickerTag):
 
     __slots__ = ("_state", "name", "id", "format", "url")
 
-    def __init__(self, *, state: ConnectionState, data: StickerItemPayload):
+    def __init__(self, *, state: ConnectionState, data: StickerItemPayload) -> None:
         self._state: ConnectionState = state
         self.name: str = data["name"]
         self.id: int = int(data["id"])
@@ -222,12 +200,12 @@ class StickerItem(_StickerTag):
         Attempts to retrieve the full sticker data of the sticker item.
 
         Raises
-        --------
+        ------
         HTTPException
             Retrieving the sticker failed.
 
         Returns
-        --------
+        -------
         Union[:class:`StandardSticker`, :class:`GuildSticker`]
             The retrieved sticker.
         """
@@ -355,14 +333,14 @@ class StandardSticker(Sticker):
         Retrieves the sticker pack that this sticker belongs to.
 
         Raises
-        --------
+        ------
         InvalidData
             The corresponding sticker pack was not found.
         HTTPException
             Retrieving the sticker pack failed.
 
         Returns
-        --------
+        -------
         :class:`StickerPack`
             The retrieved sticker pack.
         """
@@ -451,7 +429,7 @@ class GuildSticker(Sticker):
         Edits a :class:`GuildSticker` for the guild.
 
         Parameters
-        -----------
+        ----------
         name: :class:`str`
             The sticker's new name. Must be at least 2 characters.
         description: Optional[:class:`str`]
@@ -462,14 +440,14 @@ class GuildSticker(Sticker):
             The reason for editing this sticker. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You are not allowed to edit stickers.
         HTTPException
             An error occurred editing the sticker.
 
         Returns
-        --------
+        -------
         :class:`GuildSticker`
             The newly modified sticker.
         """
@@ -505,18 +483,18 @@ class GuildSticker(Sticker):
         do this.
 
         Parameters
-        -----------
+        ----------
         reason: Optional[:class:`str`]
             The reason for deleting this sticker. Shows up on the audit log.
 
         Raises
-        -------
+        ------
         Forbidden
             You are not allowed to delete stickers.
         HTTPException
             An error occurred deleting the sticker.
         """
-        await self._state.http.delete_guild_sticker(self.guild_id, self.id, reason)
+        await self._state.http.delete_guild_sticker(self.guild_id, self.id, reason=reason)
 
 
 def _sticker_factory(

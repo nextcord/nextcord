@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -35,13 +13,19 @@ class File:
     r"""A parameter object used for :meth:`abc.Messageable.send`
     for sending file objects.
 
+    .. versionchanged:: 2.5
+
+        You can now use nextcord.File as a context manager. This will
+        automatically call :meth:`close` when the context manager exits scope.
+        When using the context manager, force_close will default to True.
+
     .. note::
 
         File objects are single use and are not meant to be reused in
         multiple :meth:`abc.Messageable.send`\s.
 
     Parameters
-    -----------
+    ----------
 
     fp: Union[str, bytes, os.PathLike, io.BufferedIOBase]
         A file-like object opened in binary mode and read mode
@@ -63,9 +47,18 @@ class File:
         in the Discord client.
     spoiler: :class:`bool`
         Whether the attachment is a spoiler.
+    force_close: :class:`bool`
+        Whether to forcibly close the bytes used to create the file
+        when ``.close()`` is called.
+        This will also make the file bytes unusable by flushing it from
+        memory after it is sent once.
+        Enable this if you don't wish to reuse the same bytes.
+        Defaults to ``True`` when using context manager.
+
+        .. versionadded:: 2.2
 
     Attributes
-    -----------
+    ----------
     fp: Union[:class:`io.BufferedReader`, :class:`io.BufferedIOBase`]
         A file-like object opened in binary mode and read mode.
         This will be a :class:`io.BufferedIOBase` if an
@@ -78,15 +71,33 @@ class File:
         in the Discord client.
     spoiler: :class:`bool`
         Whether the attachment is a spoiler.
+    force_close: :class:`bool`
+        Whether to forcibly close the bytes used to create the file
+        when ``.close()`` is called.
+        This will also make the file bytes unusable by flushing it from
+        memory after it is sent or used once.
+        Enable this if you don't wish to reuse the same bytes.
+
+        .. versionadded:: 2.2
     """
 
-    __slots__ = ("fp", "filename", "spoiler", "_original_pos", "_owner", "_closer", "description")
+    __slots__ = (
+        "fp",
+        "filename",
+        "spoiler",
+        "force_close",
+        "_original_pos",
+        "_owner",
+        "_closer",
+        "description",
+    )
 
     if TYPE_CHECKING:
         fp: Union[io.BufferedReader, io.BufferedIOBase]
         filename: Optional[str]
         description: Optional[str]
         spoiler: bool
+        force_close: Optional[bool]
 
     def __init__(
         self,
@@ -95,7 +106,8 @@ class File:
         *,
         description: Optional[str] = None,
         spoiler: bool = False,
-    ):
+        force_close: Optional[bool] = None,
+    ) -> None:
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
                 raise ValueError(f"File buffer {fp!r} must be seekable and readable")
@@ -106,6 +118,8 @@ class File:
             self.fp = open(fp, "rb")
             self._original_pos = 0
             self._owner = True
+
+        self.force_close = force_close
 
         # aiohttp only uses two methods from IOBase
         # read and close, since I want to control when the files
@@ -131,6 +145,16 @@ class File:
             self.filename is not None and self.filename.startswith("SPOILER_")
         )
 
+    def __enter__(self) -> File:
+        # Set force_close to true when using context manager
+        # and force_close was not provided to __init__
+        if self.force_close is None:
+            self.force_close = True
+        return self
+
+    def __exit__(self, *_) -> None:
+        self.close()
+
     def reset(self, *, seek: Union[int, bool] = True) -> None:
         # The `seek` parameter is needed because
         # the retry-loop is iterated over multiple times
@@ -145,5 +169,5 @@ class File:
 
     def close(self) -> None:
         self.fp.close = self._closer
-        if self._owner:
+        if self._owner or self.force_close:
             self._closer()

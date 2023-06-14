@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -65,7 +43,7 @@ class Reaction:
             Returns the string form of the reaction's emoji.
 
     Attributes
-    -----------
+    ----------
     emoji: Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]
         The reaction emoji. May be a custom emoji, or a unicode emoji.
     count: :class:`int`
@@ -84,7 +62,7 @@ class Reaction:
         message: Message,
         data: ReactionPayload,
         emoji: Optional[Union[PartialEmoji, Emoji, str]] = None,
-    ):
+    ) -> None:
         self.message: Message = message
         self.emoji: Union[PartialEmoji, Emoji, str] = emoji or message._state.get_reaction_emoji(
             data["emoji"]
@@ -126,12 +104,12 @@ class Reaction:
         the :class:`abc.Snowflake` abc.
 
         Parameters
-        -----------
+        ----------
         user: :class:`abc.Snowflake`
              The user or member from which to remove the reaction.
 
         Raises
-        -------
+        ------
         HTTPException
             Removing the reaction failed.
         Forbidden
@@ -152,7 +130,7 @@ class Reaction:
         .. versionadded:: 1.3
 
         Raises
-        --------
+        ------
         HTTPException
             Clearing the reaction failed.
         Forbidden
@@ -173,7 +151,7 @@ class Reaction:
         and meet the :class:`abc.Snowflake` abc.
 
         Examples
-        ---------
+        --------
 
         Usage ::
 
@@ -189,7 +167,7 @@ class Reaction:
             await channel.send(f'{winner} has won the raffle.')
 
         Parameters
-        ------------
+        ----------
         limit: Optional[:class:`int`]
             The maximum number of results to return.
             If not provided, returns all the users who
@@ -198,12 +176,12 @@ class Reaction:
             For pagination, reactions are sorted by member.
 
         Raises
-        --------
+        ------
         HTTPException
             Getting the users for the reaction failed.
 
         Yields
-        --------
+        ------
         Union[:class:`User`, :class:`Member`]
             The member (if retrievable) or the user that has reacted
             to this message. The case where it can be a :class:`Member` is

@@ -17,7 +17,7 @@ with open("nextcord/__init__.py") as f:
 if not version:
     raise RuntimeError("version is not set")
 
-if version.endswith(("a", "b", "rc")):
+if any(v in version for v in ("a", "b", "rc")):
     # append version identifier based on commit count
     try:
         import subprocess
@@ -41,13 +41,15 @@ readme = ""
 with open("README.rst") as f:
     readme = f.read()
 
-with open("docs/requirements.txt") as f:
-    docs_requirements = f.read().splitlines()
-
 extras_require = {
     "voice": ["PyNaCl>=1.3.0,<1.5"],
-    "docs": docs_requirements,
-    "speed": ["orjson>=3.5.4", "aiodns>=1.1", "Brotli", "cchardet"],
+    "docs": [
+        "sphinx==5.2.3",
+        "sphinxcontrib_trio==1.1.2",
+        "sphinxcontrib-websupport",
+        "typing_extensions>=4.2.0, <5",
+    ],
+    "speed": ["orjson>=3.5.4", "aiohttp[speedups]"],
 }
 
 packages = [
@@ -58,6 +60,7 @@ packages = [
     "nextcord.ext.application_checks",
     "nextcord.ext.commands",
     "nextcord.ext.tasks",
+    "nextcord.ui.select",
     # Compat
     "discord",
     "discord.types",
@@ -69,7 +72,7 @@ packages = [
 
 setup(
     name="nextcord",
-    author="tag-epic & Rapptz",
+    author="Nextcord Developers & Rapptz",
     url="https://github.com/nextcord/nextcord",
     project_urls={
         "Documentation": "https://docs.nextcord.dev/",
@@ -94,6 +97,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Framework :: AsyncIO",
         "Framework :: aiohttp",
         "Topic :: Internet",

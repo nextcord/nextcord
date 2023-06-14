@@ -1,36 +1,13 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Rapptz
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 import asyncio
-import collections
 import logging
 import signal
 import sys
 import traceback
+import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -44,9 +21,11 @@ from typing import (
     Sequence,
     Set,
     Tuple,
+    Type,
     TypeVar,
     Union,
     cast,
+    overload,
 )
 
 import aiohttp
@@ -58,7 +37,7 @@ from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .enums import ChannelType, InteractionType, Status, VoiceRegion
+from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
@@ -85,17 +64,24 @@ from .widget import Widget
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import ApplicationCommand, ClientCog
+    from .application_command import BaseApplicationCommand, ClientCog
+    from .asset import Asset
     from .channel import DMChannel
+    from .enums import Locale
+    from .file import File
+    from .flags import MemberCacheFlags
     from .member import Member
-    from .message import Message
+    from .message import Attachment, Message
+    from .permissions import Permissions
     from .scheduled_events import ScheduledEvent
+    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .voice_client import VoiceProtocol
 
 
 __all__ = ("Client",)
 
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
+InterT = TypeVar("InterT", bound="Interaction")
 
 
 _log = logging.getLogger(__name__)
@@ -143,7 +129,7 @@ class Client:
     A number of options can be passed to the :class:`Client`.
 
     Parameters
-    -----------
+    ----------
     max_messages: Optional[:class:`int`]
         The maximum number of messages to store in the internal message cache.
         This defaults to ``1000``. Passing in ``None`` disables the message cache.
@@ -164,7 +150,7 @@ class Client:
         Integer starting at ``0`` and less than :attr:`.shard_count`.
     shard_count: Optional[:class:`int`]
         The total number of shards.
-    application_id: :class:`int`
+    application_id: Optional[:class:`int`]
         The client's application ID.
     intents: :class:`Intents`
         The intents that you want to enable for the session. This is a way of
@@ -249,9 +235,15 @@ class Client:
         Warning: While enabling this will prevent "ghost" commands on guilds with removed code references, rolling out
         to ALL guilds with anything other than a very small bot will likely cause it to get rate limited.
 
+    default_guild_ids: Optional[List[:class:`int`]]
+        The default guild ids for every application command set. If the application command doesn't have any explicit
+        guild ids set and this list is not empty, then the application command's guild ids will be set to this.
+        Defaults to ``None``.
+
+        .. versionadded:: 2.3
 
     Attributes
-    -----------
+    ----------
     ws
         The websocket gateway the client is currently connected to. Could be ``None``.
     loop: :class:`asyncio.AbstractEventLoop`
@@ -261,43 +253,83 @@ class Client:
     def __init__(
         self,
         *,
+        max_messages: Optional[int] = 1000,
+        connector: Optional[aiohttp.BaseConnector] = None,
+        proxy: Optional[str] = None,
+        proxy_auth: Optional[aiohttp.BasicAuth] = None,
+        shard_id: Optional[int] = None,
+        shard_count: Optional[int] = None,
+        application_id: Optional[int] = None,
+        intents: Intents = Intents.default(),
+        member_cache_flags: MemberCacheFlags = MISSING,
+        chunk_guilds_at_startup: bool = MISSING,
+        status: Optional[Status] = None,
+        activity: Optional[BaseActivity] = None,
+        allowed_mentions: Optional[AllowedMentions] = None,
+        heartbeat_timeout: float = 60.0,
+        guild_ready_timeout: float = 2.0,
+        assume_unsync_clock: bool = True,
+        enable_debug_events: bool = False,
         loop: Optional[asyncio.AbstractEventLoop] = None,
-        **options: Any,
-    ):
+        lazy_load_commands: bool = True,
+        rollout_associate_known: bool = True,
+        rollout_delete_unknown: bool = True,
+        rollout_register_new: bool = True,
+        rollout_update_known: bool = True,
+        rollout_all_guilds: bool = False,
+        default_guild_ids: Optional[List[int]] = None,
+    ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
-        self.shard_id: Optional[int] = options.get("shard_id")
-        self.shard_count: Optional[int] = options.get("shard_count")
 
-        connector: Optional[aiohttp.BaseConnector] = options.pop("connector", None)
-        proxy: Optional[str] = options.pop("proxy", None)
-        proxy_auth: Optional[aiohttp.BasicAuth] = options.pop("proxy_auth", None)
-        unsync_clock: bool = options.pop("assume_unsync_clock", True)
+        self.shard_id: Optional[int] = shard_id
+        self.shard_count: Optional[int] = shard_count
+
         self.http: HTTPClient = HTTPClient(
-            connector, proxy=proxy, proxy_auth=proxy_auth, unsync_clock=unsync_clock, loop=self.loop
+            connector,
+            proxy=proxy,
+            proxy_auth=proxy_auth,
+            unsync_clock=assume_unsync_clock,
+            loop=self.loop,
+            dispatch=self.dispatch,
         )
 
         self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}
 
         self._hooks: Dict[str, Callable] = {"before_identify": self._call_before_identify_hook}
 
-        self._enable_debug_events: bool = options.pop("enable_debug_events", False)
-        self._connection: ConnectionState = self._get_state(**options)
+        self._enable_debug_events: bool = enable_debug_events
+
+        self._connection: ConnectionState = self._get_state(
+            max_messages=max_messages,
+            application_id=application_id,
+            heartbeat_timeout=heartbeat_timeout,
+            guild_ready_timeout=guild_ready_timeout,
+            allowed_mentions=allowed_mentions,
+            activity=activity,
+            status=status,
+            intents=intents,
+            chunk_guilds_at_startup=chunk_guilds_at_startup,
+            member_cache_flags=member_cache_flags,
+        )
+
         self._connection.shard_count = self.shard_count
         self._closed: bool = False
         self._ready: asyncio.Event = asyncio.Event()
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
-        self._lazy_load_commands: bool = options.pop("lazy_load_commands", True)
+        self._lazy_load_commands: bool = lazy_load_commands
         self._client_cogs: Set[ClientCog] = set()
-        self._rollout_associate_known: bool = options.pop("rollout_associate_known", True)
-        self._rollout_delete_unknown: bool = options.pop("rollout_delete_unknown", True)
-        self._rollout_register_new: bool = options.pop("rollout_register_new", True)
-        self._rollout_update_known: bool = options.pop("rollout_update_known", True)
-        self._rollout_all_guilds: bool = options.pop("rollout_all_guilds", False)
-        self._application_commands_to_add: Set[ApplicationCommand] = set()
+        self._rollout_associate_known: bool = rollout_associate_known
+        self._rollout_delete_unknown: bool = rollout_delete_unknown
+        self._rollout_register_new: bool = rollout_register_new
+        self._rollout_update_known: bool = rollout_update_known
+        self._rollout_all_guilds: bool = rollout_all_guilds
+        self._application_commands_to_add: Set[BaseApplicationCommand] = set()
+
+        self._default_guild_ids = default_guild_ids or []
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -310,14 +342,35 @@ class Client:
     ) -> DiscordWebSocket:
         return self.ws
 
-    def _get_state(self, **options: Any) -> ConnectionState:
+    def _get_state(
+        self,
+        max_messages: Optional[int],
+        application_id: Optional[int],
+        heartbeat_timeout: float,
+        guild_ready_timeout: float,
+        allowed_mentions: Optional[AllowedMentions],
+        activity: Optional[BaseActivity],
+        status: Optional[Status],
+        intents: Intents,
+        chunk_guilds_at_startup: bool,
+        member_cache_flags: MemberCacheFlags,
+    ) -> ConnectionState:
         return ConnectionState(
             dispatch=self.dispatch,
             handlers=self._handlers,
             hooks=self._hooks,
             http=self.http,
             loop=self.loop,
-            **options,
+            max_messages=max_messages,
+            application_id=application_id,
+            heartbeat_timeout=heartbeat_timeout,
+            guild_ready_timeout=guild_ready_timeout,
+            allowed_mentions=allowed_mentions,
+            activity=activity,
+            status=status,
+            intents=intents,
+            chunk_guilds_at_startup=chunk_guilds_at_startup,
+            member_cache_flags=member_cache_flags,
         )
 
     def _handle_ready(self) -> None:
@@ -414,6 +467,14 @@ class Client:
         """
         return self._connection.application_flags
 
+    @property
+    def default_guild_ids(self) -> List[int]:
+        """List[:class:`int`] The default guild ids for all application commands.
+
+        .. versionadded:: 2.3
+        """
+        return self._default_guild_ids
+
     def is_ready(self) -> bool:
         """:class:`bool`: Specifies if the client's internal cache is ready for use."""
         return self._ready.is_set()
@@ -491,7 +552,7 @@ class Client:
 
         The default error handler provided by the client.
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
         Check :func:`~nextcord.on_error` for more details.
         """
@@ -505,7 +566,7 @@ class Client:
 
         The default application command error handler provided by the bot.
 
-        By default this prints to :data:`sys.stderr` however it could be
+        By default this prints to :data:`~sys.stderr` however it could be
         overridden to have a different implementation.
 
         This only fires if you do not specify any listeners for command error.
@@ -545,7 +606,7 @@ class Client:
         .. versionadded:: 1.4
 
         Parameters
-        ------------
+        ----------
         shard_id: :class:`int`
             The shard ID that requested being IDENTIFY'd
         initial: :class:`bool`
@@ -564,7 +625,7 @@ class Client:
 
 
         Parameters
-        -----------
+        ----------
         token: :class:`str`
             The authentication token. Do not prefix this token with
             anything as the library will do it for you.
@@ -598,7 +659,7 @@ class Client:
         is not resumed until the WebSocket connection is terminated.
 
         Parameters
-        -----------
+        ----------
         reconnect: :class:`bool`
             If we should attempt reconnecting, either due to internet
             failure or a specific failure on Discord's part. Certain
@@ -606,7 +667,7 @@ class Client:
             invalid sharding payloads or bad tokens).
 
         Raises
-        -------
+        ------
         :exc:`.GatewayNotFound`
             If the gateway to connect to Discord is not found. Usually if this
             is thrown then there is a Discord API outage.
@@ -621,7 +682,7 @@ class Client:
         }
         while not self.is_closed():
             try:
-                coro = DiscordWebSocket.from_client(self, **ws_params)
+                coro = DiscordWebSocket.from_client(self, format_gateway=True, **ws_params)
                 self.ws = await asyncio.wait_for(coro, timeout=60.0)
                 ws_params["initial"] = False
                 while True:
@@ -629,9 +690,23 @@ class Client:
             except ReconnectWebSocket as e:
                 _log.info("Got a request to %s the websocket.", e.op)
                 self.dispatch("disconnect")
-                ws_params.update(
-                    sequence=self.ws.sequence, resume=e.resume, session=self.ws.session_id
-                )
+
+                # Only specify new gateway if resuming, otherwise use the default one
+                if e.resume:
+                    ws_params.update(
+                        sequence=self.ws.sequence,
+                        gateway=self.ws.resume_url,
+                        resume=True,
+                        session=self.ws.session_id,
+                    )
+                else:
+                    ws_params.update(
+                        sequence=None,
+                        gateway=None,
+                        resume=False,
+                        session=None,
+                    )
+
                 continue
             except (
                 OSError,
@@ -641,7 +716,6 @@ class Client:
                 aiohttp.ClientError,
                 asyncio.TimeoutError,
             ) as exc:
-
                 self.dispatch("disconnect")
                 if not reconnect:
                     await self.close()
@@ -657,6 +731,7 @@ class Client:
                 if isinstance(exc, OSError) and exc.errno in (54, 10054):
                     ws_params.update(
                         sequence=self.ws.sequence,
+                        gateway=self.ws.resume_url,
                         initial=False,
                         resume=True,
                         session=self.ws.session_id,
@@ -680,7 +755,13 @@ class Client:
                 # Always try to RESUME the connection
                 # If the connection is not RESUME-able then the gateway will invalidate the session.
                 # This is apparently what the official Discord client does.
-                ws_params.update(sequence=self.ws.sequence, resume=True, session=self.ws.session_id)
+                ws_params.update(
+                    sequence=self.ws.sequence,
+                    gateway=self.ws.resume_url,
+                    initial=False,
+                    resume=True,
+                    session=self.ws.session_id,
+                )
 
     async def close(self) -> None:
         """|coro|
@@ -725,7 +806,7 @@ class Client:
         A shorthand coroutine for :meth:`login` + :meth:`connect`.
 
         Raises
-        -------
+        ------
         TypeError
             An unexpected keyword argument was received.
         """
@@ -764,14 +845,14 @@ class Client:
         except NotImplementedError:
             pass
 
-        async def runner():
+        async def runner() -> None:
             try:
                 await self.start(*args, **kwargs)
             finally:
                 if not self.is_closed():
                     await self.close()
 
-        def stop_loop_on_completion(f):
+        def stop_loop_on_completion(f) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(runner(), loop=loop)
@@ -871,12 +952,12 @@ class Client:
         """Returns a channel or thread with the given ID.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[Union[:class:`.abc.GuildChannel`, :class:`.Thread`, :class:`.abc.PrivateChannel`]]
             The returned channel or ``None`` if not found.
         """
@@ -893,14 +974,14 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The channel ID to create a partial messageable for.
         type: Optional[:class:`.ChannelType`]
             The underlying channel type for the partial messageable.
 
         Returns
-        --------
+        -------
         :class:`.PartialMessageable`
             The partial messageable
         """
@@ -912,12 +993,12 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`.StageInstance`]
             The returns stage instance of ``None`` if not found.
         """
@@ -932,12 +1013,12 @@ class Client:
         """Returns a guild with the given ID.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`.Guild`]
             The guild or ``None`` if not found.
         """
@@ -947,12 +1028,12 @@ class Client:
         """Returns a user with the given ID.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`~nextcord.User`]
             The user or ``None`` if not found.
         """
@@ -962,12 +1043,12 @@ class Client:
         """Returns an emoji with the given ID.
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`.Emoji`]
             The custom emoji or ``None`` if not found.
         """
@@ -984,7 +1065,7 @@ class Client:
             or :meth:`.fetch_premium_sticker_packs`.
 
         Returns
-        --------
+        -------
         Optional[:class:`.GuildSticker`]
             The sticker or ``None`` if not found.
         """
@@ -996,12 +1077,12 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         id: :class:`int`
             The scheduled event's ID to search for.
 
         Returns
-        --------
+        -------
         Optional[:class:`.ScheduledEvent`]
             The scheduled event or ``None`` if not found.
         """
@@ -1085,7 +1166,7 @@ class Client:
         This function returns the **first event that meets the requirements**.
 
         Examples
-        ---------
+        --------
 
         Waiting for a user reply: ::
 
@@ -1121,7 +1202,7 @@ class Client:
 
 
         Parameters
-        ------------
+        ----------
         event: :class:`str`
             The event name, similar to the :ref:`event reference <discord-api-events>`,
             but without the ``on_`` prefix, to wait for.
@@ -1133,12 +1214,12 @@ class Client:
             :exc:`asyncio.TimeoutError`.
 
         Raises
-        -------
+        ------
         asyncio.TimeoutError
             If a timeout is provided and it was reached.
 
         Returns
-        --------
+        -------
         Any
             Returns no arguments, a single argument, or a :class:`tuple` of multiple
             arguments that mirrors the parameters passed in the
@@ -1148,7 +1229,7 @@ class Client:
         future = self.loop.create_future()
         if check is None:
 
-            def _check(*args):
+            def _check(*args) -> bool:
                 return True
 
             check = _check
@@ -1173,7 +1254,7 @@ class Client:
         The events must be a :ref:`coroutine <coroutine>`, if not, :exc:`TypeError` is raised.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -1182,7 +1263,7 @@ class Client:
                 print('Ready!')
 
         Raises
-        --------
+        ------
         TypeError
             The coroutine passed is not actually a coroutine.
         """
@@ -1199,13 +1280,13 @@ class Client:
         *,
         activity: Optional[BaseActivity] = None,
         status: Optional[Status] = None,
-    ):
+    ) -> None:
         """|coro|
 
         Changes the client's presence.
 
         Example
-        ---------
+        -------
 
         .. code-block:: python3
 
@@ -1257,7 +1338,7 @@ class Client:
     def fetch_guilds(
         self,
         *,
-        limit: Optional[int] = 100,
+        limit: Optional[int] = 200,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
     ) -> GuildIterator:
@@ -1273,7 +1354,7 @@ class Client:
             This method is an API call. For general usage, consider :attr:`guilds` instead.
 
         Examples
-        ---------
+        --------
 
         Usage ::
 
@@ -1288,12 +1369,16 @@ class Client:
         All parameters are optional.
 
         Parameters
-        -----------
+        ----------
         limit: Optional[:class:`int`]
             The number of guilds to retrieve.
             If ``None``, it retrieves every guild you have access to. Note, however,
             that this would make it a slow operation.
-            Defaults to ``100``.
+            Defaults to ``200``.
+
+            .. versionchanged:: 2.0
+                Changed default to ``200``.
+
         before: Union[:class:`.abc.Snowflake`, :class:`datetime.datetime`]
             Retrieves guilds before this date or object.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
@@ -1309,7 +1394,7 @@ class Client:
             Getting the guilds failed.
 
         Yields
-        --------
+        ------
         :class:`.Guild`
             The guild with the guild data parsed.
         """
@@ -1318,22 +1403,22 @@ class Client:
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|
 
-        Gets a :class:`.Template` from a nextcord.new URL or code.
+        Gets a :class:`.Template` from a discord.new URL or code.
 
         Parameters
-        -----------
+        ----------
         code: Union[:class:`.Template`, :class:`str`]
-            The Discord Template Code or URL (must be a nextcord.new URL).
+            The Discord Template Code or URL (must be a discord.new URL).
 
         Raises
-        -------
+        ------
         :exc:`.NotFound`
             The template is invalid.
         :exc:`.HTTPException`
             Getting the template failed.
 
         Returns
-        --------
+        -------
         :class:`.Template`
             The template from the URL/code.
         """
@@ -1356,7 +1441,7 @@ class Client:
             This method is an API call. For general usage, consider :meth:`get_guild` instead.
 
         Parameters
-        -----------
+        ----------
         guild_id: :class:`int`
             The guild's ID to fetch from.
 
@@ -1375,7 +1460,7 @@ class Client:
             Getting the guild failed.
 
         Returns
-        --------
+        -------
         :class:`.Guild`
             The guild from the ID.
         """
@@ -1387,7 +1472,7 @@ class Client:
         *,
         name: str,
         region: Union[VoiceRegion, str] = VoiceRegion.us_west,
-        icon: bytes = MISSING,
+        icon: Optional[Union[bytes, Asset, Attachment, File]] = None,
         code: str = MISSING,
     ) -> Guild:
         """|coro|
@@ -1396,6 +1481,9 @@ class Client:
 
         Bot accounts in more than 10 guilds are not allowed to create guilds.
 
+        .. versionchanged:: 2.1
+            The ``icon`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
         Parameters
         ----------
         name: :class:`str`
@@ -1403,9 +1491,9 @@ class Client:
         region: :class:`.VoiceRegion`
             The region for the voice communication server.
             Defaults to :attr:`.VoiceRegion.us_west`.
-        icon: Optional[:class:`bytes`]
-            The :term:`py:bytes-like object` representing the icon. See :meth:`.ClientUser.edit`
-            for more details on what is expected.
+        icon: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            The :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the icon. See :meth:`.ClientUser.edit` for more details on what is expected.
         code: :class:`str`
             The code for a template to create the guild with.
 
@@ -1424,17 +1512,12 @@ class Client:
             The guild created. This is not the same guild that is
             added to cache.
         """
-        if icon is not MISSING:
-            icon_base64 = utils._bytes_to_base64_data(icon)
-        else:
-            icon_base64 = None
-
-        region_value = str(region)
+        icon_base64 = await utils.obj_to_base64_data(icon)
 
         if code:
-            data = await self.http.create_from_template(code, name, region_value, icon_base64)
+            data = await self.http.create_from_template(code, name, str(region), icon_base64)
         else:
-            data = await self.http.create_guild(name, region_value, icon_base64)
+            data = await self.http.create_guild(name, str(region), icon_base64)
         return Guild(data=data, state=self._connection)
 
     async def fetch_stage_instance(self, channel_id: int, /) -> StageInstance:
@@ -1445,19 +1528,19 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         channel_id: :class:`int`
             The stage channel ID.
 
         Raises
-        -------
+        ------
         :exc:`.NotFound`
             The stage instance or channel could not be found.
         :exc:`.HTTPException`
             Getting the stage instance failed.
 
         Returns
-        --------
+        -------
         :class:`.StageInstance`
             The stage instance from the stage channel ID.
         """
@@ -1481,7 +1564,7 @@ class Client:
             :class:`.PartialInviteChannel` respectively.
 
         Parameters
-        -----------
+        ----------
         url: Union[:class:`.Invite`, :class:`str`]
             The Discord invite ID or URL (must be a discord.gg URL).
         with_counts: :class:`bool`
@@ -1495,14 +1578,14 @@ class Client:
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         :exc:`.NotFound`
             The invite has expired or is invalid.
         :exc:`.HTTPException`
             Getting the invite failed.
 
         Returns
-        --------
+        -------
         :class:`.Invite`
             The invite from the URL/ID.
         """
@@ -1527,7 +1610,7 @@ class Client:
             The invite to revoke.
 
         Raises
-        -------
+        ------
         :exc:`.Forbidden`
             You do not have permissions to revoke invites.
         :exc:`.NotFound`
@@ -1551,19 +1634,19 @@ class Client:
             The guild must have the widget enabled to get this information.
 
         Parameters
-        -----------
+        ----------
         guild_id: :class:`int`
             The ID of the guild.
 
         Raises
-        -------
+        ------
         :exc:`.Forbidden`
             The widget for this guild is disabled.
         :exc:`.HTTPException`
             Retrieving the widget failed.
 
         Returns
-        --------
+        -------
         :class:`.Widget`
             The guild's widget.
         """
@@ -1577,12 +1660,12 @@ class Client:
         Retrieves the bot's application information.
 
         Raises
-        -------
+        ------
         :exc:`.HTTPException`
             Retrieving the information failed somehow.
 
         Returns
-        --------
+        -------
         :class:`.AppInfo`
             The bot's application information.
         """
@@ -1603,19 +1686,19 @@ class Client:
             This method is an API call. If you have :attr:`nextcord.Intents.members` and member cache enabled, consider :meth:`get_user` instead.
 
         Parameters
-        -----------
+        ----------
         user_id: :class:`int`
             The user's ID to fetch from.
 
         Raises
-        -------
+        ------
         :exc:`.NotFound`
             A user with this ID does not exist.
         :exc:`.HTTPException`
             Fetching the user failed.
 
         Returns
-        --------
+        -------
         :class:`~nextcord.User`
             The user you requested.
         """
@@ -1636,7 +1719,7 @@ class Client:
         .. versionadded:: 1.2
 
         Raises
-        -------
+        ------
         :exc:`.InvalidData`
             An unknown channel type was received from Discord.
         :exc:`.HTTPException`
@@ -1647,7 +1730,7 @@ class Client:
             You do not have permission to fetch this channel.
 
         Returns
-        --------
+        -------
         Union[:class:`.abc.GuildChannel`, :class:`.abc.PrivateChannel`, :class:`.Thread`]
             The channel from the ID.
         """
@@ -1675,7 +1758,7 @@ class Client:
         Retrieves a :class:`.Webhook` with the specified ID.
 
         Raises
-        --------
+        ------
         :exc:`.HTTPException`
             Retrieving the webhook failed.
         :exc:`.NotFound`
@@ -1684,7 +1767,7 @@ class Client:
             You do not have permission to fetch this webhook.
 
         Returns
-        ---------
+        -------
         :class:`.Webhook`
             The webhook you requested.
         """
@@ -1699,14 +1782,14 @@ class Client:
         .. versionadded:: 2.0
 
         Raises
-        --------
+        ------
         :exc:`.HTTPException`
             Retrieving the sticker failed.
         :exc:`.NotFound`
             Invalid sticker ID.
 
         Returns
-        --------
+        -------
         Union[:class:`.StandardSticker`, :class:`.GuildSticker`]
             The sticker you requested.
         """
@@ -1722,12 +1805,12 @@ class Client:
         .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         :exc:`.HTTPException`
             Retrieving the sticker packs failed.
 
         Returns
-        ---------
+        -------
         List[:class:`.StickerPack`]
             All available premium sticker packs.
         """
@@ -1745,7 +1828,7 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        -----------
+        ----------
         user: :class:`~nextcord.abc.Snowflake`
             The user to create a DM with.
 
@@ -1771,7 +1854,7 @@ class Client:
         .. versionadded:: 2.0
 
         Parameters
-        ------------
+        ----------
         view: :class:`nextcord.ui.View`
             The view to register for dispatching.
         message_id: Optional[:class:`int`]
@@ -1780,14 +1863,13 @@ class Client:
             then message update events are not propagated for the view.
 
         Raises
-        -------
+        ------
         TypeError
             A view was not passed.
         ValueError
             The view is not persistent. A persistent view has no timeout
             and all their components have an explicitly provided custom_id.
         """
-
         if not isinstance(view, View):
             raise TypeError(f"Expected an instance of View not {view.__class__!r}")
 
@@ -1798,6 +1880,40 @@ class Client:
 
         self._connection.store_view(view, message_id)
 
+    def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
+        """Removes a :class:`~nextcord.ui.View` from persistent listening.
+
+        This method should be used if a persistent view is set in a cog and
+        should be freed when the cog is unloaded to save memory.
+
+        .. versionadded:: 2.3
+
+        Parameters
+        ----------
+        view: :class:`nextcord.ui.View`
+            The view to remove from dispatching.
+        message_id: Optional[:class:`int`]
+            The message ID that the view is attached to. This is used to properly
+            remove the view from the view store.
+
+        Raises
+        ------
+        TypeError
+            A view was not passed.
+        ValueError
+            The view is not persistent. A persistent view has no timeout
+            and all their components have an explicitly provided custom_id.
+        """
+        if not isinstance(view, View):
+            raise TypeError(f"Expected an instance of View not {view.__class__.__name__}")
+
+        if not view.is_persistent():
+            raise ValueError(
+                "View is not persistent. Items need to have a custom_id set and View must have no timeout"
+            )
+
+        self._connection.remove_view(view, message_id)
+
     def add_modal(self, modal: Modal, *, user_id: Optional[int] = None) -> None:
         """Registers a :class:`~nextcord.ui.Modal` for persistent listening.
 
@@ -1806,7 +1922,7 @@ class Client:
         depend on particular criteria.
 
         Parameters
-        ------------
+        ----------
         modal: :class:`nextcord.ui.Modal`
             The view to register for dispatching.
         user_id: Optional[:class:`int`]
@@ -1814,7 +1930,7 @@ class Client:
             the modal calls based on the users.
 
         Raises
-        -------
+        ------
         TypeError
             A modal was not passed.
         ValueError
@@ -1832,6 +1948,38 @@ class Client:
 
         self._connection.store_modal(modal, user_id)
 
+    def remove_modal(self, modal: Modal) -> None:
+        """Removes a :class:`~nextcord.ui.Modal` from persistent listening.
+
+        This method should be used if a persistent modal is set in a cog and
+        should be freed when the cog is unloaded to save memory.
+
+        .. versionadded:: 2.3
+
+        Parameters
+        ----------
+        modal: :class:`nextcord.ui.Modal`
+            The modal to remove from dispatching.
+
+        Raises
+        ------
+        TypeError
+            A modal was not passed.
+        ValueError
+            The modal is not persistent. A persistent modal has a set
+            custom_id and all their components with a set custom_id
+            and a timeout set to None.
+        """
+        if not isinstance(modal, Modal):
+            raise TypeError(f"Expected an instance of Modal not {modal.__class__.__name__}")
+
+        if not modal.is_persistent():
+            raise ValueError(
+                "Modal is not persistent. Modal must have no timeout and Items and Modal need to have custom_id set"
+            )
+
+        self._connection.remove_modal(modal)
+
     @property
     def persistent_views(self) -> Sequence[View]:
         """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
@@ -1848,7 +1996,7 @@ class Client:
         """
         return [event for guild in self.guilds for event in guild.scheduled_events]
 
-    async def on_interaction(self, interaction: Interaction):
+    async def on_interaction(self, interaction: Interaction) -> None:
         await self.process_application_commands(interaction)
 
     async def process_application_commands(self, interaction: Interaction) -> None:
@@ -1864,78 +2012,124 @@ class Client:
         interaction.data = cast(ApplicationCommandInteractionData, interaction.data)
 
         if interaction.type is InteractionType.application_command:
-            _log.info("nextcord.Client: Found an interaction command.")
-
+            _log.debug("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.info(f"nextcord.Client: Calling your application command now {app_cmd.name}")
+                _log.debug(
+                    "nextcord.Client: Calling your application command now %s", app_cmd.error_name
+                )
                 await app_cmd.call_from_interaction(interaction)
             elif self._lazy_load_commands:
-                _log.info(
-                    f"nextcord.Client: Interaction command not found, attempting to lazy load."
+                _log.debug(
+                    "nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
-                _log.debug(f"nextcord.Client: {interaction.data}")
+                # _log.debug(f"nextcord.Client: %s", interaction.data)
                 response_signature = (
                     interaction.data["name"],
                     int(interaction.data["type"]),
                     interaction.guild_id,
                 )
-                _log.debug(f"nextcord.Client: {response_signature}")
+                _log.debug("nextcord.Client: %s", response_signature)
                 do_deploy = False
                 if app_cmd := self._connection.get_application_command_from_signature(
-                    interaction.data["name"], int(interaction.data["type"]), interaction.guild_id
+                    interaction.data["name"],
+                    int(interaction.data["type"]),
+                    int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None,
                 ):
-                    _log.info(
+                    _log.debug(
                         "nextcord.Client: Basic signature matches, checking against raw payload."
                     )
-                    # TODO: Lazy load is completely broken. Figure out how to fix it.
-                    if app_cmd.reverse_check_against_raw_payload(
-                        interaction.data, interaction.guild_id  # type: ignore
-                    ):
-                        # if app_cmd.check_against_raw_payload(interaction.data, interaction.guild_id):
-                        _log.info(
-                            "nextcord.Client: New interaction command found, Assigning id now"
+                    if app_cmd.is_interaction_valid(interaction):
+                        _log.debug(
+                            "nextcord.Client: Interaction seems to correspond to command %s, associating ID now.",
+                            app_cmd.error_name,
                         )
-                        app_cmd.parse_discord_response(self._connection, interaction.data)  # type: ignore
+                        app_cmd.parse_discord_response(self._connection, interaction.data)
                         self.add_application_command(app_cmd)
                         await app_cmd.call_from_interaction(interaction)
                     else:
                         do_deploy = True
+
                 else:
                     do_deploy = True
+
                 if do_deploy:
                     if interaction.guild:
-                        await interaction.guild.deploy_application_commands(
+                        await self.discover_application_commands(
+                            guild_id=interaction.guild.id,
                             associate_known=self._rollout_associate_known,
                             delete_unknown=self._rollout_delete_unknown,
                             update_known=self._rollout_update_known,
                         )
                     else:
-                        await self.deploy_application_commands(
+                        await self.discover_application_commands(
+                            guild_id=None,
                             associate_known=self._rollout_associate_known,
                             delete_unknown=self._rollout_delete_unknown,
                             update_known=self._rollout_update_known,
                         )
+
         elif interaction.type is InteractionType.application_command_autocomplete:
             # TODO: Is it really worth trying to lazy load with this?
-            _log.info("nextcord.Client: Autocomplete interaction received.")
-            _log.debug(f"nextcord.Client: {interaction.data}")
+            _log.debug("nextcord.Client: Autocomplete interaction received.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
-                _log.info(f"nextcord.Client: Autocomplete for command {app_cmd.name}.")
-                await app_cmd.call_autocomplete_from_interaction(interaction)
+                _log.debug("nextcord.Client: Autocomplete for command %s received.", app_cmd.name)
+                await app_cmd.call_autocomplete_from_interaction(interaction)  # type: ignore
             else:
                 raise ValueError(
                     f"Received autocomplete interaction for {interaction.data['name']} but command isn't "
                     f"found/associated!"
                 )
 
-    def get_application_command(self, command_id: int) -> Optional[ApplicationCommand]:
+    def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
+        """Gets an application command from the cache that has the given command ID.
+
+        Parameters
+        ----------
+        command_id: :class:`int`
+            Command ID corresponding to an application command.
+
+        Returns
+        -------
+        Optional[:class:`BaseApplicationCommand`]
+            Returns the application command corresponding to the ID. If no command is
+            found, ``None`` is returned instead.
+        """
         return self._connection.get_application_command(command_id)
 
-    def get_all_application_commands(self) -> Set[ApplicationCommand]:
-        """Returns a copied set of all added :class:`ApplicationCommand` objects."""
+    def get_application_command_from_signature(
+        self, name: str, cmd_type: Union[int, ApplicationCommandType], guild_id: Optional[int]
+    ) -> Optional[BaseApplicationCommand]:
+        """Gets a locally stored application command object that matches the given signature.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of the application command. Capital sensitive.
+        cmd_type: Union[:class:`int`, :class:`ApplicationCommandType`]
+            Type of application command.
+        guild_id: Optional[:class:`int`]
+            Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
+
+        Returns
+        -------
+        command: Optional[:class:`BaseApplicationCommand`]
+            Application Command with the given signature. If no command with that signature is
+            found, returns ``None`` instead.
+        """
+        if isinstance(cmd_type, ApplicationCommandType):
+            actual_type = cmd_type.value
+        else:
+            actual_type = cmd_type
+
+        return self._connection.get_application_command_from_signature(
+            name=name, cmd_type=actual_type, guild_id=guild_id
+        )
+
+    def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
+        """Returns a copied set of all added :class:`BaseApplicationCommand` objects."""
         return self._connection.application_commands
 
-    def get_application_commands(self, rollout: bool = False) -> List[ApplicationCommand]:
+    def get_application_commands(self, rollout: bool = False) -> List[BaseApplicationCommand]:
         """Gets registered global commands.
 
         Parameters
@@ -1945,15 +2139,19 @@ class Client:
 
         Returns
         -------
-        List[:class:`ApplicationCommand`]
-            List of :class:`ApplicationCommand` objects that are global.
+        List[:class:`BaseApplicationCommand`]
+            List of :class:`BaseApplicationCommand` objects that are global.
         """
         return self._connection.get_global_application_commands(rollout=rollout)
 
     def add_application_command(
-        self, command: ApplicationCommand, overwrite: bool = False, use_rollout: bool = False
+        self,
+        command: BaseApplicationCommand,
+        overwrite: bool = False,
+        use_rollout: bool = False,
+        pre_remove: bool = True,
     ) -> None:
-        """Adds an ApplicationCommand object to the client for use.
+        """Adds a BaseApplicationCommand object to the client for use.
 
         Parameters
         ----------
@@ -1963,83 +2161,324 @@ class Client:
             If to overwrite any existing commands that would conflict with this one. Defaults to ``False``
         use_rollout: :class:`bool`
             If to apply the rollout signatures instead of existing ones. Defaults to ``False``
+        pre_remove: :class:`bool`
+            If the command should be removed before adding it. This will clear all signatures from storage, including
+            rollout ones.
         """
+        if command.use_default_guild_ids:
+            for id in self._default_guild_ids:
+                command.add_guild_rollout(id)
+
         self._connection.add_application_command(
-            command, overwrite=overwrite, use_rollout=use_rollout
+            command, overwrite=overwrite, use_rollout=use_rollout, pre_remove=pre_remove
         )
 
-    async def deploy_application_commands(
+    async def sync_all_application_commands(
         self,
-        data: Optional[List[dict]] = None,
+        data: Optional[Dict[Optional[int], List[ApplicationCommandPayload]]] = None,
+        *,
+        use_rollout: bool = True,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
+        ignore_forbidden: bool = True,
+    ) -> None:
+        """|coro|
+
+        Syncs all application commands with Discord. Will sync global commands if any commands added are global, and
+        syncs with all guilds that have an application command targeting them.
+
+        This may call Discord many times depending on how different guilds you have local commands for, and how many
+        commands Discord needs to be updated or added, which may cause your bot to be rate limited or even Cloudflare
+        banned in VERY extreme cases.
+
+        This may incur high CPU usage depending on how many commands you have and how complex they are, which may cause
+        your bot to halt while it checks local commands against the existing commands that Discord has.
+
+        For a more targeted version of this method, see :func:`Client.sync_application_commands`
+
+        Parameters
+        ----------
+        data: Optional[Dict[Optional[:class:`int`], List[:class:`dict`]]]
+            Data to use when comparing local application commands to what Discord has. The key should be the
+            :class:`int` guild ID (`None` for global) corresponding to the value list of application command payloads
+            from Discord. Any guild ID's not provided will be fetched if needed. Defaults to ``None``
+        use_rollout: :class:`bool`
+            If the rollout guild IDs of commands should be used. Defaults to ``True``
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to ``True``
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to ``True``
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to ``True``
+        ignore_forbidden: :class:`bool`
+            If this command should suppress a :class:`errors.Forbidden` exception when the bot encounters a guild
+            where it doesn't have permissions to view application commands.
+            Defaults to ``True``
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._connection.sync_all_application_commands(
+            data=data,
+            use_rollout=use_rollout,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+            register_new=register_new,
+            ignore_forbidden=ignore_forbidden,
+        )
+
+    async def sync_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        *,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+        register_new: bool = True,
+    ) -> None:
+        """|coro|
+        Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
+        global commands if the guild_id is ``None``.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
+        associate_known: :class:`bool`
+            If local commands that match a command already on Discord should be associated with each other.
+            Defaults to ``True``.
+        delete_unknown: :class:`bool`
+            If commands on Discord that don't match a local command should be deleted. Defaults to ``True``.
+        update_known: :class:`bool`
+            If commands on Discord have a basic match with a local command, but don't fully match, should be updated.
+            Defaults to ``True``.
+        register_new: :class:`bool`
+            If a local command that doesn't have a basic match on Discord should be added to Discord.
+            Defaults to ``True``.
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._connection.sync_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+            register_new=register_new,
+        )
+
+    async def discover_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        *,
+        guild_id: Optional[int] = None,
         associate_known: bool = True,
         delete_unknown: bool = True,
         update_known: bool = True,
     ) -> None:
+        """|coro|
+        Associates existing, deletes unknown, and updates modified commands for either global commands or a specific
+        guild. This does a deep check on found commands, which may be expensive CPU-wise.
 
-        """Updates and associates recognizable global application commands, and deletes unknown ones."""
-        # TODO: Look, I need to get this out of the door. Properish documentation of this is in ConnectionState, and
-        #  this could be an easy "I want to contribute to Nextcord in a meaningful way" PR.
-        await self._connection.deploy_application_commands(
+        Running this for global or the same guild multiple times at once may cause unexpected or unstable behavior.
+
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Payload from ``HTTPClient.get_guild_commands`` or ``HTTPClient.get_global_commands`` to deploy with. If None,
+            the payload will be retrieved from Discord.
+        guild_id: Optional[:class:`int`]
+            Guild ID to deploy application commands to. If ``None``, global commands are deployed to.
+        associate_known: :class:`bool`
+            If True, commands on Discord that pass a signature check and a deep check will be associated with locally
+            added ApplicationCommand objects.
+        delete_unknown: :class:`bool`
+            If ``True``, commands on Discord that fail a signature check will be removed. If ``update_known`` is ``False``,
+            commands that pass the signature check but fail the deep check will also be removed.
+        update_known: :class:`bool`
+            If ``True``, commands on Discord that pass a signature check but fail the deep check will be updated.
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._connection.discover_application_commands(
             data=data,
-            guild_id=None,
+            guild_id=guild_id,
             associate_known=associate_known,
             delete_unknown=delete_unknown,
             update_known=update_known,
         )
 
-    async def delete_unknown_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def deploy_application_commands(
+        self,
+        data: Optional[List[ApplicationCommandPayload]] = None,
+        *,
+        guild_id: Optional[int] = None,
+        associate_known: bool = True,
+        delete_unknown: bool = True,
+        update_known: bool = True,
+    ) -> None:
+        warnings.warn(
+            ".deploy_application_commands is deprecated, use .discover_application_commands instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+        await self.discover_application_commands(
+            data=data,
+            guild_id=guild_id,
+            associate_known=associate_known,
+            delete_unknown=delete_unknown,
+            update_known=update_known,
+        )
+
+    async def delete_unknown_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         """Deletes unknown global commands."""
+        warnings.warn(
+            ".delete_unknown_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self._connection.delete_unknown_application_commands(data=data, guild_id=None)
 
-    async def associate_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def associate_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         """Associates global commands registered with Discord with locally added commands."""
+        warnings.warn(
+            ".associate_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self._connection.associate_application_commands(data=data, guild_id=None)
 
-    async def update_application_commands(self, data: Optional[List[dict]] = None) -> None:
+    async def update_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None
+    ) -> None:
         """Updates global commands that have slightly changed with Discord."""
+        warnings.warn(
+            ".update_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         await self._connection.update_application_commands(data=data, guild_id=None)
 
-    async def register_new_application_commands(self, data: Optional[List[dict]] = None) -> None:
-        """Registers global commands that were added locally, but aren't in Discord yet."""
-        await self._connection.register_new_application_commands(data=data, guild_id=None)
+    async def register_new_application_commands(
+        self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Registers locally added application commands that don't match a signature that Discord has registered for
+        either global commands or a specific guild.
 
-    async def register_application_commands(self, *commands: ApplicationCommand) -> None:
-        """Registers the given global application commands with Discord."""
+        Parameters
+        ----------
+        data: Optional[List[:class:`dict`]]
+            Data to use when comparing local application commands to what Discord has. Should be a list of application
+            command data from Discord. If left as ``None``, it will be fetched if needed. Defaults to ``None``
+        guild_id: Optional[:class:`int`]
+            ID of the guild to sync application commands with. If set to ``None``, global commands will be synced instead.
+            Defaults to ``None``.
+        """
+        # All this does is passthrough to connection state. All documentation updates should also be updated
+        # there, and vice versa.
+        await self._connection.register_new_application_commands(data=data, guild_id=guild_id)
+
+    async def register_application_commands(
+        self, *commands: BaseApplicationCommand, guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Registers the given application commands either for a specific guild or globally, and adds the commands to
+        the bot.
+
+        Parameters
+        ----------
+        commands: :class:`BaseApplicationCommand`
+            Application command to register. Multiple args are accepted.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to register the application commands to. If set to ``None``, the commands will be registered
+            as global commands instead. Defaults to ``None``.
+        """
         for command in commands:
-            await self._connection.register_application_command(command, guild_id=None)
+            await self._connection.register_application_command(command, guild_id=guild_id)
 
-    async def delete_application_commands(self, *commands: ApplicationCommand) -> None:
-        """Deletes the given global application commands from Discord."""
+    async def delete_application_commands(
+        self, *commands: BaseApplicationCommand, guild_id: Optional[int] = None
+    ) -> None:
+        """|coro|
+        Deletes the given application commands either from a specific guild or globally, and removes the command IDs +
+        signatures from the bot.
+
+        Parameters
+        ----------
+        commands: :class:`BaseApplicationCommand`
+            Application command to delete. Multiple args are accepted.
+        guild_id: Optional[:class:`int`]
+            ID of the guild to delete the application commands from. If set to ``None``, the commands will be deleted
+            from global commands instead. Defaults to ``None``.
+        """
         for command in commands:
-            await self._connection.delete_application_command(command, guild_id=None)
+            await self._connection.delete_application_command(command, guild_id=guild_id)
 
-    def _get_global_commands(self) -> Set[ApplicationCommand]:
+    def _get_global_commands(self) -> Set[BaseApplicationCommand]:
         ret = set()
         for command in self._connection._application_commands:
             if command.is_global:
                 ret.add(command)
+
         return ret
 
-    def _get_guild_rollout_commands(self) -> Dict[int, Set[ApplicationCommand]]:
+    def _get_guild_rollout_commands(self) -> Dict[int, Set[BaseApplicationCommand]]:
         ret = {}
         for command in self._connection._application_commands:
             if command.is_guild:
                 for guild_id in command.guild_ids_to_rollout:
                     if guild_id not in ret:
                         ret[guild_id] = set()
+
                     ret[guild_id].add(command)
+
         return ret
 
     async def on_connect(self) -> None:
-        self.add_startup_application_commands()
-        await self.rollout_application_commands()
+        self.add_all_application_commands()
+        await self.sync_application_commands(
+            guild_id=None,
+            associate_known=self._rollout_associate_known,
+            delete_unknown=self._rollout_delete_unknown,
+            update_known=self._rollout_update_known,
+            register_new=self._rollout_register_new,
+        )
+
+    def add_all_application_commands(self) -> None:
+        """Adds application commands that are either decorated by the Client or added via a cog to the state.
+        This does not register commands with Discord. If you want that, use
+        :meth:`~Client.sync_all_application_commands` instead.
+
+        """
+        self._add_decorated_application_commands()
+        self.add_all_cog_commands()
 
     def add_startup_application_commands(self) -> None:
-        """Adds application commands for use on startup.
-
-        This is a workaround for the cache (ConnectionState) clearing on startup. This will add all commands that were
-        decorated directly by the bot, and all commands inside added cogs, to the cache.
-        """
+        warnings.warn(
+            ".add_startup_application_commands is deprecated, use .add_all_application_commands instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         self._add_decorated_application_commands()
         self.add_all_cog_commands()
 
@@ -2048,17 +2487,21 @@ class Client:
             if self._rollout_all_guilds or self._connection.get_guild_application_commands(
                 guild.id, rollout=True
             ):
-                _log.info(f"nextcord.Client: Rolling out commands to guild {guild.name}|{guild.id}")
-                await guild.rollout_application_commands(
+                await self.sync_application_commands(
+                    guild_id=guild.id,
                     associate_known=self._rollout_associate_known,
                     delete_unknown=self._rollout_delete_unknown,
                     update_known=self._rollout_update_known,
+                    register_new=self._rollout_register_new,
                 )
             else:
                 _log.debug(
-                    f"nextcord.Client: No locally added commands explicitly registered for "
-                    f"{guild.name}|{guild.id}, not checking."
+                    "nextcord.Client: No locally added commands explicitly registered "
+                    "for Guild(id=%s, name=%s), not checking.",
+                    guild.id,
+                    guild.name,
                 )
+
         except Forbidden as e:
             _log.warning(
                 f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
@@ -2069,46 +2512,61 @@ class Client:
         """|coro|
         Deploys global application commands and registers new ones if enabled.
         """
+        warnings.warn(
+            ".rollout_application_commands is deprecated, use .sync_application_commands and set "
+            "kwargs in it instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+
         if self.application_id is None:
-            raise NotImplementedError("Could not get the current application id")
+            raise TypeError("Could not get the current application's id")
 
         global_payload = await self.http.get_global_commands(self.application_id)
         await self.deploy_application_commands(
-            data=global_payload,  # type: ignore
+            data=global_payload,
             associate_known=self._rollout_associate_known,
             delete_unknown=self._rollout_delete_unknown,
             update_known=self._rollout_update_known,
         )
-        # type ignore as we do not care about typeddict specificity
         if self._rollout_register_new:
-            await self.register_new_application_commands(data=global_payload)  # type: ignore
+            await self.register_new_application_commands(data=global_payload)
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
-            self.add_application_command(command, use_rollout=True)
+            command.from_callback(command.callback)
+
+            self.add_application_command(command, use_rollout=True, pre_remove=False)
 
     def add_all_cog_commands(self) -> None:
         """Adds all :class:`ApplicationCommand` objects inside added cogs to the application command list."""
         for cog in self._client_cogs:
-            if to_register := cog.to_register:
+            if to_register := cog.application_commands:
                 for cmd in to_register:
-                    self.add_application_command(cmd, use_rollout=True)
+                    self.add_application_command(cmd, use_rollout=True, pre_remove=False)
 
     def add_cog(self, cog: ClientCog) -> None:
-        for app_cmd in cog.to_register:
+        # cog.process_app_cmds()
+        for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
+
         self._client_cogs.add(cog)
 
     def remove_cog(self, cog: ClientCog) -> None:
-        for app_cmd in cog.to_register:
+        for app_cmd in cog.application_commands:
             self._connection.remove_application_command(app_cmd)
+
         self._client_cogs.discard(cog)
 
     def user_command(
         self,
-        name: str = MISSING,
-        guild_ids: Iterable[int] = MISSING,
-        default_permission: Optional[bool] = None,
+        name: Optional[str] = None,
+        *,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
+        dm_permission: Optional[bool] = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         force_global: bool = False,
     ):
         """Creates a User context command from the decorated function.
@@ -2117,20 +2575,37 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will
+            be a global command.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
+            If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+            register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
         def decorator(func: Callable):
             result = user_command(
                 name=name,
+                name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                default_permission=default_permission,
+                dm_permission=dm_permission,
+                default_member_permissions=default_member_permissions,
+                nsfw=nsfw,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2140,9 +2615,13 @@ class Client:
 
     def message_command(
         self,
-        name: str = MISSING,
-        guild_ids: Iterable[int] = MISSING,
-        default_permission: Optional[bool] = None,
+        name: Optional[str] = None,
+        *,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
+        dm_permission: Optional[bool] = None,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         force_global: bool = False,
     ):
         """Creates a Message context command from the decorated function.
@@ -2151,20 +2630,36 @@ class Client:
         ----------
         name: :class:`str`
             Name of the command that users will see. If not set, it defaults to the name of the callback.
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will
+            be a global command.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
+            If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+            register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
         def decorator(func: Callable):
             result = message_command(
                 name=name,
+                name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                default_permission=default_permission,
+                dm_permission=dm_permission,
+                default_member_permissions=default_member_permissions,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2174,10 +2669,15 @@ class Client:
 
     def slash_command(
         self,
-        name: str = MISSING,
-        description: str = MISSING,
-        guild_ids: Iterable[int] = MISSING,
-        default_permission: Optional[bool] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        *,
+        name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
+        guild_ids: Optional[Iterable[int]] = MISSING,
+        dm_permission: Optional[bool] = None,
+        nsfw: bool = False,
+        default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
     ):
         """Creates a Slash application command from the decorated function.
@@ -2189,24 +2689,113 @@ class Client:
         description: :class:`str`
             Description of the command that users will see. If not set, the docstring will be used.
             If no docstring is found for the command callback, it defaults to "No description provided".
-        guild_ids: Iterable[:class:`int`]
-            IDs of :class:`Guild`'s to add this command to. If unset, this will be a global command.
-        default_permission: :class:`bool`
-            If users should be able to use this command by default or not. Defaults to Discords default, `True`.
+        name_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Name(s) of the command for users of specific locales. The locale code should be the key, with the localized
+            name as the value.
+        description_localizations: Dict[Union[:class:`Locale`, :class:`str`], :class:`str`]
+            Description(s) of the command for users of specific locales. The locale code should be the key, with the
+            localized description as the value.
+        guild_ids: Optional[Iterable[:class:`int`]]
+            IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
+            set, then those default guild ids will be used instead. If both of those are unset, then the command will
+            be a global command.
+        dm_permission: :class:`bool`
+            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
+            usable in DMs. Only for global commands, but will not error on guild.
+        default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
+            Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
+            example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
+            default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         force_global: :class:`bool`
-            If True, will force this command to register as a global command, even if `guild_ids` is set. Will still
-            register to guilds. Has no effect if `guild_ids` are never set or added to.
+            If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
+            register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
         def decorator(func: Callable):
             result = slash_command(
                 name=name,
+                name_localizations=name_localizations,
                 description=description,
+                description_localizations=description_localizations,
                 guild_ids=guild_ids,
-                default_permission=default_permission,
+                dm_permission=dm_permission,
+                default_member_permissions=default_member_permissions,
+                nsfw=nsfw,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
             return result
 
         return decorator
+
+    def parse_mentions(self, text: str) -> List[User]:
+        """Parses user mentions in a string and returns a list of :class:`~nextcord.User` objects.
+
+        .. note::
+
+            This does not include role or channel mentions. See :meth:`Guild.parse_mentions <nextcord.Guild.parse_mentions>`
+            for :class:`~nextcord.Member` objects, :meth:`Guild.parse_role_mentions <nextcord.Guild.parse_role_mentions>`
+            for :class:`~nextcord.Role` objects, and :meth:`Guild.parse_channel_mentions <nextcord.Guild.parse_channel_mentions>`
+            for :class:`~nextcord.abc.GuildChannel` objects.
+
+        .. note::
+
+            Only cached users will be returned. To get the IDs of all users mentioned, use
+            :func:`~nextcord.utils.parse_raw_mentions` instead.
+
+        .. versionadded:: 2.2
+
+        Parameters
+        ----------
+        text: :class:`str`
+            String to parse mentions in.
+
+        Returns
+        -------
+        List[:class:`~nextcord.User`]
+            List of :class:`~nextcord.User` objects that were mentioned in the string.
+        """
+
+        it = filter(None, map(self.get_user, utils.parse_raw_mentions(text)))
+        return utils.unique(it)
+
+    @overload
+    def get_interaction(self, data) -> Interaction:
+        ...
+
+    @overload
+    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction:
+        ...
+
+    @overload
+    def get_interaction(self, data, *, cls: Type[InterT]) -> InterT:
+        ...
+
+    def get_interaction(
+        self, data, *, cls: Type[InterT] = Interaction
+    ) -> Union[Interaction, InterT]:
+        """Returns an interaction for a gateway event.
+
+        Parameters
+        ----------
+        data
+            The data direct from the gateway.
+        cls
+            The factory class that will be used to create the interaction.
+            By default, this is :py:class:`Interaction`. Should a custom
+            class be provided, it should be a subclass of :py:class:`Interaction`.
+
+        Returns
+        -------
+        Interaction
+            An instance :py:class:`Interaction` or the provided subclass.
+
+        .. note::
+
+            This is synchronous due to how slash commands are implemented.
+        """
+        return cls(data=data, state=self._connection)

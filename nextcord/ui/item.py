@@ -1,44 +1,27 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar
 
-from ..interactions import Interaction
+from ..interactions import ClientT, Interaction
 
 __all__ = ("Item",)
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ..components import Component
     from ..enums import ComponentType
+    from ..guild import Guild
+    from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
+    from ..types.interactions import ComponentInteractionData
     from .view import View
 
 I = TypeVar("I", bound="Item")
 V = TypeVar("V", bound="View", covariant=True)
-ItemCallbackType = Callable[[Any, I, Interaction], Coroutine[Any, Any, Any]]
+ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
 
 
 class Item(Generic[V]):
@@ -47,14 +30,19 @@ class Item(Generic[V]):
     The current UI items supported are:
 
     - :class:`nextcord.ui.Button`
-    - :class:`nextcord.ui.Select`
+    - :class:`nextcord.ui.StringSelect`
+    - :class:`nextcord.ui.TextInput`
+    - :class:`nextcord.ui.UserSelect`
+    - :class:`nextcord.ui.ChannelSelect`
+    - :class:`nextcord.ui.RoleSelect`
+    - :class:`nextcord.ui.MentionableSelect`
 
     .. versionadded:: 2.0
     """
 
     __item_repr_attributes__: Tuple[str, ...] = ("row",)
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._view: Optional[V] = None
         self._row: Optional[int] = None
         self._rendered_row: Optional[int] = None
@@ -72,11 +60,13 @@ class Item(Generic[V]):
     def refresh_component(self, component: Component) -> None:
         return None
 
-    def refresh_state(self, interaction: Interaction) -> None:
+    def refresh_state(
+        self, data: ComponentInteractionData, state: ConnectionState, guild: Optional[Guild]
+    ) -> None:
         return None
 
     @classmethod
-    def from_component(cls: Type[I], component: Component) -> I:
+    def from_component(cls, component: Component) -> Self:
         return cls()
 
     @property
@@ -98,7 +88,7 @@ class Item(Generic[V]):
         return self._row
 
     @row.setter
-    def row(self, value: Optional[int]):
+    def row(self, value: Optional[int]) -> None:
         if value is None:
             self._row = None
         elif 5 > value >= 0:
@@ -115,7 +105,7 @@ class Item(Generic[V]):
         """Optional[:class:`View`]: The underlying view for this item."""
         return self._view
 
-    async def callback(self, interaction: Interaction):
+    async def callback(self, interaction: Interaction) -> None:
         """|coro|
 
         The callback associated with this UI item.
@@ -123,7 +113,7 @@ class Item(Generic[V]):
         This can be overridden by subclasses.
 
         Parameters
-        -----------
+        ----------
         interaction: :class:`.Interaction`
             The interaction that triggered this UI item.
         """

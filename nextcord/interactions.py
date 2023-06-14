@@ -1,34 +1,12 @@
 # -*- coding: utf-8 -*-
 
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 from . import utils
 from .channel import ChannelType, PartialMessageable
@@ -36,6 +14,7 @@ from .embeds import Embed
 from .enums import InteractionResponseType, InteractionType, try_enum
 from .errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from .file import File
+from .flags import MessageFlags
 from .member import Member
 from .message import Attachment, Message
 from .mixins import Hashable
@@ -55,17 +34,11 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
-    from .application_command import ApplicationCommand, ApplicationSubcommand
-    from .channel import (
-        CategoryChannel,
-        PartialMessageable,
-        StageChannel,
-        TextChannel,
-        VoiceChannel,
-    )
+    from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
+    from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .client import Client
     from .guild import Guild
-    from .mentions import AllowedMentions
+    from .message import AllowedMentions
     from .state import ConnectionState
     from .threads import Thread
     from .types.interactions import Interaction as InteractionPayload, InteractionData
@@ -73,10 +46,18 @@ if TYPE_CHECKING:
     from .ui.view import View
 
     InteractionChannel = Union[
-        VoiceChannel, StageChannel, TextChannel, CategoryChannel, Thread, PartialMessageable
+        VoiceChannel,
+        StageChannel,
+        TextChannel,
+        CategoryChannel,
+        Thread,
+        PartialMessageable,
+        ForumChannel,
     ]
 
 MISSING: Any = utils.MISSING
+
+ClientT = TypeVar("ClientT", bound="Client")
 
 
 class InteractionAttached(dict):
@@ -85,7 +66,7 @@ class InteractionAttached(dict):
     This is used to store information about an :class:`Interaction`. This is useful if you want to save some data from a :meth:`ApplicationCommand.application_command_before_invoke` to use later in the callback.
 
     Example
-    ---------
+    -------
 
     .. code-block:: python3
 
@@ -103,24 +84,41 @@ class InteractionAttached(dict):
             await interaction.response.send_message(data)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.__dict__ = self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<InteractionAttached {super().__repr__()}>"
 
 
-class Interaction:
+class Interaction(Hashable, Generic[ClientT]):
     """Represents a Discord interaction.
 
     An interaction happens when a user does an action that needs to
     be notified. Current examples are slash commands and components.
 
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interactions are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the interaction's hash.
+
     .. versionadded:: 2.0
 
+    .. versionchanged:: 2.1
+        :class:`Interaction` is now hashable.
+
     Attributes
-    -----------
+    ----------
     id: :class:`int`
         The interaction's ID.
     type: :class:`InteractionType`
@@ -166,6 +164,7 @@ class Interaction:
         "application_command",
         "attached",
         "_permissions",
+        "_app_permissions",
         "_state",
         "_session",
         "_original_message",
@@ -174,34 +173,40 @@ class Interaction:
         "_cs_channel",
     )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
         # TODO: this is so janky, accessing a hidden double attribute
         self._original_message: Optional[InteractionMessage] = None
         self.attached = InteractionAttached()
-        self.application_command: Optional[ApplicationCommand | ApplicationSubcommand] = None
+        self.application_command: Optional[
+            Union[SlashApplicationSubcommand, BaseApplicationCommand]
+        ] = None
         self._from_data(data)
 
-    def _from_data(self, data: InteractionPayload):
+    def _from_data(self, data: InteractionPayload) -> None:
         self.id: int = int(data["id"])
         self.type: InteractionType = try_enum(InteractionType, data["type"])
         self.data: Optional[InteractionData] = data.get("data")
         self.token: str = data["token"]
         self.version: int = data["version"]
-        self.channel_id: Optional[int] = utils._get_as_snowflake(data, "channel_id")
-        self.guild_id: Optional[int] = utils._get_as_snowflake(data, "guild_id")
+        self.channel_id: Optional[int] = utils.get_as_snowflake(data, "channel_id")
+        self.guild_id: Optional[int] = utils.get_as_snowflake(data, "guild_id")
         self.application_id: int = int(data["application_id"])
         self.locale: Optional[str] = data.get("locale")
         self.guild_locale: Optional[str] = data.get("guild_locale")
 
         self.message: Optional[Message]
         try:
-            self.message = Message(state=self._state, channel=self.channel, data=data["message"])  # type: ignore
+            message = data["message"]
+            self.message = self._state._get_message(int(message["id"])) or Message(
+                state=self._state, channel=self.channel, data=message  # type: ignore
+            )
         except KeyError:
             self.message = None
 
         self.user: Optional[Union[User, Member]] = None
+        self._app_permissions: int = int(data.get("app_permissions", 0))
         self._permissions: int = 0
 
         # TODO: there's a potential data loss here
@@ -212,18 +217,22 @@ class Interaction:
             except KeyError:
                 pass
             else:
-                self.user = Member(state=self._state, guild=guild, data=member)  # type: ignore
+                cached_member = self.guild and self.guild.get_member(int(member["user"]["id"]))  # type: ignore # user key should be present here
+                self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore # user key should be present here
                 self._permissions = int(member.get("permissions", 0))
         else:
             try:
-                self.user = User(state=self._state, data=data["user"])
+                user = data["user"]
+                self.user = self._state.get_user(int(user["id"])) or User(
+                    state=self._state, data=user
+                )
             except KeyError:
                 pass
 
     @property
-    def client(self) -> Client:
+    def client(self) -> ClientT:
         """:class:`Client`: The client that handled the interaction."""
-        return self._state._get_client()
+        return self._state._get_client()  # type: ignore
 
     @property
     def guild(self) -> Optional[Guild]:
@@ -247,7 +256,9 @@ class Interaction:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
         return utils.utcnow() > self.expires_at
 
-    def _set_application_command(self, app_cmd: Union[ApplicationSubcommand, ApplicationCommand]):
+    def _set_application_command(
+        self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
+    ) -> None:
         self.application_command = app_cmd
 
     @utils.cached_slot_property("_cs_channel")
@@ -273,6 +284,14 @@ class Interaction:
         In a non-guild context where this doesn't apply, an empty permissions object is returned.
         """
         return Permissions(self._permissions)
+
+    @property
+    def app_permissions(self) -> Permissions:
+        """:class:`Permissions`: The resolved permissions of the bot in the channel, including overwrites.
+
+        In a non-guild context where this doesn't apply, an empty permissions object is returned.
+        """
+        return Permissions(self._app_permissions)
 
     @utils.cached_slot_property("_cs_response")
     def response(self) -> InteractionResponse:
@@ -305,14 +324,14 @@ class Interaction:
         Repeated calls to this will return a cached value.
 
         Raises
-        -------
+        ------
         HTTPException
             Fetching the original response message failed.
         ClientException
             The channel for the message could not be resolved.
 
         Returns
-        --------
+        -------
         InteractionMessage
             The original interaction response message.
         """
@@ -359,7 +378,7 @@ class Interaction:
         the message sent was ephemeral.
 
         Parameters
-        ------------
+        ----------
         content: Optional[:class:`str`]
             The content to edit the message with or ``None`` to clear it.
         embeds: List[:class:`Embed`]
@@ -384,7 +403,7 @@ class Interaction:
             the view is removed.
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -395,7 +414,7 @@ class Interaction:
             The length of ``embeds`` was invalid.
 
         Returns
-        --------
+        -------
         :class:`InteractionMessage`
             The newly edited message.
         """
@@ -437,13 +456,13 @@ class Interaction:
         you do not want to fetch the message and save an HTTP request.
 
         Parameters
-        -----------
+        ----------
         delay: Optional[:class:`float`]
             If provided, the number of seconds to wait before deleting the message.
             The waiting is done in the background and deletion failures are ignored.
 
         Raises
-        -------
+        ------
         HTTPException
             Deleting the message failed.
         Forbidden
@@ -458,7 +477,7 @@ class Interaction:
 
         if delay is not None:
 
-            async def inner_call(delay: float = delay):
+            async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
                 try:
                     await delete_func
@@ -479,9 +498,11 @@ class Interaction:
         files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
-        ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: AllowedMentions = MISSING,
+        flags: Optional[MessageFlags] = None,
+        ephemeral: Optional[bool] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -492,7 +513,7 @@ class Interaction:
         via :attr:`Interaction.followup` using :class:`Webhook.send` instead.
 
         Raises
-        --------
+        ------
         HTTPException
             Sending the message failed.
         NotFound
@@ -527,6 +548,8 @@ class Interaction:
                 ephemeral=ephemeral,
                 delete_after=delete_after,
                 allowed_mentions=allowed_mentions,
+                flags=flags,
+                suppress_embeds=suppress_embeds,
             )
         return await self.followup.send(
             content=content,  # type: ignore
@@ -539,6 +562,8 @@ class Interaction:
             ephemeral=ephemeral,
             delete_after=delete_after,
             allowed_mentions=allowed_mentions,
+            flags=flags,
+            suppress_embeds=suppress_embeds,
         )
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
@@ -596,7 +621,7 @@ class InteractionResponse:
         "_parent",
     )
 
-    def __init__(self, parent: Interaction):
+    def __init__(self, parent: Interaction) -> None:
         self._parent: Interaction = parent
         self._responded: bool = False
 
@@ -616,7 +641,7 @@ class InteractionResponse:
         and a secondary action will be done later.
 
         Parameters
-        -----------
+        ----------
         ephemeral: :class:`bool`
             Indicates whether the deferred message will eventually be ephemeral.
             This only applies for interactions of type :attr:`InteractionType.application_command` or when ``with_message`` is True
@@ -628,7 +653,7 @@ class InteractionResponse:
             .. versionadded:: 2.0
 
         Raises
-        -------
+        ------
         HTTPException
             Deferring the interaction failed.
         InteractionResponded
@@ -664,7 +689,7 @@ class InteractionResponse:
         This should rarely be used.
 
         Raises
-        -------
+        ------
         HTTPException
             Ponging the interaction failed.
         InteractionResponded
@@ -699,7 +724,7 @@ class InteractionResponse:
             name-value pair, where the display name and the value Discord sends back are the same.
 
         Raises
-        -------
+        ------
         HTTPException
             Sending the message failed.
         InteractionResponded
@@ -734,16 +759,23 @@ class InteractionResponse:
         files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
-        ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
+        flags: Optional[MessageFlags] = None,
+        ephemeral: Optional[bool] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> PartialInteractionMessage:
         """|coro|
 
         Responds to this interaction by sending a message.
 
+        .. versionchanged:: 2.4
+
+            ``ephemeral`` can now accept ``None`` to indicate that
+            ``flags`` should be used.
+
         Parameters
-        -----------
+        ----------
         content: Optional[:class:`str`]
             The content of the message to send.
         embeds: List[:class:`Embed`]
@@ -772,9 +804,18 @@ class InteractionResponse:
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+
+            .. versionadded:: 2.4
 
         Raises
-        -------
+        ------
         HTTPException
             Sending the message failed.
         NotFound
@@ -791,7 +832,7 @@ class InteractionResponse:
             This interaction has already been responded to before.
 
         Returns
-        --------
+        -------
         :class:`PartialInteractionMessage`
             An object supporting only the :meth:`~PartialInteractionMessage.edit` and :meth:`~PartialInteractionMessage.delete`
             operations. To fetch the :class:`InteractionMessage` you may use :meth:`PartialInteractionMessage.fetch`
@@ -825,8 +866,15 @@ class InteractionResponse:
         if content is not None:
             payload["content"] = str(content)
 
-        if ephemeral:
-            payload["flags"] = 64
+        if flags is None:
+            flags = MessageFlags()
+        if suppress_embeds is not None:
+            flags.suppress_embeds = suppress_embeds
+        if ephemeral is not None:
+            flags.ephemeral = ephemeral
+
+        if flags.value != 0:
+            payload["flags"] = flags.value
 
         if view is not MISSING:
             payload["components"] = view.to_components()
@@ -884,7 +932,7 @@ class InteractionResponse:
             be displayed on the user's screen.
 
         Raises
-        -------
+        ------
         HTTPException
             Sending the modal failed.
         InteractionResponded
@@ -925,7 +973,7 @@ class InteractionResponse:
         component or modal submit interaction originated from.
 
         Parameters
-        -----------
+        ----------
         content: Optional[:class:`str`]
             The new content to replace the message with. ``None`` removes the content.
         embeds: List[:class:`Embed`]
@@ -951,7 +999,7 @@ class InteractionResponse:
 
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         InvalidArgument
@@ -962,7 +1010,7 @@ class InteractionResponse:
             This interaction has already been responded to before.
 
         Returns
-        --------
+        -------
         Optional[:class:`Message`]
             The message that was edited, or None if the :attr:`Interaction.message` is not found
             (this may happen if the interaction occurred in a :class:`Thread`).
@@ -1043,7 +1091,7 @@ class InteractionResponse:
 class _InteractionMessageState:
     __slots__ = ("_parent", "_interaction")
 
-    def __init__(self, interaction: Interaction, parent: ConnectionState):
+    def __init__(self, interaction: Interaction, parent: ConnectionState) -> None:
         self._interaction: Interaction = interaction
         self._parent: ConnectionState = parent
 
@@ -1085,7 +1133,7 @@ class _InteractionMessageMixin:
         Edits the message.
 
         Parameters
-        ------------
+        ----------
         content: Optional[:class:`str`]
             The content to edit the message with or ``None`` to clear it.
         embeds: List[:class:`Embed`]
@@ -1114,7 +1162,7 @@ class _InteractionMessageMixin:
             then it is silently ignored.
 
         Raises
-        -------
+        ------
         HTTPException
             Editing the message failed.
         Forbidden
@@ -1125,7 +1173,7 @@ class _InteractionMessageMixin:
             The length of ``embeds`` was invalid.
 
         Returns
-        ---------
+        -------
         :class:`InteractionMessage`
             The newly edited message.
         """
@@ -1151,7 +1199,7 @@ class _InteractionMessageMixin:
         Deletes the message.
 
         Parameters
-        -----------
+        ----------
         delay: Optional[:class:`float`]
             If provided, the number of seconds to wait before deleting the message.
             The waiting is done in the background and deletion failures are ignored.
@@ -1169,7 +1217,7 @@ class _InteractionMessageMixin:
         await self._state._interaction.delete_original_message(delay=delay)
 
 
-class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
+class PartialInteractionMessage(_InteractionMessageMixin):
     """Represents the original interaction response message when only the
     application state and interaction token are available.
 
@@ -1181,10 +1229,31 @@ class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
     The :meth:`~PartialInteractionMessage.fetch` method can be used to
     retrieve the full :class:`InteractionMessage` object.
 
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two partial interaction messages are equal.
+
+        .. describe:: x != y
+
+            Checks if two partial interaction messages are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the partial interaction message's hash.
+
     .. versionadded:: 2.0
+
+    .. versionchanged:: 2.1
+        :class:`PartialInteractionMessage` is now hashable by :attr:`Interaction.id`.
+
+    .. note::
+        The hash of a :class:`PartialInteractionMessage` is the same as the hash of the
+        :class:`Interaction` that it is associated with but not that of the full :class:`InteractionMessage`.
     """
 
-    def __init__(self, state: _InteractionMessageState):
+    def __init__(self, state: _InteractionMessageState) -> None:
         self._state = state
 
     async def fetch(self) -> InteractionMessage:
@@ -1195,14 +1264,14 @@ class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
         Repeated calls to this will return a cached value.
 
         Raises
-        -------
+        ------
         HTTPException
             Fetching the original response message failed.
         ClientException
             The channel for the message could not be resolved.
 
         Returns
-        --------
+        -------
         InteractionMessage
             The original interaction response message.
         """
@@ -1231,8 +1300,22 @@ class PartialInteractionMessage(_InteractionMessageMixin, Hashable):
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state._interaction.guild
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, PartialInteractionMessage)
+            and self._state._interaction == other._state._interaction
+        )
+
+    def __ne__(self, other: object) -> bool:
+        if isinstance(other, PartialInteractionMessage):
+            return self._state._interaction != other._state._interaction
+        return True
+
+    def __hash__(self) -> int:
+        return hash(self._state._interaction)
 
 
 class InteractionMessage(_InteractionMessageMixin, Message):

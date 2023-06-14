@@ -11,6 +11,7 @@ There are a number of utility commands being showcased here."""
 
 intents = nextcord.Intents.default()
 intents.members = True
+intents.message_content = True
 
 bot = commands.Bot(command_prefix="$", description=description, intents=intents)
 
@@ -31,11 +32,11 @@ async def roll(ctx, dice: str):
     """Rolls a dice in NdN format."""
     try:
         rolls, limit = map(int, dice.split("d"))
-    except Exception:
+    except ValueError:
         await ctx.send("Format has to be in NdN!")
         return
 
-    result = ", ".join(str(random.randint(1, limit)) for r in range(rolls))
+    result = ", ".join(str(random.randint(1, limit)) for _ in range(rolls))
     await ctx.send(result)
 
 
@@ -48,7 +49,7 @@ async def choose(ctx, *choices: str):
 @bot.command()
 async def repeat(ctx, times: int, content="repeating..."):
     """Repeats a message multiple times."""
-    for i in range(times):
+    for _ in range(times):
         await ctx.send(content)
 
 
