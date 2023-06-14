@@ -2284,12 +2284,15 @@ class HTTPClient:
         self,
         application_id: Snowflake,
         token: str,
-        files: List[File] = [],
+        files: Optional[List[File]] = None,
         content: Optional[str] = None,
         tts: bool = False,
         embeds: Optional[List[embed.Embed]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
     ) -> Response[message.Message]:
+        if files is None:
+            files = []
+
         r = Route(
             "POST",
             "/webhooks/{application_id}/{interaction_token}",

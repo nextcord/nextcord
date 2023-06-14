@@ -94,6 +94,7 @@ __all__ = (
     "Mentionable",
     "Range",
     "String",
+    "MissingApplicationCommandParametersWarning",
     "ClientCog",
 )
 
@@ -469,6 +470,23 @@ class Mentionable(OptionConverter):
         return value
 
 
+class MissingApplicationCommandParametersWarning(UserWarning):
+    """Warning category raised when creating a slash command from a callback when it appears
+    the self and/or interaction parameter is missing based on the given type annotations.
+
+    This warning can be silenced using :func:`warnings.simplefilter`.
+
+    .. code-block:: python3
+
+        import warnings
+        from nextcord import MissingApplicationCommandParametersWarning
+
+        warnings.simplefilter("ignore", MissingApplicationCommandParametersWarning)
+    """
+
+    pass
+
+
 class CallbackMixin:
     name: Optional[str]
     options: Dict[str, BaseCommandOption]
@@ -654,6 +672,11 @@ class CallbackMixin:
                         isinstance(param.annotation, type)
                         and issubclass(param.annotation, Interaction)
                     )
+                    # will always be an interaction parameter (generic with the outermost type being Interaction)
+                    or (
+                        (origin := typing_extensions.get_origin(param.annotation))
+                        and issubclass(origin, Interaction)
+                    )
                     # will always be a self parameter
                     # TODO: use typing.Self when 3.11 is standard
                     or param.annotation is typing_extensions.Self
@@ -663,12 +686,16 @@ class CallbackMixin:
                 )
 
                 if self.parent_cog is not None and non_option_params < 2:
-                    raise ValueError(
-                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition."
+                    warnings.warn(
+                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition.",
+                        stacklevel=0,
+                        category=MissingApplicationCommandParametersWarning,
                     )
                 elif non_option_params < 1:
-                    raise ValueError(
-                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition."
+                    warnings.warn(
+                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition.",
+                        stacklevel=0,
+                        category=MissingApplicationCommandParametersWarning,
                     )
 
                 for name, param in callback_params.items():
@@ -3298,7 +3325,7 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     return ret
 
 
-def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> type:
+def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> type:
     """Takes an annotation. If the origin is Annotated, it will attempt to resolve it using the given list of accepted
     types, going from the last type and working up to the first. If no matches to the given list is found, the last
     type specified in the Annotated typehint will be returned.
@@ -3317,6 +3344,9 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
     :class:`type`
         Resolved annotation.
     """
+    if resolve_list is None:
+        resolve_list = []
+
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
     origin = typing_extensions.get_origin(given_annotation)
     if origin is Annotated:
@@ -3337,7 +3367,7 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
 
 
 def unpack_annotation(
-    given_annotation: Any, annotated_list: List[type] = []
+    given_annotation: Any, annotated_list: Optional[List[type]] = None
 ) -> Tuple[List[type], list]:
     """Unpacks the given parameter annotation into its components.
 
@@ -3355,6 +3385,9 @@ def unpack_annotation(
         and a list of unpacked literal arguments.
 
     """
+    if annotated_list is None:
+        annotated_list = []
+
     type_ret = []
     literal_ret = []
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
