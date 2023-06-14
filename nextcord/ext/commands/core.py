@@ -2101,7 +2101,9 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
     return check(predicate)
 
 
-def _permission_check_wrapper(predicate: Check, name: str, perms: Dict[str, bool]) -> Callable[[T], T]:
+def _permission_check_wrapper(
+    predicate: Check, name: str, perms: Dict[str, bool]
+) -> Callable[[T], T]:
     def wrapper(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
         if isinstance(func, Command):
             callback = func.callback
@@ -2110,7 +2112,7 @@ def _permission_check_wrapper(predicate: Check, name: str, perms: Dict[str, bool
 
         setattr(callback, name, perms)
         return check(predicate)(func)
-    
+
     return wrapper
 
 
