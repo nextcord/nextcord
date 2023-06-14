@@ -2101,6 +2101,19 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
     return check(predicate)
 
 
+def _permission_check_wrapper(predicate: Check, name: str, perms: Dict[str, bool]) -> Callable[[T], T]:
+    def wrapper(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+        if isinstance(func, Command):
+            callback = func.callback
+        else:
+            callback = func
+
+        setattr(callback, name, perms)
+        return check(predicate)(func)
+    
+    return wrapper
+
+
 def has_permissions(**perms: bool) -> Callable[[T], T]:
     """A :func:`.check` that is added that checks if the member has all of
     the permissions necessary.
@@ -2136,7 +2149,6 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
         raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
 
     def predicate(ctx: Context) -> bool:
-        setattr(ctx.command.callback, "__required_permissions", perms)
         ch = ctx.channel
         permissions = ch.permissions_for(ctx.author)  # type: ignore
 
@@ -2147,7 +2159,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise MissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_permissions", perms)
 
 
 def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2163,7 +2175,6 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
         raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
 
     def predicate(ctx: Context) -> bool:
-        setattr(ctx.command.callback, "__required_bot_permissions", perms)
         guild = ctx.guild
         me = guild.me if guild is not None else ctx.bot.user
         permissions = ctx.channel.permissions_for(me)  # type: ignore
@@ -2175,7 +2186,7 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise BotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_bot_permissions", perms)
 
 
 def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2196,7 +2207,6 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
         if not ctx.guild:
             raise NoPrivateMessage
 
-        setattr(ctx.command.callback, "__required_guild_permissions", perms)
         permissions = ctx.author.guild_permissions  # type: ignore
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
@@ -2205,7 +2215,7 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise MissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_guild_permissions", perms)
 
 
 def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2223,7 +2233,6 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
         if not ctx.guild:
             raise NoPrivateMessage
 
-        setattr(ctx.command.callback, "__required_bot_guild_permissions", perms)
         permissions = ctx.me.guild_permissions  # type: ignore
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
@@ -2232,7 +2241,7 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise BotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_bot_guild_permissions", perms)
 
 
 def dm_only() -> Callable[[T], T]:
