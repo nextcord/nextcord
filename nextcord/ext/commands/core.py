@@ -426,19 +426,18 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         self.checks.extend(self.parent.checks)  # type: ignore
 
-    # Issue #511
     @property
     def required_permissions(self) -> Dict[str, bool]:
         """Returns the permissions required to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.has_permissions`.
 
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
-
-        Notes
-        -----
-        This relates to :func:`.has_permissions`
         """
         return getattr(self.callback, "__required_permissions", {})
 
@@ -446,46 +445,44 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     def required_bot_permissions(self) -> Dict[str, bool]:
         """Returns the permissions the bot needs to run this command.
 
+        .. note::
+
+            This returns the permissions set with :func:`.bot_has_permissions`.
+
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
-
-        Notes
-        -----
-        This relates to :func:`.bot_has_permissions`
         """
         return getattr(self.callback, "__required_bot_permissions", {})
 
     @property
     def required_guild_permissions(self) -> Dict[str, bool]:
-        """Returns the guild permissions
-        needed to run this command.
+        """Returns the guild permissions needed to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.has_guild_permissions`.
 
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
-
-        Notes
-        -----
-        This relates to :func:`.has_guild_permissions`
         """
         return getattr(self.callback, "__required_guild_permissions", {})
 
     @property
     def required_bot_guild_permissions(self) -> Dict[str, bool]:
-        """Returns the permissions the bot needs
-        to have in this guild in order to run this command.
+        """Returns the permissions the bot needs to have in this guild in order to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.bot_has_guild_permissions`.
 
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
-
-        Notes
-        -----
-        This relates to :func:`.bot_has_guild_permissions`
         """
         return getattr(self.callback, "__required_bot_guild_permissions", {})
 
