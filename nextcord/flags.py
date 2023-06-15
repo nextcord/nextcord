@@ -1224,6 +1224,14 @@ class ApplicationFlags(BaseFlags):
     """
 
     @flag_value
+    def application_auto_moderation_rule_create(self):
+        """:class:`bool`: Returns ``True`` if the application uses the Auto Moderation API.
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 6
+
+    @flag_value
     def gateway_presence(self):
         """:class:`bool`: Returns ``True`` if the application is verified and is allowed to
         receive presence information over the gateway.
