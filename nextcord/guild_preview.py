@@ -36,8 +36,6 @@ class GuildPreview:
         All the emojis that the guild owns, if any.
     stickers: List[:class:`GuildSticker`]
         All the stickers that the guild owns, if any.
-
-    .. versionadded: 2.5
     """
 
     __slots__ = (
