@@ -2114,7 +2114,7 @@ def _permission_check_wrapper(
         setattr(callback, name, perms)
         return check(predicate)(func)
 
-    return cast("Callable[[T], T]", wrapper)
+    return wrapper  # type: ignore
 
 
 def has_permissions(**perms: bool) -> Callable[[T], T]:
