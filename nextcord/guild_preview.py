@@ -16,6 +16,8 @@ __all__ = ("GuildPreview",)
 class GuildPreview:
     """Represents a Discord guild preview.
 
+         .. versionadded :: 2.6
+
     Attributes
     ----------
     id: :class:`int`
