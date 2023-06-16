@@ -2914,7 +2914,7 @@ class Client:
 
         Parameters
         ----------
-        coro: :ref:`coroutine`
+        coro: :ref:`coroutine <coroutine>`
             The coroutine to register as the post-invoke hook.
 
         Raises
