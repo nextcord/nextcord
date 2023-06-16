@@ -296,6 +296,7 @@ class Guild(Hashable):
         "_scheduled_events",
         "approximate_member_count",
         "approximate_presence_count",
+        "_premium_progress_bar_enabled",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -515,6 +516,8 @@ class Guild(Hashable):
         for event in guild.get("guild_scheduled_events") or []:
             self._store_scheduled_event(event)
 
+        self._premium_progress_bar_enabled: bool = guild.get("premium_progress_bar_enabled", False)
+
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
         try:
@@ -649,6 +652,14 @@ class Guild(Hashable):
         .. versionadded:: 2.0
         """
         return list(self._scheduled_events.values())
+
+    @property
+    def premium_progress_bar_enabled(self) -> bool:
+        """:class:`bool`: Whether the premium boost progress bar is enabled.
+
+        .. versionadded:: 2.6
+        """
+        return self._premium_progress_bar_enabled
 
     def by_category(self) -> List[ByCategoryItem]:
         """Returns every :class:`CategoryChannel` and their associated channels.
