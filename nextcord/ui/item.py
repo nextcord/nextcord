@@ -169,3 +169,8 @@ class ModalItem(BaseItem, Generic[M]):
     def view(self) -> Optional[M]:
         """Optional[:class:`Modal`]: Alias for :attr:`modal` for backwards compatibility."""
         return self._modal
+
+
+# backwards compatiable
+Item = ViewItem
+"""Alias for :class:ViewItem`"""

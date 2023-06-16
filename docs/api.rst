@@ -4816,6 +4816,12 @@ ModalItem
 .. autoclass:: nextcord.ui.ModalItem
     :members:
 
+Item
+~~~~
+
+.. autoclass:: nextcord.ui.Item
+    :members:
+
 Button
 ~~~~~~
 
