@@ -1473,6 +1473,8 @@ class Client:
 
         Fetches a :class:`.GuildPreview` from an ID.
 
+        ..versionadded:: 2.6
+
         Parameters
         ----------
         guild_id: :class:`int`

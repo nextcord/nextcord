@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
@@ -15,8 +16,6 @@ __all__ = ("GuildPreview",)
 
 class GuildPreview:
     """Represents a Discord guild preview.
-
-         .. versionadded :: 2.6
 
     Attributes
     ----------
@@ -36,6 +35,8 @@ class GuildPreview:
         All the emojis that the guild owns, if any.
     stickers: List[:class:`GuildSticker`]
         All the stickers that the guild owns, if any.
+
+    .. versionadded :: 2.6
     """
 
     __slots__ = (
