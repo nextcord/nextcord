@@ -615,7 +615,7 @@ class ColourConverter(Converter[nextcord.Colour]):
         else:
             return nextcord.Color(value=value)
 
-    def parse_rgb_number(self, argument, number: int):
+    def parse_rgb_number(self, argument, number):
         if number[-1] == "%":
             value = int(number[:-1])
             if not (0 <= value <= 100):

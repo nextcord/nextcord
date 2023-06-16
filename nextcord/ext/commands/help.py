@@ -423,7 +423,7 @@ class HelpCommand:
 
         return f"{self.context.clean_prefix}{alias} {command.signature}"
 
-    def remove_mentions(self, string: str):
+    def remove_mentions(self, string):
         """Removes mentions from the string to prevent abuse.
 
         This includes ``@everyone``, ``@here``, member mentions and role mentions.
@@ -465,7 +465,7 @@ class HelpCommand:
         if cog is not None:
             self._command_impl._inject_into_cog(cog)
 
-    def command_not_found(self, string: str) -> str:
+    def command_not_found(self, string) -> str:
         """|maybecoro|
 
         A method called when a command is not found in the help command.
@@ -486,7 +486,7 @@ class HelpCommand:
         """
         return f'No command called "{string}" found.'
 
-    def subcommand_not_found(self, command, string: str) -> str:
+    def subcommand_not_found(self, command, string) -> str:
         """|maybecoro|
 
         A method called when a command did not have a subcommand requested in the help command.
@@ -930,7 +930,7 @@ class DefaultHelpCommand(HelpCommand):
             f"You can also type {self.context.clean_prefix}{command_name} category for more info on a category."
         )
 
-    def add_indented_commands(self, commands, *, heading, max_size: Optional[int] = None) -> None:
+    def add_indented_commands(self, commands, *, heading, max_size=None) -> None:
         """Indents a list of commands after the specified heading.
 
         The formatting is added to the :attr:`paginator`.
