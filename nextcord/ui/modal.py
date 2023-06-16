@@ -173,7 +173,7 @@ class Modal:
 
             .. note::
 
-                At the current time, Discord supports only Text Input items in Modals. 
+                At the current time, Discord supports only Text Input items in Modals.
                 The current Discord Docs page for supported items is [here](https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal).
 
         Raises
