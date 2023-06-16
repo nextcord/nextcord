@@ -155,7 +155,11 @@ class BaseUser(_UserTag):
         ..versionchanged:: 2.5
             Indexes avatar using ID instead of discriminator.
         """
-        return Asset._from_default_avatar(self._state, (self.id >> 6) % len(DefaultAvatar))
+        if self.discriminator is None:
+            avatar_index = (self.id >> 22) % len(DefaultAvatar)
+        else:
+            avatar_index = int(self.discriminator) % 5
+        return Asset._from_default_avatar(self._state, avatar_index)
 
     @property
     def display_avatar(self) -> Asset:
