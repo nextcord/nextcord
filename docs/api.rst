@@ -4815,6 +4815,7 @@ ModalItem
 
 .. autoclass:: nextcord.ui.ModalItem
     :members:
+    :exclude-members: callback
 
 Item
 ~~~~
