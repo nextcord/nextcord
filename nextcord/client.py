@@ -2862,7 +2862,7 @@ class Client:
                 return interaction.application_command.qualified_name in allowed_commands
 
         """
-        self.add_application_command_check(func)  # type: ignore
+        self.add_application_command_check(func)
         return func
 
     def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
