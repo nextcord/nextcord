@@ -4801,7 +4801,7 @@ Modal
     :members:
 
 ViewItem
-~~~~
+~~~~~~~~
 
 .. attributetable:: nextcord.ui.ViewItem
 
@@ -4809,7 +4809,7 @@ ViewItem
     :members:
 
 ModalItem
-~~~~
+~~~~~~~~~
 
 .. attributetable:: nextcord.ui.ModalItem
 
