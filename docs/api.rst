@@ -4800,12 +4800,20 @@ Modal
 .. autoclass:: nextcord.ui.Modal
     :members:
 
-Item
+ViewItem
 ~~~~
 
-.. attributetable:: nextcord.ui.Item
+.. attributetable:: nextcord.ui.ViewItem
 
-.. autoclass:: nextcord.ui.Item
+.. autoclass:: nextcord.ui.ViewItem
+    :members:
+
+ModalItem
+~~~~
+
+.. attributetable:: nextcord.ui.ModalItem
+
+.. autoclass:: nextcord.ui.ModalItem
     :members:
 
 Button
