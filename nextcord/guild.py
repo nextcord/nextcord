@@ -1623,6 +1623,7 @@ class Guild(Hashable):
         rules_channel: Optional[TextChannel] = MISSING,
         public_updates_channel: Optional[TextChannel] = MISSING,
         invites_disabled: bool = MISSING,
+        premium_progress_bar_enabled: bool = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1646,6 +1647,9 @@ class Guild(Hashable):
 
         .. versionchanged:: 2.4
             The ``invites_disabled`` parameter has been added.
+
+        .. versionchanged:: 2.6
+            The ``premium_progress_bar_enabled`` parameter has been added.
 
         Parameters
         ----------
@@ -1708,8 +1712,8 @@ class Guild(Hashable):
         invites_disabled: :class:`bool`
             Whether the invites should be paused for the guild.
             This will prevent new users from joining said guild.
-
-            .. versionadded:: 2.4
+        premium_progress_bar_enabled: :class:`bool`
+            Whether the premium guild boost progress bar is enabled in this guild.
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
@@ -1820,6 +1824,9 @@ class Guild(Hashable):
                 )
 
             fields["system_channel_flags"] = system_channel_flags.value
+
+        if premium_progress_bar_enabled is not MISSING:
+            fields["premium_progress_bar_enabled"] = premium_progress_bar_enabled
 
         if community is not MISSING:
             features = []
