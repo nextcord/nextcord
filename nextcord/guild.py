@@ -1713,7 +1713,7 @@ class Guild(Hashable):
             Whether the invites should be paused for the guild.
             This will prevent new users from joining said guild.
         premium_progress_bar_enabled: :class:`bool`
-            Whether the premium guild boost progress bar is enabled in this guild.
+            Whether the premium guild boost progress bar is enabled.
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
