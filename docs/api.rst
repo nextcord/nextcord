@@ -5096,6 +5096,12 @@ Cogs
 .. autoclass:: ClientCog
     :members:
 
+Warnings
+--------
+
+.. autoclass:: MissingApplicationCommandParametersWarning
+
+
 Exceptions
 ----------
 

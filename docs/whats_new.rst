@@ -12,6 +12,33 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p5p0:
+
+v2.5.0
+------
+
+This version is a smaller release, mostly bundling bug fixes with small changes.
+
+New Features
+~~~~~~~~~~~~
+
+- Add ``invitable`` to :meth:`TextChannel.create_thread` (:issue:`1007`).
+- Add a context manager to :class:`File` (:issue:`998`).
+
+Bug Fixes
+~~~~~~~~~
+
+- Support :class:`Interaction` annotations for application commands using the generic :class:`Client` parameter (:issue:`992`).
+- Fix :attr:`ForumChannel.available_tags` not returning the correct data (:issue:`1021`).
+- Fix a crash if an audit log entry did not have a ``user_id`` (:issue:`1014`).
+- Fix a crash if an auto moderation execution event did not have a ``channel_id`` (:issue:`1038`, :issue:`1051`).
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+- Webhooks now use :class:`weakref.WeakValueDictionary` for storing internal locks (:issue:`971`).
+- Change :meth:`Colour.dark_theme` to use the new dark theme colour (:issue:`1006`).
+
 .. _vp2p4p1:
 
 v2.4.1

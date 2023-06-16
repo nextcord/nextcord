@@ -299,11 +299,11 @@ class Guild(Hashable):
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
-        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=8388608),
-        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=52428800),
-        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=104857600),
+        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=25 * 1024 * 1024),
+        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=50 * 1024 * 1024),
+        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=100 * 1024 * 1024),
     }
 
     def __init__(self, *, data: GuildPayload, state: ConnectionState) -> None:
