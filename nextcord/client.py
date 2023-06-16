@@ -2862,7 +2862,8 @@ class Client:
                 return interaction.application_command.qualified_name in allowed_commands
 
         """
-        return self.add_application_command_check(func)  # type: ignore
+        self.add_application_command_check(func)  # type: ignore
+        return func
 
     def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
         """A decorator that registers a coroutine as a pre-invoke hook.
