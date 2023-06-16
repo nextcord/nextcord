@@ -306,7 +306,7 @@ class ClientUser(BaseUser):
     global_name: :class:`str`
         The user's display name. If any.
 
-        .. versionadded: 2.5
+        .. versionadded: 2.6
     discriminator: :class:`str`
         The user's discriminator.
 
