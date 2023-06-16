@@ -12,7 +12,7 @@ from ...member import Member
 from ...role import Role
 from ...user import User
 from ...utils import MISSING
-from ..item import ItemCallbackType
+from ..item import ViewItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
@@ -156,8 +156,8 @@ def mentionable_select(
     disabled: bool = False,
     row: Optional[int] = None,
 ) -> Callable[
-    [ItemCallbackType[MentionableSelect[V], ClientT]],
-    ItemCallbackType[MentionableSelect[V], ClientT],
+    [ViewItemCallbackType[MentionableSelect[V], ClientT]],
+    ViewItemCallbackType[MentionableSelect[V], ClientT],
 ]:
     """A decorator that attaches a mentionable select menu to a component.
 
@@ -193,7 +193,7 @@ def mentionable_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ViewItemCallbackType) -> ViewItemCallbackType:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

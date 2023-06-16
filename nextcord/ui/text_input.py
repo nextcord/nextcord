@@ -10,7 +10,7 @@ from ..enums import ComponentType, TextInputStyle
 from ..guild import Guild
 from ..state import ConnectionState
 from ..utils import MISSING
-from .item import Item
+from .item import ModalItem
 
 __all__ = ("TextInput",)
 
@@ -19,13 +19,13 @@ if TYPE_CHECKING:
 
     from ..types.components import TextInputComponent as TextInputComponentPayload
     from ..types.interactions import ComponentInteractionData
-    from .view import View
+    from .modal import Modal
 
 
-V = TypeVar("V", bound="View", covariant=True)
+M = TypeVar("M", bound="Modal", covariant=True)
 
 
-class TextInput(Item[V]):
+class TextInput(ModalItem[M]):
     """Represent a UI text input.
 
     .. versionadded:: 2.0

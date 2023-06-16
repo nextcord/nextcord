@@ -161,7 +161,7 @@ _base_table.update((chr(i), None) for i in range(32))
 _translation_table = str.maketrans(_base_table)
 
 
-def to_path(parser, name, *, replace_spaces: bool = False):
+def to_path(parser, name: str, *, replace_spaces: bool = False):
     if isinstance(name, Path):
         return name
 

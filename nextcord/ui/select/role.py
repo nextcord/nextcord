@@ -11,7 +11,7 @@ from ...interactions import ClientT
 from ...role import Role
 from ...state import ConnectionState
 from ...utils import MISSING
-from ..item import ItemCallbackType
+from ..item import ViewItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
@@ -143,7 +143,9 @@ def role_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[RoleSelect[V], ClientT]], ItemCallbackType[RoleSelect[V], ClientT]]:
+) -> Callable[
+    [ViewItemCallbackType[RoleSelect[V], ClientT]], ViewItemCallbackType[RoleSelect[V], ClientT]
+]:
     """A decorator that attaches a role select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -178,7 +180,7 @@ def role_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ViewItemCallbackType) -> ViewItemCallbackType:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Callable, Optional, Tuple, TypeVar, Union
 from ..components import Button as ButtonComponent
 from ..enums import ButtonStyle, ComponentType
 from ..partial_emoji import PartialEmoji, _EmojiTag
-from .item import Item, ItemCallbackType
+from .item import ViewItem, ViewItemCallbackType
 
 __all__ = (
     "Button",
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 V = TypeVar("V", bound="View", covariant=True)
 
 
-class Button(Item[V]):
+class Button(ViewItem[V]):
     """Represents a UI button.
 
     .. versionadded:: 2.0
@@ -218,7 +218,7 @@ def button(
     style: ButtonStyle = ButtonStyle.secondary,
     emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[Button[V], ClientT]], ItemCallbackType[Button[V], ClientT]]:
+) -> Callable[[ViewItemCallbackType[Button[V], ClientT]], ViewItemCallbackType[Button[V], ClientT]]:
     """A decorator that attaches a button to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -255,7 +255,7 @@ def button(
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
 
-    def decorator(func: ItemCallbackType[Button[V]]) -> ItemCallbackType[Button[V]]:
+    def decorator(func: ViewItemCallbackType[Button[V]]) -> ViewItemCallbackType[Button[V]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Button function must be a coroutine function")
 

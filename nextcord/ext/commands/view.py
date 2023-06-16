@@ -58,7 +58,7 @@ class StringView:
         self.index += pos
         return self.previous != self.index
 
-    def skip_string(self, string) -> bool:
+    def skip_string(self, string: str) -> bool:
         strlen = len(string)
         if self.buffer[self.index : self.index + strlen] == string:
             self.previous = self.index

@@ -10,7 +10,7 @@ from ...components import ChannelSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...utils import MISSING
-from ..item import ItemCallbackType
+from ..item import ViewItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
@@ -152,7 +152,8 @@ def channel_select(
     row: Optional[int] = None,
     channel_types: List[ChannelType] = MISSING,
 ) -> Callable[
-    [ItemCallbackType[ChannelSelect[V], ClientT]], ItemCallbackType[ChannelSelect[V], ClientT]
+    [ViewItemCallbackType[ChannelSelect[V], ClientT]],
+    ViewItemCallbackType[ChannelSelect[V], ClientT],
 ]:
     """A decorator that attaches a channel select menu to a component.
 
@@ -190,7 +191,7 @@ def channel_select(
         A list of channel types that can be selected in this menu.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ViewItemCallbackType) -> ViewItemCallbackType:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

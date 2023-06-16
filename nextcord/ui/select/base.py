@@ -14,7 +14,7 @@ from ...role import Role
 from ...state import ConnectionState
 from ...user import User
 from ...utils import MISSING
-from ..item import Item
+from ..item import ViewItem
 
 __all__ = ("SelectBase",)
 
@@ -64,7 +64,7 @@ class SelectValuesBase(UserList):
         return [o.id for o in self.data]
 
 
-class SelectBase(Item[V]):
+class SelectBase(ViewItem[V]):
     """Represents a UI select menu without any options.
 
     This is usually represented as a drop down menu.

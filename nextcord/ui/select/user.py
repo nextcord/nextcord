@@ -11,7 +11,7 @@ from ...interactions import ClientT
 from ...member import Member
 from ...user import User
 from ...utils import MISSING
-from ..item import ItemCallbackType
+from ..item import ViewItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
 
@@ -147,7 +147,9 @@ def user_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[UserSelect[V], ClientT]], ItemCallbackType[UserSelect[V], ClientT]]:
+) -> Callable[
+    [ViewItemCallbackType[UserSelect[V], ClientT]], ViewItemCallbackType[UserSelect[V], ClientT]
+]:
     """A decorator that attaches a user select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -182,7 +184,7 @@ def user_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(func: ViewItemCallbackType) -> ViewItemCallbackType:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

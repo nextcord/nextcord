@@ -11,7 +11,7 @@ from ...enums import ComponentType
 from ...interactions import ClientT
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
-from ..item import ItemCallbackType
+from ..item import ViewItemCallbackType
 from ..view import View
 from .base import SelectBase
 
@@ -206,7 +206,7 @@ def string_select(
     disabled: bool = False,
     row: Optional[int] = None,
 ) -> Callable[
-    [ItemCallbackType[StringSelect[V], ClientT]], ItemCallbackType[StringSelect[V], ClientT]
+    [ViewItemCallbackType[StringSelect[V], ClientT]], ViewItemCallbackType[StringSelect[V], ClientT]
 ]:
     """A decorator that attaches a string select menu to a component.
 
@@ -244,7 +244,7 @@ def string_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType[Select[V]]) -> ItemCallbackType[Select[V]]:
+    def decorator(func: ViewItemCallbackType[Select[V]]) -> ViewItemCallbackType[Select[V]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
