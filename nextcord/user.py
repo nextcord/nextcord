@@ -75,11 +75,12 @@ class BaseUser(_UserTag):
     def __repr__(self) -> str:
         return (
             f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
-            f" discriminator={self.discriminator!r} bot={self.bot} system={self.system}>"
+            f" discriminator={self.discriminator!r}" if self.discriminator is not None else ""
+            f" bot={self.bot} system={self.system}>"
         )
 
     def __str__(self) -> str:
-        return f"{self.name}#{self.discriminator}"
+        return f"{self.name}#{self.discriminator}" if self.discriminator is not None else self.name
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, _UserTag) and other.id == self.id
@@ -343,7 +344,8 @@ class ClientUser(BaseUser):
     def __repr__(self) -> str:
         return (
             f"<ClientUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
-            f" discriminator={self.discriminator!r} bot={self.bot} verified={self.verified}"
+            f" discriminator={self.discriminator!r}" if self.discriminator is not None else ""
+            f" bot={self.bot} verified={self.verified}"
             f" mfa_enabled={self.mfa_enabled}>"
         )
 
@@ -465,7 +467,8 @@ class User(BaseUser, abc.Messageable):
     def __repr__(self) -> str:
         return (
             f"<User id={self.id} name={self.name!r} global_name={self.global_name!r}"
-            f"discriminator={self.discriminator!r} bot={self.bot}>"
+            f" discriminator={self.discriminator!r}" if self.discriminator is not None else ""
+            f" bot={self.bot}>"
         )
 
     def __del__(self) -> None:
