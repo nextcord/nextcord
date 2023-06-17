@@ -2402,10 +2402,6 @@ class Guild(Hashable):
 
         def convert(d):
             factory, _ = _integration_factory(d["type"])
-            if factory is None:
-                raise InvalidData(
-                    "Unknown integration type {type!r} for integration ID {id}".format_map(d)
-                )
             return factory(guild=self, data=d)
 
         return [convert(d) for d in data]
@@ -3133,9 +3129,6 @@ class Guild(Hashable):
             user_id = user.id
         else:
             user_id = None
-
-        if action:
-            action = action.value
 
         return AuditLogIterator(
             self,

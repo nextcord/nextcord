@@ -14,7 +14,7 @@ filter_files = true
 
 [tool.taskipy.tasks]
 black = { cmd = "task lint black", help = "Run black" }
-docs = { cmd = "cd docs && sphinx-autobuild . _build/html --ignore _build --watch ../nextcord --port 8069", help = "Build the documentation on an autoreloading server."}
+docs = { cmd = "cd docs && sphinx-autobuild . _build/html --ignore _build --watch ../nextcord --port 8069", help = "Build the documentation on an autoreloading server." }
 isort = { cmd = "task lint isort", help = "Run isort" }
 lint = { cmd = "pre-commit run --all-files", help = "Check all files for linting errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Install the precommit hook" }
@@ -36,11 +36,8 @@ exclude-modules = '''
 
 [tool.pyright]
 typeCheckingMode = "basic"
-include = [  # TODO: add examples back once app cmd is fixed
-    "nextcord",
-    "docs",
-    "*.py",
-]
+include = ["nextcord", "docs", "*.py"]
+ignore = ["examples", "discord"]
 pythonVersion = "3.8"
 
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md

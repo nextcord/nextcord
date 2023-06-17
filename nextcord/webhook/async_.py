@@ -1512,8 +1512,6 @@ class Webhook(BaseWebhook):
         previous_mentions: Optional[AllowedMentions] = getattr(
             self._state, "allowed_mentions", None
         )
-        if content is None:
-            content = MISSING
 
         application_webhook = self.type is WebhookType.application
         if ephemeral and not application_webhook:

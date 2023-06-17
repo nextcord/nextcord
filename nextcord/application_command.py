@@ -1467,7 +1467,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 )
             # Make sure that all literals are only OptionConverters and nothing else.
             for lit in literals:
-                if not isinstance(lit, OptionConverter) or lit is not None:
+                if not isinstance(lit, OptionConverter):
                     raise ValueError(
                         f"{self.error_name} You cannot use non-OptionConverter literals when the base annotation is "
                         f"not Literal."
@@ -3322,9 +3322,6 @@ def get_users_from_interaction(
 
     data = cast(ApplicationCommandInteractionData, data)
 
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
     # Return a Member object if the required data is available, otherwise fall back to User.
     if "resolved" in data and "members" in data["resolved"]:
         member_payloads = data["resolved"]["members"]
@@ -3377,9 +3374,6 @@ def get_messages_from_interaction(
 
     data = cast(ApplicationCommandInteractionData, data)
 
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
     if "resolved" in data and "messages" in data["resolved"]:
         message_payloads = data["resolved"]["messages"]
         for msg_id, msg_payload in message_payloads.items():
@@ -3429,7 +3423,7 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     return ret
 
 
-def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> type:
+def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> Any:
     """Takes an annotation. If the origin is Annotated, it will attempt to resolve it using the given list of accepted
     types, going from the last type and working up to the first. If no matches to the given list is found, the last
     type specified in the Annotated typehint will be returned.
