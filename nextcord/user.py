@@ -75,8 +75,9 @@ class BaseUser(_UserTag):
     def __repr__(self) -> str:
         return (
             f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
-            f" discriminator={self.discriminator!r}" if self.discriminator is not None else ""
-            f" bot={self.bot} system={self.system}>"
+            f" discriminator={self.discriminator!r}"
+            if self.discriminator is not None
+            else "" f" bot={self.bot} system={self.system}>"
         )
 
     def __str__(self) -> str:
@@ -344,9 +345,9 @@ class ClientUser(BaseUser):
     def __repr__(self) -> str:
         return (
             f"<ClientUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
-            f" discriminator={self.discriminator!r}" if self.discriminator is not None else ""
-            f" bot={self.bot} verified={self.verified}"
-            f" mfa_enabled={self.mfa_enabled}>"
+            f" discriminator={self.discriminator!r}"
+            if self.discriminator is not None
+            else "" f" bot={self.bot} verified={self.verified}" f" mfa_enabled={self.mfa_enabled}>"
         )
 
     def _update(self, data: UserPayload) -> None:
@@ -467,8 +468,9 @@ class User(BaseUser, abc.Messageable):
     def __repr__(self) -> str:
         return (
             f"<User id={self.id} name={self.name!r} global_name={self.global_name!r}"
-            f" discriminator={self.discriminator!r}" if self.discriminator is not None else ""
-            f" bot={self.bot}>"
+            f" discriminator={self.discriminator!r}"
+            if self.discriminator is not None
+            else "" f" bot={self.bot}>"
         )
 
     def __del__(self) -> None:
