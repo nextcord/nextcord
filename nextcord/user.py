@@ -102,7 +102,7 @@ class BaseUser(_UserTag):
         self.system = data.get("system", False)
         self.global_name = data.get("global_name", None)
 
-        self.discriminator = self.discriminator if not self._discriminator == "0" else None
+        self.discriminator = self._discriminator if not self._discriminator == "0" else None
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -152,7 +152,7 @@ class BaseUser(_UserTag):
 
         This is calculated by the user's discriminator.
 
-        ..versionchanged:: 2.5
+        ..versionchanged:: 2.6
             Indexes avatar using ID instead of discriminator.
         """
         if self.discriminator is None:
@@ -313,7 +313,7 @@ class ClientUser(BaseUser):
         .. warning::
           This field is deprecated, and will only return if the user has not yet migrated to the
           new [username](https://dis.gd/usernames) update.
-        ..deprecated:: 2.6
+        .. deprecated:: 2.6
     bot: :class:`bool`
         Specifies if the user is a bot account.
     system: :class:`bool`
