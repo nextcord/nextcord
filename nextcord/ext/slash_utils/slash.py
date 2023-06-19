@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
-from typing import Callable, Union, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Callable, Union
 
 from nextcord import CallbackWrapper, SlashApplicationCommand, SlashApplicationSubcommand
 
