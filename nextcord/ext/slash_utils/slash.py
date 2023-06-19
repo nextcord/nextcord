@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: MIT
-
-from typing import Callable, Union
+from __future__ import annotations
+from typing import Callable, Union, TYPE_CHECKING
 
 from nextcord import CallbackWrapper, SlashApplicationCommand, SlashApplicationSubcommand
+
+if TYPE_CHECKING:
+    from nextcord import SlashCommandOption
 
 
 def describe(
@@ -33,32 +36,24 @@ def rename(
     [Callable], Union[SlashApplicationCommand, SlashApplicationSubcommand, CallbackWrapper]
 ]:
     class RenameWrapper(CallbackWrapper):
-        def modify(self, app_cmd: SlashApplicationCommand):
-            option_names = {option.functional_name: option for option in app_cmd.options.values()}
-            for original_name, new_name in kwargs.items():
-                if option := option_names.get(original_name):
-                    # Remove the old name from the dict and add the new one
-                    # We must do this because the dict is used to call the callback
-                    option_names.pop(original_name)
+        def modify(self, app_cmd: SlashApplicationCommand) -> None:
+            new_options: dict[str, SlashCommandOption] = {}
+            kwarg_temp = kwargs.copy()
+            for original_name, option in app_cmd.options.copy().items():
+                if new_name := kwarg_temp.get(original_name):
                     option.name = new_name
-                    option_names[new_name] = option
+                    kwarg_temp.pop(original_name)
                 else:
-                    raise ValueError(
-                        f'{app_cmd.error_name} Could not find option "{original_name}" to rename.'
-                    )
+                    new_name = original_name
 
-            # Update the options dict with the new name(s)
-            # We also need to sort it based on if the option is required or not -
-            # this is because required options must be listed first in the dict
-            app_cmd.options = {
-                name: option
-                for name, option in sorted(
-                    option_names.items(),
-                    key=lambda x: not x[1].required,
-                )
-            }
+                new_options[new_name] = option
 
-    def wrapper(func):
+            app_cmd.options = new_options
+
+            for name in kwarg_temp:
+                raise ValueError(f'{app_cmd.error_name} could not find option "{name}" to rename.')
+
+    def wrapper(func) -> RenameWrapper:
         return RenameWrapper(func)
 
     return wrapper
