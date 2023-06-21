@@ -733,8 +733,6 @@ class HTTPClient:
                                     )
                                     await url_rate_limit.update(response)
 
-                            url_rate_limit = cast(RateLimit, url_rate_limit)
-
                             if url_rate_limit.bucket is not None and self._buckets.get(
                                 url_rate_limit.bucket
                             ) not in (url_rate_limit, None):
