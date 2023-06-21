@@ -631,23 +631,13 @@ class HTTPClient:
         #     raise NotFound(None, "The given path has already resulted in a 404 and was added to the deny list.")
 
         # If a global rate limit for this authorization doesn't exist yet, make it.
-        # if (global_rate_limit := self._global_rate_limits.get(auth)) is None:
-        #     global_rate_limit = self._make_global_rate_limit(auth, self._default_max_per_second)
-        temp = self._global_rate_limits.get(auth)
-        if temp is None:
+        if (global_rate_limit := self._global_rate_limits.get(auth)) is None:
             global_rate_limit = self._make_global_rate_limit(auth, self._default_max_per_second)
-        else:
-            global_rate_limit = temp
 
         # If a rate limit for this url path doesn't exist yet, make it.
-        # if (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)) is None:
-        #     url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
-        temp = self._get_url_rate_limit(route.method, route, auth)  # Type checkers are drunk.
-        if temp is None:
+        if (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)) is None:
             url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
-        else:
-            url_rate_limit = temp
-
+        
         max_retry_count = 5
         rate_limit_path = (
             route.method,
@@ -835,8 +825,8 @@ class HTTPClient:
                     )
                 else:
                     url_rate_limit = self._buckets.get(
-                        url_rate_limit.migrating
-                    )  # pyright: ignore [reportOptionalMemberAccess]
+                        url_rate_limit.migrating  # pyright: ignore [reportOptionalMemberAccess]
+                    )
                     if url_rate_limit is None:
                         # This means we have an internal issue that we need to fix.
                         raise ValueError(
