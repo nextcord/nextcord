@@ -39,6 +39,7 @@ from .errors import (
     InvalidArgument,
     LoginFailure,
     NotFound,
+    Unauthorized,
 )
 from .file import File
 from .gateway import DiscordClientWebSocketResponse
@@ -47,8 +48,6 @@ from .utils import MISSING
 _log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    pass
-
     from .enums import AuditLogAction, InteractionResponseType
     from .types import (
         appinfo,
@@ -216,7 +215,7 @@ class RateLimit:
         return self._reset_remaining_task is not None and not self._reset_remaining_task.done()
 
     async def update(self, response: aiohttp.ClientResponse) -> None:
-        """Updates the rate limit with information found in the response. Specifically the headers."""
+        """Updates the rate limit with information from the response."""
 
         if response.headers.get("X-RateLimit-Global") == "true":
             # The response is intended for the global rate limit, not a regular rate limit.
@@ -421,9 +420,9 @@ class GlobalRateLimit(RateLimit):
             # Oh dear, we hit the rate limit.
             _log.warning("Global rate limit 429 encountered, setting remaining to 0.")
             self.remaining = 0
-            data = await response.json()
-            _log.warning(data)
             if response.headers.get("X-RateLimit-Scope") == "global":
+                data = await response.json()
+                _log.warning(data)
                 if (retry_after := data.get("retry_after")) or (
                     retry_after := response.headers.get("Retry-After")
                 ):
@@ -783,7 +782,7 @@ class HTTPClient:
                                         "Path %s resulted in error 403, check your permissions?",
                                         rate_limit_path,
                                     )
-                                    raise Forbidden(response, ret)
+                                    raise Unauthorized(response, ret)
                                 # TODO: Is this still viable to keep?
                                 elif response.status == 404:
                                     _log.warning(

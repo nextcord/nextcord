@@ -18,6 +18,7 @@ __all__ = (
     "NoMoreItems",
     "GatewayNotFound",
     "HTTPException",
+    "Unauthorized",
     "Forbidden",
     "NotFound",
     "DiscordServerError",
@@ -128,6 +129,13 @@ class HTTPException(DiscordException):
             fmt += ": {2}"
 
         super().__init__(fmt.format(self.response, self.code, self.text))
+
+
+class Unauthorized(HTTPException):
+    """Exception that's raised for when status code 401 occurs.
+
+    Subclass of :exc:`HTTPException`
+    """
 
 
 class Forbidden(HTTPException):
