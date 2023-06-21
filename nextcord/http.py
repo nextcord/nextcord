@@ -727,7 +727,7 @@ class HTTPClient:
                                         route.method, route, auth
                                     )
                                     await url_rate_limit.update(response)
-                            
+
                             url_rate_limit = cast(RateLimit, url_rate_limit)
 
                             if url_rate_limit.bucket is not None and self._buckets.get(
