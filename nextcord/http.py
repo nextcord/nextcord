@@ -703,9 +703,11 @@ class HTTPClient:
                             except IncorrectBucket as e:
                                 # This condition can be met when doing asyncio.gather()'d requests.
                                 # if response.headers.get("X-RateLimit-Bucket") in self._buckets:
-                                if (temp := self._buckets.get(
-                                    response.headers.get("X-RateLimit-Bucket")
-                                )) is not None:
+                                if (
+                                    temp := self._buckets.get(
+                                        response.headers.get("X-RateLimit-Bucket")
+                                    )
+                                ) is not None:
                                     temp = cast(RateLimit, temp)  # Pyright plz.
 
                                     _log.debug(
