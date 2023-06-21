@@ -24,6 +24,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 from urllib.parse import quote as _uriquote
 
@@ -701,10 +702,10 @@ class HTTPClient:
                                 await url_rate_limit.update(response)
                             except IncorrectBucket as e:
                                 # This condition can be met when doing asyncio.gather()'d requests.
-                                # if response.headers.get("X-RateLimit-Bucket") in self._buckets:
                                 if (
                                     temp := self._buckets.get(
-                                        response.headers.get("X-RateLimit-Bucket")
+                                        # The empty string default makes pyright happy. (hopefully)
+                                        response.headers.get("X-RateLimit-Bucket", "")
                                     )
                                 ) is not None:
                                     _log.debug(
@@ -726,6 +727,8 @@ class HTTPClient:
                                         route.method, route, auth
                                     )
                                     await url_rate_limit.update(response)
+                            
+                            url_rate_limit = cast(RateLimit, url_rate_limit)
 
                             if url_rate_limit.bucket is not None and self._buckets.get(
                                 url_rate_limit.bucket
