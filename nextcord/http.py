@@ -12,6 +12,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    cast,
     ClassVar,
     Coroutine,
     Dict,
@@ -303,7 +304,7 @@ class RateLimit:
         """Starts the reset task, non-blocking."""
         if self.resetting:
             _log.debug("Bucket %s: Reset task already running, cancelling.", self.bucket)
-            self._reset_remaining_task.cancel()
+            self._reset_remaining_task.cancel()  # pyright: ignore [reportOptionalMemberAccess]
 
         loop = asyncio.get_running_loop()
         _log.debug("Bucket %s: Resetting after %s seconds.", self.bucket, self.reset_after)
@@ -431,7 +432,7 @@ class GlobalRateLimit(RateLimit):
                     )
                     self.reset_after = float(retry_after) + self._time_offset
                     if self.resetting:
-                        self._reset_remaining_task.cancel()
+                        self._reset_remaining_task.cancel()  # pyright: ignore [reportOptionalMemberAccess]
 
                     self.start_reset_task()
 
@@ -634,9 +635,15 @@ class HTTPClient:
         if not (global_rate_limit := self._global_rate_limits.get(auth)):
             global_rate_limit = self._make_global_rate_limit(auth, self._default_max_per_second)
 
+        # Pyright you're drunk, the bit above this insures that it can't be None.
+        global_rate_limit = cast(GlobalRateLimit, global_rate_limit)
+
         # If a rate limit for this url path doesn't exist yet, make it.
         if not (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)):
             url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
+
+        # Pyright you're drunk, the bit above this insures that it can't be None.
+        url_rate_limit = cast(RateLimit, url_rate_limit)
 
         max_retry_count = 5
         rate_limit_path = (
