@@ -631,12 +631,22 @@ class HTTPClient:
         #     raise NotFound(None, "The given path has already resulted in a 404 and was added to the deny list.")
 
         # If a global rate limit for this authorization doesn't exist yet, make it.
-        if not (global_rate_limit := self._global_rate_limits.get(auth)):
+        # if (global_rate_limit := self._global_rate_limits.get(auth)) is None:
+        #     global_rate_limit = self._make_global_rate_limit(auth, self._default_max_per_second)
+        temp = self._global_rate_limits.get(auth)
+        if temp is None:
             global_rate_limit = self._make_global_rate_limit(auth, self._default_max_per_second)
+        else:
+            global_rate_limit = temp
 
         # If a rate limit for this url path doesn't exist yet, make it.
-        if not (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)):
+        # if (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)) is None:
+        #     url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
+        temp = self._get_url_rate_limit(route.method, route, auth)  # Type checkers are drunk.
+        if temp is None:
             url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
+        else:
+            url_rate_limit = temp
 
         max_retry_count = 5
         rate_limit_path = (
