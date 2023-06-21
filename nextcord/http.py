@@ -12,7 +12,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    cast,
     ClassVar,
     Coroutine,
     Dict,
@@ -25,6 +24,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 from urllib.parse import quote as _uriquote
 
