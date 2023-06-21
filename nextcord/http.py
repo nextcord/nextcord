@@ -828,9 +828,7 @@ class HTTPClient:
                         "error and should be reported!"
                     )
                 else:
-                    url_rate_limit = self._buckets.get(
-                        url_rate_limit.migrating
-                    )
+                    url_rate_limit = self._buckets.get(url_rate_limit.migrating)
                     if url_rate_limit is None:
                         # This means we have an internal issue that we need to fix.
                         raise ValueError(
