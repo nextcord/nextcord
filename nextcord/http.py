@@ -641,8 +641,6 @@ class HTTPClient:
         if (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)) is None:
             url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
 
-        url_rate_limit = cast(RateLimit, url_rate_limit)
-
         max_retry_count = 5
         rate_limit_path = (
             route.method,
