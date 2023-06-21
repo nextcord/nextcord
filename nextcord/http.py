@@ -635,15 +635,9 @@ class HTTPClient:
         if not (global_rate_limit := self._global_rate_limits.get(auth)):
             global_rate_limit = self._make_global_rate_limit(auth, self._default_max_per_second)
 
-        # Pyright you're drunk, the bit above this insures that it can't be None.
-        global_rate_limit = cast(GlobalRateLimit, global_rate_limit)
-
         # If a rate limit for this url path doesn't exist yet, make it.
         if not (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)):
             url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
-
-        # Pyright you're drunk, the bit above this insures that it can't be None.
-        url_rate_limit = cast(RateLimit, url_rate_limit)
 
         max_retry_count = 5
         rate_limit_path = (
@@ -667,7 +661,7 @@ class HTTPClient:
                         # This check is for asyncio.gather()'d requests where the rate limit can change.
                         if (
                             temp := self._get_url_rate_limit(route.method, route, auth)
-                        ) is not url_rate_limit:
+                        ) is not url_rate_limit and not None:
                             _log.debug(
                                 "Route %s had the rate limit changed, resetting and retrying.",
                                 rate_limit_path,
@@ -709,14 +703,15 @@ class HTTPClient:
                             except IncorrectBucket as e:
                                 # This condition can be met when doing asyncio.gather()'d requests.
                                 # if response.headers.get("X-RateLimit-Bucket") in self._buckets:
-                                if temp := self._buckets.get(
+                                if (temp := self._buckets.get(
                                     response.headers.get("X-RateLimit-Bucket")
-                                ):
+                                )) is not None:
+                                    temp = cast(RateLimit, temp)  # Pyright plz.
+
                                     _log.debug(
                                         "Route %s was given a different bucket, found it.",
                                         rate_limit_path,
                                     )
-                                    # url_rate_limit = self._get_url_rate_limit(route.method, route, auth)
                                     url_rate_limit = temp
                                     self._set_url_rate_limit(
                                         route.method, route, auth, url_rate_limit
@@ -830,7 +825,9 @@ class HTTPClient:
                         "error and should be reported!"
                     )
                 else:
-                    url_rate_limit = self._buckets.get(url_rate_limit.migrating)
+                    url_rate_limit = self._buckets.get(
+                        url_rate_limit.migrating
+                    )  # pyright: ignore [reportOptionalMemberAccess]
                     if url_rate_limit is None:
                         # This means we have an internal issue that we need to fix.
                         raise ValueError(
