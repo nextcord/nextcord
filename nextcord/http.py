@@ -657,7 +657,7 @@ class HTTPClient:
             should_retry = False
             try:
                 async with global_rate_limit:
-                    async with url_rate_limit:  # pyright: ignore [reportOptionalContextManager]
+                    async with url_rate_limit:
                         # TODO: Worth? It's only useful when doing asyncio.gather()'d requests AFAIK, but it's very
                         #  useful for avoiding 429's when doing that.
                         # This check is for asyncio.gather()'d requests where the rate limit can change.
@@ -829,7 +829,7 @@ class HTTPClient:
                     )
                 else:
                     url_rate_limit = self._buckets.get(
-                        url_rate_limit.migrating  # pyright: ignore [reportOptionalMemberAccess]
+                        url_rate_limit.migrating
                     )
                     if url_rate_limit is None:
                         # This means we have an internal issue that we need to fix.
