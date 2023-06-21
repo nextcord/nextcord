@@ -708,7 +708,6 @@ class HTTPClient:
                                         response.headers.get("X-RateLimit-Bucket")
                                     )
                                 ) is not None:
-                                    temp = cast(RateLimit, temp)  # Pyright plz.
 
                                     _log.debug(
                                         "Route %s was given a different bucket, found it.",
