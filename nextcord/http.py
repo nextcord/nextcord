@@ -635,9 +635,13 @@ class HTTPClient:
         if (global_rate_limit := self._global_rate_limits.get(auth)) is None:
             global_rate_limit = self._make_global_rate_limit(auth, self._default_max_per_second)
 
+        global_rate_limit = cast(GlobalRateLimit, global_rate_limit)
+
         # If a rate limit for this url path doesn't exist yet, make it.
         if (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)) is None:
             url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
+        
+        url_rate_limit = cast(RateLimit, url_rate_limit)
 
         max_retry_count = 5
         rate_limit_path = (
@@ -662,6 +666,7 @@ class HTTPClient:
                         if (
                             temp := self._get_url_rate_limit(route.method, route, auth)
                         ) is not url_rate_limit and not None:
+                            temp = cast(RateLimit, temp)
                             _log.debug(
                                 "Route %s had the rate limit changed, resetting and retrying.",
                                 rate_limit_path,
