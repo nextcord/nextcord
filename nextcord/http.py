@@ -24,7 +24,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
 )
 from urllib.parse import quote as _uriquote
 
@@ -708,7 +707,6 @@ class HTTPClient:
                                         response.headers.get("X-RateLimit-Bucket")
                                     )
                                 ) is not None:
-
                                     _log.debug(
                                         "Route %s was given a different bucket, found it.",
                                         rate_limit_path,
