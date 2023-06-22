@@ -778,13 +778,13 @@ class HTTPClient:
                                         "Path %s resulted in error 401, rejected authorization?",
                                         rate_limit_path,
                                     )
-                                    raise HTTPException(response, ret)
+                                    raise Unauthorized(response, ret)
                                 elif response.status == 403:
                                     _log.warning(
                                         "Path %s resulted in error 403, check your permissions?",
                                         rate_limit_path,
                                     )
-                                    raise Unauthorized(response, ret)
+                                    raise Forbidden(response, ret)
                                 # TODO: Is this still viable to keep?
                                 elif response.status == 404:
                                     _log.warning(
