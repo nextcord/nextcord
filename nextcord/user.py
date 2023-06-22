@@ -155,7 +155,7 @@ class BaseUser(_UserTag):
         This is calculated by the user's discriminator.
 
         ..versionchanged:: 2.6
-            Indexes avatar using ID instead of discriminator.
+            Added handling for the new username system for users without a discriminator.
         """
         if self.discriminator is None:
             avatar_index = (self.id >> 22) % len(DefaultAvatar)
@@ -306,7 +306,7 @@ class ClientUser(BaseUser):
     id: :class:`int`
         The user's unique ID.
     global_name: :class:`str`
-        The user's display name. If any.
+        The user's display name, if any.
 
         .. versionadded: 2.6
     discriminator: :class:`str`
@@ -441,7 +441,7 @@ class User(BaseUser, abc.Messageable):
     id: :class:`int`
         The user's unique ID.
     global_name: :class:`str`
-        The user's default name. If any.
+        The user's default name, if any.
 
         ..versionadded: 2.6
     discriminator: :class:`str`
