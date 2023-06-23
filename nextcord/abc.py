@@ -118,7 +118,7 @@ class User(Snowflake, Protocol):
     name: :class:`str`
         The user's username.
     global_name: :class:`str`
-        The user's global name.
+        The user's global name. This is represented in the UI as "Display Name"
 
         .. versionadded:: 2.6
     discriminator: :class:`str`
