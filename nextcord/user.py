@@ -55,7 +55,7 @@ class BaseUser(_UserTag):
     if TYPE_CHECKING:
         name: str
         id: int
-        discriminator: Optional[str]
+        discriminator: str
         bot: bool
         system: bool
         global_name: Optional[str]
@@ -64,7 +64,7 @@ class BaseUser(_UserTag):
         _banner: Optional[str]
         _accent_colour: Optional[str]
         _public_flags: int
-        _discriminator: Optional[str]
+        _discriminator: str
 
     def __init__(
         self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
@@ -76,12 +76,12 @@ class BaseUser(_UserTag):
         return (
             f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
             f" discriminator={self.discriminator!r}"
-            if self.discriminator is not None
+            if self.discriminator != "0"
             else "" f" bot={self.bot} system={self.system}>"
         )
 
     def __str__(self) -> str:
-        return f"{self.name}#{self.discriminator}" if self.discriminator is not None else self.name
+        return f"{self.name}#{self.discriminator}" if self.discriminator != "0" else self.name
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, _UserTag) and other.id == self.id
@@ -104,7 +104,7 @@ class BaseUser(_UserTag):
         self.system = data.get("system", False)
         self.global_name = data.get("global_name", None)
 
-        self.discriminator = self._discriminator if not self._discriminator == "0" else None
+        self.discriminator = self._discriminator if self._discriminator != "0" else "0"
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -157,7 +157,7 @@ class BaseUser(_UserTag):
         ..versionchanged:: 2.6
             Added handling for the new username system for users without a discriminator.
         """
-        if self.discriminator is None:
+        if self.discriminator != "0":
             avatar_index = (self.id >> 22) % len(DefaultAvatar)
         else:
             avatar_index = int(self.discriminator) % 5
@@ -346,7 +346,7 @@ class ClientUser(BaseUser):
         return (
             f"<ClientUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
             f" discriminator={self.discriminator!r}"
-            if self.discriminator is not None
+            if self.discriminator != "0"
             else "" f" bot={self.bot} verified={self.verified}" f" mfa_enabled={self.mfa_enabled}>"
         )
 
@@ -469,7 +469,7 @@ class User(BaseUser, abc.Messageable):
         return (
             f"<User id={self.id} name={self.name!r} global_name={self.global_name!r}"
             f" discriminator={self.discriminator!r}"
-            if self.discriminator is not None
+            if self.discriminator != "0"
             else "" f" bot={self.bot}>"
         )
 
