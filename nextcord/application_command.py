@@ -2018,7 +2018,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             This returns the permissions set with :func:`ext.application_checks.bot_has_guild_permissions`.
 
         .. versionadded:: 2.6
-            
+
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
