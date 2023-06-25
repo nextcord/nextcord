@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING, Callable, Dict, Union
 
 import nextcord
 from nextcord.application_command import (
@@ -414,6 +414,19 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
     return check(predicate)
 
 
+def _permission_check_wrapper(predicate: "ApplicationCheck", name: str, perms: Dict[str, bool]) -> "AC":
+    def wrapper(func: Union[CallbackWrapper, CoroFunc]) -> CheckWrapper:
+        if isinstance(func, CallbackWrapper):
+            callback = func.callback
+        else:
+            callback = func
+
+        setattr(callback, name, perms)
+        return check(predicate)(func)
+
+    return wrapper
+
+
 def has_permissions(**perms: bool) -> AC:
     """A :func:`.check` that is added that checks if the member has all of
     the permissions necessary.
@@ -465,7 +478,7 @@ def has_permissions(**perms: bool) -> AC:
 
         raise ApplicationMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_permissions", perms)
 
 
 def bot_has_permissions(**perms: bool) -> AC:
@@ -499,7 +512,7 @@ def bot_has_permissions(**perms: bool) -> AC:
 
         raise ApplicationBotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_bot_permissions", perms)
 
 
 def has_guild_permissions(**perms: bool) -> AC:
@@ -541,7 +554,7 @@ def has_guild_permissions(**perms: bool) -> AC:
 
         raise ApplicationMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_guild_permissions", perms)
 
 
 def bot_has_guild_permissions(**perms: bool) -> AC:
@@ -565,7 +578,7 @@ def bot_has_guild_permissions(**perms: bool) -> AC:
 
         raise ApplicationBotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_bot_guild_permissions", perms)
 
 
 def dm_only() -> AC:
