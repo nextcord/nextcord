@@ -1476,7 +1476,7 @@ class Client:
         .. note::
           This will only fetch guilds that the bot is in or that are discoverable.
 
-        ..versionadded:: 2.6
+        .. versionadded:: 2.6
 
         Parameters
         ----------
