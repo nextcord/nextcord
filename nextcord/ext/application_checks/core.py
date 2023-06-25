@@ -414,7 +414,9 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
     return check(predicate)
 
 
-def _permission_check_wrapper(predicate: "ApplicationCheck", name: str, perms: Dict[str, bool]) -> "AC":
+def _permission_check_wrapper(
+    predicate: "ApplicationCheck", name: str, perms: Dict[str, bool]
+) -> "AC":
     def wrapper(func: Union[CallbackWrapper, CoroFunc]) -> CheckWrapper:
         if isinstance(func, CallbackWrapper):
             callback = func.callback
