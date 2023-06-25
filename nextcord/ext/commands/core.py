@@ -413,6 +413,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
             This returns the permissions set with :func:`.has_permissions`.
 
+        .. versionadded:: 2.6
+
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
@@ -427,6 +429,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         .. note::
 
             This returns the permissions set with :func:`.bot_has_permissions`.
+
+        .. versionadded:: 2.6
 
         Returns
         -------
@@ -443,6 +447,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
             This returns the permissions set with :func:`.has_guild_permissions`.
 
+        .. versionadded:: 2.6
+
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
@@ -457,6 +463,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         .. note::
 
             This returns the permissions set with :func:`.bot_has_guild_permissions`.
+
+        .. versionadded:: 2.6
 
         Returns
         -------

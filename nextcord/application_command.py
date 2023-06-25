@@ -1966,6 +1966,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
             This returns the permissions set with :func:`ext.application_checks.has_permissions`.
 
+        .. versionadded:: 2.6
+
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
@@ -1980,6 +1982,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         .. note::
 
             This returns the permissions set with :func:`ext.application_checks.bot_has_permissions`.
+
+        .. versionadded:: 2.6
 
         Returns
         -------
@@ -1996,6 +2000,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
             This returns the permissions set with :func:`ext.application_checks.has_guild_permissions`.
 
+        .. versionadded:: 2.6
+
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
@@ -2011,6 +2017,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
             This returns the permissions set with :func:`ext.application_checks.bot_has_guild_permissions`.
 
+        .. versionadded:: 2.6
+            
         Returns
         -------
         Dict[:class:`str`, :class:`bool`]
