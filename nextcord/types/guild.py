@@ -120,6 +120,7 @@ class Guild(_BaseGuildPreview):
     premium_subscription_count: NotRequired[int]
     max_video_channel_users: NotRequired[int]
     stickers: NotRequired[List[GuildSticker]]
+    premium_progress_bar_enabled: bool
 
 
 class InviteGuild(Guild, total=False):

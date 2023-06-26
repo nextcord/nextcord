@@ -443,7 +443,7 @@ class Interaction(Hashable, Generic[ClientT]):
 
         # The message channel types should always match
         message = InteractionMessage(state=self._state, channel=self.channel, data=data)  # type: ignore
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, message.id)
         return message
 
@@ -906,7 +906,7 @@ class InteractionResponse:
                 for file in files:
                     file.close()
 
-        if view is not MISSING:
+        if view is not MISSING and view.prevent_update:
             if ephemeral and view.timeout is None:
                 view.timeout = 15 * 60.0
 
@@ -1077,7 +1077,7 @@ class InteractionResponse:
                 for file in files:
                     file.close()
 
-        if view and not view.is_finished() and message_id is not None:
+        if view and not view.is_finished() and message_id is not None and view.prevent_update:
             state.store_view(view, message_id)
 
         self._responded = True
