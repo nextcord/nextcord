@@ -516,7 +516,9 @@ class Guild(Hashable):
         for event in guild.get("guild_scheduled_events") or []:
             self._store_scheduled_event(event)
 
-        self._premium_progress_bar_enabled: Optional[bool] = guild.get("premium_progress_bar_enabled")
+        self._premium_progress_bar_enabled: Optional[bool] = guild.get(
+            "premium_progress_bar_enabled"
+        )
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
