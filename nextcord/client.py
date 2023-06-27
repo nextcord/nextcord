@@ -1367,13 +1367,13 @@ class Client:
 
         .. code-block:: python3
 
-            @bot.listen()
+            @client.listen()
             async def on_message(message):
                 print('one')
 
             # in some other file...
 
-            @bot.listen('on_message')
+            @client.listen('on_message')
             async def my_message(message):
                 print('two')
 
