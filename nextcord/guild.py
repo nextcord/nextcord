@@ -657,7 +657,7 @@ class Guild(Hashable):
 
     @property
     def premium_progress_bar_enabled(self) -> Optional[bool]:
-        """:class:`bool`: Whether the premium boost progress bar is enabled.
+        """Optional[:class:`bool`:] Whether the premium boost progress bar is enabled.
 
         .. versionadded:: 2.6
         """
