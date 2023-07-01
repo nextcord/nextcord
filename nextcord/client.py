@@ -42,6 +42,7 @@ from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
 from .guild import Guild
+from .guild_preview import GuildPreview
 from .http import HTTPClient
 from .interactions import Interaction
 from .invite import Invite
@@ -1472,6 +1473,34 @@ class Client:
         """
         data = await self.http.get_guild(guild_id, with_counts=with_counts)
         return Guild(data=data, state=self._connection)
+
+    async def fetch_guild_preview(self, guild_id: int, /) -> GuildPreview:
+        """|coro|
+
+        Fetches a :class:`.GuildPreview` from an ID.
+
+        .. note::
+          This will only fetch guilds that the bot is in or that are discoverable.
+
+        .. versionadded:: 2.6
+
+        Parameters
+        ----------
+        guild_id: :class:`int`
+            The guild's ID to fetch from.
+
+        Raises
+        ------
+        :exc:`.NotFound`
+            The guild provided is unknown.
+
+        Returns
+        -------
+        :class:`.GuildPreview`
+            The guild preview from the ID
+        """
+        data = await self.http.get_guild_preview(guild_id)
+        return GuildPreview(data=data, state=self._connection)
 
     async def create_guild(
         self,

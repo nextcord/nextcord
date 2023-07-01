@@ -4074,6 +4074,11 @@ Guild
 
         :type: :class:`User`
 
+GuildPreview
+~~~~~~~~~~~~
+
+.. autoclass:: GuildPreview()
+    :members:
 
 Integration
 ~~~~~~~~~~~
