@@ -505,11 +505,11 @@ class ViewStore:
         self._synced_message_views: Dict[int, View] = {}
         self._state: ConnectionState = state
 
-    def all_views(self) -> Sequence[View]:
+    def all_views(self) -> List[View]:
         views = [v for (v, _) in self._views.values()]
         return views
 
-    def views(self, persistent: bool = True) -> Sequence[View]:
+    def views(self, persistent: bool = True) -> List[View]:
         views = self.all_views()
         return [v for v in views if v.is_persistent() ^ (not persistent)]
 

@@ -1986,12 +1986,12 @@ class Client:
         self._connection.remove_modal(modal)
 
     @property
-    def all_views(self) -> Sequence[View]:
+    def all_views(self) -> List[View]:
         """Sequence[:class:`.View`] A sequence of all views added to the client."""
         return self._connection.all_views()
 
     @property
-    def persistent_views(self) -> Sequence[View]:
+    def persistent_views(self) -> List[View]:
         """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
 
         .. versionadded:: 2.0
@@ -2003,7 +2003,7 @@ class Client:
         )
         return self.views()
 
-    def views(self, *, persistent: bool = True) -> Sequence[View]:
+    def views(self, *, persistent: bool = True) -> List[View]:
         """Returns all persistent or non-persistent views.
 
         Parameters
