@@ -1863,7 +1863,7 @@ class Client:
         Parameters
         ----------
         view: :class:`nextcord.ui.View`
-            The view to register for dispatching or add to storage.
+            The view to register for dispatching or to add to storage.
         message_id: Optional[:class:`int`]
             The message ID that the view is attached to. This is currently used to
             refresh the view's state during message update events. If not given
