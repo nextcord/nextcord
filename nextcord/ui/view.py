@@ -511,15 +511,7 @@ class ViewStore:
 
     def views(self, persistent: bool = True) -> Sequence[View]:
         views = self.all_views()
-
-        # I'm not sure if there is a better way to do this
-        check: Callable[[View], bool]
-        if persistent:
-            check = lambda v: v.is_persistent()
-        else:
-            check = lambda v: not v.is_persistent()
-
-        return list(filter(check, views))
+        return [v for v in views if v.is_persistent() ^ (not persistent)]
 
     def __verify_integrity(self):
         to_remove: List[Tuple[int, Optional[int], str]] = []
