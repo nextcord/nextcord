@@ -32,18 +32,7 @@ import time
 import traceback
 from functools import partial
 from itertools import groupby
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterator, List, Optional, Tuple
 
 from typing_extensions import Self
 

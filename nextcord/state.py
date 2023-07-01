@@ -42,7 +42,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Set,
     Tuple,
     TypeVar,
