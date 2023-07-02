@@ -314,7 +314,7 @@ How do I use a local image file for an embed image?
 Discord special-cases uploading an image attachment and using it within an embed so that it will not
 display separately, but instead in the embed's thumbnail, image, footer or author icon.
 
-To do so, create a file object and pass it as a ``file`` kwarg.
+To do so, create a file object and pass it as a ``url`` arg.
 
 This is supported on the following methods:
 
@@ -327,7 +327,7 @@ Quick example: ::
 
     file = nextcord.File("path/to/my/image.png", filename="image.png")
     embed = nextcord.Embed()
-    embed.set_image(file=file)
+    embed.set_image(file)
     await channel.send(embed=embed)
 
 .. note ::
