@@ -477,7 +477,7 @@ class Embed:
             except AttributeError:
                 pass
 
-        if file is EmptyEmbed:
+        if file is None:
             self._local_files.pop("thumbnail", None)
 
         elif url and file:
