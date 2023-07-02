@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, 
 
 from . import utils
 from .colour import Colour
-from .errors import InvalidArgument
 from .file import File
 
 if TYPE_CHECKING:
