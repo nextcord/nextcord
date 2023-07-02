@@ -399,7 +399,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_image", {}))  # type: ignore
 
-    def set_image(self, url: Optional[Any] = None, *, file: Optional[File] = None) -> Self:
+    def set_image(self, url: Optional[Any] = None) -> Self:
         """Sets the image for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -408,14 +408,14 @@ class Embed:
         .. versionchanged:: 1.4
             Passing ``None`` removes the image.
 
+        .. versionchanged:: 2.5
+            The url parameter can be a File object.
+
         Parameters
         ----------
         url: Optional[:class:`str`]
-            The source URL for the image. Only HTTP(S) is supported.
-        file: Optional[:class:`File`]
-            A file to use for the image.
-
-            .. versionadded:: 2.5
+            The source URL or the File object for the image.
+            Only HTTP(S) and File(s) are supported.
         """
         if url is None:
             try:
@@ -423,15 +423,11 @@ class Embed:
             except AttributeError:
                 pass
 
-        if file is None:
             self._local_files.pop("image", None)
 
-        if url is not EmptyEmbed and file is not EmptyEmbed:
-            raise InvalidArgument("Cannot pass both url and file.")
-
-        elif isinstance(file, File):
-            self._local_files["image"] = file
-            self._image = {"url": f"attachment://{file.filename}"}
+        elif isinstance(url, File):
+            self._local_files["image"] = url
+            self._image = {"url": f"attachment://{url.filename}"}
 
         else:
             self._image = {"url": str(url)}
