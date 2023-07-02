@@ -423,7 +423,7 @@ class Embed:
             except AttributeError:
                 pass
 
-        if file is EmptyEmbed:
+        if file is None:
             self._local_files.pop("image", None)
 
         if url is not EmptyEmbed and file is not EmptyEmbed:
