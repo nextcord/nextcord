@@ -1048,10 +1048,7 @@ class InteractionResponse:
             raise InvalidArgument("Cannot mix file and files keyword arguments")
 
         if file is not MISSING:
-            if files:
-                files.append(file)
-            else:
-                files = [file]
+            files = [file]
 
         if files and not all(isinstance(f, File) for f in files):
             raise TypeError("Files parameter must be a list of type File")
