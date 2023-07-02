@@ -331,37 +331,33 @@ class Embed:
         *,
         text: Optional[Any] = None,
         icon_url: Optional[Any] = None,
-        icon_file: Optional[File] = None,
     ) -> Self:
         """Sets the footer for the embed content.
 
         This function returns the class instance to allow for fluent-style
         chaining.
 
+        .. versionchanged:: 2.5
+            The ``icon_url`` parameter can be a File object.
+
         Parameters
         ----------
         text: Optional[:class:`str`]
             The footer text.
         icon_url: Optional[:class:`str`]
-            The URL of the footer icon. Only HTTP(S) is supported.
-        icon_file: Optional[:class:`File`]
-            A file to use for the image.
-
-            .. versionadded:: 2.5
+            The URL or the File object of the footer icon.
+            Only HTTP(S) and File(s) are supported.
         """
         self._footer = {}
         if text is not None:
             self._footer["text"] = str(text)
 
-        if icon_url is not None and icon_file is not None:
-            raise InvalidArgument("Cannot pass both icon_url and icon_file")
-
         if icon_url is not None:
             self._footer["icon_url"] = str(icon_url)
 
-        elif isinstance(icon_file, File):
-            self._local_files["footer"] = icon_file
-            self._footer["icon_url"] = f"attachment://{icon_file.filename}"
+        elif isinstance(icon_url, File):
+            self._local_files["footer"] = icon_url
+            self._footer["icon_url"] = f"attachment://{icon_url.filename}"
 
         else:
             self._footer.pop("icon_url", None)
@@ -409,7 +405,7 @@ class Embed:
             Passing ``None`` removes the image.
 
         .. versionchanged:: 2.5
-            The url parameter can be a File object.
+            The ``url`` parameter can be a File object.
 
         Parameters
         ----------
@@ -449,7 +445,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_thumbnail", {}))  # type: ignore
 
-    def set_thumbnail(self, url: Optional[Any], *, file: Optional[File] = None) -> Self:
+    def set_thumbnail(self, url: Optional[Any]) -> Self:
         """Sets the thumbnail for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -458,14 +454,14 @@ class Embed:
         .. versionchanged:: 1.4
             Passing ``None`` removes the thumbnail.
 
+        .. versionchanged:: 2.5
+            The ``url`` parameter can be a File object.
+
         Parameters
         ----------
-        url: :class:`str`
-            The source URL for the thumbnail. Only HTTP(S) is supported.
-        file: Optional[:class:`File`]
-            A file to use for the image.
-
-            .. versionadded:: 2.5
+        url: Optional[:class:`str`]
+            The source URL or the File object for the image.
+            Only HTTP(S) and File(s) are supported.
         """
         if url is None:
             try:
@@ -473,15 +469,11 @@ class Embed:
             except AttributeError:
                 pass
 
-        if file is None:
             self._local_files.pop("thumbnail", None)
 
-        elif url and file:
-            raise InvalidArgument("Can't pass both url and file.")
-
-        elif isinstance(file, File):
-            self._local_files["thumbnail"] = file
-            self._thumbnail = {"url": f"attachment://{file.filename}"}
+        elif isinstance(url, File):
+            self._local_files["thumbnail"] = url
+            self._thumbnail = {"url": f"attachment://{url.filename}"}
 
         else:
             self._thumbnail = {"url": str(url)}
@@ -528,12 +520,14 @@ class Embed:
         name: Any,
         url: Optional[Any] = None,
         icon_url: Optional[Any] = None,
-        icon_file: Optional[File] = None,
     ) -> Self:
         """Sets the author for the embed content.
 
         This function returns the class instance to allow for fluent-style
         chaining.
+
+        .. versionchanged:: 2.5
+            The ``icon_url`` parameter can be a File object.
 
         Parameters
         ----------
@@ -542,19 +536,13 @@ class Embed:
         url: Optional[:class:`str`]
             The URL for the author.
         icon_url: Optional[:class:`str`]
-            The URL of the author icon. Only HTTP(S) is supported.
-        icon_file: Optional[:class:`File`]
-            A file to use for the image.
-
-            .. versionadded:: 2.5
+            The URL or the File object of the author icon.
+            Only HTTP(S) and File(s) are supported.
         """
 
         self._author = {
             "name": str(name),
         }
-
-        if icon_url is not None and icon_file is not None:
-            raise InvalidArgument("Cannot pass both icon_url and icon_file")
 
         if url is not None:
             self._author["url"] = str(url)
@@ -562,9 +550,9 @@ class Embed:
         if icon_url is not None:
             self._author["icon_url"] = str(icon_url)
 
-        if isinstance(icon_file, File):
-            self._local_files["author"] = icon_file
-            self._author["icon_url"] = f"attachment://{icon_file.filename}"
+        if isinstance(icon_url, File):
+            self._local_files["author"] = icon_url
+            self._author["icon_url"] = f"attachment://{icon_url.filename}"
 
         return self
 
