@@ -1995,7 +1995,7 @@ class Client:
 
     @property
     def all_views(self) -> List[View]:
-        """Sequence[:class:`.View`] A sequence of all views added to the client.
+        """List[:class:`.View`] A sequence of all views added to the client.
 
         .. versionadded:: 2.6
         """
@@ -2003,7 +2003,7 @@ class Client:
 
     @property
     def persistent_views(self) -> List[View]:
-        """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
+        """List[:class:`.View`]: A sequence of persistent views added to the client.
 
         .. versionadded:: 2.0
         """
@@ -2026,7 +2026,7 @@ class Client:
 
         Returns
         -------
-        Sequence[:class:`ui.View`]
+        List[:class:`ui.View`]
             The views requested.
         """
         return self._connection.views(persistent)
