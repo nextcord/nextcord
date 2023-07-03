@@ -74,12 +74,8 @@ class BaseUser(_UserTag):
 
     def __repr__(self) -> str:
         return (
-            f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}" +
-            (
-                f" discriminator={self.discriminator!r}"
-                if self.discriminator != "0"
-                else ""
-            ) 
+            f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            + (f" discriminator={self.discriminator!r}" if self.discriminator != "0" else "")
             + f" bot={self.bot} system={self.system}>"
         )
 
@@ -470,12 +466,8 @@ class User(BaseUser, abc.Messageable):
 
     def __repr__(self) -> str:
         return (
-            f"<User id={self.id} name={self.name!r} global_name={self.global_name!r}" +
-            (
-                f" discriminator={self.discriminator!r}"
-                if self.discriminator != "0"
-                else ""
-            )
+            f"<User id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            + (f" discriminator={self.discriminator!r}" if self.discriminator != "0" else "")
             + f" bot={self.bot}>"
         )
 
