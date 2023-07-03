@@ -1860,6 +1860,10 @@ class Client:
 
         .. versionadded:: 2.0
 
+        .. versionchanged:: 2.6
+
+            Non-persistent views can now be stored during the lifetime of the bot.
+
         Parameters
         ----------
         view: :class:`nextcord.ui.View`
@@ -1894,6 +1898,10 @@ class Client:
         to stop tracking a non-persistent view.
 
         .. versionadded:: 2.3
+
+        .. versionchanged:: 2.6
+
+            Non-persistent views can now be removed from storage.
 
         Parameters
         ----------
@@ -1987,7 +1995,10 @@ class Client:
 
     @property
     def all_views(self) -> List[View]:
-        """Sequence[:class:`.View`] A sequence of all views added to the client."""
+        """Sequence[:class:`.View`] A sequence of all views added to the client.
+
+        .. versionadded:: 2.6
+        """
         return self._connection.all_views()
 
     @property
@@ -2005,6 +2016,8 @@ class Client:
 
     def views(self, *, persistent: bool = True) -> List[View]:
         """Returns all persistent or non-persistent views.
+
+        .. versionadded:: 2.6
 
         Parameters
         ----------
