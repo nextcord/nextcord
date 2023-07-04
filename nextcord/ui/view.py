@@ -10,18 +10,7 @@ import time
 import traceback
 from functools import partial
 from itertools import groupby
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterator, List, Optional, Tuple
 
 from typing_extensions import Self
 
@@ -499,16 +488,13 @@ class ViewStore:
         self._synced_message_views: Dict[int, View] = {}
         self._state: ConnectionState = state
 
-    @property
-    def persistent_views(self) -> Sequence[View]:
-        # fmt: off
-        views = {
-            view.id: view
-            for (_, (view, _)) in self._views.items()
-            if view.is_persistent()
-        }
-        # fmt: on
-        return list(views.values())
+    def all_views(self) -> List[View]:
+        views = [v for (v, _) in self._views.values()]
+        return views
+
+    def views(self, persistent: bool = True) -> List[View]:
+        views = self.all_views()
+        return [v for v in views if v.is_persistent() ^ (not persistent)]
 
     def __verify_integrity(self) -> None:
         to_remove: List[Tuple[int, Optional[int], str]] = []

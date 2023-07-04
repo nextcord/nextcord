@@ -19,7 +19,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Set,
     Tuple,
     TypeVar,
@@ -404,9 +403,11 @@ class ConnectionState:
     def prevent_view_updates_for(self, message_id: Optional[int]) -> Optional[View]:
         return self._view_store.remove_message_tracking(message_id)  # type: ignore
 
-    @property
-    def persistent_views(self) -> Sequence[View]:
-        return self._view_store.persistent_views
+    def all_views(self) -> List[View]:
+        return self._view_store.all_views()
+
+    def views(self, persistent: bool = True) -> List[View]:
+        return self._view_store.views(persistent)
 
     @property
     def guilds(self) -> List[Guild]:

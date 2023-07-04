@@ -1881,47 +1881,56 @@ class Client:
         return state.add_dm_channel(data)
 
     def add_view(self, view: View, *, message_id: Optional[int] = None) -> None:
-        """Registers a :class:`~nextcord.ui.View` for persistent listening.
+        """Registers a :class:`~nextcord.ui.View` for persistent listening or for non-
+        persistent storage.
 
         This method should be used for when a view is comprised of components
         that last longer than the lifecycle of the program.
 
         .. versionadded:: 2.0
 
+        .. versionchanged:: 2.6
+
+            Non-persistent views can now be stored during the lifetime of the bot.
+
         Parameters
         ----------
         view: :class:`nextcord.ui.View`
-            The view to register for dispatching.
+            The view to register for dispatching or to add to storage.
         message_id: Optional[:class:`int`]
             The message ID that the view is attached to. This is currently used to
             refresh the view's state during message update events. If not given
-            then message update events are not propagated for the view.
+            then message update events are not propagated for the view. This cannot
+            be provided if the view is non-persistent.
 
         Raises
         ------
         TypeError
             A view was not passed.
         ValueError
-            The view is not persistent. A persistent view has no timeout
-            and all their components have an explicitly provided custom_id.
+            The message_id parameter was passed in with a non-persistent view.
         """
         if not isinstance(view, View):
             raise TypeError(f"Expected an instance of View not {view.__class__!r}")
 
-        if not view.is_persistent():
-            raise ValueError(
-                "View is not persistent. Items need to have a custom_id set and View must have no timeout"
-            )
+        if message_id is not None and not view.is_persistent():
+            raise ValueError("message_id parameter cannot be included for non-persistent views")
 
         self._connection.store_view(view, message_id)
 
     def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
-        """Removes a :class:`~nextcord.ui.View` from persistent listening.
+        """Removes a :class:`~nextcord.ui.View` from persistent listening or non-persistent
+        storage.
 
         This method should be used if a persistent view is set in a cog and
-        should be freed when the cog is unloaded to save memory.
+        should be freed when the cog is unloaded to save memory or if you want
+        to stop tracking a non-persistent view.
 
         .. versionadded:: 2.3
+
+        .. versionchanged:: 2.6
+
+            Non-persistent views can now be removed from storage.
 
         Parameters
         ----------
@@ -1929,23 +1938,21 @@ class Client:
             The view to remove from dispatching.
         message_id: Optional[:class:`int`]
             The message ID that the view is attached to. This is used to properly
-            remove the view from the view store.
+            remove the view from the view store. This cannot be provided if the
+            view is non-persistent.
 
         Raises
         ------
         TypeError
             A view was not passed.
         ValueError
-            The view is not persistent. A persistent view has no timeout
-            and all their components have an explicitly provided custom_id.
+            The message_id parameter was passed in with a non-persistent view.
         """
         if not isinstance(view, View):
             raise TypeError(f"Expected an instance of View not {view.__class__.__name__}")
 
-        if not view.is_persistent():
-            raise ValueError(
-                "View is not persistent. Items need to have a custom_id set and View must have no timeout"
-            )
+        if message_id is not None and not view.is_persistent():
+            raise ValueError("message_id parameter cannot be included for non-persistent views")
 
         self._connection.remove_view(view, message_id)
 
@@ -2016,12 +2023,42 @@ class Client:
         self._connection.remove_modal(modal)
 
     @property
-    def persistent_views(self) -> Sequence[View]:
-        """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
+    def all_views(self) -> List[View]:
+        """List[:class:`.View`] A sequence of all views added to the client.
+
+        .. versionadded:: 2.6
+        """
+        return self._connection.all_views()
+
+    @property
+    def persistent_views(self) -> List[View]:
+        """List[:class:`.View`]: A sequence of persistent views added to the client.
 
         .. versionadded:: 2.0
         """
-        return self._connection.persistent_views
+        warnings.warn(
+            ".persistent_views is deprecated, use .views instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+        return self.views()
+
+    def views(self, *, persistent: bool = True) -> List[View]:
+        """Returns all persistent or non-persistent views.
+
+        .. versionadded:: 2.6
+
+        Parameters
+        ----------
+        persistent: :class:`bool`
+            Whether or not we should grab persistent views. Defaults to ``True``.
+
+        Returns
+        -------
+        List[:class:`ui.View`]
+            The views requested.
+        """
+        return self._connection.views(persistent)
 
     @property
     def scheduled_events(self) -> List[ScheduledEvent]:
