@@ -2619,7 +2619,7 @@ of :class:`enum.Enum`.
 
         Permissions were updated for an application command.
 
-        When this is the action, the type of :attr:`~AuditLogEntry.target` is 
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is
         the class :class:`ApplicationCommandPermissions` or :class:`Object`
         with the ID of the command that was updated.
 
@@ -2627,7 +2627,7 @@ of :class:`enum.Enum`.
 
         - :attr:`~AuditLogDiff.type`
         - :attr:`~AuditLogDiff.permission`
-        
+
 
         .. versionadded:: 2.6
 
