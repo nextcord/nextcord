@@ -150,8 +150,8 @@ class RolePositionUpdate(TypedDict):
 
 class OnboardingPromptOption(TypedDict):
     id: Snowflake
-    channel_ids: list[Snowflake]
-    role_ids: list[Snowflake]
+    channel_ids: List[Snowflake]
+    role_ids: List[Snowflake]
     emoji: Emoji
     title: str
     description: Optional[str]
@@ -160,7 +160,7 @@ class OnboardingPromptOption(TypedDict):
 class OnboardingPrompt(TypedDict):
     id: Snowflake
     type: PromptOptionTypes
-    options: list[OnboardingPromptOption]
+    options: List[OnboardingPromptOption]
     title: str
     single_select: bool
     required: bool
@@ -169,6 +169,6 @@ class OnboardingPrompt(TypedDict):
 
 class Onboarding(TypedDict):
     guild_id: Snowflake
-    prompts: list[OnboardingPrompt]
-    default_channel_ids: list[Snowflake]
+    prompts: List[OnboardingPrompt]
+    default_channel_ids: List[Snowflake]
     enabled: bool
