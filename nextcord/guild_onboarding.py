@@ -3,12 +3,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from .enums import try_enum, OnboardingPromptType
+from .enums import OnboardingPromptType, try_enum
 from .partial_emoji import PartialEmoji
 
 if TYPE_CHECKING:
     from .guild import Guild
-    from .types.guild import OnboardingPromptOption as PromptOptionPayload, OnboardingPrompt as OnboardingPromptPayload, Onboarding as OnboardingPayload
+    from .types.guild import (
+        Onboarding as OnboardingPayload,
+        OnboardingPrompt as OnboardingPromptPayload,
+        OnboardingPromptOption as PromptOptionPayload,
+    )
 
 __all__ = (
     "OnboardingPromptOption",
@@ -19,7 +23,7 @@ __all__ = (
 
 class OnboardingPromptOption:
     """Represents an option in a guild's onboarding prompt.
-    
+
     Attributes
     ----------
     id: :class:`int`
@@ -45,7 +49,7 @@ class OnboardingPromptOption:
         "description",
     )
 
-    def __init__(self, *, data: PromptOptionPayload):
+    def __init__(self, *, data: PromptOptionPayload) -> None:
         self.id: int = int(data["id"])
         self.channel_ids: List[int] = [int(c) for c in data["channel_ids"]]
         self.role_ids: List[int] = [int(r) for r in data["role_ids"]]
@@ -56,7 +60,7 @@ class OnboardingPromptOption:
 
 class OnboardingPrompt:
     """Represents a prompt for a guild's onboarding screen.
-    
+
     Attributes
     ----------
     id: :class:`int`
@@ -74,7 +78,8 @@ class OnboardingPrompt:
     in_onboarding: :class:`bool`
         Whether or not the prompt is visible on the onboarding screen.
     """
-    def __init__(self, *, data: OnboardingPromptPayload):
+
+    def __init__(self, *, data: OnboardingPromptPayload) -> None:
         self.id: int = int(data["id"])
         self.type: OnboardingPromptType = try_enum(OnboardingPromptType, data["type"])
         self.options: List[OnboardingPromptOption] = [
@@ -88,7 +93,7 @@ class OnboardingPrompt:
 
 class Onboarding:
     """Represents the onboarding screen for a guild.
-    
+
     Attributes
     ----------
     guild: :class:`Guild`
@@ -103,11 +108,9 @@ class Onboarding:
         Whether or not this screen is enabled.
     """
 
-    def __init__(self, *, guild: Guild, data: OnboardingPayload):
+    def __init__(self, *, guild: Guild, data: OnboardingPayload) -> None:
         self.guild: Guild = guild
         self.guild_id: int = int(data["guild_id"])
-        self.prompts: List[OnboardingPrompt] = [
-            OnboardingPrompt(data=p) for p in data["prompts"]
-        ]
+        self.prompts: List[OnboardingPrompt] = [OnboardingPrompt(data=p) for p in data["prompts"]]
         self.default_channel_ids: list[int] = [int(c) for c in data["default_channel_ids"]]
         self.enabled: bool = bool(data["enabled"])
