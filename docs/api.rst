@@ -2615,6 +2615,22 @@ of :class:`enum.Enum`.
 
         .. versionadded:: 2.0
 
+    .. attribute:: application_command_permission_update
+
+        Permissions were updated for an application command.
+
+        When this is the action, the type of :attr:`~AuditLogEntry.target` is 
+        the class :class:`ApplicationCommandPermissions` or :class:`Object`
+        with the ID of the command that was updated.
+
+        Possible attributes for :class:`AuditLogDiff`:
+
+        - :attr:`~AuditLogDiff.type`
+        - :attr:`~AuditLogDiff.permission`
+        
+
+        .. versionadded:: 2.6
+
     .. attribute:: auto_moderation_rule_create
 
         An auto moderation rule was created.
