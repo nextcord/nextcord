@@ -49,7 +49,6 @@ class BaseUser(_UserTag):
         "_public_flags",
         "_state",
         "global_name",
-        "_discriminator",
     )
 
     if TYPE_CHECKING:
@@ -64,7 +63,6 @@ class BaseUser(_UserTag):
         _banner: Optional[str]
         _accent_colour: Optional[str]
         _public_flags: int
-        _discriminator: str
 
     def __init__(
         self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
@@ -94,7 +92,7 @@ class BaseUser(_UserTag):
     def _update(self, data: Union[PartialUserPayload, UserPayload]) -> None:
         self.name = data["username"]
         self.id = int(data["id"])
-        self._discriminator = data.get("discriminator")
+        self.discriminator = data.get("discriminator")
         self._avatar = data["avatar"]
         self._banner = data.get("banner", None)
         self._accent_colour = data.get("accent_color", None)
@@ -102,8 +100,6 @@ class BaseUser(_UserTag):
         self.bot = data.get("bot", False)
         self.system = data.get("system", False)
         self.global_name = data.get("global_name", None)
-
-        self.discriminator = self._discriminator if self._discriminator != "0" else "0"
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
