@@ -217,6 +217,7 @@ class Guild(Hashable):
         - ``NEWS``: Guild can create news channels.
         - ``PARTNERED``: Guild is a partnered server.
         - ``PREVIEW_ENABLED``: Guild can be viewed before being accepted via Membership Screening.
+        - ``RAID_ALERTS_DISABLED``: Guild disabled alerts for join raids in the configured safety alerts channel.
         - ``ROLE_ICONS``: Guild is able to set role icons.
         - ``TICKETED_EVENTS_ENABLED``: Guild has enabled ticketed events.
         - ``VANITY_URL``: Guild can have a vanity invite URL (e.g. discord.gg/discord-api).
@@ -297,6 +298,7 @@ class Guild(Hashable):
         "approximate_member_count",
         "approximate_presence_count",
         "_premium_progress_bar_enabled",
+        "safety_alerts_channel_id",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -519,6 +521,8 @@ class Guild(Hashable):
         self._premium_progress_bar_enabled: Optional[bool] = guild.get(
             "premium_progress_bar_enabled"
         )
+
+        self.safety_alerts_channel_id: Optional[int] = guild.get("safety_alerts_channel_id")
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
