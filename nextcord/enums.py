@@ -49,6 +49,7 @@ __all__ = (
     "SortOrderType",
     "RoleConnectionMetadataType",
     "ForumLayoutType",
+    "OnboardingPromptType",
 )
 
 
@@ -735,6 +736,11 @@ class ForumLayoutType(IntEnum):
     not_set = 0
     list = 1
     gallery = 2
+
+
+class OnboardingPromptType(IntEnum):
+    MULTIPLE_CHOICE = 0
+    DROPDOWN = 1
 
 
 T = TypeVar("T")

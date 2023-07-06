@@ -34,6 +34,7 @@ MFALevel = Literal[0, 1]
 VerificationLevel = Literal[0, 1, 2, 3, 4]
 NSFWLevel = Literal[0, 1, 2, 3]
 PremiumTier = Literal[0, 1, 2, 3]
+PromptOptionTypes = Literal[0, 1]
 GuildFeature = Literal[
     "AUTO_MODERATION",
     "ANIMATED_BANNER",
@@ -145,3 +146,29 @@ class ChannelPositionUpdate(TypedDict):
 class RolePositionUpdate(TypedDict):
     id: Snowflake
     position: NotRequired[Optional[Snowflake]]
+
+
+class OnboardingPromptOption(TypedDict):
+    id: Snowflake
+    channel_ids: list[Snowflake]
+    role_ids: list[Snowflake]
+    emoji: Emoji
+    title: str
+    description: Optional[str]
+
+
+class OnboardingPrompt(TypedDict):
+    id: Snowflake
+    type: PromptOptionTypes
+    options: list[OnboardingPromptOption]
+    title: str
+    single_select: bool
+    required: bool
+    in_onboarding: bool
+
+
+class Onboarding(TypedDict):
+    guild_id: Snowflake
+    prompts: list[OnboardingPrompt]
+    default_channel_ids: list[Snowflake]
+    enabled: bool

@@ -1783,6 +1783,11 @@ class HTTPClient:
             Route("PATCH", "/guilds/{guild_id}/widget", guild_id=guild_id), json=payload
         )
 
+    def get_onboarding(self, guild_id: Snowflake) -> Response[guild.Onboarding]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/onboarding", guild_id=guild_id)
+        )
+
     # Invite management
 
     def create_invite(

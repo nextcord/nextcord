@@ -4080,6 +4080,18 @@ GuildPreview
 .. autoclass:: GuildPreview()
     :members:
 
+Onboarding
+~~~~~~~~~~
+
+.. autoclass:: Onboarding()
+    :members:
+
+.. autoclass:: OnboardingPrompt()
+    :members:
+
+.. autoclass:: OnboardingPromptOption()
+    :members:
+
 Integration
 ~~~~~~~~~~~
 

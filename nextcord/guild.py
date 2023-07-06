@@ -55,6 +55,7 @@ from .enums import (
 )
 from .errors import ClientException, InvalidArgument, InvalidData
 from .flags import SystemChannelFlags
+from .guild_onboarding import Onboarding
 from .integrations import Integration, _integration_factory
 from .invite import Invite
 from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
@@ -2082,6 +2083,28 @@ class Guild(Hashable):
 
         channel: GuildChannel = factory(guild=self, state=self._state, data=data)  # type: ignore
         return channel
+
+    async def fetch_onboarding(self) -> Onboarding:
+        """|coro|
+
+        Retrieves the :class:`Onboarding` for this guild.
+
+        Raises
+        ------
+        Forbidden
+            You do not have proper permissions to get the information.
+        NotFound
+            This guild does not have an onboarding object.
+        HTTPException
+            An error occurred while fetching the information.
+
+        Returns
+        -------
+        :class:`Onboarding`
+            The :class:`Onboarding` object for this guild.
+        """
+        data = await self._state.http.get_onboarding(self.id)
+        return Onboarding(guild=self, data=data)
 
     def bans(
         self,
