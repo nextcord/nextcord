@@ -1329,9 +1329,10 @@ class InviteFlags(BaseFlags):
         The raw value. You should query flags via the properties
         rather than using this raw value.
     """
+
     @flag_value
     def guest(self):
         """:class:`bool`: Returns ``True`` if invite is a guest invite.
-        
+
         .. versionadded:: 2.6"""
-        return 1 << 0 
+        return 1 << 0

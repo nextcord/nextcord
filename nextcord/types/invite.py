@@ -6,11 +6,11 @@ from typing import Literal, Optional, TypedDict, Union
 
 from typing_extensions import NotRequired
 
+from ..flags import InviteFlags
 from .appinfo import PartialAppInfo
 from .channel import PartialChannel
 from .guild import InviteGuild, _GuildPreviewUnique
 from .snowflake import Snowflake
-from ..flags import InviteFlags
 from .user import PartialUser
 
 InviteTargetType = Literal[1, 2]
