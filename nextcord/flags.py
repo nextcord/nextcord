@@ -1299,6 +1299,7 @@ class ApplicationFlags(BaseFlags):
         """
         return 1 << 24
 
+
 @fill_with_flags()
 class RoleFlags(BaseFlags):
     r"""Wraps up the Discord Guild Role Flags.
@@ -1328,6 +1329,7 @@ class RoleFlags(BaseFlags):
         The raw value. You should query flags via the properties
         rather than using this raw value.
     """
+
     @flag_value
     def in_prompt(self):
         """:class:`bool`: Returns ``True`` if the role can be selected in an onboarding prompt.
