@@ -29,6 +29,7 @@ if TYPE_CHECKING:
         Invite as InvitePayload,
         InviteGuild as InviteGuildPayload,
         VanityInvite as VanityInvitePayload,
+        InviteFlags as InviteFlagsPayload
     )
     from .user import User
 
@@ -368,7 +369,7 @@ class Invite(Hashable):
             PartialAppInfo(data=application, state=state) if application else None
         )
 
-        self.flags = data.get("flags")
+        self.flags: Optional[InviteFlagsPayload] = data.get("flags")
 
     @classmethod
     def from_incomplete(cls, *, state: ConnectionState, data: InvitePayload) -> Self:
