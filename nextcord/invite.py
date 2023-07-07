@@ -293,6 +293,10 @@ class Invite(Hashable):
         The embedded application the invite targets, if any.
 
         .. versionadded:: 2.0
+    flags: Optional[:class:`InviteFlags`]
+        The invite's flags.
+
+        .. versionadded:: 2.6
     """
 
     __slots__ = (
@@ -313,6 +317,7 @@ class Invite(Hashable):
         "approximate_presence_count",
         "target_application",
         "expires_at",
+        "flags",
     )
 
     BASE = "https://discord.gg"
@@ -362,6 +367,8 @@ class Invite(Hashable):
         self.target_application: Optional[PartialAppInfo] = (
             PartialAppInfo(data=application, state=state) if application else None
         )
+
+        self.flags = data.get("flags")
 
     @classmethod
     def from_incomplete(cls, *, state: ConnectionState, data: InvitePayload) -> Self:

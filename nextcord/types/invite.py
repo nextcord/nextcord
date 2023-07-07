@@ -10,6 +10,7 @@ from .appinfo import PartialAppInfo
 from .channel import PartialChannel
 from .guild import InviteGuild, _GuildPreviewUnique
 from .snowflake import Snowflake
+from ..flags import InviteFlags
 from .user import PartialUser
 
 InviteTargetType = Literal[1, 2]
@@ -40,6 +41,7 @@ class Invite(IncompleteInvite, total=False):
     target_user: PartialUser
     target_type: InviteTargetType
     target_application: PartialAppInfo
+    flags: InviteFlags
 
 
 class InviteWithCounts(Invite, _GuildPreviewUnique):
@@ -59,6 +61,7 @@ class GatewayInviteCreate(TypedDict):
     target_type: NotRequired[InviteTargetType]
     target_user: NotRequired[PartialUser]
     target_application: NotRequired[PartialAppInfo]
+    flags: InviteFlags
 
 
 class GatewayInviteDelete(TypedDict):
