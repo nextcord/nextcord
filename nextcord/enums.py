@@ -378,8 +378,8 @@ class AuditLogAction(IntEnum):
             AuditLogAction.scheduled_event_delete:                      AuditLogActionCategory.delete,
             AuditLogAction.thread_create:                               AuditLogActionCategory.create,
             AuditLogAction.thread_update:                               AuditLogActionCategory.update,
-            AuditLogAction.thread_delete:
-            AuditLogAction.application_command_permission_update:       AuditLogActionCategory.update,                          AuditLogActionCategory.delete,
+            AuditLogAction.thread_delete:                               AuditLogActionCategory.delete,
+            AuditLogAction.application_command_permission_update:       AuditLogActionCategory.update,
             AuditLogAction.auto_moderation_rule_create:                 AuditLogActionCategory.create,
             AuditLogAction.auto_moderation_rule_update:                 AuditLogActionCategory.update,
             AuditLogAction.auto_moderation_rule_delete:                 AuditLogActionCategory.delete,
