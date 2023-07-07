@@ -6,6 +6,7 @@ from typing import TypedDict
 
 from typing_extensions import NotRequired
 
+from ..flags import RoleFlags
 from .snowflake import Snowflake
 
 
@@ -21,6 +22,7 @@ class Role(TypedDict):
     tags: NotRequired[RoleTags]
     unicode_emoji: NotRequired[str]
     icon: NotRequired[str]
+    flags: RoleFlags
 
 
 class RoleTags(TypedDict, total=False):

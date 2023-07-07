@@ -178,6 +178,8 @@ class Role(Hashable):
         Indicates if the role can be mentioned by users.
     tags: Optional[:class:`RoleTags`]
         The role tags associated with this role.
+    flags: :class:`RoleFlags`
+        The role's flags
     """
 
     __slots__ = (
@@ -193,6 +195,7 @@ class Role(Hashable):
         "tags",
         "_icon",
         "_state",
+        "flags",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload) -> None:
@@ -260,6 +263,8 @@ class Role(Hashable):
             self.tags = RoleTags(data["tags"])
         except KeyError:
             self.tags = None
+
+        self.flags = data.get("flags", 0)
 
     def is_default(self) -> bool:
         """:class:`bool`: Checks if the role is the default role."""
