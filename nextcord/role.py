@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
+from nextcord.flags import RoleFlags
+
 from .asset import Asset
 from .colour import Colour
 from .errors import InvalidArgument
@@ -264,7 +266,7 @@ class Role(Hashable):
         except KeyError:
             self.tags = None
 
-        self.flags = data.get("flags", 0)
+        self.flags: Optional[RoleFlags] = data.get("flags")
 
     def is_default(self) -> bool:
         """:class:`bool`: Checks if the role is the default role."""
