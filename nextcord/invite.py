@@ -27,9 +27,9 @@ if TYPE_CHECKING:
     from .types.invite import (
         GatewayInvite as GatewayInvitePayload,
         Invite as InvitePayload,
+        InviteFlags as InviteFlagsPayload,
         InviteGuild as InviteGuildPayload,
         VanityInvite as VanityInvitePayload,
-        InviteFlags as InviteFlagsPayload
     )
     from .user import User
 
