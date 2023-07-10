@@ -306,6 +306,13 @@ class Role(Hashable):
             and (me.top_role > self or me.id == self.guild.owner_id)
         )
 
+    def is_in_prompt(self) -> bool:
+        """:class:`bool`: Whether the role can be selected in an onboarding prompt.
+        
+        .. versionadded:: 2.6
+        """
+        return self.flags.in_prompt
+
     @property
     def permissions(self) -> Permissions:
         """:class:`Permissions`: Returns the role's permissions."""
