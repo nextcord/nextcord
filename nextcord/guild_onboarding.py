@@ -72,12 +72,23 @@ class OnboardingPrompt:
     title: :class:`str`
         The prompt's title.
     single_select: :class:`bool`
-        Whether or not the user can select one or multiple options.
+        Whether the user is restricted to selecting only one option.
     required: :class:`bool`
-        Whether or not the prompt is required to answer.
+        Whether the prompt is required before a user completes the onboarding flow.
     in_onboarding: :class:`bool`
-        Whether or not the prompt is visible on the onboarding screen.
+        Whether the prompt is present in the onboarding flow. 
+        If ``False``, the prompt will only appear in the Channels & Roles tab.
     """
+
+    __slots__ = (
+        "id",
+        "type",
+        "options",
+        "title",
+        "single_select",
+        "required",
+        "in_onboarding",
+    )
 
     def __init__(self, *, data: OnboardingPromptPayload) -> None:
         self.id: int = int(data["id"])
@@ -105,8 +116,16 @@ class Onboarding:
     default_channel_ids: List[:class:`int`]
         The list of the IDs of channels that users are opted into immediately.
     enabled: :class:`bool`
-        Whether or not this screen is enabled.
+        Whether this screen is enabled.
     """
+
+    __slots__ = (
+        "guild",
+        "guild_id",
+        "prompts",
+        "default_channel_ids",
+        "enabled",
+    )
 
     def __init__(self, *, guild: Guild, data: OnboardingPayload) -> None:
         self.guild: Guild = guild

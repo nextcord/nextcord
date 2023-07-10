@@ -2084,7 +2084,7 @@ class Guild(Hashable):
         channel: GuildChannel = factory(guild=self, state=self._state, data=data)  # type: ignore
         return channel
 
-    async def fetch_onboarding(self) -> Onboarding:
+    async def onboarding(self) -> Onboarding:
         """|coro|
 
         Retrieves the :class:`Onboarding` for this guild.

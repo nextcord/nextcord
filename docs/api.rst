@@ -3142,6 +3142,18 @@ of :class:`enum.Enum`.
 
         The metadata value must be not equal to the guild's configured value.
 
+.. class:: OnboardingPromptType
+
+    Represents the type of :class:`OnboardingPrompt`.
+
+    .. attribute:: multiple_choice
+
+        A prompt with multiple choices.
+
+    .. attribute:: dropdown
+
+        A prompt with a dropdown.
+
 
 Async Iterator
 --------------

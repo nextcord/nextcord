@@ -739,8 +739,8 @@ class ForumLayoutType(IntEnum):
 
 
 class OnboardingPromptType(IntEnum):
-    MULTIPLE_CHOICE = 0
-    DROPDOWN = 1
+    multiple_choice = 0
+    dropdown = 1
 
 
 T = TypeVar("T")
