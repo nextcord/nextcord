@@ -308,7 +308,7 @@ class Role(Hashable):
 
     def is_in_prompt(self) -> bool:
         """:class:`bool`: Whether the role can be selected in an onboarding prompt.
-        
+
         .. versionadded:: 2.6
         """
         return self.flags.in_prompt
