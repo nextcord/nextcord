@@ -126,7 +126,7 @@ class User(Snowflake, Protocol):
 
         .. warning::
             This field is deprecated, and will only return if the user has not yet migrated to the
-            new new `username <https://dis.gd/usernames>`_ update.
+            new `username <https://dis.gd/usernames>`_ update.
         .. deprecated:: 2.6
     avatar: :class:`~nextcord.Asset`
         The avatar asset the user has.
