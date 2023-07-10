@@ -157,7 +157,7 @@ class Attachment(Hashable):
         "_http",
         "content_type",
         "description",
-        "_flags"
+        "_flags",
     )
 
     def __init__(self, *, data: AttachmentPayload, state: ConnectionState) -> None:
@@ -370,6 +370,7 @@ class Attachment(Hashable):
         .. versionadded:: 2.6
         """
         return ApplicationFlags._from_value(self._flags)
+
 
 class DeletedReferencedMessage:
     """A special sentinel type that denotes whether the

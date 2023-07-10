@@ -1328,6 +1328,7 @@ class AttachmentFlags(BaseFlags):
         The raw value. You should query flags via the properties
         rather than using this raw value.
     """
+
     @flag_value
     def is_remix(self):
         """:class:`bool`: Returns ``True`` if the attachment has been edited using the remix feature on mobile.
