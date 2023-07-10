@@ -300,7 +300,7 @@ class ClientUser(BaseUser):
         The user's username.
     id: :class:`int`
         The user's unique ID.
-    global_name: :class:`str`
+    global_name: Optional[:class:`str`]
         The user's display name, if any.
 
         .. versionadded: 2.6
@@ -435,7 +435,7 @@ class User(BaseUser, abc.Messageable):
         The user's username.
     id: :class:`int`
         The user's unique ID.
-    global_name: :class:`str`
+    global_name: Optional[:class:`str`]
         The user's default name, if any.
 
         ..versionadded: 2.6
