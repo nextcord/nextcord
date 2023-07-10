@@ -507,7 +507,7 @@ class Role(Hashable):
     @property
     def flags(self) -> RoleFlags:
         """:class:`RoleFlags`: The avaliable flags the role has.
-        
+
         .. versionadded:: 2.6
         """
         return RoleFlags._from_value(self._flags)
