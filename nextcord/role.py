@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-from nextcord.flags import RoleFlags
-
 from .asset import Asset
 from .colour import Colour
 from .errors import InvalidArgument
+from .flags import RoleFlags
 from .mixins import Hashable
 from .permissions import Permissions
 from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
