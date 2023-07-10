@@ -198,7 +198,7 @@ class Role(Hashable):
         "tags",
         "_icon",
         "_state",
-        "flags",
+        "_flags",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload) -> None:
@@ -267,7 +267,7 @@ class Role(Hashable):
         except KeyError:
             self.tags = None
 
-        self.flags: Optional[RoleFlags] = data.get("flags")
+        self._flags = data.get("flags", 0)
 
     def is_default(self) -> bool:
         """:class:`bool`: Checks if the role is the default role."""
@@ -503,3 +503,11 @@ class Role(Hashable):
         """
 
         await self._state.http.delete_role(self.guild.id, self.id, reason=reason)
+
+    @property
+    def flags(self) -> RoleFlags:
+        """:class:`RoleFlags`: The avaliable flags the role has.
+        
+        .. versionadded:: 2.6
+        """
+        return RoleFlags._from_value(self._flags)
