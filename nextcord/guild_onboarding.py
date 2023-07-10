@@ -76,7 +76,7 @@ class OnboardingPrompt:
     required: :class:`bool`
         Whether the prompt is required before a user completes the onboarding flow.
     in_onboarding: :class:`bool`
-        Whether the prompt is present in the onboarding flow. 
+        Whether the prompt is present in the onboarding flow.
         If ``False``, the prompt will only appear in the Channels & Roles tab.
     """
 
