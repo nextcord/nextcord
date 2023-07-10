@@ -179,10 +179,6 @@ class Role(Hashable):
         Indicates if the role can be mentioned by users.
     tags: Optional[:class:`RoleTags`]
         The role tags associated with this role.
-    flags: :class:`RoleFlags`
-        The role's flags
-
-        .. versionadded:: 2.6
     """
 
     __slots__ = (
