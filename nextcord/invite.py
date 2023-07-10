@@ -495,5 +495,6 @@ class Invite(Hashable):
     def flags(self) -> InviteFlags:
         """:class:`InviteFlags`: The avaliable flags the invite has.
 
-        .. versionadded:: 2.6"""
+        .. versionadded:: 2.6
+        """
         return InviteFlags._from_value(self._flags)
