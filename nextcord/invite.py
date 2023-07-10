@@ -365,7 +365,7 @@ class Invite(Hashable):
             PartialAppInfo(data=application, state=state) if application else None
         )
 
-        self._flags: InviteFlags | int | Any = data.get("flags", 0)
+        self._flags = data.get("flags", 0)
 
     @classmethod
     def from_incomplete(cls, *, state: ConnectionState, data: InvitePayload) -> Self:
