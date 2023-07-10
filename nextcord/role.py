@@ -182,6 +182,8 @@ class Role(Hashable):
         The role tags associated with this role.
     flags: :class:`RoleFlags`
         The role's flags
+
+        .. versionadded:: 2.6
     """
 
     __slots__ = (
