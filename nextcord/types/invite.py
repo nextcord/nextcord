@@ -40,7 +40,7 @@ class Invite(IncompleteInvite, total=False):
     target_user: PartialUser
     target_type: InviteTargetType
     target_application: PartialAppInfo
-    flags: InviteFlags
+    flags: int
 
 
 class InviteWithCounts(Invite, _GuildPreviewUnique):
