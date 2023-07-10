@@ -41,6 +41,7 @@ class Attachment(TypedDict):
     description: NotRequired[str]
     content_type: NotRequired[str]
     spoiler: NotRequired[bool]
+    flags: NotRequired[Optional[int]]
 
 
 MessageActivityType = Literal[1, 2, 3, 5]
