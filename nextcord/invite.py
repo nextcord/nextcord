@@ -21,8 +21,8 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .abc import GuildChannel
-    from .guild import Guild
     from .flags import InviteFlags
+    from .guild import Guild
     from .state import ConnectionState
     from .types.channel import PartialChannel as InviteChannelPayload
     from .types.invite import (
@@ -494,6 +494,6 @@ class Invite(Hashable):
     @property
     def flags(self) -> InviteFlags:
         """:class:`InviteFlags`: The avaliable flags the invite has.
-        
+
         .. versionadded:: 2.6"""
         return InviteFlags._from_value(self._flags)
