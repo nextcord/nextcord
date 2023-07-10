@@ -6,7 +6,6 @@ from typing import Literal, Optional, TypedDict, Union
 
 from typing_extensions import NotRequired
 
-from ..flags import InviteFlags
 from .appinfo import PartialAppInfo
 from .channel import PartialChannel
 from .guild import InviteGuild, _GuildPreviewUnique
@@ -61,7 +60,7 @@ class GatewayInviteCreate(TypedDict):
     target_type: NotRequired[InviteTargetType]
     target_user: NotRequired[PartialUser]
     target_application: NotRequired[PartialAppInfo]
-    flags: InviteFlags
+    flags: int
 
 
 class GatewayInviteDelete(TypedDict):
