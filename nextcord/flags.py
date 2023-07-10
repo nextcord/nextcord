@@ -1332,7 +1332,7 @@ class InviteFlags(BaseFlags):
 
     @flag_value
     def guest(self):
-        """:class:`bool`: Returns ``True`` if invite is a guest invite.
+        """:class:`bool`: Returns ``True`` if the invite is a guest invite.
 
         .. versionadded:: 2.6
         """
