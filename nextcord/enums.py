@@ -694,6 +694,7 @@ class ScheduledEventStatus(IntEnum):
 
 class AutoModerationEventType(IntEnum):
     message_send = 1
+    member_update = 2
 
 
 class AutoModerationTriggerType(IntEnum):
@@ -701,6 +702,7 @@ class AutoModerationTriggerType(IntEnum):
     spam = 3
     keyword_preset = 4
     mention_spam = 5
+    member_profile = 6
 
 
 class KeywordPresetType(IntEnum):
@@ -713,6 +715,7 @@ class AutoModerationActionType(IntEnum):
     block_message = 1
     send_alert_message = 2
     timeout = 3
+    block_member_interaction = 4
 
 
 class SortOrderType(IntEnum):

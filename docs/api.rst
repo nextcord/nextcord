@@ -3016,6 +3016,12 @@ of :class:`enum.Enum`.
 
         A member sends or edits a message in the guild.
 
+    .. attribute:: member_profile
+
+        A member edits their profile.
+
+        .. versionadded:: 2.6
+
 .. class:: AutoModerationTriggerType
 
     Represents the type of content which can trigger an auto moderation rule.
@@ -3083,6 +3089,12 @@ of :class:`enum.Enum`.
         .. note::
 
             This action type can only be used with the :attr:`Permissions.moderate_members` permission.
+
+    .. attribute:: block_member_interaction
+
+        Prevents a member from using text, voice, or other interactions.
+
+        .. versionadded:: 2.6
 
 .. class:: SortOrderType
 
