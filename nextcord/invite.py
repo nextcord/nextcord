@@ -22,12 +22,12 @@ if TYPE_CHECKING:
 
     from .abc import GuildChannel
     from .guild import Guild
+    from .flags import InviteFlags
     from .state import ConnectionState
     from .types.channel import PartialChannel as InviteChannelPayload
     from .types.invite import (
         GatewayInvite as GatewayInvitePayload,
         Invite as InvitePayload,
-        InviteFlags as InviteFlagsPayload,
         InviteGuild as InviteGuildPayload,
         VanityInvite as VanityInvitePayload,
     )
@@ -294,10 +294,6 @@ class Invite(Hashable):
         The embedded application the invite targets, if any.
 
         .. versionadded:: 2.0
-    flags: Optional[:class:`InviteFlags`]
-        The invite's flags.
-
-        .. versionadded:: 2.6
     """
 
     __slots__ = (
@@ -318,7 +314,7 @@ class Invite(Hashable):
         "approximate_presence_count",
         "target_application",
         "expires_at",
-        "flags",
+        "_flags",
     )
 
     BASE = "https://discord.gg"
@@ -369,7 +365,7 @@ class Invite(Hashable):
             PartialAppInfo(data=application, state=state) if application else None
         )
 
-        self.flags: Optional[InviteFlagsPayload] = data.get("flags")
+        self._flags: InviteFlags | int | Any = data.get("flags", 0)
 
     @classmethod
     def from_incomplete(cls, *, state: ConnectionState, data: InvitePayload) -> Self:
@@ -494,3 +490,10 @@ class Invite(Hashable):
             return
 
         await self._state.http.delete_invite(self.code, reason=reason)
+
+    @property
+    def flags(self) -> InviteFlags:
+        """:class:`InviteFlags`: The avaliable flags the invite has.
+        
+        .. versionadded:: 2.6"""
+        return InviteFlags._from_value(self._flags)
