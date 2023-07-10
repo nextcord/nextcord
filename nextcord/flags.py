@@ -1302,7 +1302,7 @@ class ApplicationFlags(BaseFlags):
 
 @fill_with_flags()
 class InviteFlags(BaseFlags):
-    r"""Wraps up the Discord Guild Flags.
+    r"""Wraps up the Invite Flags.
 
     .. container:: operations
 
