@@ -22,7 +22,7 @@ class Role(TypedDict):
     tags: NotRequired[RoleTags]
     unicode_emoji: NotRequired[str]
     icon: NotRequired[str]
-    flags: RoleFlags
+    flags: int
 
 
 class RoleTags(TypedDict, total=False):
