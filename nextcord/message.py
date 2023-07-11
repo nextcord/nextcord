@@ -27,7 +27,7 @@ from .emoji import Emoji
 from .enums import ChannelType, MessageType, try_enum
 from .errors import HTTPException, InvalidArgument
 from .file import File
-from .flags import ApplicationFlags, MessageFlags
+from .flags import ApplicationFlags, AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
@@ -364,12 +364,12 @@ class Attachment(Hashable):
         return result
 
     @property
-    def flags(self) -> Optional[ApplicationFlags]:
-        """:class:`bool`: Whether the attachment has been edited using the remix feature on mobile.
+    def flags(self) -> Optional[AttachmentFlags]:
+        """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
 
         .. versionadded:: 2.6
         """
-        return ApplicationFlags._from_value(self._flags)
+        return AttachmentFlags._from_value(self._flags)
 
 
 class DeletedReferencedMessage:
