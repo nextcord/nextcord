@@ -27,7 +27,7 @@ from .emoji import Emoji
 from .enums import ChannelType, MessageType, try_enum
 from .errors import HTTPException, InvalidArgument
 from .file import File
-from .flags import ApplicationFlags, AttachmentFlags, MessageFlags
+from .flags import AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
