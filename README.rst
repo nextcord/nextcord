@@ -114,4 +114,4 @@ Links
 
 - `Documentation <https://docs.nextcord.dev/>`_
 - `Official Discord Server <https://discord.gg/nextcord>`_
-- `Discord API <https://discord.gg/discord-api>`_
+- `Discord API <https://discord.gg/discord-developers>`_
