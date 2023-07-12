@@ -254,7 +254,7 @@ class Guild(Hashable):
     max_stage_video_channel_users: Optional[:class:`int`]
         The maximum amount of users in a stage channel when video is being broadcasted.
 
-        .. versionadded:: 2.5
+        .. versionadded:: 2.6
     """
 
     __slots__ = (
@@ -1379,24 +1379,24 @@ class Guild(Hashable):
         bitrate: Optional[:class:`int`]
             The channel's preferred audio bitrate in bits per second.
 
-            .. versionadded:: 2.5
+            .. versionadded:: 2.6
         user_limit: :class:`int`
             The channel's limit for number of members that can be in a voice channel.
 
-            .. versionadded:: 2.5
+            .. versionadded:: 2.6
         rtc_region: Optional[:class:`VoiceRegion`]
             The region for the voice channel's voice communication.
             A value of ``None`` indicates automatic voice region detection.
 
-            .. versionadded:: 2.5
+            .. versionadded:: 2.6
         nsfw: :class:`bool`
             To mark the channel as NSFW or not.
 
-            .. versionadded:: 2.5
+            .. versionadded:: 2.6
         video_quality_mode: :class:`VideoQualityMode`
             The camera video quality for the voice channel's participants.
 
-            .. versionadded:: 2.5
+            .. versionadded:: 2.6
         reason: Optional[:class:`str`]
             The reason for creating this channel. Shows up on the audit log.
 

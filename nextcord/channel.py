@@ -2310,7 +2310,7 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
             This must be between ``0`` and ``10,000``. A value of ``0`` indicates
             no limit.
 
-            .. versionadded:: 2.5
+            .. versionadded:: 2.6
 
         Raises
         ------

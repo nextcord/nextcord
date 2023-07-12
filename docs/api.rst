@@ -1498,22 +1498,22 @@ of :class:`enum.Enum`.
 
         The system message denoting that a stage channel has started.
 
-        .. versionadded:: 2.5
+        .. versionadded:: 2.6
     .. attribute:: stage_end
 
             The system message denoting that a stage channel has ended.
 
-            .. versionadded:: 2.5
+            .. versionadded:: 2.6
     .. attribute:: stage_speaker
 
         The system message denoting that a stage channel has a new speaker.
 
-        .. versionadded:: 2.5
+        .. versionadded:: 2.6
     .. attribute:: stage_topic
 
         The system message denoting that a stage channel has a new topic.
 
-        .. versionadded:: 2.5
+        .. versionadded:: 2.6
 
 .. class:: UserFlags
 
