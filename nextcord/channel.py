@@ -2075,7 +2075,7 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
     nsfw: :class:`bool`
         If the channel is marked as "not safe for work".
 
-        .. versionadded:: 2.5
+        .. versionadded:: 2.6
 
         .. note::
 
