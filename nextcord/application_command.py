@@ -46,6 +46,7 @@ from .guild import Guild
 from .interactions import Interaction
 from .member import Member
 from .message import Attachment, Message
+from .object import Object
 from .permissions import Permissions
 from .role import Role
 from .threads import Thread
@@ -1213,6 +1214,10 @@ class AutocompleteCommandMixin:
             To use inputs from other options inputted in the command, you can add them as arguments to the autocomplete
             callback. The order of the arguments does not matter, but the names do.
 
+            If you are using :class:`nextcord.Member` or :class:`nextcord.User` typehints in
+            your autocompletes then just note that the objects provided can be both `None` and
+            :class:`nextcord.Object` depending on the data Discord sends.
+
         Parameters
         ----------
         on_kwarg: :class:`str`
@@ -1683,7 +1688,25 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         elif self.type is ApplicationCommandOptionType.user:
             user_id = int(value)
             user_dict = {user.id: user for user in get_users_from_interaction(state, interaction)}
-            value = user_dict[user_id]
+            try:
+                value = user_dict[user_id]
+            except KeyError:
+                # By here the interaction data doesn't contain
+                # a full member/user object yet so fall back to bot cache
+                value = None
+                data = cast(ApplicationCommandInteractionData, interaction.data)
+                if guild_id := data.get("guild_id"):
+                    if guild := state._guilds.get(int(guild_id)):
+                        value = guild.get_member(user_id)
+
+                if value is None:
+                    # Either we aren't in a guild or
+                    # the member object is not cached
+                    value = state._users.get(user_id)
+
+                    if value is None:
+                        # Fall back to a Object at-least
+                        value = Object(id=user_id)
         elif self.type is ApplicationCommandOptionType.role:
             if interaction.guild is None:
                 raise TypeError("Unable to handle a Role type when guild is None")
