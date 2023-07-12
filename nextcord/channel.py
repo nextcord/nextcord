@@ -12,6 +12,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -715,7 +716,9 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         name: str,
         message: Optional[Snowflake] = None,
         auto_archive_duration: ThreadArchiveDuration = MISSING,
-        type: Optional[ChannelType] = None,
+        type: Optional[
+            Literal[ChannelType.news_thread, ChannelType.public_thread, ChannelType.private_thread]
+        ] = None,
         invitable: bool = True,
         reason: Optional[str] = None,
     ) -> Thread:
@@ -3022,7 +3025,7 @@ class ForumTag:
     @classmethod
     def from_data(cls, data: ForumTagPayload) -> ForumTag:
         return cls(
-            id=int(data["id"]) if data["id"] is not None else None,
+            id=int(data["id"]),
             name=data["name"],
             moderated=data["moderated"],
             emoji=PartialEmoji.from_default_reaction(data),

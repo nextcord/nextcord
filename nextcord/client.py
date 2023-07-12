@@ -789,7 +789,7 @@ class Client:
                 # if an error happens during disconnects, disregard it.
                 pass
 
-        if self.ws is not None and self.ws.open:
+        if self.ws is not None and self.ws.open:  # pyright: ignore
             await self.ws.close(code=1000)
 
         await self.http.close()
@@ -1330,7 +1330,7 @@ class Client:
 
         for guild in self._connection.guilds:
             me = guild.me
-            if me is None:
+            if me is None:  # pyright: ignore[reportUnnecessaryComparison]
                 continue
 
             if activity is not None:
