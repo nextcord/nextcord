@@ -340,9 +340,8 @@ class ClientUser(BaseUser):
     def __repr__(self) -> str:
         return (
             f"<ClientUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
-            f" discriminator={self.discriminator!r}"
-            if self.discriminator != "0"
-            else "" f" bot={self.bot} verified={self.verified}" f" mfa_enabled={self.mfa_enabled}>"
+            + (f" discriminator={self.discriminator!r}" if self.discriminator != "0" else "") 
+            + f" bot={self.bot} verified={self.verified} mfa_enabled={self.mfa_enabled}>"
         )
 
     def _update(self, data: UserPayload) -> None:
