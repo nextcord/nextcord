@@ -171,7 +171,7 @@ class Attachment(Hashable):
         self._http = state.http
         self.content_type: Optional[str] = data.get("content_type")
         self.description: Optional[str] = data.get("description")
-        self._flags: Optional[int] = data.get("flags")
+        self._flags: int = data.get("flags", 0)
 
     def is_spoiler(self) -> bool:
         """:class:`bool`: Whether this attachment contains a spoiler."""
@@ -364,7 +364,7 @@ class Attachment(Hashable):
         return result
 
     @property
-    def flags(self) -> Optional[AttachmentFlags]:
+    def flags(self) -> AttachmentFlags:
         """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
 
         .. versionadded:: 2.6
