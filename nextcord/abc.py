@@ -117,8 +117,17 @@ class User(Snowflake, Protocol):
     ----------
     name: :class:`str`
         The user's username.
+    global_name: :class:`str`
+        The user's global name. This is represented in the UI as "Display Name"
+
+        .. versionadded:: 2.6
     discriminator: :class:`str`
         The user's discriminator.
+
+        .. warning::
+            This field is deprecated, and will only return if the user has not yet migrated to the
+            new `username <https://dis.gd/usernames>`_ update.
+        .. deprecated:: 2.6
     avatar: :class:`~nextcord.Asset`
         The avatar asset the user has.
     bot: :class:`bool`
@@ -128,6 +137,7 @@ class User(Snowflake, Protocol):
     __slots__ = ()
 
     name: str
+    global_name: str
     discriminator: str
     avatar: Asset
     bot: bool

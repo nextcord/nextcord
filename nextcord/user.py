@@ -48,6 +48,7 @@ class BaseUser(_UserTag):
         "system",
         "_public_flags",
         "_state",
+        "global_name",
     )
 
     if TYPE_CHECKING:
@@ -56,6 +57,7 @@ class BaseUser(_UserTag):
         discriminator: str
         bot: bool
         system: bool
+        global_name: Optional[str]
         _state: ConnectionState
         _avatar: Optional[str]
         _banner: Optional[str]
@@ -70,12 +72,13 @@ class BaseUser(_UserTag):
 
     def __repr__(self) -> str:
         return (
-            f"<BaseUser id={self.id} name={self.name!r} discriminator={self.discriminator!r}"
-            f" bot={self.bot} system={self.system}>"
+            f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            + (f" discriminator={self.discriminator!r}" if self.discriminator != "0" else "")
+            + f" bot={self.bot} system={self.system}>"
         )
 
     def __str__(self) -> str:
-        return f"{self.name}#{self.discriminator}"
+        return f"{self.name}#{self.discriminator}" if self.discriminator != "0" else self.name
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, _UserTag) and other.id == self.id
@@ -89,13 +92,14 @@ class BaseUser(_UserTag):
     def _update(self, data: Union[PartialUserPayload, UserPayload]) -> None:
         self.name = data["username"]
         self.id = int(data["id"])
-        self.discriminator = data["discriminator"]
+        self.discriminator = data.get("discriminator")
         self._avatar = data["avatar"]
         self._banner = data.get("banner", None)
         self._accent_colour = data.get("accent_color", None)
         self._public_flags = data.get("public_flags", 0)
         self.bot = data.get("bot", False)
         self.system = data.get("system", False)
+        self.global_name = data.get("global_name", None)
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -118,7 +122,8 @@ class BaseUser(_UserTag):
             "username": self.name,
             "id": self.id,
             "avatar": self._avatar,
-            "discriminator": self.discriminator,
+            "global_name": self.global_name,
+            "discriminator": self.discriminator,  # TODO: possibly remove this?
             "bot": self.bot,
         }
 
@@ -143,8 +148,15 @@ class BaseUser(_UserTag):
         """:class:`Asset`: Returns the default avatar for a given user.
 
         This is calculated by the user's discriminator.
+
+        ..versionchanged:: 2.6
+            Added handling for the new username system for users without a discriminator.
         """
-        return Asset._from_default_avatar(self._state, int(self.discriminator) % len(DefaultAvatar))
+        if self.discriminator != "0":
+            avatar_index = (self.id >> 22) % len(DefaultAvatar)
+        else:
+            avatar_index = int(self.discriminator) % 5
+        return Asset._from_default_avatar(self._state, avatar_index)
 
     @property
     def display_avatar(self) -> Asset:
@@ -288,8 +300,17 @@ class ClientUser(BaseUser):
         The user's username.
     id: :class:`int`
         The user's unique ID.
+    global_name: Optional[:class:`str`]
+        The user's display name, if any.
+
+        .. versionadded: 2.6
     discriminator: :class:`str`
-        The user's discriminator. This is given when the username has conflicts.
+        The user's discriminator.
+
+        .. warning::
+            This field is deprecated, and will only return if the user has not yet migrated to the
+            new `username <https://dis.gd/usernames>`_ update.
+        .. deprecated:: 2.6
     bot: :class:`bool`
         Specifies if the user is a bot account.
     system: :class:`bool`
@@ -318,8 +339,9 @@ class ClientUser(BaseUser):
 
     def __repr__(self) -> str:
         return (
-            f"<ClientUser id={self.id} name={self.name!r} discriminator={self.discriminator!r}"
-            f" bot={self.bot} verified={self.verified} mfa_enabled={self.mfa_enabled}>"
+            f"<ClientUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            + (f" discriminator={self.discriminator!r}" if self.discriminator != "0" else "")
+            + f" bot={self.bot} verified={self.verified} mfa_enabled={self.mfa_enabled}>"
         )
 
     def _update(self, data: UserPayload) -> None:
@@ -412,8 +434,17 @@ class User(BaseUser, abc.Messageable):
         The user's username.
     id: :class:`int`
         The user's unique ID.
+    global_name: Optional[:class:`str`]
+        The user's default name, if any.
+
+        ..versionadded: 2.6
     discriminator: :class:`str`
-        The user's discriminator. This is given when the username has conflicts.
+        The user's discriminator.
+
+        .. warning::
+          This field is deprecated, and will only return if the user has not yet migrated to the
+          new `username <https://dis.gd/usernames>`_ update.
+        .. deprecated:: 2.6
     bot: :class:`bool`
         Specifies if the user is a bot account.
     system: :class:`bool`
@@ -429,7 +460,11 @@ class User(BaseUser, abc.Messageable):
         self._stored: bool = False
 
     def __repr__(self) -> str:
-        return f"<User id={self.id} name={self.name!r} discriminator={self.discriminator!r} bot={self.bot}>"
+        return (
+            f"<User id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            + (f" discriminator={self.discriminator!r}" if self.discriminator != "0" else "")
+            + f" bot={self.bot}>"
+        )
 
     def __del__(self) -> None:
         try:
