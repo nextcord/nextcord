@@ -444,7 +444,7 @@ class User(BaseUser, abc.Messageable):
 
         .. warning::
           This field is deprecated, and will only return if the user has not yet migrated to the
-          new [username](https://dis.gd/usernames) update.
+          new `username <https://dis.gd/usernames>`_ update.
         .. deprecated:: 2.6
     bot: :class:`bool`
         Specifies if the user is a bot account.
