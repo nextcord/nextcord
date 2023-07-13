@@ -375,6 +375,7 @@ class Attachment(Hashable):
         """:class:`bool`: Whether the attachment is remixed."""
         return self.flags.is_remix
 
+
 class DeletedReferencedMessage:
     """A special sentinel type that denotes whether the
     resolved message referenced message had since been deleted.
