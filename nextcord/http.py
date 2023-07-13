@@ -519,12 +519,6 @@ class HTTPClient:
         """{"Auth string": RateLimit}, None for auth-less ratelimit."""
         self._url_rate_limits: dict[tuple[str, str, str | None], RateLimit] = {}
         """{("METHOD", "Route.bucket", "auth string"): RateLimit} auth string may be None to indicate auth-less."""
-        # TODO: Is this worth keeping? May reduce errors, thus cloudflare bannability.
-        self._url_deny_list: set[tuple[str, str, str | None]] = set()
-        """{("METHOD", "route", "auth string"), ...}
-
-        Paths that result in a 404. These will immediately error if a request is made to them.
-        """
 
     def _make_global_rate_limit(self, auth: str | None, max_per_second: int) -> GlobalRateLimit:
         _log.debug(
@@ -615,7 +609,6 @@ class HTTPClient:
 
         headers = self._make_headers(kwargs.pop("headers", {}), auth=auth)
 
-        # TODO: Look into integrating this better?
         try:
             reason = kwargs.pop("reason")
         except KeyError:
@@ -625,11 +618,6 @@ class HTTPClient:
                 headers["X-Audit-Log-Reason"] = _uriquote(reason, safe="/ ")
 
         auth = headers.get("Authorization")
-
-        # TODO: I can't actually add this because NotFound cannot take None. I'd have to modify that to work, which
-        #  is another breaking change.
-        # if self._check_url_deny(route.method, route, auth):
-        #     raise NotFound(None, "The given path has already resulted in a 404 and was added to the deny list.")
 
         # If a global rate limit for this authorization doesn't exist yet, make it.
         if (global_rate_limit := self._global_rate_limits.get(auth)) is None:
@@ -658,8 +646,6 @@ class HTTPClient:
             try:
                 async with global_rate_limit:
                     async with url_rate_limit:
-                        # TODO: Worth? It's only useful when doing asyncio.gather()'d requests AFAIK, but it's very
-                        #  useful for avoiding 429's when doing that.
                         # This check is for asyncio.gather()'d requests where the rate limit can change.
                         if (
                             temp := self._get_url_rate_limit(route.method, route, auth)
@@ -672,12 +658,10 @@ class HTTPClient:
                             url_rate_limit = temp
                             continue
 
-                        # TODO: Figure out why this is required.
                         if files:
                             for f in files:
                                 f.reset(seek=retry_count)
 
-                        # TODO: I feel like this can be handled more gracefully.
                         if form:
                             form_data = aiohttp.FormData(quote_fields=False)
                             for params in form:
@@ -785,10 +769,9 @@ class HTTPClient:
                                         rate_limit_path,
                                     )
                                     raise Forbidden(response, ret)
-                                # TODO: Is this still viable to keep?
                                 elif response.status == 404:
                                     _log.warning(
-                                        "Path %s resulted in error 404, added to deny list. Check your path?",
+                                        "Path %s resulted in error 404, check your path?",
                                         rate_limit_path,
                                     )
                                     self._add_url_deny(route.method, route, auth)
