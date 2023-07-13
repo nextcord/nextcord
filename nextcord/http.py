@@ -1503,6 +1503,7 @@ class HTTPClient:
             "default_thread_rate_limit_per_user",
             "default_reaction_emoji",
             "available_tags",
+            "default_forum_layout",
         )
         payload.update({k: v for k, v in options.items() if k in valid_keys and v is not None})
 
@@ -1796,6 +1797,9 @@ class HTTPClient:
     def get_guild(self, guild_id: Snowflake, *, with_counts: bool = True) -> Response[guild.Guild]:
         params = {"with_counts": int(with_counts)}
         return self.request(Route("GET", "/guilds/{guild_id}", guild_id=guild_id), params=params)
+
+    def get_guild_preview(self, guild_id: Snowflake) -> Response[guild.GuildPreview]:
+        return self.request(Route("GET", "/guilds/{guild_id}/preview", guild_id=guild_id))
 
     def delete_guild(self, guild_id: Snowflake) -> Response[None]:
         return self.request(Route("DELETE", "/guilds/{guild_id}", guild_id=guild_id))
@@ -2204,7 +2208,7 @@ class HTTPClient:
         if user_id:
             params["user_id"] = user_id
         if action_type:
-            params["action_type"] = action_type
+            params["action_type"] = action_type.value
 
         r = Route("GET", "/guilds/{guild_id}/audit-logs", guild_id=guild_id)
         return self.request(r, params=params)

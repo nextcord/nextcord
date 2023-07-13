@@ -49,7 +49,6 @@ if TYPE_CHECKING:
     from nextcord.flags import MemberCacheFlags
     from nextcord.mentions import AllowedMentions
     from nextcord.message import Message
-    from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from ._types import Check, CoroFunc
 
@@ -695,7 +694,7 @@ class BotBase(GroupMixin):
 
         # remove all the commands from the module
         for cmd in self.all_commands.copy().values():
-            if cmd.module is not None and _is_submodule(name, cmd.module):
+            if _is_submodule(name, cmd.module):
                 if isinstance(cmd, GroupMixin):
                     cmd.recursively_remove_all_commands()
                 self.remove_command(cmd.name)
@@ -704,7 +703,7 @@ class BotBase(GroupMixin):
         for event_list in self.extra_events.copy().values():
             remove = []
             for index, event in enumerate(event_list):
-                if event.__module__ is not None and _is_submodule(name, event.__module__):
+                if _is_submodule(name, event.__module__):
                     remove.append(index)
 
             for index in reversed(remove):
@@ -1290,8 +1289,7 @@ class BotBase(GroupMixin):
         """
 
         view = StringView(message.content)
-        ctx: CXT = cls(prefix=None, view=view, bot=self, message=message)  # type: ignore
-        # pyright/lance has no idea how typevars work for some reason
+        ctx: CXT = cls(prefix=None, view=view, bot=self, message=message)
 
         if message.author.id == self.user.id:  # type: ignore
             return ctx
@@ -1428,128 +1426,6 @@ class BotBase(GroupMixin):
 
     async def on_message(self, message) -> None:
         await self.process_commands(message)
-
-    def add_application_command_check(self, func: ApplicationCheck) -> None:
-        """Adds a global application check to the bot.
-
-        This is the non-decorator interface to :meth:`.check`
-        and :meth:`.check_once`.
-
-        Parameters
-        ----------
-        func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
-            The function that was used as a global application check.
-        """
-
-        self._connection._application_command_checks.append(func)  # type: ignore
-
-    def remove_application_command_check(self, func: ApplicationCheck) -> None:
-        """Removes a global check from the bot.
-
-        This function is idempotent and will not raise an exception
-        if the function is not in the global checks.
-
-        Parameters
-        ----------
-        func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
-            The function to remove from the global application checks.
-        """
-
-        try:
-            self._connection._application_command_checks.remove(func)  # type: ignore
-        except ValueError:
-            pass
-
-    def application_command_check(self, func: Callable) -> ApplicationCheck:
-        r"""A decorator that adds a global application check to the bot.
-
-        A global check is similar to a :func:`.check` that is applied
-        on a per command basis except it is run before any command checks
-        have been verified and applies to every command the bot has.
-
-        .. note::
-
-            This function can either be a regular function or a coroutine.
-
-        Similar to a command :func:`.check`\, this takes a single parameter
-        of type :class:`.Interaction` and can only raise exceptions inherited from
-        :exc:`.ApplicationError`.
-
-        Example
-        -------
-
-        .. code-block:: python3
-
-            @client.check
-            def check_commands(interaction: Interaction) -> bool:
-                return interaction.application_command.qualified_name in allowed_commands
-
-        """
-        return self.add_application_command_check(func)  # type: ignore
-
-    def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
-        """A decorator that registers a coroutine as a pre-invoke hook.
-
-        A pre-invoke hook is called directly before the command is
-        called. This makes it a useful function to set up database
-        connections or any type of set up required.
-
-        This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
-
-        .. note::
-
-            The :meth:`.application_command_before_invoke` and :meth:`.application_command_after_invoke`
-            hooks are only called if all checks pass without error. If any check fails, then the hooks
-            are not called.
-
-        Parameters
-        ----------
-        coro: :ref:`coroutine <coroutine>`
-            The coroutine to register as the pre-invoke hook.
-
-        Raises
-        ------
-        TypeError
-            The coroutine passed is not actually a coroutine.
-        """
-        if not asyncio.iscoroutinefunction(coro):
-            raise TypeError("The pre-invoke hook must be a coroutine.")
-
-        self._connection._application_command_before_invoke = coro  # type: ignore
-        return coro
-
-    def application_command_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
-        r"""A decorator that registers a coroutine as a post-invoke hook.
-
-        A post-invoke hook is called directly after the command is
-        called. This makes it a useful function to clean-up database
-        connections or any type of clean up required. There may only be
-        one global post-invoke hook.
-
-        This post-invoke hook takes a sole parameter, a :class:`.Interaction`.
-
-        .. note::
-
-            Similar to :meth:`~.Client.application_command_before_invoke`\, this is not called unless
-            checks succeed. This hook is, however, **always** called regardless of the internal command
-            callback raising an error (i.e. :exc:`.ApplicationInvokeError`\).
-            This makes it ideal for clean-up scenarios.
-
-        Parameters
-        ----------
-        coro: :ref:`coroutine`
-            The coroutine to register as the post-invoke hook.
-
-        Raises
-        ------
-        TypeError
-            The coroutine passed is not actually a coroutine.
-        """
-        if not asyncio.iscoroutinefunction(coro):
-            raise TypeError("The post-invoke hook must be a coroutine.")
-
-        self._connection._application_command_after_invoke = coro  # type: ignore
-        return coro
 
 
 class Bot(BotBase, nextcord.Client):

@@ -405,6 +405,8 @@ class DiscordWebSocket:
 
     async def identify(self) -> None:
         """Sends the IDENTIFY packet."""
+        state = self._connection
+
         payload = {
             "op": self.IDENTIFY,
             "d": {
@@ -416,13 +418,13 @@ class DiscordWebSocket:
                 },
                 "compress": True,
                 "large_threshold": 250,
+                "intents": state._intents.value,
             },
         }
 
         if self.shard_id is not None and self.shard_count is not None:
             payload["d"]["shard"] = [self.shard_id, self.shard_count]
 
-        state = self._connection
         if state._activity is not None or state._status is not None:
             payload["d"]["presence"] = {
                 "status": state._status,
@@ -430,9 +432,6 @@ class DiscordWebSocket:
                 "since": 0,
                 "afk": False,
             }
-
-        if state._intents is not None:
-            payload["d"]["intents"] = state._intents.value
 
         await self.call_hooks("before_identify", self.shard_id, initial=self._initial_identify)
         await self.send_as_json(payload)
@@ -468,7 +467,7 @@ class DiscordWebSocket:
 
         op: int = message["op"]
         data: Dict[str, Any] = message["d"]
-        seq: int = message["s"]
+        seq: Optional[int] = message["s"]
         if seq is not None:
             self.sequence = seq
 

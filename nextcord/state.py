@@ -19,7 +19,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Set,
     Tuple,
     TypeVar,
@@ -65,7 +64,6 @@ if TYPE_CHECKING:
     from .http import HTTPClient
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
-    from .types.checks import ApplicationCheck, ApplicationHook
     from .types.emoji import Emoji as EmojiPayload
     from .types.guild import Guild as GuildPayload
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
@@ -254,11 +252,6 @@ class ConnectionState:
             if attr.startswith("parse_"):
                 parsers[attr[6:].upper()] = func
 
-        # Global application command checks
-        self._application_command_checks: List[ApplicationCheck] = []
-        self._application_command_before_invoke: Optional[ApplicationHook] = None
-        self._application_command_after_invoke: Optional[ApplicationHook] = None
-
         self.clear()
 
     def clear(self, *, views: bool = True, modals: bool = True) -> None:
@@ -410,9 +403,11 @@ class ConnectionState:
     def prevent_view_updates_for(self, message_id: Optional[int]) -> Optional[View]:
         return self._view_store.remove_message_tracking(message_id)  # type: ignore
 
-    @property
-    def persistent_views(self) -> Sequence[View]:
-        return self._view_store.persistent_views
+    def all_views(self) -> List[View]:
+        return self._view_store.all_views()
+
+    def views(self, persistent: bool = True) -> List[View]:
+        return self._view_store.views(persistent)
 
     @property
     def guilds(self) -> List[Guild]:
@@ -852,9 +847,6 @@ class ConnectionState:
             else:
                 data = await self.http.get_global_commands(self.application_id)
 
-        if data is None:
-            raise NotImplementedError("Could not get application commands from Discord.")
-
         for raw_response in data:
             fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else None
             payload_type = raw_response["type"] if "type" in raw_response else 1
@@ -994,9 +986,6 @@ class ConnectionState:
             else:
                 data = await self.http.get_global_commands(self.application_id)
 
-        if data is None:
-            raise NotImplementedError("Could not get application commands from Discord.")
-
         data_signatures = [
             (
                 raw_response["name"],
@@ -1135,10 +1124,10 @@ class ConnectionState:
         user_ids: Optional[List[int]],
         cache: bool,
         presences: bool,
-    ):
+    ) -> List[Member]:
         guild_id = guild.id
         ws = self._get_websocket(guild_id)
-        if ws is None:
+        if ws is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise RuntimeError("Somehow do not have a websocket for this guild_id")
 
         request = ChunkRequest(guild.id, self.loop, self._get_guild, cache=cache)
@@ -2119,7 +2108,7 @@ class ConnectionState:
         self.dispatch("raw_typing", raw)
 
         channel, guild = self._get_guild_channel(data)
-        if channel is not None:
+        if channel is not None:  # pyright: ignore[reportUnnecessaryComparison]
             user = raw.member or self._get_typing_user(channel, raw.user_id)  # type: ignore
             # will be messageable channel if we get here
 
@@ -2132,7 +2121,7 @@ class ConnectionState:
         if isinstance(channel, DMChannel):
             return channel.recipient or self.get_user(user_id)
 
-        elif isinstance(channel, (Thread, TextChannel)) and channel.guild is not None:
+        elif isinstance(channel, (Thread, TextChannel)):
             return channel.guild.get_member(user_id)
 
         elif isinstance(channel, GroupChannel):
