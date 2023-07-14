@@ -1973,7 +1973,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
         """
-        return getattr(self.callback, "__required_permissions", {})
+        return getattr(self.callback, "__slash_required_permissions", {})
 
     @property
     def required_bot_permissions(self) -> Dict[str, bool]:
@@ -1990,7 +1990,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
         """
-        return getattr(self.callback, "__required_bot_permissions", {})
+        return getattr(self.callback, "__slash_required_bot_permissions", {})
 
     @property
     def required_guild_permissions(self) -> Dict[str, bool]:
@@ -2007,7 +2007,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
         """
-        return getattr(self.callback, "__required_guild_permissions", {})
+        return getattr(self.callback, "__slash_required_guild_permissions", {})
 
     @property
     def required_bot_guild_permissions(self) -> Dict[str, bool]:
@@ -2024,7 +2024,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         Dict[:class:`str`, :class:`bool`]
             A dictionary of the required permissions for this command.
         """
-        return getattr(self.callback, "__required_bot_guild_permissions", {})
+        return getattr(self.callback, "__slash_required_bot_guild_permissions", {})
 
     @property
     def qualified_name(self) -> str:

@@ -480,7 +480,7 @@ def has_permissions(**perms: bool) -> AC:
 
         raise ApplicationMissingPermissions(missing)
 
-    return _permission_check_wrapper(predicate, "__required_permissions", perms)
+    return _permission_check_wrapper(predicate, "__slash_required_permissions", perms)
 
 
 def bot_has_permissions(**perms: bool) -> AC:
@@ -514,7 +514,7 @@ def bot_has_permissions(**perms: bool) -> AC:
 
         raise ApplicationBotMissingPermissions(missing)
 
-    return _permission_check_wrapper(predicate, "__required_bot_permissions", perms)
+    return _permission_check_wrapper(predicate, "__slash_required_bot_permissions", perms)
 
 
 def has_guild_permissions(**perms: bool) -> AC:
@@ -556,7 +556,7 @@ def has_guild_permissions(**perms: bool) -> AC:
 
         raise ApplicationMissingPermissions(missing)
 
-    return _permission_check_wrapper(predicate, "__required_guild_permissions", perms)
+    return _permission_check_wrapper(predicate, "__slash_required_guild_permissions", perms)
 
 
 def bot_has_guild_permissions(**perms: bool) -> AC:
@@ -580,7 +580,7 @@ def bot_has_guild_permissions(**perms: bool) -> AC:
 
         raise ApplicationBotMissingPermissions(missing)
 
-    return _permission_check_wrapper(predicate, "__required_bot_guild_permissions", perms)
+    return _permission_check_wrapper(predicate, "__slash_required_bot_guild_permissions", perms)
 
 
 def dm_only() -> AC:
