@@ -551,12 +551,6 @@ class HTTPClient:
     def _get_url_rate_limit(self, method: str, route: Route, auth: str | None) -> RateLimit | None:
         return self._url_rate_limits.get((method, route.bucket, auth), None)
 
-    def _add_url_deny(self, method: str, route: Route, auth: str | None) -> None:
-        self._url_deny_list.add((method, route.bucket, auth))
-
-    def _check_url_deny(self, method: str, route: Route, auth: str | None) -> bool:
-        return (method, route.bucket, auth) in self._url_deny_list
-
     def _set_default_auth(self, auth: str | None) -> None:
         self._default_auth = auth
 
@@ -774,7 +768,6 @@ class HTTPClient:
                                         "Path %s resulted in error 404, check your path?",
                                         rate_limit_path,
                                     )
-                                    self._add_url_deny(route.method, route, auth)
                                     raise NotFound(response, ret)
                                 elif response.status == 429:
                                     _log.warning(
