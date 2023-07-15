@@ -5,12 +5,11 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
 if TYPE_CHECKING:
     from nextcord.application_command import (
         BaseApplicationCommand,
-        CallbackWrapper,
+        ClientCog,
         SlashApplicationSubcommand,
-        ClientCog
     )
-    from ..ext.application_checks.core import CheckWrapper
 
+    from ..ext.application_checks.core import CheckWrapper
     from ..interactions import Interaction
 
     T = TypeVar("T")
