@@ -3,7 +3,13 @@
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar, Union
 
 if TYPE_CHECKING:
-    from nextcord.application_command import ClientCog
+    from nextcord.application_command import (
+        BaseApplicationCommand,
+        CallbackWrapper,
+        SlashApplicationSubcommand,
+        ClientCog
+    )
+    from ..ext.application_checks.core import CheckWrapper
 
     from ..interactions import Interaction
 
@@ -12,6 +18,7 @@ if TYPE_CHECKING:
     Coro = Coroutine[Any, Any, T]
     MaybeCoro = Union[T, Coro[T]]
     CoroFunc = Callable[..., Coro[Any]]
+
     ApplicationCheck = Union[
         Callable[[ClientCog, Interaction], MaybeCoro[bool]],
         Callable[[Interaction], MaybeCoro[bool]],
