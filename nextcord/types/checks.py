@@ -15,6 +15,19 @@ if TYPE_CHECKING:
     ApplicationCheck = Union[
         Callable[[ClientCog, Interaction], MaybeCoro[bool]],
         Callable[[Interaction], MaybeCoro[bool]],
+    
+        Callable[
+            [
+                Union[
+                    CoroFunc,
+                    Callable[[Interaction], bool],
+                    BaseApplicationCommand,
+                    SlashApplicationSubcommand,
+                ]
+            ],
+            CheckWrapper,
+        ]
+    
     ]
     ApplicationHook = Union[
         Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
