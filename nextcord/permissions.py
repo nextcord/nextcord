@@ -559,7 +559,7 @@ class Permissions(BaseFlags):
 
     @flag_value
     def create_expressions(self) -> int:
-        """:class:`bool`: Returns ``True`` if the user can create expressions.
+        """:class:`bool`: Returns ``True`` if a user can create expressions.
 
         This includes creating emojis, stickers, and soundboard sounds.
 
