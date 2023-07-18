@@ -625,6 +625,11 @@ class GuildIterator(_AsyncIterator["Guild"]):
         The client to retrieve the guilds from.
     limit: :class:`int`
         Maximum number of guilds to retrieve.
+    with_counts: :class:`bool`
+        Whether to include approximate member and presence counts for the guilds.
+        Defaults to ``True``.
+
+        .. versionadded:: 2.6
     before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
         Object before which all guilds must be.
     after: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
@@ -635,6 +640,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         self,
         bot: Client,
         limit: Optional[int],
+        with_counts: bool = False,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
     ) -> None:
@@ -647,6 +653,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
         self.bot: Client = bot
         self.limit: Optional[int] = limit
+        self.with_counts: bool = with_counts
         self.before: Optional[Snowflake] = before
         self.after: Optional[Snowflake] = after
 
@@ -706,20 +713,28 @@ class GuildIterator(_AsyncIterator["Guild"]):
         """Retrieve guilds and update next parameters."""
         raise NotImplementedError
 
-    async def _retrieve_guilds_before_strategy(self, retrieve: int) -> List[GuildPayload]:
+    async def _retrieve_guilds_before_strategy(
+        self, retrieve: int, with_counts: bool = False
+    ) -> List[GuildPayload]:
         """Retrieve guilds using before parameter."""
         before = self.before.id if self.before else None
-        data: List[GuildPayload] = await self.bot.http.get_guilds(retrieve, before=before)
+        data: List[GuildPayload] = await self.bot.http.get_guilds(
+            retrieve, before=before, with_counts=with_counts
+        )
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
             self.before = Object(id=int(data[0]["id"]))
         return data
 
-    async def _retrieve_guilds_after_strategy(self, retrieve: int) -> List[GuildPayload]:
+    async def _retrieve_guilds_after_strategy(
+        self, retrieve: int, with_guilds: bool = False
+    ) -> List[GuildPayload]:
         """Retrieve guilds using after parameter."""
         after = self.after.id if self.after else None
-        data: List[GuildPayload] = await self.bot.http.get_guilds(retrieve, after=after)
+        data: List[GuildPayload] = await self.bot.http.get_guilds(
+            retrieve, after=after, with_guilds=with_guilds
+        )
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
