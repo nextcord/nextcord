@@ -211,7 +211,10 @@ class SequenceProxy(Sequence[T_co], Generic[T_co]):
     def __init__(self, proxied: Sequence[T_co]) -> None:
         self.__proxied = proxied
 
-    def __getitem__(self, idx: int) -> T_co:
+    # Likely Pyright bug. The base method doesn't seem to even have a return type.
+    # base method returns type "Sequence[T_co@SequenceProxy]"
+    # override returns type "T_co@SequenceProxy"
+    def __getitem__(self, idx: int) -> T_co:  # pyright: ignore
         return self.__proxied[idx]
 
     def __len__(self) -> int:

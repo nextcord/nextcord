@@ -22,6 +22,7 @@ from typing import (
     overload,
 )
 from urllib.parse import quote as urlquote
+from weakref import WeakValueDictionary
 
 import aiohttp
 
@@ -57,6 +58,7 @@ if TYPE_CHECKING:
     from ..mentions import AllowedMentions
     from ..state import ConnectionState
     from ..types.message import Message as MessagePayload
+    from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
     from ..ui.view import View
 
@@ -88,7 +90,10 @@ class AsyncDeferredLock:
 
 class AsyncWebhookAdapter:
     def __init__(self) -> None:
-        self._locks: Dict[Any, asyncio.Lock] = {}
+        self._locks: WeakValueDictionary[
+            Tuple[Optional[SnowflakeAlias], Optional[str]],
+            asyncio.Lock,
+        ] = WeakValueDictionary()
 
     async def request(
         self,
@@ -1135,6 +1140,7 @@ class Webhook(BaseWebhook):
             "guild_id": channel.guild.id,
             "user": {
                 "username": user.name,
+                "global_name": user.global_name,
                 "discriminator": user.discriminator,
                 "id": user.id,
                 "avatar": user._avatar,
@@ -1507,8 +1513,6 @@ class Webhook(BaseWebhook):
         previous_mentions: Optional[AllowedMentions] = getattr(
             self._state, "allowed_mentions", None
         )
-        if content is None:
-            content = MISSING
 
         application_webhook = self.type is WebhookType.application
         if ephemeral and not application_webhook:

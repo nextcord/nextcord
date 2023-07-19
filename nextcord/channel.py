@@ -13,6 +13,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -716,7 +717,10 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         name: str,
         message: Optional[Snowflake] = None,
         auto_archive_duration: ThreadArchiveDuration = MISSING,
-        type: Optional[ChannelType] = None,
+        type: Optional[
+            Literal[ChannelType.news_thread, ChannelType.public_thread, ChannelType.private_thread]
+        ] = None,
+        invitable: bool = True,
         reason: Optional[str] = None,
     ) -> Thread:
         """|coro|
@@ -743,6 +747,9 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             The type of thread to create. If a ``message`` is passed then this parameter
             is ignored, as a thread created with a message is always a public thread.
             By default this creates a private thread if this is ``None``.
+        invitable: :class:`bool`
+            Whether non-moderators can add other non-moderators to this thread.
+            Only available for private threads and threads created without a ``message``.
         reason: :class:`str`
             The reason for creating a new thread. Shows up on the audit log.
 
@@ -768,6 +775,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
                 name=name,
                 auto_archive_duration=auto_archive_duration or self.default_auto_archive_duration,
                 type=type.value,
+                invitable=invitable,
                 reason=reason,
             )
         else:
@@ -957,7 +965,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
             "default_thread_slowmode_delay"
         )
         self._available_tags: Dict[int, ForumTag] = {
-            int(data["id"]): ForumTag.from_data(tag) for tag in data.get("available_tags", [])
+            int(tag["id"]): ForumTag.from_data(tag) for tag in data.get("available_tags", [])
         }
 
         self.default_reaction: Optional[PartialEmoji]
@@ -3020,7 +3028,7 @@ class ForumTag:
     @classmethod
     def from_data(cls, data: ForumTagPayload) -> ForumTag:
         return cls(
-            id=int(data["id"]) if data["id"] is not None else None,
+            id=int(data["id"]),
             name=data["name"],
             moderated=data["moderated"],
             emoji=PartialEmoji.from_default_reaction(data),
@@ -3040,7 +3048,7 @@ class ForumTag:
     @property
     def payload(self) -> ForumTagPayload:
         data: ForumTagPayload = {
-            "id": str(self.id) if self.id is not None else None,
+            "id": str(self.id),
             "name": self.name,
             "moderated": self.moderated,
         }

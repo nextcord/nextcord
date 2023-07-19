@@ -84,7 +84,7 @@ if TYPE_CHECKING:
     from .audit_logs import AuditLogEntry
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
-    from .enums import SortOrderType
+    from .enums import ForumLayoutType, SortOrderType
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -298,14 +298,15 @@ class Guild(Hashable):
         "_scheduled_events",
         "approximate_member_count",
         "approximate_presence_count",
+        "_premium_progress_bar_enabled",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
-        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=8388608),
-        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=52428800),
-        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=104857600),
+        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=25 * 1024 * 1024),
+        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=50 * 1024 * 1024),
+        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=100 * 1024 * 1024),
     }
 
     def __init__(self, *, data: GuildPayload, state: ConnectionState) -> None:
@@ -517,6 +518,10 @@ class Guild(Hashable):
         for event in guild.get("guild_scheduled_events") or []:
             self._store_scheduled_event(event)
 
+        self._premium_progress_bar_enabled: Optional[bool] = guild.get(
+            "premium_progress_bar_enabled"
+        )
+
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
         try:
@@ -651,6 +656,14 @@ class Guild(Hashable):
         .. versionadded:: 2.0
         """
         return list(self._scheduled_events.values())
+
+    @property
+    def premium_progress_bar_enabled(self) -> Optional[bool]:
+        """Optional[:class:`bool`:] Whether the premium boost progress bar is enabled.
+
+        .. versionadded:: 2.6
+        """
+        return self._premium_progress_bar_enabled
 
     def by_category(self) -> List[ByCategoryItem]:
         """Returns every :class:`CategoryChannel` and their associated channels.
@@ -1448,12 +1461,17 @@ class Guild(Hashable):
         available_tags: List[ForumTag] = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
+        default_forum_layout: Optional[ForumLayoutType] = None,
     ) -> ForumChannel:
         """|coro|
 
         This is similar to :meth:`create_text_channel` except makes a :class:`ForumChannel` instead.
 
         .. versionadded:: 2.1
+
+        .. versionchanged:: 2.5
+
+            Added the ``default_forum_layout`` parameter.
 
         Parameters
         ----------
@@ -1491,6 +1509,8 @@ class Guild(Hashable):
             The available tags for threads created in this channel.
 
             .. versionadded:: 2.4
+        default_forum_layout: Optional[:class:`ForumLayoutType`]
+            The default layout type used to display posts in this forum.
 
         Raises
         ------
@@ -1538,6 +1558,9 @@ class Guild(Hashable):
                         "emoji_name": default_reaction.name,
                     }
                 )
+
+        if default_forum_layout is not None:
+            options["default_forum_layout"] = default_forum_layout.value
 
         data = await self._create_channel(
             name,
@@ -1614,6 +1637,7 @@ class Guild(Hashable):
         rules_channel: Optional[TextChannel] = MISSING,
         public_updates_channel: Optional[TextChannel] = MISSING,
         invites_disabled: bool = MISSING,
+        premium_progress_bar_enabled: bool = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1637,6 +1661,9 @@ class Guild(Hashable):
 
         .. versionchanged:: 2.4
             The ``invites_disabled`` parameter has been added.
+
+        .. versionchanged:: 2.6
+            The ``premium_progress_bar_enabled`` parameter has been added.
 
         Parameters
         ----------
@@ -1699,8 +1726,8 @@ class Guild(Hashable):
         invites_disabled: :class:`bool`
             Whether the invites should be paused for the guild.
             This will prevent new users from joining said guild.
-
-            .. versionadded:: 2.4
+        premium_progress_bar_enabled: :class:`bool`
+            Whether the premium guild boost progress bar is enabled.
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
@@ -1811,6 +1838,9 @@ class Guild(Hashable):
                 )
 
             fields["system_channel_flags"] = system_channel_flags.value
+
+        if premium_progress_bar_enabled is not MISSING:
+            fields["premium_progress_bar_enabled"] = premium_progress_bar_enabled
 
         if community is not MISSING:
             features = []
@@ -2398,10 +2428,6 @@ class Guild(Hashable):
 
         def convert(d):
             factory, _ = _integration_factory(d["type"])
-            if factory is None:
-                raise InvalidData(
-                    "Unknown integration type {type!r} for integration ID {id}".format_map(d)
-                )
             return factory(guild=self, data=d)
 
         return [convert(d) for d in data]
@@ -3732,7 +3758,7 @@ class Guild(Hashable):
             The actions to execute when this rule is triggered.
         trigger_type: :class:`AutoModerationTriggerType`
             The type of content that triggers this rule.
-        trigger_metadata: Optinal[:class:`AutoModerationTriggerMetadata`]
+        trigger_metadata: Optional[:class:`AutoModerationTriggerMetadata`]
             The additional data to use to determine if this rule has been triggered.
         enabled: Optional[:class:`bool`]
             If this rule should be enabled.

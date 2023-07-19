@@ -23,7 +23,7 @@ class PermissionOverwrite(TypedDict):
     deny: str
 
 
-ChannelType = Literal[0, 1, 2, 3, 4, 5, 6, 10, 11, 12, 13]
+ChannelType = Literal[0, 1, 2, 3, 4, 5, 6, 10, 11, 12, 13, 14, 15]
 
 
 class _BaseChannel(TypedDict):
@@ -151,7 +151,7 @@ class StageInstance(TypedDict):
 
 
 class ForumTag(TypedDict):
-    id: Optional[Snowflake]
+    id: Snowflake
     name: str
     moderated: bool
     emoji_id: NotRequired[Optional[Snowflake]]

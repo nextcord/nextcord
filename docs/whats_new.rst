@@ -12,6 +12,99 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p5p0:
+
+v2.5.0
+------
+
+This version is a smaller release, mostly bundling bug fixes with small changes.
+
+New Features
+~~~~~~~~~~~~
+
+- Add ``invitable`` to :meth:`TextChannel.create_thread` (:issue:`1007`).
+- Add a context manager to :class:`File` (:issue:`998`).
+
+Bug Fixes
+~~~~~~~~~
+
+- Support :class:`Interaction` annotations for application commands using the generic :class:`Client` parameter (:issue:`992`).
+- Fix :attr:`ForumChannel.available_tags` not returning the correct data (:issue:`1021`).
+- Fix a crash if an audit log entry did not have a ``user_id`` (:issue:`1014`).
+- Fix a crash if an auto moderation execution event did not have a ``channel_id`` (:issue:`1038`, :issue:`1051`).
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+- Webhooks now use :class:`weakref.WeakValueDictionary` for storing internal locks (:issue:`971`).
+- Change :meth:`Colour.dark_theme` to use the new dark theme colour (:issue:`1006`).
+
+.. _vp2p4p1:
+
+v2.4.1
+------
+
+This version includes bug fixes for voice, backported from v2.5.0.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix an issue where the bot would not connect to a voice channel, referring to a breaking change by Discord (:issue:`1005`).
+- Fix audio not playing for stage channels (:issue:`1009`).
+
+.. _vp2p4p0:
+
+v2.4.0
+------
+
+This version includes support for recently added Discord features, and improves typehinting.
+
+New Features
+~~~~~~~~~~~~
+
+- Add active developer related flags (:issue:`897`):
+    - :attr:`UserFlags.active_developer`
+    - :attr:`PublicUserFlags.active_developer`
+    - :attr:`ApplicationFlags.active`
+- Add support for the remaining new features of forum channels (:issue:`799`, :issue:`890`):
+    - :class:`ForumTag`
+    - :meth:`Guild.create_forum_channel` - ``default_thread_slowmode_delay``, ``default_reaction`` and ``available_tags`` parameters
+    - :attr:`TextChannel.default_thread_slowmode_delay`
+    - :meth:`TextChannel.edit` - ``default_thread_slowmode_delay`` parameter
+    - :attr:`ForumChannel.default_thread_slowmode_delay`
+    - :attr:`ForumChannel.default_reaction`
+    - :attr:`ForumChannel.available_tags`
+    - :meth:`ForumChannel.get_tag`
+    - :meth:`ForumChannel.edit` - ``default_thread_slowmode_delay``, ``default_reaction`` and ``available_tags`` parameters
+    - :meth:`ForumChannel.create_thread` - ``applied_tags`` parameter
+    - :attr:`ChannelFlags.require_tag`
+    - :attr:`Thread.applied_tag_ids`
+    - :attr:`Thread.applied_tags`
+    - :meth:`Thread.edit` - ``applied_tags`` parameter
+- Add :attr:`UserFlags.bot_http_interactions` (:issue:`912`).
+- Add :attr:`Locale.id` (:issue:`933`, :issue:`943`).
+- Add additional :class:`RoleTags` fields (:issue:`966`):
+    - :attr:`RoleTags.subscription_listing_id`
+    - :meth:`RoleTags.is_available_for_purchase`
+    - :meth:`RoleTags.has_guild_connections`
+- Add :func:`on_thread_create` (:issue:`962`, :issue:`968`).
+- Add :func:`on_http_ratelimit` and :func:`on_global_http_ratelimit` (:issue:`154`, :issue:`834`).
+- Add :meth:`ForumChannel.create_webhook` and :meth:`VoiceChannel.create_webhook` (:issue:`914`).
+- Add ``invites_disabled`` parameter to :meth:`Guild.edit` and :attr:`Guild.invites_disabled` (:issue:`931`, :issue:`932`).
+- Add :attr:`AutoModerationTriggerMetadata.regex_patterns` (:issue:`884`, :issue:`887`).
+- Add support for role connection metadata (:issue:`964`):
+    - :class:`RoleConnectionMetadataType`
+    - :class:`RoleConnectionMetadata`
+- Add :attr:`StickerFormatType.gif` (:issue:`969`).
+- Add :func:`on_guild_audit_log_entry_create` (:issue:`973`, :issue:`974`).
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix an issue where :attr:`VoiceChannel.last_message_id` would not be updated (:issue:`889`).
+- Fix an error raised with application command lazy loading (:issue:`909`).
+- Fix an import error with :class:`ui.ChannelSelect` (:issue:`919`, :issue:`920`).
+
 .. _vp2p3p3:
 
 v2.3.3
