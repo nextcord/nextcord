@@ -728,12 +728,12 @@ class GuildIterator(_AsyncIterator["Guild"]):
         return data
 
     async def _retrieve_guilds_after_strategy(
-        self, retrieve: int, with_guilds: bool = False
+        self, retrieve: int, with_counts: bool = False
     ) -> List[GuildPayload]:
         """Retrieve guilds using after parameter."""
         after = self.after.id if self.after else None
         data: List[GuildPayload] = await self.bot.http.get_guilds(
-            retrieve, after=after, with_guilds=with_guilds
+            retrieve, after=after, with_counts=with_counts
         )
         if len(data):
             if self.limit is not None:
