@@ -194,15 +194,45 @@ class Interaction(TypedDict):
     type: InteractionType
     token: str
     version: int
-    data: NotRequired[InteractionData]
+    # data: NotRequired[InteractionData]
     guild_id: NotRequired[Snowflake]
     channel_id: NotRequired[Snowflake]
     member: NotRequired[Member]
     user: NotRequired[User]
-    message: NotRequired[Message]
     locale: NotRequired[str]
     guild_locale: NotRequired[str]
     app_permissions: NotRequired[str]
+
+    message: NotRequired[Message]
+
+
+class ApplicationCommandInteraction(Interaction):
+    data: ApplicationCommandInteractionData
+
+
+class ApplicationAutocompleteInteraction(Interaction):
+    data: ApplicationCommandInteractionData
+
+
+class MessageComponentInteraction(Interaction):
+    data: ComponentInteractionData
+    message: Message
+    custom_id: str
+    component_id: int
+
+
+class ModalSubmitInteraction(Interaction):
+    data: ModalSubmitInteractionData    
+    message: NotRequired[Message]
+    custom_id: str
+
+
+InteractionPayload = Union[
+    MessageComponentInteraction, 
+    ModalSubmitInteraction, 
+    ApplicationCommandInteraction, 
+    ApplicationAutocompleteInteraction
+]
 
 
 class InteractionApplicationCommandCallbackData(TypedDict, total=False):

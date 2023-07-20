@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Tuple
@@ -10,13 +12,13 @@ __all__ = ("ModalSubmitInteraction",)
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
-    from ..types.interactions import Interaction as InteractionPayload
+    from ..types.interactions import ModalSubmitInteraction as ModalSubmitPayload
 
 
 class ModalSubmitInteraction(Interaction):
     """Represents the interaction for all modal submits.
 
-    This interaction gets triggered by :class:`nextcord.ui.Modal`
+    This interaction is triggered by a :class:`nextcord.ui.Modal`
 
     .. container:: operations
 
@@ -45,10 +47,10 @@ class ModalSubmitInteraction(Interaction):
         "message",
     )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
+    def __init__(self, *, data: ModalSubmitPayload, state: ConnectionState) -> None:
         super().__init__(data=data, state=state)
 
-    def _from_data(self, data: InteractionPayload) -> None:
+    def _from_data(self, data: ModalSubmitPayload) -> None:
         super()._from_data(data=data)
 
         self.modal_id = self.data["custom_id"]  # type: ignore # self.data should be present here

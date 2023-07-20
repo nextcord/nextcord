@@ -37,6 +37,8 @@ from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
+from .interactions.message_component import MessageComponentInteraction
+from .interactions.modal_submit import ModalSubmitInteraction
 from .invite import Invite
 from .member import Member
 from .mentions import AllowedMentions
@@ -1374,16 +1376,13 @@ class ConnectionState:
 
     def parse_interaction_create(self, data) -> None:
         interaction = self._get_client().get_interaction(data=data)
-        if data["type"] == 3:  # interaction component
+        if isinstance(interaction, MessageComponentInteraction):
             custom_id = interaction.data["custom_id"]  # type: ignore
             component_type = interaction.data["component_type"]  # type: ignore
-            self._view_store.dispatch(component_type, custom_id, interaction)  # type: ignore
-            # Some Interaction types incompatible with this method -> accounted for via if-statement
-        if data["type"] == 5:  # modal submit
+            self._view_store.dispatch(component_type, custom_id, interaction)  
+        if isinstance(interaction, ModalSubmitInteraction):
             custom_id = interaction.data["custom_id"]  # type: ignore
-            # key exists if type is 5 etc
-            self._modal_store.dispatch(custom_id, interaction)  # type: ignore
-            # Some Interaction types incompatible with this method -> accounted for via if-statement
+            self._modal_store.dispatch(custom_id, interaction)
 
         self.dispatch("interaction", interaction)
 

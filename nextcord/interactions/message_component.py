@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Tuple
@@ -10,7 +12,7 @@ __all__ = ("MessageComponentInteraction",)
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
-    from ..types.interactions import Interaction as InteractionPayload
+    from ..types.interactions import MessageComponentInteraction as MessageComponentPayload
 
 
 class MessageComponentInteraction(Interaction):
@@ -48,16 +50,16 @@ class MessageComponentInteraction(Interaction):
         "value",
     )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
+    def __init__(self, *, data: MessageComponentPayload, state: ConnectionState) -> None:
         super().__init__(data=data, state=state)
 
-    def _from_data(self, data: InteractionPayload) -> None:
+    def _from_data(self, data: MessageComponentPayload) -> None:
         super()._from_data(data=data)
 
-        message = data["message"]  # type: ignore # should be present here - not sure why its causing issues
+        message = data["message"]
         self.message = self._state._get_message(
             int(message["id"])
-        ) or Message(  # ---- check for and create correct message object ----
+        ) or Message(
             state=self._state, channel=self.channel, data=message  # type: ignore
         )
         self.component_id = self.data["custom_id"]  # type: ignore # self.data should be present here
@@ -101,9 +103,5 @@ class MessageComponentInteraction(Interaction):
         """
         if not self.response.is_done():
             return await self.response.edit_message(*args, **kwargs)
-        if self.message is not None:
+        else:
             return await self.followup.edit_message(self.message.id, *args, **kwargs)
-        raise InvalidArgument(
-            "Interaction.message is None, this method can only be used in "
-            "response to a component or modal submit interaction."
-        )

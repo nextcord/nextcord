@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar, Union
 
 from ..interactions.base import ClientT, Interaction
+from ..interactions.message_component import MessageComponentInteraction
+from ..interactions.modal_submit import ModalSubmitInteraction
 
 __all__ = ("Item",)
 
@@ -105,7 +107,7 @@ class Item(Generic[V]):
         """Optional[:class:`View`]: The underlying view for this item."""
         return self._view
 
-    async def callback(self, interaction: Interaction) -> None:
+    async def callback(self, interaction: Union[MessageComponentInteraction, ModalSubmitInteraction]) -> None:
         """|coro|
 
         The callback associated with this UI item.
@@ -114,7 +116,7 @@ class Item(Generic[V]):
 
         Parameters
         ----------
-        interaction: :class:`.Interaction`
+        interaction: Union[:class:`.MessageComponentInteraction`, :class:`.ModalSubmitInteraction`]
             The interaction that triggered this UI item.
         """
         pass
