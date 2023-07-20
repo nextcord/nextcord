@@ -307,22 +307,22 @@ class MessageFlags(BaseFlags):
     @flag_value
     def crossposted(self) -> int:
         """:class:`bool`: Returns ``True`` if the message is the original crossposted message."""
-        return 1
+        return 1 << 0
 
     @flag_value
     def is_crossposted(self) -> int:
         """:class:`bool`: Returns ``True`` if the message was crossposted from another channel."""
-        return 2
+        return 1 << 1
 
     @flag_value
     def suppress_embeds(self) -> int:
         """:class:`bool`: Returns ``True`` if the message's embeds have been suppressed."""
-        return 4
+        return 1 << 2
 
     @flag_value
     def source_message_deleted(self) -> int:
         """:class:`bool`: Returns ``True`` if the source message for this crosspost has been deleted."""
-        return 8
+        return 1 << 3
 
     @flag_value
     def urgent(self) -> int:
@@ -330,7 +330,7 @@ class MessageFlags(BaseFlags):
 
         An urgent message is one sent by Discord Trust and Safety.
         """
-        return 16
+        return 1 << 4
 
     @flag_value
     def has_thread(self) -> int:
@@ -338,7 +338,7 @@ class MessageFlags(BaseFlags):
 
         .. versionadded:: 2.0
         """
-        return 32
+        return 1 << 5
 
     @flag_value
     def ephemeral(self) -> int:
@@ -346,7 +346,37 @@ class MessageFlags(BaseFlags):
 
         .. versionadded:: 2.0
         """
-        return 64
+        return 1 << 6
+
+    @flag_value
+    def loading(self) -> int:
+        """:class:`bool`: Returns ``True`` if the source message is loading.
+
+        This is represented in the UI as "bot is thinking...".
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 7
+
+    @flag_value
+    def failed_to_mention_roles(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message failed to mention some roles in a thread.
+
+        This means that those members were not added.
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 8
+
+    @flag_value
+    def suppress_notifications(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message does not trigger notifications.
+
+        These are sent via `@silent` message prefixes in the UI.
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 12
 
 
 @fill_with_flags()
@@ -623,15 +653,25 @@ class Intents(BaseFlags):
         return 1 << 1
 
     @flag_value
-    def bans(self):
-        """:class:`bool`: Whether guild ban related events are enabled.
+    def moderation(self):
+        """:class:`bool`: Whether guild moderation related events are enabled.
 
         This corresponds to the following events:
 
         - :func:`on_member_ban`
         - :func:`on_member_unban`
+        - :func:`on_audit_log_entry_create`
 
         This does not correspond to any attributes or classes in the library in terms of cache.
+        """
+        return 1 << 2
+
+    @alias_flag_value
+    def bans(self):
+        """:class:`bool`: Alias of :attr:`.moderation`.
+
+        .. versionchanged:: 2.4
+            Changed to an alias.
         """
         return 1 << 2
 
@@ -1182,6 +1222,14 @@ class ApplicationFlags(BaseFlags):
         The raw value. You should query flags via the properties
         rather than using this raw value.
     """
+
+    @flag_value
+    def application_auto_moderation_rule_create(self):
+        """:class:`bool`: Returns ``True`` if the application uses the Auto Moderation API.
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 6
 
     @flag_value
     def gateway_presence(self):

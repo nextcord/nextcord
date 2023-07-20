@@ -25,7 +25,7 @@ from .context_managers import Typing
 from .enums import ChannelType
 from .errors import ClientException, InvalidArgument
 from .file import File
-from .flags import ChannelFlags
+from .flags import ChannelFlags, MessageFlags
 from .invite import Invite
 from .iterators import HistoryIterator
 from .mentions import AllowedMentions
@@ -117,8 +117,17 @@ class User(Snowflake, Protocol):
     ----------
     name: :class:`str`
         The user's username.
+    global_name: :class:`str`
+        The user's global name. This is represented in the UI as "Display Name"
+
+        .. versionadded:: 2.6
     discriminator: :class:`str`
         The user's discriminator.
+
+        .. warning::
+            This field is deprecated, and will only return if the user has not yet migrated to the
+            new `username <https://dis.gd/usernames>`_ update.
+        .. deprecated:: 2.6
     avatar: :class:`~nextcord.Asset`
         The avatar asset the user has.
     bot: :class:`bool`
@@ -128,6 +137,7 @@ class User(Snowflake, Protocol):
     __slots__ = ()
 
     name: str
+    global_name: str
     discriminator: str
     avatar: Asset
     bot: bool
@@ -223,8 +233,10 @@ class GuildChannel:
     guild: :class:`~nextcord.Guild`
         The guild the channel belongs to.
     position: :class:`int`
-        The position in the channel list. This is a number that starts at 0.
-        e.g. the top channel is position 0.
+        The position in the channel list.
+
+        .. note::
+            Due to API inconsistencies, the position may not mirror the correct UI ordering
     """
 
     __slots__ = ()
@@ -332,6 +344,13 @@ class GuildChannel:
             pass
         else:
             options["default_sort_order"] = default_sort_order.value
+
+        try:
+            default_forum_layout = options.pop("default_forum_layout")
+        except KeyError:
+            pass
+        else:
+            options["default_forum_layout"] = default_forum_layout.value
 
         lock_permissions = options.pop("sync_permissions", False)
 
@@ -1247,6 +1266,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1265,6 +1286,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1283,6 +1306,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1301,6 +1326,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1320,6 +1347,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = None,
         mention_author: Optional[bool] = None,
         view: Optional[View] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ):
         """|coro|
 
@@ -1390,6 +1419,15 @@ class Messageable:
             A list of stickers to upload. Must be a maximum of 3.
 
             .. versionadded:: 2.0
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -1402,7 +1440,7 @@ class Messageable:
             you specified both ``file`` and ``files``,
             or you specified both ``embed`` and ``embeds``,
             or the ``reference`` object is not a :class:`~nextcord.Message`,
-            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`.
+            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`
 
         Returns
         -------
@@ -1413,6 +1451,12 @@ class Messageable:
         channel = await self._get_channel()
         state = self._state
         content = str(content) if content is not None else None
+        if flags is None:
+            flags = MessageFlags()
+        if suppress_embeds is not None:
+            flags.suppress_embeds = suppress_embeds
+
+        flag_value: Optional[int] = flags.value if flags.value != 0 else None
 
         embed_payload: Optional[EmbedData] = None
         embeds_payload: Optional[List[EmbedData]] = None
@@ -1479,6 +1523,7 @@ class Messageable:
                     message_reference=reference_payload,
                     stickers=stickers_payload,
                     components=components,
+                    flags=flag_value,
                 )
             finally:
                 file.close()
@@ -1500,6 +1545,7 @@ class Messageable:
                     message_reference=reference_payload,
                     stickers=stickers_payload,
                     components=components,
+                    flags=flag_value,
                 )
             finally:
                 for f in files:
@@ -1516,10 +1562,11 @@ class Messageable:
                 message_reference=reference_payload,
                 stickers=stickers_payload,
                 components=components,
+                flags=flag_value,
             )
 
         ret = state.create_message(channel=channel, data=data)
-        if view:
+        if view and view.prevent_update:
             state.store_view(view, ret.id)
 
         if delete_after is not None:

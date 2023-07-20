@@ -279,12 +279,12 @@ class StringSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ("options",)
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    type: Literal[ComponentType.select] = ComponentType.select
 
     def __init__(self, data: SelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.select
         self.options: List[SelectOption] = [
             SelectOption.from_dict(option) for option in data.get("options", [])
         ]
@@ -332,12 +332,12 @@ class UserSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ()
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    type: Literal[ComponentType.user_select] = ComponentType.user_select
 
     def __init__(self, data: UserSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.user_select
 
     def to_dict(self) -> UserSelectMenuPayload:
         payload: UserSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
@@ -375,12 +375,12 @@ class RoleSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ()
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    type: Literal[ComponentType.role_select] = ComponentType.role_select
 
     def __init__(self, data: RoleSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.role_select
 
     def to_dict(self) -> RoleSelectMenuPayload:
         payload: RoleSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
@@ -418,12 +418,12 @@ class MentionableSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ()
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    type: Literal[ComponentType.mentionable_select] = ComponentType.mentionable_select
 
     def __init__(self, data: MentionableSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.mentionable_select
 
     def to_dict(self) -> MentionableSelectMenuPayload:
         payload: MentionableSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
@@ -463,12 +463,12 @@ class ChannelSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ("channel_types",)
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
+
+    type: Literal[ComponentType.channel_select] = ComponentType.channel_select
 
     def __init__(self, data: ChannelSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.channel_select
         self.channel_types: List[ChannelType] = [
             ChannelType(t) for t in data.get("channel_types", [])
         ]
@@ -588,7 +588,6 @@ class SelectOption:
 
 
 class TextInput(Component):
-
     __slots__: Tuple[str, ...] = (
         "style",
         "custom_id",

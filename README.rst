@@ -93,6 +93,7 @@ Quick Example
 
 .. code:: py
 
+    import nextcord
     from nextcord.ext import commands
 
 
@@ -104,13 +105,13 @@ Quick Example
 
     bot.run("token")
 
-You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/stable/examples/>`_.
+You can find more examples in the `examples directory <https://github.com/nextcord/nextcord/blob/master/examples/>`_.
 
-**NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/stable/examples/secure_token_storage.py/>`_.
+**NOTE:** It is not advised to leave your token directly in your code, as it allows anyone with it to access your bot. If you intend to make your code public you should `store it securely <https://github.com/nextcord/nextcord/blob/master/examples/secure_token_storage.py/>`_.
 
 Links
 ------
 
 - `Documentation <https://docs.nextcord.dev/>`_
 - `Official Discord Server <https://discord.gg/nextcord>`_
-- `Discord API <https://discord.gg/discord-api>`_
+- `Discord Developers Server <https://discord.gg/discord-developers>`_

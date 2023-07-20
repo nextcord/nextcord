@@ -28,8 +28,8 @@ from .errors import *
 if TYPE_CHECKING:
     from typing import Callable
 
+    from nextcord.abc import PartialMessageableChannel
     from nextcord.member import Member
-    from nextcord.message import PartialMessageableChannel
     from nextcord.user import User
 
     from .context import Context

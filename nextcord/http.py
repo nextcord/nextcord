@@ -65,6 +65,7 @@ if TYPE_CHECKING:
         member,
         message,
         role,
+        role_connections,
         scheduled_events,
         sticker,
         template,
@@ -245,8 +246,7 @@ class HTTPClient:
         lock = self._locks.get(bucket)
         if lock is None:
             lock = asyncio.Lock()
-            if bucket is not None:
-                self._locks[bucket] = lock
+            self._locks[bucket] = lock
 
         # header creation
         headers: Dict[str, str] = {
@@ -492,6 +492,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        flags: Optional[int] = None,
     ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -521,6 +522,9 @@ class HTTPClient:
         if stickers is not None:
             payload["sticker_ids"] = stickers
 
+        if flags is not None:
+            payload["flags"] = flags
+
         return payload
 
     def send_message(
@@ -536,6 +540,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        flags: Optional[int] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
         payload = self.get_message_payload(
@@ -548,6 +553,7 @@ class HTTPClient:
             message_reference=message_reference,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
 
         return self.request(r, json=payload)
@@ -570,6 +576,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
+        flags: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         form: List[Dict[str, Any]] = []
 
@@ -584,6 +591,7 @@ class HTTPClient:
             message_reference=message_reference,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
 
         if message_key is not None:
@@ -626,6 +634,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
+        flags: Optional[int] = None,
     ) -> Response[message.Message]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -643,6 +652,7 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             attachments=attachments,
+            flags=flags,
         )
         return self.request(route, form=form, files=files)
 
@@ -660,6 +670,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        flags: Optional[int] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
         return self.send_multipart_helper(
@@ -674,6 +685,7 @@ class HTTPClient:
             message_reference=message_reference,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
 
     def delete_message(
@@ -1005,6 +1017,7 @@ class HTTPClient:
             "default_auto_archive_duration",
             "flags",
             "default_sort_order",
+            "default_forum_layout",
             "default_thread_rate_limit_per_user",
             "default_reaction_emoji",
             "available_tags",
@@ -1052,6 +1065,7 @@ class HTTPClient:
             "default_thread_rate_limit_per_user",
             "default_reaction_emoji",
             "available_tags",
+            "default_forum_layout",
         )
         payload.update({k: v for k, v in options.items() if k in valid_keys and v is not None})
 
@@ -1130,6 +1144,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         applied_tag_ids: Optional[List[str]] = None,
+        flags: Optional[int] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
@@ -1146,6 +1161,7 @@ class HTTPClient:
             allowed_mentions=allowed_mentions,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
         if msg_payload != {}:
             payload["message"] = msg_payload
@@ -1170,6 +1186,7 @@ class HTTPClient:
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
         applied_tag_ids: Optional[List[str]] = None,
+        flags: Optional[int] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
@@ -1191,6 +1208,7 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             attachments=attachments,
+            flags=flags,
         )
         params = {"use_nested_fields": "true"}
         route = Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id)
@@ -1341,6 +1359,9 @@ class HTTPClient:
     def get_guild(self, guild_id: Snowflake, *, with_counts: bool = True) -> Response[guild.Guild]:
         params = {"with_counts": int(with_counts)}
         return self.request(Route("GET", "/guilds/{guild_id}", guild_id=guild_id), params=params)
+
+    def get_guild_preview(self, guild_id: Snowflake) -> Response[guild.GuildPreview]:
+        return self.request(Route("GET", "/guilds/{guild_id}/preview", guild_id=guild_id))
 
     def delete_guild(self, guild_id: Snowflake) -> Response[None]:
         return self.request(Route("DELETE", "/guilds/{guild_id}", guild_id=guild_id))
@@ -1749,7 +1770,7 @@ class HTTPClient:
         if user_id:
             params["user_id"] = user_id
         if action_type:
-            params["action_type"] = action_type
+            params["action_type"] = action_type.value
 
         r = Route("GET", "/guilds/{guild_id}/audit-logs", guild_id=guild_id)
         return self.request(r, params=params)
@@ -2169,7 +2190,6 @@ class HTTPClient:
         embeds: Optional[List[embed.Embed]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
     ):
-
         payload: Dict[str, Any] = {}
         if content:
             payload["content"] = content
@@ -2267,12 +2287,15 @@ class HTTPClient:
         self,
         application_id: Snowflake,
         token: str,
-        files: List[File] = [],
+        files: Optional[List[File]] = None,
         content: Optional[str] = None,
         tts: bool = False,
         embeds: Optional[List[embed.Embed]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
     ) -> Response[message.Message]:
+        if files is None:
+            files = []
+
         r = Route(
             "POST",
             "/webhooks/{application_id}/{interaction_token}",
@@ -2599,3 +2622,27 @@ class HTTPClient:
             auto_moderation_rule_id=auto_moderation_rule_id,
         )
         return self.request(r, reason=reason)
+
+    def get_role_connection_metadata(
+        self, application_id: Snowflake
+    ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
+        r = Route(
+            "GET",
+            "/applications/{application_id}/role-connections/metadata",
+            application_id=application_id,
+        )
+        return self.request(r)
+
+    def update_role_connection_metadata(
+        self,
+        application_id: Snowflake,
+        data: List[role_connections.ApplicationRoleConnectionMetadata],
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
+        r = Route(
+            "PUT",
+            "/applications/{application_id}/role-connections/metadata",
+            application_id=application_id,
+        )
+        return self.request(r, json=data, reason=reason)

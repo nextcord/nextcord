@@ -391,7 +391,7 @@ class ModalStore:
 
     def __verify_integrity(self) -> None:
         to_remove: List[Tuple[int | None, str]] = []
-        for (k, modal) in self._modals.items():
+        for k, modal in self._modals.items():
             if modal.is_finished():
                 to_remove.append(k)
 

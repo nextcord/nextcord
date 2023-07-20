@@ -838,10 +838,9 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             dt = ctx.message.edited_at or ctx.message.created_at
             current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
             bucket = self._buckets.get_bucket(ctx.message, current)
-            if bucket is not None:
-                retry_after = bucket.update_rate_limit(current)
-                if retry_after:
-                    raise CommandOnCooldown(bucket, retry_after, self._buckets.type)  # type: ignore
+            retry_after = bucket.update_rate_limit(current)
+            if retry_after:
+                raise CommandOnCooldown(bucket, retry_after, self._buckets.type)  # type: ignore
 
     async def prepare(self, ctx: Context) -> None:
         ctx.command = self
@@ -1342,7 +1341,7 @@ class GroupMixin(Generic[CogT]):
     def command(
         self,
         name: str = ...,
-        cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
+        cls: Type[Command[CogT, P, T]] = Command,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[
@@ -1470,7 +1469,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
     def __init__(self, *args: Any, **attrs: Any) -> None:
         self.invoke_without_command: bool = attrs.pop("invoke_without_command", False)
         GroupMixin.__init__(self, *args, **attrs)
-        Command.__init__(self, *args, **attrs)  # type: ignore
+        Command.__init__(self, *args, **attrs)
 
     def copy(self) -> Self:
         """Creates a copy of this :class:`Group`.
@@ -1563,7 +1562,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
 @overload
 def command(
     name: str = ...,
-    cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
+    cls: Type[Command[CogT, P, T]] = Command,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1656,11 +1655,11 @@ def group(
 ) -> Callable[
     [
         Union[
-            Callable[Concatenate[Cog, ContextT, P], Coro[T]],
+            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
             Callable[Concatenate[ContextT, P], Coro[T]],
         ]
     ],
-    Group[Cog, P, T],
+    Group[CogT, P, T],
 ]:
     ...
 
@@ -1812,7 +1811,7 @@ def check(predicate: Check) -> Callable[[T], T]:
         decorator.predicate = predicate
     else:
 
-        @functools.wraps(predicate)
+        @functools.wraps(predicate)  # type: ignore
         async def wrapper(ctx):
             return predicate(ctx)  # type: ignore
 

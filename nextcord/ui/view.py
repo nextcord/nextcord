@@ -10,18 +10,7 @@ import time
 import traceback
 from functools import partial
 from itertools import groupby
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterator, List, Optional, Tuple
 
 from typing_extensions import Self
 
@@ -138,6 +127,13 @@ class View:
         Whether or not to automatically defer the component interaction when the callback
         completes without responding to the interaction. Set this to ``False`` if you want to
         handle view interactions outside of the callback.
+    prevent_update: :class:`bool` = True
+        This option only affects persistent views.
+        Whether or not to store the view separately for each message.
+        The stored views are not automatically cleared, and can cause issues if
+        you run the bot continously for long periods of time if views are not properly stopped.
+        Setting this to False will force the client to find a persistent view added with
+        `Bot.add_view` and not store the view separately.
     """
 
     __discord_ui_view__: ClassVar[bool] = True
@@ -146,18 +142,27 @@ class View:
     def __init_subclass__(cls) -> None:
         children: List[ItemCallbackType] = []
         for base in reversed(cls.__mro__):
-            for member in base.__dict__.values():
-                if hasattr(member, "__discord_ui_model_type__"):
-                    children.append(member)
+            children.extend(
+                member
+                for member in base.__dict__.values()
+                if hasattr(member, "__discord_ui_model_type__")
+            )
 
         if len(children) > 25:
             raise TypeError("View cannot have more than 25 children")
 
         cls.__view_children_items__ = children
 
-    def __init__(self, *, timeout: Optional[float] = 180.0, auto_defer: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        timeout: Optional[float] = 180.0,
+        auto_defer: bool = True,
+        prevent_update: bool = True,
+    ) -> None:
         self.timeout = timeout
         self.auto_defer = auto_defer
+        self.prevent_update = True if timeout else prevent_update
         self.children: List[Item] = []
         for func in self.__view_children_items__:
             item: Item = func.__discord_ui_model_type__(**func.__discord_ui_model_kwargs__)
@@ -485,20 +490,17 @@ class ViewStore:
         self._synced_message_views: Dict[int, View] = {}
         self._state: ConnectionState = state
 
-    @property
-    def persistent_views(self) -> Sequence[View]:
-        # fmt: off
-        views = {
-            view.id: view
-            for (_, (view, _)) in self._views.items()
-            if view.is_persistent()
-        }
-        # fmt: on
-        return list(views.values())
+    def all_views(self) -> List[View]:
+        views = [v for (v, _) in self._views.values()]
+        return views
+
+    def views(self, persistent: bool = True) -> List[View]:
+        views = self.all_views()
+        return [v for v in views if v.is_persistent() ^ (not persistent)]
 
     def __verify_integrity(self) -> None:
         to_remove: List[Tuple[int, Optional[int], str]] = []
-        for (k, (view, _)) in self._views.items():
+        for k, (view, _) in self._views.items():
             if view.is_finished():
                 to_remove.append(k)
 
