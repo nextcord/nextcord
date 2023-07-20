@@ -33,10 +33,7 @@ if TYPE_CHECKING:
     from ..message import AllowedMentions
     from ..state import ConnectionState
     from ..threads import Thread
-    from ..types.interactions import (
-        InteractionPayload,
-        InteractionData
-    )
+    from ..types.interactions import InteractionData, InteractionPayload
     from ..ui.modal import Modal
     from ..ui.view import View
     from .message_component import MessageComponentInteraction

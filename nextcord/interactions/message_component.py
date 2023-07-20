@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Tuple
 
-from ..errors import InvalidArgument
 from ..message import Message
 from .base import Interaction
 
@@ -57,9 +56,7 @@ class MessageComponentInteraction(Interaction):
         super()._from_data(data=data)
 
         message = data["message"]
-        self.message = self._state._get_message(
-            int(message["id"])
-        ) or Message(
+        self.message = self._state._get_message(int(message["id"])) or Message(
             state=self._state, channel=self.channel, data=message  # type: ignore
         )
         self.component_id = self.data["custom_id"]  # type: ignore # self.data should be present here

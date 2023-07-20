@@ -230,16 +230,16 @@ class MessageComponentInteraction(Interaction):
 
 
 class ModalSubmitInteraction(Interaction):
-    data: ModalSubmitInteractionData    
+    data: ModalSubmitInteractionData
     message: NotRequired[Message]
     custom_id: str
 
 
 InteractionPayload = Union[
-    MessageComponentInteraction, 
-    ModalSubmitInteraction, 
-    ApplicationCommandInteraction, 
-    ApplicationAutocompleteInteraction
+    MessageComponentInteraction,
+    ModalSubmitInteraction,
+    ApplicationCommandInteraction,
+    ApplicationAutocompleteInteraction,
 ]
 
 

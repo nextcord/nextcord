@@ -9,14 +9,16 @@ from .base import Interaction
 __all__ = ("ApplicationCommandInteraction", "ApplicationAutocompleteInteraction")
 
 if TYPE_CHECKING:
-    from ..application_command import BaseApplicationCommand, SlashApplicationSubcommand
+    from ..application_command import (
+        BaseApplicationCommand,
+        SlashApplicationSubcommand,
+        SlashOptionData,
+    )
     from ..state import ConnectionState
     from ..types.interactions import (
+        ApplicationAutocompleteInteraction as ApplicationAutocompletePayload,
         ApplicationCommandInteraction as ApplicationCommandPayload,
-        ApplicationAutocompleteInteraction as ApplicationAutocompletePayload
     )
-    from ..application_command import SlashOptionData
-
 
 
 class ApplicationCommandInteraction(Interaction):
@@ -93,7 +95,9 @@ class ApplicationCommandInteraction(Interaction):
                 # return empty list if no options exist
                 return []
 
-        from ..application_command import SlashOptionData  # Importing here due to circular import issues
+        from ..application_command import (  # Importing here due to circular import issues
+            SlashOptionData,
+        )
 
         # If we are here, then the user provided an input for some options
         options_collection: List[SlashOptionData] = []
