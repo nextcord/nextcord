@@ -9,6 +9,7 @@ from .. import utils
 from ..message import Message, Attachment
 from .base import Interaction, InteractionResponse, MISSING, PartialInteractionMessage, _InteractionMessageState, InteractionMessage
 from ..embeds import Embed
+from ..enums import InteractionType
 from ..file import File
 from ..flags import MessageFlags
 from ..errors import InteractionResponded, InvalidArgument, HTTPException, ClientException
@@ -395,6 +396,55 @@ class MessageComponentInteractionResponse(InteractionResponse):
     def __init__(self, parent: MessageComponentInteraction) -> None:
         self._parent: MessageComponentInteraction = parent
         self._responded: bool = False
+
+    async def defer(self, *, ephemeral: bool = False, with_message: bool = False) -> None:
+        """|coro|
+
+        Defers the interaction response.
+
+        This is typically used when the interaction is acknowledged
+        and a secondary action will be done later.
+
+        Parameters
+        ----------
+        ephemeral: :class:`bool`
+            Indicates whether the deferred message will eventually be ephemeral.
+            This only applies for interactions of type :attr:`InteractionType.application_command` or when ``with_message`` is True
+        with_message: :class:`bool`
+            Indicates whether the response will be a message with thinking state (bot is thinking...).
+            This is always True for interactions of type :attr:`InteractionType.application_command`.
+            For interactions of type :attr:`InteractionType.component` this defaults to False.
+
+            .. versionadded:: 2.0
+
+        Raises
+        ------
+        HTTPException
+            Deferring the interaction failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+        """
+        if self._responded:
+            raise InteractionResponded(self._parent)
+
+        defer_type: int = 0
+        data: Optional[Dict[str, Any]] = None
+        parent = self._parent
+        if parent.type is InteractionType.application_command or with_message:
+            defer_type = InteractionResponseType.deferred_channel_message.value
+            if ephemeral:
+                data = {"flags": 64}
+        elif (
+            parent.type is InteractionType.component or parent.type is InteractionType.modal_submit
+        ):
+            defer_type = InteractionResponseType.deferred_message_update.value
+
+        if defer_type:
+            adapter = async_context.get()
+            await adapter.create_interaction_response(
+                parent.id, parent.token, session=parent._session, type=defer_type, data=data
+            )
+            self._responded = True
 
     async def send_message(
         self,

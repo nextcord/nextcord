@@ -2105,7 +2105,7 @@ class Client:
         """
         interaction.data = cast(ApplicationCommandInteractionData, interaction.data)
 
-        if interaction.type is InteractionType.application_command:
+        if isinstance(interaction, ApplicationCommandInteraction):
             _log.debug("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
                 _log.debug(
