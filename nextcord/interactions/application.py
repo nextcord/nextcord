@@ -3,18 +3,24 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union, Dict, Any
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .. import utils
-from ..message import Attachment
-from .base import Interaction, InteractionResponse, MISSING, PartialInteractionMessage, _InteractionMessageState, InteractionMessage
-from ..errors import InteractionResponded, InvalidArgument, HTTPException, ClientException
-from ..enums import InteractionResponseType, InteractionType
-from ..webhook.async_ import async_context, WebhookMessage, handle_message_parameters
 from ..embeds import Embed
+from ..enums import InteractionResponseType, InteractionType
+from ..errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from ..file import File
 from ..flags import MessageFlags
-
+from ..message import Attachment
+from ..webhook.async_ import WebhookMessage, async_context, handle_message_parameters
+from .base import (
+    MISSING,
+    Interaction,
+    InteractionMessage,
+    InteractionResponse,
+    PartialInteractionMessage,
+    _InteractionMessageState,
+)
 
 __all__ = ("ApplicationCommandInteraction", "ApplicationAutocompleteInteraction")
 
@@ -24,19 +30,19 @@ if TYPE_CHECKING:
         SlashApplicationSubcommand,
         SlashOptionData,
     )
+    from ..message import AllowedMentions
     from ..state import ConnectionState
     from ..types.interactions import (
         ApplicationAutocompleteInteraction as ApplicationAutocompletePayload,
         ApplicationCommandInteraction as ApplicationCommandPayload,
     )
-    from ..ui.view import View
     from ..ui.modal import Modal
-    from ..message import AllowedMentions
+    from ..ui.view import View
 
 
 class ApplicationCommandInteraction(Interaction):
     """Represents the interaction for all application commands.
-    
+
     This interaction is a subclass of :class:`Interaction`.
 
     .. container:: operations
@@ -121,7 +127,7 @@ class ApplicationCommandInteraction(Interaction):
             options_collection.append(SlashOptionData(option))
 
         return options_collection
-    
+
     @utils.cached_slot_property("_cs_response")
     def response(self) -> ApplicationCommandInteractionResponse:
         """:class:`ApplicationCommandInteractionResponse`: Returns an object responsible for handling responding to the interaction.
@@ -130,7 +136,7 @@ class ApplicationCommandInteraction(Interaction):
         instead.
         """
         return ApplicationCommandInteractionResponse(self)
-    
+
     async def send(
         self,
         content: Optional[str] = None,
@@ -208,7 +214,7 @@ class ApplicationCommandInteraction(Interaction):
             flags=flags,
             suppress_embeds=suppress_embeds,
         )
-    
+
     async def delete_original_message(self, *, delay: Optional[float] = None) -> None:
         """|coro|
 
@@ -753,7 +759,7 @@ class ApplicationAutocompleteInteraction(Interaction):
                 return option
 
         return None
-    
+
     @utils.cached_slot_property("_cs_response")
     def response(self) -> ApplicationAutocompleteInteractionResponse:
         """:class:`ApplicationAutocompleteInteractionResponse`: Returns an object responsible for handling responding to the interaction.

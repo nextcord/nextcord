@@ -303,8 +303,16 @@ class InteractionResponse:
 class _InteractionMessageState:
     __slots__ = ("_parent", "_interaction")
 
-    def __init__(self, interaction: Union[MessageComponentInteraction, ModalSubmitInteraction, ApplicationCommandInteraction], parent: ConnectionState) -> None:
-        self._interaction: Union[MessageComponentInteraction, ModalSubmitInteraction, ApplicationCommandInteraction] = interaction
+    def __init__(
+        self,
+        interaction: Union[
+            MessageComponentInteraction, ModalSubmitInteraction, ApplicationCommandInteraction
+        ],
+        parent: ConnectionState,
+    ) -> None:
+        self._interaction: Union[
+            MessageComponentInteraction, ModalSubmitInteraction, ApplicationCommandInteraction
+        ] = interaction
         self._parent: ConnectionState = parent
 
     def _get_guild(self, guild_id):

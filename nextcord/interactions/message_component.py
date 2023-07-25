@@ -3,27 +3,33 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Optional, Tuple, List, Dict, Any, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .. import utils
-from ..message import Message, Attachment
-from .base import Interaction, InteractionResponse, MISSING, PartialInteractionMessage, _InteractionMessageState, InteractionMessage
 from ..embeds import Embed
+from ..enums import InteractionResponseType
+from ..errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from ..file import File
 from ..flags import MessageFlags
-from ..errors import InteractionResponded, InvalidArgument, HTTPException, ClientException
-from ..webhook.async_ import async_context, WebhookMessage, handle_message_parameters
-from ..enums import InteractionResponseType
-
+from ..message import Attachment, Message
+from ..webhook.async_ import WebhookMessage, async_context, handle_message_parameters
+from .base import (
+    MISSING,
+    Interaction,
+    InteractionMessage,
+    InteractionResponse,
+    PartialInteractionMessage,
+    _InteractionMessageState,
+)
 
 __all__ = ("MessageComponentInteraction",)
 
 if TYPE_CHECKING:
+    from ..message import AllowedMentions
     from ..state import ConnectionState
     from ..types.interactions import MessageComponentInteraction as MessageComponentPayload
     from ..ui.modal import Modal
     from ..ui.view import View
-    from ..message import AllowedMentions
     from .modal_submit import ModalSubmitInteraction
 
 
@@ -123,7 +129,7 @@ class MessageComponentInteraction(Interaction):
             return await self.response.edit_message(*args, **kwargs)
         else:
             return await self.followup.edit_message(self.message.id, *args, **kwargs)
-        
+
     async def send(
         self,
         content: Optional[str] = None,
@@ -201,7 +207,7 @@ class MessageComponentInteraction(Interaction):
             flags=flags,
             suppress_embeds=suppress_embeds,
         )
-    
+
     async def delete_original_message(self, *, delay: Optional[float] = None) -> None:
         """|coro|
 
@@ -383,7 +389,7 @@ class MessageComponentInteractionResponse(InteractionResponse):
     """Represents a Discord interaction response.
 
     This interaction response is a subclass of :class:`InteractionResponse`.
-    
+
     This type can be accessed through :attr:`Interaction.response`.
     """
 
