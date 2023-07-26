@@ -439,7 +439,11 @@ class OptionConverter(_CustomTypingMetaBase):
         """
         self.type = option_type
 
-    async def convert(self, interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction], value: Any) -> Any:
+    async def convert(
+        self,
+        interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
+        value: Any,
+    ) -> Any:
         """|coro|
         Called to convert a value received from Discord to the desired value.
 
@@ -1734,7 +1738,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         return True
 
     async def handle_value(
-        self, state: ConnectionState, value: Any, interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction]
+        self,
+        state: ConnectionState,
+        value: Any,
+        interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
     ) -> Any:
         if self.type is ApplicationCommandOptionType.channel:
             value = state.get_channel(int(value))
