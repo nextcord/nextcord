@@ -23,11 +23,11 @@ bot = commands.Bot()
     guild_ids=[TESTING_GUILD_ID],
 )
 async def hello_command(interaction: Interaction):
-    if interaction.locale == "de":
+    if interaction.locale == Locale.de:
         await interaction.response.send_message("Hallo Welt!")
-    elif interaction.locale == "fr":
+    elif interaction.locale == Locale.fr:
         await interaction.response.send_message("Bonjour le monde!")
-    elif interaction.locale == "es-ES":
+    elif interaction.locale == Locale.es_ES:
         await interaction.response.send_message("¡Hola Mundo!")
     else:
         await interaction.response.send_message("Hello, world!")
@@ -80,13 +80,13 @@ async def choose_colour_command(
         },
     ),
 ):
-    if interaction.locale == "en-US":
+    if interaction.locale == Locale.en_US:
         await interaction.response.send_message(f"You chose **`{colour}`** color")
-    elif interaction.locale == "de":
+    elif interaction.locale == Locale.de:
         await interaction.response.send_message(f"Du hast **`{colour}`** Farbe gewählt")
-    elif interaction.locale == "fr":
+    elif interaction.locale == Locale.fr:
         await interaction.response.send_message(f"Tu as choisi la couleur **`{colour}`**")
-    elif interaction.locale == "es-ES":
+    elif interaction.locale == Locale.es_ES:
         await interaction.response.send_message(f"Elegiste el color **`{colour}`**")
     else:
         await interaction.response.send_message(f"You chose **`{colour}`** colour")
