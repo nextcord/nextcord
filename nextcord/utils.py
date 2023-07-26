@@ -1133,7 +1133,7 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
 
 
 def format_ts(ts: int, /, style: Optional[TimestampStyle] = None) -> str:
-    """A helper function to format an :class:`int` unix timestamp for presentation within Discord.
+    """A helper function to format a Unix timestamp as an :class:`int` for presentation within Discord.
 
     This allows for a locale-independent way of presenting data using Discord specific Markdown.
 
@@ -1163,9 +1163,9 @@ def format_ts(ts: int, /, style: Optional[TimestampStyle] = None) -> str:
     Parameters
     ----------
     ts: :class:`int`
-        The unix timestamp to format.
+        The Unix timestamp to format.
     style: :class:`str`
-        The style to format the datetime with.
+        The style to format the timestamp with.
 
     Returns
     -------
