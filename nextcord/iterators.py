@@ -627,7 +627,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         Maximum number of guilds to retrieve.
     with_counts: :class:`bool`
         Whether to include approximate member and presence counts for the guilds.
-        Defaults to ``True``.
+        Defaults to ``False``.
 
         .. versionadded:: 2.6
     before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
