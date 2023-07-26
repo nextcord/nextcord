@@ -398,11 +398,6 @@ class ModalSubmitInteractionResponse(InteractionResponse):
     This type can be accessed through :attr:`Interaction.response`.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "_responded",
-        "_parent",
-    )
-
     def __init__(self, parent: ModalSubmitInteraction) -> None:
         self._parent: ModalSubmitInteraction = parent
         self._responded: bool = False

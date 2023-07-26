@@ -396,11 +396,6 @@ class ApplicationCommandInteractionResponse(InteractionResponse):
     This type can be accessed through :attr:`ApplicationCommandInteraction.response`.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "_responded",
-        "_parent",
-    )
-
     def __init__(self, parent: ApplicationCommandInteraction) -> None:
         self._parent: ApplicationCommandInteraction = parent
         self._responded: bool = False
@@ -777,11 +772,6 @@ class ApplicationAutocompleteInteractionResponse(InteractionResponse):
 
     This type can be accessed through :attr:`Interaction.response`.
     """
-
-    __slots__: Tuple[str, ...] = (
-        "_responded",
-        "_parent",
-    )
 
     def __init__(self, parent: ApplicationAutocompleteInteraction) -> None:
         self._parent: ApplicationAutocompleteInteraction = parent

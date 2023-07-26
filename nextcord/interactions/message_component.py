@@ -393,11 +393,6 @@ class MessageComponentInteractionResponse(InteractionResponse):
     This type can be accessed through :attr:`Interaction.response`.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "_responded",
-        "_parent",
-    )
-
     def __init__(self, parent: MessageComponentInteraction) -> None:
         self._parent: MessageComponentInteraction = parent
         self._responded: bool = False
