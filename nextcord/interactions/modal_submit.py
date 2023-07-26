@@ -3,25 +3,32 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Optional, Tuple, Dict, List, Any, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .. import utils
-from ..errors import InvalidArgument, InteractionResponded, HTTPException, ClientException
-from ..message import Message, Attachment
-from .base import Interaction, MISSING, PartialInteractionMessage, _InteractionMessageState, InteractionResponse, InteractionMessage
-from ..enums import InteractionType, InteractionResponseType
-from ..webhook.async_ import async_context, WebhookMessage, handle_message_parameters
 from ..embeds import Embed
+from ..enums import InteractionResponseType, InteractionType
+from ..errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from ..file import File
 from ..flags import MessageFlags
+from ..message import Attachment, Message
+from ..webhook.async_ import WebhookMessage, async_context, handle_message_parameters
+from .base import (
+    MISSING,
+    Interaction,
+    InteractionMessage,
+    InteractionResponse,
+    PartialInteractionMessage,
+    _InteractionMessageState,
+)
 
 __all__ = ("ModalSubmitInteraction",)
 
 if TYPE_CHECKING:
+    from ..message import AllowedMentions
     from ..state import ConnectionState
     from ..types.interactions import ModalSubmitInteraction as ModalSubmitPayload
     from ..ui.view import View
-    from ..message import AllowedMentions
     from .message_component import MessageComponentInteraction
 
 
