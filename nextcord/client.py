@@ -42,6 +42,7 @@ from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
 from .guild import Guild
+from .guild_preview import GuildPreview
 from .http import HTTPClient
 from .interactions import Interaction
 from .invite import Invite
@@ -63,6 +64,8 @@ from .webhook import Webhook
 from .widget import Widget
 
 if TYPE_CHECKING:
+    from nextcord.types.checks import ApplicationCheck, ApplicationHook
+
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand, ClientCog
     from .asset import Asset
@@ -76,7 +79,6 @@ if TYPE_CHECKING:
     from .scheduled_events import ScheduledEvent
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .voice_client import VoiceProtocol
-
 
 __all__ = ("Client",)
 
@@ -330,6 +332,11 @@ class Client:
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
 
         self._default_guild_ids = default_guild_ids or []
+
+        # Global application command checks
+        self._application_command_checks: List[ApplicationCheck] = []
+        self._application_command_before_invoke: Optional[ApplicationHook] = None
+        self._application_command_after_invoke: Optional[ApplicationHook] = None
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False
@@ -782,7 +789,7 @@ class Client:
                 # if an error happens during disconnects, disregard it.
                 pass
 
-        if self.ws is not None and self.ws.open:
+        if self.ws is not None and self.ws.open:  # pyright: ignore
             await self.ws.close(code=1000)
 
         await self.http.close()
@@ -1323,7 +1330,7 @@ class Client:
 
         for guild in self._connection.guilds:
             me = guild.me
-            if me is None:
+            if me is None:  # pyright: ignore[reportUnnecessaryComparison]
                 continue
 
             if activity is not None:
@@ -1466,6 +1473,34 @@ class Client:
         """
         data = await self.http.get_guild(guild_id, with_counts=with_counts)
         return Guild(data=data, state=self._connection)
+
+    async def fetch_guild_preview(self, guild_id: int, /) -> GuildPreview:
+        """|coro|
+
+        Fetches a :class:`.GuildPreview` from an ID.
+
+        .. note::
+          This will only fetch guilds that the bot is in or that are discoverable.
+
+        .. versionadded:: 2.6
+
+        Parameters
+        ----------
+        guild_id: :class:`int`
+            The guild's ID to fetch from.
+
+        Raises
+        ------
+        :exc:`.NotFound`
+            The guild provided is unknown.
+
+        Returns
+        -------
+        :class:`.GuildPreview`
+            The guild preview from the ID
+        """
+        data = await self.http.get_guild_preview(guild_id)
+        return GuildPreview(data=data, state=self._connection)
 
     async def create_guild(
         self,
@@ -1846,47 +1881,56 @@ class Client:
         return state.add_dm_channel(data)
 
     def add_view(self, view: View, *, message_id: Optional[int] = None) -> None:
-        """Registers a :class:`~nextcord.ui.View` for persistent listening.
+        """Registers a :class:`~nextcord.ui.View` for persistent listening or for non-
+        persistent storage.
 
         This method should be used for when a view is comprised of components
         that last longer than the lifecycle of the program.
 
         .. versionadded:: 2.0
 
+        .. versionchanged:: 2.6
+
+            Non-persistent views can now be stored during the lifetime of the bot.
+
         Parameters
         ----------
         view: :class:`nextcord.ui.View`
-            The view to register for dispatching.
+            The view to register for dispatching or to add to storage.
         message_id: Optional[:class:`int`]
             The message ID that the view is attached to. This is currently used to
             refresh the view's state during message update events. If not given
-            then message update events are not propagated for the view.
+            then message update events are not propagated for the view. This cannot
+            be provided if the view is non-persistent.
 
         Raises
         ------
         TypeError
             A view was not passed.
         ValueError
-            The view is not persistent. A persistent view has no timeout
-            and all their components have an explicitly provided custom_id.
+            The message_id parameter was passed in with a non-persistent view.
         """
         if not isinstance(view, View):
             raise TypeError(f"Expected an instance of View not {view.__class__!r}")
 
-        if not view.is_persistent():
-            raise ValueError(
-                "View is not persistent. Items need to have a custom_id set and View must have no timeout"
-            )
+        if message_id is not None and not view.is_persistent():
+            raise ValueError("message_id parameter cannot be included for non-persistent views")
 
         self._connection.store_view(view, message_id)
 
     def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
-        """Removes a :class:`~nextcord.ui.View` from persistent listening.
+        """Removes a :class:`~nextcord.ui.View` from persistent listening or non-persistent
+        storage.
 
         This method should be used if a persistent view is set in a cog and
-        should be freed when the cog is unloaded to save memory.
+        should be freed when the cog is unloaded to save memory or if you want
+        to stop tracking a non-persistent view.
 
         .. versionadded:: 2.3
+
+        .. versionchanged:: 2.6
+
+            Non-persistent views can now be removed from storage.
 
         Parameters
         ----------
@@ -1894,23 +1938,21 @@ class Client:
             The view to remove from dispatching.
         message_id: Optional[:class:`int`]
             The message ID that the view is attached to. This is used to properly
-            remove the view from the view store.
+            remove the view from the view store. This cannot be provided if the
+            view is non-persistent.
 
         Raises
         ------
         TypeError
             A view was not passed.
         ValueError
-            The view is not persistent. A persistent view has no timeout
-            and all their components have an explicitly provided custom_id.
+            The message_id parameter was passed in with a non-persistent view.
         """
         if not isinstance(view, View):
             raise TypeError(f"Expected an instance of View not {view.__class__.__name__}")
 
-        if not view.is_persistent():
-            raise ValueError(
-                "View is not persistent. Items need to have a custom_id set and View must have no timeout"
-            )
+        if message_id is not None and not view.is_persistent():
+            raise ValueError("message_id parameter cannot be included for non-persistent views")
 
         self._connection.remove_view(view, message_id)
 
@@ -1981,12 +2023,42 @@ class Client:
         self._connection.remove_modal(modal)
 
     @property
-    def persistent_views(self) -> Sequence[View]:
-        """Sequence[:class:`.View`]: A sequence of persistent views added to the client.
+    def all_views(self) -> List[View]:
+        """List[:class:`.View`] A sequence of all views added to the client.
+
+        .. versionadded:: 2.6
+        """
+        return self._connection.all_views()
+
+    @property
+    def persistent_views(self) -> List[View]:
+        """List[:class:`.View`]: A sequence of persistent views added to the client.
 
         .. versionadded:: 2.0
         """
-        return self._connection.persistent_views
+        warnings.warn(
+            ".persistent_views is deprecated, use .views instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+        return self.views()
+
+    def views(self, *, persistent: bool = True) -> List[View]:
+        """Returns all persistent or non-persistent views.
+
+        .. versionadded:: 2.6
+
+        Parameters
+        ----------
+        persistent: :class:`bool`
+            Whether or not we should grab persistent views. Defaults to ``True``.
+
+        Returns
+        -------
+        List[:class:`ui.View`]
+            The views requested.
+        """
+        return self._connection.views(persistent)
 
     @property
     def scheduled_events(self) -> List[ScheduledEvent]:
@@ -2799,3 +2871,126 @@ class Client:
             This is synchronous due to how slash commands are implemented.
         """
         return cls(data=data, state=self._connection)
+
+    # Application Command Global Checks
+
+    def add_application_command_check(self, func: ApplicationCheck) -> None:
+        """Adds a global application command check to the client.
+
+        This is the non-decorator interface to :meth:`.application_command_check`.
+
+        Parameters
+        ----------
+        func: Callable[[:class:`~nextcord.Interaction`], ``MaybeCoro[bool]``]]
+            The function that was used as a global application check.
+        """
+        self._application_command_checks.append(func)
+
+    def remove_application_command_check(self, func: ApplicationCheck) -> None:
+        """Removes a global application command check from the client.
+
+        This function is idempotent and will not raise an exception
+        if the function is not in the global checks.
+
+        Parameters
+        ----------
+        func: Callable[[:class:`~nextcord.Interaction`], ``MaybeCoro[bool]``]]
+            The function to remove from the global application checks.
+        """
+
+        try:
+            self._application_command_checks.remove(func)
+        except ValueError:
+            pass
+
+    def application_command_check(self, func: ApplicationCheck) -> ApplicationCheck:
+        """A decorator that adds a global applications command check to the client.
+
+        A global check is similar to a :func:`~nextcord.ext.application_checks.check` that is applied
+        on a per command basis except it is run before any command checks
+        have been verified and applies to every application command the client has.
+
+        .. note::
+
+            This function can either be a regular function or a coroutine.
+
+        Similar to a application command :func:`~nextcord.ext.application_checks.check`, this takes a single parameter
+        of type :class:`.Interaction` and can only raise exceptions inherited from
+        :exc:`.ApplicationError`.
+
+        Example
+        -------
+
+        .. code-block:: python3
+
+            @client.application_command_check
+            def check_commands(interaction: Interaction) -> bool:
+                return interaction.application_command.qualified_name in allowed_commands
+
+        """
+        self.add_application_command_check(func)
+        return func
+
+    def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+        """A decorator that registers a coroutine as a pre-invoke hook.
+
+        A pre-invoke hook is called directly before the command is
+        called. This makes it a useful function to set up database
+        connections or any type of set up required.
+
+        This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
+        .. note::
+
+            The :meth:`~nextcord.Client.application_command_before_invoke` and :meth:`~nextcord.Client.application_command_after_invoke`
+            hooks are only called if all checks pass without error. If any check fails, then the hooks
+            are not called.
+
+        Parameters
+        ----------
+        coro: :ref:`coroutine <coroutine>`
+            The coroutine to register as the pre-invoke hook.
+
+        Raises
+        ------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError("The pre-invoke hook must be a coroutine.")
+
+        self._application_command_before_invoke = coro
+        return coro
+
+    def application_command_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+        r"""A decorator that registers a coroutine as a post-invoke hook.
+
+        A post-invoke hook is called directly after the command is
+        called. This makes it a useful function to clean-up database
+        connections or any type of clean up required. There may only be
+        one global post-invoke hook.
+
+        This post-invoke hook takes a sole parameter, a :class:`.Interaction`.
+
+        .. note::
+
+            Similar to :meth:`~nextcord.Client.application_command_before_invoke`, this is not called unless
+            checks succeed. This hook is, however, **always** called regardless of the internal command
+            callback raising an error (i.e. :exc:`.ApplicationInvokeError`\).
+            This makes it ideal for clean-up scenarios.
+
+        Parameters
+        ----------
+        coro: :ref:`coroutine <coroutine>`
+            The coroutine to register as the post-invoke hook.
+
+        Raises
+        ------
+        TypeError
+            The coroutine passed is not actually a coroutine.
+        """
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError("The post-invoke hook must be a coroutine.")
+
+        self._application_command_after_invoke = coro
+        return coro

@@ -1140,6 +1140,7 @@ class Webhook(BaseWebhook):
             "guild_id": channel.guild.id,
             "user": {
                 "username": user.name,
+                "global_name": user.global_name,
                 "discriminator": user.discriminator,
                 "id": user.id,
                 "avatar": user._avatar,
@@ -1512,8 +1513,6 @@ class Webhook(BaseWebhook):
         previous_mentions: Optional[AllowedMentions] = getattr(
             self._state, "allowed_mentions", None
         )
-        if content is None:
-            content = MISSING
 
         application_webhook = self.type is WebhookType.application
         if ephemeral and not application_webhook:

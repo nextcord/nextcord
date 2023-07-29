@@ -511,10 +511,9 @@ class MessageReference:
             {"message_id": self.message_id} if self.message_id is not None else {}
         )
         result["channel_id"] = self.channel_id
+        result["fail_if_not_exists"] = self.fail_if_not_exists
         if self.guild_id is not None:
             result["guild_id"] = self.guild_id
-        if self.fail_if_not_exists is not None:
-            result["fail_if_not_exists"] = self.fail_if_not_exists
         return result
 
     to_message_reference_dict = to_dict
@@ -1508,7 +1507,7 @@ class Message(Hashable):
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)
 
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, self.id)
 
         if delete_after is not None:
@@ -2060,6 +2059,6 @@ class PartialMessage(Hashable):
         if fields:
             # data isn't unbound
             msg = self._state.create_message(channel=self.channel, data=data)  # type: ignore
-            if view and not view.is_finished():
+            if view and not view.is_finished() and view.prevent_update:
                 self._state.store_view(view, self.id)
             return msg

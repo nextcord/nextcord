@@ -69,6 +69,7 @@ class _BaseGuildPreview(UnavailableGuild):
     emojis: List[Emoji]
     features: List[GuildFeature]
     description: Optional[str]
+    stickers: List[GuildSticker]
 
 
 class _GuildPreviewUnique(TypedDict):
@@ -119,6 +120,7 @@ class Guild(_BaseGuildPreview):
     premium_subscription_count: NotRequired[int]
     max_video_channel_users: NotRequired[int]
     stickers: NotRequired[List[GuildSticker]]
+    premium_progress_bar_enabled: Optional[bool]
 
 
 class InviteGuild(Guild, total=False):
