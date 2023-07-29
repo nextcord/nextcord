@@ -77,7 +77,7 @@ class Component:
     def _raw_construct(cls, **kwargs) -> Self:
         self = cls.__new__(cls)
         for slot in get_slots(cls):
-            if slot == "type":
+            if slot == "type" and getattr(self, slot) is not None:
                 # nextcord/issues/1103
                 continue
 
