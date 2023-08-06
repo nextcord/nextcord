@@ -224,7 +224,7 @@ class ScheduledEvent(Hashable):
         self.privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel(
             data["privacy_level"]
         )
-        self.metadata: EntityMetadata = EntityMetadata(**data.get("metadata", {}))
+        self.metadata: EntityMetadata = EntityMetadata(**data.get("entity_metadata", {}))
         self.user_count: int = data.get("user_count", 0)
         self.channel: Optional[GuildChannel] = self._state.get_channel(  # type: ignore # who knows
             int(data.get("channel_id") or 0)
