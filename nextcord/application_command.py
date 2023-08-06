@@ -1543,10 +1543,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # If they didn't explicitly enable autocomplete but did add an autocomplete callback...
             self.autocomplete = True
         if self.autocomplete_callback:
-            if not asyncio.iscoroutinefunction(self.autocomplete_callback):
-                raise TypeError(
-                    f"Given autocomplete callback for kwarg {self.functional_name} isn't a coroutine."
-                )
+            self.from_autocomplete_callback(self.autocomplete_callback)
 
         if cmd_arg.required is not None:
             # If the user manually set if it's required...
