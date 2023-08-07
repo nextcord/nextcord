@@ -187,7 +187,7 @@ class ConnectionState:
 
         self.allowed_mentions: Optional[AllowedMentions] = allowed_mentions
         self._chunk_requests: Dict[Union[int, str], ChunkRequest] = {}
-        self._chunk_tasks: Dict[Union[int, str], asyncio.Task] = {}
+        self._chunk_tasks: Dict[Union[int, str], asyncio.Task[None]] = {}
         self._background_tasks: Set[asyncio.Task] = set()
 
         if activity is not None:

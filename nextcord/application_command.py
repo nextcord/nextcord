@@ -1507,7 +1507,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                             f"{self.error_name} | Annotation {anno} is incompatible with {found_type} \n| {typehint_origin}\n| {parameter.annotation}\n| {grouped_annotations}"
                         )
 
-                    if not (isinstance(anno, ApplicationCommandOptionType | OptionConverter)) and (
+                    if not (isinstance(anno, (ApplicationCommandOptionType, OptionConverter))) and (
                         channel_types := self.channel_mapping.get(anno)
                     ):
                         found_channel_types.extend(channel_types)
