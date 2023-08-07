@@ -1686,7 +1686,10 @@ class ConnectionState:
                 self.dispatch("member_remove", member)
         else:
             _log.debug(
-                "GUILD_MEMBER_REMOVE referencing an unknown guild ID: %s. Discarding.",
+                (
+                    "GUILD_MEMBER_REMOVE referencing an unknown guild ID: %s."
+                    "Falling back to raw data."
+                ),
                 data["guild_id"],
             )
 
