@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import signal
 import sys
@@ -37,7 +38,13 @@ from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
+from .enums import (
+    ApplicationCommandType,
+    ChannelType,
+    InteractionType,
+    Status,
+    VoiceRegion,
+)
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
@@ -498,10 +505,8 @@ class Client:
         except asyncio.CancelledError:
             pass
         except Exception:
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.on_error(event_name, *args, **kwargs)
-            except asyncio.CancelledError:
-                pass
 
     def _schedule_event(
         self,
@@ -563,7 +568,7 @@ class Client:
         overridden to have a different implementation.
         Check :func:`~nextcord.on_error` for more details.
         """
-        print(f"Ignoring exception in {event_method}", file=sys.stderr)
+        print(f"Ignoring exception in {event_method}", file=sys.stderr)  # noqa: T201
         traceback.print_exc()
 
     async def on_application_command_error(
@@ -581,12 +586,14 @@ class Client:
         if interaction.application_command and interaction.application_command.has_error_handler():
             return
 
-        # TODO implement cog error handling
-        # cog = context.cog
+        # TODO: implement cog error handling
+        # cog = context.cog  # noqa: ERA001
         # if cog and cog.has_error_handler():
-        #     return
+        #     return  # noqa: ERA001
 
-        print(f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr)
+        print(  # noqa: T201
+            f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr
+        )
         traceback.print_exception(
             type(exception), exception, exception.__traceback__, file=sys.stderr
         )
@@ -783,11 +790,9 @@ class Client:
         self.dispatch("close")
 
         for voice in self.voice_clients:
-            try:
+            # if an error happens during disconnects, disregard it.
+            with contextlib.suppress(Exception):
                 await voice.disconnect(force=True)
-            except Exception:
-                # if an error happens during disconnects, disregard it.
-                pass
 
         if self.ws is not None and self.ws.open:  # pyright: ignore
             await self.ws.close(code=1000)
@@ -859,7 +864,7 @@ class Client:
                 if not self.is_closed():
                     await self.close()
 
-        def stop_loop_on_completion(f) -> None:
+        def stop_loop_on_completion(_future) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(runner(), loop=loop)
@@ -879,6 +884,8 @@ class Client:
             except KeyboardInterrupt:
                 # I am unsure why this gets raised here but suppress it anyway
                 return None
+
+        return None
 
     # properties
 
@@ -910,7 +917,7 @@ class Client:
 
         .. versionadded: 2.0
         """
-        if self._connection._status in set(state.value for state in Status):
+        if self._connection._status in {state.value for state in Status}:
             return Status(self._connection._status)
         return Status.online
 
@@ -1015,6 +1022,7 @@ class Client:
 
         if isinstance(channel, StageChannel):
             return channel.instance
+        return None
 
     def get_guild(self, id: int, /) -> Optional[Guild]:
         """Returns a guild with the given ID.
@@ -1236,7 +1244,7 @@ class Client:
         future = self.loop.create_future()
         if check is None:
 
-            def _check(*args) -> bool:
+            def _check(*_args) -> bool:
                 return True
 
             check = _check
@@ -2094,7 +2102,6 @@ class Client:
                 _log.debug(
                     "nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
-                # _log.debug(f"nextcord.Client: %s", interaction.data)
                 response_signature = (
                     interaction.data["name"],
                     int(interaction.data["type"]),
@@ -2188,10 +2195,7 @@ class Client:
             Application Command with the given signature. If no command with that signature is
             found, returns ``None`` instead.
         """
-        if isinstance(cmd_type, ApplicationCommandType):
-            actual_type = cmd_type.value
-        else:
-            actual_type = cmd_type
+        actual_type = cmd_type.value if isinstance(cmd_type, ApplicationCommandType) else cmd_type
 
         return self._connection.get_application_command_from_signature(
             name=name, cmd_type=actual_type, guild_id=guild_id
@@ -2618,7 +2622,6 @@ class Client:
                     self.add_application_command(cmd, use_rollout=True, pre_remove=False)
 
     def add_cog(self, cog: ClientCog) -> None:
-        # cog.process_app_cmds()
         for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
 
@@ -2898,10 +2901,8 @@ class Client:
             The function to remove from the global application checks.
         """
 
-        try:
+        with contextlib.suppress(ValueError):
             self._application_command_checks.remove(func)
-        except ValueError:
-            pass
 
     def application_command_check(self, func: ApplicationCheck) -> ApplicationCheck:
         """A decorator that adds a global applications command check to the client.

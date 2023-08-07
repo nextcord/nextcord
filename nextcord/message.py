@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 import io
 import re
@@ -15,6 +16,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Set,
     Tuple,
     Union,
     overload,
@@ -227,9 +229,9 @@ class Attachment(Hashable):
             if seek_begin:
                 fp.seek(0)
             return written
-        else:
-            with open(fp, "wb") as f:
-                return f.write(data)
+
+        with open(fp, "wb") as f:  # noqa: ASYNC101
+            return f.write(data)
 
     async def read(self, *, use_cached: bool = False) -> bytes:
         """|coro|
@@ -263,8 +265,7 @@ class Attachment(Hashable):
             The contents of the attachment.
         """
         url = self.proxy_url if use_cached else self.url
-        data = await self._http.get_from_cdn(url)
-        return data
+        return await self._http.get_from_cdn(url)
 
     async def to_file(
         self,
@@ -755,6 +756,7 @@ class Message(Hashable):
         "activity",
         "stickers",
         "components",
+        "_background_tasks",
         "guild",
     )
 
@@ -803,6 +805,7 @@ class Message(Hashable):
         self.components: List[Component] = [
             _component_factory(d) for d in data.get("components", [])
         ]
+        self._background_tasks: Set[asyncio.Task[None]] = set()
 
         try:
             # if the channel doesn't have a guild attribute, we handle that
@@ -813,9 +816,12 @@ class Message(Hashable):
             else:
                 self.guild = None
 
-        if thread_data := data.get("thread"):
-            if not self.thread and isinstance(self.guild, Guild):
-                self.guild._store_thread(thread_data)
+        if (
+            (thread_data := data.get("thread"))
+            and not self.thread
+            and isinstance(self.guild, Guild)
+        ):
+            self.guild._store_thread(thread_data)
 
         try:
             ref = data["message_reference"]
@@ -905,12 +911,12 @@ class Message(Hashable):
 
     def _clear_emoji(self, emoji) -> Optional[Reaction]:
         to_check = str(emoji)
-        for index, reaction in enumerate(self.reactions):
+        for index, reaction in enumerate(self.reactions):  # noqa: B007
             if str(reaction.emoji) == to_check:
                 break
         else:
             # didn't find anything so just return
-            return
+            return None
 
         del self.reactions[index]
         return reaction
@@ -930,10 +936,8 @@ class Message(Hashable):
 
         # clear the cached properties
         for attr in self._CACHED_SLOTS:
-            try:
+            with contextlib.suppress(AttributeError):
                 delattr(self, attr)
-            except AttributeError:
-                pass
 
     def _handle_edited_timestamp(self, value: str) -> None:
         self._edited_timestamp = utils.parse_time(value)
@@ -1079,21 +1083,17 @@ class Message(Hashable):
             respectively, along with this function.
         """
 
-        # fmt: off
         transformations = {
-            re.escape(f'<#{channel.id}>'): '#' + channel.name
-            for channel in self.channel_mentions
+            re.escape(f"<#{channel.id}>"): "#" + channel.name for channel in self.channel_mentions
         }
 
         mention_transforms = {
-            re.escape(f'<@{member.id}>'): '@' + member.display_name
-            for member in self.mentions
+            re.escape(f"<@{member.id}>"): "@" + member.display_name for member in self.mentions
         }
 
         # add the <@!user_id> cases as well..
         second_mention_transforms = {
-            re.escape(f'<@!{member.id}>'): '@' + member.display_name
-            for member in self.mentions
+            re.escape(f"<@!{member.id}>"): "@" + member.display_name for member in self.mentions
         }
 
         transformations.update(mention_transforms)
@@ -1101,12 +1101,9 @@ class Message(Hashable):
 
         if self.guild is not None:
             role_transforms = {
-                re.escape(f'<@&{role.id}>'): '@' + role.name
-                for role in self.role_mentions
+                re.escape(f"<@&{role.id}>"): "@" + role.name for role in self.role_mentions
             }
             transformations.update(role_transforms)
-
-        # fmt: on
 
         def repl(obj):
             return transformations.get(re.escape(obj.group(0)), "")
@@ -1171,14 +1168,12 @@ class Message(Hashable):
         if self.type is MessageType.recipient_add:
             if self.channel.type is ChannelType.group:
                 return f"{self.author.name} added {self.mentions[0].name} to the group."
-            else:
-                return f"{self.author.name} added {self.mentions[0].name} to the thread."
+            return f"{self.author.name} added {self.mentions[0].name} to the thread."
 
         if self.type is MessageType.recipient_remove:
             if self.channel.type is ChannelType.group:
                 return f"{self.author.name} removed {self.mentions[0].name} from the group."
-            else:
-                return f"{self.author.name} removed {self.mentions[0].name} from the thread."
+            return f"{self.author.name} removed {self.mentions[0].name} from the thread."
 
         if self.type is MessageType.channel_name_change:
             return f"{self.author.name} changed the channel name: **{self.content}**"
@@ -1212,26 +1207,22 @@ class Message(Hashable):
         if self.type is MessageType.premium_guild_subscription:
             if not self.content:
                 return f"{self.author.name} just boosted the server!"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times!"
+            return f"{self.author.name} just boosted the server **{self.content}** times!"
 
         if self.type is MessageType.premium_guild_tier_1:
             if not self.content:
                 return f"{self.author.name} just boosted the server! {self.guild} has achieved **Level 1!**"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 1!**"
+            return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 1!**"
 
         if self.type is MessageType.premium_guild_tier_2:
             if not self.content:
                 return f"{self.author.name} just boosted the server! {self.guild} has achieved **Level 2!**"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 2!**"
+            return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 2!**"
 
         if self.type is MessageType.premium_guild_tier_3:
             if not self.content:
                 return f"{self.author.name} just boosted the server! {self.guild} has achieved **Level 3!**"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 3!**"
+            return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 3!**"
 
         if self.type is MessageType.channel_follow_add:
             return f"{self.author.name} has added {self.content} to this channel"
@@ -1268,6 +1259,8 @@ class Message(Hashable):
         if self.type is MessageType.guild_invite_reminder:
             return "Wondering who to invite?\nStart by inviting anyone who can help you build the server!"
 
+        return None
+
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
 
@@ -1299,12 +1292,12 @@ class Message(Hashable):
 
             async def delete(delay: float) -> None:
                 await asyncio.sleep(delay)
-                try:
+                with contextlib.suppress(HTTPException):
                     await self._state.http.delete_message(self.channel.id, self.id)
-                except HTTPException:
-                    pass
 
-            asyncio.create_task(delete(delay))
+            task = asyncio.create_task(delete(delay))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
         else:
             await self._state.http.delete_message(self.channel.id, self.id)
 
@@ -1480,14 +1473,13 @@ class Message(Hashable):
         if allowed_mentions is MISSING:
             if self._state.allowed_mentions is not None and self.author.id == self._state.self_id:
                 payload["allowed_mentions"] = self._state.allowed_mentions.to_dict()
-        else:
-            if allowed_mentions is not None:
-                if self._state.allowed_mentions is not None:
-                    payload["allowed_mentions"] = self._state.allowed_mentions.merge(
-                        allowed_mentions
-                    ).to_dict()
-                else:
-                    payload["allowed_mentions"] = allowed_mentions.to_dict()
+        elif allowed_mentions is not None:
+            if self._state.allowed_mentions is not None:
+                payload["allowed_mentions"] = self._state.allowed_mentions.merge(
+                    allowed_mentions
+                ).to_dict()
+            else:
+                payload["allowed_mentions"] = allowed_mentions.to_dict()
 
         if attachments is not MISSING:
             payload["attachments"] = [a.to_dict() for a in attachments]
@@ -1894,7 +1886,7 @@ class PartialMessage(Hashable):
 
     # Also needed for duck typing purposes
     # n.b. not exposed
-    pinned = property(None, lambda x, y: None)
+    pinned = property(None, lambda _, __: None)
 
     def __repr__(self) -> str:
         return f"<PartialMessage id={self.id} channel={self.channel!r}>"
@@ -2062,3 +2054,4 @@ class PartialMessage(Hashable):
             if view and not view.is_finished() and view.prevent_update:
                 self._state.store_view(view, self.id)
             return msg
+        return None

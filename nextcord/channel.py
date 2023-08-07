@@ -373,6 +373,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+        return None
 
     @utils.copy_doc(abc.GuildChannel.clone)
     async def clone(
@@ -501,7 +502,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         """
 
         if check is MISSING:
-            check = lambda m: True
+            check = lambda _: True
 
         iterator = self.history(
             limit=limit, before=before, after=after, oldest_first=oldest_first, around=around
@@ -1169,8 +1170,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
-        else:
-            return self
+        return self
 
     def get_thread(self, thread_id: int, /) -> Optional[Thread]:
         """Returns a thread with the given ID.
@@ -1291,10 +1291,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         else:
             raw_embeds = []
 
-        if stickers is not None:
-            raw_stickers = [sticker.id for sticker in stickers]
-        else:
-            raw_stickers = []
+        raw_stickers = [sticker.id for sticker in stickers] if stickers is not None else []
 
         if allowed_mentions is not None:
             if state.allowed_mentions is not None:
@@ -1559,13 +1556,11 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         Mapping[:class:`int`, :class:`VoiceState`]
             The mapping of member ID to a voice state.
         """
-        # fmt: off
         return {
             key: value
             for key, value in self.guild._voice_states.items()
             if value.channel and value.channel.id == self.id
         }
-        # fmt: on
 
     @utils.copy_doc(abc.GuildChannel.permissions_for)
     def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
@@ -1800,6 +1795,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+        return None
 
     async def delete_messages(self, messages: Iterable[Snowflake]) -> None:
         """|coro|
@@ -1922,7 +1918,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         """
 
         if check is MISSING:
-            check = lambda m: True
+            check = lambda _: True
 
         iterator = self.history(
             limit=limit, before=before, after=after, oldest_first=oldest_first, around=around
@@ -2309,6 +2305,7 @@ class StageChannel(VocalGuildChannel):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+        return None
 
 
 class CategoryChannel(abc.GuildChannel, Hashable):
@@ -2472,6 +2469,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+        return None
 
     @utils.copy_doc(abc.GuildChannel.move)
     async def move(self, **kwargs) -> None:
@@ -2784,7 +2782,7 @@ class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         if len(self.recipients) == 0:
             return "Unnamed"
 
-        return ", ".join(map(lambda x: x.name, self.recipients))
+        return ", ".join((x.name for x in self.recipients))
 
     def __repr__(self) -> str:
         return f"<GroupChannel id={self.id} name={self.name!r}>"
@@ -2925,28 +2923,26 @@ def _guild_channel_factory(channel_type: int):
     value = try_enum(ChannelType, channel_type)
     if value is ChannelType.text:
         return TextChannel, value
-    elif value is ChannelType.voice:
+    if value is ChannelType.voice:
         return VoiceChannel, value
-    elif value is ChannelType.category:
+    if value is ChannelType.category:
         return CategoryChannel, value
-    elif value is ChannelType.news:
+    if value is ChannelType.news:
         return TextChannel, value
-    elif value is ChannelType.stage_voice:
+    if value is ChannelType.stage_voice:
         return StageChannel, value
-    elif value is ChannelType.forum:
+    if value is ChannelType.forum:
         return ForumChannel, value
-    else:
-        return None, value
+    return None, value
 
 
 def _channel_factory(channel_type: int):
     cls, value = _guild_channel_factory(channel_type)
     if value is ChannelType.private:
         return DMChannel, value
-    elif value is ChannelType.group:
+    if value is ChannelType.group:
         return GroupChannel, value
-    else:
-        return cls, value
+    return cls, value
 
 
 def _threaded_channel_factory(channel_type: int):

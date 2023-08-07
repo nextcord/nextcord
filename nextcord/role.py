@@ -323,8 +323,7 @@ class Role(Hashable):
         """:class:`str`: Returns a string that allows you to mention a role."""
         if self.id != self.guild.id:
             return f"<@&{self.id}>"
-        else:
-            return "@everyone"
+        return "@everyone"
 
     @property
     def members(self) -> List[Member]:

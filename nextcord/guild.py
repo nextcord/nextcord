@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import unicodedata
 import warnings
@@ -467,10 +468,10 @@ class Guild(Hashable):
 
         self.mfa_level: MFALevel = guild.get("mfa_level")
         self.emojis: Tuple[Emoji, ...] = tuple(
-            map(lambda d: state.store_emoji(self, d), guild.get("emojis", []))
+            (state.store_emoji(self, d) for d in guild.get("emojis", []))
         )
         self.stickers: Tuple[GuildSticker, ...] = tuple(
-            map(lambda d: state.store_sticker(self, d), guild.get("stickers", []))
+            (state.store_sticker(self, d) for d in guild.get("stickers", []))
         )
         self.features: List[GuildFeature] = guild.get("features", [])
         self._splash: Optional[str] = guild.get("splash")
@@ -522,12 +523,10 @@ class Guild(Hashable):
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
-        try:
+        with contextlib.suppress(KeyError):
             self._large = data["large"]
-        except KeyError:
-            pass
 
-        empty_tuple = tuple()
+        empty_tuple = ()
         for presence in data.get("presences", []):
             user_id = int(presence["user"]["id"])
             member = self.get_member(user_id)
@@ -700,7 +699,7 @@ class Guild(Hashable):
 
     def _resolve_channel(self, id: Optional[int], /) -> Optional[Union[GuildChannel, Thread]]:
         if id is None:
-            return
+            return None
 
         return self._channels.get(id) or self._threads.get(id)
 
@@ -1857,9 +1856,8 @@ class Guild(Hashable):
 
             if invites_disabled:
                 features.append("INVITES_DISABLED")
-            else:
-                if "INVITES_DISABLED" in features:
-                    features.remove("INVITES_DISABLED")
+            elif "INVITES_DISABLED" in features:
+                features.remove("INVITES_DISABLED")
 
             fields["features"] = features
 
@@ -1896,8 +1894,7 @@ class Guild(Hashable):
             if factory is None:
                 raise InvalidData("Unknown channel type {type} for channel ID {id}.".format_map(d))
 
-            channel = factory(guild=self, state=self._state, data=d)
-            return channel
+            return factory(guild=self, state=self._state, data=d)
 
         return [convert(d) for d in data]
 
@@ -2213,10 +2210,7 @@ class Guild(Hashable):
                 f"Expected int for ``days``, received {days.__class__.__name__} instead."
             )
 
-        if roles:
-            role_ids = [str(role.id) for role in roles]
-        else:
-            role_ids = []
+        role_ids = [str(role.id) for role in roles] if roles else []
 
         data = await self._state.http.prune_members(
             self.id, days, compute_prune_count=compute_prune_count, roles=role_ids, reason=reason
@@ -2309,10 +2303,7 @@ class Guild(Hashable):
                 f"Expected int for ``days``, received {days.__class__.__name__} instead."
             )
 
-        if roles:
-            role_ids = [str(role.id) for role in roles]
-        else:
-            role_ids = []
+        role_ids = [str(role.id) for role in roles] if roles else []
 
         data = await self._state.http.estimate_pruned_members(self.id, days, role_ids)
         return data["pruned"]
@@ -2679,10 +2670,7 @@ class Guild(Hashable):
         img_base64 = await utils.obj_to_base64_data(image)
 
         role_ids: SnowflakeList
-        if roles:
-            role_ids = [role.id for role in roles]
-        else:
-            role_ids = []
+        role_ids = [role.id for role in roles] if roles else []
 
         data = await self._state.http.create_custom_emoji(
             self.id, name, img_base64, roles=role_ids, reason=reason
@@ -2865,9 +2853,7 @@ class Guild(Hashable):
                 fields["icon"] = await utils.obj_to_base64_data(icon)
 
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
-        role = Role(guild=self, data=data, state=self._state)
-
-        return role
+        return Role(guild=self, data=data, state=self._state)
 
     async def edit_role_positions(
         self, positions: Dict[Snowflake, int], *, reason: Optional[str] = None
@@ -3010,11 +2996,12 @@ class Guild(Hashable):
             raise InvalidArgument(
                 "Cannot pass both delete_message_days and delete_message_seconds."
             )
-        elif delete_message_days is not None:
+        if delete_message_days is not None:
             warnings.warn(
                 DeprecationWarning(
-                    "delete_message_days is deprecated, use delete_message_seconds instead."
-                )
+                    "delete_message_days is deprecated, use delete_message_seconds instead.",
+                ),
+                stacklevel=2,
             )
             delete_message_seconds = delete_message_days * 24 * 60 * 60
         elif delete_message_seconds is None:
@@ -3155,10 +3142,7 @@ class Guild(Hashable):
         :class:`AuditLogEntry`
             The audit log entry.
         """
-        if user is not None:
-            user_id = user.id
-        else:
-            user_id = None
+        user_id = user.id if user is not None else None
 
         return AuditLogIterator(
             self,
@@ -3264,6 +3248,7 @@ class Guild(Hashable):
                 members = await members
 
             return members
+        return None
 
     async def query_members(
         self,

@@ -4,14 +4,6 @@ line-length = 100
 target-version = ["py38", "py39", "py310", "py311"]
 
 
-[tool.isort]
-profile = "black"
-py_version = 38
-line_length = 100
-combine_as_imports = true
-filter_files = true
-
-
 [tool.taskipy.tasks]
 black = { cmd = "task lint black", help = "Run black" }
 docs = { cmd = "cd docs && sphinx-autobuild . _build/html --ignore _build --watch ../nextcord --port 8069", help = "Build the documentation on an autoreloading server." }
@@ -56,3 +48,76 @@ reportUnsupportedDunderAll = true
 reportUnusedVariable = true
 reportUnnecessaryComparison = true
 reportUnnecessaryTypeIgnoreComment = true
+
+[tool.ruff]
+line-length = 100
+select = ["ALL"]
+# TODO comments are for rules that should be enabled in the future (separate PRs)
+ignore = [
+    "A",       # TODO:
+    "ANN",     # TODO:
+    "ANN101",  # `self` does not need a type annotation
+    "ANN102",  # `cls` does not need a type annotation
+    "ARG002",  # TODO:
+    "ARG003",  # TODO:
+    "B008",    # SlashOption() as default, it is okay (Annotated is technically better but verbose)
+    "B905",    # zip(strict: bool) is from 3.10
+    "BLE",     # TODO:
+    "C90",     # TODO:
+    "COM",     # black sorts out trailing commas
+    "D",       # TODO:
+    "E",       # TODO:
+    "E501",    # black sorts out line length
+    "F403",    # wildcard imports shouldn't be blasted
+    "F405",    # pyright can detect undefined names anyway
+    "EM",      # TODO:
+    "FBT",     # TODO:
+    "FIX",     # this can be removed on demand, todo comments are okay to be left in
+    "N",       # TODO:
+    "PD",      # all .values is mistaken for pandas
+    "PERF203", # TODO:
+    "PGH003",  # pyright: ignore[rule] is too verbose (reportGeneralTypeIssues) unfortunately and makes a mess
+    "PLR2004", # TODO:
+    "PLW2901", # overriding loop var with a change (like anno = anno.type) is very common in this
+    "PTH",     # TODO:
+    "S101",    # asserts are usually used for typing assertions - typing.cast would be better but it's fine
+    "S110",    # TODO:
+    "S112",    # TODO:
+    "S311",    # "cryptographic purposes", this is a Discord bot library
+    "S603",    # as this is a client, we do not need to check for untrusted input here
+    "S607",    # or partial executable paths
+    "SLF",     # pyright can detect private access, but internals rely on it too much right now
+    "TD002",   # authors in TODO comments would be nice, but they don't exactly work retroactively (discord.py comments)
+    "TD003",   # same with issue links, nice but not retroactive
+    "TCH",     # TODO:
+    "TID",     # TODO:
+    "TRY",     # TODO:
+    "UP",      # TODO:
+]
+exclude = ["aliasgen.py", "discord/*", "unaliased-setup.py", ".github/*"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = [
+    "F401", # unused imports in __init__.py, "from . import abc, ..."
+]
+"scripts/autotyping.py" = ["INP"]
+"examples/*" = [
+    "ARG001", # unused args in examples, not including _ prefixes to prevent confusion
+    "INP",    # examples is an implicit namespace as it is just a directory
+    "S104",   # all interfaces binding as an example
+    "SIM105", # not using contextlib.supress in examples, as comments denote "error handling here"
+    "T20",    # print in examples is okay
+    "RET502", # return ... is used in commands, which is fine as an example
+    "RET503", # same as above
+]
+"__main__.py" = ["T20"]
+"docs/*" = ["ERA001", "INP"]
+
+[tool.ruff.pylint]
+max-args = 40        # message args (send, execute_webhook) make this way too long usually
+max-branches = 50    # these are quite big, but better than no linting for now
+max-statements = 110
+max-returns = 40
+
+[tool.ruff.isort]
+combine-as-imports = true

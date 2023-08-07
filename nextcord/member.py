@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 import itertools
 import sys
@@ -156,7 +157,7 @@ def flatten_user(cls):
             # However I'm not sure how I feel about "functions" returning properties
             # It probably breaks something in Sphinx.
             # probably a member function by now
-            def generate_function(x):
+            def generate_function(x, value=value):
                 # We want sphinx to properly show coroutine functions as coroutines
                 if asyncio.iscoroutinefunction(value):
 
@@ -276,7 +277,7 @@ class Member(abc.Messageable, _UserTag):
         )
         self._roles: utils.SnowflakeList = utils.SnowflakeList(map(int, data["roles"]))
         self._client_status: Dict[Optional[str], str] = {None: "offline"}
-        self.activities: Tuple[ActivityTypes, ...] = tuple()
+        self.activities: Tuple[ActivityTypes, ...] = ()
         self.nick: Optional[str] = data.get("nick", None)
         self.pending: bool = data.get("pending", False)
         self._avatar: Optional[str] = data.get("avatar")
@@ -352,21 +353,16 @@ class Member(abc.Messageable, _UserTag):
         return self
 
     async def _get_channel(self):
-        ch = await self.create_dm()
-        return ch
+        return await self.create_dm()
 
     def _update(self, data: MemberPayload) -> None:
         # the nickname change is optional,
         # if it isn't in the payload then it didn't change
-        try:
+        with contextlib.suppress(KeyError):
             self.nick = data["nick"]
-        except KeyError:
-            pass
 
-        try:
+        with contextlib.suppress(KeyError):
             self.pending = data["pending"]
-        except KeyError:
-            pass
 
         self.premium_since = utils.parse_time(data.get("premium_since"))
         self._roles = utils.SnowflakeList(map(int, data["roles"]))
@@ -376,7 +372,7 @@ class Member(abc.Messageable, _UserTag):
     def _presence_update(
         self, data: PartialPresenceUpdate, user: UserPayload
     ) -> Optional[Tuple[User, User]]:
-        self.activities = tuple(map(lambda x: create_activity(self._state, x), data["activities"]))
+        self.activities = tuple((create_activity(self._state, x) for x in data["activities"]))
         self._client_status = {
             sys.intern(key): sys.intern(value) for key, value in data.get("client_status", {}).items()  # type: ignore
         }
@@ -401,6 +397,7 @@ class Member(abc.Messageable, _UserTag):
             u.name, u._avatar, u.discriminator, u._public_flags = modified
             # Signal to dispatch on_user_update
             return to_return, u
+        return None
 
     @property
     def status(self) -> Union[Status, str]:
@@ -545,6 +542,7 @@ class Member(abc.Messageable, _UserTag):
         """
         if self.activities:
             return self.activities[0]
+        return None
 
     def mentioned_in(self, message: Message) -> bool:
         """Checks if the member is mentioned in the specified message.
@@ -801,9 +799,7 @@ class Member(abc.Messageable, _UserTag):
                 await http.edit_my_voice_state(guild_id, voice_state_payload)
             else:
                 if not suppress:
-                    voice_state_payload[
-                        "request_to_speak_timestamp"
-                    ] = datetime.datetime.utcnow().isoformat()
+                    voice_state_payload["request_to_speak_timestamp"] = utils.utcnow().isoformat()
                 await http.edit_voice_state(guild_id, self.id, voice_state_payload)
 
         if voice_channel is not MISSING:
@@ -829,6 +825,7 @@ class Member(abc.Messageable, _UserTag):
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
             return Member(data=data, guild=self.guild, state=self._state)
+        return None
 
     async def request_to_speak(self) -> None:
         """|coro|
@@ -853,7 +850,7 @@ class Member(abc.Messageable, _UserTag):
         """
         payload = {
             "channel_id": self.voice.channel.id,  # type: ignore # should exist
-            "request_to_speak_timestamp": datetime.datetime.utcnow().isoformat(),
+            "request_to_speak_timestamp": utils.utcnow().isoformat(),
         }
 
         if self._state.self_id != self.id:
@@ -983,10 +980,8 @@ class Member(abc.Messageable, _UserTag):
                 Object(id=r.id) for r in self.roles[1:]
             ]  # remove @everyone
             for role in roles:
-                try:
+                with contextlib.suppress(ValueError):
                     new_roles.remove(Object(id=role.id))
-                except ValueError:
-                    pass
 
             await self.edit(roles=new_roles, reason=reason)
         else:

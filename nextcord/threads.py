@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import time
 from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Union
 
@@ -189,18 +190,14 @@ class Thread(Messageable, Hashable, PinsMixin):
         self.create_timestamp = parse_time(data.get("create_timestamp"))
 
     def _update(self, data) -> None:
-        try:
+        with contextlib.suppress(KeyError):
             self.name = data["name"]
-        except KeyError:
-            pass
 
         self.slowmode_delay = data.get("rate_limit_per_user", 0)
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
 
-        try:
+        with contextlib.suppress(KeyError):
             self._unroll_metadata(data["thread_metadata"])
-        except KeyError:
-            pass
 
     @property
     def created_at(self) -> Optional[datetime]:
@@ -513,7 +510,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         """
 
         if check is MISSING:
-            check = lambda m: True
+            check = lambda _: True
 
         iterator = self.history(
             limit=limit, before=before, after=after, oldest_first=oldest_first, around=around
