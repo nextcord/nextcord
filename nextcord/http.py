@@ -808,7 +808,10 @@ class HTTPClient:
                                         await asyncio.sleep(1 + retry_count * 2)
                                         should_retry = True
                                     else:
-                                        _log.info("Path %s encountered a Discord server issue.", rate_limit_path)
+                                        _log.info(
+                                            "Path %s encountered a Discord server issue.",
+                                            rate_limit_path,
+                                        )
                                         raise DiscordServerError(response, ret)
                                 elif response.status == 401:
                                     _log.warning(
@@ -855,9 +858,11 @@ class HTTPClient:
                                     else:
                                         _log.warning(
                                             "Path %s resulted in error 429, rate limit exceeded.",
-                                            rate_limit_path
+                                            rate_limit_path,
                                         )
-                                        raise HTTPException(response, ret)  # TODO: Make actual HTTPRateLimit error?
+                                        raise HTTPException(
+                                            response, ret
+                                        )  # TODO: Make actual HTTPRateLimit error?
                                 elif response.status >= 500:
                                     raise DiscordServerError(response, ret)
                                 else:
