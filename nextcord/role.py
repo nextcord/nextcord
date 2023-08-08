@@ -263,7 +263,7 @@ class Role(Hashable):
         except KeyError:
             self.tags = None
 
-        self._flags = data.get("flags", 0)
+        self._flags: int = data.get("flags", 0)
 
     def is_default(self) -> bool:
         """:class:`bool`: Checks if the role is the default role."""
