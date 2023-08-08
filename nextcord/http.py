@@ -555,7 +555,7 @@ class HTTPClient:
         self,
         original_headers: dict[str, str],
         *,
-        auth: str | None | MISSING = MISSING,
+        auth: str | None = MISSING,
     ) -> dict[str, str]:
         """Creates a new dictionary of headers, without overwriting values from the given headers.
 
@@ -616,7 +616,7 @@ class HTTPClient:
         *,
         files: Optional[Sequence[File]] = None,
         form: Optional[Iterable[Dict[str, Any]]] = None,
-        auth: Optional[str] | MISSING = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **kwargs: Any,
     ) -> Any:
