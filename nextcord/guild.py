@@ -298,7 +298,7 @@ class Guild(Hashable):
         "approximate_member_count",
         "approximate_presence_count",
         "_premium_progress_bar_enabled",
-        "safety_alerts_channel_id",
+        "_safety_alerts_channel_id",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -522,7 +522,9 @@ class Guild(Hashable):
             "premium_progress_bar_enabled"
         )
 
-        self.safety_alerts_channel_id: Optional[int] = guild.get("safety_alerts_channel_id")
+        self._safety_alerts_channel_id: Optional[int] = utils.get_as_snowflake(
+            guild, "safety_alerts_channel_id"
+        )
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
@@ -798,6 +800,19 @@ class Guild(Hashable):
         .. versionadded:: 1.4
         """
         channel_id = self._public_updates_channel_id
+        return channel_id and self._channels.get(channel_id)  # type: ignore
+
+    @property
+    def safety_alerts_channel(self) -> Optional[TextChannel]:
+        """Optional[:class:`TextChannel`]: Returns the guild's safety alerts channel where admins and
+        moderators of the guild receive notices about DM or join activity that exceeds usual numbers
+        for the guild.
+
+        If no channel is set then this is set to ``None``.
+
+        .. versionadded:: 2.6
+        """
+        channel_id = self._safety_alerts_channel_id
         return channel_id and self._channels.get(channel_id)  # type: ignore
 
     @property
