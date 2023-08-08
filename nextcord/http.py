@@ -265,15 +265,12 @@ class RateLimit:
         x_reset_after = response.headers.get("X-RateLimit-Reset-After")
         if x_reset_after is not None:
             x_reset_after = float(x_reset_after) + self._time_offset
-            if self.reset_after is None:
+            if self.reset_after < x_reset_after:
+                _log.debug(
+                    "Bucket %s: Reset after time increased, adapting reset time.", self.bucket
+                )
                 self.reset_after = x_reset_after
-            else:
-                if self.reset_after < x_reset_after:
-                    _log.debug(
-                        "Bucket %s: Reset after time increased, adapting reset time.", self.bucket
-                    )
-                    self.reset_after = x_reset_after
-                    self.start_reset_task()
+                self.start_reset_task()
 
         if not self.resetting:
             self.start_reset_task()
