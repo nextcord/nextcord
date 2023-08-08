@@ -1332,8 +1332,5 @@ class RoleFlags(BaseFlags):
 
     @flag_value
     def in_prompt(self):
-        """:class:`bool`: Returns ``True`` if the role can be selected in an onboarding prompt.
-
-        .. versionadded:: 2.6
-        """
+        """:class:`bool`: Returns ``True`` if the role can be selected in an onboarding prompt."""
         return 1 << 0
