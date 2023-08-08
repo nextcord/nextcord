@@ -5,10 +5,14 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, List, Optional, Set
 
+from .user import User
+
 if TYPE_CHECKING:
+    from .guild import Guild
     from .member import Member
     from .message import Message
     from .partial_emoji import PartialEmoji
+    from .state import ConnectionState
     from .types.raw_models import (
         BulkMessageDeleteEvent,
         IntegrationDeleteEvent,
@@ -306,10 +310,19 @@ class RawMemberRemoveEvent(_RawReprMixin):
     ----------
     guild_id: :class:`int`
         The guild ID where the member left from.
+    guild: Optional[:class:`Guild`]
+        The guild where the member left from.
+
+        .. versionadded:: 2.6
+    user: :class:`User`
+        The user that left the guild.
+
+        .. versionadded:: 2.6
     """
 
-    __slots__ = ("guild_id", "user")
+    __slots__ = ("guild_id", "user", "guild")
 
-    def __init__(self, data: MemberRemoveEvent) -> None:
+    def __init__(self, *, data: MemberRemoveEvent, state: ConnectionState) -> None:
         self.guild_id: int = int(data["guild_id"])
-        # FIXME: practically no data
+        self.guild: Optional[Guild] = state._get_guild(int(data["guild_id"]))
+        self.user: User = User(state=state, data=data["user"])
