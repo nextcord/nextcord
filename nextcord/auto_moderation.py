@@ -97,9 +97,20 @@ class AutoModerationTriggerMetadata:
         .. note::
 
             This is ``None`` and cannot be provided if the trigger type of this rule is not :attr:`AutoModerationTriggerType.mention_spam`.
+    mention_raid_protection_enabled: Optional[:class:`bool`]
+        Whether to automatically detect mention raids.
+
+        .. versionadded:: 2.6
     """
 
-    __slots__ = ("keyword_filter", "regex_patterns", "presets", "allow_list", "mention_total_limit")
+    __slots__ = (
+        "keyword_filter",
+        "regex_patterns",
+        "presets",
+        "allow_list",
+        "mention_total_limit",
+        "mention_raid_protection_enabled",
+    )
 
     def __init__(
         self,
@@ -109,12 +120,14 @@ class AutoModerationTriggerMetadata:
         presets: Optional[List[KeywordPresetType]] = None,
         allow_list: Optional[List[str]] = None,
         mention_total_limit: Optional[int] = None,
+        mention_raid_protection_enabled: Optional[bool] = None,
     ) -> None:
         self.keyword_filter: Optional[List[str]] = keyword_filter
         self.regex_patterns: Optional[List[str]] = regex_patterns
         self.presets: Optional[List[KeywordPresetType]] = presets
         self.allow_list: Optional[List[str]] = allow_list
         self.mention_total_limit: Optional[int] = mention_total_limit
+        self.mention_raid_protection_enabled: Optional[bool] = mention_raid_protection_enabled
 
     @classmethod
     def from_data(cls, data: TriggerMetadataPayload):
@@ -127,6 +140,7 @@ class AutoModerationTriggerMetadata:
         )
         allow_list = data.get("allow_list")
         mention_total_limit = data.get("mention_total_limit")
+        mention_raid_protection_enabled = data.get("mention_raid_protection_enabled")
 
         return cls(
             keyword_filter=keyword_filter,
@@ -134,6 +148,7 @@ class AutoModerationTriggerMetadata:
             presets=presets,
             allow_list=allow_list,
             mention_total_limit=mention_total_limit,
+            mention_raid_protection_enabled=mention_raid_protection_enabled,
         )
 
     @property
@@ -154,6 +169,9 @@ class AutoModerationTriggerMetadata:
 
         if self.mention_total_limit is not None:
             payload["mention_total_limit"] = self.mention_total_limit
+
+        if self.mention_raid_protection_enabled is not None:
+            payload["mention_raid_protection_enabled"] = self.mention_raid_protection_enabled
 
         return payload
 
