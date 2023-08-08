@@ -31,6 +31,7 @@ __all__ = (
     "MemberCacheFlags",
     "ApplicationFlags",
     "ChannelFlags",
+    "AttachmentFlags",
 )
 
 BF = TypeVar("BF", bound="BaseFlags")
