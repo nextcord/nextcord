@@ -101,9 +101,9 @@ class AutoModerationTriggerMetadata:
         Whether to automatically detect mention raids.
 
         .. versionadded:: 2.6
-        
+
         .. note::
-        
+
             This is ``None`` and cannot be provided if the trigger type of this rule is not :attr:`AutoModerationTriggerType.mention_spam`.
     """
 

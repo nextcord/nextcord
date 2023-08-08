@@ -805,7 +805,7 @@ class Guild(Hashable):
     @property
     def safety_alerts_channel(self) -> Optional[TextChannel]:
         """Optional[:class:`TextChannel`]: Returns the guild's channel where admins and
-        moderators of the guild receive safety alerts from Discord. The guild must be a 
+        moderators of the guild receive safety alerts from Discord. The guild must be a
         Community guild.
 
         If no channel is set then this returns ``None``.
