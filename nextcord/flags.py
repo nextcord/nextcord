@@ -1331,8 +1331,5 @@ class AttachmentFlags(BaseFlags):
 
     @flag_value
     def is_remix(self):
-        """:class:`bool`: Returns ``True`` if the attachment has been edited using the remix feature on mobile.
-
-        .. versionadded:: 2.6
-        """
+        """:class:`bool`: Returns ``True`` if the attachment has been edited using the remix feature on mobile."""
         return 1 << 2
