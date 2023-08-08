@@ -555,11 +555,37 @@ class HTTPClient:
         self._default_auth = auth
 
     def _make_headers(
-        self, original_headers: dict[str, str], *, auth: str | None = None
+        self,
+        original_headers: dict[str, str],
+        *,
+        auth: str | None | MISSING = MISSING,
     ) -> dict[str, str]:
+        """Creates a new dictionary of headers, without overwriting values from the given headers.
+
+        Parameters
+        ----------
+        original_headers: :class:`dict`[:class:`str`, :class:`str`]
+            Headers to make a shallow copy of.
+        auth: :class:`str` | `None` | `MISSING`
+            Authorization string to use. Will not auto-format given tokens. For example, a bot token must be provided
+            as "Bot <bot token>". If set to `None`, no authorization header will be added. If left unset, the default
+            auth string will be used. (if the default is not set, no auth will be used.)
+
+        Returns
+        -------
+        :class:`dict`[:class:`str`, :class:`str`]
+            Modified headers to use.
+        """
         ret = original_headers.copy()
-        if "Authorization" not in ret and self._default_auth:
-            ret["Authorization"] = self._default_auth if auth is None else auth
+
+        if "Authorization" not in ret:
+            if auth is None:
+                pass  # We do nothing, this is here to make the logic easier to read.
+            elif auth is MISSING:
+                if self._default_auth is not None:
+                    ret["Authorization"] = self._default_auth
+            else:  # auth isn't None or MISSING, so it must be something.
+                ret["Authorization"] = auth
 
         if "User-Agent" not in ret and self._user_agent:
             ret["User-Agent"] = self._user_agent
@@ -593,9 +619,38 @@ class HTTPClient:
         *,
         files: Optional[Sequence[File]] = None,
         form: Optional[Iterable[Dict[str, Any]]] = None,
-        auth: Optional[str] = None,
+        auth: Optional[str] | MISSING = MISSING,
+        retry_request: bool = True,
         **kwargs: Any,
     ) -> Any:
+        """|coro|
+
+        Makes an API request to Discord, handling authorization (if needed), rate limits, and limited error handling.
+
+        Parameters
+        ----------
+        route: :class:`Route`
+            The Discord Route to make the API request for.
+        files: Optional[Sequence[:class:`File`]]
+            pass
+        form: Optional[Iterable[:class:`dict`[:class:`str`, `Any`]]]
+            pass
+        auth: :class:`str` | `None` | `MISSING`
+            Authorization string to use. Will not auto-format given tokens. For example, a bot token must be provided
+            as "Bot <bot token>". If set to `None`, no authorization will be used. If left unset, the default
+            auth will be used. (if the default is not set, no auth will be used.)
+        retry_request: :class:`bool`
+            If the request should be retried in specific cases. This mainly concerns 500 errors (Discord server issues)
+            or 429s. (ratelimit issues)
+        kwargs
+            This is purposefully undocumented. Behavior of extra kwargs may change in a breaking way at any point, and
+            extra kwargs may not be allowed in the future.
+
+        Returns
+        -------
+        pass
+        """
+
         if not self.__session:
             self.__session = aiohttp.ClientSession(
                 connector=self._connector, ws_response_class=DiscordClientWebSocketResponse
@@ -745,12 +800,16 @@ class HTTPClient:
                             if response.status >= 400:
                                 # >= 500 was considered, but stuff like 501 and 505+ are not good to retry on.
                                 if response.status in {500, 502, 504}:
-                                    _log.info(
-                                        "Path %s encountered a Discord server issue, retrying.",
-                                        rate_limit_path,
-                                    )
-                                    await asyncio.sleep(1 + retry_count * 2)
-                                    should_retry = True
+                                    if retry_request:
+                                        _log.info(
+                                            "Path %s encountered a Discord server issue, retrying.",
+                                            rate_limit_path,
+                                        )
+                                        await asyncio.sleep(1 + retry_count * 2)
+                                        should_retry = True
+                                    else:
+                                        _log.info("Path %s encountered a Discord server issue.", rate_limit_path)
+                                        raise DiscordServerError(response, ret)
                                 elif response.status == 401:
                                     _log.warning(
                                         "Path %s resulted in error 401, rejected authorization?",
@@ -770,10 +829,6 @@ class HTTPClient:
                                     )
                                     raise NotFound(response, ret)
                                 elif response.status == 429:
-                                    _log.warning(
-                                        "Path %s resulted in error 429, rate limit exceeded. Retrying.",
-                                        rate_limit_path,
-                                    )
                                     self._dispatch(
                                         "http_ratelimit",
                                         url_rate_limit.limit,
@@ -782,7 +837,27 @@ class HTTPClient:
                                         url_rate_limit.bucket,
                                         response.headers.get("X-RateLimit-Scope"),
                                     )
-                                    should_retry = True
+
+                                    if not response.headers.get("Via") or isinstance(ret, str):
+                                        _log.error(
+                                            "Path %s resulted in what appears to be a CloudFlare ban, either a "
+                                            "large amount of errors recently happened and/or Nextcord has a bug."
+                                        )
+                                        # Banned by Cloudflare more than likely.
+                                        raise HTTPException(response, ret)
+
+                                    if retry_request:
+                                        _log.warning(
+                                            "Path %s resulted in error 429, rate limit exceeded. Retrying.",
+                                            rate_limit_path,
+                                        )
+                                        should_retry = True
+                                    else:
+                                        _log.warning(
+                                            "Path %s resulted in error 429, rate limit exceeded.",
+                                            rate_limit_path
+                                        )
+                                        raise HTTPException(response, ret)  # TODO: Make actual HTTPRateLimit error?
                                 elif response.status >= 500:
                                     raise DiscordServerError(response, ret)
                                 else:
