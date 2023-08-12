@@ -520,7 +520,7 @@ class MemberFlags(BaseFlags):
 
     @flag_value
     def did_rejoin(self):
-        """:class:`bool`: Returns ``True`` if the member left and rejoined the :attr:`~nextcord.Member.guild`."""
+        """:class:`bool`: Returns ``True`` if the member left and rejoined the :attr:`~nextcord.Guild`."""
         return 1 << 0
 
     @flag_value
