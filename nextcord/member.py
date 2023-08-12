@@ -284,7 +284,7 @@ class Member(abc.Messageable, _UserTag):
         self._timeout: Optional[datetime.datetime] = utils.parse_time(
             data.get("communication_disabled_until")
         )
-        self._flags = data.get("flags", 0)
+        self._flags: int = data.get("flags", 0)
 
     def __str__(self) -> str:
         return str(self._user)
@@ -554,7 +554,7 @@ class Member(abc.Messageable, _UserTag):
     def flags(self) -> MemberFlags:
         """:class:`MemberFlags`: Returns the member's flags.
 
-        .. versionadded:: 2.5
+        .. versionadded:: 2.6
         """
         return MemberFlags._from_value(self._flags)
 
@@ -771,11 +771,11 @@ class Member(abc.Messageable, _UserTag):
             The flags to set for this member.
             Currently only :class:`~nextcord.MemberFlags.bypasses_verification` is able to be set.
 
-            .. versionadded:: 2.5
+            .. versionadded:: 2.6
         bypass_verification: :class:`bool`
             Indicates if the member should be allowed to bypass the guild verification requirements.
 
-            .. versionadded:: 2.5
+            .. versionadded:: 2.6
 
         Raises
         ------
