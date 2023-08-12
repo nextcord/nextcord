@@ -803,7 +803,7 @@ class Member(abc.Messageable, _UserTag):
                 if not suppress:
                     voice_state_payload[
                         "request_to_speak_timestamp"
-                    ] = datetime.datetime.utcnow().isoformat()
+                    ] = utils.utcnow().isoformat()
                 await http.edit_voice_state(guild_id, self.id, voice_state_payload)
 
         if voice_channel is not MISSING:
@@ -853,7 +853,7 @@ class Member(abc.Messageable, _UserTag):
         """
         payload = {
             "channel_id": self.voice.channel.id,  # type: ignore # should exist
-            "request_to_speak_timestamp": datetime.datetime.utcnow().isoformat(),
+            "request_to_speak_timestamp": utils.utcnow().isoformat(),
         }
 
         if self._state.self_id != self.id:
