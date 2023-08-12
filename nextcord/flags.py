@@ -491,7 +491,7 @@ class PublicUserFlags(BaseFlags):
 class MemberFlags(BaseFlags):
     r"""Wraps up the Discord Guild Member flags
 
-    .. versionadded:: 2.6 
+    .. versionadded:: 2.6
 
     .. container:: operations
 
