@@ -406,6 +406,74 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         self.checks.extend(self.parent.checks)  # type: ignore
 
     @property
+    def required_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions required to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__required_permissions", {})
+
+    @property
+    def required_bot_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.bot_has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__required_bot_permissions", {})
+
+    @property
+    def required_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the guild permissions needed to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__required_guild_permissions", {})
+
+    @property
+    def required_bot_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to have in this guild in order to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.bot_has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__required_bot_guild_permissions", {})
+
+    @property
     def callback(
         self,
     ) -> Union[
@@ -838,10 +906,9 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             dt = ctx.message.edited_at or ctx.message.created_at
             current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
             bucket = self._buckets.get_bucket(ctx.message, current)
-            if bucket is not None:
-                retry_after = bucket.update_rate_limit(current)
-                if retry_after:
-                    raise CommandOnCooldown(bucket, retry_after, self._buckets.type)  # type: ignore
+            retry_after = bucket.update_rate_limit(current)
+            if retry_after:
+                raise CommandOnCooldown(bucket, retry_after, self._buckets.type)  # type: ignore
 
     async def prepare(self, ctx: Context) -> None:
         ctx.command = self
@@ -1470,7 +1537,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
     def __init__(self, *args: Any, **attrs: Any) -> None:
         self.invoke_without_command: bool = attrs.pop("invoke_without_command", False)
         GroupMixin.__init__(self, *args, **attrs)
-        Command.__init__(self, *args, **attrs)  # type: ignore
+        Command.__init__(self, *args, **attrs)
 
     def copy(self) -> Self:
         """Creates a copy of this :class:`Group`.
@@ -1812,7 +1879,7 @@ def check(predicate: Check) -> Callable[[T], T]:
         decorator.predicate = predicate
     else:
 
-        @functools.wraps(predicate)
+        @functools.wraps(predicate)  # type: ignore
         async def wrapper(ctx):
             return predicate(ctx)  # type: ignore
 
@@ -2041,6 +2108,21 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
     return check(predicate)
 
 
+def _permission_check_wrapper(
+    predicate: Check, name: str, perms: Dict[str, bool]
+) -> Callable[[T], T]:
+    def wrapper(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+        if isinstance(func, Command):
+            callback = func.callback
+        else:
+            callback = func
+
+        setattr(callback, name, perms)
+        return check(predicate)(func)
+
+    return wrapper  # type: ignore
+
+
 def has_permissions(**perms: bool) -> Callable[[T], T]:
     """A :func:`.check` that is added that checks if the member has all of
     the permissions necessary.
@@ -2086,7 +2168,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise MissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_permissions", perms)
 
 
 def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2113,7 +2195,7 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise BotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_bot_permissions", perms)
 
 
 def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2142,7 +2224,7 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise MissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_guild_permissions", perms)
 
 
 def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2168,7 +2250,7 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise BotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_bot_guild_permissions", perms)
 
 
 def dm_only() -> Callable[[T], T]:

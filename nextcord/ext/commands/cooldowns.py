@@ -230,8 +230,7 @@ class CooldownMapping:
         key = self._bucket_key(message)
         if key not in self._cache:
             bucket = self.create_bucket(message)
-            if bucket is not None:
-                self._cache[key] = bucket
+            self._cache[key] = bucket
         else:
             bucket = self._cache[key]
 

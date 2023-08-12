@@ -120,10 +120,6 @@ class _AsyncIterator(AsyncIterator[T]):
             raise StopAsyncIteration()
 
 
-def _identity(x: T) -> T:
-    return x
-
-
 class _ChunkedAsyncIterator(_AsyncIterator[List[T]]):
     def __init__(self, iterator: _AsyncIterator[T], max_size: int) -> None:
         self.iterator: _AsyncIterator[T] = iterator
@@ -159,10 +155,6 @@ class _MappedAsyncIterator(_AsyncIterator[OT], Generic[T, OT]):
 class _FilteredAsyncIterator(_AsyncIterator[T]):
     def __init__(self, iterator: _AsyncIterator[T], predicate: _Func[T, Any]) -> None:
         self.iterator: _AsyncIterator[T] = iterator
-
-        if predicate is None:
-            predicate = _identity
-
         self.predicate: _Func[T, Any] = predicate
 
     async def next(self) -> T:
@@ -589,7 +581,7 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
 
             for element in entries:
                 # TODO: remove this if statement later
-                if element["action_type"] is None:
+                if element["action_type"] is None:  # pyright: ignore
                     continue
 
                 await self.entries.put(

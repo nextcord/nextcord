@@ -244,7 +244,9 @@ def string_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType[Select[V]]) -> ItemCallbackType[Select[V]]:
+    def decorator(
+        func: ItemCallbackType[Select[V], ClientT]
+    ) -> ItemCallbackType[Select[V], ClientT]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

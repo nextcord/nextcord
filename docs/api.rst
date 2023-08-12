@@ -2832,7 +2832,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: standard
 
-        Represents a standard sticker that all Nitro users can use.
+        Represents a standard sticker.
 
     .. attribute:: guild
 
@@ -4074,6 +4074,11 @@ Guild
 
         :type: :class:`User`
 
+GuildPreview
+~~~~~~~~~~~~
+
+.. autoclass:: GuildPreview()
+    :members:
 
 Integration
 ~~~~~~~~~~~

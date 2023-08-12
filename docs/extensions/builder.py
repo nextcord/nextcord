@@ -26,9 +26,6 @@ class DPYStandaloneHTMLBuilder(StandaloneHTMLBuilder):
     def write_genindex(self) -> None:
         # the total count of lines for each index letter, used to distribute
         # the entries into two columns
-        if self.env is None:
-            raise ValueError("No environment was found.")
-
         genindex = IndexEntries(self.env).create_index(self, group_entries=False)
         indexcounts = []
         for _k, entries in genindex:
