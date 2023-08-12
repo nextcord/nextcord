@@ -31,6 +31,7 @@ __all__ = (
     "MemberCacheFlags",
     "ApplicationFlags",
     "ChannelFlags",
+    "AttachmentFlags",
 )
 
 BF = TypeVar("BF", bound="BaseFlags")
@@ -1297,3 +1298,39 @@ class ApplicationFlags(BaseFlags):
         .. versionadded:: 2.4
         """
         return 1 << 24
+
+
+@fill_with_flags()
+class AttachmentFlags(BaseFlags):
+    r"""Wraps up the Discord Attachment flags.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two AttachmentFlags are equal.
+        .. describe:: x != y
+
+            Checks if two AttachmentFlags are not equal.
+        .. describe:: hash(x)
+
+            Return the flag's hash.
+        .. describe:: iter(x)
+
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
+
+    .. versionadded:: 2.6
+
+    Attributes
+    ----------
+    value: :class:`int`
+        The raw value. You should query flags via the properties
+        rather than using this raw value.
+    """
+
+    @flag_value
+    def is_remix(self):
+        """:class:`bool`: Returns ``True`` if the attachment has been edited using the remix feature on mobile."""
+        return 1 << 2
