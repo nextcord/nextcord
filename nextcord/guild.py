@@ -3158,9 +3158,6 @@ class Guild(Hashable):
         else:
             user_id = None
 
-        if action:
-            action = action.value
-
         return audit_log_iterator(
             self,
             before=before,
