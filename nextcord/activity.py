@@ -735,6 +735,11 @@ class CustomActivity(BaseActivity):
         The custom activity's name.
     emoji: Optional[:class:`PartialEmoji`]
         The emoji to pass to the activity, if any.
+    state: Optional[:class:`str`]
+        The custom status text. :attr:`~.CustomActivity.name` must equal to "Custom Status" for this to work.
+
+        .. versionchanged:: 2.6
+            Fallsback to :attr:`~.CustomActivity.name` if not provided.
     """
 
     __slots__ = ("name", "emoji", "state", "_state")
@@ -750,7 +755,7 @@ class CustomActivity(BaseActivity):
         super().__init__(**extra)
         self._state = _connection_state
         self.name: Optional[str] = name
-        self.state: Optional[str] = extra.pop("state", None)
+        self.state: Optional[str] = extra.pop("state", name)
         if self.name == "Custom Status":
             self.name = self.state
 
