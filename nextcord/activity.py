@@ -736,7 +736,7 @@ class CustomActivity(BaseActivity):
     emoji: Optional[:class:`PartialEmoji`]
         The emoji to pass to the activity, if any.
     state: Optional[:class:`str`]
-        The custom status text. :attr:`~.CustomActivity.name` must equal to "Custom Status" for this to work.
+        The custom status text. :attr:`~.CustomActivity.name` must equal "Custom Status" for this to work.
 
         .. versionchanged:: 2.6
             Fallsback to :attr:`~.CustomActivity.name` if not provided.
