@@ -713,9 +713,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         """Retrieve guilds and update next parameters."""
         raise NotImplementedError
 
-    async def _retrieve_guilds_before_strategy(
-        self, retrieve: int
-    ) -> List[GuildPayload]:
+    async def _retrieve_guilds_before_strategy(self, retrieve: int) -> List[GuildPayload]:
         """Retrieve guilds using before parameter."""
         before = self.before.id if self.before else None
         data: List[GuildPayload] = await self.bot.http.get_guilds(
@@ -727,9 +725,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
             self.before = Object(id=int(data[0]["id"]))
         return data
 
-    async def _retrieve_guilds_after_strategy(
-        self, retrieve: int
-    ) -> List[GuildPayload]:
+    async def _retrieve_guilds_after_strategy(self, retrieve: int) -> List[GuildPayload]:
         """Retrieve guilds using after parameter."""
         after = self.after.id if self.after else None
         data: List[GuildPayload] = await self.bot.http.get_guilds(
