@@ -1343,7 +1343,7 @@ class HTTPClient:
         after: Optional[Snowflake] = None,
         with_counts: bool = False,
     ) -> Response[List[guild.Guild]]:
-        params: Dict[str, Any] = {"limit": limit, "with_counts": with_counts}
+        params: Dict[str, Any] = {"limit": limit, "with_counts": int(with_counts)}
 
         if before:
             params["before"] = before
