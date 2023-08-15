@@ -144,6 +144,10 @@ class Attachment(Hashable):
         The attachment's description. This is used for alternative text in the Discord client.
 
         .. versionadded:: 2.0
+    duration_secs: Optional[:class:`float`]
+        The duration of the audio file (currently for voice messages).
+
+        .. versionadded:: 2.6
     """
 
     __slots__ = (
@@ -157,6 +161,8 @@ class Attachment(Hashable):
         "_http",
         "content_type",
         "description",
+        "duration_secs",
+        "_waveform",
     )
 
     def __init__(self, *, data: AttachmentPayload, state: ConnectionState) -> None:
@@ -170,6 +176,8 @@ class Attachment(Hashable):
         self._http = state.http
         self.content_type: Optional[str] = data.get("content_type")
         self.description: Optional[str] = data.get("description")
+        self.duration_secs: Optional[float] = data.get("duration_secs")
+        self._waveform: Optional[str] = data.get("waveform")
 
     def is_spoiler(self) -> bool:
         """:class:`bool`: Whether this attachment contains a spoiler."""
@@ -359,7 +367,21 @@ class Attachment(Hashable):
             result["content_type"] = self.content_type
         if self.description:
             result["description"] = self.description
+        if self.duration_secs:
+            result["duration_secs"] = self.duration_secs
+        if self._waveform:
+            result["waveform"] = self._waveform
         return result
+
+    @property
+    def waveform(self) -> Optional[bytearray]:
+        """Optional[:class:`str`]: The base64 encoded bytearray representing a sampled waveform
+        (currently for voice messages).
+
+        .. versionadded:: 2.6
+        """
+        if self.waveform is not None:
+            return bytearray(self.waveform)
 
 
 class DeletedReferencedMessage:
