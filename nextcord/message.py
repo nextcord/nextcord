@@ -375,6 +375,7 @@ class Attachment(Hashable):
             result["waveform"] = self._waveform
         return result
 
+    @property
     def waveform(self) -> Optional[bytearray]:
         """Optional[:class:`str`]: The base64 encoded bytearray representing a sampled waveform
         (currently for voice messages).
