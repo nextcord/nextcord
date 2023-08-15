@@ -43,6 +43,7 @@ class Attachment(TypedDict):
     spoiler: NotRequired[bool]
     duration_secs: Optional[float]
     waveform: Optional[str]
+    flags: NotRequired[int]
 
 
 MessageActivityType = Literal[1, 2, 3, 5]

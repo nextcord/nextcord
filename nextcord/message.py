@@ -27,7 +27,7 @@ from .emoji import Emoji
 from .enums import ChannelType, MessageType, try_enum
 from .errors import HTTPException, InvalidArgument
 from .file import File
-from .flags import MessageFlags
+from .flags import AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
@@ -163,6 +163,7 @@ class Attachment(Hashable):
         "description",
         "duration_secs",
         "_waveform",
+        "_flags",
     )
 
     def __init__(self, *, data: AttachmentPayload, state: ConnectionState) -> None:
@@ -178,6 +179,7 @@ class Attachment(Hashable):
         self.description: Optional[str] = data.get("description")
         self.duration_secs: Optional[float] = data.get("duration_secs")
         self._waveform: Optional[str] = data.get("waveform")
+        self._flags: int = data.get("flags", 0)
 
     def is_spoiler(self) -> bool:
         """:class:`bool`: Whether this attachment contains a spoiler."""
@@ -373,7 +375,6 @@ class Attachment(Hashable):
             result["waveform"] = self._waveform
         return result
 
-    @property
     def waveform(self) -> Optional[bytearray]:
         """Optional[:class:`str`]: The base64 encoded bytearray representing a sampled waveform
         (currently for voice messages).
@@ -382,6 +383,17 @@ class Attachment(Hashable):
         """
         if self.waveform is not None:
             return bytearray(self.waveform)
+
+    def flags(self) -> AttachmentFlags:
+        """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
+
+        .. versionadded:: 2.6
+        """
+        return AttachmentFlags._from_value(self._flags)
+
+    def is_remix(self) -> bool:
+        """:class:`bool`: Whether the attachment is remixed."""
+        return self.flags.is_remix
 
 
 class DeletedReferencedMessage:
