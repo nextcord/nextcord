@@ -557,6 +557,14 @@ class Permissions(BaseFlags):
         """
         return 1 << 40
 
+    @flag_value
+    def use_clyde_ai(self) -> int:
+        """:class:`bool`: Returns ``True`` if a user can interact with the Clyde AI bot.
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 47
+
 
 def _augment_from_permissions(cls):
     cls.VALID_NAMES = set(Permissions.VALID_FLAGS)
@@ -671,6 +679,7 @@ class PermissionOverwrite:
         use_external_stickers: Optional[bool]
         start_embedded_activities: Optional[bool]
         moderate_members: Optional[bool]
+        use_clyde_ai: Optional[bool]
 
     def __init__(self, **kwargs: Optional[bool]) -> None:
         self._values: Dict[str, Optional[bool]] = {}
