@@ -64,7 +64,7 @@ class Component:
         The type of component.
     """
 
-    __slots__: Tuple[str, ...] = ("type",)
+    __slots__: Tuple[str, ...] = ()
 
     __repr_info__: ClassVar[Tuple[str, ...]]
     type: ComponentType
@@ -77,10 +77,6 @@ class Component:
     def _raw_construct(cls, **kwargs) -> Self:
         self = cls.__new__(cls)
         for slot in get_slots(cls):
-            if slot == "type" and getattr(self, slot, None) is not None:
-                # nextcord/issues/1103
-                continue
-
             try:
                 value = kwargs[slot]
             except KeyError:
