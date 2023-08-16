@@ -383,7 +383,7 @@ class Attachment(Hashable):
         .. versionadded:: 2.6
         """
         if self.waveform is not None:
-            return bytearray(self.waveform)
+            return bytearray(self._waveform)
 
     def flags(self) -> AttachmentFlags:
         """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
