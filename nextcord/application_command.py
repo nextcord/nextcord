@@ -962,10 +962,8 @@ class CallbackMixin:
         """|coro|
         Invokes the error handler if available.
         """
-        if (
-            self.has_error_handler() and self.error_callback is not None
-        ):  # TODO Why is this here? self.has_error_handler does the same as the second check
-            await self.error_callback(interaction, error)
+        if self.has_error_handler():
+            await self.error_callback(interaction, error)  # type: ignore
 
     def error(self, callback: ApplicationErrorCallback) -> Callable:
         """Decorates a function, setting it as a callback to be called when a :class:`ApplicationError` or any of
