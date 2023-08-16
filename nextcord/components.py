@@ -106,7 +106,7 @@ class ActionRow(Component):
         The children components that this holds, if any.
     """
 
-    __slots__: Tuple[str, ...] = ("children",)
+    __slots__: Tuple[str, ...] = ("type", "children")
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
@@ -151,6 +151,7 @@ class Button(Component):
     """
 
     __slots__: Tuple[str, ...] = (
+        "type",
         "style",
         "custom_id",
         "url",
@@ -589,6 +590,7 @@ class SelectOption:
 
 class TextInput(Component):
     __slots__: Tuple[str, ...] = (
+        "type",
         "style",
         "custom_id",
         "label",
