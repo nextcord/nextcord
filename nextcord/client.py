@@ -571,11 +571,11 @@ class Client:
 
         This only fires if you do not specify any listeners for command error.
         """
-        if interaction.application_command and interaction.application_command.has_error_handler():
-            return
-
         if interaction.application_command is None:
             return  # Not supposed to ever happen
+
+        if interaction.application_command.has_error_handler():
+            return
 
         cog = interaction.application_command.parent_cog
         if cog and cog.has_application_command_error_handler():
