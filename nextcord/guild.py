@@ -107,7 +107,6 @@ if TYPE_CHECKING:
     from .types.template import CreateTemplate
     from .types.threads import Thread as ThreadPayload
     from .types.voice import GuildVoiceState
-    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
     from .voice_client import VoiceProtocol
     from .webhook import Webhook
 

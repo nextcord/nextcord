@@ -1,16 +1,14 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Optional, cast
 
-from nextcord.asset import Asset
+from typing import TYPE_CHECKING, Any, Optional
 
 from .emoji import Emoji
 from .guild import Guild
 from .user import User
 
-
 if TYPE_CHECKING:
-    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
     from .state import ConnectionState
+    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
 
 
 class SoundboardSound:
@@ -28,7 +26,7 @@ class SoundboardSound:
         "available",
     )
 
-    def __init__(self, data: SoundboardSoundPayload, guild: Guild, state: ConnectionState):
+    def __init__(self, data: SoundboardSoundPayload, guild: Guild, state: ConnectionState) -> None:
         self._state: ConnectionState = state
 
         self._update(data, guild, state)

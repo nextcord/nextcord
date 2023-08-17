@@ -67,13 +67,13 @@ if TYPE_CHECKING:
         role,
         role_connections,
         scheduled_events,
+        soundboard,
         sticker,
         template,
         threads,
         user,
         webhook,
         widget,
-        soundboard,
     )
     from .types.snowflake import Snowflake, SnowflakeList
 
