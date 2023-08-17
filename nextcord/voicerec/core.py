@@ -24,23 +24,23 @@ DEALINGS IN THE SOFTWARE.
 
 
 import logging
-
 from enum import Enum
-from nextcord import VoiceClient, VoiceChannel, StageChannel
-from nextcord.client import Client
 from io import BufferedWriter, BytesIO
-from typing import Optional, Union
-from time import sleep, time as clock_timestamp
-from threading import Thread
-from select import select
-from pathlib import Path
 from os import makedirs
 from os.path import dirname
+from pathlib import Path
+from select import select
 from struct import unpack_from
-from . import opus
+from threading import Thread
+from time import sleep, time as clock_timestamp
+from typing import Optional, Union
 
+from nextcord import StageChannel, VoiceChannel, VoiceClient
+from nextcord.client import Client
+
+from . import decrypter, opus
 from .errors import *
-from . import decrypter
+
 
 class Formats(Enum):
     MP3 = 0
@@ -52,11 +52,12 @@ class Formats(Enum):
     PCM = 6
     WAV = 7
 
+
 class TMPFile:
     def __init__(self, filepath) -> None:
         self.file = open(Path(filepath), "ab")
 
-    def write(self, b: bytes):
+    def write(self, b: bytes) -> None:
         self.file.write(b)
 
 
@@ -79,15 +80,16 @@ class TimeTracker:
         self.starting_time: Optional[float] = clock_timestamp()  # Also used as filename
         self.first_packet_time: Optional[float] = None
         self.stopping_time: Optional[float] = None
-        
+
         self.users_times: dict[int, float] = {}
 
-    def add_user(self, user, start_time):
+    def add_user(self, user, start_time) -> None:
         if user not in self.users_times:
             self.users_times[user] = start_time
-    
-    def calculate_time_updates(self, user_id, timestamp, received_timestamp):
+
+    def calculate_time_updates(self, user_id, timestamp, received_timestamp) -> None:
         ...  # TODO
+
 
 def _open_tmp_file(guild_id, user_id):
     path = Path(f".rectmps/{guild_id}-{user_id}.tmp")
@@ -110,38 +112,34 @@ class AudioWriter:
             self.buffer = BytesIO()
         else:
             raise InvalidTempType("Arg `temp_type` must be of type TempType")
-    
-    def write(self, bytes):
+
+    def write(self, bytes) -> None:
         self.buffer.write(bytes)
 
 
 class AudioData(dict):
     def get_writer(self, temp_type: TempType, guild_id: int, user_id: int) -> AudioWriter:
-        return (
-            self.get(user_id)
-            or self.add_new_writer(
-                user_id,
-                AudioWriter(temp_type, guild_id, user_id)
-            )
+        return self.get(user_id) or self.add_new_writer(
+            user_id, AudioWriter(temp_type, guild_id, user_id)
         )
-    
+
     def add_new_writer(self, user_id: int, writer: AudioWriter) -> AudioWriter:
         self[user_id] = writer
         return writer
 
-    def append(self, temp_type: TempType, guild_id: int, user_id: int, data: bytes):
+    def append(self, temp_type: TempType, guild_id: int, user_id: int, data: bytes) -> None:
         writer = self.get_writer(temp_type, guild_id, user_id)
         writer.write(data)
 
 
 class RecorderClient(VoiceClient):
     def __init__(
-        self, client: Client,
+        self,
+        client: Client,
         channel: ConnectableVoiceChannels,
         auto_deaf: bool = True,
-        temp_type: TempType = TempType.File
+        temp_type: TempType = TempType.File,
     ) -> None:
-
         super().__init__(client, channel)
         self.channel: ConnectableVoiceChannels
 
@@ -152,13 +150,10 @@ class RecorderClient(VoiceClient):
         self.auto_deaf: bool = auto_deaf
         self.temp_type: TempType = temp_type
 
-
     async def voice_connect(self) -> None:
         await self.channel.guild.change_voice_state(
-            channel=self.channel,
-            self_deaf=True if self.auto_deaf else False
+            channel=self.channel, self_deaf=True if self.auto_deaf else False
         )
-
 
     # recording stuff
 
@@ -167,8 +162,9 @@ class RecorderClient(VoiceClient):
         sequence: int,
         timestamp: float,
         received_timestamp: float,
-        ssrc: int, decoded_data: bytes
-    ):
+        ssrc: int,
+        decoded_data: bytes,
+    ) -> None:
         print(type(decoded_data), type(sequence), type(timestamp), type(ssrc))
         if self.audio_data is None or self.time_tracker is None or not self.guild:
             return
@@ -178,15 +174,12 @@ class RecorderClient(VoiceClient):
             sleep(0.05)
 
         self.audio_data.append(
-            self.temp_type,
-            self.guild.id,
-            (user_id := user_data["user_id"]),
-            decoded_data
+            self.temp_type, self.guild.id, (user_id := user_data["user_id"]), decoded_data
         )
 
         self.time_tracker.calculate_time_updates(user_id, timestamp, received_timestamp)
 
-    def _decode_audio(self, data):
+    def _decode_audio(self, data) -> None:
         if 200 <= data[1] <= 204:
             return  # RTCP concention info, not useful
 
@@ -197,18 +190,15 @@ class RecorderClient(VoiceClient):
 
         sequence, timestamp, ssrc = unpack_from(">xxHII", header)
 
-        decrypted_data = getattr(
-            decrypter,
-            f"decrypt_{self.mode}"
-        )(self.secret_key, header, data)
-        
+        decrypted_data = getattr(decrypter, f"decrypt_{self.mode}")(self.secret_key, header, data)
+
         if decrypted_data == b"\xf8\xff\xfe":  # frame of silence
             return
 
         # decoder will call `_process_decoded_audio` once finished decoding
         self.decoder.decode((sequence, timestamp, clock_timestamp(), ssrc, decrypted_data))
 
-    def _process_audio_packet(self, data):
+    def _process_audio_packet(self, data) -> None:
         if self.audio_data is None:
             return
 
@@ -226,27 +216,26 @@ class RecorderClient(VoiceClient):
                 if error:
                     logging.debug(f"Socket Error: {error}")
                 continue
-            
+
             try:
                 self._process_audio_packet(self.socket.recv(4096))
             except OSError:
                 return self._stop_recording()
 
-
     def _start_recording(self) -> Thread:
         self.decoder = opus.DecoderThread(self)
         self.decoder.start()
 
-        self.process = Thread(
-            target=self._start_packets_recording
-        )
+        self.process = Thread(target=self._start_packets_recording)
         self.process.start()
         return self.process
 
     async def start_recording(self, channel: Optional[ConnectableVoiceChannels] = None) -> Thread:
         if self.time_tracker:
-            raise OngoingRecordingError(f"A recording has already started at {self.time_tracker.starting_time}")
-        
+            raise OngoingRecordingError(
+                f"A recording has already started at {self.time_tracker.starting_time}"
+            )
+
         if channel:
             self.channel = channel
             await self.voice_connect()
@@ -256,7 +245,9 @@ class RecorderClient(VoiceClient):
 
         return self._start_recording()
 
-    def _stop_recording(self, ) -> tuple[TimeTracker, dict]:
+    def _stop_recording(
+        self,
+    ) -> tuple[TimeTracker, dict]:
         if not (time_tracker := self.time_tracker):  # stops the recording loop
             raise NotRecordingError(f"There is no ongoing recording to stop.")
         self.time_tracker = None
@@ -269,5 +260,7 @@ class RecorderClient(VoiceClient):
 
         return time_tracker, audio_data
 
-    async def stop_recording(self, ):  # TODO: TempFile that gets deleted, should superclass nextcord.File
+    async def stop_recording(
+        self,
+    ) -> None:  # TODO: TempFile that gets deleted, should superclass nextcord.File
         ...
