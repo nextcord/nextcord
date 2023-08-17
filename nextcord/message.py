@@ -382,7 +382,7 @@ class Attachment(Hashable):
 
         .. versionadded:: 2.6
         """
-        if self.waveform is not None:
+        if self._waveform is not None:
             return bytearray(self._waveform.encode("utf-8"))
 
     def flags(self) -> AttachmentFlags:
