@@ -53,6 +53,7 @@ GuildFeature = Literal[
     "PARTNERED",
     "PREVIEW_ENABLED",
     "ROLE_ICONS",
+    "SOUNDBOARD",
     "TICKETED_EVENTS_ENABLED",
     "VANITY_URL",
     "VERIFIED",

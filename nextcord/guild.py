@@ -23,6 +23,8 @@ from typing import (
     overload,
 )
 
+from nextcord.soundboard import SoundboardSound
+
 from . import abc, utils
 from .asset import Asset
 from .auto_moderation import AutoModerationRule, AutoModerationTriggerMetadata
@@ -105,6 +107,7 @@ if TYPE_CHECKING:
     from .types.template import CreateTemplate
     from .types.threads import Thread as ThreadPayload
     from .types.voice import GuildVoiceState
+    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
     from .voice_client import VoiceProtocol
     from .webhook import Webhook
 
@@ -294,6 +297,7 @@ class Guild(Hashable):
         "_stage_instances",
         "_threads",
         "_scheduled_events",
+        "_soundboard_sounds",
         "approximate_member_count",
         "approximate_presence_count",
         "_premium_progress_bar_enabled",
@@ -314,6 +318,7 @@ class Guild(Hashable):
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
         self._application_commands: Dict[int, BaseApplicationCommand] = {}
+        self._soundboard_sounds: Dict[int, Any] = {}
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -369,6 +374,12 @@ class Guild(Hashable):
         event = ScheduledEvent(guild=self, state=self._state, data=payload)
         self._scheduled_events[event.id] = event
         return event
+
+    def _add_soundboard_sound(self, payload: SoundboardSound) -> None:
+        self._soundboard_sounds[payload.id] = payload
+
+    def _remove_soundboard_sound(self, sound_id: int) -> None:
+        self._soundboard_sounds.pop(sound_id, None)
 
     def __str__(self) -> str:
         return self.name or ""

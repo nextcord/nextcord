@@ -25,6 +25,8 @@ from typing import (
     Union,
 )
 
+from nextcord.soundboard import SoundboardSound
+
 from . import utils
 from .activity import BaseActivity
 from .audit_logs import AuditLogEntry
@@ -272,6 +274,7 @@ class ConnectionState:
         self._emojis: Dict[int, Emoji] = {}
         self._stickers: Dict[int, GuildSticker] = {}
         self._guilds: Dict[int, Guild] = {}
+        self._soundboard_sounds: Dict[int, SoundboardSound] = {}
         # TODO: Why aren't the above and stuff below application_commands declared in __init__?
         self._application_commands = set()
         # Thought about making these two weakref.WeakValueDictionary's, but the bot could theoretically be holding on
@@ -2313,6 +2316,76 @@ class ConnectionState:
                 guild,
                 user,
             )
+
+    def parse_guild_soundboard_sound_create(self, data) -> None:
+        # guild_id is always present
+
+        if (guild := self._get_guild(int(data["guild_id"]))) == None:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_CREATE referencing unknown guild ID: %s. Discarding.",
+                data["guild_id"],
+            )
+            return
+
+        sound = SoundboardSound(data=data, guild=guild, state=self)
+        guild._add_soundboard_sound(sound)
+        self.dispatch(
+            "guild_soundboard_sound_create", SoundboardSound(data=data, guild=guild, state=self)
+        )
+
+    def parse_guild_soundboard_sound_update(self, data) -> None:
+        if (guild := self._get_guild(int(data["guild_id"]))) == None:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_UPDATE referencing unknown guild ID: %s. Discarding.",
+                data["guild_id"],
+            )
+            return
+
+        if sound := self._soundboard_sounds.get(data["sound_id"]):
+            old_sound = copy.copy(sound)
+            sound._update(data, guild, self)
+            self.dispatch("guild_soundboard_sound_update", old_sound, sound)
+        else:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_UPDATE referencing unknown sound ID: %s. Discarding.",
+                data["sound_id"],
+            )
+            # TODO: Should we store the sound here? We definitely could
+
+    def parse_guild_soundboard_sound_delete(self, data) -> None:
+        # Data fields are guild_id and sound_id
+        if (guild := self._get_guild(int(data["guild_id"]))) == None:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_DELETE referencing unknown guild ID: %s. Discarding.",
+                data["guild_id"],
+            )
+            return
+
+        if sound := self._soundboard_sounds.get(data["sound_id"]):
+            guild._remove_soundboard_sound(sound.id)
+            self.dispatch("guild_soundboard_sound_delete", sound)
+        else:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_DELETE referencing unknown sound ID: %s. Discarding.",
+                data["sound_id"],
+            )
+
+    def parse_soundboard_sounds(self, data) -> None:
+        # data: {soundboard_sounds: SoundboardSoundPayload[], guild_id: Snowflake}
+
+        if (guild := self._get_guild(int(data["guild_id"]))) == None:
+            _log.debug(
+                "SOUNDBOARD_SOUNDS referencing unknown guild ID: %s. Discarding.", data["guild_id"]
+            )
+            return
+
+        guild._soundboard_sounds = {
+            sound["id"]: SoundboardSound(data=sound, guild=guild, state=self)
+            for sound in data["soundboard_sounds"]
+        }
+
+        for sound in guild._soundboard_sounds.values():
+            self._soundboard_sounds[sound.id] = sound
 
 
 class AutoShardedConnectionState(ConnectionState):
