@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import io
 import os
-from typing import TYPE_CHECKING, Any, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Literal, Optional, Tuple, Union
 
 import yarl
 

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union, cast
-
-from .partial_emoji import PartialEmoji
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from .asset import SoundAsset
 from .emoji import Emoji
+from .partial_emoji import PartialEmoji
 from .user import User
 
 if TYPE_CHECKING:
@@ -70,7 +69,7 @@ class SoundboardSound:
 
     def __init__(
         self, data: SoundboardSoundPayload, guild: Optional[Guild], state: ConnectionState
-    ):
+    ) -> None:
         self._state: ConnectionState = state
         self._update(data, guild, state)
 

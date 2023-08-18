@@ -103,7 +103,6 @@ if TYPE_CHECKING:
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.snowflake import SnowflakeList
-    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
     from .types.sticker import CreateGuildSticker
     from .types.template import CreateTemplate
     from .types.threads import Thread as ThreadPayload
