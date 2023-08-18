@@ -218,6 +218,14 @@ class SpeakingState(IntEnum):
         return self.name
 
 
+class AnimationType(IntEnum):
+    premium = 0
+    basic = 1
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class VerificationLevel(IntEnum):
     none = 0
     low = 1

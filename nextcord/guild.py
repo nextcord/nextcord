@@ -103,11 +103,11 @@ if TYPE_CHECKING:
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.snowflake import SnowflakeList
+    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
     from .types.sticker import CreateGuildSticker
     from .types.template import CreateTemplate
     from .types.threads import Thread as ThreadPayload
     from .types.voice import GuildVoiceState
-    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
     from .voice_client import VoiceProtocol
     from .webhook import Webhook
 
@@ -665,6 +665,13 @@ class Guild(Hashable):
         .. versionadded:: 2.0
         """
         return list(self._scheduled_events.values())
+
+    @property
+    def soundboard_sounds(self) -> List[SoundboardSound]:
+        """List[:class:`SoundboardSound`]: A list of soundboard sounds in this guild. This is only available
+        if the sounds have been fetched using :meth:`fetch_soundboard_sounds`.
+        """
+        return list(self._soundboard_sounds.values())
 
     @property
     def premium_progress_bar_enabled(self) -> Optional[bool]:
@@ -2724,6 +2731,17 @@ class Guild(Hashable):
         """
 
         await self._state.http.delete_custom_emoji(self.id, emoji.id, reason=reason)
+
+    async def fetch_soundboard_sounds(self) -> List[SoundboardSound]:
+        """|coro|
+
+        Fetches all the soundboard sounds from the guild.
+
+        .. versionadded:: 2.x
+        """
+        await self._state._get_websocket(self.id).request_soundboard_sounds([self.id])
+
+        return await self._state._get_client().wait_for("soundboard_sounds")
 
     async def fetch_roles(self, *, cache: bool = False) -> List[Role]:
         """|coro|

@@ -12,9 +12,11 @@ from . import utils
 from .errors import DiscordException, InvalidArgument
 from .file import File
 
-__all__ = ("Asset",)
+__all__ = ("Asset", "SoundAsset")
 
 if TYPE_CHECKING:
+    from .state import ConnectionState
+
     ValidStaticFormatTypes = Literal["webp", "jpeg", "jpg", "png"]
     ValidAssetFormatTypes = Literal["webp", "jpeg", "jpg", "png", "gif"]
 
@@ -27,7 +29,7 @@ MISSING = utils.MISSING
 
 class AssetMixin:
     url: str
-    _state: Optional[Any]
+    _state: Optional[ConnectionState]
     __slots__: tuple[str, ...] = ()
 
     async def read(self) -> bytes:
@@ -159,7 +161,41 @@ class AssetMixin:
         )
 
 
-class Asset(AssetMixin):
+class BaseAsset(AssetMixin):
+    BASE = "https://cdn.discordapp.com"
+
+    __slots__: Tuple[str, ...] = (
+        "_state",
+        "_url",
+    )
+
+    def __init__(self, state, *, url: str) -> None:
+        self._state = state
+        self._url = url
+
+    def __str__(self) -> str:
+        return self._url
+
+    def __len__(self) -> int:
+        return len(self._url)
+
+    def __repr__(self) -> str:
+        shorten = self._url.replace(self.BASE, "")
+        return f"<Asset url={shorten!r}>"
+
+    def __eq__(self, other):
+        return isinstance(other, Asset) and self._url == other._url
+
+    def __hash__(self):
+        return hash(self._url)
+
+    @property
+    def url(self) -> str:
+        """:class:`str`: Returns the underlying URL of the asset."""
+        return self._url
+
+
+class Asset(BaseAsset):
     """Represents a CDN asset on Discord.
 
     .. container:: operations
@@ -191,8 +227,6 @@ class Asset(AssetMixin):
         "_animated",
         "_key",
     )
-
-    BASE = "https://cdn.discordapp.com"
 
     def __init__(self, state, *, url: str, key: str, animated: bool = False) -> None:
         self._state = state
@@ -303,27 +337,6 @@ class Asset(AssetMixin):
             key=image_hash,
             animated=False,
         )
-
-    def __str__(self) -> str:
-        return self._url
-
-    def __len__(self) -> int:
-        return len(self._url)
-
-    def __repr__(self) -> str:
-        shorten = self._url.replace(self.BASE, "")
-        return f"<Asset url={shorten!r}>"
-
-    def __eq__(self, other):
-        return isinstance(other, Asset) and self._url == other._url
-
-    def __hash__(self):
-        return hash(self._url)
-
-    @property
-    def url(self) -> str:
-        """:class:`str`: Returns the underlying URL of the asset."""
-        return self._url
 
     @property
     def key(self) -> str:
@@ -472,3 +485,16 @@ class Asset(AssetMixin):
         if self._animated:
             return self
         return self.with_format(format)
+
+
+class SoundAsset(BaseAsset):
+    def __init__(self, state, *, url: str) -> None:
+        super().__init__(state, url=url)
+
+    @classmethod
+    def _from_guild_soundboard_sound(cls, state, sound_id: int) -> SoundAsset:
+        return cls(state, url=f"{cls.BASE}/soundboard-sounds/{sound_id}")
+
+    @classmethod
+    def _from_default_soundboard_sound(cls, state, sound_override_path: str) -> SoundAsset:
+        return cls(state, url=f"{cls.BASE}/soundboard-default-sounds/{sound_override_path}")

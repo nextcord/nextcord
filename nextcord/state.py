@@ -25,8 +25,6 @@ from typing import (
     Union,
 )
 
-from nextcord.soundboard import SoundboardSound
-
 from . import utils
 from .activity import BaseActivity
 from .audit_logs import AuditLogEntry
@@ -48,12 +46,14 @@ from .partial_emoji import PartialEmoji
 from .raw_models import *
 from .role import Role
 from .scheduled_events import ScheduledEvent, ScheduledEventUser
+from .soundboard import PartialSoundboardSound, SoundboardSound
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
 from .ui.modal import Modal, ModalStore
 from .ui.view import View, ViewStore
 from .user import ClientUser, User
+from .voice_channel_effect import VoiceChannelEffect
 
 if TYPE_CHECKING:
     from asyncio import Future
@@ -71,8 +71,10 @@ if TYPE_CHECKING:
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.message import Message as MessagePayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
+    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
     from .types.user import PartialUser as PartialUserPayload, User as UserPayload
+    from .types.voice import VoiceChannelEffectSend as VoiceChannelEffectSendPayload
     from .voice_client import VoiceProtocol
 
     T = TypeVar("T")
@@ -391,6 +393,13 @@ class ConnectionState:
         self._stickers[sticker_id] = sticker = GuildSticker(state=self, data=data)
         return sticker
 
+    def store_soundboard_sound(
+        self, guild: Optional[Guild], data: SoundboardSoundPayload
+    ) -> SoundboardSound:
+        sound = SoundboardSound(data=data, guild=guild, state=self)
+        self._soundboard_sounds[sound.id] = sound
+        return sound
+
     def store_view(self, view: View, message_id: Optional[int] = None) -> None:
         self._view_store.add_view(view, message_id)
 
@@ -449,6 +458,10 @@ class ConnectionState:
     def get_sticker(self, sticker_id: Optional[int]) -> Optional[GuildSticker]:
         # the keys of self._stickers are ints
         return self._stickers.get(sticker_id)  # type: ignore
+
+    def get_soundboard_sound(self, sound_id: Optional[int]) -> Optional[SoundboardSound]:
+        # the keys of self._soundboard_sounds are ints
+        return self._soundboard_sounds.get(sound_id)  # type: ignore
 
     @property
     def private_channels(self) -> List[PrivateChannel]:
@@ -2162,6 +2175,16 @@ class ConnectionState:
         except KeyError:
             return emoji
 
+    def _upgrade_partial_soundboard_sound(
+        self, sound: PartialSoundboardSound
+    ) -> Union[SoundboardSound, PartialSoundboardSound]:
+        sound_id = sound.id
+
+        try:
+            return self._soundboard_sounds[sound_id]
+        except KeyError:
+            return sound
+
     def get_channel(self, id: Optional[int]) -> Optional[Union[Channel, Thread]]:
         if id is None:
             return None
@@ -2380,12 +2403,19 @@ class ConnectionState:
             return
 
         guild._soundboard_sounds = {
-            sound["id"]: SoundboardSound(data=sound, guild=guild, state=self)
+            sound["sound_id"]: SoundboardSound(data=sound, guild=guild, state=self)
             for sound in data["soundboard_sounds"]
         }
 
-        for sound in guild._soundboard_sounds.values():
+        sounds = list(guild._soundboard_sounds.values())
+
+        for sound in sounds:
             self._soundboard_sounds[sound.id] = sound
+
+        self.dispatch("soundboard_sounds", sounds)
+
+    def parse_voice_channel_effect_send(self, data: VoiceChannelEffectSendPayload) -> None:
+        self.dispatch("voice_channel_effect_send", VoiceChannelEffect(data=data, state=self))
 
 
 class AutoShardedConnectionState(ConnectionState):

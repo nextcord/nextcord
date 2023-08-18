@@ -67,13 +67,13 @@ if TYPE_CHECKING:
         role,
         role_connections,
         scheduled_events,
+        soundboard,
         sticker,
         template,
         threads,
         user,
         webhook,
         widget,
-        soundboard,
     )
     from .types.snowflake import Snowflake, SnowflakeList
 
@@ -2475,7 +2475,7 @@ class HTTPClient:
             )
         )
 
-    def list_default_soundboard_sounds(self) -> Response[List[soundboard.DefaultSoundboardSound]]:
+    def list_default_soundboard_sounds(self) -> Response[List[soundboard.SoundboardSound]]:
         return self.request(Route("GET", "/soundboard-default-sounds"))
 
     # Misc
