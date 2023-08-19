@@ -222,8 +222,6 @@ class Asset(BaseAsset):
     """
 
     __slots__: Tuple[str, ...] = (
-        "_state",
-        "_url",
         "_animated",
         "_key",
     )

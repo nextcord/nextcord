@@ -2366,7 +2366,7 @@ class ConnectionState:
 
         if sound := self._soundboard_sounds.get(data["sound_id"]):
             old_sound = copy.copy(sound)
-            sound._update(data, guild, self)
+            sound._update(data, guild)
             self.dispatch("guild_soundboard_sound_update", old_sound, sound)
         else:
             _log.debug(
