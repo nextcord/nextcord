@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import io
 import os
-from typing import TYPE_CHECKING, Any, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Literal, Optional, Tuple, Union
 
 import yarl
 
@@ -181,10 +181,10 @@ class BaseAsset(AssetMixin):
 
     def __repr__(self) -> str:
         shorten = self._url.replace(self.BASE, "")
-        return f"<Asset url={shorten!r}>"
+        return f"<{type(self).__name__} url={shorten!r}>"
 
     def __eq__(self, other):
-        return isinstance(other, Asset) and self._url == other._url
+        return isinstance(other, type(self)) and self._url == other._url
 
     def __hash__(self):
         return hash(self._url)

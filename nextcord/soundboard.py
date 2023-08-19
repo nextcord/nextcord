@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union, cast
-
-from .partial_emoji import PartialEmoji
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from .asset import SoundAsset
 from .emoji import Emoji
+from .partial_emoji import PartialEmoji
 from .user import User
 
 if TYPE_CHECKING:
@@ -42,7 +41,7 @@ class PartialSoundboardSound:
         self.volume: Optional[float] = sound_volume
 
     @property
-    def sound(self) -> SoundAsset:
+    def asset(self) -> SoundAsset:
         if self.override_path is not None:
             return SoundAsset._from_default_soundboard_sound(self._state, self.override_path)
         else:
@@ -70,13 +69,11 @@ class SoundboardSound:
 
     def __init__(
         self, data: SoundboardSoundPayload, guild: Optional[Guild], state: ConnectionState
-    ):
-        self._state: ConnectionState = state
-        self._update(data, guild, state)
-
-    def _update(
-        self, data: SoundboardSoundPayload, guild: Optional[Guild], state: ConnectionState
     ) -> None:
+        self._state: ConnectionState = state
+        self._update(data, guild)
+
+    def _update(self, data: SoundboardSoundPayload, guild: Optional[Guild]) -> None:
         self.name: str = data["name"]
         self.id: int = int(data["sound_id"])
         self.volume: float = data["volume"]
@@ -89,7 +86,9 @@ class SoundboardSound:
         self.guild: Optional[Guild] = guild
 
         self.user_id: int = int(data["user_id"])
-        self.user: Optional[User] = User(state=state, data=data["user"]) if "user" in data else None
+        self.user: Optional[User] = (
+            User(state=self._state, data=data["user"]) if "user" in data else None
+        )
         self.available: bool = data.get("available", True)
 
         self.override_path: Optional[str] = data.get("override_path", None)

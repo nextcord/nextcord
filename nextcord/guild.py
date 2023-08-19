@@ -23,8 +23,6 @@ from typing import (
     overload,
 )
 
-from nextcord.soundboard import SoundboardSound
-
 from . import abc, utils
 from .asset import Asset
 from .auto_moderation import AutoModerationRule, AutoModerationTriggerMetadata
@@ -66,6 +64,7 @@ from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
 from .role import Role
 from .scheduled_events import EntityMetadata, ScheduledEvent
+from .soundboard import SoundboardSound
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
@@ -103,7 +102,6 @@ if TYPE_CHECKING:
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.snowflake import SnowflakeList
-    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
     from .types.sticker import CreateGuildSticker
     from .types.template import CreateTemplate
     from .types.threads import Thread as ThreadPayload
@@ -2734,8 +2732,7 @@ class Guild(Hashable):
 
     async def fetch_soundboard_sounds(self) -> List[SoundboardSound]:
         """|coro|
-
-        Fetches all the soundboard sounds from the guild.
+        Retrieves all soundboard sounds that the guild has.
 
         .. versionadded:: 2.x
         """

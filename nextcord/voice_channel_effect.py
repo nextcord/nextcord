@@ -1,12 +1,13 @@
+# SPDX-License-Identifier: MIT
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Union
 
 from .emoji import Emoji
 from .enums import AnimationType
-from .soundboard import PartialSoundboardSound, SoundboardSound
-
 from .partial_emoji import PartialEmoji
+from .soundboard import PartialSoundboardSound, SoundboardSound
 
 if TYPE_CHECKING:
     from .guild import Guild
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class VoiceChannelEffect:
-    def __init__(self, data: VoiceChannelEffectSendPayload, state: ConnectionState):
+    def __init__(self, data: VoiceChannelEffectSendPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
         self._update(data)
 
