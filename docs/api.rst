@@ -3945,6 +3945,27 @@ Connectable
 
 .. autoclass:: nextcord.abc.Connectable()
 
+.. _discord_api_sentinels:
+
+Sentinels
+---------
+
+Sentinels are singleton objects (as in, objects with only one instance) that have
+some sort of symbolic meaning. For example, ``None`` is a sentinel in Python meaning
+that a variable has no value.
+
+.. autodata:: nextcord.MISSING
+    :annotation:
+
+    A sentinel that indicates that a variable is missing.
+    This is equivalent to optional values in the `Discord API <https://discord.dev/reference#nullable-and-optional-resource-fields>`_.
+
+.. py:data:: nextcord.MissingOr
+    :value: Union[T, MISSING]
+
+    A union that represents that this variable could be missing.
+    ``T`` represents the type of the variable if it is not missing.
+
 .. _discord_api_models:
 
 Discord Models
