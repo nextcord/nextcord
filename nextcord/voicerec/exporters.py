@@ -1,23 +1,23 @@
 import os
 import subprocess
 import wave
+from asyncio import get_running_loop
+from io import BufferedRandom, BufferedWriter, BytesIO
+from typing import Union
 
 from nextcord import File
-from typing import Union
-from io import BufferedWriter, BufferedRandom, BytesIO
-from asyncio import get_running_loop
 
+from . import opus
 from .errors import *
 from .shared import *
-from . import opus
 
 
 class AudioFile(File):
-    def close(self):
+    def close(self) -> None:
         # get file name if it's not a memory record
         name = self.fp.name if isinstance(self.fp, (BufferedRandom, BufferedWriter)) else None
         super().close()
-        
+
         # delete temp file after closure
         if name:
             self.fp.close()
@@ -54,7 +54,7 @@ def _read_and_delete(buffer: Union[BufferedWriter, BytesIO]) -> bytes:
 
     if buffer.name:
         os.remove(buffer.name)
-    
+
     return data
 
 
@@ -79,9 +79,7 @@ class FFmpeg:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 shell=True,
-            ).communicate(
-                _read_and_delete(writer.buffer)
-            )[0]
+            ).communicate(_read_and_delete(writer.buffer))[0]
         except FileNotFoundError:
             raise NoFFmpeg(
                 "FFmpeg is not installed or aliased improperly. Unable to launch `ffmpeg` command."
@@ -103,7 +101,9 @@ class FFmpeg:
                 "FFmpeg is not installed or aliased improperly. Unable to launch `ffmpeg` command."
             )
 
+
 # FFMPEG converts
+
 
 def _export_with_file_tmp(audio_data, audio_format: str) -> dict[int, AudioFile]:
     return {
@@ -111,40 +111,36 @@ def _export_with_file_tmp(audio_data, audio_format: str) -> dict[int, AudioFile]
             AudioFile(
                 _open_tmp_file(
                     writer,
-                    FFmpeg.file_tmp_conv(
-                        audio_format[1],
-                        writer
-                    ),
+                    FFmpeg.file_tmp_conv(audio_format[1], writer),
                 ),
-                f"{user_id}.{audio_format[0]}"
+                f"{user_id}.{audio_format[0]}",
             )
         )
         for (user_id, writer) in audio_data.items()
     }
 
+
 def _export_with_memory_tmp(audio_data, audio_format: str) -> dict[int, AudioFile]:
     return {
         user_id: (
             AudioFile(
-                _write_in_memory(
-                    FFmpeg.memory_tmp_conv(
-                        audio_format[1],
-                        writer
-                    )
-                ),
-                f"{user_id}.{audio_format[0]}"
+                _write_in_memory(FFmpeg.memory_tmp_conv(audio_format[1], writer)),
+                f"{user_id}.{audio_format[0]}",
             )
         )
         for (user_id, writer) in audio_data.items()
     }
-        
+
 
 export_methods = {
     TempType.File: _export_with_file_tmp,
     TempType.Memory: _export_with_memory_tmp,
 }
 
-async def export_with_ffmpeg(audio_data, audio_format: Formats, temp_type: TempType) -> dict[int, AudioFile]:
+
+async def export_with_ffmpeg(
+    audio_data, audio_format: Formats, temp_type: TempType
+) -> dict[int, AudioFile]:
     if not isinstance(temp_type, TempType):
         raise InvalidTempType(f"Arg `temp_type` must be of type TempType not `{type(temp_type)}`")
 
@@ -152,19 +148,18 @@ async def export_with_ffmpeg(audio_data, audio_format: Formats, temp_type: TempT
         raise TypeError(f"audio_format must be of type `Formats` not {type(audio_format)}")
 
     return await get_running_loop().run_in_executor(
-        None,
-        export_methods[temp_type],
-        audio_data,
-        ffmpeg_args[audio_format]
+        None, export_methods[temp_type], audio_data, ffmpeg_args[audio_format]
     )
 
 
 # PCM
 
+
 def _export_as_PCM(user_id: int, data):
     buffer: BufferedWriter | BytesIO = data.buffer
     buffer.seek(0)
     return AudioFile(buffer, f"{user_id}.pcm", force_close=True)
+
 
 async def export_as_PCM(audio_data, *args) -> dict[int, AudioFile]:
     return {
@@ -174,6 +169,7 @@ async def export_as_PCM(audio_data, *args) -> dict[int, AudioFile]:
 
 
 # WAV
+
 
 def _export_as_WAV(user_id: int, data, decoder: opus.DecoderThread):
     buffer: BufferedWriter | BytesIO = data.buffer
@@ -186,6 +182,7 @@ def _export_as_WAV(user_id: int, data, decoder: opus.DecoderThread):
 
     buffer.seek(0)
     return AudioFile(buffer, f"{user_id}.wav", force_close=True)
+
 
 async def export_as_WAV(audio_data, *args) -> dict[int, AudioFile]:
     decoder = audio_data.decoder

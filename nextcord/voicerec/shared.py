@@ -2,13 +2,15 @@
 """
 
 from enum import Enum
-from pathlib import Path
 from os import makedirs
 from os.path import dirname
+from pathlib import Path
+
 
 class TempType(Enum):
     Memory = 0
     File = 1
+
 
 class Formats(Enum):
     MP3 = 0
@@ -20,6 +22,7 @@ class Formats(Enum):
     PCM = 6
     WAV = 7
 
+
 format_exports = {
     Formats.MP3: "export_with_ffmpeg",
     Formats.MP4: "export_with_ffmpeg",
@@ -30,6 +33,7 @@ format_exports = {
     Formats.PCM: "export_as_PCM",
     Formats.WAV: "export_as_WAV",
 }
+
 
 def open_tmp_file(guild_id, user_id, mode):
     path = Path(f".rectmps/{guild_id}.{user_id}.tmp")
