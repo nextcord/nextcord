@@ -21,7 +21,7 @@ from weakref import WeakValueDictionary
 from .. import utils
 from ..channel import PartialMessageable
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
-from ..http import Route
+from ..http import _USER_AGENT, Route
 from ..message import Attachment, Message
 from .async_ import BaseWebhook, _WebhookState, handle_message_parameters
 
@@ -99,6 +99,9 @@ class WebhookAdapter:
             lock = self._locks[bucket]
         except KeyError:
             self._locks[bucket] = lock = threading.Lock()
+
+        # always ensure our user agent is being used
+        headers["User-Agent"] = _USER_AGENT
 
         if payload is not None:
             headers["Content-Type"] = "application/json"

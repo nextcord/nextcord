@@ -32,7 +32,7 @@ from ..channel import PartialMessageable
 from ..enums import WebhookType, try_enum
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
 from ..flags import MessageFlags
-from ..http import Route
+from ..http import _USER_AGENT, Route
 from ..message import Attachment, Message
 from ..mixins import Hashable
 from ..user import BaseUser, User
@@ -116,6 +116,9 @@ class AsyncWebhookAdapter:
             lock = self._locks[bucket]
         except KeyError:
             self._locks[bucket] = lock = asyncio.Lock()
+
+        # always ensure our user agent is being used
+        headers["User-Agent"] = _USER_AGENT
 
         if payload is not None:
             headers["Content-Type"] = "application/json"
