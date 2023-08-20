@@ -29,7 +29,7 @@ from .flags import ChannelFlags, MessageFlags
 from .invite import Invite
 from .iterators import HistoryIterator
 from .mentions import AllowedMentions
-from .missing import MISSING, MissingOr
+from .missing import MISSING
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role

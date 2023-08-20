@@ -30,16 +30,16 @@ __all__ = ("MISSING", "MissingOr")
 
 
 class _MissingSentinel:
-    def __eq__(self, other: Any):
+    def __eq__(self, other: Any) -> bool:
         return self is other
 
     def __hash__(self):
         return id(self)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "..."
 
 
