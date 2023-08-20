@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 
-from typing import Any, Type, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 T = TypeVar("T")
 
@@ -25,7 +25,7 @@ MISSING = _MissingSentinel()
 """A sentinel that indicates that a variable has not been set."""
 
 
-def __new__(cls: Type[_MissingSentinel]) -> _MissingSentinel:
+def __new__(cls: type) -> _MissingSentinel:
     return MISSING
 
 
