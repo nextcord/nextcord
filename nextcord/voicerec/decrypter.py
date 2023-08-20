@@ -23,8 +23,10 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from nacl.secret import SecretBox
 from struct import unpack_from
+
+from nacl.secret import SecretBox
+
 
 def strip_header_ext(data):
     if data[0] == 0xBE and data[1] == 0xDE and len(data) > 4:
@@ -32,6 +34,7 @@ def strip_header_ext(data):
         offset = 4 + length * 4
         data = data[offset:]
     return data
+
 
 def decrypt_xsalsa20_poly1305(secret_key, header, data):
     box = SecretBox(bytes(secret_key))
@@ -41,6 +44,7 @@ def decrypt_xsalsa20_poly1305(secret_key, header, data):
 
     return strip_header_ext(box.decrypt(bytes(data), bytes(nonce)))
 
+
 def decrypt_xsalsa20_poly1305_suffix(secret_key, _, data):
     box = SecretBox(bytes(secret_key))
 
@@ -48,6 +52,7 @@ def decrypt_xsalsa20_poly1305_suffix(secret_key, _, data):
     nonce = data[-nonce_size:]
 
     return strip_header_ext(box.decrypt(bytes(data[:-nonce_size]), nonce))
+
 
 def decrypt_xsalsa20_poly1305_lite(secret_key, _, data):
     box = SecretBox(bytes(secret_key))

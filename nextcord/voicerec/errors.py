@@ -32,6 +32,7 @@ class InvalidTempType(DiscordException):
     Raised when attempting to record with an invalid temp file type.
     """
 
+
 class TempNotFound(DiscordException):
     """
     Raised when failed attempting to access temp files.
