@@ -24,24 +24,23 @@ DEALINGS IN THE SOFTWARE.
 
 
 import logging
-
 from enum import Enum
-from nextcord import VoiceClient, VoiceChannel, StageChannel, File
-from nextcord.client import Client
 from io import BufferedWriter, BytesIO
-from typing import Optional, Union
-from time import sleep, time as clock_timestamp, perf_counter
-from threading import Thread
-from select import select
-from pathlib import Path
 from os import makedirs
 from os.path import dirname
-from struct import unpack_from, pack
-from . import opus
+from pathlib import Path
+from select import select
+from struct import pack, unpack_from
+from threading import Thread
+from time import perf_counter, sleep, time as clock_timestamp
+from typing import Optional, Union
 
+from nextcord import File, StageChannel, VoiceChannel, VoiceClient
+from nextcord.client import Client
+
+from . import decrypter, exporters, opus
 from .errors import *
-from . import decrypter
-from . import exporters
+
 
 class Formats(Enum):
     MP3 = 0
@@ -52,6 +51,7 @@ class Formats(Enum):
     OGG = 5
     PCM = 6
     WAV = 7
+
 
 formats = {
     Formats.MP3: "export_as_MP3",
@@ -86,11 +86,12 @@ SILENCE_STRUCT_10 = SILENCE_STRUCT * 10
 SILENCE_STRUCT_100 = SILENCE_STRUCT * 100
 SILENCE_STRUCT_1000 = SILENCE_STRUCT * 1000  # 3.4mb in size
 
+
 class Silence:
-    def __init__(self, frames: int):
+    def __init__(self, frames: int) -> None:
         self.frames: int = frames
 
-    def write_to(self, buffer: Union[BufferedWriter, BytesIO]):
+    def write_to(self, buffer: Union[BufferedWriter, BytesIO]) -> None:
         write = buffer.write
         frames = self.frames
 
@@ -115,22 +116,22 @@ class TimeTracker:
         self.starting_time: Optional[float] = clock_timestamp()  # Also used as filename
         self.first_packet_time: Optional[float] = None
         self.stopping_time: Optional[float] = None
-        
+
         self.users_times: dict[int, tuple[int, float]] = {}
 
-    def add_user(self, user, start_time):
+    def add_user(self, user, start_time) -> None:
         if user not in self.users_times:
             self.users_times[user] = start_time
-    
+
     def calculate_silence(self, user_id, timestamp, received_timestamp):
         # process a packet for a registered user
-        if (user_time := self.users_times.get(user_id)):
+        if user_time := self.users_times.get(user_id):
             delta_created_time = timestamp - user_time[0]
             delta_received_time = (received_timestamp - user_time[1]) * AUDIO_HZ
             difference = abs(100 - (delta_created_time * 100 / delta_received_time))
 
             # calculate time since last audio packet
-            if (difference > DIFFERENCE_THRESHOLD and delta_created_time != SILENCE_FRAME_SIZE):
+            if difference > DIFFERENCE_THRESHOLD and delta_created_time != SILENCE_FRAME_SIZE:
                 silence = delta_received_time - SILENCE_FRAME_SIZE
             else:
                 silence = delta_created_time - SILENCE_FRAME_SIZE
@@ -145,17 +146,16 @@ class TimeTracker:
         else:
             # calculate time since first packet from user
             silence = (
-                ((received_timestamp - self.first_packet_timestamp) * AUDIO_HZ) - SILENCE_FRAME_SIZE
-            )
+                (received_timestamp - self.first_packet_timestamp) * AUDIO_HZ
+            ) - SILENCE_FRAME_SIZE
 
         # update receive times for next calculation
         self.users_times[user_id] = (timestamp, received_timestamp)
 
         return Silence(
-            frames=(
-                max(0, int(silence / SILENCE_FRAME_SIZE)) * opus.DecoderThread.CHANNELS
-            )
+            frames=(max(0, int(silence / SILENCE_FRAME_SIZE)) * opus.DecoderThread.CHANNELS)
         )
+
 
 def _open_tmp_file(guild_id, user_id):
     path = Path(f".rectmps/{guild_id}.{user_id}.tmp")
@@ -179,38 +179,36 @@ class AudioWriter:
         else:
             raise InvalidTempType("Arg `temp_type` must be of type TempType")
 
-    def write(self, bytes):
+    def write(self, bytes) -> None:
         if not self.buffer.closed:
             self.buffer.write(bytes)
 
 
 class AudioData(dict):
-    def __init__(self, decoder: opus.DecoderThread):
+    def __init__(self, decoder: opus.DecoderThread) -> None:
         self.time_tracker: Optional[TimeTracker] = None
         self.decoder: opus.DecoderThread = decoder
 
     def get_writer(self, temp_type: TempType, guild_id: int, user_id: int) -> AudioWriter:
-        return (
-            self.get(user_id)
-            or self.add_new_writer(
-                user_id,
-                AudioWriter(temp_type, guild_id, user_id)
-            )
+        return self.get(user_id) or self.add_new_writer(
+            user_id, AudioWriter(temp_type, guild_id, user_id)
         )
-    
+
     def add_new_writer(self, user_id: int, writer: AudioWriter) -> AudioWriter:
         self[user_id] = writer
         return writer
 
-    def append(self, temp_type: TempType, guild_id: int, user_id: int, silence: Silence, data: bytes):
+    def append(
+        self, temp_type: TempType, guild_id: int, user_id: int, silence: Silence, data: bytes
+    ) -> None:
         writer = self.get_writer(temp_type, guild_id, user_id)
         silence.write_to(writer.buffer)
         writer.write(data)
-    
+
     def export(self, audio_format: Formats) -> list[File]:
         if not self.time_tracker:
             raise OngoingRecordingError("Cannot export a recording before it is stopped!")
-        
+
         if not isinstance(audio_format, Formats):
             raise TypeError("audio_format must be of type `Formats`")
 
@@ -223,12 +221,12 @@ class AudioData(dict):
 
 class RecorderClient(VoiceClient):
     def __init__(
-        self, client: Client,
+        self,
+        client: Client,
         channel: ConnectableVoiceChannels,
         auto_deaf: bool = True,
-        temp_type: TempType = TempType.File
+        temp_type: TempType = TempType.File,
     ) -> None:
-
         super().__init__(client, channel)
         self.channel: ConnectableVoiceChannels
 
@@ -239,18 +237,11 @@ class RecorderClient(VoiceClient):
         self.auto_deaf: bool = auto_deaf
         self.temp_type: TempType = temp_type
 
-
     async def voice_connect(self, deaf=None, mute=None) -> None:
         await self.channel.guild.change_voice_state(
             channel=self.channel,
-            self_deaf=(
-                deaf
-                if deaf is not None
-                else (
-                    True if self.auto_deaf else False
-                )
-            ),
-            self_mute=mute or False
+            self_deaf=(deaf if deaf is not None else (True if self.auto_deaf else False)),
+            self_mute=mute or False,
         )
 
     # recording stuff
@@ -261,8 +252,8 @@ class RecorderClient(VoiceClient):
         timestamp: int,
         received_timestamp: float,
         ssrc: int,
-        decoded_data: bytes
-    ):
+        decoded_data: bytes,
+    ) -> None:
         if self.audio_data is None or self.time_tracker is None or not self.guild:
             return
 
@@ -284,7 +275,7 @@ class RecorderClient(VoiceClient):
             decoded_data,
         )
 
-    def _decode_audio(self, data):
+    def _decode_audio(self, data) -> None:
         if 200 <= data[1] <= 204:
             return  # RTCP concention info, not useful
 
@@ -295,18 +286,15 @@ class RecorderClient(VoiceClient):
 
         sequence, timestamp, ssrc = unpack_from(">xxHII", header)
 
-        decrypted_data = getattr(
-            decrypter,
-            f"decrypt_{self.mode}"
-        )(self.secret_key, header, data)
-        
+        decrypted_data = getattr(decrypter, f"decrypt_{self.mode}")(self.secret_key, header, data)
+
         if decrypted_data == FRAME_OF_SILENCE:
             return
 
         # decoder will call `_process_decoded_audio` once finished decoding
         self.decoder.decode((sequence, timestamp, perf_counter(), ssrc, decrypted_data))
 
-    def _process_audio_packet(self, data):
+    def _process_audio_packet(self, data) -> None:
         if self.audio_data is None:
             return
 
@@ -324,26 +312,25 @@ class RecorderClient(VoiceClient):
                 if error:
                     logging.debug(f"Socket Error: {error}")
                 continue
-            
+
             try:
                 self._process_audio_packet(self.socket.recv(4096))
             except OSError:
                 return self._stop_recording()
 
-
     def _start_recording(self) -> Thread:
         self.decoder = opus.DecoderThread(self)
         self.decoder.start()
 
-        self.process = Thread(
-            target=self._start_packets_recording
-        )
+        self.process = Thread(target=self._start_packets_recording)
         self.process.start()
         return self.process
 
     async def start_recording(self, channel: Optional[ConnectableVoiceChannels] = None) -> Thread:
         if self.time_tracker:
-            raise OngoingRecordingError(f"A recording has already started at {self.time_tracker.starting_time}")
+            raise OngoingRecordingError(
+                f"A recording has already started at {self.time_tracker.starting_time}"
+            )
 
         if channel:
             self.channel = channel
@@ -376,7 +363,7 @@ class RecorderClient(VoiceClient):
 
         if disconnect:
             await self.disconnect()
-        
+
         if not disconnect and self.auto_deaf:
             await self.voice_connect()
 
