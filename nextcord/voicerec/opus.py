@@ -25,16 +25,14 @@ DEALINGS IN THE SOFTWARE.
 """
 
 
-import gc
 import logging
-import threading
-from time import sleep
-
 from nextcord import opus
-
+from time import sleep
+import threading
+import gc
 
 class DecoderThread(threading.Thread, opus._OpusStruct):
-    def __init__(self, recorder) -> None:
+    def __init__(self, recorder):
         super().__init__(daemon=True)
 
         self.recorder = recorder
@@ -42,10 +40,10 @@ class DecoderThread(threading.Thread, opus._OpusStruct):
         self.decoder = {}
         self._end_thread = threading.Event()
 
-    def decode(self, opus_frame) -> None:
+    def decode(self, opus_frame):
         self.decode_queue.append(opus_frame)
 
-    def run(self) -> None:
+    def run(self):
         while not self._end_thread.is_set():
             try:
                 (
@@ -53,13 +51,14 @@ class DecoderThread(threading.Thread, opus._OpusStruct):
                     timestamp,
                     received_timestamp,
                     ssrc,
-                    decrypted_data,
+                    decrypted_data
                 ) = self.decode_queue.pop(0)
             except IndexError:
                 sleep(0.001)
                 continue
 
             try:
+
                 if decrypted_data is None:
                     continue
                 else:
@@ -69,11 +68,9 @@ class DecoderThread(threading.Thread, opus._OpusStruct):
                 print("Error occurred while decoding opus frame.")
                 continue
 
-            self.recorder._process_decoded_audio(
-                sequence, timestamp, received_timestamp, ssrc, decoded_data
-            )
+            self.recorder._process_decoded_audio(sequence, timestamp, received_timestamp, ssrc, decoded_data)
 
-    def stop(self) -> None:
+    def stop(self):
         while self.decoding:
             sleep(0.1)
             self.decoder = {}
