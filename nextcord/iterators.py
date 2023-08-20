@@ -109,6 +109,11 @@ async def history_iterator(
     A note that if both ``before`` and ``after`` are specified, ``before`` is ignored by the
     messages endpoint.
 
+    .. versionchanged:: 3.0
+
+        This was modified from being a class to being a function to remove unneeded
+        bloat.
+
     Parameters
     ----------
     messageable: :class:`abc.Messageable`
@@ -209,6 +214,11 @@ async def ban_iterator(
 
     A note that if both ``before`` and ``after`` are specified, ``after`` is ignored by the
     bans endpoint.
+
+    .. versionchanged:: 3.0
+
+        This was modified from being a class to being a function to remove unneeded
+        bloat.
 
     Parameters
     ----------
@@ -344,6 +354,11 @@ async def guild_iterator(
 
     Not that if both ``before`` and ``after`` are specified, ``before`` is ignored by the
     guilds endpoint.
+
+    .. versionchanged:: 3.0
+
+        This was modified from being a class to being a function to remove unneeded
+        bloat.
 
     Parameters
     ----------
