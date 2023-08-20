@@ -452,8 +452,7 @@ class Loop(Generic[LF]):
         """
         return not bool(self._task.done()) if self._task is not MISSING else False
 
-    async def _error(self, *args: Any) -> None:
-        exception: Exception = args[-1]
+    async def _error(self, exception: BaseException) -> None:
         print(
             f"Unhandled exception in internal background task {self.coro.__name__!r}.",
             file=sys.stderr,
@@ -538,7 +537,7 @@ class Loop(Generic[LF]):
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError(f"Expected coroutine function, received {coro.__class__.__name__!r}.")
 
-        self._error = coro
+        self._error = coro  # type: ignore  # `self` messes with the type checker
         return coro
 
     def _get_next_sleep_time(self) -> datetime.datetime:

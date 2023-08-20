@@ -38,7 +38,7 @@ class UserSelectValues(SelectValuesBase):
 
     @property
     def users(self) -> List[User]:
-        """List[:class:`.User`]: A list of users that were selected."""
+        """List[:class:`nextcord.User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
 
 
@@ -111,7 +111,7 @@ class UserSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> UserSelectValues:
-        """:class:`.ui.UserSelectValues`: A list of Union[:class:`.Member`, :class:`.User`] that have been selected by the user."""
+        """:class:`.ui.UserSelectValues`: A list of Union[:class:`.Member`, :class:`nextcord.User`] that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> UserSelectMenuPayload:

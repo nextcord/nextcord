@@ -61,7 +61,7 @@ class NoMoreItems(DiscordException):
 class GatewayNotFound(DiscordException):
     """An exception that is raised when the gateway for Discord could not be found"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         message = "The gateway to connect to discord was not found."
         super().__init__(message)
 
@@ -102,7 +102,9 @@ class HTTPException(DiscordException):
         The Discord specific error code for the failure.
     """
 
-    def __init__(self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]):
+    def __init__(
+        self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]
+    ) -> None:
         self.response: _ResponseType = response
         self.status: int = response.status  # type: ignore
         self.code: int
@@ -206,7 +208,7 @@ class ConnectionClosed(ClientException):
         *,
         shard_id: Optional[int],
         code: Optional[int] = None,
-    ):
+    ) -> None:
         # This exception is just the same exception except
         # reconfigured to subclass ClientException for users
         self.code: int = code or socket.close_code or -1
@@ -232,7 +234,7 @@ class PrivilegedIntentsRequired(ClientException):
         The shard ID that got closed if applicable.
     """
 
-    def __init__(self, shard_id: Optional[int]):
+    def __init__(self, shard_id: Optional[int]) -> None:
         self.shard_id: Optional[int] = shard_id
         msg = (
             "Shard ID %s is requesting privileged intents that have not been explicitly enabled in the "
@@ -257,7 +259,7 @@ class InteractionResponded(ClientException):
         The interaction that's already been responded to.
     """
 
-    def __init__(self, interaction: Interaction):
+    def __init__(self, interaction: Interaction) -> None:
         self.interaction: Interaction = interaction
         super().__init__("This interaction has already been responded to before")
 

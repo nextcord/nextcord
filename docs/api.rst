@@ -241,6 +241,38 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param shard_id: The shard ID that has disconnected.
     :type shard_id: :class:`int`
 
+.. function:: on_http_ratelimit(limit, remaining, reset_after, bucket, scope)
+
+    Called when a HTTP request in progress either exhausts its bucket or gets a 429 response.
+    For more information on how a ratelimit bucket is defined, check out the [Discord API Docs](https://discord.dev/topics/rate-limits).
+
+    If the 429 response is a global ratelimit, then use :func:`on_global_http_ratelimit` instead.
+
+    .. versionadded:: 2.4
+
+    :param limit: The amount of requests that have been made under the bucket that the request correlates to.
+    :type limit: :class:`int`
+    :param remaining: The amount of remaining requests that can be made under the bucket that the request correlates to.
+    :type remaining: :class:`int`
+    :param reset_after: The amount of time we have to wait before making another request under the same bucket.
+    :type reset_after: :class:`float`
+    :param bucket: The hash correlating to the bucket of the request from Discord. This hash denotes the rate limit being encountered.
+    :type bucket: :class:`str`
+    :param scope: If we get a 429, the scope of the 429 response. This value can either be "user" (rate limit relating to the user) or "shared" (rate limit relating to a resource).
+    :type scope: Optional[:class:`str`]
+
+.. function:: on_global_http_ratelimit(retry_after)
+
+    Called when a HTTP request in progress gets a 429 response and the scope is global.
+
+    If the 429 response is a non-global ratelimit or you want to track when the bucket expires,
+    then use :func:`on_http_ratelimit` instead.
+
+    .. versionadded:: 2.4
+
+    :param retry_after: The amount of time we have to wait before making another request.
+    :type retry_after: :class:`float`
+
 .. function:: on_ready()
 
     Called when the client is done preparing the data received from Discord. Usually after login is successful
@@ -708,14 +740,28 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param last_pin: The latest message that was pinned as an aware datetime in UTC. Could be ``None``.
     :type last_pin: Optional[:class:`datetime.datetime`]
 
+.. function:: on_thread_create(thread)
+
+    Called when a thread is created.
+
+    .. versionadded:: 2.4
+
+    :param thread: The thread that got created.
+    :type thread: :class:`Thread`
+
 .. function:: on_thread_join(thread)
 
-    Called whenever a thread is joined or created. Note that from the API's perspective there is no way to
-    differentiate between a thread being created or the bot joining a thread.
+    Called whenever a thread is joined or created.
 
     Note that you can get the guild from :attr:`Thread.guild`.
 
     This requires :attr:`Intents.guilds` to be enabled.
+
+    .. note::
+
+        This event is also called when a thread is created. To differentiate,
+        use :func:`on_thread_create` instead. This is done to avoid a breaking change
+        in v2.
 
     .. versionadded:: 2.0
 
@@ -1201,6 +1247,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     :param execution: The object containing the execution information.
     :type execution: :class:`AutoModerationActionExecution`
+
+.. function:: on_guild_audit_log_entry_create(entry)
+
+    Called when an :class:`AuditLogEntry` is created.
+
+    .. versionadded:: 2.4
+
+    :param entry: The entry that was created.
+    :type entry: :class:`AuditLogEntry`
 
 .. _discord-api-utils:
 
@@ -2777,7 +2832,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: standard
 
-        Represents a standard sticker that all Nitro users can use.
+        Represents a standard sticker.
 
     .. attribute:: guild
 
@@ -2800,6 +2855,12 @@ of :class:`enum.Enum`.
     .. attribute:: lottie
 
         Represents a sticker with a lottie image.
+
+    .. attribute:: gif
+
+        Represents a sticker with a GIF image.
+
+        .. versionadded:: 2.4
 
 .. class:: InviteTarget
 
@@ -3036,6 +3097,50 @@ of :class:`enum.Enum`.
     .. attribute:: creation_date
 
         Sort forum posts by their creation date.
+
+.. class:: ForumLayoutType
+
+    The default layout type used to display posts in a :class:`ForumChannel`.
+
+    .. versionadded:: 2.4
+
+    .. attribute:: not_set
+
+        No default has been set by channel administrators.
+
+    .. attribute:: list
+
+        Display posts as a list, more text focused.
+
+    .. attribute:: gallery
+
+        Display posts as a collection of posts with images, this is more image focused.
+
+.. class:: RoleConnectionMetadataType
+
+    Represents the type of comparison a role connection metadata record will use.
+
+    .. versionadded:: 2.4
+
+    .. attribute:: integer_less_than_or_equal
+    .. attribute:: datetime_less_than_or_equal
+
+        The metadata value must be less than or equal to the guild's configured value.
+
+    .. attribute:: integer_greater_than_or_equal
+    .. attribute:: datetime_greater_than_or_equal
+
+        The metadata value must be greater than or equal to the guild's configured value.
+
+    .. attribute:: integer_equal
+    .. attribute:: boolean_equal
+
+        The metadata value must be equal to the guild's configured value.
+
+    .. attribute:: integer_not_equal
+    .. attribute:: boolean_not_equal
+
+        The metadata value must be not equal to the guild's configured value.
 
 
 Async Iterator
@@ -3969,6 +4074,11 @@ Guild
 
         :type: :class:`User`
 
+GuildPreview
+~~~~~~~~~~~~
+
+.. autoclass:: GuildPreview()
+    :members:
 
 Integration
 ~~~~~~~~~~~
@@ -4663,6 +4773,15 @@ ForumTag
 .. autoclass:: ForumTag
     :members:
 
+RoleConnectionMetadata
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: RoleConnectionMetadata
+
+.. autoclass:: RoleConnectionMetadata
+    :members:
+
+
 .. _discord_ui_kit:
 
 Bot UI Kit
@@ -4981,6 +5100,12 @@ Cogs
 
 .. autoclass:: ClientCog
     :members:
+
+Warnings
+--------
+
+.. autoclass:: MissingApplicationCommandParametersWarning
+
 
 Exceptions
 ----------

@@ -74,7 +74,7 @@ class Button(Item[V]):
         url: Optional[str] = None,
         emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
         row: Optional[int] = None,
-    ):
+    ) -> None:
         super().__init__()
         if custom_id is not None and url is not None:
             raise TypeError("Cannot mix both url and custom_id with Button")
@@ -255,7 +255,9 @@ def button(
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
 
-    def decorator(func: ItemCallbackType[Button[V]]) -> ItemCallbackType[Button[V]]:
+    def decorator(
+        func: ItemCallbackType[Button[V], ClientT]
+    ) -> ItemCallbackType[Button[V], ClientT]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Button function must be a coroutine function")
 

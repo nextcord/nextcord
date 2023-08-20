@@ -102,9 +102,8 @@ __all__ = (
 
 DISCORD_EPOCH = 1420070400000
 
-
 class _cached_property:
-    def __init__(self, function: Callable[..., Any]):
+    def __init__(self, function: Callable[..., Any]) -> None:
         self.function = function
         self.__doc__ = getattr(function, "__doc__")
 
@@ -190,10 +189,13 @@ def cached_slot_property(
 class SequenceProxy(Sequence[T_co], Generic[T_co]):
     """Read-only proxy of a Sequence."""
 
-    def __init__(self, proxied: Sequence[T_co]):
+    def __init__(self, proxied: Sequence[T_co]) -> None:
         self.__proxied = proxied
 
-    def __getitem__(self, idx: int) -> T_co:
+    # Likely Pyright bug. The base method doesn't seem to even have a return type.
+    # base method returns type "Sequence[T_co@SequenceProxy]"
+    # override returns type "T_co@SequenceProxy"
+    def __getitem__(self, idx: int) -> T_co:  # pyright: ignore
         return self.__proxied[idx]
 
     def __len__(self) -> int:
@@ -478,7 +480,7 @@ def get_as_snowflake(data: Any, key: str) -> Optional[int]:
         return value and int(value)
 
 
-def _get_mime_type_for_image(data: bytes):
+def _get_mime_type_for_image(data: bytes) -> str:
     if data.startswith(b"\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"):
         return "image/png"
     elif data[0:3] == b"\xff\xd8\xff" or data[6:10] in (b"JFIF", b"Exif"):
@@ -630,7 +632,7 @@ class SnowflakeList(array.array):  # pyright: ignore[reportMissingTypeArgument]
 
     if TYPE_CHECKING:
 
-        def __init__(self, data: Iterable[int], *, is_sorted: bool = False):
+        def __init__(self, data: Iterable[int], *, is_sorted: bool = False) -> None:
             ...
 
     def __new__(cls, data: Iterable[int], *, is_sorted: bool = False) -> Self:

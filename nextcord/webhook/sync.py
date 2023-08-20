@@ -13,9 +13,10 @@ import logging
 import re
 import threading
 import time
-from types import ModuleType
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union, overload
+from types import TracebackType
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, Union, overload
 from urllib.parse import quote as urlquote
+from weakref import WeakValueDictionary
 
 from .. import utils
 from ..channel import PartialMessageable
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
     from ..embeds import Embed
     from ..file import File
     from ..mentions import AllowedMentions
+    from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
 
     try:
@@ -46,7 +48,7 @@ if TYPE_CHECKING:
 
 
 class DeferredLock:
-    def __init__(self, lock: threading.Lock):
+    def __init__(self, lock: threading.Lock) -> None:
         self.lock = lock
         self.delta: Optional[float] = None
 
@@ -57,15 +59,23 @@ class DeferredLock:
     def delay_by(self, delta: float) -> None:
         self.delta = delta
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(
+        self,
+        type: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         if self.delta:
             time.sleep(self.delta)
         self.lock.release()
 
 
 class WebhookAdapter:
-    def __init__(self):
-        self._locks: Dict[Any, threading.Lock] = {}
+    def __init__(self) -> None:
+        self._locks: WeakValueDictionary[
+            Tuple[Optional[SnowflakeAlias], Optional[str]],
+            threading.Lock,
+        ] = WeakValueDictionary()
 
     def request(
         self,
@@ -523,11 +533,11 @@ class SyncWebhook(BaseWebhook):
 
     def __init__(
         self, data: WebhookPayload, session: Session, token: Optional[str] = None, state=None
-    ):
+    ) -> None:
         super().__init__(data, token, state)
         self.session = session
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Webhook id={self.id!r}>"
 
     @property
@@ -935,8 +945,6 @@ class SyncWebhook(BaseWebhook):
         previous_mentions: Optional[AllowedMentions] = getattr(
             self._state, "allowed_mentions", None
         )
-        if content is None:
-            content = MISSING
 
         params = handle_message_parameters(
             content=content,

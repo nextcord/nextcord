@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, ClassVar, List, Literal, Optional, Tuple, TypeVar, Union, cast
 
 from .enums import ButtonStyle, ComponentType, TextInputStyle, try_enum
 from .missing import MISSING, MissingOr
@@ -65,7 +65,7 @@ class Component:
         The type of component.
     """
 
-    __slots__: Tuple[str, ...] = ("type",)
+    __slots__: Tuple[str, ...] = ()
 
     __repr_info__: ClassVar[Tuple[str, ...]]
     type: ComponentType
@@ -86,7 +86,7 @@ class Component:
                 setattr(self, slot, value)
         return self
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> ComponentPayload:
         raise NotImplementedError
 
 
@@ -107,19 +107,19 @@ class ActionRow(Component):
         The children components that this holds, if any.
     """
 
-    __slots__: Tuple[str, ...] = ("children",)
+    __slots__: Tuple[str, ...] = ("type", "children")
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: ComponentPayload):
+    def __init__(self, data: ComponentPayload) -> None:
         self.type: ComponentType = try_enum(ComponentType, data["type"])
         self.children: List[Component] = [_component_factory(d) for d in data.get("components", [])]
 
     def to_dict(self) -> ActionRowPayload:
         return {
-            "type": int(self.type),
+            "type": cast(Literal[1], int(self.type)),
             "components": [child.to_dict() for child in self.children],
-        }  # type: ignore
+        }
 
 
 class Button(Component):
@@ -152,6 +152,7 @@ class Button(Component):
     """
 
     __slots__: Tuple[str, ...] = (
+        "type",
         "style",
         "custom_id",
         "url",
@@ -162,7 +163,7 @@ class Button(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: ButtonComponentPayload):
+    def __init__(self, data: ButtonComponentPayload) -> None:
         self.type: ComponentType = try_enum(ComponentType, data["type"])
         self.style: ButtonStyle = try_enum(ButtonStyle, data["style"])
         self.custom_id: Optional[str] = data.get("custom_id")
@@ -225,7 +226,7 @@ class SelectMenuBase(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: SelectMenuBasePayload):
+    def __init__(self, data: SelectMenuBasePayload) -> None:
         self.custom_id: str = data["custom_id"]
         self.disabled: bool = data.get("disabled", False)
         self.placeholder: Optional[str] = data.get("placeholder")
@@ -280,12 +281,12 @@ class StringSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ("options",)
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: SelectMenuPayload):
+    type: Literal[ComponentType.select] = ComponentType.select
+
+    def __init__(self, data: SelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.select
         self.options: List[SelectOption] = [
             SelectOption.from_dict(option) for option in data.get("options", [])
         ]
@@ -333,12 +334,12 @@ class UserSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ()
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: UserSelectMenuPayload):
+    type: Literal[ComponentType.user_select] = ComponentType.user_select
+
+    def __init__(self, data: UserSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.user_select
 
     def to_dict(self) -> UserSelectMenuPayload:
         payload: UserSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
@@ -376,12 +377,12 @@ class RoleSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ()
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: RoleSelectMenuPayload):
+    type: Literal[ComponentType.role_select] = ComponentType.role_select
+
+    def __init__(self, data: RoleSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.role_select
 
     def to_dict(self) -> RoleSelectMenuPayload:
         payload: RoleSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
@@ -419,12 +420,12 @@ class MentionableSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ()
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: MentionableSelectMenuPayload):
+    type: Literal[ComponentType.mentionable_select] = ComponentType.mentionable_select
+
+    def __init__(self, data: MentionableSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.mentionable_select
 
     def to_dict(self) -> MentionableSelectMenuPayload:
         payload: MentionableSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
@@ -464,12 +465,12 @@ class ChannelSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ("channel_types",)
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: ChannelSelectMenuPayload):
+    type: Literal[ComponentType.channel_select] = ComponentType.channel_select
+
+    def __init__(self, data: ChannelSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.channel_select
         self.channel_types: List[ChannelType] = [
             ChannelType(t) for t in data.get("channel_types", [])
         ]
@@ -589,8 +590,8 @@ class SelectOption:
 
 
 class TextInput(Component):
-
     __slots__: Tuple[str, ...] = (
+        "type",
         "style",
         "custom_id",
         "label",
@@ -603,7 +604,7 @@ class TextInput(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: TextInputComponentPayload):
+    def __init__(self, data: TextInputComponentPayload) -> None:
         self.type: ComponentType = try_enum(ComponentType, data["type"])
         self.style: TextInputStyle = try_enum(
             TextInputStyle,
