@@ -11,7 +11,7 @@ from nextcord import DiscordException
 
 class OngoingRecordingError(DiscordException):
     """
-    Raised when starting a recording is attempted while a recording is already ongoing.
+    Raised when an forbidden action is performed when a recording is ongoing.
     """
 
 
@@ -31,7 +31,6 @@ class InvalidTempType(DiscordException):
     """
     Raised when attempting to record with an invalid temp file type.
     """
-
 
 class TempNotFound(DiscordException):
     """
