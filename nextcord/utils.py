@@ -88,7 +88,6 @@ __all__ = (
     "find",
     "get",
     "anext",
-    "chunk",
     "sleep_until",
     "utcnow",
     "remove_markdown",
@@ -506,34 +505,6 @@ async def anext(iter: AsyncIterator[Any], default: Any = MISSING) -> Any:
         raise
     else:
         return ret
-
-
-async def chunk(iter: AsyncIterator[T], size: int) -> AsyncIterator[List[T]]:
-    """|coro|
-
-    A helper that chunks items in an iterator according to a maximum chunk size.
-
-    Parameters
-    ----------
-    iter
-        The iterator to chunk.
-    size: :class:`int`
-        The size of each chunk.
-    """
-    ret: List[T] = []
-    current_size: int = 0
-
-    async for item in iter:
-        ret.append(item)
-        current_size += 1
-
-        if current_size == size:
-            yield ret
-            ret = []
-            current_size = 0
-
-    if ret:
-        yield ret
 
 
 def unique(iterable: Iterable[T]) -> List[T]:
