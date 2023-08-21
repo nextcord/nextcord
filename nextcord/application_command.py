@@ -65,7 +65,6 @@ if TYPE_CHECKING:
     from .types.interactions import (
         ApplicationCommand as ApplicationCommandPayload,
         ApplicationCommandInteractionDataOption,
-        InteractionData,
     )
 
     _CustomTypingMetaBase = Any
@@ -1854,7 +1853,6 @@ class SlashCommandMixin(CallbackMixin):
         interaction: ApplicationCommandInteraction,
         option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ) -> Dict[str, Any]:
-
         if option_data is None:
             option_data = interaction.data.get("options")
 
