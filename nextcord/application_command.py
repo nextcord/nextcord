@@ -1889,9 +1889,6 @@ class SlashCommandMixin(CallbackMixin):
         option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ):
         if option_data is None:
-            if interaction.data is None:
-                raise ValueError("Discord did not provide us interaction data")
-
             option_data = interaction.data.get("options")
 
             if not option_data:
@@ -2338,10 +2335,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             ``True`` If the interaction could possibly be for this command, ``False`` otherwise.
         """
         data = interaction.data
-
-        if data is None:
-            raise ValueError("Discord did not provide us with interaction data")
-
         our_payload = self.get_payload(data.get("guild_id", None))
 
         def _recursive_subcommand_check(inter_pos: dict, cmd_pos: dict) -> bool:
@@ -2882,9 +2875,6 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
     async def call(
         self, state: ConnectionState, interaction: ApplicationCommandInteraction
     ) -> None:
-        if interaction.data is None:
-            raise ValueError("Discord did not provide us interaction data")
-
         # pyright does not want to lose typeddict specificity but we do not care here
         option_data = interaction.data.get("options", [])
 
@@ -3410,8 +3400,6 @@ def get_users_from_interaction(
     data = interaction.data
     ret: List[Union[User, Member]] = []
 
-    data = cast(ApplicationCommandInteractionData, data)
-
     # Return a Member object if the required data is available, otherwise fall back to User.
     if "resolved" in data and "members" in data["resolved"]:
         member_payloads = data["resolved"]["members"]
@@ -3463,8 +3451,6 @@ def get_messages_from_interaction(
     data = interaction.data
     ret = []
 
-    data = cast(ApplicationCommandInteractionData, data)
-
     if "resolved" in data and "messages" in data["resolved"]:
         message_payloads = data["resolved"]["messages"]
         for msg_id, msg_payload in message_payloads.items():
@@ -3496,11 +3482,6 @@ def get_roles_from_interaction(
     """
     data = interaction.data
     ret = []
-
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
-    data = cast(ApplicationCommandInteractionData, data)
 
     if "resolved" in data and "roles" in data["resolved"]:
         role_payloads = data["resolved"]["roles"]
