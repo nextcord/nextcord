@@ -617,6 +617,7 @@ class HTTPClient:
         files: Optional[Sequence[File]] = None,
         form: Optional[Iterable[Dict[str, Any]]] = None,
         auth: Optional[str] = MISSING,
+        headers: dict | None = None,
         retry_request: bool = True,
         **kwargs: Any,
     ) -> Any:
@@ -632,10 +633,12 @@ class HTTPClient:
             pass
         form: Optional[Iterable[:class:`dict`[:class:`str`, `Any`]]]
             pass
-        auth: :class:`str` | `None` | `MISSING`
+        auth: :class:`str` | `None`
             Authorization string to use. Will not auto-format given tokens. For example, a bot token must be provided
             as "Bot <bot token>". If set to `None`, no authorization will be used. If left unset, the default
             auth will be used. (if the default is not set, no auth will be used.)
+        headers: :class:`dict` | `None`
+            Headers to include in the request.
         retry_request: :class:`bool`
             If the request should be retried in specific cases. This mainly concerns 500 errors (Discord server issues)
             or 429s. (ratelimit issues)
@@ -653,7 +656,7 @@ class HTTPClient:
                 connector=self._connector, ws_response_class=DiscordClientWebSocketResponse
             )
 
-        headers = self._make_headers(kwargs.pop("headers", {}), auth=auth)
+        headers = self._make_headers(headers or {}, auth=auth)
 
         try:
             reason = kwargs.pop("reason")
@@ -1824,8 +1827,11 @@ class HTTPClient:
     def guild_webhooks(self, guild_id: Snowflake) -> Response[List[webhook.Webhook]]:
         return self.request(Route("GET", "/guilds/{guild_id}/webhooks", guild_id=guild_id))
 
-    def get_webhook(self, webhook_id: Snowflake) -> Response[webhook.Webhook]:
-        return self.request(Route("GET", "/webhooks/{webhook_id}", webhook_id=webhook_id))
+    def get_webhook(self, webhook_id: Snowflake, auth: str | None = MISSING) -> Response[webhook.Webhook]:
+        return self.request(
+            Route("GET", "/webhooks/{webhook_id}", webhook_id=webhook_id),
+            auth=auth
+        )
 
     def follow_webhook(
         self,
@@ -1841,6 +1847,30 @@ class HTTPClient:
             json=payload,
             reason=reason,
         )
+
+    def execute_webhook(
+            self,
+            webhook_id: int,
+            webhook_token: str,
+            *,
+            payload: dict[str, Any] | None = None,
+            multipart: list[dict[str, Any]] = None,
+            files: list[File] | None = None,
+            thread_id: int | None = None,
+            wait: bool = False,
+    ):
+        params = {"wait": int(wait)}
+        if thread_id:
+            params["thread_id"] = thread_id
+
+        route = Route(
+            "POST",
+            f"/webhooks/{webhook_id}/{webhook_token}",
+            webhook_id=webhook_id,
+            webhook_token=webhook_token,
+        )
+
+        return self.request(route, data=payload, form=multipart, files=files, params=params)
 
     # Guild management
 
@@ -2728,25 +2758,64 @@ class HTTPClient:
     def create_interaction_response(
         self,
         interaction_id: Snowflake,
-        token: str,
+        interaction_token: str,
         *,
-        type: InteractionResponseType,
+        interaction_type: InteractionResponseType,
         data: Optional[interactions.InteractionApplicationCommandCallbackData] = None,
+        files: Iterable[File] | None = None,
     ) -> Response[None]:
         r = Route(
             "POST",
             "/interactions/{interaction_id}/{interaction_token}/callback",
             interaction_id=interaction_id,
-            interaction_token=token,
+            interaction_token=interaction_token,
         )
-        payload: Dict[str, Any] = {
-            "type": type,
+        payload: Dict[str, Any] | None = {
+            "type": interaction_type,
         }
 
         if data is not None:
             payload["data"] = data
 
-        return self.request(r, json=payload)
+        multipart = []
+
+        if files:
+            if "data" not in payload:
+                payload["data"] = {}
+
+            if "attachments" not in payload["data"]:
+                payload["data"]["attachments"] = []
+
+            multipart.append({"name": "payload_json"})
+            for index, file in enumerate(files):
+                payload["data"]["attachments"].append(
+                    {
+                        "id": index,
+                        "filename": file.filename,
+                        "description": file.description,
+                    }
+                )
+                multipart.append(
+                    {
+                        "name": f"files[{index}]",
+                        "value": file.fp,
+                        "filename": file.filename,
+                        "content_type": "application/octet-stream",
+                    }
+                )
+            multipart[0]["value"] = utils.to_json(payload)
+            payload = None
+
+        if "content" in payload["data"]:
+            payload["data"]["content"] += "\nCheers from HTTPClient! :D"
+
+        return self.request(
+            r,
+            auth=None,
+            json=payload,
+            form=multipart,  # TODO: wut. Think about renaming parts of self.request()?
+            files=files,
+        )
 
     def get_original_interaction_response(
         self,

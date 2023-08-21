@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .client import Client
     from .guild import Guild
+    from .http import HTTPClient
     from .message import AllowedMentions
     from .state import ConnectionState
     from .threads import Thread
@@ -163,6 +164,7 @@ class Interaction(Hashable, Generic[ClientT]):
         "version",
         "application_command",
         "attached",
+        "_http",
         "_permissions",
         "_app_permissions",
         "_state",
@@ -176,6 +178,7 @@ class Interaction(Hashable, Generic[ClientT]):
     def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
+        self._http: HTTPClient = state.http
         # TODO: this is so janky, accessing a hidden double attribute
         self._original_message: Optional[InteractionMessage] = None
         self.attached = InteractionAttached()
@@ -662,22 +665,25 @@ class InteractionResponse:
         if self._responded:
             raise InteractionResponded(self._parent)
 
-        defer_type: int = 0
+        defer_type: InteractionResponseType | None = None
         data: Optional[Dict[str, Any]] = None
         parent = self._parent
         if parent.type is InteractionType.application_command or with_message:
-            defer_type = InteractionResponseType.deferred_channel_message.value
+            defer_type = InteractionResponseType.deferred_channel_message
             if ephemeral:
                 data = {"flags": 64}
         elif (
             parent.type is InteractionType.component or parent.type is InteractionType.modal_submit
         ):
-            defer_type = InteractionResponseType.deferred_message_update.value
+            defer_type = InteractionResponseType.deferred_message_update
 
         if defer_type:
-            adapter = async_context.get()
-            await adapter.create_interaction_response(
-                parent.id, parent.token, session=parent._session, type=defer_type, data=data
+            # adapter = async_context.get()
+            # await adapter.create_interaction_response(
+            #     parent.id, parent.token, session=parent._session, type=defer_type, data=data
+            # )
+            await self._parent._http.create_interaction_response(
+                parent.id, parent.token, interaction_type=defer_type, data=data
             )
             self._responded = True
 
@@ -890,16 +896,23 @@ class InteractionResponse:
             else:
                 payload["allowed_mentions"] = allowed_mentions.to_dict()
 
-        parent = self._parent
-        adapter = async_context.get()
+        # parent = self._parent  # Really Rapptz?
+        # adapter = async_context.get()
         try:
-            await adapter.create_interaction_response(
-                parent.id,
-                parent.token,
-                session=parent._session,
-                type=InteractionResponseType.channel_message.value,
+            # await adapter.create_interaction_response(
+            #     parent.id,
+            #     parent.token,
+            #     session=parent._session,
+            #     type=InteractionResponseType.channel_message.value,
+            #     data=payload,
+            #     files=files,
+            # )
+            await self._parent._http.create_interaction_response(
+                self._parent.id,
+                self._parent.token,
+                interaction_type=InteractionResponseType.channel_message,
                 data=payload,
-                files=files,
+                files=files
             )
         finally:
             if files:
