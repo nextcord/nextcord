@@ -541,7 +541,7 @@ class ViewStore:
             return
 
         view, item = value
-        item.refresh_state(interaction.data, interaction._state, interaction.guild)  # type: ignore
+        item.refresh_state(interaction.data, interaction._state, interaction.guild)
         view._dispatch_item(item, interaction)
 
     def is_message_tracked(self, message_id: int) -> bool:

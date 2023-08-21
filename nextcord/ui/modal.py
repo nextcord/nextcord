@@ -38,7 +38,7 @@ def _walk_component_interaction_data(
 ) -> Iterator[ComponentInteractionData]:
     for item in components:
         if "components" in item:
-            yield from item["components"]  # type: ignore
+            yield from item["components"]
         else:
             yield item
 
@@ -255,7 +255,7 @@ class Modal:
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
     async def _scheduled_task(self, interaction: ModalSubmitInteraction):
-        data: ModalSubmitInteractionData = interaction.data  # type: ignore
+        data: ModalSubmitInteractionData = interaction.data
         for child in self.children:
             for component_data in _walk_component_interaction_data(data["components"]):
                 if component_data["custom_id"] == child.custom_id:  # type: ignore

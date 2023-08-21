@@ -1118,9 +1118,6 @@ class AutocompleteCommandMixin:
         Calls the autocomplete callback with the given interaction and option data.
         """
         if not option_data:
-            if interaction.data is None:
-                raise ValueError("Discord did not provide us interaction data")
-
             # pyright does not want to lose typeddict specificity but we do not care here
             option_data = interaction.data.get("options", {})  # type: ignore
 
@@ -1754,7 +1751,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 # By here the interaction data doesn't contain
                 # a full member/user object yet so fall back to bot cache
                 value = None
-                data = cast(ApplicationCommandInteractionData, interaction.data)
+                data = interaction.data
                 if guild_id := data.get("guild_id"):
                     if guild := state._guilds.get(int(guild_id)):
                         value = guild.get_member(user_id)
@@ -1786,7 +1783,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             try:
                 # this looks messy but is too much effort to handle
                 # feel free to use typing.cast and if statements and raises
-                resolved_attachment_data = interaction.data["resolved"]["attachments"][value]  # type: ignore
+                resolved_attachment_data = interaction.data["resolved"]["attachments"][value]
             except (AttributeError, ValueError, IndexError):
                 raise ValueError("Discord did not provide us interaction data for the attachment")
 
@@ -1857,7 +1854,6 @@ class SlashCommandMixin(CallbackMixin):
         interaction: ApplicationCommandInteraction,
         option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ) -> Dict[str, Any]:
-        interaction.data = cast("InteractionData", interaction.data)
 
         if option_data is None:
             option_data = interaction.data.get("options")

@@ -1367,11 +1367,11 @@ class ConnectionState:
     def parse_interaction_create(self, data) -> None:
         interaction = self._get_client().get_interaction(data=data)
         if isinstance(interaction, MessageComponentInteraction):
-            custom_id = interaction.data["custom_id"]  # type: ignore
-            component_type = interaction.data["component_type"]  # type: ignore
+            custom_id = interaction.data["custom_id"]
+            component_type = interaction.data["component_type"]
             self._view_store.dispatch(component_type, custom_id, interaction)
         if isinstance(interaction, ModalSubmitInteraction):
-            custom_id = interaction.data["custom_id"]  # type: ignore
+            custom_id = interaction.data["custom_id"]
             self._modal_store.dispatch(custom_id, interaction)
 
         self.dispatch("interaction", interaction)
