@@ -1827,10 +1827,11 @@ class HTTPClient:
     def guild_webhooks(self, guild_id: Snowflake) -> Response[List[webhook.Webhook]]:
         return self.request(Route("GET", "/guilds/{guild_id}/webhooks", guild_id=guild_id))
 
-    def get_webhook(self, webhook_id: Snowflake, auth: str | None = MISSING) -> Response[webhook.Webhook]:
+    def get_webhook(
+        self, webhook_id: Snowflake, auth: str | None = MISSING
+    ) -> Response[webhook.Webhook]:
         return self.request(
-            Route("GET", "/webhooks/{webhook_id}", webhook_id=webhook_id),
-            auth=auth
+            Route("GET", "/webhooks/{webhook_id}", webhook_id=webhook_id), auth=auth
         )
 
     def follow_webhook(
@@ -1849,15 +1850,15 @@ class HTTPClient:
         )
 
     def execute_webhook(
-            self,
-            webhook_id: int,
-            webhook_token: str,
-            *,
-            payload: dict[str, Any] | None = None,
-            multipart: list[dict[str, Any]] = None,
-            files: list[File] | None = None,
-            thread_id: int | None = None,
-            wait: bool = False,
+        self,
+        webhook_id: int,
+        webhook_token: str,
+        *,
+        payload: dict[str, Any] | None = None,
+        multipart: list[dict[str, Any]] = None,
+        files: list[File] | None = None,
+        thread_id: int | None = None,
+        wait: bool = False,
     ):
         params = {"wait": int(wait)}
         if thread_id:

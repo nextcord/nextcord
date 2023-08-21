@@ -54,7 +54,7 @@ if TYPE_CHECKING:
     from ..embeds import Embed
     from ..file import File
     from ..guild import Guild
-    from ..http import Response, HTTPClient
+    from ..http import HTTPClient, Response
     from ..mentions import AllowedMentions
     from ..state import ConnectionState
     from ..types.message import Message as MessagePayload
@@ -1568,7 +1568,7 @@ class Webhook(BaseWebhook):
             multipart=params.multipart,
             files=params.files,
             thread_id=thread_id,
-            wait=wait
+            wait=wait,
         )
 
         msg = None

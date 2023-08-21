@@ -912,7 +912,7 @@ class InteractionResponse:
                 self._parent.token,
                 interaction_type=InteractionResponseType.channel_message,
                 data=payload,
-                files=files
+                files=files,
             )
         finally:
             if files:
