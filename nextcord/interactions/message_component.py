@@ -14,7 +14,6 @@ from ..flags import MessageFlags
 from ..message import Attachment, Message
 from ..webhook.async_ import WebhookMessage, async_context, handle_message_parameters
 from .base import (
-    MISSING,
     Interaction,
     InteractionMessage,
     InteractionResponse,
@@ -27,10 +26,12 @@ __all__ = ("MessageComponentInteraction",)
 if TYPE_CHECKING:
     from ..message import AllowedMentions
     from ..state import ConnectionState
-    from ..types.interactions import MessageComponentInteraction as MessageComponentPayload
+    from ..types.interactions import MessageComponentInteraction as MessageComponentPayload, ComponentInteractionData as InteractionData
     from ..ui.modal import Modal
     from ..ui.view import View
     from .modal_submit import ModalSubmitInteraction
+
+MISSING: Any = utils.MISSING
 
 
 class MessageComponentInteraction(Interaction):
@@ -75,18 +76,17 @@ class MessageComponentInteraction(Interaction):
 
     def _from_data(self, data: MessageComponentPayload) -> None:
         super()._from_data(data=data)
+        
+        self.data: InteractionData = data.get("data")
+        self.component_id = self.data["custom_id"]
+        self.value = self.data.get("values")
 
         message = data["message"]
         self.message = self._state._get_message(int(message["id"])) or Message(
             state=self._state, channel=self.channel, data=message  # type: ignore
         )
-        self.component_id = self.data["custom_id"]  # type: ignore # self.data should be present here
 
-        try:
-            self.value = self.data["values"]  # type: ignore # self.data should be present here
-        except KeyError:
-            self.value = None
-
+        
     @utils.cached_slot_property("_cs_response")
     def response(self) -> MessageComponentInteractionResponse:
         """:class:`MessageComponentInteractionResponse`: Returns an object responsible for handling responding to the interaction.

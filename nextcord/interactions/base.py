@@ -164,7 +164,7 @@ class Interaction(Hashable, Generic[ClientT]):
     def _from_data(self, data: InteractionPayload) -> None:
         self.id: int = int(data["id"])
         self.type: InteractionType = try_enum(InteractionType, data["type"])
-        self.data: Optional[InteractionData] = data.get("data")
+        # self.data: Optional[InteractionData] = data.get("data")
         self.token: str = data["token"]
         self.version: int = data["version"]
         self.channel_id: Optional[int] = utils.get_as_snowflake(data, "channel_id")
@@ -549,5 +549,3 @@ class InteractionMessage(_InteractionMessageMixin, Message):
 
     .. versionadded:: 2.0
     """
-
-    pass

@@ -14,7 +14,6 @@ from ..flags import MessageFlags
 from ..message import Attachment, Message
 from ..webhook.async_ import WebhookMessage, async_context, handle_message_parameters
 from .base import (
-    MISSING,
     Interaction,
     InteractionMessage,
     InteractionResponse,
@@ -27,9 +26,11 @@ __all__ = ("ModalSubmitInteraction",)
 if TYPE_CHECKING:
     from ..message import AllowedMentions
     from ..state import ConnectionState
-    from ..types.interactions import ModalSubmitInteraction as ModalSubmitPayload
+    from ..types.interactions import ModalSubmitInteraction as ModalSubmitPayload, ModalSubmitInteractionData as InteractionData
     from ..ui.view import View
     from .message_component import MessageComponentInteraction
+
+MISSING: Any = utils.MISSING
 
 
 class ModalSubmitInteraction(Interaction):
@@ -71,14 +72,13 @@ class ModalSubmitInteraction(Interaction):
 
     def _from_data(self, data: ModalSubmitPayload) -> None:
         super()._from_data(data=data)
-
-        self.modal_id = self.data["custom_id"]  # type: ignore # self.data should be present here
-
+        
+        self.data: InteractionData = data.get("data")
+        self.modal_id = self.data["custom_id"]
         self.message: Optional[Message]
+
         try:
             message = data["message"]
-
-            # TODO: Check for an create correct message type
             self.message = self._state._get_message(int(message["id"])) or Message(
                 state=self._state, channel=self.channel, data=message  # type: ignore
             )

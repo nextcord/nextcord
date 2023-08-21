@@ -13,8 +13,8 @@ from ..file import File
 from ..flags import MessageFlags
 from ..message import Attachment
 from ..webhook.async_ import WebhookMessage, async_context, handle_message_parameters
+from ..types.snowflake import Snowflake
 from .base import (
-    MISSING,
     Interaction,
     InteractionMessage,
     InteractionResponse,
@@ -35,9 +35,13 @@ if TYPE_CHECKING:
     from ..types.interactions import (
         ApplicationAutocompleteInteraction as ApplicationAutocompletePayload,
         ApplicationCommandInteraction as ApplicationCommandPayload,
+        ApplicationCommandInteractionData as InteractionData,
+        ApplicationCommandInteractionDataOption as OptionsPayload
     )
     from ..ui.modal import Modal
     from ..ui.view import View
+
+MISSING: Any = utils.MISSING
 
 
 class ApplicationCommandInteraction(Interaction):
@@ -88,31 +92,30 @@ class ApplicationCommandInteraction(Interaction):
     def _from_data(self, data: ApplicationCommandPayload) -> None:
         super()._from_data(data=data)
 
-        self.app_command_name: str = self.data["name"]  # type: ignore # self.data should be present here
-        self.app_command_id: int = self.data["id"]  # type: ignore # self.data should be present here
+        self.data: InteractionData = data.get("data")
+        self.app_command_name: str = self.data["name"] 
+        self.app_command_id: Snowflake = self.data["id"]
 
-        try:
-            self.options: List[SlashOptionData] = self._get_application_options(self.data["options"])  # type: ignore # Data should be defined here
-        except KeyError:
-            self.options: List[SlashOptionData] = []
+        options = self.data.get("options")
+        self.options: List[SlashOptionData] = self._get_application_options(options) if options else []
 
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
     ) -> None:
         self.application_command = app_cmd
 
-    def _get_application_options(self, data):
-        options = data
-
+    def _get_application_options(self, options: List[OptionsPayload]) -> List[SlashOptionData]:
         if len(options) == 0:
             # return empty list if no options exist
             return []
 
         # iterate through options to get inputs
+        # The option data gets nested 1x for each subcommand level
+        # E.x. "/parent child subcommand" has 2 subcommands -> options get nested 2x
         while "options" in options[0]:
-            options = options[0]["options"]
+            options = options[0]["options"]  # type: ignore - Key exists only for one type -> accounted for by while loop
 
-            if len(options) == 0:
+            if not options:
                 # return empty list if no options exist
                 return []
 
@@ -120,13 +123,7 @@ class ApplicationCommandInteraction(Interaction):
             SlashOptionData,
         )
 
-        # If we are here, then the user provided an input for some options
-        options_collection: List[SlashOptionData] = []
-
-        for option in options:
-            options_collection.append(SlashOptionData(option))
-
-        return options_collection
+        return [SlashOptionData(option) for option in options]
 
     @utils.cached_slot_property("_cs_response")
     def response(self) -> ApplicationCommandInteractionResponse:
@@ -436,7 +433,7 @@ class ApplicationCommandInteractionResponse(InteractionResponse):
         if parent.type is InteractionType.application_command or with_message:
             defer_type = InteractionResponseType.deferred_channel_message.value
             if ephemeral:
-                data = {"flags": 64}
+                data = {"flags": MessageFlags.ephemeral.flag}
         elif (
             parent.type is InteractionType.component or parent.type is InteractionType.modal_submit
         ):
@@ -705,32 +702,31 @@ class ApplicationAutocompleteInteraction(Interaction):
 
     def _from_data(self, data: ApplicationCommandPayload) -> None:
         super()._from_data(data=data)
+        self.data: InteractionData = data.get("data")
 
-        self.app_command_name: str = self.data["name"]  # type: ignore # self.data should be present here
-        self.app_command_id: int = self.data["id"]  # type: ignore # self.data should be present here
+        self.app_command_name: str = self.data["name"]
+        self.app_command_id: Snowflake = self.data["id"]
 
-        try:
-            self.options: List[SlashOptionData] = self._get_application_options(self.data["options"])  # type: ignore # Data should be defined here
-        except KeyError:
-            self.options: List[SlashOptionData] = []
+        options = self.data.get("options")
+        self.options: List[SlashOptionData] = self._get_application_options(options) if options else []
 
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
     ) -> None:
         self.application_command = app_cmd
 
-    def _get_application_options(self, data):
-        options = data
-
+    def _get_application_options(self, options: List[OptionsPayload]) -> List[SlashOptionData]:
         if len(options) == 0:
             # return empty list if no options exist
             return []
 
         # iterate through options to get inputs
+        # The option data gets nested 1x for each subcommand level
+        # E.x. "/parent child subcommand" has 2 subcommands -> options get nested 2x
         while "options" in options[0]:
-            options = options[0]["options"]
+            options = options[0]["options"]  # type: ignore - Key exists only for one type -> accounted for by while loop
 
-            if len(options) == 0:
+            if not options:
                 # return empty list if no options exist
                 return []
 
@@ -738,22 +734,12 @@ class ApplicationAutocompleteInteraction(Interaction):
             SlashOptionData,
         )
 
-        # If we are here, then the user provided an input for some options
-        options_collection: List[SlashOptionData] = []
-
-        for option in options:
-            options_collection.append(SlashOptionData(option))
-
-        return options_collection
+        return [SlashOptionData(option) for option in options]
 
     @property
     def focused_option(self) -> Optional[SlashOptionData]:
         """The application command option the autocomplete was called for."""
-        for option in self.options:
-            if option.focused:
-                return option
-
-        return None
+        return next((option for option in self.options if option.focused), None)
 
     @utils.cached_slot_property("_cs_response")
     def response(self) -> ApplicationAutocompleteInteractionResponse:
