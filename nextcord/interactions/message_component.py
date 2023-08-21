@@ -26,7 +26,10 @@ __all__ = ("MessageComponentInteraction",)
 if TYPE_CHECKING:
     from ..message import AllowedMentions
     from ..state import ConnectionState
-    from ..types.interactions import MessageComponentInteraction as MessageComponentPayload, ComponentInteractionData as InteractionData
+    from ..types.interactions import (
+        ComponentInteractionData as InteractionData,
+        MessageComponentInteraction as MessageComponentPayload,
+    )
     from ..ui.modal import Modal
     from ..ui.view import View
     from .modal_submit import ModalSubmitInteraction
@@ -76,7 +79,7 @@ class MessageComponentInteraction(Interaction):
 
     def _from_data(self, data: MessageComponentPayload) -> None:
         super()._from_data(data=data)
-        
+
         self.data: InteractionData = data.get("data")
         self.component_id = self.data["custom_id"]
         self.value = self.data.get("values")
@@ -86,7 +89,6 @@ class MessageComponentInteraction(Interaction):
             state=self._state, channel=self.channel, data=message  # type: ignore
         )
 
-        
     @utils.cached_slot_property("_cs_response")
     def response(self) -> MessageComponentInteractionResponse:
         """:class:`MessageComponentInteractionResponse`: Returns an object responsible for handling responding to the interaction.
