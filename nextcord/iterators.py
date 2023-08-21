@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Awaitable, Callable, List, Optional, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Awaitable, Callable, List, Optional, Union, cast
 
 from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationRule
@@ -43,8 +43,6 @@ if TYPE_CHECKING:
     )
     from .types.threads import Thread as ThreadPayload, ThreadPaginationPayload
 
-T = TypeVar("T")
-OT = TypeVar("OT")
 
 OLDEST_OBJECT = Object(id=0)
 
@@ -58,12 +56,11 @@ async def reaction_iterator(
 
     while limit > 0:
         retrieve = limit if limit <= 100 else 100
-        after_id = after.id if after else None
 
         data = cast(
             List[PartialUserPayload],
             await state.http.get_reaction_users(
-                message.channel.id, message.id, emoji, retrieve, after=after_id
+                message.channel.id, message.id, emoji, retrieve, after=after.id if after else None
             ),
         )
         # cast needed here because of list's invariance
@@ -131,15 +128,23 @@ async def history_iterator(
         If set to ``True``, return messages in oldest->newest order. Defaults to
         ``True`` if ``after`` is specified, otherwise ``False``.
     """
+    # pyright ignores that the converted parameters have to be a generic object or None 
+    # inside the scope of a nested function
+
     if isinstance(before, datetime.datetime):
-        before = Object(id=time_snowflake(before, high=False))
+        cbefore = Object(id=time_snowflake(before, high=False))
+    else:
+        cbefore = before
+
     if isinstance(after, datetime.datetime):
-        after = Object(id=time_snowflake(after, high=True))
+        cafter = Object(id=time_snowflake(after, high=True))
+    else:
+        cafter = after
+
     if isinstance(around, datetime.datetime):
         around = Object(id=time_snowflake(around))
 
     state = messageable._state
-    converted_after = after or OLDEST_OBJECT
     channel = await messageable._get_channel()
     retrieve = 0
 
@@ -149,6 +154,7 @@ async def history_iterator(
     else:
         reverse = oldest_first
 
+    checks: List[Callable[[MessagePayload], bool]] = []
     if around:
         if limit is None:
             raise ValueError("history does not support around with limit=None")
@@ -157,13 +163,24 @@ async def history_iterator(
         elif limit == 101:
             limit = 100  # Thanks discord
 
+        if cbefore is not None:
+            def _check(msg: MessagePayload):
+                return cbefore is not None and int(msg["id"]) < cbefore.id
+
+            checks.append(_check)
+
+        if cafter is not None:
+            def _check(msg: MessagePayload):
+                return cafter is not None and cafter.id < int(msg["id"])
+
+            checks.append(_check)
+
+    # we combine all of the checks together so we only have to replace the data payload once
+    check: Callable[[MessagePayload], bool] = lambda m: all(c(m) for c in checks)
+
     def get_retrieve():
         nonlocal retrieve
-
-        if limit is None or limit > 100:
-            retrieve = 100
-        else:
-            retrieve = limit
+        retrieve = min(limit, 100) if limit is not None else 100
 
         return retrieve > 0
 
@@ -171,26 +188,29 @@ async def history_iterator(
         data: List[MessagePayload] = await state.http.logs_from(
             channel.id,
             retrieve,
-            before.id if before else None,
-            converted_after.id,
-            around.id if around else None,
+            cbefore.id if cbefore is not None and around is None else None,
+            cafter.id if cafter is not None and around is None else None,
+            around.id if around is not None else None,
         )
 
-        if len(data):
-            if limit:
+        if data:
+            if limit is not None:
                 limit -= retrieve
-            if len(data) < 100:
-                limit = 0
 
             if before is not None:
-                before = Object(id=int(data[-1]["id"]))
+                cbefore = Object(id=int(data[-1]["id"]))
             if after is not None:
-                converted_after = Object(id=int(data[0]["id"]))
+                cafter = Object(id=int(data[0]["id"]))
             if around is not None:
                 around = None
 
-        if reverse:
-            data = list(reversed(data))
+        if len(data) < 100:
+            limit = 0
+
+        if checks:
+            data = list(filter(check, data))
+
+        data.sort(key=lambda msg: msg["id"], reverse=not reverse)
 
         for item in data:
             yield state.create_message(channel=channel, data=item)
@@ -231,38 +251,37 @@ async def ban_iterator(
     after: Optional[:class:`abc.Snowflake`]
         Date or user id after which all bans must be.
     """
-    from .user import User
-
     state = guild._state
-    converted_after = after or OLDEST_OBJECT
     retrieve = 0
 
     def get_retrieve():
         nonlocal retrieve
-
-        if limit is None or limit > 1000:
-            retrieve = 1000
-        else:
-            retrieve = limit
+        retrieve = min(limit, 1000) if limit is not None else 1000
 
         return retrieve > 0
 
     while get_retrieve():
         data: List[BanPayload] = await state.http.get_bans(
-            guild.id, retrieve, before=before.id if before else None, after=converted_after.id
+            guild.id, 
+            retrieve, 
+            before=before.id if before is not None else None, 
+            after=after.id if after is not None else None,
         )
 
-        if len(data):
+        if data:
             if limit:
                 limit -= len(data)
 
             if before is not None:
                 before = Object(id=int(data[0]["user"]["id"]))
             if after is not None:
-                converted_after = Object(id=int(data[-1]["user"]["id"]))
+                after = Object(id=int(data[-1]["user"]["id"]))
+
+        if len(data) < 1000:
+            limit = 0
 
         for item in data:
-            yield BanEntry(user=User(state=state, data=item["user"]), reason=item["reason"])
+            yield BanEntry(user=state.create_user(item["user"]), reason=item["reason"])
 
 
 async def audit_log_iterator(
@@ -280,18 +299,13 @@ async def audit_log_iterator(
         after = Object(id=time_snowflake(after, high=True))
 
     state = guild._state
-    after = after
     retrieve = 0
 
     reverse = bool(oldest_first)
 
     def get_retrieve():
         nonlocal retrieve
-
-        if limit is None or limit > 100:
-            retrieve = 100
-        else:
-            retrieve = limit
+        retrieve = min(limit, 100) if limit is not None else 100
 
         return retrieve > 0
 
@@ -301,19 +315,19 @@ async def audit_log_iterator(
             limit=retrieve,
             user_id=user_id,
             action_type=action_type,
-            before=before.id if before else None,
-            after=after.id if after else None,
+            before=before.id if before is not None else None,
+            after=after.id if after is not None else None,
         )
 
         entries = data.get("audit_log_entries", [])
-        if len(data) and entries:
+        if data and entries:
             if limit is not None:
                 limit -= retrieve
-            if len(data) < 100:
-                limit = 0
 
-            if before is not None:
-                before = Object(id=int(entries[-1]["id"]))
+            before = Object(id=int(entries[-1]["id"]))
+
+        if len(entries) < 100:
+            limit = 0
 
         if reverse:
             entries = list(reversed(entries))
@@ -375,43 +389,50 @@ async def guild_iterator(
 
     if isinstance(before, datetime.datetime):
         before = Object(id=time_snowflake(before, high=False))
+
+    # see the history iterator for why this is necessary
     if isinstance(after, datetime.datetime):
-        after = Object(id=time_snowflake(after, high=True))
+        cafter = Object(id=time_snowflake(after, high=True))
+    else:
+        cafter = after
 
     state = client._connection
     retrieve = 0
     reverse = bool(before)
 
+    check: Optional[Callable[[GuildPayload], bool]] = None
+    if before is not None and cafter is not None:
+        check = lambda g: cafter is not None and int(g["id"]) > cafter.id
+
     def get_retrieve():
         nonlocal retrieve
-
-        if limit is None or limit > 200:
-            retrieve = 200
-        else:
-            retrieve = limit
+        retrieve = min(limit, 200) if limit is not None else 200
 
         return retrieve > 0
 
     while get_retrieve():
         data: List[GuildPayload] = await state.http.get_guilds(
             retrieve,
-            before=before.id if before else None,
-            after=after.id if after else None,
+            before=before.id if before is not None else None,
+            after=cafter.id if cafter is not None else None,
         )
 
-        if len(data):
+        if data:
             if limit is not None:
                 limit -= retrieve
-            if len(data) < 200:
-                limit = 0
 
             if before is not None:
                 before = Object(id=int(data[0]["id"]))
             if after is not None:
-                after = Object(id=int(data[-1]["id"]))
+                cafter = Object(id=int(data[-1]["id"]))
 
-        if reverse:
-            data = list(reversed(data))
+        if len(data) < 200:
+            limit = 0
+
+        if check is not None:
+            data = list(filter(check, data))
+
+        data.sort(key=lambda guild: guild["id"], reverse=not reverse)
 
         for item in data:
             yield Guild(state=state, data=item)
@@ -433,22 +454,17 @@ async def member_iterator(
 
     def get_retrieve():
         nonlocal retrieve
-
-        if limit is None or limit > 1000:
-            retrieve = 1000
-        else:
-            retrieve = limit
+        retrieve = min(limit, 1000) if limit is not None else 1000
 
         return retrieve > 0
 
     while get_retrieve():
         data: List[MemberWithUser] = await state.http.get_members(guild.id, retrieve, after.id)
 
-        if len(data):
-            if len(data) < 1000:
-                limit = 0
+        if len(data) < 1000:
+            limit = 0
 
-            after = Object(id=int(data[-1]["user"]["id"]))
+        after = Object(id=int(data[-1]["user"]["id"]))
 
         for item in reversed(data):
             yield Member(data=item, guild=guild, state=state)
@@ -499,15 +515,12 @@ async def archived_thread_iterator(
         endpoint = state.http.get_public_archived_threads
 
     while has_more:
-        limit = 50 if limit is None else max(limit, 50)
+        limit = max(limit, 50) if limit is not None else 50
         data = await endpoint(channel_id, before=converted_before, limit=limit)
 
-        # This stuff is obviously WIP because 'members' is always empty
-        threads: List[ThreadPayload] = data.get("threads", [])
-        for item in reversed(threads):
-            yield Thread(guild=guild, state=state, data=item)
+        threads = data["threads"]
+        has_more = data["has_more"]
 
-        has_more = data.get("has_more", False)
         limit -= len(threads)
         if limit <= 0:
             has_more = False
@@ -515,24 +528,19 @@ async def archived_thread_iterator(
         if has_more:
             converted_before = update_before(threads[-1])
 
+        for item in reversed(threads):
+            yield Thread(guild=guild, state=state, data=item)
+
 
 async def scheduled_event_iterator(
     guild: Guild,
     with_users: bool = False,
 ):
     state = guild._state
-    has_more = True
+    data: List[ScheduledEventPayload] = await state.http.get_guild_events(guild.id, with_users)
 
-    while has_more:
-        data: List[ScheduledEventPayload] = await state.http.get_guild_events(guild.id, with_users)
-        has_more = False
-
-        if not data:
-            # no data, terminate
-            return
-
-        for item in reversed(data):
-            yield guild._store_scheduled_event(item)
+    for item in reversed(data):
+        yield guild._store_scheduled_event(item)
 
 
 async def scheduled_event_user_iterator(
@@ -543,16 +551,11 @@ async def scheduled_event_user_iterator(
     after: Optional[Snowflake] = None,
 ):
     state = guild._state
-    after = after or OLDEST_OBJECT
     retrieve = 0
 
     def get_retrieve():
         nonlocal retrieve
-
-        if limit is None or limit > 100:
-            retrieve = 100
-        else:
-            retrieve = limit
+        retrieve = min(limit, 100) if limit is not None else 100
 
         return retrieve > 0
 
@@ -562,18 +565,20 @@ async def scheduled_event_user_iterator(
             event.id,
             limit=retrieve,
             before=before.id if before else None,
-            after=after.id,
+            after=after.id if after else None,
         )
 
-        if len(data):
+        if data:
             if limit is not None:
                 limit -= len(data)
-            if len(data) < 100:
-                limit = 0  # terminate the infinte loop
 
             if before is not None:
                 before = Object(id=int(data[0]["user"]["id"]))
-            after = Object(id=int(data[-1]["user"]["id"]))
+            if after is not None:
+                after = Object(id=int(data[-1]["user"]["id"]))
+
+        if len(data) < 100:
+            limit = 0  # terminate the infinte loop
 
         for item in reversed(data):
             yield event._update_user(item)
