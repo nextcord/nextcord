@@ -80,7 +80,7 @@ class Component:
             if slot == "type" and getattr(self, slot, None) is not None:
                 # nextcord/issues/1103
                 continue
-    
+
             try:
                 value = kwargs[slot]
             except KeyError:

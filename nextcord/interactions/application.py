@@ -12,8 +12,8 @@ from ..errors import ClientException, HTTPException, InteractionResponded, Inval
 from ..file import File
 from ..flags import MessageFlags
 from ..message import Attachment
-from ..webhook.async_ import WebhookMessage, async_context, handle_message_parameters
 from ..types.snowflake import Snowflake
+from ..webhook.async_ import WebhookMessage, async_context, handle_message_parameters
 from .base import (
     Interaction,
     InteractionMessage,
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
         ApplicationAutocompleteInteraction as ApplicationAutocompletePayload,
         ApplicationCommandInteraction as ApplicationCommandPayload,
         ApplicationCommandInteractionData as InteractionData,
-        ApplicationCommandInteractionDataOption as OptionsPayload
+        ApplicationCommandInteractionDataOption as OptionsPayload,
     )
     from ..ui.modal import Modal
     from ..ui.view import View
@@ -93,11 +93,13 @@ class ApplicationCommandInteraction(Interaction):
         super()._from_data(data=data)
 
         self.data: InteractionData = data.get("data")
-        self.app_command_name: str = self.data["name"] 
+        self.app_command_name: str = self.data["name"]
         self.app_command_id: Snowflake = self.data["id"]
 
         options = self.data.get("options")
-        self.options: List[SlashOptionData] = self._get_application_options(options) if options else []
+        self.options: List[SlashOptionData] = (
+            self._get_application_options(options) if options else []
+        )
 
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
@@ -708,7 +710,9 @@ class ApplicationAutocompleteInteraction(Interaction):
         self.app_command_id: Snowflake = self.data["id"]
 
         options = self.data.get("options")
-        self.options: List[SlashOptionData] = self._get_application_options(options) if options else []
+        self.options: List[SlashOptionData] = (
+            self._get_application_options(options) if options else []
+        )
 
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]

@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from ..message import AllowedMentions
     from ..state import ConnectionState
     from ..threads import Thread
-    from ..types.interactions import InteractionData, InteractionPayload
+    from ..types.interactions import InteractionPayload
     from ..ui.view import View
     from .application import ApplicationCommandInteraction
     from .message_component import MessageComponentInteraction

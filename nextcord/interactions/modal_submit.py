@@ -26,7 +26,10 @@ __all__ = ("ModalSubmitInteraction",)
 if TYPE_CHECKING:
     from ..message import AllowedMentions
     from ..state import ConnectionState
-    from ..types.interactions import ModalSubmitInteraction as ModalSubmitPayload, ModalSubmitInteractionData as InteractionData
+    from ..types.interactions import (
+        ModalSubmitInteraction as ModalSubmitPayload,
+        ModalSubmitInteractionData as InteractionData,
+    )
     from ..ui.view import View
     from .message_component import MessageComponentInteraction
 
@@ -72,7 +75,7 @@ class ModalSubmitInteraction(Interaction):
 
     def _from_data(self, data: ModalSubmitPayload) -> None:
         super()._from_data(data=data)
-        
+
         self.data: InteractionData = data.get("data")
         self.modal_id = self.data["custom_id"]
         self.message: Optional[Message]
