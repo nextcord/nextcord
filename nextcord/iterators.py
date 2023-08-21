@@ -128,7 +128,7 @@ async def history_iterator(
         If set to ``True``, return messages in oldest->newest order. Defaults to
         ``True`` if ``after`` is specified, otherwise ``False``.
     """
-    # pyright ignores that the converted parameters have to be a generic object or None 
+    # pyright ignores that the converted parameters have to be a generic object or None
     # inside the scope of a nested function
 
     if isinstance(before, datetime.datetime):
@@ -164,12 +164,14 @@ async def history_iterator(
             limit = 100  # Thanks discord
 
         if cbefore is not None:
+
             def _check(msg: MessagePayload):
                 return cbefore is not None and int(msg["id"]) < cbefore.id
 
             checks.append(_check)
 
         if cafter is not None:
+
             def _check(msg: MessagePayload):
                 return cafter is not None and cafter.id < int(msg["id"])
 
@@ -262,9 +264,9 @@ async def ban_iterator(
 
     while get_retrieve():
         data: List[BanPayload] = await state.http.get_bans(
-            guild.id, 
-            retrieve, 
-            before=before.id if before is not None else None, 
+            guild.id,
+            retrieve,
+            before=before.id if before is not None else None,
             after=after.id if after is not None else None,
         )
 
