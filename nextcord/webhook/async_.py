@@ -54,7 +54,7 @@ if TYPE_CHECKING:
     from ..embeds import Embed
     from ..file import File
     from ..guild import Guild
-    from ..http import HTTPClient, Response
+    from ..http import Response
     from ..mentions import AllowedMentions
     from ..state import ConnectionState
     from ..types.message import Message as MessagePayload
@@ -107,8 +107,6 @@ class AsyncWebhookAdapter:
         auth_token: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        # TODO: Rethink this entire thing? Perhaps instead of having a webhook class with these weird adapters, we have
-        #  a single class with swappable parts?
         headers: Dict[str, str] = {}
         files = files or []
         to_send: Optional[Union[str, aiohttp.FormData]] = None
@@ -351,17 +349,17 @@ class AsyncWebhookAdapter:
         webhook_id: int,
         token: str,
         *,
-        http: HTTPClient,
+        session: aiohttp.ClientSession,
     ) -> Response[WebhookPayload]:
         route = Route("GET", "/webhooks/{webhook_id}", webhook_id=webhook_id)
-        return self.request(route, http=http, auth_token=token)
+        return self.request(route, session=session, auth_token=token)
 
     def fetch_webhook_with_token(
         self,
         webhook_id: int,
         token: str,
         *,
-        http: HTTPClient,
+        session: aiohttp.ClientSession,
     ) -> Response[WebhookPayload]:
         route = Route(
             "GET",
@@ -369,8 +367,7 @@ class AsyncWebhookAdapter:
             webhook_id=webhook_id,
             webhook_token=token,
         )
-        # TODO: TF is this?
-        return self.request(route, http=http)
+        return self.request(route, session=session)
 
     def create_interaction_response(
         self,
@@ -1030,18 +1027,17 @@ class Webhook(BaseWebhook):
         .. versionadded:: 2.0
     """
 
-    __slots__: Tuple[str, ...] = ("_http",)
+    __slots__: Tuple[str, ...] = ("session",)
 
     def __init__(
         self,
         data: WebhookPayload,
-        http: HTTPClient,
+        session: aiohttp.ClientSession,
         token: Optional[str] = None,
         state=None,
     ) -> None:
         super().__init__(data, token, state)
-        # self.session = session
-        self._http = http
+        self.session = session
 
     def __repr__(self) -> str:
         return f"<Webhook id={self.id!r}>"
@@ -1053,7 +1049,7 @@ class Webhook(BaseWebhook):
 
     @classmethod
     def partial(
-        cls, id: int, token: str, *, http: HTTPClient, bot_token: Optional[str] = None
+        cls, id: int, token: str, *, session: aiohttp.ClientSession, bot_token: Optional[str] = None
     ) -> Webhook:
         """Creates a partial :class:`Webhook`.
 
@@ -1087,10 +1083,12 @@ class Webhook(BaseWebhook):
             "token": token,
         }
 
-        return cls(data, http, token=bot_token)
+        return cls(data, session, token=bot_token)
 
     @classmethod
-    def from_url(cls, url: str, *, http: HTTPClient, bot_token: Optional[str] = None) -> Webhook:
+    def from_url(
+        cls, url: str, *, session: aiohttp.ClientSession, bot_token: Optional[str] = None
+    ) -> Webhook:
         """Creates a partial :class:`Webhook` from a webhook URL.
 
         Parameters
@@ -1129,7 +1127,7 @@ class Webhook(BaseWebhook):
 
         data: Dict[str, Any] = m.groupdict()
         data["type"] = 1
-        return cls(data, http, token=bot_token)  # type: ignore
+        return cls(data, session, token=bot_token)  # type: ignore
 
     @classmethod
     def _as_follower(cls, data, *, channel, user) -> Webhook:
@@ -1150,14 +1148,13 @@ class Webhook(BaseWebhook):
         }
 
         state = channel._state
-        # session = channel._state.http._HTTPClient__session
-        http = channel._state.http
-        return cls(feed, http=http, state=state, token=state._get_client()._token)
+        session = channel._state.http._HTTPClient__session
+        return cls(feed, session=session, state=state, token=state._get_client()._token)
 
     @classmethod
     def from_state(cls, data, state) -> Webhook:
-        # session = state.http._HTTPClient__session
-        return cls(data, http=state.http, state=state, token=state._get_client()._token)
+        session = state.http._HTTPClient__session
+        return cls(data, session=session, state=state, token=state._get_client()._token)
 
     async def fetch(self, *, prefer_auth: bool = True) -> Webhook:
         """|coro|
@@ -1203,7 +1200,7 @@ class Webhook(BaseWebhook):
         else:
             raise InvalidArgument("This webhook does not have a token associated with it")
 
-        return Webhook(data, self._http, token=self.auth_token, state=self._state)
+        return Webhook(data, self.session, token=self.auth_token, state=self._state)
 
     async def delete(self, *, reason: Optional[str] = None, prefer_auth: bool = True):
         """|coro|
@@ -1546,24 +1543,15 @@ class Webhook(BaseWebhook):
             flags=flags,
             suppress_embeds=suppress_embeds,
         )
-        # adapter = async_context.get()
+        adapter = async_context.get()
         thread_id: Optional[int] = None
         if thread is not MISSING:
             thread_id = thread.id
 
-        # data = await adapter.execute_webhook(
-        #     self.id,
-        #     self.token,
-        #     session=self.session,
-        #     payload=params.payload,
-        #     multipart=params.multipart,
-        #     files=params.files,
-        #     thread_id=thread_id,
-        #     wait=wait,
-        # )
-        data = await self._http.execute_webhook(
+        data = await adapter.execute_webhook(
             self.id,
             self.token,
+            session=self.session,
             payload=params.payload,
             multipart=params.multipart,
             files=params.files,
