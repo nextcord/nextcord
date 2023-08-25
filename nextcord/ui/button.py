@@ -255,7 +255,9 @@ def button(
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
 
-    def decorator(func: ItemCallbackType[Button[V]]) -> ItemCallbackType[Button[V]]:
+    def decorator(
+        func: ItemCallbackType[Button[V], ClientT]
+    ) -> ItemCallbackType[Button[V], ClientT]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Button function must be a coroutine function")
 

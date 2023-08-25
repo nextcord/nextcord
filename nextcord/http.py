@@ -246,8 +246,7 @@ class HTTPClient:
         lock = self._locks.get(bucket)
         if lock is None:
             lock = asyncio.Lock()
-            if bucket is not None:
-                self._locks[bucket] = lock
+            self._locks[bucket] = lock
 
         # header creation
         headers: Dict[str, str] = {
@@ -1066,6 +1065,7 @@ class HTTPClient:
             "default_thread_rate_limit_per_user",
             "default_reaction_emoji",
             "available_tags",
+            "default_forum_layout",
         )
         payload.update({k: v for k, v in options.items() if k in valid_keys and v is not None})
 
@@ -1770,7 +1770,7 @@ class HTTPClient:
         if user_id:
             params["user_id"] = user_id
         if action_type:
-            params["action_type"] = action_type
+            params["action_type"] = action_type.value
 
         r = Route("GET", "/guilds/{guild_id}/audit-logs", guild_id=guild_id)
         return self.request(r, params=params)

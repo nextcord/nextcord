@@ -82,7 +82,7 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
-    from .enums import SortOrderType
+    from .enums import ForumLayoutType, SortOrderType
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -1459,12 +1459,17 @@ class Guild(Hashable):
         available_tags: List[ForumTag] = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
+        default_forum_layout: Optional[ForumLayoutType] = None,
     ) -> ForumChannel:
         """|coro|
 
         This is similar to :meth:`create_text_channel` except makes a :class:`ForumChannel` instead.
 
         .. versionadded:: 2.1
+
+        .. versionchanged:: 2.5
+
+            Added the ``default_forum_layout`` parameter.
 
         Parameters
         ----------
@@ -1502,6 +1507,8 @@ class Guild(Hashable):
             The available tags for threads created in this channel.
 
             .. versionadded:: 2.4
+        default_forum_layout: Optional[:class:`ForumLayoutType`]
+            The default layout type used to display posts in this forum.
 
         Raises
         ------
@@ -1549,6 +1556,9 @@ class Guild(Hashable):
                         "emoji_name": default_reaction.name,
                     }
                 )
+
+        if default_forum_layout is not None:
+            options["default_forum_layout"] = default_forum_layout.value
 
         data = await self._create_channel(
             name,
@@ -2422,10 +2432,6 @@ class Guild(Hashable):
 
         def convert(d):
             factory, _ = _integration_factory(d["type"])
-            if factory is None:
-                raise InvalidData(
-                    "Unknown integration type {type!r} for integration ID {id}".format_map(d)
-                )
             return factory(guild=self, data=d)
 
         return [convert(d) for d in data]
@@ -3153,9 +3159,6 @@ class Guild(Hashable):
             user_id = user.id
         else:
             user_id = None
-
-        if action:
-            action = action.value
 
         return AuditLogIterator(
             self,

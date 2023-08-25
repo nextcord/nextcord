@@ -599,7 +599,7 @@ class BotBase(GroupMixin):
             The cog does not inherit from :class:`.Cog`.
         CommandError
             An error happened during loading.
-        .ClientException
+        ClientException
             A cog with the same name is already loaded.
         """
 
@@ -694,7 +694,7 @@ class BotBase(GroupMixin):
 
         # remove all the commands from the module
         for cmd in self.all_commands.copy().values():
-            if cmd.module is not None and _is_submodule(name, cmd.module):
+            if _is_submodule(name, cmd.module):
                 if isinstance(cmd, GroupMixin):
                     cmd.recursively_remove_all_commands()
                 self.remove_command(cmd.name)
@@ -703,7 +703,7 @@ class BotBase(GroupMixin):
         for event_list in self.extra_events.copy().values():
             remove = []
             for index, event in enumerate(event_list):
-                if event.__module__ is not None and _is_submodule(name, event.__module__):
+                if _is_submodule(name, event.__module__):
                     remove.append(index)
 
             for index in reversed(remove):
@@ -1289,8 +1289,7 @@ class BotBase(GroupMixin):
         """
 
         view = StringView(message.content)
-        ctx: CXT = cls(prefix=None, view=view, bot=self, message=message)  # type: ignore
-        # pyright/lance has no idea how typevars work for some reason
+        ctx: CXT = cls(prefix=None, view=view, bot=self, message=message)
 
         if message.author.id == self.user.id:  # type: ignore
             return ctx
