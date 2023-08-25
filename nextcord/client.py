@@ -2103,8 +2103,6 @@ class Client:
         interaction: :class:`Interaction`
             Interaction from Discord to read data from.
         """
-        interaction.data = cast(ApplicationCommandInteractionData, interaction.data)
-
         if isinstance(interaction, ApplicationCommandInteraction):
             _log.debug("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):

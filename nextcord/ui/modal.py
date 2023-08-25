@@ -9,7 +9,7 @@ import time
 import traceback
 from functools import partial
 from itertools import groupby
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Tuple, cast
 
 from ..components import Component
 from ..utils import MISSING
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from ..types.interactions import (
         ComponentInteractionData,
         ModalSubmitComponentInteractionData,
-        ModalSubmitInteractionData,
+        ModalSubmitInteractionData
     )
 
 
@@ -38,7 +38,7 @@ def _walk_component_interaction_data(
 ) -> Iterator[ComponentInteractionData]:
     for item in components:
         if "components" in item:
-            yield from item["components"]
+            yield from item["components"] #type: ignore
         else:
             yield item
 
