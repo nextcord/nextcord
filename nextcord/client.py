@@ -24,7 +24,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     overload,
 )
 
@@ -67,7 +66,6 @@ from .state import ConnectionState
 from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factory
 from .template import Template
 from .threads import Thread
-from .types.interactions import ApplicationCommandInteractionData
 from .ui.modal import Modal
 from .ui.view import View
 from .user import ClientUser, User
