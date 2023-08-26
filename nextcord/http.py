@@ -675,8 +675,6 @@ class HTTPClient:
         if (global_rate_limit := self._global_rate_limits.get(auth)) is None:
             global_rate_limit = self._make_global_rate_limit(auth, self._max_global_requests)
 
-        # global_rate_limit = cast(GlobalRateLimit, global_rate_limit)  # TODO: Remove this if Pyright doesn't care.
-
         # If a rate limit for this url path doesn't exist yet, make it.
         if (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)) is None:
             url_rate_limit = self._make_url_rate_limit(route.method, route, auth)
@@ -717,7 +715,6 @@ class HTTPClient:
                         if (
                             temp := self._get_url_rate_limit(route.method, route, auth)
                         ) is not url_rate_limit and temp is not None:
-                            temp = cast(RateLimit, temp)
                             _log.debug(
                                 "Route %s had the rate limit changed, resetting and retrying.",
                                 rate_limit_path,
