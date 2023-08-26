@@ -98,38 +98,6 @@ _DEFAULT_API_VERSION = 10
 _API_VERSION: Literal[9, 10] = _DEFAULT_API_VERSION
 
 
-class UnsupportedAPIVersion(UserWarning):
-    """Warning category raised when changing the API version to an unsupported version."""
-
-
-def _modify_api_version(version: Literal[9, 10]):
-    """Modify the API version used by the HTTP client.
-
-    Additional versions may be added around the time of a Discord API
-    version bump to allow temporarily downgrading to an older API version
-    or upgrading to a newer version that is not yet supported by the library.
-
-    Changing the API version from the default is not supported and may result in
-    unexpected behaviour.
-    """
-    available_versions = (9, 10)
-
-    if version not in available_versions:
-        raise ValueError(f"Only API versions {available_versions} are available.")
-
-    if version != _DEFAULT_API_VERSION:
-        warnings.warn(
-            "Changing the API version is not supported and may result in unexpected behaviour.",
-            category=UnsupportedAPIVersion,
-            stacklevel=2,
-        )
-
-    global _API_VERSION
-    _API_VERSION = version
-
-    Route.BASE = f"https://discord.com/api/v{version}"
-
-
 class Route:
     BASE: ClassVar[str] = f"https://discord.com/api/v{_DEFAULT_API_VERSION}"
 
