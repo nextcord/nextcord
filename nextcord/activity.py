@@ -739,7 +739,7 @@ class CustomActivity(BaseActivity):
         The custom status text. :attr:`~.CustomActivity.name` must equal "Custom Status" for this to work.
 
         .. versionchanged:: 2.6
-            Fallsback to :attr:`~.CustomActivity.name` if not provided.
+            This falls back to :attr:`~.CustomActivity.name` if not provided.
     """
 
     __slots__ = ("name", "emoji", "state", "_state")
