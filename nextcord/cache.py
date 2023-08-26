@@ -38,7 +38,6 @@ class BetterTTLCache(dict):
         self.timelink = {}
         self.working: bool = False
 
-
     def __getitem__(self, key):
         self.__expire__()
         return __get_item__(self, key)
