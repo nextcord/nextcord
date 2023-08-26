@@ -977,9 +977,9 @@ class HTTPClient:
     async def get_current_user(self, *, auth: str | None = None):
         return await self.request(Route("GET", "/users/@me"), auth=auth)
 
-    def logout(self) -> Response[None]:
+    def logout(self, auth: str = MISSING) -> Response[None]:
         # TODO: Is this only for user bots? Can we get rid of it?
-        return self.request(Route("POST", "/auth/logout"))
+        return self.request(Route("POST", "/auth/logout"), auth=auth)
 
     # Group functionality
 
