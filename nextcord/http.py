@@ -6,7 +6,7 @@ import asyncio
 import logging
 import sys
 import warnings
-from datetime import datetime
+from datetime import datetime, timezone
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
@@ -174,7 +174,7 @@ class IncorrectBucket(DiscordException):
 
 
 class RateLimit:
-    """Used to time gate a large batch of requests to only occur X every Y seconds. Used via ``async with``
+    """Used to time gate a large batch of requests to only allow X every Y seconds. Used via an async context manager.
 
     NOT THREAD SAFE.
 
@@ -260,7 +260,7 @@ class RateLimit:
         # Updates the datetime of the reset.
         x_reset = response.headers.get("X-RateLimit-Reset")
         if x_reset is not None:
-            self.reset = datetime.utcfromtimestamp(float(x_reset))
+            self.reset = datetime.fromtimestamp(float(x_reset), tz=timezone.utc)
 
         # Updates the reset-after count, being pessimistic.
         x_reset_after = response.headers.get("X-RateLimit-Reset-After")
@@ -349,12 +349,13 @@ class RateLimit:
     ) -> None:
         self.release()
 
+    @property
     def locked(self) -> bool:
         return self.remaining <= 0
 
     async def acquire(self) -> bool:
         # If no more requests can be made but the event is set, clear it.
-        if self.remaining <= 0 and self._on_reset_event.is_set():
+        if self.locked and self._on_reset_event.is_set():
             _log.debug(
                 "Bucket %s: Hit the remaining request limit of %s, locking until reset.",
                 self.bucket,
@@ -369,7 +370,7 @@ class RateLimit:
             _log.debug("Bucket %s: Not set yet, waiting for it to be set.", self.bucket)
             await self._on_reset_event.wait()
 
-            if self.remaining <= 0 and self._on_reset_event.is_set():
+            if self.locked and self._on_reset_event.is_set():
                 _log.debug(
                     "Bucket %s: Hit the remaining limit of %s, locking until reset.",
                     self.bucket,
@@ -411,7 +412,10 @@ class GlobalRateLimit(RateLimit):
         return ret
 
     async def update(self, response: aiohttp.ClientResponse) -> None:
-        if response.headers.get("X-RateLimit-Global") != "true":
+        if (
+            response.headers.get("X-RateLimit-Global") != "true"
+            and response.headers.get("X-RateLimit-Scope") != "global"
+        ):
             # The response is intended for the regular rate limit, not a global rate limit.
             return
 
@@ -421,7 +425,7 @@ class GlobalRateLimit(RateLimit):
             self.remaining = 0
             if response.headers.get("X-RateLimit-Scope") == "global":
                 data = await response.json()
-                _log.warning(data)
+                _log.debug(data)
                 if (retry_after := data.get("retry_after")) or (
                     retry_after := response.headers.get("Retry-After")
                 ):
@@ -453,8 +457,9 @@ class HTTPClient:
 
     Parameters
     ----------
-    connector
-    default_max_per_second: :class:`int`
+    connector: Optional[:class:`aiohttp.BaseConnector`]
+        The connector object to use for the client session.
+    max_global_requests: :class:`int`
         Maximum amount of requests per second per authorization.
 
         Discord by default only allows 50 requests per second, but if your bot has had its maximum increased, then
@@ -470,22 +475,23 @@ class HTTPClient:
         Decreasing will hasten bucket resets and increase max theoretical speed but may cause 429s.
     default_auth: Optional[:class:`str`]
         Default string to use in the Authorization header if it's not manually provided.
-    proxy
-    proxy_auth
-    loop
-    dispatch
+    proxy: Optional[:class:`str`]
+        The proxy url to connect to the Discord API with, if any.
+    proxy_auth: Optional[:class:`aiohttp.BasicAuth`]
+        The authentication to use in order to make a request to the proxy url. Not to be confused with ``default_auth``.
+    dispatch: :class:`Callable`
+        The dispatcher to use for rate limit events.
     """
 
     def __init__(
         self,
         connector: Optional[aiohttp.BaseConnector] = None,
         *,
-        default_max_per_second: int = 50,
+        max_global_requests: int = 50,
         time_offset: float = 0.0,
         default_auth: Optional[str] = None,
         proxy: Optional[str] = None,
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
         dispatch: Callable,
     ) -> None:
         # TODO: Think about adding ratelimit_multiplier? Would reduce the internal RateLimit.limit by that
@@ -493,17 +499,13 @@ class HTTPClient:
         #  ratelimit issues. Could also help with replit-style scenarios.
         self.__session: aiohttp.ClientSession = MISSING  # filled in static_login
         self._connector = connector
-        self._default_max_per_second = default_max_per_second
-        """Maximum amount of requests per second per authorization."""
+        self._max_global_requests = max_global_requests
         self._time_offset = time_offset
-        """Amount of seconds added to all ratelimit timers for lag compensation."""
         self._default_auth = None
         # For consistency with possible future changes to set_default_auth.
         self._set_default_auth(default_auth)
         self._proxy = proxy
         self._proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
-        # loop is truthy by default it seems, so this works.
-        self._loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
         self._dispatch = dispatch
 
         user_agent = "DiscordBot (https://github.com/nextcord/nextcord/ {0}) Python/{1[0]}.{1[1]} aiohttp/{2}"
@@ -630,7 +632,8 @@ class HTTPClient:
         route: :class:`Route`
             The Discord Route to make the API request for.
         files: Optional[Sequence[:class:`File`]]
-            pass
+            The files to provide with the JSON body of this request. If provided, the body of the request will be
+            repackaged into a multipart form.
         form: Optional[Iterable[:class:`dict`[:class:`str`, `Any`]]]
             pass
         auth: :class:`str` | `None` | `MISSING`
@@ -648,7 +651,7 @@ class HTTPClient:
 
         Returns
         -------
-        pass
+        A JSON payload response from Discord. They JSON payload's type will usually be a :class:`list` or :class:`dict`
         """
 
         if not self.__session:
@@ -670,9 +673,9 @@ class HTTPClient:
 
         # If a global rate limit for this authorization doesn't exist yet, make it.
         if (global_rate_limit := self._global_rate_limits.get(auth)) is None:
-            global_rate_limit = self._make_global_rate_limit(auth, self._default_max_per_second)
+            global_rate_limit = self._make_global_rate_limit(auth, self._max_global_requests)
 
-        global_rate_limit = cast(GlobalRateLimit, global_rate_limit)
+        # global_rate_limit = cast(GlobalRateLimit, global_rate_limit)  # TODO: Remove this if Pyright doesn't care.
 
         # If a rate limit for this url path doesn't exist yet, make it.
         if (url_rate_limit := self._get_url_rate_limit(route.method, route, auth)) is None:
@@ -689,13 +692,13 @@ class HTTPClient:
 
         # If retry_request is False and any of the rate limits are locked, don't continue and raise immediately.
         if retry_request is False:
-            if global_rate_limit.locked():
+            if global_rate_limit.locked:
                 _log.info(
                     "Path %s was called with retry_request=False while the global rate limit is locked.",
                     rate_limit_path,
                 )
                 raise HTTPCancelled("Global rate limit locked.")
-            elif url_rate_limit.locked():
+            elif url_rate_limit.locked:
                 _log.info(
                     "Path %s was called with retry_request=False while the URL rate limit is locked.",
                     rate_limit_path,
@@ -713,7 +716,7 @@ class HTTPClient:
                         # This check is for asyncio.gather()'d requests where the rate limit can change.
                         if (
                             temp := self._get_url_rate_limit(route.method, route, auth)
-                        ) is not url_rate_limit and not None:
+                        ) is not url_rate_limit and temp is not None:
                             temp = cast(RateLimit, temp)
                             _log.debug(
                                 "Route %s had the rate limit changed, resetting and retrying.",
@@ -755,7 +758,7 @@ class HTTPClient:
                                 # This condition can be met when doing asyncio.gather()'d requests.
                                 if (
                                     temp := self._buckets.get(
-                                        # The empty string default makes pyright happy. (hopefully)
+                                        # Defaulting to "" makes pyright happy because None is an invalid type of key.
                                         response.headers.get("X-RateLimit-Bucket", "")
                                     )
                                 ) is not None:
@@ -847,14 +850,23 @@ class HTTPClient:
                                     )
                                     raise NotFound(response, ret)
                                 elif response.status == 429:
-                                    self._dispatch(
-                                        "http_ratelimit",
-                                        url_rate_limit.limit,
-                                        url_rate_limit.remaining,
-                                        url_rate_limit.reset_after,
-                                        url_rate_limit.bucket,
-                                        response.headers.get("X-RateLimit-Scope"),
-                                    )
+                                    if (
+                                        response.headers.get("X-RateLimit-Global") != "true"
+                                        and response.headers.get("X-RateLimit-Scope") != "global"
+                                    ):
+                                        self._dispatch(
+                                            "http_ratelimit",
+                                            url_rate_limit.limit,
+                                            url_rate_limit.remaining,
+                                            url_rate_limit.reset_after,
+                                            url_rate_limit.bucket,
+                                            response.headers.get("X-RateLimit-Scope"),
+                                        )
+                                    else:
+                                        self._dispatch(
+                                            "global_http_ratelimit",
+                                            global_rate_limit.reset_after
+                                        )
 
                                     if not response.headers.get("Via") or isinstance(ret, str):
                                         _log.error(
