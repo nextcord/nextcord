@@ -33,10 +33,11 @@ class BetterTTLCache(dict):
     def __init__(
         self, maxsize: Optional[int] = None, ttl: Optional[Union[int, float]] = None
     ) -> None:
-        self.maxsize = maxsize or float("inf")
-        self.ttl = ttl
+        self.maxsize: float = float(maxsize) or float("inf")
+        self.ttl: float = float(ttl)
         self.timelink = {}
-        self.working = False
+        self.working: bool = False
+
 
     def __getitem__(self, key):
         self.__expire__()
