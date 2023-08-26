@@ -36,6 +36,7 @@ from .errors import (
     DiscordServerError,
     Forbidden,
     GatewayNotFound,
+    HTTPCancelled,
     HTTPException,
     InvalidArgument,
     LoginFailure,
@@ -639,6 +640,8 @@ class HTTPClient:
         retry_request: :class:`bool`
             If the request should be retried in specific cases. This mainly concerns 500 errors (Discord server issues)
             or 429s. (ratelimit issues)
+            If `False`, the request will raise an exception immediately if a 500 or 429 error is encountered or if the
+            internally tracked rate limits are locked.
         kwargs
             This is purposefully undocumented. Behavior of extra kwargs may change in a breaking way at any point, and
             extra kwargs may not be allowed in the future.
@@ -683,6 +686,21 @@ class HTTPClient:
         )  # Only use this for logging.
         ret: Any | None = None
         response: aiohttp.ClientResponse | None = None
+
+        # If retry_request is False and any of the rate limits are locked, don't continue and raise immediately.
+        if retry_request is False:
+            if global_rate_limit.locked():
+                _log.info(
+                    "Path %s was called with retry_request=False while the global rate limit is locked.",
+                    rate_limit_path
+                )
+                raise HTTPCancelled("Global rate limit locked.")
+            elif url_rate_limit.locked():
+                _log.info(
+                    "Path %s was called with retry_request=False while the URL rate limit is locked.",
+                    rate_limit_path
+                )
+                raise HTTPCancelled("Route rate limit locked.")
 
         # The loop is to allow migration to a different RateLimit if needed.
         # If we hit this loop max_retry_count times, something is wrong. Either we're migrating buckets way
@@ -1049,6 +1067,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
+        retry_request: bool = True,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
         payload = self.get_message_payload(
@@ -1064,7 +1083,7 @@ class HTTPClient:
             flags=flags,
         )
 
-        return self.request(r, json=payload)
+        return self.request(r, json=payload, retry_request=retry_request)
 
     def send_typing(self, channel_id: Snowflake) -> Response[None]:
         return self.request(Route("POST", "/channels/{channel_id}/typing", channel_id=channel_id))

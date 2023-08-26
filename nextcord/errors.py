@@ -17,6 +17,7 @@ __all__ = (
     "ClientException",
     "NoMoreItems",
     "GatewayNotFound",
+    "HTTPCancelled",
     "HTTPException",
     "Unauthorized",
     "Forbidden",
@@ -83,6 +84,10 @@ def _flatten_error_dict(d: Dict[str, Any], key: str = "") -> Dict[str, str]:
             items.append((new_key, v))
 
     return dict(items)
+
+
+class HTTPCancelled(DiscordException):
+    """Exception that's raised when an HTTP request is internally cancelled. """
 
 
 class HTTPException(DiscordException):
