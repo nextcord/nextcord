@@ -1,10 +1,4 @@
-"""
-The MIT License (MIT)
-
-:copyright: (c) 2021-present Nextcord Developers
-
-:license: See license for more info
-"""
+# SPDX-License-Identifier: MIT
 
 from nextcord import DiscordException
 
