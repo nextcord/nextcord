@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import datetime
 import io
 import re
+from array import array
 from os import PathLike
 from typing import (
     TYPE_CHECKING,
@@ -376,14 +378,14 @@ class Attachment(Hashable):
         return result
 
     @property
-    def waveform(self) -> Optional[bytearray]:
-        """Optional[:class:`str`]: The base64 encoded bytearray representing a sampled waveform
+    def waveform(self) -> Optional[array[int]]:
+        """Optional[array[:class:`int`]]: The base64 decoded representing a sampled waveform
         (currently for voice messages).
 
         .. versionadded:: 2.6
         """
         if self._waveform is not None:
-            return bytearray(self._waveform.encode("utf-8"))
+            return array("B", [int(b) for b in base64.b64decode(self._waveform)])
 
     def flags(self) -> AttachmentFlags:
         """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
