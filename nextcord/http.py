@@ -24,7 +24,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
 )
 from urllib.parse import quote as _uriquote
 
