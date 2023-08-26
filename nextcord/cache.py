@@ -13,8 +13,7 @@ class SizedDict(dict):
     def __init__(self, maxsize: Optional[Union[float, int]] = None) -> None:
         if not maxsize:
             maxsize = float("inf")
-        else:
-            self.maxsize = maxsize
+        self.maxsize: float = float(maxsize)
 
     def __getitem__(self, key):
         return __get_item__(self, key)
