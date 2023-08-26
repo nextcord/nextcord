@@ -87,7 +87,7 @@ def _flatten_error_dict(d: Dict[str, Any], key: str = "") -> Dict[str, str]:
 
 
 class HTTPCancelled(DiscordException):
-    """Exception that's raised when an HTTP request is internally cancelled. """
+    """Exception that's raised when an HTTP request is internally cancelled."""
 
 
 class HTTPException(DiscordException):

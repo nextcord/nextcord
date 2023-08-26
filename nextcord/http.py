@@ -692,13 +692,13 @@ class HTTPClient:
             if global_rate_limit.locked():
                 _log.info(
                     "Path %s was called with retry_request=False while the global rate limit is locked.",
-                    rate_limit_path
+                    rate_limit_path,
                 )
                 raise HTTPCancelled("Global rate limit locked.")
             elif url_rate_limit.locked():
                 _log.info(
                     "Path %s was called with retry_request=False while the URL rate limit is locked.",
-                    rate_limit_path
+                    rate_limit_path,
                 )
                 raise HTTPCancelled("Route rate limit locked.")
 
