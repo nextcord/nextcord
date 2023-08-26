@@ -864,8 +864,7 @@ class HTTPClient:
                                         )
                                     else:
                                         self._dispatch(
-                                            "global_http_ratelimit",
-                                            global_rate_limit.reset_after
+                                            "global_http_ratelimit", global_rate_limit.reset_after
                                         )
 
                                     if not response.headers.get("Via") or isinstance(ret, str):
