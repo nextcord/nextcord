@@ -79,7 +79,7 @@ def fill_with_flags(*, inverted: bool = False):
 
         if inverted:
             max_bits = max(cls.VALID_FLAGS.values()).bit_length()
-            cls.DEFAULT_VALUE = (1<<max_bits) - 1
+            cls.DEFAULT_VALUE = (1 << max_bits) - 1
         else:
             cls.DEFAULT_VALUE = 0
 
