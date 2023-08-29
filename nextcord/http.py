@@ -195,7 +195,7 @@ class RateLimit:
         """Datetime that the bucket roughly will be reset at."""
         # self._reset_diff: float = 1.0
         self._tracked_reset_time: float = 1.0
-        """The estimate time between bucket resets. Found via reset if use_reset_timestamp is True, found with 
+        """The estimate time between bucket resets. Found via reset if use_reset_timestamp is True, found with
         reset_after if False.
         """
         self.reset_after: float = 1.0
@@ -282,7 +282,8 @@ class RateLimit:
                 self.reset = x_reset
                 if self._use_reset_timestamp:
                     _log.debug(
-                        "Bucket %s: Reset timestamp increased, starting/resetting reset task.", self.bucket
+                        "Bucket %s: Reset timestamp increased, starting/resetting reset task.",
+                        self.bucket,
                     )
                     self.start_reset_task()
 
@@ -455,7 +456,7 @@ class GlobalRateLimit(RateLimit):
     Still not thread safe.
     """
 
-    def __init__(self, time_offset: float = 0.0, *args, **kwargs):
+    def __init__(self, time_offset: float = 0.0, *args, **kwargs) -> None:
         super().__init__(time_offset=time_offset, use_reset_timestamp=False)
 
     async def acquire(self) -> bool:
@@ -608,7 +609,9 @@ class HTTPClient:
         _log.debug(
             "Making URL rate limit for %s %s %s", method, route.bucket, _get_logging_auth(auth)
         )
-        ret = RateLimit(time_offset=self._time_offset, use_reset_timestamp=self._ratelimit_use_timestamp)
+        ret = RateLimit(
+            time_offset=self._time_offset, use_reset_timestamp=self._ratelimit_use_timestamp
+        )
         self._url_rate_limits[(method, route.bucket, auth)] = ret
         return ret
 
