@@ -270,6 +270,7 @@ class Client:
         allowed_mentions: Optional[AllowedMentions] = None,
         heartbeat_timeout: float = 60.0,
         guild_ready_timeout: float = 2.0,
+        assume_unsync_clock: bool = True,
         enable_debug_events: bool = False,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         lazy_load_commands: bool = True,
@@ -292,6 +293,7 @@ class Client:
             connector,
             proxy=proxy,
             proxy_auth=proxy_auth,
+            assume_unsync_clock=assume_unsync_clock,
             dispatch=self.dispatch,
         )
 

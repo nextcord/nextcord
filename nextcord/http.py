@@ -184,13 +184,21 @@ class RateLimit:
         Number in seconds to increase all timers by. Used for lag compensation.
     """
 
-    def __init__(self, time_offset: float = 0.3) -> None:
+    _reset_ignore_threshold = 0.02  # Arbitrary number, feel free to tweak.
+    """Minimum reset - current time diff threshold. Any diff lower will be ignored."""
+
+    def __init__(self, time_offset: float = 0.0, *, use_reset_timestamp: bool = False) -> None:
         self.limit: int = 1
         """Maximum amount of requests before requests have to wait for the rate limit to reset."""
         self.remaining: int = 1
         """Remaining amount of requests before requests have to wait for the rate limit to reset."""
         self.reset: datetime | None = None
         """Datetime that the bucket roughly will be reset at."""
+        # self._reset_diff: float = 1.0
+        self._tracked_reset_time: float = 1.0
+        """The estimate time between bucket resets. Found via reset if use_reset_timestamp is True, found with 
+        reset_after if False.
+        """
         self.reset_after: float = 1.0
         """Amount of seconds roughly until the rate limit will be reset."""
         self.bucket: str | None = None
@@ -198,6 +206,8 @@ class RateLimit:
 
         self._time_offset: float = time_offset
         """Number in seconds to increase all timers by. Used for lag compensation."""
+        self._use_reset_timestamp: bool = use_reset_timestamp
+        """If the reset timestamp should be used for bucket resets. If False, the float reset_after is used."""
         self._first_update: bool = True
         """If the next update to be ran will be the first."""
         self._reset_remaining_task: asyncio.Task | None = None
@@ -260,18 +270,41 @@ class RateLimit:
         # Updates the datetime of the reset.
         x_reset = response.headers.get("X-RateLimit-Reset")
         if x_reset is not None:
-            self.reset = datetime.fromtimestamp(float(x_reset), tz=timezone.utc)
+            x_reset = datetime.fromtimestamp(float(x_reset) + self._time_offset, tz=timezone.utc)
+
+            if self._use_reset_timestamp and self.reset is not None:
+                new_reset_diff = (x_reset - self.reset).total_seconds()
+                if self._tracked_reset_time < new_reset_diff:
+                    # Any time the tracked reset time is increased, the reset timestamp should also be increased
+                    #  thus we shouldn't have to (re)start the reset task here.
+                    self._tracked_reset_time = new_reset_diff
+
+            if self.reset is None or self.reset < x_reset:
+                self.reset = x_reset
+                if self._use_reset_timestamp:
+                    _log.debug(
+                        "Bucket %s: Reset timestamp increased, starting/resetting reset task.", self.bucket
+                    )
+                    self.start_reset_task()
 
         # Updates the reset-after count, being pessimistic.
         x_reset_after = response.headers.get("X-RateLimit-Reset-After")
         if x_reset_after is not None:
             x_reset_after = float(x_reset_after) + self._time_offset
-            if self.reset_after < x_reset_after:
-                _log.debug(
-                    "Bucket %s: Reset after time increased, adapting reset time.", self.bucket
-                )
-                self.reset_after = x_reset_after
-                self.start_reset_task()
+            # TODO: Due to Discord constantly adjusting reset_after and requests not always being responded to in
+            #  order, self.reset_after can be incorrect and not representative of the rate limit state. Is it worth
+            #  doing more comparisons and work to make it more correct when possible, or is this good enough?
+            self.reset_after = x_reset_after
+            # Once we figure out what the true reset delay is, for example 5 seconds, we want to keep it at that.
+            if not self._use_reset_timestamp:
+                if self._tracked_reset_time < x_reset_after:
+                    self._tracked_reset_time = x_reset_after
+                    _log.debug(
+                        "Bucket %s: Reset after time increased to %s seconds, adapting reset time.",
+                        self.bucket,
+                        self._tracked_reset_time,
+                    )
+                    self.start_reset_task()
 
         if not self.resetting:
             self.start_reset_task()
@@ -304,9 +337,28 @@ class RateLimit:
             _log.debug("Bucket %s: Reset task already running, cancelling.", self.bucket)
             self._reset_remaining_task.cancel()  # pyright: ignore [reportOptionalMemberAccess]
 
+        if self._use_reset_timestamp:  # In reset timestamp mode.
+            if self.reset:
+                current_time = datetime.now(tz=timezone.utc)
+                reset_delta = (self.reset - current_time).total_seconds()
+                # Use estimated time between resets to guess when the next one will be.
+                # The non-zero comparison helps prevent issues when reset_diff isn't quite perfect yet.
+                if reset_delta < self._reset_ignore_threshold:
+                    # seconds_until_reset = self._reset_diff
+                    seconds_until_reset = self._tracked_reset_time
+                else:  # Reset when the server resets.
+                    seconds_until_reset = reset_delta
+
+            else:
+                # seconds_until_reset = self._reset_diff
+                seconds_until_reset = self._tracked_reset_time
+
+        else:  # In reset_after seconds mode.
+            # seconds_until_reset = self.reset_after
+            seconds_until_reset = self._tracked_reset_time
+
         loop = asyncio.get_running_loop()
-        _log.debug("Bucket %s: Resetting after %s seconds.", self.bucket, self.reset_after)
-        self._reset_remaining_task = loop.create_task(self.reset_remaining(self.reset_after))
+        self._reset_remaining_task = loop.create_task(self.reset_remaining(seconds_until_reset))
 
     async def reset_remaining(self, time: float) -> None:
         """|coro|
@@ -318,6 +370,7 @@ class RateLimit:
             Amount of time to sleep until the request count is reset to the limit. ``time_offset`` is not added to
             this number.
         """
+        _log.debug("Bucket %s: Resetting after %s seconds.", self.bucket, time)
         await asyncio.sleep(time)
         self.remaining = self.limit
         self._on_reset_event.set()
@@ -403,6 +456,9 @@ class GlobalRateLimit(RateLimit):
     Still not thread safe.
     """
 
+    def __init__(self, time_offset: float = 0.0, *args, **kwargs):
+        super().__init__(time_offset=time_offset, use_reset_timestamp=False)
+
     async def acquire(self) -> bool:
         ret = await super().acquire()
         # As updates are little weird, it's best to start the reset task as soon as the first request has acquired.
@@ -475,6 +531,18 @@ class HTTPClient:
         Decreasing will hasten bucket resets and increase max theoretical speed but may cause 429s.
     default_auth: Optional[:class:`str`]
         Default string to use in the Authorization header if it's not manually provided.
+    assume_unsync_clock: :class:`bool`
+        Whether to assume the system clock is unsynced regarding rate limit handling.
+
+        If ``True``, rate limits will use a discovered static-ish time delay to figure out when buckets reset.
+        Generally results in longer-than-necessary inaccurate bucket reset times, especially with high-latency
+        connections, but is most consistent across a wide variety of hosts and applications.
+
+        If ``False``, rate limits will use a combination of server-given bucket reset timestamps compared with local
+        time to accurately reset when the bucket resets and discovered static-ish time delays to predict the next reset
+        when needed.
+        Generally results in more accurate bucket reset times, especially with high-latency connections, but relies
+        heavily on host time being accurate with Discords time.
     proxy: Optional[:class:`str`]
         The proxy url to connect to the Discord API with, if any.
     proxy_auth: Optional[:class:`aiohttp.BasicAuth`]
@@ -490,6 +558,7 @@ class HTTPClient:
         max_global_requests: int = 50,
         time_offset: float = 0.0,
         default_auth: Optional[str] = None,
+        assume_unsync_clock: bool = False,  # TODO: Think about renaming this?
         proxy: Optional[str] = None,
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         dispatch: Callable,
@@ -504,6 +573,7 @@ class HTTPClient:
         self._default_auth = None
         # For consistency with possible future changes to set_default_auth.
         self._set_default_auth(default_auth)
+        self._ratelimit_use_timestamp = not assume_unsync_clock
         self._proxy = proxy
         self._proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
         self._dispatch = dispatch
@@ -539,7 +609,7 @@ class HTTPClient:
         _log.debug(
             "Making URL rate limit for %s %s %s", method, route.bucket, _get_logging_auth(auth)
         )
-        ret = RateLimit(time_offset=self._time_offset)
+        ret = RateLimit(time_offset=self._time_offset, use_reset_timestamp=self._ratelimit_use_timestamp)
         self._url_rate_limits[(method, route.bucket, auth)] = ret
         return ret
 
