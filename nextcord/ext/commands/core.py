@@ -31,6 +31,7 @@ from .context import Context
 from .converter import Greedy, get_converter, run_converters
 from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMapping, MaxConcurrency
 from .errors import *
+from .view import Separator, Quotation
 
 if TYPE_CHECKING:
     from typing_extensions import Concatenate, ParamSpec, Self, TypeGuard
@@ -263,6 +264,18 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             Any ``pre_invoke`` or ``after_invoke``'s defined on this will override parent ones.
 
         .. versionadded:: 2.0.0
+    
+    separator: :class:`Separator`
+        The separator which partitions each argument. By default, it is a whitespace separator,
+        which is equivalent to ``Separator(" ")``.
+
+        .. versionadded:: 2.x
+
+    quotation: :class:`Quotation`
+        The quotations that can escape each argument. By default, it is the default quotations
+        returned by :meth:`Quotations.defaults`.
+
+        .. versionadded:: 2.x
     """
     __original_kwargs__: Dict[str, Any]
 
@@ -404,6 +417,9 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 self.after_invoke(inherited_after_invoke)
 
         self.checks.extend(self.parent.checks)  # type: ignore
+
+        self.separator: Separator = kwargs.pop("separator", None) or Separator()
+        self.quotation: Quotation = kwargs.pop("quotation", None) or Quotation.defaults()
 
     @property
     def required_permissions(self) -> Dict[str, bool]:
@@ -803,6 +819,16 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     def __str__(self) -> str:
         return self.qualified_name
 
+    def _get_separator(self, ctx: Context) -> Separator:
+        if ctx.bot.command_separator:
+            return ctx.bot.command_separator
+        return self.separator
+    
+    def _get_quotation(self, ctx: Context) -> Quotation:
+        if ctx.bot.command_quotation:
+            return ctx.bot.command_quotation
+        return self.quotation
+
     async def _parse_arguments(self, ctx: Context) -> None:
         ctx.args = [ctx] if self.cog is None else [self.cog, ctx]
         ctx.kwargs = {}
@@ -811,6 +837,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         view = ctx.view
         iterator = iter(self.params.items())
+        view.separator = self._get_separator(ctx)
+        view.quotation = self._get_quotation(ctx)
 
         if self.cog is not None:
             # we have 'self' as the first parameter so just advance
@@ -1185,7 +1213,11 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             else:
                 result.append(f"<{name}>")
 
-        return " ".join(result)
+        if not self.quotation.is_default:
+            (quotation_start, quotation_end) = self.quotation.initial_quotations
+            result = [f"{quotation_start}{r}{quotation_end}" for r in result]
+
+        return self.separator.value.join(result)
 
     async def can_run(self, ctx: Context) -> bool:
         """|coro|
@@ -1562,7 +1594,10 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
         view = ctx.view
         previous = view.index
         view.skip_ws()
+        sep = view.separator
+        view.separator = Separator()
         trigger = view.get_word()
+        view.separator = sep
 
         if trigger:
             ctx.subcommand_passed = trigger
@@ -1596,7 +1631,10 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
         view = ctx.view
         previous = view.index
         view.skip_ws()
+        sep = view.separator
+        view.separator = Separator()
         trigger = view.get_word()
+        view.separator = sep
 
         if trigger:
             ctx.subcommand_passed = trigger
