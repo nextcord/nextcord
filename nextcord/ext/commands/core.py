@@ -31,7 +31,7 @@ from .context import Context
 from .converter import Greedy, get_converter, run_converters
 from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMapping, MaxConcurrency
 from .errors import *
-from .view import Separator, Quotation
+from .view import Quotation, Separator
 
 if TYPE_CHECKING:
     from typing_extensions import Concatenate, ParamSpec, Self, TypeGuard
@@ -264,7 +264,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             Any ``pre_invoke`` or ``after_invoke``'s defined on this will override parent ones.
 
         .. versionadded:: 2.0.0
-    
+
     separator: :class:`Separator`
         The separator which partitions each argument. By default, it is a whitespace separator,
         which is equivalent to ``Separator(" ")``.
@@ -823,7 +823,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         if ctx.bot.command_separator:
             return ctx.bot.command_separator
         return self.separator
-    
+
     def _get_quotation(self, ctx: Context) -> Quotation:
         if ctx.bot.command_quotation:
             return ctx.bot.command_quotation

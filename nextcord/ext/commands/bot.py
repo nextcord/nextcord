@@ -37,7 +37,7 @@ from .cog import Cog
 from .context import Context
 from .core import GroupMixin
 from .help import DefaultHelpCommand, HelpCommand
-from .view import StringView, Separator, Quotation
+from .view import Quotation, Separator, StringView
 
 if TYPE_CHECKING:
     import importlib.machinery

@@ -1,13 +1,17 @@
 # SPDX-License-Identifier: MIT
 
-from typing import Optional, Tuple, overload, Type
+from typing import Optional, Tuple, Type, overload
+
+from typing_extensions import Self
 
 import nextcord
-from typing_extensions import Self
 
 from .errors import ExpectedClosingQuoteError, InvalidEndOfQuotedStringError, UnexpectedQuoteError
 
-__all__ = ("Separator", "Quotation",)
+__all__ = (
+    "Separator",
+    "Quotation",
+)
 
 
 class Separator:
@@ -23,7 +27,7 @@ class Separator:
 
     __slots__ = ("value", "strip_ws")
 
-    def __init__(self, value: Optional[str] = None, *, strip_ws: bool = True):
+    def __init__(self, value: Optional[str] = None, *, strip_ws: bool = True) -> None:
         if value == "":
             raise ValueError("Separators must be a non-empty string or None.")
 
@@ -48,7 +52,7 @@ class Separator:
 
     def __repr__(self) -> str:
         return f"<Separator value={self.value!r} strip_ws={self.strip_ws}>"
-    
+
 
 class Quotation:
     """Delimiters for a quoted argument.
@@ -81,7 +85,7 @@ class Quotation:
     @classmethod
     def from_pairs(cls: Type[Self], *pairs: Tuple[str, str]) -> Self:
         """Creates a quotation from a pair from quotations.
-        
+
         Example
         -------
 
@@ -94,7 +98,7 @@ class Quotation:
         """
         if not pairs:
             raise ValueError("Pairs must be provided.")
-        
+
         pair = pairs[0]
         pairs = pairs[1:]
 
@@ -110,7 +114,7 @@ class Quotation:
     @classmethod
     def defaults(cls: Type[Self]) -> Self:
         """Creates a quotation from the default recognized pair of quotations.
-        
+
         The following are the defaults:
             * ``''``
             * ``""``
@@ -160,7 +164,7 @@ class Quotation:
     def all_values(self):
         """Set[:class:`str`] All of the possible values for a quotation."""
         return set(self._values.keys()) | set(self._values.values())
-    
+
     @nextcord.utils.cached_slot_property("_cs_initial_quotations")
     def initial_quotations(self):
         """Tuple[:class:`str`\, :class:`str`] The first quotation mapping provided."""
@@ -176,7 +180,7 @@ class Quotation:
 
     def __contains__(self, item: str) -> bool:
         return item in self._values
-    
+
     def __repr__(self) -> str:
         return f"<Quotation values={self.all_values!r}>"
 
@@ -283,7 +287,7 @@ class StringView:
                 if is_quoted:
                     # unexpected EOF
                     raise ExpectedClosingQuoteError(close_quote)
-                
+
                 r = "".join(result)
                 if self.separator.strip_ws:
                     r = r.strip()
