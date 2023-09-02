@@ -557,6 +557,14 @@ class Permissions(BaseFlags):
         """
         return 1 << 40
 
+    @flag_value
+    def set_voice_channel_status(self) -> int:
+        """:class:`bool`: Returns ``True`` if a user can set a voice channel's status.
+
+        .. versionadded:: 2.7
+        """
+        return 1 << 48
+
 
 def _augment_from_permissions(cls):
     cls.VALID_NAMES = set(Permissions.VALID_FLAGS)
