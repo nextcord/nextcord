@@ -81,6 +81,12 @@ if TYPE_CHECKING:
     Response = Coroutine[Any, Any, T]
 
 
+__all__ = (
+    "HTTPClient",
+    "Route",
+)
+
+
 async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any], str]:
     text = await response.text(encoding="utf-8")
     try:
@@ -344,17 +350,14 @@ class RateLimit:
                 # Use estimated time between resets to guess when the next one will be.
                 # The non-zero comparison helps prevent issues when reset_diff isn't quite perfect yet.
                 if reset_delta < self._reset_ignore_threshold:
-                    # seconds_until_reset = self._reset_diff
                     seconds_until_reset = self._tracked_reset_time
                 else:  # Reset when the server resets.
                     seconds_until_reset = reset_delta
 
             else:
-                # seconds_until_reset = self._reset_diff
                 seconds_until_reset = self._tracked_reset_time
 
         else:  # In reset_after seconds mode.
-            # seconds_until_reset = self.reset_after
             seconds_until_reset = self._tracked_reset_time
 
         loop = asyncio.get_running_loop()
