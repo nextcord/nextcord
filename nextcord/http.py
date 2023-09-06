@@ -1043,7 +1043,14 @@ class HTTPClient:
         return data
 
     async def exchange_access_code(
-        self, *, client_id: int, client_secret: str, code: str, redirect_uri: str
+        self,
+        *,
+        client_id: int,
+        client_secret: str,
+        code: str,
+        redirect_uri: str,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ):
         # TODO: Look into how viable this function is here.
         # This doesn't actually have hard ratelimits it seems? Not in the headers at least. The default bucket should
@@ -1055,39 +1062,91 @@ class HTTPClient:
             "code": code,
             "redirect_uri": redirect_uri,
         }
-        return await self.request(Route("POST", "/oauth2/token"), data=data)
+        return await self.request(
+            Route("POST", "/oauth2/token"),
+            data=data,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    async def get_current_user(self, *, auth: str | None = None):
-        return await self.request(Route("GET", "/users/@me"), auth=auth)
+    async def get_current_user(
+        self,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ):
+        return await self.request(
+            Route("GET", "/users/@me"),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def logout(self, auth: str = MISSING) -> Response[None]:
+    def logout(
+        self,
+        auth: str = MISSING,
+        *,
+        retry_request: bool = True,
+    ) -> Response[None]:
         # TODO: Is this only for user bots? Can we get rid of it?
-        return self.request(Route("POST", "/auth/logout"), auth=auth)
+        return self.request(
+            Route("POST", "/auth/logout"),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     # Group functionality
 
     def start_group(
-        self, user_id: Snowflake, recipients: List[int]
+        self,
+        user_id: Snowflake,
+        recipients: List[int],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[channel.GroupDMChannel]:
         payload = {
             "recipients": recipients,
         }
 
         return self.request(
-            Route("POST", "/users/{user_id}/channels", user_id=user_id), json=payload
+            Route("POST", "/users/{user_id}/channels", user_id=user_id),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def leave_group(self, channel_id) -> Response[None]:
-        return self.request(Route("DELETE", "/channels/{channel_id}", channel_id=channel_id))
+    def leave_group(
+        self,
+        channel_id,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
+        return self.request(
+            Route("DELETE", "/channels/{channel_id}", channel_id=channel_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     # Message management
 
-    def start_private_message(self, user_id: Snowflake) -> Response[channel.DMChannel]:
+    def start_private_message(
+        self,
+        user_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[channel.DMChannel]:
         payload = {
             "recipient_id": user_id,
         }
 
-        return self.request(Route("POST", "/users/@me/channels"), json=payload)
+        return self.request(
+            Route("POST", "/users/@me/channels"),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_message_payload(
         self,
@@ -1150,6 +1209,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
+        auth: str | None = MISSING,
         retry_request: bool = True,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
@@ -1166,10 +1226,25 @@ class HTTPClient:
             flags=flags,
         )
 
-        return self.request(r, json=payload, retry_request=retry_request)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def send_typing(self, channel_id: Snowflake) -> Response[None]:
-        return self.request(Route("POST", "/channels/{channel_id}/typing", channel_id=channel_id))
+    def send_typing(
+        self,
+        channel_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
+        return self.request(
+            Route("POST", "/channels/{channel_id}/typing", channel_id=channel_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_message_multipart_form(
         self,
@@ -1245,6 +1320,8 @@ class HTTPClient:
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
         flags: Optional[int] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[message.Message]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -1264,7 +1341,13 @@ class HTTPClient:
             attachments=attachments,
             flags=flags,
         )
-        return self.request(route, form=form, files=files)
+        return self.request(
+            route,
+            form=form,
+            files=files,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def send_files(
         self,
@@ -1281,6 +1364,8 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
         return self.send_multipart_helper(
@@ -1296,10 +1381,18 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             flags=flags,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def delete_message(
-        self, channel_id: Snowflake, message_id: Snowflake, *, reason: Optional[str] = None
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -1307,20 +1400,42 @@ class HTTPClient:
             channel_id=channel_id,
             message_id=message_id,
         )
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def delete_messages(
-        self, channel_id: Snowflake, message_ids: SnowflakeList, *, reason: Optional[str] = None
+        self,
+        channel_id: Snowflake,
+        message_ids: SnowflakeList,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route("POST", "/channels/{channel_id}/messages/bulk-delete", channel_id=channel_id)
         payload = {
             "messages": message_ids,
         }
 
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_message(
-        self, channel_id: Snowflake, message_id: Snowflake, **fields: Any
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+        **fields: Any,
     ) -> Response[message.Message]:
         r = Route(
             "PATCH",
@@ -1329,11 +1444,22 @@ class HTTPClient:
             message_id=message_id,
         )
         if "files" in fields:
-            return self.send_multipart_helper(r, **fields)
-        return self.request(r, json=fields)
+            return self.send_multipart_helper(r, auth=auth, retry_request=retry_request, **fields)
+        return self.request(
+            r,
+            json=fields,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def add_reaction(
-        self, channel_id: Snowflake, message_id: Snowflake, emoji: str
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        emoji: str,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "PUT",
@@ -1342,10 +1468,21 @@ class HTTPClient:
             message_id=message_id,
             emoji=emoji,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def remove_reaction(
-        self, channel_id: Snowflake, message_id: Snowflake, emoji: str, member_id: Snowflake
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        emoji: str,
+        member_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -1355,10 +1492,20 @@ class HTTPClient:
             member_id=member_id,
             emoji=emoji,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def remove_own_reaction(
-        self, channel_id: Snowflake, message_id: Snowflake, emoji: str
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        emoji: str,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -1367,7 +1514,11 @@ class HTTPClient:
             message_id=message_id,
             emoji=emoji,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_reaction_users(
         self,
@@ -1376,6 +1527,9 @@ class HTTPClient:
         emoji: str,
         limit: int,
         after: Optional[Snowflake] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[user.User]]:
         r = Route(
             "GET",
@@ -1390,9 +1544,21 @@ class HTTPClient:
         }
         if after:
             params["after"] = after
-        return self.request(r, params=params)
+        return self.request(
+            r,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def clear_reactions(self, channel_id: Snowflake, message_id: Snowflake) -> Response[None]:
+    def clear_reactions(
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
         r = Route(
             "DELETE",
             "/channels/{channel_id}/messages/{message_id}/reactions",
@@ -1400,10 +1566,20 @@ class HTTPClient:
             message_id=message_id,
         )
 
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def clear_single_reaction(
-        self, channel_id: Snowflake, message_id: Snowflake, emoji: str
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        emoji: str,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -1412,10 +1588,19 @@ class HTTPClient:
             message_id=message_id,
             emoji=emoji,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_message(
-        self, channel_id: Snowflake, message_id: Snowflake
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[message.Message]:
         r = Route(
             "GET",
@@ -1423,11 +1608,25 @@ class HTTPClient:
             channel_id=channel_id,
             message_id=message_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def get_channel(self, channel_id: Snowflake) -> Response[channel.Channel]:
+    def get_channel(
+        self,
+        channel_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[channel.Channel]:
         r = Route("GET", "/channels/{channel_id}", channel_id=channel_id)
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def logs_from(
         self,
@@ -1436,6 +1635,9 @@ class HTTPClient:
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
         around: Optional[Snowflake] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[message.Message]]:
         params: Dict[str, Any] = {
             "limit": limit,
@@ -1449,11 +1651,19 @@ class HTTPClient:
             params["around"] = around
 
         return self.request(
-            Route("GET", "/channels/{channel_id}/messages", channel_id=channel_id), params=params
+            Route("GET", "/channels/{channel_id}/messages", channel_id=channel_id),
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def publish_message(
-        self, channel_id: Snowflake, message_id: Snowflake
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[message.Message]:
         return self.request(
             Route(
@@ -1461,11 +1671,19 @@ class HTTPClient:
                 "/channels/{channel_id}/messages/{message_id}/crosspost",
                 channel_id=channel_id,
                 message_id=message_id,
-            )
+            ),
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def pin_message(
-        self, channel_id: Snowflake, message_id: Snowflake, reason: Optional[str] = None
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        reason: Optional[str] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "PUT",
@@ -1473,10 +1691,21 @@ class HTTPClient:
             channel_id=channel_id,
             message_id=message_id,
         )
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def unpin_message(
-        self, channel_id: Snowflake, message_id: Snowflake, reason: Optional[str] = None
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        reason: Optional[str] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -1484,20 +1713,42 @@ class HTTPClient:
             channel_id=channel_id,
             message_id=message_id,
         )
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def pins_from(self, channel_id: Snowflake) -> Response[List[message.Message]]:
+    def pins_from(
+        self,
+        channel_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[message.Message]]:
         return self.request(Route("GET", "/channels/{channel_id}/pins", channel_id=channel_id))
 
     # Member management
 
     def kick(
-        self, user_id: Snowflake, guild_id: Snowflake, reason: Optional[str] = None
+        self,
+        user_id: Snowflake,
+        guild_id: Snowflake,
+        reason: Optional[str] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE", "/guilds/{guild_id}/members/{user_id}", guild_id=guild_id, user_id=user_id
         )
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def ban(
         self,
@@ -1505,19 +1756,39 @@ class HTTPClient:
         guild_id: Snowflake,
         delete_message_seconds: int = 86400,
         reason: Optional[str] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route("PUT", "/guilds/{guild_id}/bans/{user_id}", guild_id=guild_id, user_id=user_id)
         params = {
             "delete_message_seconds": delete_message_seconds,
         }
 
-        return self.request(r, params=params, reason=reason)
+        return self.request(
+            r,
+            params=params,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def unban(
-        self, user_id: Snowflake, guild_id: Snowflake, *, reason: Optional[str] = None
+        self,
+        user_id: Snowflake,
+        guild_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route("DELETE", "/guilds/{guild_id}/bans/{user_id}", guild_id=guild_id, user_id=user_id)
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def guild_voice_state(
         self,
@@ -1527,6 +1798,8 @@ class HTTPClient:
         mute: Optional[bool] = None,
         deafen: Optional[bool] = None,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[member.Member]:
         r = Route(
             "PATCH", "/guilds/{guild_id}/members/{user_id}", guild_id=guild_id, user_id=user_id
@@ -1538,10 +1811,27 @@ class HTTPClient:
         if deafen is not None:
             payload["deaf"] = deafen
 
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def edit_profile(self, payload: Dict[str, Any]) -> Response[user.User]:
-        return self.request(Route("PATCH", "/users/@me"), json=payload)
+    def edit_profile(
+        self,
+        payload: Dict[str, Any],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[user.User]:
+        return self.request(
+            Route("PATCH", "/users/@me"),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def change_my_nickname(
         self,
@@ -1549,12 +1839,20 @@ class HTTPClient:
         nickname: str,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[member.Nickname]:
         r = Route("PATCH", "/guilds/{guild_id}/members/@me/nick", guild_id=guild_id)
         payload = {
             "nick": nickname,
         }
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def change_nickname(
         self,
@@ -1563,6 +1861,8 @@ class HTTPClient:
         nickname: str,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[member.Member]:
         r = Route(
             "PATCH", "/guilds/{guild_id}/members/{user_id}", guild_id=guild_id, user_id=user_id
@@ -1570,19 +1870,48 @@ class HTTPClient:
         payload = {
             "nick": nickname,
         }
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def edit_my_voice_state(self, guild_id: Snowflake, payload: Dict[str, Any]) -> Response[None]:
+    def edit_my_voice_state(
+        self,
+        guild_id: Snowflake,
+        payload: Dict[str, Any],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
         r = Route("PATCH", "/guilds/{guild_id}/voice-states/@me", guild_id=guild_id)
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_voice_state(
-        self, guild_id: Snowflake, user_id: Snowflake, payload: Dict[str, Any]
+        self,
+        guild_id: Snowflake,
+        user_id: Snowflake,
+        payload: Dict[str, Any],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "PATCH", "/guilds/{guild_id}/voice-states/{user_id}", guild_id=guild_id, user_id=user_id
         )
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_member(
         self,
@@ -1590,12 +1919,20 @@ class HTTPClient:
         user_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
         **fields: Any,
     ) -> Response[member.MemberWithUser]:
         r = Route(
             "PATCH", "/guilds/{guild_id}/members/{user_id}", guild_id=guild_id, user_id=user_id
         )
-        return self.request(r, json=fields, reason=reason)
+        return self.request(
+            r,
+            json=fields,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     # Channel management
 
@@ -1604,6 +1941,8 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
         **options: Any,
     ) -> Response[channel.Channel]:
         r = Route("PATCH", "/channels/{channel_id}", channel_id=channel_id)
@@ -1634,7 +1973,13 @@ class HTTPClient:
             "applied_tags",
         )
         payload = {k: v for k, v in options.items() if k in valid_keys}
-        return self.request(r, reason=reason, json=payload)
+        return self.request(
+            r,
+            reason=reason,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def bulk_channel_update(
         self,
@@ -1642,9 +1987,17 @@ class HTTPClient:
         data: List[guild.ChannelPositionUpdate],
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route("PATCH", "/guilds/{guild_id}/channels", guild_id=guild_id)
-        return self.request(r, json=data, reason=reason)
+        return self.request(
+            r,
+            json=data,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def create_channel(
         self,
@@ -1652,6 +2005,8 @@ class HTTPClient:
         channel_type: channel.ChannelType,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
         **options: Any,
     ) -> Response[channel.GuildChannel]:
         payload = {
@@ -1683,6 +2038,8 @@ class HTTPClient:
             Route("POST", "/guilds/{guild_id}/channels", guild_id=guild_id),
             json=payload,
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def delete_channel(
@@ -1690,9 +2047,14 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
-            Route("DELETE", "/channels/{channel_id}", channel_id=channel_id), reason=reason
+            Route("DELETE", "/channels/{channel_id}", channel_id=channel_id),
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     # Thread management
@@ -1705,6 +2067,8 @@ class HTTPClient:
         name: str,
         auto_archive_duration: threads.ThreadArchiveDuration,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[threads.Thread]:
         payload = {
             "name": name,
@@ -1717,7 +2081,13 @@ class HTTPClient:
             channel_id=channel_id,
             message_id=message_id,
         )
-        return self.request(route, json=payload, reason=reason)
+        return self.request(
+            route,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def start_thread_without_message(
         self,
@@ -1728,6 +2098,8 @@ class HTTPClient:
         type: threads.ThreadType,
         invitable: bool = True,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[threads.Thread]:
         payload = {
             "name": name,
@@ -1737,7 +2109,13 @@ class HTTPClient:
         }
 
         route = Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id)
-        return self.request(route, json=payload, reason=reason)
+        return self.request(
+            route,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def start_thread_in_forum_channel(
         self,
@@ -1756,6 +2134,8 @@ class HTTPClient:
         applied_tag_ids: Optional[List[str]] = None,
         flags: Optional[int] = None,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[threads.Thread]:
         payload = {
             "name": name,
@@ -1777,7 +2157,14 @@ class HTTPClient:
             payload["message"] = msg_payload
         params = {"use_nested_fields": "true"}
         route = Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id)
-        return self.request(route, json=payload, reason=reason, params=params)
+        return self.request(
+            route,
+            json=payload,
+            reason=reason,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def start_thread_in_forum_channel_with_files(
         self,
@@ -1798,6 +2185,8 @@ class HTTPClient:
         applied_tag_ids: Optional[List[str]] = None,
         flags: Optional[int] = None,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[threads.Thread]:
         payload = {
             "name": name,
@@ -1822,39 +2211,89 @@ class HTTPClient:
         )
         params = {"use_nested_fields": "true"}
         route = Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id)
-        return self.request(route, form=form, files=files, reason=reason, params=params)
-
-    def join_thread(self, channel_id: Snowflake) -> Response[None]:
         return self.request(
-            Route("POST", "/channels/{channel_id}/thread-members/@me", channel_id=channel_id)
+            route,
+            form=form,
+            files=files,
+            reason=reason,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def add_user_to_thread(self, channel_id: Snowflake, user_id: Snowflake) -> Response[None]:
+    def join_thread(
+        self,
+        channel_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
+        return self.request(
+            Route("POST", "/channels/{channel_id}/thread-members/@me", channel_id=channel_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def add_user_to_thread(
+        self,
+        channel_id: Snowflake,
+        user_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
         return self.request(
             Route(
                 "PUT",
                 "/channels/{channel_id}/thread-members/{user_id}",
                 channel_id=channel_id,
                 user_id=user_id,
-            )
+            ),
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def leave_thread(self, channel_id: Snowflake) -> Response[None]:
+    def leave_thread(
+        self,
+        channel_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
         return self.request(
-            Route("DELETE", "/channels/{channel_id}/thread-members/@me", channel_id=channel_id)
+            Route("DELETE", "/channels/{channel_id}/thread-members/@me", channel_id=channel_id),
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def remove_user_from_thread(self, channel_id: Snowflake, user_id: Snowflake) -> Response[None]:
+    def remove_user_from_thread(
+        self,
+        channel_id: Snowflake,
+        user_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
         route = Route(
             "DELETE",
             "/channels/{channel_id}/thread-members/{user_id}",
             channel_id=channel_id,
             user_id=user_id,
         )
-        return self.request(route)
+        return self.request(
+            route,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_public_archived_threads(
-        self, channel_id: Snowflake, before: Optional[Snowflake] = None, limit: int = 50
+        self,
+        channel_id: Snowflake,
+        before: Optional[Snowflake] = None,
+        limit: int = 50,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[threads.ThreadPaginationPayload]:
         route = Route(
             "GET", "/channels/{channel_id}/threads/archived/public", channel_id=channel_id
@@ -1864,10 +2303,21 @@ class HTTPClient:
         if before:
             params["before"] = before
         params["limit"] = limit
-        return self.request(route, params=params)
+        return self.request(
+            route,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_private_archived_threads(
-        self, channel_id: Snowflake, before: Optional[Snowflake] = None, limit: int = 50
+        self,
+        channel_id: Snowflake,
+        before: Optional[Snowflake] = None,
+        limit: int = 50,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[threads.ThreadPaginationPayload]:
         route = Route(
             "GET", "/channels/{channel_id}/threads/archived/private", channel_id=channel_id
@@ -1877,10 +2327,21 @@ class HTTPClient:
         if before:
             params["before"] = before
         params["limit"] = limit
-        return self.request(route, params=params)
+        return self.request(
+            route,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_joined_private_archived_threads(
-        self, channel_id: Snowflake, before: Optional[Snowflake] = None, limit: int = 50
+        self,
+        channel_id: Snowflake,
+        before: Optional[Snowflake] = None,
+        limit: int = 50,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[threads.ThreadPaginationPayload]:
         route = Route(
             "GET",
@@ -1891,15 +2352,40 @@ class HTTPClient:
         if before:
             params["before"] = before
         params["limit"] = limit
-        return self.request(route, params=params)
+        return self.request(
+            route,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def get_active_threads(self, guild_id: Snowflake) -> Response[threads.ThreadPaginationPayload]:
+    def get_active_threads(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[threads.ThreadPaginationPayload]:
         route = Route("GET", "/guilds/{guild_id}/threads/active", guild_id=guild_id)
-        return self.request(route)
+        return self.request(
+            route,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def get_thread_members(self, channel_id: Snowflake) -> Response[List[threads.ThreadMember]]:
+    def get_thread_members(
+        self,
+        channel_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[threads.ThreadMember]]:
         route = Route("GET", "/channels/{channel_id}/thread-members", channel_id=channel_id)
-        return self.request(route)
+        return self.request(
+            route,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     # Webhook management
 
@@ -1910,6 +2396,8 @@ class HTTPClient:
         name: str,
         avatar: Optional[str] = None,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[webhook.Webhook]:
         payload: Dict[str, Any] = {
             "name": name,
@@ -1918,22 +2406,61 @@ class HTTPClient:
             payload["avatar"] = avatar
 
         r = Route("POST", "/channels/{channel_id}/webhooks", channel_id=channel_id)
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def channel_webhooks(self, channel_id: Snowflake) -> Response[List[webhook.Webhook]]:
-        return self.request(Route("GET", "/channels/{channel_id}/webhooks", channel_id=channel_id))
+    def channel_webhooks(
+        self,
+        channel_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[webhook.Webhook]]:
+        return self.request(
+            Route("GET", "/channels/{channel_id}/webhooks", channel_id=channel_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def guild_webhooks(self, guild_id: Snowflake) -> Response[List[webhook.Webhook]]:
-        return self.request(Route("GET", "/guilds/{guild_id}/webhooks", guild_id=guild_id))
+    def guild_webhooks(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[webhook.Webhook]]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/webhooks", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def get_webhook(self, webhook_id: Snowflake) -> Response[webhook.Webhook]:
-        return self.request(Route("GET", "/webhooks/{webhook_id}", webhook_id=webhook_id))
+    def get_webhook(
+        self,
+        webhook_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[webhook.Webhook]:
+        return self.request(
+            Route("GET", "/webhooks/{webhook_id}", webhook_id=webhook_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def follow_webhook(
         self,
         channel_id: Snowflake,
         webhook_channel_id: Snowflake,
         reason: Optional[str] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         payload = {
             "webhook_channel_id": str(webhook_channel_id),
@@ -1942,6 +2469,8 @@ class HTTPClient:
             Route("POST", "/channels/{channel_id}/followers", channel_id=channel_id),
             json=payload,
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     # Guild management
@@ -1951,6 +2480,9 @@ class HTTPClient:
         limit: int,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[guild.Guild]]:
         params: Dict[str, Any] = {
             "limit": limit,
@@ -1961,22 +2493,77 @@ class HTTPClient:
         if after:
             params["after"] = after
 
-        return self.request(Route("GET", "/users/@me/guilds"), params=params)
+        return self.request(
+            Route("GET", "/users/@me/guilds"),
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def leave_guild(self, guild_id: Snowflake) -> Response[None]:
-        return self.request(Route("DELETE", "/users/@me/guilds/{guild_id}", guild_id=guild_id))
+    def leave_guild(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
+        return self.request(
+            Route("DELETE", "/users/@me/guilds/{guild_id}", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def get_guild(self, guild_id: Snowflake, *, with_counts: bool = True) -> Response[guild.Guild]:
+    def get_guild(
+        self,
+        guild_id: Snowflake,
+        *,
+        with_counts: bool = True,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[guild.Guild]:
         params = {"with_counts": int(with_counts)}
-        return self.request(Route("GET", "/guilds/{guild_id}", guild_id=guild_id), params=params)
+        return self.request(
+            Route("GET", "/guilds/{guild_id}", guild_id=guild_id),
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def get_guild_preview(self, guild_id: Snowflake) -> Response[guild.GuildPreview]:
-        return self.request(Route("GET", "/guilds/{guild_id}/preview", guild_id=guild_id))
+    def get_guild_preview(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[guild.GuildPreview]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/preview", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def delete_guild(self, guild_id: Snowflake) -> Response[None]:
-        return self.request(Route("DELETE", "/guilds/{guild_id}", guild_id=guild_id))
+    def delete_guild(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
+        return self.request(
+            Route("DELETE", "/guilds/{guild_id}", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def create_guild(self, name: str, region: str, icon: Optional[str]) -> Response[guild.Guild]:
+    def create_guild(
+        self,
+        name: str,
+        region: str,
+        icon: Optional[str],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[guild.Guild]:
         payload = {
             "name": name,
             "region": region,
@@ -1984,10 +2571,21 @@ class HTTPClient:
         if icon:
             payload["icon"] = icon
 
-        return self.request(Route("POST", "/guilds"), json=payload)
+        return self.request(
+            Route("POST", "/guilds"),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_guild(
-        self, guild_id: Snowflake, *, reason: Optional[str] = None, **fields: Any
+        self,
+        guild_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+        **fields: Any,
     ) -> Response[guild.Guild]:
         valid_keys = (
             "name",
@@ -2014,28 +2612,77 @@ class HTTPClient:
         payload = {k: v for k, v in fields.items() if k in valid_keys}
 
         return self.request(
-            Route("PATCH", "/guilds/{guild_id}", guild_id=guild_id), json=payload, reason=reason
+            Route("PATCH", "/guilds/{guild_id}", guild_id=guild_id),
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def get_template(self, code: str) -> Response[template.Template]:
-        return self.request(Route("GET", "/guilds/templates/{code}", code=code))
-
-    def guild_templates(self, guild_id: Snowflake) -> Response[List[template.Template]]:
-        return self.request(Route("GET", "/guilds/{guild_id}/templates", guild_id=guild_id))
-
-    def create_template(
-        self, guild_id: Snowflake, payload: template.CreateTemplate
+    def get_template(
+        self,
+        code: str,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[template.Template]:
         return self.request(
-            Route("POST", "/guilds/{guild_id}/templates", guild_id=guild_id), json=payload
+            Route("GET", "/guilds/templates/{code}", code=code),
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def sync_template(self, guild_id: Snowflake, code: str) -> Response[template.Template]:
+    def guild_templates(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[template.Template]]:
         return self.request(
-            Route("PUT", "/guilds/{guild_id}/templates/{code}", guild_id=guild_id, code=code)
+            Route("GET", "/guilds/{guild_id}/templates", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def edit_template(self, guild_id: Snowflake, code: str, payload) -> Response[template.Template]:
+    def create_template(
+        self,
+        guild_id: Snowflake,
+        payload: template.CreateTemplate,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[template.Template]:
+        return self.request(
+            Route("POST", "/guilds/{guild_id}/templates", guild_id=guild_id),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def sync_template(
+        self,
+        guild_id: Snowflake,
+        code: str,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[template.Template]:
+        return self.request(
+            Route("PUT", "/guilds/{guild_id}/templates/{code}", guild_id=guild_id, code=code),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def edit_template(
+        self,
+        guild_id: Snowflake,
+        code: str,
+        payload,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[template.Template]:
         valid_keys = (
             "name",
             "description",
@@ -2044,15 +2691,33 @@ class HTTPClient:
         return self.request(
             Route("PATCH", "/guilds/{guild_id}/templates/{code}", guild_id=guild_id, code=code),
             json=payload,
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def delete_template(self, guild_id: Snowflake, code: str) -> Response[None]:
+    def delete_template(
+        self,
+        guild_id: Snowflake,
+        code: str,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
         return self.request(
-            Route("DELETE", "/guilds/{guild_id}/templates/{code}", guild_id=guild_id, code=code)
+            Route("DELETE", "/guilds/{guild_id}/templates/{code}", guild_id=guild_id, code=code),
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def create_from_template(
-        self, code: str, name: str, region: str, icon: Optional[str]
+        self,
+        code: str,
+        name: str,
+        region: str,
+        icon: Optional[str],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[guild.Guild]:
         payload = {
             "name": name,
@@ -2060,7 +2725,12 @@ class HTTPClient:
         }
         if icon:
             payload["icon"] = icon
-        return self.request(Route("POST", "/guilds/templates/{code}", code=code), json=payload)
+        return self.request(
+            Route("POST", "/guilds/templates/{code}", code=code),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_bans(
         self,
@@ -2068,6 +2738,9 @@ class HTTPClient:
         limit: Optional[int] = None,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[guild.Ban]]:
         params: Dict[str, Union[int, Snowflake]] = {}
 
@@ -2079,32 +2752,78 @@ class HTTPClient:
             params["after"] = after
 
         return self.request(
-            Route("GET", "/guilds/{guild_id}/bans", guild_id=guild_id), params=params
+            Route("GET", "/guilds/{guild_id}/bans", guild_id=guild_id),
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def get_ban(self, user_id: Snowflake, guild_id: Snowflake) -> Response[guild.Ban]:
+    def get_ban(
+        self,
+        user_id: Snowflake,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[guild.Ban]:
         return self.request(
-            Route("GET", "/guilds/{guild_id}/bans/{user_id}", guild_id=guild_id, user_id=user_id)
+            Route("GET", "/guilds/{guild_id}/bans/{user_id}", guild_id=guild_id, user_id=user_id),
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def get_vanity_code(self, guild_id: Snowflake) -> Response[invite.VanityInvite]:
-        return self.request(Route("GET", "/guilds/{guild_id}/vanity-url", guild_id=guild_id))
+    def get_vanity_code(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[invite.VanityInvite]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/vanity-url", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def change_vanity_code(
-        self, guild_id: Snowflake, code: str, *, reason: Optional[str] = None
+        self,
+        guild_id: Snowflake,
+        code: str,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         payload: Dict[str, Any] = {"code": code}
         return self.request(
             Route("PATCH", "/guilds/{guild_id}/vanity-url", guild_id=guild_id),
             json=payload,
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def get_all_guild_channels(self, guild_id: Snowflake) -> Response[List[guild.GuildChannel]]:
-        return self.request(Route("GET", "/guilds/{guild_id}/channels", guild_id=guild_id))
+    def get_all_guild_channels(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[guild.GuildChannel]]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/channels", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_members(
-        self, guild_id: Snowflake, limit: int, after: Optional[Snowflake]
+        self,
+        guild_id: Snowflake,
+        limit: int,
+        after: Optional[Snowflake],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[member.MemberWithUser]]:
         params: Dict[str, Any] = {
             "limit": limit,
@@ -2113,10 +2832,20 @@ class HTTPClient:
             params["after"] = after
 
         r = Route("GET", "/guilds/{guild_id}/members", guild_id=guild_id)
-        return self.request(r, params=params)
+        return self.request(
+            r,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_member(
-        self, guild_id: Snowflake, member_id: Snowflake
+        self,
+        guild_id: Snowflake,
+        member_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[member.MemberWithUser]:
         return self.request(
             Route(
@@ -2124,6 +2853,8 @@ class HTTPClient:
                 "/guilds/{guild_id}/members/{member_id}",
                 guild_id=guild_id,
                 member_id=member_id,
+                auth=auth,
+                retry_request=retry_request,
             )
         )
 
@@ -2135,6 +2866,8 @@ class HTTPClient:
         roles: List[str],
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[guild.GuildPrune]:
         payload: Dict[str, Any] = {
             "days": days,
@@ -2147,6 +2880,8 @@ class HTTPClient:
             Route("POST", "/guilds/{guild_id}/prune", guild_id=guild_id),
             json=payload,
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def estimate_pruned_members(
@@ -2154,6 +2889,9 @@ class HTTPClient:
         guild_id: Snowflake,
         days: int,
         roles: List[str],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[guild.GuildPrune]:
         params: Dict[str, Any] = {
             "days": days,
@@ -2162,20 +2900,57 @@ class HTTPClient:
             params["include_roles"] = ", ".join(roles)
 
         return self.request(
-            Route("GET", "/guilds/{guild_id}/prune", guild_id=guild_id), params=params
+            Route("GET", "/guilds/{guild_id}/prune", guild_id=guild_id),
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def get_sticker(self, sticker_id: Snowflake) -> Response[sticker.Sticker]:
-        return self.request(Route("GET", "/stickers/{sticker_id}", sticker_id=sticker_id))
+    def get_sticker(
+        self,
+        sticker_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[sticker.Sticker]:
+        return self.request(
+            Route("GET", "/stickers/{sticker_id}", sticker_id=sticker_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def list_premium_sticker_packs(self) -> Response[sticker.ListPremiumStickerPacks]:
-        return self.request(Route("GET", "/sticker-packs"))
+    def list_premium_sticker_packs(
+        self,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[sticker.ListPremiumStickerPacks]:
+        return self.request(
+            Route("GET", "/sticker-packs"),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def get_all_guild_stickers(self, guild_id: Snowflake) -> Response[List[sticker.GuildSticker]]:
-        return self.request(Route("GET", "/guilds/{guild_id}/stickers", guild_id=guild_id))
+    def get_all_guild_stickers(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[sticker.GuildSticker]]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/stickers", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_guild_sticker(
-        self, guild_id: Snowflake, sticker_id: Snowflake
+        self,
+        guild_id: Snowflake,
+        sticker_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[sticker.GuildSticker]:
         return self.request(
             Route(
@@ -2183,7 +2958,9 @@ class HTTPClient:
                 "/guilds/{guild_id}/stickers/{sticker_id}",
                 guild_id=guild_id,
                 sticker_id=sticker_id,
-            )
+            ),
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def create_guild_sticker(
@@ -2192,6 +2969,9 @@ class HTTPClient:
         payload: sticker.CreateGuildSticker,
         file: File,
         reason: Optional[str],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[sticker.GuildSticker]:
         initial_bytes = file.fp.read(16)
 
@@ -2227,6 +3007,8 @@ class HTTPClient:
             form=form,
             files=[file],
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def modify_guild_sticker(
@@ -2235,6 +3017,9 @@ class HTTPClient:
         sticker_id: Snowflake,
         payload: sticker.EditGuildSticker,
         reason: Optional[str],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[sticker.GuildSticker]:
         return self.request(
             Route(
@@ -2245,10 +3030,18 @@ class HTTPClient:
             ),
             json=payload,
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def delete_guild_sticker(
-        self, guild_id: Snowflake, sticker_id: Snowflake, reason: Optional[str]
+        self,
+        guild_id: Snowflake,
+        sticker_id: Snowflake,
+        reason: Optional[str],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
             Route(
@@ -2258,16 +3051,37 @@ class HTTPClient:
                 sticker_id=sticker_id,
             ),
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def get_all_custom_emojis(self, guild_id: Snowflake) -> Response[List[emoji.Emoji]]:
-        return self.request(Route("GET", "/guilds/{guild_id}/emojis", guild_id=guild_id))
+    def get_all_custom_emojis(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[emoji.Emoji]]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/emojis", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def get_custom_emoji(self, guild_id: Snowflake, emoji_id: Snowflake) -> Response[emoji.Emoji]:
+    def get_custom_emoji(
+        self,
+        guild_id: Snowflake,
+        emoji_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[emoji.Emoji]:
         return self.request(
             Route(
                 "GET", "/guilds/{guild_id}/emojis/{emoji_id}", guild_id=guild_id, emoji_id=emoji_id
-            )
+            ),
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def create_custom_emoji(
@@ -2278,6 +3092,8 @@ class HTTPClient:
         *,
         roles: Optional[SnowflakeList] = None,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[emoji.Emoji]:
         payload = {
             "name": name,
@@ -2286,7 +3102,13 @@ class HTTPClient:
         }
 
         r = Route("POST", "/guilds/{guild_id}/emojis", guild_id=guild_id)
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def delete_custom_emoji(
         self,
@@ -2294,11 +3116,13 @@ class HTTPClient:
         emoji_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE", "/guilds/{guild_id}/emojis/{emoji_id}", guild_id=guild_id, emoji_id=emoji_id
         )
-        return self.request(r, reason=reason)
+        return self.request(r, reason=reason, auth=auth, retry_request=retry_request)
 
     def edit_custom_emoji(
         self,
@@ -2307,19 +3131,43 @@ class HTTPClient:
         *,
         payload: Dict[str, Any],
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[emoji.Emoji]:
         r = Route(
             "PATCH", "/guilds/{guild_id}/emojis/{emoji_id}", guild_id=guild_id, emoji_id=emoji_id
         )
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def get_all_integrations(self, guild_id: Snowflake) -> Response[List[integration.Integration]]:
+    def get_all_integrations(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[integration.Integration]]:
         r = Route("GET", "/guilds/{guild_id}/integrations", guild_id=guild_id)
 
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def create_integration(
-        self, guild_id: Snowflake, type: integration.IntegrationType, id: int
+        self,
+        guild_id: Snowflake,
+        type: integration.IntegrationType,
+        id: int,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         payload = {
             "type": type,
@@ -2327,10 +3175,21 @@ class HTTPClient:
         }
 
         r = Route("POST", "/guilds/{guild_id}/integrations", guild_id=guild_id)
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_integration(
-        self, guild_id: Snowflake, integration_id: Snowflake, **payload: Any
+        self,
+        guild_id: Snowflake,
+        integration_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+        **payload: Any,
     ) -> Response[None]:
         r = Route(
             "PATCH",
@@ -2339,9 +3198,21 @@ class HTTPClient:
             integration_id=integration_id,
         )
 
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def sync_integration(self, guild_id: Snowflake, integration_id: Snowflake) -> Response[None]:
+    def sync_integration(
+        self,
+        guild_id: Snowflake,
+        integration_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
         r = Route(
             "POST",
             "/guilds/{guild_id}/integrations/{integration_id}/sync",
@@ -2349,10 +3220,20 @@ class HTTPClient:
             integration_id=integration_id,
         )
 
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def delete_integration(
-        self, guild_id: Snowflake, integration_id: Snowflake, *, reason: Optional[str] = None
+        self,
+        guild_id: Snowflake,
+        integration_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -2361,7 +3242,12 @@ class HTTPClient:
             integration_id=integration_id,
         )
 
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_audit_logs(
         self,
@@ -2371,6 +3257,9 @@ class HTTPClient:
         after: Optional[Snowflake] = None,
         user_id: Optional[Snowflake] = None,
         action_type: Optional[AuditLogAction] = None,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[audit_log.AuditLog]:
         params: Dict[str, Any] = {"limit": limit}
         if before:
@@ -2383,14 +3272,39 @@ class HTTPClient:
             params["action_type"] = action_type.value
 
         r = Route("GET", "/guilds/{guild_id}/audit-logs", guild_id=guild_id)
-        return self.request(r, params=params)
-
-    def get_widget(self, guild_id: Snowflake) -> Response[widget.Widget]:
-        return self.request(Route("GET", "/guilds/{guild_id}/widget.json", guild_id=guild_id))
-
-    def edit_widget(self, guild_id: Snowflake, payload) -> Response[widget.WidgetSettings]:
         return self.request(
-            Route("PATCH", "/guilds/{guild_id}/widget", guild_id=guild_id), json=payload
+            r,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def get_widget(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[widget.Widget]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/widget.json", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def edit_widget(
+        self,
+        guild_id: Snowflake,
+        payload,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[widget.WidgetSettings]:
+        return self.request(
+            Route("PATCH", "/guilds/{guild_id}/widget", guild_id=guild_id),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     # Invite management
@@ -2407,6 +3321,8 @@ class HTTPClient:
         target_type: Optional[invite.InviteTargetType] = None,
         target_user_id: Optional[Snowflake] = None,
         target_application_id: Optional[Snowflake] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[invite.Invite]:
         r = Route("POST", "/channels/{channel_id}/invites", channel_id=channel_id)
         payload = {
@@ -2425,34 +3341,89 @@ class HTTPClient:
         if target_application_id:
             payload["target_application_id"] = str(target_application_id)
 
-        return self.request(r, reason=reason, json=payload)
+        return self.request(
+            r,
+            reason=reason,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_invite(
-        self, invite_id: str, *, with_counts: bool = True, with_expiration: bool = True
+        self,
+        invite_id: str,
+        *,
+        with_counts: bool = True,
+        with_expiration: bool = True,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[invite.Invite]:
         params = {
             "with_counts": int(with_counts),
             "with_expiration": int(with_expiration),
         }
         return self.request(
-            Route("GET", "/invites/{invite_id}", invite_id=invite_id), params=params
+            Route("GET", "/invites/{invite_id}", invite_id=invite_id),
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
         )
 
-    def invites_from(self, guild_id: Snowflake) -> Response[List[invite.Invite]]:
-        return self.request(Route("GET", "/guilds/{guild_id}/invites", guild_id=guild_id))
-
-    def invites_from_channel(self, channel_id: Snowflake) -> Response[List[invite.Invite]]:
-        return self.request(Route("GET", "/channels/{channel_id}/invites", channel_id=channel_id))
-
-    def delete_invite(self, invite_id: str, *, reason: Optional[str] = None) -> Response[None]:
+    def invites_from(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[invite.Invite]]:
         return self.request(
-            Route("DELETE", "/invites/{invite_id}", invite_id=invite_id), reason=reason
+            Route("GET", "/guilds/{guild_id}/invites", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def invites_from_channel(
+        self,
+        channel_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[invite.Invite]]:
+        return self.request(
+            Route("GET", "/channels/{channel_id}/invites", channel_id=channel_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def delete_invite(
+        self,
+        invite_id: str,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
+        return self.request(
+            Route("DELETE", "/invites/{invite_id}", invite_id=invite_id),
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     # Role management
 
-    def get_roles(self, guild_id: Snowflake) -> Response[List[role.Role]]:
-        return self.request(Route("GET", "/guilds/{guild_id}/roles", guild_id=guild_id))
+    def get_roles(
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[List[role.Role]]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/roles", guild_id=guild_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_role(
         self,
@@ -2460,6 +3431,8 @@ class HTTPClient:
         role_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
         **fields: Any,
     ) -> Response[role.Role]:
         r = Route("PATCH", "/guilds/{guild_id}/roles/{role_id}", guild_id=guild_id, role_id=role_id)
@@ -2473,15 +3446,32 @@ class HTTPClient:
             "unicode_emoji",
         )
         payload = {k: v for k, v in fields.items() if k in valid_keys}
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def delete_role(
-        self, guild_id: Snowflake, role_id: Snowflake, *, reason: Optional[str] = None
+        self,
+        guild_id: Snowflake,
+        role_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE", "/guilds/{guild_id}/roles/{role_id}", guild_id=guild_id, role_id=role_id
         )
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def replace_roles(
         self,
@@ -2490,14 +3480,35 @@ class HTTPClient:
         role_ids: List[int],
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[member.MemberWithUser]:
-        return self.edit_member(guild_id=guild_id, user_id=user_id, roles=role_ids, reason=reason)
+        return self.edit_member(
+            guild_id=guild_id,
+            user_id=user_id,
+            roles=role_ids,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def create_role(
-        self, guild_id: Snowflake, *, reason: Optional[str] = None, **fields: Any
+        self,
+        guild_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+        **fields: Any,
     ) -> Response[role.Role]:
         r = Route("POST", "/guilds/{guild_id}/roles", guild_id=guild_id)
-        return self.request(r, json=fields, reason=reason)
+        return self.request(
+            r,
+            json=fields,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def move_role_position(
         self,
@@ -2505,9 +3516,17 @@ class HTTPClient:
         positions: List[guild.RolePositionUpdate],
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[role.Role]]:
         r = Route("PATCH", "/guilds/{guild_id}/roles", guild_id=guild_id)
-        return self.request(r, json=positions, reason=reason)
+        return self.request(
+            r,
+            json=positions,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def add_role(
         self,
@@ -2516,6 +3535,8 @@ class HTTPClient:
         role_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "PUT",
@@ -2524,7 +3545,12 @@ class HTTPClient:
             user_id=user_id,
             role_id=role_id,
         )
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def remove_role(
         self,
@@ -2533,6 +3559,8 @@ class HTTPClient:
         role_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -2541,7 +3569,12 @@ class HTTPClient:
             user_id=user_id,
             role_id=role_id,
         )
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_channel_permissions(
         self,
@@ -2552,6 +3585,8 @@ class HTTPClient:
         type: channel.OverwriteType,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         payload = {"id": target, "allow": allow, "deny": deny, "type": type}
         r = Route(
@@ -2560,10 +3595,22 @@ class HTTPClient:
             channel_id=channel_id,
             target=target,
         )
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def delete_channel_permissions(
-        self, channel_id: Snowflake, target: Snowflake, *, reason: Optional[str] = None
+        self,
+        channel_id: Snowflake,
+        target: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -2571,7 +3618,12 @@ class HTTPClient:
             channel_id=channel_id,
             target=target,
         )
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     # Voice management
 
@@ -2582,18 +3634,40 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[member.MemberWithUser]:
         return self.edit_member(
-            guild_id=guild_id, user_id=user_id, channel_id=channel_id, reason=reason
+            guild_id=guild_id,
+            user_id=user_id,
+            channel_id=channel_id,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     # Stage instance management
 
-    def get_stage_instance(self, channel_id: Snowflake) -> Response[channel.StageInstance]:
-        return self.request(Route("GET", "/stage-instances/{channel_id}", channel_id=channel_id))
+    def get_stage_instance(
+        self,
+        channel_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[channel.StageInstance]:
+        return self.request(
+            Route("GET", "/stage-instances/{channel_id}", channel_id=channel_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def create_stage_instance(
-        self, *, reason: Optional[str], **payload: Any
+        self,
+        *,
+        reason: Optional[str],
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+        **payload: Any,
     ) -> Response[channel.StageInstance]:
         valid_keys = (
             "channel_id",
@@ -2602,10 +3676,22 @@ class HTTPClient:
         )
         payload = {k: v for k, v in payload.items() if k in valid_keys}
 
-        return self.request(Route("POST", "/stage-instances"), json=payload, reason=reason)
+        return self.request(
+            Route("POST", "/stage-instances"),
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_stage_instance(
-        self, channel_id: Snowflake, *, reason: Optional[str] = None, **payload: Any
+        self,
+        channel_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+        **payload: Any,
     ) -> Response[None]:
         valid_keys = (
             "topic",
@@ -2617,19 +3703,34 @@ class HTTPClient:
             Route("PATCH", "/stage-instances/{channel_id}", channel_id=channel_id),
             json=payload,
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def delete_stage_instance(
-        self, channel_id: Snowflake, *, reason: Optional[str] = None
+        self,
+        channel_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
-            Route("DELETE", "/stage-instances/{channel_id}", channel_id=channel_id), reason=reason
+            Route("DELETE", "/stage-instances/{channel_id}", channel_id=channel_id),
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     # Application commands (global)
 
     def get_global_commands(
-        self, application_id: Snowflake, with_localizations: bool = True
+        self,
+        application_id: Snowflake,
+        with_localizations: bool = True,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[interactions.ApplicationCommand]]:
         params: Dict[str, str] = {}
         if with_localizations:
@@ -2638,10 +3739,17 @@ class HTTPClient:
         return self.request(
             Route("GET", "/applications/{application_id}/commands", application_id=application_id),
             params=params,
+            auth=auth,
+            retry_request=retry_request,
         )
 
     def get_global_command(
-        self, application_id: Snowflake, command_id: Snowflake
+        self,
+        application_id: Snowflake,
+        command_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         r = Route(
             "GET",
@@ -2649,19 +3757,36 @@ class HTTPClient:
             application_id=application_id,
             command_id=command_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def upsert_global_command(
-        self, application_id: Snowflake, payload
+        self,
+        application_id: Snowflake,
+        payload,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         r = Route("POST", "/applications/{application_id}/commands", application_id=application_id)
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_global_command(
         self,
         application_id: Snowflake,
         command_id: Snowflake,
         payload: interactions.EditApplicationCommand,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         valid_keys = (
             "name",
@@ -2675,10 +3800,20 @@ class HTTPClient:
             application_id=application_id,
             command_id=command_id,
         )
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def delete_global_command(
-        self, application_id: Snowflake, command_id: Snowflake
+        self,
+        application_id: Snowflake,
+        command_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -2686,18 +3821,38 @@ class HTTPClient:
             application_id=application_id,
             command_id=command_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def bulk_upsert_global_commands(
-        self, application_id: Snowflake, payload
+        self,
+        application_id: Snowflake,
+        payload,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[interactions.ApplicationCommand]]:
         r = Route("PUT", "/applications/{application_id}/commands", application_id=application_id)
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     # Application commands (guild)
 
     def get_guild_commands(
-        self, application_id: Snowflake, guild_id: Snowflake, with_localizations: bool = True
+        self,
+        application_id: Snowflake,
+        guild_id: Snowflake,
+        with_localizations: bool = True,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[interactions.ApplicationCommand]]:
         params: Dict[str, str] = {}
         if with_localizations:
@@ -2708,13 +3863,21 @@ class HTTPClient:
             application_id=application_id,
             guild_id=guild_id,
         )
-        return self.request(r, params=params)
+        return self.request(
+            r,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_guild_command(
         self,
         application_id: Snowflake,
         guild_id: Snowflake,
         command_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         r = Route(
             "GET",
@@ -2723,13 +3886,20 @@ class HTTPClient:
             guild_id=guild_id,
             command_id=command_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def upsert_guild_command(
         self,
         application_id: Snowflake,
         guild_id: Snowflake,
         payload: interactions.EditApplicationCommand,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         r = Route(
             "POST",
@@ -2737,7 +3907,12 @@ class HTTPClient:
             application_id=application_id,
             guild_id=guild_id,
         )
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_guild_command(
         self,
@@ -2745,6 +3920,9 @@ class HTTPClient:
         guild_id: Snowflake,
         command_id: Snowflake,
         payload: interactions.EditApplicationCommand,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         valid_keys = (
             "name",
@@ -2759,13 +3937,21 @@ class HTTPClient:
             guild_id=guild_id,
             command_id=command_id,
         )
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def delete_guild_command(
         self,
         application_id: Snowflake,
         guild_id: Snowflake,
         command_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -2774,13 +3960,20 @@ class HTTPClient:
             guild_id=guild_id,
             command_id=command_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def bulk_upsert_guild_commands(
         self,
         application_id: Snowflake,
         guild_id: Snowflake,
         payload: List[interactions.EditApplicationCommand],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[interactions.ApplicationCommand]]:
         r = Route(
             "PUT",
@@ -2788,7 +3981,12 @@ class HTTPClient:
             application_id=application_id,
             guild_id=guild_id,
         )
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     # Interaction responses
 
@@ -2825,7 +4023,11 @@ class HTTPClient:
                 }
             )
 
-        return self.request(route, form=form, files=[file] if file else None)
+        return self.request(
+            route,
+            form=form,
+            files=[file] if file else None,
+        )
 
     def create_interaction_response(
         self,
@@ -2848,7 +4050,10 @@ class HTTPClient:
         if data is not None:
             payload["data"] = data
 
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+        )
 
     def get_original_interaction_response(
         self,
@@ -2861,7 +4066,9 @@ class HTTPClient:
             application_id=application_id,
             interaction_token=token,
         )
-        return self.request(r)
+        return self.request(
+            r,
+        )
 
     def edit_original_interaction_response(
         self,
@@ -2891,7 +4098,9 @@ class HTTPClient:
             application_id=application_id,
             interaction_token=token,
         )
-        return self.request(r)
+        return self.request(
+            r,
+        )
 
     def create_followup_message(
         self,
@@ -2952,12 +4161,17 @@ class HTTPClient:
             interaction_token=token,
             message_id=message_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+        )
 
     def get_guild_application_command_permissions(
         self,
         application_id: Snowflake,
         guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[interactions.GuildApplicationCommandPermissions]]:
         r = Route(
             "GET",
@@ -2965,13 +4179,20 @@ class HTTPClient:
             application_id=application_id,
             guild_id=guild_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_application_command_permissions(
         self,
         application_id: Snowflake,
         guild_id: Snowflake,
         command_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[interactions.GuildApplicationCommandPermissions]:
         r = Route(
             "GET",
@@ -2980,7 +4201,11 @@ class HTTPClient:
             guild_id=guild_id,
             command_id=command_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_application_command_permissions(
         self,
@@ -2988,6 +4213,9 @@ class HTTPClient:
         guild_id: Snowflake,
         command_id: Snowflake,
         payload: interactions.BaseGuildApplicationCommandPermissions,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "PUT",
@@ -2996,13 +4224,21 @@ class HTTPClient:
             guild_id=guild_id,
             command_id=command_id,
         )
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def bulk_edit_guild_application_command_permissions(
         self,
         application_id: Snowflake,
         guild_id: Snowflake,
         payload: List[interactions.PartialGuildApplicationCommandPermissions],
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "PUT",
@@ -3010,12 +4246,26 @@ class HTTPClient:
             application_id=application_id,
             guild_id=guild_id,
         )
-        return self.request(r, json=payload)
+        return self.request(
+            r,
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     # Misc
 
-    def application_info(self) -> Response[appinfo.AppInfo]:
-        return self.request(Route("GET", "/oauth2/applications/@me"))
+    def application_info(
+        self,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[appinfo.AppInfo]:
+        return self.request(
+            Route("GET", "/oauth2/applications/@me"),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     @staticmethod
     def format_websocket_url(url: str, encoding: str = "json", zlib: bool = True) -> str:
@@ -3025,36 +4275,82 @@ class HTTPClient:
             value = "{url}?encoding={encoding}&v={version}"
         return value.format(url=url, encoding=encoding, version=_API_VERSION)
 
-    async def get_gateway(self, *, encoding: str = "json", zlib: bool = True) -> str:
+    async def get_gateway(
+        self,
+        *,
+        encoding: str = "json",
+        zlib: bool = True,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> str:
         try:
-            data = await self.request(Route("GET", "/gateway"))
+            data = await self.request(
+                Route("GET", "/gateway"),
+                auth=auth,
+                retry_request=retry_request,
+            )
         except HTTPException as exc:
             raise GatewayNotFound() from exc
 
         return self.format_websocket_url(data["url"], encoding, zlib)
 
     async def get_bot_gateway(
-        self, *, encoding: str = "json", zlib: bool = True
+        self,
+        *,
+        encoding: str = "json",
+        zlib: bool = True,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Tuple[int, str]:
         try:
-            data = await self.request(Route("GET", "/gateway/bot"))
+            data = await self.request(
+                Route("GET", "/gateway/bot"),
+                auth=auth,
+                retry_request=retry_request,
+            )
         except HTTPException as exc:
             raise GatewayNotFound() from exc
 
         return data["shards"], self.format_websocket_url(data["url"], encoding, zlib)
 
-    def get_user(self, user_id: Snowflake) -> Response[user.User]:
-        return self.request(Route("GET", "/users/{user_id}", user_id=user_id))
+    def get_user(
+        self,
+        user_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[user.User]:
+        return self.request(
+            Route("GET", "/users/{user_id}", user_id=user_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_guild_events(
-        self, guild_id: Snowflake, with_user_count: bool
+        self,
+        guild_id: Snowflake,
+        with_user_count: bool,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[scheduled_events.ScheduledEvent]]:
         params: Dict[str, Any] = {"with_user_count": str(with_user_count)}
         r = Route("GET", "/guilds/{guild_id}/scheduled-events", guild_id=guild_id)
-        return self.request(r, params=params)
+        return self.request(
+            r,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def create_event(
-        self, guild_id: Snowflake, *, reason: Optional[str] = None, **payload: Any
+        self,
+        guild_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+        **payload: Any,
     ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
             "channel_id",
@@ -3069,10 +4365,22 @@ class HTTPClient:
         }
         payload = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route("POST", "/guilds/{guild_id}/scheduled-events", guild_id=guild_id)
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_event(
-        self, guild_id: Snowflake, event_id: Snowflake, with_user_count: bool
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake,
+        with_user_count: bool,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[scheduled_events.ScheduledEvent]:
         params: Dict[str, Any] = {"with_user_count": str(with_user_count)}
         r = Route(
@@ -3081,7 +4389,12 @@ class HTTPClient:
             guild_id=guild_id,
             event_id=event_id,
         )
-        return self.request(r, params=params)
+        return self.request(
+            r,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def edit_event(
         self,
@@ -3089,6 +4402,8 @@ class HTTPClient:
         event_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
         **payload: Any,
     ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
@@ -3110,16 +4425,33 @@ class HTTPClient:
             guild_id=guild_id,
             event_id=event_id,
         )
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
-    def delete_event(self, guild_id: Snowflake, event_id: Snowflake) -> Response[None]:
+    def delete_event(
+        self,
+        guild_id: Snowflake,
+        event_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
         r = Route(
             "DELETE",
             "/guilds/{guild_id}/scheduled-events/{event_id}",
             guild_id=guild_id,
             event_id=event_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_event_users(
         self,
@@ -3130,6 +4462,8 @@ class HTTPClient:
         with_member: bool = MISSING,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[scheduled_events.ScheduledEventUser]]:
         params: Dict[str, Any] = {}
         if limit is not MISSING:
@@ -3146,18 +4480,34 @@ class HTTPClient:
             guild_id=guild_id,
             event_id=event_id,
         )
-        return self.request(r, params=params)
+        return self.request(
+            r,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def list_guild_auto_moderation_rules(
-        self, guild_id: Snowflake
+        self,
+        guild_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[auto_moderation.AutoModerationRule]]:
         r = Route("GET", "/guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_auto_moderation_rule(
         self,
         guild_id: Snowflake,
         auto_moderation_rule_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[auto_moderation.AutoModerationRule]:
         r = Route(
             "GET",
@@ -3165,7 +4515,11 @@ class HTTPClient:
             guild_id=guild_id,
             auto_moderation_rule_id=auto_moderation_rule_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def create_auto_moderation_rule(
         self,
@@ -3173,6 +4527,8 @@ class HTTPClient:
         data: auto_moderation.AutoModerationRuleCreate,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[auto_moderation.AutoModerationRule]:
         valid_keys = (
             "trigger_metadata",
@@ -3188,7 +4544,13 @@ class HTTPClient:
         payload = {k: v for k, v in data.items() if k in valid_keys}
 
         r = Route("POST", "/guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def modify_auto_moderation_rule(
         self,
@@ -3197,6 +4559,8 @@ class HTTPClient:
         data: auto_moderation.AutoModerationRuleModify,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[auto_moderation.AutoModerationRule]:
         valid_keys = (
             "name",
@@ -3216,7 +4580,13 @@ class HTTPClient:
             guild_id=guild_id,
             auto_moderation_rule_id=auto_moderation_rule_id,
         )
-        return self.request(r, json=payload, reason=reason)
+        return self.request(
+            r,
+            json=payload,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def delete_auto_moderation_rule(
         self,
@@ -3224,6 +4594,8 @@ class HTTPClient:
         auto_moderation_rule_id: Snowflake,
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
             "DELETE",
@@ -3231,17 +4603,30 @@ class HTTPClient:
             guild_id=guild_id,
             auto_moderation_rule_id=auto_moderation_rule_id,
         )
-        return self.request(r, reason=reason)
+        return self.request(
+            r,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def get_role_connection_metadata(
-        self, application_id: Snowflake
+        self,
+        application_id: Snowflake,
+        *,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
         r = Route(
             "GET",
             "/applications/{application_id}/role-connections/metadata",
             application_id=application_id,
         )
-        return self.request(r)
+        return self.request(
+            r,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     def update_role_connection_metadata(
         self,
@@ -3249,10 +4634,18 @@ class HTTPClient:
         data: List[role_connections.ApplicationRoleConnectionMetadata],
         *,
         reason: Optional[str] = None,
+        auth: str | None = MISSING,
+        retry_request: bool = True,
     ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
         r = Route(
             "PUT",
             "/applications/{application_id}/role-connections/metadata",
             application_id=application_id,
         )
-        return self.request(r, json=data, reason=reason)
+        return self.request(
+            r,
+            json=data,
+            reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
