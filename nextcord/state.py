@@ -1794,8 +1794,8 @@ class ConnectionState:
         # check if it requires chunking
         if self._guild_needs_chunking(guild):
             task = asyncio.create_task(self._chunk_and_dispatch(guild, unavailable))
-            task.add_done_callback(lambda _t: self._chunk_tasks.pop(guild.id, None))
             self._chunk_tasks[guild.id] = task
+            task.add_done_callback(lambda _t: self._chunk_tasks.pop(guild.id, None))
             return
 
         # Dispatch available if newly available
