@@ -64,7 +64,7 @@ class Component:
         The type of component.
     """
 
-    __slots__: Tuple[str, ...] = ("type",)
+    __slots__: Tuple[str, ...] = ()
 
     __repr_info__: ClassVar[Tuple[str, ...]]
     type: ComponentType
@@ -106,7 +106,7 @@ class ActionRow(Component):
         The children components that this holds, if any.
     """
 
-    __slots__: Tuple[str, ...] = ("children",)
+    __slots__: Tuple[str, ...] = ("type", "children")
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
@@ -151,6 +151,7 @@ class Button(Component):
     """
 
     __slots__: Tuple[str, ...] = (
+        "type",
         "style",
         "custom_id",
         "url",
@@ -586,6 +587,7 @@ class SelectOption:
 
 class TextInput(Component):
     __slots__: Tuple[str, ...] = (
+        "type",
         "style",
         "custom_id",
         "label",
