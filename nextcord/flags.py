@@ -504,7 +504,7 @@ class MemberFlags(BaseFlags):
             Checks if two MemberFlags are not equal.
         .. describe:: hash(x)
 
-            Return the flag's hash.
+            Returns the flag's hash.
         .. describe:: iter(x)
 
             Returns an iterator of ``(name, value)`` pairs. This allows it
