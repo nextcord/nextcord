@@ -96,7 +96,7 @@ class BetterTTLCache(dict):
 
     def pop(self, key, default=None):
         """Pop from timelink before returning pop from self"""
-        __pop__(self.timelink, key)
+        __pop__(self.timelink, key, None)
         return __pop__(self, key, default)
 
     def get_with_update(self, key, default=None):
