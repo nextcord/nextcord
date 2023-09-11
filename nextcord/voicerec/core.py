@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: MIT
 
 
+from dataclasses import dataclass
 import logging
-from io import BufferedWriter, BytesIO
+from io import BytesIO, BufferedIOBase
 from select import select
 from struct import pack, unpack_from
 from threading import Thread
 from time import perf_counter, sleep, time as clock_timestamp
-from typing import Optional, Union
+from typing import Any, Dict, Callable, Optional, Union
 
 from nextcord import File, StageChannel, VoiceChannel, VoiceClient
 from nextcord.client import Client
@@ -21,6 +22,7 @@ ConnectableVoiceChannels = Union[VoiceChannel, StageChannel]
 
 AUDIO_HZ = opus.DecoderThread.SAMPLING_RATE
 SILENCE_FRAME_SIZE = 960
+RECV_SIZE = 4096
 FRAME_OF_SILENCE = b"\xf8\xff\xfe"
 DIFFERENCE_THRESHOLD = 60
 
@@ -33,11 +35,27 @@ SILENCE_STRUCT_100 = SILENCE_STRUCT * 100
 SILENCE_STRUCT_1000 = SILENCE_STRUCT * 1000  # 3.4mb in size
 
 
+export_methods = {
+    Formats.MP3: exporters.export_with_ffmpeg,
+    Formats.MP4: exporters.export_with_ffmpeg,
+    Formats.M4A: exporters.export_with_ffmpeg,
+    Formats.MKA: exporters.export_with_ffmpeg,
+    Formats.MKV: exporters.export_with_ffmpeg,
+    Formats.OGG: exporters.export_with_ffmpeg,
+    Formats.PCM: exporters.export_as_PCM,
+    Formats.WAV: exporters.export_as_WAV,
+}
+
+
 class Silence:
     def __init__(self, frames: int) -> None:
         self.frames: int = frames
 
-    def write_to(self, buffer: Union[BufferedWriter, BytesIO]) -> None:
+    @property
+    def milliseconds(self):
+        return self.frames / (AUDIO_HZ / SILENCE_FRAME_SIZE) * 1000
+
+    def write_to(self, buffer: BufferedIOBase) -> None:
         write = buffer.write
         frames = self.frames
 
@@ -56,51 +74,12 @@ class Silence:
                 write(SILENCE_STRUCT)
                 frames -= 1
 
-
-class TimeTracker:
-    def __init__(self) -> None:
-        self.starting_time: Optional[float] = clock_timestamp()  # Also used as filename
-        self.first_packet_time: Optional[float] = None
-        self.stopping_time: Optional[float] = None
-
-        self.users_times: dict[int, tuple[int, float]] = {}
-
-    def add_user(self, user, start_time) -> None:
-        if user not in self.users_times:
-            self.users_times[user] = start_time
-
-    def calculate_silence(self, user_id, timestamp, received_timestamp):
-        # process a packet for a registered user
-        if user_time := self.users_times.get(user_id):
-            delta_created_time = timestamp - user_time[0]
-            delta_received_time = (received_timestamp - user_time[1]) * AUDIO_HZ
-            difference = abs(100 - (delta_created_time * 100 / delta_received_time))
-
-            # calculate time since last audio packet
-            if difference > DIFFERENCE_THRESHOLD and delta_created_time != SILENCE_FRAME_SIZE:
-                silence = delta_received_time - SILENCE_FRAME_SIZE
-            else:
-                silence = delta_created_time - SILENCE_FRAME_SIZE
-
-        # first packet ever
-        elif not self.users_times:
-            # register first packet ever
-            self.first_packet_timestamp = received_timestamp
-            silence = 0
-
-        # first packet from user
-        else:
-            # calculate time since first packet from user
-            silence = (
-                (received_timestamp - self.first_packet_timestamp) * AUDIO_HZ
-            ) - SILENCE_FRAME_SIZE
-
-        # update receive times for next calculation
-        self.users_times[user_id] = (timestamp, received_timestamp)
-
-        return Silence(
-            frames=(max(0, int(silence / SILENCE_FRAME_SIZE)) * opus.DecoderThread.CHANNELS)
-        )
+    @staticmethod
+    def from_timedelta(silence: int):
+        half_frames = int(silence / SILENCE_FRAME_SIZE)
+        if half_frames <= 0:
+            return None
+        return Silence(half_frames * opus.DecoderThread.CHANNELS)
 
 
 class AudioWriter:
@@ -108,7 +87,9 @@ class AudioWriter:
         self.guild_id = guild_id
         self.user_id = user_id
 
-        self.buffer: Union[BufferedWriter, BytesIO]
+        self.buffer: BufferedIOBase
+        self.starting_silence: Optional[Silence] = None
+
         if temp_type == TempType.File:
             self.buffer = open_tmp_file(guild_id, user_id, "wb+")
         elif temp_type == TempType.Memory:
@@ -123,12 +104,69 @@ class AudioWriter:
             self.buffer.write(bytes)
 
 
+class TimeTracker:
+    def __init__(self) -> None:
+        self.starting_time: Optional[float] = clock_timestamp()  # Also used as filename
+        self.first_packet_time: Optional[float] = None
+
+        self.users_times: Dict[int, tuple[int, float]] = {}
+
+    def add_user(self, user, start_time) -> None:
+        if user not in self.users_times:
+            self.users_times[user] = start_time
+
+    def calculate_silence(
+        self, writer: AudioWriter, user_id, timestamp, received_timestamp
+    ) -> Optional[Silence]:
+        # process a packet for a registered user
+        if user_time := self.users_times.get(user_id):
+            delta_created_time = timestamp - user_time[0]
+            delta_received_time = (received_timestamp - user_time[1]) * AUDIO_HZ
+            difference = abs(100 - (delta_created_time * 100 / delta_received_time))
+
+            # calculate time since last audio packet
+            if (
+                difference > DIFFERENCE_THRESHOLD
+                and delta_created_time != SILENCE_FRAME_SIZE
+            ):
+                silence = delta_received_time - SILENCE_FRAME_SIZE
+            else:
+                silence = delta_created_time - SILENCE_FRAME_SIZE
+
+        # first packet ever
+        elif not self.users_times:
+            # register first packet
+            self.first_packet_timestamp = received_timestamp
+            silence = 0
+
+        # first packet from user
+        else:
+            # calculate time since first packet
+            silence = (
+                (received_timestamp - self.first_packet_timestamp) * AUDIO_HZ
+            ) - SILENCE_FRAME_SIZE
+
+            # store first silence to write later if needed
+            writer.starting_silence = Silence.from_timedelta(silence)
+            # update receive times for next calculation
+            self.users_times[user_id] = (timestamp, received_timestamp)
+
+            return None  # starting silence written later in export
+
+        # update receive times for next calculation
+        self.users_times[user_id] = (timestamp, received_timestamp)
+
+        return Silence.from_timedelta(silence)
+
+
 class AudioData(dict):
     def __init__(self, decoder: opus.DecoderThread) -> None:
         self.time_tracker: Optional[TimeTracker] = None
         self.decoder: opus.DecoderThread = decoder
 
-    def get_writer(self, temp_type: TempType, guild_id: int, user_id: int) -> AudioWriter:
+    def get_writer(
+        self, temp_type: TempType, guild_id: int, user_id: int
+    ) -> AudioWriter:
         return self.get(user_id) or self.add_new_writer(
             user_id, AudioWriter(temp_type, guild_id, user_id)
         )
@@ -137,23 +175,33 @@ class AudioData(dict):
         self[user_id] = writer
         return writer
 
-    def append(
-        self, temp_type: TempType, guild_id: int, user_id: int, silence: Silence, data: bytes
-    ) -> None:
-        writer = self.get_writer(temp_type, guild_id, user_id)
-        silence.write_to(writer.buffer)
-        writer.write(data)
-
-    async def export(self, audio_format: Formats, temp_type: TempType) -> dict[int, File]:
+    async def export(
+        self, audio_format: Formats, temp_type: TempType, sync_start: bool = True
+    ) -> Dict[int, File]:
         if not self.time_tracker:
-            raise OngoingRecordingError("Cannot export a recording before it is stopped!")
+            raise OngoingRecordingError(
+                "Cannot export a recording before it is stopped!"
+            )
 
         if not isinstance(audio_format, Formats):
-            raise TypeError(f"audio_format must be of type `Formats` not {type(audio_format)}")
+            raise TypeError(
+                f"audio_format must be of type `Formats` not {type(audio_format)}"
+            )
 
-        exporter = getattr(exporters, format_exports[audio_format])
+        return await export_methods[audio_format](
+            self, audio_format, temp_type, sync_start=sync_start  # individual files
+        )
 
-        return await exporter(self, audio_format, temp_type)  # individual files
+
+@dataclass
+class OpusFrame:
+    sequence: int
+    timestamp: float
+    received_timestamp: float
+    ssrc: int
+    decrypted_data: bytes
+    decoded_data: Optional[bytes] = None
+    user_id: Optional[int] = None
 
 
 class RecorderClient(VoiceClient):
@@ -169,50 +217,100 @@ class RecorderClient(VoiceClient):
 
         self.time_tracker: Optional[TimeTracker] = None
         self.audio_data: Optional[AudioData] = None
+        self.recording_paused: bool = False
 
+        # processes
+        self.decoder = opus.DecoderThread(self)
         self.process: Optional[Thread] = None
         self.auto_deaf: bool = auto_deaf
         self.temp_type: TempType = temp_type
 
+        # handlers private
+        self.__handler_set: bool = False
+        self.__record_alongside_handler: bool = False
+        self.__raw_data_handler: Optional[Callable[[bytes], Any]] = None
+        self.__decrypted_data_handler: Optional[Callable[[OpusFrame], Any]] = None
+        self.__decoded_data_handler: Optional[Callable[[OpusFrame], Any]] = None
+
     async def voice_connect(self, deaf=None, mute=None) -> None:
         await self.channel.guild.change_voice_state(
             channel=self.channel,
-            self_deaf=(deaf if deaf is not None else (True if self.auto_deaf else False)),
+            self_deaf=(
+                deaf if deaf is not None else (True if self.auto_deaf else False)
+            ),
             self_mute=mute or False,
         )
+
+    # custom output stuff
+
+    def set_data_handler(
+        self,
+        *,
+        raw_data_handler: Optional[Callable[[bytes], Any]] = None,
+        decrypted_data_handler: Optional[Callable[[OpusFrame], Any]] = None,
+        decoded_data_handler: Optional[Callable[[OpusFrame], Any]] = None,
+        record_alongside_handler=False,
+    ) -> None:
+        self.__record_alongside_handler = record_alongside_handler
+        self.__raw_data_handler = raw_data_handler
+        self.__decrypted_data_handler = decrypted_data_handler
+        self.__decoded_data_handler = decoded_data_handler
+
+        handlers = (
+            self.__raw_data_handler,
+            self.__decrypted_data_handler,
+            self.__decoded_data_handler,
+        )
+
+        if sum(bool(method) for method in handlers) > 1:
+            self.__raw_data_handler = None
+            self.__decrypted_data_handler = None
+            self.__decoded_data_handler = None
+            raise MultipleHandlersError(
+                "You may only set one handler! The lowest level handler will be called ommiting the rest.\n"
+                "`raw_data_handler` being the lowest level for handling raw data from discord.\n"
+                "`decrypted_data_handler` will give you valid opus audio data before decoding.\n"
+                "`decoded_data_handler` will give you the decrypted data and pcm audio bytes.\n"
+            )
+
+        if not self.__record_alongside_handler:
+            self.__handler_set = True
 
     # recording stuff
 
     def _process_decoded_audio(
         self,
-        _: int,  # sequence
-        timestamp: int,
-        received_timestamp: float,
-        ssrc: int,
-        decoded_data: bytes,
+        opus_frame: OpusFrame,
     ) -> None:
+        if self.__decoded_data_handler:
+            self.__decoded_data_handler(opus_frame)
+            # terminate early after calling custom decoded handler method if not set to record too
+            if not self.__record_alongside_handler:
+                return
+
         if self.audio_data is None or self.time_tracker is None or not self.guild:
             return
 
         ssrc_cache = self.ws.ssrc_cache
-        while not (user_data := ssrc_cache.get(ssrc)):
+        while not (user_data := ssrc_cache.get(opus_frame.ssrc)):
             sleep(0.05)
 
-        silence = self.time_tracker.calculate_silence(
-            (user_id := user_data["user_id"]),
-            timestamp,
-            received_timestamp,
-        )
+        user_id = user_data["user_id"]
+        writer = self.audio_data.get_writer(self.temp_type, self.guild.id, user_id)
 
-        self.audio_data.append(
-            self.temp_type,
-            self.guild.id,
+        silence: Optional[Silence] = self.time_tracker.calculate_silence(
+            writer,
             user_id,
-            silence,
-            decoded_data,
+            opus_frame.timestamp,
+            opus_frame.received_timestamp,
         )
 
-    def _decode_audio(self, data) -> None:
+        if silence is not None:
+            silence.write_to(writer.buffer)
+
+        writer.write(opus_frame.decoded_data)
+
+    def _decode_audio(self, data: bytes) -> None:
         if 200 <= data[1] <= 204:
             return  # RTCP concention info, not useful
 
@@ -222,18 +320,35 @@ class RecorderClient(VoiceClient):
         data = data[12:]
 
         sequence, timestamp, ssrc = unpack_from(">xxHII", header)
+        decrypted_data = getattr(decrypter, f"decrypt_{self.mode}")(
+            self.secret_key, header, data
+        )
 
-        decrypted_data = getattr(decrypter, f"decrypt_{self.mode}")(self.secret_key, header, data)
+        opus_frame = OpusFrame(
+            sequence, timestamp, perf_counter(), ssrc, decrypted_data
+        )
+
+        if self.__decrypted_data_handler:
+            self.__decrypted_data_handler(opus_frame)
+            # terminate early after calling custom decrypt handler method if not set to record too
+            if not self.__record_alongside_handler:
+                return
 
         if decrypted_data == FRAME_OF_SILENCE:
             return
 
         # decoder will call `_process_decoded_audio` once finished decoding
-        self.decoder.decode((sequence, timestamp, perf_counter(), ssrc, decrypted_data))
+        self.decoder.decode(opus_frame)
 
-    def _process_audio_packet(self, data) -> None:
+    def _process_audio_packet(self, data: bytes) -> None:
         if self.audio_data is None:
             return
+
+        if self.__raw_data_handler:
+            self.__raw_data_handler(data)
+            # terminate early after calling custom decoded handler method if not set to record too
+            if not self.__record_alongside_handler:
+                return
 
         self._decode_audio(data)
 
@@ -251,19 +366,26 @@ class RecorderClient(VoiceClient):
                 continue
 
             try:
-                self._process_audio_packet(self.socket.recv(4096))
+                if self.recording_paused:
+                    self.socket.recv(RECV_SIZE)
+                else:
+                    self._process_audio_packet(self.socket.recv(RECV_SIZE))
             except OSError:
                 return self._stop_recording()
 
-    def _start_recording(self) -> Thread:
-        self.decoder = opus.DecoderThread(self)
-        self.decoder.start()
+    def _start_recording(self) -> None:
+        if (
+            self.__record_alongside_handler  # requires recording alongside
+            or self.__decoded_data_handler  # requires decoding data
+            or not self.__handler_set  # normal recording
+        ):
+            self.decoder.start()
 
-        self.process = Thread(target=self._start_packets_recording)
-        self.process.start()
-        return self.process
+        Thread(target=self._start_packets_recording).start()
 
-    async def start_recording(self, channel: Optional[ConnectableVoiceChannels] = None) -> Thread:
+    async def start_recording(
+        self, channel: Optional[ConnectableVoiceChannels] = None
+    ):
         if self.time_tracker:
             raise OngoingRecordingError(
                 f"A recording has already started at {self.time_tracker.starting_time}"
@@ -279,7 +401,16 @@ class RecorderClient(VoiceClient):
         if not self.is_connected():
             raise NotConnectedError("Not connected to a voice channel.")
 
-        return self._start_recording()
+        self._start_recording()
+
+    def pause_recording(self) -> None:
+        self.recording_paused = True
+
+    def resume_recording(self) -> None:
+        self.recording_paused = False
+
+    def toggle_recording_paused(self) -> None:
+        self.recording_paused = True if self.recording_paused is False else True
 
     def _stop_recording(self) -> AudioData:
         if not (time_tracker := self.time_tracker):  # stops the recording loop
@@ -287,6 +418,10 @@ class RecorderClient(VoiceClient):
 
         if (audio_data := self.audio_data) is None:
             raise TempNotFound("Audio data not found!")
+
+        self.recording_paused = True
+
+        self.decoder.stop()
 
         audio_data.decoder = self.decoder
         audio_data.time_tracker = time_tracker
@@ -301,7 +436,8 @@ class RecorderClient(VoiceClient):
         disconnect: bool = False,
         export_format: Optional[Formats] = None,
         temp_type: TempType = TempType.File,  # memory tmp export will not work with m4a & mp4
-    ) -> Union[AudioData, dict[int, File]]:
+        sync_start: bool = True,
+    ) -> Optional[Union[AudioData, Dict[int, File]]]:
         audio_data: AudioData = self._stop_recording()
 
         if disconnect:
@@ -310,7 +446,14 @@ class RecorderClient(VoiceClient):
         if not disconnect and self.auto_deaf:
             await self.voice_connect()
 
+        if self.__handler_set:
+            if export_format:
+                raise ExportUnavailable(
+                    "Cannot export incomplete audio recordings due to setting a custom handler!"
+                )
+            return
+
         if not export_format:
             return audio_data
 
-        return await audio_data.export(export_format, temp_type)
+        return await audio_data.export(export_format, temp_type, sync_start)
