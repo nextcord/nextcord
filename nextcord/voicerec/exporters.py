@@ -3,9 +3,9 @@
 import os
 import subprocess
 import wave
-from platform import system
 from asyncio import get_running_loop
 from io import BufferedIOBase, BufferedRandom, BufferedWriter, BytesIO
+from platform import system
 from typing import Dict, Union
 
 from nextcord import File
@@ -16,8 +16,9 @@ from .shared import *
 
 FLAG = subprocess.CREATE_NO_WINDOW if system() == "Windows" else 0
 
+
 class AudioFile(File):
-    def __init__(self, *args, sync_start=True, starting_silence=None, **kwargs) -> None:
+    def __init__(self, *args, sync_start: bool = True, starting_silence=None, **kwargs) -> None:
         self.starting_silence = starting_silence if sync_start else None
         super().__init__(*args, **kwargs)
 
@@ -108,10 +109,13 @@ class FFmpeg:
                 "FFmpeg is not installed or aliased improperly. Unable to launch `ffmpeg` command."
             )
 
+
 # FFMPEG converts
 
 
-def _export_all_with_file_tmp(audio_data, audio_format: str, sync_start: bool) -> Dict[int, AudioFile]:
+def _export_all_with_file_tmp(
+    audio_data, audio_format: str, sync_start: bool
+) -> Dict[int, AudioFile]:
     return {
         user_id: (
             AudioFile(
@@ -119,14 +123,16 @@ def _export_all_with_file_tmp(audio_data, audio_format: str, sync_start: bool) -
                 f"{user_id}.{audio_format[0]}",
                 sync_start=sync_start,
                 starting_silence=writer.starting_silence,
-                force_close=True
+                force_close=True,
             )
         )
         for (user_id, writer) in audio_data.items()
     }
 
 
-def _export_all_with_memory_tmp(audio_data, audio_format: str, sync_start: bool) -> Dict[int, AudioFile]:
+def _export_all_with_memory_tmp(
+    audio_data, audio_format: str, sync_start: bool
+) -> Dict[int, AudioFile]:
     return {
         user_id: (
             AudioFile(
@@ -134,7 +140,7 @@ def _export_all_with_memory_tmp(audio_data, audio_format: str, sync_start: bool)
                 f"{user_id}.{audio_format[0]}",
                 sync_start=sync_start,
                 starting_silence=writer.starting_silence,
-                force_close=True
+                force_close=True,
             )
         )
         for (user_id, writer) in audio_data.items()
@@ -157,11 +163,7 @@ async def export_with_ffmpeg(
         raise TypeError(f"audio_format must be of type `Formats` not {type(audio_format)}")
 
     return await get_running_loop().run_in_executor(
-        None,
-        export_methods[temp_type],
-        audio_data,
-        ffmpeg_args[audio_format],
-        sync_start
+        None, export_methods[temp_type], audio_data, ffmpeg_args[audio_format], sync_start
     )
 
 
@@ -177,16 +179,14 @@ def _export_as_PCM(user_id: int, writer, sync_start: bool):
         f"{user_id}.pcm",
         sync_start=sync_start,
         starting_silence=writer.starting_silence,
-        force_close=True
+        force_close=True,
     )
 
 
 async def export_as_PCM(audio_data, *args, sync_start: bool) -> Dict[int, AudioFile]:
     run = get_running_loop().run_in_executor
     return {
-        user_id: await run(
-            None, _export_as_PCM, user_id, audio_writer, sync_start
-        )
+        user_id: await run(None, _export_as_PCM, user_id, audio_writer, sync_start)
         for user_id, audio_writer in audio_data.items()
     }
 
@@ -209,7 +209,7 @@ def _export_as_WAV(user_id: int, writer, decoder: opus.DecoderThread, sync_start
         f"{user_id}.wav",
         sync_start=sync_start,
         starting_silence=writer.starting_silence,
-        force_close=True
+        force_close=True,
     )
 
 
@@ -217,8 +217,6 @@ async def export_as_WAV(audio_data, *args, sync_start: bool) -> Dict[int, AudioF
     decoder = audio_data.decoder
     run = get_running_loop().run_in_executor
     return {
-        user_id: await run(
-            None, _export_as_WAV, user_id, audio_writer, decoder, sync_start
-        )
+        user_id: await run(None, _export_as_WAV, user_id, audio_writer, decoder, sync_start)
         for user_id, audio_writer in audio_data.items()
     }

@@ -19,7 +19,7 @@ class DecoderThread(threading.Thread, opus._OpusStruct):
         self.decoder = {}
         self._end_thread = threading.Event()
 
-    def start(self):
+    def start(self) -> None:
         self._end_thread = threading.Event()
         super().start()
 
@@ -30,7 +30,7 @@ class DecoderThread(threading.Thread, opus._OpusStruct):
         while not self._end_thread.is_set():
             try:
                 opus_frame = self.decode_queue.pop(0)
-                
+
             except IndexError:
                 sleep(0.001)
                 continue
@@ -45,9 +45,7 @@ class DecoderThread(threading.Thread, opus._OpusStruct):
                 print("Error occurred while decoding opus frame.")
                 continue
 
-            self.recorder._process_decoded_audio(
-                opus_frame
-            )
+            self.recorder._process_decoded_audio(opus_frame)
 
     def stop(self) -> None:
         self._end_thread.set()
