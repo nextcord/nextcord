@@ -2,7 +2,7 @@
 
 from enum import Enum
 from time import time as now
-from typing import Optional, Union, Hashable
+from typing import Hashable, Optional, Union
 
 # Avoiding super() call speeds up by 2x
 # Cache speedup is very beneficial as it will be one of
@@ -16,11 +16,12 @@ __pop__ = dict.pop
 class CacheMissing(Enum):
     MISSING = 0
 
+
 _MISSING = CacheMissing.MISSING
 
 
 class SizedDict(dict):
-    __slots__ = ("maxsize", )
+    __slots__ = ("maxsize",)
 
     def __init__(self, maxsize: Optional[Union[float, int]] = None) -> None:
         self.maxsize: Union[float, int] = maxsize or float("inf")
