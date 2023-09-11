@@ -7,6 +7,7 @@ import threading
 from time import sleep
 
 from nextcord import opus
+from nextcord.errors import InvalidArgument
 
 
 class DecoderThread(threading.Thread, opus._OpusStruct):
@@ -18,51 +19,45 @@ class DecoderThread(threading.Thread, opus._OpusStruct):
         self.decoder = {}
         self._end_thread = threading.Event()
 
+    def start(self):
+        self._end_thread = threading.Event()
+        super().start()
+
     def decode(self, opus_frame) -> None:
         self.decode_queue.append(opus_frame)
 
     def run(self) -> None:
         while not self._end_thread.is_set():
             try:
-                (
-                    sequence,
-                    timestamp,
-                    received_timestamp,
-                    ssrc,
-                    decrypted_data,
-                ) = self.decode_queue.pop(0)
+                opus_frame = self.decode_queue.pop(0)
+                
             except IndexError:
                 sleep(0.001)
                 continue
 
             try:
-                if decrypted_data is None:
+                if opus_frame.decrypted_data is None:
                     continue
                 else:
-                    decoder = self.get_decoder(ssrc)
-                    decoded_data = decoder.decode(decrypted_data, fec=False)
-            except opus.InvalidArgument:
+                    decoder = self.get_decoder(opus_frame.ssrc)
+                    opus_frame.decoded_data = decoder.decode(opus_frame.decrypted_data, fec=False)
+            except InvalidArgument:
                 print("Error occurred while decoding opus frame.")
                 continue
 
             self.recorder._process_decoded_audio(
-                sequence, timestamp, received_timestamp, ssrc, decoded_data
+                opus_frame
             )
 
     def stop(self) -> None:
-        while self.decoding:
-            sleep(0.1)
-            self.decoder = {}
-            gc.collect()
-            logging.debug("Decoder process killed.")
         self._end_thread.set()
+        self.decode_queue.clear()
+        self.decoder.clear()
+        gc.collect()
+        logging.debug("Decoder process killed.")
 
     def get_decoder(self, ssrc) -> opus.Decoder:
         if (d := self.decoder.get(ssrc)) is not None:
             return d
         d = self.decoder[ssrc] = opus.Decoder()
         return d
-
-    @property
-    def decoding(self):
-        return bool(self.decode_queue)
