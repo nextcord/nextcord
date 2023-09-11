@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT
 
 from struct import unpack_from
-
 from nacl.secret import SecretBox
 
 
