@@ -22,18 +22,6 @@ class Formats(Enum):
     WAV = 7
 
 
-format_exports = {
-    Formats.MP3: "export_with_ffmpeg",
-    Formats.MP4: "export_with_ffmpeg",
-    Formats.M4A: "export_with_ffmpeg",
-    Formats.MKA: "export_with_ffmpeg",
-    Formats.MKV: "export_with_ffmpeg",
-    Formats.OGG: "export_with_ffmpeg",
-    Formats.PCM: "export_as_PCM",
-    Formats.WAV: "export_as_WAV",
-}
-
-
 def open_tmp_file(guild_id, user_id, mode):
     path = Path(f".rectmps/{guild_id}.{user_id}.tmp")
 
