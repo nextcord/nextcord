@@ -37,3 +37,15 @@ class NoFFmpeg(DiscordException):
     """
     Raised if ffmpeg was not found.
     """
+
+
+class MultipleHandlersError(DiscordException):
+    """
+    Raised when trying to set multiple receivers.
+    """
+
+
+class ExportUnavailable(DiscordException):
+    """
+    Raised when exporting is not possible due to a receiver having been set.
+    """
