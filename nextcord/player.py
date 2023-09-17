@@ -779,6 +779,9 @@ class AudioPlayer(threading.Thread):
             self.resume(update_speaking=False)
 
     def _speak(self, speaking: bool) -> None:
+        if self.client.ws is MISSING:
+            return
+
         try:
             asyncio.run_coroutine_threadsafe(
                 self.client.ws.speak(SpeakingState(int(speaking))), self.client.loop

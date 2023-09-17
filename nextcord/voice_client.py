@@ -28,6 +28,7 @@ from . import opus, utils
 from .backoff import ExponentialBackoff
 from .errors import ClientException, ConnectionClosed
 from .gateway import *
+from .missing import MISSING, MissingOr
 from .player import AudioPlayer, AudioSource
 from .utils import MISSING
 
@@ -200,7 +201,7 @@ class VoiceClient(VoiceProtocol):
         The event loop that the voice client is running on.
     """
 
-    endpoint_ip: str
+    endpoint_ip: MissingOr[str]
     voice_port: int
     secret_key: List[int]
     ssrc: int
@@ -213,7 +214,7 @@ class VoiceClient(VoiceProtocol):
 
         super().__init__(client, channel)
         state = client._connection
-        self.token: str = MISSING
+        self.token: MissingOr[str] = MISSING
         self.socket = MISSING
         self.loop: asyncio.AbstractEventLoop = state.loop
         self._state: ConnectionState = state
@@ -225,16 +226,16 @@ class VoiceClient(VoiceProtocol):
         self._voice_state_complete: asyncio.Event = asyncio.Event()
         self._voice_server_complete: asyncio.Event = asyncio.Event()
 
-        self.mode: str = MISSING
+        self.mode: MissingOr[str] = MISSING
         self._connections: int = 0
         self.sequence: int = 0
         self.timestamp: int = 0
         self.timeout: float = 0
-        self._runner: asyncio.Task = MISSING
+        self._runner: MissingOr[asyncio.Task] = MISSING
         self._player: Optional[AudioPlayer] = None
-        self.encoder: Encoder = MISSING
+        self.encoder: MissingOr[Encoder] = MISSING
         self._lite_nonce: int = 0
-        self.ws: DiscordVoiceWebSocket = MISSING
+        self.ws: MissingOr[DiscordVoiceWebSocket] = MISSING
 
     warn_nacl = not has_nacl
     supported_modes: Tuple[SupportedModes, ...] = (
@@ -306,7 +307,7 @@ class VoiceClient(VoiceProtocol):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.setblocking(False)
 
-        if not self._handshaking:
+        if not self._handshaking and self.ws is not MISSING:
             # If we're not handshaking then we need to terminate our previous connection in the websocket
             await self.ws.close(4000)
             return
@@ -424,6 +425,9 @@ class VoiceClient(VoiceProtocol):
         return float("inf") if not ws else ws.average_latency
 
     async def poll_voice_ws(self, reconnect: bool) -> None:
+        if self.ws is MISSING:
+            return
+
         backoff = ExponentialBackoff()
         while True:
             try:
@@ -506,6 +510,9 @@ class VoiceClient(VoiceProtocol):
     # audio related
 
     def _get_voice_packet(self, data):
+        if self.mode is MISSING:
+            return
+
         header = bytearray(12)
 
         # Formulate rtp header
@@ -648,6 +655,9 @@ class VoiceClient(VoiceProtocol):
         opus.OpusError
             Encoding the data failed.
         """
+
+        if self.encoder is MISSING or self.socket is MISSING:
+            return
 
         self.checked_add("sequence", 1, 65535)
         if encode:

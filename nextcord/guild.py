@@ -1631,29 +1631,29 @@ class Guild(Hashable):
     async def edit(
         self,
         *,
-        reason: Optional[str] = MISSING,
-        name: str = MISSING,
-        description: Optional[str] = MISSING,
-        icon: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
-        banner: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
-        splash: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
-        discovery_splash: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
-        community: bool = MISSING,
-        region: Optional[Union[str, VoiceRegion]] = MISSING,
-        afk_channel: Optional[VoiceChannel] = MISSING,
-        owner: Snowflake = MISSING,
-        afk_timeout: int = MISSING,
-        default_notifications: NotificationLevel = MISSING,
-        verification_level: VerificationLevel = MISSING,
-        explicit_content_filter: ContentFilter = MISSING,
-        vanity_code: str = MISSING,
-        system_channel: Optional[TextChannel] = MISSING,
-        system_channel_flags: SystemChannelFlags = MISSING,
-        preferred_locale: str = MISSING,
-        rules_channel: Optional[TextChannel] = MISSING,
-        public_updates_channel: Optional[TextChannel] = MISSING,
-        invites_disabled: bool = MISSING,
-        premium_progress_bar_enabled: bool = MISSING,
+        reason: MissingOr[Optional[str]] = MISSING,
+        name: MissingOr[str] = MISSING,
+        description: MissingOr[Optional[str]] = MISSING,
+        icon: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
+        banner: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
+        splash: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
+        discovery_splash: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
+        community: MissingOr[bool] = MISSING,
+        region: MissingOr[Optional[Union[str, VoiceRegion]]] = MISSING,
+        afk_channel: MissingOr[Optional[VoiceChannel]] = MISSING,
+        owner: MissingOr[Snowflake] = MISSING,
+        afk_timeout: MissingOr[int] = MISSING,
+        default_notifications: MissingOr[NotificationLevel] = MISSING,
+        verification_level: MissingOr[VerificationLevel] = MISSING,
+        explicit_content_filter: MissingOr[ContentFilter] = MISSING,
+        vanity_code: MissingOr[str] = MISSING,
+        system_channel: MissingOr[Optional[TextChannel]] = MISSING,
+        system_channel_flags: MissingOr[SystemChannelFlags] = MISSING,
+        preferred_locale: MissingOr[str] = MISSING,
+        rules_channel: MissingOr[Optional[TextChannel]] = MISSING,
+        public_updates_channel: MissingOr[Optional[TextChannel]] = MISSING,
+        invites_disabled: MissingOr[bool] = MISSING,
+        premium_progress_bar_enabled: MissingOr[bool] = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1764,6 +1764,10 @@ class Guild(Hashable):
             The newly updated guild. Note that this has the same limitations as
             mentioned in :meth:`Client.fetch_guild` and may not have full data.
         """
+
+        # I'm not sure why reason can be MISSING since the http methods can't handle it as MISSING anyways
+        if reason is MISSING:
+            reason = None
 
         http = self._state.http
 
