@@ -4650,6 +4650,14 @@ ApplicationFlags
 .. autoclass:: ApplicationFlags
     :members:
 
+RoleFlags
+~~~~~~~~~
+
+.. attributetable:: RoleFlags
+
+.. autoclass:: RoleFlags
+    :members:
+
 File
 ~~~~
 
