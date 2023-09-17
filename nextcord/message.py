@@ -27,7 +27,7 @@ from .emoji import Emoji
 from .enums import ChannelType, MessageType, try_enum
 from .errors import HTTPException, InvalidArgument
 from .file import File
-from .flags import MessageFlags
+from .flags import AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
@@ -157,6 +157,7 @@ class Attachment(Hashable):
         "_http",
         "content_type",
         "description",
+        "_flags",
     )
 
     def __init__(self, *, data: AttachmentPayload, state: ConnectionState) -> None:
@@ -170,6 +171,7 @@ class Attachment(Hashable):
         self._http = state.http
         self.content_type: Optional[str] = data.get("content_type")
         self.description: Optional[str] = data.get("description")
+        self._flags: int = data.get("flags", 0)
 
     def is_spoiler(self) -> bool:
         """:class:`bool`: Whether this attachment contains a spoiler."""
@@ -360,6 +362,18 @@ class Attachment(Hashable):
         if self.description:
             result["description"] = self.description
         return result
+
+    @property
+    def flags(self) -> AttachmentFlags:
+        """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
+
+        .. versionadded:: 2.6
+        """
+        return AttachmentFlags._from_value(self._flags)
+
+    def is_remix(self) -> bool:
+        """:class:`bool`: Whether the attachment is remixed."""
+        return self.flags.is_remix
 
 
 class DeletedReferencedMessage:

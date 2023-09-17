@@ -18,6 +18,7 @@ class AutoModerationTriggerMetadata(TypedDict, total=False):
     presets: List[KeywordPresetType]
     allow_list: List[str]
     mention_total_limit: Optional[int]
+    mention_raid_protection_enabled: bool
 
 
 class AutoModerationActionMetadata(TypedDict, total=False):

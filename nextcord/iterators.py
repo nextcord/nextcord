@@ -382,6 +382,11 @@ async def guild_iterator(
         The client to retrieve the guilds from.
     limit: :class:`int`
         Maximum number of guilds to retrieve.
+    with_counts: :class:`bool`
+        Whether to include approximate member and presence counts for the guilds.
+        Defaults to ``False``.
+
+        .. versionadded:: 2.6
     before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
         Object before which all guilds must be.
     after: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]

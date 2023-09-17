@@ -1347,6 +1347,7 @@ class Client:
         self,
         *,
         limit: Optional[int] = 200,
+        with_counts: bool = False,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
     ) -> AsyncIterator[Guild]:
@@ -1383,7 +1384,11 @@ class Client:
 
             .. versionchanged:: 2.0
                 Changed default to ``200``.
+        with_counts: :class:`bool`
+            Whether to include approximate member and presence counts for the guilds.
+            Defaults to ``False``.
 
+            .. versionadded:: 2.6
         before: Union[:class:`.abc.Snowflake`, :class:`datetime.datetime`]
             Retrieves guilds before this date or object.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
