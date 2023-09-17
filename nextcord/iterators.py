@@ -352,6 +352,7 @@ async def audit_log_iterator(
 async def guild_iterator(
     client: Client,
     limit: Optional[int],
+    with_counts: bool = False,
     before: Optional[SnowflakeTime] = None,
     after: Optional[SnowflakeTime] = None,
 ):
@@ -422,6 +423,7 @@ async def guild_iterator(
             retrieve,
             before=before.id if before is not None else None,
             after=cafter.id if cafter is not None else None,
+            with_counts=with_counts,
         )
 
         if data:
