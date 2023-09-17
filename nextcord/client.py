@@ -1408,7 +1408,9 @@ class Client:
         :class:`.Guild`
             The guild with the guild data parsed.
         """
-        return guild_iterator(self, limit=limit, before=before, after=after, with_counts=with_counts)
+        return guild_iterator(
+            self, limit=limit, before=before, after=after, with_counts=with_counts
+        )
 
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|
