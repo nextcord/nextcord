@@ -1335,10 +1335,9 @@ class Message(Hashable):
             total_months_subscribed = self.role_subscription.total_months_subscribed
             months = f"{total_months_subscribed} month{'s' if total_months_subscribed != 1 else ''}"
             if self.role_subscription.is_renewal:
-                # TODO: figure this out.
-                return ""
+                return f"{self.author.name} renewed {tier_name} and has been a subscriber of {self.guild} for {months}!"
 
-            return f"{self.author.name} joined {tier_name} and has been a subscriber of {self.guild} for {months}"
+            return f"{self.author.name} joined {tier_name} and has been a subscriber of {self.guild} for {months}!"
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
