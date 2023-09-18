@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from .asset import Asset
 from .colour import Colour
 from .errors import InvalidArgument
+from .flags import RoleFlags
 from .mixins import Hashable
 from .permissions import Permissions
 from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
@@ -58,10 +59,12 @@ class RoleTags:
         "integration_id",
         "subscription_listing_id",
         "_premium_subscriber",
+        "subscription_listing_id",
         "_available_for_purchase",
+        "_guild_connections",
     )
 
-    def __init__(self, data: RoleTagPayload):
+    def __init__(self, data: RoleTagPayload) -> None:
         self.bot_id: Optional[int] = get_as_snowflake(data, "bot_id")
         self.integration_id: Optional[int] = get_as_snowflake(data, "integration_id")
         self.subscription_listing_id: Optional[int] = get_as_snowflake(
@@ -72,7 +75,11 @@ class RoleTags:
         # So in this case, a value of None is the same as True.
         # Which means we would need a different sentinel.
         self._premium_subscriber: Optional[Any] = data.get("premium_subscriber", MISSING)
+        self.subscription_listing_id: Optional[int] = get_as_snowflake(
+            data, "subscription_listing_id"
+        )
         self._available_for_purchase: Optional[Any] = data.get("available_for_purchase", MISSING)
+        self._guild_connections: Optional[Any] = data.get("guild_connections", MISSING)
 
     def is_bot_managed(self) -> bool:
         """:class:`bool`: Whether the role is associated with a bot."""
@@ -93,10 +100,27 @@ class RoleTags:
         """:class:`bool`: Whether the role is managed by an integration."""
         return self.integration_id is not None
 
+    def is_available_for_purchase(self) -> bool:
+        """:class:`bool`: Whether the role is available for purchase.
+
+        .. versionadded:: 2.4
+        """
+        return self._available_for_purchase is None
+
+    def has_guild_connections(self) -> bool:
+        """:class:`bool`: Whether the role is a guild's linked role.
+
+        .. versionadded:: 2.4
+        """
+        return self._guild_connections is None
+
     def __repr__(self) -> str:
         return (
             f"<RoleTags bot_id={self.bot_id} integration_id={self.integration_id} "
             f"premium_subscriber={self.is_premium_subscriber()}>"
+            f"subscription_listing_id={self.subscription_listing_id}>"
+            f"available_for_purchase={self.is_available_for_purchase()}>"
+            f"guild_connections={self.has_guild_connections()}>"
         )
 
 
@@ -181,9 +205,10 @@ class Role(Hashable):
         "tags",
         "_icon",
         "_state",
+        "_flags",
     )
 
-    def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload):
+    def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload) -> None:
         self.guild: Guild = guild
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
@@ -231,7 +256,7 @@ class Role(Hashable):
             return NotImplemented
         return not r
 
-    def _update(self, data: RolePayload):
+    def _update(self, data: RolePayload) -> None:
         self.name: str = data["name"]
         self._permissions: int = int(data.get("permissions", 0))
         self.position: int = data.get("position", 0)
@@ -248,6 +273,8 @@ class Role(Hashable):
             self.tags = RoleTags(data["tags"])
         except KeyError:
             self.tags = None
+
+        self._flags: int = data.get("flags", 0)
 
     def is_default(self) -> bool:
         """:class:`bool`: Checks if the role is the default role."""
@@ -285,6 +312,13 @@ class Role(Hashable):
             and not self.managed
             and (me.top_role > self or me.id == self.guild.owner_id)
         )
+
+    def is_in_prompt(self) -> bool:
+        """:class:`bool`: Whether the role can be selected in an onboarding prompt.
+
+        .. versionadded:: 2.6
+        """
+        return self.flags.in_prompt
 
     @property
     def permissions(self) -> Permissions:
@@ -483,3 +517,11 @@ class Role(Hashable):
         """
 
         await self._state.http.delete_role(self.guild.id, self.id, reason=reason)
+
+    @property
+    def flags(self) -> RoleFlags:
+        """:class:`RoleFlags`: The avaliable flags the role has.
+
+        .. versionadded:: 2.6
+        """
+        return RoleFlags._from_value(self._flags)

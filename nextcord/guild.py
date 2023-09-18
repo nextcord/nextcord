@@ -82,7 +82,7 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
-    from .enums import SortOrderType
+    from .enums import ForumLayoutType, SortOrderType
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -200,24 +200,25 @@ class Guild(Hashable):
 
         They are currently as follows:
 
+        - ``ANIMATED_BANNER``: Guild can upload an animated banner.
         - ``ANIMATED_ICON``: Guild can upload an animated icon.
         - ``AUTO_MODERATION``: Guild has set up auto moderation rules.
+        - ``APPLICATION_COMMAND_PERMISSIONS_V2``: Guild is using the old permissions configuration behavior.
         - ``BANNER``: Guild can upload and use a banner. (i.e. :attr:`.banner`)
         - ``COMMUNITY``: Guild is a community server.
         - ``DEVELOPER_SUPPORT_SERVER``: Guild has been set as a support server on the App Directory.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
         - ``FEATURABLE``: Guild is able to be featured in Server Discovery.
+        - ``INVITES_DISABLED``: Guild has paused invites, preventing new users from joining.
         - ``INVITE_SPLASH``: Guild's invite page can have a special splash.
         - ``MEMBER_VERIFICATION_GATE_ENABLED``: Guild has Membership Screening enabled.
         - ``MONETIZATION_ENABLED``: Guild has enabled monetization.
-        - ``MORE_EMOJI``: Guild has increased custom emoji slots.
         - ``MORE_STICKERS``: Guild has increased custom sticker slots.
         - ``NEWS``: Guild can create news channels.
         - ``PARTNERED``: Guild is a partnered server.
         - ``PREVIEW_ENABLED``: Guild can be viewed before being accepted via Membership Screening.
-        - ``PRIVATE_THREADS``: Guild has access to create private threads.
-        - ``SEVEN_DAY_THREAD_ARCHIVE``: Guild has access to the seven day archive time for threads.
-        - ``THREE_DAY_THREAD_ARCHIVE``: Guild has access to the three day archive time for threads.
+        - ``RAID_ALERTS_DISABLED``: Guild disabled alerts for join raids in the configured safety alerts channel.
+        - ``ROLE_ICONS``: Guild is able to set role icons.
         - ``TICKETED_EVENTS_ENABLED``: Guild has enabled ticketed events.
         - ``VANITY_URL``: Guild can have a vanity invite URL (e.g. discord.gg/discord-api).
         - ``VERIFIED``: Guild is a verified server.
@@ -298,17 +299,19 @@ class Guild(Hashable):
         "_scheduled_events",
         "approximate_member_count",
         "approximate_presence_count",
+        "_premium_progress_bar_enabled",
+        "_safety_alerts_channel_id",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
-        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=8388608),
-        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=52428800),
-        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=104857600),
+        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=25 * 1024 * 1024),
+        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=50 * 1024 * 1024),
+        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=100 * 1024 * 1024),
     }
 
-    def __init__(self, *, data: GuildPayload, state: ConnectionState):
+    def __init__(self, *, data: GuildPayload, state: ConnectionState) -> None:
         self._channels: Dict[int, GuildChannel] = {}
         self._members: Dict[int, Member] = {}
         self._scheduled_events: Dict[int, ScheduledEvent] = {}
@@ -517,6 +520,14 @@ class Guild(Hashable):
         for event in guild.get("guild_scheduled_events") or []:
             self._store_scheduled_event(event)
 
+        self._premium_progress_bar_enabled: Optional[bool] = guild.get(
+            "premium_progress_bar_enabled"
+        )
+
+        self._safety_alerts_channel_id: Optional[int] = utils.get_as_snowflake(
+            guild, "safety_alerts_channel_id"
+        )
+
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
         try:
@@ -569,6 +580,14 @@ class Guild(Hashable):
             except AttributeError:
                 return len(self._members) >= 250
         return self._large
+
+    @property
+    def invites_disabled(self) -> bool:
+        """:class:`bool`: Indicates if the guild's invites are paused.
+
+        .. versionadded:: 2.4
+        """
+        return "INVITES_DISABLED" in self.features
 
     @property
     def voice_channels(self) -> List[VoiceChannel]:
@@ -643,6 +662,14 @@ class Guild(Hashable):
         .. versionadded:: 2.0
         """
         return list(self._scheduled_events.values())
+
+    @property
+    def premium_progress_bar_enabled(self) -> Optional[bool]:
+        """Optional[:class:`bool`:] Whether the premium boost progress bar is enabled.
+
+        .. versionadded:: 2.6
+        """
+        return self._premium_progress_bar_enabled
 
     def by_category(self) -> List[ByCategoryItem]:
         """Returns every :class:`CategoryChannel` and their associated channels.
@@ -775,6 +802,19 @@ class Guild(Hashable):
         .. versionadded:: 1.4
         """
         channel_id = self._public_updates_channel_id
+        return channel_id and self._channels.get(channel_id)  # type: ignore
+
+    @property
+    def safety_alerts_channel(self) -> Optional[TextChannel]:
+        """Optional[:class:`TextChannel`]: Returns the guild's channel where admins and
+        moderators of the guild receive safety alerts from Discord. The guild must be a
+        Community guild.
+
+        If no channel is set then this returns ``None``.
+
+        .. versionadded:: 2.6
+        """
+        channel_id = self._safety_alerts_channel_id
         return channel_id and self._channels.get(channel_id)  # type: ignore
 
     @property
@@ -1440,12 +1480,17 @@ class Guild(Hashable):
         available_tags: List[ForumTag] = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
+        default_forum_layout: Optional[ForumLayoutType] = None,
     ) -> ForumChannel:
         """|coro|
 
         This is similar to :meth:`create_text_channel` except makes a :class:`ForumChannel` instead.
 
         .. versionadded:: 2.1
+
+        .. versionchanged:: 2.5
+
+            Added the ``default_forum_layout`` parameter.
 
         Parameters
         ----------
@@ -1483,6 +1528,8 @@ class Guild(Hashable):
             The available tags for threads created in this channel.
 
             .. versionadded:: 2.4
+        default_forum_layout: Optional[:class:`ForumLayoutType`]
+            The default layout type used to display posts in this forum.
 
         Raises
         ------
@@ -1530,6 +1577,9 @@ class Guild(Hashable):
                         "emoji_name": default_reaction.name,
                     }
                 )
+
+        if default_forum_layout is not None:
+            options["default_forum_layout"] = default_forum_layout.value
 
         data = await self._create_channel(
             name,
@@ -1605,6 +1655,8 @@ class Guild(Hashable):
         preferred_locale: str = MISSING,
         rules_channel: Optional[TextChannel] = MISSING,
         public_updates_channel: Optional[TextChannel] = MISSING,
+        invites_disabled: bool = MISSING,
+        premium_progress_bar_enabled: bool = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1625,6 +1677,12 @@ class Guild(Hashable):
         .. versionchanged:: 2.1
             The ``icon``, ``banner``, ``splash``, ``discovery_splash``
             parameters now accept :class:`File`, :class:`Attachment`, and :class:`Asset`.
+
+        .. versionchanged:: 2.4
+            The ``invites_disabled`` parameter has been added.
+
+        .. versionchanged:: 2.6
+            The ``premium_progress_bar_enabled`` parameter has been added.
 
         Parameters
         ----------
@@ -1684,6 +1742,11 @@ class Guild(Hashable):
             The new channel that is used for public updates from Discord. This is only available to
             guilds that contain ``PUBLIC`` in :attr:`Guild.features`. Could be ``None`` for no
             public updates channel.
+        invites_disabled: :class:`bool`
+            Whether the invites should be paused for the guild.
+            This will prevent new users from joining said guild.
+        premium_progress_bar_enabled: :class:`bool`
+            Whether the premium guild boost progress bar is enabled.
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
@@ -1795,6 +1858,9 @@ class Guild(Hashable):
 
             fields["system_channel_flags"] = system_channel_flags.value
 
+        if premium_progress_bar_enabled is not MISSING:
+            fields["premium_progress_bar_enabled"] = premium_progress_bar_enabled
+
         if community is not MISSING:
             features = []
             if community:
@@ -1804,6 +1870,17 @@ class Guild(Hashable):
                     raise InvalidArgument(
                         "community field requires both rules_channel and public_updates_channel fields to be provided"
                     )
+
+            fields["features"] = features
+
+        if invites_disabled is not MISSING:
+            features = self.features.copy()
+
+            if invites_disabled:
+                features.append("INVITES_DISABLED")
+            else:
+                if "INVITES_DISABLED" in features:
+                    features.remove("INVITES_DISABLED")
 
             fields["features"] = features
 
@@ -2376,10 +2453,6 @@ class Guild(Hashable):
 
         def convert(d):
             factory, _ = _integration_factory(d["type"])
-            if factory is None:
-                raise InvalidData(
-                    "Unknown integration type {type!r} for integration ID {id}".format_map(d)
-                )
             return factory(guild=self, data=d)
 
         return [convert(d) for d in data]
@@ -2868,7 +2941,6 @@ class Guild(Hashable):
 
         role_positions: List[RolePositionUpdate] = []
         for role, position in positions.items():
-
             payload: RolePositionUpdate = {"id": role.id, "position": position}
 
             role_positions.append(payload)
@@ -3109,9 +3181,6 @@ class Guild(Hashable):
         else:
             user_id = None
 
-        if action:
-            action = action.value
-
         return AuditLogIterator(
             self,
             before=before,
@@ -3299,7 +3368,7 @@ class Guild(Hashable):
         channel: Optional[VocalGuildChannel],
         self_mute: bool = False,
         self_deaf: bool = False,
-    ):
+    ) -> None:
         """|coro|
 
         Changes client's voice state in the guild.
@@ -3712,7 +3781,7 @@ class Guild(Hashable):
             The actions to execute when this rule is triggered.
         trigger_type: :class:`AutoModerationTriggerType`
             The type of content that triggers this rule.
-        trigger_metadata: Optinal[:class:`AutoModerationTriggerMetadata`]
+        trigger_metadata: Optional[:class:`AutoModerationTriggerMetadata`]
             The additional data to use to determine if this rule has been triggered.
         enabled: Optional[:class:`bool`]
             If this rule should be enabled.

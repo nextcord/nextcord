@@ -28,8 +28,8 @@ from .errors import *
 if TYPE_CHECKING:
     from typing import Callable
 
+    from nextcord.abc import PartialMessageableChannel
     from nextcord.member import Member
-    from nextcord.message import PartialMessageableChannel
     from nextcord.user import User
 
     from .context import Context
@@ -1044,10 +1044,10 @@ class Greedy(List[T]):
 
     __slots__ = ("converter",)
 
-    def __init__(self, *, converter: T):
+    def __init__(self, *, converter: T) -> None:
         self.converter = converter
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         converter = getattr(self.converter, "__name__", repr(self.converter))
         return f"Greedy[{converter}]"
 

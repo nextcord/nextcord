@@ -21,6 +21,7 @@ class Role(TypedDict):
     tags: NotRequired[RoleTags]
     unicode_emoji: NotRequired[str]
     icon: NotRequired[str]
+    flags: int
 
 
 class RoleTags(TypedDict, total=False):
@@ -29,3 +30,4 @@ class RoleTags(TypedDict, total=False):
     premium_subscriber: None
     subscription_listing_id: Snowflake
     available_for_purchase: None
+    guild_connections: None

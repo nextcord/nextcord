@@ -84,7 +84,7 @@ class TextInput(Item[V]):
         required: Optional[bool] = None,
         default_value: Optional[str] = None,
         placeholder: Optional[str] = None,
-    ):
+    ) -> None:
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = TextInputComponent._raw_construct(
@@ -129,7 +129,7 @@ class TextInput(Item[V]):
 
     @label.setter
     def label(self, value: str) -> None:
-        if value is None:
+        if value is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise TypeError("label must cannot be None")
         self._underlying.label = str(value)
 

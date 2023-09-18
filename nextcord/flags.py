@@ -31,13 +31,15 @@ __all__ = (
     "MemberCacheFlags",
     "ApplicationFlags",
     "ChannelFlags",
+    "AttachmentFlags",
+    "RoleFlags",
 )
 
 BF = TypeVar("BF", bound="BaseFlags")
 
 
 class flag_value:
-    def __init__(self, func: Callable[[Any], int]):
+    def __init__(self, func: Callable[[Any], int]) -> None:
         self.flag = func(None)
         self.__doc__ = func.__doc__
 
@@ -57,7 +59,7 @@ class flag_value:
     def __set__(self, instance: BaseFlags, value: bool) -> None:
         instance._set_flag(self.flag, value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<flag_value flag={self.flag!r}>"
 
 
@@ -95,7 +97,7 @@ class BaseFlags:
 
     __slots__ = ("value",)
 
-    def __init__(self, **kwargs: bool):
+    def __init__(self, **kwargs: bool) -> None:
         self.value = self.DEFAULT_VALUE
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
@@ -194,17 +196,17 @@ class SystemChannelFlags(BaseFlags):
             raise TypeError("Value to set for SystemChannelFlags must be a bool.")
 
     @flag_value
-    def join_notifications(self):
+    def join_notifications(self) -> int:
         """:class:`bool`: Returns ``True`` if the system channel is used for member join notifications."""
         return 1
 
     @flag_value
-    def premium_subscriptions(self):
+    def premium_subscriptions(self) -> int:
         """:class:`bool`: Returns ``True`` if the system channel is used for "Nitro boosting" notifications."""
         return 2
 
     @flag_value
-    def guild_reminder_notifications(self):
+    def guild_reminder_notifications(self) -> int:
         """:class:`bool`: Returns ``True`` if the system channel is used for server setup helpful tips notifications.
 
         .. versionadded:: 2.0
@@ -212,7 +214,7 @@ class SystemChannelFlags(BaseFlags):
         return 4
 
     @flag_value
-    def join_notification_replies(self):
+    def join_notification_replies(self) -> int:
         """:class:`bool`: Returns ``True`` if the button to reply with a sticker to member join notifications is shown.
 
         .. versionadded:: 2.0
@@ -220,7 +222,7 @@ class SystemChannelFlags(BaseFlags):
         return 8
 
     @flag_value
-    def role_subscription_purchase_notifications(self):
+    def role_subscription_purchase_notifications(self) -> int:
         """:class:`bool`: Returns ``True`` if the system channel is used for role subscription purchase notifications.
 
         .. versionadded:: 2.4
@@ -228,7 +230,7 @@ class SystemChannelFlags(BaseFlags):
         return 16
 
     @flag_value
-    def role_subscription_purchase_notification_replies(self):
+    def role_subscription_purchase_notification_replies(self) -> int:
         """:class:`bool`: Returns ``True`` if the button to reply with a sticker to role subscription purchase notifications is shown.
 
         .. versionadded:: 2.4
@@ -321,48 +323,78 @@ class MessageFlags(BaseFlags):
     __slots__ = ()
 
     @flag_value
-    def crossposted(self):
+    def crossposted(self) -> int:
         """:class:`bool`: Returns ``True`` if the message is the original crossposted message."""
-        return 1
+        return 1 << 0
 
     @flag_value
-    def is_crossposted(self):
+    def is_crossposted(self) -> int:
         """:class:`bool`: Returns ``True`` if the message was crossposted from another channel."""
-        return 2
+        return 1 << 1
 
     @flag_value
-    def suppress_embeds(self):
+    def suppress_embeds(self) -> int:
         """:class:`bool`: Returns ``True`` if the message's embeds have been suppressed."""
-        return 4
+        return 1 << 2
 
     @flag_value
-    def source_message_deleted(self):
+    def source_message_deleted(self) -> int:
         """:class:`bool`: Returns ``True`` if the source message for this crosspost has been deleted."""
-        return 8
+        return 1 << 3
 
     @flag_value
-    def urgent(self):
+    def urgent(self) -> int:
         """:class:`bool`: Returns ``True`` if the source message is an urgent message.
 
         An urgent message is one sent by Discord Trust and Safety.
         """
-        return 16
+        return 1 << 4
 
     @flag_value
-    def has_thread(self):
+    def has_thread(self) -> int:
         """:class:`bool`: Returns ``True`` if the source message is associated with a thread.
 
         .. versionadded:: 2.0
         """
-        return 32
+        return 1 << 5
 
     @flag_value
-    def ephemeral(self):
+    def ephemeral(self) -> int:
         """:class:`bool`: Returns ``True`` if the source message is ephemeral.
 
         .. versionadded:: 2.0
         """
-        return 64
+        return 1 << 6
+
+    @flag_value
+    def loading(self) -> int:
+        """:class:`bool`: Returns ``True`` if the source message is loading.
+
+        This is represented in the UI as "bot is thinking...".
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 7
+
+    @flag_value
+    def failed_to_mention_roles(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message failed to mention some roles in a thread.
+
+        This means that those members were not added.
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 8
+
+    @flag_value
+    def suppress_notifications(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message does not trigger notifications.
+
+        These are sent via `@silent` message prefixes in the UI.
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 12
 
 
 @fill_with_flags()
@@ -473,7 +505,9 @@ class PublicUserFlags(BaseFlags):
 
     @flag_value
     def discord_certified_moderator(self):
-        """:class:`bool`: Returns ``True`` if the user is a Discord Certified Moderator.
+        """:class:`bool`: Returns ``True`` if the user is a Discord Moderator Programs Alumni.
+
+        Formally known as Discord Certified Moderator.
 
         .. versionadded:: 2.0
         """
@@ -542,7 +576,7 @@ class Intents(BaseFlags):
 
     __slots__ = ()
 
-    def __init__(self, **kwargs: bool):
+    def __init__(self, **kwargs: bool) -> None:
         self.value = self.DEFAULT_VALUE
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
@@ -637,15 +671,25 @@ class Intents(BaseFlags):
         return 1 << 1
 
     @flag_value
-    def bans(self):
-        """:class:`bool`: Whether guild ban related events are enabled.
+    def moderation(self):
+        """:class:`bool`: Whether guild moderation related events are enabled.
 
         This corresponds to the following events:
 
         - :func:`on_member_ban`
         - :func:`on_member_unban`
+        - :func:`on_audit_log_entry_create`
 
         This does not correspond to any attributes or classes in the library in terms of cache.
+        """
+        return 1 << 2
+
+    @alias_flag_value
+    def bans(self):
+        """:class:`bool`: Alias of :attr:`.moderation`.
+
+        .. versionchanged:: 2.4
+            Changed to an alias.
         """
         return 1 << 2
 
@@ -1082,7 +1126,7 @@ class MemberCacheFlags(BaseFlags):
 
     __slots__ = ()
 
-    def __init__(self, **kwargs: bool):
+    def __init__(self, **kwargs: bool) -> None:
         bits = max(self.VALID_FLAGS.values()).bit_length()
         self.value = (1 << bits) - 1
         for key, value in kwargs.items():
@@ -1111,7 +1155,7 @@ class MemberCacheFlags(BaseFlags):
         return self.value == self.DEFAULT_VALUE
 
     @flag_value
-    def voice(self):
+    def voice(self) -> int:
         """:class:`bool`: Whether to cache members that are in voice.
 
         This requires :attr:`Intents.voice_states`.
@@ -1121,7 +1165,7 @@ class MemberCacheFlags(BaseFlags):
         return 1
 
     @flag_value
-    def joined(self):
+    def joined(self) -> int:
         """:class:`bool`: Whether to cache members that joined the guild
         or are chunked as part of the initial log in flow.
 
@@ -1198,6 +1242,14 @@ class ApplicationFlags(BaseFlags):
     """
 
     @flag_value
+    def application_auto_moderation_rule_create(self):
+        """:class:`bool`: Returns ``True`` if the application uses the Auto Moderation API.
+
+        .. versionadded:: 2.6
+        """
+        return 1 << 6
+
+    @flag_value
     def gateway_presence(self):
         """:class:`bool`: Returns ``True`` if the application is verified and is allowed to
         receive presence information over the gateway.
@@ -1263,3 +1315,75 @@ class ApplicationFlags(BaseFlags):
         .. versionadded:: 2.4
         """
         return 1 << 24
+
+
+@fill_with_flags()
+class AttachmentFlags(BaseFlags):
+    r"""Wraps up the Discord Attachment flags.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two AttachmentFlags are equal.
+        .. describe:: x != y
+
+            Checks if two AttachmentFlags are not equal.
+        .. describe:: hash(x)
+
+            Return the flag's hash.
+        .. describe:: iter(x)
+
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
+
+    .. versionadded:: 2.6
+
+    Attributes
+    ----------
+    value: :class:`int`
+        The raw value. You should query flags via the properties
+        rather than using this raw value.
+    """
+
+    @flag_value
+    def is_remix(self):
+        """:class:`bool`: Returns ``True`` if the attachment has been edited using the remix feature on mobile."""
+        return 1 << 2
+
+
+@fill_with_flags()
+class RoleFlags(BaseFlags):
+    r"""Wraps up the Discord Guild Role Flags.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two RoleFlags are equal.
+        .. describe:: x != y
+
+            Checks if two RoleFlags are not equal.
+        .. describe:: hash(x)
+
+            Return the flag's hash.
+        .. describe:: iter(x)
+
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
+
+    .. versionadded:: 2.6
+
+    Attributes
+    ----------
+    value: :class:`int`
+        The raw value. You should query flags via the properties
+        rather than using this raw value.
+    """
+
+    @flag_value
+    def in_prompt(self):
+        """:class:`bool`: Returns ``True`` if the role can be selected in an onboarding prompt."""
+        return 1 << 0

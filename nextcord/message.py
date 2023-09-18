@@ -27,7 +27,7 @@ from .emoji import Emoji
 from .enums import ChannelType, MessageType, try_enum
 from .errors import HTTPException, InvalidArgument
 from .file import File
-from .flags import MessageFlags
+from .flags import AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
@@ -159,9 +159,10 @@ class Attachment(Hashable):
         "_http",
         "content_type",
         "description",
+        "_flags",
     )
 
-    def __init__(self, *, data: AttachmentPayload, state: ConnectionState):
+    def __init__(self, *, data: AttachmentPayload, state: ConnectionState) -> None:
         self.id: int = int(data["id"])
         self.size: int = data["size"]
         self.height: Optional[int] = data.get("height")
@@ -172,6 +173,7 @@ class Attachment(Hashable):
         self._http = state.http
         self.content_type: Optional[str] = data.get("content_type")
         self.description: Optional[str] = data.get("description")
+        self._flags: int = data.get("flags", 0)
 
     def is_spoiler(self) -> bool:
         """:class:`bool`: Whether this attachment contains a spoiler."""
@@ -363,6 +365,18 @@ class Attachment(Hashable):
             result["description"] = self.description
         return result
 
+    @property
+    def flags(self) -> AttachmentFlags:
+        """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
+
+        .. versionadded:: 2.6
+        """
+        return AttachmentFlags._from_value(self._flags)
+
+    def is_remix(self) -> bool:
+        """:class:`bool`: Whether the attachment is remixed."""
+        return self.flags.is_remix
+
 
 class DeletedReferencedMessage:
     """A special sentinel type that denotes whether the
@@ -376,7 +390,7 @@ class DeletedReferencedMessage:
 
     __slots__ = ("_parent",)
 
-    def __init__(self, parent: MessageReference):
+    def __init__(self, parent: MessageReference) -> None:
         self._parent: MessageReference = parent
 
     def __repr__(self) -> str:
@@ -442,7 +456,7 @@ class MessageReference:
         channel_id: int,
         guild_id: Optional[int] = None,
         fail_if_not_exists: bool = True,
-    ):
+    ) -> None:
         self._state: Optional[ConnectionState] = None
         self.resolved: Optional[Union[Message, DeletedReferencedMessage]] = None
         self.message_id: Optional[int] = message_id
@@ -513,10 +527,9 @@ class MessageReference:
             {"message_id": self.message_id} if self.message_id is not None else {}
         )
         result["channel_id"] = self.channel_id
+        result["fail_if_not_exists"] = self.fail_if_not_exists
         if self.guild_id is not None:
             result["guild_id"] = self.guild_id
-        if self.fail_if_not_exists is not None:
-            result["fail_if_not_exists"] = self.fail_if_not_exists
         return result
 
     to_message_reference_dict = to_dict
@@ -585,7 +598,7 @@ class MessageInteraction(Hashable):
 
     def __init__(
         self, *, data: MessageInteractionPayload, guild: Optional[Guild], state: ConnectionState
-    ):
+    ) -> None:
         self._state: ConnectionState = state
 
         self.data: MessageInteractionPayload = data
@@ -599,7 +612,7 @@ class MessageInteraction(Hashable):
         else:
             self.user = self._state.create_user(data=data["user"])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={self.id} type={self.type} name={self.name} user={self.user!r}>"
 
     @property
@@ -814,7 +827,7 @@ class Message(Hashable):
         state: ConnectionState,
         channel: MessageableChannel,
         data: MessagePayload,
-    ):
+    ) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self.webhook_id: Optional[int] = utils.get_as_snowflake(data, "webhook_id")
@@ -961,7 +974,7 @@ class Message(Hashable):
         del self.reactions[index]
         return reaction
 
-    def _update(self, data):
+    def _update(self, data) -> None:
         # In an update scheme, 'author' key has to be handled before 'member'
         # otherwise they overwrite each other which is undesirable.
         # Since there's no good way to do this we have to iterate over every
@@ -1064,7 +1077,7 @@ class Message(Hashable):
                 if role is not None:
                     self.role_mentions.append(role)
 
-    def _handle_components(self, components: List[ComponentPayload]):
+    def _handle_components(self, components: List[ComponentPayload]) -> None:
         self.components = [_component_factory(d) for d in components]
 
     def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
@@ -1356,7 +1369,7 @@ class Message(Hashable):
         """
         if delay is not None:
 
-            async def delete(delay: float):
+            async def delete(delay: float) -> None:
                 await asyncio.sleep(delay)
                 try:
                     await self._state.http.delete_message(self.channel.id, self.id)
@@ -1566,7 +1579,7 @@ class Message(Hashable):
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)
 
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, self.id)
 
         if delete_after is not None:
@@ -1931,7 +1944,7 @@ class PartialMessage(Hashable):
     to_reference = Message.to_reference
     to_message_reference_dict = Message.to_message_reference_dict
 
-    def __init__(self, *, channel: PartialMessageableChannel, id: int):
+    def __init__(self, *, channel: PartialMessageableChannel, id: int) -> None:
         if channel.type not in (
             ChannelType.text,
             ChannelType.news,
@@ -2118,6 +2131,6 @@ class PartialMessage(Hashable):
         if fields:
             # data isn't unbound
             msg = self._state.create_message(channel=self.channel, data=data)  # type: ignore
-            if view and not view.is_finished():
+            if view and not view.is_finished() and view.prevent_update:
                 self._state.store_view(view, self.id)
             return msg

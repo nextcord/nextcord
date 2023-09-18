@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING, Callable, Dict, Union
 
 import nextcord
 from nextcord.application_command import (
@@ -55,7 +55,7 @@ __all__ = (
 
 
 class CheckWrapper(CallbackWrapper):
-    def __init__(self, callback: Union[Callable, CallbackWrapper], predicate):
+    def __init__(self, callback: Union[Callable, CallbackWrapper], predicate) -> None:
         super().__init__(callback)
 
         if not asyncio.iscoroutinefunction(predicate):
@@ -71,7 +71,7 @@ class CheckWrapper(CallbackWrapper):
     def __call__(self, *args, **kwargs):
         return self.predicate(*args, **kwargs)
 
-    def modify(self, app_cmd: BaseApplicationCommand):
+    def modify(self, app_cmd: BaseApplicationCommand) -> None:
         app_cmd.checks.append(self.predicate)
 
 
@@ -414,6 +414,19 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
     return check(predicate)
 
 
+def _permission_check_wrapper(predicate: ApplicationCheck, name: str, perms: Dict[str, bool]) -> AC:
+    def wrapper(func) -> CheckWrapper:
+        if isinstance(func, CallbackWrapper):
+            callback = func.callback
+        else:
+            callback = func
+
+        setattr(callback, name, perms)
+        return check(predicate)(func)  # type: ignore
+
+    return wrapper
+
+
 def has_permissions(**perms: bool) -> AC:
     """A :func:`.check` that is added that checks if the member has all of
     the permissions necessary.
@@ -465,7 +478,7 @@ def has_permissions(**perms: bool) -> AC:
 
         raise ApplicationMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__slash_required_permissions", perms)
 
 
 def bot_has_permissions(**perms: bool) -> AC:
@@ -499,7 +512,7 @@ def bot_has_permissions(**perms: bool) -> AC:
 
         raise ApplicationBotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__slash_required_bot_permissions", perms)
 
 
 def has_guild_permissions(**perms: bool) -> AC:
@@ -541,7 +554,7 @@ def has_guild_permissions(**perms: bool) -> AC:
 
         raise ApplicationMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__slash_required_guild_permissions", perms)
 
 
 def bot_has_guild_permissions(**perms: bool) -> AC:
@@ -565,7 +578,7 @@ def bot_has_guild_permissions(**perms: bool) -> AC:
 
         raise ApplicationBotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__slash_required_bot_guild_permissions", perms)
 
 
 def dm_only() -> AC:
@@ -732,7 +745,7 @@ def application_command_before_invoke(coro) -> AC:
     """
 
     class BeforeInvokeModifier(CallbackWrapper):
-        def modify(self, app_cmd: BaseApplicationCommand):
+        def modify(self, app_cmd: BaseApplicationCommand) -> None:
             app_cmd._callback_before_invoke = coro
 
     def decorator(
@@ -751,7 +764,7 @@ def application_command_after_invoke(coro) -> AC:
     """
 
     class AfterInvokeModifier(CallbackWrapper):
-        def modify(self, app_cmd: BaseApplicationCommand):
+        def modify(self, app_cmd: BaseApplicationCommand) -> None:
             app_cmd._callback_after_invoke = coro
 
     def decorator(
