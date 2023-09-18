@@ -89,13 +89,6 @@ class RoleTags:
         """:class:`bool`: Whether the role is the premium subscriber, AKA "boost", role for the guild."""
         return self._premium_subscriber is None
 
-    def is_available_for_purchase(self) -> bool:
-        """:class:`bool`: Whether the role is available for purchase.
-
-        .. versionadded:: 2.4
-        """
-        return self._available_for_purchase is None
-
     def is_integration(self) -> bool:
         """:class:`bool`: Whether the role is managed by an integration."""
         return self.integration_id is not None
