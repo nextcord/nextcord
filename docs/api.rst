@@ -2930,16 +2930,16 @@ of :class:`enum.Enum`.
             Checks if two Age Restriction levels are not equal.
         .. describe:: x > y
 
-            Checks if a Age Restriction level is higher than another.
+            Checks if an Age Restriction level is higher than another.
         .. describe:: x < y
 
-            Checks if a Age Restriction level is lower than another.
+            Checks if an Age Restriction level is lower than another.
         .. describe:: x >= y
 
-            Checks if a Age Restriction level is higher or equal to another.
+            Checks if an Age Restriction level is higher or equal to another.
         .. describe:: x <= y
 
-            Checks if a Age Restriction level is lower or equal to another.
+            Checks if an Age Restriction level is lower or equal to another.
 
     .. attribute:: default
 
@@ -2947,15 +2947,15 @@ of :class:`enum.Enum`.
 
     .. attribute:: explicit
 
-        The guild contains age restriced content.
+        The guild contains age restricted content.
 
     .. attribute:: safe
 
-        The guild does not contain any age restriced content.
+        The guild does not contain any age restricted content.
 
     .. attribute:: age_restricted
 
-        The guild may contain age restriced content.
+        The guild may contain age restricted content.
 
 .. class:: ScheduledEventEntityType
 

@@ -145,11 +145,11 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         .. vesionchanged:: 2.5
             This is now an alias for :attr:`.age_restricted`.
     age_restricted: :class:`bool`
-        If the channel is age restricted.
+        Whether the channel is age restricted.
 
         .. note::
 
-            To check if the channel or the guild of that channel are age restricted, consider :meth:`.is_age_restricted` instead.
+            To check whether the channel or the guild of that channel are age restricted, consider :meth:`.is_age_restricted` instead.
 
         .. versionadded:: 2.5
 
@@ -340,7 +340,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
     async def edit(self) -> Optional[TextChannel]:
         ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
 
         Edits the channel.
@@ -933,7 +933,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     nsfw: :class:`bool`
         Alias for :attr:`.age_restricted`.
 
-        .. versionadded:: 2.5
+        .. versionchanged:: 2.5
             This is now an alias for :attr:`.age_restricted`.
     age_restricted: :class:`bool`
         If this channel is age restricted.
@@ -1181,7 +1181,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
     async def edit(self) -> ForumChannel:
         ...
 
-    async def edit(self, *, reason=None, **options) -> ForumChannel:
+    async def edit(self, *, reason: Optional[str] = None, **options) -> ForumChannel:
         """|coro|
 
         Edits the channel.
@@ -1855,7 +1855,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     async def edit(self) -> Optional[VoiceChannel]:
         ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
 
         Edits the channel.
@@ -2370,7 +2370,7 @@ class StageChannel(VocalGuildChannel):
     async def edit(self) -> Optional[StageChannel]:
         ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
 
         Edits the channel.
@@ -2577,7 +2577,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
     async def edit(self) -> Optional[CategoryChannel]:
         ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
 
         Edits the channel.

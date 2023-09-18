@@ -723,13 +723,13 @@ class AgeRestrictedChannelRequired(CheckFailure):
     There is an alias for this called ``NSFWChannelRequired``.
 
     .. versionadded:: 2.5
-    .. versionchanged:: 2.5
         Renamed from ``NSFWChannelRequired`` to :exc:`AgeRestrictedChannelRequired`. ``NSFWChannelRequired`` is now an alias.
 
     Parameters
     ----------
     channel: Union[:class:`.abc.GuildChannel`, :class:`.Thread`]
         The channel is not age restricted
+        The channel is not age restricted.
     """
 
     def __init__(self, channel: Union[GuildChannel, Thread]) -> None:

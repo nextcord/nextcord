@@ -1158,7 +1158,7 @@ Bug Fixes
 - Use message creation time for reference time when computing cooldowns.
     - This prevents cooldowns from triggering during e.g. a RESUME session.
 - Fix the default :func:`on_command_error` to work with new-style cogs (:dpyissue:`2094`)
-- DM channels are now recognised as age restricted in :func:`~.commands.is_nsfw` check.
+- DM channels are now recognised as NSFW in :func:`~.commands.is_nsfw` check.
 - Fix race condition with help commands (:dpyissue:`2123`)
 - Fix cog descriptions not showing in :class:`~.commands.MinimalHelpCommand` (:dpyissue:`2139`)
 
