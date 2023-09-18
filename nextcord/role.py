@@ -49,7 +49,7 @@ class RoleTags:
     integration_id: Optional[:class:`int`]
         The integration ID that manages the role.
     subscription_listing_id: Optional[:class:`int`]
-        The id of this role's subscription sku and listing
+        The ID of the subscription listing that manages the role.
 
         .. versionadded:: 2.4
     """
