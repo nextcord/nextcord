@@ -78,9 +78,6 @@ class RoleTags:
     def __init__(self, data: RoleTagPayload) -> None:
         self.bot_id: Optional[int] = get_as_snowflake(data, "bot_id")
         self.integration_id: Optional[int] = get_as_snowflake(data, "integration_id")
-        self.subscription_listing_id: Optional[int] = get_as_snowflake(
-            data, "subscription_listing_id"
-        )
         # NOTE: The API returns "null" for this if it's valid, which corresponds to None.
         # This is different from other fields where "null" means "not there".
         # So in this case, a value of None is the same as True.
