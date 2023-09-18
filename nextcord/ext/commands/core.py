@@ -162,7 +162,7 @@ def hooked_wrapped_callback(command, ctx, coro):
 
 
 class _CaseInsensitiveDict(dict):
-    def __contains__(self, k):
+    def __contains__(self, k) -> bool:
         return super().__contains__(k.casefold())
 
     def __delitem__(self, k):
@@ -177,7 +177,7 @@ class _CaseInsensitiveDict(dict):
     def pop(self, k, default=None):
         return super().pop(k.casefold(), default)
 
-    def __setitem__(self, k, v):
+    def __setitem__(self, k, v) -> None:
         super().__setitem__(k.casefold(), v)
 
 
@@ -290,7 +290,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             Callable[Concatenate[ContextT, P], Coro[T]],
         ],
         **kwargs: Any,
-    ):
+    ) -> None:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Callback must be a coroutine.")
 
@@ -405,6 +405,74 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 self.after_invoke(inherited_after_invoke)
 
         self.checks.extend(self.parent.checks)  # type: ignore
+
+    @property
+    def required_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions required to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__required_permissions", {})
+
+    @property
+    def required_bot_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.bot_has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__required_bot_permissions", {})
+
+    @property
+    def required_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the guild permissions needed to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__required_guild_permissions", {})
+
+    @property
+    def required_bot_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to have in this guild in order to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`.bot_has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__required_bot_guild_permissions", {})
 
     @property
     def callback(
@@ -683,7 +751,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         command = self
         # command.parent is type-hinted as GroupMixin some attributes are resolved via MRO
         while command.parent is not None:  # type: ignore
-            command = command.parent  # type: ignore
+            command = command.parent
             entries.append(command.name)  # type: ignore
 
         return " ".join(reversed(entries))
@@ -701,7 +769,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         entries = []
         command = self
         while command.parent is not None:  # type: ignore
-            command = command.parent  # type: ignore
+            command = command.parent
             entries.append(command)
 
         return entries
@@ -839,10 +907,9 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             dt = ctx.message.edited_at or ctx.message.created_at
             current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
             bucket = self._buckets.get_bucket(ctx.message, current)
-            if bucket is not None:
-                retry_after = bucket.update_rate_limit(current)
-                if retry_after:
-                    raise CommandOnCooldown(bucket, retry_after, self._buckets.type)  # type: ignore
+            retry_after = bucket.update_rate_limit(current)
+            if retry_after:
+                raise CommandOnCooldown(bucket, retry_after, self._buckets.type)  # type: ignore
 
     async def prepare(self, ctx: Context) -> None:
         ctx.command = self
@@ -1343,7 +1410,7 @@ class GroupMixin(Generic[CogT]):
     def command(
         self,
         name: str = ...,
-        cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
+        cls: Type[Command[CogT, P, T]] = Command,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[
@@ -1471,7 +1538,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
     def __init__(self, *args: Any, **attrs: Any) -> None:
         self.invoke_without_command: bool = attrs.pop("invoke_without_command", False)
         GroupMixin.__init__(self, *args, **attrs)
-        Command.__init__(self, *args, **attrs)  # type: ignore
+        Command.__init__(self, *args, **attrs)
 
     def copy(self) -> Self:
         """Creates a copy of this :class:`Group`.
@@ -1564,7 +1631,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
 @overload
 def command(
     name: str = ...,
-    cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
+    cls: Type[Command[CogT, P, T]] = Command,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1640,12 +1707,8 @@ def command(
     if cls is MISSING:
         cls = Command
 
-    def decorator(
-        func: Union[
-            Callable[Concatenate[ContextT, P], Coro[Any]],
-            Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
-        ]
-    ) -> Union[Command[CogT, P, T], CommandT]:
+    # Type variables do not seem to nest within decorators.
+    def decorator(func: Any) -> Union[Command[CogT, P, T], CommandT]:
         if isinstance(func, Command):
             raise TypeError("Callback is already a command.")
 
@@ -1661,11 +1724,11 @@ def group(
 ) -> Callable[
     [
         Union[
-            Callable[Concatenate[Cog, ContextT, P], Coro[T]],
+            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
             Callable[Concatenate[ContextT, P], Coro[T]],
         ]
     ],
-    Group[Cog, P, T],
+    Group[CogT, P, T],
 ]:
     ...
 
@@ -1817,7 +1880,7 @@ def check(predicate: Check) -> Callable[[T], T]:
         decorator.predicate = predicate
     else:
 
-        @functools.wraps(predicate)
+        @functools.wraps(predicate)  # type: ignore
         async def wrapper(ctx):
             return predicate(ctx)  # type: ignore
 
@@ -1970,7 +2033,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
             await ctx.send('You are cool indeed')
     """
 
-    def predicate(ctx):
+    def predicate(ctx) -> bool:
         if ctx.guild is None:
             raise NoPrivateMessage()
 
@@ -2000,7 +2063,7 @@ def bot_has_role(item: int) -> Callable[[T], T]:
         instead of generic :exc:`.CheckFailure`
     """
 
-    def predicate(ctx):
+    def predicate(ctx) -> bool:
         if ctx.guild is None:
             raise NoPrivateMessage()
 
@@ -2030,7 +2093,7 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
         instead of generic checkfailure
     """
 
-    def predicate(ctx):
+    def predicate(ctx) -> bool:
         if ctx.guild is None:
             raise NoPrivateMessage()
 
@@ -2044,6 +2107,21 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
         raise BotMissingAnyRole(list(items))
 
     return check(predicate)
+
+
+def _permission_check_wrapper(
+    predicate: Check, name: str, perms: Dict[str, bool]
+) -> Callable[[T], T]:
+    def wrapper(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+        if isinstance(func, Command):
+            callback = func.callback
+        else:
+            callback = func
+
+        setattr(callback, name, perms)
+        return check(predicate)(func)
+
+    return wrapper  # type: ignore
 
 
 def has_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2091,7 +2169,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise MissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_permissions", perms)
 
 
 def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2118,7 +2196,7 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise BotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_bot_permissions", perms)
 
 
 def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2147,7 +2225,7 @@ def has_guild_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise MissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_guild_permissions", perms)
 
 
 def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
@@ -2173,7 +2251,7 @@ def bot_has_guild_permissions(**perms: bool) -> Callable[[T], T]:
 
         raise BotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__required_bot_guild_permissions", perms)
 
 
 def dm_only() -> Callable[[T], T]:

@@ -29,7 +29,7 @@ class _FriendlyHttpAttributeErrorHelper:
 
 
 class _PartialTemplateState:
-    def __init__(self, *, state):
+    def __init__(self, *, state) -> None:
         self.__state = state
         self.http = _FriendlyHttpAttributeErrorHelper()
 
@@ -120,10 +120,7 @@ class Template:
         self.uses: int = data["usage_count"]
         self.name: str = data["name"]
         self.description: Optional[str] = data["description"]
-        creator_data = data.get("creator")
-        self.creator: Optional[User] = (
-            None if creator_data is None else self._state.create_user(creator_data)
-        )
+        self.creator: Optional[User] = self._state.create_user(data.get("creator"))
 
         self.created_at: Optional[datetime.datetime] = parse_time(data.get("created_at"))
         self.updated_at: Optional[datetime.datetime] = parse_time(data.get("updated_at"))

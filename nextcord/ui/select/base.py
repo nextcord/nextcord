@@ -30,7 +30,7 @@ V = TypeVar("V", bound="View", covariant=True)
 
 
 class SelectValuesBase(UserList):
-    def __init__(self):
+    def __init__(self) -> None:
         self.data: List[Union[Member, User, Role, GuildChannel]] = []
 
     @classmethod
