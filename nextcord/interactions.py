@@ -844,7 +844,8 @@ class InteractionResponse:
         payload: Dict[str, Any] = {
             "tts": tts,
         }
-
+        if view == None:
+            raise SyntaxWarning("View cannot be None leave out if not required")
         if embed is not MISSING and embeds is not MISSING:
             raise InvalidArgument("Cannot mix embed and embeds keyword arguments")
 
@@ -876,7 +877,7 @@ class InteractionResponse:
         if flags.value != 0:
             payload["flags"] = flags.value
 
-        if view is not MISSING or view is not  None:
+        if view is not MISSING :
             payload["components"] = view.to_components()
 
         if allowed_mentions is MISSING or allowed_mentions is None:
