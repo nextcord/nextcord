@@ -1282,6 +1282,18 @@ class Message(Hashable):
         if self.type is MessageType.guild_invite_reminder:
             return "Wondering who to invite?\nStart by inviting anyone who can help you build the server!"
 
+        if self.type is MessageType.stage_start:
+            return f"{self.author.display_name} started {self.content}"
+
+        if self.type is MessageType.stage_end:
+            return f"{self.author.display_name} ended {self.content}"
+
+        if self.type is MessageType.stage_speaker:
+            return f"{self.author.display_name} is now a speaker."
+
+        if self.type is MessageType.stage_topic:
+            return f"{self.author.display_name} changed the Stage topic: {self.content}"
+
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
 
