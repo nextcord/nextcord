@@ -876,7 +876,7 @@ class InteractionResponse:
         if flags.value != 0:
             payload["flags"] = flags.value
 
-        if view is not MISSING:
+        if view is not MISSING or view is not  None:
             payload["components"] = view.to_components()
 
         if allowed_mentions is MISSING or allowed_mentions is None:
