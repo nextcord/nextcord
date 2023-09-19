@@ -52,6 +52,7 @@ GuildFeature = Literal[
     "NEWS",
     "PARTNERED",
     "PREVIEW_ENABLED",
+    "RAID_ALERTS_DISABLED",
     "ROLE_ICONS",
     "TICKETED_EVENTS_ENABLED",
     "VANITY_URL",
@@ -122,6 +123,7 @@ class Guild(_BaseGuildPreview):
     max_stage_video_channel_users: NotRequired[int]
     stickers: NotRequired[List[GuildSticker]]
     premium_progress_bar_enabled: Optional[bool]
+    safety_alerts_channel_id: Optional[Snowflake]
 
 
 class InviteGuild(Guild, total=False):

@@ -82,7 +82,7 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
-    from .enums import SortOrderType
+    from .enums import ForumLayoutType, SortOrderType
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -217,6 +217,7 @@ class Guild(Hashable):
         - ``NEWS``: Guild can create news channels.
         - ``PARTNERED``: Guild is a partnered server.
         - ``PREVIEW_ENABLED``: Guild can be viewed before being accepted via Membership Screening.
+        - ``RAID_ALERTS_DISABLED``: Guild disabled alerts for join raids in the configured safety alerts channel.
         - ``ROLE_ICONS``: Guild is able to set role icons.
         - ``TICKETED_EVENTS_ENABLED``: Guild has enabled ticketed events.
         - ``VANITY_URL``: Guild can have a vanity invite URL (e.g. discord.gg/discord-api).
@@ -302,6 +303,7 @@ class Guild(Hashable):
         "approximate_member_count",
         "approximate_presence_count",
         "_premium_progress_bar_enabled",
+        "_safety_alerts_channel_id",
         "max_stage_video_channel_users",
     )
 
@@ -527,6 +529,10 @@ class Guild(Hashable):
 
         self._premium_progress_bar_enabled: Optional[bool] = guild.get(
             "premium_progress_bar_enabled"
+        )
+
+        self._safety_alerts_channel_id: Optional[int] = utils.get_as_snowflake(
+            guild, "safety_alerts_channel_id"
         )
 
     # TODO: refactor/remove?
@@ -803,6 +809,19 @@ class Guild(Hashable):
         .. versionadded:: 1.4
         """
         channel_id = self._public_updates_channel_id
+        return channel_id and self._channels.get(channel_id)  # type: ignore
+
+    @property
+    def safety_alerts_channel(self) -> Optional[TextChannel]:
+        """Optional[:class:`TextChannel`]: Returns the guild's channel where admins and
+        moderators of the guild receive safety alerts from Discord. The guild must be a
+        Community guild.
+
+        If no channel is set then this returns ``None``.
+
+        .. versionadded:: 2.6
+        """
+        channel_id = self._safety_alerts_channel_id
         return channel_id and self._channels.get(channel_id)  # type: ignore
 
     @property
@@ -1509,12 +1528,17 @@ class Guild(Hashable):
         available_tags: List[ForumTag] = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
+        default_forum_layout: Optional[ForumLayoutType] = None,
     ) -> ForumChannel:
         """|coro|
 
         This is similar to :meth:`create_text_channel` except makes a :class:`ForumChannel` instead.
 
         .. versionadded:: 2.1
+
+        .. versionchanged:: 2.5
+
+            Added the ``default_forum_layout`` parameter.
 
         Parameters
         ----------
@@ -1552,6 +1576,8 @@ class Guild(Hashable):
             The available tags for threads created in this channel.
 
             .. versionadded:: 2.4
+        default_forum_layout: Optional[:class:`ForumLayoutType`]
+            The default layout type used to display posts in this forum.
 
         Raises
         ------
@@ -1599,6 +1625,9 @@ class Guild(Hashable):
                         "emoji_name": default_reaction.name,
                     }
                 )
+
+        if default_forum_layout is not None:
+            options["default_forum_layout"] = default_forum_layout.value
 
         data = await self._create_channel(
             name,

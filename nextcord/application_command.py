@@ -1543,10 +1543,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # If they didn't explicitly enable autocomplete but did add an autocomplete callback...
             self.autocomplete = True
         if self.autocomplete_callback:
-            if not asyncio.iscoroutinefunction(self.autocomplete_callback):
-                raise TypeError(
-                    f"Given autocomplete callback for kwarg {self.functional_name} isn't a coroutine."
-                )
+            self.from_autocomplete_callback(self.autocomplete_callback)
 
         if cmd_arg.required is not None:
             # If the user manually set if it's required...
@@ -1982,6 +1979,74 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self.options: Dict[str, ApplicationCommandOption] = {}
 
     # Simple-ish getter + setter methods.
+
+    @property
+    def required_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions required to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_permissions", {})
+
+    @property
+    def required_bot_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.bot_has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_bot_permissions", {})
+
+    @property
+    def required_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the guild permissions needed to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_guild_permissions", {})
+
+    @property
+    def required_bot_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to have in this guild in order to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.bot_has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_bot_guild_permissions", {})
 
     @property
     def qualified_name(self) -> str:

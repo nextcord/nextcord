@@ -2852,7 +2852,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: standard
 
-        Represents a standard sticker that all Nitro users can use.
+        Represents a standard sticker.
 
     .. attribute:: guild
 
@@ -4647,6 +4647,14 @@ ApplicationFlags
 .. attributetable:: ApplicationFlags
 
 .. autoclass:: ApplicationFlags
+    :members:
+
+RoleFlags
+~~~~~~~~~
+
+.. attributetable:: RoleFlags
+
+.. autoclass:: RoleFlags
     :members:
 
 File

@@ -39,7 +39,7 @@ class MentionableSelectValues(SelectValuesBase):
 
     @property
     def users(self) -> List[User]:
-        """List[:class:`.User`]: A list of users that were selected."""
+        """List[:class:`nextcord.User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
 
     @property
@@ -119,7 +119,7 @@ class MentionableSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> MentionableSelectValues:
-        """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`.User`, :class:`.Role`] that have been selected by the user."""
+        """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`nextcord.User`, :class:`.Role`] that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:

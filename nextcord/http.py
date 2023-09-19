@@ -1065,6 +1065,7 @@ class HTTPClient:
             "default_thread_rate_limit_per_user",
             "default_reaction_emoji",
             "available_tags",
+            "default_forum_layout",
         )
         payload.update({k: v for k, v in options.items() if k in valid_keys and v is not None})
 
@@ -1340,10 +1341,9 @@ class HTTPClient:
         limit: int,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
+        with_counts: bool = False,
     ) -> Response[List[guild.Guild]]:
-        params: Dict[str, Any] = {
-            "limit": limit,
-        }
+        params: Dict[str, Any] = {"limit": limit, "with_counts": int(with_counts)}
 
         if before:
             params["before"] = before
