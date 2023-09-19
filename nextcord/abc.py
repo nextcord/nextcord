@@ -54,7 +54,15 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .asset import Asset
-    from .channel import CategoryChannel, DMChannel, GroupChannel, PartialMessageable, TextChannel
+    from .channel import (
+        CategoryChannel,
+        DMChannel,
+        GroupChannel,
+        PartialMessageable,
+        StageChannel,
+        TextChannel,
+        VoiceChannel,
+    )
     from .client import Client
     from .embeds import Embed, EmbedData
     from .enums import InviteTarget
@@ -76,7 +84,9 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .user import ClientUser
 
-    PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
+    PartialMessageableChannel = Union[
+        TextChannel, Thread, DMChannel, PartialMessageable, VoiceChannel, StageChannel
+    ]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
 
@@ -117,8 +127,17 @@ class User(Snowflake, Protocol):
     ----------
     name: :class:`str`
         The user's username.
+    global_name: :class:`str`
+        The user's global name. This is represented in the UI as "Display Name"
+
+        .. versionadded:: 2.6
     discriminator: :class:`str`
         The user's discriminator.
+
+        .. warning::
+            This field is deprecated, and will only return if the user has not yet migrated to the
+            new `username <https://dis.gd/usernames>`_ update.
+        .. deprecated:: 2.6
     avatar: :class:`~nextcord.Asset`
         The avatar asset the user has.
     bot: :class:`bool`
@@ -128,6 +147,7 @@ class User(Snowflake, Protocol):
     __slots__ = ()
 
     name: str
+    global_name: str
     discriminator: str
     avatar: Asset
     bot: bool
@@ -1229,6 +1249,7 @@ class Messageable:
     - :class:`~nextcord.DMChannel`
     - :class:`~nextcord.GroupChannel`
     - :class:`~nextcord.VoiceChannel`
+    - :class:`~nextcord.StageChannel`
     - :class:`~nextcord.User`
     - :class:`~nextcord.Member`
     - :class:`~nextcord.ext.commands.Context`

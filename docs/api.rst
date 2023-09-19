@@ -1494,6 +1494,26 @@ of :class:`enum.Enum`.
         The system message denoting that an auto moderation action was executed
 
         .. versionadded:: 2.1
+    .. attribute:: stage_start
+
+        The system message denoting that a stage channel has started.
+
+        .. versionadded:: 2.6
+    .. attribute:: stage_end
+
+            The system message denoting that a stage channel has ended.
+
+            .. versionadded:: 2.6
+    .. attribute:: stage_speaker
+
+        The system message denoting that a stage channel has a new speaker.
+
+        .. versionadded:: 2.6
+    .. attribute:: stage_topic
+
+        The system message denoting that a stage channel has a new topic.
+
+        .. versionadded:: 2.6
 
 .. class:: UserFlags
 
@@ -2832,7 +2852,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: standard
 
-        Represents a standard sticker that all Nitro users can use.
+        Represents a standard sticker.
 
     .. attribute:: guild
 
@@ -4627,6 +4647,14 @@ ApplicationFlags
 .. attributetable:: ApplicationFlags
 
 .. autoclass:: ApplicationFlags
+    :members:
+
+RoleFlags
+~~~~~~~~~
+
+.. attributetable:: RoleFlags
+
+.. autoclass:: RoleFlags
     :members:
 
 File

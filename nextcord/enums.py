@@ -180,6 +180,10 @@ class MessageType(IntEnum):
     guild_invite_reminder = 22
     context_menu_command = 23
     auto_moderation_action = 24
+    stage_start = 27
+    stage_end = 28
+    stage_speaker = 29
+    stage_topic = 31
 
 
 class VoiceRegion(StrEnum):
@@ -254,6 +258,8 @@ class DefaultAvatar(IntEnum):
     green = 2
     orange = 3
     red = 4
+    fuchsia = 5
+    pink = 5
 
     def __str__(self) -> str:
         return self.name
@@ -391,7 +397,7 @@ class AuditLogAction(IntEnum):
     @property
     def target_type(self) -> Optional[str]:
         v = self.value
-        if v == -1:
+        if v == -1:  # pyright: ignore[reportUnnecessaryComparison]
             return "all"
         elif v < 10:
             return "guild"

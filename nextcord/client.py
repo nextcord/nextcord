@@ -789,7 +789,7 @@ class Client:
                 # if an error happens during disconnects, disregard it.
                 pass
 
-        if self.ws is not None and self.ws.open:
+        if self.ws is not None and self.ws.open:  # pyright: ignore
             await self.ws.close(code=1000)
 
         await self.http.close()
@@ -1330,7 +1330,7 @@ class Client:
 
         for guild in self._connection.guilds:
             me = guild.me
-            if me is None:
+            if me is None:  # pyright: ignore[reportUnnecessaryComparison]
                 continue
 
             if activity is not None:
@@ -1346,6 +1346,7 @@ class Client:
         self,
         *,
         limit: Optional[int] = 200,
+        with_counts: bool = False,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
     ) -> GuildIterator:
@@ -1385,7 +1386,11 @@ class Client:
 
             .. versionchanged:: 2.0
                 Changed default to ``200``.
+        with_counts: :class:`bool`
+            Whether to include approximate member and presence counts for the guilds.
+            Defaults to ``False``.
 
+            .. versionadded:: 2.6
         before: Union[:class:`.abc.Snowflake`, :class:`datetime.datetime`]
             Retrieves guilds before this date or object.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
@@ -1405,7 +1410,7 @@ class Client:
         :class:`.Guild`
             The guild with the guild data parsed.
         """
-        return GuildIterator(self, limit=limit, before=before, after=after)
+        return GuildIterator(self, limit=limit, before=before, after=after, with_counts=with_counts)
 
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|

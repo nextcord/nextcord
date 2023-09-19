@@ -27,7 +27,7 @@ from .emoji import Emoji
 from .enums import ChannelType, MessageType, try_enum
 from .errors import HTTPException, InvalidArgument
 from .file import File
-from .flags import MessageFlags
+from .flags import AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
@@ -157,6 +157,7 @@ class Attachment(Hashable):
         "_http",
         "content_type",
         "description",
+        "_flags",
     )
 
     def __init__(self, *, data: AttachmentPayload, state: ConnectionState) -> None:
@@ -170,6 +171,7 @@ class Attachment(Hashable):
         self._http = state.http
         self.content_type: Optional[str] = data.get("content_type")
         self.description: Optional[str] = data.get("description")
+        self._flags: int = data.get("flags", 0)
 
     def is_spoiler(self) -> bool:
         """:class:`bool`: Whether this attachment contains a spoiler."""
@@ -361,6 +363,18 @@ class Attachment(Hashable):
             result["description"] = self.description
         return result
 
+    @property
+    def flags(self) -> AttachmentFlags:
+        """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
+
+        .. versionadded:: 2.6
+        """
+        return AttachmentFlags._from_value(self._flags)
+
+    def is_remix(self) -> bool:
+        """:class:`bool`: Whether the attachment is remixed."""
+        return self.flags.is_remix
+
 
 class DeletedReferencedMessage:
     """A special sentinel type that denotes whether the
@@ -511,10 +525,9 @@ class MessageReference:
             {"message_id": self.message_id} if self.message_id is not None else {}
         )
         result["channel_id"] = self.channel_id
+        result["fail_if_not_exists"] = self.fail_if_not_exists
         if self.guild_id is not None:
             result["guild_id"] = self.guild_id
-        if self.fail_if_not_exists is not None:
-            result["fail_if_not_exists"] = self.fail_if_not_exists
         return result
 
     to_message_reference_dict = to_dict
@@ -1268,6 +1281,18 @@ class Message(Hashable):
 
         if self.type is MessageType.guild_invite_reminder:
             return "Wondering who to invite?\nStart by inviting anyone who can help you build the server!"
+
+        if self.type is MessageType.stage_start:
+            return f"{self.author.display_name} started {self.content}"
+
+        if self.type is MessageType.stage_end:
+            return f"{self.author.display_name} ended {self.content}"
+
+        if self.type is MessageType.stage_speaker:
+            return f"{self.author.display_name} is now a speaker."
+
+        if self.type is MessageType.stage_topic:
+            return f"{self.author.display_name} changed the Stage topic: {self.content}"
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|

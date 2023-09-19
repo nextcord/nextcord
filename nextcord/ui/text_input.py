@@ -129,7 +129,7 @@ class TextInput(Item[V]):
 
     @label.setter
     def label(self, value: str) -> None:
-        if value is None:
+        if value is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise TypeError("label must cannot be None")
         self._underlying.label = str(value)
 
