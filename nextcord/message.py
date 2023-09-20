@@ -629,7 +629,7 @@ class MessageRoleSubscription:
     .. versionadded:: 2.6
 
     Attributes
-    -----------
+    ----------
     role_subscription_listing_id: :class:`int`
         The ID of the SKU and listing that the user is subscribed to.
     tier_name: :class:`str`
