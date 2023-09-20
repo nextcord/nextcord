@@ -17,6 +17,7 @@ from .file import File
 from .flags import MessageFlags
 from .member import Member
 from .message import Attachment, Message
+from .missing import MISSING, MissingOr
 from .mixins import Hashable
 from .object import Object
 from .permissions import Permissions
@@ -54,8 +55,6 @@ if TYPE_CHECKING:
         PartialMessageable,
         ForumChannel,
     ]
-
-MISSING: Any = utils.MISSING
 
 ClientT = TypeVar("ClientT", bound="Client")
 
@@ -358,13 +357,13 @@ class Interaction(Hashable, Generic[ClientT]):
     async def edit_original_message(
         self,
         *,
-        content: Optional[str] = MISSING,
-        embeds: List[Embed] = MISSING,
-        embed: Optional[Embed] = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        attachments: List[Attachment] = MISSING,
-        view: Optional[View] = MISSING,
+        content: MissingOr[Optional[str]] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        embed: MissingOr[Optional[Embed]] = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        attachments: MissingOr[List[Attachment]] = MISSING,
+        view: MissingOr[Optional[View]] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> InteractionMessage:
         """|coro|
@@ -492,14 +491,14 @@ class Interaction(Hashable, Generic[ClientT]):
         self,
         content: Optional[str] = None,
         *,
-        embed: Embed = MISSING,
-        embeds: List[Embed] = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        view: View = MISSING,
+        embed: MissingOr[Embed] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        view: MissingOr[View] = MISSING,
         tts: bool = False,
         delete_after: Optional[float] = None,
-        allowed_mentions: AllowedMentions = MISSING,
+        allowed_mentions: MissingOr[AllowedMentions] = MISSING,
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
@@ -753,14 +752,14 @@ class InteractionResponse:
         self,
         content: Optional[Any] = None,
         *,
-        embed: Embed = MISSING,
-        embeds: List[Embed] = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        view: View = MISSING,
+        embed: MissingOr[Embed] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        view: MissingOr[View] = MISSING,
         tts: bool = False,
         delete_after: Optional[float] = None,
-        allowed_mentions: Optional[AllowedMentions] = MISSING,
+        allowed_mentions: MissingOr[Optional[AllowedMentions]] = MISSING,
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
@@ -899,7 +898,7 @@ class InteractionResponse:
                 session=parent._session,
                 type=InteractionResponseType.channel_message.value,
                 data=payload,
-                files=files,
+                files=files if files is not MISSING else None,
             )
         finally:
             if files:
@@ -958,13 +957,13 @@ class InteractionResponse:
     async def edit_message(
         self,
         *,
-        content: Optional[Any] = MISSING,
-        embed: Optional[Embed] = MISSING,
-        embeds: List[Embed] = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        attachments: List[Attachment] = MISSING,
-        view: Optional[View] = MISSING,
+        content: MissingOr[Optional[Any]] = MISSING,
+        embed: MissingOr[Optional[Embed]] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        attachments: MissingOr[List[Attachment]] = MISSING,
+        view: MissingOr[Optional[View]] = MISSING,
         delete_after: Optional[float] = None,
     ) -> Optional[Message]:
         """|coro|
@@ -1070,7 +1069,7 @@ class InteractionResponse:
                 session=parent._session,
                 type=InteractionResponseType.message_update.value,
                 data=payload,
-                files=files,
+                files=files if files is not MISSING else None,
             )
         finally:
             if files:
@@ -1118,13 +1117,13 @@ class _InteractionMessageMixin:
 
     async def edit(
         self,
-        content: Optional[str] = MISSING,
-        embeds: List[Embed] = MISSING,
-        embed: Optional[Embed] = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        attachments: List[Attachment] = MISSING,
-        view: Optional[View] = MISSING,
+        content: MissingOr[Optional[str]] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        embed: MissingOr[Optional[Embed]] = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        attachments: MissingOr[List[Attachment]] = MISSING,
+        view: MissingOr[Optional[View]] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         delete_after: Optional[float] = None,
     ) -> InteractionMessage:

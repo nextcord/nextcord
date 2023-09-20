@@ -9,8 +9,8 @@ from ...components import UserSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...member import Member
+from ...missing import MISSING, MissingOr
 from ...user import User
-from ...utils import MISSING
 from ..item import ItemCallbackType
 from ..view import View
 from .base import SelectBase, SelectValuesBase
@@ -84,7 +84,7 @@ class UserSelect(SelectBase, Generic[V]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: MissingOr[str] = MISSING,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
@@ -142,7 +142,7 @@ class UserSelect(SelectBase, Generic[V]):
 def user_select(
     *,
     placeholder: Optional[str] = None,
-    custom_id: str = MISSING,
+    custom_id: MissingOr[str] = MISSING,
     min_values: int = 1,
     max_values: int = 1,
     disabled: bool = False,

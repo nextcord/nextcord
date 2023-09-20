@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Tuple, Union
 
 from .asset import Asset, AssetMixin
+from .missing import MISSING, MissingOr
 from .partial_emoji import PartialEmoji, _EmojiTag
 from .user import User
-from .utils import MISSING, SnowflakeList, snowflake_time
+from .utils import SnowflakeList, snowflake_time
 
 __all__ = ("Emoji",)
 
@@ -194,7 +195,11 @@ class Emoji(_EmojiTag, AssetMixin):
         await self._state.http.delete_custom_emoji(self.guild.id, self.id, reason=reason)
 
     async def edit(
-        self, *, name: str = MISSING, roles: List[Snowflake] = MISSING, reason: Optional[str] = None
+        self,
+        *,
+        name: MissingOr[str] = MISSING,
+        roles: MissingOr[List[Snowflake]] = MISSING,
+        reason: Optional[str] = None,
     ) -> Emoji:
         r"""|coro|
 

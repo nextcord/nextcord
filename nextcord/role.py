@@ -8,9 +8,10 @@ from .asset import Asset
 from .colour import Colour
 from .errors import InvalidArgument
 from .flags import RoleFlags
+from .missing import MISSING, MissingOr
 from .mixins import Hashable
 from .permissions import Permissions
-from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
+from .utils import get_as_snowflake, obj_to_base64_data, snowflake_time
 
 __all__ = (
     "RoleTags",
@@ -387,15 +388,15 @@ class Role(Hashable):
     async def edit(
         self,
         *,
-        name: str = MISSING,
-        permissions: Permissions = MISSING,
-        colour: Union[Colour, int] = MISSING,
-        color: Union[Colour, int] = MISSING,
-        hoist: bool = MISSING,
-        mentionable: bool = MISSING,
-        position: int = MISSING,
-        reason: Optional[str] = MISSING,
-        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = MISSING,
+        name: MissingOr[str] = MISSING,
+        permissions: MissingOr[Permissions] = MISSING,
+        colour: MissingOr[Union[Colour, int]] = MISSING,
+        color: MissingOr[Union[Colour, int]] = MISSING,
+        hoist: MissingOr[bool] = MISSING,
+        mentionable: MissingOr[bool] = MISSING,
+        position: MissingOr[int] = MISSING,
+        reason: Optional[str] = None,
+        icon: MissingOr[Optional[Union[str, bytes, Asset, Attachment, File]]] = MISSING,
     ) -> Optional[Role]:
         """|coro|
 

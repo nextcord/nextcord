@@ -41,6 +41,7 @@ from .invite import Invite
 from .member import Member
 from .mentions import AllowedMentions
 from .message import Message
+from .missing import MISSING, MissingOr
 from .object import Object
 from .partial_emoji import PartialEmoji
 from .raw_models import *
@@ -76,9 +77,6 @@ if TYPE_CHECKING:
     T = TypeVar("T")
     CS = TypeVar("CS", bound="ConnectionState")
     Channel = Union[GuildChannel, VocalGuildChannel, PrivateChannel, PartialMessageable]
-
-
-MISSING = utils.MISSING
 
 
 class ChunkRequest:
@@ -161,8 +159,8 @@ class ConnectionState:
         activity: Optional[BaseActivity] = None,
         status: Optional[Status] = None,
         intents: Intents = Intents.default(),
-        chunk_guilds_at_startup: bool = MISSING,
-        member_cache_flags: MemberCacheFlags = MISSING,
+        chunk_guilds_at_startup: MissingOr[bool] = MISSING,
+        member_cache_flags: MissingOr[MemberCacheFlags] = MISSING,
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = loop
         self.http: HTTPClient = http

@@ -23,6 +23,7 @@ from ..channel import PartialMessageable
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
 from ..http import Route
 from ..message import Attachment, Message
+from ..missing import MISSING, MissingOr
 from .async_ import BaseWebhook, _WebhookState, handle_message_parameters
 
 __all__ = (
@@ -44,8 +45,6 @@ if TYPE_CHECKING:
         from requests import Response, Session
     except ModuleNotFoundError:
         pass
-
-MISSING = utils.MISSING
 
 
 class DeferredLock:
@@ -390,12 +389,12 @@ class SyncWebhookMessage(Message):
 
     def edit(
         self,
-        content: Optional[str] = MISSING,
-        embeds: List[Embed] = MISSING,
-        embed: Optional[Embed] = MISSING,
-        attachments: List[Attachment] = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
+        content: MissingOr[Optional[str]] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        embed: MissingOr[Optional[Embed]] = MISSING,
+        attachments: MissingOr[List[Attachment]] = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> SyncWebhookMessage:
         """Edits the message.
@@ -548,7 +547,12 @@ class SyncWebhook(BaseWebhook):
 
     @classmethod
     def partial(
-        cls, id: int, token: str, *, session: Session = MISSING, bot_token: Optional[str] = None
+        cls,
+        id: int,
+        token: str,
+        *,
+        session: MissingOr[Session] = MISSING,
+        bot_token: Optional[str] = None,
     ) -> SyncWebhook:
         """Creates a partial :class:`Webhook`.
 
@@ -580,16 +584,20 @@ class SyncWebhook(BaseWebhook):
         }
         import requests
 
+        # we use a separate varable here to convince pyright that this will not be MISSING by
+        # the time the class instance is being made
+        processed_session: MissingOr[Union[ModuleType, requests.Session]] = session
         if session is not MISSING:
             if not isinstance(session, requests.Session):
                 raise TypeError(f"Expected requests.Session not {session.__class__!r}")
         else:
-            session = requests  # type: ignore
-        return cls(data, session, token=bot_token)
+            processed_session = requests
+        # just terrible discord.py typing that is better off to be fixed in another pr
+        return cls(data, processed_session, token=bot_token)  # type: ignore
 
     @classmethod
     def from_url(
-        cls, url: str, *, session: Session = MISSING, bot_token: Optional[str] = None
+        cls, url: str, *, session: MissingOr[Session] = MISSING, bot_token: Optional[str] = None
     ) -> SyncWebhook:
         """Creates a partial :class:`Webhook` from a webhook URL.
 
@@ -628,12 +636,14 @@ class SyncWebhook(BaseWebhook):
         data["type"] = 1
         import requests
 
+        # see the partial function for an explantion
+        processed_session: MissingOr[Union[ModuleType, requests.Session]] = session
         if session is not MISSING:
             if not isinstance(session, requests.Session):
                 raise TypeError(f"Expected requests.Session not {session.__class__!r}")
         else:
-            session = requests  # type: ignore
-        return cls(data, session, token=bot_token)  # type: ignore
+            processed_session = requests
+        return cls(data, processed_session, token=bot_token)  # type: ignore
 
     def fetch(self, *, prefer_auth: bool = True) -> SyncWebhook:
         """Fetches the current webhook.
@@ -719,8 +729,8 @@ class SyncWebhook(BaseWebhook):
         self,
         *,
         reason: Optional[str] = None,
-        name: Optional[str] = MISSING,
-        avatar: Optional[Union[bytes, File]] = MISSING,
+        name: MissingOr[Optional[str]] = MISSING,
+        avatar: MissingOr[Optional[Union[bytes, File]]] = MISSING,
         channel: Optional[Snowflake] = None,
         prefer_auth: bool = True,
     ) -> SyncWebhook:
@@ -814,16 +824,16 @@ class SyncWebhook(BaseWebhook):
     @overload
     def send(
         self,
-        content: str = MISSING,
+        content: MissingOr[str] = MISSING,
         *,
-        username: str = MISSING,
-        avatar_url: Any = MISSING,
-        tts: bool = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        embed: Embed = MISSING,
-        embeds: List[Embed] = MISSING,
-        allowed_mentions: AllowedMentions = MISSING,
+        username: MissingOr[str] = MISSING,
+        avatar_url: MissingOr[Any] = MISSING,
+        tts: bool = ...,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        embed: MissingOr[Embed] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        allowed_mentions: MissingOr[AllowedMentions] = MISSING,
         wait: Literal[True],
     ) -> SyncWebhookMessage:
         ...
@@ -831,33 +841,33 @@ class SyncWebhook(BaseWebhook):
     @overload
     def send(
         self,
-        content: str = MISSING,
+        content: MissingOr[str] = MISSING,
         *,
-        username: str = MISSING,
-        avatar_url: Any = MISSING,
-        tts: bool = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        embed: Embed = MISSING,
-        embeds: List[Embed] = MISSING,
-        allowed_mentions: AllowedMentions = MISSING,
+        username: MissingOr[str] = MISSING,
+        avatar_url: MissingOr[Any] = MISSING,
+        tts: bool = ...,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        embed: MissingOr[Embed] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        allowed_mentions: MissingOr[AllowedMentions] = MISSING,
         wait: Literal[False] = ...,
     ) -> None:
         ...
 
     def send(
         self,
-        content: str = MISSING,
+        content: MissingOr[str] = MISSING,
         *,
-        username: str = MISSING,
-        avatar_url: Any = MISSING,
+        username: MissingOr[str] = MISSING,
+        avatar_url: MissingOr[Any] = MISSING,
         tts: bool = False,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        embed: Embed = MISSING,
-        embeds: List[Embed] = MISSING,
-        allowed_mentions: AllowedMentions = MISSING,
-        thread: Snowflake = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        embed: MissingOr[Embed] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        allowed_mentions: MissingOr[AllowedMentions] = MISSING,
+        thread: MissingOr[Snowflake] = MISSING,
         wait: bool = False,
     ) -> Optional[SyncWebhookMessage]:
         """Sends a message using the webhook.
@@ -1009,12 +1019,12 @@ class SyncWebhook(BaseWebhook):
         self,
         message_id: int,
         *,
-        content: Optional[str] = MISSING,
-        embeds: List[Embed] = MISSING,
-        embed: Optional[Embed] = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        attachments: List[Attachment] = MISSING,
+        content: MissingOr[Optional[str]] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        embed: MissingOr[Optional[Embed]] = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        attachments: MissingOr[List[Attachment]] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> SyncWebhookMessage:
         """Edits a message owned by this webhook.

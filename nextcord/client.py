@@ -48,6 +48,7 @@ from .interactions import Interaction
 from .invite import Invite
 from .iterators import GuildIterator
 from .mentions import AllowedMentions
+from .missing import MISSING, MissingOr
 from .object import Object
 from .stage_instance import StageInstance
 from .state import ConnectionState
@@ -58,7 +59,6 @@ from .types.interactions import ApplicationCommandInteractionData
 from .ui.modal import Modal
 from .ui.view import View
 from .user import ClientUser, User
-from .utils import MISSING
 from .voice_client import VoiceClient
 from .webhook import Webhook
 from .widget import Widget
@@ -263,8 +263,8 @@ class Client:
         shard_count: Optional[int] = None,
         application_id: Optional[int] = None,
         intents: Intents = Intents.default(),
-        member_cache_flags: MemberCacheFlags = MISSING,
-        chunk_guilds_at_startup: bool = MISSING,
+        member_cache_flags: MissingOr[MemberCacheFlags] = MISSING,
+        chunk_guilds_at_startup: MissingOr[bool] = MISSING,
         status: Optional[Status] = None,
         activity: Optional[BaseActivity] = None,
         allowed_mentions: Optional[AllowedMentions] = None,
@@ -359,8 +359,8 @@ class Client:
         activity: Optional[BaseActivity],
         status: Optional[Status],
         intents: Intents,
-        chunk_guilds_at_startup: bool,
-        member_cache_flags: MemberCacheFlags,
+        chunk_guilds_at_startup: MissingOr[bool],
+        member_cache_flags: MissingOr[MemberCacheFlags],
     ) -> ConnectionState:
         return ConnectionState(
             dispatch=self.dispatch,
@@ -1513,7 +1513,7 @@ class Client:
         name: str,
         region: Union[VoiceRegion, str] = VoiceRegion.us_west,
         icon: Optional[Union[bytes, Asset, Attachment, File]] = None,
-        code: str = MISSING,
+        code: MissingOr[str] = MISSING,
     ) -> Guild:
         """|coro|
 
@@ -2640,7 +2640,7 @@ class Client:
         name: Optional[str] = None,
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        guild_ids: Optional[Iterable[int]] = MISSING,
+        guild_ids: MissingOr[Optional[Iterable[int]]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
@@ -2695,7 +2695,7 @@ class Client:
         name: Optional[str] = None,
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        guild_ids: Optional[Iterable[int]] = MISSING,
+        guild_ids: MissingOr[Optional[Iterable[int]]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
@@ -2751,7 +2751,7 @@ class Client:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        guild_ids: Optional[Iterable[int]] = MISSING,
+        guild_ids: MissingOr[Optional[Iterable[int]]] = MISSING,
         dm_permission: Optional[bool] = None,
         nsfw: bool = False,
         default_member_permissions: Optional[Union[Permissions, int]] = None,

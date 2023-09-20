@@ -11,6 +11,7 @@ import yarl
 from . import utils
 from .errors import DiscordException, InvalidArgument
 from .file import File
+from .missing import MISSING, MissingOr
 
 __all__ = ("Asset",)
 
@@ -20,9 +21,6 @@ if TYPE_CHECKING:
 
 VALID_STATIC_FORMATS = frozenset({"jpeg", "jpg", "webp", "png"})
 VALID_ASSET_FORMATS = VALID_STATIC_FORMATS | {"gif"}
-
-
-MISSING = utils.MISSING
 
 
 class AssetMixin:
@@ -99,7 +97,7 @@ class AssetMixin:
     async def to_file(
         self,
         *,
-        filename: Optional[str] = MISSING,
+        filename: MissingOr[Optional[str]] = MISSING,
         description: Optional[str] = None,
         spoiler: bool = False,
         force_close: bool = True,
@@ -337,9 +335,9 @@ class Asset(AssetMixin):
     def replace(
         self,
         *,
-        size: int = MISSING,
-        format: ValidAssetFormatTypes = MISSING,
-        static_format: ValidStaticFormatTypes = MISSING,
+        size: MissingOr[int] = MISSING,
+        format: MissingOr[ValidAssetFormatTypes] = MISSING,
+        static_format: MissingOr[ValidStaticFormatTypes] = MISSING,
     ) -> Asset:
         """Returns a new asset with the passed components replaced.
 

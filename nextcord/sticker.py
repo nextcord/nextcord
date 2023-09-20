@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import unicodedata
-from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Type, Union, cast
 
 from .asset import Asset, AssetMixin
 from .enums import StickerFormatType, StickerType, try_enum
 from .errors import InvalidData
+from .missing import MISSING, MissingOr
 from .mixins import Hashable
-from .utils import MISSING, cached_slot_property, find, get, snowflake_time
+from .utils import cached_slot_property, find, get, snowflake_time
 
 __all__ = (
     "StickerPack",
@@ -419,9 +420,9 @@ class GuildSticker(Sticker):
     async def edit(
         self,
         *,
-        name: str = MISSING,
-        description: str = MISSING,
-        emoji: str = MISSING,
+        name: MissingOr[str] = MISSING,
+        description: MissingOr[str] = MISSING,
+        emoji: MissingOr[str] = MISSING,
         reason: Optional[str] = None,
     ) -> GuildSticker:
         """|coro|
@@ -465,7 +466,9 @@ class GuildSticker(Sticker):
             except TypeError:
                 pass
             else:
-                emoji = emoji.replace(" ", "_")
+                # for some odd reason pyright thinks that emoji could be MISSING again even
+                # though it cannot
+                emoji = cast(str, emoji).replace(" ", "_")
 
             payload["tags"] = emoji
 

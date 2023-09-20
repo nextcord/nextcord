@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, List, Literal, Optional, Tuple, TypeVar, Union, cast
 
 from .enums import ButtonStyle, ComponentType, TextInputStyle, try_enum
+from .missing import MISSING, MissingOr
 from .partial_emoji import PartialEmoji, _EmojiTag
-from .utils import MISSING, get_slots
+from .utils import get_slots
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -519,7 +520,7 @@ class SelectOption:
         self,
         *,
         label: str,
-        value: str = MISSING,
+        value: MissingOr[str] = MISSING,
         description: Optional[str] = None,
         emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
         default: bool = False,

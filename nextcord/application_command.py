@@ -46,13 +46,14 @@ from .guild import Guild
 from .interactions import Interaction
 from .member import Member
 from .message import Attachment, Message
+from .missing import MISSING, MissingOr
 from .object import Object
 from .permissions import Permissions
 from .role import Role
 from .threads import Thread
 from .types.interactions import ApplicationCommandInteractionData
 from .user import User
-from .utils import MISSING, find, maybe_coroutine, parse_docstring
+from .utils import find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
     from .abc import Snowflake
@@ -1422,6 +1423,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         annotation_channel_types: List[ChannelType] = []
         annotation_converters: List[OptionConverter] = []
 
+        found_type: MissingOr[ApplicationCommandOptionType]
         if typehint_origin is Literal:
             # If they use the Literal typehint as their base. This currently should only support int, float, str, and
             #  technically None for setting it to be optional.
@@ -1518,7 +1520,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                     ) and (channel_types := self.channel_mapping.get(anno)):
                         found_channel_types.extend(channel_types)
 
-            annotation_type = found_type
+            # pyright thinks that found_type can still be MISSING even though it cannot by this point
+            annotation_type = cast(ApplicationCommandOptionType, found_type)
             if found_channel_types:
                 annotation_channel_types = found_channel_types
         else:
@@ -1905,7 +1908,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
-        guild_ids: Optional[Iterable[int]] = MISSING,
+        guild_ids: MissingOr[Optional[Iterable[int]]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
@@ -2805,7 +2808,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: MissingOr[Optional[Iterable[int]]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
@@ -2979,7 +2982,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: MissingOr[Optional[Iterable[int]]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
@@ -3061,7 +3064,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
-        guild_ids: Optional[Iterable[int]] = None,
+        guild_ids: MissingOr[Optional[Iterable[int]]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
@@ -3140,7 +3143,7 @@ def slash_command(
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-    guild_ids: Optional[Iterable[int]] = MISSING,
+    guild_ids: MissingOr[Optional[Iterable[int]]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
@@ -3211,7 +3214,7 @@ def message_command(
     name: Optional[str] = None,
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-    guild_ids: Optional[Iterable[int]] = MISSING,
+    guild_ids: MissingOr[Optional[Iterable[int]]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
@@ -3270,7 +3273,7 @@ def user_command(
     name: Optional[str] = None,
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-    guild_ids: Optional[Iterable[int]] = MISSING,
+    guild_ids: MissingOr[Optional[Iterable[int]]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,

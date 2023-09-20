@@ -8,8 +8,9 @@ from .abc import Snowflake
 from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
 from .iterators import ScheduledEventUserIterator
+from .missing import MISSING, MissingOr
 from .mixins import Hashable
-from .utils import MISSING, obj_to_base64_data, parse_time
+from .utils import obj_to_base64_data, parse_time
 
 __all__: Tuple[str, ...] = (
     "EntityMetadata",
@@ -304,17 +305,17 @@ class ScheduledEvent(Hashable):
     async def edit(
         self,
         *,
-        channel: GuildChannel = MISSING,
-        metadata: EntityMetadata = MISSING,
-        name: str = MISSING,
-        privacy_level: ScheduledEventPrivacyLevel = MISSING,
-        start_time: datetime = MISSING,
-        end_time: datetime = MISSING,
-        description: str = MISSING,
-        type: ScheduledEventEntityType = MISSING,
-        status: ScheduledEventStatus = MISSING,
+        channel: MissingOr[GuildChannel] = MISSING,
+        metadata: MissingOr[EntityMetadata] = MISSING,
+        name: MissingOr[str] = MISSING,
+        privacy_level: MissingOr[ScheduledEventPrivacyLevel] = MISSING,
+        start_time: MissingOr[datetime] = MISSING,
+        end_time: MissingOr[datetime] = MISSING,
+        description: MissingOr[str] = MISSING,
+        type: MissingOr[ScheduledEventEntityType] = MISSING,
+        status: MissingOr[ScheduledEventStatus] = MISSING,
         reason: Optional[str] = None,
-        image: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        image: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
     ) -> ScheduledEvent:
         """|coro|
 

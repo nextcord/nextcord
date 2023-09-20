@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Optional, Tuple, TypeVar
 from ..components import TextInput as TextInputComponent
 from ..enums import ComponentType, TextInputStyle
 from ..guild import Guild
+from ..missing import MISSING, MissingOr
 from ..state import ConnectionState
-from ..utils import MISSING
 from .item import Item
 
 __all__ = ("TextInput",)
@@ -77,7 +77,7 @@ class TextInput(Item[V]):
         label: str,
         *,
         style: TextInputStyle = TextInputStyle.short,
-        custom_id: str = MISSING,
+        custom_id: MissingOr[str] = MISSING,
         row: Optional[int] = None,
         min_length: Optional[int] = 0,
         max_length: Optional[int] = 4000,

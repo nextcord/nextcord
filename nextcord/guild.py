@@ -59,6 +59,7 @@ from .integrations import Integration, _integration_factory
 from .invite import Invite
 from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
 from .member import Member, VoiceState
+from .missing import MISSING, MissingOr
 from .mixins import Hashable
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
@@ -71,8 +72,6 @@ from .user import User
 from .widget import Widget
 
 __all__ = ("Guild",)
-
-MISSING = utils.MISSING
 
 if TYPE_CHECKING:
     import datetime
@@ -1106,7 +1105,7 @@ class Guild(Hashable):
         self,
         name: str,
         channel_type: ChannelType,
-        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        overwrites: MissingOr[Dict[Union[Role, Member], PermissionOverwrite]] = MISSING,
         category: Optional[Snowflake] = None,
         **options: Any,
     ):
@@ -1148,12 +1147,12 @@ class Guild(Hashable):
         *,
         reason: Optional[str] = None,
         category: Optional[CategoryChannel] = None,
-        position: int = MISSING,
-        topic: str = MISSING,
-        slowmode_delay: int = MISSING,
-        nsfw: bool = MISSING,
-        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
-        default_thread_slowmode_delay: int = MISSING,
+        position: MissingOr[int] = MISSING,
+        topic: MissingOr[str] = MISSING,
+        slowmode_delay: MissingOr[int] = MISSING,
+        nsfw: MissingOr[bool] = MISSING,
+        overwrites: MissingOr[Dict[Union[Role, Member], PermissionOverwrite]] = MISSING,
+        default_thread_slowmode_delay: MissingOr[int] = MISSING,
     ) -> TextChannel:
         """|coro|
 
@@ -1270,12 +1269,12 @@ class Guild(Hashable):
         *,
         reason: Optional[str] = None,
         category: Optional[CategoryChannel] = None,
-        position: int = MISSING,
-        bitrate: int = MISSING,
-        user_limit: int = MISSING,
-        rtc_region: Optional[VoiceRegion] = MISSING,
-        video_quality_mode: VideoQualityMode = MISSING,
-        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        position: MissingOr[int] = MISSING,
+        bitrate: MissingOr[int] = MISSING,
+        user_limit: MissingOr[int] = MISSING,
+        rtc_region: MissingOr[Optional[VoiceRegion]] = MISSING,
+        video_quality_mode: MissingOr[VideoQualityMode] = MISSING,
+        overwrites: MissingOr[Dict[Union[Role, Member], PermissionOverwrite]] = MISSING,
     ) -> VoiceChannel:
         """|coro|
 
@@ -1362,8 +1361,8 @@ class Guild(Hashable):
         name: str,
         *,
         topic: str,
-        position: int = MISSING,
-        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        position: MissingOr[int] = MISSING,
+        overwrites: MissingOr[Dict[Union[Role, Member], PermissionOverwrite]] = MISSING,
         category: Optional[CategoryChannel] = None,
         bitrate: Optional[int] = None,
         user_limit: Optional[int] = None,
@@ -1474,9 +1473,9 @@ class Guild(Hashable):
         self,
         name: str,
         *,
-        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        overwrites: MissingOr[Dict[Union[Role, Member], PermissionOverwrite]] = MISSING,
         reason: Optional[str] = None,
-        position: int = MISSING,
+        position: MissingOr[int] = MISSING,
     ) -> CategoryChannel:
         """|coro|
 
@@ -1520,14 +1519,14 @@ class Guild(Hashable):
         name: str,
         *,
         topic: str,
-        position: int = MISSING,
-        overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
+        position: MissingOr[int] = MISSING,
+        overwrites: MissingOr[Dict[Union[Role, Member], PermissionOverwrite]] = MISSING,
         category: Optional[CategoryChannel] = None,
-        default_thread_slowmode_delay: int = MISSING,
-        default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = MISSING,
-        available_tags: List[ForumTag] = MISSING,
+        default_thread_slowmode_delay: MissingOr[int] = MISSING,
+        default_reaction: MissingOr[Optional[Union[Emoji, PartialEmoji, str]]] = MISSING,
+        available_tags: MissingOr[List[ForumTag]] = MISSING,
         reason: Optional[str] = None,
-        default_sort_order: SortOrderType = MISSING,
+        default_sort_order: MissingOr[SortOrderType] = MISSING,
         default_forum_layout: Optional[ForumLayoutType] = None,
     ) -> ForumChannel:
         """|coro|
@@ -1682,29 +1681,29 @@ class Guild(Hashable):
     async def edit(
         self,
         *,
-        reason: Optional[str] = MISSING,
-        name: str = MISSING,
-        description: Optional[str] = MISSING,
-        icon: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
-        banner: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
-        splash: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
-        discovery_splash: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
-        community: bool = MISSING,
-        region: Optional[Union[str, VoiceRegion]] = MISSING,
-        afk_channel: Optional[VoiceChannel] = MISSING,
-        owner: Snowflake = MISSING,
-        afk_timeout: int = MISSING,
-        default_notifications: NotificationLevel = MISSING,
-        verification_level: VerificationLevel = MISSING,
-        explicit_content_filter: ContentFilter = MISSING,
-        vanity_code: str = MISSING,
-        system_channel: Optional[TextChannel] = MISSING,
-        system_channel_flags: SystemChannelFlags = MISSING,
-        preferred_locale: str = MISSING,
-        rules_channel: Optional[TextChannel] = MISSING,
-        public_updates_channel: Optional[TextChannel] = MISSING,
-        invites_disabled: bool = MISSING,
-        premium_progress_bar_enabled: bool = MISSING,
+        reason: MissingOr[Optional[str]] = MISSING,
+        name: MissingOr[str] = MISSING,
+        description: MissingOr[Optional[str]] = MISSING,
+        icon: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
+        banner: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
+        splash: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
+        discovery_splash: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
+        community: MissingOr[bool] = MISSING,
+        region: MissingOr[Optional[Union[str, VoiceRegion]]] = MISSING,
+        afk_channel: MissingOr[Optional[VoiceChannel]] = MISSING,
+        owner: MissingOr[Snowflake] = MISSING,
+        afk_timeout: MissingOr[int] = MISSING,
+        default_notifications: MissingOr[NotificationLevel] = MISSING,
+        verification_level: MissingOr[VerificationLevel] = MISSING,
+        explicit_content_filter: MissingOr[ContentFilter] = MISSING,
+        vanity_code: MissingOr[str] = MISSING,
+        system_channel: MissingOr[Optional[TextChannel]] = MISSING,
+        system_channel_flags: MissingOr[SystemChannelFlags] = MISSING,
+        preferred_locale: MissingOr[str] = MISSING,
+        rules_channel: MissingOr[Optional[TextChannel]] = MISSING,
+        public_updates_channel: MissingOr[Optional[TextChannel]] = MISSING,
+        invites_disabled: MissingOr[bool] = MISSING,
+        premium_progress_bar_enabled: MissingOr[bool] = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1815,6 +1814,10 @@ class Guild(Hashable):
             The newly updated guild. Note that this has the same limitations as
             mentioned in :meth:`Client.fetch_guild` and may not have full data.
         """
+
+        # I'm not sure why reason can be MISSING since the http methods can't handle it as MISSING anyways
+        if reason is MISSING:
+            reason = None
 
         http = self._state.http
 
@@ -2225,7 +2228,7 @@ class Guild(Hashable):
         *,
         days: int,
         compute_prune_count: bool = True,
-        roles: List[Snowflake] = MISSING,
+        roles: MissingOr[List[Snowflake]] = MISSING,
         reason: Optional[str] = None,
     ) -> Optional[int]:
         r"""|coro|
@@ -2340,7 +2343,7 @@ class Guild(Hashable):
         return [Webhook.from_state(d, state=self._state) for d in data]
 
     async def estimate_pruned_members(
-        self, *, days: int, roles: List[Snowflake] = MISSING
+        self, *, days: int, roles: MissingOr[List[Snowflake]] = MISSING
     ) -> Optional[int]:
         """|coro|
 
@@ -2421,7 +2424,9 @@ class Guild(Hashable):
 
         return result
 
-    async def create_template(self, *, name: str, description: str = MISSING) -> Template:
+    async def create_template(
+        self, *, name: str, description: MissingOr[str] = MISSING
+    ) -> Template:
         """|coro|
 
         Creates a template for the guild.
@@ -2705,7 +2710,7 @@ class Guild(Hashable):
         *,
         name: str,
         image: Union[bytes, Asset, Attachment, File],
-        roles: List[Role] = MISSING,
+        roles: MissingOr[List[Role]] = MISSING,
         reason: Optional[str] = None,
     ) -> Emoji:
         r"""|coro|
@@ -2848,13 +2853,13 @@ class Guild(Hashable):
     async def create_role(
         self,
         *,
-        name: str = MISSING,
-        permissions: Permissions = MISSING,
-        color: Union[Colour, int] = MISSING,
-        colour: Union[Colour, int] = MISSING,
-        hoist: bool = MISSING,
-        mentionable: bool = MISSING,
-        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = MISSING,
+        name: MissingOr[str] = MISSING,
+        permissions: MissingOr[Permissions] = MISSING,
+        color: MissingOr[Union[Colour, int]] = MISSING,
+        colour: MissingOr[Union[Colour, int]] = MISSING,
+        hoist: MissingOr[bool] = MISSING,
+        mentionable: MissingOr[bool] = MISSING,
+        icon: MissingOr[Optional[Union[str, bytes, Asset, Attachment, File]]] = MISSING,
         reason: Optional[str] = None,
     ) -> Role:
         """|coro|
@@ -3265,7 +3270,10 @@ class Guild(Hashable):
         return Widget(state=self._state, data=data)
 
     async def edit_widget(
-        self, *, enabled: bool = MISSING, channel: Optional[Snowflake] = MISSING
+        self,
+        *,
+        enabled: MissingOr[bool] = MISSING,
+        channel: MissingOr[Optional[Snowflake]] = MISSING,
     ) -> None:
         """|coro|
 
@@ -3535,11 +3543,11 @@ class Guild(Hashable):
         name: str,
         entity_type: ScheduledEventEntityType,
         start_time: datetime.datetime,
-        channel: abc.GuildChannel = MISSING,
-        metadata: EntityMetadata = MISSING,
+        channel: MissingOr[abc.GuildChannel] = MISSING,
+        metadata: MissingOr[EntityMetadata] = MISSING,
         privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel.guild_only,
-        end_time: datetime.datetime = MISSING,
-        description: str = MISSING,
+        end_time: MissingOr[datetime.datetime] = MISSING,
+        description: MissingOr[str] = MISSING,
         image: Optional[Union[bytes, Asset, Attachment, File]] = None,
         reason: Optional[str] = None,
     ) -> ScheduledEvent:

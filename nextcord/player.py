@@ -13,13 +13,13 @@ import sys
 import threading
 import time
 import traceback
-from typing import IO, TYPE_CHECKING, Any, Callable, Generic, Optional, Tuple, TypeVar, Union
+from typing import IO, TYPE_CHECKING, Any, Callable, Generic, Optional, Tuple, TypeVar, Union, cast
 
 from .enums import SpeakingState
 from .errors import ClientException
+from .missing import MISSING, MissingOr
 from .oggparse import OggStream
 from .opus import Encoder as OpusEncoder
-from .utils import MISSING
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -141,9 +141,9 @@ class FFmpegAudio(AudioSource):
         kwargs = {"stdout": subprocess.PIPE}
         kwargs.update(subprocess_kwargs)
 
-        self._process: subprocess.Popen = self._spawn_process(args, **kwargs)
-        self._stdout: IO[bytes] = self._process.stdout  # type: ignore
-        self._stdin: Optional[IO[bytes]] = None
+        self._process: MissingOr[subprocess.Popen] = self._spawn_process(args, **kwargs)
+        self._stdout: MissingOr[IO[bytes]] = self._process.stdout  # type: ignore
+        self._stdin: MissingOr[Optional[IO[bytes]]] = None
         self._pipe_thread: Optional[threading.Thread] = None
 
         if piping:
@@ -281,7 +281,8 @@ class FFmpegPCMAudio(FFmpegAudio):
         super().__init__(source, executable=executable, args=args, **subprocess_kwargs)
 
     def read(self) -> bytes:
-        ret = self._stdout.read(OpusEncoder.FRAME_SIZE)
+        stdout = cast(IO[bytes], self._stdout)
+        ret = stdout.read(OpusEncoder.FRAME_SIZE)
         if len(ret) != OpusEncoder.FRAME_SIZE:
             return b""
         return ret
@@ -402,7 +403,8 @@ class FFmpegOpusAudio(FFmpegAudio):
         args.append("pipe:1")
 
         super().__init__(source, executable=executable, args=args, **subprocess_kwargs)
-        self._packet_iter = OggStream(self._stdout).iter_packets()
+        stdout = cast(IO[bytes], self._stdout)
+        self._packet_iter = OggStream(stdout).iter_packets()
 
     @classmethod
     async def from_probe(
@@ -777,6 +779,9 @@ class AudioPlayer(threading.Thread):
             self.resume(update_speaking=False)
 
     def _speak(self, speaking: bool) -> None:
+        if self.client.ws is MISSING:
+            return
+
         try:
             asyncio.run_coroutine_threadsafe(
                 self.client.ws.speak(SpeakingState(int(speaking))), self.client.loop

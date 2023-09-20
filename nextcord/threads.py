@@ -11,8 +11,9 @@ from .abc import Messageable
 from .enums import ChannelType, try_enum
 from .errors import ClientException
 from .flags import ChannelFlags
+from .missing import MISSING, MissingOr
 from .mixins import Hashable, PinsMixin
-from .utils import MISSING, get_as_snowflake, parse_time
+from .utils import get_as_snowflake, parse_time
 
 __all__ = (
     "Thread",
@@ -450,7 +451,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         self,
         *,
         limit: Optional[int] = 100,
-        check: Callable[[Message], bool] = MISSING,
+        check: MissingOr[Callable[[Message], bool]] = MISSING,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
         around: Optional[SnowflakeTime] = None,
@@ -568,14 +569,14 @@ class Thread(Messageable, Hashable, PinsMixin):
     async def edit(
         self,
         *,
-        name: str = MISSING,
-        archived: bool = MISSING,
-        locked: bool = MISSING,
-        invitable: bool = MISSING,
-        slowmode_delay: int = MISSING,
-        auto_archive_duration: ThreadArchiveDuration = MISSING,
-        flags: ChannelFlags = MISSING,
-        applied_tags: List[ForumTag] = MISSING,
+        name: MissingOr[str] = MISSING,
+        archived: MissingOr[bool] = MISSING,
+        locked: MissingOr[bool] = MISSING,
+        invitable: MissingOr[bool] = MISSING,
+        slowmode_delay: MissingOr[int] = MISSING,
+        auto_archive_duration: MissingOr[ThreadArchiveDuration] = MISSING,
+        flags: MissingOr[ChannelFlags] = MISSING,
+        applied_tags: MissingOr[List[ForumTag]] = MISSING,
     ) -> Thread:
         """|coro|
 

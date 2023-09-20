@@ -20,8 +20,8 @@ from .errors import (
 )
 from .flags import Intents
 from .gateway import *
+from .missing import MISSING, MissingOr
 from .state import AutoShardedConnectionState
-from .utils import MISSING
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -318,8 +318,8 @@ class AutoShardedClient(Client):
         shard_count: Optional[int] = None,
         application_id: Optional[int] = None,
         intents: Intents = Intents.default(),
-        member_cache_flags: MemberCacheFlags = MISSING,
-        chunk_guilds_at_startup: bool = MISSING,
+        member_cache_flags: MissingOr[MemberCacheFlags] = MISSING,
+        chunk_guilds_at_startup: MissingOr[bool] = MISSING,
         status: Optional[Status] = None,
         activity: Optional[BaseActivity] = None,
         allowed_mentions: Optional[AllowedMentions] = None,

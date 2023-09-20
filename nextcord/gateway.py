@@ -20,6 +20,7 @@ from . import utils
 from .activity import BaseActivity
 from .enums import SpeakingState
 from .errors import ConnectionClosed, InvalidArgument
+from .missing import MISSING
 
 if TYPE_CHECKING:
     from typing import Any, Protocol
@@ -911,6 +912,9 @@ class DiscordVoiceWebSocket:
         state.ssrc = data["ssrc"]
         state.voice_port = data["port"]
         state.endpoint_ip = data["ip"]
+
+        if state.socket is MISSING:
+            return
 
         # Discover our external IP and port by asking our voice port.
         # https://discord.dev/topics/voice-connections#ip-discovery

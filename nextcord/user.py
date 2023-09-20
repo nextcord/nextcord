@@ -9,7 +9,8 @@ from .asset import Asset
 from .colour import Colour
 from .enums import DefaultAvatar
 from .flags import PublicUserFlags
-from .utils import MISSING, obj_to_base64_data, snowflake_time
+from .missing import MISSING, MissingOr
+from .utils import obj_to_base64_data, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -355,8 +356,8 @@ class ClientUser(BaseUser):
     async def edit(
         self,
         *,
-        username: str = MISSING,
-        avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        username: MissingOr[str] = MISSING,
+        avatar: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
     ) -> ClientUser:
         """|coro|
 

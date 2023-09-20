@@ -44,6 +44,7 @@ from typing import (
 
 from .errors import InvalidArgument
 from .file import File
+from .missing import MISSING, MissingOr
 
 try:
     import orjson
@@ -101,23 +102,6 @@ __all__ = (
 )
 
 DISCORD_EPOCH = 1420070400000
-
-
-class _MissingSentinel:
-    def __eq__(self, other: Any) -> bool:
-        return self is other
-
-    def __hash__(self):
-        return id(self)
-
-    def __bool__(self) -> bool:
-        return False
-
-    def __repr__(self) -> str:
-        return "..."
-
-
-MISSING: Any = _MissingSentinel()
 
 
 class _cached_property:
@@ -289,10 +273,10 @@ def deprecated(
 def oauth_url(
     client_id: Union[int, str],
     *,
-    permissions: Permissions = MISSING,
-    guild: Snowflake = MISSING,
-    redirect_uri: str = MISSING,
-    scopes: Iterable[str] = MISSING,
+    permissions: MissingOr[Permissions] = MISSING,
+    guild: MissingOr[Snowflake] = MISSING,
+    redirect_uri: MissingOr[str] = MISSING,
+    scopes: MissingOr[Iterable[str]] = MISSING,
     disable_guild_select: bool = False,
 ) -> str:
     """A helper function that returns the OAuth2 URL for inviting the bot
@@ -1225,7 +1209,9 @@ def _trim_text(text: str, max_chars: int) -> str:
     return text
 
 
-def parse_docstring(func: Callable[..., Any], max_chars: int = MISSING) -> Dict[str, Any]:
+def parse_docstring(
+    func: Callable[..., Any], max_chars: MissingOr[int] = MISSING
+) -> Dict[str, Any]:
     """Parses the docstring of a function into a dictionary.
 
     Parameters

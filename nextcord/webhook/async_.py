@@ -34,6 +34,7 @@ from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgume
 from ..flags import MessageFlags
 from ..http import Route
 from ..message import Attachment, Message
+from ..missing import MISSING, MissingOr
 from ..mixins import Hashable
 from ..user import BaseUser, User
 
@@ -61,8 +62,6 @@ if TYPE_CHECKING:
     from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
     from ..ui.view import View
-
-MISSING = utils.MISSING
 
 
 class AsyncDeferredLock:
@@ -480,18 +479,18 @@ class ExecuteWebhookParameters(NamedTuple):
 
 
 def handle_message_parameters(
-    content: Optional[str] = MISSING,
+    content: MissingOr[Optional[str]] = MISSING,
     *,
-    username: str = MISSING,
-    avatar_url: Any = MISSING,
+    username: MissingOr[str] = MISSING,
+    avatar_url: MissingOr[Any] = MISSING,
     tts: bool = False,
-    file: File = MISSING,
-    files: List[File] = MISSING,
-    attachments: List[Attachment] = MISSING,
-    embed: Optional[Embed] = MISSING,
-    embeds: List[Embed] = MISSING,
-    view: Optional[View] = MISSING,
-    allowed_mentions: Optional[AllowedMentions] = MISSING,
+    file: MissingOr[File] = MISSING,
+    files: MissingOr[List[File]] = MISSING,
+    attachments: MissingOr[List[Attachment]] = MISSING,
+    embed: MissingOr[Optional[Embed]] = MISSING,
+    embeds: MissingOr[List[Embed]] = MISSING,
+    view: MissingOr[Optional[View]] = MISSING,
+    allowed_mentions: MissingOr[Optional[AllowedMentions]] = MISSING,
     previous_allowed_mentions: Optional[AllowedMentions] = None,
     ephemeral: Optional[bool] = None,
     flags: Optional[MessageFlags] = None,
@@ -718,13 +717,13 @@ class WebhookMessage(Message):
 
     async def edit(
         self,
-        content: Optional[str] = MISSING,
-        embeds: List[Embed] = MISSING,
-        embed: Optional[Embed] = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        attachments: List[Attachment] = MISSING,
-        view: Optional[View] = MISSING,
+        content: MissingOr[Optional[str]] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        embed: MissingOr[Optional[Embed]] = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        attachments: MissingOr[List[Attachment]] = MISSING,
+        view: MissingOr[Optional[View]] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         delete_after: Optional[float] = None,
     ) -> WebhookMessage:
@@ -1248,8 +1247,8 @@ class Webhook(BaseWebhook):
         self,
         *,
         reason: Optional[str] = None,
-        name: Optional[str] = MISSING,
-        avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        name: MissingOr[Optional[str]] = MISSING,
+        avatar: MissingOr[Optional[Union[bytes, Asset, Attachment, File]]] = MISSING,
         channel: Optional[Snowflake] = None,
         prefer_auth: bool = True,
     ) -> Webhook:
@@ -1338,18 +1337,18 @@ class Webhook(BaseWebhook):
     @overload
     async def send(
         self,
-        content: str = MISSING,
+        content: MissingOr[str] = MISSING,
         *,
-        username: str = MISSING,
-        avatar_url: Union[Asset, str] = MISSING,
-        tts: bool = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        embed: Embed = MISSING,
-        embeds: List[Embed] = MISSING,
-        allowed_mentions: AllowedMentions = MISSING,
-        view: View = MISSING,
-        thread: Snowflake = MISSING,
+        username: MissingOr[str] = MISSING,
+        avatar_url: MissingOr[Union[Asset, str]] = MISSING,
+        tts: bool = ...,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        embed: MissingOr[Embed] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        allowed_mentions: MissingOr[AllowedMentions] = MISSING,
+        view: MissingOr[View] = MISSING,
+        thread: MissingOr[Snowflake] = MISSING,
         wait: Literal[True],
         delete_after: Optional[float] = None,
         ephemeral: Optional[bool] = None,
@@ -1361,18 +1360,18 @@ class Webhook(BaseWebhook):
     @overload
     async def send(
         self,
-        content: str = MISSING,
+        content: MissingOr[str] = MISSING,
         *,
-        username: str = MISSING,
-        avatar_url: Union[Asset, str] = MISSING,
-        tts: bool = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        embed: Embed = MISSING,
-        embeds: List[Embed] = MISSING,
-        allowed_mentions: AllowedMentions = MISSING,
-        view: View = MISSING,
-        thread: Snowflake = MISSING,
+        username: MissingOr[str] = MISSING,
+        avatar_url: MissingOr[Union[Asset, str]] = MISSING,
+        tts: bool = ...,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        embed: MissingOr[Embed] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        allowed_mentions: MissingOr[AllowedMentions] = MISSING,
+        view: MissingOr[View] = MISSING,
+        thread: MissingOr[Snowflake] = MISSING,
         wait: Literal[False] = ...,
         delete_after: Optional[float] = None,
         ephemeral: Optional[bool] = None,
@@ -1383,18 +1382,18 @@ class Webhook(BaseWebhook):
 
     async def send(
         self,
-        content: str = MISSING,
+        content: MissingOr[str] = MISSING,
         *,
-        username: str = MISSING,
-        avatar_url: Union[Asset, str] = MISSING,
+        username: MissingOr[str] = MISSING,
+        avatar_url: MissingOr[Union[Asset, str]] = MISSING,
         tts: bool = False,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        embed: Embed = MISSING,
-        embeds: List[Embed] = MISSING,
-        allowed_mentions: AllowedMentions = MISSING,
-        view: View = MISSING,
-        thread: Snowflake = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        embed: MissingOr[Embed] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        allowed_mentions: MissingOr[AllowedMentions] = MISSING,
+        view: MissingOr[View] = MISSING,
+        thread: MissingOr[Snowflake] = MISSING,
         wait: bool = False,
         delete_after: Optional[float] = None,
         ephemeral: Optional[bool] = None,
@@ -1617,13 +1616,13 @@ class Webhook(BaseWebhook):
         self,
         message_id: int,
         *,
-        content: Optional[str] = MISSING,
-        embeds: List[Embed] = MISSING,
-        embed: Optional[Embed] = MISSING,
-        file: File = MISSING,
-        files: List[File] = MISSING,
-        attachments: List[Attachment] = MISSING,
-        view: Optional[View] = MISSING,
+        content: MissingOr[Optional[str]] = MISSING,
+        embeds: MissingOr[List[Embed]] = MISSING,
+        embed: MissingOr[Optional[Embed]] = MISSING,
+        file: MissingOr[File] = MISSING,
+        files: MissingOr[List[File]] = MISSING,
+        attachments: MissingOr[List[Attachment]] = MISSING,
+        view: MissingOr[Optional[View]] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> WebhookMessage:
         """|coro|

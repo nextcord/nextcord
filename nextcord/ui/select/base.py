@@ -10,10 +10,10 @@ from ...components import SelectMenu
 from ...enums import ComponentType
 from ...guild import Guild
 from ...member import Member
+from ...missing import MISSING, MissingOr
 from ...role import Role
 from ...state import ConnectionState
 from ...user import User
-from ...utils import MISSING
 from ..item import Item
 
 __all__ = ("SelectBase",)
@@ -109,7 +109,7 @@ class SelectBase(Item[V]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: MissingOr[str] = MISSING,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
