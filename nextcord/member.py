@@ -157,7 +157,7 @@ def flatten_user(cls):
             # However I'm not sure how I feel about "functions" returning properties
             # It probably breaks something in Sphinx.
             # probably a member function by now
-            def generate_function(x, value=value):
+            def generate_function(x, value):
                 # We want sphinx to properly show coroutine functions as coroutines
                 if asyncio.iscoroutinefunction(value):
 
@@ -172,7 +172,7 @@ def flatten_user(cls):
                 general.__name__ = x
                 return general
 
-            func = generate_function(attr)
+            func = generate_function(attr, value)
             func = utils.copy_doc(value)(func)
             setattr(cls, attr, func)
 
