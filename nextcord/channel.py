@@ -1523,6 +1523,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         self.bitrate: int = data.get("bitrate")
         self.user_limit: int = data.get("user_limit")
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
+        self.nsfw: bool = data.get("nsfw", False)
         self._fill_overwrites(data)
 
     @property
@@ -1573,6 +1574,10 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
             denied.update(manage_channels=True, manage_roles=True)
             base.value &= ~denied.value
         return base
+
+    def is_nsfw(self) -> bool:
+        """:class:`bool`: Checks if the channel is NSFW."""
+        return self.nsfw
 
 
 class VoiceChannel(VocalGuildChannel, abc.Messageable):
@@ -1663,7 +1668,6 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     def _update(self, guild: Guild, data: VoiceChannelPayload) -> None:
         VocalGuildChannel._update(self, guild, data)
         self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
-        self.nsfw: bool = data.get("nsfw", False)
 
     async def _get_channel(self):
         return self
@@ -1672,10 +1676,6 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     def type(self) -> ChannelType:
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.voice
-
-    def is_nsfw(self) -> bool:
-        """:class:`bool`: Checks if the channel is NSFW."""
-        return self.nsfw
 
     @property
     def last_message(self) -> Optional[Message]:
@@ -1752,6 +1752,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             The new channel's bitrate.
         user_limit: :class:`int`
             The new channel's user limit.
+
+            This must be a number between ``0`` and ``99``. ``0`` indicates no limit.
         position: :class:`int`
             The new channel's position.
         sync_permissions: :class:`bool`
@@ -2013,7 +2015,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         return Webhook.from_state(data, state=self._state)
 
 
-class StageChannel(VocalGuildChannel):
+class StageChannel(VocalGuildChannel, abc.Messageable):
     """Represents a Discord guild stage channel.
 
     .. versionadded:: 1.7
@@ -2066,9 +2068,18 @@ class StageChannel(VocalGuildChannel):
         Extra features of the channel.
 
         ..versionadded:: 2.1
+    nsfw: :class:`bool`
+        If the channel is marked as "not safe for work".
+
+        .. versionadded:: 2.6
+
+        .. note::
+
+            To check if the channel or the guild of that channel are marked as NSFW,
+            consider :meth:`is_nsfw` instead.
     """
 
-    __slots__ = ("topic",)
+    __slots__ = ("topic", "nsfw")
 
     def __repr__(self) -> str:
         attrs = [
@@ -2081,13 +2092,17 @@ class StageChannel(VocalGuildChannel):
             ("video_quality_mode", self.video_quality_mode),
             ("user_limit", self.user_limit),
             ("category_id", self.category_id),
+            ("nsfw", self.nsfw),
         ]
         joined = " ".join("%s=%r" % t for t in attrs)
         return f"<{self.__class__.__name__} {joined}>"
 
     def _update(self, guild: Guild, data: StageChannelPayload) -> None:
         super()._update(guild, data)
-        self.topic = data.get("topic")
+        self.topic: Optional[str] = data.get("topic")
+
+    async def _get_channel(self):
+        return self
 
     @property
     def requesting_to_speak(self) -> List[Member]:
@@ -2238,6 +2253,7 @@ class StageChannel(VocalGuildChannel):
         rtc_region: Optional[VoiceRegion] = ...,
         video_quality_mode: VideoQualityMode = ...,
         flags: ChannelFlags = ...,
+        user_limit: int = ...,
         reason: Optional[str] = ...,
     ) -> Optional[StageChannel]:
         ...
@@ -2284,6 +2300,13 @@ class StageChannel(VocalGuildChannel):
             The camera video quality for the stage channel's participants.
 
             .. versionadded:: 2.0
+        user_limit: :class:`int`
+            The maximum number of users allowed in the stage channel.
+
+            This must be between ``0`` and ``10,000``. A value of ``0`` indicates
+            no limit.
+
+            .. versionadded:: 2.6
 
         Raises
         ------

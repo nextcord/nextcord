@@ -912,6 +912,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     - nickname
     - roles
     - pending
+    - flags
 
     This requires :attr:`Intents.members` to be enabled.
 
@@ -1494,6 +1495,26 @@ of :class:`enum.Enum`.
         The system message denoting that an auto moderation action was executed
 
         .. versionadded:: 2.1
+    .. attribute:: stage_start
+
+        The system message denoting that a stage channel has started.
+
+        .. versionadded:: 2.6
+    .. attribute:: stage_end
+
+            The system message denoting that a stage channel has ended.
+
+            .. versionadded:: 2.6
+    .. attribute:: stage_speaker
+
+        The system message denoting that a stage channel has a new speaker.
+
+        .. versionadded:: 2.6
+    .. attribute:: stage_topic
+
+        The system message denoting that a stage channel has a new topic.
+
+        .. versionadded:: 2.6
 
 .. class:: UserFlags
 
@@ -4739,6 +4760,14 @@ PublicUserFlags
 .. attributetable:: PublicUserFlags
 
 .. autoclass:: PublicUserFlags()
+    :members:
+
+MemberFlags
+~~~~~~~~~~~
+
+.. attributetable:: MemberFlags
+
+.. autoclass:: MemberFlags()
     :members:
 
 ChannelFlags

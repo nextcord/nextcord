@@ -97,6 +97,7 @@ __all__ = (
     "parse_raw_channel_mentions",
     "as_chunks",
     "format_dt",
+    "format_ts",
     "cached_property",
 )
 
@@ -1127,9 +1128,54 @@ def format_dt(dt: datetime.datetime, /, style: Optional[TimestampStyle] = None) 
     """
     if not isinstance(dt, datetime.datetime):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise InvalidArgument("'dt' must be of type 'datetime.datetime'")
+    return format_ts(int(dt.timestamp()), style=style)
+
+
+def format_ts(ts: int, /, style: Optional[TimestampStyle] = None) -> str:
+    """A helper function to format a Unix timestamp as an :class:`int` for presentation within Discord.
+
+    This allows for a locale-independent way of presenting data using Discord specific Markdown.
+
+    +-------------+----------------------------+-----------------+
+    |    Style    |       Example Output       |   Description   |
+    +=============+============================+=================+
+    | t           | 22:57                      | Short Time      |
+    +-------------+----------------------------+-----------------+
+    | T           | 22:57:58                   | Long Time       |
+    +-------------+----------------------------+-----------------+
+    | d           | 17/05/2016                 | Short Date      |
+    +-------------+----------------------------+-----------------+
+    | D           | 17 May 2016                | Long Date       |
+    +-------------+----------------------------+-----------------+
+    | f (default) | 17 May 2016 22:57          | Short Date Time |
+    +-------------+----------------------------+-----------------+
+    | F           | Tuesday, 17 May 2016 22:57 | Long Date Time  |
+    +-------------+----------------------------+-----------------+
+    | R           | 5 years ago                | Relative Time   |
+    +-------------+----------------------------+-----------------+
+
+    Note that the exact output depends on the user's locale setting in the client. The example output
+    presented is using the ``en-GB`` locale.
+
+    .. versionadded:: 2.6
+
+    Parameters
+    ----------
+    ts: :class:`int`
+        The Unix timestamp to format.
+    style: :class:`str`
+        The style to format the timestamp with.
+
+    Returns
+    -------
+    :class:`str`
+        The formatted string.
+    """
+    if not isinstance(ts, int):  # pyright: ignore[reportUnnecessaryIsInstance]
+        raise InvalidArgument("'ts' must be of type 'int'")
     if style is None:
-        return f"<t:{int(dt.timestamp())}>"
-    return f"<t:{int(dt.timestamp())}:{style}>"
+        return f"<t:{ts}>"
+    return f"<t:{ts}:{style}>"
 
 
 _FUNCTION_DESCRIPTION_REGEX = re.compile(r"\A(?:.|\n)+?(?=\Z|\r?\n\r?\n)", re.MULTILINE)
