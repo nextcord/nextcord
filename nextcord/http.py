@@ -2408,6 +2408,8 @@ class HTTPClient:
     def create_soundboard_sound(
         self,
         guild_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
         name: str,
         sound: str,
         volume: Optional[float] = MISSING,
@@ -2429,13 +2431,17 @@ class HTTPClient:
             payload["emoji_name"] = emoji_name
 
         return self.request(
-            Route("POST", "/guilds/{guild_id}/soundboard-sounds", guild_id=guild_id), json=payload
+            Route("POST", "/guilds/{guild_id}/soundboard-sounds", guild_id=guild_id),
+            json=payload,
+            reason=reason,
         )
 
     def modify_soundboard_sound(
         self,
         guild_id: Snowflake,
         sound_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
         name: Optional[str] = MISSING,
         volume: Optional[float] = MISSING,
         emoji_id: Optional[Snowflake] = MISSING,
@@ -2463,16 +2469,24 @@ class HTTPClient:
                 sound_id=sound_id,
             ),
             json=payload,
+            reason=reason,
         )
 
-    def delete_soundboard_sound(self, guild_id: Snowflake, sound_id: Snowflake) -> Response[None]:
+    def delete_soundboard_sound(
+        self,
+        guild_id: Snowflake,
+        sound_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[None]:
         return self.request(
             Route(
                 "DELETE",
                 "/guilds/{guild_id}/soundboard-sounds/{sound_id}",
                 guild_id=guild_id,
                 sound_id=sound_id,
-            )
+            ),
+            reason=reason,
         )
 
     def list_default_soundboard_sounds(self) -> Response[List[soundboard.SoundboardSound]]:

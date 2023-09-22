@@ -18,12 +18,10 @@ if TYPE_CHECKING:
 class VoiceChannelEffect:
     def __init__(self, data: VoiceChannelEffectSendPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
-        self._update(data)
-
-    def _update(self, data: VoiceChannelEffectSendPayload) -> None:
         self.channel_id: int = int(data["channel_id"])
         self.guild_id: int = int(data["guild_id"])
         self.guild: Optional[Guild] = self._state._get_guild(self.guild_id)
+
         self.user_id: int = int(data["user_id"])
 
         self.emoji: Optional[Union[Emoji, PartialEmoji, str]] = None

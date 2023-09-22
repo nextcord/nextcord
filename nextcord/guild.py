@@ -316,7 +316,7 @@ class Guild(Hashable):
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
         self._application_commands: Dict[int, BaseApplicationCommand] = {}
-        self._soundboard_sounds: Dict[int, Any] = {}
+        self._soundboard_sounds: Dict[int, SoundboardSound] = {}
         self._state: ConnectionState = state
         self._from_data(data)
 

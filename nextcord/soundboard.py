@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional, Union
@@ -104,13 +106,8 @@ class SoundboardSound:
         else:
             return SoundAsset._from_guild_soundboard_sound(self._state, self.id)
 
-    def __eq__(self, other: Any | SoundboardSound) -> bool:
-        if not isinstance(other, SoundboardSound):
-            raise TypeError(
-                f"Expected type SoundboardSound, received {type(other).__name__!r} instead"
-            )
-
-        return other.id == self.id
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, SoundboardSound) and other.id == self.id
 
     def __repr__(self) -> str:
         return f"<SoundboardSound id={self.id} name={self.name!r} volume={self.volume} emoji={self.emoji!r} user_id={self.user_id} available={self.available}>"

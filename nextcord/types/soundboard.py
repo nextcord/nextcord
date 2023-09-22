@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class SoundboardSound(TypedDict):
     name: str
     sound_id: Snowflake
-    id: Optional[Snowflake]  # Should be the same as sound_id, might be None
+    id: NotRequired[Snowflake]  # Should be the same as sound_id, might be missing
     volume: float
     emoji_id: Optional[Snowflake]
     emoji_name: Optional[str]
