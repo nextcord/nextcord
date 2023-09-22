@@ -363,7 +363,6 @@ class FFmpegOpusAudio(FFmpegAudio):
         before_options=None,
         options=None,
     ) -> None:
-
         args = []
         subprocess_kwargs = {
             "stdin": subprocess.PIPE if pipe else subprocess.DEVNULL,

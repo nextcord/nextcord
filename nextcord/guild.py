@@ -82,7 +82,7 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
-    from .enums import SortOrderType
+    from .enums import ForumLayoutType, SortOrderType
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -217,6 +217,7 @@ class Guild(Hashable):
         - ``NEWS``: Guild can create news channels.
         - ``PARTNERED``: Guild is a partnered server.
         - ``PREVIEW_ENABLED``: Guild can be viewed before being accepted via Membership Screening.
+        - ``RAID_ALERTS_DISABLED``: Guild disabled alerts for join raids in the configured safety alerts channel.
         - ``ROLE_ICONS``: Guild is able to set role icons.
         - ``TICKETED_EVENTS_ENABLED``: Guild has enabled ticketed events.
         - ``VANITY_URL``: Guild can have a vanity invite URL (e.g. discord.gg/discord-api).
@@ -250,6 +251,11 @@ class Guild(Hashable):
         with ``with_counts=True``.
 
         .. versionadded:: 2.0
+
+    max_stage_video_channel_users: Optional[:class:`int`]
+        The maximum amount of users in a stage channel when video is being broadcasted.
+
+        .. versionadded:: 2.6
     """
 
     __slots__ = (
@@ -296,14 +302,17 @@ class Guild(Hashable):
         "_scheduled_events",
         "approximate_member_count",
         "approximate_presence_count",
+        "_premium_progress_bar_enabled",
+        "_safety_alerts_channel_id",
+        "max_stage_video_channel_users",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
-        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=8388608),
-        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=52428800),
-        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=104857600),
+        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=25 * 1024 * 1024),
+        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=50 * 1024 * 1024),
+        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=100 * 1024 * 1024),
     }
 
     def __init__(self, *, data: GuildPayload, state: ConnectionState) -> None:
@@ -478,6 +487,9 @@ class Guild(Hashable):
         self.max_presences: Optional[int] = guild.get("max_presences")
         self.max_members: Optional[int] = guild.get("max_members")
         self.max_video_channel_users: Optional[int] = guild.get("max_video_channel_users")
+        self.max_stage_video_channel_users: Optional[int] = guild.get(
+            "max_stage_video_channel_users"
+        )
         self.premium_tier: int = guild.get("premium_tier", 0)
         self.premium_subscription_count: int = guild.get("premium_subscription_count") or 0
         self._system_channel_flags: int = guild.get("system_channel_flags", 0)
@@ -514,6 +526,14 @@ class Guild(Hashable):
 
         for event in guild.get("guild_scheduled_events") or []:
             self._store_scheduled_event(event)
+
+        self._premium_progress_bar_enabled: Optional[bool] = guild.get(
+            "premium_progress_bar_enabled"
+        )
+
+        self._safety_alerts_channel_id: Optional[int] = utils.get_as_snowflake(
+            guild, "safety_alerts_channel_id"
+        )
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
@@ -650,6 +670,14 @@ class Guild(Hashable):
         """
         return list(self._scheduled_events.values())
 
+    @property
+    def premium_progress_bar_enabled(self) -> Optional[bool]:
+        """Optional[:class:`bool`:] Whether the premium boost progress bar is enabled.
+
+        .. versionadded:: 2.6
+        """
+        return self._premium_progress_bar_enabled
+
     def by_category(self) -> List[ByCategoryItem]:
         """Returns every :class:`CategoryChannel` and their associated channels.
 
@@ -781,6 +809,19 @@ class Guild(Hashable):
         .. versionadded:: 1.4
         """
         channel_id = self._public_updates_channel_id
+        return channel_id and self._channels.get(channel_id)  # type: ignore
+
+    @property
+    def safety_alerts_channel(self) -> Optional[TextChannel]:
+        """Optional[:class:`TextChannel`]: Returns the guild's channel where admins and
+        moderators of the guild receive safety alerts from Discord. The guild must be a
+        Community guild.
+
+        If no channel is set then this returns ``None``.
+
+        .. versionadded:: 2.6
+        """
+        channel_id = self._safety_alerts_channel_id
         return channel_id and self._channels.get(channel_id)  # type: ignore
 
     @property
@@ -1324,6 +1365,11 @@ class Guild(Hashable):
         position: int = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
         category: Optional[CategoryChannel] = None,
+        bitrate: Optional[int] = None,
+        user_limit: Optional[int] = None,
+        nsfw: Optional[bool] = None,
+        rtc_region: Optional[VoiceRegion] = MISSING,
+        video_quality_mode: Optional[VideoQualityMode] = None,
         reason: Optional[str] = None,
     ) -> StageChannel:
         """|coro|
@@ -1349,6 +1395,27 @@ class Guild(Hashable):
         position: :class:`int`
             The position in the channel list. This is a number that starts
             at 0. e.g. the top channel is position 0.
+        bitrate: Optional[:class:`int`]
+            The channel's preferred audio bitrate in bits per second.
+
+            .. versionadded:: 2.6
+        user_limit: :class:`int`
+            The channel's limit for number of members that can be in a voice channel.
+
+            .. versionadded:: 2.6
+        rtc_region: Optional[:class:`VoiceRegion`]
+            The region for the voice channel's voice communication.
+            A value of ``None`` indicates automatic voice region detection.
+
+            .. versionadded:: 2.6
+        nsfw: :class:`bool`
+            To mark the channel as NSFW or not.
+
+            .. versionadded:: 2.6
+        video_quality_mode: :class:`VideoQualityMode`
+            The camera video quality for the voice channel's participants.
+
+            .. versionadded:: 2.6
         reason: Optional[:class:`str`]
             The reason for creating this channel. Shows up on the audit log.
 
@@ -1372,6 +1439,21 @@ class Guild(Hashable):
         }
         if position is not MISSING:
             options["position"] = position
+
+        if bitrate is not None:
+            options["bitrate"] = bitrate
+
+        if user_limit is not None:
+            options["user_limit"] = user_limit
+
+        if rtc_region is not MISSING:
+            options["rtc_region"] = None if rtc_region is None else str(rtc_region)
+
+        if nsfw is not None:
+            options["nsfw"] = nsfw
+
+        if video_quality_mode is not None:
+            options["video_quality_mode"] = video_quality_mode.value
 
         data = await self._create_channel(
             name,
@@ -1446,12 +1528,17 @@ class Guild(Hashable):
         available_tags: List[ForumTag] = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
+        default_forum_layout: Optional[ForumLayoutType] = None,
     ) -> ForumChannel:
         """|coro|
 
         This is similar to :meth:`create_text_channel` except makes a :class:`ForumChannel` instead.
 
         .. versionadded:: 2.1
+
+        .. versionchanged:: 2.5
+
+            Added the ``default_forum_layout`` parameter.
 
         Parameters
         ----------
@@ -1489,6 +1576,8 @@ class Guild(Hashable):
             The available tags for threads created in this channel.
 
             .. versionadded:: 2.4
+        default_forum_layout: Optional[:class:`ForumLayoutType`]
+            The default layout type used to display posts in this forum.
 
         Raises
         ------
@@ -1536,6 +1625,9 @@ class Guild(Hashable):
                         "emoji_name": default_reaction.name,
                     }
                 )
+
+        if default_forum_layout is not None:
+            options["default_forum_layout"] = default_forum_layout.value
 
         data = await self._create_channel(
             name,
@@ -1612,6 +1704,7 @@ class Guild(Hashable):
         rules_channel: Optional[TextChannel] = MISSING,
         public_updates_channel: Optional[TextChannel] = MISSING,
         invites_disabled: bool = MISSING,
+        premium_progress_bar_enabled: bool = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1635,6 +1728,9 @@ class Guild(Hashable):
 
         .. versionchanged:: 2.4
             The ``invites_disabled`` parameter has been added.
+
+        .. versionchanged:: 2.6
+            The ``premium_progress_bar_enabled`` parameter has been added.
 
         Parameters
         ----------
@@ -1697,8 +1793,8 @@ class Guild(Hashable):
         invites_disabled: :class:`bool`
             Whether the invites should be paused for the guild.
             This will prevent new users from joining said guild.
-
-            .. versionadded:: 2.4
+        premium_progress_bar_enabled: :class:`bool`
+            Whether the premium guild boost progress bar is enabled.
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
@@ -1809,6 +1905,9 @@ class Guild(Hashable):
                 )
 
             fields["system_channel_flags"] = system_channel_flags.value
+
+        if premium_progress_bar_enabled is not MISSING:
+            fields["premium_progress_bar_enabled"] = premium_progress_bar_enabled
 
         if community is not MISSING:
             features = []
@@ -2402,10 +2501,6 @@ class Guild(Hashable):
 
         def convert(d):
             factory, _ = _integration_factory(d["type"])
-            if factory is None:
-                raise InvalidData(
-                    "Unknown integration type {type!r} for integration ID {id}".format_map(d)
-                )
             return factory(guild=self, data=d)
 
         return [convert(d) for d in data]
@@ -2894,7 +2989,6 @@ class Guild(Hashable):
 
         role_positions: List[RolePositionUpdate] = []
         for role, position in positions.items():
-
             payload: RolePositionUpdate = {"id": role.id, "position": position}
 
             role_positions.append(payload)
@@ -3134,9 +3228,6 @@ class Guild(Hashable):
             user_id = user.id
         else:
             user_id = None
-
-        if action:
-            action = action.value
 
         return AuditLogIterator(
             self,
@@ -3738,7 +3829,7 @@ class Guild(Hashable):
             The actions to execute when this rule is triggered.
         trigger_type: :class:`AutoModerationTriggerType`
             The type of content that triggers this rule.
-        trigger_metadata: Optinal[:class:`AutoModerationTriggerMetadata`]
+        trigger_metadata: Optional[:class:`AutoModerationTriggerMetadata`]
             The additional data to use to determine if this rule has been triggered.
         enabled: Optional[:class:`bool`]
             If this rule should be enabled.

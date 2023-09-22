@@ -177,9 +177,7 @@ class Thread(Messageable, Hashable, PinsMixin):
         else:
             self.me = ThreadMember(self, member)
 
-        self.applied_tag_ids: List[int] = [
-            int(tag_id) for tag_id in data.get("applied_thread_tags", [])
-        ]
+        self.applied_tag_ids: List[int] = [int(tag_id) for tag_id in data.get("applied_tags", [])]
 
     def _unroll_metadata(self, data: ThreadMetadata) -> None:
         self.archived = data["archived"]
@@ -198,6 +196,7 @@ class Thread(Messageable, Hashable, PinsMixin):
 
         self.slowmode_delay = data.get("rate_limit_per_user", 0)
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
+        self.applied_tag_ids: List[int] = [int(tag_id) for tag_id in data.get("applied_tags", [])]
 
         try:
             self._unroll_metadata(data["thread_metadata"])

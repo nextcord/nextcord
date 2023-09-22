@@ -405,6 +405,8 @@ class DiscordWebSocket:
 
     async def identify(self) -> None:
         """Sends the IDENTIFY packet."""
+        state = self._connection
+
         payload = {
             "op": self.IDENTIFY,
             "d": {
@@ -416,13 +418,13 @@ class DiscordWebSocket:
                 },
                 "compress": True,
                 "large_threshold": 250,
+                "intents": state._intents.value,
             },
         }
 
         if self.shard_id is not None and self.shard_count is not None:
             payload["d"]["shard"] = [self.shard_id, self.shard_count]
 
-        state = self._connection
         if state._activity is not None or state._status is not None:
             payload["d"]["presence"] = {
                 "status": state._status,
@@ -430,9 +432,6 @@ class DiscordWebSocket:
                 "since": 0,
                 "afk": False,
             }
-
-        if state._intents is not None:
-            payload["d"]["intents"] = state._intents.value
 
         await self.call_hooks("before_identify", self.shard_id, initial=self._initial_identify)
         await self.send_as_json(payload)
@@ -468,7 +467,7 @@ class DiscordWebSocket:
 
         op: int = message["op"]
         data: Dict[str, Any] = message["d"]
-        seq: int = message["s"]
+        seq: Optional[int] = message["s"]
         if seq is not None:
             self.sequence = seq
 
@@ -873,7 +872,14 @@ class DiscordVoiceWebSocket:
         await self.send_as_json(payload)
 
     async def speak(self, state: SpeakingState = SpeakingState.voice) -> None:
-        payload = {"op": self.SPEAKING, "d": {"speaking": int(state), "delay": 0}}
+        payload = {
+            "op": self.SPEAKING,
+            "d": {
+                "speaking": int(state),
+                "delay": 0,
+                "ssrc": self._connection.ssrc,
+            },
+        }
 
         await self.send_as_json(payload)
 
@@ -906,16 +912,20 @@ class DiscordVoiceWebSocket:
         state.voice_port = data["port"]
         state.endpoint_ip = data["ip"]
 
-        packet = bytearray(70)
-        struct.pack_into(">H", packet, 0, 1)  # 1 = Send
-        struct.pack_into(">H", packet, 2, 70)  # 70 = Length
+        # Discover our external IP and port by asking our voice port.
+        # https://discord.dev/topics/voice-connections#ip-discovery
+        packet = bytearray(74)
+
+        # > = big-endian, H = unsigned short, I = unsigned int
+        struct.pack_into(">H", packet, 0, 1)  # 1 = Request
+        struct.pack_into(">H", packet, 2, 70)  # 70 = Message length. A constant of 70.
         struct.pack_into(">I", packet, 4, state.ssrc)
         state.socket.sendto(packet, (state.endpoint_ip, state.voice_port))
-        recv = await self.loop.sock_recv(state.socket, 70)
+        recv = await self.loop.sock_recv(state.socket, 74)
         _log.debug("received packet in initial_connection: %s", recv)
 
-        # the ip is ascii starting at the 4th byte and ending at the first null
-        ip_start = 4
+        # the ip is ascii starting at the 8th byte and ending at the first null
+        ip_start = 8
         ip_end = recv.index(0, ip_start)
         state.ip = recv[ip_start:ip_end].decode("ascii")
 
@@ -948,7 +958,10 @@ class DiscordVoiceWebSocket:
     async def load_secret_key(self, data: Dict[str, Any]) -> None:
         _log.info("received secret key for voice connection")
         self.secret_key = self._connection.secret_key = data["secret_key"]
-        await self.speak()
+        # Send a speak command with the "not speaking" state.
+        # This also tells Discord our SSRC value, which Discord requires
+        # before sending any voice data (and is the real reason why we
+        # call this here).
         await self.speak(SpeakingState.none)
 
     async def poll_event(self) -> None:

@@ -51,6 +51,7 @@ from .guild import Guild
 from .interactions import Interaction
 from .member import Member
 from .message import Attachment, Message
+from .object import Object
 from .permissions import Permissions
 from .role import Role
 from .threads import Thread
@@ -99,6 +100,7 @@ __all__ = (
     "Mentionable",
     "Range",
     "String",
+    "MissingApplicationCommandParametersWarning",
 )
 
 _log = logging.getLogger(__name__)
@@ -601,6 +603,23 @@ class ClientCog:
         pass
 
 
+class MissingApplicationCommandParametersWarning(UserWarning):
+    """Warning category raised when creating a slash command from a callback when it appears
+    the self and/or interaction parameter is missing based on the given type annotations.
+
+    This warning can be silenced using :func:`warnings.simplefilter`.
+
+    .. code-block:: python3
+
+        import warnings
+        from nextcord import MissingApplicationCommandParametersWarning
+
+        warnings.simplefilter("ignore", MissingApplicationCommandParametersWarning)
+    """
+
+    pass
+
+
 class CallbackMixin:
     name: Optional[str]
     options: Dict[str, BaseCommandOption]
@@ -801,6 +820,11 @@ class CallbackMixin:
                         isinstance(param.annotation, type)
                         and issubclass(param.annotation, Interaction)
                     )
+                    # will always be an interaction parameter (generic with the outermost type being Interaction)
+                    or (
+                        (origin := typing_extensions.get_origin(param.annotation))
+                        and issubclass(origin, Interaction)
+                    )
                     # will always be a self parameter
                     # TODO: use typing.Self when 3.11 is standard
                     or param.annotation is typing_extensions.Self
@@ -810,12 +834,16 @@ class CallbackMixin:
                 )
 
                 if self.parent_cog is not None and non_option_params < 2:
-                    raise ValueError(
-                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition."
+                    warnings.warn(
+                        f"Callback {self.error_name} is missing the self and/or interaction parameters. Please double check your function definition.",
+                        stacklevel=0,
+                        category=MissingApplicationCommandParametersWarning,
                     )
                 elif non_option_params < 1:
-                    raise ValueError(
-                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition."
+                    warnings.warn(
+                        f"Callback {self.error_name} is missing the interaction parameter. Please double check your function definition.",
+                        stacklevel=0,
+                        category=MissingApplicationCommandParametersWarning,
                     )
 
                 for name, param in callback_params.items():
@@ -857,7 +885,7 @@ class CallbackMixin:
             A boolean indicating if the command can be invoked.
         """
         # Global checks
-        for check in interaction.client._connection._application_command_checks:
+        for check in interaction.client._application_command_checks:
             try:
                 check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
@@ -927,8 +955,8 @@ class CallbackMixin:
             if (before_invoke := self.cog_before_invoke) is not None:
                 await before_invoke(interaction)  # type: ignore
 
-            if (before_invoke := state._application_command_before_invoke) is not None:
-                await before_invoke(interaction)  # type: ignore
+            if (before_invoke := interaction.client._application_command_before_invoke) is not None:
+                await before_invoke(interaction)
 
             try:
                 # await self.invoke_callback(interaction, *args, **kwargs)
@@ -949,8 +977,10 @@ class CallbackMixin:
                 if (after_invoke := self.cog_after_invoke) is not None:
                     await after_invoke(interaction)  # type: ignore
 
-                if (after_invoke := state._application_command_after_invoke) is not None:
-                    await after_invoke(interaction)  # type: ignore
+                if (
+                    after_invoke := interaction.client._application_command_after_invoke
+                ) is not None:
+                    await after_invoke(interaction)
 
     async def invoke_callback(self, interaction: Interaction, *args, **kwargs) -> None:
         """|coro|
@@ -1226,6 +1256,10 @@ class AutocompleteCommandMixin:
             To use inputs from other options inputted in the command, you can add them as arguments to the autocomplete
             callback. The order of the arguments does not matter, but the names do.
 
+            If you are using :class:`nextcord.Member` or :class:`nextcord.User` typehints in
+            your autocompletes then just note that the objects provided can be both `None` and
+            :class:`nextcord.Object` depending on the data Discord sends.
+
         Parameters
         ----------
         on_kwarg: :class:`str`
@@ -1482,7 +1516,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 )
             # Make sure that all literals are only OptionConverters and nothing else.
             for lit in literals:
-                if not isinstance(lit, OptionConverter) or lit is not None:
+                if not isinstance(lit, OptionConverter):
                     raise ValueError(
                         f"{self.error_name} You cannot use non-OptionConverter literals when the base annotation is "
                         f"not Literal."
@@ -1551,10 +1585,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # If they didn't explicitly enable autocomplete but did add an autocomplete callback...
             self.autocomplete = True
         if self.autocomplete_callback:
-            if not asyncio.iscoroutinefunction(self.autocomplete_callback):
-                raise TypeError(
-                    f"Given autocomplete callback for kwarg {self.functional_name} isn't a coroutine."
-                )
+            self.from_autocomplete_callback(self.autocomplete_callback)
 
         if cmd_arg.required is not None:
             # If the user manually set if it's required...
@@ -1696,7 +1727,25 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         elif self.type is ApplicationCommandOptionType.user:
             user_id = int(value)
             user_dict = {user.id: user for user in get_users_from_interaction(state, interaction)}
-            value = user_dict[user_id]
+            try:
+                value = user_dict[user_id]
+            except KeyError:
+                # By here the interaction data doesn't contain
+                # a full member/user object yet so fall back to bot cache
+                value = None
+                data = cast(ApplicationCommandInteractionData, interaction.data)
+                if guild_id := data.get("guild_id"):
+                    if guild := state._guilds.get(int(guild_id)):
+                        value = guild.get_member(user_id)
+
+                if value is None:
+                    # Either we aren't in a guild or
+                    # the member object is not cached
+                    value = state._users.get(user_id)
+
+                    if value is None:
+                        # Fall back to a Object at-least
+                        value = Object(id=user_id)
         elif self.type is ApplicationCommandOptionType.role:
             if interaction.guild is None:
                 raise TypeError("Unable to handle a Role type when guild is None")
@@ -1901,6 +1950,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -1934,6 +1984,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -1955,6 +2009,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self.default_member_permissions: Optional[
             Union[Permissions, int]
         ] = default_member_permissions
+        self.nsfw: bool = nsfw
 
         self.force_global: bool = force_global
 
@@ -1966,6 +2021,74 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self.options: Dict[str, ApplicationCommandOption] = {}
 
     # Simple-ish getter + setter methods.
+
+    @property
+    def required_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions required to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_permissions", {})
+
+    @property
+    def required_bot_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.bot_has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_bot_permissions", {})
+
+    @property
+    def required_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the guild permissions needed to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_guild_permissions", {})
+
+    @property
+    def required_bot_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to have in this guild in order to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.bot_has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_bot_guild_permissions", {})
 
     @property
     def qualified_name(self) -> str:
@@ -2156,6 +2279,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 #  the default (True) to ensure payload parity for comparisons.
                 ret["dm_permission"] = True
 
+        ret["nsfw"] = self.nsfw
+
         return ret
 
     def parse_discord_response(
@@ -2217,6 +2342,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             "name_localizations",
             "description_localizations",
             "dm_permission",
+            "nsfw",
         ):
             _log.debug("Failed check dictionary values, not valid payload.")
             return False
@@ -2724,6 +2850,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2753,6 +2880,14 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. note::
+
+                Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2769,6 +2904,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             guild_ids=guild_ids,
             default_member_permissions=default_member_permissions,
             dm_permission=dm_permission,
+            nsfw=nsfw,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -2888,6 +3024,7 @@ class UserApplicationCommand(BaseApplicationCommand):
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2912,6 +3049,10 @@ class UserApplicationCommand(BaseApplicationCommand):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2926,6 +3067,7 @@ class UserApplicationCommand(BaseApplicationCommand):
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -2964,6 +3106,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        nsfw: bool = False,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2988,6 +3131,10 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
             default. Server owners CAN override the permission requirements.
+        nsfw: :class:`bool`
+            Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+            .. versionadded:: 2.4
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -3002,6 +3149,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -3037,6 +3185,7 @@ def slash_command(
     guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
@@ -3066,6 +3215,14 @@ def slash_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
+    nsfw: :class:`bool`
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+        .. note::
+
+            Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
+
+        .. versionadded:: 2.4
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3084,6 +3241,7 @@ def slash_command(
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             force_global=force_global,
         )
         return app_cmd
@@ -3098,6 +3256,7 @@ def message_command(
     guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
@@ -3121,6 +3280,10 @@ def message_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
+    nsfw: :class:`bool`
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+        .. versionadded:: 2.4
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3137,6 +3300,7 @@ def message_command(
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             force_global=force_global,
         )
         return app_cmd
@@ -3151,6 +3315,7 @@ def user_command(
     guild_ids: Optional[Iterable[int]] = MISSING,
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
+    nsfw: bool = False,
     force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
@@ -3174,6 +3339,10 @@ def user_command(
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
         default. Server owners CAN override the permission requirements.
+    nsfw: :class:`bool`
+        Whether the command can only be used in age-restricted channels. Defaults to ``False``.
+
+        .. versionadded:: 2.4
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3190,6 +3359,7 @@ def user_command(
             guild_ids=guild_ids,
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
+            nsfw=nsfw,
             force_global=force_global,
         )
         return app_cmd
@@ -3284,9 +3454,6 @@ def get_users_from_interaction(
 
     data = cast(ApplicationCommandInteractionData, data)
 
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
     # Return a Member object if the required data is available, otherwise fall back to User.
     if "resolved" in data and "members" in data["resolved"]:
         member_payloads = data["resolved"]["members"]
@@ -3339,9 +3506,6 @@ def get_messages_from_interaction(
 
     data = cast(ApplicationCommandInteractionData, data)
 
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
     if "resolved" in data and "messages" in data["resolved"]:
         message_payloads = data["resolved"]["messages"]
         for msg_id, msg_payload in message_payloads.items():
@@ -3391,7 +3555,7 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     return ret
 
 
-def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> type:
+def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> Any:
     """Takes an annotation. If the origin is Annotated, it will attempt to resolve it using the given list of accepted
     types, going from the last type and working up to the first. If no matches to the given list is found, the last
     type specified in the Annotated typehint will be returned.
@@ -3410,6 +3574,9 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
     :class:`type`
         Resolved annotation.
     """
+    if resolve_list is None:
+        resolve_list = []
+
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
     origin = typing_extensions.get_origin(given_annotation)
     if origin is Annotated:
@@ -3430,7 +3597,7 @@ def unpack_annotated(given_annotation: Any, resolve_list: list[type] = []) -> ty
 
 
 def unpack_annotation(
-    given_annotation: Any, annotated_list: List[type] = []
+    given_annotation: Any, annotated_list: Optional[List[type]] = None
 ) -> Tuple[List[type], list]:
     """Unpacks the given parameter annotation into its components.
 
@@ -3448,6 +3615,9 @@ def unpack_annotation(
         and a list of unpacked literal arguments.
 
     """
+    if annotated_list is None:
+        annotated_list = []
+
     type_ret = []
     literal_ret = []
     # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.

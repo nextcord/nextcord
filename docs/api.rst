@@ -912,6 +912,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     - nickname
     - roles
     - pending
+    - flags
 
     This requires :attr:`Intents.members` to be enabled.
 
@@ -1248,6 +1249,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param execution: The object containing the execution information.
     :type execution: :class:`AutoModerationActionExecution`
 
+.. function:: on_guild_audit_log_entry_create(entry)
+
+    Called when an :class:`AuditLogEntry` is created.
+
+    .. versionadded:: 2.4
+
+    :param entry: The entry that was created.
+    :type entry: :class:`AuditLogEntry`
+
 .. _discord-api-utils:
 
 Utility Functions
@@ -1485,6 +1495,26 @@ of :class:`enum.Enum`.
         The system message denoting that an auto moderation action was executed
 
         .. versionadded:: 2.1
+    .. attribute:: stage_start
+
+        The system message denoting that a stage channel has started.
+
+        .. versionadded:: 2.6
+    .. attribute:: stage_end
+
+            The system message denoting that a stage channel has ended.
+
+            .. versionadded:: 2.6
+    .. attribute:: stage_speaker
+
+        The system message denoting that a stage channel has a new speaker.
+
+        .. versionadded:: 2.6
+    .. attribute:: stage_topic
+
+        The system message denoting that a stage channel has a new topic.
+
+        .. versionadded:: 2.6
 
 .. class:: UserFlags
 
@@ -2823,7 +2853,7 @@ of :class:`enum.Enum`.
 
     .. attribute:: standard
 
-        Represents a standard sticker that all Nitro users can use.
+        Represents a standard sticker.
 
     .. attribute:: guild
 
@@ -2846,6 +2876,12 @@ of :class:`enum.Enum`.
     .. attribute:: lottie
 
         Represents a sticker with a lottie image.
+
+    .. attribute:: gif
+
+        Represents a sticker with a GIF image.
+
+        .. versionadded:: 2.4
 
 .. class:: InviteTarget
 
@@ -3082,6 +3118,50 @@ of :class:`enum.Enum`.
     .. attribute:: creation_date
 
         Sort forum posts by their creation date.
+
+.. class:: ForumLayoutType
+
+    The default layout type used to display posts in a :class:`ForumChannel`.
+
+    .. versionadded:: 2.4
+
+    .. attribute:: not_set
+
+        No default has been set by channel administrators.
+
+    .. attribute:: list
+
+        Display posts as a list, more text focused.
+
+    .. attribute:: gallery
+
+        Display posts as a collection of posts with images, this is more image focused.
+
+.. class:: RoleConnectionMetadataType
+
+    Represents the type of comparison a role connection metadata record will use.
+
+    .. versionadded:: 2.4
+
+    .. attribute:: integer_less_than_or_equal
+    .. attribute:: datetime_less_than_or_equal
+
+        The metadata value must be less than or equal to the guild's configured value.
+
+    .. attribute:: integer_greater_than_or_equal
+    .. attribute:: datetime_greater_than_or_equal
+
+        The metadata value must be greater than or equal to the guild's configured value.
+
+    .. attribute:: integer_equal
+    .. attribute:: boolean_equal
+
+        The metadata value must be equal to the guild's configured value.
+
+    .. attribute:: integer_not_equal
+    .. attribute:: boolean_not_equal
+
+        The metadata value must be not equal to the guild's configured value.
 
 
 Async Iterator
@@ -4015,6 +4095,11 @@ Guild
 
         :type: :class:`User`
 
+GuildPreview
+~~~~~~~~~~~~
+
+.. autoclass:: GuildPreview()
+    :members:
 
 Integration
 ~~~~~~~~~~~
@@ -4565,6 +4650,14 @@ ApplicationFlags
 .. autoclass:: ApplicationFlags
     :members:
 
+RoleFlags
+~~~~~~~~~
+
+.. attributetable:: RoleFlags
+
+.. autoclass:: RoleFlags
+    :members:
+
 File
 ~~~~
 
@@ -4669,6 +4762,14 @@ PublicUserFlags
 .. autoclass:: PublicUserFlags()
     :members:
 
+MemberFlags
+~~~~~~~~~~~
+
+.. attributetable:: MemberFlags
+
+.. autoclass:: MemberFlags()
+    :members:
+
 ChannelFlags
 ~~~~~~~~~~~~
 
@@ -4708,6 +4809,15 @@ ForumTag
 
 .. autoclass:: ForumTag
     :members:
+
+RoleConnectionMetadata
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: RoleConnectionMetadata
+
+.. autoclass:: RoleConnectionMetadata
+    :members:
+
 
 .. _discord_ui_kit:
 
@@ -5027,6 +5137,12 @@ Cogs
 
 .. autoclass:: ClientCog
     :members:
+
+Warnings
+--------
+
+.. autoclass:: MissingApplicationCommandParametersWarning
+
 
 Exceptions
 ----------

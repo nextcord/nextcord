@@ -47,6 +47,8 @@ __all__ = (
     "KeywordPresetType",
     "AutoModerationActionType",
     "SortOrderType",
+    "RoleConnectionMetadataType",
+    "ForumLayoutType",
 )
 
 
@@ -178,6 +180,10 @@ class MessageType(IntEnum):
     guild_invite_reminder = 22
     context_menu_command = 23
     auto_moderation_action = 24
+    stage_start = 27
+    stage_end = 28
+    stage_speaker = 29
+    stage_topic = 31
 
 
 class VoiceRegion(StrEnum):
@@ -252,6 +258,8 @@ class DefaultAvatar(IntEnum):
     green = 2
     orange = 3
     red = 4
+    fuchsia = 5
+    pink = 5
 
     def __str__(self) -> str:
         return self.name
@@ -389,7 +397,7 @@ class AuditLogAction(IntEnum):
     @property
     def target_type(self) -> Optional[str]:
         v = self.value
-        if v == -1:
+        if v == -1:  # pyright: ignore[reportUnnecessaryComparison]
             return "all"
         elif v < 10:
             return "guild"
@@ -492,6 +500,7 @@ class StickerFormatType(IntEnum):
     png = 1
     apng = 2
     lottie = 3
+    gif = 4
 
     @property
     def file_extension(self) -> str:
@@ -500,6 +509,7 @@ class StickerFormatType(IntEnum):
             StickerFormatType.png: 'png',
             StickerFormatType.apng: 'png',
             StickerFormatType.lottie: 'json',
+            StickerFormatType.gif: 'gif',
         }
         # fmt: on
         return lookup[self]
@@ -714,6 +724,23 @@ class AutoModerationActionType(IntEnum):
 class SortOrderType(IntEnum):
     latest_activity = 0
     creation_date = 1
+
+
+class RoleConnectionMetadataType(IntEnum):
+    integer_less_than_or_equal = 1
+    integer_greater_than_or_equal = 2
+    integer_equal = 3
+    integer_not_equal = 4
+    datetime_less_than_or_equal = 5
+    datetime_greater_than_or_equal = 6
+    boolean_equal = 7
+    boolean_not_equal = 8
+
+
+class ForumLayoutType(IntEnum):
+    not_set = 0
+    list = 1
+    gallery = 2
 
 
 T = TypeVar("T")

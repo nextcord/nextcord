@@ -218,13 +218,13 @@ class ScheduledEvent(Hashable):
         else:
             self.creator: Optional[User] = None
         self.name: str = data["name"]
-        self.description: str = data.get("description", "")
+        self.description: str = data.get("description") or ""
         self.start_time: datetime = parse_time(data["scheduled_start_time"])
         self.end_time: Optional[datetime] = parse_time(data.get("scheduled_end_time"))
         self.privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel(
             data["privacy_level"]
         )
-        self.metadata: EntityMetadata = EntityMetadata(**data.get("metadata", {}))
+        self.metadata: EntityMetadata = EntityMetadata(**(data["entity_metadata"] or {}))
         self.user_count: int = data.get("user_count", 0)
         self.channel: Optional[GuildChannel] = self._state.get_channel(  # type: ignore # who knows
             int(data.get("channel_id") or 0)
