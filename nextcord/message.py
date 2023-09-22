@@ -1339,6 +1339,18 @@ class Message(Hashable):
 
             return f"{self.author.name} joined {tier_name} and has been a subscriber of {self.guild} for {months}!"
 
+        if self.type is MessageType.stage_start:
+            return f"{self.author.display_name} started {self.content}"
+
+        if self.type is MessageType.stage_end:
+            return f"{self.author.display_name} ended {self.content}"
+
+        if self.type is MessageType.stage_speaker:
+            return f"{self.author.display_name} is now a speaker."
+
+        if self.type is MessageType.stage_topic:
+            return f"{self.author.display_name} changed the Stage topic: {self.content}"
+
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
 

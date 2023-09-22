@@ -181,6 +181,10 @@ class MessageType(IntEnum):
     context_menu_command = 23
     auto_moderation_action = 24
     role_subscription_purchase = 25
+    stage_start = 27
+    stage_end = 28
+    stage_speaker = 29
+    stage_topic = 31
 
 
 class VoiceRegion(StrEnum):
