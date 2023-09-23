@@ -151,10 +151,7 @@ class MentionableSelect(SelectBase, Generic[V]):
             self._underlying.default_values = [d.to_dict() for d in value]
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:
-        payload: MentionableSelectMenuPayload = self._underlying.to_dict()
-        if self.defaults:
-            payload["default_values"] = [d.to_dict() for d in self.defaults]
-        return payload
+        return self._underlying.to_dict()
 
     @classmethod
     def from_component(cls, component: MentionableSelectMenu) -> Self:

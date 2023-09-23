@@ -352,6 +352,8 @@ class UserSelectMenu(SelectMenuBase):
 
     def to_dict(self) -> UserSelectMenuPayload:
         payload: UserSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
+        if self.default_values:
+            payload["default_values"] = self.default_values
 
         return payload
 
@@ -398,6 +400,8 @@ class RoleSelectMenu(SelectMenuBase):
 
     def to_dict(self) -> RoleSelectMenuPayload:
         payload: RoleSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
+        if self.default_values:
+            payload["default_values"] = self.default_values
 
         return payload
 
@@ -444,6 +448,8 @@ class MentionableSelectMenu(SelectMenuBase):
 
     def to_dict(self) -> MentionableSelectMenuPayload:
         payload: MentionableSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
+        if self.default_values:
+            payload["default_values"] = self.default_values
 
         return payload
 
@@ -500,6 +506,8 @@ class ChannelSelectMenu(SelectMenuBase):
         payload: ChannelSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
         if self.channel_types:
             payload["channel_types"] = [t.value for t in self.channel_types]
+        if self.default_values:
+            payload["default_values"] = self.default_values
 
         return payload
 
@@ -642,12 +650,12 @@ class SelectDefault:
     def from_value(
         cls, value: Union[GuildChannel, Member, PartialMessageable, Role, User]
     ) -> SelectDefault:
-        if any([isinstance(value, GuildChannel), isinstance(value, PartialMessageable)]):
+        if isinstance(value, (GuildChannel, PartialMessageable)):
             return cls(
                 id=value.id,
                 type=SelectDefaultType.channel,
             )
-        elif any([isinstance(value, Member), isinstance(value, User)]):
+        elif isinstance(value, (Member, User)):
             return cls(
                 id=value.id,
                 type=SelectDefaultType.user,
