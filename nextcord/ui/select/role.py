@@ -107,7 +107,7 @@ class RoleSelect(SelectBase, Generic[V]):
             min_values=self.min_values,
             max_values=self.max_values,
             disabled=self.disabled,
-            default_values=[
+            defaults=[
                 SelectDefault.from_value(d).to_dict()
                 if not isinstance(d, SelectDefault)
                 else d.to_dict()
@@ -126,17 +126,17 @@ class RoleSelect(SelectBase, Generic[V]):
     def defaults(self) -> Optional[List[SelectDefault]]:
         """List[:class:`.Role`]: The default roles that are automatically selected."""
         return (
-            [SelectDefault.from_dict(d) for d in self._underlying.default_values]
-            if self._underlying.default_values
+            [SelectDefault.from_dict(d) for d in self._underlying.defaults]
+            if self._underlying.defaults
             else None
         )
 
     @defaults.setter
     def defaults(self, value: Optional[List[SelectDefault]]) -> None:
         if value is None:
-            self._underlying.default_values = None
+            self._underlying.defaults = None
         else:
-            self._underlying.default_values = [d.to_dict() for d in value]
+            self._underlying.defaults = [d.to_dict() for d in value]
 
     def to_component_dict(self) -> RoleSelectMenuPayload:
         return self._underlying.to_dict()
@@ -149,8 +149,8 @@ class RoleSelect(SelectBase, Generic[V]):
             min_values=component.min_values,
             max_values=component.max_values,
             disabled=component.disabled,
-            defaults=[SelectDefault.from_dict(d) for d in component.default_values]
-            if component.default_values
+            defaults=[SelectDefault.from_dict(d) for d in component.defaults]
+            if component.defaults
             else None,
             row=None,
         )
