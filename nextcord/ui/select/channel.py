@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar, Union
 
 from ...abc import GuildChannel
-from ...components import ChannelSelectMenu
+from ...channel import PartialMessageable
+from ...components import ChannelSelectMenu, SelectDefault
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...utils import MISSING
@@ -79,6 +80,7 @@ class ChannelSelect(SelectBase, Generic[V]):
         "max_values",
         "disabled",
         "channel_types",
+        "defaults",
     )
 
     def __init__(
@@ -89,8 +91,9 @@ class ChannelSelect(SelectBase, Generic[V]):
         min_values: int = 1,
         max_values: int = 1,
         disabled: bool = False,
-        row: Optional[int] = None,
+        defaults: Optional[List[Union[SelectDefault, GuildChannel, PartialMessageable]]] = None,
         channel_types: List[ChannelType] = MISSING,
+        row: Optional[int] = None,
     ) -> None:
         super().__init__(
             custom_id=custom_id,
@@ -109,6 +112,9 @@ class ChannelSelect(SelectBase, Generic[V]):
             min_values=self.min_values,
             max_values=self.max_values,
             disabled=self.disabled,
+            default_values=[
+                SelectDefault.from_value(d).to_dict() if not isinstance(d, SelectDefault) else d.to_dict() for d in defaults
+            ] if defaults else None,
             channel_types=channel_types,
         )
 
@@ -117,8 +123,25 @@ class ChannelSelect(SelectBase, Generic[V]):
         """:class:`.ui.ChannelSelectValues`: A list of resolved :class:`.abc.GuildChannel` that have been selected by the user."""
         return self._selected_values
 
+    @property
+    def defaults(self) -> Optional[List[SelectDefault]]:
+        """List[:class:`.Role`]: The default roles that are automatically selected."""
+        return [
+            SelectDefault.from_dict(d) for d in self._underlying.default_values
+        ] if self._underlying.default_values else None
+    
+    @defaults.setter
+    def defaults(self, value: Optional[List[SelectDefault]]) -> None:
+        if value is None:
+            self._underlying.default_values = None
+        else:
+            self._underlying.default_values = [d.to_dict() for d in value]
+
     def to_component_dict(self) -> ChannelSelectMenuPayload:
-        return self._underlying.to_dict()
+        payload: ChannelSelectMenuPayload = self._underlying.to_dict()
+        if self.defaults:
+            payload["default_values"] = [d.to_dict() for d in self.defaults]
+        return payload
 
     @classmethod
     def from_component(cls, component: ChannelSelectMenu) -> Self:
@@ -128,6 +151,7 @@ class ChannelSelect(SelectBase, Generic[V]):
             min_values=component.min_values,
             max_values=component.max_values,
             disabled=component.disabled,
+            defaults=[SelectDefault.from_dict(d) for d in component.default_values] if component.default_values else None,
             row=None,
         )
 
@@ -150,6 +174,7 @@ def channel_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
+    defaults: Optional[List[Union[SelectDefault, GuildChannel, PartialMessageable]]] = None,
     channel_types: List[ChannelType] = MISSING,
 ) -> Callable[
     [ItemCallbackType[ChannelSelect[V], ClientT]], ItemCallbackType[ChannelSelect[V], ClientT]
@@ -203,6 +228,7 @@ def channel_select(
             "max_values": max_values,
             "disabled": disabled,
             "channel_types": channel_types,
+            "defaults": defaults,
         }
         return func
 

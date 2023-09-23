@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar, Union
 
-from ...components import MentionableSelectMenu
+from ...components import MentionableSelectMenu, SelectDefault
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...member import Member
@@ -87,6 +87,7 @@ class MentionableSelect(SelectBase, Generic[V]):
         "min_values",
         "max_values",
         "disabled",
+        "defaults",
     )
 
     def __init__(
@@ -97,6 +98,7 @@ class MentionableSelect(SelectBase, Generic[V]):
         min_values: int = 1,
         max_values: int = 1,
         disabled: bool = False,
+        defaults: Optional[List[Union[SelectDefault, Role, Member, User]]] = None,
         row: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -115,6 +117,9 @@ class MentionableSelect(SelectBase, Generic[V]):
             min_values=self.min_values,
             max_values=self.max_values,
             disabled=self.disabled,
+            default_values=[
+                SelectDefault.from_value(d).to_dict() if not isinstance(d, SelectDefault) else d.to_dict() for d in defaults
+            ] if defaults else None,
         )
 
     @property
@@ -122,8 +127,25 @@ class MentionableSelect(SelectBase, Generic[V]):
         """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`nextcord.User`, :class:`.Role`] that have been selected by the user."""
         return self._selected_values
 
+    @property
+    def defaults(self) -> Optional[List[SelectDefault]]:
+        """List[:class:`.Role`]: The default roles that are automatically selected."""
+        return [
+            SelectDefault.from_dict(d) for d in self._underlying.default_values
+        ] if self._underlying.default_values else None
+    
+    @defaults.setter
+    def defaults(self, value: Optional[List[SelectDefault]]) -> None:
+        if value is None:
+            self._underlying.default_values = None
+        else:
+            self._underlying.default_values = [d.to_dict() for d in value]
+
     def to_component_dict(self) -> MentionableSelectMenuPayload:
-        return self._underlying.to_dict()
+        payload: MentionableSelectMenuPayload = self._underlying.to_dict()
+        if self.defaults:
+            payload["default_values"] = [d.to_dict() for d in self.defaults]
+        return payload
 
     @classmethod
     def from_component(cls, component: MentionableSelectMenu) -> Self:
@@ -133,6 +155,7 @@ class MentionableSelect(SelectBase, Generic[V]):
             min_values=component.min_values,
             max_values=component.max_values,
             disabled=component.disabled,
+            defaults=[SelectDefault.from_dict(d) for d in component.default_values] if component.default_values else None,
             row=None,
         )
 
@@ -154,6 +177,7 @@ def mentionable_select(
     min_values: int = 1,
     max_values: int = 1,
     disabled: bool = False,
+    defaults: Optional[List[Union[SelectDefault, Role, Member, User]]] = None,
     row: Optional[int] = None,
 ) -> Callable[
     [ItemCallbackType[MentionableSelect[V], ClientT]],
@@ -205,6 +229,7 @@ def mentionable_select(
             "min_values": min_values,
             "max_values": max_values,
             "disabled": disabled,
+            "defaults": defaults,
         }
         return func
 
