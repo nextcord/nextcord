@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar, Union
 
-from ...components import UserSelectMenu, SelectDefault
+from ...components import SelectDefault, UserSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...member import Member
@@ -112,8 +112,13 @@ class UserSelect(SelectBase, Generic[V]):
             max_values=self.max_values,
             disabled=self.disabled,
             default_values=[
-                SelectDefault.from_value(d).to_dict() if not isinstance(d, SelectDefault) else d.to_dict() for d in defaults
-            ] if defaults else None,
+                SelectDefault.from_value(d).to_dict()
+                if not isinstance(d, SelectDefault)
+                else d.to_dict()
+                for d in defaults
+            ]
+            if defaults
+            else None,
         )
 
     @property
@@ -124,10 +129,12 @@ class UserSelect(SelectBase, Generic[V]):
     @property
     def defaults(self) -> Optional[List[SelectDefault]]:
         """List[:class:`.Role`]: The default roles that are automatically selected."""
-        return [
-            SelectDefault.from_dict(d) for d in self._underlying.default_values
-        ] if self._underlying.default_values else None
-    
+        return (
+            [SelectDefault.from_dict(d) for d in self._underlying.default_values]
+            if self._underlying.default_values
+            else None
+        )
+
     @defaults.setter
     def defaults(self, value: Optional[List[SelectDefault]]) -> None:
         if value is None:
@@ -150,7 +157,9 @@ class UserSelect(SelectBase, Generic[V]):
             max_values=component.max_values,
             disabled=component.disabled,
             row=None,
-            defaults=[SelectDefault.from_dict(d) for d in component.default_values] if component.default_values else None,
+            defaults=[SelectDefault.from_dict(d) for d in component.default_values]
+            if component.default_values
+            else None,
         )
 
     def refresh_state(

@@ -341,9 +341,7 @@ class UserSelectMenu(SelectMenuBase):
         The default users that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "default_values",
-    )
+    __slots__: Tuple[str, ...] = ("default_values",)
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.user_select] = ComponentType.user_select
@@ -389,9 +387,7 @@ class RoleSelectMenu(SelectMenuBase):
         The default roles that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "default_values",
-    )
+    __slots__: Tuple[str, ...] = ("default_values",)
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.role_select] = ComponentType.role_select
@@ -437,9 +433,7 @@ class MentionableSelectMenu(SelectMenuBase):
         The default roles or users that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "default_values",
-    )
+    __slots__: Tuple[str, ...] = ("default_values",)
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.mentionable_select] = ComponentType.mentionable_select
@@ -618,9 +612,9 @@ class SelectOption:
 
 class SelectDefault:
     """Represents an autopopulated select menu's default value.
-    
+
     .. versionadded:: 2.6
-    
+
     Attributes
     ----------
     id: :class:`int`
@@ -629,7 +623,7 @@ class SelectDefault:
         The type of value."""
 
     __slots__: Tuple[str, ...] = (
-        "id", 
+        "id",
         "type",
     )
 
@@ -643,9 +637,11 @@ class SelectDefault:
             id=data["id"],
             type=try_enum(SelectDefaultType, data["type"]),
         )
-    
+
     @classmethod
-    def from_value(cls, value: Union[GuildChannel, Member, PartialMessageable, Role, User]) -> SelectDefault:
+    def from_value(
+        cls, value: Union[GuildChannel, Member, PartialMessageable, Role, User]
+    ) -> SelectDefault:
         if any([isinstance(value, GuildChannel), isinstance(value, PartialMessageable)]):
             return cls(
                 id=value.id,
