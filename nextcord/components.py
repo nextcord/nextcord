@@ -341,19 +341,19 @@ class UserSelectMenu(SelectMenuBase):
         The default users that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = ("default_values",)
+    __slots__: Tuple[str, ...] = ("defaults",)
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.user_select] = ComponentType.user_select
 
     def __init__(self, data: UserSelectMenuPayload) -> None:
         super().__init__(data)
-        self.default_values: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
+        self.defaults: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
 
     def to_dict(self) -> UserSelectMenuPayload:
         payload: UserSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
-        if self.default_values:
-            payload["default_values"] = self.default_values
+        if self.defaults:
+            payload["default_values"] = self.defaults
 
         return payload
 
@@ -389,19 +389,19 @@ class RoleSelectMenu(SelectMenuBase):
         The default roles that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = ("default_values",)
+    __slots__: Tuple[str, ...] = ("defaults",)
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.role_select] = ComponentType.role_select
 
     def __init__(self, data: RoleSelectMenuPayload) -> None:
         super().__init__(data)
-        self.default_values: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
+        self.defaults: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
 
     def to_dict(self) -> RoleSelectMenuPayload:
         payload: RoleSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
-        if self.default_values:
-            payload["default_values"] = self.default_values
+        if self.defaults:
+            payload["default_values"] = self.defaults
 
         return payload
 
@@ -437,19 +437,19 @@ class MentionableSelectMenu(SelectMenuBase):
         The default roles or users that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = ("default_values",)
+    __slots__: Tuple[str, ...] = ("defaults",)
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.mentionable_select] = ComponentType.mentionable_select
 
     def __init__(self, data: MentionableSelectMenuPayload) -> None:
         super().__init__(data)
-        self.default_values: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
+        self.defaults: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
 
     def to_dict(self) -> MentionableSelectMenuPayload:
         payload: MentionableSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
-        if self.default_values:
-            payload["default_values"] = self.default_values
+        if self.defaults:
+            payload["default_values"] = self.defaults
 
         return payload
 
@@ -489,7 +489,7 @@ class ChannelSelectMenu(SelectMenuBase):
 
     __slots__: Tuple[str, ...] = (
         "channel_types",
-        "default_values",
+        "defaults",
     )
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
@@ -500,14 +500,14 @@ class ChannelSelectMenu(SelectMenuBase):
         self.channel_types: List[ChannelType] = [
             ChannelType(t) for t in data.get("channel_types", [])
         ]
-        self.default_values: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
+        self.defaults: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
 
     def to_dict(self) -> ChannelSelectMenuPayload:
         payload: ChannelSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
         if self.channel_types:
             payload["channel_types"] = [t.value for t in self.channel_types]
-        if self.default_values:
-            payload["default_values"] = self.default_values
+        if self.defaults:
+            payload["default_values"] = self.defaults
 
         return payload
 
