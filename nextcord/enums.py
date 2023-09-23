@@ -32,6 +32,7 @@ __all__ = (
     "VideoQualityMode",
     "ComponentType",
     "ButtonStyle",
+    "SelectDefaultType",
     "TextInputStyle",
     "StagePrivacyLevel",
     "InteractionType",
@@ -655,6 +656,12 @@ class ButtonStyle(IntEnum):
     green = 3
     red = 4
     url = 5
+
+
+class SelectDefaultType(StrEnum):
+    channel = "channel"
+    role = "role"
+    user = "user"
 
 
 class TextInputStyle(IntEnum):
