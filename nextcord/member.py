@@ -505,11 +505,14 @@ class Member(abc.Messageable, _UserTag):
     def display_name(self) -> str:
         """:class:`str`: Returns the user's display name.
 
-        For regular users this is just their username, but
-        if they have a guild specific nickname then that
-        is returned instead.
+        Returns the users displayed name.
+        So whatever is the first thing to exist from the following priority list:
+
+        1. Guild specific nickname
+        2. Global Name (also known as 'Display Name' in the Discord UI)
+        3. Unique username
         """
-        return self.nick or self.name
+        return self.nick or self.global_name or self.name
 
     @property
     def display_avatar(self) -> Asset:
