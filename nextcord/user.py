@@ -247,12 +247,10 @@ class BaseUser(_UserTag):
     def display_name(self) -> str:
         """:class:`str`: Returns the user's display name.
 
-        Returns the users displayed name.
         This will return the name using the following hierachy:
 
-        1. Guild specific nickname
-        2. Global Name (also known as 'Display Name' in the Discord UI)
-        3. Unique username
+        1. Global Name (also known as 'Display Name' in the Discord UI)
+        2. Unique username
         """
         return self.global_name or self.name
 

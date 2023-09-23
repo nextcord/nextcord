@@ -505,7 +505,6 @@ class Member(abc.Messageable, _UserTag):
     def display_name(self) -> str:
         """:class:`str`: Returns the user's display name.
 
-        Returns the users displayed name.
         This will return the name using the following hierachy:
 
         1. Guild specific nickname
