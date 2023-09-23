@@ -642,7 +642,7 @@ class SelectDefault:
     @classmethod
     def channel(cls, id: int) -> SelectDefault:
         return cls(id, type=SelectDefaultType.channel)
-    
+
     @classmethod
     def role(cls, id: int) -> SelectDefault:
         return cls(id, type=SelectDefaultType.role)
