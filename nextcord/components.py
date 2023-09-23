@@ -621,7 +621,7 @@ class SelectOption:
 class SelectDefault:
     """Represents an autopopulated select menu's default value.
 
-    .. versionadded:: 2.6
+    .. versionadded:: 3.0
 
     Attributes
     ----------
@@ -638,6 +638,18 @@ class SelectDefault:
     def __init__(self, id: int, *, type: SelectDefaultType) -> None:
         self.id: int = id
         self.type: SelectDefaultType = type
+
+    @classmethod
+    def channel(cls, id: int) -> SelectDefault:
+        return cls(id, type=SelectDefaultType.channel)
+    
+    @classmethod
+    def role(cls, id: int) -> SelectDefault:
+        return cls(id, type=SelectDefaultType.role)
+
+    @classmethod
+    def user(cls, id: int) -> SelectDefault:
+        return cls(id, type=SelectDefaultType.user)
 
     @classmethod
     def from_dict(cls, data: SelectDefaultPayload) -> SelectDefault:
