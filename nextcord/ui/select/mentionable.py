@@ -122,8 +122,13 @@ class MentionableSelect(SelectBase, Generic[V_co]):
             max_values=self.max_values,
             disabled=self.disabled,
             default_values=[
-                SelectDefault.from_value(d).to_dict() if not isinstance(d, SelectDefault) else d.to_dict() for d in defaults
-            ] if defaults else None,
+                SelectDefault.from_value(d).to_dict()
+                if not isinstance(d, SelectDefault)
+                else d.to_dict()
+                for d in defaults
+            ]
+            if defaults
+            else None,
         )
 
     @property
@@ -134,10 +139,12 @@ class MentionableSelect(SelectBase, Generic[V_co]):
     @property
     def defaults(self) -> Optional[List[SelectDefault]]:
         """List[:class:`.Role`]: The default roles that are automatically selected."""
-        return [
-            SelectDefault.from_dict(d) for d in self._underlying.default_values
-        ] if self._underlying.default_values else None
-    
+        return (
+            [SelectDefault.from_dict(d) for d in self._underlying.default_values]
+            if self._underlying.default_values
+            else None
+        )
+
     @defaults.setter
     def defaults(self, value: Optional[List[SelectDefault]]) -> None:
         if value is None:
@@ -159,7 +166,9 @@ class MentionableSelect(SelectBase, Generic[V_co]):
             min_values=component.min_values,
             max_values=component.max_values,
             disabled=component.disabled,
-            defaults=[SelectDefault.from_dict(d) for d in component.default_values] if component.default_values else None,
+            defaults=[SelectDefault.from_dict(d) for d in component.default_values]
+            if component.default_values
+            else None,
             row=None,
         )
 
