@@ -993,7 +993,10 @@ class CallbackMixin:
         Invokes the error handler if available.
         """
         if self.has_error_handler():
-            await self.error_callback(interaction, error)  # type: ignore
+            if TYPE_CHECKING:
+                error_callback = cast(Callable, self.error_callback)
+
+            await error_callback(interaction, error)
 
     def error(self, callback: ApplicationErrorCallback) -> Callable:
         """Decorates a function, setting it as a callback to be called when a :class:`ApplicationError` or any of
