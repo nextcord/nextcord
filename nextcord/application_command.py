@@ -561,7 +561,7 @@ class ClientCog:
 
         This **must** be a coroutine.
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.0
 
         Parameters
         ----------
