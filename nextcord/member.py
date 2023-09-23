@@ -506,7 +506,7 @@ class Member(abc.Messageable, _UserTag):
         """:class:`str`: Returns the user's display name.
 
         Returns the users displayed name.
-        So whatever is the first thing to exist from the following priority list:
+        This will return the name using the following hierachy:
 
         1. Guild specific nickname
         2. Global Name (also known as 'Display Name' in the Discord UI)
