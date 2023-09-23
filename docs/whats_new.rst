@@ -24,7 +24,7 @@ v3.0 will have breaking changes and more support for new API features.
 Removals
 ~~~~~~~~
 
-- :attr:`ApplicationFlags.active` has been removed as that is not used for active applications anymore (:issue:`1081`).
+- ``ApplicationFlags.active`` has been removed as that is not used for active applications anymore (:issue:`1081`).
 
 Deprecations
 ~~~~~~~~~~~~
@@ -50,7 +50,7 @@ New Features
 - Add support for guild previews (:issue:`1033`). This adds:
     - :func:`Client.fetch_guild_preview`
     - :class:`GuildPreview`
-- Track non-persistent :class:`ui.View`s, and expose them via :attr:`Client.all_views` and :func:`Client.views` (:issue:`843`).
+- Track non-persistent :class:`ui.View`\s, and expose them via :attr:`Client.all_views` and :func:`Client.views` (:issue:`843`).
 - Add support for the new "pomelo" username system (:issue:`1060`, :issue:`1061`). :attr:`abc.User.global_name` is used to access the "Display Name", and :attr:`abc.User.discriminator` returns ``0000`` for unmigrated users. This also adds the new default avatar :attr:`DefaultAvatar.fuchsia`.
 - Add the ``default_forum_layout`` parameter to :func:`Guild.create_forum_channel` (:issue:`1013`).
 - Add support to inspect application command permissions (:issue:`1065`). This adds:
@@ -59,10 +59,10 @@ New Features
     - :attr:`BaseApplicationCommand.required_guild_permissions`
     - :attr:`BaseApplicationCommand.required_bot_guild_permissions`
 - |commands| Add support to inspect prefix command permissions (:issue:`1065`). This adds:
-    - :attr:`Command.required_permissions`
-    - :attr:`Command.required_bot_permissions`
-    - :attr:`Command.required_guild_permissions`
-    - :attr:`Command.required_bot_guild_permissions`
+    - :attr:`Command.required_permissions <nextcord.ext.commands.Command.required_permissions>`
+    - :attr:`Command.required_bot_permissions <nextcord.ext.commands.Command.required_bot_permissions>`
+    - :attr:`Command.required_guild_permissions <nextcord.ext.commands.Command.required_guild_permissions>`
+    - :attr:`Command.required_bot_guild_permissions <nextcord.ext.commands.Command.required_bot_guild_permissions>`
 - Add :class:`AttachmentFlags`, accessible via :attr:`Attachment.flags` and :func:`Attachment.is_remix` (:issue:`1088`).
 - Add :class:`RoleFlags`, accessible via :attr:`Role.flags` and :func:`Role.is_in_prompt` (:issue:`1084`).
 - Add the ``with_counts`` parameter to :func:`Client.fetch_guilds` (:issue:`1093`).
@@ -75,7 +75,7 @@ New Features
     - :attr:`MessageType.stage_speaker`
     - :attr:`MessageType.stage_topic`
     - :attr:`Guild.max_stage_video_channel_users`
-- Add :func:`utils.format_ts` for formatting integer timestamps without a :class:`datetime.datetime` wrapping it.
+- Add :func:`nextcord.utils.format_ts <utils.format_ts>` for formatting integer timestamps without a :class:`datetime.datetime` wrapping it (:issue:`1085`, :issue:`1099`).
 - Add support for custom statuses by making :attr:`CustomActivity.state` fall back to ``name`` so Discord recognises the activity (:issue:`1109`).
 - Add :class:`MemberFlags`, accessible via :attr:`Member.flags`, and modifiable via the ``flags`` and ``bypass_verification`` parameters in :func:`Member.edit` (:issue:`1042`).
 
