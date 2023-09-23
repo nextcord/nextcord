@@ -62,6 +62,8 @@ class RoleSelect(SelectBase, Generic[V]):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.Role`, :class:`.SelectDefault`]]]
+        The default roles that are automatically selected.
     row: Optional[:class:`int`]
         The relative row this select menu belongs to. A Discord component can only have 5
         rows. By default, items are arranged automatically into those 5 rows. If you'd
@@ -200,6 +202,8 @@ def role_select(
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.Role`, :class:`.SelectDefault`]]]
+        The default roles that are automatically selected.
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:

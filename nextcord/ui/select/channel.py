@@ -72,6 +72,8 @@ class ChannelSelect(SelectBase, Generic[V]):
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     channel_types: List[:class:`.ChannelType`]
         The types of channels that can be selected. If not given, all channel types are allowed.
+    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.abc.GuildChannel`, :class:`.abc.PartialMessageable`]]]
+        The default channels that are automatically selected.
     """
 
     __item_repr_attributes__: Tuple[str, ...] = (
@@ -213,6 +215,8 @@ def channel_select(
         Whether the select is disabled or not. Defaults to ``False``.
     channel_types: List[:class:`.ChannelType`]
         A list of channel types that can be selected in this menu.
+    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.abc.GuildChannel`, :class:`.abc.PartialMessageable`]]]
+        The default channels that are automatically selected.
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:

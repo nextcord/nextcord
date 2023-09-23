@@ -337,6 +337,8 @@ class UserSelectMenu(SelectMenuBase):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.Member`, :class:`nextcord.User`, :class:`.SelectDefault`]]]
+        The default users that are automatically selected.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -383,6 +385,8 @@ class RoleSelectMenu(SelectMenuBase):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.Role`, :class:`.SelectDefault`]]]
+        The default roles that are automatically selected.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -429,6 +433,8 @@ class MentionableSelectMenu(SelectMenuBase):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.Role`, :class:`.Member`, :class:`nextcord.User`, :class:`.SelectDefault`]]]
+        The default roles or users that are automatically selected.
     """
 
     __slots__: Tuple[str, ...] = (
@@ -477,6 +483,8 @@ class ChannelSelectMenu(SelectMenuBase):
         Whether the select is disabled or not. Defaults to ``False``.
     channel_types: List[:class:`ChannelType`]
         The types of channels that can be selected. If not given, all channel types are allowed.
+    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.abc.GuildChannel`, :class:`.abc.PartialMessageable`]]]
+        The default channels that are automatically selected.
     """
 
     __slots__: Tuple[str, ...] = (
