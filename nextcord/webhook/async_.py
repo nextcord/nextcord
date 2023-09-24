@@ -107,7 +107,8 @@ class AsyncWebhookAdapter:
         auth_token: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        headers: Dict[str, str] = {}
+        # always ensure our user agent is being used
+        headers: Dict[str, str] = {"User-Agent": _USER_AGENT}
         files = files or []
         to_send: Optional[Union[str, aiohttp.FormData]] = None
         bucket = (route.webhook_id, route.webhook_token)
@@ -116,9 +117,6 @@ class AsyncWebhookAdapter:
             lock = self._locks[bucket]
         except KeyError:
             self._locks[bucket] = lock = asyncio.Lock()
-
-        # always ensure our user agent is being used
-        headers["User-Agent"] = _USER_AGENT
 
         if payload is not None:
             headers["Content-Type"] = "application/json"

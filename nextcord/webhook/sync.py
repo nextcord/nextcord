@@ -90,7 +90,8 @@ class WebhookAdapter:
         auth_token: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        headers: Dict[str, str] = {}
+        # always ensure our user agent is being used
+        headers: Dict[str, str] = {"User-Agent": _USER_AGENT}
         files = files or []
         to_send: Optional[Union[str, Dict[str, Any]]] = None
         bucket = (route.webhook_id, route.webhook_token)
@@ -99,9 +100,6 @@ class WebhookAdapter:
             lock = self._locks[bucket]
         except KeyError:
             self._locks[bucket] = lock = threading.Lock()
-
-        # always ensure our user agent is being used
-        headers["User-Agent"] = _USER_AGENT
 
         if payload is not None:
             headers["Content-Type"] = "application/json"
