@@ -94,11 +94,11 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
 
 _DEFAULT_API_VERSION = 10
 
-_API_VERSION: Literal[9, 10] = _DEFAULT_API_VERSION
+_API_VERSION: Literal[10] = _DEFAULT_API_VERSION
 
 
 class Route:
-    BASE: ClassVar[str] = f"https://discord.com/api/v{_DEFAULT_API_VERSION}"
+    BASE: ClassVar[str] = f"https://discord.com/api/v{_API_VERSION}"
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
