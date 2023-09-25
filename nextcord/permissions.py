@@ -337,7 +337,7 @@ class Permissions(BaseFlags):
         """:class:`bool`: Returns ``True`` if a user can send messages from all or specific text channels.
 
         .. note::
-            This falls under ``Create Posts`` on the UI specifically for Forum Channels. 
+            This falls under ``Create Posts`` on the UI specifically for Forum Channels.
         """
         return 1 << 11
 
