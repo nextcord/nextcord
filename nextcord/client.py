@@ -481,7 +481,7 @@ class Client:
     def cogs(self) -> Mapping[str, Cog]:
         """Mapping[:class:`str`, :class:`nextcord.Cog`]: A read-only mapping of cog name to cog.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
         """
         return types.MappingProxyType(self._cogs)
 
@@ -2648,7 +2648,7 @@ class Client:
             If a previously loaded cog with the same name should be ejected
             instead of raising an error.
 
-            .. versionadded:: 2.3
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -2681,7 +2681,7 @@ class Client:
 
         If the cog is not found, ``None`` is returned instead.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
 
         Parameters
         ----------
@@ -2707,7 +2707,7 @@ class Client:
 
         Parameters
         ----------
-        name: Union[:class:`str`, :class:`Cog`]
+        cog: Union[:class:`str`, :class:`Cog`]
             Either the name of the cog to remove or the instance
             of the cog to remove.
 

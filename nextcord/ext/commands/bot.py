@@ -583,7 +583,7 @@ class BotBase(GroupMixin):
         cog: :class:`nextcord.Cog`
             The cog to register to the bot.
 
-            .. versionchanged:: 2.3
+            .. versionchanged:: 3.0
 
                 :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
 
@@ -607,7 +607,7 @@ class BotBase(GroupMixin):
             cog = cog._inject(self)
 
         # TODO: This blind call to nextcord.Client is dumb.
-        super().add_cog(cog)  # type: ignore
+        super().add_cog(cog, override=override)  # type: ignore
         # Info: To add the ability to use BaseApplicationCommands in Cogs, the Client has to be aware of cogs. For
         # minimal editing, BotBase must call Client's add_cog function. While it all works out in the end because Bot
         # and AutoShardedBot both end up subclassing Client, this is BotBase and BotBase does not subclass Client, hence
@@ -615,7 +615,7 @@ class BotBase(GroupMixin):
         # Whatever warning that your IDE is giving about the above line of code is correct. When Bot + BotBase
         # inevitably get reworked, make me happy and fix this.
 
-    def remove_cog(self, name: Union[str, nextcord.Cog]) -> Optional[nextcord.Cog]:
+    def remove_cog(self, cog: Union[str, nextcord.Cog]) -> Optional[nextcord.Cog]:
         """Removes a cog from the bot and returns it.
 
         All registered commands and event listeners that the
@@ -625,15 +625,17 @@ class BotBase(GroupMixin):
 
         Parameters
         ----------
-        name: Union[:class:`str`, :class:`nextcord.Cog`]
+        cog: Union[:class:`str`, :class:`nextcord.Cog`]
             Either the name of the cog to remove or the instance
             of the cog to remove.
 
-            .. versionchanged:: 2.3
+            .. versionchanged:: 3.0
 
                 You can now provide the instance of the cog to remove.
 
-            .. versionchanged:: 2.3
+                The name of this parameter has been changed to ``cog`` to better reflect this behavior.
+
+            .. versionchanged:: 3.0
 
                 :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
 
@@ -642,14 +644,14 @@ class BotBase(GroupMixin):
         Optional[:class:`nextcord.Cog`]
              The cog that was removed. ``None`` if not found.
 
-             .. versionchanged:: 2.3
+             .. versionchanged:: 3.0
 
                 :class:`nextcord.Cog` is supported, alongside :class:`.Cog`.
 
         """
 
         # TODO: This blind call to nextcord.Client is dumb.
-        actual_cog = super().remove_cog(name)  # type: ignore
+        actual_cog = super().remove_cog(cog)  # type: ignore
         # See Bot.add_cog() for the reason why.
 
         if actual_cog is None:
