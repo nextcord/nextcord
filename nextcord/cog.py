@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-import warnings
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Optional, Tuple, Type, TypeVar
 
 from .utils import MISSING
@@ -15,7 +14,6 @@ if TYPE_CHECKING:
 __all__ = (
     "CogMeta",
     "Cog",
-    "ClientCog",
 )
 
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
@@ -290,14 +288,3 @@ class Cog(metaclass=CogMeta):
             The invocation interaction.
         """
         pass
-
-
-class ClientCog(Cog):
-    """An alias of :class:`Cog` for backwards compatibility reasons."""
-
-    def __init_subclass__(cls, *args, **kwargs) -> None:
-        warnings.warn(
-            "nextcord.ClientCog is deprecated, use nextcord.Cog instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )

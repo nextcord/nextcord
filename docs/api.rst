@@ -5101,9 +5101,6 @@ Cogs
 .. autoclass:: Cog
     :members:
 
-.. autoclass:: ClientCog
-    :members:
-
 Warnings
 --------
 

@@ -40,7 +40,7 @@ from .channel import (
     TextChannel,
     VoiceChannel,
 )
-from .cog import ClientCog, Cog
+from .cog import Cog
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
@@ -96,7 +96,6 @@ __all__ = (
     "Range",
     "String",
     "MissingApplicationCommandParametersWarning",
-    "ClientCog",
 )
 
 _log = logging.getLogger(__name__)
@@ -1783,7 +1782,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
     Attributes
     ----------
-    checks: List[Union[Callable[[:class:`ClientCog`, :class:`Interaction`], MaybeCoro[:class:`bool`]], Callable[[:class:`Interaction`], MaybeCoro[:class:`bool`]]]]
+    checks: List[Union[Callable[[:class:`Cog`, :class:`Interaction`], MaybeCoro[:class:`bool`]], Callable[[:class:`Interaction`], MaybeCoro[:class:`bool`]]]]
         A list of predicates that verifies if the command could be executed
         with the given :class:`Interaction` as the sole parameter. If an exception
         is necessary to be thrown to signal failure, then one inherited from
