@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
+import asyncio
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Tuple, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator, List, Tuple, TypeVar
 
 import nextcord.utils
 from nextcord.cog import Cog as _Cog, CogMeta as _CogMeta, _cog_special_method
@@ -62,6 +63,7 @@ class CogMeta(_CogMeta):
         new_cls = super().__new__(cls, name, bases, attrs, **kwargs)
 
         commands = {}
+        listeners = {}
         no_bot_cog = (
             "Commands or listeners must not start with cog_ or bot_ (in method {0.__name__}.{1})"
         )
@@ -70,6 +72,8 @@ class CogMeta(_CogMeta):
             for elem, value in base.__dict__.items():
                 if elem in commands:
                     del commands[elem]
+                if elem in listeners:
+                    del listeners[elem]
 
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
@@ -82,10 +86,29 @@ class CogMeta(_CogMeta):
                     if elem.startswith(("cog_", "bot_")):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
+                elif asyncio.iscoroutinefunction(value):
+                    try:
+                        getattr(value, "__cog_listener__")
+                    except AttributeError:
+                        continue
+                    else:
+                        if elem.startswith(("cog_", "bot_")):
+                            raise TypeError(no_bot_cog.format(base, elem))
+                        listeners[elem] = value
+
+        new_cls.__cog_commands__ = list(commands.values())  # type: ignore
+
+        listeners_as_list = []
+        for listener in listeners.values():
+            for listener_name in listener.__cog_listener_names__:
+                # I use __name__ instead of just storing the value so I can inject
+                # the self attribute when the time comes to add them to the bot
+                listeners_as_list.append((listener_name, listener.__name__))
+
+        new_cls.__cog_listeners__ = listeners_as_list  # type: ignore
 
         # pyright says that nextcord.CogMeta and commands.CogMeta are incompatible
         # even though commands.CogMeta is a subclass of nextcord.CogMeta
-        new_cls.__cog_commands__ = list(commands.values())  # type: ignore
         return new_cls  # type: ignore
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -179,6 +202,56 @@ class Cog(_Cog, metaclass=CogMeta):
                 yield command
                 if isinstance(command, GroupMixin):
                     yield from command.walk_commands()
+
+    def get_listeners(self) -> List[Tuple[str, Callable[..., Any]]]:
+        """Returns a :class:`list` of (name, function) listener pairs that are defined in this cog.
+        Returns
+        -------
+        List[Tuple[:class:`str`, :ref:`coroutine <coroutine>`]]
+            The listeners defined in this cog.
+        """
+        return [(name, getattr(self, method_name)) for name, method_name in self.__cog_listeners__]
+
+    @classmethod
+    def listener(cls, name: str = MISSING) -> Callable[[FuncT], FuncT]:
+        """A decorator that marks a function as a listener.
+        This is the cog equivalent of :meth:`.Bot.listen`.
+        Parameters
+        ----------
+        name: :class:`str`
+            The name of the event being listened to. If not provided, it
+            defaults to the function's name.
+        Raises
+        ------
+        TypeError
+            The function is not a coroutine function or a string was not passed as
+            the name.
+        """
+
+        if name is not MISSING and not isinstance(name, str):
+            raise TypeError(
+                f"Cog.listener expected str but received {name.__class__.__name__!r} instead."
+            )
+
+        def decorator(func: FuncT) -> FuncT:
+            actual = func
+            if isinstance(actual, staticmethod):
+                actual = actual.__func__
+            if not asyncio.iscoroutinefunction(actual):
+                raise TypeError("Listener function must be a coroutine function.")
+            actual.__cog_listener__ = True
+            to_assign = name or actual.__name__
+            try:
+                actual.__cog_listener_names__.append(to_assign)
+            except AttributeError:
+                actual.__cog_listener_names__ = [to_assign]
+            # we have to return `func` instead of `actual` because
+            # we need the type to be `staticmethod` for the metaclass
+            # to pick it up but the metaclass unfurls the function and
+            # thus the assignments need to be on the actual function
+            return func
+
+        return decorator
 
     def has_error_handler(self) -> bool:
         """:class:`bool`: Checks whether the cog has an error handler.

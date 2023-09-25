@@ -5,13 +5,12 @@
 Cogs
 ====
 
-There comes a point in your bot's development when you want to organize a collection of commands, listeners, and some state into one class. Cogs allow you to do just that.
+There comes a point in your bot's development when you want to organize a collection of commands and some state into one class. Cogs allow you to do just that.
 
 The gist:
 
 - Each cog is a Python class that subclasses :class:`nextcord.Cog`.
 - Every command is marked with the :func:`.slash_command`, :func:`.user_command`, or :func:`.message_command` decorators.
-- Every listener is marked with the :meth:`nextcord.Cog.listener` decorator.
 - Cogs are then registered with the :meth:`.Client.add_cog` call.
 - Cogs are subsequently removed with the :meth:`.Client.remove_cog` call.
 
@@ -20,7 +19,7 @@ If you want to use :class:`ext.commands.Command` instead of/with application com
 Quick Example
 -------------
 
-This example cog defines a ``Greetings`` category for your commands, with a single :class:`nextcord.SlashApplicationCommand` named ``hello`` as well as a listener to listen to an :ref:`Event <discord-api-events>`.
+This example cog defines a ``Greetings`` category for your commands, with a single :class:`nextcord.SlashApplicationCommand` named ``hello``.
 
 .. code-block:: python3
 
@@ -28,12 +27,6 @@ This example cog defines a ``Greetings`` category for your commands, with a sing
         def __init__(self, client):
             self.client = client
             self._last_member = None
-
-        @nextcord.Cog.listener()
-        async def on_member_join(self, member):
-            channel = member.guild.system_channel
-            if channel is not None:
-                await channel.send(f"Welcome {member.mention}.")
 
         @nextcord.slash_command()
         async def hello(self, interaction, member: nextcord.Member = None):
@@ -47,7 +40,6 @@ This example cog defines a ``Greetings`` category for your commands, with a sing
 
 A couple of technical notes to take into consideration:
 
-- All listeners must be explicitly marked via the :meth:`nextcord.Cog.listener` decorator.
 - The name of the cog is automatically derived from the class name but can be overridden. See :ref:`cogs_meta_options`.
 - All commands must now take a ``self`` parameter to allow usage of instance attributes that can be used to maintain state.
 
@@ -60,7 +52,7 @@ Once you have defined your cogs, you need to tell the bot to register the cogs t
 
     client.add_cog(Greetings(client))
 
-This binds the cog to the bot, adding all commands and listeners to the bot automatically.
+This binds the cog to the bot, adding all commands to the bot automatically.
 
 Note that we reference the cog by name, which we can override through :ref:`cogs_meta_options`. So if we ever want to remove the cog eventually, we would have to do the following.
 
@@ -143,8 +135,3 @@ To get a :class:`list` of commands, we can use :attr:`nextcord.Cog.application_c
     >>> cog = bot.get_cog("Greetings")
     >>> commands = cog.application_commands
     >>> print([c.name for c in commands])
-
-To grab all of the listeners, we can query them with :meth:`nextcord.Cog.get_listeners`. This returns a list of tuples -- the first element being the listener name and the second one being the actual function itself. ::
-
-    >>> for name, func in cog.get_listeners():
-    ...     print(name, "->", func)

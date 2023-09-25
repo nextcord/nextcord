@@ -5,7 +5,7 @@
 Cogs
 ====
 
-:class:`~.commands.Cog` is similar to :class:`nextcord.Cog` except it adds support for :class:`~.commands.Command`
+:class:`~.commands.Cog` is similar to :class:`nextcord.Cog` except it adds support for :class:`~.commands.Command`, listeners,
 and more special methods.
 
 It should be noted that cogs are typically used alongside with :ref:`ext_commands_extensions`.
@@ -38,6 +38,32 @@ This example cog defines a ``Greetings`` category for your commands, with a sing
                 await ctx.send(f'Hello {member.name}... This feels familiar.')
             self._last_member = member
 
+.. _ext_commands_cogs_listeners:
+
+Listeners
+---------
+
+Listeners are functions that are invoked whenever an :ref:`Event <discord-api-events>` is dispatched by the bot. They are always indicated with the :func:`.Cog.listener` decorator, which optionally takes in the name of the event being listened to. If not provided, the name of the function is used to determine the event being listened to.
+Here is an example:
+
+.. code-block:: python3
+
+    class MyListeners(commands.Cog):
+        def __init__(self, bot):
+            self.bot = bot
+
+        # this listens to the ready event because of the name of the function, "on_ready"
+        @commands.Cog.listener()
+        def on_ready(self):
+            print("The bot is ready!")
+
+        @commands.Cog.listener()
+        def on_message(self, message):
+            print("Got a message from", message.author)
+
+        @commands.Cog.listener("on_message")
+        def you_got_mail(self, message):
+            print("You got mail:", message.content)
 
 .. _ext_commands_cogs_special_methods:
 
@@ -82,3 +108,8 @@ To get a :class:`list` of commands, we can use :meth:`.Cog.get_commands`. ::
 If we want to get the subcommands as well, we can use the :meth:`.Cog.walk_commands` generator. ::
 
     >>> print([c.qualified_name for c in cog.walk_commands()])
+
+To do the same with listeners, we can query them with :meth:`.Cog.get_listeners`. This returns a list of tuples -- the first element being the listener name and the second one being the actual function itself. ::
+
+    >>> for name, func in cog.get_listeners():
+    ...     print(name, '->', func)
