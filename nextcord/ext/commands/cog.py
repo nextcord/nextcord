@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
-import asyncio
 
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator, List, Tuple, TypeVar
+import asyncio
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Tuple, TypeVar
 
 import nextcord.utils
 from nextcord.cog import Cog as _Cog, CogMeta as _CogMeta, _cog_special_method

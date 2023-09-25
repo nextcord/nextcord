@@ -1,11 +1,8 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-import asyncio
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Optional, Tuple, Type, TypeVar
-
-from .utils import MISSING
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type, TypeVar
 
 if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand
