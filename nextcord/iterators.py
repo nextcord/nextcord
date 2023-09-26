@@ -564,10 +564,11 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
     async def _fill(self) -> None:
         if self._get_retrieve():
             data = await self._get_logs(self.retrieve)
-            if len(data) < 100:
+
+            entries = data.get("audit_log_entries", [])
+            if len(entries) < 100:
                 self.limit = 0  # terminate the infinite loop
 
-            entries = data.get("audit_log_entries")
             if self.reverse:
                 entries = reversed(entries)
 
