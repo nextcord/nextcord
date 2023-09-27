@@ -36,7 +36,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Export dependencies
-        run: poetry export --no-interaction -f requirements.txt --output requirements.txt --with docs,dev
+        run: poetry export --no-interaction -f requirements.txt --output requirements.txt --with docs,dev -E voice -E speed
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -92,7 +92,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Export dependencies
-        run: poetry export --no-interaction -f requirements.txt --output requirements.txt --with docs,dev
+        run: poetry export --no-interaction -f requirements.txt --output requirements.txt --with docs,dev -E voice -E speed
 
       - name: Install dependencies
         run: pip install -r requirements.txt

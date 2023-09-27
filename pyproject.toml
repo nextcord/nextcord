@@ -94,7 +94,7 @@ strict = true
 
 [tool.poetry-dynamic-versioning.substitution]
 patterns = [
-    "(^__version__\\s*(?::.*?)?=\\s*['\"])[^'\"]*(['\"])",
+    { value = "(^__version__\\s*(?::.*?)?=\\s*['\"])[^'\"]*(['\"])" },
     { value = "(^version_info\\s*(?::.*?)?=\\s*\\S*?\\()[^)]*(\\))", mode = "version_info" },
 ]
 
