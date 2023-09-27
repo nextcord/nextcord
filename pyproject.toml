@@ -48,14 +48,17 @@ orjson = { version = ">=3.5.4", optional = true }
 #  Brotli; platform_python_implementation == 'CPython'
 #  brotlicffi; platform_python_implementation != 'CPython'
 aiodns = { version = ">1.1", optional = true, markers = "sys_platform == 'linux' or sys_platform == 'darwin'" }
-Brotli = { version = "*", optional = true, markers = "platform_python_implementation == 'CPython'"}
+Brotli = { version = "*", optional = true, markers = "platform_python_implementation == 'CPython'" }
 # If brotlicffi is unsupported by an older aiohttp version, it will simply be ignored.
-brotlicffi = { version = "*", optional = true, markers = "platform_python_implementation != 'CPython'"}
+brotlicffi = { version = "*", optional = true, markers = "platform_python_implementation != 'CPython'" }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "2.18.1"
 taskipy = "1.10.3"
-pyright = "1.1.290"
+slotscheck = "0.14.0"
+python-dotenv = "0.20.0"
+pyright = "1.1.317"
+sphinx_autobuild = "2021.3.14"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "5.2.3"
@@ -96,7 +99,10 @@ patterns = [
 ]
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning @ https://github.com/ooliver1/poetry-dynamic-versioning/archive/f6952e5.zip"]
+requires = [
+    "poetry-core>=1.0.0",
+    "poetry-dynamic-versioning @ https://github.com/ooliver1/poetry-dynamic-versioning/archive/f6952e5.zip",
+]
 build-backend = "poetry_dynamic_versioning.backend"
 
 
