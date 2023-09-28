@@ -1259,7 +1259,7 @@ class SlashOptionData:
 
     Parameters
     ----------
-    data: :class: Dict[Union[`str`, `int`, `bool`]]
+    data: :class:`dict`
         The raw data for an option. See https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure for more information.
     value: Union[`str`, `int`, `float`, `bool`]
         Returns the user input value.
