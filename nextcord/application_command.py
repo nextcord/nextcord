@@ -1255,7 +1255,7 @@ class SlashOptionData:
     Thus, application command options that are not required, and weren't
     given a value by a user will not have a dedicated instance of this class.
 
-    This class is for data recieving only! To create slash options, use :class:`SlashOption`.
+    This class is for data receiving only! To create slash options, use :class:`SlashOption`.
 
     Parameters
     ----------
