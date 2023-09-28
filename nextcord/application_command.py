@@ -1279,10 +1279,7 @@ class SlashOptionData:
         self.type: int = data["type"]
         self.name: str = data["name"]
 
-        try:
-            self.focused = data["focused"]
-        except KeyError:
-            self.focused = False
+        self.focused: bool = data.get("focused", False)
 
     def __repr__(self) -> str:
         return str(self.value)
