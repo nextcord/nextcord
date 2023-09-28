@@ -3009,7 +3009,7 @@ class Client:
             in the event that defining this parameter was a mistake, and other parameters were to be defined instead.
         """
         # check if they are creating custom interaction subclasses
-        if cls != Interaction:
+        if cls is not Interaction:
             warnings.warn(
                 "The 'cls' parameter was given a custom Interaction class. "
                 "This parameter only gets used if the interaction type wasn't recognized.",
