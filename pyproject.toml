@@ -65,6 +65,12 @@ sphinx = "5.2.3"
 sphinxcontrib-trio = "1.1.2"
 sphinxcontrib-websupport = "^1.2.4"
 
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.2"
+pytest-asyncio = "^0.21.1"
+pytest-cov = "^4.1.0"
+coverage = { extras = ["toml"], version = "^7.3.1" }
+
 [tool.poetry.urls]
 "Documentation" = "https://docs.nextcord.dev/"
 "Issue tracker" = "https://github.com/nextcord/nextcord/issues"
@@ -121,6 +127,34 @@ precommit = { cmd = "pre-commit install --install-hooks", help = "Install the pr
 pyright = { cmd = "dotenv -f task.env run -- python -m pyright", help = "Run pyright" }
 slotscheck = { cmd = "python -m slotscheck --verbose -m nextcord", help = "Run slotscheck" }
 autotyping = { cmd = "task lint autotyping", help = "Refactor code to add automatic type annotations" }
+tests = { cmd = "pytest --cov --cov-report html --cov-context test", help = "Run tests" }
+coverage = { cmd = "python -m http.server 8188 --directory htmlcov" }
+
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = "--strict-markers -Werror -s"
+xfail_strict = true
+asyncio_mode = "strict"
+
+[tool.coverage.run]
+branch = true
+include = ["nextcord/*", "tests/*"]
+omit = ["nextcord/types/*", "nextcord/__main__.py"]
+
+[tool.coverage.report]
+precision = 1
+exclude_lines = [
+    "# pragma: no cov(er(age)?)?$",
+    "^\\s*def __repr__",
+    "^\\s*@overload",
+    "^\\s*if TYPE_CHECKING",
+    "^\\s*raise NotImplementedError$",
+    "^\\s*\\.\\.\\.$",
+]
+
+[tool.coverage.html]
+show_contexts = true
 
 
 [tool.slotscheck]

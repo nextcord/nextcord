@@ -27,3 +27,5 @@ build/
 
 # locks don't belong in libraries
 poetry.lock
+
+*.coverage
