@@ -1282,7 +1282,7 @@ class SlashOptionData:
         self.focused: bool = data.get("focused", False)
 
     def __repr__(self) -> str:
-        return str(self.value)
+        return f"<SlashOptionData name={self.name} value={self.value} type={self.type}>"
 
 
 # Extends Any so that type checkers won't complain that it's a default for a parameter of a different type
