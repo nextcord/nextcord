@@ -3011,7 +3011,7 @@ class Client:
         # check if they are creating custom interaction subclasses
         if cls != Interaction:
             warnings.warn(
-                "The 'cls' parameter was given a custom Interaction object. "
+                "The 'cls' parameter was given a custom Interaction class. "
                 "This parameter only gets used if the interaction type wasn't recognized.",
                 stacklevel=2,
                 category=FutureWarning,
