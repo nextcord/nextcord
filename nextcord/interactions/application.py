@@ -47,7 +47,7 @@ MISSING: Any = utils.MISSING
 class ApplicationCommandInteraction(Interaction):
     """Represents the interaction for all application commands.
 
-    This interaction is a subclass of :class:`Interaction`.
+    Subclass of :class:`Interaction`.
 
     .. container:: operations
 
