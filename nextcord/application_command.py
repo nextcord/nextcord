@@ -1262,7 +1262,7 @@ class SlashOptionData:
     data: :class:`dict`
         The raw data for an option. See https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure for more information.
     value: Union[`str`, `int`, `float`, `bool`]
-        Returns the user input value.
+        The user input value.
     type: :class:`int`
         The type of the application command option. This indicates what value the option accepts as an input
     name: :class:`str`
