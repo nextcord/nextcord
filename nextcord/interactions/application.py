@@ -65,7 +65,7 @@ class ApplicationCommandInteraction(Interaction):
 
     Attributes
     ----------
-    application_command: Union[SlashApplicationSubcommand, BaseApplicationCommand]
+    application_command: Union[:class:`SlashApplicationSubcommand`, :class:`BaseApplicationCommand`]
         The application command that triggered the interaction.
     app_command_name: :class:`str`
         The name of the application command that triggered the interaction.
