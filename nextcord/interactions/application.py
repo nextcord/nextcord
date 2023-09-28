@@ -71,7 +71,7 @@ class ApplicationCommandInteraction(Interaction):
         The name of the application command that triggered the interaction.
     app_command_id: :class:`int`
         The application command ID that triggered the interaction.
-    options: List[SlashOptionData]
+    options: List[:class:`SlashOptionData`]
         The application command options that have been given a value.
     """
 
