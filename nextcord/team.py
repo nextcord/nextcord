@@ -38,7 +38,7 @@ class Team:
 
     __slots__ = ("_state", "id", "name", "_icon", "owner_id", "members")
 
-    def __init__(self, state: ConnectionState, data: TeamPayload):
+    def __init__(self, state: ConnectionState, data: TeamPayload) -> None:
         self._state: ConnectionState = state
 
         self.id: int = int(data["id"])
@@ -108,7 +108,7 @@ class TeamMember(BaseUser):
 
     __slots__ = ("team", "membership_state", "permissions")
 
-    def __init__(self, team: Team, state: ConnectionState, data: TeamMemberPayload):
+    def __init__(self, team: Team, state: ConnectionState, data: TeamMemberPayload) -> None:
         self.team: Team = team
         self.membership_state: TeamMembershipState = try_enum(
             TeamMembershipState, data["membership_state"]

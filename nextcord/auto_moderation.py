@@ -55,6 +55,22 @@ class AutoModerationTriggerMetadata:
 
             This is ``None`` and cannot be provided if the trigger type of the rule is not
             :attr:`AutoModerationTriggerType.keyword`.
+    regex_patterns: Optional[List[:class:`str`]]
+        A list of regex patterns which will be matched with content. Can only be up to 10 patterns.
+
+        .. versionadded:: 2.4
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the trigger type of the rule is not
+            :attr:`AutoModerationTriggerType.keyword`.
+
+        .. warning::
+
+            The flavor of regex used is Rust flavor and has no guarantees of working with
+            the :mod:`re` module.
+            Each regex pattern must be 75 characters or less.
+
     presets: List[:class:`KeywordPresetType`]
         A list of Discord pre-defined wordsets which will be searched for in content.
 
@@ -81,26 +97,46 @@ class AutoModerationTriggerMetadata:
         .. note::
 
             This is ``None`` and cannot be provided if the trigger type of this rule is not :attr:`AutoModerationTriggerType.mention_spam`.
+    mention_raid_protection_enabled: Optional[:class:`bool`]
+        Whether to automatically detect mention raids.
+
+        .. versionadded:: 2.6
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the trigger type of this rule is not :attr:`AutoModerationTriggerType.mention_spam`.
     """
 
-    __slots__ = ("keyword_filter", "presets", "allow_list", "mention_total_limit")
+    __slots__ = (
+        "keyword_filter",
+        "regex_patterns",
+        "presets",
+        "allow_list",
+        "mention_total_limit",
+        "mention_raid_protection_enabled",
+    )
 
     def __init__(
         self,
         *,
         keyword_filter: Optional[List[str]] = None,
+        regex_patterns: Optional[List[str]] = None,
         presets: Optional[List[KeywordPresetType]] = None,
         allow_list: Optional[List[str]] = None,
         mention_total_limit: Optional[int] = None,
+        mention_raid_protection_enabled: Optional[bool] = None,
     ) -> None:
         self.keyword_filter: Optional[List[str]] = keyword_filter
+        self.regex_patterns: Optional[List[str]] = regex_patterns
         self.presets: Optional[List[KeywordPresetType]] = presets
         self.allow_list: Optional[List[str]] = allow_list
         self.mention_total_limit: Optional[int] = mention_total_limit
+        self.mention_raid_protection_enabled: Optional[bool] = mention_raid_protection_enabled
 
     @classmethod
     def from_data(cls, data: TriggerMetadataPayload):
         keyword_filter = data.get("keyword_filter")
+        regex_patterns = data.get("regex_patterns")
         presets = (
             [try_enum(KeywordPresetType, preset) for preset in data["presets"]]
             if "presets" in data
@@ -108,12 +144,15 @@ class AutoModerationTriggerMetadata:
         )
         allow_list = data.get("allow_list")
         mention_total_limit = data.get("mention_total_limit")
+        mention_raid_protection_enabled = data.get("mention_raid_protection_enabled")
 
         return cls(
             keyword_filter=keyword_filter,
+            regex_patterns=regex_patterns,
             presets=presets,
             allow_list=allow_list,
             mention_total_limit=mention_total_limit,
+            mention_raid_protection_enabled=mention_raid_protection_enabled,
         )
 
     @property
@@ -123,6 +162,9 @@ class AutoModerationTriggerMetadata:
         if self.keyword_filter is not None:
             payload["keyword_filter"] = self.keyword_filter
 
+        if self.regex_patterns is not None:
+            payload["regex_patterns"] = self.regex_patterns
+
         if self.presets is not None:
             payload["presets"] = [enum.value for enum in self.presets]
 
@@ -131,6 +173,9 @@ class AutoModerationTriggerMetadata:
 
         if self.mention_total_limit is not None:
             payload["mention_total_limit"] = self.mention_total_limit
+
+        if self.mention_raid_protection_enabled is not None:
+            payload["mention_raid_protection_enabled"] = self.mention_raid_protection_enabled
 
         return payload
 
@@ -166,7 +211,7 @@ class AutoModerationActionMetadata:
 
     def __init__(
         self, *, channel: Optional[Snowflake] = None, duration_seconds: Optional[int] = None
-    ):
+    ) -> None:
         self.channel_id: Optional[int] = channel.id if channel is not None else None
         self.duration_seconds: Optional[int] = duration_seconds
 
@@ -316,7 +361,7 @@ class AutoModerationRule(Hashable):
         "exempt_channels",
     )
 
-    def __init__(self, *, data: AutoModerationRulePayload, state: ConnectionState):
+    def __init__(self, *, data: AutoModerationRulePayload, state: ConnectionState) -> None:
         self._state = state
         self.id: int = int(data["id"])
         self.guild_id: int = int(data["guild_id"])

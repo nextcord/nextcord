@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Tuple, Union
 
 from .asset import Asset, AssetMixin
 from .partial_emoji import PartialEmoji, _EmojiTag
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake
     from .guild import Guild
+    from .guild_preview import GuildPreview
     from .role import Role
     from .state import ConnectionState
     from .types.emoji import Emoji as EmojiPayload
@@ -84,12 +85,14 @@ class Emoji(_EmojiTag, AssetMixin):
         "available",
     )
 
-    def __init__(self, *, guild: Guild, state: ConnectionState, data: EmojiPayload):
+    def __init__(
+        self, *, guild: Union[Guild, GuildPreview], state: ConnectionState, data: EmojiPayload
+    ) -> None:
         self.guild_id: int = guild.id
         self._state: ConnectionState = state
         self._from_data(data)
 
-    def _from_data(self, emoji: EmojiPayload):
+    def _from_data(self, emoji: EmojiPayload) -> None:
         self.require_colons: bool = emoji.get("require_colons", False)
         self.managed: bool = emoji.get("managed", False)
         self.id: int = int(emoji["id"])  # type: ignore
@@ -145,7 +148,7 @@ class Emoji(_EmojiTag, AssetMixin):
         If roles is empty, the emoji is unrestricted.
         """
         guild = self.guild
-        if guild is None:
+        if guild is None:  # pyright: ignore[reportUnnecessaryComparison]
             return []
 
         return [role for role in guild.roles if self._roles.has(role.id)]

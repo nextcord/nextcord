@@ -49,7 +49,7 @@ class Object(Hashable):
         The ID of the object.
     """
 
-    def __init__(self, id: SupportsIntCast):
+    def __init__(self, id: SupportsIntCast) -> None:
         try:
             id = int(id)
         except ValueError:

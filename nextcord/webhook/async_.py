@@ -7,6 +7,7 @@ import json
 import logging
 import re
 from contextvars import ContextVar
+from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,10 +17,12 @@ from typing import (
     NamedTuple,
     Optional,
     Tuple,
+    Type,
     Union,
     overload,
 )
 from urllib.parse import quote as urlquote
+from weakref import WeakValueDictionary
 
 import aiohttp
 
@@ -28,6 +31,7 @@ from ..asset import Asset
 from ..channel import PartialMessageable
 from ..enums import WebhookType, try_enum
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
+from ..flags import MessageFlags
 from ..http import Route
 from ..message import Attachment, Message
 from ..mixins import Hashable
@@ -54,6 +58,7 @@ if TYPE_CHECKING:
     from ..mentions import AllowedMentions
     from ..state import ConnectionState
     from ..types.message import Message as MessagePayload
+    from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
     from ..ui.view import View
 
@@ -61,7 +66,7 @@ MISSING = utils.MISSING
 
 
 class AsyncDeferredLock:
-    def __init__(self, lock: asyncio.Lock):
+    def __init__(self, lock: asyncio.Lock) -> None:
         self.lock = lock
         self.delta: Optional[float] = None
 
@@ -72,15 +77,23 @@ class AsyncDeferredLock:
     def delay_by(self, delta: float) -> None:
         self.delta = delta
 
-    async def __aexit__(self, type, value, traceback):
+    async def __aexit__(
+        self,
+        type: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         if self.delta:
             await asyncio.sleep(self.delta)
         self.lock.release()
 
 
 class AsyncWebhookAdapter:
-    def __init__(self):
-        self._locks: Dict[Any, asyncio.Lock] = {}
+    def __init__(self) -> None:
+        self._locks: WeakValueDictionary[
+            Tuple[Optional[SnowflakeAlias], Optional[str]],
+            asyncio.Lock,
+        ] = WeakValueDictionary()
 
     async def request(
         self,
@@ -472,7 +485,6 @@ def handle_message_parameters(
     username: str = MISSING,
     avatar_url: Any = MISSING,
     tts: bool = False,
-    ephemeral: bool = False,
     file: File = MISSING,
     files: List[File] = MISSING,
     attachments: List[Attachment] = MISSING,
@@ -481,6 +493,9 @@ def handle_message_parameters(
     view: Optional[View] = MISSING,
     allowed_mentions: Optional[AllowedMentions] = MISSING,
     previous_allowed_mentions: Optional[AllowedMentions] = None,
+    ephemeral: Optional[bool] = None,
+    flags: Optional[MessageFlags] = None,
+    suppress_embeds: Optional[bool] = None,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -521,8 +536,16 @@ def handle_message_parameters(
         payload["avatar_url"] = str(avatar_url)
     if username:
         payload["username"] = username
-    if ephemeral:
-        payload["flags"] = 64
+
+    if flags is None:
+        flags = MessageFlags()
+    if suppress_embeds is not None:
+        flags.suppress_embeds = suppress_embeds
+    if ephemeral is not None:
+        flags.ephemeral = ephemeral
+
+    if flags.value != 0:
+        payload["flags"] = flags.value
 
     if allowed_mentions:
         if previous_allowed_mentions is not None:
@@ -585,11 +608,11 @@ class PartialWebhookChannel(Hashable):
 
     __slots__ = ("id", "name")
 
-    def __init__(self, *, data):
+    def __init__(self, *, data) -> None:
         self.id = int(data["id"])
         self.name = data["name"]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PartialWebhookChannel name={self.name!r} id={self.id}>"
 
 
@@ -610,13 +633,13 @@ class PartialWebhookGuild(Hashable):
 
     __slots__ = ("id", "name", "_icon", "_state")
 
-    def __init__(self, *, data, state):
+    def __init__(self, *, data, state) -> None:
         self._state = state
         self.id = int(data["id"])
         self.name = data["name"]
         self._icon = data["icon"]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PartialWebhookGuild name={self.name!r} id={self.id}>"
 
     @property
@@ -637,7 +660,9 @@ class _FriendlyHttpAttributeErrorHelper:
 class _WebhookState:
     __slots__ = ("_parent", "_webhook")
 
-    def __init__(self, webhook: Any, parent: Optional[Union[ConnectionState, _WebhookState]]):
+    def __init__(
+        self, webhook: Any, parent: Optional[Union[ConnectionState, _WebhookState]]
+    ) -> None:
         self._webhook: Any = webhook
 
         self._parent: Optional[ConnectionState]
@@ -808,7 +833,7 @@ class WebhookMessage(Message):
 
         if delay is not None:
 
-            async def inner_call(delay: float = delay):
+            async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
                 try:
                     await self._state._webhook.delete_message(self.id)
@@ -841,14 +866,14 @@ class BaseWebhook(Hashable):
         data: WebhookPayload,
         token: Optional[str] = None,
         state: Optional[ConnectionState] = None,
-    ):
+    ) -> None:
         self.auth_token: Optional[str] = token
         self._state: Union[ConnectionState, _WebhookState] = state or _WebhookState(
             self, parent=state
         )
         self._update(data)
 
-    def _update(self, data: WebhookPayload):
+    def _update(self, data: WebhookPayload) -> None:
         self.id = int(data["id"])
         self.type = try_enum(WebhookType, int(data["type"]))
         self.channel_id = utils.get_as_snowflake(data, "channel_id")
@@ -1010,11 +1035,11 @@ class Webhook(BaseWebhook):
         session: aiohttp.ClientSession,
         token: Optional[str] = None,
         state=None,
-    ):
+    ) -> None:
         super().__init__(data, token, state)
         self.session = session
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Webhook id={self.id!r}>"
 
     @property
@@ -1115,6 +1140,7 @@ class Webhook(BaseWebhook):
             "guild_id": channel.guild.id,
             "user": {
                 "username": user.name,
+                "global_name": user.global_name,
                 "discriminator": user.discriminator,
                 "id": user.id,
                 "avatar": user._avatar,
@@ -1317,7 +1343,6 @@ class Webhook(BaseWebhook):
         username: str = MISSING,
         avatar_url: Union[Asset, str] = MISSING,
         tts: bool = MISSING,
-        ephemeral: bool = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
         embed: Embed = MISSING,
@@ -1327,6 +1352,9 @@ class Webhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: Literal[True],
         delete_after: Optional[float] = None,
+        ephemeral: Optional[bool] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> WebhookMessage:
         ...
 
@@ -1338,7 +1366,6 @@ class Webhook(BaseWebhook):
         username: str = MISSING,
         avatar_url: Union[Asset, str] = MISSING,
         tts: bool = MISSING,
-        ephemeral: bool = MISSING,
         file: File = MISSING,
         files: List[File] = MISSING,
         embed: Embed = MISSING,
@@ -1348,6 +1375,9 @@ class Webhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: Literal[False] = ...,
         delete_after: Optional[float] = None,
+        ephemeral: Optional[bool] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> None:
         ...
 
@@ -1358,7 +1388,6 @@ class Webhook(BaseWebhook):
         username: str = MISSING,
         avatar_url: Union[Asset, str] = MISSING,
         tts: bool = False,
-        ephemeral: bool = False,
         file: File = MISSING,
         files: List[File] = MISSING,
         embed: Embed = MISSING,
@@ -1368,6 +1397,9 @@ class Webhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: bool = False,
         delete_after: Optional[float] = None,
+        ephemeral: Optional[bool] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1381,6 +1413,11 @@ class Webhook(BaseWebhook):
         If the ``embed`` parameter is provided, it must be of type :class:`Embed` and
         it must be a rich embed type. You cannot mix the ``embed`` parameter with the
         ``embeds`` parameter, which must be a :class:`list` of :class:`Embed` objects to send.
+
+        .. versionchanged:: 2.4
+
+            ``ephemeral`` can now accept ``None`` to indicate that
+            ``flags`` should be used.
 
         Parameters
         ----------
@@ -1437,6 +1474,15 @@ class Webhook(BaseWebhook):
             The thread to send this webhook to.
 
             .. versionadded:: 2.0
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -1467,8 +1513,6 @@ class Webhook(BaseWebhook):
         previous_mentions: Optional[AllowedMentions] = getattr(
             self._state, "allowed_mentions", None
         )
-        if content is None:
-            content = MISSING
 
         application_webhook = self.type is WebhookType.application
         if ephemeral and not application_webhook:
@@ -1496,6 +1540,8 @@ class Webhook(BaseWebhook):
             view=view,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
+            flags=flags,
+            suppress_embeds=suppress_embeds,
         )
         adapter = async_context.get()
         thread_id: Optional[int] = None

@@ -103,11 +103,13 @@ class VoiceState:
         "suppress",
     )
 
-    def __init__(self, *, data: VoiceStatePayload, channel: Optional[VocalGuildChannel] = None):
+    def __init__(
+        self, *, data: VoiceStatePayload, channel: Optional[VocalGuildChannel] = None
+    ) -> None:
         self.session_id: str = data.get("session_id")
         self._update(data, channel)
 
-    def _update(self, data: VoiceStatePayload, channel: Optional[VocalGuildChannel]):
+    def _update(self, data: VoiceStatePayload, channel: Optional[VocalGuildChannel]) -> None:
         self.self_mute: bool = data.get("self_mute", False)
         self.self_deaf: bool = data.get("self_deaf", False)
         self.self_stream: bool = data.get("self_stream", False)
@@ -247,6 +249,7 @@ class Member(abc.Messageable, _UserTag):
     if TYPE_CHECKING:
         name: str
         id: int
+        global_name: Optional[str]
         discriminator: str
         bot: bool
         system: bool
@@ -262,7 +265,9 @@ class Member(abc.Messageable, _UserTag):
         accent_colour: Optional[Colour]
         avatar_decoration: Optional[Asset]
 
-    def __init__(self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState):
+    def __init__(
+        self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
+    ) -> None:
         self._state: ConnectionState = state
         self._user: User = state.store_user(data["user"])
         self.guild: Guild = guild
@@ -285,8 +290,9 @@ class Member(abc.Messageable, _UserTag):
 
     def __repr__(self) -> str:
         return (
-            f"<Member id={self._user.id} name={self._user.name!r} discriminator={self._user.discriminator!r}"
-            f" bot={self._user.bot} nick={self.nick!r} guild={self.guild!r}>"
+            f"<Member id={self._user.id} name={self._user.name!r} global_name={self._user.global_name!r}"
+            + (f" discriminator={self._user.discriminator!r}" if self.discriminator != "0" else "")
+            + f" bot={self._user.bot} nick={self.nick!r} guild={self.guild!r}>"
         )
 
     def __eq__(self, other: Any) -> bool:

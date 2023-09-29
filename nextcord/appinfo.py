@@ -82,7 +82,7 @@ class AppInfo:
         "privacy_policy_url",
     )
 
-    def __init__(self, state: ConnectionState, data: AppInfoPayload):
+    def __init__(self, state: ConnectionState, data: AppInfoPayload) -> None:
         from .team import Team
 
         self._state: ConnectionState = state
@@ -154,7 +154,7 @@ class PartialAppInfo:
         "_icon",
     )
 
-    def __init__(self, *, state: ConnectionState, data: PartialAppInfoPayload):
+    def __init__(self, *, state: ConnectionState, data: PartialAppInfoPayload) -> None:
         self._state: ConnectionState = state
         self.id: int = int(data["id"])
         self.name: str = data["name"]

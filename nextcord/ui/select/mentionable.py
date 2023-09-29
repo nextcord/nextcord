@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
+from ...member import Member
+from ...role import Role
+from ...user import User
 from ...utils import MISSING
 from ..item import ItemCallbackType
 from ..view import View
@@ -17,12 +20,9 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...guild import Guild
-    from ...member import Member
-    from ...role import Role
     from ...state import ConnectionState
     from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
-    from ...user import User
 
 __all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
 
@@ -39,7 +39,7 @@ class MentionableSelectValues(SelectValuesBase):
 
     @property
     def users(self) -> List[User]:
-        """List[:class:`.User`]: A list of users that were selected."""
+        """List[:class:`nextcord.User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
 
     @property
@@ -119,7 +119,7 @@ class MentionableSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> MentionableSelectValues:
-        """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`.User`, :class:`.Role`] that have been selected by the user."""
+        """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`nextcord.User`, :class:`.Role`] that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:

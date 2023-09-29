@@ -13,6 +13,7 @@ from .user import PartialUser
 
 OverwriteType = Literal[0, 1]
 SortOrderType = Literal[0, 1]
+ForumLayoutType = Literal[0, 1, 2]
 
 
 class PermissionOverwrite(TypedDict):
@@ -22,7 +23,7 @@ class PermissionOverwrite(TypedDict):
     deny: str
 
 
-ChannelType = Literal[0, 1, 2, 3, 4, 5, 6, 10, 11, 12, 13]
+ChannelType = Literal[0, 1, 2, 3, 4, 5, 6, 10, 11, 12, 13, 14, 15]
 
 
 class _BaseChannel(TypedDict):
@@ -63,6 +64,7 @@ class ForumChannel(_ThreadedBaseChannel):
     default_reaction_emoji: NotRequired[Optional[DefaultReaction]]
     default_thread_rate_limit_per_user: NotRequired[int]
     available_tags: NotRequired[List[ForumTag]]
+    default_forum_layout: NotRequired[ForumLayoutType]
 
 
 class NewsChannel(_ThreadedBaseChannel):
@@ -149,7 +151,7 @@ class StageInstance(TypedDict):
 
 
 class ForumTag(TypedDict):
-    id: Optional[Snowflake]
+    id: Snowflake
     name: str
     moderated: bool
     emoji_id: NotRequired[Optional[Snowflake]]
