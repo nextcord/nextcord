@@ -2312,7 +2312,7 @@ class Client:
         global commands if the guild_id is ``None``.
 
         .. versionchanged:: 3.0
-            This replaces the now removed ``delete_unknown_application_commands``, 
+            This replaces the now removed ``delete_unknown_application_commands``,
             ``associate_application_commands``, ``update_application_commands``, and ``rollout_application_commands``
             methods.
 

@@ -13,7 +13,6 @@ from typing import (
     ClassVar,
     Dict,
     List,
-    Literal,
     NamedTuple,
     Optional,
     Sequence,
