@@ -643,7 +643,6 @@ class Member(abc.Messageable, _UserTag):
         self,
         *,
         delete_message_seconds: Optional[int] = None,
-        delete_message_days: Optional[Literal[0, 1, 2, 3, 4, 5, 6, 7]] = None,
         reason: Optional[str] = None,
     ) -> None:
         """|coro|
@@ -654,7 +653,6 @@ class Member(abc.Messageable, _UserTag):
             self,
             reason=reason,
             delete_message_seconds=delete_message_seconds,
-            delete_message_days=delete_message_days,
         )
 
     async def unban(self, *, reason: Optional[str] = None) -> None:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, Union
 
 from . import utils
@@ -13,9 +12,6 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 __all__ = ("Embed",)
-
-# Backwards compatibility
-EmptyEmbed = None
 
 
 class EmbedProxy:
@@ -96,6 +92,9 @@ class Embed:
             and is typed as ``Optional[...]`` over ``Embed.Empty``.
             This also means that you can no longer use ``len()`` on an empty field.
 
+    .. versionchanged:: 3.0
+        ``Embed.Empty`` has been removed in favor of ``None``.
+
     Attributes
     ----------
     title: :class:`str`
@@ -166,16 +165,6 @@ class Embed:
 
         if timestamp:
             self.timestamp = timestamp
-
-    # backwards compatibility
-    @property
-    def Empty(self) -> None:
-        warnings.warn(
-            "Empty is deprecated and will be removed in a future version. Use None instead.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return None
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> Self:
