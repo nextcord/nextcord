@@ -156,7 +156,7 @@ We use [`.. versionadded::`](https://www.sphinx-doc.org/en/master/usage/restruct
 
 These should not be used in methods in a new class, since the whole class is new.
 
-The current in-development version can be found in `nextcord/__init__.py` at `__version__`.
+The current in-development version can be found from the [repository's tags](https://github.com/nextcord/nextcord/tags).
 
 #### Versioning Example
 
