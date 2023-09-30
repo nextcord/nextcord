@@ -25,6 +25,6 @@ class EditEmoji(TypedDict):
     roles: Optional[SnowflakeList]
 
 
-class DefaultReaction(TypedDict, total=False):
+class DefaultReaction(TypedDict):
     emoji_id: Optional[Snowflake]
     emoji_name: Optional[str]
