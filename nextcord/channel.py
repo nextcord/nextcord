@@ -3063,9 +3063,8 @@ class ForumTag:
         return f"{type(self).__name__} {inner}"
 
     @property
-    def payload(self) -> Union[ForumTagPayload, ForumTagCreatePayload]:
-        data: ForumTagPayload = {
-            "id": self.id,
+    def payload(self) -> ForumTagCreatePayload:
+        data: ForumTagCreatePayload = {
             "name": self.name,
             "moderated": self.moderated,
         }

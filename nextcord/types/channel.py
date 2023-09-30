@@ -152,10 +152,14 @@ class StageInstance(TypedDict):
 
 class ForumTagCreate(TypedDict):
     name: str
+    moderated: NotRequired[bool]
+    emoji_id: NotRequired[Optional[Snowflake]]
+    emoji_name: NotRequired[Optional[str]]
+
+
+class ForumTag(TypedDict):
+    id: Snowflake
+    name: str
     moderated: bool
     emoji_id: Optional[Snowflake]
     emoji_name: Optional[str]
-
-
-class ForumTag(ForumTagCreate):
-    id: Snowflake
