@@ -45,7 +45,9 @@ Please use the following to get your contributions up to spec:
 
 ## Installing Development Dependencies Locally
 
-To install dependencies locally for development, we use [Poetry](https://python-poetry.org). Install it then run `poetry install` to create a virtual environment.
+To install dependencies locally for development, we use [Poetry](https://python-poetry.org).
+
+[Install poetry](https://python-poetry.org/docs/#installation), install our plugin at `poetry self add "poetry-dynamic-versioning[plugin] @ git+https://github.com/nextcord/poetry-dynamic-versioning@master"`, then run `poetry install` to create a virtual environment.
 
 ## Code Style
 
