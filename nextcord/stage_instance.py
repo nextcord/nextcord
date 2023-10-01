@@ -52,6 +52,8 @@ class StageInstance(Hashable):
         The privacy level of the stage instance.
     scheduled_event_id: Optional[:class:`int`]
         The ID of the scheduled event for this stage instance.
+
+        .. versionadded:: 2.7
     discoverable_disabled: :class:`bool`
         Whether discoverability for the stage instance is disabled.
     """
@@ -93,7 +95,10 @@ class StageInstance(Hashable):
 
     @cached_slot_property("_cs_scheduled_event")
     def scheduled_event(self) -> Optional[ScheduledEvent]:
-        """Optional[:class:`ScheduledEvent`]: The scheduled event for this stage instance."""
+        """Optional[:class:`ScheduledEvent`]: The scheduled event for this stage instance.
+
+        .. versionadded:: 2.7
+        """
         if self.scheduled_event_id is None:
             return None
 
