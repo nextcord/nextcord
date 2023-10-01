@@ -379,7 +379,7 @@ class Attachment(Hashable):
 
     @property
     def waveform(self) -> Optional[array[int]]:
-        """Optional[array[:class:`int`]]: The base64 decoded representing a sampled waveform
+        """Optional[array[:class:`int`]]: The base64 decoded data representing a sampled waveform
         (currently for voice messages).
 
         .. versionadded:: 3.0
