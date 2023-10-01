@@ -8,7 +8,7 @@ ci:
 
 repos:
   - repo: https://github.com/PyCQA/autoflake
-    rev: v2.2.0
+    rev: v2.2.1
     hooks:
       - id: autoflake
         name: Remove unused imports with autoflake.
@@ -18,11 +18,10 @@ repos:
             "--remove-all-unused-imports",
             "--ignore-init-module-imports",
             "--ignore-pass-after-docstring",
-            "--exclude=discord/**",
           ]
 
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 23.9.1
     hooks:
       - id: black
         name: Running black in all files.

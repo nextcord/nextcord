@@ -564,10 +564,11 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
     async def _fill(self) -> None:
         if self._get_retrieve():
             data = await self._get_logs(self.retrieve)
-            if len(data) < 100:
+
+            entries = data.get("audit_log_entries", [])
+            if len(entries) < 100:
                 self.limit = 0  # terminate the infinite loop
 
-            entries = data.get("audit_log_entries")
             if self.reverse:
                 entries = reversed(entries)
 
@@ -617,6 +618,11 @@ class GuildIterator(_AsyncIterator["Guild"]):
         The client to retrieve the guilds from.
     limit: :class:`int`
         Maximum number of guilds to retrieve.
+    with_counts: :class:`bool`
+        Whether to include approximate member and presence counts for the guilds.
+        Defaults to ``False``.
+
+        .. versionadded:: 2.6
     before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
         Object before which all guilds must be.
     after: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
@@ -627,6 +633,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
         self,
         bot: Client,
         limit: Optional[int],
+        with_counts: bool = False,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
     ) -> None:
@@ -639,6 +646,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
         self.bot: Client = bot
         self.limit: Optional[int] = limit
+        self.with_counts: bool = with_counts
         self.before: Optional[Snowflake] = before
         self.after: Optional[Snowflake] = after
 
@@ -701,7 +709,9 @@ class GuildIterator(_AsyncIterator["Guild"]):
     async def _retrieve_guilds_before_strategy(self, retrieve: int) -> List[GuildPayload]:
         """Retrieve guilds using before parameter."""
         before = self.before.id if self.before else None
-        data: List[GuildPayload] = await self.bot.http.get_guilds(retrieve, before=before)
+        data: List[GuildPayload] = await self.bot.http.get_guilds(
+            retrieve, before=before, with_counts=self.with_counts
+        )
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
@@ -711,7 +721,9 @@ class GuildIterator(_AsyncIterator["Guild"]):
     async def _retrieve_guilds_after_strategy(self, retrieve: int) -> List[GuildPayload]:
         """Retrieve guilds using after parameter."""
         after = self.after.id if self.after else None
-        data: List[GuildPayload] = await self.bot.http.get_guilds(retrieve, after=after)
+        data: List[GuildPayload] = await self.bot.http.get_guilds(
+            retrieve, after=after, with_counts=self.with_counts
+        )
         if len(data):
             if self.limit is not None:
                 self.limit -= retrieve
