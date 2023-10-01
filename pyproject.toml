@@ -61,7 +61,6 @@ ignore = [
     "ARG002",  # TODO:
     "ARG003",  # TODO:
     "B008",    # SlashOption() as default, it is okay (Annotated is technically better but verbose)
-    "B905",    # zip(strict: bool) is from 3.10
     "BLE",     # TODO:
     "C90",     # TODO:
     "COM",     # black sorts out trailing commas
@@ -70,6 +69,7 @@ ignore = [
     "E501",    # black sorts out line length
     "F403",    # wildcard imports shouldn't be blasted
     "F405",    # pyright can detect undefined names anyway
+    "FA",      # TODO:
     "EM",      # TODO:
     "FBT",     # TODO:
     "FIX",     # this can be removed on demand, todo comments are okay to be left in
@@ -84,7 +84,7 @@ ignore = [
     "S110",    # TODO:
     "S112",    # TODO:
     "S311",    # "cryptographic purposes", this is a Discord bot library
-    "S603",    # as this is a client, we do not need to check for untrusted input here
+    "S603",    # as this is a library, we do not need to check for untrusted input here
     "S607",    # or partial executable paths
     "SLF",     # pyright can detect private access, but internals rely on it too much right now
     "TD002",   # authors in TODO comments would be nice, but they don't exactly work retroactively (discord.py comments)
@@ -95,6 +95,7 @@ ignore = [
     "UP",      # TODO:
 ]
 exclude = ["aliasgen.py", "discord/*", "unaliased-setup.py", ".github/*"]
+target-version = "py38"
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = [
