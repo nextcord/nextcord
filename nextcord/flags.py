@@ -383,7 +383,8 @@ class MessageFlags(BaseFlags):
     def is_voice_message(self) -> int:
         """:class:`bool`: Returns ``True`` if the message is a voice message.
 
-        .. versionadded:: 2.6"""
+        .. versionadded:: 3.0
+        """
         return 1 << 13
 
 

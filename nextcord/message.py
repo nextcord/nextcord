@@ -149,7 +149,7 @@ class Attachment(Hashable):
     duration_secs: Optional[:class:`float`]
         The duration of the audio file (currently for voice messages).
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -382,7 +382,7 @@ class Attachment(Hashable):
         """Optional[array[:class:`int`]]: The base64 decoded representing a sampled waveform
         (currently for voice messages).
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.0
         """
         if self._waveform is not None:
             return array("B", [int(b) for b in base64.b64decode(self._waveform)])

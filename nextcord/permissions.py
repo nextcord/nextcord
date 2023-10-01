@@ -561,7 +561,8 @@ class Permissions(BaseFlags):
     def send_voice_messages(self) -> int:
         """:class:`bool`: Returns ``True`` if a user can send voice messages.
 
-        .. versionadded:: 2.6"""
+        .. versionadded:: 3.0
+        """
         return 1 << 46
 
 
