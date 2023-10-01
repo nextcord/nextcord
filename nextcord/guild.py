@@ -1097,7 +1097,7 @@ class Guild(Hashable):
                 return result
 
         def pred(m: Member) -> bool:
-            return m.nick == name or m.name == name
+            return name in {m.nick, m.name}
 
         return utils.find(pred, members)
 

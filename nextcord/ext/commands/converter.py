@@ -184,7 +184,7 @@ class MemberConverter(IDConverter[nextcord.Member]):
             return nextcord.utils.get(members, name=username, discriminator=discriminator)
 
         members = await guild.query_members(argument, limit=100, cache=cache)
-        finder: Callable[[Member], bool] = lambda m: m.name == argument or m.nick == argument
+        finder: Callable[[Member], bool] = lambda m: argument in {m.name, m.nick}
         return nextcord.utils.find(finder, members)
 
     async def query_member_by_id(self, bot, guild, user_id):

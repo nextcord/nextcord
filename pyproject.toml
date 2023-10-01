@@ -80,6 +80,7 @@ ignore = [
     "PLR2004", # TODO:
     "PLW2901", # overriding loop var with a change (like anno = anno.type) is very common in this
     "PTH",     # TODO:
+    "PYI",     # TODO:
     "S101",    # asserts are usually used for typing assertions - typing.cast would be better but it's fine
     "S110",    # TODO:
     "S112",    # TODO:
