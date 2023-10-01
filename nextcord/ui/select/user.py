@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 
 from ...components import UserSelectMenu
 from ...enums import ComponentType
-from ...interactions import ClientT
+from ...interactions.base import ClientT
 from ...member import Member
 from ...user import User
 from ...utils import MISSING

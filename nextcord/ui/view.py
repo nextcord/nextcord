@@ -27,7 +27,7 @@ from .item import Item, ItemCallbackType
 __all__ = ("View",)
 
 if TYPE_CHECKING:
-    from ..interactions import ClientT, Interaction
+    from ..interactions.message_component import MessageComponentInteraction
     from ..message import Message
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
@@ -308,7 +308,7 @@ class View:
         self.children.clear()
         self.__weights.clear()
 
-    async def interaction_check(self, interaction: Interaction) -> bool:
+    async def interaction_check(self, interaction: MessageComponentInteraction) -> bool:
         """|coro|
 
         A callback that is called when an interaction happens within the view
@@ -343,7 +343,9 @@ class View:
         """
         pass
 
-    async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
+    async def on_error(
+        self, error: Exception, item: Item, interaction: MessageComponentInteraction
+    ) -> None:
         """|coro|
 
         A callback that is called when an item's callback or :meth:`interaction_check`
@@ -363,7 +365,7 @@ class View:
         print(f"Ignoring exception in view {self} for item {item}:", file=sys.stderr)
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
-    async def _scheduled_task(self, item: Item, interaction: Interaction):
+    async def _scheduled_task(self, item: Item, interaction: MessageComponentInteraction):
         try:
             if self.timeout:
                 self.__timeout_expiry = time.monotonic() + self.timeout
@@ -399,7 +401,7 @@ class View:
         asyncio.create_task(self.on_timeout(), name=f"discord-ui-view-timeout-{self.id}")
         self.__stopped.set_result(True)
 
-    def _dispatch_item(self, item: Item, interaction: Interaction) -> None:
+    def _dispatch_item(self, item: Item, interaction: MessageComponentInteraction) -> None:
         if self.__stopped.done():
             return
 
@@ -527,7 +529,7 @@ class ViewStore:
                 break
 
     def dispatch(
-        self, component_type: int, custom_id: str, interaction: Interaction[ClientT]
+        self, component_type: int, custom_id: str, interaction: MessageComponentInteraction
     ) -> None:
         self.__verify_integrity()
         message_id: Optional[int] = interaction.message and interaction.message.id
@@ -539,7 +541,7 @@ class ViewStore:
             return
 
         view, item = value
-        item.refresh_state(interaction.data, interaction._state, interaction.guild)  # type: ignore
+        item.refresh_state(interaction.data, interaction._state, interaction.guild)
         view._dispatch_item(item, interaction)
 
     def is_message_tracked(self, message_id: int) -> bool:

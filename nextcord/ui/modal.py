@@ -23,7 +23,7 @@ __all__ = (
 
 
 if TYPE_CHECKING:
-    from ..interactions import ClientT, Interaction
+    from ..interactions.modal_submit import ModalSubmitInteraction
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
     from ..types.interactions import (
@@ -211,7 +211,7 @@ class Modal:
         self.children.clear()
         self.__weights.clear()
 
-    async def callback(self, interaction: Interaction) -> None:
+    async def callback(self, interaction: ModalSubmitInteraction) -> None:
         """|coro|
 
         The callback that is called when the user press the submit button.
@@ -234,7 +234,7 @@ class Modal:
         """
         pass
 
-    async def on_error(self, error: Exception, interaction: Interaction) -> None:
+    async def on_error(self, error: Exception, interaction: ModalSubmitInteraction) -> None:
         """|coro|
 
         A callback that is called when an item's callback or :meth:`interaction_check`
@@ -254,8 +254,8 @@ class Modal:
         print(f"Ignoring exception in modal {self}:", file=sys.stderr)
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
-    async def _scheduled_task(self, interaction: Interaction):
-        data: ModalSubmitInteractionData = interaction.data  # type: ignore
+    async def _scheduled_task(self, interaction: ModalSubmitInteraction):
+        data: ModalSubmitInteractionData = interaction.data
         for child in self.children:
             for component_data in _walk_component_interaction_data(data["components"]):
                 if component_data["custom_id"] == child.custom_id:  # type: ignore
@@ -292,7 +292,7 @@ class Modal:
         asyncio.create_task(self.on_timeout(), name=f"discord-ui-modal-timeout-{self.id}")
         self.__stopped.set_result(True)
 
-    def _dispatch(self, interaction: Interaction) -> None:
+    def _dispatch(self, interaction: ModalSubmitInteraction) -> None:
         if self.__stopped.done():
             return
 
@@ -410,7 +410,7 @@ class ModalStore:
             if value is modal:
                 del self._modals[key]
 
-    def dispatch(self, custom_id: str, interaction: Interaction[ClientT]) -> None:
+    def dispatch(self, custom_id: str, interaction: ModalSubmitInteraction) -> None:
         self.__verify_integrity()
 
         key = (interaction.user.id, custom_id)  # type: ignore

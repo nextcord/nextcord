@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 
 from ...components import RoleSelectMenu
 from ...enums import ComponentType
-from ...interactions import ClientT
+from ...interactions.base import ClientT
 from ...role import Role
 from ...state import ConnectionState
 from ...utils import MISSING

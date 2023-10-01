@@ -23,7 +23,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     overload,
 )
 
@@ -43,7 +42,11 @@ from .channel import (
 from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
 from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
 from .guild import Guild
-from .interactions import Interaction
+from .interactions.application import (
+    ApplicationAutocompleteInteraction,
+    ApplicationCommandInteraction,
+)
+from .interactions.base import Interaction
 from .member import Member
 from .message import Attachment, Message
 from .object import Object
@@ -61,7 +64,6 @@ if TYPE_CHECKING:
     from .types.interactions import (
         ApplicationCommand as ApplicationCommandPayload,
         ApplicationCommandInteractionDataOption,
-        InteractionData,
     )
 
     _CustomTypingMetaBase = Any
@@ -82,6 +84,7 @@ __all__ = (
     "OptionConverter",
     "ClientCog",
     "CallbackMixin",
+    "SlashOptionData",
     "SlashOption",
     "SlashCommandOption",
     "BaseApplicationCommand",
@@ -434,7 +437,11 @@ class OptionConverter(_CustomTypingMetaBase):
         """
         self.type = option_type
 
-    async def convert(self, interaction: Interaction, value: Any) -> Any:
+    async def convert(
+        self,
+        interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
+        value: Any,
+    ) -> Any:
         """|coro|
         Called to convert a value received from Discord to the desired value.
 
@@ -471,7 +478,7 @@ class Mentionable(OptionConverter):
     def __init__(self) -> None:
         super().__init__(ApplicationCommandOptionType.mentionable)
 
-    async def convert(self, interaction: Interaction, value: Any) -> Any:
+    async def convert(self, interaction: ApplicationCommandInteraction, value: Any) -> Any:
         return value
 
 
@@ -529,7 +536,9 @@ class ClientCog:
         return getattr(method.__func__, "__cog_special_method__", method)
 
     @_cog_special_method
-    def cog_application_command_check(self, interaction: Interaction) -> bool:
+    def cog_application_command_check(
+        self, interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction]
+    ) -> bool:
         """A special method that registers as a :func:`.ext.application_checks.check`
         for every application command and subcommand in this cog.
 
@@ -618,7 +627,7 @@ class CallbackMixin:
 
         self.parent_cog = parent_cog
 
-    def __call__(self, interaction: Interaction, *args, **kwargs):
+    def __call__(self, interaction: ApplicationCommandInteraction, *args, **kwargs):
         """Invokes the callback, injecting ``self`` if available."""
         if self.callback is None:
             raise ValueError("Cannot call callback when it is not set.")
@@ -773,7 +782,7 @@ class CallbackMixin:
                     # will always be an interaction parameter
                     or (
                         isinstance(param.annotation, type)
-                        and issubclass(param.annotation, Interaction)
+                        and issubclass(param.annotation, ApplicationCommandInteraction)
                     )
                     # will always be an interaction parameter (generic with the outermost type being Interaction)
                     or (
@@ -817,7 +826,7 @@ class CallbackMixin:
             _log.error("Error creating from callback %s: %s", self.error_name, e)
             raise e
 
-    async def can_run(self, interaction: Interaction) -> bool:
+    async def can_run(self, interaction: ApplicationCommandInteraction) -> bool:
         """|coro|
 
         Checks if the command can be executed by checking all the predicates
@@ -882,7 +891,7 @@ class CallbackMixin:
     async def invoke_callback_with_hooks(
         self,
         state: ConnectionState,
-        interaction: Interaction,
+        interaction: ApplicationCommandInteraction,
         args: Optional[tuple] = None,
         kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -937,13 +946,17 @@ class CallbackMixin:
                 ) is not None:
                     await after_invoke(interaction)
 
-    async def invoke_callback(self, interaction: Interaction, *args, **kwargs) -> None:
+    async def invoke_callback(
+        self, interaction: ApplicationCommandInteraction, *args, **kwargs
+    ) -> None:
         """|coro|
         Invokes the callback, injecting ``self`` if available.
         """
         await self(interaction, *args, **kwargs)
 
-    async def invoke_error(self, interaction: Interaction, error: Exception) -> None:
+    async def invoke_error(
+        self, interaction: ApplicationCommandInteraction, error: Exception
+    ) -> None:
         """|coro|
         Invokes the error handler if available.
         """
@@ -1048,7 +1061,7 @@ class AutocompleteOptionMixin:
         return self
 
     async def invoke_autocomplete_callback(
-        self, interaction: Interaction, option_value: Any, **kwargs
+        self, interaction: ApplicationAutocompleteInteraction, option_value: Any, **kwargs
     ) -> None:
         """|coro|
         Invokes the autocomplete callback, injecting ``self`` if available.
@@ -1085,7 +1098,9 @@ class AutocompleteCommandMixin:
         # method, thus we have to hold the decorated autocomplete callbacks temporarily until then.
         self._temp_autocomplete_callbacks: Dict[str, Callable] = {}
 
-    async def call_autocomplete_from_interaction(self, interaction: Interaction) -> None:
+    async def call_autocomplete_from_interaction(
+        self, interaction: ApplicationAutocompleteInteraction
+    ) -> None:
         """|coro|
         Calls the autocomplete callback with the given interaction.
         """
@@ -1094,16 +1109,13 @@ class AutocompleteCommandMixin:
     async def call_autocomplete(
         self,
         state: ConnectionState,
-        interaction: Interaction,
+        interaction: ApplicationAutocompleteInteraction,
         option_data: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
         """|coro|
         Calls the autocomplete callback with the given interaction and option data.
         """
         if not option_data:
-            if interaction.data is None:
-                raise ValueError("Discord did not provide us interaction data")
-
             # pyright does not want to lose typeddict specificity but we do not care here
             option_data = interaction.data.get("options", {})  # type: ignore
 
@@ -1234,6 +1246,43 @@ class AutocompleteCommandMixin:
     def error_name(self) -> str:
         # Signals that this mixin needs this.
         raise NotImplementedError
+
+
+class SlashOptionData:
+    """A class that contains data for an application command option.
+
+    These classes are only created for options that a user defined.
+    Thus, application command options that are not required, and weren't
+    given a value by a user will not have a dedicated instance of this class.
+
+    This class is for data receiving only! To create slash options, use :class:`SlashOption`.
+
+    Parameters
+    ----------
+    data: :class:`dict`
+        The raw data for an option. See https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure for more information.
+    value: Union[`str`, `int`, `float`, `bool`]
+        The user input value.
+    type: :class:`int`
+        The type of the application command option. This indicates what value the option accepts as an input
+    name: :class:`str`
+        The name of this option
+    focused: :class:`bool`
+        Whether the user is currently creating an input for this option. This is useful for :meth:`on_autocomplete`
+    """
+
+    __slots__: Tuple[str, ...] = ("data", "value", "type", "name", "focused")
+
+    def __init__(self, data) -> None:
+        self.data: dict = data
+        self.value: Union[str, int, float, bool] = data["value"]
+        self.type: int = data["type"]
+        self.name: str = data["name"]
+
+        self.focused: bool = data.get("focused", False)
+
+    def __repr__(self) -> str:
+        return f"<SlashOptionData name={self.name} value={self.value} type={self.type}>"
 
 
 # Extends Any so that type checkers won't complain that it's a default for a parameter of a different type
@@ -1678,7 +1727,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         return True
 
     async def handle_value(
-        self, state: ConnectionState, value: Any, interaction: Interaction
+        self,
+        state: ConnectionState,
+        value: Any,
+        interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
     ) -> Any:
         if self.type is ApplicationCommandOptionType.channel:
             value = state.get_channel(int(value))
@@ -1691,7 +1743,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 # By here the interaction data doesn't contain
                 # a full member/user object yet so fall back to bot cache
                 value = None
-                data = cast(ApplicationCommandInteractionData, interaction.data)
+                data = interaction.data
                 if guild_id := data.get("guild_id"):
                     if guild := state._guilds.get(int(guild_id)):
                         value = guild.get_member(user_id)
@@ -1723,7 +1775,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             try:
                 # this looks messy but is too much effort to handle
                 # feel free to use typing.cast and if statements and raises
-                resolved_attachment_data = interaction.data["resolved"]["attachments"][value]  # type: ignore
+                resolved_attachment_data = interaction.data["resolved"]["attachments"][value]
             except (AttributeError, ValueError, IndexError):
                 raise ValueError("Discord did not provide us interaction data for the attachment")
 
@@ -1791,11 +1843,9 @@ class SlashCommandMixin(CallbackMixin):
     async def get_slash_kwargs(
         self,
         state: ConnectionState,
-        interaction: Interaction,
+        interaction: ApplicationCommandInteraction,
         option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ) -> Dict[str, Any]:
-        interaction.data = cast("InteractionData", interaction.data)
-
         if option_data is None:
             option_data = interaction.data.get("options")
 
@@ -1826,13 +1876,10 @@ class SlashCommandMixin(CallbackMixin):
     async def call_slash(
         self,
         state: ConnectionState,
-        interaction: Interaction,
+        interaction: ApplicationCommandInteraction,
         option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ):
         if option_data is None:
-            if interaction.data is None:
-                raise ValueError("Discord did not provide us interaction data")
-
             option_data = interaction.data.get("options")
 
             if not option_data:
@@ -2331,7 +2378,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         return True
 
-    def is_interaction_valid(self, interaction: Interaction) -> bool:
+    def is_interaction_valid(self, interaction: ApplicationCommandInteraction) -> bool:
         """Checks if the interaction given is possibly valid for this command.
         If the command has more parameters (especially optionals) than the interaction coming in, this may cause a
         desync between your bot and Discord.
@@ -2347,10 +2394,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             ``True`` If the interaction could possibly be for this command, ``False`` otherwise.
         """
         data = interaction.data
-
-        if data is None:
-            raise ValueError("Discord did not provide us with interaction data")
-
         our_payload = self.get_payload(data.get("guild_id", None))
 
         def _recursive_subcommand_check(inter_pos: dict, cmd_pos: dict) -> bool:
@@ -2501,7 +2544,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
     ) -> None:
         super().from_callback(callback=callback, option_class=option_class)
 
-    async def call_from_interaction(self, interaction: Interaction) -> None:
+    async def call_from_interaction(self, interaction: ApplicationCommandInteraction) -> None:
         """|coro|
         Calls the callback via the given :class:`Interaction`, relying on the locally
         stored :class:`ConnectionState` object.
@@ -2513,7 +2556,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """
         await self.call(self._state, interaction)  # type: ignore
 
-    async def call(self, state: ConnectionState, interaction: Interaction) -> None:
+    async def call(
+        self, state: ConnectionState, interaction: ApplicationCommandInteraction
+    ) -> None:
         """|coro|
         Calls the callback via the given :class:`Interaction`, using the given :class:`ConnectionState` to get resolved
         objects if needed and available.
@@ -2631,7 +2676,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
     async def call(
         self,
         state: ConnectionState,
-        interaction: Interaction,
+        interaction: ApplicationCommandInteraction,
         option_data: Optional[List[ApplicationCommandInteractionDataOption]],
     ) -> None:
         """|coro|
@@ -2886,10 +2931,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
         return ret
 
-    async def call(self, state: ConnectionState, interaction: Interaction) -> None:
-        if interaction.data is None:
-            raise ValueError("Discord did not provide us interaction data")
-
+    async def call(
+        self, state: ConnectionState, interaction: ApplicationCommandInteraction
+    ) -> None:
         # pyright does not want to lose typeddict specificity but we do not care here
         option_data = interaction.data.get("options", [])
 
@@ -3038,7 +3082,9 @@ class UserApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("UserApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: Interaction) -> None:
+    async def call(
+        self, state: ConnectionState, interaction: ApplicationCommandInteraction
+    ) -> None:
         await self.invoke_callback_with_hooks(
             state, interaction, args=(get_users_from_interaction(state, interaction)[0],)
         )
@@ -3120,7 +3166,9 @@ class MessageApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("MessageApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: Interaction) -> None:
+    async def call(
+        self, state: ConnectionState, interaction: ApplicationCommandInteraction
+    ) -> None:
         await self.invoke_callback_with_hooks(
             state, interaction, args=(get_messages_from_interaction(state, interaction)[0],)
         )
@@ -3389,7 +3437,8 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
 
 
 def get_users_from_interaction(
-    state: ConnectionState, interaction: Interaction
+    state: ConnectionState,
+    interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
 ) -> List[Union[User, Member]]:
     """Tries to get a list of resolved :class:`User` objects from the interaction data.
 
@@ -3409,8 +3458,6 @@ def get_users_from_interaction(
     """
     data = interaction.data
     ret: List[Union[User, Member]] = []
-
-    data = cast(ApplicationCommandInteractionData, data)
 
     # Return a Member object if the required data is available, otherwise fall back to User.
     if "resolved" in data and "members" in data["resolved"]:
@@ -3443,7 +3490,8 @@ def get_users_from_interaction(
 
 
 def get_messages_from_interaction(
-    state: ConnectionState, interaction: Interaction
+    state: ConnectionState,
+    interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
 ) -> List[Message]:
     """Tries to get a list of resolved :class:`Message` objects from the interaction data.
 
@@ -3462,8 +3510,6 @@ def get_messages_from_interaction(
     data = interaction.data
     ret = []
 
-    data = cast(ApplicationCommandInteractionData, data)
-
     if "resolved" in data and "messages" in data["resolved"]:
         message_payloads = data["resolved"]["messages"]
         for msg_id, msg_payload in message_payloads.items():
@@ -3475,7 +3521,10 @@ def get_messages_from_interaction(
     return ret
 
 
-def get_roles_from_interaction(state: ConnectionState, interaction: Interaction) -> List[Role]:
+def get_roles_from_interaction(
+    state: ConnectionState,
+    interaction: Union[ApplicationCommandInteraction, ApplicationAutocompleteInteraction],
+) -> List[Role]:
     """Tries to get a list of resolved :class:`Role` objects from the interaction .data
 
     Parameters
@@ -3492,11 +3541,6 @@ def get_roles_from_interaction(state: ConnectionState, interaction: Interaction)
     """
     data = interaction.data
     ret = []
-
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
-    data = cast(ApplicationCommandInteractionData, data)
 
     if "resolved" in data and "roles" in data["resolved"]:
         role_payloads = data["resolved"]["roles"]
@@ -3649,7 +3693,7 @@ class RangeMeta(type):
             def __init__(self) -> None:
                 super().__init__(option_type=type(self.min or self.max))
 
-            async def convert(self, interaction: Interaction, value: Any) -> Any:
+            async def convert(self, interaction: ApplicationCommandInteraction, value: Any) -> Any:
                 return value
 
             def modify(self, option: SlashCommandOption) -> None:
@@ -3726,7 +3770,7 @@ class StringMeta(type):
             def __init__(self) -> None:
                 super().__init__(option_type=str)
 
-            async def convert(self, interaction: Interaction, value: Any) -> Any:
+            async def convert(self, interaction: ApplicationCommandInteraction, value: Any) -> Any:
                 return value
 
             def modify(self, option: SlashCommandOption) -> None:
