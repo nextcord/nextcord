@@ -68,6 +68,11 @@ if TYPE_CHECKING:
     _CustomTypingMetaBase = Any
 else:
     _CustomTypingMetaBase = object
+    # `ellipsis` is a type-checking only variable. This assignment avoids ruff `F821`
+    # as this is defined at runtime now.
+    ellipsis = ...
+
+EllipsisType = type(...)
 
 if sys.version_info >= (3, 10):
     from types import UnionType
@@ -108,11 +113,6 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
-# As nextcord.types exist, we cannot import types
-if TYPE_CHECKING:  # noqa: SIM108
-    EllipsisType = ellipsis  # noqa: F821
-else:
-    EllipsisType = type(Ellipsis)
 
 
 def _cog_special_method(func: FuncT) -> FuncT:
@@ -3600,8 +3600,8 @@ class RangeMeta(type):
         value: Union[
             int,
             Tuple[int, int],
-            Tuple[int, EllipsisType],
-            Tuple[EllipsisType, int],
+            Tuple[int, ellipsis],
+            Tuple[ellipsis, int],
         ],
     ) -> Type[int]:
         ...
@@ -3612,8 +3612,8 @@ class RangeMeta(type):
         value: Union[
             float,
             Tuple[float, float],
-            Tuple[float, EllipsisType],
-            Tuple[EllipsisType, float],
+            Tuple[float, ellipsis],
+            Tuple[ellipsis, float],
         ],
     ) -> Type[float]:
         ...
@@ -3625,8 +3625,8 @@ class RangeMeta(type):
             float,
             Tuple[int, int],
             Tuple[float, float],
-            Tuple[Union[int, float], EllipsisType],
-            Tuple[EllipsisType, Union[int, float]],
+            Tuple[Union[int, float], ellipsis],
+            Tuple[ellipsis, Union[int, float]],
         ],
     ) -> Type[Union[int, float]]:
         class Inner(Range, OptionConverter):
@@ -3652,14 +3652,14 @@ class RangeMeta(type):
             min_value = None
             max_value = value
 
-        if min_value is None or isinstance(min_value, EllipsisType):
+        if min_value is None or min_value is Ellipsis:
             Inner.min = None
         elif isinstance(min_value, (int, float)):
             Inner.min = min_value
         else:
             raise TypeError("Range min must be int or float.")
 
-        if isinstance(max_value, EllipsisType):
+        if max_value is Ellipsis:
             Inner.max = None
         elif isinstance(max_value, (int, float)):
             Inner.max = max_value
@@ -3702,8 +3702,8 @@ class StringMeta(type):
         value: Union[
             int,
             Tuple[int, int],
-            Tuple[int, EllipsisType],
-            Tuple[EllipsisType, int],
+            Tuple[int, ellipsis],
+            Tuple[ellipsis, int],
         ],
     ) -> Type[str]:
         class Inner(String, OptionConverter):
@@ -3736,7 +3736,7 @@ class StringMeta(type):
         else:
             raise TypeError("String min must be int.")
 
-        if isinstance(max_value, EllipsisType):
+        if max_value is Ellipsis:
             Inner.max = None
         elif isinstance(max_value, int):
             Inner.max = max_value

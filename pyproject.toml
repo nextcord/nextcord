@@ -33,6 +33,7 @@ ignore = ["examples"]
 pythonVersion = "3.8"
 
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
+disableBytesTypePromotions = true
 reportInvalidStringEscapeSequence = false
 reportPropertyTypeMismatch = true
 reportDuplicateImport = true
