@@ -22,13 +22,62 @@ if TYPE_CHECKING:
     from .message import Attachment, Message
     from .state import ConnectionState
     from .types.channel import DMChannel as DMChannelPayload
-    from .types.user import PartialUser as PartialUserPayload, User as UserPayload
+    from .types.user import (
+        AvatarDecorationData as AvatarDecorationDataPayload,
+        PartialUser as PartialUserPayload,
+        User as UserPayload,
+    )
 
 
 __all__ = (
     "User",
     "ClientUser",
 )
+
+
+class AvatarDecoration:
+    """Represents an avatar decoration. This is a cosmetic item that can be applied to a user's avatar.
+
+    You can get this object via :meth:`User.avatar_decoration`.
+
+    .. versionadded:: 2.7
+
+    Attributes
+    ----------
+    user: :class:`.BaseUser`
+        The user this avatar decoration belongs to.
+    sku_id: :class:`str`
+        The sku id of the avatar decoration.
+    asset: :class:`Asset`
+        The asset of the avatar decoration.
+    """
+
+    __slots__ = ("user", "sku_id", "_asset", "_state")
+
+    def __init__(self, *, user: BaseUser, data: AvatarDecorationDataPayload) -> None:
+        self._update(user, data)
+
+    def __repr__(self) -> str:
+        return f"<AvatarDecoration sku_id={self.sku_id!r} asset={self.asset!r}>"
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, AvatarDecoration)
+            and other.sku_id == self.sku_id
+            and other.asset == self.asset
+        )
+
+    def __ne__(self, other: Any) -> bool:
+        return not self.__eq__(other)
+
+    def _update(self, user: BaseUser, data: AvatarDecorationDataPayload, /) -> None:
+        self.user: BaseUser = user
+        self.sku_id: str = data["sku_id"]
+        self._asset: str = data["asset"]
+
+    @property
+    def asset(self) -> Asset:
+        return Asset._from_avatar_decoration(self.user._state, self._asset)
 
 
 class _UserTag:
@@ -44,12 +93,12 @@ class BaseUser(_UserTag):
         "_avatar",
         "_banner",
         "_accent_colour",
-        "_avatar_decoration",
         "bot",
         "system",
         "_public_flags",
         "_state",
         "global_name",
+        "_avatar_decoration",
     )
 
     if TYPE_CHECKING:
@@ -63,8 +112,8 @@ class BaseUser(_UserTag):
         _avatar: Optional[str]
         _banner: Optional[str]
         _accent_colour: Optional[str]
-        _avatar_decoration: Optional[str]
         _public_flags: int
+        _avatar_decoration: Optional[AvatarDecorationDataPayload]
 
     def __init__(
         self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
@@ -98,7 +147,7 @@ class BaseUser(_UserTag):
         self._avatar = data["avatar"]
         self._banner = data.get("banner", None)
         self._accent_colour = data.get("accent_color", None)
-        self._avatar_decoration = data.get("avatar_decoration", None)
+        self._avatar_decoration = data.get("avatar_decoration_data", None)
         self._public_flags = data.get("public_flags", 0)
         self.bot = data.get("bot", False)
         self.system = data.get("system", False)
@@ -173,6 +222,23 @@ class BaseUser(_UserTag):
         return self.avatar or self.default_avatar
 
     @property
+    def avatar_decoration(self) -> Optional[AvatarDecoration]:
+        """Optional[:class:`AvatarDecoration`]: Returns the user's avatar decoration, if applicable.
+
+        You can get the asset of the avatar decoration via :attr:`AvatarDecoration.asset`.
+
+        .. versionadded:: 2.7
+
+        .. note::
+
+            This information is only available via :meth:`Client.fetch_user`.
+        """
+        if self._avatar_decoration is None:
+            return None
+
+        return AvatarDecoration(user=self, data=self._avatar_decoration)
+
+    @property
     def banner(self) -> Optional[Asset]:
         """Optional[:class:`Asset`]: Returns the user's banner asset, if available.
 
@@ -215,20 +281,6 @@ class BaseUser(_UserTag):
             This information is only available via :meth:`Client.fetch_user`.
         """
         return self.accent_colour
-
-    @property
-    def avatar_decoration(self) -> Optional[Asset]:
-        """Optional[:class:`Asset`]: Returns the user's avatar decoration, if applicable.
-
-        .. versionadded:: 2.4
-
-        .. note::
-
-            This information is only available via :meth:`Client.fetch_user`.
-        """
-        if self._avatar_decoration is None:
-            return None
-        return Asset._from_avatar_decoration(self._state, self.id, self._avatar_decoration)
 
     @property
     def colour(self) -> Colour:

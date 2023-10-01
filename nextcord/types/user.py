@@ -5,6 +5,11 @@ from typing import Literal, Optional, TypedDict
 from .snowflake import Snowflake
 
 
+class AvatarDecorationData(TypedDict):
+    sku_id: str
+    asset: str
+
+
 class PartialUser(TypedDict):
     id: Snowflake
     username: str
@@ -26,3 +31,4 @@ class User(PartialUser, total=False):
     premium_type: PremiumType
     public_flags: int
     global_name: Optional[str]
+    avatar_decoration_data: Optional[AvatarDecorationData]
