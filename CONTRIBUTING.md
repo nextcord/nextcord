@@ -53,7 +53,7 @@ pip install -r requirements-dev.txt
 
 ## Code Style
 
-We use [Black](https://github.com/psf/black) for code formatting, [Isort](https://github.com/pycqa/isort) for import sorting, [Slotscheck](https://github.com/ariebovenberg/slotscheck) and several other [pre-commit hooks](https://github.com/pre-commit/pre-commit-hooks) for linting.
+We use [Black](https://github.com/psf/black) for code formatting, [Slotscheck](https://github.com/ariebovenberg/slotscheck), [Ruff](https://github.com/astral-sh/ruff) for linting + import sorting, and several other [pre-commit hooks](https://github.com/pre-commit/pre-commit-hooks) for linting.
 
 To run all of these but `slotscheck`, you can simply run `task lint` in the root of the project. To run `slotscheck`, you can run `task slotscheck`.
 
