@@ -22,10 +22,10 @@ if TYPE_CHECKING:
     from .view import View
 
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
-class TextInput(Item[V]):
+class TextInput(Item[V_co]):
     """Represent a UI text input.
 
     .. versionadded:: 2.0
@@ -207,7 +207,6 @@ class TextInput(Item[V]):
             min_length=text_input.min_length,
             max_length=text_input.max_length,
             required=text_input.required,
-            # value=text_input.value,  # FIXME: figure out what this was
             placeholder=text_input.placeholder,
             row=None,
         )
