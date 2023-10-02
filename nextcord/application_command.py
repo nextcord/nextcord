@@ -64,6 +64,7 @@ if TYPE_CHECKING:
     from .types.interactions import (
         ApplicationCommand as ApplicationCommandPayload,
         ApplicationCommandInteractionDataOption,
+        ApplicationCommandInteractionInputDataOption
     )
 
     _CustomTypingMetaBase = Any
@@ -1273,8 +1274,8 @@ class SlashOptionData:
 
     __slots__: Tuple[str, ...] = ("data", "value", "type", "name", "focused")
 
-    def __init__(self, data) -> None:
-        self.data: dict = data
+    def __init__(self, data: ApplicationCommandInteractionInputDataOption) -> None:
+        self.data: ApplicationCommandInteractionInputDataOption = data
         self.value: Union[str, int, float, bool] = data["value"]
         self.type: int = data["type"]
         self.name: str = data["name"]

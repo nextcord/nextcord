@@ -125,13 +125,18 @@ class _ApplicationCommandInteractionDataOptionNumber(TypedDict):
     value: float
 
 
-ApplicationCommandInteractionDataOption = Union[
+ApplicationCommandInteractionInputDataOption = Union[
     _ApplicationCommandInteractionDataOptionString,
     _ApplicationCommandInteractionDataOptionInteger,
-    _ApplicationCommandInteractionDataOptionSubcommand,
     _ApplicationCommandInteractionDataOptionBoolean,
-    _ApplicationCommandInteractionDataOptionSnowflake,
     _ApplicationCommandInteractionDataOptionNumber,
+    _ApplicationCommandInteractionDataOptionSnowflake
+]
+
+
+ApplicationCommandInteractionDataOption = Union[
+    ApplicationCommandInteractionInputDataOption,
+    _ApplicationCommandInteractionDataOptionSubcommand,
 ]
 
 
