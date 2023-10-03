@@ -69,10 +69,11 @@ if TYPE_CHECKING:
 else:
     _CustomTypingMetaBase = object
     # `ellipsis` is a type-checking only variable. This assignment avoids ruff `F821`
-    # as this is defined at runtime now.
-    ellipsis = ...
+    # as this is defined at runtime now. Lowercase `ellipsis` is actually the type,
+    # `Ellipsis` is the object, but that doesn't really matter.
+    ellipsis = Ellipsis
 
-EllipsisType = type(...)
+EllipsisType = type(Ellipsis)
 
 if sys.version_info >= (3, 10):
     from types import UnionType
