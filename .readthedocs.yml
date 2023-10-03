@@ -2,7 +2,7 @@ version: 2
 formats: []
 
 build:
-  image: latest
+  os: ubuntu-22.04
 
 sphinx:
   configuration: docs/conf.py

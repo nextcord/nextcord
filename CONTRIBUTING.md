@@ -116,6 +116,7 @@ Co-Authored-By: Some Person <email@example.com>
 - **fix**: A bug fix
 - **perf**: A code change that improves performance
 - **refactor**: A code change that neither fixes a bug nor adds a feature
+- **removal**: A code change that removes user-facing code
 - **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
 - **test**: Adding missing tests or correcting existing tests
 - **typing**: Changes that affect type annotations
