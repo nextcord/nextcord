@@ -5,8 +5,8 @@ from .errors import ExpectedClosingQuoteError, InvalidEndOfQuotedStringError, Un
 # map from opening quotes to closing quotes
 _quotes = {
     '"': '"',
-    "‘": "’",
-    "‚": "‛",
+    "‘": "’",  # noqa: RUF001
+    "‚": "‛",  # noqa: RUF001
     "“": "”",
     "„": "‟",
     "⹂": "⹂",
@@ -15,10 +15,10 @@ _quotes = {
     "〝": "〞",
     "﹁": "﹂",
     "﹃": "﹄",
-    "＂": "＂",
+    "＂": "＂",  # noqa: RUF001
     "｢": "｣",
     "«": "»",
-    "‹": "›",
+    "‹": "›",  # noqa: RUF001
     "《": "》",
     "〈": "〉",
 }
@@ -165,6 +165,7 @@ class StringView:
                 return "".join(result)
 
             result.append(current)
+        return None
 
     def __repr__(self) -> str:
         return (

@@ -51,7 +51,7 @@ To install dependencies locally for development, we use [Poetry](https://python-
 
 ## Code Style
 
-We use [Black](https://github.com/psf/black) for code formatting, [Isort](https://github.com/pycqa/isort) for import sorting, [Slotscheck](https://github.com/ariebovenberg/slotscheck) and several other [pre-commit hooks](https://github.com/pre-commit/pre-commit-hooks) for linting.
+We use [Black](https://github.com/psf/black) for code formatting, [Slotscheck](https://github.com/ariebovenberg/slotscheck), [Ruff](https://github.com/astral-sh/ruff) for linting + import sorting, and several other [pre-commit hooks](https://github.com/pre-commit/pre-commit-hooks) for linting.
 
 To run all of these but `slotscheck`, you can simply run `task lint` in the root of the project. To run `slotscheck`, you can run `task slotscheck`.
 
@@ -114,6 +114,7 @@ Co-Authored-By: Some Person <email@example.com>
 - **fix**: A bug fix
 - **perf**: A code change that improves performance
 - **refactor**: A code change that neither fixes a bug nor adds a feature
+- **removal**: A code change that removes user-facing code
 - **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
 - **test**: Adding missing tests or correcting existing tests
 - **typing**: Changes that affect type annotations

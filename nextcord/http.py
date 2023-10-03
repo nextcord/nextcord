@@ -358,12 +358,11 @@ class HTTPClient:
                         # the usual error cases
                         if response.status == 403:
                             raise Forbidden(response, data)
-                        elif response.status == 404:
+                        if response.status == 404:
                             raise NotFound(response, data)
-                        elif response.status >= 500:
+                        if response.status >= 500:
                             raise DiscordServerError(response, data)
-                        else:
-                            raise HTTPException(response, data)
+                        raise HTTPException(response, data)
 
                 # This is handling exceptions from the request
                 except OSError as e:
@@ -386,12 +385,11 @@ class HTTPClient:
         async with self.__session.get(url) as resp:
             if resp.status == 200:
                 return await resp.read()
-            elif resp.status == 404:
+            if resp.status == 404:
                 raise NotFound(resp, "asset not found")
-            elif resp.status == 403:
+            if resp.status == 403:
                 raise Forbidden(resp, "cannot retrieve asset")
-            else:
-                raise HTTPException(resp, "failed to get asset")
+            raise HTTPException(resp, "failed to get asset")
 
     # state management
 
@@ -2385,7 +2383,7 @@ class HTTPClient:
         try:
             data = await self.request(Route("GET", "/gateway"))
         except HTTPException as exc:
-            raise GatewayNotFound() from exc
+            raise GatewayNotFound from exc
 
         return self.format_websocket_url(data["url"], encoding, zlib)
 
@@ -2395,7 +2393,7 @@ class HTTPClient:
         try:
             data = await self.request(Route("GET", "/gateway/bot"))
         except HTTPException as exc:
-            raise GatewayNotFound() from exc
+            raise GatewayNotFound from exc
 
         return data["shards"], self.format_websocket_url(data["url"], encoding, zlib)
 

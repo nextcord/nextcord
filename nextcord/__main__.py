@@ -34,7 +34,7 @@ def show_version() -> None:
     print("\n".join(entries))
 
 
-def core(parser, args) -> None:
+def core(_parser, args) -> None:
     if args.version:
         show_version()
 
