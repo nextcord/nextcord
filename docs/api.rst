@@ -1333,74 +1333,8 @@ of :class:`enum.Enum`.
 .. autoclass:: AuditLogActionCategory
     :members:
 
-.. class:: UserFlags
-
-    Represents Discord User flags.
-
-    .. attribute:: staff
-
-        The user is a Discord Employee.
-    .. attribute:: partner
-
-        The user is a Discord Partner.
-    .. attribute:: hypesquad
-
-        The user is a HypeSquad Events member.
-    .. attribute:: bug_hunter
-
-        The user is a Bug Hunter.
-    .. attribute:: mfa_sms
-
-        The user has SMS recovery for Multi Factor Authentication enabled.
-    .. attribute:: premium_promo_dismissed
-
-        The user has dismissed the Discord Nitro promotion.
-    .. attribute:: hypesquad_bravery
-
-        The user is a HypeSquad Bravery member.
-    .. attribute:: hypesquad_brilliance
-
-        The user is a HypeSquad Brilliance member.
-    .. attribute:: hypesquad_balance
-
-        The user is a HypeSquad Balance member.
-    .. attribute:: early_supporter
-
-        The user is an Early Supporter.
-    .. attribute:: team_user
-
-        The user is a Team User.
-    .. attribute:: system
-
-        The user is a system user (i.e. represents Discord officially).
-    .. attribute:: has_unread_urgent_messages
-
-        The user has an unread system message.
-    .. attribute:: bug_hunter_level_2
-
-        The user is a Bug Hunter Level 2.
-    .. attribute:: verified_bot
-
-        The user is a Verified Bot.
-    .. attribute:: verified_bot_developer
-
-        The user is an Early Verified Bot Developer.
-    .. attribute:: discord_certified_moderator
-
-        The user is a Discord Certified Moderator.
-    .. attribute:: bot_http_interactions
-
-        The user is a bot that uses only HTTP interactions and is shown in the online member list.
-
-        .. versionadded:: 2.4
-    .. attribute:: known_spammer
-
-        The user is a Known Spammer.
-    .. attribute:: active_developer
-
-        The user is an Active Developer.
-
-        .. versionadded:: 2.4
+.. autoclass:: UserFlags
+    :members:
 
 .. class:: ActivityType
 

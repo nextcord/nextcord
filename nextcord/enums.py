@@ -728,26 +728,55 @@ class AuditLogAction(IntEnum):
 
 
 class UserFlags(IntEnum):
+    """Represents Discord User flags."""
+
     staff = 1 << 0
+    """The user is a Discord Employee."""
     partner = 1 << 1
+    """The user is a Discord Partner."""
     hypesquad = 1 << 2
+    """The user is a HypeSquad Events member."""
     bug_hunter = 1 << 3
+    """The user is a Bug Hunter."""
     mfa_sms = 1 << 4
+    """The user has SMS recovery for Multi Factor Authentication enabled."""
     premium_promo_dismissed = 1 << 5
+    """The user has dismissed the Discord Nitro promotion."""
     hypesquad_bravery = 1 << 6
+    """The user is a HypeSquad Bravery member."""
     hypesquad_brilliance = 1 << 7
+    """The user is a HypeSquad Brilliance member."""
     hypesquad_balance = 1 << 8
+    """The user is a HypeSquad Balance member."""
     early_supporter = 1 << 9
+    """The user is an Early Supporter."""
     team_user = 1 << 10
+    """The user is a Team User."""
     system = 1 << 12
+    """The user is a system user (i.e. represents Discord officially)."""
     has_unread_urgent_messages = 1 << 13
+    """The user has an unread system message."""
     bug_hunter_level_2 = 1 << 14
+    """The user is a Bug Hunter Level 2."""
     verified_bot = 1 << 16
+    """The user is a Verified Bot."""
     verified_bot_developer = 1 << 17
+    """The user is am Early Verified Bot Developer."""
     discord_certified_moderator = 1 << 18
+    """The user is a Discord Certified Moderator."""
     bot_http_interactions = 1 << 19
+    """The user is a bot that uses only HTTP interactions and is shown in the
+     online member list.
+
+    .. versionadded:: 2.4
+    """
     known_spammer = 1 << 20
+    """The user is a Known Spammer."""
     active_developer = 1 << 22
+    """The user is an Active Developer.
+
+    .. versionadded:: 2.4
+    """
 
 
 class ActivityType(IntEnum):
