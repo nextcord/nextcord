@@ -171,35 +171,134 @@ class ChannelType(IntEnum):
 
 
 class MessageType(IntEnum):
+    """Specifies the type of :class:`Message`. This is used to denote if a message
+    is to be interpreted as a system message or a regular message.
+
+    .. container:: operations
+
+      .. describe:: x == y
+
+          Checks if two messages are equal.
+      .. describe:: x != y
+
+          Checks if two messages are not equal.
+    """
+
     default = 0
+    """The default message type. This is the same as regular messages."""
     recipient_add = 1
+    """The system message when a user is added to a group private message or a thread."""
     recipient_remove = 2
+    """The system message when a user is removed from a group private message or a thread."""
     call = 3
+    """The system message denoting call state, e.g. missed call, started call, etc."""
     channel_name_change = 4
+    """The system message denoting that a channel's name has been changed."""
     channel_icon_change = 5
+    """The system message denoting that a channel's icon has been changed."""
     pins_add = 6
+    """The system message denoting that a pinned message has been added to a channel."""
     new_member = 7
+    """The system message denoting that a new member has joined a Guild."""
     premium_guild_subscription = 8
+    """The system message denoting that a member has "nitro boosted" a guild."""
     premium_guild_tier_1 = 9
+    """The system message denoting that a member has "nitro boosted" a guild and it achieved level 1."""
     premium_guild_tier_2 = 10
+    """The system message denoting that a member has "nitro boosted" a guild and it achieved level 2."""
     premium_guild_tier_3 = 11
+    """The system message denoting that a member has "nitro boosted" a guild and it achieved level 3."""
     channel_follow_add = 12
+    """The system message denoting that an announcement channel has been followed.
+
+    .. versionadded:: 1.3
+    """
     guild_stream = 13
+    """The system message denoting that a member is streaming in the guild.
+
+    .. versionadded:: 1.7
+    """
     guild_discovery_disqualified = 14
+    """The system message denoting that the guild is no longer eligible for Server Discovery.
+
+    .. versionadded:: 1.7
+    """
     guild_discovery_requalified = 15
+    """The system message denoting that the guild has become eligible again for Server Discovery.
+
+    .. versionadded:: 1.7
+    """
     guild_discovery_grace_period_initial_warning = 16
+    """The system message denoting that the guild has failed to meet the Server
+        Discovery requirements for one week.
+
+    .. versionadded:: 1.7
+    """
     guild_discovery_grace_period_final_warning = 17
+    """The system message denoting that the guild has failed to meet the Server
+        Discovery requirements for 3 weeks in a row.
+
+    .. versionadded:: 1.7
+    """
     thread_created = 18
+    """The system message denoting that a thread has been created. This is only
+        sent if the thread has been created from an older message. The period of time
+        required for a message to be considered old cannot be relied upon and is up to
+        Discord.
+
+    .. versionadded:: 2.0
+    """
     reply = 19
+    """The system message denoting that the author is replying to a message.
+
+    .. versionadded:: 2.0
+    """
     chat_input_command = 20
+    """The system message denoting that a slash command was executed.
+
+    .. versionadded:: 2.0
+    """
     thread_starter_message = 21
+    """The system message denoting the message in the thread that is the one that started the
+        thread's conversation topic.
+
+    .. versionadded:: 2.0
+    """
     guild_invite_reminder = 22
+    """The system message sent as a reminder to invite people to the guild.
+
+    .. versionadded:: 2.0
+    """
     context_menu_command = 23
+    """The system message denoting that a context menu command was executed.
+
+    .. versionadded:: 2.0
+    """
     auto_moderation_action = 24
+    """The system message denoting that an auto moderation action was executed.
+
+    .. versionadded:: 2.1
+    """
     stage_start = 27
+    """The system message denoting that a stage channel has started.
+
+    .. versionadded:: 2.6
+    """
     stage_end = 28
+    """The system message denoting that a stage channel has ended.
+
+    .. versionadded:: 2.6
+    """
     stage_speaker = 29
+    """The system message denoting that a stage channel has a new speaker.
+
+    .. versionadded:: 2.6
+    """
     stage_topic = 31
+    """The system message denoting that a stage channel has a new topic.
+
+    .. versionadded:: 2.6
+    """
 
 
 class VoiceRegion(StrEnum):
