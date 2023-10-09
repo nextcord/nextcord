@@ -1144,9 +1144,16 @@ class TextInputStyle(IntEnum):
 
 
 class StagePrivacyLevel(IntEnum):
+    """Represents a stage instance's privacy level.
+
+    .. versionadded:: 2.0
+    """
     public = 1
+    """The stage instance can be joined by external users."""
     closed = 2
+    """The stage instance can only be joined by members of the guild."""
     guild_only = 2
+    """An alias for :attr:`StagePrivacyLevel.closed`."""
 
 
 class NSFWLevel(IntEnum):

@@ -1378,6 +1378,9 @@ of :class:`enum.Enum`.
 .. autoclass:: TextInputStyle
     :members:
 
+.. autoclass:: StagePrivacyLevel
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2131,24 +2134,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: StagePrivacyLevel
-
-    Represents a stage instance's privacy level.
-
-    .. versionadded:: 2.0
-
-    .. attribute:: public
-
-        The stage instance can be joined by external users.
-
-    .. attribute:: closed
-
-        The stage instance can only be joined by members of the guild.
-
-    .. attribute:: guild_only
-
-        Alias for :attr:`.closed`
 
 .. class:: NSFWLevel
 
