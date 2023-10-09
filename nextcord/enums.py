@@ -854,8 +854,15 @@ ExpireBehavior = ExpireBehaviour
 
 
 class StickerType(IntEnum):
+    """Represents the type of sticker.
+
+    .. versionadded:: 2.0
+    """
+
     standard = 1
+    """Represents a standard sticker."""
     guild = 2
+    """Represents a custom sticker created in a guild."""
 
 
 class StickerFormatType(IntEnum):

@@ -1348,6 +1348,9 @@ of :class:`enum.Enum`.
 .. autoclass:: ExpireBehaviour
     :members:
 
+.. autoclass:: StickerType
+    :members:
+
 .. class:: InteractionType
 
     Specifies the type of :class:`Interaction`.
@@ -2252,20 +2255,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: StickerType
-
-    Represents the type of sticker.
-
-    .. versionadded:: 2.0
-
-    .. attribute:: standard
-
-        Represents a standard sticker.
-
-    .. attribute:: guild
-
-        Represents a custom sticker created in a guild.
 
 .. class:: StickerFormatType
 
