@@ -1324,6 +1324,9 @@ of :class:`enum.Enum`.
 .. autoclass:: Status
     :members:
 
+.. autoclass:: DefaultAvatar
+    :members:
+
 .. class:: UserFlags
 
     Represents Discord User flags.
@@ -2430,45 +2433,6 @@ of :class:`enum.Enum`.
     .. attribute:: kick
 
         This will kick the user when their subscription is finished.
-
-.. class:: DefaultAvatar
-
-    Represents the default avatar of a Discord :class:`User`
-
-    .. attribute:: blurple
-
-        Represents the default avatar with the color blurple.
-        See also :attr:`Colour.blurple`
-    .. attribute:: grey
-
-        Represents the default avatar with the color grey.
-        See also :attr:`Colour.greyple`
-    .. attribute:: gray
-
-        An alias for :attr:`grey`.
-    .. attribute:: green
-
-        Represents the default avatar with the color green.
-        See also :attr:`Colour.green`
-    .. attribute:: orange
-
-        Represents the default avatar with the color orange.
-        See also :attr:`Colour.orange`
-    .. attribute:: red
-
-        Represents the default avatar with the color red.
-        See also :attr:`Colour.red`
-    .. attribute:: fuchsia
-
-        Represents the default avatar with the color fuchsia.
-        See also :attr:`Colour.fuchsia`
-
-        .. versionadded:: 2.6
-    .. attribute:: pink
-
-        An alias for :attr:`fuchsia`
-
-        .. versionadded:: 2.6
 
 .. class:: StickerType
 

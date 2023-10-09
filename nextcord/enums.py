@@ -477,14 +477,41 @@ class Status(StrEnum):
 
 
 class DefaultAvatar(IntEnum):
+    """Represents the default avatar of a Discord :class:`User`."""
+
     blurple = 0
+    """Represents the default avatar with the color blurple.
+    See also :attr:`Colour.blurple`
+    """
     grey = 1
+    """Represents the default avatar with the color grey.
+    See also :attr:`Colour.greyple`
+    """
     gray = 1
+    """An alias for :attr:`DefaultAvatar.grey`."""
     green = 2
+    """Represents the default avatar with the color green.
+    See also :attr:`Colour.green`
+    """
     orange = 3
+    """Represents the default avatar with the color orange.
+    See also :attr:`Colour.orange`
+    """
     red = 4
+    """Represents the default avatar with the color red.
+    See also :attr:`Colour.red`
+    """
     fuchsia = 5
+    """Represents the default avatar with the color fuchsia.
+    See also :attr:`Colour.fuchsia`
+
+    .. versionadded:: 2.6
+    """
     pink = 5
+    """An alias for :attr:`DefaultAvatar.fuchsia`.
+
+    .. versionadded:: 2.6
+    """
 
     def __str__(self) -> str:
         return self.name
