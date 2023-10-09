@@ -2198,8 +2198,8 @@ class Client:
     def get_application_command_from_signature(
         self,
         *,
-        type: Union[int, ApplicationCommandType],
         qualified_name: str,
+        type: Union[int, ApplicationCommandType] = ApplicationCommandType.chat_input,
         guild: Optional[Snowflake] = None,
         search_localizations: bool = False,
     ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
@@ -2208,17 +2208,20 @@ class Client:
         .. versionadded:: 2.0
 
         .. versionchanged:: 3.0
-            - Changed the signature from ``(qualified_name, type, guild_id)`` to ``(*, type, qualified_name, guild)``. All parameters are now keyword-only.
-            - Subcommands/Subcommand groups can now be retrieved with this method.
+            - All parameters are now keyword-only.
             - ``guild_id`` parameter has been refactored to ``guild`` with type :class:`~nextcord.abc.Snowflake` and defaults to ``None``.
+            - Subcommands/Subcommand groups can now be retrieved with this method.
 
         Parameters
         ----------
-        type: Union[:class:`int`, :class:`ApplicationCommandType`]
-            Type of application command.
         qualified_name: :class:`str`
             Full name of the application command. Case sensitive.
             Subcommands must be separated by a space, E.g, ``parent group subcommand``.
+        type: Union[:class:`int`, :class:`ApplicationCommandType`]
+            Type of application command. Defaults to :attr:`.ApplicationCommandType.chat_input`.
+
+            .. versionchanged:: 3.0
+                Defaults to :attr:`.ApplicationCommandType.chat_input` now.
         guild: Optional[:class:`~nextcord.abc.Snowflake`]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
         search_localizations: :class:`bool`
