@@ -909,11 +909,21 @@ class InviteTarget(IntEnum):
 
 
 class InteractionType(IntEnum):
+    """Specifies the type of :class:`Interaction`.
+
+    .. versionadded:: 2.0
+    """
+
     ping = 1
+    """Represents Discord pinging to see if the interaction response server is alive."""
     application_command = 2
+    """Represents a slash command or context menu interaction."""
     component = 3
+    """Represents a component based interaction, i.e. using the Discord Bot UI Kit."""
     application_command_autocomplete = 4
+    """Represents a slash command autocomplete interaction."""
     modal_submit = 5
+    """Represents a modal submit interaction."""
 
 
 class InteractionResponseType(IntEnum):
