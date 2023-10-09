@@ -1363,6 +1363,9 @@ of :class:`enum.Enum`.
 .. autoclass:: InteractionResponseType
     :members:
 
+.. autoclass:: Locale
+    :members:
+
 .. class:: ComponentType
 
     Represents the component type of a component.
@@ -2335,9 +2338,6 @@ of :class:`enum.Enum`.
     .. attribute:: cancelled
 
         An alias for :attr:`canceled`.
-
-.. autoclass:: Locale
-    :members:
 
 .. class:: AutoModerationEventType
 
