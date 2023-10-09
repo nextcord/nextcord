@@ -931,6 +931,7 @@ class InteractionResponseType(IntEnum):
 
     .. versionadded:: 2.0
     """
+
     pong = 1
     """Pongs the interaction when given a ping.
 
@@ -1055,6 +1056,7 @@ class VideoQualityMode(IntEnum):
 
     .. versionadded:: 2.0
     """
+
     auto = 1
     """Represents auto camera video quality."""
     full = 2
@@ -1066,6 +1068,7 @@ class ComponentType(IntEnum):
 
     .. versionadded:: 2.0
     """
+
     action_row = 1
     """Represents the group component which holds different components in a row."""
     button = 2
@@ -1106,6 +1109,7 @@ class ButtonStyle(IntEnum):
 
     .. versionadded:: 2.0
     """
+
     primary = 1
     """Represents a blurple button for the primary action."""
     secondary = 2
@@ -1137,6 +1141,7 @@ class TextInputStyle(IntEnum):
 
     .. versionadded:: 2.0
     """
+
     short = 1
     """Represent a single line input."""
     paragraph = 2
@@ -1148,6 +1153,7 @@ class StagePrivacyLevel(IntEnum):
 
     .. versionadded:: 2.0
     """
+
     public = 1
     """The stage instance can be joined by external users."""
     closed = 2
@@ -1182,6 +1188,7 @@ class NSFWLevel(IntEnum):
 
             Checks if a NSFW level is lower or equal to another.
     """
+
     default = 0
     """The guild has not been categorised yet."""
     explicit = 1
