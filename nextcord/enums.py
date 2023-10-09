@@ -518,8 +518,37 @@ class DefaultAvatar(IntEnum):
 
 
 class NotificationLevel(IntEnum):
+    """Specifies whether a :class:`Guild` has notifications on for all
+     messages or mentions only by default.
+
+    .. container:: operations
+
+        .. versionadded:: 2.0
+
+        .. describe:: x == y
+
+            Checks if two notification levels are equal.
+        .. describe:: x != y
+
+            Checks if two notification levels are not equal.
+        .. describe:: x > y
+
+            Checks if a notification level is higher than another.
+        .. describe:: x < y
+
+            Checks if a notification level is lower than another.
+        .. describe:: x >= y
+
+            Checks if a notification level is higher or equal to another.
+        .. describe:: x <= y
+
+            Checks if a notification level is lower or equal to another.
+    """
+
     all_messages = 0
+    """Members receive notifications for every message regardless of them being mentioned."""
     only_mentions = 1
+    """Members receive notifications for messages they are mentioned in."""
 
 
 class AuditLogActionCategory(IntEnum):
