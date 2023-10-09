@@ -817,9 +817,20 @@ class TeamMembershipState(IntEnum):
 
 
 class WebhookType(IntEnum):
+    """Represents the type of webhook that can be received.
+
+    .. versionadded:: 1.3
+    """
+
     incoming = 1
+    """Represents a webhook that can post messages to channels with a token."""
     channel_follower = 2
+    """Represents a webhook that is internally managed by Discord, used for following channels."""
     application = 3
+    """Represents a webhook that is used for interactions or applications.
+
+    .. versionadded:: 2.0
+    """
 
 
 class ExpireBehaviour(IntEnum):
