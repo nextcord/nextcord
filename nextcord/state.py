@@ -545,14 +545,16 @@ class ConnectionState:
         search_localizations: bool = False,
     ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         def get_parent_command(name: str, /) -> Optional[BaseApplicationCommand]:
+            found = self._application_command_signatures.get((name, type, guild_id))
             if not search_localizations:
-                return self._application_command_signatures.get((name, type, guild_id))
+                return found
 
             for command in self._application_command_signatures.values():
                 if command.name_localizations and name in command.name_localizations.values():
-                    return command
+                    found = command
+                    break
 
-            return None
+            return found
 
         def find_children(
             parent: Union[BaseApplicationCommand, SlashApplicationSubcommand], name: str, /
@@ -561,15 +563,17 @@ class ConnectionState:
             if not children:
                 return parent
 
+            found = children.get(name)
             if not search_localizations:
-                return children.get(name)
+                return found
 
             subcommand: Union[BaseApplicationCommand, SlashApplicationSubcommand]
             for subcommand in children.values():
                 if subcommand.name_localizations and name in subcommand.name_localizations.values():
-                    return subcommand
+                    found = subcommand
+                    break
 
-            return None
+            return found
 
         parent: Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]] = None
 
@@ -888,13 +892,13 @@ class ConnectionState:
                 data = await self.http.get_global_commands(self.application_id)
 
         for raw_response in data:
-            fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else None
             payload_type = raw_response["type"] if "type" in raw_response else 1
+            fixed_guild_id = raw_response.get("guild_id", None)
 
             response_signature = {
                 "type": int(payload_type),
                 "qualified_name": raw_response["name"],
-                "guild_id": fixed_guild_id,
+                "guild_id": None if not fixed_guild_id else int(fixed_guild_id),
             }
             app_cmd = self.get_application_command_from_signature(**response_signature)
             if app_cmd:

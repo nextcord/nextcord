@@ -2115,12 +2115,11 @@ class Client:
                 _log.debug("nextcord.Client: %s", debug_response_signature)
                 do_deploy = False
 
+                guild_id = interaction.data.get("guild_id")
                 response_signature: Dict[str, Any] = {
                     "type": int(interaction.data["type"]),
                     "qualified_name": interaction.data["name"],
-                    "guild_id": int(guild_id)
-                    if (guild_id := interaction.data.get("guild_id"))
-                    else None,
+                    "guild_id": None if not guild_id else int(guild_id),
                 }
                 app_cmd = self._connection.get_application_command_from_signature(
                     **response_signature
