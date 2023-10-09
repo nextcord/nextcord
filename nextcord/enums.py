@@ -302,29 +302,63 @@ class MessageType(IntEnum):
 
 
 class VoiceRegion(StrEnum):
+    """Specifies the region a voice server belongs to."""
+
     us_west = "us-west"
+    """The US West region."""
     us_east = "us-east"
+    """The US East region."""
     us_south = "us-south"
+    """The US South region."""
     us_central = "us-central"
+    """The US Central region."""
     eu_west = "eu-west"
+    """The Western Europe region."""
     eu_central = "eu-central"
+    """The Central Europe region."""
     singapore = "singapore"
+    """The Singapore region."""
     london = "london"
+    """The London region."""
     sydney = "sydney"
+    """The Sydney region."""
     amsterdam = "amsterdam"
+    """The Amsterdam region."""
     frankfurt = "frankfurt"
+    """The Frankfurt region."""
     brazil = "brazil"
+    """The Brazil region."""
     hongkong = "hongkong"
+    """The Hong Kong region."""
     russia = "russia"
+    """The Russia region."""
     japan = "japan"
+    """The Japan region."""
     southafrica = "southafrica"
+    """The South Africa region."""
     south_korea = "south-korea"
+    """The South Korea region."""
     india = "india"
+    """The India region.
+
+    .. versionadded:: 1.2
+    """
     europe = "europe"
+    """The Europe region.
+
+    .. versionadded:: 1.3
+    """
     dubai = "dubai"
+    """The Dubai region.
+
+    .. versionadded:: 1.3
+    """
     vip_us_east = "vip-us-east"
+    """The US East region for VIP guilds."""
     vip_us_west = "vip-us-west"
+    """The US West region for VIP guilds."""
     vip_amsterdam = "vip-amsterdam"
+    """The Amsterdam region for VIP guilds."""
 
 
 class SpeakingState(IntEnum):
