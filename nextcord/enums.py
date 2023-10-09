@@ -457,12 +457,23 @@ class ContentFilter(IntEnum):
 
 
 class Status(StrEnum):
+    """Specifies a :class:`Member` 's status."""
+
     online = "online"
+    """The member is online."""
     offline = "offline"
+    """The member is offline."""
     idle = "idle"
+    """The member is idle."""
     dnd = "dnd"
+    """The member is "Do Not Disturb."""
     do_not_disturb = "dnd"
+    """An alias for :attr:`Status.dnd`."""
     invisible = "invisible"
+    """The member is "invisible". In reality, this is only used in sending
+    a presence a la :meth:`Client.change_presence`. When you receive a
+    user's presence this will be :attr:`offline` instead.
+    """
 
 
 class DefaultAvatar(IntEnum):
