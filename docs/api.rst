@@ -1345,6 +1345,9 @@ of :class:`enum.Enum`.
 .. autoclass:: WebhookType
     :members:
 
+.. autoclass:: ExpireBehaviour
+    :members:
+
 .. class:: InteractionType
 
     Specifies the type of :class:`Interaction`.
@@ -2249,24 +2252,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: ExpireBehaviour
-
-    Represents the behaviour the :class:`Integration` should perform
-    when a user's subscription has finished.
-
-    There is an alias for this called ``ExpireBehavior``.
-
-    .. versionadded:: 1.4
-
-    .. attribute:: remove_role
-
-        This will remove the :attr:`StreamIntegration.role` from the user
-        when their subscription is finished.
-
-    .. attribute:: kick
-
-        This will kick the user when their subscription is finished.
 
 .. class:: StickerType
 

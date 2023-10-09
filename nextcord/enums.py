@@ -834,8 +834,20 @@ class WebhookType(IntEnum):
 
 
 class ExpireBehaviour(IntEnum):
+    """Represents the behaviour the :class:`Integration` should perform
+    when a user's subscription has finished.
+
+    There is an alias for this called ``ExpireBehavior``.
+
+    .. versionadded:: 1.4
+    """
+
     remove_role = 0
+    """This will remove the :attr:`StreamIntegration.role` from the user
+     when their subscription is finished.
+    """
     kick = 1
+    """This will kick the user when their subscription is finished."""
 
 
 ExpireBehavior = ExpireBehaviour
