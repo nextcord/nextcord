@@ -1102,19 +1102,34 @@ class ComponentType(IntEnum):
 
 
 class ButtonStyle(IntEnum):
+    """Represents the style of the button component.
+
+    .. versionadded:: 2.0
+    """
     primary = 1
+    """Represents a blurple button for the primary action."""
     secondary = 2
+    """Represents a grey button for secondary actions."""
     success = 3
+    """Represents a green button for success actions."""
     danger = 4
+    """Represents a red button for dangerous actions."""
     link = 5
+    """Represents a link button."""
 
     # Aliases
     blurple = 1
+    """An alias for :attr:`ButtonStyle.primary`."""
     grey = 2
+    """An alias for :attr:`ButtonStyle.secondary`."""
     gray = 2
+    """An alias for :attr:`ButtonStyle.secondary`."""
     green = 3
+    """An alias for :attr:`ButtonStyle.success`."""
     red = 4
+    """An alias for :attr:`ButtonStyle.danger`."""
     url = 5
+    """An alias for :attr:`ButtonStyle.link`."""
 
 
 class TextInputStyle(IntEnum):

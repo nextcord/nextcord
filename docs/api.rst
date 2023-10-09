@@ -1372,46 +1372,8 @@ of :class:`enum.Enum`.
 .. autoclass:: ComponentType
     :members:
 
-.. class:: ButtonStyle
-
-    Represents the style of the button component.
-
-    .. versionadded:: 2.0
-
-    .. attribute:: primary
-
-        Represents a blurple button for the primary action.
-    .. attribute:: secondary
-
-        Represents a grey button for the secondary action.
-    .. attribute:: success
-
-        Represents a green button for a successful action.
-    .. attribute:: danger
-
-        Represents a red button for a dangerous action.
-    .. attribute:: link
-
-        Represents a link button.
-
-    .. attribute:: blurple
-
-        An alias for :attr:`primary`.
-    .. attribute:: grey
-
-        An alias for :attr:`secondary`.
-    .. attribute:: gray
-
-        An alias for :attr:`secondary`.
-    .. attribute:: green
-
-        An alias for :attr:`success`.
-    .. attribute:: red
-
-        An alias for :attr:`danger`.
-    .. attribute:: url
-
-        An alias for :attr:`link`.
+.. autoclass:: ButtonStyle
+    :members:
 
 .. class:: TextInputStyle
 
