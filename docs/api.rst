@@ -1339,6 +1339,9 @@ of :class:`enum.Enum`.
 .. autoclass:: ActivityType
     :members:
 
+.. autoclass:: TeamMembershipState
+    :members:
+
 .. class:: InteractionType
 
     Specifies the type of :class:`Interaction`.
@@ -2243,20 +2246,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: TeamMembershipState
-
-    Represents the membership state of a team member retrieved through :func:`Client.application_info`.
-
-    .. versionadded:: 1.3
-
-    .. attribute:: invited
-
-        Represents an invited member.
-
-    .. attribute:: accepted
-
-        Represents a member currently in the team.
 
 .. class:: WebhookType
 

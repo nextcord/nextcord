@@ -804,8 +804,16 @@ class ActivityType(IntEnum):
 
 
 class TeamMembershipState(IntEnum):
+    """Represents the membership state of a team member retrieved
+     through :func:`Client.application_info`.
+
+    .. versionadded:: 1.3
+    """
+
     invited = 1
+    """Represents an invited member."""
     accepted = 2
+    """Represents a member currently in the team."""
 
 
 class WebhookType(IntEnum):
