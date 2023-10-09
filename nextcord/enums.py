@@ -866,10 +866,22 @@ class StickerType(IntEnum):
 
 
 class StickerFormatType(IntEnum):
+    """Represents the type of sticker images.
+
+    .. versionadded:: 1.6
+    """
+
     png = 1
+    """Represents a sticker with a png image."""
     apng = 2
+    """Represents a sticker with an apng image."""
     lottie = 3
+    """Represents a sticker with a lottie image."""
     gif = 4
+    """Represents a sticker with a GIF image.
+
+    .. versionadded:: 2.4
+    """
 
     @property
     def file_extension(self) -> str:

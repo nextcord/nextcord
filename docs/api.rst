@@ -1351,6 +1351,9 @@ of :class:`enum.Enum`.
 .. autoclass:: StickerType
     :members:
 
+.. autoclass:: StickerFormatType
+    :members:
+
 .. class:: InteractionType
 
     Specifies the type of :class:`Interaction`.
@@ -2255,30 +2258,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: StickerFormatType
-
-    Represents the type of sticker images.
-
-    .. versionadded:: 1.6
-
-    .. attribute:: png
-
-        Represents a sticker with a png image.
-
-    .. attribute:: apng
-
-        Represents a sticker with an apng image.
-
-    .. attribute:: lottie
-
-        Represents a sticker with a lottie image.
-
-    .. attribute:: gif
-
-        Represents a sticker with a GIF image.
-
-        .. versionadded:: 2.4
 
 .. class:: InviteTarget
 
