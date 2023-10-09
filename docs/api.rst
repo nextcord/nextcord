@@ -1330,6 +1330,9 @@ of :class:`enum.Enum`.
 .. autoclass:: NotificationLevel
     :members:
 
+.. autoclass:: AuditLogActionCategory
+    :members:
+
 .. class:: UserFlags
 
     Represents Discord User flags.
@@ -2332,24 +2335,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: AuditLogActionCategory
-
-    Represents the category that the :class:`AuditLogAction` belongs to.
-
-    This can be retrieved via :attr:`AuditLogEntry.category`.
-
-    .. attribute:: create
-
-        The action is the creation of something.
-
-    .. attribute:: delete
-
-        The action is the deletion of something.
-
-    .. attribute:: update
-
-        The action is the update of something.
 
 .. class:: TeamMembershipState
 

@@ -552,9 +552,17 @@ class NotificationLevel(IntEnum):
 
 
 class AuditLogActionCategory(IntEnum):
+    """Represents the category that the :class:`AuditLogAction` belongs to.
+
+    This can be retrieved via :attr:`AuditLogEntry.category`.
+    """
+
     create = 1
+    """The action is the creation of something."""
     delete = 2
+    """The action is the deletion of something."""
     update = 3
+    """The action is the update of something."""
 
 
 class AuditLogAction(IntEnum):
