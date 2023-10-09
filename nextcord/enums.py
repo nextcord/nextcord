@@ -1133,8 +1133,14 @@ class ButtonStyle(IntEnum):
 
 
 class TextInputStyle(IntEnum):
+    """Represent the style of a text input component.
+
+    .. versionadded:: 2.0
+    """
     short = 1
+    """Represent a single line input."""
     paragraph = 2
+    """Represent a multi line input."""
 
 
 class StagePrivacyLevel(IntEnum):
