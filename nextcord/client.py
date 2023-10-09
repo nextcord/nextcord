@@ -2197,8 +2197,8 @@ class Client:
 
     def get_application_command_from_signature(
         self,
-        *,
         qualified_name: str,
+        *,
         type: Union[int, ApplicationCommandType] = ApplicationCommandType.chat_input,
         guild: Optional[Snowflake] = None,
         search_localizations: bool = False,
