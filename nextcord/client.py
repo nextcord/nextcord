@@ -2107,7 +2107,6 @@ class Client:
                 _log.debug(
                     "nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
-                # _log.debug(f"nextcord.Client: %s", interaction.data)
                 debug_response_signature = (
                     interaction.data["name"],
                     int(interaction.data["type"]),
@@ -2336,11 +2335,7 @@ class Client:
 
             return base
 
-        missing_argument: List[str] = []
-        for arg in REQUIRED_ARGS:
-            if arg not in kwargs:
-                missing_argument.append(arg)
-
+        missing_argument: List[str] = [arg for arg in REQUIRED_ARGS if arg not in kwargs]
         if missing_argument:
             raise TypeError(parse_args_errors(*missing_argument))
 
