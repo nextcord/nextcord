@@ -2201,7 +2201,7 @@ class Client:
         type: Union[int, ApplicationCommandType],
         qualified_name: str,
         guild_id: Optional[int],
-        search_locales: bool = False,
+        search_localizations: bool = False,
     ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         """Gets a locally stored application command object that matches the given signature.
 
@@ -2220,7 +2220,7 @@ class Client:
             Subcommands must be separated by a space, E.g, ``parent group subcommand``.
         guild_id: Optional[:class:`int`]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
-        search_locales: :class:`bool`
+        search_localizations: :class:`bool`
             Whether to also search through the command's name locales. Defaults to ``False``.
 
             .. versionadded:: 3.0
@@ -2234,7 +2234,7 @@ class Client:
             type=type.value if isinstance(type, ApplicationCommandType) else type,
             qualified_name=qualified_name,
             guild_id=guild_id,
-            search_locales=search_locales,
+            search_localizations=search_localizations,
         )
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:

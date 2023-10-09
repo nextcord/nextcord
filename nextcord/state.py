@@ -542,10 +542,10 @@ class ConnectionState:
         type: int,
         qualified_name: str,
         guild_id: Optional[int],
-        search_locales: bool = False,
+        search_localizations: bool = False,
     ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         def get_parent_command(name: str, /) -> Optional[BaseApplicationCommand]:
-            if not search_locales:
+            if not search_localizations:
                 return self._application_command_signatures.get((name, type, guild_id))
 
             for command in self._application_command_signatures.values():
@@ -561,7 +561,7 @@ class ConnectionState:
             if not children:
                 return parent
 
-            if not search_locales:
+            if not search_localizations:
                 return children.get(name)
 
             subcommand: Union[BaseApplicationCommand, SlashApplicationSubcommand]
