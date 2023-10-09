@@ -2224,6 +2224,7 @@ class Client:
                 Defaults to :attr:`.ApplicationCommandType.chat_input` now.
         guild: Optional[:class:`~nextcord.abc.Snowflake`]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
+            Defaults to ``None``.
         search_localizations: :class:`bool`
             Whether to also search through the command's name locales. Defaults to ``False``.
 
