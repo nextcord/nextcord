@@ -1360,38 +1360,8 @@ of :class:`enum.Enum`.
 .. autoclass:: InteractionType
     :members:
 
-.. class:: InteractionResponseType
-
-    Specifies the response type for the interaction.
-
-    .. versionadded:: 2.0
-
-    .. attribute:: pong
-
-        Pongs the interaction when given a ping.
-
-        See also :meth:`InteractionResponse.pong`
-    .. attribute:: channel_message
-
-        Respond to the interaction with a message.
-
-        See also :meth:`InteractionResponse.send_message`
-    .. attribute:: deferred_channel_message
-
-        Responds to the interaction with a message at a later time.
-
-        See also :meth:`InteractionResponse.defer`
-    .. attribute:: deferred_message_update
-
-        Acknowledges the component interaction with a promise that
-        the message will update later (though there is no need to actually update the message).
-
-        See also :meth:`InteractionResponse.defer`
-    .. attribute:: message_update
-
-        Responds to the interaction by editing the message.
-
-        See also :meth:`InteractionResponse.edit_message`
+.. autoclass:: InteractionResponseType
+    :members:
 
 .. class:: ComponentType
 

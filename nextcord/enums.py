@@ -927,11 +927,37 @@ class InteractionType(IntEnum):
 
 
 class InteractionResponseType(IntEnum):
+    """Specifies the response type for the interaction.
+
+    .. versionadded:: 2.0
+    """
     pong = 1
+    """Pongs the interaction when given a ping.
+
+    See also :meth:`InteractionResponse.pong`
+    """
     channel_message = 4  # (with source)
+    """Respond to the interaction with a message.
+
+    See also :meth:`InteractionResponse.send_message`
+    """
     deferred_channel_message = 5  # (with source)
+    """Responds to the interaction with a message at a later time.
+
+    See also :meth:`InteractionResponse.defer`
+    """
     deferred_message_update = 6  # for components
+    """Acknowledges the component interaction with a promise that
+     the message will update later (though there is no need to
+     actually update the message).
+
+    See also :meth:`InteractionResponse.defer`
+    """
     message_update = 7  # for components
+    """Responds to the interaction by editing the message.
+
+    See also :meth:`InteractionResponse.edit_message`
+    """
     application_command_autocomplete_result = 8
     modal = 9
 
