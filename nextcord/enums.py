@@ -1157,10 +1157,39 @@ class StagePrivacyLevel(IntEnum):
 
 
 class NSFWLevel(IntEnum):
+    """Represents the NSFW level of a guild.
+
+    .. versionadded:: 2.0
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two NSFW levels are equal.
+        .. describe:: x != y
+
+            Checks if two NSFW levels are not equal.
+        .. describe:: x > y
+
+            Checks if a NSFW level is higher than another.
+        .. describe:: x < y
+
+            Checks if a NSFW level is lower than another.
+        .. describe:: x >= y
+
+            Checks if a NSFW level is higher or equal to another.
+        .. describe:: x <= y
+
+            Checks if a NSFW level is lower or equal to another.
+    """
     default = 0
+    """The guild has not been categorised yet."""
     explicit = 1
+    """The guild contains NSFW content."""
     safe = 2
+    """The guild does not contain any NSFW content."""
     age_restricted = 3
+    """The guild may contain NSFW content."""
 
 
 class ScheduledEventEntityType(IntEnum):

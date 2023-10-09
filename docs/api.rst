@@ -1381,6 +1381,9 @@ of :class:`enum.Enum`.
 .. autoclass:: StagePrivacyLevel
     :members:
 
+.. autoclass:: NSFWLevel
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2134,49 +2137,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: NSFWLevel
-
-    Represents the NSFW level of a guild.
-
-    .. versionadded:: 2.0
-
-    .. container:: operations
-
-        .. describe:: x == y
-
-            Checks if two NSFW levels are equal.
-        .. describe:: x != y
-
-            Checks if two NSFW levels are not equal.
-        .. describe:: x > y
-
-            Checks if a NSFW level is higher than another.
-        .. describe:: x < y
-
-            Checks if a NSFW level is lower than another.
-        .. describe:: x >= y
-
-            Checks if a NSFW level is higher or equal to another.
-        .. describe:: x <= y
-
-            Checks if a NSFW level is lower or equal to another.
-
-    .. attribute:: default
-
-        The guild has not been categorised yet.
-
-    .. attribute:: explicit
-
-        The guild contains NSFW content.
-
-    .. attribute:: safe
-
-        The guild does not contain any NSFW content.
-
-    .. attribute:: age_restricted
-
-        The guild may contain NSFW content.
 
 .. class:: ScheduledEventEntityType
 
