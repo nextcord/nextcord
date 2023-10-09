@@ -2208,6 +2208,7 @@ class Client:
 
         .. versionchanged:: 3.0
             - Subcommands/Subcommand groups can now be retrieved with this method.
+            - ``name`` parameter was refactored to ``qualified_name`` and now accepts subcommands/subcommand groups separated by a space.
             - ``cmd_type`` parameter was refactored to ``type``, defaults to :attr:`.ApplicationCommandType.chat_input` and is now a keyword-only parameter.
             - ``guild_id`` parameter was refactored to ``guild`` with type :class:`~nextcord.abc.Snowflake`, defaults to ``None`` and is now a keyword-only parameter.
 
