@@ -2208,9 +2208,9 @@ class Client:
         .. versionadded:: 2.0
 
         .. versionchanged:: 3.0
-            - All parameters are now keyword-only.
-            - ``guild_id`` parameter has been refactored to ``guild`` with type :class:`~nextcord.abc.Snowflake` and defaults to ``None``.
             - Subcommands/Subcommand groups can now be retrieved with this method.
+            - ``cmd_type`` parameter was refactored to ``type``, defaults to :attr:`.ApplicationCommandType.chat_input` and is now a keyword-only parameter.
+            - ``guild_id`` parameter was refactored to ``guild`` with type :class:`~nextcord.abc.Snowflake`, defaults to ``None`` and is now a keyword-only parameter.
 
         Parameters
         ----------
@@ -2219,9 +2219,6 @@ class Client:
             Subcommands must be separated by a space, E.g, ``parent group subcommand``.
         type: Union[:class:`int`, :class:`ApplicationCommandType`]
             Type of application command. Defaults to :attr:`.ApplicationCommandType.chat_input`.
-
-            .. versionchanged:: 3.0
-                Defaults to :attr:`.ApplicationCommandType.chat_input` now.
         guild: Optional[:class:`~nextcord.abc.Snowflake`]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
             Defaults to ``None``.
