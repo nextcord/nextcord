@@ -1051,8 +1051,14 @@ class Locale(StrEnum):
 
 
 class VideoQualityMode(IntEnum):
+    """Represents the camera video quality mode for voice channel participants.
+
+    .. versionadded:: 2.0
+    """
     auto = 1
+    """Represents auto camera video quality."""
     full = 2
+    """Represents full camera video quality."""
 
 
 class ComponentType(IntEnum):

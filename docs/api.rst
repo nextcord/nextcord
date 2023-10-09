@@ -1366,6 +1366,9 @@ of :class:`enum.Enum`.
 .. autoclass:: Locale
     :members:
 
+.. autoclass:: VideoQualityMode
+    :members:
+
 .. class:: ComponentType
 
     Represents the component type of a component.
@@ -2215,20 +2218,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: VideoQualityMode
-
-    Represents the camera video quality mode for voice channel participants.
-
-    .. versionadded:: 2.0
-
-    .. attribute:: auto
-
-        Represents auto camera video quality.
-
-    .. attribute:: full
-
-        Represents full camera video quality.
 
 .. class:: StagePrivacyLevel
 
