@@ -23,14 +23,17 @@ if TYPE_CHECKING:
 
     from ...abc import GuildChannel
     from ...types.components import SelectMenu as SelectMenuPayload
-    from ...types.interactions import ComponentInteractionData, ComponentInteractionResolved
+    from ...types.interactions import (
+        ComponentInteractionData,
+        ComponentInteractionResolved,
+    )
     from ..view import View
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class SelectValuesBase(UserList):
-    def __init__(self):
+    def __init__(self) -> None:
         self.data: List[Union[Member, User, Role, GuildChannel]] = []
 
     @classmethod
@@ -64,7 +67,7 @@ class SelectValuesBase(UserList):
         return [o.id for o in self.data]
 
 
-class SelectBase(Item[V]):
+class SelectBase(Item[V_co]):
     """Represents a UI select menu without any options.
 
     This is usually represented as a drop down menu.

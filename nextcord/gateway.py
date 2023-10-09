@@ -57,14 +57,12 @@ class ReconnectWebSocket(Exception):
 class WebSocketClosure(Exception):
     """An exception to make up for the fact that aiohttp doesn't signal closure."""
 
-    pass
-
 
 EventListener = namedtuple("EventListener", "predicate event result future")  # type: ignore
 
 
 class GatewayRatelimiter:
-    def __init__(self, count: int = 110, per: float = 60.0):
+    def __init__(self, count: int = 110, per: float = 60.0) -> None:
         # The default is 110 to give room for at least 10 heartbeats per minute
         self.max = count
         self.remaining = count
@@ -110,7 +108,7 @@ class GatewayRatelimiter:
 
 
 class KeepAliveHandler(threading.Thread):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         ws: DiscordWebSocket = kwargs.pop("ws")  # will fail at `_main_thread_id` anyway
         interval: Optional[float] = kwargs.pop("interval", None)
         shard_id: Optional[int] = kwargs.pop("shard_id", None)
@@ -146,7 +144,7 @@ class KeepAliveHandler(threading.Thread):
                     _log.exception("An error occurred while stopping the gateway. Ignoring.")
                 finally:
                     self.stop()
-                    return
+                    return  # noqa: B012  # ignoring is intentional
 
             data = self.get_payload()
             _log.debug(self.msg, self.shard_id, data["d"])
@@ -193,7 +191,7 @@ class KeepAliveHandler(threading.Thread):
 
 
 class VoiceKeepAliveHandler(KeepAliveHandler):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.recent_ack_latencies = deque(maxlen=20)
         self.msg = "Keeping shard ID %s voice websocket alive with timestamp %s."
@@ -289,7 +287,7 @@ class DiscordWebSocket:
         self.loop: asyncio.AbstractEventLoop = loop
 
         # an empty dispatcher to prevent crashes
-        self._dispatch: VariadicArgNone = lambda *args: None
+        self._dispatch: VariadicArgNone = lambda *_args: None
         # generic event listeners
         self._dispatch_listeners: List[EventListener] = []
         # the keep alive
@@ -405,6 +403,8 @@ class DiscordWebSocket:
 
     async def identify(self) -> None:
         """Sends the IDENTIFY packet."""
+        state = self._connection
+
         payload = {
             "op": self.IDENTIFY,
             "d": {
@@ -416,13 +416,13 @@ class DiscordWebSocket:
                 },
                 "compress": True,
                 "large_threshold": 250,
+                "intents": state._intents.value,
             },
         }
 
         if self.shard_id is not None and self.shard_count is not None:
             payload["d"]["shard"] = [self.shard_id, self.shard_count]
 
-        state = self._connection
         if state._activity is not None or state._status is not None:
             payload["d"]["presence"] = {
                 "status": state._status,
@@ -430,9 +430,6 @@ class DiscordWebSocket:
                 "since": 0,
                 "afk": False,
             }
-
-        if state._intents is not None:
-            payload["d"]["intents"] = state._intents.value
 
         await self.call_hooks("before_identify", self.shard_id, initial=self._initial_identify)
         await self.send_as_json(payload)
@@ -468,7 +465,7 @@ class DiscordWebSocket:
 
         op: int = message["op"]
         data: Dict[str, Any] = message["d"]
-        seq: int = message["s"]
+        seq: Optional[int] = message["s"]
         if seq is not None:
             self.sequence = seq
 
@@ -597,9 +594,7 @@ class DiscordWebSocket:
         """
         try:
             msg = await self.socket.receive(timeout=self._max_heartbeat_timeout)
-            if msg.type is aiohttp.WSMsgType.TEXT:
-                await self.received_message(msg.data)
-            elif msg.type is aiohttp.WSMsgType.BINARY:
+            if msg.type is aiohttp.WSMsgType.TEXT or msg.type is aiohttp.WSMsgType.BINARY:
                 await self.received_message(msg.data)
             elif msg.type is aiohttp.WSMsgType.ERROR:
                 _log.debug("Received %s", msg)
@@ -625,9 +620,9 @@ class DiscordWebSocket:
             if self._can_handle_close():
                 _log.info("Websocket closed with %s, attempting a reconnect.", code)
                 raise ReconnectWebSocket(self.shard_id) from None
-            else:
-                _log.info("Websocket closed with %s, cannot reconnect.", code)
-                raise ConnectionClosed(self.socket, shard_id=self.shard_id, code=code) from None
+
+            _log.info("Websocket closed with %s, cannot reconnect.", code)
+            raise ConnectionClosed(self.socket, shard_id=self.shard_id, code=code) from None
 
     async def debug_send(self, data: Any, /) -> None:
         await self._rate_limiter.block()
@@ -790,14 +785,14 @@ class DiscordVoiceWebSocket:
         loop: asyncio.AbstractEventLoop,
         *,
         hook: Optional[Callable[..., Awaitable[None]]] = None,
-    ):
+    ) -> None:
         self.ws: DiscordClientWebSocketResponse = socket
         self.loop: asyncio.AbstractEventLoop = loop
         self._keep_alive: Optional[VoiceKeepAliveHandler] = None
         self._close_code: Optional[int] = None
         self.secret_key: Optional[List[int]] = None
         self._hook: Optional[Callable[..., Awaitable[None]]] = (
-            hook or getattr(self, "_hook", None) or getattr(self, "_default_hook")
+            hook or getattr(self, "_hook", None) or self._default_hook
         )
 
     async def _default_hook(self, *args: Any) -> None:
@@ -873,7 +868,14 @@ class DiscordVoiceWebSocket:
         await self.send_as_json(payload)
 
     async def speak(self, state: SpeakingState = SpeakingState.voice) -> None:
-        payload = {"op": self.SPEAKING, "d": {"speaking": int(state), "delay": 0}}
+        payload = {
+            "op": self.SPEAKING,
+            "d": {
+                "speaking": int(state),
+                "delay": 0,
+                "ssrc": self._connection.ssrc,
+            },
+        }
 
         await self.send_as_json(payload)
 
@@ -906,16 +908,20 @@ class DiscordVoiceWebSocket:
         state.voice_port = data["port"]
         state.endpoint_ip = data["ip"]
 
-        packet = bytearray(70)
-        struct.pack_into(">H", packet, 0, 1)  # 1 = Send
-        struct.pack_into(">H", packet, 2, 70)  # 70 = Length
+        # Discover our external IP and port by asking our voice port.
+        # https://discord.dev/topics/voice-connections#ip-discovery
+        packet = bytearray(74)
+
+        # > = big-endian, H = unsigned short, I = unsigned int
+        struct.pack_into(">H", packet, 0, 1)  # 1 = Request
+        struct.pack_into(">H", packet, 2, 70)  # 70 = Message length. A constant of 70.
         struct.pack_into(">I", packet, 4, state.ssrc)
         state.socket.sendto(packet, (state.endpoint_ip, state.voice_port))
-        recv = await self.loop.sock_recv(state.socket, 70)
+        recv = await self.loop.sock_recv(state.socket, 74)
         _log.debug("received packet in initial_connection: %s", recv)
 
-        # the ip is ascii starting at the 4th byte and ending at the first null
-        ip_start = 4
+        # the ip is ascii starting at the 8th byte and ending at the first null
+        ip_start = 8
         ip_end = recv.index(0, ip_start)
         state.ip = recv[ip_start:ip_end].decode("ascii")
 
@@ -948,7 +954,10 @@ class DiscordVoiceWebSocket:
     async def load_secret_key(self, data: Dict[str, Any]) -> None:
         _log.info("received secret key for voice connection")
         self.secret_key = self._connection.secret_key = data["secret_key"]
-        await self.speak()
+        # Send a speak command with the "not speaking" state.
+        # This also tells Discord our SSRC value, which Discord requires
+        # before sending any voice data (and is the real reason why we
+        # call this here).
         await self.speak(SpeakingState.none)
 
     async def poll_event(self) -> None:

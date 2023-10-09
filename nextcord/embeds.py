@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import datetime
 import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, Union
@@ -19,7 +20,7 @@ EmptyEmbed = None
 
 
 class EmbedProxy:
-    def __init__(self, layer: Dict[str, Any]):
+    def __init__(self, layer: Dict[str, Any]) -> None:
         self.__dict__.update(layer)
 
     def __len__(self) -> int:
@@ -148,8 +149,7 @@ class Embed:
         url: Optional[Any] = None,
         description: Optional[Any] = None,
         timestamp: Optional[datetime.datetime] = None,
-    ):
-
+    ) -> None:
         self.colour = colour if colour is not None else color
         self.title = title
         self.type = type
@@ -176,7 +176,6 @@ class Embed:
             FutureWarning,
             stacklevel=2,
         )
-        return None
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> Self:
@@ -215,15 +214,11 @@ class Embed:
 
         # try to fill in the more rich fields
 
-        try:
+        with contextlib.suppress(KeyError):
             self._colour = Colour(value=data["color"])
-        except KeyError:
-            pass
 
-        try:
+        with contextlib.suppress(KeyError):
             self._timestamp = utils.parse_time(data["timestamp"])
-        except KeyError:
-            pass
 
         for attr in ("thumbnail", "video", "provider", "author", "fields", "image", "footer"):
             try:
@@ -353,10 +348,8 @@ class Embed:
 
         .. versionadded:: 2.0
         """
-        try:
+        with contextlib.suppress(AttributeError):
             del self._footer
-        except AttributeError:
-            pass
 
         return self
 
@@ -391,10 +384,9 @@ class Embed:
         """
 
         if url is None:
-            try:
+            with contextlib.suppress(AttributeError):
                 del self._image
-            except AttributeError:
-                pass
+
         else:
             self._image = {
                 "url": str(url),
@@ -433,10 +425,9 @@ class Embed:
         """
 
         if url is None:
-            try:
+            with contextlib.suppress(AttributeError):
                 del self._thumbnail
-            except AttributeError:
-                pass
+
         else:
             self._thumbnail = {
                 "url": str(url),
@@ -520,10 +511,8 @@ class Embed:
 
         .. versionadded:: 1.4
         """
-        try:
+        with contextlib.suppress(AttributeError):
             del self._author
-        except AttributeError:
-            pass
 
         return self
 
@@ -631,10 +620,8 @@ class Embed:
         index: :class:`int`
             The index of the field to remove.
         """
-        try:
+        with contextlib.suppress(AttributeError, IndexError):
             del self._fields[index]
-        except (AttributeError, IndexError):
-            pass
 
         return self
 
@@ -665,8 +652,8 @@ class Embed:
 
         try:
             field = self._fields[index]
-        except (TypeError, IndexError, AttributeError):
-            raise IndexError("field index out of range")
+        except (TypeError, IndexError, AttributeError) as e:
+            raise IndexError("field index out of range") from e
 
         field["name"] = str(name)
         field["value"] = str(value)
@@ -681,7 +668,7 @@ class Embed:
         result = {
             key[1:]: getattr(self, key)
             for key in self.__slots__
-            if key[0] == '_' and hasattr(self, key)
+            if key[0] == "_" and hasattr(self, key)
         }
         # fmt: on
 

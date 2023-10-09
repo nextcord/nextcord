@@ -47,6 +47,8 @@ __all__ = (
     "KeywordPresetType",
     "AutoModerationActionType",
     "SortOrderType",
+    "RoleConnectionMetadataType",
+    "ForumLayoutType",
 )
 
 
@@ -56,17 +58,17 @@ class UnknownEnumValue(NamedTuple):
     name: str
     value: Any
 
-    def __str__(self):
+    def __str__(self) -> str:
         if isinstance(self.value, str):
             return self.value
         return self.name
 
-    def __int__(self):
+    def __int__(self) -> int:
         if isinstance(self.value, int):
             return self.value
         raise TypeError(f"{self.name}.{self.value} cannot be converted to an int")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.name}.{self.value!r}>"
 
     def __le__(self, other):
@@ -123,14 +125,14 @@ class Enum(enum.Enum):
 class IntEnum(int, Enum):
     """An enum that supports comparing and hashing as an int."""
 
-    def __int__(self):
+    def __int__(self) -> int:
         return self.value
 
 
-class StrEnum(str, Enum):
+class StrEnum(str, Enum):  # noqa: SLOT000
     """An enum that supports comparing and hashing as a string."""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 
@@ -148,7 +150,7 @@ class ChannelType(IntEnum):
     guild_directory = 14
     forum = 15
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -178,6 +180,10 @@ class MessageType(IntEnum):
     guild_invite_reminder = 22
     context_menu_command = 23
     auto_moderation_action = 24
+    stage_start = 27
+    stage_end = 28
+    stage_speaker = 29
+    stage_topic = 31
 
 
 class VoiceRegion(StrEnum):
@@ -212,7 +218,7 @@ class SpeakingState(IntEnum):
     soundshare = 1 << 1
     priority = 1 << 2
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -223,7 +229,7 @@ class VerificationLevel(IntEnum):
     high = 3
     highest = 4
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -232,7 +238,7 @@ class ContentFilter(IntEnum):
     no_role = 1
     all_members = 2
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -252,8 +258,10 @@ class DefaultAvatar(IntEnum):
     green = 2
     orange = 3
     red = 4
+    fuchsia = 5
+    pink = 5
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -389,46 +397,45 @@ class AuditLogAction(IntEnum):
     @property
     def target_type(self) -> Optional[str]:
         v = self.value
-        if v == -1:
+        if v == -1:  # pyright: ignore[reportUnnecessaryComparison]
             return "all"
-        elif v < 10:
+        if v < 10:
             return "guild"
-        elif v < 20:
+        if v < 20:
             return "channel"
-        elif v < 30:
+        if v < 30:
             return "user"
-        elif v < 40:
+        if v < 40:
             return "role"
-        elif v < 50:
+        if v < 50:
             return "invite"
-        elif v < 60:
+        if v < 60:
             return "webhook"
-        elif v < 70:
+        if v < 70:
             return "emoji"
-        elif v == 73:
+        if v == 73:
             return "channel"
-        elif v < 80:
+        if v < 80:
             return "message"
-        elif v < 83:
+        if v < 83:
             return "integration"
-        elif v < 90:
+        if v < 90:
             return "stage_instance"
-        elif v < 93:
+        if v < 93:
             return "sticker"
-        elif v < 103:
+        if v < 103:
             return "event"
-        elif v < 113:
+        if v < 113:
             return "thread"
-        elif v < 122:
+        if v < 122:
             return "application_command_or_integration"
-        elif v < 140:
+        if v < 140:
             return None
-        elif v == 143:
+        if v == 143:
             return "user"
-        elif v < 143:
+        if v < 143:
             return "auto_moderation_rule"
-        else:
-            return None
+        return None
 
 
 class UserFlags(IntEnum):
@@ -492,16 +499,16 @@ class StickerFormatType(IntEnum):
     png = 1
     apng = 2
     lottie = 3
+    gif = 4
 
     @property
     def file_extension(self) -> str:
-        # fmt: off
         lookup: Dict[StickerFormatType, str] = {
-            StickerFormatType.png: 'png',
-            StickerFormatType.apng: 'png',
-            StickerFormatType.lottie: 'json',
+            StickerFormatType.png: "png",
+            StickerFormatType.apng: "png",
+            StickerFormatType.lottie: "json",
+            StickerFormatType.gif: "gif",
         }
-        # fmt: on
         return lookup[self]
 
 
@@ -521,8 +528,6 @@ class InteractionType(IntEnum):
 
 class InteractionResponseType(IntEnum):
     pong = 1
-    # ack = 2 (deprecated)
-    # channel_message = 3 (deprecated)
     channel_message = 4  # (with source)
     deferred_channel_message = 5  # (with source)
     deferred_message_update = 6  # for components
@@ -566,6 +571,11 @@ class Locale(StrEnum):
     """French | Français"""
     hr = "hr"
     """Croatian | Hrvatski"""
+    id = "id"
+    """Indonesian | Bahasa Indonesia
+
+    .. versionadded:: 2.4
+    """
     it = "it"
     """Italian | Italiano"""
     lt = "lt"
@@ -597,7 +607,7 @@ class Locale(StrEnum):
     bg = "bg"
     """Bulgarian | български"""
     ru = "ru"
-    """Russian | Pусский"""
+    """Russian | Pусский"""  # noqa: RUF001
     uk = "uk"
     """Ukrainian | Українська"""
     hi = "hi"
@@ -709,6 +719,23 @@ class AutoModerationActionType(IntEnum):
 class SortOrderType(IntEnum):
     latest_activity = 0
     creation_date = 1
+
+
+class RoleConnectionMetadataType(IntEnum):
+    integer_less_than_or_equal = 1
+    integer_greater_than_or_equal = 2
+    integer_equal = 3
+    integer_not_equal = 4
+    datetime_less_than_or_equal = 5
+    datetime_greater_than_or_equal = 6
+    boolean_equal = 7
+    boolean_not_equal = 8
+
+
+class ForumLayoutType(IntEnum):
+    not_set = 0
+    list = 1
+    gallery = 2
 
 
 T = TypeVar("T")

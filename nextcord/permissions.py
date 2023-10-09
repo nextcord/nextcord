@@ -14,6 +14,7 @@ __all__ = (
     "PermissionOverwrite",
 )
 
+
 # A permission alias works like a regular flag but is marked
 # So the PermissionOverwrite knows to work with it
 class permission_alias(alias_flag_value):
@@ -80,7 +81,7 @@ class Permissions(BaseFlags):
 
     __slots__ = ()
 
-    def __init__(self, permissions: int = 0, **kwargs: bool):
+    def __init__(self, permissions: int = 0, **kwargs: bool) -> None:
         if not isinstance(permissions, int):
             raise TypeError(
                 f"Expected int parameter, received {permissions.__class__.__name__} instead."
@@ -96,19 +97,13 @@ class Permissions(BaseFlags):
         """Returns ``True`` if self has the same or fewer permissions as other."""
         if isinstance(other, Permissions):
             return (self.value & other.value) == self.value
-        else:
-            raise TypeError(
-                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
-            )
+        raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
 
     def is_superset(self, other: Permissions) -> bool:
         """Returns ``True`` if self has the same or more permissions as other."""
         if isinstance(other, Permissions):
             return (self.value | other.value) == self.value
-        else:
-            raise TypeError(
-                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
-            )
+        raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
 
     def is_strict_subset(self, other: Permissions) -> bool:
         """Returns ``True`` if the permissions on other are a strict subset of those on self."""
@@ -575,7 +570,7 @@ def _augment_from_permissions(cls):
         def getter(self, x=key):
             return self._values.get(x)
 
-        def setter(self, value, x=key):
+        def setter(self, value, x=key) -> None:
             self._set(x, value)
 
         prop = property(getter, setter)
@@ -671,7 +666,7 @@ class PermissionOverwrite:
         start_embedded_activities: Optional[bool]
         moderate_members: Optional[bool]
 
-    def __init__(self, **kwargs: Optional[bool]):
+    def __init__(self, **kwargs: Optional[bool]) -> None:
         self._values: Dict[str, Optional[bool]] = {}
 
         for key, value in kwargs.items():

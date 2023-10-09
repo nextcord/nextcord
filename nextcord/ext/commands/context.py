@@ -34,10 +34,7 @@ T = TypeVar("T")
 BotT = TypeVar("BotT", bound="Union[Bot, AutoShardedBot]")
 CogT = TypeVar("CogT", bound="Cog")
 
-if TYPE_CHECKING:
-    P = ParamSpec("P")
-else:
-    P = TypeVar("P")
+P = ParamSpec("P") if TYPE_CHECKING else TypeVar("P")
 
 
 class Context(nextcord.abc.Messageable, Generic[BotT]):
@@ -112,7 +109,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         subcommand_passed: Optional[str] = None,
         command_failed: bool = False,
         current_parameter: Optional[inspect.Parameter] = None,
-    ):
+    ) -> None:
         self.message: Message = message
         self.bot: BotT = bot
         self.args: List[Any] = args or []
@@ -347,9 +344,7 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
         if entity is None:
             return None
 
-        try:
-            entity.qualified_name
-        except AttributeError:
+        if not hasattr(entity, "qualified_name"):
             # if we're here then it's not a cog, group, or command.
             return None
 
@@ -359,14 +354,13 @@ class Context(nextcord.abc.Messageable, Generic[BotT]):
             if hasattr(entity, "__cog_commands__"):
                 injected = wrap_callback(cmd.send_cog_help)
                 return await injected(entity)
-            elif isinstance(entity, Group):
+            if isinstance(entity, Group):
                 injected = wrap_callback(cmd.send_group_help)
                 return await injected(entity)
-            elif isinstance(entity, Command):
+            if isinstance(entity, Command):
                 injected = wrap_callback(cmd.send_command_help)
                 return await injected(entity)
-            else:
-                return None
+            return None
         except CommandError as e:
             await cmd.on_help_command_error(self, e)
 

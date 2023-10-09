@@ -36,23 +36,24 @@ NSFWLevel = Literal[0, 1, 2, 3]
 PremiumTier = Literal[0, 1, 2, 3]
 GuildFeature = Literal[
     "AUTO_MODERATION",
+    "ANIMATED_BANNER",
     "ANIMATED_ICON",
+    "APPLICATION_COMMAND_PERMISSIONS_V2",
     "BANNER",
     "COMMUNITY",
     "DEVELOPER_SUPPORT_SERVER",
     "DISCOVERABLE",
     "FEATURABLE",
+    "INVITES_DISABLED",
     "INVITE_SPLASH",
     "MEMBER_VERIFICATION_GATE_ENABLED",
     "MONETIZATION_ENABLED",
-    "MORE_EMOJI",
     "MORE_STICKERS",
     "NEWS",
     "PARTNERED",
     "PREVIEW_ENABLED",
-    "PRIVATE_THREADS",
-    "SEVEN_DAY_THREAD_ARCHIVE",
-    "THREE_DAY_THREAD_ARCHIVE",
+    "RAID_ALERTS_DISABLED",
+    "ROLE_ICONS",
     "TICKETED_EVENTS_ENABLED",
     "VANITY_URL",
     "VERIFIED",
@@ -69,6 +70,7 @@ class _BaseGuildPreview(UnavailableGuild):
     emojis: List[Emoji]
     features: List[GuildFeature]
     description: Optional[str]
+    stickers: List[GuildSticker]
 
 
 class _GuildPreviewUnique(TypedDict):
@@ -118,7 +120,10 @@ class Guild(_BaseGuildPreview):
     max_members: NotRequired[int]
     premium_subscription_count: NotRequired[int]
     max_video_channel_users: NotRequired[int]
+    max_stage_video_channel_users: NotRequired[int]
     stickers: NotRequired[List[GuildSticker]]
+    premium_progress_bar_enabled: Optional[bool]
+    safety_alerts_channel_id: Optional[Snowflake]
 
 
 class InviteGuild(Guild, total=False):

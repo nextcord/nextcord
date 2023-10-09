@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING, Callable, Dict, Union
 
 import nextcord
 from nextcord.application_command import (
@@ -55,7 +55,7 @@ __all__ = (
 
 
 class CheckWrapper(CallbackWrapper):
-    def __init__(self, callback: Union[Callable, CallbackWrapper], predicate):
+    def __init__(self, callback: Union[Callable, CallbackWrapper], predicate) -> None:
         super().__init__(callback)
 
         if not asyncio.iscoroutinefunction(predicate):
@@ -71,7 +71,7 @@ class CheckWrapper(CallbackWrapper):
     def __call__(self, *args, **kwargs):
         return self.predicate(*args, **kwargs)
 
-    def modify(self, app_cmd: BaseApplicationCommand):
+    def modify(self, app_cmd: BaseApplicationCommand) -> None:
         app_cmd.checks.append(self.predicate)
 
 
@@ -276,7 +276,7 @@ def has_role(item: Union[int, str]) -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
 
         # interaction.guild is None doesn't narrow interaction.user to Member
         if isinstance(item, int):
@@ -319,7 +319,7 @@ def has_any_role(*items: Union[int, str]) -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
 
         # interaction.guild is None doesn't narrow interaction.user to Member
         getter = functools.partial(nextcord.utils.get, interaction.user.roles)  # type: ignore
@@ -360,7 +360,7 @@ def bot_has_role(item: Union[int, str]) -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
 
         me = interaction.guild.me
         if isinstance(item, int):
@@ -401,7 +401,7 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
 
         getter = functools.partial(nextcord.utils.get, interaction.guild.me.roles)
         if any(
@@ -412,6 +412,16 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
         raise ApplicationBotMissingAnyRole(list(items))
 
     return check(predicate)
+
+
+def _permission_check_wrapper(predicate: ApplicationCheck, name: str, perms: Dict[str, bool]) -> AC:
+    def wrapper(func) -> CheckWrapper:
+        callback = func.callback if isinstance(func, CallbackWrapper) else func
+
+        setattr(callback, name, perms)
+        return check(predicate)(func)  # type: ignore
+
+    return wrapper
 
 
 def has_permissions(**perms: bool) -> AC:
@@ -456,7 +466,7 @@ def has_permissions(**perms: bool) -> AC:
         try:
             permissions = ch.permissions_for(interaction.user)  # type: ignore
         except AttributeError:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage from None
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
@@ -465,7 +475,7 @@ def has_permissions(**perms: bool) -> AC:
 
         raise ApplicationMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__slash_required_permissions", perms)
 
 
 def bot_has_permissions(**perms: bool) -> AC:
@@ -490,7 +500,7 @@ def bot_has_permissions(**perms: bool) -> AC:
         try:
             permissions = ch.permissions_for(me)  # type: ignore
         except AttributeError:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage from None
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
@@ -499,7 +509,7 @@ def bot_has_permissions(**perms: bool) -> AC:
 
         raise ApplicationBotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__slash_required_bot_permissions", perms)
 
 
 def has_guild_permissions(**perms: bool) -> AC:
@@ -541,7 +551,7 @@ def has_guild_permissions(**perms: bool) -> AC:
 
         raise ApplicationMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__slash_required_guild_permissions", perms)
 
 
 def bot_has_guild_permissions(**perms: bool) -> AC:
@@ -565,7 +575,7 @@ def bot_has_guild_permissions(**perms: bool) -> AC:
 
         raise ApplicationBotMissingPermissions(missing)
 
-    return check(predicate)
+    return _permission_check_wrapper(predicate, "__slash_required_bot_guild_permissions", perms)
 
 
 def dm_only() -> AC:
@@ -589,7 +599,7 @@ def dm_only() -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is not None:
-            raise ApplicationPrivateMessageOnly()
+            raise ApplicationPrivateMessageOnly
         return True
 
     return check(predicate)
@@ -616,7 +626,7 @@ def guild_only() -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
         return True
 
     return check(predicate)
@@ -649,7 +659,7 @@ def is_owner() -> AC:
 
     async def predicate(interaction: Interaction) -> bool:
         if not hasattr(interaction.client, "is_owner"):
-            raise ApplicationCheckForBotOnly()
+            raise ApplicationCheckForBotOnly
 
         if not await interaction.client.is_owner(interaction.user):
             raise ApplicationNotOwner("You do not own this bot.")
@@ -732,7 +742,7 @@ def application_command_before_invoke(coro) -> AC:
     """
 
     class BeforeInvokeModifier(CallbackWrapper):
-        def modify(self, app_cmd: BaseApplicationCommand):
+        def modify(self, app_cmd: BaseApplicationCommand) -> None:
             app_cmd._callback_before_invoke = coro
 
     def decorator(
@@ -751,7 +761,7 @@ def application_command_after_invoke(coro) -> AC:
     """
 
     class AfterInvokeModifier(CallbackWrapper):
-        def modify(self, app_cmd: BaseApplicationCommand):
+        def modify(self, app_cmd: BaseApplicationCommand) -> None:
             app_cmd._callback_after_invoke = coro
 
     def decorator(

@@ -22,10 +22,10 @@ if TYPE_CHECKING:
     from .view import View
 
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
-class TextInput(Item[V]):
+class TextInput(Item[V_co]):
     """Represent a UI text input.
 
     .. versionadded:: 2.0
@@ -84,7 +84,7 @@ class TextInput(Item[V]):
         required: Optional[bool] = None,
         default_value: Optional[str] = None,
         placeholder: Optional[str] = None,
-    ):
+    ) -> None:
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = TextInputComponent._raw_construct(
@@ -129,7 +129,7 @@ class TextInput(Item[V]):
 
     @label.setter
     def label(self, value: str) -> None:
-        if value is None:
+        if value is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise TypeError("label must cannot be None")
         self._underlying.label = str(value)
 
@@ -207,7 +207,6 @@ class TextInput(Item[V]):
             min_length=text_input.min_length,
             max_length=text_input.max_length,
             required=text_input.required,
-            # value=text_input.value,  # FIXME: figure out what this was
             placeholder=text_input.placeholder,
             row=None,
         )

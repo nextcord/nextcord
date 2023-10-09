@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import copy
 from typing import (
     TYPE_CHECKING,
@@ -25,7 +26,7 @@ from .context_managers import Typing
 from .enums import ChannelType
 from .errors import ClientException, InvalidArgument
 from .file import File
-from .flags import ChannelFlags
+from .flags import ChannelFlags, MessageFlags
 from .invite import Invite
 from .iterators import HistoryIterator
 from .mentions import AllowedMentions
@@ -54,7 +55,15 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .asset import Asset
-    from .channel import CategoryChannel, DMChannel, GroupChannel, PartialMessageable, TextChannel
+    from .channel import (
+        CategoryChannel,
+        DMChannel,
+        GroupChannel,
+        PartialMessageable,
+        StageChannel,
+        TextChannel,
+        VoiceChannel,
+    )
     from .client import Client
     from .embeds import Embed, EmbedData
     from .enums import InviteTarget
@@ -76,7 +85,9 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .user import ClientUser
 
-    PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
+    PartialMessageableChannel = Union[
+        TextChannel, Thread, DMChannel, PartialMessageable, VoiceChannel, StageChannel
+    ]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
 
@@ -117,8 +128,17 @@ class User(Snowflake, Protocol):
     ----------
     name: :class:`str`
         The user's username.
+    global_name: :class:`str`
+        The user's global name. This is represented in the UI as "Display Name"
+
+        .. versionadded:: 2.6
     discriminator: :class:`str`
         The user's discriminator.
+
+        .. warning::
+            This field is deprecated, and will only return if the user has not yet migrated to the
+            new `username <https://dis.gd/usernames>`_ update.
+        .. deprecated:: 2.6
     avatar: :class:`~nextcord.Asset`
         The avatar asset the user has.
     bot: :class:`bool`
@@ -128,6 +148,7 @@ class User(Snowflake, Protocol):
     __slots__ = ()
 
     name: str
+    global_name: str
     discriminator: str
     avatar: Asset
     bot: bool
@@ -179,7 +200,7 @@ class _Overwrites:
     ROLE = 0
     MEMBER = 1
 
-    def __init__(self, data: PermissionOverwritePayload):
+    def __init__(self, data: PermissionOverwritePayload) -> None:
         self.id: int = int(data["id"])
         self.allow: int = int(data.get("allow", 0))
         self.deny: int = int(data.get("deny", 0))
@@ -223,8 +244,10 @@ class GuildChannel:
     guild: :class:`~nextcord.Guild`
         The guild the channel belongs to.
     position: :class:`int`
-        The position in the channel list. This is a number that starts at 0.
-        e.g. the top channel is position 0.
+        The position in the channel list.
+
+        .. note::
+            Due to API inconsistencies, the position may not mirror the correct UI ordering
     """
 
     __slots__ = ()
@@ -241,7 +264,9 @@ class GuildChannel:
 
     if TYPE_CHECKING:
 
-        def __init__(self, *, state: ConnectionState, guild: Guild, data: GuildChannelPayload):
+        def __init__(
+            self, *, state: ConnectionState, guild: Guild, data: GuildChannelPayload
+        ) -> None:
             ...
 
     def __str__(self) -> str:
@@ -305,10 +330,8 @@ class GuildChannel:
         else:
             parent_id = parent and parent.id
 
-        try:
+        with contextlib.suppress(KeyError):
             options["rate_limit_per_user"] = options.pop("slowmode_delay")
-        except KeyError:
-            pass
 
         try:
             rtc_region = options.pop("rtc_region")
@@ -330,6 +353,13 @@ class GuildChannel:
             pass
         else:
             options["default_sort_order"] = default_sort_order.value
+
+        try:
+            default_forum_layout = options.pop("default_forum_layout")
+        except KeyError:
+            pass
+        else:
+            options["default_forum_layout"] = default_forum_layout.value
 
         lock_permissions = options.pop("sync_permissions", False)
 
@@ -388,12 +418,10 @@ class GuildChannel:
                 raise InvalidArgument("type field must be of type ChannelType")
             options["type"] = ch_type.value
 
-        try:
+        with contextlib.suppress(KeyError):
             options["default_thread_rate_limit_per_user"] = options.pop(
                 "default_thread_slowmode_delay"
             )
-        except KeyError:
-            pass
 
         try:
             default_reaction = options.pop("default_reaction")
@@ -424,6 +452,7 @@ class GuildChannel:
 
         if options:
             return await self._state.http.edit_channel(self.id, reason=reason, **options)
+        return None
 
     def _fill_overwrites(self, data: GuildChannelPayload) -> None:
         self._overwrites = []
@@ -497,7 +526,7 @@ class GuildChannel:
         elif isinstance(obj, Role):
             predicate = lambda p: p.is_role()
         else:
-            predicate = lambda p: True
+            predicate = lambda _: True
 
         for overwrite in filter(predicate, self._overwrites):
             if overwrite.id == obj.id:
@@ -852,11 +881,10 @@ class GuildChannel:
                 raise InvalidArgument("No overwrite provided.")
             try:
                 overwrite = PermissionOverwrite(**permissions)
-            except (ValueError, TypeError):
-                raise InvalidArgument("Invalid permissions given to keyword arguments.")
-        else:
-            if len(permissions) > 0:
-                raise InvalidArgument("Cannot mix overwrite and keyword arguments.")
+            except (ValueError, TypeError) as e:
+                raise InvalidArgument("Invalid permissions given to keyword arguments.") from e
+        elif len(permissions) > 0:
+            raise InvalidArgument("Cannot mix overwrite and keyword arguments.")
 
         # TODO: wait for event
 
@@ -929,10 +957,10 @@ class GuildChannel:
         self,
         *,
         beginning: bool,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: Optional[str] = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = ...,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
@@ -941,10 +969,10 @@ class GuildChannel:
         self,
         *,
         end: bool,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: str = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = ...,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
@@ -953,10 +981,10 @@ class GuildChannel:
         self,
         *,
         before: Snowflake,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: str = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = ...,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
@@ -965,14 +993,25 @@ class GuildChannel:
         self,
         *,
         after: Snowflake,
-        offset: int = MISSING,
-        category: Optional[Snowflake] = MISSING,
-        sync_permissions: bool = MISSING,
-        reason: str = MISSING,
+        offset: int = ...,
+        category: Optional[Snowflake] = ...,
+        sync_permissions: bool = ...,
+        reason: Optional[str] = None,
     ) -> None:
         ...
 
-    async def move(self, **kwargs) -> None:
+    async def move(
+        self,
+        *,
+        beginning: Optional[bool] = None,
+        end: Optional[bool] = None,
+        before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
+        offset: int = 0,
+        category: Optional[Snowflake] = MISSING,
+        sync_permissions: bool = False,
+        reason: Optional[str] = None,
+    ) -> None:
         """|coro|
 
         A rich interface to help move a channel relative to other channels.
@@ -989,20 +1028,24 @@ class GuildChannel:
 
         .. versionadded:: 1.7
 
+        .. versionchanged:: 2.4
+
+            ``beginning``, ``end``, ``before``, ``after`` and ``reason`` now accept ``None``.
+
         Parameters
         ----------
-        beginning: :class:`bool`
+        beginning: Optional[:class:`bool`]
             Whether to move the channel to the beginning of the
             channel list (or category if given).
             This is mutually exclusive with ``end``, ``before``, and ``after``.
-        end: :class:`bool`
+        end: Optional[:class:`bool`]
             Whether to move the channel to the end of the
             channel list (or category if given).
             This is mutually exclusive with ``beginning``, ``before``, and ``after``.
-        before: :class:`~nextcord.abc.Snowflake`
+        before: Optional[:class:`~nextcord.abc.Snowflake`]
             The channel that should be before our current channel.
             This is mutually exclusive with ``beginning``, ``end``, and ``after``.
-        after: :class:`~nextcord.abc.Snowflake`
+        after: Optional[:class:`~nextcord.abc.Snowflake`]
             The channel that should be after our current channel.
             This is mutually exclusive with ``beginning``, ``end``, and ``before``.
         offset: :class:`int`
@@ -1018,7 +1061,7 @@ class GuildChannel:
             This parameter is ignored if moving a category channel.
         sync_permissions: :class:`bool`
             Whether to sync the permissions with the category (if given).
-        reason: :class:`str`
+        reason: Optional[:class:`str`]
             The reason for the move.
 
         Raises
@@ -1031,44 +1074,32 @@ class GuildChannel:
             Moving the channel failed.
         """
 
-        if not kwargs:
-            return
-
-        beginning, end = kwargs.get("beginning"), kwargs.get("end")
-        before, after = kwargs.get("before"), kwargs.get("after")
-        offset = kwargs.get("offset", 0)
         if sum(bool(a) for a in (beginning, end, before, after)) > 1:
             raise InvalidArgument("Only one of [before, after, end, beginning] can be used.")
 
         bucket = self._sorting_bucket
-        parent_id = kwargs.get("category", MISSING)
-        # fmt: off
         channels: List[GuildChannel]
-        if parent_id not in (MISSING, None):
-            parent_id = parent_id.id
+        if category:
+            parent_id = category.id
             channels = [
                 ch
                 for ch in self.guild.channels
-                if ch._sorting_bucket == bucket
-                and ch.category_id == parent_id
+                if ch._sorting_bucket == bucket and ch.category_id == parent_id
             ]
         else:
+            parent_id = None
             channels = [
                 ch
                 for ch in self.guild.channels
-                if ch._sorting_bucket == bucket
-                and ch.category_id == self.category_id
+                if ch._sorting_bucket == bucket and ch.category_id == self.category_id
             ]
-        # fmt: on
 
         channels.sort(key=lambda c: (c.position, c.id))
 
-        try:
+        with contextlib.suppress(ValueError):
             # Try to remove ourselves from the channel list
-            channels.remove(self)
-        except ValueError:
             # If we're not there then it's probably due to not being in the category
-            pass
+            channels.remove(self)
 
         index = None
         if beginning:
@@ -1085,12 +1116,11 @@ class GuildChannel:
 
         channels.insert(max((index + offset), 0), self)
         payload = []
-        lock_permissions = kwargs.get("sync_permissions", False)
-        reason = kwargs.get("reason")
+
         for index, channel in enumerate(channels):
-            d = {"id": channel.id, "position": index}
-            if parent_id is not MISSING and channel.id == self.id:
-                d.update(parent_id=parent_id, lock_permissions=lock_permissions)
+            d: Dict[str, Any] = {"id": channel.id, "position": index}
+            if category is not MISSING and channel.id == self.id:
+                d.update(parent_id=parent_id, lock_permissions=sync_permissions)
             payload.append(d)
 
         await self._state.http.bulk_channel_update(self.guild.id, payload, reason=reason)
@@ -1210,6 +1240,7 @@ class Messageable:
     - :class:`~nextcord.DMChannel`
     - :class:`~nextcord.GroupChannel`
     - :class:`~nextcord.VoiceChannel`
+    - :class:`~nextcord.StageChannel`
     - :class:`~nextcord.User`
     - :class:`~nextcord.Member`
     - :class:`~nextcord.ext.commands.Context`
@@ -1237,6 +1268,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1255,6 +1288,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1273,6 +1308,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1291,6 +1328,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        flags: Optional[MessageFlags] = ...,
+        suppress_embeds: Optional[bool] = ...,
     ) -> Message:
         ...
 
@@ -1310,6 +1349,8 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = None,
         mention_author: Optional[bool] = None,
         view: Optional[View] = None,
+        flags: Optional[MessageFlags] = None,
+        suppress_embeds: Optional[bool] = None,
     ):
         """|coro|
 
@@ -1380,6 +1421,15 @@ class Messageable:
             A list of stickers to upload. Must be a maximum of 3.
 
             .. versionadded:: 2.0
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -1392,7 +1442,7 @@ class Messageable:
             you specified both ``file`` and ``files``,
             or you specified both ``embed`` and ``embeds``,
             or the ``reference`` object is not a :class:`~nextcord.Message`,
-            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`.
+            :class:`~nextcord.MessageReference` or :class:`~nextcord.PartialMessage`
 
         Returns
         -------
@@ -1403,6 +1453,12 @@ class Messageable:
         channel = await self._get_channel()
         state = self._state
         content = str(content) if content is not None else None
+        if flags is None:
+            flags = MessageFlags()
+        if suppress_embeds is not None:
+            flags.suppress_embeds = suppress_embeds
+
+        flag_value: Optional[int] = flags.value if flags.value != 0 else None
 
         embed_payload: Optional[EmbedData] = None
         embeds_payload: Optional[List[EmbedData]] = None
@@ -1469,6 +1525,7 @@ class Messageable:
                     message_reference=reference_payload,
                     stickers=stickers_payload,
                     components=components,
+                    flags=flag_value,
                 )
             finally:
                 file.close()
@@ -1490,6 +1547,7 @@ class Messageable:
                     message_reference=reference_payload,
                     stickers=stickers_payload,
                     components=components,
+                    flags=flag_value,
                 )
             finally:
                 for f in files:
@@ -1506,10 +1564,11 @@ class Messageable:
                 message_reference=reference_payload,
                 stickers=stickers_payload,
                 components=components,
+                flags=flag_value,
             )
 
         ret = state.create_message(channel=channel, data=data)
-        if view:
+        if view and view.prevent_update:
             state.store_view(view, ret.id)
 
         if delete_after is not None:
@@ -1730,11 +1789,9 @@ class Connectable(Protocol):
         try:
             await voice.connect(timeout=timeout, reconnect=reconnect)
         except asyncio.TimeoutError:
-            try:
+            # we don't care if disconnect failed because connection failed
+            with contextlib.suppress(Exception):
                 await voice.disconnect(force=True)
-            except Exception:
-                # we don't care if disconnect failed because connection failed
-                pass
             raise  # re-raise
 
         return voice

@@ -181,7 +181,7 @@ class StickerItem(_StickerTag):
 
     __slots__ = ("_state", "name", "id", "format", "url")
 
-    def __init__(self, *, state: ConnectionState, data: StickerItemPayload):
+    def __init__(self, *, state: ConnectionState, data: StickerItemPayload) -> None:
         self._state: ConnectionState = state
         self.name: str = data["name"]
         self.id: int = int(data["id"])
@@ -503,7 +503,6 @@ def _sticker_factory(
     value = try_enum(StickerType, sticker_type)
     if value == StickerType.standard:
         return StandardSticker, value
-    elif value == StickerType.guild:
+    if value == StickerType.guild:
         return GuildSticker, value
-    else:
-        return Sticker, value
+    return Sticker, value

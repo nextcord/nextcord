@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import collections
 import collections.abc
+import contextlib
 import copy
 import importlib.util
 import inspect
@@ -49,7 +50,6 @@ if TYPE_CHECKING:
     from nextcord.flags import MemberCacheFlags
     from nextcord.mentions import AllowedMentions
     from nextcord.message import Message
-    from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from ._types import Check, CoroFunc
 
@@ -68,7 +68,7 @@ CFT = TypeVar("CFT", bound="CoroFunc")
 CXT = TypeVar("CXT", bound="Context")
 
 
-def when_mentioned(bot: Union[Bot, AutoShardedBot], msg: Message) -> List[str]:
+def when_mentioned(bot: Union[Bot, AutoShardedBot], _msg: Message) -> List[str]:
     """A callable that implements a command prefix equivalent to being mentioned.
 
     These are meant to be passed into the :attr:`.Bot.command_prefix` attribute.
@@ -109,8 +109,7 @@ def when_mentioned_or(*prefixes: str) -> Callable[[Union[Bot, AutoShardedBot], M
 
     def inner(bot, msg):
         r = list(prefixes)
-        r = when_mentioned(bot, msg) + r
-        return r
+        return when_mentioned(bot, msg) + r
 
     return inner
 
@@ -137,8 +136,6 @@ class MissingMessageContentIntentWarning(UserWarning):
         warnings.simplefilter("ignore", commands.MissingMessageContentIntentWarning)
     """
 
-    pass
-
 
 _NonCallablePrefix = Union[str, Sequence[str]]
 
@@ -160,12 +157,12 @@ class BotBase(GroupMixin):
         owner_ids: Optional[Iterable[int]],
         strip_after_prefix: bool,
         case_insensitive: bool,
-    ):
+    ) -> None:
         super().__init__(
             case_insensitive=case_insensitive,
         )
 
-        self.command_prefix = command_prefix if command_prefix is not MISSING else tuple()
+        self.command_prefix = command_prefix if command_prefix is not MISSING else ()
         self.extra_events: Dict[str, List[CoroFunc]] = {}
         self.__cogs: Dict[str, Cog] = {}
         self.__extensions: Dict[str, types.ModuleType] = {}
@@ -223,16 +220,12 @@ class BotBase(GroupMixin):
     @nextcord.utils.copy_doc(nextcord.Client.close)
     async def close(self) -> None:
         for extension in tuple(self.__extensions):
-            try:
+            with contextlib.suppress(Exception):
                 self.unload_extension(extension)
-            except Exception:
-                pass
 
         for cog in tuple(self.__cogs):
-            try:
+            with contextlib.suppress(Exception):
                 self.remove_cog(cog)
-            except Exception:
-                pass
 
         await super().close()  # type: ignore
 
@@ -257,7 +250,7 @@ class BotBase(GroupMixin):
         if cog and cog.has_error_handler():
             return
 
-        print(f"Ignoring exception in command {context.command}:", file=sys.stderr)
+        print(f"Ignoring exception in command {context.command}:", file=sys.stderr)  # noqa: T201
         traceback.print_exception(
             type(exception), exception, exception.__traceback__, file=sys.stderr
         )
@@ -329,10 +322,8 @@ class BotBase(GroupMixin):
         """
         l = self._check_once if call_once else self._checks
 
-        try:
+        with contextlib.suppress(ValueError):
             l.remove(func)
-        except ValueError:
-            pass
 
     def check_once(self, func: CFT) -> CFT:
         r"""A decorator that adds a "call once" global check to the bot.
@@ -406,17 +397,16 @@ class BotBase(GroupMixin):
 
         if self.owner_id:
             return user.id == self.owner_id
-        elif self.owner_ids:
+        if self.owner_ids:
             return user.id in self.owner_ids
-        else:
 
-            app = await self.application_info()  # type: ignore
-            if app.team:
-                self.owner_ids = ids = {m.id for m in app.team.members}
-                return user.id in ids
-            else:
-                self.owner_id = owner_id = app.owner.id
-                return user.id == owner_id
+        app = await self.application_info()  # type: ignore
+        if app.team:
+            self.owner_ids = ids = {m.id for m in app.team.members}
+            return user.id in ids
+
+        self.owner_id = owner_id = app.owner.id
+        return user.id == owner_id
 
     def before_invoke(self, coro: CFT) -> CFT:
         """A decorator that registers a coroutine as a pre-invoke hook.
@@ -532,10 +522,8 @@ class BotBase(GroupMixin):
         name = func.__name__ if name is MISSING else name
 
         if name in self.extra_events:
-            try:
+            with contextlib.suppress(ValueError):
                 self.extra_events[name].remove(func)
-            except ValueError:
-                pass
 
     def listen(self, name: str = MISSING) -> Callable[[CFT], CFT]:
         """A decorator that registers another function as an external
@@ -601,7 +589,7 @@ class BotBase(GroupMixin):
             The cog does not inherit from :class:`.Cog`.
         CommandError
             An error happened during loading.
-        .ClientException
+        ClientException
             A cog with the same name is already loaded.
         """
 
@@ -667,7 +655,7 @@ class BotBase(GroupMixin):
 
         cog = self.__cogs.pop(name, None)
         if cog is None:
-            return
+            return None
 
         help_command = self._help_command
         if help_command and help_command.cog is cog:
@@ -696,7 +684,7 @@ class BotBase(GroupMixin):
 
         # remove all the commands from the module
         for cmd in self.all_commands.copy().values():
-            if cmd.module is not None and _is_submodule(name, cmd.module):
+            if _is_submodule(name, cmd.module):
                 if isinstance(cmd, GroupMixin):
                     cmd.recursively_remove_all_commands()
                 self.remove_command(cmd.name)
@@ -705,7 +693,7 @@ class BotBase(GroupMixin):
         for event_list in self.extra_events.copy().values():
             remove = []
             for index, event in enumerate(event_list):
-                if event.__module__ is not None and _is_submodule(name, event.__module__):
+                if _is_submodule(name, event.__module__):
                     remove.append(index)
 
             for index in reversed(remove):
@@ -713,14 +701,13 @@ class BotBase(GroupMixin):
 
     def _call_module_finalizers(self, lib: types.ModuleType, key: str) -> None:
         try:
-            func = getattr(lib, "teardown")
+            func = lib.teardown
         except AttributeError:
             pass
         else:
-            try:
+            with contextlib.suppress(Exception):
                 func(self)
-            except Exception:
-                pass
+
         finally:
             self.__extensions.pop(key, None)
             sys.modules.pop(key, None)
@@ -735,7 +722,7 @@ class BotBase(GroupMixin):
         key: str,
         extras: Optional[Dict[str, Any]] = None,
     ) -> None:
-        # precondition: key not in self.__extensions
+        # precondition - key not in self.__extensions
         lib = importlib.util.module_from_spec(spec)
         sys.modules[key] = lib
         try:
@@ -745,10 +732,10 @@ class BotBase(GroupMixin):
             raise errors.ExtensionFailed(key, e) from e
 
         try:
-            setup = getattr(lib, "setup")
+            setup = lib.setup
         except AttributeError:
             del sys.modules[key]
-            raise errors.NoEntryPointError(key)
+            raise errors.NoEntryPointError(key) from None
 
         params = inspect.signature(setup).parameters
         has_kwargs = len(params) > 1
@@ -756,14 +743,15 @@ class BotBase(GroupMixin):
         if extras is not None:
             if not has_kwargs:
                 raise errors.InvalidSetupArguments(key)
-            elif not isinstance(extras, dict):
+            if not isinstance(extras, dict):
                 raise errors.ExtensionFailed(key, TypeError("Expected 'extras' to be a dictionary"))
 
         extras = extras or {}
         try:
             if asyncio.iscoroutinefunction(setup):
                 try:
-                    asyncio.create_task(setup(self, **extras))
+                    # I don't want to deal with handling tasks with a niche feature.
+                    asyncio.create_task(setup(self, **extras))  # noqa: RUF006
                 except RuntimeError:
                     raise RuntimeError(
                         """
@@ -771,7 +759,7 @@ class BotBase(GroupMixin):
                     Please read our FAQ here:
                     https://docs.nextcord.dev/en/stable/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
                     """
-                    )
+                    ) from None
             else:
                 setup(self, **extras)
         except Exception as e:
@@ -785,8 +773,8 @@ class BotBase(GroupMixin):
     def _resolve_name(self, name: str, package: Optional[str]) -> str:
         try:
             return importlib.util.resolve_name(name, package)
-        except ImportError:
-            raise errors.ExtensionNotFound(name)
+        except ImportError as e:
+            raise errors.ExtensionNotFound(name) from e
 
     def load_extension(
         self, name: str, *, package: Optional[str] = None, extras: Optional[Dict[str, Any]] = None
@@ -1115,9 +1103,8 @@ class BotBase(GroupMixin):
             except Exception as e:
                 if stop_at_error:
                     raise e
-                else:
-                    # we print the exception instead of raising it because we want to continue loading extensions
-                    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+                # we print the exception instead of raising it because we want to continue loading extensions
+                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
             else:
                 loaded_extensions.append(extension)
 
@@ -1256,7 +1243,7 @@ class BotBase(GroupMixin):
                 raise TypeError(
                     "command_prefix must be plain string, iterable of strings, or callable "
                     f"returning either of these, not {ret.__class__.__name__}"
-                )
+                ) from None
 
         return ret
 
@@ -1291,8 +1278,7 @@ class BotBase(GroupMixin):
         """
 
         view = StringView(message.content)
-        ctx: CXT = cls(prefix=None, view=view, bot=self, message=message)  # type: ignore
-        # pyright/lance has no idea how typevars work for some reason
+        ctx: CXT = cls(prefix=None, view=view, bot=self, message=message)
 
         if message.author.id == self.user.id:  # type: ignore
             return ctx
@@ -1317,7 +1303,7 @@ class BotBase(GroupMixin):
                     raise TypeError(
                         "get_prefix must return either a string or a list of string, "
                         f"not {prefix.__class__.__name__}"
-                    )
+                    ) from None
 
                 # It's possible a bad command_prefix got us here.
                 for value in prefix:
@@ -1325,7 +1311,7 @@ class BotBase(GroupMixin):
                         raise TypeError(
                             "Iterable command_prefix or list returned from get_prefix must "
                             f"contain only strings, not {value.__class__.__name__}"
-                        )
+                        ) from None
 
                 # Getting here shouldn't happen
                 raise
@@ -1427,130 +1413,8 @@ class BotBase(GroupMixin):
 
         message.content = old_content
 
-    async def on_message(self, message):
+    async def on_message(self, message) -> None:
         await self.process_commands(message)
-
-    def add_application_command_check(self, func: ApplicationCheck) -> None:
-        """Adds a global application check to the bot.
-
-        This is the non-decorator interface to :meth:`.check`
-        and :meth:`.check_once`.
-
-        Parameters
-        ----------
-        func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
-            The function that was used as a global application check.
-        """
-
-        self._connection._application_command_checks.append(func)  # type: ignore
-
-    def remove_application_command_check(self, func: ApplicationCheck) -> None:
-        """Removes a global check from the bot.
-
-        This function is idempotent and will not raise an exception
-        if the function is not in the global checks.
-
-        Parameters
-        ----------
-        func: Callable[[:class:`Interaction`], MaybeCoro[bool]]]
-            The function to remove from the global application checks.
-        """
-
-        try:
-            self._connection._application_command_checks.remove(func)  # type: ignore
-        except ValueError:
-            pass
-
-    def application_command_check(self, func: Callable) -> ApplicationCheck:
-        r"""A decorator that adds a global application check to the bot.
-
-        A global check is similar to a :func:`.check` that is applied
-        on a per command basis except it is run before any command checks
-        have been verified and applies to every command the bot has.
-
-        .. note::
-
-            This function can either be a regular function or a coroutine.
-
-        Similar to a command :func:`.check`\, this takes a single parameter
-        of type :class:`.Interaction` and can only raise exceptions inherited from
-        :exc:`.ApplicationError`.
-
-        Example
-        -------
-
-        .. code-block:: python3
-
-            @client.check
-            def check_commands(interaction: Interaction) -> bool:
-                return interaction.application_command.qualified_name in allowed_commands
-
-        """
-        return self.add_application_command_check(func)  # type: ignore
-
-    def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
-        """A decorator that registers a coroutine as a pre-invoke hook.
-
-        A pre-invoke hook is called directly before the command is
-        called. This makes it a useful function to set up database
-        connections or any type of set up required.
-
-        This pre-invoke hook takes a sole parameter, a :class:`.Interaction`.
-
-        .. note::
-
-            The :meth:`.application_command_before_invoke` and :meth:`.application_command_after_invoke`
-            hooks are only called if all checks pass without error. If any check fails, then the hooks
-            are not called.
-
-        Parameters
-        ----------
-        coro: :ref:`coroutine <coroutine>`
-            The coroutine to register as the pre-invoke hook.
-
-        Raises
-        ------
-        TypeError
-            The coroutine passed is not actually a coroutine.
-        """
-        if not asyncio.iscoroutinefunction(coro):
-            raise TypeError("The pre-invoke hook must be a coroutine.")
-
-        self._connection._application_command_before_invoke = coro  # type: ignore
-        return coro
-
-    def application_command_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
-        r"""A decorator that registers a coroutine as a post-invoke hook.
-
-        A post-invoke hook is called directly after the command is
-        called. This makes it a useful function to clean-up database
-        connections or any type of clean up required. There may only be
-        one global post-invoke hook.
-
-        This post-invoke hook takes a sole parameter, a :class:`.Interaction`.
-
-        .. note::
-
-            Similar to :meth:`~.Client.application_command_before_invoke`\, this is not called unless
-            checks succeed. This hook is, however, **always** called regardless of the internal command
-            callback raising an error (i.e. :exc:`.ApplicationInvokeError`\).
-            This makes it ideal for clean-up scenarios.
-
-        Parameters
-        ----------
-        coro: :ref:`coroutine`
-            The coroutine to register as the post-invoke hook.
-
-        Raises
-        ------
-        TypeError
-            The coroutine passed is not actually a coroutine.
-        """
-        if not asyncio.iscoroutinefunction(coro):
-            raise TypeError("The post-invoke hook must be a coroutine.")
-
-        self._connection._application_command_after_invoke = coro  # type: ignore
-        return coro
 
 
 class Bot(BotBase, nextcord.Client):
@@ -1631,7 +1495,7 @@ class Bot(BotBase, nextcord.Client):
                 [Union[Bot, AutoShardedBot], Message],
                 Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix],
             ],
-        ] = tuple(),
+        ] = (),
         help_command: Optional[HelpCommand] = MISSING,
         description: Optional[str] = None,
         *,
@@ -1664,7 +1528,7 @@ class Bot(BotBase, nextcord.Client):
         owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
         case_insensitive: bool = False,
-    ):
+    ) -> None:
         nextcord.Client.__init__(
             self,
             max_messages=max_messages,
@@ -1719,7 +1583,7 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
                 [Union[Bot, AutoShardedBot], Message],
                 Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix],
             ],
-        ] = tuple(),
+        ] = (),
         help_command: Optional[HelpCommand] = MISSING,
         description: Optional[str] = None,
         *,
@@ -1753,7 +1617,7 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
         owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
         case_insensitive: bool = False,
-    ):
+    ) -> None:
         nextcord.AutoShardedClient.__init__(
             self,
             max_messages=max_messages,

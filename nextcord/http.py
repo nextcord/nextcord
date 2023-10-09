@@ -5,11 +5,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
-import warnings
 import weakref
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     ClassVar,
     Coroutine,
     Dict,
@@ -64,6 +64,7 @@ if TYPE_CHECKING:
         member,
         message,
         role,
+        role_connections,
         scheduled_events,
         sticker,
         template,
@@ -93,43 +94,11 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
 
 _DEFAULT_API_VERSION = 10
 
-_API_VERSION: Literal[9, 10] = _DEFAULT_API_VERSION
-
-
-class UnsupportedAPIVersion(UserWarning):
-    """Warning category raised when changing the API version to an unsupported version."""
-
-
-def _modify_api_version(version: Literal[9, 10]):
-    """Modify the API version used by the HTTP client.
-
-    Additional versions may be added around the time of a Discord API
-    version bump to allow temporarily downgrading to an older API version
-    or upgrading to a newer version that is not yet supported by the library.
-
-    Changing the API version from the default is not supported and may result in
-    unexpected behaviour.
-    """
-    available_versions = (9, 10)
-
-    if version not in available_versions:
-        raise ValueError(f"Only API versions {available_versions} are available.")
-
-    if version != _DEFAULT_API_VERSION:
-        warnings.warn(
-            "Changing the API version is not supported and may result in unexpected behaviour.",
-            category=UnsupportedAPIVersion,
-            stacklevel=2,
-        )
-
-    global _API_VERSION
-    _API_VERSION = version
-
-    Route.BASE = f"https://discord.com/api/v{version}"
+_API_VERSION: Literal[10] = _DEFAULT_API_VERSION
 
 
 class Route:
-    BASE: ClassVar[str] = f"https://discord.com/api/v{_DEFAULT_API_VERSION}"
+    BASE: ClassVar[str] = f"https://discord.com/api/v{_API_VERSION}"
 
     def __init__(self, method: str, path: str, **parameters: Any) -> None:
         self.path: str = path
@@ -190,6 +159,7 @@ class HTTPClient:
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         unsync_clock: bool = True,
+        dispatch: Callable,
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
         self.connector = connector
@@ -202,6 +172,7 @@ class HTTPClient:
         self.proxy: Optional[str] = proxy
         self.proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
         self.use_clock: bool = not unsync_clock
+        self._dispatch: Callable = dispatch
 
         user_agent = "DiscordBot (https://github.com/nextcord/nextcord/ {0}) Python/{1[0]}.{1[1]} aiohttp/{2}"
         self.user_agent: str = user_agent.format(__version__, sys.version_info, aiohttp.__version__)
@@ -242,8 +213,7 @@ class HTTPClient:
         lock = self._locks.get(bucket)
         if lock is None:
             lock = asyncio.Lock()
-            if bucket is not None:
-                self._locks[bucket] = lock
+            self._locks[bucket] = lock
 
         # header creation
         headers: Dict[str, str] = {
@@ -306,7 +276,12 @@ class HTTPClient:
                         data = await json_or_text(response)
 
                         # check if we have rate limit header information
-                        remaining = response.headers.get("X-Ratelimit-Remaining")
+                        is_global = bool(response.headers.get("X-RateLimit-Global", False))
+
+                        limit = response.headers.get("X-RateLimit-Limit", "")
+                        remaining = response.headers.get("X-Ratelimit-Remaining", "")
+
+                        bucket = response.headers.get("X-RateLimit-Bucket")
                         if remaining == "0" and response.status != 429:
                             # we've depleted our current bucket
                             delta = utils.parse_ratelimit_header(response, use_clock=self.use_clock)
@@ -314,6 +289,14 @@ class HTTPClient:
                                 "A rate limit bucket has been exhausted (bucket: %s, retry: %s).",
                                 bucket,
                                 delta,
+                            )
+                            self._dispatch(
+                                "http_ratelimit",
+                                int(limit),
+                                int(remaining),
+                                delta,
+                                bucket,
+                                response.headers.get("X-RateLimit-Scope"),
                             )
                             maybe_lock.defer()
                             self.loop.call_later(delta, lock.release)
@@ -336,13 +319,25 @@ class HTTPClient:
                             _log.warning(fmt, retry_after, bucket)
 
                             # check if it's a global rate limit
-                            is_global = data.get("global", False)
                             if is_global:
                                 _log.warning(
                                     "Global rate limit has been hit. Retrying in %.2f seconds.",
                                     retry_after,
                                 )
+                                self._dispatch(
+                                    "global_http_ratelimit",
+                                    retry_after,
+                                )
                                 self._global_over.clear()
+                            else:
+                                self._dispatch(
+                                    "http_ratelimit",
+                                    int(limit),
+                                    int(remaining),
+                                    retry_after,
+                                    bucket,
+                                    response.headers.get("X-RateLimit-Scope"),
+                                )
 
                             await asyncio.sleep(retry_after)
                             _log.debug("Done sleeping for the rate limit. Retrying...")
@@ -363,12 +358,11 @@ class HTTPClient:
                         # the usual error cases
                         if response.status == 403:
                             raise Forbidden(response, data)
-                        elif response.status == 404:
+                        if response.status == 404:
                             raise NotFound(response, data)
-                        elif response.status >= 500:
+                        if response.status >= 500:
                             raise DiscordServerError(response, data)
-                        else:
-                            raise HTTPException(response, data)
+                        raise HTTPException(response, data)
 
                 # This is handling exceptions from the request
                 except OSError as e:
@@ -391,12 +385,11 @@ class HTTPClient:
         async with self.__session.get(url) as resp:
             if resp.status == 200:
                 return await resp.read()
-            elif resp.status == 404:
+            if resp.status == 404:
                 raise NotFound(resp, "asset not found")
-            elif resp.status == 403:
+            if resp.status == 403:
                 raise Forbidden(resp, "cannot retrieve asset")
-            else:
-                raise HTTPException(resp, "failed to get asset")
+            raise HTTPException(resp, "failed to get asset")
 
     # state management
 
@@ -464,6 +457,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        flags: Optional[int] = None,
     ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -493,6 +487,9 @@ class HTTPClient:
         if stickers is not None:
             payload["sticker_ids"] = stickers
 
+        if flags is not None:
+            payload["flags"] = flags
+
         return payload
 
     def send_message(
@@ -508,6 +505,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        flags: Optional[int] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
         payload = self.get_message_payload(
@@ -520,6 +518,7 @@ class HTTPClient:
             message_reference=message_reference,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
 
         return self.request(r, json=payload)
@@ -542,6 +541,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
+        flags: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         form: List[Dict[str, Any]] = []
 
@@ -556,6 +556,7 @@ class HTTPClient:
             message_reference=message_reference,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
 
         if message_key is not None:
@@ -598,6 +599,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
+        flags: Optional[int] = None,
     ) -> Response[message.Message]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -615,6 +617,7 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             attachments=attachments,
+            flags=flags,
         )
         return self.request(route, form=form, files=files)
 
@@ -632,6 +635,7 @@ class HTTPClient:
         message_reference: Optional[message.MessageReference] = None,
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
+        flags: Optional[int] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
         return self.send_multipart_helper(
@@ -646,6 +650,7 @@ class HTTPClient:
             message_reference=message_reference,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
 
     def delete_message(
@@ -977,6 +982,7 @@ class HTTPClient:
             "default_auto_archive_duration",
             "flags",
             "default_sort_order",
+            "default_forum_layout",
             "default_thread_rate_limit_per_user",
             "default_reaction_emoji",
             "available_tags",
@@ -1024,6 +1030,7 @@ class HTTPClient:
             "default_thread_rate_limit_per_user",
             "default_reaction_emoji",
             "available_tags",
+            "default_forum_layout",
         )
         payload.update({k: v for k, v in options.items() if k in valid_keys and v is not None})
 
@@ -1102,6 +1109,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         applied_tag_ids: Optional[List[str]] = None,
+        flags: Optional[int] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
@@ -1118,6 +1126,7 @@ class HTTPClient:
             allowed_mentions=allowed_mentions,
             stickers=stickers,
             components=components,
+            flags=flags,
         )
         if msg_payload != {}:
             payload["message"] = msg_payload
@@ -1142,6 +1151,7 @@ class HTTPClient:
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
         applied_tag_ids: Optional[List[str]] = None,
+        flags: Optional[int] = None,
         reason: Optional[str] = None,
     ) -> Response[threads.Thread]:
         payload = {
@@ -1163,6 +1173,7 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             attachments=attachments,
+            flags=flags,
         )
         params = {"use_nested_fields": "true"}
         route = Route("POST", "/channels/{channel_id}/threads", channel_id=channel_id)
@@ -1295,10 +1306,9 @@ class HTTPClient:
         limit: int,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
+        with_counts: bool = False,
     ) -> Response[List[guild.Guild]]:
-        params: Dict[str, Any] = {
-            "limit": limit,
-        }
+        params: Dict[str, Any] = {"limit": limit, "with_counts": int(with_counts)}
 
         if before:
             params["before"] = before
@@ -1313,6 +1323,9 @@ class HTTPClient:
     def get_guild(self, guild_id: Snowflake, *, with_counts: bool = True) -> Response[guild.Guild]:
         params = {"with_counts": int(with_counts)}
         return self.request(Route("GET", "/guilds/{guild_id}", guild_id=guild_id), params=params)
+
+    def get_guild_preview(self, guild_id: Snowflake) -> Response[guild.GuildPreview]:
+        return self.request(Route("GET", "/guilds/{guild_id}/preview", guild_id=guild_id))
 
     def delete_guild(self, guild_id: Snowflake) -> Response[None]:
         return self.request(Route("DELETE", "/guilds/{guild_id}", guild_id=guild_id))
@@ -1709,16 +1722,19 @@ class HTTPClient:
         guild_id: Snowflake,
         limit: int = 100,
         before: Optional[Snowflake] = None,
+        after: Optional[Snowflake] = None,
         user_id: Optional[Snowflake] = None,
         action_type: Optional[AuditLogAction] = None,
     ) -> Response[audit_log.AuditLog]:
         params: Dict[str, Any] = {"limit": limit}
         if before:
             params["before"] = before
+        if after:
+            params["after"] = after
         if user_id:
             params["user_id"] = user_id
         if action_type:
-            params["action_type"] = action_type
+            params["action_type"] = action_type.value
 
         r = Route("GET", "/guilds/{guild_id}/audit-logs", guild_id=guild_id)
         return self.request(r, params=params)
@@ -2138,7 +2154,6 @@ class HTTPClient:
         embeds: Optional[List[embed.Embed]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
     ):
-
         payload: Dict[str, Any] = {}
         if content:
             payload["content"] = content
@@ -2236,12 +2251,15 @@ class HTTPClient:
         self,
         application_id: Snowflake,
         token: str,
-        files: List[File] = [],
+        files: Optional[List[File]] = None,
         content: Optional[str] = None,
         tts: bool = False,
         embeds: Optional[List[embed.Embed]] = None,
         allowed_mentions: Optional[message.AllowedMentions] = None,
     ) -> Response[message.Message]:
+        if files is None:
+            files = []
+
         r = Route(
             "POST",
             "/webhooks/{application_id}/{interaction_token}",
@@ -2365,7 +2383,7 @@ class HTTPClient:
         try:
             data = await self.request(Route("GET", "/gateway"))
         except HTTPException as exc:
-            raise GatewayNotFound() from exc
+            raise GatewayNotFound from exc
 
         return self.format_websocket_url(data["url"], encoding, zlib)
 
@@ -2375,7 +2393,7 @@ class HTTPClient:
         try:
             data = await self.request(Route("GET", "/gateway/bot"))
         except HTTPException as exc:
-            raise GatewayNotFound() from exc
+            raise GatewayNotFound from exc
 
         return data["shards"], self.format_websocket_url(data["url"], encoding, zlib)
 
@@ -2568,3 +2586,27 @@ class HTTPClient:
             auto_moderation_rule_id=auto_moderation_rule_id,
         )
         return self.request(r, reason=reason)
+
+    def get_role_connection_metadata(
+        self, application_id: Snowflake
+    ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
+        r = Route(
+            "GET",
+            "/applications/{application_id}/role-connections/metadata",
+            application_id=application_id,
+        )
+        return self.request(r)
+
+    def update_role_connection_metadata(
+        self,
+        application_id: Snowflake,
+        data: List[role_connections.ApplicationRoleConnectionMetadata],
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
+        r = Route(
+            "PUT",
+            "/applications/{application_id}/role-connections/metadata",
+            application_id=application_id,
+        )
+        return self.request(r, json=data, reason=reason)

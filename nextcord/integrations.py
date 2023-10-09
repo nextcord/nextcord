@@ -93,7 +93,7 @@ class Integration:
         self._state = guild._state
         self._from_data(data)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={self.id} name={self.name!r}>"
 
     def _from_data(self, data: IntegrationPayload) -> None:
@@ -294,7 +294,7 @@ class IntegrationApplication:
         "user",
     )
 
-    def __init__(self, *, data: IntegrationApplicationPayload, state):
+    def __init__(self, *, data: IntegrationApplicationPayload, state) -> None:
         self.id: int = int(data["id"])
         self.name: str = data["name"]
         self.icon: Optional[str] = data["icon"]
@@ -339,7 +339,6 @@ class BotIntegration(Integration):
 def _integration_factory(value: str) -> Tuple[Type[Integration], str]:
     if value == "discord":
         return BotIntegration, value
-    elif value in ("twitch", "youtube"):
+    if value in ("twitch", "youtube"):
         return StreamIntegration, value
-    else:
-        return Integration, value
+    return Integration, value

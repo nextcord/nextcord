@@ -92,9 +92,9 @@ class AssetMixin:
             if seek_begin:
                 fp.seek(0)
             return written
-        else:
-            with open(fp, "wb") as f:
-                return f.write(data)
+
+        with open(fp, "wb") as f:  # noqa: ASYNC101
+            return f.write(data)
 
     async def to_file(
         self,
@@ -194,7 +194,7 @@ class Asset(AssetMixin):
 
     BASE = "https://cdn.discordapp.com"
 
-    def __init__(self, state, *, url: str, key: str, animated: bool = False):
+    def __init__(self, state, *, url: str, key: str, animated: bool = False) -> None:
         self._state = state
         self._url = url
         self._animated = animated
@@ -310,7 +310,7 @@ class Asset(AssetMixin):
     def __len__(self) -> int:
         return len(self._url)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         shorten = self._url.replace(self.BASE, "")
         return f"<Asset url={shorten!r}>"
 
@@ -438,9 +438,8 @@ class Asset(AssetMixin):
         if self._animated:
             if format not in VALID_ASSET_FORMATS:
                 raise InvalidArgument(f"format must be one of {VALID_ASSET_FORMATS}")
-        else:
-            if format not in VALID_STATIC_FORMATS:
-                raise InvalidArgument(f"format must be one of {VALID_STATIC_FORMATS}")
+        elif format not in VALID_STATIC_FORMATS:
+            raise InvalidArgument(f"format must be one of {VALID_STATIC_FORMATS}")
 
         url = yarl.URL(self._url)
         path, _ = os.path.splitext(url.path)

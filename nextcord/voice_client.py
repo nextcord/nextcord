@@ -22,7 +22,7 @@ import logging
 import socket
 import struct
 import threading
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Union, cast
 
 from . import opus, utils
 from .backoff import ExponentialBackoff
@@ -207,7 +207,7 @@ class VoiceClient(VoiceProtocol):
     ip: str
     port: int
 
-    def __init__(self, client: Client, channel: abc.Connectable):
+    def __init__(self, client: Client, channel: abc.Connectable) -> None:
         if not has_nacl:
             raise RuntimeError("PyNaCl library needed in order to use voice")
 
@@ -253,7 +253,7 @@ class VoiceClient(VoiceProtocol):
         """:class:`ClientUser`: The user connected to voice (i.e. ourselves)."""
         return self._state.user  # type: ignore # [should exist]
 
-    def checked_add(self, attr, value, limit):
+    def checked_add(self, attr, value, limit) -> None:
         val = getattr(self, attr)
         if val + value > limit:
             setattr(self, attr, 0)
@@ -264,7 +264,7 @@ class VoiceClient(VoiceProtocol):
 
     async def on_voice_state_update(self, data: GuildVoiceStatePayload) -> None:
         self.session_id = data["session_id"]
-        channel_id = data["channel_id"]
+        channel_id = cast(Optional[Union[str, int]], data["channel_id"])
 
         if not self._handshaking or self._potentially_reconnecting:
             # If we're done handshaking then we just need to update ourselves
@@ -281,14 +281,14 @@ class VoiceClient(VoiceProtocol):
 
     async def on_voice_server_update(self, data: VoiceServerUpdatePayload) -> None:
         if self._voice_server_complete.is_set():
-            _log.info("Ignoring extraneous voice server update.")
+            _log.info(msg="Ignoring extraneous voice server update.")
             return
 
         self.token = data.get("token")
         self.server_id = int(data["guild_id"])
         endpoint = data.get("endpoint")
 
-        if endpoint is None or self.token is None:
+        if endpoint is None or self.token is MISSING:
             _log.warning(
                 "Awaiting endpoint... This requires waiting. "
                 "If timeout occurred considering raising the timeout and reconnecting."
@@ -314,7 +314,8 @@ class VoiceClient(VoiceProtocol):
         self._voice_server_complete.set()
 
     async def voice_connect(self) -> None:
-        await self.channel.guild.change_voice_state(channel=self.channel)  # type: ignore # FIXME: protocol should be fixed for guild
+        # TODO: protocol should be fixed for guild
+        await self.channel.guild.change_voice_state(channel=self.channel)  # type: ignore
 
     async def voice_disconnect(self) -> None:
         _log.info("The voice handshake is being terminated for Channel ID %s (Guild ID %s)", self.channel.id, self.guild.id)  # type: ignore
@@ -374,8 +375,7 @@ class VoiceClient(VoiceProtocol):
                     await asyncio.sleep(1 + i * 2.0)
                     await self.voice_disconnect()
                     continue
-                else:
-                    raise
+                raise
 
         if self._runner is MISSING:
             self._runner = self.loop.create_task(self.poll_voice_ws(reconnect))
@@ -447,8 +447,7 @@ class VoiceClient(VoiceProtocol):
                             )
                             await self.disconnect()
                             break
-                        else:
-                            continue
+                        continue
 
                 if not reconnect:
                     await self.disconnect()
@@ -650,10 +649,7 @@ class VoiceClient(VoiceProtocol):
         """
 
         self.checked_add("sequence", 1, 65535)
-        if encode:
-            encoded_data = self.encoder.encode(data, self.encoder.SAMPLES_PER_FRAME)
-        else:
-            encoded_data = data
+        encoded_data = self.encoder.encode(data, self.encoder.SAMPLES_PER_FRAME) if encode else data
         packet = self._get_voice_packet(encoded_data)
         try:
             self.socket.sendto(packet, (self.endpoint_ip, self.voice_port))

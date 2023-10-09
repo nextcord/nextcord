@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set, Tuple, TypeVar, Union
 
 from . import utils
 from .channel import ChannelType, PartialMessageable
@@ -14,6 +15,7 @@ from .embeds import Embed
 from .enums import InteractionResponseType, InteractionType, try_enum
 from .errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from .file import File
+from .flags import MessageFlags
 from .member import Member
 from .message import Attachment, Message
 from .mixins import Hashable
@@ -83,11 +85,11 @@ class InteractionAttached(dict):
             await interaction.response.send_message(data)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.__dict__ = self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<InteractionAttached {super().__repr__()}>"
 
 
@@ -162,6 +164,7 @@ class Interaction(Hashable, Generic[ClientT]):
         "version",
         "application_command",
         "attached",
+        "_background_tasks",
         "_permissions",
         "_app_permissions",
         "_state",
@@ -172,7 +175,7 @@ class Interaction(Hashable, Generic[ClientT]):
         "_cs_channel",
     )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
         self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
         # TODO: this is so janky, accessing a hidden double attribute
@@ -181,9 +184,10 @@ class Interaction(Hashable, Generic[ClientT]):
         self.application_command: Optional[
             Union[SlashApplicationSubcommand, BaseApplicationCommand]
         ] = None
+        self._background_tasks: Set[asyncio.Task] = set()
         self._from_data(data)
 
-    def _from_data(self, data: InteractionPayload):
+    def _from_data(self, data: InteractionPayload) -> None:
         self.id: int = int(data["id"])
         self.type: InteractionType = try_enum(InteractionType, data["type"])
         self.data: Optional[InteractionData] = data.get("data")
@@ -248,8 +252,7 @@ class Interaction(Hashable, Generic[ClientT]):
         """:class:`datetime.datetime`: An aware datetime in UTC representing the time when the interaction will expire."""
         if self.response.is_done():
             return self.created_at + timedelta(minutes=15)
-        else:
-            return self.created_at + timedelta(seconds=3)
+        return self.created_at + timedelta(seconds=3)
 
     def is_expired(self) -> bool:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
@@ -257,7 +260,7 @@ class Interaction(Hashable, Generic[ClientT]):
 
     def _set_application_command(
         self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
-    ):
+    ) -> None:
         self.application_command = app_cmd
 
     @utils.cached_slot_property("_cs_channel")
@@ -442,7 +445,7 @@ class Interaction(Hashable, Generic[ClientT]):
 
         # The message channel types should always match
         message = InteractionMessage(state=self._state, channel=self.channel, data=data)  # type: ignore
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, message.id)
         return message
 
@@ -476,14 +479,14 @@ class Interaction(Hashable, Generic[ClientT]):
 
         if delay is not None:
 
-            async def inner_call(delay: float = delay):
+            async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
-                try:
+                with contextlib.suppress(HTTPException):
                     await delete_func
-                except HTTPException:
-                    pass
 
-            asyncio.create_task(inner_call())
+            task = asyncio.create_task(inner_call())
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
         else:
             await delete_func
 
@@ -497,9 +500,11 @@ class Interaction(Hashable, Generic[ClientT]):
         files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
-        ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: AllowedMentions = MISSING,
+        flags: Optional[MessageFlags] = None,
+        ephemeral: Optional[bool] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -545,6 +550,8 @@ class Interaction(Hashable, Generic[ClientT]):
                 ephemeral=ephemeral,
                 delete_after=delete_after,
                 allowed_mentions=allowed_mentions,
+                flags=flags,
+                suppress_embeds=suppress_embeds,
             )
         return await self.followup.send(
             content=content,  # type: ignore
@@ -557,6 +564,8 @@ class Interaction(Hashable, Generic[ClientT]):
             ephemeral=ephemeral,
             delete_after=delete_after,
             allowed_mentions=allowed_mentions,
+            flags=flags,
+            suppress_embeds=suppress_embeds,
         )
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
@@ -614,7 +623,7 @@ class InteractionResponse:
         "_parent",
     )
 
-    def __init__(self, parent: Interaction):
+    def __init__(self, parent: Interaction) -> None:
         self._parent: Interaction = parent
         self._responded: bool = False
 
@@ -752,13 +761,20 @@ class InteractionResponse:
         files: List[File] = MISSING,
         view: View = MISSING,
         tts: bool = False,
-        ephemeral: bool = False,
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
+        flags: Optional[MessageFlags] = None,
+        ephemeral: Optional[bool] = None,
+        suppress_embeds: Optional[bool] = None,
     ) -> PartialInteractionMessage:
         """|coro|
 
         Responds to this interaction by sending a message.
+
+        .. versionchanged:: 2.4
+
+            ``ephemeral`` can now accept ``None`` to indicate that
+            ``flags`` should be used.
 
         Parameters
         ----------
@@ -790,6 +806,15 @@ class InteractionResponse:
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
+        flags: Optional[:class:`~nextcord.MessageFlags`]
+            The message flags being set for this message.
+            Currently only :class:`~nextcord.MessageFlags.suppress_embeds` is able to be set.
+
+            .. versionadded:: 2.4
+        suppress_embeds: Optional[:class:`bool`]
+            Whether to suppress embeds on this message.
+
+            .. versionadded:: 2.4
 
         Raises
         ------
@@ -843,8 +868,15 @@ class InteractionResponse:
         if content is not None:
             payload["content"] = str(content)
 
-        if ephemeral:
-            payload["flags"] = 64
+        if flags is None:
+            flags = MessageFlags()
+        if suppress_embeds is not None:
+            flags.suppress_embeds = suppress_embeds
+        if ephemeral is not None:
+            flags.ephemeral = ephemeral
+
+        if flags.value != 0:
+            payload["flags"] = flags.value
 
         if view is not MISSING:
             payload["components"] = view.to_components()
@@ -852,13 +884,12 @@ class InteractionResponse:
         if allowed_mentions is MISSING or allowed_mentions is None:
             if self._parent._state.allowed_mentions is not None:
                 payload["allowed_mentions"] = self._parent._state.allowed_mentions.to_dict()
+        elif self._parent._state.allowed_mentions is not None:
+            payload["allowed_mentions"] = self._parent._state.allowed_mentions.merge(
+                allowed_mentions
+            ).to_dict()
         else:
-            if self._parent._state.allowed_mentions is not None:
-                payload["allowed_mentions"] = self._parent._state.allowed_mentions.merge(
-                    allowed_mentions
-                ).to_dict()
-            else:
-                payload["allowed_mentions"] = allowed_mentions.to_dict()
+            payload["allowed_mentions"] = allowed_mentions.to_dict()
 
         parent = self._parent
         adapter = async_context.get()
@@ -876,7 +907,7 @@ class InteractionResponse:
                 for file in files:
                     file.close()
 
-        if view is not MISSING:
+        if view is not MISSING and view.prevent_update:
             if ephemeral and view.timeout is None:
                 view.timeout = 15 * 60.0
 
@@ -1004,10 +1035,7 @@ class InteractionResponse:
             raise InvalidArgument("Cannot mix both embed and embeds keyword arguments")
 
         if embed is not MISSING:
-            if embed is None:
-                embeds = []
-            else:
-                embeds = [embed]
+            embeds = [] if embed is None else [embed]
 
         if embeds is not MISSING:
             payload["embeds"] = [e.to_dict() for e in embeds]
@@ -1047,7 +1075,7 @@ class InteractionResponse:
                 for file in files:
                     file.close()
 
-        if view and not view.is_finished() and message_id is not None:
+        if view and not view.is_finished() and message_id is not None and view.prevent_update:
             state.store_view(view, message_id)
 
         self._responded = True
@@ -1061,7 +1089,7 @@ class InteractionResponse:
 class _InteractionMessageState:
     __slots__ = ("_parent", "_interaction")
 
-    def __init__(self, interaction: Interaction, parent: ConnectionState):
+    def __init__(self, interaction: Interaction, parent: ConnectionState) -> None:
         self._interaction: Interaction = interaction
         self._parent: ConnectionState = parent
 
@@ -1223,7 +1251,7 @@ class PartialInteractionMessage(_InteractionMessageMixin):
         :class:`Interaction` that it is associated with but not that of the full :class:`InteractionMessage`.
     """
 
-    def __init__(self, state: _InteractionMessageState):
+    def __init__(self, state: _InteractionMessageState) -> None:
         self._state = state
 
     async def fetch(self) -> InteractionMessage:
@@ -1270,7 +1298,7 @@ class PartialInteractionMessage(_InteractionMessageMixin):
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
         return self._state._interaction.guild
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
 
     def __eq__(self, other: object) -> bool:
@@ -1299,5 +1327,3 @@ class InteractionMessage(_InteractionMessageMixin, Message):
 
     .. versionadded:: 2.0
     """
-
-    pass
