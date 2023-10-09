@@ -1306,64 +1306,10 @@ from being stringly typed in case the strings change in the future.
 All enumerations are subclasses of an internal class which mimics the behaviour
 of :class:`enum.Enum`.
 
-.. class:: ChannelType
+.. attributetable:: ChannelType
 
-    Specifies the type of channel.
-
-    .. attribute:: text
-
-        A text channel.
-    .. attribute:: voice
-
-        A voice channel.
-    .. attribute:: private
-
-        A private text channel. Also called a direct message.
-    .. attribute:: group
-
-        A private group text channel.
-    .. attribute:: category
-
-        A category channel.
-    .. attribute:: news
-
-        A guild news channel.
-
-    .. attribute:: stage_voice
-
-        A guild stage voice channel.
-
-        .. versionadded:: 1.7
-
-    .. attribute:: news_thread
-
-        A news thread
-
-        .. versionadded:: 2.0
-
-    .. attribute:: public_thread
-
-        A public thread
-
-        .. versionadded:: 2.0
-
-    .. attribute:: private_thread
-
-        A private thread
-
-        .. versionadded:: 2.0
-
-    .. attribute:: guild_directory
-
-        A channel containing the guilds in a `Student Hub <https://support.discord.com/hc/en-us/articles/4406046651927-Discord-Student-Hubs-FAQ>`_
-
-        .. versionadded:: 2.2
-
-    .. attribute:: forum
-
-        A forum channel.
-
-        .. versionadded:: 2.1
+.. autoclass:: ChannelType()
+    :members:
 
 .. class:: MessageType
 

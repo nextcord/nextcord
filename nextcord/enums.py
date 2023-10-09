@@ -137,18 +137,34 @@ class StrEnum(str, Enum):  # noqa: SLOT000
 
 
 class ChannelType(IntEnum):
+    """Specifies the type of channel."""
+
     text = 0
+    """A text channel"""
     private = 1
+    """A private text channel. Also called a direct message."""
     voice = 2
+    """A voice channel"""
     group = 3
+    """A private group text channel."""
     category = 4
+    """A category channel."""
     news = 5
+    """A guild news channel."""
     news_thread = 10
+    """A news thread."""
     public_thread = 11
+    """A public thread."""
     private_thread = 12
+    """A private thread."""
     stage_voice = 13
+    """A guild stage voice channel."""
     guild_directory = 14
+    """A channel containing the guilds in a
+     `Student Hub <https://support.discord.com/hc/en-us/articles/4406046651927-Discord-Student-Hubs-FAQ>`_
+    """
     forum = 15
+    """A forum channel."""
 
     def __str__(self) -> str:
         return self.name
