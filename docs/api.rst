@@ -1354,6 +1354,9 @@ of :class:`enum.Enum`.
 .. autoclass:: StickerFormatType
     :members:
 
+.. autoclass:: InviteTarget
+    :members:
+
 .. class:: InteractionType
 
     Specifies the type of :class:`Interaction`.
@@ -2258,24 +2261,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: InviteTarget
-
-    Represents the invite type for voice channel invites.
-
-    .. versionadded:: 2.0
-
-    .. attribute:: unknown
-
-        The invite doesn't target anyone or anything.
-
-    .. attribute:: stream
-
-        A stream invite that targets a user.
-
-    .. attribute:: embedded_application
-
-        A stream invite that targets an embedded application.
 
 .. class:: VideoQualityMode
 

@@ -895,9 +895,17 @@ class StickerFormatType(IntEnum):
 
 
 class InviteTarget(IntEnum):
+    """Represents the invite type for voice channel invites.
+
+    .. versionadded:: 2.0
+    """
+
     unknown = 0
+    """The invite doesn't target anyone or anything."""
     stream = 1
+    """A stream invite that targets a user."""
     embedded_application = 2
+    """A stream invite that targets an embedded application."""
 
 
 class InteractionType(IntEnum):
