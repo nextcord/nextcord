@@ -780,13 +780,27 @@ class UserFlags(IntEnum):
 
 
 class ActivityType(IntEnum):
+    """Specifies the type of :class:`Activity`. This is used to check how to
+    interpret the activity itself.
+    """
+
     unknown = -1
+    """An unknown activity type. This should generally not happen."""
     playing = 0
+    """A "Playing" activity type."""
     streaming = 1
+    """A "Streaming" activity type."""
     listening = 2
+    """A "Listening" activity type."""
     watching = 3
+    """A "Watching" activity type."""
     custom = 4
+    """A "Custom" activity type."""
     competing = 5
+    """A "Competing" activity type.
+
+    .. versionadded:: 1.5
+    """
 
 
 class TeamMembershipState(IntEnum):
