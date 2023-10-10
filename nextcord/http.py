@@ -106,10 +106,11 @@ _API_VERSION: Literal[10] = _DEFAULT_API_VERSION
 def _get_logging_auth(auth: str | None) -> str:
     if auth is None:
         return "None"
-    elif len(auth) < 12:  # This shouldn't ever occur, but whatever.
+
+    if len(auth) < 12:  # This shouldn't ever occur, but whatever.
         return "[redacted]"
-    else:
-        return f"{auth[:12]}[redacted]"
+
+    return f"{auth[:12]}[redacted]"
 
 
 class Route:
@@ -404,7 +405,8 @@ class RateLimit:
             raise RateLimitMigrating(
                 f"This RateLimit is deprecated, you need to migrate to bucket {self.migrating}"
             )
-        elif self._deny:
+
+        if self._deny:
             raise ValueError("This request path 404'd and is now denied.")
 
         _log.debug("Bucket %s: Continuing with request.", self.bucket)
@@ -735,7 +737,8 @@ class HTTPClient:
                     rate_limit_path,
                 )
                 raise HTTPCancelled("Global rate limit locked.")
-            elif url_rate_limit.locked:
+
+            if url_rate_limit.locked:
                 _log.info(
                     "Path %s was called with retry_request=False while the URL rate limit is locked.",
                     rate_limit_path,
@@ -748,187 +751,182 @@ class HTTPClient:
         for retry_count in range(max_retry_count):  # To prevent infinite loops.
             should_retry = False
             try:
-                async with global_rate_limit:
-                    async with url_rate_limit:
-                        # This check is for asyncio.gather()'d requests where the rate limit can change.
-                        if (
-                            temp := self._get_url_rate_limit(route.method, route, auth)
-                        ) is not url_rate_limit and temp is not None:
-                            _log.debug(
-                                "Route %s had the rate limit changed, resetting and retrying.",
-                                rate_limit_path,
-                            )
-                            url_rate_limit = temp
-                            continue
+                async with global_rate_limit, url_rate_limit:
+                    # This check is for asyncio.gather()'d requests where the rate limit can change.
+                    if (
+                        temp := self._get_url_rate_limit(route.method, route, auth)
+                    ) is not url_rate_limit and temp is not None:
+                        _log.debug(
+                            "Route %s had the rate limit changed, resetting and retrying.",
+                            rate_limit_path,
+                        )
+                        url_rate_limit = temp
+                        continue
 
-                        if files:
-                            for f in files:
-                                f.reset(seek=retry_count)
+                    if files:
+                        for f in files:
+                            f.reset(seek=retry_count)
 
-                        if form:
-                            form_data = aiohttp.FormData(quote_fields=False)
-                            for params in form:
-                                form_data.add_field(**params)
-                            kwargs["data"] = form_data
+                    if form:
+                        form_data = aiohttp.FormData(quote_fields=False)
+                        for params in form:
+                            form_data.add_field(**params)
+                        kwargs["data"] = form_data
 
-                        async with self.__session.request(
-                            method=route.method,
-                            url=route.url,
-                            headers=headers,
-                            proxy=self._proxy,
-                            proxy_auth=self._proxy_auth,
-                            **kwargs,
-                        ) as response:
-                            _log.debug(
-                                "%s %s with %s has returned %s",
-                                route.method,
-                                route.url,
-                                kwargs.get("data"),
-                                response.status,
-                            )
+                    async with self.__session.request(
+                        method=route.method,
+                        url=route.url,
+                        headers=headers,
+                        proxy=self._proxy,
+                        proxy_auth=self._proxy_auth,
+                        **kwargs,
+                    ) as response:
+                        _log.debug(
+                            "%s %s with %s has returned %s",
+                            route.method,
+                            route.url,
+                            kwargs.get("data"),
+                            response.status,
+                        )
 
-                            await global_rate_limit.update(response)
-                            try:
-                                await url_rate_limit.update(response)
-                            except IncorrectBucket as e:
-                                # This condition can be met when doing asyncio.gather()'d requests.
-                                if (
-                                    temp := self._buckets.get(
-                                        # Defaulting to "" makes pyright happy because None is an invalid type of key.
-                                        response.headers.get("X-RateLimit-Bucket", "")
-                                    )
-                                ) is not None:
-                                    _log.debug(
-                                        "Route %s was given a different bucket, found it.",
-                                        rate_limit_path,
-                                    )
-                                    url_rate_limit = temp
-                                    self._set_url_rate_limit(
-                                        route.method, route, auth, url_rate_limit
-                                    )
-                                    await url_rate_limit.update(response)
-                                else:
-                                    _log.debug(
-                                        "Route %s was given a different bucket, making a new one: %s",
-                                        rate_limit_path,
-                                        e,
-                                    )
-                                    url_rate_limit = self._make_url_rate_limit(
-                                        route.method, route, auth
-                                    )
-                                    await url_rate_limit.update(response)
-
-                            if url_rate_limit.bucket is not None and self._buckets.get(
-                                url_rate_limit.bucket
-                            ) not in (url_rate_limit, None):
-                                # If the current RateLimit bucket name exists, but the stored RateLimit is not the
-                                #  current RateLimit, finish up and signal that the current bucket should be migrated
-                                #  to the stored one.
+                        await global_rate_limit.update(response)
+                        try:
+                            await url_rate_limit.update(response)
+                        except IncorrectBucket as e:
+                            # This condition can be met when doing asyncio.gather()'d requests.
+                            if (
+                                temp := self._buckets.get(
+                                    # Defaulting to "" makes pyright happy because None is an invalid type of key.
+                                    response.headers.get("X-RateLimit-Bucket", "")
+                                )
+                            ) is not None:
                                 _log.debug(
-                                    "Route %s with bucket %s already exists, migrating other possible requests to "
-                                    "that bucket.",
+                                    "Route %s was given a different bucket, found it.",
                                     rate_limit_path,
-                                    url_rate_limit.bucket,
                                 )
-                                correct_rate_limit = self._buckets[url_rate_limit.bucket]
-                                self._set_url_rate_limit(
-                                    route.method, route, auth, correct_rate_limit
+                                url_rate_limit = temp
+                                self._set_url_rate_limit(route.method, route, auth, url_rate_limit)
+                                await url_rate_limit.update(response)
+                            else:
+                                _log.debug(
+                                    "Route %s was given a different bucket, making a new one: %s",
+                                    rate_limit_path,
+                                    e,
                                 )
-                                if correct_rate_limit.bucket:
-                                    # Signals to all requests waiting to acquire to migrate.
-                                    url_rate_limit.migrate_to(correct_rate_limit.bucket)
+                                url_rate_limit = self._make_url_rate_limit(
+                                    route.method, route, auth
+                                )
+                                await url_rate_limit.update(response)
+
+                        if url_rate_limit.bucket is not None and self._buckets.get(
+                            url_rate_limit.bucket
+                        ) not in (url_rate_limit, None):
+                            # If the current RateLimit bucket name exists, but the stored RateLimit is not the
+                            #  current RateLimit, finish up and signal that the current bucket should be migrated
+                            #  to the stored one.
+                            _log.debug(
+                                "Route %s with bucket %s already exists, migrating other possible requests to "
+                                "that bucket.",
+                                rate_limit_path,
+                                url_rate_limit.bucket,
+                            )
+                            correct_rate_limit = self._buckets[url_rate_limit.bucket]
+                            self._set_url_rate_limit(route.method, route, auth, correct_rate_limit)
+                            if correct_rate_limit.bucket:
+                                # Signals to all requests waiting to acquire to migrate.
+                                url_rate_limit.migrate_to(correct_rate_limit.bucket)
+                            else:
+                                raise ValueError(
+                                    f"Migrating to bucket {correct_rate_limit.bucket}, but "
+                                    f"correct_rate_limit.bucket is falsey. This is likely an internal Nextcord "
+                                    f"issue and should be reported."
+                                )
+                            # Update the correct RateLimit object with our findings.
+                            await correct_rate_limit.update(response)
+                        elif url_rate_limit.bucket is not None:
+                            self._buckets[url_rate_limit.bucket] = url_rate_limit
+
+                        # even errors have text involved in them so this is safe to call
+                        ret = await json_or_text(response)
+
+                        if response.status >= 400:
+                            # >= 500 was considered, but stuff like 501 and 505+ are not good to retry on.
+                            if response.status in {500, 502, 504}:
+                                if retry_request:
+                                    _log.info(
+                                        "Path %s encountered a Discord server issue, retrying.",
+                                        rate_limit_path,
+                                    )
+                                    await asyncio.sleep(1 + retry_count * 2)
+                                    should_retry = True
                                 else:
-                                    raise ValueError(
-                                        f"Migrating to bucket {correct_rate_limit.bucket}, but "
-                                        f"correct_rate_limit.bucket is falsey. This is likely an internal Nextcord "
-                                        f"issue and should be reported."
-                                    )
-                                # Update the correct RateLimit object with our findings.
-                                await correct_rate_limit.update(response)
-                            elif url_rate_limit.bucket is not None:
-                                self._buckets[url_rate_limit.bucket] = url_rate_limit
-
-                            # even errors have text involved in them so this is safe to call
-                            ret = await json_or_text(response)
-
-                            if response.status >= 400:
-                                # >= 500 was considered, but stuff like 501 and 505+ are not good to retry on.
-                                if response.status in {500, 502, 504}:
-                                    if retry_request:
-                                        _log.info(
-                                            "Path %s encountered a Discord server issue, retrying.",
-                                            rate_limit_path,
-                                        )
-                                        await asyncio.sleep(1 + retry_count * 2)
-                                        should_retry = True
-                                    else:
-                                        _log.info(
-                                            "Path %s encountered a Discord server issue.",
-                                            rate_limit_path,
-                                        )
-                                        raise DiscordServerError(response, ret)
-                                elif response.status == 401:
-                                    _log.warning(
-                                        "Path %s resulted in error 401, rejected authorization?",
+                                    _log.info(
+                                        "Path %s encountered a Discord server issue.",
                                         rate_limit_path,
                                     )
-                                    raise Unauthorized(response, ret)
-                                elif response.status == 403:
-                                    _log.warning(
-                                        "Path %s resulted in error 403, check your permissions?",
-                                        rate_limit_path,
-                                    )
-                                    raise Forbidden(response, ret)
-                                elif response.status == 404:
-                                    _log.warning(
-                                        "Path %s resulted in error 404, check your path?",
-                                        rate_limit_path,
-                                    )
-                                    raise NotFound(response, ret)
-                                elif response.status == 429:
-                                    if (
-                                        response.headers.get("X-RateLimit-Global") != "true"
-                                        and response.headers.get("X-RateLimit-Scope") != "global"
-                                    ):
-                                        self._dispatch(
-                                            "http_ratelimit",
-                                            url_rate_limit.limit,
-                                            url_rate_limit.remaining,
-                                            url_rate_limit.reset_after,
-                                            url_rate_limit.bucket,
-                                            response.headers.get("X-RateLimit-Scope"),
-                                        )
-                                    else:
-                                        self._dispatch(
-                                            "global_http_ratelimit", global_rate_limit.reset_after
-                                        )
-
-                                    if not response.headers.get("Via") or isinstance(ret, str):
-                                        _log.error(
-                                            "Path %s resulted in what appears to be a CloudFlare ban, either a "
-                                            "large amount of errors recently happened and/or Nextcord has a bug."
-                                        )
-                                        # Banned by Cloudflare more than likely.
-                                        raise HTTPException(response, ret)
-
-                                    if retry_request:
-                                        _log.warning(
-                                            "Path %s resulted in error 429, rate limit exceeded. Retrying.",
-                                            rate_limit_path,
-                                        )
-                                        should_retry = True
-                                    else:
-                                        _log.warning(
-                                            "Path %s resulted in error 429, rate limit exceeded.",
-                                            rate_limit_path,
-                                        )
-                                        raise HTTPException(
-                                            response, ret
-                                        )  # TODO: Make actual HTTPRateLimit error?
-                                elif response.status >= 500:
                                     raise DiscordServerError(response, ret)
+                            elif response.status == 401:
+                                _log.warning(
+                                    "Path %s resulted in error 401, rejected authorization?",
+                                    rate_limit_path,
+                                )
+                                raise Unauthorized(response, ret)
+                            elif response.status == 403:
+                                _log.warning(
+                                    "Path %s resulted in error 403, check your permissions?",
+                                    rate_limit_path,
+                                )
+                                raise Forbidden(response, ret)
+                            elif response.status == 404:
+                                _log.warning(
+                                    "Path %s resulted in error 404, check your path?",
+                                    rate_limit_path,
+                                )
+                                raise NotFound(response, ret)
+                            elif response.status == 429:
+                                if (
+                                    response.headers.get("X-RateLimit-Global") != "true"
+                                    and response.headers.get("X-RateLimit-Scope") != "global"
+                                ):
+                                    self._dispatch(
+                                        "http_ratelimit",
+                                        url_rate_limit.limit,
+                                        url_rate_limit.remaining,
+                                        url_rate_limit.reset_after,
+                                        url_rate_limit.bucket,
+                                        response.headers.get("X-RateLimit-Scope"),
+                                    )
                                 else:
+                                    self._dispatch(
+                                        "global_http_ratelimit", global_rate_limit.reset_after
+                                    )
+
+                                if not response.headers.get("Via") or isinstance(ret, str):
+                                    _log.error(
+                                        "Path %s resulted in what appears to be a CloudFlare ban, either a "
+                                        "large amount of errors recently happened and/or Nextcord has a bug."
+                                    )
+                                    # Banned by Cloudflare more than likely.
                                     raise HTTPException(response, ret)
+
+                                if retry_request:
+                                    _log.warning(
+                                        "Path %s resulted in error 429, rate limit exceeded. Retrying.",
+                                        rate_limit_path,
+                                    )
+                                    should_retry = True
+                                else:
+                                    _log.warning(
+                                        "Path %s resulted in error 429, rate limit exceeded.",
+                                        rate_limit_path,
+                                    )
+                                    raise HTTPException(
+                                        response, ret
+                                    )  # TODO: Make actual HTTPRateLimit error?
+                            elif response.status >= 500:
+                                raise DiscordServerError(response, ret)
+                            else:
+                                raise HTTPException(response, ret)
 
             # This is handling exceptions from the request
             except OSError as e:
@@ -939,20 +937,20 @@ class HTTPClient:
 
                 raise
 
-            except RateLimitMigrating:
+            except RateLimitMigrating as e:
                 if url_rate_limit.migrating is None:
                     raise ValueError(
                         "RateLimitMigrating raised, but RateLimit.migrating is None. This is an internal Nextcord "
                         "error and should be reported!"
-                    )
-                else:
-                    url_rate_limit = self._buckets.get(url_rate_limit.migrating)
-                    if url_rate_limit is None:
-                        # This means we have an internal issue that we need to fix.
-                        raise ValueError(
-                            "RateLimit said to migrate, but the RateLimit to migrate was not found? This is an "
-                            "internal Nextcord error and should be reported!"
-                        )
+                    ) from e
+
+                url_rate_limit = self._buckets.get(url_rate_limit.migrating)
+                if url_rate_limit is None:
+                    # This means we have an internal issue that we need to fix.
+                    raise ValueError(
+                        "RateLimit said to migrate, but the RateLimit to migrate was not found? This is an "
+                        "internal Nextcord error and should be reported!"
+                    ) from e
 
             else:
                 if not should_retry:
