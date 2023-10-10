@@ -1325,9 +1325,17 @@ class RoleConnectionMetadataType(IntEnum):
 
 
 class ForumLayoutType(IntEnum):
+    """The default layout type used to display posts in a :class:`ForumChannel`.
+
+    .. versionadded:: 2.4
+    """
+
     not_set = 0
+    """No default has been set by channel administrators."""
     list = 1
+    """Display posts as a list, more text focused."""
     gallery = 2
+    """Display posts as a collection of posts with images, this is more image focused."""
 
 
 T = TypeVar("T")

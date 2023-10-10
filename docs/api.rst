@@ -1412,6 +1412,9 @@ of :class:`enum.Enum`.
     :members:
     :undoc-members:
 
+.. autoclass:: ForumLayoutType
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2165,24 +2168,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: ForumLayoutType
-
-    The default layout type used to display posts in a :class:`ForumChannel`.
-
-    .. versionadded:: 2.4
-
-    .. attribute:: not_set
-
-        No default has been set by channel administrators.
-
-    .. attribute:: list
-
-        Display posts as a list, more text focused.
-
-    .. attribute:: gallery
-
-        Display posts as a collection of posts with images, this is more image focused.
 
 
 Async Iterator
