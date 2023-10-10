@@ -1237,6 +1237,7 @@ class AutoModerationEventType(IntEnum):
 
     .. versionadded:: 2.1
     """
+
     message_send = 1
     """A member sends or edits a message in the guild."""
 
@@ -1250,6 +1251,7 @@ class AutoModerationTriggerType(IntEnum):
 
         Removed ``harmful_link`` as it is no longer used by Discord.
     """
+
     keyword = 1
     """This rule checks if content contains words from a user defined list of keywords."""
     spam = 3
@@ -1268,6 +1270,7 @@ class KeywordPresetType(IntEnum):
 
     .. versionadded:: 2.1
     """
+
     profanity = 1
     """Words that may be considered forms of swearing or cursing."""
     sexual_content = 2
@@ -1281,6 +1284,7 @@ class AutoModerationActionType(IntEnum):
 
     .. versionadded:: 2.1
     """
+
     block_message = 1
     """Blocks a message with content matching the rule."""
     send_alert_message = 2
@@ -1289,16 +1293,17 @@ class AutoModerationActionType(IntEnum):
     """Timeout user for a specified duration.
 
     .. note::
-    
+
         This action type can only be used with the :attr:`Permissions.moderate_members` permission.
     """
 
 
 class SortOrderType(IntEnum):
     """The default sort order type used to sort posts in a :class:`ForumChannel`.
-    
+
     .. versionadded:: 2.3
     """
+
     latest_activity = 0
     """Sort forum posts by their activity."""
     creation_date = 1
@@ -1310,6 +1315,7 @@ class RoleConnectionMetadataType(IntEnum):
 
     .. versionadded:: 2.4
     """
+
     integer_less_than_or_equal = 1
     integer_greater_than_or_equal = 2
     """The metadata value must be less than or equal to the guild's configured value."""
