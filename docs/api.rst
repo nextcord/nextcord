@@ -1405,6 +1405,9 @@ of :class:`enum.Enum`.
 .. autoclass:: AutoModerationActionType
     :members:
 
+.. autoclass:: SortOrderType
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2158,20 +2161,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: SortOrderType
-
-    .. versionadded:: 2.3
-
-    The default sort order type used to sort posts in a :class:`ForumChannel`.
-
-    .. attribute:: latest_activity
-
-        Sort forum posts by their activity.
-
-    .. attribute:: creation_date
-
-        Sort forum posts by their creation date.
 
 .. class:: ForumLayoutType
 

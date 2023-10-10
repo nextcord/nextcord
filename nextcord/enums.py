@@ -1295,8 +1295,14 @@ class AutoModerationActionType(IntEnum):
 
 
 class SortOrderType(IntEnum):
+    """The default sort order type used to sort posts in a :class:`ForumChannel`.
+    
+    .. versionadded:: 2.3
+    """
     latest_activity = 0
+    """Sort forum posts by their activity."""
     creation_date = 1
+    """Sort forum posts by their creation date."""
 
 
 class RoleConnectionMetadataType(IntEnum):
