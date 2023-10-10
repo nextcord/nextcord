@@ -1306,14 +1306,22 @@ class SortOrderType(IntEnum):
 
 
 class RoleConnectionMetadataType(IntEnum):
+    """Represents the type of comparison a role connection metadata record will use.
+
+    .. versionadded:: 2.4
+    """
     integer_less_than_or_equal = 1
     integer_greater_than_or_equal = 2
+    """The metadata value must be less than or equal to the guild's configured value."""
     integer_equal = 3
     integer_not_equal = 4
+    """The metadata value must be greater than or equal to the guild's configured value."""
     datetime_less_than_or_equal = 5
     datetime_greater_than_or_equal = 6
+    """The metadata value must be equal to the guild's configured value."""
     boolean_equal = 7
     boolean_not_equal = 8
+    """The metadata value must be not equal to the guild's configured value."""
 
 
 class ForumLayoutType(IntEnum):

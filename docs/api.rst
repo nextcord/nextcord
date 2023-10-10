@@ -1408,6 +1408,10 @@ of :class:`enum.Enum`.
 .. autoclass:: SortOrderType
     :members:
 
+.. autoclass:: RoleConnectionMetadataType
+    :members:
+    :undoc-members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2179,32 +2183,6 @@ of :class:`enum.Enum`.
     .. attribute:: gallery
 
         Display posts as a collection of posts with images, this is more image focused.
-
-.. class:: RoleConnectionMetadataType
-
-    Represents the type of comparison a role connection metadata record will use.
-
-    .. versionadded:: 2.4
-
-    .. attribute:: integer_less_than_or_equal
-    .. attribute:: datetime_less_than_or_equal
-
-        The metadata value must be less than or equal to the guild's configured value.
-
-    .. attribute:: integer_greater_than_or_equal
-    .. attribute:: datetime_greater_than_or_equal
-
-        The metadata value must be greater than or equal to the guild's configured value.
-
-    .. attribute:: integer_equal
-    .. attribute:: boolean_equal
-
-        The metadata value must be equal to the guild's configured value.
-
-    .. attribute:: integer_not_equal
-    .. attribute:: boolean_not_equal
-
-        The metadata value must be not equal to the guild's configured value.
 
 
 Async Iterator
