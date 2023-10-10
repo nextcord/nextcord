@@ -1399,6 +1399,9 @@ of :class:`enum.Enum`.
 .. autoclass:: AutoModerationTriggerType
     :members:
 
+.. autoclass:: KeywordPresetType
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2152,24 +2155,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: KeywordPresetType
-
-    Represents the type of a keyword preset auto moderation rule.
-
-    .. versionadded:: 2.1
-
-    .. attribute:: profanity
-
-        Words that may be considered forms of swearing or cursing.
-
-    .. attribute:: sexual_content
-
-        Words that refer to sexually explicit behaviour or activity.
-
-    .. attribute:: slurs
-
-        Personal insults or words that may be considered hate speech.
 
 .. class:: AutoModerationActionType
 

@@ -1264,9 +1264,16 @@ class AutoModerationTriggerType(IntEnum):
 
 
 class KeywordPresetType(IntEnum):
+    """Represents the type of a keyword preset auto moderation rule.
+
+    .. versionadded:: 2.1
+    """
     profanity = 1
+    """Words that may be considered forms of swearing or cursing."""
     sexual_content = 2
+    """Words that refer to sexually explicit behaviour or activity."""
     slurs = 3
+    """Personal insults or words that may be considered hate speech."""
 
 
 class AutoModerationActionType(IntEnum):
