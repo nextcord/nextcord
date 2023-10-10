@@ -1200,9 +1200,14 @@ class NSFWLevel(IntEnum):
 
 
 class ScheduledEventEntityType(IntEnum):
+    """Represents the type of an entity on a scheduled event."""
+
     stage_instance = 1
+    """The event is for a stage"""
     voice = 2
+    """The event is for a voice channel."""
     external = 3
+    """The event is happening elsewhere."""
 
 
 class ScheduledEventPrivacyLevel(IntEnum):

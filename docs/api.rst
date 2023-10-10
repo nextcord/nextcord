@@ -1384,6 +1384,9 @@ of :class:`enum.Enum`.
 .. autoclass:: NSFWLevel
     :members:
 
+.. autoclass:: ScheduledEventEntityType
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2137,22 +2140,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: ScheduledEventEntityType
-
-    Represents the type of an entity on a scheduled event.
-
-    .. attribute:: stage_instance
-
-        The event is for a stage.
-
-    .. attribute:: voice
-
-        The event is for a voice channel.
-
-    .. attribute:: external
-
-        The event is happening elsewhere.
 
 .. class:: ScheduledEventPrivacyLevel
 
