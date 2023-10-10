@@ -166,7 +166,6 @@ class RateLimit:
         """Remaining amount of requests before requests have to wait for the rate limit to reset."""
         self.reset: datetime | None = None
         """Datetime that the bucket roughly will be reset at."""
-        # self._reset_diff: float = 1.0
         self._tracked_reset_time: float = 1.0
         """The estimate time between bucket resets. Found via reset if use_reset_timestamp is True, found with
         reset_after if False.
@@ -269,21 +268,20 @@ class RateLimit:
             #  doing more comparisons and work to make it more correct when possible, or is this good enough?
             self.reset_after = x_reset_after
             # Once we figure out what the true reset delay is, for example 5 seconds, we want to keep it at that.
-            if not self._use_reset_timestamp:
-                if self._tracked_reset_time < x_reset_after:
-                    self._tracked_reset_time = x_reset_after
-                    _log.debug(
-                        "Bucket %s: Reset after time increased to %s seconds, adapting reset time.",
-                        self.bucket,
-                        self._tracked_reset_time,
-                    )
-                    self.start_reset_task()
+            if not self._use_reset_timestamp and self._tracked_reset_time < x_reset_after:
+                self._tracked_reset_time = x_reset_after
+                _log.debug(
+                    "Bucket %s: Reset after time increased to %s seconds, adapting reset time.",
+                    self.bucket,
+                    self._tracked_reset_time,
+                )
+                self.start_reset_task()
 
         if not self.resetting:
             self.start_reset_task()
 
         # If for whatever reason we have requests remaining but the reset event isn't set, set it.
-        if 0 < self.remaining and not self._on_reset_event.is_set():
+        if self.remaining > 0 and not self._on_reset_event.is_set():
             _log.debug(
                 "Bucket %s: Updated with remaining %s, setting reset event.",
                 self.bucket,
@@ -362,7 +360,6 @@ class RateLimit:
 
     async def __aenter__(self) -> None:
         await self.acquire()
-        return None
 
     async def __aexit__(
         self,
