@@ -1393,6 +1393,9 @@ of :class:`enum.Enum`.
 .. autoclass:: ScheduledEventStatus
     :members:
 
+.. autoclass:: AutoModerationEventType
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2146,16 +2149,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: AutoModerationEventType
-
-    Represents what event context an auto moderation rule will be checked.
-
-    .. versionadded:: 2.1
-
-    .. attribute:: message_send
-
-        A member sends or edits a message in the guild.
 
 .. class:: AutoModerationTriggerType
 

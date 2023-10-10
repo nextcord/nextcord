@@ -1233,7 +1233,12 @@ class ScheduledEventStatus(IntEnum):
 
 
 class AutoModerationEventType(IntEnum):
+    """Represents what event context an auto moderation rule will be checked.
+
+    .. versionadded:: 2.1
+    """
     message_send = 1
+    """A member sends or edits a message in the guild."""
 
 
 class AutoModerationTriggerType(IntEnum):
