@@ -1242,10 +1242,25 @@ class AutoModerationEventType(IntEnum):
 
 
 class AutoModerationTriggerType(IntEnum):
+    """Represents the type of content which can trigger an auto moderation rule.
+
+    .. versionadded:: 2.1
+
+    .. versionchanged:: 2.2
+
+        Removed ``harmful_link`` as it is no longer used by Discord.
+    """
     keyword = 1
+    """This rule checks if content contains words from a user defined list of keywords."""
     spam = 3
+    """This rule checks if content represents generic spam."""
     keyword_preset = 4
+    """This rule checks if content contains words from Discord pre-defined wordsets."""
     mention_spam = 5
+    """This rule checks if the number of mentions in the message is more than the maximum allowed.
+
+    .. versionadded:: 2.3
+    """
 
 
 class KeywordPresetType(IntEnum):

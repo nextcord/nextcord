@@ -1396,6 +1396,9 @@ of :class:`enum.Enum`.
 .. autoclass:: AutoModerationEventType
     :members:
 
+.. autoclass:: AutoModerationTriggerType
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2147,34 +2150,6 @@ of :class:`enum.Enum`.
         - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the member was timed out.
         - ``rule_name``: A :class:`str` with the name of the rule.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
-
-        .. versionadded:: 2.3
-
-.. class:: AutoModerationTriggerType
-
-    Represents the type of content which can trigger an auto moderation rule.
-
-    .. versionadded:: 2.1
-
-    .. versionchanged:: 2.2
-
-        Removed ``harmful_link`` as it is no longer used by Discord.
-
-    .. attribute:: keyword
-
-        This rule checks if content contains words from a user defined list of keywords.
-
-    .. attribute:: spam
-
-        This rule checks if content represents generic spam.
-
-    .. attribute:: keyword_preset
-
-        This rule checks if content contains words from Discord pre-defined wordsets.
-
-    .. attribute:: mention_spam
-
-        This rule checks if the number of mentions in the message is more than the maximum allowed.
 
         .. versionadded:: 2.3
 
