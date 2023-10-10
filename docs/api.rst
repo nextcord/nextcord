@@ -1390,6 +1390,9 @@ of :class:`enum.Enum`.
 .. autoclass:: ScheduledEventPrivacyLevel
     :members:
 
+.. autoclass:: ScheduledEventStatus
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2143,30 +2146,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: ScheduledEventStatus
-
-    Represents the status of a scheduled event.
-
-    .. attribute:: scheduled
-
-        The event is scheduled to happen.
-
-    .. attribute:: active
-
-        The event is happening.
-
-    .. attribute:: completed
-
-        The event has finished.
-
-    .. attribute:: canceled
-
-        The event was canceled.
-
-    .. attribute:: cancelled
-
-        An alias for :attr:`canceled`.
 
 .. class:: AutoModerationEventType
 

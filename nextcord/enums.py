@@ -1218,11 +1218,18 @@ class ScheduledEventPrivacyLevel(IntEnum):
 
 
 class ScheduledEventStatus(IntEnum):
+    """Represents the status of a scheduled event."""
+
     scheduled = 1
+    """The event is scheduled to happen."""
     active = 2
+    """The event is happening."""
     completed = 3
+    """The event has finished."""
     canceled = 4
+    """The event was cancelled."""
     cancelled = 4
+    """An alias for :attr:`ScheduledEventStatus.canceled`."""
 
 
 class AutoModerationEventType(IntEnum):
