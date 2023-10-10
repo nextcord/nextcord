@@ -1211,7 +1211,10 @@ class ScheduledEventEntityType(IntEnum):
 
 
 class ScheduledEventPrivacyLevel(IntEnum):
+    """Represents the privacy level of scheduled event."""
+
     guild_only = 2
+    """The scheduled event is only visible to members of the guild."""
 
 
 class ScheduledEventStatus(IntEnum):

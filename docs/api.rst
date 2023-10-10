@@ -1387,6 +1387,9 @@ of :class:`enum.Enum`.
 .. autoclass:: ScheduledEventEntityType
     :members:
 
+.. autoclass:: ScheduledEventPrivacyLevel
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2140,14 +2143,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: ScheduledEventPrivacyLevel
-
-    Represents the privacy level of scheduled event.
-
-    .. attribute:: guild_only
-
-        The scheduled event is only visible to members of the guild.
 
 .. class:: ScheduledEventStatus
 
