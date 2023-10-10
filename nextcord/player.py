@@ -89,7 +89,6 @@ class AudioSource:
         Useful for clearing buffer data or processes after
         it is done playing audio.
         """
-        pass
 
     def __del__(self) -> None:
         self.cleanup()
@@ -537,7 +536,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         except Exception:
             if not fallback:
                 _log.exception("Probe '%s' using '%s' failed", method, executable)
-                return  # type: ignore
+                return None, None
 
             _log.exception("Probe '%s' using '%s' failed, trying fallback", method, executable)
             try:
@@ -551,7 +550,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         else:
             _log.info("Probe found codec=%s, bitrate=%s", codec, bitrate)
         finally:
-            return codec, bitrate
+            return codec, bitrate  # noqa: B012  # all exception are caught already
 
     @staticmethod
     def _probe_codec_native(
@@ -744,7 +743,7 @@ class AudioPlayer(threading.Thread):
         elif error:
             msg = f"Exception in voice thread {self.name}"
             _log.exception(msg, exc_info=error)
-            print(msg, file=sys.stderr)
+            print(msg, file=sys.stderr)  # noqa: T201
             traceback.print_exception(type(error), error, error.__traceback__)
 
     def stop(self) -> None:

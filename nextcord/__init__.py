@@ -40,7 +40,6 @@ from .file import *
 from .flags import *
 from .guild import *
 from .guild_preview import *
-from .health_check import *
 from .integrations import *
 from .interactions import *
 from .invite import *

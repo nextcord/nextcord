@@ -182,10 +182,10 @@ class MemberConverter(IDConverter[nextcord.Member]):
             username, _, discriminator = argument.rpartition("#")
             members = await guild.query_members(username, limit=100, cache=cache)
             return nextcord.utils.get(members, name=username, discriminator=discriminator)
-        else:
-            members = await guild.query_members(argument, limit=100, cache=cache)
-            finder: Callable[[Member], bool] = lambda m: m.name == argument or m.nick == argument
-            return nextcord.utils.find(finder, members)
+
+        members = await guild.query_members(argument, limit=100, cache=cache)
+        finder: Callable[[Member], bool] = lambda m: argument in {m.name, m.nick}
+        return nextcord.utils.find(finder, members)
 
     async def query_member_by_id(self, bot, guild, user_id):
         ws = bot._get_websocket(shard_id=guild.shard_id)
@@ -354,10 +354,8 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
             guild = ctx.bot.get_guild(guild_id)
             if guild is not None and channel_id is not None:
                 return guild._resolve_channel(channel_id)
-            else:
-                return None
-        else:
-            return ctx.bot.get_channel(channel_id) if channel_id else ctx.channel
+            return None
+        return ctx.bot.get_channel(channel_id) if channel_id else ctx.channel
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.PartialMessage:
         guild_id, message_id, channel_id = self._get_id_matches(ctx, argument)
@@ -392,10 +390,10 @@ class MessageConverter(IDConverter[nextcord.Message]):
             raise ChannelNotFound(str(channel_id))
         try:
             return await channel.fetch_message(message_id)
-        except nextcord.NotFound:
-            raise MessageNotFound(argument)
-        except nextcord.Forbidden:
-            raise ChannelNotReadable(channel)  # type: ignore  # weird type conflict
+        except nextcord.NotFound as e:
+            raise MessageNotFound(argument) from e
+        except nextcord.Forbidden as e:
+            raise ChannelNotReadable(channel) from e  # type: ignore  # weird type conflict
 
 
 class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
@@ -610,8 +608,8 @@ class ColourConverter(Converter[nextcord.Colour]):
             value = int(arg, base=16)
             if not (0 <= value <= 0xFFFFFF):
                 raise BadColourArgument(argument)
-        except ValueError:
-            raise BadColourArgument(argument)
+        except ValueError as e:
+            raise BadColourArgument(argument) from e
         else:
             return nextcord.Color(value=value)
 
@@ -681,7 +679,7 @@ class RoleConverter(IDConverter[nextcord.Role]):
     async def convert(self, ctx: Context, argument: str) -> nextcord.Role:
         guild = ctx.guild
         if not guild:
-            raise NoPrivateMessage()
+            raise NoPrivateMessage
 
         match = self._get_id_match(argument) or re.match(r"<@&([0-9]{15,20})>$", argument)
         if match:
@@ -712,8 +710,7 @@ class InviteConverter(Converter[nextcord.Invite]):
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.Invite:
         try:
-            invite = await ctx.bot.fetch_invite(argument)
-            return invite
+            return await ctx.bot.fetch_invite(argument)
         except Exception as exc:
             raise BadInviteArgument(argument) from exc
 
@@ -861,11 +858,11 @@ class GuildStickerConverter(IDConverter[nextcord.GuildSticker]):
 
 
 _EVENT_INVITE_RE = re.compile(
-    r"(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)" "?event=(\d+)"
+    r"(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)?event=(\d+)"
 )
 
 _EVENT_API_RE = re.compile(
-    r"(?:https?\:\/\/)?(?:(ptb|canary|www)\.)?discord" r"(?:(?:app)?\.com\/events)\/(\d+)\/(\d+)"
+    r"(?:https?\:\/\/)?(?:(ptb|canary|www)\.)?discord(?:(?:app)?\.com\/events)\/(\d+)\/(\d+)"
 )
 
 
@@ -973,7 +970,7 @@ class clean_content(Converter[str]):
                     f"@{m.display_name if self.use_nicknames else m.name}" if m else "@deleted-user"
                 )
 
-            def resolve_role(id: int) -> str:
+            def resolve_role(id: int) -> str:  # pyright: ignore[reportGeneralTypeIssues]
                 r = _utils_get(msg.role_mentions, id=id) or ctx.guild.get_role(id)  # type: ignore
                 return f"@{r.name}" if r else "@deleted-role"
 
@@ -983,7 +980,7 @@ class clean_content(Converter[str]):
                 m = _utils_get(msg.mentions, id=id) or ctx.bot.get_user(id)
                 return f"@{m.name}" if m else "@deleted-user"
 
-            def resolve_role(id: int) -> str:
+            def resolve_role(_id: int) -> str:
                 return "@deleted-role"
 
         if self.fix_channel_mentions and ctx.guild:
@@ -1007,8 +1004,7 @@ class clean_content(Converter[str]):
         def repl(match: re.Match) -> str:
             type = match[1]
             id = int(match[2])
-            transformed = transforms[type](id)
-            return transformed
+            return transforms[type](id)
 
         result = re.sub(r"<(@[!&]?|#)([0-9]{15,20})>", repl, argument)
         if self.escape_markdown:
@@ -1077,10 +1073,9 @@ def _convert_to_bool(argument: str) -> bool:
     lowered = argument.lower()
     if lowered in ("yes", "y", "true", "t", "1", "enable", "on"):
         return True
-    elif lowered in ("no", "n", "false", "f", "0", "disable", "off"):
+    if lowered in ("no", "n", "false", "f", "0", "disable", "off"):
         return False
-    else:
-        raise BadBoolArgument(lowered)
+    raise BadBoolArgument(lowered)
 
 
 def get_converter(param: inspect.Parameter) -> Any:
@@ -1142,9 +1137,9 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
         if inspect.isclass(converter) and issubclass(converter, Converter):
             if inspect.ismethod(converter.convert):
                 return await converter.convert(ctx, argument)
-            else:
-                return await converter().convert(ctx, argument)
-        elif isinstance(converter, Converter):
+            return await converter().convert(ctx, argument)
+
+        if isinstance(converter, Converter):
             return await converter.convert(ctx, argument)  # type: ignore
     except CommandError:
         raise

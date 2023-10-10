@@ -1,3 +1,5 @@
+from typing import Any, ClassVar, Dict
+
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.roles import set_classes
@@ -20,11 +22,11 @@ def visit_summary_node(self, node):
     self.body.append(node.rawsource)
 
 
-def depart_details_node(self, node):
+def depart_details_node(self, _node):
     self.body.append("</details>\n")
 
 
-def depart_summary_node(self, node):
+def depart_summary_node(self, _node):
     self.body.append("</summary>")
 
 
@@ -32,7 +34,7 @@ class DetailsDirective(Directive):
     final_argument_whitespace = True
     optional_arguments = 1
 
-    option_spec = {
+    option_spec: ClassVar[Dict[str, Any]] = {
         "class": directives.class_option,
         "summary-class": directives.class_option,
     }
