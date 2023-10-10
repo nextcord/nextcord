@@ -1277,9 +1277,21 @@ class KeywordPresetType(IntEnum):
 
 
 class AutoModerationActionType(IntEnum):
+    """Represents the action that will be taken if an auto moderation rule is triggered.
+
+    .. versionadded:: 2.1
+    """
     block_message = 1
+    """Blocks a message with content matching the rule."""
     send_alert_message = 2
+    """Logs message content to a specified channel."""
     timeout = 3
+    """Timeout user for a specified duration.
+
+    .. note::
+    
+        This action type can only be used with the :attr:`Permissions.moderate_members` permission.
+    """
 
 
 class SortOrderType(IntEnum):

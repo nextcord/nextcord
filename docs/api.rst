@@ -1402,6 +1402,9 @@ of :class:`enum.Enum`.
 .. autoclass:: KeywordPresetType
     :members:
 
+.. autoclass:: AutoModerationActionType
+    :members:
+
 .. class:: AuditLogAction
 
     Represents the type of action being done for a :class:`AuditLogEntry`\,
@@ -2155,28 +2158,6 @@ of :class:`enum.Enum`.
         - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
 
         .. versionadded:: 2.3
-
-.. class:: AutoModerationActionType
-
-    Represents the action that will be taken if an auto moderation rule is triggered.
-
-    .. versionadded:: 2.1
-
-    .. attribute:: block_message
-
-        Blocks a message with content matching the rule.
-
-    .. attribute:: send_alert_message
-
-        Logs message content to a specified channel.
-
-    .. attribute:: timeout
-
-        Timeout user for a specified duration.
-
-        .. note::
-
-            This action type can only be used with the :attr:`Permissions.moderate_members` permission.
 
 .. class:: SortOrderType
 
