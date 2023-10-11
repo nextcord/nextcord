@@ -1633,23 +1633,47 @@ class InteractionResponseType(IntEnum):
 
 
 class ApplicationCommandType(IntEnum):
+    """Represents the type of application command.
+
+    .. versionadded:: 2.0
+    """
+
     chat_input = 1
+    """The command is a slash command."""
     user = 2
+    """The command is a user context menu command."""
     message = 3
+    """The command is a message context menu command."""
 
 
 class ApplicationCommandOptionType(IntEnum):
+    """Represents the type of application command option.
+
+    .. versionadded:: 2.0
+    """
+
     sub_command = 1
+    """The option is a subcommand."""
     sub_command_group = 2
+    """The option is a subcommand group."""
     string = 3
+    """The option is a string."""
     integer = 4
+    """The option is an integer."""
     boolean = 5
+    """The option is a boolean."""
     user = 6
+    """The option is a user."""
     channel = 7
+    """The option is a channel."""
     role = 8
+    """The option is a role."""
     mentionable = 9
-    number = 10  # A double, AKA floating point.
+    """The option is a mentionable."""
+    number = 10
+    """The option is a number. This is a double, AKA floating point."""
     attachment = 11
+    """The option is an attachment."""
 
 
 class Locale(StrEnum):
