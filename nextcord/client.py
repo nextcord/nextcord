@@ -2199,7 +2199,7 @@ class Client:
         qualified_name: str,
         *,
         type: Union[int, ApplicationCommandType] = ApplicationCommandType.chat_input,
-        guild: Optional[Snowflake] = None,
+        guild: Optional[Union[int, Snowflake]] = None,
         search_localizations: bool = False,
     ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         """Gets a locally stored application command object that matches the given signature.
@@ -2210,7 +2210,7 @@ class Client:
             - Subcommands/Subcommand groups can now be retrieved with this method.
             - ``name`` parameter was refactored to ``qualified_name`` and now accepts subcommands/subcommand groups separated by a space.
             - ``cmd_type`` parameter was refactored to ``type``, defaults to :attr:`.ApplicationCommandType.chat_input` and is now a keyword-only parameter.
-            - ``guild_id`` parameter was refactored to ``guild`` with type :class:`~nextcord.abc.Snowflake`, defaults to ``None`` and is now a keyword-only parameter.
+            - ``guild_id`` parameter was refactored to ``guild`` with type Union[:class:`int`, :class:`~nextcord.abc.Snowflake`], defaults to ``None`` and is now a keyword-only parameter.
 
         Parameters
         ----------
@@ -2235,7 +2235,7 @@ class Client:
         return self._connection.get_application_command_from_signature(
             type=type.value if isinstance(type, ApplicationCommandType) else type,
             qualified_name=qualified_name,
-            guild_id=None if not guild else int(guild.id),
+            guild_id=None if not guild else int(guild.id if not isinstance(guild, int) else guild),
             search_localizations=search_localizations,
         )
 
