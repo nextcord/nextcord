@@ -2219,7 +2219,7 @@ class Client:
             Subcommands must be separated by a space, E.g, ``parent group subcommand``.
         type: Union[:class:`int`, :class:`ApplicationCommandType`]
             Type of application command. Defaults to :attr:`.ApplicationCommandType.chat_input`.
-        guild: Optional[:class:`~nextcord.abc.Snowflake`]
+        guild: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`]]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
             Defaults to ``None``.
         search_localizations: :class:`bool`
