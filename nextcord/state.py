@@ -577,10 +577,9 @@ class ConnectionState:
 
         parent: Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]] = None
 
-        # exit early if no valid string is given
         if not qualified_name:
             return None
-        # exit early if there are no spaces
+
         if " " not in qualified_name:
             return get_parent_command(qualified_name)
 
