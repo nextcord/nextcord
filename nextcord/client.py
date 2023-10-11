@@ -2223,7 +2223,7 @@ class Client:
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
             Defaults to ``None``.
         search_localizations: :class:`bool`
-            Whether to also search through the command's name locales. Defaults to ``False``.
+            Whether to also search through the command's :attr:`~BaseApplicationCommand.name_localizations`. Defaults to ``False``.
 
             .. versionadded:: 3.0
 
