@@ -566,61 +566,730 @@ class AuditLogActionCategory(IntEnum):
 
 
 class AuditLogAction(IntEnum):
-    # fmt: off
-    guild_update                                = 1
-    channel_create                              = 10
-    channel_update                              = 11
-    channel_delete                              = 12
-    overwrite_create                            = 13
-    overwrite_update                            = 14
-    overwrite_delete                            = 15
-    kick                                        = 20
-    member_prune                                = 21
-    ban                                         = 22
-    unban                                       = 23
-    member_update                               = 24
-    member_role_update                          = 25
-    member_move                                 = 26
-    member_disconnect                           = 27
-    bot_add                                     = 28
-    role_create                                 = 30
-    role_update                                 = 31
-    role_delete                                 = 32
-    invite_create                               = 40
-    invite_update                               = 41
-    invite_delete                               = 42
-    webhook_create                              = 50
-    webhook_update                              = 51
-    webhook_delete                              = 52
-    emoji_create                                = 60
-    emoji_update                                = 61
-    emoji_delete                                = 62
-    message_delete                              = 72
-    message_bulk_delete                         = 73
-    message_pin                                 = 74
-    message_unpin                               = 75
-    integration_create                          = 80
-    integration_update                          = 81
-    integration_delete                          = 82
-    stage_instance_create                       = 83
-    stage_instance_update                       = 84
-    stage_instance_delete                       = 85
-    sticker_create                              = 90
-    sticker_update                              = 91
-    sticker_delete                              = 92
-    scheduled_event_create                      = 100
-    scheduled_event_update                      = 101
-    scheduled_event_delete                      = 102
-    thread_create                               = 110
-    thread_update                               = 111
-    thread_delete                               = 112
-    auto_moderation_rule_create                 = 140
-    auto_moderation_rule_update                 = 141
-    auto_moderation_rule_delete                 = 142
-    auto_moderation_block_message               = 143
-    auto_moderation_flag_to_channel             = 144
+    r"""Represents the type of action being done for a :class:`AuditLogEntry`\,
+    which is retrievable via :meth:`nextcord.Guild.audit_logs`.
+    """
+
+    guild_update = 1
+    """The guild has updated. Things that trigger this include:
+
+    - Changing the guild vanity URL
+    - Changing the guild invite splash
+    - Changing the guild AFK channel or timeout
+    - Changing the guild voice server region
+    - Changing the guild icon, banner, or discovery splash
+    - Changing the guild moderation settings
+    - Changing things related to the guild widget
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Guild`.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.afk_channel`
+    - :attr:`~nextcord.AuditLogDiff.system_channel`
+    - :attr:`~nextcord.AuditLogDiff.afk_timeout`
+    - :attr:`~nextcord.AuditLogDiff.default_message_notifications`
+    - :attr:`~nextcord.AuditLogDiff.explicit_content_filter`
+    - :attr:`~nextcord.AuditLogDiff.mfa_level`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.owner`
+    - :attr:`~nextcord.AuditLogDiff.splash`
+    - :attr:`~nextcord.AuditLogDiff.discovery_splash`
+    - :attr:`~nextcord.AuditLogDiff.icon`
+    - :attr:`~nextcord.AuditLogDiff.banner`
+    - :attr:`~nextcord.AuditLogDiff.vanity_url_code`
+    """
+    channel_create = 10
+    """A new channel was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    either a :class:`abc.GuildChannel` or :class:`Object` with an ID.
+
+    A more filled out object in the :class:`Object` case can be found
+    by using :attr:`~AuditLogEntry.after`.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.type`
+    - :attr:`~nextcord.AuditLogDiff.overwrites`
+    """
+    channel_update = 11
+    """A channel was updated. Things that trigger this include:
+
+    - The channel name or topic was changed
+    - The channel bitrate was changed
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`abc.GuildChannel` or :class:`Object` with an ID.
+
+    A more filled out object in the :class:`Object` case can be found
+    by using :attr:`~AuditLogEntry.after` or :attr:`~AuditLogEntry.before`.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.type`
+    - :attr:`~nextcord.AuditLogDiff.position`
+    - :attr:`~nextcord.AuditLogDiff.overwrites`
+    - :attr:`~nextcord.AuditLogDiff.topic`
+    - :attr:`~nextcord.AuditLogDiff.bitrate`
+    - :attr:`~nextcord.AuditLogDiff.rtc_region`
+    - :attr:`~nextcord.AuditLogDiff.video_quality_mode`
+    - :attr:`~nextcord.AuditLogDiff.default_auto_archive_duration`
+    """
+    channel_delete = 12
+    """A channel was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    an :class:`Object` with an ID.
+
+    A more filled out object can be found by using the
+    :attr:`~AuditLogEntry.before` object.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.type`
+    - :attr:`~nextcord.AuditLogDiff.overwrites`
+    """
+    overwrite_create = 13
+    """A channel permission overwrite was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`abc.GuildChannel` or :class:`Object` with an ID.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    either a :class:`Role` or :class:`Member`. If the object is not found
+    then it is a :class:`Object` with an ID being filled, a name, and a
+    ``type`` attribute set to either ``'role'`` or ``'member'`` to help
+    dictate what type of ID it is.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.deny`
+    - :attr:`~nextcord.AuditLogDiff.allow`
+    - :attr:`~nextcord.AuditLogDiff.id`
+    - :attr:`~nextcord.AuditLogDiff.type`
+    """
+    overwrite_update = 14
+    """A channel permission overwrite was changed, this is typically
+    when the permission values change.
+
+    See :attr:`overwrite_create` for more information on how the
+    :attr:`~AuditLogEntry.target` and :attr:`~AuditLogEntry.extra` fields
+    are set.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.deny`
+    - :attr:`~nextcord.AuditLogDiff.allow`
+    - :attr:`~nextcord.AuditLogDiff.id`
+    - :attr:`~nextcord.AuditLogDiff.type`
+    """
+    overwrite_delete = 15
+    """A channel permission overwrite was deleted.
+
+    See :attr:`overwrite_create` for more information on how the
+    :attr:`~AuditLogEntry.target` and :attr:`~AuditLogEntry.extra` fields
+    are set.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.deny`
+    - :attr:`~nextcord.AuditLogDiff.allow`
+    - :attr:`~nextcord.AuditLogDiff.id`
+    - :attr:`~nextcord.AuditLogDiff.type`
+    """
+    kick = 20
+    """A member was kicked.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`User` who got kicked.
+
+    When this is the action, :attr:`~AuditLogEntry.changes` is empty.
+    """
+    member_prune = 21
+    """A member prune was triggered.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    set to ``None``.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with two attributes:
+
+    - ``delete_members_days``: An integer specifying how far the prune was.
+    - ``members_removed``: An integer specifying how many members were removed.
+
+    When this is the action, :attr:`~AuditLogEntry.changes` is empty.
+    """
+    ban = 22
+    """A member was banned.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`User` who got banned.
+
+    When this is the action, :attr:`~AuditLogEntry.changes` is empty.
+    """
+    unban = 23
+    """A member was unbanned.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`User` who got unbanned.
+
+    When this is the action, :attr:`~AuditLogEntry.changes` is empty.
+    """
+    member_update = 24
+    """A member has updated. This triggers in the following situations:
+
+    - A nickname was changed
+    - They were server muted or deafened (or it was undo'd)
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Member` or :class:`User` who got updated.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.nick`
+    - :attr:`~nextcord.AuditLogDiff.mute`
+    - :attr:`~nextcord.AuditLogDiff.deaf`
+    """
+    member_role_update = 25
+    """A member's role has been updated. This triggers when a member
+    either gains a role or loses a role.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Member` or :class:`User` who got the role.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.roles`
+    """
+    member_move = 26
+    """A member's voice channel has been updated. This triggers when a
+    member is moved to a different voice channel.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with two attributes:
+
+    - ``channel``: A :class:`TextChannel` or :class:`Object` with the channel ID where the members were moved.
+    - ``count``: An integer specifying how many members were moved.
+
+    .. versionadded:: 1.3
+    """
+    member_disconnect = 27
+    """A member's voice state has changed. This triggers when a
+    member is force disconnected from voice.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with one attribute:
+
+    - ``count``: An integer specifying how many members were disconnected.
+
+    .. versionadded:: 1.3
+    """
+    bot_add = 28
+    """A bot was added to the guild.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Member` or :class:`User` which was added to the guild.
+
+    .. versionadded:: 1.3
+    """
+    role_create = 30
+    """A new role was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Role` or a :class:`Object` with the ID.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.colour`
+    - :attr:`~nextcord.AuditLogDiff.mentionable`
+    - :attr:`~nextcord.AuditLogDiff.hoist`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.permissions`
+    """
+    role_update = 31
+    """A role was updated. This triggers in the following situations:
+
+    - The name has changed
+    - The permissions have changed
+    - The colour has changed
+    - Its hoist/mentionable state has changed
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Role` or a :class:`Object` with the ID.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.colour`
+    - :attr:`~nextcord.AuditLogDiff.mentionable`
+    - :attr:`~nextcord.AuditLogDiff.hoist`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.permissions`
+    """
+    role_delete = 32
+    """A role was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Role` or a :class:`Object` with the ID.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.colour`
+    - :attr:`~nextcord.AuditLogDiff.mentionable`
+    - :attr:`~nextcord.AuditLogDiff.hoist`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.permissions`
+    """
+    invite_create = 40
+    """An invite was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Invite` that was created.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.max_age`
+    - :attr:`~nextcord.AuditLogDiff.code`
+    - :attr:`~nextcord.AuditLogDiff.temporary`
+    - :attr:`~nextcord.AuditLogDiff.inviter`
+    - :attr:`~nextcord.AuditLogDiff.channel`
+    - :attr:`~nextcord.AuditLogDiff.uses`
+    - :attr:`~nextcord.AuditLogDiff.max_uses`
+    """
+    invite_update = 41
+    """An invite was updated.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Invite` that was updated.
+    """
+    invite_delete = 42
+    """An invite was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Invite` that was deleted.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.max_age`
+    - :attr:`~nextcord.AuditLogDiff.code`
+    - :attr:`~nextcord.AuditLogDiff.temporary`
+    - :attr:`~nextcord.AuditLogDiff.inviter`
+    - :attr:`~nextcord.AuditLogDiff.channel`
+    - :attr:`~nextcord.AuditLogDiff.uses`
+    - :attr:`~nextcord.AuditLogDiff.max_uses`
+    """
+    webhook_create = 50
+    """A webhook was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Object` with the webhook ID.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.channel`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.type` (always set to ``1`` if so)
+    """
+    webhook_update = 51
+    """A webhook was updated. This trigger in the following situations:
+
+    - The webhook name changed
+    - The webhook channel changed
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Object` with the webhook ID.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.channel`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.avatar`
+    """
+    webhook_delete = 52
+    """A webhook was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Object` with the webhook ID.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.channel`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.type` (always set to ``1`` if so)
+    """
+    emoji_create = 60
+    """An emoji was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Emoji` or :class:`Object` with the emoji ID.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    """
+    emoji_update = 61
+    """An emoji was updated. This triggers when the name has changed.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Emoji` or :class:`Object` with the emoji ID.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    """
+    emoji_delete = 62
+    """An emoji was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Object` with the emoji ID.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    """
+    message_delete = 72
+    """A message was deleted by a moderator. Note that this
+    only triggers if the message was deleted by someone other than the author.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Member` or :class:`User` who had their message deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with two attributes:
+
+    - ``count``: An integer specifying how many messages were deleted.
+    - ``channel``: A :class:`TextChannel` or :class:`Object` with the channel ID where the message got deleted.
+    """
+    message_bulk_delete = 73
+    """Messages were bulk deleted by a moderator.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`TextChannel` or :class:`Object` with the ID of the channel that was purged.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with one attribute:
+
+    - ``count``: An integer specifying how many messages were deleted.
+
+    .. versionadded:: 1.3
+    """
+    message_pin = 74
+    """A message was pinned in a channel.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Member` or :class:`User` who had their message pinned.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with two attributes:
+
+    - ``channel``: A :class:`TextChannel` or :class:`Object` with the channel ID where the message was pinned.
+    - ``message_id``: the ID of the message which was pinned.
+
+    .. versionadded:: 1.3
+    """
+    message_unpin = 75
+    """A message was unpinned in a channel.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Member` or :class:`User` who had their message unpinned.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with two attributes:
+
+    - ``channel``: A :class:`TextChannel` or :class:`Object` with the channel ID where the message was unpinned.
+    - ``message_id``: the ID of the message which was unpinned.
+
+    .. versionadded:: 1.3
+    """
+    integration_create = 80
+    """A guild integration was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Object` with the integration ID of the integration which was created.
+
+    .. versionadded:: 1.3
+    """
+    integration_update = 81
+    """A guild integration was updated.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Object` with the integration ID of the integration which was updated.
+
+    .. versionadded:: 1.3
+    """
+    integration_delete = 82
+    """A guild integration was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Object` with the integration ID of the integration which was deleted.
+
+    .. versionadded:: 1.3
+    """
+    stage_instance_create = 83
+    """A stage instance was started.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`StageInstance` or :class:`Object` with the ID of the stage
+    instance which was created.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.topic`
+    - :attr:`~nextcord.AuditLogDiff.privacy_level`
+
+    .. versionadded:: 2.0
+    """
+    stage_instance_update = 84
+    """A stage instance was updated.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`StageInstance` or :class:`Object` with the ID of the stage
+    instance which was updated.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.topic`
+    - :attr:`~nextcord.AuditLogDiff.privacy_level`
+
+    .. versionadded:: 2.0
+    """
+    stage_instance_delete = 85
+    """A stage instance was ended.
+
+    .. versionadded:: 2.0
+    """
+    sticker_create = 90
+    """A sticker was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`GuildSticker` or :class:`Object` with the ID of the sticker
+    which was updated.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.emoji`
+    - :attr:`~nextcord.AuditLogDiff.type`
+    - :attr:`~nextcord.AuditLogDiff.format_type`
+    - :attr:`~nextcord.AuditLogDiff.description`
+    - :attr:`~nextcord.AuditLogDiff.available`
+
+    .. versionadded:: 2.0
+    """
+    sticker_update = 91
+    """A sticker was updated.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`GuildSticker` or :class:`Object` with the ID of the sticker
+    which was updated.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.emoji`
+    - :attr:`~nextcord.AuditLogDiff.type`
+    - :attr:`~nextcord.AuditLogDiff.format_type`
+    - :attr:`~nextcord.AuditLogDiff.description`
+    - :attr:`~nextcord.AuditLogDiff.available`
+
+    .. versionadded:: 2.0
+    """
+    sticker_delete = 92
+    """A sticker was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`GuildSticker` or :class:`Object` with the ID of the sticker
+    which was updated.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.emoji`
+    - :attr:`~nextcord.AuditLogDiff.type`
+    - :attr:`~nextcord.AuditLogDiff.format_type`
+    - :attr:`~nextcord.AuditLogDiff.description`
+    - :attr:`~nextcord.AuditLogDiff.available`
+
+    .. versionadded:: 2.0
+    """
+    scheduled_event_create = 100
+    """A scheduled event was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`ScheduledEvent` or :class:`Object` with the ID of the scheduled event which
+    was created.
+    """
+    scheduled_event_update = 101
+    """A scheduled event was updated.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`ScheduledEvent` or :class:`Object` with the ID of the scheduled event which
+    was created.
+    """
+    scheduled_event_delete = 102
+    """A scheduled event was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`ScheduledEvent` or :class:`Object` with the ID of the scheduled event which
+    was created.
+    """
+    thread_create = 110
+    """A thread was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Thread` or :class:`Object` with the ID of the thread which
+    was created.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.archived`
+    - :attr:`~nextcord.AuditLogDiff.locked`
+    - :attr:`~nextcord.AuditLogDiff.auto_archive_duration`
+
+    .. versionadded:: 2.0
+    """
+    thread_update = 111
+    """A thread was updated.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Thread` or :class:`Object` with the ID of the thread which
+    was updated.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.archived`
+    - :attr:`~nextcord.AuditLogDiff.locked`
+    - :attr:`~nextcord.AuditLogDiff.auto_archive_duration`
+
+    .. versionadded:: 2.0
+    """
+    thread_delete = 112
+    """A thread was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Thread` or :class:`Object` with the ID of the thread which
+    was deleted.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.archived`
+    - :attr:`~nextcord.AuditLogDiff.locked`
+    - :attr:`~nextcord.AuditLogDiff.auto_archive_duration`
+
+    .. versionadded:: 2.0
+    """
+    auto_moderation_rule_create = 140
+    """An auto moderation rule was created.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`AutoModerationRule` or :class:`Object` with the ID of the
+    rule which was created.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.actions`
+    - :attr:`~nextcord.AuditLogDiff.enabled`
+    - :attr:`~nextcord.AuditLogDiff.exempt_channels`
+    - :attr:`~nextcord.AuditLogDiff.exempt_roles`
+    - :attr:`~nextcord.AuditLogDiff.event_type`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.trigger_type`
+    - :attr:`~nextcord.AuditLogDiff.trigger_metadata`
+
+    .. versionadded:: 2.1
+    """
+    auto_moderation_rule_update = 141
+    """An auto moderation rule was updated.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`AutoModerationRule` or :class:`Object` with the ID of the
+    rule which was updated.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.actions`
+    - :attr:`~nextcord.AuditLogDiff.enabled`
+    - :attr:`~nextcord.AuditLogDiff.exempt_channels`
+    - :attr:`~nextcord.AuditLogDiff.exempt_roles`
+    - :attr:`~nextcord.AuditLogDiff.event_type`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.trigger_type`
+    - :attr:`~nextcord.AuditLogDiff.trigger_metadata`
+
+    .. versionadded:: 2.1
+    """
+    auto_moderation_rule_delete = 142
+    """An auto moderation rule was deleted.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`AutoModerationRule` or :class:`Object` with the ID of the
+    rule which was deleted.
+
+    Possible attributes for :class:`nextcord.AuditLogDiff`:
+
+    - :attr:`~nextcord.AuditLogDiff.actions`
+    - :attr:`~nextcord.AuditLogDiff.enabled`
+    - :attr:`~nextcord.AuditLogDiff.exempt_channels`
+    - :attr:`~nextcord.AuditLogDiff.exempt_roles`
+    - :attr:`~nextcord.AuditLogDiff.event_type`
+    - :attr:`~nextcord.AuditLogDiff.name`
+    - :attr:`~nextcord.AuditLogDiff.trigger_type`
+    - :attr:`~nextcord.AuditLogDiff.trigger_metadata`
+
+    .. versionadded:: 2.1
+    """
+    auto_moderation_block_message = 143
+    """A message was blocked by an auto moderation rule.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Member` or :class:`User` whose message was blocked.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with these three attributes:
+
+    - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the message was blocked.
+    - ``rule_name``: A :class:`str` with the name of the rule.
+    - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+    .. versionadded:: 2.1
+    """
+    auto_moderation_flag_to_channel = 144
+    """A message was flagged by an auto moderation rule.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Member` or :class:`User` whose message was flagged.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with these three attributes:
+
+    - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the message was flagged.
+    - ``rule_name``: A :class:`str` with the name of the rule.
+    - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+    .. versionadded:: 2.3
+    """
     auto_moderation_user_communication_disabled = 145
-    # fmt: on
+    """A member was timed out by an auto moderation rule.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`Member` or :class:`User` who was timed out.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.extra` is
+    set to an unspecified proxy object with these three attributes:
+
+    - ``channel``: A :class:`~abc.GuildChannel`, :class:`Thread` or :class:`Object` with the channel ID where the member was timed out.
+    - ``rule_name``: A :class:`str` with the name of the rule.
+    - ``rule_trigger_type``: A :class:`AutoModerationTriggerType` value with the trigger type of the rule.
+
+    .. versionadded:: 2.3
+    """
 
     @property
     def category(self) -> Optional[AuditLogActionCategory]:
