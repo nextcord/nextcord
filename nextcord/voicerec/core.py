@@ -226,7 +226,7 @@ class RecorderClient(VoiceClient):
     async def voice_connect(self, deaf=None, mute=None) -> None:
         await self.channel.guild.change_voice_state(
             channel=self.channel,
-            self_deaf=(deaf if deaf is not None else (True if self.auto_deaf else False)),
+            self_deaf=(deaf if deaf is not None else (bool(self.auto_deaf))),
             self_mute=mute or False,
         )
 
@@ -357,6 +357,7 @@ class RecorderClient(VoiceClient):
                     self._process_audio_packet(self.socket.recv(RECV_SIZE))
             except OSError:
                 return self._stop_recording()
+        return None
 
     def _start_recording(self) -> None:
         if (
@@ -397,7 +398,7 @@ class RecorderClient(VoiceClient):
 
     def _stop_recording(self) -> AudioData:
         if not (time_tracker := self.time_tracker):  # stops the recording loop
-            raise NotRecordingError(f"There is no ongoing recording to stop.")
+            raise NotRecordingError("There is no ongoing recording to stop.")
 
         if (audio_data := self.audio_data) is None:
             raise TempNotFound("Audio data not found!")
@@ -434,7 +435,7 @@ class RecorderClient(VoiceClient):
                 raise ExportUnavailable(
                     "Cannot export incomplete audio recordings due to setting a custom handler!"
                 )
-            return
+            return None
 
         if not export_format:
             return audio_data

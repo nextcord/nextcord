@@ -43,7 +43,6 @@ ffmpeg_default_arg = (
 )
 
 
-# format: (format_extension, output_format)
 ffmpeg_args = {
     Formats.MP3: ("mp3", "mp3"),
     Formats.MP4: ("mp4", "mp4"),
