@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MIT
+# ruff: noqa: PLW0603
 
 from __future__ import annotations
 
@@ -106,7 +107,7 @@ signal_ctl: SignalCtl = {
 }
 
 
-def _err_lt(result: int, func: Callable, args: List) -> int:
+def _err_lt(result: int, func: Callable, _args: List) -> int:
     if result < OK:
         _log.info("error has happened in %s", func.__name__)
         raise OpusError(result)
@@ -235,10 +236,7 @@ def _load_default() -> bool:
         else:
             opus = ctypes.util.find_library("opus")
 
-            if opus is None:
-                _lib = None
-            else:
-                _lib = libopus_loader(opus)
+            _lib = None if opus is None else libopus_loader(opus)
     except Exception:
         _lib = None
 
@@ -295,7 +293,6 @@ def is_loaded() -> bool:
     :class:`bool`
         Indicates if the opus library has been loaded.
     """
-    global _lib
     return _lib is not None
 
 
@@ -318,8 +315,6 @@ class OpusError(DiscordException):
 class OpusNotLoaded(DiscordException):
     """An exception that is thrown for when libopus is not loaded."""
 
-    pass
-
 
 class _OpusStruct:
     SAMPLING_RATE = 48000
@@ -333,7 +328,7 @@ class _OpusStruct:
     @staticmethod
     def get_opus_version() -> str:
         if not is_loaded() and not _load_default():
-            raise OpusNotLoaded()
+            raise OpusNotLoaded
 
         return _lib.opus_get_version_string().decode("utf-8")
 
