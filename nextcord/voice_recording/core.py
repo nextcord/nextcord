@@ -478,7 +478,7 @@ class RecorderClient(VoiceClient):
         self.recording_paused = False
 
     def toggle_recording_paused(self) -> None:
-        self.recording_paused = True if self.recording_paused is False else False
+        self.recording_paused = self.recording_paused is False
 
     def _stop_recording(self) -> AudioData:
         if not (time_tracker := self.time_tracker):  # stops the recording loop
