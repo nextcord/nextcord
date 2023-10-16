@@ -83,9 +83,7 @@ class Silence:
     @classmethod
     def from_timedelta(cls, silence: int):
         half_frames = int(silence / SILENCE_FRAME_SIZE)
-        if half_frames <= 0:
-            return None
-        return cls(half_frames * DecoderThread.CHANNELS)
+        return None if half_frames <= 0 else cls(half_frames * DecoderThread.CHANNELS)
 
 
 class UserFilter:
@@ -218,7 +216,7 @@ class TimeTracker:
         return Silence.from_timedelta(silence)
 
 
-class AudioData(dict[int, AudioWriter]):
+class AudioData(Dict[int, AudioWriter]):
     def __init__(self, decoder: DecoderThread) -> None:
         self.time_tracker: Optional[TimeTracker] = None
         self.decoder: DecoderThread = decoder
@@ -268,7 +266,7 @@ class OpusFrame:
     timestamp: float
     received_timestamp: float
     ssrc: int
-    decrypted_data: bytes
+    decrypted_data: Optional[bytes]
     decoded_data: Optional[bytes] = None
     user_id: Optional[int] = None
 
@@ -480,7 +478,7 @@ class RecorderClient(VoiceClient):
         self.recording_paused = False
 
     def toggle_recording_paused(self) -> None:
-        self.recording_paused = True if self.recording_paused is False else True
+        self.recording_paused = True if self.recording_paused is False else False
 
     def _stop_recording(self) -> AudioData:
         if not (time_tracker := self.time_tracker):  # stops the recording loop

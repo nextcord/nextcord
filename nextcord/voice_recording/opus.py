@@ -43,9 +43,9 @@ class DecoderThread(Thread, opus._OpusStruct):
             try:
                 if opus_frame.decrypted_data is None:
                     continue
-                else:
-                    decoder = self.get_decoder(opus_frame.ssrc)
-                    opus_frame.decoded_data = decoder.decode(opus_frame.decrypted_data, fec=False)
+
+                decoder = self.get_decoder(opus_frame.ssrc)
+                opus_frame.decoded_data = decoder.decode(opus_frame.decrypted_data, fec=False)
             except InvalidArgument:
                 print("Error occurred while decoding opus frame.")
                 continue
