@@ -3,29 +3,23 @@
 import logging
 import os
 from dataclasses import dataclass
+from io import BufferedIOBase, BufferedRandom, BufferedWriter, BytesIO
 from select import select
 from struct import pack, unpack_from
+from sys import version_info as PYTHON_VERSION
 from threading import Thread
 from time import perf_counter, sleep, time as clock_timestamp
-from typing import Any, Dict, Callable, Iterable, Optional, Union
-from io import BufferedIOBase, BufferedRandom, BufferedWriter, BytesIO
-from sys import version_info as PYTHON_VERSION
+from typing import Any, Callable, Dict, Iterable, Optional, Union
 
-from nextcord import StageChannel, VoiceChannel, VoiceClient, Member, User
+from nextcord import Member, StageChannel, User, VoiceChannel, VoiceClient
 from nextcord.client import Client
 from nextcord.utils import MISSING
 
 from . import decrypter
-from .exporters import (
-    export_with_ffmpeg,
-    export_as_PCM,
-    export_as_WAV,
-    AudioFile
-)
-from .opus import DecoderThread
 from .errors import *
+from .exporters import AudioFile, export_as_PCM, export_as_WAV, export_with_ffmpeg
+from .opus import DecoderThread
 from .shared import *
-
 
 ConnectableVoiceChannels = Union[VoiceChannel, StageChannel]
 
@@ -58,7 +52,7 @@ export_methods = {
 
 
 class Silence:
-    __slots__ = ("frames", )
+    __slots__ = ("frames",)
 
     def __init__(self, frames: int) -> None:
         self.frames: int = frames
@@ -98,13 +92,11 @@ class UserFilter:
     __slots__ = ("users", "client")
 
     def __init__(
-        self,
-        client = None,
-        iterable: Optional[Iterable[Union[int, User, Member]]] = None
+        self, client=None, iterable: Optional[Iterable[Union[int, User, Member]]] = None
     ) -> None:
         self.users = set()
         self.client: Optional[RecorderClient] = client
-        
+
         if iterable:
             self.users.update(iterable)
 
@@ -117,7 +109,7 @@ class UserFilter:
 
         if isinstance(user, int):
             return user
-        
+
         if isinstance(user, (Member, User)):
             return user.id
 
@@ -127,10 +119,7 @@ class UserFilter:
         return self.users.add(self._get_id(user))
 
     def extend(self, iterable: Iterable[Union[int, User, Member]]) -> None:
-        users = set(
-            self._get_id(u)
-            for u in iterable
-        )
+        users = {self._get_id(u) for u in iterable}
 
         return self.users.update(users)
 
@@ -159,16 +148,16 @@ class AudioWriter:
         elif tmp_type == TmpType.Memory:
             self.buffer = BytesIO()
         else:
-            raise TypeError(
-                f"Arg `tmp_type` must be of type `TmpType` not `{type(tmp_type)}`"
-            )
+            raise TypeError(f"Arg `tmp_type` must be of type `TmpType` not `{type(tmp_type)}`")
 
     def write(self, bytes) -> None:
         if not self.buffer.closed:
             self.buffer.write(bytes)
-    
-    def close(self):
-        name = self.buffer.name if isinstance(self.buffer, (BufferedRandom, BufferedWriter)) else None
+
+    def close(self) -> None:
+        name = (
+            self.buffer.name if isinstance(self.buffer, (BufferedRandom, BufferedWriter)) else None
+        )
         self.buffer.close()
 
         if name:
@@ -198,10 +187,7 @@ class TimeTracker:
             difference = abs(100 - (delta_created_time * 100 / delta_received_time))
 
             # calculate time since last audio packet
-            if (
-                difference > DIFFERENCE_THRESHOLD
-                and delta_created_time != SILENCE_FRAME_SIZE
-            ):
+            if difference > DIFFERENCE_THRESHOLD and delta_created_time != SILENCE_FRAME_SIZE:
                 silence = delta_received_time - SILENCE_FRAME_SIZE
             else:
                 silence = delta_created_time - SILENCE_FRAME_SIZE
@@ -237,9 +223,7 @@ class AudioData(dict[int, AudioWriter]):
         self.time_tracker: Optional[TimeTracker] = None
         self.decoder: DecoderThread = decoder
 
-    def get_writer(
-        self, tmp_type: TmpType, guild_id: int, user_id: int
-    ) -> AudioWriter:
+    def get_writer(self, tmp_type: TmpType, guild_id: int, user_id: int) -> AudioWriter:
         return self.get(user_id) or self.add_new_writer(
             user_id, AudioWriter(tmp_type, guild_id, user_id)
         )
@@ -247,7 +231,7 @@ class AudioData(dict[int, AudioWriter]):
     def add_new_writer(self, user_id: int, writer: AudioWriter) -> AudioWriter:
         self[user_id] = writer
         return writer
-    
+
     def remove_writer(self, user_id: int):
         return w.close() if (w := self.pop(user_id, None)) else w
 
@@ -264,17 +248,13 @@ class AudioData(dict[int, AudioWriter]):
         audio_format: Formats,
         tmp_type: TmpType,
         sync_start: bool = True,
-        filters: Optional[UserFilter] = None
+        filters: Optional[UserFilter] = None,
     ) -> Dict[int, AudioFile]:
         if not self.time_tracker:
-            raise OngoingRecordingError(
-                "Cannot export a recording before it is stopped!"
-            )
+            raise OngoingRecordingError("Cannot export a recording before it is stopped!")
 
         if not isinstance(audio_format, Formats):
-            raise TypeError(
-                f"audio_format must be of type `Formats` not {type(audio_format)}"
-            )
+            raise TypeError(f"audio_format must be of type `Formats` not {type(audio_format)}")
 
         return await export_methods[audio_format](
             self, audio_format, tmp_type, sync_start=sync_start, filters=filters  # individual files
@@ -326,9 +306,7 @@ class RecorderClient(VoiceClient):
     async def voice_connect(self, deaf=None, mute=None) -> None:
         await self.channel.guild.change_voice_state(
             channel=self.channel,
-            self_deaf=(
-                deaf if deaf is not None else (True if self.auto_deaf else False)
-            ),
+            self_deaf=(deaf if deaf is not None else (bool(self.auto_deaf))),
             self_mute=mute or False,
         )
 
@@ -340,7 +318,7 @@ class RecorderClient(VoiceClient):
         raw_data_handler: Optional[Callable[[bytes], Any]] = None,
         decrypted_data_handler: Optional[Callable[[OpusFrame], Any]] = None,
         decoded_data_handler: Optional[Callable[[OpusFrame], Any]] = None,
-        record_alongside_handler=False,
+        record_alongside_handler: bool = False,
     ) -> None:
         self.__record_alongside_handler = record_alongside_handler
         self.__raw_data_handler = raw_data_handler
@@ -377,10 +355,10 @@ class RecorderClient(VoiceClient):
             self.__decoded_data_handler(opus_frame)
             # terminate early after calling custom decoded handler method if not set to record too
             if not self.__record_alongside_handler:
-                return
+                return None
 
         if self.audio_data is None or self.time_tracker is None or not self.guild:
-            return
+            return None
 
         ssrc_cache = self.ws.ssrc_cache
         while not (user_data := ssrc_cache.get(opus_frame.ssrc)):
@@ -389,7 +367,7 @@ class RecorderClient(VoiceClient):
         user_id = user_data["user_id"]
         if user_id in self.filters:
             return self.audio_data.remove_writer(user_id)
-        
+
         writer = self.audio_data.get_writer(self.tmp_type, self.guild.id, user_id)
 
         silence: Optional[Silence] = self.time_tracker.calculate_silence(
@@ -403,6 +381,7 @@ class RecorderClient(VoiceClient):
             silence.write_to(writer.buffer)
 
         writer.write(opus_frame.decoded_data)
+        return None
 
     def _decode_audio(self, data: bytes) -> None:
         if 200 <= data[1] <= 204:
@@ -414,13 +393,9 @@ class RecorderClient(VoiceClient):
         data = data[12:]
 
         sequence, timestamp, ssrc = unpack_from(">xxHII", header)
-        decrypted_data = getattr(decrypter, f"decrypt_{self.mode}")(
-            self.secret_key, header, data
-        )
+        decrypted_data = getattr(decrypter, f"decrypt_{self.mode}")(self.secret_key, header, data)
 
-        opus_frame = OpusFrame(
-            sequence, timestamp, perf_counter(), ssrc, decrypted_data
-        )
+        opus_frame = OpusFrame(sequence, timestamp, perf_counter(), ssrc, decrypted_data)
 
         if self.__decrypted_data_handler:
             self.__decrypted_data_handler(opus_frame)
@@ -466,6 +441,7 @@ class RecorderClient(VoiceClient):
                     self._process_audio_packet(self.socket.recv(RECV_SIZE))
             except OSError:
                 return self._stop_recording()
+        return None
 
     def _start_recording(self) -> None:
         self.recording_paused = False
@@ -479,9 +455,7 @@ class RecorderClient(VoiceClient):
 
         Thread(target=self._start_packets_recording).start()
 
-    async def start_recording(
-        self, channel: Optional[ConnectableVoiceChannels] = None
-    ) -> None:
+    async def start_recording(self, channel: Optional[ConnectableVoiceChannels] = None) -> None:
         if self.time_tracker:
             raise OngoingRecordingError(
                 f"A recording has already started at {self.time_tracker.starting_time}"
@@ -510,7 +484,7 @@ class RecorderClient(VoiceClient):
 
     def _stop_recording(self) -> AudioData:
         if not (time_tracker := self.time_tracker):  # stops the recording loop
-            raise NotRecordingError(f"There is no ongoing recording to stop.")
+            raise NotRecordingError("There is no ongoing recording to stop.")
 
         if (audio_data := self.audio_data) is None:
             raise TmpNotFound("Audio data not found!")
@@ -533,7 +507,7 @@ class RecorderClient(VoiceClient):
         export_format: Optional[Formats] = None,
         tmp_type: TmpType = TmpType.File,  # memory tmp export will not work with m4a & mp4
         sync_start: bool = True,
-        filters: Optional[UserFilter] = MISSING
+        filters: Optional[UserFilter] = MISSING,
     ) -> Optional[Union[AudioData, Dict[int, AudioFile]]]:
         audio_data: AudioData = self._stop_recording()
 
@@ -548,11 +522,11 @@ class RecorderClient(VoiceClient):
                 raise ExportUnavailable(
                     "Cannot export incomplete audio recordings due to setting a custom handler!"
                 )
-            return
+            return None
 
         if not export_format:
             return audio_data
-        
+
         if filters:
             return await audio_data.export(export_format, tmp_type, sync_start, filters)
         elif filters is MISSING:

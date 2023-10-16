@@ -12,7 +12,6 @@ try:
             data = data[offset:]
         return data
 
-
     def decrypt_xsalsa20_poly1305(secret_key, header, data):
         box = SecretBox(bytes(secret_key))
 
@@ -21,7 +20,6 @@ try:
 
         return strip_header_ext(box.decrypt(bytes(data), bytes(nonce)))
 
-
     def decrypt_xsalsa20_poly1305_suffix(secret_key, _, data):
         box = SecretBox(bytes(secret_key))
 
@@ -29,7 +27,6 @@ try:
         nonce = data[-nonce_size:]
 
         return strip_header_ext(box.decrypt(bytes(data[:-nonce_size]), nonce))
-
 
     def decrypt_xsalsa20_poly1305_lite(secret_key, _, data):
         box = SecretBox(bytes(secret_key))

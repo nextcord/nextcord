@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: MIT
 
 from enum import Enum
-from os import makedirs, getcwd
+from os import getcwd, makedirs
 from os.path import dirname
 from pathlib import Path
-
 
 TMP_DIR = ".rectmps"
 

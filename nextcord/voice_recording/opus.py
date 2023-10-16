@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import logging
-from threading import Thread, Event
+from threading import Event, Thread
 from time import sleep
 from typing import TYPE_CHECKING, Dict
 
@@ -12,10 +12,8 @@ from nextcord import opus
 from nextcord.errors import InvalidArgument
 
 if TYPE_CHECKING:
-    from .core import (
-        OpusFrame,
-        RecorderClient
-    )
+    from .core import OpusFrame, RecorderClient
+
 
 class DecoderThread(Thread, opus._OpusStruct):
     def __init__(self, recorder) -> None:
@@ -26,7 +24,7 @@ class DecoderThread(Thread, opus._OpusStruct):
         self.decoder: Dict[int, opus.Decoder] = {}
         self._end = Event()
 
-    def start(self):
+    def start(self) -> None:
         self._end = Event()
         super().start()
 
@@ -37,7 +35,7 @@ class DecoderThread(Thread, opus._OpusStruct):
         while not self._end.is_set():
             try:
                 opus_frame: OpusFrame = self.decode_queue.pop(0)
-                
+
             except IndexError:
                 sleep(0.001)
                 continue
@@ -47,9 +45,7 @@ class DecoderThread(Thread, opus._OpusStruct):
                     continue
                 else:
                     decoder = self.get_decoder(opus_frame.ssrc)
-                    opus_frame.decoded_data = decoder.decode(
-                        opus_frame.decrypted_data, fec=False
-                    )
+                    opus_frame.decoded_data = decoder.decode(opus_frame.decrypted_data, fec=False)
             except InvalidArgument:
                 print("Error occurred while decoding opus frame.")
                 continue
