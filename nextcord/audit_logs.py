@@ -462,11 +462,10 @@ class AuditLogEntry(Hashable):
 
         # this key is technically not usually present
         self.reason = data.get("reason")
-        self.extra = data.get("options", {})  # type: ignore
-        # I gave up trying to fix this
+        self.extra = extra = data.get("options", {})  # type: ignore
 
         elems: Dict[str, Any] = {}
-        channel_id = int(self.extra["channel_id"]) if self.extra.get("channel_id", None) else None
+        channel_id = int(extra["channel_id"]) if extra.get("channel_id", None) else None
 
         if isinstance(self.action, enums.AuditLogAction) and self.extra:
             if self.action is enums.AuditLogAction.member_prune:
@@ -479,21 +478,21 @@ class AuditLogEntry(Hashable):
                 or self.action is enums.AuditLogAction.message_delete
             ):
                 elems = {
-                    "count": int(self.extra["count"]),
+                    "count": int(extra["count"]),
                 }
             elif self.action is enums.AuditLogAction.member_disconnect:
                 # The member disconnect action has a dict with some information
                 elems = {
-                    "count": int(self.extra["count"]),
+                    "count": int(extra["count"]),
                 }
             elif self.action.name.endswith("pin"):
                 # the pin actions have a dict with some information
                 elems = {
-                    "message_id": int(self.extra["message_id"]),
+                    "message_id": int(extra["message_id"]),
                 }
             elif self.action.name.startswith("overwrite_"):
                 # the overwrite_ actions have a dict with some information
-                instance_id = int(self.extra["id"])
+                instance_id = int(extra["id"])
                 the_type = self.extra.get("type")
                 if the_type == "1":
                     self.extra = self._get_member(instance_id)
@@ -504,7 +503,7 @@ class AuditLogEntry(Hashable):
                         role.name = self.extra.get("role_name")  # type: ignore
                     self.extra = role  # type: ignore
             elif self.action.name.startswith("stage_instance"):
-                channel_id = int(self.extra["channel_id"])
+                channel_id = int(extra["channel_id"])
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
             elif (
                 self.action is enums.AuditLogAction.auto_moderation_block_message
@@ -512,10 +511,10 @@ class AuditLogEntry(Hashable):
                 or self.action is enums.AuditLogAction.auto_moderation_user_communication_disabled
             ):
                 elems = {
-                    "rule_name": self.extra["auto_moderation_rule_name"],
+                    "rule_name": extra["auto_moderation_rule_name"],
                     "rule_trigger_type": enums.try_enum(
                         enums.AutoModerationTriggerType,
-                        int(self.extra["auto_moderation_rule_trigger_type"]),
+                        int(extra["auto_moderation_rule_trigger_type"]),
                     ),
                 }
 

@@ -1099,7 +1099,7 @@ class AutocompleteCommandMixin:
                 raise ValueError("Discord did not provide us interaction data")
 
             # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})  # type: ignore
+            option_data = interaction.data.get("options", {})
 
             if not option_data:
                 raise ValueError("Discord did not provide us option data")
