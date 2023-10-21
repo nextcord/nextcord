@@ -11,7 +11,7 @@ from threading import Thread
 from time import perf_counter, sleep, time as clock_timestamp
 from typing import Any, Callable, Dict, Iterable, Optional, Union
 
-from nextcord import Member, StageChannel, User, VoiceChannel, VoiceClient
+from nextcord import Member, User, VoiceClient
 from nextcord.abc import Connectable
 from nextcord.client import Client
 from nextcord.utils import MISSING
@@ -21,7 +21,6 @@ from .errors import *
 from .exporters import AudioFile, export_as_PCM, export_as_WAV, export_with_ffmpeg
 from .opus import DecoderThread
 from .shared import *
-
 
 AUDIO_HZ = DecoderThread.SAMPLING_RATE
 SILENCE_FRAME_SIZE = 960
@@ -92,7 +91,7 @@ class RecordingFilter:
         self,
         client=None,
         iterable: Optional[Iterable[Union[int, User, Member]]] = None,
-        ignored_after: Optional[int] = None
+        ignored_after: Optional[int] = None,
     ) -> None:
         self.users = set()
         self.client: Optional[RecorderClient] = client
@@ -130,7 +129,7 @@ class RecordingFilter:
     def discard(self, user: Union[int, User, Member]) -> None:
         return self.users.discard(self._get_id(user))
 
-    def clear(self):
+    def clear(self) -> None:
         self.users.clear()
 
     def __contains__(self, key: Union[int, User, Member]) -> bool:
@@ -230,6 +229,7 @@ class AudioData(Dict[int, AudioWriter]):
     This is usually not meant to be created, it is received when you stop a recording
     without specifying an export format.
     """
+
     def __init__(self, decoder: DecoderThread) -> None:
         self.time_tracker: Optional[TimeTracker] = None
         self.decoder: DecoderThread = decoder
@@ -641,8 +641,7 @@ class RecorderClient(VoiceClient):
         self.recording_paused = False
 
     def toggle_recording_paused(self) -> None:
-        """Toggleing whether a recording is paused if there is an ongoing one.
-        """
+        """Toggleing whether a recording is paused if there is an ongoing one."""
 
         self.recording_paused = self.recording_paused is False
 
