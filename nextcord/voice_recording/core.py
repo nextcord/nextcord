@@ -226,7 +226,7 @@ class AudioData(Dict[int, AudioWriter]):
     """A container to hold the :class:`AudioWriter` associated with each user's id
     during a recording, as well as the :class:`TimeTracker` specifying the details of
     the timings of the received packets (assigned on recording stopped).
-    
+
     This is usually not meant to be created, it is received when you stop a recording
     without specifying an export format.
     """
@@ -240,7 +240,7 @@ class AudioData(Dict[int, AudioWriter]):
 
     def get_writer(self, tmp_type: TmpType, guild_id: int, user_id: int) -> AudioWriter:
         """Gets or creates an :class:`AudioWriter` for a specific user.
-        
+
         Parameters
         ----------
         tmp_type: class:`TmpType`
@@ -271,7 +271,7 @@ class AudioData(Dict[int, AudioWriter]):
 
     def process_filters(self, filters: Optional[RecordingFilter]) -> None:
         """Removes the writers that match the designated filters
-        
+
         Parameters
         ----------
         filters: :class:`RecordingFilter`
@@ -445,7 +445,7 @@ class RecorderClient(VoiceClient):
         Setting a data handler allows the RecorderClient to output the data from discord
         to your own method for handling instead of recording the audio. This is useful if
         you are streaming this data somewhere else directly and don't want to record the data.
-        
+
         .. note:: You may only set one data handler.
 
         Parameters
@@ -465,7 +465,7 @@ class RecorderClient(VoiceClient):
         MultipleHandlersError
             Multiple handlers were passed when calling this method.
         """
-        
+
         self.__record_alongside_handler = record_alongside_handler
         self.__raw_handler = raw_data_handler
         self.__decrypted_handler = decrypted_data_handler
