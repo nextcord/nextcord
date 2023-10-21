@@ -13,6 +13,7 @@ from threading import Thread
 from time import perf_counter, sleep, time as clock_timestamp
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Optional, Union
 
+import nextcord.voice_client as nc_vc
 from nextcord.utils import MISSING
 
 from . import decrypter
@@ -22,7 +23,7 @@ from .opus import DecoderThread
 from .shared import *
 
 if TYPE_CHECKING:
-    from nextcord import Member, User, VoiceClient
+    from nextcord import Member, User
     from nextcord.abc import Connectable
     from nextcord.client import Client
 
@@ -343,7 +344,7 @@ class OpusFrame:
     user_id: Optional[int] = None
 
 
-class RecorderClient(VoiceClient):
+class RecorderClient(nc_vc.VoiceClient):
     """Represents a Discord voice connection that is able to receive audio packets.
 
     This is returned when passing `recordable=True` when connecting to a voice channel.
