@@ -639,23 +639,23 @@ class SelectDefault:
     @classmethod
     def channel(cls, id: int) -> SelectDefault:
         """Constructs a channel select default.
-        
+
         Parameters
         ----------
         id: :class:`int`
             The ID of the channel."""
-        
+
         return cls(id, type=SelectDefaultType.channel)
 
     @classmethod
     def role(cls, id: int) -> SelectDefault:
         """Constructs a role select default.
-        
+
         Parameters
         ----------
         id: :class:`int`
             The ID of the role."""
-        
+
         return cls(id, type=SelectDefaultType.role)
 
     @classmethod
@@ -666,7 +666,7 @@ class SelectDefault:
         ----------
         id: :class:`int`
             The ID of the user."""
-        
+
         return cls(id, type=SelectDefaultType.user)
 
     @classmethod
@@ -674,17 +674,17 @@ class SelectDefault:
         cls, value: Union[GuildChannel, Member, PartialMessageable, Role, User]
     ) -> SelectDefault:
         """Constructs a select default from a value.
-        
+
         Currently, the following types are supported: :class:`.abc.GuildChannel`, :class:`.Member`,
         :class:`.abc.PartialMessageable`, :class:`.Role`, and :class:`.User`. If the value is not
         one of these types, then a :exc:`TypeError` is raised. If the value is one of these types,
         then the type of this select default is automatically inferred.
-        
+
         Parameters
         ----------
         value: Union[:class:`.abc.GuildChannel`, :class:`.Member`, :class:`.abc.PartialMessageable`, :class:`.Role`, :class:`.User`]
             The value to construct from."""
-        
+
         if isinstance(value, (GuildChannel, PartialMessageable)):
             return cls.channel(value.id)
         elif isinstance(value, (Member, User)):
@@ -695,7 +695,7 @@ class SelectDefault:
             raise TypeError(
                 f"Expected object to be GuildChannel, Member, PartialMessageable, Role, or User not {value.__class__}"
             )
-        
+
     @classmethod
     def from_dict(cls, data: SelectDefaultPayload) -> SelectDefault:
         return cls(
