@@ -4626,6 +4626,14 @@ SelectOption
 .. autoclass:: SelectOption
     :members:
 
+SelectDefault
+~~~~~~~~~~~~~
+
+.. attributetable:: SelectDefault
+
+.. autoclass:: SelectDefault
+    :members:
+
 Intents
 ~~~~~~~
 
