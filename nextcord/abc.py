@@ -37,7 +37,7 @@ from .sticker import GuildSticker, StickerItem
 from .types.components import Component as ComponentPayload
 from .utils import MISSING, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
-from .voice_recording import RecorderClient, RecordingFilter, TmpType
+from .voice_recording import RecorderClient
 
 __all__ = (
     "Snowflake",
@@ -85,6 +85,7 @@ if TYPE_CHECKING:
     )
     from .ui.view import View
     from .user import ClientUser
+    from .voice_recording import RecordingFilter, TmpType
 
     PartialMessageableChannel = Union[
         TextChannel, Thread, DMChannel, PartialMessageable, VoiceChannel, StageChannel
@@ -1740,7 +1741,7 @@ class Connectable(Protocol):
         cls: Callable[[Client, Connectable], T] = VoiceClient,
         recordable: bool = False,
         auto_deaf: bool = True,
-        tmp_type: TmpType = TmpType.File,
+        tmp_type: TmpType = MISSING,
         filters: RecordingFilter,
     ) -> T:
         """|coro|
@@ -1791,7 +1792,6 @@ class Connectable(Protocol):
         :class:`~nextcord.VoiceProtocol`
             A voice client that is fully connected to the voice server.
         """
-
         key_id, _ = self._get_voice_client_key()
         state = self._state
 
@@ -1799,11 +1799,10 @@ class Connectable(Protocol):
             raise ClientException("Already connected to a voice channel.")
 
         client = state._get_client()
-        voice = (
-            RecorderClient(client, self, auto_deaf, tmp_type, filters)
-            if recordable
-            else cls(client, self)
-        )
+        if recordable:
+            voice = RecorderClient(client, self, auto_deaf, tmp_type, filters)
+        else:
+            voice = cls(client, self)
 
         if not isinstance(voice, VoiceProtocol):
             raise TypeError("Type must meet VoiceProtocol abstract base class.")
