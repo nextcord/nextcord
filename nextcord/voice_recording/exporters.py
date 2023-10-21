@@ -5,12 +5,11 @@ from __future__ import annotations
 import os
 import subprocess
 import wave
+import nextcord as nc
 from asyncio import get_running_loop
 from io import BufferedIOBase, BufferedRandom, BufferedWriter, BytesIO
 from platform import system
 from typing import TYPE_CHECKING, Dict, Optional, Union
-
-from nextcord import File
 
 from .errors import *
 from .opus import DecoderThread
@@ -23,7 +22,7 @@ if TYPE_CHECKING:
 FLAG = getattr(subprocess, "CREATE_NO_WINDOW", 0) if system() == "Windows" else 0
 
 
-class AudioFile(File):
+class AudioFile(nc.File):
     """
     This acts exactly like :class:`nextcord.File` other than some extra logic
     to handle closing file temporary storage properly.

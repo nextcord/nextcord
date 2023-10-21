@@ -8,20 +8,19 @@ from threading import Event, Thread
 from time import sleep
 from typing import TYPE_CHECKING, Dict
 
-from nextcord import opus
-from nextcord.errors import InvalidArgument
+import nextcord as nc
 
 if TYPE_CHECKING:
     from .core import OpusFrame, RecorderClient
 
 
-class DecoderThread(Thread, opus._OpusStruct):
+class DecoderThread(Thread, nc.opus._OpusStruct):
     def __init__(self, recorder) -> None:
         super().__init__(daemon=True)
 
         self.recorder: RecorderClient = recorder
         self.decode_queue: list[OpusFrame] = []
-        self.decoder: Dict[int, opus.Decoder] = {}
+        self.decoder: Dict[int, nc.opus.Decoder] = {}
         self._end = Event()
 
     def start(self) -> None:
@@ -46,7 +45,7 @@ class DecoderThread(Thread, opus._OpusStruct):
 
                 decoder = self.get_decoder(opus_frame.ssrc)
                 opus_frame.decoded_data = decoder.decode(opus_frame.decrypted_data, fec=False)
-            except InvalidArgument:
+            except nc.InvalidArgument:
                 print("Error occurred while decoding opus frame.")
                 continue
 
@@ -59,8 +58,8 @@ class DecoderThread(Thread, opus._OpusStruct):
         gc.collect()
         logging.debug("Decoder process killed.")
 
-    def get_decoder(self, ssrc) -> opus.Decoder:
+    def get_decoder(self, ssrc) -> nc.opus.Decoder:
         if (d := self.decoder.get(ssrc)) is not None:
             return d
-        d = self.decoder[ssrc] = opus.Decoder()
+        d = self.decoder[ssrc] = nc.opus.Decoder()
         return d
