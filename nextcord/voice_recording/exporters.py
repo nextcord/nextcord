@@ -5,11 +5,12 @@ from __future__ import annotations
 import os
 import subprocess
 import wave
-import nextcord as nc
 from asyncio import get_running_loop
 from io import BufferedIOBase, BufferedRandom, BufferedWriter, BytesIO
 from platform import system
 from typing import TYPE_CHECKING, Dict, Optional, Union
+
+import nextcord as nc
 
 from .errors import *
 from .opus import DecoderThread
