@@ -12,6 +12,7 @@ from time import perf_counter, sleep, time as clock_timestamp
 from typing import Any, Callable, Dict, Iterable, Optional, Union
 
 from nextcord import Member, StageChannel, User, VoiceChannel, VoiceClient
+from nextcord.abc import Connectable
 from nextcord.client import Client
 from nextcord.utils import MISSING
 
@@ -20,8 +21,6 @@ from .errors import *
 from .exporters import AudioFile, export_as_PCM, export_as_WAV, export_with_ffmpeg
 from .opus import DecoderThread
 from .shared import *
-
-ConnectableVoiceChannels = Union[VoiceChannel, StageChannel]
 
 
 AUDIO_HZ = DecoderThread.SAMPLING_RATE
@@ -86,14 +85,18 @@ class Silence:
         return None if half_frames <= 0 else cls(half_frames * DecoderThread.CHANNELS)
 
 
-class UserFilter:
-    __slots__ = ("users", "client")
+class RecordingFilter:
+    __slots__ = ("users", "client", "ignored_after")
 
     def __init__(
-        self, client=None, iterable: Optional[Iterable[Union[int, User, Member]]] = None
+        self,
+        client=None,
+        iterable: Optional[Iterable[Union[int, User, Member]]] = None,
+        ignored_after: Optional[int] = None
     ) -> None:
         self.users = set()
         self.client: Optional[RecorderClient] = client
+        self.ignored_after = ignored_after
 
         if iterable:
             self.users.update(iterable)
@@ -126,6 +129,9 @@ class UserFilter:
 
     def discard(self, user: Union[int, User, Member]) -> None:
         return self.users.discard(self._get_id(user))
+
+    def clear(self):
+        self.users.clear()
 
     def __contains__(self, key: Union[int, User, Member]) -> bool:
         return self._get_id(key) in self.users
@@ -217,23 +223,60 @@ class TimeTracker:
 
 
 class AudioData(Dict[int, AudioWriter]):
+    """A container to hold the :class:`AudioWriter` associated with each user's id
+    during a recording, as well as the :class:`TimeTracker` specifying the details of
+    the timings of the received packets (assigned on recording stopped).
+    
+    This is usually not meant to be created, it is received when you stop a recording
+    without specifying an export format.
+    """
     def __init__(self, decoder: DecoderThread) -> None:
         self.time_tracker: Optional[TimeTracker] = None
         self.decoder: DecoderThread = decoder
 
-    def get_writer(self, tmp_type: TmpType, guild_id: int, user_id: int) -> AudioWriter:
-        return self.get(user_id) or self.add_new_writer(
-            user_id, AudioWriter(tmp_type, guild_id, user_id)
-        )
-
-    def add_new_writer(self, user_id: int, writer: AudioWriter) -> AudioWriter:
+    def _add_writer(self, user_id: int, writer: AudioWriter) -> AudioWriter:
         self[user_id] = writer
         return writer
 
-    def remove_writer(self, user_id: int):
-        return w.close() if (w := self.pop(user_id, None)) else w
+    def get_writer(self, tmp_type: TmpType, guild_id: int, user_id: int) -> AudioWriter:
+        """Gets or creates an :class:`AudioWriter` for a specific user.
+        
+        Parameters
+        ----------
+        tmp_type: class:`TmpType`
+            The type of temporary storage to create the writer with when it is necessary.
+        guild_id: :class:`int`
+            The guild id used for creating the writer when it is necessary.
+        user_id: :class:`int`
+            The user id to get the writer for.
 
-    def process_filters(self, filters: Optional[UserFilter] = None) -> None:
+        Returns
+        -------
+        AudioWriter
+            The writer containing the audio data of a specific user.
+        """
+        return self.get(user_id) or self._add_writer(
+            user_id, AudioWriter(tmp_type, guild_id, user_id)
+        )
+
+    def remove_writer(self, user_id: int) -> None:
+        """Remove an :class:`AudioWriter` if it exists.
+
+        Parameters
+        ----------
+        user_id: :class:`int`
+            The user id to remove from this map.
+        """
+        return w.close() if (w := self.pop(user_id, None)) else None
+
+    def process_filters(self, filters: Optional[RecordingFilter]) -> None:
+        """Removes the writers that match the designated filters
+        
+        Parameters
+        ----------
+        filters: :class:`RecordingFilter`
+            The filter to use to filter the writers map.
+        """
         if not filters:
             return
 
@@ -245,9 +288,33 @@ class AudioData(Dict[int, AudioWriter]):
         self,
         audio_format: Formats,
         tmp_type: TmpType,
-        sync_start: bool = True,
-        filters: Optional[UserFilter] = None,
+        filters: Optional[RecordingFilter] = None,
     ) -> Dict[int, AudioFile]:
+        """
+        Exports the stored references to each writer containing the audio data
+        to the specified format.
+
+        audio_format: :class:`Formats`
+            The format to export this this container to.
+        tmp_type :class:`TmpType`:
+            The type of temporary storage to use for exporting. Exporting in memory is **not**
+            supported for `m4a` and `mp4` formats.
+        filters Optional[:class:`RecordingFilter`] = None
+            The filters to use when exporting.
+
+        Raises
+        ------
+        OngoingRecordingError
+            A recording must be stopped before exporting.
+            This is raised when a recording is still ongoing.
+        TypeError
+            When the audio format is not a supported format from the local enum.
+
+        Returns
+        -------
+        Dict[int, AudioFile]
+            A map of the each user to their respective exported :class:`AudioFile`.
+        """
         if not self.time_tracker:
             raise OngoingRecordingError("Cannot export a recording before it is stopped!")
 
@@ -255,7 +322,7 @@ class AudioData(Dict[int, AudioWriter]):
             raise TypeError(f"audio_format must be of type `Formats` not {type(audio_format)}")
 
         return await export_methods[audio_format](
-            self, audio_format, tmp_type, sync_start=sync_start, filters=filters  # individual files
+            self, audio_format, tmp_type, filters=filters  # individual files
         )
 
 
@@ -272,21 +339,70 @@ class OpusFrame:
 
 
 class RecorderClient(VoiceClient):
+    """Represents a Discord voice connection that is able to receive audio packets.
+
+    This is returned when passing `recordable=True` when connecting to a voice channel.
+
+    Warning
+    -------
+    **Receiving audio:**
+    In order to receive usable voice data,
+    decryption is performed using the `PyNaCl` library
+
+    **Playing audio:**
+    In order to use PCM based AudioSources, you must have the opus library
+    installed on your system and loaded through :func:`opus.load_opus`.
+    Otherwise, your AudioSources must be opus encoded (e.g. using :class:`FFmpegOpusAudio`)
+    or the library will not be able to transmit audio.
+
+    Attributes
+    ----------
+    session_id: :class:`str`
+        The voice connection session ID.
+    token: :class:`str`
+        The voice connection token.
+    endpoint: :class:`str`
+        The endpoint we are connecting to.
+    channel: :class:`abc.Connectable`
+        The voice channel connected to.
+    loop: :class:`asyncio.AbstractEventLoop`
+        The event loop that the voice client is running on.
+
+    time_tracker: Optional[:class:`TimeTracker`]
+        A container class that keeps track of all timings related to the current recording.
+    audio_data: Optional[:class:`AudioData`]
+        A container class that keeps track of all data related information relative to each
+        user in the current recording.
+    recording_paused: :class:`bool`
+        Whether or not the recording is currently paused or stopped.
+    filters: :class:`RecordingFilter`
+        A container of the default filters that should be used with this recording client.
+    decoder: :class:`DecoderThread`
+        The decoder instance used to convert decrypted opus data into pcm data.
+    process: Optional[:class:`Thread`]
+        The process :class:`threading.Thread` of a recording instance.
+    auto_deaf: :class:`bool`
+        Whether or not the client will automatically deafen when not recording.
+    tmp_type: :class:`TmpType`
+        The type of temporary storage to contain recorded data.
+    """
+
     def __init__(
         self,
         client: Client,
-        channel: ConnectableVoiceChannels,
+        channel: Connectable,
         auto_deaf: bool = True,
         tmp_type: TmpType = TmpType.File,
+        filters: Optional[RecordingFilter] = None,
     ) -> None:
         super().__init__(client, channel)
-        self.channel: ConnectableVoiceChannels
+        self.channel: Connectable
 
         # data
         self.time_tracker: Optional[TimeTracker] = None
         self.audio_data: Optional[AudioData] = None
         self.recording_paused: bool = False
-        self.filters = UserFilter()
+        self.filters: RecordingFilter = filters or RecordingFilter()
 
         # processes
         self.decoder = DecoderThread(self)
@@ -297,12 +413,19 @@ class RecorderClient(VoiceClient):
         # handlers private
         self.__handler_set: bool = False
         self.__record_alongside_handler: bool = False
-        self.__raw_data_handler: Optional[Callable[[bytes], Any]] = None
-        self.__decrypted_data_handler: Optional[Callable[[OpusFrame], Any]] = None
-        self.__decoded_data_handler: Optional[Callable[[OpusFrame], Any]] = None
+        self.__raw_handler: Optional[Callable[[bytes], Any]] = None
+        self.__decrypted_handler: Optional[Callable[[OpusFrame], Any]] = None
+        self.__decoded_handler: Optional[Callable[[OpusFrame], Any]] = None
+
+    @property
+    def is_recording(self) -> bool:
+        """Whether or not a recording is currently ongoing.
+        This does **not** take into account whether the recording is paused.
+        """
+        return bool(self.time_tracker)
 
     async def voice_connect(self, deaf=None, mute=None) -> None:
-        await self.channel.guild.change_voice_state(
+        await self.channel.guild.change_voice_state(  # type: ignore
             channel=self.channel,
             self_deaf=(deaf if deaf is not None else (bool(self.auto_deaf))),
             self_mute=mute or False,
@@ -313,26 +436,51 @@ class RecorderClient(VoiceClient):
     def set_data_handler(
         self,
         *,
-        raw_data_handler: Optional[Callable[[bytes], Any]] = None,
-        decrypted_data_handler: Optional[Callable[[OpusFrame], Any]] = None,
-        decoded_data_handler: Optional[Callable[[OpusFrame], Any]] = None,
+        raw_data_handler: Optional[Callable[[bytes], None]] = None,
+        decrypted_data_handler: Optional[Callable[[OpusFrame], None]] = None,
+        decoded_data_handler: Optional[Callable[[OpusFrame], None]] = None,
         record_alongside_handler: bool = False,
     ) -> None:
+        """
+        Setting a data handler allows the RecorderClient to output the data from discord
+        to your own method for handling instead of recording the audio. This is useful if
+        you are streaming this data somewhere else directly and don't want to record the data.
+        
+        .. note:: You may only set one data handler.
+
+        Parameters
+        ----------
+        raw_data_handler: Optional[:class:`Callable[:class:`bytes`], None]`] = None
+            Set a handler method receiving the raw audio data from Discord.
+        decrypted_data_handler: Optional[:class:`Callable[:class:`OpusFrame`], None]`] = None
+            Set a handler method receiving the decrypted opus audio data.
+        decoded_data_handler: Optional[:class:`Callable[:class:`OpusFrame`], None]`] = None
+            Set a handler method receiving the decoded pcm audio data.
+            This contains the decrypted data as well.
+        record_alongside_handler: :class:`bool` = False
+            Whether or not to also record audio alongside your custom set data handler.
+
+        Raises
+        ------
+        MultipleHandlersError
+            Multiple handlers were passed when calling this method.
+        """
+        
         self.__record_alongside_handler = record_alongside_handler
-        self.__raw_data_handler = raw_data_handler
-        self.__decrypted_data_handler = decrypted_data_handler
-        self.__decoded_data_handler = decoded_data_handler
+        self.__raw_handler = raw_data_handler
+        self.__decrypted_handler = decrypted_data_handler
+        self.__decoded_handler = decoded_data_handler
 
         handlers = (
-            self.__raw_data_handler,
-            self.__decrypted_data_handler,
-            self.__decoded_data_handler,
+            self.__raw_handler,
+            self.__decrypted_handler,
+            self.__decoded_handler,
         )
 
         if sum(bool(method) for method in handlers) > 1:
-            self.__raw_data_handler = None
-            self.__decrypted_data_handler = None
-            self.__decoded_data_handler = None
+            self.__raw_handler = None
+            self.__decrypted_handler = None
+            self.__decoded_handler = None
             raise MultipleHandlersError(
                 "You may only set one handler! The lowest level handler will be called ommiting the rest.\n"
                 "`raw_data_handler` being the lowest level for handling raw data from discord.\n"
@@ -349,8 +497,8 @@ class RecorderClient(VoiceClient):
         self,
         opus_frame: OpusFrame,
     ) -> None:
-        if self.__decoded_data_handler:
-            self.__decoded_data_handler(opus_frame)
+        if self.__decoded_handler:
+            self.__decoded_handler(opus_frame)
             # terminate early after calling custom decoded handler method if not set to record too
             if not self.__record_alongside_handler:
                 return None
@@ -395,8 +543,8 @@ class RecorderClient(VoiceClient):
 
         opus_frame = OpusFrame(sequence, timestamp, perf_counter(), ssrc, decrypted_data)
 
-        if self.__decrypted_data_handler:
-            self.__decrypted_data_handler(opus_frame)
+        if self.__decrypted_handler:
+            self.__decrypted_handler(opus_frame)
             # terminate early after calling custom decrypt handler method if not set to record too
             if not self.__record_alongside_handler:
                 return
@@ -411,8 +559,8 @@ class RecorderClient(VoiceClient):
         if self.audio_data is None:
             return
 
-        if self.__raw_data_handler:
-            self.__raw_data_handler(data)
+        if self.__raw_handler:
+            self.__raw_handler(data)
             # terminate early after calling custom decoded handler method if not set to record too
             if not self.__record_alongside_handler:
                 return
@@ -446,14 +594,21 @@ class RecorderClient(VoiceClient):
 
         if (
             self.__record_alongside_handler  # requires recording alongside
-            or self.__decoded_data_handler  # requires decoding data
+            or self.__decoded_handler  # requires decoding data
             or not self.__handler_set  # normal recording
         ):
             self.decoder.start()
 
         Thread(target=self._start_packets_recording).start()
 
-    async def start_recording(self, channel: Optional[ConnectableVoiceChannels] = None) -> None:
+    async def start_recording(self, channel: Optional[Connectable] = None) -> None:
+        """|coro|
+        Start recording audio, and optionally connect to a voice channel.
+
+        Parameters
+        ----------
+        channel: Optional[:class:`Connectable`] = None
+        """
         if self.time_tracker:
             raise OngoingRecordingError(
                 f"A recording has already started at {self.time_tracker.starting_time}"
@@ -472,27 +627,38 @@ class RecorderClient(VoiceClient):
         self._start_recording()
 
     def pause_recording(self) -> None:
+        """Set paused to be False.
+        Effectively pausing a recording if there is an ongoing one
+        """
+
         self.recording_paused = True
 
     def resume_recording(self) -> None:
+        """Set paused to be False.
+        Effectively resuming a recording if there is an ongoing one
+        """
+
         self.recording_paused = False
 
     def toggle_recording_paused(self) -> None:
-        self.recording_paused = True if self.recording_paused is False else False
+        """Toggleing whether a recording is paused if there is an ongoing one.
+        """
 
-    def _stop_recording(self) -> AudioData:
+        self.recording_paused = self.recording_paused is False
+
+    def _stop_recording(self) -> Optional[AudioData]:
         if not (time_tracker := self.time_tracker):  # stops the recording loop
             raise NotRecordingError("There is no ongoing recording to stop.")
 
-        if (audio_data := self.audio_data) is None:
-            raise TmpNotFound("Audio data not found!")
+        audio_data = self.audio_data
 
         self.recording_paused = True
 
         self.decoder.stop()
 
-        audio_data.decoder = self.decoder
-        audio_data.time_tracker = time_tracker
+        if audio_data:
+            audio_data.decoder = self.decoder
+            audio_data.time_tracker = time_tracker
 
         self.time_tracker = None
         self.audio_data = None
@@ -504,10 +670,45 @@ class RecorderClient(VoiceClient):
         disconnect: bool = False,
         export_format: Optional[Formats] = None,
         tmp_type: TmpType = TmpType.File,  # memory tmp export will not work with m4a & mp4
-        sync_start: bool = True,
-        filters: Optional[UserFilter] = MISSING,
+        filters: Optional[RecordingFilter] = MISSING,
     ) -> Optional[Union[AudioData, Dict[int, AudioFile]]]:
-        audio_data: AudioData = self._stop_recording()
+        """|coro|
+        Stops a currently ongoing recording.
+
+        Parameters
+        ----------
+        disconnect: class:`bool` = False
+            Whether to disconnect the voice channel as well.
+        export_format: Optional[:class:`Formats`] = None
+            Select a format to export the audio in.
+            Does not export when left as `None`.
+        tmp_type: :class:`TmpType` = TmpType.File
+            The type of temporary storage to use for exporting. Exporting in memory is **not**
+            supported for `m4a` and `mp4` formats.
+        filters Optional[:class:`RecordingFilter`]: = MISSING
+            The filters to use when exporting. This defaults to the one set to the client if
+            not specified. No filter will be used when this is `None`
+
+        Raises
+        ------
+        ExportUnavailable
+            Attempting to export an incomplete recording. This occurs when setting a data
+            handler that does not record alongside it at any point during the recording.
+        NotRecordingError
+            Attempting to stop a recording when the client is not currently recording.
+        TmpNotFound
+            The temporary files storing the audio data were not found.
+
+        Returns
+        -------
+            AudioData
+                When export is not specified, you receive the the audio data map
+                of each user's id to their respective :class:`AudioWriter`
+            Dict[int, AudioFile]
+                When export is specified, you will receive the dict containing
+                each user's id to their respective :class:`AudioFile`
+        """
+        audio_data: Optional[AudioData] = self._stop_recording()
 
         if disconnect:
             await self.disconnect()
@@ -522,12 +723,15 @@ class RecorderClient(VoiceClient):
                 )
             return None
 
+        if not audio_data:
+            raise TmpNotFound("Audio data not found!")
+
         if not export_format:
             return audio_data
 
         if filters:
-            return await audio_data.export(export_format, tmp_type, sync_start, filters)
+            return await audio_data.export(export_format, tmp_type, filters)
         elif filters is MISSING:
-            return await audio_data.export(export_format, tmp_type, sync_start, self.filters)
+            return await audio_data.export(export_format, tmp_type, self.filters)
         else:
-            return await audio_data.export(export_format, tmp_type, sync_start)
+            return await audio_data.export(export_format, tmp_type)

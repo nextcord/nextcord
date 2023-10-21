@@ -17,17 +17,21 @@ from .opus import DecoderThread
 from .shared import *
 
 if TYPE_CHECKING:
-    from .core import AudioData, AudioWriter, Silence, UserFilter
+    from .core import AudioData, AudioWriter, Silence, RecordingFilter
 
 
 FLAG = getattr(subprocess, "CREATE_NO_WINDOW", 0) if system() == "Windows" else 0
 
 
 class AudioFile(File):
+    """
+    This acts exactly like :class:`nextcord.File` other than some extra logic
+    to handle closing file temporary storage properly.
+    """
     def __init__(
-        self, *args, sync_start: bool = True, starting_silence: Optional[Silence] = None, **kwargs
+        self, *args, starting_silence: Optional[Silence] = None, **kwargs
     ) -> None:
-        self.starting_silence: Optional[Silence] = starting_silence if sync_start else None
+        self.starting_silence: Optional[Silence] = starting_silence
         super().__init__(*args, **kwargs)
 
     def close(self) -> None:
@@ -121,14 +125,13 @@ class FFmpeg:
 
 
 def _export_all_with_file_tmp(
-    audio_data: AudioData, audio_format: str, sync_start: bool
+    audio_data: AudioData, audio_format: str
 ) -> Dict[int, AudioFile]:
     return {
         user_id: (
             AudioFile(
                 _open_tmp_file(writer, FFmpeg.file_tmp_conv(audio_format[1], writer)),
                 f"{user_id}.{audio_format[0]}",
-                sync_start=sync_start,
                 starting_silence=writer.starting_silence,
                 force_close=True,
             )
@@ -138,14 +141,13 @@ def _export_all_with_file_tmp(
 
 
 def _export_all_with_memory_tmp(
-    audio_data: AudioData, audio_format: str, sync_start: bool
+    audio_data: AudioData, audio_format: str
 ) -> Dict[int, AudioFile]:
     return {
         user_id: (
             AudioFile(
                 _write_in_memory(FFmpeg.memory_tmp_conv(audio_format[1], writer)),
                 f"{user_id}.{audio_format[0]}",
-                sync_start=sync_start,
                 starting_silence=writer.starting_silence,
                 force_close=True,
             )
@@ -164,8 +166,7 @@ async def export_with_ffmpeg(
     audio_data: AudioData,
     audio_format: Formats,
     tmp_type: TmpType,
-    sync_start: bool,
-    filters: Optional[UserFilter] = None,
+    filters: Optional[RecordingFilter] = None,
 ) -> Dict[int, AudioFile]:
     if not isinstance(tmp_type, TmpType):
         raise TypeError(f"Arg `tmp_type` must be of type `TmpType` not `{type(tmp_type)}`")
@@ -176,35 +177,34 @@ async def export_with_ffmpeg(
     audio_data.process_filters(filters)
 
     return await get_running_loop().run_in_executor(
-        None, export_methods[tmp_type], audio_data, ffmpeg_args[audio_format], sync_start
+        None, export_methods[tmp_type], audio_data, ffmpeg_args[audio_format]
     )
 
 
 # .pcm exports
 
 
-def _export_as_PCM(user_id: int, writer: AudioWriter, sync_start: bool) -> AudioFile:
+def _export_as_PCM(user_id: int, writer: AudioWriter) -> AudioFile:
     buffer: Union[BufferedWriter, BytesIO] = writer.buffer
 
     buffer.seek(0)
     return AudioFile(
         buffer,
         f"{user_id}.pcm",
-        sync_start=sync_start,
         starting_silence=writer.starting_silence,
         force_close=True,
     )
 
 
 async def export_as_PCM(
-    audio_data: AudioData, *args, sync_start: bool, filters: Optional[UserFilter] = None
+    audio_data: AudioData, *args, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
     run = get_running_loop().run_in_executor
 
     audio_data.process_filters(filters)
 
     return {
-        user_id: await run(None, _export_as_PCM, user_id, audio_writer, sync_start)
+        user_id: await run(None, _export_as_PCM, user_id, audio_writer)
         for user_id, audio_writer in audio_data.items()
     }
 
@@ -213,7 +213,7 @@ async def export_as_PCM(
 
 
 def _export_as_WAV(
-    user_id: int, writer: AudioWriter, decoder: DecoderThread, sync_start
+    user_id: int, writer: AudioWriter, decoder: DecoderThread
 ) -> AudioFile:
     buffer: Union[BufferedWriter, BytesIO] = writer.buffer
 
@@ -227,14 +227,13 @@ def _export_as_WAV(
     return AudioFile(
         buffer,
         f"{user_id}.wav",
-        sync_start=sync_start,
         starting_silence=writer.starting_silence,
         force_close=True,
     )
 
 
 async def export_as_WAV(
-    audio_data: AudioData, *args, sync_start: bool, filters: Optional[UserFilter] = None
+    audio_data: AudioData, *args, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
     decoder = audio_data.decoder
     run = get_running_loop().run_in_executor
@@ -242,6 +241,6 @@ async def export_as_WAV(
     audio_data.process_filters(filters)
 
     return {
-        user_id: await run(None, _export_as_WAV, user_id, audio_writer, decoder, sync_start)
+        user_id: await run(None, _export_as_WAV, user_id, audio_writer, decoder)
         for user_id, audio_writer in audio_data.items()
     }

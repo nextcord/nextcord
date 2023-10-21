@@ -37,6 +37,7 @@ from .sticker import GuildSticker, StickerItem
 from .types.components import Component as ComponentPayload
 from .utils import MISSING, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
+from .voice_recording import RecorderClient, RecordingFilter, TmpType
 
 __all__ = (
     "Snowflake",
@@ -1737,6 +1738,10 @@ class Connectable(Protocol):
         timeout: float = 60.0,
         reconnect: bool = True,
         cls: Callable[[Client, Connectable], T] = VoiceClient,
+        recordable: bool = False,
+        auto_deaf: bool = True,
+        tmp_type: TmpType = TmpType.File,
+        filters: RecordingFilter
     ) -> T:
         """|coro|
 
@@ -1756,6 +1761,21 @@ class Connectable(Protocol):
         cls: Type[:class:`VoiceProtocol`]
             A type that subclasses :class:`~nextcord.VoiceProtocol` to connect with.
             Defaults to :class:`~nextcord.VoiceClient`.
+
+            .. versionadded:: TODO
+        recordable: :class:`bool` = False
+            Whether or not should use the VoiceRecorder client instead of VoiceClient
+            This allows for receiving audio data from voice connection on top of being
+            able to play audio. Will override cls if True.
+        auto_deaf: :class:`bool` = True
+            Effective only with `recordable=True`.
+            Whether to automatically deafen when not receiving audio.
+        tmp_type: :class:`TmpType` = TmpType.File
+            Effective with `recordable=True`.
+            The type of temporary storage to contain recorded data.
+        filters: Optional[:class:`RecordingFilter`] = None
+            Effective with `recordable=True`.
+            The filter used to filter out certain users from a recording.
 
         Raises
         ------
@@ -1779,7 +1799,9 @@ class Connectable(Protocol):
             raise ClientException("Already connected to a voice channel.")
 
         client = state._get_client()
-        voice = cls(client, self)
+        voice = RecorderClient(
+            client, self, auto_deaf, tmp_type, filters
+        ) if recordable else cls(client, self) 
 
         if not isinstance(voice, VoiceProtocol):
             raise TypeError("Type must meet VoiceProtocol abstract base class.")
@@ -1794,4 +1816,4 @@ class Connectable(Protocol):
                 await voice.disconnect(force=True)
             raise  # re-raise
 
-        return voice
+        return voice  # type: ignore
