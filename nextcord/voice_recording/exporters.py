@@ -17,7 +17,7 @@ from .opus import DecoderThread
 from .shared import *
 
 if TYPE_CHECKING:
-    from .core import AudioData, AudioWriter, Silence, RecordingFilter
+    from .core import AudioData, AudioWriter, RecordingFilter, Silence
 
 
 FLAG = getattr(subprocess, "CREATE_NO_WINDOW", 0) if system() == "Windows" else 0
@@ -28,9 +28,8 @@ class AudioFile(File):
     This acts exactly like :class:`nextcord.File` other than some extra logic
     to handle closing file temporary storage properly.
     """
-    def __init__(
-        self, *args, starting_silence: Optional[Silence] = None, **kwargs
-    ) -> None:
+
+    def __init__(self, *args, starting_silence: Optional[Silence] = None, **kwargs) -> None:
         self.starting_silence: Optional[Silence] = starting_silence
         super().__init__(*args, **kwargs)
 
@@ -124,9 +123,7 @@ class FFmpeg:
 # FFMPEG conversion exports
 
 
-def _export_all_with_file_tmp(
-    audio_data: AudioData, audio_format: str
-) -> Dict[int, AudioFile]:
+def _export_all_with_file_tmp(audio_data: AudioData, audio_format: str) -> Dict[int, AudioFile]:
     return {
         user_id: (
             AudioFile(
@@ -140,9 +137,7 @@ def _export_all_with_file_tmp(
     }
 
 
-def _export_all_with_memory_tmp(
-    audio_data: AudioData, audio_format: str
-) -> Dict[int, AudioFile]:
+def _export_all_with_memory_tmp(audio_data: AudioData, audio_format: str) -> Dict[int, AudioFile]:
     return {
         user_id: (
             AudioFile(
@@ -212,9 +207,7 @@ async def export_as_PCM(
 # .wav exports
 
 
-def _export_as_WAV(
-    user_id: int, writer: AudioWriter, decoder: DecoderThread
-) -> AudioFile:
+def _export_as_WAV(user_id: int, writer: AudioWriter, decoder: DecoderThread) -> AudioFile:
     buffer: Union[BufferedWriter, BytesIO] = writer.buffer
 
     buffer.seek(0)

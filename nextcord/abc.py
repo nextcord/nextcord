@@ -1741,7 +1741,7 @@ class Connectable(Protocol):
         recordable: bool = False,
         auto_deaf: bool = True,
         tmp_type: TmpType = TmpType.File,
-        filters: RecordingFilter
+        filters: RecordingFilter,
     ) -> T:
         """|coro|
 
@@ -1799,9 +1799,11 @@ class Connectable(Protocol):
             raise ClientException("Already connected to a voice channel.")
 
         client = state._get_client()
-        voice = RecorderClient(
-            client, self, auto_deaf, tmp_type, filters
-        ) if recordable else cls(client, self) 
+        voice = (
+            RecorderClient(client, self, auto_deaf, tmp_type, filters)
+            if recordable
+            else cls(client, self)
+        )
 
         if not isinstance(voice, VoiceProtocol):
             raise TypeError("Type must meet VoiceProtocol abstract base class.")
