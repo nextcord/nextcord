@@ -135,7 +135,7 @@ class ChannelSelect(SelectBase, Generic[V]):
     @property
     def defaults(self) -> Optional[List[SelectDefault]]:
         """List[:class:`.SelectDefault`]: The default channels that are automatically selected.
-        
+
         .. versionadded:: 3.0"""
         return (
             [SelectDefault.from_dict(d) for d in self._underlying.defaults]
