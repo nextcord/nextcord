@@ -687,14 +687,13 @@ class SelectDefault:
 
         if isinstance(value, (GuildChannel, PartialMessageable)):
             return cls.channel(value.id)
-        elif isinstance(value, (Member, User)):
+        if isinstance(value, (Member, User)):
             return cls.user(value.id)
-        elif isinstance(value, Role):
+        if isinstance(value, Role):
             return cls.role(value.id)
-        else:
-            raise TypeError(
-                f"Expected object to be GuildChannel, Member, PartialMessageable, Role, or User not {value.__class__}"
-            )
+        raise TypeError(
+            f"Expected object to be GuildChannel, Member, PartialMessageable, Role, or User not {value.__class__}"
+        )
 
     @classmethod
     def from_dict(cls, data: SelectDefaultPayload) -> SelectDefault:
