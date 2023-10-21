@@ -13,18 +13,18 @@ from threading import Thread
 from time import perf_counter, sleep, time as clock_timestamp
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Optional, Union
 
+from nextcord.utils import MISSING
+
 from . import decrypter
 from .errors import *
 from .exporters import AudioFile, export_as_PCM, export_as_WAV, export_with_ffmpeg
 from .opus import DecoderThread
 from .shared import *
 
-from nextcord.utils import MISSING
-
 if TYPE_CHECKING:
-    from nextcord.client import Client
     from nextcord import Member, User, VoiceClient
     from nextcord.abc import Connectable
+    from nextcord.client import Client
 
 
 AUDIO_HZ = DecoderThread.SAMPLING_RATE
