@@ -11,7 +11,7 @@ from threading import Thread
 from time import perf_counter, sleep, time as clock_timestamp
 from typing import Any, Callable, Dict, Iterable, Optional, Union
 
-from nextcord import Member, StageChannel, User, VoiceChannel, VoiceClient
+from nextcord import Member, User, VoiceClient
 from nextcord.abc import Connectable
 from nextcord.client import Client
 from nextcord.utils import MISSING
@@ -641,8 +641,7 @@ class RecorderClient(VoiceClient):
         self.recording_paused = False
 
     def toggle_recording_paused(self) -> None:
-        """Toggleing whether a recording is paused if there is an ongoing one.
-        """
+        """Toggleing whether a recording is paused if there is an ongoing one."""
 
         self.recording_paused = self.recording_paused is False
 
