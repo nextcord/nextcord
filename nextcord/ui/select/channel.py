@@ -64,16 +64,18 @@ class ChannelSelect(SelectBase, Generic[V_co]):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.abc.GuildChannel`, :class:`.abc.PartialMessageable`]]]
+        The default channels that are automatically selected.
+
+        .. versionadded:: 3.0
+    channel_types: List[:class:`.ChannelType`]
+        The types of channels that can be selected. If not given, all channel types are allowed.
     row: Optional[:class:`int`]
         The relative row this select menu belongs to. A Discord component can only have 5
         rows. By default, items are arranged automatically into those 5 rows. If you'd
         like to control the relative positioning of the row then passing an index is advised.
         For example, row=1 will show up before row=2. Defaults to ``None``, which is automatic
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
-    channel_types: List[:class:`.ChannelType`]
-        The types of channels that can be selected. If not given, all channel types are allowed.
-    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.abc.GuildChannel`, :class:`.abc.PartialMessageable`]]]
-        The default channels that are automatically selected.
     """
 
     __item_repr_attributes__: Tuple[str, ...] = (
@@ -132,7 +134,9 @@ class ChannelSelect(SelectBase, Generic[V_co]):
 
     @property
     def defaults(self) -> Optional[List[SelectDefault]]:
-        """List[:class:`.Role`]: The default roles that are automatically selected."""
+        """List[:class:`.SelectDefault`]: The default channels that are automatically selected.
+        
+        .. versionadded:: 3.0"""
         return (
             [SelectDefault.from_dict(d) for d in self._underlying.defaults]
             if self._underlying.defaults
@@ -194,11 +198,7 @@ def channel_select(
     the :class:`.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`ChannelSelect.values`.
-
-    .. versionadded:: 2.3
-
-    Parameters
+    use :attr:`ChannelSelect.values`.roles
     ----------
     placeholder: Optional[:class:`str`]
         The placeholder text that is shown if nothing is selected, if any.
@@ -223,6 +223,8 @@ def channel_select(
         A list of channel types that can be selected in this menu.
     defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.abc.GuildChannel`, :class:`.abc.PartialMessageable`]]]
         The default channels that are automatically selected.
+
+        .. versionadded:: 3.0
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:

@@ -76,8 +76,10 @@ class MentionableSelect(SelectBase, Generic[V_co]):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
-    defaults: Optional[List[Union[:class:`.Role`, :class:`.Member`, :class:`nextcord.User`]]]
-        The default roles or users that are automatically selected.
+    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.Role`, :class:`.Member`, :class:`nextcord.User`]]]
+        The default roles and users that are automatically selected.
+
+        .. versionadded:: 3.0
     row: Optional[:class:`int`]
         The relative row this select menu belongs to. A Discord component can only have 5
         rows. By default, items are arranged automatically into those 5 rows. If you'd
@@ -138,7 +140,7 @@ class MentionableSelect(SelectBase, Generic[V_co]):
 
     @property
     def defaults(self) -> Optional[List[SelectDefault]]:
-        """List[:class:`.Role`]: The default roles that are automatically selected."""
+        """List[:class:`.SelectDefault`]: The default roles and users that are automatically selected."""
         return (
             [SelectDefault.from_dict(d) for d in self._underlying.defaults]
             if self._underlying.defaults
@@ -225,8 +227,10 @@ def mentionable_select(
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
-    defaults: Optional[List[Union[:class:`.Role`, :class:`.Member`, :class:`nextcord.User`]]]
-        The default roles or users that are automatically selected.
+    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.Role`, :class:`.Member`, :class:`nextcord.User`]]]
+        The default roles and users that are automatically selected.
+
+        .. versionadded:: 3.0
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
