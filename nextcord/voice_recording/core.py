@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import logging
 import os
 from dataclasses import dataclass
@@ -9,10 +11,9 @@ from struct import pack, unpack_from
 from sys import version_info as PYTHON_VERSION
 from threading import Thread
 from time import perf_counter, sleep, time as clock_timestamp
-from typing import Any, Callable, Dict, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Optional, Union
 
 from nextcord import Member, User, VoiceClient
-from nextcord.abc import Connectable
 from nextcord.client import Client
 from nextcord.utils import MISSING
 
@@ -21,6 +22,9 @@ from .errors import *
 from .exporters import AudioFile, export_as_PCM, export_as_WAV, export_with_ffmpeg
 from .opus import DecoderThread
 from .shared import *
+
+if TYPE_CHECKING:
+    from nextcord.abc import Connectable
 
 
 AUDIO_HZ = DecoderThread.SAMPLING_RATE
