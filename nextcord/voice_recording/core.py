@@ -96,7 +96,7 @@ class RecordingFilter:
         self,
         client=None,
         iterable: Optional[Iterable[Union[int, User, Member]]] = None,
-        ignored_after: Optional[int] = None
+        ignored_after: Optional[int] = None,
     ) -> None:
         self.users = set()
         self.client: Optional[RecorderClient] = client
@@ -134,7 +134,7 @@ class RecordingFilter:
     def discard(self, user: Union[int, User, Member]) -> None:
         return self.users.discard(self._get_id(user))
 
-    def clear(self):
+    def clear(self) -> None:
         self.users.clear()
 
     def __contains__(self, key: Union[int, User, Member]) -> bool:
@@ -234,6 +234,7 @@ class AudioData(Dict[int, AudioWriter]):
     This is usually not meant to be created, it is received when you stop a recording
     without specifying an export format.
     """
+
     def __init__(self, decoder: DecoderThread) -> None:
         self.time_tracker: Optional[TimeTracker] = None
         self.decoder: DecoderThread = decoder
