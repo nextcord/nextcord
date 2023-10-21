@@ -2844,6 +2844,17 @@ of :class:`enum.Enum`.
 
         Represents the default avatar with the color red.
         See also :attr:`Colour.red`
+    .. attribute:: fuchsia
+
+        Represents the default avatar with the color fuchsia.
+        See also :attr:`Colour.fuchsia`
+
+        .. versionadded:: 2.6
+    .. attribute:: pink
+
+        An alias for :attr:`fuchsia`
+
+        .. versionadded:: 2.6
 
 .. class:: StickerType
 

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 __all__ = ("RoleSelect", "role_select", "RoleSelectValues")
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class RoleSelectValues(SelectValuesBase):
@@ -36,7 +36,7 @@ class RoleSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, Role)]
 
 
-class RoleSelect(SelectBase, Generic[V]):
+class RoleSelect(SelectBase, Generic[V_co]):
 
     """Represents a UI role select menu.
 
@@ -177,7 +177,9 @@ def role_select(
     disabled: bool = False,
     defaults: Optional[List[Union[SelectDefault, Role]]] = None,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[RoleSelect[V], ClientT]], ItemCallbackType[RoleSelect[V], ClientT]]:
+) -> Callable[
+    [ItemCallbackType[RoleSelect[V_co], ClientT]], ItemCallbackType[RoleSelect[V_co], ClientT]
+]:
     """A decorator that attaches a role select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing

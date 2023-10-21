@@ -56,18 +56,11 @@ packages = [
     "nextcord",
     "nextcord.types",
     "nextcord.ui",
+    "nextcord.ui.select",
     "nextcord.webhook",
     "nextcord.ext.application_checks",
     "nextcord.ext.commands",
     "nextcord.ext.tasks",
-    "nextcord.ui.select",
-    # Compat
-    "discord",
-    "discord.types",
-    "discord.ui",
-    "discord.webhook",
-    "discord.ext.commands",
-    "discord.ext.tasks",
 ]
 
 setup(

@@ -21,12 +21,14 @@ if TYPE_CHECKING:
 
     from ...guild import Guild
     from ...state import ConnectionState
-    from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
+    from ...types.components import (
+        MentionableSelectMenu as MentionableSelectMenuPayload,
+    )
     from ...types.interactions import ComponentInteractionData
 
 __all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class MentionableSelectValues(SelectValuesBase):
@@ -48,7 +50,7 @@ class MentionableSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, Role)]
 
 
-class MentionableSelect(SelectBase, Generic[V]):
+class MentionableSelect(SelectBase, Generic[V_co]):
 
     """Represents a UI mentionable select menu.
 
@@ -190,8 +192,8 @@ def mentionable_select(
     defaults: Optional[List[Union[SelectDefault, Role, Member, User]]] = None,
     row: Optional[int] = None,
 ) -> Callable[
-    [ItemCallbackType[MentionableSelect[V], ClientT]],
-    ItemCallbackType[MentionableSelect[V], ClientT],
+    [ItemCallbackType[MentionableSelect[V_co], ClientT]],
+    ItemCallbackType[MentionableSelect[V_co], ClientT],
 ]:
     """A decorator that attaches a mentionable select menu to a component.
 

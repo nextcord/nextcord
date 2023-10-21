@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import inspect
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator, List, Tuple, TypeVar
 
@@ -130,28 +131,27 @@ class CogMeta(type):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
                 elif asyncio.iscoroutinefunction(value):
-                    try:
-                        getattr(value, "__cog_listener__")
-                    except AttributeError:
+                    if not hasattr(value, "__cog_listener__"):
                         continue
-                    else:
-                        if elem.startswith(("cog_", "bot_")):
-                            raise TypeError(no_bot_cog.format(base, elem))
-                        listeners[elem] = value
+
+                    if elem.startswith(("cog_", "bot_")):
+                        raise TypeError(no_bot_cog.format(base, elem))
+                    listeners[elem] = value
 
         new_cls.__cog_commands__ = list(commands.values())  # this will be copied in Cog.__new__
 
-        listeners_as_list = []
-        for listener in listeners.values():
-            for listener_name in listener.__cog_listener_names__:
-                # I use __name__ instead of just storing the value so I can inject
-                # the self attribute when the time comes to add them to the bot
-                listeners_as_list.append((listener_name, listener.__name__))
+        listeners_as_list = [
+            # I use __name__ instead of just storing the value so I can inject
+            # the self attribute when the time comes to add them to the bot
+            (listener_name, listener.__name__)
+            for listener in listeners.values()
+            for listener_name in listener.__cog_listener_names__
+        ]
 
         new_cls.__cog_listeners__ = listeners_as_list
         return new_cls
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **_kwargs: Any) -> None:
         super().__init__(*args)
 
     @classmethod
@@ -175,7 +175,7 @@ class Cog(ClientCog, metaclass=CogMeta):
     __cog_commands__: ClassVar[List[Command]]
     __cog_listeners__: ClassVar[List[Tuple[str, str]]]
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
+    def __new__(cls, *_args: Any, **_kwargs: Any) -> Self:
         # For issue 426, we need to store a copy of the command objects
         # since we modify them to inject `self` to them.
         # To do this, we need to interfere with the Cog creation process.
@@ -316,7 +316,6 @@ class Cog(ClientCog, metaclass=CogMeta):
 
         Subclasses must replace this if they want special unloading behaviour.
         """
-        pass
 
     @_cog_special_method
     def bot_check_once(self, ctx: Context) -> bool:
@@ -369,7 +368,6 @@ class Cog(ClientCog, metaclass=CogMeta):
         error: :class:`CommandError`
             The error that happened.
         """
-        pass
 
     @_cog_special_method
     async def cog_before_invoke(self, ctx: Context) -> None:
@@ -384,7 +382,6 @@ class Cog(ClientCog, metaclass=CogMeta):
         ctx: :class:`.Context`
             The invocation context.
         """
-        pass
 
     @_cog_special_method
     async def cog_after_invoke(self, ctx: Context) -> None:
@@ -399,7 +396,6 @@ class Cog(ClientCog, metaclass=CogMeta):
         ctx: :class:`.Context`
             The invocation context.
         """
-        pass
 
     def _inject(self, bot: BotBase) -> Self:
         cls = self.__class__
@@ -453,7 +449,5 @@ class Cog(ClientCog, metaclass=CogMeta):
             if cls.bot_check_once is not Cog.bot_check_once:
                 bot.remove_check(self.bot_check_once, call_once=True)
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 self.cog_unload()
-            except Exception:
-                pass
