@@ -1258,6 +1258,36 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param entry: The entry that was created.
     :type entry: :class:`AuditLogEntry`
 
+.. function:: on_entitlement_create(entitlement)
+
+    Called when an :class:`Entitlement` is created.
+
+    .. versionadded:: 3.0
+
+    :param entitlement: The entitlement that was created.
+    :type entitlement: :class:`Entitlement`
+
+.. function:: on_entitlement_update(entitlement)
+
+    Called when an :class:`Entitlement` is updated.
+    This is the case when a user's subscription renews for the next billing period.
+
+    .. versionadded:: 3.0
+
+    :param entitlement: The entitlement that was updated.
+    :type entitlement: :class:`Entitlement`
+
+.. function:: on_entitlement_delete(entitlement)
+
+    Called when an :class:`Entitlement` is deleted.
+    This is the case when Discord issues a refund for a purchase or 
+    Discord removes an entitlement via internal tooling.
+
+    .. versionadded:: 3.0
+
+    :param entitlement: The entitlement that was deleted.
+    :type entitlement: :class:`Entitlement`
+
 .. _discord-api-utils:
 
 Utility Functions
@@ -1763,6 +1793,36 @@ of :class:`enum.Enum`.
     .. attribute:: paragraph
 
         Represent a multi line input
+
+.. class:: SKUType
+
+    Represents the type of a :class:`SKU`.
+
+    .. attribute:: subscription
+
+        A subscription.
+    .. attribute:: subscription_group
+
+        A subscription group.
+
+.. class:: EntitlementType
+
+    Represents the type of an :class:`Entitlement`.
+
+    .. attribute:: application_subscription
+
+        An application subscription.
+
+.. class:: EntitlementOwnerType
+
+    Represents the type of an :class:`Entitlement` owner.
+
+    .. attribute:: guild_subscription
+
+        A guild subscription.
+    .. attribute:: user_subscription
+
+        A user subscription.
 
 .. class:: VoiceRegion
 
@@ -4187,6 +4247,22 @@ Member
 
     .. automethod:: typing
         :async-with:
+
+Entitlement
+~~~~~~~~~~~
+
+.. attributetable:: Entitlement
+
+.. autoclass:: Entitlement()
+    :members:
+
+SKU
+~~~
+
+.. attributetable:: SKU
+
+.. autoclass:: SKU()
+    :members:
 
 Spotify
 ~~~~~~~
