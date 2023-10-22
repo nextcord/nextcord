@@ -75,8 +75,6 @@ class SKU(Object):
     .. versionadded:: 3.0
     """
 
-    __slots__ = ("id", "type", "application_id", "name", "slug", "flags")
-
     def __init__(self, payload: SKUPayload) -> None:
         self.id: int = int(payload["id"])
         self.type: SKUType = SKUType(payload["type"])
