@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
-from ...components import MentionableSelectMenu, SelectDefault
+from ...components import MentionableSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...member import Member
@@ -76,10 +76,6 @@ class MentionableSelect(SelectBase, Generic[V_co]):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
-    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.Role`, :class:`.Member`, :class:`nextcord.User`]]]
-        The default roles and users that are automatically selected.
-
-        .. versionadded:: 3.0
     row: Optional[:class:`int`]
         The relative row this select menu belongs to. A Discord component can only have 5
         rows. By default, items are arranged automatically into those 5 rows. If you'd
@@ -93,7 +89,6 @@ class MentionableSelect(SelectBase, Generic[V_co]):
         "min_values",
         "max_values",
         "disabled",
-        "defaults",
     )
 
     def __init__(
@@ -104,7 +99,6 @@ class MentionableSelect(SelectBase, Generic[V_co]):
         min_values: int = 1,
         max_values: int = 1,
         disabled: bool = False,
-        defaults: Optional[List[Union[SelectDefault, Role, Member, User]]] = None,
         row: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -123,36 +117,12 @@ class MentionableSelect(SelectBase, Generic[V_co]):
             min_values=self.min_values,
             max_values=self.max_values,
             disabled=self.disabled,
-            defaults=[
-                SelectDefault.from_value(d).to_dict()
-                if not isinstance(d, SelectDefault)
-                else d.to_dict()
-                for d in defaults
-            ]
-            if defaults
-            else None,
         )
 
     @property
     def values(self) -> MentionableSelectValues:
         """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`nextcord.User`, :class:`.Role`] that have been selected by the user."""
         return self._selected_values
-
-    @property
-    def defaults(self) -> Optional[List[SelectDefault]]:
-        """List[:class:`.SelectDefault`]: The default roles and users that are automatically selected."""
-        return (
-            [SelectDefault.from_dict(d) for d in self._underlying.defaults]
-            if self._underlying.defaults
-            else None
-        )
-
-    @defaults.setter
-    def defaults(self, value: Optional[List[SelectDefault]]) -> None:
-        if value is None:
-            self._underlying.defaults = None
-        else:
-            self._underlying.defaults = [d.to_dict() for d in value]
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:
         return self._underlying.to_dict()
@@ -165,9 +135,6 @@ class MentionableSelect(SelectBase, Generic[V_co]):
             min_values=component.min_values,
             max_values=component.max_values,
             disabled=component.disabled,
-            defaults=[SelectDefault.from_dict(d) for d in component.defaults]
-            if component.defaults
-            else None,
             row=None,
         )
 
@@ -189,7 +156,6 @@ def mentionable_select(
     min_values: int = 1,
     max_values: int = 1,
     disabled: bool = False,
-    defaults: Optional[List[Union[SelectDefault, Role, Member, User]]] = None,
     row: Optional[int] = None,
 ) -> Callable[
     [ItemCallbackType[MentionableSelect[V_co], ClientT]],
@@ -227,10 +193,6 @@ def mentionable_select(
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
-    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.Role`, :class:`.Member`, :class:`nextcord.User`]]]
-        The default roles and users that are automatically selected.
-
-        .. versionadded:: 3.0
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
@@ -245,7 +207,6 @@ def mentionable_select(
             "min_values": min_values,
             "max_values": max_values,
             "disabled": disabled,
-            "defaults": defaults,
         }
         return func
 
