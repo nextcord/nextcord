@@ -15,8 +15,6 @@ from .object import Object
 from .utils import MISSING, obj_to_base64_data, snowflake_time, time_snowflake
 
 if TYPE_CHECKING:
-    from datetime import datetime
-
     from typing_extensions import Self
 
     from .abc import SnowflakeTime
