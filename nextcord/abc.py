@@ -1763,7 +1763,7 @@ class Connectable(Protocol):
             A type that subclasses :class:`~nextcord.VoiceProtocol` to connect with.
             Defaults to :class:`~nextcord.VoiceClient`.
 
-            .. versionadded:: TODO
+            .. versionadded:: 3.0
         recordable: :class:`bool` = False
             Whether or not should use the VoiceRecorder client instead of VoiceClient
             This allows for receiving audio data from voice connection on top of being
