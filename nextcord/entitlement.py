@@ -5,11 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from enums import EntitlementType, SKUType
-from flags import SKUFlags
-from object import Object
-from utils import parse_time
-
+from .enums import EntitlementType, SKUType
+from .flags import SKUFlags
+from .object import Object
+from .utils import parse_time
 from .types.entitlement import SKU as SKUPayload, Entitlement as EntitlementPayload
 
 
