@@ -1280,7 +1280,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 .. function:: on_entitlement_delete(entitlement)
 
     Called when an :class:`Entitlement` is deleted.
-    This is the case when Discord issues a refund for a purchase or 
+    This is the case when Discord issues a refund for a purchase or
     Discord removes an entitlement via internal tooling.
 
     .. versionadded:: 3.0
