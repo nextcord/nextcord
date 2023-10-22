@@ -39,18 +39,6 @@ class Entitlement(Object):
     .. versionadded:: 3.0
     """
 
-    __slots__ = (
-        "id",
-        "sku_id",
-        "application_id",
-        "user_id",
-        "type",
-        "deleted",
-        "starts_at",
-        "ends_at",
-        "guild_id",
-    )
-
     def __init__(self, payload: EntitlementPayload) -> None:
         self.id: int = int(payload["id"])
         self.sku_id: int = int(payload["sku_id"])
