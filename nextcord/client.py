@@ -1736,6 +1736,11 @@ class Client:
         ------
         :exc:`.HTTPException`
             Retrieving the SKUs failed.
+
+        Returns
+        -------
+        List[:class:`.SKU`]
+            The SKUs retrieved.
         """
         if self.application_id is None:
             raise TypeError("Could not get the current application's id")
@@ -1791,6 +1796,11 @@ class Client:
         ------
         :exc:`.HTTPException`
             Getting the entitlements failed.
+
+        Returns
+        -------
+        List[:class:`.Entitlement`]
+            The entitlements retrieved.
         """
         if self.application_id is None:
             raise TypeError("Could not get the current application's id")

@@ -3936,7 +3936,7 @@ class Guild(Hashable):
             owner_type=EntitlementOwnerType.guild_subscription.value,
         )
 
-    async def fetch_entitlements(
+    async def entitlements(
         self,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,

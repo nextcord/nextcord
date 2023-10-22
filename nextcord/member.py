@@ -1082,7 +1082,7 @@ class Member(abc.Messageable, _UserTag):
             owner_type=EntitlementOwnerType.user_subscription.value,
         )
 
-    async def fetch_entitlements(
+    async def entitlements(
         self,
         before: Optional[abc.SnowflakeTime] = None,
         after: Optional[abc.SnowflakeTime] = None,

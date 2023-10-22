@@ -566,7 +566,7 @@ class User(BaseUser, abc.Messageable):
             owner_type=EntitlementOwnerType.user_subscription.value,
         )
 
-    async def fetch_entitlements(
+    async def entitlements(
         self,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
