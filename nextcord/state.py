@@ -1737,7 +1737,7 @@ class ConnectionState:
 
     def parse_entitlement_create(self, data) -> None:
         self.dispatch("entitlement_create", Entitlement(data))
-    
+
     def parse_entitlement_update(self, data) -> None:
         self.dispatch("entitlement_update", Entitlement(data))
 
