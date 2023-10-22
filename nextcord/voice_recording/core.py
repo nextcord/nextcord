@@ -211,9 +211,7 @@ class TimeTracker:
         # first packet from user
         else:
             # calculate time since first packet
-            silence = (
-                (received_timestamp - self.first_packet_time) * AUDIO_HZ
-            ) - FRAME_SIZE
+            silence = ((received_timestamp - self.first_packet_time) * AUDIO_HZ) - FRAME_SIZE
 
             # store first silence to write later if needed
             writer.starting_silence = Silence.from_timedelta(silence)
@@ -343,7 +341,7 @@ class OpusFrame:
     decrypted_data: Optional[bytes]
     decoded_data: Optional[bytes] = None
     user_id: Optional[int] = None
-    
+
     @property
     def is_silent(self):
         return self.decrypted_data == FRAME_OF_SILENCE
@@ -419,7 +417,7 @@ class RecorderClient(nc_vc.VoiceClient):
         self.process: Optional[Thread] = None
         self.auto_deaf: bool = auto_deaf if isinstance(auto_deaf, bool) else True
         self.tmp_type: TmpType = tmp_type or TmpType.File
-        
+
         # leakage calculation
         self.time_info = None
 
@@ -554,7 +552,9 @@ class RecorderClient(nc_vc.VoiceClient):
 
         sequence, timestamp, ssrc = unpack_from(">xxHII", header)
 
-        if self.time_info and timestamp < self.time_info[0]:  # in case timestamp from discord has reset
+        if (
+            self.time_info and timestamp < self.time_info[0]
+        ):  # in case timestamp from discord has reset
             self.time_info = None
             self.start_time = 0
         elif timestamp < self.start_time:  # discard any packet leakage from previous recording
@@ -581,13 +581,13 @@ class RecorderClient(nc_vc.VoiceClient):
 
     def _process_audio_packet(self, data: bytes) -> None:
         if self.audio_data is None:
-            return
+            return None
 
         if self.__raw_handler:
             self.__raw_handler(data)
             # terminate early after calling custom decoded handler method if not set to record too
             if not self.__record_alongside_handler:
-                return
+                return None
 
         return self._decode_audio(data)
 
@@ -599,7 +599,9 @@ class RecorderClient(nc_vc.VoiceClient):
         return (
             discord_rtp  # original rtp at the saved timestamp
             + (abs(t - clocktime) * FRAME_SIZE * FPS)  # offset to the current timestamp
-            - (FRAME_SIZE * min(self.latency * 1000, 1000) / FRAME_SIZE)  # minus the latency (max 1s)
+            - (
+                FRAME_SIZE * min(self.latency * 1000, 1000) / FRAME_SIZE
+            )  # minus the latency (max 1s)
         )
 
     def _start_packets_recording(self) -> Optional[AudioData]:
