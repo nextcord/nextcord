@@ -2642,35 +2642,33 @@ class HTTPClient:
             params["exclude_ended"] = exclude_ended
         if user_id is not None:
             params["user_id"] = user_id
-        r = Route("GET", "/applications/{application_id}/entitlements", application_id=application_id)
+        r = Route(
+            "GET", "/applications/{application_id}/entitlements", application_id=application_id
+        )
         return self.request(r, params=params)
-    
+
     def create_test_entitlement(
         self,
         application_id: Snowflake,
         sku_id: Snowflake,
         owner_id: Snowflake,
-        owner_type: Literal[1, 2]
+        owner_type: Literal[1, 2],
     ) -> Response:
-        r = Route("POST", "/applications/{application_id}/entitlements", application_id=application_id)
-        payload = {
-            "sku_id": sku_id,
-            "owner_id": owner_id,
-            "owner_type": owner_type
-        }
+        r = Route(
+            "POST", "/applications/{application_id}/entitlements", application_id=application_id
+        )
+        payload = {"sku_id": sku_id, "owner_id": owner_id, "owner_type": owner_type}
         return self.request(r, json=payload)
-    
+
     def delete_test_entitlement(
         self,
         application_id: Snowflake,
         sku_id: Snowflake,
         owner_id: Snowflake,
-        owner_type: Literal[1, 2]
+        owner_type: Literal[1, 2],
     ) -> Response[None]:
-        r = Route("DELETE", "/applications/{application_id}/entitlements", application_id=application_id)
-        payload = {
-            "sku_id": sku_id,
-            "owner_id": owner_id,
-            "owner_type": owner_type
-        }
+        r = Route(
+            "DELETE", "/applications/{application_id}/entitlements", application_id=application_id
+        )
+        payload = {"sku_id": sku_id, "owner_id": owner_id, "owner_type": owner_type}
         return self.request(r, json=payload)

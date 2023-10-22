@@ -1096,19 +1096,19 @@ class InteractionResponse:
 
     async def premium_required(self) -> None:
         """|coro|
-        
-        Responds to this interaction by sending a message indicating that the command requires 
+
+        Responds to this interaction by sending a message indicating that the command requires
         an active premium `.Entitlement` subscription.
-        
+
         Raises
         ------
         HTTPException
             Sending the message failed.
         InteractionResponded
             This interaction has already been responded to before.
-            
+
         .. versionadded:: 3.0"""
-        
+
         adapter = async_context.get()
         parent = self._parent
         await adapter.create_interaction_response(

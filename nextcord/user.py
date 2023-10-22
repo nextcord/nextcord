@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
-    from .abc import Snowflake, SnowflakeTime
+    from .abc import SnowflakeTime
     from .channel import DMChannel
     from .file import File
     from .guild import Guild
@@ -603,7 +603,7 @@ class User(BaseUser, abc.Messageable):
         """
         if not self._state.application_id:
             raise TypeError("Couldn't get the clients application_id.")
-        
+
         if isinstance(before, datetime):
             before = Object(id=time_snowflake(before, high=False))
         if isinstance(after, datetime):
@@ -618,4 +618,3 @@ class User(BaseUser, abc.Messageable):
             exclude_ended=exclude_ended,
         )
         return [Entitlement(payload) for payload in data]
-    

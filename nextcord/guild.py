@@ -3877,20 +3877,20 @@ class Guild(Hashable):
             self.id, data=payload, reason=reason
         )
         return AutoModerationRule(data=data, state=self._state)
-    
+
     async def create_test_entitlement(self, sku_id: int) -> None:
         """|coro|
-        
+
         Creates a test entitlement for the guild.
         This makes Discord behave as if the guild has purchased the SKU.
-        
+
         .. versionadded:: 3.0
-        
+
         Parameters
         ----------
         sku_id: :class:`int`
             The ID of the SKU to create a test entitlement for.
-        
+
         Raises
         ------
         :exc:`.HTTPException`
@@ -3909,17 +3909,17 @@ class Guild(Hashable):
 
     async def delete_test_entitlement(self, sku_id: int) -> None:
         """|coro|
-        
+
         Deletes a test entitlement for the guild.
         This makes Discord behave as if the guild has not purchased the SKU.
-        
+
         .. versionadded:: 3.0
-        
+
         Parameters
         ----------
         sku_id: :class:`int`
             The ID of the SKU to delete a test entitlement for.
-        
+
         Raises
         ------
         :exc:`.HTTPException`
@@ -3944,11 +3944,11 @@ class Guild(Hashable):
         exclude_ended: bool = False,
     ) -> List[Entitlement]:
         """|coro|
-        
+
         Fetches the entitlements for the guild.
-        
+
         .. versionadded:: 3.0
-        
+
         Parameters
         ----------
         before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
@@ -3974,7 +3974,7 @@ class Guild(Hashable):
             Fetching the entitlements failed.
         :exc:`TypeError`
             The client's application ID is not available.
-        
+
         Returns
         -------
         List[:class:`Entitlement`]
@@ -3982,7 +3982,7 @@ class Guild(Hashable):
         """
         if not self._state.application_id:
             raise TypeError("Couldn't get the clients application_id.")
-        
+
         if isinstance(before, datetime.datetime):
             before = Object(id=utils.time_snowflake(before, high=False))
         if isinstance(after, datetime.datetime):

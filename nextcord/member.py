@@ -1043,7 +1043,7 @@ class Member(abc.Messageable, _UserTag):
             The role or ``None`` if not found in the member's roles.
         """
         return self.guild.get_role(role_id) if self._roles.has(role_id) else None
-    
+
     async def create_test_entitlement(self, sku_id: int):
         """|coro|
 
@@ -1119,7 +1119,7 @@ class Member(abc.Messageable, _UserTag):
         """
         if not self._state.application_id:
             raise TypeError("Couldn't get the clients application_id.")
-        
+
         if isinstance(before, datetime.datetime):
             before = Object(id=utils.time_snowflake(before, high=False))
         if isinstance(after, datetime.datetime):

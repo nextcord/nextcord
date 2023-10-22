@@ -39,8 +39,15 @@ from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .entitlement import Entitlement, SKU
-from .enums import ApplicationCommandType, ChannelType, EntitlementOwnerType, InteractionType, Status, VoiceRegion
+from .entitlement import SKU, Entitlement
+from .enums import (
+    ApplicationCommandType,
+    ChannelType,
+    EntitlementOwnerType,
+    InteractionType,
+    Status,
+    VoiceRegion,
+)
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
@@ -1720,9 +1727,9 @@ class Client:
 
     async def skus(self) -> List[SKU]:
         """|coro|
-        
+
         Retrieves a list of :class:`.SKU` for the current application.
-        
+
         .. versionadded:: 3.0
 
         Raises
@@ -1746,11 +1753,11 @@ class Client:
         exclude_ended: bool = False,
     ) -> List[Entitlement]:
         """|coro|
-        
+
         Retrieves a list of :class:`.Entitlement` for the current application.
-        
+
         .. versionadded:: 3.0
-        
+
         Parameters
         ----------
         before: Optional[Union[:class:`~datetime.datetime`, :class:`~nextcord.Object`]]
@@ -1812,7 +1819,7 @@ class Client:
         owner_type: EntitlementOwnerType,
     ) -> None:
         """|coro|
-        
+
         Creates a test :class:`.Entitlement` for the current application.
         This makes Discord behave as if the user or guild has purchased the SKU.
 
@@ -1852,7 +1859,7 @@ class Client:
         owner_type: EntitlementOwnerType,
     ) -> None:
         """|coro|
-        
+
         Deletes a test :class:`.Entitlement` for the current application.
 
         .. versionadded:: 3.0

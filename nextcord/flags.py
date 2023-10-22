@@ -1450,12 +1450,12 @@ class SKUFlags(BaseFlags):
     def available(self):
         """:class:`bool`: Returns ``True`` if the SKU is available for purchase."""
         return 1 << 2
-    
+
     @flag_value
     def guild_subscription(self):
         """:class:`bool`: Returns ``True`` if the SKU is available for guild subscriptions."""
         return 1 << 7
-    
+
     @flag_value
     def user_subscription(self):
         """:class:`bool`: Returns ``True`` if the SKU is available for user subscriptions."""

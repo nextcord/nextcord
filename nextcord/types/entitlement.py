@@ -4,7 +4,6 @@ from typing_extensions import NotRequired
 
 from .snowflake import Snowflake
 
-
 EntitlementType = Literal[8]
 
 
