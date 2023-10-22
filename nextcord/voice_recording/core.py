@@ -29,7 +29,8 @@ if TYPE_CHECKING:
 
 
 AUDIO_HZ = DecoderThread.SAMPLING_RATE
-SILENCE_FRAME_SIZE = 960
+FRAME_SIZE = 960
+FPS = AUDIO_HZ / FRAME_SIZE
 RECV_SIZE = 4096
 FRAME_OF_SILENCE = b"\xf8\xff\xfe"
 DIFFERENCE_THRESHOLD = 60
@@ -37,7 +38,7 @@ DIFFERENCE_THRESHOLD = 60
 STUB = ()
 
 
-SILENCE_STRUCT = pack("<h", 0) * SILENCE_FRAME_SIZE
+SILENCE_STRUCT = pack("<h", 0) * FRAME_SIZE
 SILENCE_STRUCT_10 = SILENCE_STRUCT * 10
 SILENCE_STRUCT_100 = SILENCE_STRUCT * 100
 SILENCE_STRUCT_1000 = SILENCE_STRUCT * 1000  # 3.4mb in size
@@ -63,7 +64,7 @@ class Silence:
 
     @property
     def milliseconds(self) -> float:
-        return self.frames / (AUDIO_HZ / SILENCE_FRAME_SIZE) * 1000
+        return self.frames / (AUDIO_HZ / FRAME_SIZE) * 1000
 
     def write_to(self, buffer: BufferedIOBase) -> None:
         write = buffer.write
@@ -86,7 +87,7 @@ class Silence:
 
     @classmethod
     def from_timedelta(cls, silence: int):
-        half_frames = int(silence / SILENCE_FRAME_SIZE)
+        half_frames = int(silence / FRAME_SIZE)
         return None if half_frames <= 0 else cls(half_frames * DecoderThread.CHANNELS)
 
 
@@ -196,10 +197,10 @@ class TimeTracker:
             difference = abs(100 - (delta_created_time * 100 / delta_received_time))
 
             # calculate time since last audio packet
-            if difference > DIFFERENCE_THRESHOLD and delta_created_time != SILENCE_FRAME_SIZE:
-                silence = delta_received_time - SILENCE_FRAME_SIZE
+            if difference > DIFFERENCE_THRESHOLD and delta_created_time != FRAME_SIZE:
+                silence = delta_received_time - FRAME_SIZE
             else:
-                silence = delta_created_time - SILENCE_FRAME_SIZE
+                silence = delta_created_time - FRAME_SIZE
 
         # first packet ever
         elif not self.users_times:
@@ -212,7 +213,7 @@ class TimeTracker:
             # calculate time since first packet
             silence = (
                 (received_timestamp - self.first_packet_time) * AUDIO_HZ
-            ) - SILENCE_FRAME_SIZE
+            ) - FRAME_SIZE
 
             # store first silence to write later if needed
             writer.starting_silence = Silence.from_timedelta(silence)
@@ -342,6 +343,10 @@ class OpusFrame:
     decrypted_data: Optional[bytes]
     decoded_data: Optional[bytes] = None
     user_id: Optional[int] = None
+    
+    @property
+    def is_silent(self):
+        return self.decrypted_data == FRAME_OF_SILENCE
 
 
 class RecorderClient(nc_vc.VoiceClient):
@@ -411,10 +416,12 @@ class RecorderClient(nc_vc.VoiceClient):
         self.filters: RecordingFilter = filters or RecordingFilter()
 
         # processes
-        self.decoder = DecoderThread(self)
         self.process: Optional[Thread] = None
-        self.auto_deaf: bool = auto_deaf
-        self.tmp_type: TmpType = tmp_type
+        self.auto_deaf: bool = auto_deaf if isinstance(auto_deaf, bool) else True
+        self.tmp_type: TmpType = tmp_type or TmpType.File
+        
+        # leakage calculation
+        self.time_info = None
 
         # handlers private
         self.__handler_set: bool = False
@@ -539,12 +546,22 @@ class RecorderClient(nc_vc.VoiceClient):
         if 200 <= data[1] <= 204:
             return  # RTCP concention info, not useful
 
+        # decryption
         data = bytearray(data)
 
         header = data[:12]
         data = data[12:]
 
         sequence, timestamp, ssrc = unpack_from(">xxHII", header)
+
+        if self.time_info and timestamp < self.time_info[0]:  # in case timestamp from discord has reset
+            self.time_info = None
+            self.start_time = 0
+        elif timestamp < self.start_time:  # discard any packet leakage from previous recording
+            return
+
+        self.time_info = (timestamp, perf_counter())
+
         decrypted_data = getattr(decrypter, f"decrypt_{self.mode}")(self.secret_key, header, data)
 
         opus_frame = OpusFrame(sequence, timestamp, perf_counter(), ssrc, decrypted_data)
@@ -558,6 +575,7 @@ class RecorderClient(nc_vc.VoiceClient):
         if decrypted_data == FRAME_OF_SILENCE:
             return
 
+        # send to decoder now
         # decoder will call `_process_decoded_audio` once finished decoding
         self.decoder.decode(opus_frame)
 
@@ -571,11 +589,23 @@ class RecorderClient(nc_vc.VoiceClient):
             if not self.__record_alongside_handler:
                 return
 
-        self._decode_audio(data)
+        return self._decode_audio(data)
+
+    def _calc_timestamp(self, t):
+        if not self.time_info:
+            return 0
+
+        discord_rtp, clocktime = self.time_info
+        return (
+            discord_rtp  # original rtp at the saved timestamp
+            + (abs(t - clocktime) * FRAME_SIZE * FPS)  # offset to the current timestamp
+            - (FRAME_SIZE * min(self.latency * 1000, 1000) / FRAME_SIZE)  # minus the latency (max 1s)
+        )
 
     def _start_packets_recording(self) -> Optional[AudioData]:
         self.time_tracker = TimeTracker()
         self.audio_data = AudioData(self.decoder)
+        self.start_time = self._calc_timestamp(perf_counter())
 
         pre_socket = [self.socket]
 
@@ -593,6 +623,7 @@ class RecorderClient(nc_vc.VoiceClient):
                     self._process_audio_packet(self.socket.recv(RECV_SIZE))
             except OSError:
                 return self._stop_recording()
+
         return None
 
     def _start_recording(self) -> None:
@@ -603,6 +634,7 @@ class RecorderClient(nc_vc.VoiceClient):
             or self.__decoded_handler  # requires decoding data
             or not self.__handler_set  # normal recording
         ):
+            self.decoder = DecoderThread(self)
             self.decoder.start()
 
         Thread(target=self._start_packets_recording).start()

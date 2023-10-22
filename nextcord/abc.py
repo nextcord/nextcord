@@ -1742,7 +1742,7 @@ class Connectable(Protocol):
         recordable: bool = False,
         auto_deaf: bool = True,
         tmp_type: TmpType = MISSING,
-        filters: RecordingFilter,
+        filters: Optional[RecordingFilter] = MISSING,
     ) -> T:
         """|coro|
 
