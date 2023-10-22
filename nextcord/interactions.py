@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set, Tuple
 from . import utils
 from .channel import ChannelType, PartialMessageable
 from .embeds import Embed
+from .entitlement import Entitlement
 from .enums import InteractionResponseType, InteractionType, try_enum
 from .errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from .file import File
@@ -147,6 +148,10 @@ class Interaction(Hashable, Generic[ClientT]):
         The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
     application_command: Optional[:class:`ApplicationCommand`]
         The application command that handled the interaction.
+    entitlements: Optional[List[:class:`.Entitlement`]]
+        The premium entitlements the user and guild of the interaction has.
+
+        ..versionadded:: 3.0
     """
 
     __slots__: Tuple[str, ...] = (
@@ -165,6 +170,7 @@ class Interaction(Hashable, Generic[ClientT]):
         "application_command",
         "attached",
         "_background_tasks",
+        "entitlements",
         "_permissions",
         "_app_permissions",
         "_state",
@@ -198,6 +204,9 @@ class Interaction(Hashable, Generic[ClientT]):
         self.application_id: int = int(data["application_id"])
         self.locale: Optional[str] = data.get("locale")
         self.guild_locale: Optional[str] = data.get("guild_locale")
+        self.entitlements: List[Entitlement] = [
+            Entitlement(payload) for payload in data["entitlements"]
+        ]
 
         self.message: Optional[Message]
         try:
@@ -1084,6 +1093,31 @@ class InteractionResponse:
             await parent.delete_original_message(delay=delete_after)
 
         return state._get_message(message_id)
+
+    async def premium_required(self) -> None:
+        """|coro|
+        
+        Responds to this interaction by sending a message indicating that the command requires 
+        an active premium `.Entitlement` subscription.
+        
+        Raises
+        ------
+        HTTPException
+            Sending the message failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+            
+        .. versionadded:: 3.0"""
+        
+        adapter = async_context.get()
+        parent = self._parent
+        await adapter.create_interaction_response(
+            parent.id,
+            parent.token,
+            session=parent._session,
+            type=InteractionResponseType.premium_required.value,
+            data={},
+        )
 
 
 class _InteractionMessageState:

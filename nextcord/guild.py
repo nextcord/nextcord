@@ -39,12 +39,14 @@ from .channel import (
 )
 from .colour import Colour
 from .emoji import Emoji
+from .entitlement import Entitlement
 from .enums import (
     AuditLogAction,
     AutoModerationEventType,
     AutoModerationTriggerType,
     ChannelType,
     ContentFilter,
+    EntitlementOwnerType,
     NotificationLevel,
     NSFWLevel,
     ScheduledEventEntityType,
@@ -61,6 +63,7 @@ from .invite import Invite
 from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
+from .object import Object
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
 from .role import Role
@@ -3874,6 +3877,126 @@ class Guild(Hashable):
             self.id, data=payload, reason=reason
         )
         return AutoModerationRule(data=data, state=self._state)
+    
+    async def create_test_entitlement(self, sku_id: int) -> None:
+        """|coro|
+        
+        Creates a test entitlement for the guild.
+        This makes Discord behave as if the guild has purchased the SKU.
+        
+        .. versionadded:: 3.0
+        
+        Parameters
+        ----------
+        sku_id: :class:`int`
+            The ID of the SKU to create a test entitlement for.
+        
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Creating the test entitlement failed.
+        :exc:`TypeError`
+            The client's application ID is not available.
+        """
+        if not self._state.application_id:
+            raise TypeError("Couldn't get the clients application_id.")
+        await self._state.http.create_test_entitlement(
+            application_id=self._state.application_id,
+            sku_id=sku_id,
+            owner_id=self.id,
+            owner_type=EntitlementOwnerType.guild_subscription.value,
+        )
+
+    async def delete_test_entitlement(self, sku_id: int) -> None:
+        """|coro|
+        
+        Deletes a test entitlement for the guild.
+        This makes Discord behave as if the guild has not purchased the SKU.
+        
+        .. versionadded:: 3.0
+        
+        Parameters
+        ----------
+        sku_id: :class:`int`
+            The ID of the SKU to delete a test entitlement for.
+        
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Deleting the test entitlement failed.
+        :exc:`TypeError`
+            The client's application ID is not available.
+        """
+        if not self._state.application_id:
+            raise TypeError("Couldn't get the clients application_id.")
+        await self._state.http.delete_test_entitlement(
+            application_id=self._state.application_id,
+            sku_id=sku_id,
+            owner_id=self.id,
+            owner_type=EntitlementOwnerType.guild_subscription.value,
+        )
+
+    async def fetch_entitlements(
+        self,
+        before: Optional[SnowflakeTime] = None,
+        after: Optional[SnowflakeTime] = None,
+        limit: Optional[int] = None,
+        exclude_ended: bool = False,
+    ) -> List[Entitlement]:
+        """|coro|
+        
+        Fetches the entitlements for the guild.
+        
+        .. versionadded:: 3.0
+        
+        Parameters
+        ----------
+        before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Retrieve entitlements before this date or entitlement.
+            If a datetime is provided, it is recommended to use a UTC aware datetime.
+            If the datetime is naive, it is assumed to be local time.
+            Defaults to ``None``.
+        after: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Retrieve entitlements after this date or entitlement.
+            If a datetime is provided, it is recommended to use a UTC aware datetime.
+            If the datetime is naive, it is assumed to be local time.
+            Defaults to ``None``.
+        limit: Optional[:class:`int`]
+            The number of entitlements to retrieve. If ``None`` retrieve all entitlements.
+            Defaults to ``None``.
+        exclude_ended: :class:`bool`
+            Whether to exclude ended entitlements.
+            Defaults to ``False``.
+
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Fetching the entitlements failed.
+        :exc:`TypeError`
+            The client's application ID is not available.
+        
+        Returns
+        -------
+        List[:class:`Entitlement`]
+            The guild's entitlements.
+        """
+        if not self._state.application_id:
+            raise TypeError("Couldn't get the clients application_id.")
+        
+        if isinstance(before, datetime.datetime):
+            before = Object(id=utils.time_snowflake(before, high=False))
+        if isinstance(after, datetime.datetime):
+            after = Object(id=utils.time_snowflake(after, high=True))
+
+        data = await self._state.http.list_entitlements(
+            application_id=self._state.application_id,
+            before=before.id if before else None,
+            after=after.id if after else None,
+            limit=limit,
+            guild_id=self.id,
+            exclude_ended=exclude_ended,
+        )
+        return [Entitlement(payload=d) for d in data]
 
     def parse_mentions(self, text: str) -> List[Union[Member, User]]:
         """Parses user mentions in a string and returns a list of :class:`Member` objects.

@@ -519,6 +519,20 @@ class InviteTarget(IntEnum):
     embedded_application = 2
 
 
+class SKUType(IntEnum):
+    subscription = 5
+    subscription_group = 6
+
+
+class EntitlementType(IntEnum):
+    application_subscription = 8
+
+
+class EntitlementOwnerType(IntEnum):
+    guild_subscription = 1
+    user_subscription = 2
+
+
 class InteractionType(IntEnum):
     ping = 1
     application_command = 2
@@ -535,6 +549,7 @@ class InteractionResponseType(IntEnum):
     message_update = 7  # for components
     application_command_autocomplete_result = 8
     modal = 9
+    premium_required = 10
 
 
 class ApplicationCommandType(IntEnum):

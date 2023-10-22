@@ -2,20 +2,24 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from . import abc
 from .asset import Asset
 from .colour import Colour
-from .enums import DefaultAvatar
+from .entitlement import Entitlement
+from .enums import DefaultAvatar, EntitlementOwnerType
 from .flags import PublicUserFlags
-from .utils import MISSING, obj_to_base64_data, snowflake_time
+from .object import Object
+from .utils import MISSING, obj_to_base64_data, snowflake_time, time_snowflake
 
 if TYPE_CHECKING:
     from datetime import datetime
 
     from typing_extensions import Self
 
+    from .abc import Snowflake, SnowflakeTime
     from .channel import DMChannel
     from .file import File
     from .guild import Guild
@@ -523,3 +527,95 @@ class User(BaseUser, abc.Messageable):
         state = self._state
         data: DMChannelPayload = await state.http.start_private_message(self.id)
         return state.add_dm_channel(data)
+
+    async def create_test_entitlement(self, sku_id: int):
+        """|coro|
+
+        Creates a test entitlement for this user.
+
+        Parameters
+        ----------
+        sku_id: :class:`int`
+            The ID of the SKU to create a test entitlement for.
+        """
+        if not self._state.application_id:
+            raise TypeError("Couldn't get the clients application_id.")
+        await self._state.http.create_test_entitlement(
+            application_id=self._state.application_id,
+            sku_id=sku_id,
+            owner_id=self.id,
+            owner_type=EntitlementOwnerType.user_subscription.value,
+        )
+
+    async def delete_test_entitlement(self, sku_id: int):
+        """|coro|
+
+        Deletes a test entitlement for this user.
+
+        Parameters
+        ----------
+        sku_id: :class:`int`
+            The ID of the SKU to delete a test entitlement for.
+        """
+        if not self._state.application_id:
+            raise TypeError("Couldn't get the clients application_id.")
+        await self._state.http.delete_test_entitlement(
+            application_id=self._state.application_id,
+            sku_id=sku_id,
+            owner_id=self.id,
+            owner_type=EntitlementOwnerType.user_subscription.value,
+        )
+
+    async def fetch_entitlements(
+        self,
+        before: Optional[SnowflakeTime] = None,
+        after: Optional[SnowflakeTime] = None,
+        limit: Optional[int] = None,
+        exclude_ended: bool = False,
+    ) -> List[Entitlement]:
+        """|coro|
+
+        Fetches the entitlements for this user.
+
+        Parameters
+        ----------
+        before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Retrieve entitlements before this date or entitlement.
+            If a datetime is provided, it is recommended to use a UTC aware datetime.
+            If the datetime is naive, it is assumed to be local time.
+            Defaults to ``None``.
+        after: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Retrieve entitlements after this date or entitlement.
+            If a datetime is provided, it is recommended to use a UTC aware datetime.
+            If the datetime is naive, it is assumed to be local time.
+            Defaults to ``None``.
+        limit: Optional[:class:`int`]
+            The number of entitlements to retrieve. If ``None`` retrieve all entitlements.
+            Defaults to ``None``.
+        exclude_ended: :class:`bool`
+            Whether to exclude ended entitlements.
+            Defaults to ``False``.
+
+        Returns
+        -------
+        List[:class:`Entitlement`]
+            The entitlements for this user.
+        """
+        if not self._state.application_id:
+            raise TypeError("Couldn't get the clients application_id.")
+        
+        if isinstance(before, datetime):
+            before = Object(id=time_snowflake(before, high=False))
+        if isinstance(after, datetime):
+            after = Object(id=time_snowflake(after, high=True))
+
+        data = await self._state.http.list_entitlements(
+            application_id=self._state.application_id,
+            user_id=self.id,
+            before=before.id if before else None,
+            after=after.id if after else None,
+            limit=limit,
+            exclude_ended=exclude_ended,
+        )
+        return [Entitlement(payload) for payload in data]
+    

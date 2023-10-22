@@ -34,6 +34,7 @@ from .colour import *
 from .components import *
 from .embeds import *
 from .emoji import *
+from .entitlement import *
 from .enums import *
 from .errors import *
 from .file import *
