@@ -49,6 +49,8 @@ __all__ = (
     "SortOrderType",
     "RoleConnectionMetadataType",
     "ForumLayoutType",
+    "EntitlementType",
+    "EntitlementOwnerType",
 )
 
 

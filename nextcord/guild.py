@@ -3907,35 +3907,6 @@ class Guild(Hashable):
             owner_type=EntitlementOwnerType.guild_subscription.value,
         )
 
-    async def delete_test_entitlement(self, sku_id: int) -> None:
-        """|coro|
-
-        Deletes a test entitlement for the guild.
-        This makes Discord behave as if the guild has not purchased the SKU.
-
-        .. versionadded:: 3.0
-
-        Parameters
-        ----------
-        sku_id: :class:`int`
-            The ID of the SKU to delete a test entitlement for.
-
-        Raises
-        ------
-        :exc:`.HTTPException`
-            Deleting the test entitlement failed.
-        :exc:`TypeError`
-            The client's application ID is not available.
-        """
-        if not self._state.application_id:
-            raise TypeError("Couldn't get the clients application_id.")
-        await self._state.http.delete_test_entitlement(
-            application_id=self._state.application_id,
-            sku_id=sku_id,
-            owner_id=self.id,
-            owner_type=EntitlementOwnerType.guild_subscription.value,
-        )
-
     async def entitlements(
         self,
         before: Optional[SnowflakeTime] = None,

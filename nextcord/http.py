@@ -2639,7 +2639,7 @@ class HTTPClient:
         if guild_id is not None:
             params["guild_id"] = guild_id
         if exclude_ended is not None:
-            params["exclude_ended"] = exclude_ended
+            params["exclude_ended"] = int(exclude_ended)
         if user_id is not None:
             params["user_id"] = user_id
         r = Route(
@@ -2653,7 +2653,7 @@ class HTTPClient:
         sku_id: Snowflake,
         owner_id: Snowflake,
         owner_type: Literal[1, 2],
-    ) -> Response:
+    ) -> Response[entitlement.Entitlement]:
         r = Route(
             "POST", "/applications/{application_id}/entitlements", application_id=application_id
         )
@@ -2663,12 +2663,12 @@ class HTTPClient:
     def delete_test_entitlement(
         self,
         application_id: Snowflake,
-        sku_id: Snowflake,
-        owner_id: Snowflake,
-        owner_type: Literal[1, 2],
+        entitlement_id: Snowflake,
     ) -> Response[None]:
         r = Route(
-            "DELETE", "/applications/{application_id}/entitlements", application_id=application_id
+            "DELETE",
+            "/applications/{application_id}/entitlements/{entitlement_id}",
+            application_id=application_id,
+            entitlement_id=entitlement_id,
         )
-        payload = {"sku_id": sku_id, "owner_id": owner_id, "owner_type": owner_type}
-        return self.request(r, json=payload)
+        return self.request(r)

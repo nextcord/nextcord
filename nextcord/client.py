@@ -1817,6 +1817,7 @@ class Client:
             limit=limit,
             guild_id=guild_id,
             exclude_ended=exclude_ended,
+            user_id=user_id,
         )
 
         return [Entitlement(payload=entitlement) for entitlement in data]
@@ -1863,10 +1864,7 @@ class Client:
 
     async def delete_test_entitlement(
         self,
-        *,
-        sku_id: int,
-        owner_id: int,
-        owner_type: EntitlementOwnerType,
+        entitlement_id: int,
     ) -> None:
         """|coro|
 
@@ -1876,12 +1874,8 @@ class Client:
 
         Parameters
         ----------
-        sku_id: :class:`int`
-            The ID of the SKU to delete the entitlement for.
-        owner_id: :class:`int`
-            The ID of the user to delete the entitlement for.
-        owner_type: :class:`.EntitlementOwnerType`
-            The type of the owner.
+        entitlement_id: :class:`int`
+            The ID of the entitlement to delete.
 
         Raises
         ------
@@ -1893,9 +1887,7 @@ class Client:
 
         await self.http.delete_test_entitlement(
             application_id=self.application_id,
-            sku_id=sku_id,
-            owner_id=owner_id,
-            owner_type=owner_type.value,
+            entitlement_id=entitlement_id,
         )
 
     async def fetch_user(self, user_id: int, /) -> User:

@@ -545,25 +545,6 @@ class User(BaseUser, abc.Messageable):
             owner_type=EntitlementOwnerType.user_subscription.value,
         )
 
-    async def delete_test_entitlement(self, sku_id: int):
-        """|coro|
-
-        Deletes a test entitlement for this user.
-
-        Parameters
-        ----------
-        sku_id: :class:`int`
-            The ID of the SKU to delete a test entitlement for.
-        """
-        if not self._state.application_id:
-            raise TypeError("Couldn't get the clients application_id.")
-        await self._state.http.delete_test_entitlement(
-            application_id=self._state.application_id,
-            sku_id=sku_id,
-            owner_id=self.id,
-            owner_type=EntitlementOwnerType.user_subscription.value,
-        )
-
     async def entitlements(
         self,
         before: Optional[SnowflakeTime] = None,
