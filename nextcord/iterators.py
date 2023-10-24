@@ -25,7 +25,7 @@ from .bans import BanEntry
 from .errors import NoMoreItems
 from .object import Object
 from .types.user import PartialUser as PartialUserPayload
-from .utils import maybe_coroutine, snowflake_time, time_snowflake
+from .utils import _snowflake_or_int, maybe_coroutine, snowflake_time, time_snowflake
 
 __all__ = (
     "ReactionIterator",
@@ -265,12 +265,16 @@ class HistoryIterator(_AsyncIterator["Message"]):
         around: Optional[SnowflakeTime] = None,
         oldest_first: Optional[bool] = None,
     ) -> None:
-        if isinstance(before, datetime.datetime):
-            before = Object(id=time_snowflake(before, high=False))
-        if isinstance(after, datetime.datetime):
-            after = Object(id=time_snowflake(after, high=True))
-        if isinstance(around, datetime.datetime):
-            around = Object(id=time_snowflake(around))
+        _before = _snowflake_or_int(before, return_when=(datetime.datetime,))
+        _after = _snowflake_or_int(after, return_when=(datetime.datetime,))
+        _around = _snowflake_or_int(around, return_when=(datetime.datetime,))
+
+        if isinstance(_before, datetime.datetime):
+            before = Object(id=time_snowflake(_before, high=False))
+        if isinstance(_after, datetime.datetime):
+            after = Object(id=time_snowflake(_after, high=True))
+        if isinstance(_around, datetime.datetime):
+            around = Object(id=time_snowflake(_around))
 
         self.reverse: bool
         if oldest_first is None:
