@@ -1089,7 +1089,7 @@ class AutocompleteCommandMixin:
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: Optional[List[Dict[str, Any]]] = None,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ) -> None:
         """|coro|
         Calls the autocomplete callback with the given interaction and option data.
@@ -1099,7 +1099,7 @@ class AutocompleteCommandMixin:
                 raise ValueError("Discord did not provide us interaction data")
 
             # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})
+            option_data = interaction.data.get("options")
 
             if not option_data:
                 raise ValueError("Discord did not provide us option data")
@@ -1142,11 +1142,11 @@ class AutocompleteCommandMixin:
                 ) and option.functional_name in uncalled_options:
                     uncalled_options.discard(option.functional_name)
                     kwargs[option.functional_name] = await option.handle_value(
-                        state, arg_data["value"], interaction
+                        state, arg_data.get("value"), interaction
                     )
                 elif arg_data["name"] == focused_option.name:
                     focused_option_value = await focused_option.handle_value(
-                        state, arg_data["value"], interaction
+                        state, arg_data.get("value"), interaction
                     )
 
             for option_name in uncalled_options:
