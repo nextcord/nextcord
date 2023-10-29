@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import datetime
 import unicodedata
 import warnings
 from asyncio import Future
@@ -79,7 +80,6 @@ __all__ = ("Guild",)
 MISSING = utils.MISSING
 
 if TYPE_CHECKING:
-    import datetime
     from typing import cast
 
     from .abc import Snowflake, SnowflakeTime
