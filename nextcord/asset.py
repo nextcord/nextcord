@@ -94,9 +94,9 @@ class AssetMixin:
             if seek_begin:
                 fp.seek(0)
             return written
-        else:
-            with open(fp, "wb") as f:
-                return f.write(data)
+
+        with open(fp, "wb") as f:  # noqa: ASYNC101
+            return f.write(data)
 
     async def to_file(
         self,
@@ -449,9 +449,8 @@ class Asset(BaseAsset):
         if self._animated:
             if format not in VALID_ASSET_FORMATS:
                 raise InvalidArgument(f"format must be one of {VALID_ASSET_FORMATS}")
-        else:
-            if format not in VALID_STATIC_FORMATS:
-                raise InvalidArgument(f"format must be one of {VALID_STATIC_FORMATS}")
+        elif format not in VALID_STATIC_FORMATS:
+            raise InvalidArgument(f"format must be one of {VALID_STATIC_FORMATS}")
 
         url = yarl.URL(self._url)
         path, _ = os.path.splitext(url.path)
