@@ -109,7 +109,7 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 # As nextcord.types exist, we cannot import types
-if TYPE_CHECKING:  # noqa: SIM108
+if TYPE_CHECKING:
     EllipsisType = ellipsis  # noqa: F821
 else:
     EllipsisType = type(Ellipsis)
