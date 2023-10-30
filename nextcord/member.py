@@ -502,11 +502,14 @@ class Member(abc.Messageable, _UserTag):
     def display_name(self) -> str:
         """:class:`str`: Returns the user's display name.
 
-        For regular users this is just their username, but
+        For regular users this is just their global_name or username, but
         if they have a guild specific nickname then that
         is returned instead.
+
+        .. versionchanged:: 2.6
+            Prioritizes global_name over username if available.
         """
-        return self.nick or self.name
+        return self.nick or self.global_name or self.name
 
     @property
     def display_avatar(self) -> Asset:
