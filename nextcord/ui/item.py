@@ -11,6 +11,7 @@ from typing import (
 )
 
 from ..interactions import Interaction
+from ._types import ModalT_co, ViewT_co
 
 __all__ = (
     "ViewItem",
@@ -26,7 +27,6 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
     from ..types.interactions import ComponentInteractionData
-    from ._types import ModalT_co, ViewT_co
 
 
 class Item:
