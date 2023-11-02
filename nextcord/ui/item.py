@@ -140,7 +140,6 @@ class ViewItem(BaseItem, Generic[V]):
         interaction: :class:`.Interaction`
             The interaction that triggered this UI item.
         """
-        pass
 
 
 class ModalItem(BaseItem, Generic[M]):
