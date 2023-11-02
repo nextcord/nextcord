@@ -407,7 +407,7 @@ class RateLimit:
             )
 
         if self._deny:
-            raise ValueError("This request path 404'd and is now denied.")
+            raise HTTPCancelled("This request path previously 404'd and is now denied.")
 
         _log.debug("Bucket %s: Continuing with request.", self.bucket)
         self.remaining -= 1
@@ -541,7 +541,7 @@ class HTTPClient:
         self._time_offset = time_offset
         self._default_auth = None
         # For consistency with possible future changes to set_default_auth.
-        self._set_default_auth(default_auth)
+        self.set_default_auth(default_auth)
         self._ratelimit_use_timestamp = not assume_unsync_clock
         self._proxy = proxy
         self._proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
@@ -592,7 +592,7 @@ class HTTPClient:
     def _get_url_rate_limit(self, method: str, route: Route, auth: str | None) -> RateLimit | None:
         return self._url_rate_limits.get((method, route.bucket, auth), None)
 
-    def _set_default_auth(self, auth: str | None) -> None:
+    def set_default_auth(self, auth: str | None) -> None:
         self._default_auth = auth
 
     def _make_headers(
@@ -792,7 +792,7 @@ class HTTPClient:
                         await global_rate_limit.update(response)
                         try:
                             await url_rate_limit.update(response)
-                        except IncorrectBucket as e:
+                        except IncorrectBucket:
                             # This condition can be met when doing asyncio.gather()'d requests.
                             if (
                                 temp := self._buckets.get(
@@ -808,15 +808,15 @@ class HTTPClient:
                                 self._set_url_rate_limit(route.method, route, auth, url_rate_limit)
                                 await url_rate_limit.update(response)
                             else:
-                                _log.debug(
-                                    "Route %s was given a different bucket, making a new one: %s",
-                                    rate_limit_path,
-                                    e,
-                                )
                                 url_rate_limit = self._make_url_rate_limit(
                                     route.method, route, auth
                                 )
                                 await url_rate_limit.update(response)
+                                _log.critical(
+                                    "Route %s was given a different bucket, made a new one: %s",
+                                    rate_limit_path,
+                                    url_rate_limit.bucket,
+                                )
 
                         if url_rate_limit.bucket is not None and self._buckets.get(
                             url_rate_limit.bucket
@@ -991,8 +991,8 @@ class HTTPClient:
 
     async def static_login(self, auth: str) -> user.User:
         # TODO: Change this? This is literally just fetching /users/@me AKA "Get Current User", and is totally
-        #  usable with OAuth2. This doesn't actually have anything to do with logging in.
-        self._set_default_auth(auth)
+        #  usable with OAuth2. This doesn't actually have anything "log in" in any way.
+        self.set_default_auth(auth)
 
         try:
             data = await self.request(Route("GET", "/users/@me"))
