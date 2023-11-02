@@ -32,7 +32,7 @@ from ..components import (
     SelectMenu as SelectComponent,
     _component_factory,
 )
-from .item import ViewItem, ViewItemCallbackType
+from .item import ViewItem
 
 __all__ = ("View",)
 
@@ -41,7 +41,10 @@ if TYPE_CHECKING:
     from ..message import Message
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload, Component as ComponentPayload
-    from .item import BaseItem
+    from ._types import ItemCallbackType
+
+    # _ViewWeights is also used for Modal thus Item is used instead of ViewItem
+    from .item import Item
 
 _log = logging.getLogger(__name__)
 
@@ -69,23 +72,23 @@ def _component_to_item(component: Component) -> ViewItem:
 class _ViewWeights:
     __slots__ = ("weights",)
 
-    def __init__(self, children: List[BaseItem]) -> None:
+    def __init__(self, children: List[Item]) -> None:
         self.weights: List[int] = [0, 0, 0, 0, 0]
 
-        key: Callable[[BaseItem], int] = lambda i: sys.maxsize if i.row is None else i.row
+        key: Callable[[Item], int] = lambda i: sys.maxsize if i.row is None else i.row
         children = sorted(children, key=key)
         for _, group in groupby(children, key=key):
             for item in group:
                 self.add_item(item)
 
-    def find_open_space(self, item: BaseItem) -> int:
+    def find_open_space(self, item: Item) -> int:
         for index, weight in enumerate(self.weights):
             if weight + item.width <= 5:
                 return index
 
         raise ValueError("Could not find open space for item")
 
-    def add_item(self, item: BaseItem) -> None:
+    def add_item(self, item: Item) -> None:
         if item.row is not None:
             total = self.weights[item.row] + item.width
             if total > 5:
@@ -97,7 +100,7 @@ class _ViewWeights:
             self.weights[index] += item.width
             item._rendered_row = index
 
-    def remove_item(self, item: BaseItem) -> None:
+    def remove_item(self, item: Item) -> None:
         if item._rendered_row is not None:
             self.weights[item._rendered_row] -= item.width
             item._rendered_row = None
@@ -144,10 +147,10 @@ class View:
     """
 
     __discord_ui_view__: ClassVar[bool] = True
-    __view_children_items__: ClassVar[List[ViewItemCallbackType]] = []
+    __view_children_items__: ClassVar[List[ItemCallbackType[ViewItem[Self]]]] = []
 
     def __init_subclass__(cls) -> None:
-        children: List[ViewItemCallbackType] = []
+        children: List[ItemCallbackType[ViewItem[Self]]] = []
         for base in reversed(cls.__mro__):
             children.extend(
                 member
@@ -170,7 +173,7 @@ class View:
         self.timeout = timeout
         self.auto_defer = auto_defer
         self.prevent_update = True if timeout else prevent_update
-        self.children: List[ViewItem[Any]] = []
+        self.children: List[ViewItem[Self]] = []
         for func in self.__view_children_items__:
             item: ViewItem = func.__discord_ui_model_type__(**func.__discord_ui_model_kwargs__)
             item.callback = partial(func, self, item)  # type: ignore
@@ -208,7 +211,7 @@ class View:
             await asyncio.sleep(self.__timeout_expiry - now)
 
     def to_components(self) -> List[ActionRowPayload]:
-        def key(item: ViewItem) -> int:
+        def key(item: ViewItem[Self]) -> int:
             return item._rendered_row or 0
 
         children = sorted(self.children, key=key)
@@ -267,7 +270,7 @@ class View:
         """
         return self.__timeout_expiry
 
-    def add_item(self, item: ViewItem[Self]) -> None:
+    def add_item(self, item: ViewItem) -> None:
         """Adds an item to the view.
 
         Parameters
@@ -295,7 +298,7 @@ class View:
         item._view = self
         self.children.append(item)
 
-    def remove_item(self, item: ViewItem) -> None:
+    def remove_item(self, item: ViewItem[Self]) -> None:
         """Removes an item from the view.
 
         Parameters

@@ -3,17 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple
 
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
-from ...interactions import ClientT
 from ...member import Member
 from ...role import Role
 from ...user import User
 from ...utils import MISSING
-from ..item import ViewItemCallbackType
-from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
@@ -23,10 +20,11 @@ if TYPE_CHECKING:
     from ...state import ConnectionState
     from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
+    from .._types import ItemCallbackType, ViewT_co
+
+    Decorator = ItemCallbackType["MentionableSelect[ViewT_co]"]
 
 __all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
-
-V = TypeVar("V", bound="View", covariant=True)
 
 
 class MentionableSelectValues(SelectValuesBase):
@@ -48,7 +46,7 @@ class MentionableSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, Role)]
 
 
-class MentionableSelect(SelectBase, Generic[V]):
+class MentionableSelect(SelectBase[ViewT_co]):
 
     """Represents a UI mentionable select menu.
 
@@ -155,10 +153,7 @@ def mentionable_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[
-    [ViewItemCallbackType[MentionableSelect[V], ClientT]],
-    ViewItemCallbackType[MentionableSelect[V], ClientT],
-]:
+) -> Callable[[Decorator], Decorator]:
     """A decorator that attaches a mentionable select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -193,7 +188,7 @@ def mentionable_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ViewItemCallbackType) -> ViewItemCallbackType:
+    def decorator(func: Decorator) -> Decorator:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

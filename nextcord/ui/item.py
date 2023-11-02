@@ -4,17 +4,13 @@ from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
-    Any,
-    Callable,
-    Coroutine,
     Generic,
     Literal,
     Optional,
     Tuple,
-    TypeVar,
 )
 
-from ..interactions import ClientT, Interaction
+from ..interactions import Interaction
 
 __all__ = (
     "ViewItem",
@@ -30,19 +26,11 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
     from ..types.interactions import ComponentInteractionData
-    from .modal import Modal
-    from .view import View
-
-I = TypeVar("I", bound="BaseItem")
-VI = TypeVar("VI", bound="ViewItem", covariant=True)
-V = TypeVar("V", bound="View", covariant=True)
-M = TypeVar("M", bound="Modal", covariant=True)
-
-ViewItemCallbackType = Callable[[Any, VI, Interaction[ClientT]], Coroutine[Any, Any, Any]]
+    from ._types import ModalT_co, ViewT_co
 
 
-class BaseItem:
-    """Represents the base UI item that all UI components inherit from."""
+class Item:
+    """Represents the UI item that all UI components inherit from."""
 
     __item_repr_attributes__: Tuple[str, ...] = ("row",)
 
@@ -104,7 +92,7 @@ class BaseItem:
         return 1
 
 
-class ViewItem(BaseItem, Generic[V]):
+class ViewItem(Item, Generic[ViewT_co]):
     """Represents the View UI item that all UI components supporting :class:`View` inherit from.
 
     The current UI items supported for View are:
@@ -121,10 +109,10 @@ class ViewItem(BaseItem, Generic[V]):
 
     def __init__(self) -> None:
         super().__init__()
-        self._view: Optional[V] = None
+        self._view: Optional[ViewT_co] = None
 
     @property
-    def view(self) -> Optional[V_co]:
+    def view(self) -> Optional[ViewT_co]:
         """Optional[:class:`View`]: The underlying view for this item."""
         return self._view
 
@@ -142,7 +130,7 @@ class ViewItem(BaseItem, Generic[V]):
         """
 
 
-class ModalItem(BaseItem, Generic[M]):
+class ModalItem(Item, Generic[ModalT_co]):
     """Represents the Modal UI item that all UI components supporting :class:`Modal` inherit from.
 
     The current UI items supported for Modal are:
@@ -154,22 +142,12 @@ class ModalItem(BaseItem, Generic[M]):
 
     def __init__(self) -> None:
         super().__init__()
-        self._modal: Optional[M] = None
+        self._modal: Optional[ModalT_co] = None
 
         # backwards compatibility
         self.callback: Literal[None] = None
 
     @property
-    def modal(self) -> Optional[M]:
+    def modal(self) -> Optional[ModalT_co]:
         """Optional[:class:`Modal`]: The underlying modal for this item."""
         return self._modal
-
-    @property
-    def view(self) -> Optional[M]:
-        """Optional[:class:`Modal`]: Alias for :attr:`modal` for backwards compatibility."""
-        return self._modal
-
-
-# backwards compatiable
-Item = ViewItem
-"""Alias for :class:ViewItem`"""

@@ -3,20 +3,19 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
 
 from ...components import SelectOption, StringSelectMenu
 from ...emoji import Emoji
 from ...enums import ComponentType
-from ...interactions import ClientT
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
-from ..item import ViewItemCallbackType
-from ..view import View
 from .base import SelectBase
 
 if TYPE_CHECKING:
     from typing_extensions import Self
+
+    from .._types import ItemCallbackType, ViewT_co
 
 __all__ = (
     "Select",
@@ -25,10 +24,8 @@ __all__ = (
     "string_select",
 )
 
-V_co = TypeVar("V_co", bound="View", covariant=True)
 
-
-class StringSelect(SelectBase, Generic[V_co]):
+class StringSelect(SelectBase[ViewT_co]):
     """Represents a UI string select menu.
 
     This is usually represented as a drop down menu.
@@ -205,9 +202,7 @@ def string_select(
     options: List[SelectOption] = MISSING,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[
-    [ViewItemCallbackType[StringSelect[V], ClientT]], ViewItemCallbackType[StringSelect[V], ClientT]
-]:
+) -> Callable[[ItemCallbackType[StringSelect[ViewT_co]]], ItemCallbackType[StringSelect[ViewT_co]]]:
     """A decorator that attaches a string select menu to a component.
 
     There is an alias for this function called ``select``.
@@ -244,7 +239,9 @@ def string_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ViewItemCallbackType[Select[V]]) -> ViewItemCallbackType[Select[V]]:
+    def decorator(
+        func: ItemCallbackType[StringSelect[ViewT_co]],
+    ) -> ItemCallbackType[StringSelect[ViewT_co]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

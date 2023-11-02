@@ -40,7 +40,7 @@ def _walk_component_interaction_data(
 ) -> Iterator[ComponentInteractionData]:
     for item in components:
         if "components" in item:
-            yield from item["components"]  # type: ignore
+            yield from item["components"]
         else:
             yield item
 
@@ -108,7 +108,7 @@ class Modal:
         self.auto_defer = auto_defer
 
         self.children: list[ModalItem[Self]] = []
-        self.__weights = _ViewWeights(self.children)  # type: ignore # it's compatiable.
+        self.__weights = _ViewWeights(list(self.children))
         loop = asyncio.get_running_loop()
         self.id: str = os.urandom(16).hex()
         self.__cancel_callback: Optional[Callable[[Modal], None]] = None
@@ -135,7 +135,7 @@ class Modal:
             await asyncio.sleep(self.__timeout_expiry - now)
 
     def to_components(self) -> List[ActionRowPayload]:
-        def key(item: ModalItem) -> int:
+        def key(item: ModalItem[Self]) -> int:
             return item._rendered_row or 0
 
         children = sorted(self.children, key=key)
@@ -199,7 +199,7 @@ class Modal:
 
         return self
 
-    def remove_item(self, item: ModalItem) -> Modal:
+    def remove_item(self, item: ModalItem[Self]) -> Modal:
         """Removes an item from the modal.
 
         Parameters

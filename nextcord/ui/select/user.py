@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple
 
 from ...components import UserSelectMenu
 from ...enums import ComponentType
-from ...interactions import ClientT
 from ...member import Member
 from ...user import User
 from ...utils import MISSING
-from ..item import ViewItemCallbackType
-from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
@@ -22,10 +19,9 @@ if TYPE_CHECKING:
     from ...state import ConnectionState
     from ...types.components import UserSelectMenu as UserSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
+    from .._types import ItemCallbackType, ViewT_co
 
 __all__ = ("UserSelect", "user_select", "UserSelectValues")
-
-V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class UserSelectValues(SelectValuesBase):
@@ -42,7 +38,7 @@ class UserSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, User)]
 
 
-class UserSelect(SelectBase, Generic[V_co]):
+class UserSelect(SelectBase[ViewT_co]):
     """Represents a UI user select menu.
 
     This is usually represented as a drop down menu.
@@ -147,9 +143,7 @@ def user_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[
-    [ViewItemCallbackType[UserSelect[V], ClientT]], ViewItemCallbackType[UserSelect[V], ClientT]
-]:
+) -> Callable[[ItemCallbackType[UserSelect[ViewT_co]]], ItemCallbackType[UserSelect[ViewT_co]]]:
     """A decorator that attaches a user select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -184,7 +178,9 @@ def user_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ViewItemCallbackType) -> ViewItemCallbackType:
+    def decorator(
+        func: ItemCallbackType[UserSelect[ViewT_co]],
+    ) -> ItemCallbackType[UserSelect[ViewT_co]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
