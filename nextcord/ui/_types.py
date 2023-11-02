@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar
 
+from ..interactions import Interaction
+
 if TYPE_CHECKING:
     from ..client import Client
-    from ..interactions import ClientT, Interaction
+    from ..interactions import ClientT
     from .item import Item, ModalItem, ViewItem
     from .modal import Modal
     from .view import View
