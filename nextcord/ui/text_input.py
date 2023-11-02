@@ -129,7 +129,7 @@ class TextInput(ModalItem[M]):
 
     @label.setter
     def label(self, value: str) -> None:
-        if value is None:
+        if value is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise TypeError("label must cannot be None")
         self._underlying.label = str(value)
 
@@ -207,7 +207,6 @@ class TextInput(ModalItem[M]):
             min_length=text_input.min_length,
             max_length=text_input.max_length,
             required=text_input.required,
-            # value=text_input.value,  # FIXME: figure out what this was
             placeholder=text_input.placeholder,
             row=None,
         )

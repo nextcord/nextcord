@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from ..types.components import ButtonComponent as ButtonComponentPayload
     from .view import View
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class Button(ViewItem[V]):

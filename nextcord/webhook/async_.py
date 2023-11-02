@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
@@ -191,10 +192,11 @@ class AsyncWebhookAdapter:
 
                         if response.status == 403:
                             raise Forbidden(response, data)
-                        elif response.status == 404:
+
+                        if response.status == 404:
                             raise NotFound(response, data)
-                        else:
-                            raise HTTPException(response, data)
+
+                        raise HTTPException(response, data)
 
                 except OSError as e:
                     if attempt < 4 and e.errno in (54, 10054):
@@ -835,12 +837,12 @@ class WebhookMessage(Message):
 
             async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
-                try:
+                with contextlib.suppress(HTTPException):
                     await self._state._webhook.delete_message(self.id)
-                except HTTPException:
-                    pass
 
-            asyncio.create_task(inner_call())
+            task = asyncio.create_task(inner_call())
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
         else:
             await self._state._webhook.delete_message(self.id)
 
@@ -1140,6 +1142,7 @@ class Webhook(BaseWebhook):
             "guild_id": channel.guild.id,
             "user": {
                 "username": user.name,
+                "global_name": user.global_name,
                 "discriminator": user.discriminator,
                 "id": user.id,
                 "avatar": user._avatar,
@@ -1512,8 +1515,6 @@ class Webhook(BaseWebhook):
         previous_mentions: Optional[AllowedMentions] = getattr(
             self._state, "allowed_mentions", None
         )
-        if content is None:
-            content = MISSING
 
         application_webhook = self.type is WebhookType.application
         if ephemeral and not application_webhook:

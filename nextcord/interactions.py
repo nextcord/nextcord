@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set, Tuple, TypeVar, Union
 
 from . import utils
 from .channel import ChannelType, PartialMessageable
@@ -163,6 +164,7 @@ class Interaction(Hashable, Generic[ClientT]):
         "version",
         "application_command",
         "attached",
+        "_background_tasks",
         "_permissions",
         "_app_permissions",
         "_state",
@@ -182,6 +184,7 @@ class Interaction(Hashable, Generic[ClientT]):
         self.application_command: Optional[
             Union[SlashApplicationSubcommand, BaseApplicationCommand]
         ] = None
+        self._background_tasks: Set[asyncio.Task] = set()
         self._from_data(data)
 
     def _from_data(self, data: InteractionPayload) -> None:
@@ -249,8 +252,7 @@ class Interaction(Hashable, Generic[ClientT]):
         """:class:`datetime.datetime`: An aware datetime in UTC representing the time when the interaction will expire."""
         if self.response.is_done():
             return self.created_at + timedelta(minutes=15)
-        else:
-            return self.created_at + timedelta(seconds=3)
+        return self.created_at + timedelta(seconds=3)
 
     def is_expired(self) -> bool:
         """:class:`bool` A boolean whether the interaction token is invalid or not."""
@@ -443,7 +445,7 @@ class Interaction(Hashable, Generic[ClientT]):
 
         # The message channel types should always match
         message = InteractionMessage(state=self._state, channel=self.channel, data=data)  # type: ignore
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, message.id)
         return message
 
@@ -479,12 +481,12 @@ class Interaction(Hashable, Generic[ClientT]):
 
             async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
-                try:
+                with contextlib.suppress(HTTPException):
                     await delete_func
-                except HTTPException:
-                    pass
 
-            asyncio.create_task(inner_call())
+            task = asyncio.create_task(inner_call())
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
         else:
             await delete_func
 
@@ -882,13 +884,12 @@ class InteractionResponse:
         if allowed_mentions is MISSING or allowed_mentions is None:
             if self._parent._state.allowed_mentions is not None:
                 payload["allowed_mentions"] = self._parent._state.allowed_mentions.to_dict()
+        elif self._parent._state.allowed_mentions is not None:
+            payload["allowed_mentions"] = self._parent._state.allowed_mentions.merge(
+                allowed_mentions
+            ).to_dict()
         else:
-            if self._parent._state.allowed_mentions is not None:
-                payload["allowed_mentions"] = self._parent._state.allowed_mentions.merge(
-                    allowed_mentions
-                ).to_dict()
-            else:
-                payload["allowed_mentions"] = allowed_mentions.to_dict()
+            payload["allowed_mentions"] = allowed_mentions.to_dict()
 
         parent = self._parent
         adapter = async_context.get()
@@ -906,7 +907,7 @@ class InteractionResponse:
                 for file in files:
                     file.close()
 
-        if view is not MISSING:
+        if view is not MISSING and view.prevent_update:
             if ephemeral and view.timeout is None:
                 view.timeout = 15 * 60.0
 
@@ -1034,10 +1035,7 @@ class InteractionResponse:
             raise InvalidArgument("Cannot mix both embed and embeds keyword arguments")
 
         if embed is not MISSING:
-            if embed is None:
-                embeds = []
-            else:
-                embeds = [embed]
+            embeds = [] if embed is None else [embed]
 
         if embeds is not MISSING:
             payload["embeds"] = [e.to_dict() for e in embeds]
@@ -1077,7 +1075,7 @@ class InteractionResponse:
                 for file in files:
                     file.close()
 
-        if view and not view.is_finished() and message_id is not None:
+        if view and not view.is_finished() and message_id is not None and view.prevent_update:
             state.store_view(view, message_id)
 
         self._responded = True
@@ -1329,5 +1327,3 @@ class InteractionMessage(_InteractionMessageMixin, Message):
 
     .. versionadded:: 2.0
     """
-
-    pass

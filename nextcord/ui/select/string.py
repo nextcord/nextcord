@@ -25,10 +25,10 @@ __all__ = (
     "string_select",
 )
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
-class StringSelect(SelectBase, Generic[V]):
+class StringSelect(SelectBase, Generic[V_co]):
     """Represents a UI string select menu.
 
     This is usually represented as a drop down menu.

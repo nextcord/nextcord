@@ -124,7 +124,7 @@ class ViewItem(BaseItem, Generic[V]):
         self._view: Optional[V] = None
 
     @property
-    def view(self) -> Optional[V]:
+    def view(self) -> Optional[V_co]:
         """Optional[:class:`View`]: The underlying view for this item."""
         return self._view
 

@@ -60,23 +60,23 @@ def visit_attributetable_item_node(self, node):
     self.body.append(self.starttag(node, "li", CLASS="py-attribute-table-entry"))
 
 
-def depart_attributetable_node(self, node):
+def depart_attributetable_node(self, _node):
     self.body.append("</div>")
 
 
-def depart_attributetablecolumn_node(self, node):
+def depart_attributetablecolumn_node(self, _node):
     self.body.append("</div>")
 
 
-def depart_attributetabletitle_node(self, node):
+def depart_attributetabletitle_node(self, _node):
     self.body.append("</span>")
 
 
-def depart_attributetablebadge_node(self, node):
+def depart_attributetablebadge_node(self, _node):
     self.body.append("</span>")
 
 
-def depart_attributetable_item_node(self, node):
+def depart_attributetable_item_node(self, _node):
     self.body.append("</li>")
 
 
@@ -88,7 +88,6 @@ class PyAttributeTable(SphinxDirective):
     required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = False
-    option_spec = {}
 
     def parse_name(self, content):
         match = _name_parser_regex.match(content)
@@ -159,11 +158,11 @@ def build_lookup_table(env):
         "class",
     }
 
-    for fullname, _, objtype, _, _, _ in domain.get_objects():
+    for fullname, __, objtype, *__ in domain.get_objects():
         if objtype in ignored:
             continue
 
-        classname, _, child = fullname.rpartition(".")
+        classname, __, child = fullname.rpartition(".")
         try:
             result[classname].append(child)
         except KeyError:
@@ -178,7 +177,7 @@ class TableElement(NamedTuple):
     badge: Optional[attributetablebadge]
 
 
-def process_attributetable(app, doctree, fromdocname):
+def process_attributetable(app, doctree, _fromdocname):
     env = app.builder.env
 
     lookup = build_lookup_table(env)
@@ -267,10 +266,10 @@ def class_results_to_node(key, elements):
         ref = nodes.reference(
             "",
             "",
+            *[nodes.Text(element.label)],
             internal=True,
             refuri="#" + element.fullname,
             anchorname="",
-            *[nodes.Text(element.label)],
         )
         para = addnodes.compact_paragraph("", "", ref)
         if element.badge is not None:
