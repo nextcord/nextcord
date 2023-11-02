@@ -39,7 +39,7 @@ def _walk_component_interaction_data(
     components: List[ModalSubmitComponentInteractionData],
 ) -> Iterator[ComponentInteractionData]:
     for item in components:
-        if "components" in item:
+        if "components" in item:  # type: ignore
             yield from item["components"]
         else:
             yield item
