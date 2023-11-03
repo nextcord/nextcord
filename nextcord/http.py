@@ -158,7 +158,9 @@ class RateLimit:
     """
 
     _reset_ignore_threshold = 0.02  # Arbitrary number, feel free to tweak.
-    """Minimum reset - current time diff threshold. Any diff lower will be ignored."""
+    """Minimum reset - current time diff threshold. Any diff lower will be ignored. 
+    Only used when use_reset_timestamp is enabled.
+    """
 
     def __init__(self, time_offset: float = 0.0, *, use_reset_timestamp: bool = False) -> None:
         self.limit: int = 1
@@ -186,13 +188,12 @@ class RateLimit:
         """Holds the task object for resetting the remaining count."""
         self._on_reset_event: asyncio.Event = asyncio.Event()
         """Used to indicate when the rate limit is ready to be acquired."""
-        self._on_reset_event.set()
-        self._deny: bool = False
-        """Set to error all acquiring requests with a 404 value error."""
         self._migrating: str | None = None
         """When this RateLimit is being deprecated and acquiring requests need to migrate to a different RateLimit, this
         variable should be set to the different RateLimit/buckets string name.
         """
+
+        self._on_reset_event.set()
 
     @property
     def resetting(self) -> bool:
@@ -217,9 +218,6 @@ class RateLimit:
             raise IncorrectBucket(
                 f"Update given for bucket {x_bucket}, but this RateLimit is for bucket {self.bucket}!"
             )
-
-        if response.status == 404:
-            self._deny = True
 
         # Updates the limit if it exists.
         x_limit = response.headers.get("X-RateLimit-Limit")
@@ -405,9 +403,6 @@ class RateLimit:
             raise RateLimitMigrating(
                 f"This RateLimit is deprecated, you need to migrate to bucket {self.migrating}"
             )
-
-        if self._deny:
-            raise HTTPCancelled("This request path previously 404'd and is now denied.")
 
         _log.debug("Bucket %s: Continuing with request.", self.bucket)
         self.remaining -= 1
@@ -663,7 +658,7 @@ class HTTPClient:
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **kwargs: Any,
-    ) -> Any:
+    ) -> Any:  # ruff: noqa: PLR0915
         """|coro|
 
         Makes an API request to Discord, handling authorization (if needed), rate limits, and limited error handling.
@@ -812,7 +807,7 @@ class HTTPClient:
                                     route.method, route, auth
                                 )
                                 await url_rate_limit.update(response)
-                                _log.critical(
+                                _log.debug(
                                     "Route %s was given a different bucket, made a new one: %s",
                                     rate_limit_path,
                                     url_rate_limit.bucket,
