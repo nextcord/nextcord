@@ -158,7 +158,7 @@ class RateLimit:
     """
 
     _reset_ignore_threshold = 0.02  # Arbitrary number, feel free to tweak.
-    """Minimum reset - current time diff threshold. Any diff lower will be ignored. 
+    """Minimum reset - current time diff threshold. Any diff lower will be ignored.
     Only used when use_reset_timestamp is enabled.
     """
 
