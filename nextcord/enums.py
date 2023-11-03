@@ -1430,7 +1430,7 @@ class UserFlags(IntEnum):
     verified_bot = 1 << 16
     """The user is a Verified Bot."""
     verified_bot_developer = 1 << 17
-    """The user is am Early Verified Bot Developer."""
+    """The user is an Early Verified Bot Developer."""
     discord_certified_moderator = 1 << 18
     """The user is a Discord Certified Moderator."""
     bot_http_interactions = 1 << 19
