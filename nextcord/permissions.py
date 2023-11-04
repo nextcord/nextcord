@@ -336,8 +336,7 @@ class Permissions(BaseFlags):
     def send_messages(self) -> int:
         """:class:`bool`: Returns ``True`` if a user can send messages from all or specific text channels.
 
-        .. note::
-            This falls under ``Create Posts`` on the UI specifically for Forum Channels.
+        This falls under ``Create Posts`` on the UI specifically for Forum Channels.
         """
         return 1 << 11
 
@@ -539,8 +538,7 @@ class Permissions(BaseFlags):
     def send_messages_in_threads(self) -> int:
         """:class:`bool`: Returns ``True`` if a user can send messages in threads.
 
-        .. note::
-            This falls under ``Send Messages in Posts`` on the UI specifically for Forum channels.
+        This falls under ``Send Messages in Posts`` on the UI specifically for Forum channels.
 
         .. versionadded:: 2.0
         """
