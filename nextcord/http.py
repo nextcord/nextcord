@@ -649,6 +649,9 @@ class HTTPClient:
 
         return await self.__session.ws_connect(url, **kwargs)
 
+    # ruff: noqa: PLR0915
+    # Ruff says this is too many statements in a single function, but I'm not sure how to break it down while
+    #  maintaining readability. I suppose general purpose rules cannot be perfectly applied in every situation.
     async def request(
         self,
         route: Route,
