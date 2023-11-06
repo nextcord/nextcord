@@ -658,7 +658,7 @@ class HTTPClient:
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **kwargs: Any,
-    ) -> Any:  # ruff: noqa: PLR0915
+    ) -> Any:  # noqa: PLR0915
         """|coro|
 
         Makes an API request to Discord, handling authorization (if needed), rate limits, and limited error handling.
