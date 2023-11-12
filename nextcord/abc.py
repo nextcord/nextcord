@@ -1743,6 +1743,7 @@ class Connectable(Protocol):
         auto_deaf: bool = True,
         tmp_type: TmpType = MISSING,
         filters: Optional[RecordingFilter] = MISSING,
+        periodic_write_seconds: Optional[int] = 5,
     ) -> T:
         """|coro|
 
@@ -1772,11 +1773,17 @@ class Connectable(Protocol):
             Effective only with `recordable=True`.
             Whether to automatically deafen when not receiving audio.
         tmp_type: :class:`TmpType` = TmpType.File
-            Effective with `recordable=True`.
+            Effective only with `recordable=True`.
             The type of temporary storage to contain recorded data.
         filters: Optional[:class:`RecordingFilter`] = None
-            Effective with `recordable=True`.
+            Effective only with `recordable=True`.
             The filter used to filter out certain users from a recording.
+        periodic_write_seconds: Optional[:class:`int`] = 5
+            Effective only with `recordable=True`.
+            The delay between periodic silence writes.
+            Setting this to None turns off periodic writes and may result
+            in huge silence writes all at once causing the recording to
+            be obstructed by the blocking write call.
 
         Raises
         ------
@@ -1800,7 +1807,9 @@ class Connectable(Protocol):
 
         client = state._get_client()
         if recordable:
-            voice = RecorderClient(client, self, auto_deaf, tmp_type, filters)
+            voice = RecorderClient(
+                client, self, auto_deaf, tmp_type, filters, periodic_write_seconds
+            )
         else:
             voice = cls(client, self)
 
