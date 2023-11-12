@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
 
 AUDIO_HZ = DecoderThread.SAMPLING_RATE
+AUDIO_CHANNELS = DecoderThread.CHANNELS
 FRAME_SIZE = 960
 FPS = AUDIO_HZ / FRAME_SIZE
 RECV_SIZE = 4096
@@ -72,12 +73,12 @@ class Silence:
 
         # write the rest
         if remainder:
-            buffer.write(SILENCE_STRUCT[: remainder * FRAME_SIZE * DecoderThread.CHANNELS])
+            buffer.write(SILENCE_STRUCT[: remainder * FRAME_SIZE * AUDIO_CHANNELS])
 
     @classmethod
     def from_timedelta(cls, silence: int):
         half_frames = int(silence / FRAME_SIZE)
-        return None if half_frames <= 0 else cls(half_frames * DecoderThread.CHANNELS)
+        return None if half_frames <= 0 else cls(half_frames * AUDIO_CHANNELS)
 
 
 class RecordingFilter:
@@ -595,7 +596,7 @@ class RecorderClient(nc_vc.VoiceClient):
 
     # recording stuff
 
-    def set_prevent_leakage(self, prevent_leakage: bool) -> None:
+    def toggle_prevent_leakage(self, prevent_leakage: Optional[bool] = None) -> None:
         """
         Attempts to prevent leekage of audio when starting a 2nd recording without reconnecting.
 
@@ -606,10 +607,14 @@ class RecorderClient(nc_vc.VoiceClient):
 
         Parameters
         ----------
-        prevent_leakage: :class:`True`
+        prevent_leakage: Optional[:class:`bool`]
             The value to set for `prevent_leakage`
         """
-        self.prevent_leakage = prevent_leakage
+        self.prevent_leakage = (
+            prevent_leakage
+            if prevent_leakage is not None
+            else self.prevent_leakage is False
+        )
 
     def _process_decoded_audio(
         self,
