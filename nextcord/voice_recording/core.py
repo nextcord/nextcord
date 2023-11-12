@@ -286,10 +286,8 @@ class TimeTracker:
 
         # write silence to each user
         for user, u_t in users_to_write.items():
-            silence = Silence.from_timedelta(int(u_t * const))
-            if silence:
+            if silence := Silence.from_timedelta(int(u_t * const)):
                 logging.debug("Wrote %d seconds of final silence to user %d from guild %d", u_t, user, guild_id)
-                print(u_t, user, guild_id)
                 silence.write_to(
                     audio_data.get_writer(tmp_type, guild_id, user).buffer
                 )
@@ -692,10 +690,8 @@ class RecorderClient(nc_vc.VoiceClient):
             # try discard any packet leakage from previous recording
             elif self.time_tracker.starting_perf + 1 > t and timestamp < self._calc_timestamp(ssrc, t):
                 # kept for debug: print(f"[FAIL] {sequence} | {timestamp} vs {self._calc_timestamp(ssrc, t)}")
-                print(f"[FAIL] {sequence} | {timestamp} vs {self._calc_timestamp(ssrc, t)}")
                 return
             # kept for debug: print(f"[PASS] {sequence} | {timestamp} vs {self._calc_timestamp(ssrc, t)}")
-            print(f"[PASS] {sequence} | {timestamp} vs {self._calc_timestamp(ssrc, t)}")
 
             self.time_info[ssrc] = (timestamp, perf_counter())
 
