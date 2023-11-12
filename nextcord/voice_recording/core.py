@@ -611,9 +611,7 @@ class RecorderClient(nc_vc.VoiceClient):
             The value to set for `prevent_leakage`
         """
         self.prevent_leakage = (
-            prevent_leakage
-            if prevent_leakage is not None
-            else self.prevent_leakage is False
+            prevent_leakage if prevent_leakage is not None else self.prevent_leakage is False
         )
 
     def _process_decoded_audio(
