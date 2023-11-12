@@ -37,8 +37,8 @@ DIFFERENCE_THRESHOLD = 60
 
 STUB = ()
 
-STRUCT_SIZE = 1024
-SILENCE_STRUCT = pack("<h", 0) * FRAME_SIZE * STRUCT_SIZE  # 3.5mb in size at 1024
+STRUCT_SIZE = 512
+SILENCE_STRUCT = pack("<h", 0) * FRAME_SIZE * STRUCT_SIZE  # 1.8mb in size at 512
 
 export_methods = {
     Formats.MP3: export_with_ffmpeg,
