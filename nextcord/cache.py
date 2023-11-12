@@ -23,12 +23,13 @@ _MISSING = CacheMissing.MISSING
 class SizedDict(dict):
     """This represents a sized cache dictionary where objects over size limit
     will be removed upon adding a new object.
-    
+
     .. note::
         This cache relies on the presumed order of dictionaries after Python 3.7
         This allows for the cache to be much faster and take 3x less memory than
         the TTL cache from the `collections` module.
     """
+
     __slots__ = ("maxsize",)
 
     def __init__(self, maxsize: Optional[Union[float, int]] = None) -> None:
@@ -47,12 +48,13 @@ class BetterTTLCache(dict):
     """This represents a timed cache dictionary where objects past a certain age
     will be removed upon the next get (lazy ttl), and objects over size limit
     will be removed upon setting a new object.
-    
+
     .. note::
         This cache relies on the presumed order of dictionaries after Python 3.7
         This allows for the cache to be much faster and take 3x less memory than
         the TTL cache from the `collections` module.
     """
+
     __slots__ = ("maxsize", "ttl", "timelink", "working")
 
     def __init__(
