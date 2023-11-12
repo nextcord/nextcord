@@ -69,8 +69,7 @@ class Silence:
             for _ in range(res):
                 buffer.write(SILENCE_STRUCT)
         if remainder:
-            buffer.write(SILENCE_STRUCT[:remainder * FRAME_SIZE * 2])
-            
+            buffer.write(SILENCE_STRUCT[: remainder * FRAME_SIZE * 2])
 
     @classmethod
     def from_timedelta(cls, silence: int):
