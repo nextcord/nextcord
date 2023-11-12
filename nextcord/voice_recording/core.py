@@ -37,12 +37,8 @@ DIFFERENCE_THRESHOLD = 60
 
 STUB = ()
 
-
-SILENCE_STRUCT = pack("<h", 0) * FRAME_SIZE
-SILENCE_STRUCT_10 = SILENCE_STRUCT * 10
-SILENCE_STRUCT_100 = SILENCE_STRUCT * 100
-SILENCE_STRUCT_1000 = SILENCE_STRUCT * 1000  # 3.4mb in size
-
+STRUCT_SIZE = 1024
+SILENCE_STRUCT = pack("<h", 0) * FRAME_SIZE * STRUCT_SIZE  # 3.5mb in size at 1024
 
 export_methods = {
     Formats.MP3: export_with_ffmpeg,
@@ -67,23 +63,14 @@ class Silence:
         return self.frames / (AUDIO_HZ / FRAME_SIZE) * 1000
 
     def write_to(self, buffer: BufferedIOBase) -> None:
-        write = buffer.write
-        frames = self.frames
-
         # write in a loop as to avoid generating a huge memory buffer
-        while frames > 0:
-            if frames > 1000:
-                write(SILENCE_STRUCT_1000)
-                frames -= 1000
-            elif frames > 100:
-                write(SILENCE_STRUCT_100)
-                frames -= 100
-            elif frames > 10:
-                write(SILENCE_STRUCT_10)
-                frames -= 10
-            else:
-                write(SILENCE_STRUCT)
-                frames -= 1
+        res, remainder = divmod(self.frames, STRUCT_SIZE)
+        if res:
+            for _ in range(res):
+                buffer.write(SILENCE_STRUCT)
+        if remainder:
+            buffer.write(SILENCE_STRUCT[:remainder * FRAME_SIZE * 2])
+            
 
     @classmethod
     def from_timedelta(cls, silence: int):
