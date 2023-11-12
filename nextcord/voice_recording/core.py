@@ -815,7 +815,7 @@ class RecorderClient(nc_vc.VoiceClient):
         self.recording_paused = False
 
     def toggle_recording_paused(self) -> None:
-        """Toggleing whether a recording is paused if there is an ongoing one."""
+        """Toggling whether a recording is paused if there is an ongoing one."""
 
         self.recording_paused = self.recording_paused is False
 
