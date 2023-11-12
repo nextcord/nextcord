@@ -72,7 +72,7 @@ class Silence:
 
         # write the rest
         if remainder:
-            buffer.write(SILENCE_STRUCT[:remainder * FRAME_SIZE * DecoderThread.CHANNELS])
+            buffer.write(SILENCE_STRUCT[: remainder * FRAME_SIZE * DecoderThread.CHANNELS])
 
     @classmethod
     def from_timedelta(cls, silence: int):
@@ -164,7 +164,13 @@ class AudioWriter:
 
 
 class TimeTracker:
-    __slots__ = ("starting_time", "starting_perf", "first_packet_time", "users_times", "last_periodic_write")
+    __slots__ = (
+        "starting_time",
+        "starting_perf",
+        "first_packet_time",
+        "users_times",
+        "last_periodic_write",
+    )
 
     def __init__(self) -> None:
         self.starting_time: float = clock_timestamp()  # also used as filename
@@ -215,7 +221,7 @@ class TimeTracker:
         self.users_times[user_id] = (timestamp, received_timestamp)
 
         return Silence.from_timedelta(silence)
-    
+
     # helper method for inserting to a different dict during dict comprehension
     @staticmethod
     def _add_user_time_with_insert(
@@ -225,12 +231,8 @@ class TimeTracker:
         return x + u_t
 
     def write_periodic_silence(
-        self,
-        period: int,
-        audio_data: Optional[AudioData],
-        tmp_type: TmpType,
-        guild_id: int
-    ):
+        self, period: int, audio_data: Optional[AudioData], tmp_type: TmpType, guild_id: int
+    ) -> None:
         if not audio_data:
             return
 
@@ -238,7 +240,9 @@ class TimeTracker:
         t = perf_counter()
 
         # ensure this method doesnt called more often than needed
-        if self.last_periodic_write + (period * 0.8) > t:  # multiply by 0.8 to give some leeway time
+        if (
+            self.last_periodic_write + (period * 0.8) > t
+        ):  # multiply by 0.8 to give some leeway time
             return
         self.last_periodic_write = t
 
@@ -247,10 +251,9 @@ class TimeTracker:
         users_to_update: Dict[int, tuple[int, float]] = {
             user: (
                 t_create + (u_t * FRAME_SIZE),
-                self._add_user_time_with_insert(users_to_write, user, t_receive, u_t)
+                self._add_user_time_with_insert(users_to_write, user, t_receive, u_t),
             )
-            for user, (t_create, t_receive)
-            in self.users_times.items()
+            for user, (t_create, t_receive) in self.users_times.items()
             if (u_t := int(t - t_receive)) > period  # if user hasn't been written to in x time
         }
         self.users_times.update(users_to_update)
@@ -260,26 +263,23 @@ class TimeTracker:
         # write silence to each user
         for user, u_t in users_to_write.items():
             if silence := Silence.from_timedelta(u_t * const):
-                logging.debug("Periodically wrote %d seconds of silence to user %d from guild %d", u_t, user, guild_id)
-                silence.write_to(
-                    audio_data.get_writer(tmp_type, guild_id, user).buffer
+                logging.debug(
+                    "Periodically wrote %d seconds of silence to user %d from guild %d",
+                    u_t,
+                    user,
+                    guild_id,
                 )
-    
+                silence.write_to(audio_data.get_writer(tmp_type, guild_id, user).buffer)
+
     def write_remaining_silence(  # called when ending recording
-        self,
-        t,
-        audio_data: Optional[AudioData],
-        tmp_type: TmpType,
-        guild_id: int
-    ):
+        self, t, audio_data: Optional[AudioData], tmp_type: TmpType, guild_id: int
+    ) -> None:
         if not audio_data:
             return
 
         # get all users' writes
         users_to_write: Dict[int, float] = {
-            user: t - t_receive
-            for user, (_, t_receive)
-            in self.users_times.items()
+            user: t - t_receive for user, (_, t_receive) in self.users_times.items()
         }
 
         const = FRAME_SIZE * (AUDIO_HZ // FRAME_SIZE)
@@ -287,10 +287,14 @@ class TimeTracker:
         # write silence to each user
         for user, u_t in users_to_write.items():
             if silence := Silence.from_timedelta(int(u_t * const)):
-                logging.debug("Wrote %d seconds of final silence to user %d from guild %d", u_t, user, guild_id)
-                silence.write_to(
-                    audio_data.get_writer(tmp_type, guild_id, user).buffer
+                logging.debug(
+                    "Wrote %d seconds of final silence to user %d from guild %d",
+                    u_t,
+                    user,
+                    guild_id,
                 )
+                silence.write_to(audio_data.get_writer(tmp_type, guild_id, user).buffer)
+
 
 class AudioData(Dict[int, AudioWriter]):
     """A container to hold the :class:`AudioWriter` associated with each user's id
@@ -411,7 +415,7 @@ class OpusFrame:
     @property
     def is_silent(self):
         return self.decrypted_data == FRAME_OF_SILENCE
-    
+
     def __repr__(self) -> str:
         attrs = (
             ("sequence", self.sequence),
@@ -485,7 +489,7 @@ class RecorderClient(nc_vc.VoiceClient):
         tmp_type: TmpType = TmpType.File,
         filters: Optional[RecordingFilter] = None,
         periodic_write_seconds: Optional[int] = 5,
-        prevent_leakage: bool = False
+        prevent_leakage: bool = False,
     ) -> None:
         super().__init__(client, channel)
         self.channel: Connectable
@@ -504,7 +508,7 @@ class RecorderClient(nc_vc.VoiceClient):
         # leakage calculation
         self.prevent_leakage: bool = prevent_leakage  # unstable feature
         self.time_info: Dict[int, tuple] = {}  # ssrc to tuple[timestamp, received]
-        
+
         # periodically write silence
         self.periodic_write_seconds: Optional[int] = periodic_write_seconds
 
@@ -591,10 +595,10 @@ class RecorderClient(nc_vc.VoiceClient):
 
     # recording stuff
 
-    def set_prevent_leakage(self, prevent_leakage: bool):
+    def set_prevent_leakage(self, prevent_leakage: bool) -> None:
         """
         Attempts to prevent leekage of audio when starting a 2nd recording without reconnecting.
-        
+
         Warning
         -------
         This feature is unstable and may cause the recording to start slightly delayed, or may
@@ -664,9 +668,13 @@ class RecorderClient(nc_vc.VoiceClient):
 
         # check & write silence when receiving any packet
         if self.guild and self.periodic_write_seconds is not None:
-            self.time_tracker.write_periodic_silence(self.periodic_write_seconds, self.audio_data, self.tmp_type, self.guild.id)
+            self.time_tracker.write_periodic_silence(
+                self.periodic_write_seconds, self.audio_data, self.tmp_type, self.guild.id
+            )
         else:
-            logging.debug("Unable to write periodic silence due to no `time_tracker` or no `guild`.")
+            logging.debug(
+                "Unable to write periodic silence due to no `time_tracker` or no `guild`."
+            )
 
         # RTCP concention info, not useful
         if 200 <= data[1] <= 204:
@@ -688,7 +696,9 @@ class RecorderClient(nc_vc.VoiceClient):
             elif self.time_info and timestamp < self.time_info[ssrc][0]:
                 self.time_info = {}
             # try discard any packet leakage from previous recording
-            elif self.time_tracker.starting_perf + 1 > t and timestamp < self._calc_timestamp(ssrc, t):
+            elif self.time_tracker.starting_perf + 1 > t and timestamp < self._calc_timestamp(
+                ssrc, t
+            ):
                 # kept for debug: print(f"[FAIL] {sequence} | {timestamp} vs {self._calc_timestamp(ssrc, t)}")
                 return
             # kept for debug: print(f"[PASS] {sequence} | {timestamp} vs {self._calc_timestamp(ssrc, t)}")
@@ -891,7 +901,7 @@ class RecorderClient(nc_vc.VoiceClient):
 
         if not audio_data:
             raise TmpNotFound("Audio data not found!")
-        
+
         if write_remaining_silence:
             if time_tracker and self.guild:
                 time_tracker.write_remaining_silence(t, audio_data, self.tmp_type, self.guild.id)
