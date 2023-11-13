@@ -4,15 +4,6 @@ from enum import Enum
 from time import time as now
 from typing import Hashable, Optional, Union
 
-# Avoiding super() call speeds up by 2x
-# Cache speedup is very beneficial as it will be one of
-# the hotest spots called
-__set_item__ = dict.__setitem__
-__get_item__ = dict.__getitem__
-__get__ = dict.get
-__pop__ = dict.pop
-
-
 class CacheMissing(Enum):
     MISSING = 0
 
@@ -41,7 +32,7 @@ class SizedDict(dict):
             for item in self:  # iter to delete first item
                 del self[item]
                 break
-        __set_item__(self, key, val)
+        super().__setitem__(key, val)
 
 
 class BetterTTLCache(dict):
@@ -68,7 +59,7 @@ class BetterTTLCache(dict):
     def __getitem__(self, key):
         """Expires items before returning getitem."""
         self.__expire__()
-        return __get_item__(self, key)
+        return super().__getitem__(key)
 
     def __setitem__(self, key, val) -> None:
         """
@@ -79,7 +70,7 @@ class BetterTTLCache(dict):
             for item in self:  # iter to delete first item
                 del self[item]
                 break
-        __set_item__(self, key, val)
+        super().__setitem__(key, val)
         self.update_time(key)
 
     def __expire__(self) -> None:
@@ -111,17 +102,17 @@ class BetterTTLCache(dict):
     def get(self, key, default=None):
         """Expire before returning from get."""
         self.__expire__()
-        return __get__(self, key, default)
+        return super().get(key, default)
 
     def pop(self, key, default=None):
         """Pop from timelink before returning pop from self"""
-        __pop__(self.timelink, key, None)
-        return __pop__(self, key, default)
+        self.timelink.pop(key, None)
+        return super().pop(key, default)
 
     def get_with_update(self, key, default=None):
         """Get an item whilst updating the timelink for the item."""
         self.__expire__()
-        item = __get__(self, key, _MISSING)
+        item = super().get(key, _MISSING)
         if item is not _MISSING:
             self.update_time(key)
             return item
@@ -134,7 +125,7 @@ class BetterTTLCache(dict):
             for item in self:
                 del self[item]
                 break
-        __set_item__(self, key, val)
+        super().__setitem__(key, val)
         if key not in self.timelink:
             self.timelink[key] = now()
             return True
