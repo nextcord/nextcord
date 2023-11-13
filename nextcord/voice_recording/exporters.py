@@ -97,7 +97,7 @@ class FFmpeg:
                 stdout=subprocess.PIPE,
                 creationflags=FLAG,
             ).communicate(_read_and_delete(writer.buffer))[0]
-        except FileNotFoundError:  # noqa: B904
+        except FileNotFoundError:
             raise NoFFmpeg(
                 "FFmpeg is not installed or aliased improperly. Unable to launch `ffmpeg` command."
             )
@@ -113,7 +113,7 @@ class FFmpeg:
                 creationflags=FLAG,
             )
             process.communicate(data)
-        except FileNotFoundError:  # noqa: B904
+        except FileNotFoundError:
             raise NoFFmpeg(
                 "FFmpeg is not installed or aliased improperly. Unable to launch `ffmpeg` command."
             )
