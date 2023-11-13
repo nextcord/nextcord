@@ -97,10 +97,10 @@ class FFmpeg:
                 stdout=subprocess.PIPE,
                 creationflags=FLAG,
             ).communicate(_read_and_delete(writer.buffer))[0]
-        except FileNotFoundError:  # noqa: B904
+        except FileNotFoundError as e:
             raise NoFFmpeg(
                 "FFmpeg is not installed or aliased improperly. Unable to launch `ffmpeg` command."
-            )
+            ) from e
 
     @staticmethod
     def file_tmp_conv(audio_format: str, writer: AudioWriter) -> None:
@@ -113,10 +113,10 @@ class FFmpeg:
                 creationflags=FLAG,
             )
             process.communicate(data)
-        except FileNotFoundError:  # noqa: B904
+        except FileNotFoundError as e:
             raise NoFFmpeg(
                 "FFmpeg is not installed or aliased improperly. Unable to launch `ffmpeg` command."
-            )
+            ) from e
 
 
 # FFMPEG conversion exports
