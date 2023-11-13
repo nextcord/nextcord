@@ -4,6 +4,7 @@ from enum import Enum
 from time import time as now
 from typing import Hashable, Optional, Union
 
+
 class CacheMissing(Enum):
     MISSING = 0
 
