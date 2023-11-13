@@ -46,7 +46,7 @@ class DecoderThread(Thread, nc.opus._OpusStruct):
                 decoder = self.get_decoder(opus_frame.ssrc)
                 opus_frame.decoded_data = decoder.decode(opus_frame.decrypted_data, fec=False)
             except nc.InvalidArgument:
-                print("Error occurred while decoding opus frame.")
+                logging.error("Error occurred while decoding opus frame. %s", repr(opus_frame))
                 continue
 
             self.recorder._process_decoded_audio(opus_frame)

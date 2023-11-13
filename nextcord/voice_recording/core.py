@@ -919,7 +919,6 @@ class RecorderClient(nc_vc.VoiceClient):
 
         if filters:
             return await audio_data.export(export_format, tmp_type, filters)
-        elif filters is MISSING:
+        if filters is MISSING:
             return await audio_data.export(export_format, tmp_type, self.filters)
-        else:
-            return await audio_data.export(export_format, tmp_type)
+        return await audio_data.export(export_format, tmp_type)

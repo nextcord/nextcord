@@ -68,8 +68,7 @@ def _read_and_delete(buffer: BufferedIOBase) -> bytes:
     buffer.seek(0)
     data: bytes = buffer.read()
 
-    buffer.close()  # TODO check memory
-
+    buffer.close()
     if getattr(buffer, "name", None):
         os.remove(buffer.name)  # type: ignore
 
@@ -82,7 +81,7 @@ def _write_in_memory(bytes: bytes) -> BytesIO:
     return buffer
 
 
-def _open_tmp_file(writer: AudioWriter, *args) -> BufferedWriter:
+def _open_tmp_file(writer: AudioWriter, *_) -> BufferedWriter:
     f: BufferedWriter = open_tmp_file(writer.guild_id, writer.user_id, "ab+")
     f.seek(0)
     return f
@@ -192,7 +191,7 @@ def _export_as_PCM(user_id: int, writer: AudioWriter) -> AudioFile:
 
 
 async def export_as_PCM(
-    audio_data: AudioData, *args, filters: Optional[RecordingFilter] = None
+    audio_data: AudioData, *_, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
     run = get_running_loop().run_in_executor
 
@@ -226,7 +225,7 @@ def _export_as_WAV(user_id: int, writer: AudioWriter, decoder: DecoderThread) ->
 
 
 async def export_as_WAV(
-    audio_data: AudioData, *args, filters: Optional[RecordingFilter] = None
+    audio_data: AudioData, *_, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
     decoder = audio_data.decoder
     run = get_running_loop().run_in_executor

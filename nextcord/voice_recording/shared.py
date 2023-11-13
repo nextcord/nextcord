@@ -28,9 +28,9 @@ def open_tmp_file(guild_id, user_id, mode):
     path = Path(f"{getcwd()}/{TMP_DIR}/{guild_id}.{user_id}.tmp")
 
     try:
-        return open(path, mode)
+        return open(path, mode)  # noqa: SIM115
 
     except FileNotFoundError:
         makedirs(dirname(path), exist_ok=True)  # Create missing dirs
         path.touch(exist_ok=True)  # create missing file
-        return open(path, mode)
+        return open(path, mode)  # noqa: SIM115

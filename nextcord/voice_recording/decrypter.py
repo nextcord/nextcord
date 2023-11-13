@@ -39,7 +39,7 @@ try:
 
 except ImportError:
 
-    def no_nacl(*args, **kwargs):
+    def no_nacl(*_args, **_kwargs):
         raise RuntimeError("PyNaCl library needed in order to use voice")
 
     strip_header_ext = no_nacl
