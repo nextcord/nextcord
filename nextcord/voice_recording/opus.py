@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class DecoderThread(Thread, nc.opus._OpusStruct):
-    def __init__(self, recorder) -> None:
+    def __init__(self, recorder: RecorderClient) -> None:
         super().__init__(daemon=True)
 
         self.recorder: RecorderClient = recorder
@@ -27,7 +27,7 @@ class DecoderThread(Thread, nc.opus._OpusStruct):
         self._end = Event()
         super().start()
 
-    def decode(self, opus_frame) -> None:
+    def decode(self, opus_frame: OpusFrame) -> None:
         self.decode_queue.append(opus_frame)
 
     def run(self) -> None:
@@ -58,7 +58,7 @@ class DecoderThread(Thread, nc.opus._OpusStruct):
         gc.collect()
         logging.debug("Decoder process killed.")
 
-    def get_decoder(self, ssrc) -> nc.opus.Decoder:
+    def get_decoder(self, ssrc: int) -> nc.opus.Decoder:
         if (d := self.decoder.get(ssrc)) is not None:
             return d
         d = self.decoder[ssrc] = nc.opus.Decoder()
