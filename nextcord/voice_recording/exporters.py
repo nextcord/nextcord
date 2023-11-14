@@ -150,7 +150,9 @@ def export_one_with_memory_tmp(writer: AudioWriter, audio_format: Formats) -> Au
     )
 
 
-def export_all_with_memory_tmp(audio_data: AudioData, audio_format: Formats) -> Dict[int, AudioFile]:
+def export_all_with_memory_tmp(
+    audio_data: AudioData, audio_format: Formats
+) -> Dict[int, AudioFile]:
     return {
         user_id: export_one_with_memory_tmp(writer, audio_format)
         for (user_id, writer) in audio_data.items()
