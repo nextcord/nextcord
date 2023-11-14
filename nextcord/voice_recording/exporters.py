@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
+import logging
 
 import os
 import subprocess
@@ -40,7 +41,10 @@ class AudioFile(nc_file.File):
 
         # delete tmp file after closure
         if name:
-            os.remove(name)
+            try:
+                os.remove(name)
+            except Exception:
+                logging.error("Failed to remove tempfile object at path %s", name)
 
 
 ffmpeg_default_arg = (
@@ -121,10 +125,10 @@ class FFmpeg:
 
 # FFMPEG conversion exports
 
-def export_one_with_file_tmp(user_id: int, writer: AudioWriter, audio_format: Formats):
+def export_one_with_file_tmp(writer: AudioWriter, audio_format: Formats) -> AudioFile:
     return AudioFile(
         _open_tmp_file(writer, FFmpeg.file_tmp_conv(ffmpeg_args[audio_format][1], writer)),
-        f"{user_id}.{ffmpeg_args[audio_format][0]}",
+        f"{writer.user_id}.{ffmpeg_args[audio_format][0]}",
         starting_silence=writer.starting_silence,
         force_close=True,
     )
@@ -132,15 +136,15 @@ def export_one_with_file_tmp(user_id: int, writer: AudioWriter, audio_format: Fo
 
 def export_all_with_file_tmp(audio_data: AudioData, audio_format: Formats) -> Dict[int, AudioFile]:
     return {
-        user_id: export_one_with_file_tmp(user_id, writer, audio_format)
+        user_id: export_one_with_file_tmp(writer, audio_format)
         for (user_id, writer) in audio_data.items()
     }
 
 
-def export_one_with_memory_tmp(user_id: int, writer: AudioWriter, audio_format: Formats):
+def export_one_with_memory_tmp(writer: AudioWriter, audio_format: Formats) -> AudioFile:
     return AudioFile(
         _write_in_memory(FFmpeg.memory_tmp_conv(ffmpeg_args[audio_format][1], writer)),
-        f"{user_id}.{ffmpeg_args[audio_format][0]}",
+        f"{writer.user_id}.{ffmpeg_args[audio_format][0]}",
         starting_silence=writer.starting_silence,
         force_close=True,
     )
@@ -148,9 +152,33 @@ def export_one_with_memory_tmp(user_id: int, writer: AudioWriter, audio_format: 
 
 def export_all_with_memory_tmp(audio_data: AudioData, audio_format: Formats) -> Dict[int, AudioFile]:
     return {
-        user_id: export_one_with_memory_tmp(user_id, writer, audio_format)
+        user_id: export_one_with_memory_tmp(writer, audio_format)
         for (user_id, writer) in audio_data.items()
     }
+
+
+export_one_methods = {
+    TmpType.File: export_one_with_file_tmp,
+    TmpType.Memory: export_one_with_memory_tmp,
+}
+
+
+async def export_one_with_ffmpeg(
+    writer: AudioWriter,
+    *,
+    audio_format: Formats,
+    tmp_type: TmpType,
+    **_
+) -> AudioFile:
+    if not isinstance(tmp_type, TmpType):
+        raise TypeError(f"Arg `tmp_type` must be of type `TmpType` not `{type(tmp_type)}`")
+
+    if not isinstance(audio_format, Formats):
+        raise TypeError(f"audio_format must be of type `Formats` not {type(audio_format)}")
+
+    return await get_running_loop().run_in_executor(
+        None, export_one_methods[tmp_type], writer, audio_format
+    )
 
 
 export_methods = {
@@ -181,7 +209,7 @@ async def export_with_ffmpeg(
 # .pcm exports
 
 
-def export_one_as_PCM(user_id: int, writer: AudioWriter) -> AudioFile:
+def _export_one_as_PCM(writer: AudioWriter, user_id: int) -> AudioFile:
     buffer: Union[BufferedWriter, BytesIO] = writer.buffer
 
     buffer.seek(0)
@@ -193,23 +221,26 @@ def export_one_as_PCM(user_id: int, writer: AudioWriter) -> AudioFile:
     )
 
 
+async def export_one_as_PCM(writer: AudioWriter, *, user_id: int, **_) -> AudioFile:
+    return await get_running_loop().run_in_executor(None, _export_one_as_PCM, writer, user_id)
+
+
 async def export_as_PCM(
     audio_data: AudioData, *_, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
-    run = get_running_loop().run_in_executor
 
     audio_data.process_filters(filters)
 
     return {
-        user_id: await run(None, export_one_as_PCM, user_id, audio_writer)
-        for user_id, audio_writer in audio_data.items()
+        user_id: await export_one_as_PCM(writer, user_id=user_id)
+        for user_id, writer in audio_data.items()
     }
 
 
 # .wav exports
 
 
-def export_one_as_WAV(user_id: int, writer: AudioWriter, decoder: DecoderThread) -> AudioFile:
+def _export_one_as_WAV(writer: AudioWriter, user_id: int, decoder: DecoderThread) -> AudioFile:
     buffer: Union[BufferedWriter, BytesIO] = writer.buffer
 
     buffer.seek(0)
@@ -227,15 +258,20 @@ def export_one_as_WAV(user_id: int, writer: AudioWriter, decoder: DecoderThread)
     )
 
 
+async def export_one_as_WAV(
+    writer: AudioWriter, *, user_id: int, decoder: DecoderThread, **_
+) -> AudioFile:
+    return await get_running_loop().run_in_executor(None, _export_one_as_WAV, writer, user_id, decoder)
+
+
 async def export_as_WAV(
     audio_data: AudioData, *_, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
     decoder = audio_data.decoder
-    run = get_running_loop().run_in_executor
 
     audio_data.process_filters(filters)
 
     return {
-        user_id: await run(None, export_one_as_WAV, user_id, audio_writer, decoder)
-        for user_id, audio_writer in audio_data.items()
+        user_id: await export_one_as_WAV(writer, user_id=user_id,  decoder=decoder)
+        for user_id, writer in audio_data.items()
     }

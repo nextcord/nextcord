@@ -18,7 +18,11 @@ from nextcord.utils import MISSING
 
 from . import decrypter
 from .errors import *
-from .exporters import AudioFile, export_as_PCM, export_as_WAV, export_with_ffmpeg
+from .exporters import (
+    AudioFile,
+    export_as_PCM, export_as_WAV, export_with_ffmpeg,
+    export_one_as_PCM, export_one_as_WAV, export_one_with_ffmpeg
+)
 from .opus import DecoderThread
 from .shared import *
 
@@ -50,6 +54,17 @@ export_methods = {
     Formats.OGG: export_with_ffmpeg,
     Formats.PCM: export_as_PCM,
     Formats.WAV: export_as_WAV,
+}
+
+export_one_methods = {
+    Formats.MP3: export_one_with_ffmpeg,
+    Formats.MP4: export_one_with_ffmpeg,
+    Formats.M4A: export_one_with_ffmpeg,
+    Formats.MKA: export_one_with_ffmpeg,
+    Formats.MKV: export_one_with_ffmpeg,
+    Formats.OGG: export_one_with_ffmpeg,
+    Formats.PCM: export_one_as_PCM,
+    Formats.WAV: export_one_as_WAV,
 }
 
 
@@ -150,18 +165,65 @@ class AudioWriter:
         else:
             raise TypeError(f"Arg `tmp_type` must be of type `TmpType` not `{type(tmp_type)}`")
 
-    def write(self, bytes) -> None:
+    def write(self, data: bytes) -> None:
+        """Write bytes to the buffer of this writer."""
         if not self.buffer.closed:
-            self.buffer.write(bytes)
+            self.buffer.write(data)
 
     def close(self) -> None:
+        """Closes the buffer of this AudioWriter and removes any temp files if exists."""
         name = (
             self.buffer.name if isinstance(self.buffer, (BufferedRandom, BufferedWriter)) else None
         )
         self.buffer.close()
 
         if name:
-            os.remove(name)
+            try:
+                os.remove(name)
+            except Exception:
+                logging.error("Failed to remove tempfile object at path %s", name)
+
+    async def export(
+        self,
+        audio_format: Formats,
+        tmp_type: TmpType,
+    ) -> Dict[int, AudioFile]:
+        """
+        Exports the stored references to each writer containing the audio data
+        to the specified format.
+
+        audio_format: :class:`Formats`
+            The format to export this this container to.
+        tmp_type :class:`TmpType`:
+            The type of temporary storage to use for exporting. Exporting in memory is **not**
+            supported for `m4a` and `mp4` formats.
+        
+        Warning
+        -------
+        Exporting a single writer requires you to make sure the recording is stopped beforehand.
+        If a writer is exported while it is being written to, there could be unexepected errors.
+
+        Raises
+        ------
+        TypeError
+            When the audio format is not a supported format from the local enum.
+
+        Returns
+        -------
+        Dict[int, AudioFile]
+            A map of the each user to their respective exported :class:`AudioFile`.
+        """
+
+        if not isinstance(audio_format, Formats):
+            raise TypeError(f"audio_format must be of type `Formats` not {type(audio_format)}")
+
+        return await export_one_methods[audio_format](
+            self,
+            audio_format=audio_format,
+            tmp_type=tmp_type,
+            user_id=self.user_id,
+            decoder=DecoderThread
+        )
 
 
 class TimeTracker:
@@ -624,7 +686,12 @@ class RecorderClient(nc_vc.VoiceClient):
             if not self.__record_alongside_handler:
                 return None
 
-        if self.audio_data is None or self.time_tracker is None or not self.guild:
+        if (
+            opus_frame.decoded_data is None
+            or self.audio_data is None
+            or self.time_tracker is None
+            or not self.guild
+        ):
             return None
 
         ssrc_cache = self.ws.ssrc_cache
