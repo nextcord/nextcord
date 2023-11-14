@@ -16,10 +16,16 @@ class SizedDict(dict):
     """This represents a sized cache dictionary where objects over size limit
     will be removed upon adding a new object.
 
+    Warning
+    -------
+    This cache is not thread safe! Iterating or writing to this cache from a
+    different thread can result in unexpected race conditions, causing iteration
+    errors, which can be fatal to the object and irreversible.
+
     .. note::
         This cache relies on the presumed order of dictionaries after Python 3.7
         This allows for the cache to be much faster and take 3x less memory than
-        the TTL cache from the `collections` module.
+        the sized cache from the `collections` module.
     """
 
     __slots__ = ("maxsize",)
@@ -41,13 +47,19 @@ class BetterTTLCache(dict):
     will be removed upon the next get (lazy ttl), and objects over size limit
     will be removed upon setting a new object.
 
+    Warning
+    -------
+    This cache is not thread safe! Accessing or writing to this cache from a
+    different thread can result in unexpected race conditions, causing iteration
+    errors, which can be fatal to the object and irreversible.
+
     .. note::
         This cache relies on the presumed order of dictionaries after Python 3.7
         This allows for the cache to be much faster and take 3x less memory than
         the TTL cache from the `collections` module.
     """
 
-    __slots__ = ("maxsize", "ttl", "timelink", "working")
+    __slots__ = ("maxsize", "ttl", "timelink")
 
     def __init__(
         self, maxsize: Optional[int] = None, ttl: Optional[Union[int, float]] = None
@@ -55,7 +67,6 @@ class BetterTTLCache(dict):
         self.maxsize: Union[int, float] = maxsize or float("inf")
         self.ttl: Optional[Union[int, float]] = ttl
         self.timelink: dict[Hashable, float] = {}
-        self.working: bool = False
 
     def __getitem__(self, key):
         """Expires items before returning getitem."""
@@ -81,10 +92,8 @@ class BetterTTLCache(dict):
         are assumed to be the earliest created items to avoid checking every item.
         Timelink order must be managed properly in order for expiration to work.
         """
-        if not self.ttl or self.working:
+        if not self.ttl:
             return
-
-        self.working = True
 
         expiration = now() - self.ttl
         expired = []
@@ -97,8 +106,6 @@ class BetterTTLCache(dict):
         for item in expired:
             del self[item]
             del self.timelink[item]
-
-        self.working = False
 
     def get(self, key, default=None):
         """Expire before returning from get."""
