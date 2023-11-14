@@ -26,6 +26,11 @@ class TmpNotFound(nc_errors.DiscordException):
     Raised when failed attempting to access temp files.
     """
 
+class EmptyRecordingError(nc_errors.DiscordException):
+    """
+    Raised when the recording was empty.
+    """
+
 
 class NoFFmpeg(nc_errors.DiscordException):
     """

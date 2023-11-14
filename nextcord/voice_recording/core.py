@@ -1011,6 +1011,8 @@ class RecorderClient(nc_vc.VoiceClient):
             Attempting to stop a recording when the client is not currently recording.
         TmpNotFound
             The temporary files storing the audio data were not found.
+        EmptyRecordingError
+            Nothing was recorded.
 
         Returns
         -------
@@ -1039,8 +1041,11 @@ class RecorderClient(nc_vc.VoiceClient):
                 )
             return None
 
-        if not audio_data:
+        if audio_data is None:
             raise TmpNotFound("Audio data not found!")
+        
+        if not audio_data:
+            raise EmptyRecordingError("Nothing was recorded! Cannot return or export empty recording.")
 
         if write_remaining_silence:
             if time_tracker and self.guild:
