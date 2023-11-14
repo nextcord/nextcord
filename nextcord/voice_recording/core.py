@@ -292,7 +292,6 @@ class AudioWriter:
             self,
             audio_format=audio_format,
             tmp_type=tmp_type,
-            user_id=self.user_id,
             decoder=DecoderThread,
         )
 
