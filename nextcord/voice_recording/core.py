@@ -73,6 +73,20 @@ export_one_methods = {
 
 
 class Silence:
+    """Represents the number of frames where a recording has been silent
+    
+    Parameters
+    ----------
+    frames: :class:`int`
+        The number of 20ms frames where this recording was silent
+    
+    Attributes
+    ----------
+    frames: :class:`int`
+        The number of 20ms frames where this recording was silent
+    milliseconds: :class:`float`
+        The relative number of milliseconds based on the frames
+    """
     __slots__ = ("frames",)
 
     def __init__(self, frames: int) -> None:
@@ -83,6 +97,13 @@ class Silence:
         return self.frames / (AUDIO_HZ / FRAME_SIZE) * 1000
 
     def write_to(self, buffer: BufferedIOBase) -> None:
+        """Writes the silence to IO
+        
+        Parameters
+        ----------
+        buffer: :class:`BufferedIOBase`
+            The buffer for which to write this silence to.
+        """
         res, remainder = divmod(self.frames, STRUCT_SIZE)
 
         # write in a loop as to avoid generating a huge memory buffer
@@ -96,22 +117,38 @@ class Silence:
 
     @classmethod
     def from_timedelta(cls, silence: int):
+        """Creates a Silence object with the desginated timeframe.
+
+        Parameters
+        ----------
+        silence: :class:`int`
+            The number of Hz to convert to silence
+            E.g. 48,000 for 1 second of silence when the audio frame size is 48,000Hz
+        """
         half_frames = int(silence / FRAME_SIZE)
         return None if half_frames <= 0 else cls(half_frames * AUDIO_CHANNELS)
 
 
 class RecordingFilter:
-    __slots__ = ("users", "client", "ignored_after")
+    """Represents a filter used to restrict the recording.
+    
+    Parameters
+    ----------
+    client: Optional[:class:`RecorderClient`]
+        The recorder client for which to use this filter on.
+        Is optional for creation but not for when used.
+    iterable: Optional[:class:`RecorderClient`]
+        An optional iterable containing pre-existing data to convert to filter.    
+    """
+    __slots__ = ("users", "client")
 
     def __init__(
         self,
-        client=None,
+        client = None,
         iterable: Optional[Iterable[Union[int, User, Member]]] = None,
-        ignored_after: Optional[int] = None,
     ) -> None:
         self.users = set()
         self.client: Optional[RecorderClient] = client
-        self.ignored_after = ignored_after
 
         if iterable:
             self.users.update(iterable)
@@ -132,20 +169,50 @@ class RecordingFilter:
         raise TypeError("Each user must be of type `int`, `User`, or `Member`")
 
     def add(self, user: Union[int, User, Member]) -> None:
+        """Add a user to the filter.
+
+        Parameters
+        ----------
+        user: Union[:class:`int`, :class:`User`, :class:`Member`]
+        """
         return self.users.add(self._get_id(user))
 
     def extend(self, iterable: Iterable[Union[int, User, Member]]) -> None:
+        """Extend the user with an iterable containing more users.
+
+        Parameters
+        ----------
+        iterable: Iterable[Union[:class:`int`, :class:`User`, :class:`Member`]]
+        """
         users = {self._get_id(u) for u in iterable}
 
         return self.users.update(users)
 
     def remove(self, user: Union[int, User, Member]) -> None:
+        """Remove a user from the filter.
+
+        Parameters
+        ----------
+        user: Union[:class:`int`, :class:`User`, :class:`Member`]
+        
+        Raises
+        ------
+        KeyError
+            When the user is not found.
+        """
         return self.users.remove(self._get_id(user))
 
     def discard(self, user: Union[int, User, Member]) -> None:
+        """Discard a user from the filter.
+
+        Parameters
+        ----------
+        user: Union[:class:`int`, :class:`User`, :class:`Member`]
+        """
         return self.users.discard(self._get_id(user))
 
     def clear(self) -> None:
+        """Clear all users from the filter."""
         self.users.clear()
 
     def __contains__(self, key: Union[int, User, Member]) -> bool:
@@ -214,7 +281,7 @@ class AudioWriter:
 
         Returns
         -------
-        Dict[int, AudioFile]
+        Dict[:class:`int`, :class:`AudioFile`]
             A map of the each user to their respective exported :class:`AudioFile`.
         """
 
@@ -325,11 +392,9 @@ class TimeTracker:
         }
         self.users_times.update(users_to_update)
 
-        const = FRAME_SIZE * (AUDIO_HZ // FRAME_SIZE)
-
         # write silence to each user
         for user, u_t in users_to_write.items():
-            if silence := Silence.from_timedelta(u_t * const):
+            if silence := Silence.from_timedelta(u_t * AUDIO_HZ):
                 logging.debug(
                     "Periodically wrote %d seconds of silence to user %d from guild %d",
                     u_t,
@@ -394,7 +459,7 @@ class AudioData(Dict[int, AudioWriter]):
 
         Returns
         -------
-        AudioWriter
+        :class:`AudioWriter`
             The writer containing the audio data of a specific user.
         """
         return self.get(user_id) or self._add_writer(
@@ -454,7 +519,7 @@ class AudioData(Dict[int, AudioWriter]):
 
         Returns
         -------
-        Dict[int, AudioFile]
+        Dict[:class:`int`, :class:`AudioFile`]
             A map of the each user to their respective exported :class:`AudioFile`.
         """
         if not self.time_tracker:
@@ -948,12 +1013,12 @@ class RecorderClient(nc_vc.VoiceClient):
 
         Returns
         -------
-            AudioData
-                When export is not specified, you receive the the audio data map
-                of each user's id to their respective :class:`AudioWriter`
-            Dict[int, AudioFile]
-                When export is specified, you will receive the dict containing
-                each user's id to their respective :class:`AudioFile`
+        :class:`AudioData`
+            When export is not specified, you receive the the audio data map
+            of each user's id to their respective :class:`AudioWriter`
+        Dict[:class:`int`, :class:`AudioFile`]
+            When export is specified, you will receive the dict containing
+            each user's id to their respective :class:`AudioFile`
         """
         audio_data: Optional[AudioData]
         time_tracker: Optional[TimeTracker]

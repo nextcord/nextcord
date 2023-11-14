@@ -92,6 +92,8 @@ def _open_tmp_file(writer: AudioWriter, *_) -> BufferedWriter:
 
 
 class FFmpeg:
+    """A utility class containing audio conversion methods using FFmpeg"""
+
     @staticmethod
     def memory_tmp_conv(audio_format: str, writer: AudioWriter) -> bytes:
         try:
@@ -169,6 +171,27 @@ export_one_methods = {
 async def export_one_with_ffmpeg(
     writer: AudioWriter, *, audio_format: Formats, tmp_type: TmpType, **_
 ) -> AudioFile:
+    """Exports an AudioWriter to AudioFile using FFmpeg in order to
+    provide a large range of selectable audio formats.
+
+    Parameters
+    ----------
+    writer: :class:`AudioWriter`
+        The container for which to export all AudioWriters from
+    audio_format: :class:`AudioFormat`
+        The format for which to export this audio file.
+        The format cannot be WAV or PCM as those are raw audio files which don't
+        require the use of FFmpeg to process
+    tmp_type: :class:`TmpType`
+        The temporary file type to use with FFmpeg. Exporting in memory is **not**
+        supported for `m4a` and `mp4` formats.
+
+    Returns
+    -------
+    :class:`AudioFile`
+        The :class:`AudioFile` containing the exported audio data
+    """
+
     if not isinstance(tmp_type, TmpType):
         raise TypeError(f"Arg `tmp_type` must be of type `TmpType` not `{type(tmp_type)}`")
 
@@ -192,6 +215,29 @@ async def export_with_ffmpeg(
     tmp_type: TmpType,
     filters: Optional[RecordingFilter] = None,
 ) -> Dict[int, AudioFile]:
+    """Exports all AudioWriter instances contained in an AudioData instance
+    using FFmpeg in order to provide a large range of selectable audio formats.
+
+    Parameters
+    ----------
+    audio_data: :class:`AudioData`
+        The container for which to export all AudioWriters from
+    audio_format: :class:`AudioFormat`
+        The format for which to export this audio file.
+        The format cannot be WAV or PCM as those are raw audio files which don't
+        require the use of FFmpeg to process
+    tmp_type: :class:`TmpType`
+        The temporary file type to use with FFmpeg. Exporting in memory is **not**
+        supported for `m4a` and `mp4` formats.
+    filters: :class:`RecordingFilter` = None
+        The filter for which to apply to the export.
+
+    Returns
+    -------
+    Dict[:class:`int`, :class:`AudioFile`]
+        A map of all writers exported as :class:`AudioFile` containing the audio data
+    """
+
     if not isinstance(tmp_type, TmpType):
         raise TypeError(f"Arg `tmp_type` must be of type `TmpType` not `{type(tmp_type)}`")
 
@@ -208,29 +254,57 @@ async def export_with_ffmpeg(
 # .pcm exports
 
 
-def _export_one_as_PCM(writer: AudioWriter, user_id: int) -> AudioFile:
+def _export_one_as_PCM(writer: AudioWriter) -> AudioFile:
     buffer: Union[BufferedWriter, BytesIO] = writer.buffer
 
     buffer.seek(0)
     return AudioFile(
         buffer,
-        f"{user_id}.pcm",
+        f"{writer.user_id}.pcm",
         starting_silence=writer.starting_silence,
         force_close=True,
     )
 
 
-async def export_one_as_PCM(writer: AudioWriter, *, user_id: int, **_) -> AudioFile:
-    return await get_running_loop().run_in_executor(None, _export_one_as_PCM, writer, user_id)
+async def export_one_as_PCM(writer: AudioWriter, **_) -> AudioFile:
+    """Exports an AudioWriter to AudioFile to the `.pcm` (raw) audio format.
+
+    Parameters
+    ----------
+    writer: :class:`AudioWriter`
+        The :class:`AudioWriter` to be exported to :class:`AudioFile`
+
+    Returns
+    -------
+    :class:`AudioFile`
+        The :class:`AudioFile` containing the exported audio data
+    """
+    return await get_running_loop().run_in_executor(None, _export_one_as_PCM, writer)
 
 
 async def export_as_PCM(
     audio_data: AudioData, *_, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
+    """Exports all AudioWriter instances contained in an AudioData instance
+    to the `.pcm` (raw) audio format.
+
+    Parameters
+    ----------
+    audio_data: :class:`AudioData`
+        The container for which to export all AudioWriters from
+    filters: :class:`RecordingFilter` = None
+        The filter for which to apply to the export. 
+
+    Returns
+    -------
+    Dict[:class:`int`, :class:`AudioFile`]
+        A map of all writers exported as :class:`AudioFile` containing the audio data
+    """
+
     audio_data.process_filters(filters)
 
     return {
-        user_id: await export_one_as_PCM(writer, user_id=user_id)
+        user_id: await export_one_as_PCM(writer)
         for user_id, writer in audio_data.items()
     }
 
@@ -238,7 +312,7 @@ async def export_as_PCM(
 # .wav exports
 
 
-def _export_one_as_WAV(writer: AudioWriter, user_id: int, decoder: DecoderThread) -> AudioFile:
+def _export_one_as_WAV(writer: AudioWriter, decoder: DecoderThread) -> AudioFile:
     buffer: Union[BufferedWriter, BytesIO] = writer.buffer
 
     buffer.seek(0)
@@ -250,28 +324,53 @@ def _export_one_as_WAV(writer: AudioWriter, user_id: int, decoder: DecoderThread
     buffer.seek(0)
     return AudioFile(
         buffer,
-        f"{user_id}.wav",
+        f"{writer.user_id}.wav",
         starting_silence=writer.starting_silence,
         force_close=True,
     )
 
 
-async def export_one_as_WAV(
-    writer: AudioWriter, *, user_id: int, decoder: DecoderThread, **_
-) -> AudioFile:
+async def export_one_as_WAV(writer: AudioWriter, *, decoder: DecoderThread, **_) -> AudioFile:
+    """Exports an AudioWriter to AudioFile to the `.wav` (wave) audio format.
+
+    Parameters
+    ----------
+    writer: :class:`AudioWriter`
+        The :class:`AudioWriter` to be exported to :class:`AudioFile`
+
+    Returns
+    -------
+    :class:`AudioFile`
+        The :class:`AudioFile` containing the exported audio data
+    """
     return await get_running_loop().run_in_executor(
-        None, _export_one_as_WAV, writer, user_id, decoder
+        None, _export_one_as_WAV, writer, decoder
     )
 
 
 async def export_as_WAV(
     audio_data: AudioData, *_, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
+    """Exports all AudioWriter instances contained in an AudioData instance
+    to the `.wav` (wave) audio format.
+
+    Parameters
+    ----------
+    audio_data: :class:`AudioData`
+        The container for which to export all AudioWriters from
+    filters: :class:`RecordingFilter` = None
+        The filter for which to apply to the export. 
+
+    Returns
+    -------
+    Dict[:class:`int`, :class:`AudioFile`]
+        A map of all writers exported as :class:`AudioFile` containing the audio data
+    """
     decoder = audio_data.decoder
 
     audio_data.process_filters(filters)
 
     return {
-        user_id: await export_one_as_WAV(writer, user_id=user_id, decoder=decoder)
+        user_id: await export_one_as_WAV(writer, decoder=decoder)
         for user_id, writer in audio_data.items()
     }
