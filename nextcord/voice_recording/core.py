@@ -187,7 +187,7 @@ class AudioWriter:
         self,
         audio_format: Formats,
         tmp_type: TmpType,
-    ) -> Dict[int, AudioFile]:
+    ) -> AudioFile:
         """
         Exports the stored references to each writer containing the audio data
         to the specified format.
