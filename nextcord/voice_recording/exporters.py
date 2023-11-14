@@ -293,7 +293,7 @@ async def export_as_PCM(
     audio_data: :class:`AudioData`
         The container for which to export all AudioWriters from
     filters: :class:`RecordingFilter` = None
-        The filter for which to apply to the export. 
+        The filter for which to apply to the export.
 
     Returns
     -------
@@ -303,10 +303,7 @@ async def export_as_PCM(
 
     audio_data.process_filters(filters)
 
-    return {
-        user_id: await export_one_as_PCM(writer)
-        for user_id, writer in audio_data.items()
-    }
+    return {user_id: await export_one_as_PCM(writer) for user_id, writer in audio_data.items()}
 
 
 # .wav exports
@@ -343,9 +340,7 @@ async def export_one_as_WAV(writer: AudioWriter, *, decoder: DecoderThread, **_)
     :class:`AudioFile`
         The :class:`AudioFile` containing the exported audio data
     """
-    return await get_running_loop().run_in_executor(
-        None, _export_one_as_WAV, writer, decoder
-    )
+    return await get_running_loop().run_in_executor(None, _export_one_as_WAV, writer, decoder)
 
 
 async def export_as_WAV(
@@ -359,7 +354,7 @@ async def export_as_WAV(
     audio_data: :class:`AudioData`
         The container for which to export all AudioWriters from
     filters: :class:`RecordingFilter` = None
-        The filter for which to apply to the export. 
+        The filter for which to apply to the export.
 
     Returns
     -------
