@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
-import logging
 
+import logging
 import os
 import subprocess
 import wave
@@ -125,6 +125,7 @@ class FFmpeg:
 
 # FFMPEG conversion exports
 
+
 def export_one_with_file_tmp(writer: AudioWriter, audio_format: Formats) -> AudioFile:
     return AudioFile(
         _open_tmp_file(writer, FFmpeg.file_tmp_conv(ffmpeg_args[audio_format][1], writer)),
@@ -166,11 +167,7 @@ export_one_methods = {
 
 
 async def export_one_with_ffmpeg(
-    writer: AudioWriter,
-    *,
-    audio_format: Formats,
-    tmp_type: TmpType,
-    **_
+    writer: AudioWriter, *, audio_format: Formats, tmp_type: TmpType, **_
 ) -> AudioFile:
     if not isinstance(tmp_type, TmpType):
         raise TypeError(f"Arg `tmp_type` must be of type `TmpType` not `{type(tmp_type)}`")
@@ -230,7 +227,6 @@ async def export_one_as_PCM(writer: AudioWriter, *, user_id: int, **_) -> AudioF
 async def export_as_PCM(
     audio_data: AudioData, *_, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
-
     audio_data.process_filters(filters)
 
     return {
@@ -263,7 +259,9 @@ def _export_one_as_WAV(writer: AudioWriter, user_id: int, decoder: DecoderThread
 async def export_one_as_WAV(
     writer: AudioWriter, *, user_id: int, decoder: DecoderThread, **_
 ) -> AudioFile:
-    return await get_running_loop().run_in_executor(None, _export_one_as_WAV, writer, user_id, decoder)
+    return await get_running_loop().run_in_executor(
+        None, _export_one_as_WAV, writer, user_id, decoder
+    )
 
 
 async def export_as_WAV(
@@ -274,6 +272,6 @@ async def export_as_WAV(
     audio_data.process_filters(filters)
 
     return {
-        user_id: await export_one_as_WAV(writer, user_id=user_id,  decoder=decoder)
+        user_id: await export_one_as_WAV(writer, user_id=user_id, decoder=decoder)
         for user_id, writer in audio_data.items()
     }
