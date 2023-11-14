@@ -143,7 +143,7 @@ class BetterTTLCache(dict):
         """
         Update the timelink for a key.
         Creates the key anew if it does not exist in the timelink.
-        
+
         Warning
         -------
         Make sure the item exists in self, could result in memory leak if used improperly!
