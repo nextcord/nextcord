@@ -20,8 +20,12 @@ from . import decrypter
 from .errors import *
 from .exporters import (
     AudioFile,
-    export_as_PCM, export_as_WAV, export_with_ffmpeg,
-    export_one_as_PCM, export_one_as_WAV, export_one_with_ffmpeg
+    export_as_PCM,
+    export_as_WAV,
+    export_one_as_PCM,
+    export_one_as_WAV,
+    export_one_with_ffmpeg,
+    export_with_ffmpeg,
 )
 from .opus import DecoderThread
 from .shared import *
@@ -197,7 +201,7 @@ class AudioWriter:
         tmp_type :class:`TmpType`:
             The type of temporary storage to use for exporting. Exporting in memory is **not**
             supported for `m4a` and `mp4` formats.
-        
+
         Warning
         -------
         Exporting a single writer requires you to make sure the recording is stopped beforehand.
@@ -222,7 +226,7 @@ class AudioWriter:
             audio_format=audio_format,
             tmp_type=tmp_type,
             user_id=self.user_id,
-            decoder=DecoderThread
+            decoder=DecoderThread,
         )
 
 
