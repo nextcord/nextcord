@@ -74,12 +74,12 @@ export_one_methods = {
 
 class Silence:
     """Represents the number of frames where a recording has been silent
-    
+
     Parameters
     ----------
     frames: :class:`int`
         The number of 20ms frames where this recording was silent
-    
+
     Attributes
     ----------
     frames: :class:`int`
@@ -87,6 +87,7 @@ class Silence:
     milliseconds: :class:`float`
         The relative number of milliseconds based on the frames
     """
+
     __slots__ = ("frames",)
 
     def __init__(self, frames: int) -> None:
@@ -98,7 +99,7 @@ class Silence:
 
     def write_to(self, buffer: BufferedIOBase) -> None:
         """Writes the silence to IO
-        
+
         Parameters
         ----------
         buffer: :class:`BufferedIOBase`
@@ -131,20 +132,21 @@ class Silence:
 
 class RecordingFilter:
     """Represents a filter used to restrict the recording.
-    
+
     Parameters
     ----------
     client: Optional[:class:`RecorderClient`]
         The recorder client for which to use this filter on.
         Is optional for creation but not for when used.
     iterable: Optional[:class:`RecorderClient`]
-        An optional iterable containing pre-existing data to convert to filter.    
+        An optional iterable containing pre-existing data to convert to filter.
     """
+
     __slots__ = ("users", "client")
 
     def __init__(
         self,
-        client = None,
+        client=None,
         iterable: Optional[Iterable[Union[int, User, Member]]] = None,
     ) -> None:
         self.users = set()
@@ -194,7 +196,7 @@ class RecordingFilter:
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
-        
+
         Raises
         ------
         KeyError
