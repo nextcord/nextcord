@@ -121,38 +121,41 @@ class FFmpeg:
 
 # FFMPEG conversion exports
 
+def export_one_with_file_tmp(user_id: int, writer: AudioWriter, audio_format: Formats):
+    return AudioFile(
+        _open_tmp_file(writer, FFmpeg.file_tmp_conv(ffmpeg_args[audio_format][1], writer)),
+        f"{user_id}.{ffmpeg_args[audio_format][0]}",
+        starting_silence=writer.starting_silence,
+        force_close=True,
+    )
 
-def _export_all_with_file_tmp(audio_data: AudioData, audio_format: str) -> Dict[int, AudioFile]:
+
+def export_all_with_file_tmp(audio_data: AudioData, audio_format: Formats) -> Dict[int, AudioFile]:
     return {
-        user_id: (
-            AudioFile(
-                _open_tmp_file(writer, FFmpeg.file_tmp_conv(audio_format[1], writer)),
-                f"{user_id}.{audio_format[0]}",
-                starting_silence=writer.starting_silence,
-                force_close=True,
-            )
-        )
+        user_id: export_one_with_file_tmp(user_id, writer, audio_format)
         for (user_id, writer) in audio_data.items()
     }
 
 
-def _export_all_with_memory_tmp(audio_data: AudioData, audio_format: str) -> Dict[int, AudioFile]:
+def export_one_with_memory_tmp(user_id: int, writer: AudioWriter, audio_format: Formats):
+    return AudioFile(
+        _write_in_memory(FFmpeg.memory_tmp_conv(ffmpeg_args[audio_format][1], writer)),
+        f"{user_id}.{ffmpeg_args[audio_format][0]}",
+        starting_silence=writer.starting_silence,
+        force_close=True,
+    )
+
+
+def export_all_with_memory_tmp(audio_data: AudioData, audio_format: Formats) -> Dict[int, AudioFile]:
     return {
-        user_id: (
-            AudioFile(
-                _write_in_memory(FFmpeg.memory_tmp_conv(audio_format[1], writer)),
-                f"{user_id}.{audio_format[0]}",
-                starting_silence=writer.starting_silence,
-                force_close=True,
-            )
-        )
+        user_id: export_one_with_memory_tmp(user_id, writer, audio_format)
         for (user_id, writer) in audio_data.items()
     }
 
 
 export_methods = {
-    TmpType.File: _export_all_with_file_tmp,
-    TmpType.Memory: _export_all_with_memory_tmp,
+    TmpType.File: export_all_with_file_tmp,
+    TmpType.Memory: export_all_with_memory_tmp,
 }
 
 
@@ -171,14 +174,14 @@ async def export_with_ffmpeg(
     audio_data.process_filters(filters)
 
     return await get_running_loop().run_in_executor(
-        None, export_methods[tmp_type], audio_data, ffmpeg_args[audio_format]
+        None, export_methods[tmp_type], audio_data, audio_format
     )
 
 
 # .pcm exports
 
 
-def _export_as_PCM(user_id: int, writer: AudioWriter) -> AudioFile:
+def export_one_as_PCM(user_id: int, writer: AudioWriter) -> AudioFile:
     buffer: Union[BufferedWriter, BytesIO] = writer.buffer
 
     buffer.seek(0)
@@ -198,7 +201,7 @@ async def export_as_PCM(
     audio_data.process_filters(filters)
 
     return {
-        user_id: await run(None, _export_as_PCM, user_id, audio_writer)
+        user_id: await run(None, export_one_as_PCM, user_id, audio_writer)
         for user_id, audio_writer in audio_data.items()
     }
 
@@ -206,7 +209,7 @@ async def export_as_PCM(
 # .wav exports
 
 
-def _export_as_WAV(user_id: int, writer: AudioWriter, decoder: DecoderThread) -> AudioFile:
+def export_one_as_WAV(user_id: int, writer: AudioWriter, decoder: DecoderThread) -> AudioFile:
     buffer: Union[BufferedWriter, BytesIO] = writer.buffer
 
     buffer.seek(0)
@@ -233,6 +236,6 @@ async def export_as_WAV(
     audio_data.process_filters(filters)
 
     return {
-        user_id: await run(None, _export_as_WAV, user_id, audio_writer, decoder)
+        user_id: await run(None, export_one_as_WAV, user_id, audio_writer, decoder)
         for user_id, audio_writer in audio_data.items()
     }
