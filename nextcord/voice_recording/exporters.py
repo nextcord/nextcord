@@ -121,6 +121,7 @@ class FFmpeg:
 
 # FFMPEG conversion exports
 
+
 def export_one_with_file_tmp(user_id: int, writer: AudioWriter, audio_format: Formats):
     return AudioFile(
         _open_tmp_file(writer, FFmpeg.file_tmp_conv(ffmpeg_args[audio_format][1], writer)),
@@ -146,7 +147,9 @@ def export_one_with_memory_tmp(user_id: int, writer: AudioWriter, audio_format: 
     )
 
 
-def export_all_with_memory_tmp(audio_data: AudioData, audio_format: Formats) -> Dict[int, AudioFile]:
+def export_all_with_memory_tmp(
+    audio_data: AudioData, audio_format: Formats
+) -> Dict[int, AudioFile]:
     return {
         user_id: export_one_with_memory_tmp(user_id, writer, audio_format)
         for (user_id, writer) in audio_data.items()
