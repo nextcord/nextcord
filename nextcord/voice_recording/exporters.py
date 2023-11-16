@@ -27,7 +27,7 @@ FLAG = getattr(subprocess, "CREATE_NO_WINDOW", 0) if system() == "Windows" else 
 class AudioFile(nc_file.File):
     """This acts exactly like :class:`nextcord.File` other than some extra logic
     to handle closing file temporary storage properly.
-    
+
     Parameters
     ----------
     starting_silence: Optional[:class:`Silence`] = None
