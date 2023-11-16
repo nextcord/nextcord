@@ -25,9 +25,13 @@ FLAG = getattr(subprocess, "CREATE_NO_WINDOW", 0) if system() == "Windows" else 
 
 
 class AudioFile(nc_file.File):
-    """
-    This acts exactly like :class:`nextcord.File` other than some extra logic
+    """This acts exactly like :class:`nextcord.File` other than some extra logic
     to handle closing file temporary storage properly.
+    
+    Parameters
+    ----------
+    starting_silence: Optional[:class:`Silence`] = None
+        The silence between the start of the recording and the start of this track.
     """
 
     def __init__(self, *args, starting_silence: Optional[Silence] = None, **kwargs) -> None:
@@ -171,7 +175,8 @@ export_one_methods = {
 async def export_one_with_ffmpeg(
     writer: AudioWriter, *, audio_format: Formats, tmp_type: TmpType, **_
 ) -> AudioFile:
-    """Exports an AudioWriter to AudioFile using FFmpeg in order to
+    """|coro|
+    Exports an AudioWriter to AudioFile using FFmpeg in order to
     provide a large range of selectable audio formats.
 
     Parameters
@@ -215,7 +220,8 @@ async def export_with_ffmpeg(
     tmp_type: TmpType,
     filters: Optional[RecordingFilter] = None,
 ) -> Dict[int, AudioFile]:
-    """Exports all AudioWriter instances contained in an AudioData instance
+    """|coro|
+    Exports all AudioWriter instances contained in an AudioData instance
     using FFmpeg in order to provide a large range of selectable audio formats.
 
     Parameters
@@ -267,7 +273,8 @@ def _export_one_as_PCM(writer: AudioWriter) -> AudioFile:
 
 
 async def export_one_as_PCM(writer: AudioWriter, **_) -> AudioFile:
-    """Exports an AudioWriter to AudioFile to the `.pcm` (raw) audio format.
+    """|coro|
+    Exports an AudioWriter to AudioFile to the `.pcm` (raw) audio format.
 
     Parameters
     ----------
@@ -285,7 +292,8 @@ async def export_one_as_PCM(writer: AudioWriter, **_) -> AudioFile:
 async def export_as_PCM(
     audio_data: AudioData, *_, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
-    """Exports all AudioWriter instances contained in an AudioData instance
+    """|coro|
+    Exports all AudioWriter instances contained in an AudioData instance
     to the `.pcm` (raw) audio format.
 
     Parameters
@@ -328,7 +336,8 @@ def _export_one_as_WAV(writer: AudioWriter, decoder: DecoderThread) -> AudioFile
 
 
 async def export_one_as_WAV(writer: AudioWriter, *, decoder: DecoderThread, **_) -> AudioFile:
-    """Exports an AudioWriter to AudioFile to the `.wav` (wave) audio format.
+    """|coro|
+    Exports an AudioWriter to AudioFile to the `.wav` (wave) audio format.
 
     Parameters
     ----------
@@ -346,7 +355,8 @@ async def export_one_as_WAV(writer: AudioWriter, *, decoder: DecoderThread, **_)
 async def export_as_WAV(
     audio_data: AudioData, *_, filters: Optional[RecordingFilter] = None
 ) -> Dict[int, AudioFile]:
-    """Exports all AudioWriter instances contained in an AudioData instance
+    """|coro|
+    Exports all AudioWriter instances contained in an AudioData instance
     to the `.wav` (wave) audio format.
 
     Parameters
