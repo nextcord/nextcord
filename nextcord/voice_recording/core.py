@@ -697,9 +697,14 @@ class RecorderClient(nc_vc.VoiceClient):
 
         Raises
         ------
+        OngoingRecordingError
+            Attempting to set a handler whilst a recording is ongoing.
         MultipleHandlersError
             Multiple handlers were passed when calling this method.
         """
+
+        if self.is_recording:
+            raise OngoingRecordingError("Cannot set a data handler whilst recording.")
 
         self.__record_alongside_handler = record_alongside_handler
         self.__raw_handler = raw_data_handler
