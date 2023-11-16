@@ -285,7 +285,7 @@ class RecordingFilter:
 
     def is_allowed(self, user: Union[int, User, Member]) -> bool:
         """Whether or not a user should be allowed based on both the blocklist and allowlist
-        
+
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
@@ -297,8 +297,8 @@ class RecordingFilter:
             return True
 
         return False if uid in self.blocklist else not self.allowlist
-    
-    def is_empty(self):
+
+    def is_empty(self) -> bool:
         """Whether if the filter has no effect, when it is empty."""
         return not self.blocklist and not self.allowlist
 
