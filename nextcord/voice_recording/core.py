@@ -899,13 +899,13 @@ class RecorderClient(nc_vc.VoiceClient):
 
     def _start_recording(self) -> None:
         self.recording_paused = False
+        self.decoder = DecoderThread(self)
 
         if (
             self.__record_alongside_handler  # requires recording alongside
             or self.__decoded_handler  # requires decoding data
             or not self.__handler_set  # normal recording
         ):
-            self.decoder = DecoderThread(self)
             self.decoder.start()
 
         Thread(target=self._start_packets_recording).start()
