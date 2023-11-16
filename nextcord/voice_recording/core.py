@@ -161,7 +161,7 @@ class RecordingFilter:
     ) -> None:
         self.blocklist = set()
         self.allowlist = set()
-        
+
         self.client: Optional[RecorderClient] = client
 
         if blocklist:
@@ -264,7 +264,7 @@ class RecordingFilter:
             The user to discard from the blocklist.
         """
         return self.blocklist.discard(self._get_id(user))
-    
+
     def discard_allowed(self, user: Union[int, User, Member]) -> None:
         """Discard a user from the allowlist.
 
@@ -282,7 +282,7 @@ class RecordingFilter:
     def clear_allowed(self) -> None:
         """Clear all users from the allowlist."""
         self.allowlist.clear()
-    
+
     def is_allowed(self, user: Union[int, User, Member]) -> bool:
         """Whether or not a user should be allowed based on both the blocklist and allowlist
         
@@ -834,7 +834,7 @@ class RecorderClient(nc_vc.VoiceClient):
         self.prevent_leakage = (
             prevent_leakage if prevent_leakage is not None else self.prevent_leakage is False
         )
-    
+
     def _wait_for_user_id(self, ssrc: int) -> int:
         ssrc_cache = self.ws.ssrc_cache
         while not (user_data := ssrc_cache.get(ssrc)):
@@ -846,7 +846,6 @@ class RecorderClient(nc_vc.VoiceClient):
         self,
         opus_frame: OpusFrame,
     ) -> None:
-
         user_id = self._wait_for_user_id(opus_frame.ssrc)
         if not self.filters.is_allowed(user_id):
             return  # ignore their packet
@@ -855,7 +854,7 @@ class RecorderClient(nc_vc.VoiceClient):
             self.__decoded_handler(opus_frame)
             # terminate early after calling custom decoded handler method if not set to record too
             if not self.__record_alongside_handler:
-                return None
+                return
 
         if (
             opus_frame.decoded_data is None
@@ -863,7 +862,7 @@ class RecorderClient(nc_vc.VoiceClient):
             or self.time_tracker is None
             or not self.guild
         ):
-            return None
+            return
 
         writer = self.audio_data.get_writer(self.tmp_type, self.guild.id, user_id)
 
@@ -878,7 +877,7 @@ class RecorderClient(nc_vc.VoiceClient):
             silence.write_to(writer.buffer)
 
         writer.write(opus_frame.decoded_data)
-        return None
+        return
 
     def _calc_timestamp(self, ssrc: int, t: float) -> Union[int, float]:
         if not self.time_info:
@@ -969,7 +968,7 @@ class RecorderClient(nc_vc.VoiceClient):
                 ssrc = unpack_from(">xxHII", data[:12])[2]
                 user_id = self._wait_for_user_id(ssrc)
                 if not self.filters.is_allowed(user_id):
-                    return  # ignore their packet
+                    return None  # ignore their packet
 
             self.__raw_handler(data)
             # terminate early after calling custom decoded handler method if not set to record too
