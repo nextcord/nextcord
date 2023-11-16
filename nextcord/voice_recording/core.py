@@ -910,7 +910,8 @@ class RecorderClient(nc_vc.VoiceClient):
         ):
             self.decoder.start()
 
-        Thread(target=self._start_packets_recording).start()
+        self.process = Thread(target=self._start_packets_recording)
+        self.process.start()
 
     async def start_recording(self, channel: Optional[Connectable] = None) -> None:
         """|coro|
