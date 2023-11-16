@@ -350,7 +350,7 @@ class TimeTracker:
             # update receive times for next calculation
             self.users_times[user_id] = (timestamp, received_timestamp)
 
-            return None  # starting silence written later in export
+            return  # starting silence written later in export
 
         # update receive times for next calculation
         self.users_times[user_id] = (timestamp, received_timestamp)
@@ -759,7 +759,7 @@ class RecorderClient(nc_vc.VoiceClient):
             self.__decoded_handler(opus_frame)
             # terminate early after calling custom decoded handler method if not set to record too
             if not self.__record_alongside_handler:
-                return None
+                return
 
         if (
             opus_frame.decoded_data is None
@@ -767,7 +767,7 @@ class RecorderClient(nc_vc.VoiceClient):
             or self.time_tracker is None
             or not self.guild
         ):
-            return None
+            return
 
         ssrc_cache = self.ws.ssrc_cache
         while not (user_data := ssrc_cache.get(opus_frame.ssrc)):
@@ -790,7 +790,6 @@ class RecorderClient(nc_vc.VoiceClient):
             silence.write_to(writer.buffer)
 
         writer.write(opus_frame.decoded_data)
-        return None
 
     def _calc_timestamp(self, ssrc: int, t: float) -> Union[int, float]:
         if not self.time_info:
@@ -869,13 +868,13 @@ class RecorderClient(nc_vc.VoiceClient):
 
     def _process_audio_packet(self, data: bytes) -> None:
         if self.audio_data is None:
-            return None
+            return
 
         if self.__raw_handler:
             self.__raw_handler(data)
             # terminate early after calling custom decoded handler method if not set to record too
             if not self.__record_alongside_handler:
-                return None
+                return
 
         return self._decode_audio(data)
 
@@ -899,8 +898,6 @@ class RecorderClient(nc_vc.VoiceClient):
                     self._process_audio_packet(self.socket.recv(RECV_SIZE))
             except OSError:
                 return self._stop_recording()
-
-        return None
 
     def _start_recording(self) -> None:
         self.recording_paused = False
@@ -1044,7 +1041,7 @@ class RecorderClient(nc_vc.VoiceClient):
                 raise ExportUnavailable(
                     "Cannot export incomplete audio recordings due to setting a custom handler!"
                 )
-            return None
+            return
 
         if audio_data is None:
             raise TmpNotFound("Audio data not found!")
