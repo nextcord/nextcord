@@ -1043,9 +1043,11 @@ class RecorderClient(nc_vc.VoiceClient):
 
         if audio_data is None:
             raise TmpNotFound("Audio data not found!")
-        
+
         if not audio_data:
-            raise EmptyRecordingError("Nothing was recorded! Cannot return or export empty recording.")
+            raise EmptyRecordingError(
+                "Nothing was recorded! Cannot return or export empty recording."
+            )
 
         if write_remaining_silence:
             if time_tracker and self.guild:
