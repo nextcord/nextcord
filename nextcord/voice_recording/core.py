@@ -271,17 +271,23 @@ class RecordingFilter:
         self.allowlist.clear()
     
     def is_allowed(self, user: Union[int, User, Member]) -> bool:
+        """Whether or not a user should be allowed based on both the blocklist and allowlist
+        
+        Parameters
+        ----------
+        user: Union[:class:`int`, :class:`User`, :class:`Member`]
+            The user to check for whether they are allowed.
+        """
+
         uid = self._get_id(user)
         if uid in self.allowlist:
             return True
 
-        if uid in self.blocklist:
-            return False
-
-        return False if self.allowlist else True
+        return False if uid in self.blocklist else not self.allowlist
     
     def is_empty(self):
-        return True if not self.blocklist and not self.allowlist else False
+        """Whether if the filter has no effect, when it is empty."""
+        return not self.blocklist and not self.allowlist
 
 
 class AudioWriter:
