@@ -9,6 +9,7 @@ class RecordingException(nc_errors.DiscordException):
     .. versionadded:: 3.0
     """
 
+
 class OngoingRecordingError(RecordingException):
     """Raised when an forbidden action is performed when a recording is ongoing.
 
@@ -53,7 +54,7 @@ class NoFFmpeg(RecordingException):
 
 class MultipleHandlersError(RecordingException):
     """Raised when trying to set multiple audio handlers.
-    
+
     Subclass of :exc:`RecordingException`
     """
 
