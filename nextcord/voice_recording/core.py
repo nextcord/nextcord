@@ -790,6 +790,7 @@ class RecorderClient(nc_vc.VoiceClient):
             silence.write_to(writer.buffer)
 
         writer.write(opus_frame.decoded_data)
+        return None
 
     def _calc_timestamp(self, ssrc: int, t: float) -> Union[int, float]:
         if not self.time_info:
@@ -898,6 +899,8 @@ class RecorderClient(nc_vc.VoiceClient):
                     self._process_audio_packet(self.socket.recv(RECV_SIZE))
             except OSError:
                 return self._stop_recording()
+
+        return None
 
     def _start_recording(self) -> None:
         self.recording_paused = False
