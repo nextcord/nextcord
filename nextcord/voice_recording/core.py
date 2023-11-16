@@ -143,6 +143,11 @@ class RecordingFilter:
         Is optional for creation but not for when used.
     iterable: Optional[:class:`RecorderClient`]
         An optional iterable containing pre-existing data to convert to filter.
+
+    Raises
+    ------
+    TypeError
+        The argument passed for any `user` was not :class:`int`, :class:`User` or :class:`Member`
     """
 
     __slots__ = ("blocklist", "allowlist", "client")
@@ -174,23 +179,25 @@ class RecordingFilter:
         raise TypeError("Each user must be of type `int`, `User`, or `Member`")
 
     def add_blocked(self, user: Union[int, User, Member]) -> None:
-        """Add a user to the blocked list filter.
+        """Add a user to the blocklist filter.
         When set during a recording, their packets will be ignored.
         When set for export, their track will not be exported.
 
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
+            The user to add to the blocklist.
         """
         return self.blocklist.add(self._get_id(user))
 
     def add_allowed(self, user: Union[int, User, Member]) -> None:
-        """Add a user to the allowed list filter.
+        """Add a user to the allowlist filter.
         Audio from user will always pass through.
 
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
+            The user to add to the allowlist.
         """
         return self.allowlist.add(self._get_id(user))
 
@@ -200,6 +207,7 @@ class RecordingFilter:
         Parameters
         ----------
         iterable: Iterable[Union[:class:`int`, :class:`User`, :class:`Member`]]
+            An iterable containing users to add to the blocklist.
         """
         users = {self._get_id(u) for u in iterable}
 
@@ -211,6 +219,7 @@ class RecordingFilter:
         Parameters
         ----------
         iterable: Iterable[Union[:class:`int`, :class:`User`, :class:`Member`]]
+            An iterable containing users to add to the allowlist.
         """
         users = {self._get_id(u) for u in iterable}
 
@@ -222,6 +231,7 @@ class RecordingFilter:
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
+            The user to remove from the blocklist.
 
         Raises
         ------
@@ -236,6 +246,7 @@ class RecordingFilter:
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
+            The user to remove from the allowlist.
 
         Raises
         ------
@@ -250,6 +261,7 @@ class RecordingFilter:
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
+            The user to discard from the blocklist.
         """
         return self.blocklist.discard(self._get_id(user))
     
@@ -259,6 +271,7 @@ class RecordingFilter:
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
+            The user to discard from the allowlist.
         """
         return self.allowlist.discard(self._get_id(user))
 
