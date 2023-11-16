@@ -132,6 +132,9 @@ class Silence:
 
 class RecordingFilter:
     """Represents a filter used to restrict the recording.
+    Allowlist overwrites blocklist. If a user is allowlisted and blocklisted, they
+    will not be affected by the blocklist. List will only affect the filter
+    if they are not empty.
 
     Parameters
     ----------
@@ -142,26 +145,26 @@ class RecordingFilter:
         An optional iterable containing pre-existing data to convert to filter.
     """
 
-    __slots__ = ("users", "client")
+    __slots__ = ("blocklist", "allowlist", "client")
 
     def __init__(
         self,
         client=None,
-        iterable: Optional[Iterable[Union[int, User, Member]]] = None,
+        *,
+        blocklist: Optional[Iterable[Union[int, User, Member]]] = None,
+        allowlist: Optional[Iterable[Union[int, User, Member]]] = None,
     ) -> None:
-        self.users = set()
+        self.blocklist = set()
+        self.allowlist = set()
+        
         self.client: Optional[RecorderClient] = client
 
-        if iterable:
-            self.users.update(iterable)
+        if blocklist:
+            self.blocklist.update(blocklist)
+        if allowlist:
+            self.allowlist.update(allowlist)
 
     def _get_id(self, user: Union[int, User, Member]) -> int:
-        if self.client and self.client.time_tracker:
-            raise OngoingRecordingError(
-                "Cannot modify filters while recording. "
-                "Filters can be modified before, or passed when exporting."
-            )
-
         if isinstance(user, int):
             return user
 
@@ -170,17 +173,29 @@ class RecordingFilter:
 
         raise TypeError("Each user must be of type `int`, `User`, or `Member`")
 
-    def add(self, user: Union[int, User, Member]) -> None:
-        """Add a user to the filter.
+    def add_blocked(self, user: Union[int, User, Member]) -> None:
+        """Add a user to the blocked list filter.
+        When set during a recording, their packets will be ignored.
+        When set for export, their track will not be exported.
 
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
         """
-        return self.users.add(self._get_id(user))
+        return self.blocklist.add(self._get_id(user))
 
-    def extend(self, iterable: Iterable[Union[int, User, Member]]) -> None:
-        """Extend the user with an iterable containing more users.
+    def add_allowed(self, user: Union[int, User, Member]) -> None:
+        """Add a user to the allowed list filter.
+        Audio from user will always pass through.
+
+        Parameters
+        ----------
+        user: Union[:class:`int`, :class:`User`, :class:`Member`]
+        """
+        return self.allowlist.add(self._get_id(user))
+
+    def extend_blocked(self, iterable: Iterable[Union[int, User, Member]]) -> None:
+        """Extend the blocklist with an iterable containing more users.
 
         Parameters
         ----------
@@ -188,10 +203,21 @@ class RecordingFilter:
         """
         users = {self._get_id(u) for u in iterable}
 
-        return self.users.update(users)
+        return self.blocklist.update(users)
 
-    def remove(self, user: Union[int, User, Member]) -> None:
-        """Remove a user from the filter.
+    def extend_allowed(self, iterable: Iterable[Union[int, User, Member]]) -> None:
+        """Extend the allowlist with an iterable containing more users.
+
+        Parameters
+        ----------
+        iterable: Iterable[Union[:class:`int`, :class:`User`, :class:`Member`]]
+        """
+        users = {self._get_id(u) for u in iterable}
+
+        return self.allowlist.update(users)
+
+    def remove_blocked(self, user: Union[int, User, Member]) -> None:
+        """Remove a user from the blocklist.
 
         Parameters
         ----------
@@ -202,23 +228,60 @@ class RecordingFilter:
         KeyError
             When the user is not found.
         """
-        return self.users.remove(self._get_id(user))
+        return self.blocklist.remove(self._get_id(user))
 
-    def discard(self, user: Union[int, User, Member]) -> None:
-        """Discard a user from the filter.
+    def remove_allowed(self, user: Union[int, User, Member]) -> None:
+        """Remove a user from the allowlist.
+
+        Parameters
+        ----------
+        user: Union[:class:`int`, :class:`User`, :class:`Member`]
+
+        Raises
+        ------
+        KeyError
+            When the user is not found.
+        """
+        return self.allowlist.remove(self._get_id(user))
+
+    def discard_blocked(self, user: Union[int, User, Member]) -> None:
+        """Discard a user from the blocklist.
 
         Parameters
         ----------
         user: Union[:class:`int`, :class:`User`, :class:`Member`]
         """
-        return self.users.discard(self._get_id(user))
+        return self.blocklist.discard(self._get_id(user))
+    
+    def discard_allowed(self, user: Union[int, User, Member]) -> None:
+        """Discard a user from the allowlist.
 
-    def clear(self) -> None:
-        """Clear all users from the filter."""
-        self.users.clear()
+        Parameters
+        ----------
+        user: Union[:class:`int`, :class:`User`, :class:`Member`]
+        """
+        return self.allowlist.discard(self._get_id(user))
 
-    def __contains__(self, key: Union[int, User, Member]) -> bool:
-        return self._get_id(key) in self.users
+    def clear_blocked(self) -> None:
+        """Clear all users from the blocklist."""
+        self.blocklist.clear()
+
+    def clear_allowed(self) -> None:
+        """Clear all users from the allowlist."""
+        self.allowlist.clear()
+    
+    def is_allowed(self, user: Union[int, User, Member]) -> bool:
+        uid = self._get_id(user)
+        if uid in self.allowlist:
+            return True
+
+        if uid in self.blocklist:
+            return False
+
+        return False if self.allowlist else True
+    
+    def is_empty(self):
+        return True if not self.blocklist and not self.allowlist else False
 
 
 class AudioWriter:
@@ -488,7 +551,7 @@ class AudioData(Dict[int, AudioWriter]):
         if not filters:
             return
 
-        filtered_writers = [uid for uid in self if uid in filters]
+        filtered_writers = [uid for uid in self if not filters.is_allowed(uid)]
         for user_id in filtered_writers:
             self.remove_writer(user_id)
 
@@ -498,7 +561,7 @@ class AudioData(Dict[int, AudioWriter]):
         tmp_type: TmpType,
         filters: Optional[RecordingFilter] = None,
     ) -> Dict[int, AudioFile]:
-        """
+        """|coro|
         Exports the stored references to each writer containing the audio data
         to the specified format.
 
@@ -681,7 +744,9 @@ class RecorderClient(nc_vc.VoiceClient):
         to your own method for handling instead of recording the audio. This is useful if
         you are streaming this data somewhere else directly and don't want to record the data.
 
-        .. note:: You may only set one data handler.
+        Warning
+        -------
+        You may only set one data handler as each one acts as a breakpoint.
 
         Parameters
         ----------
@@ -750,11 +815,23 @@ class RecorderClient(nc_vc.VoiceClient):
         self.prevent_leakage = (
             prevent_leakage if prevent_leakage is not None else self.prevent_leakage is False
         )
+    
+    def _wait_for_user_id(self, ssrc: int) -> int:
+        ssrc_cache = self.ws.ssrc_cache
+        while not (user_data := ssrc_cache.get(ssrc)):
+            sleep(0.02)
+
+        return user_data["user_id"]
 
     def _process_decoded_audio(
         self,
         opus_frame: OpusFrame,
     ) -> None:
+
+        user_id = self._wait_for_user_id(opus_frame.ssrc)
+        if not self.filters.is_allowed(user_id):
+            return  # ignore their packet
+
         if self.__decoded_handler:
             self.__decoded_handler(opus_frame)
             # terminate early after calling custom decoded handler method if not set to record too
@@ -768,14 +845,6 @@ class RecorderClient(nc_vc.VoiceClient):
             or not self.guild
         ):
             return None
-
-        ssrc_cache = self.ws.ssrc_cache
-        while not (user_data := ssrc_cache.get(opus_frame.ssrc)):
-            sleep(0.05)
-
-        user_id = user_data["user_id"]
-        if user_id in self.filters:
-            return self.audio_data.remove_writer(user_id)
 
         writer = self.audio_data.get_writer(self.tmp_type, self.guild.id, user_id)
 
@@ -855,6 +924,11 @@ class RecorderClient(nc_vc.VoiceClient):
         opus_frame = OpusFrame(sequence, timestamp, perf_counter(), ssrc, decrypted_data)
 
         if self.__decrypted_handler:
+            if not self.filters.is_empty():  # get ssrc to process filters if its not empty
+                user_id = self._wait_for_user_id(ssrc)
+                if not self.filters.is_allowed(user_id):
+                    return  # ignore their packet
+
             self.__decrypted_handler(opus_frame)
             # terminate early after calling custom decrypt handler method if not set to record too
             if not self.__record_alongside_handler:
@@ -872,6 +946,12 @@ class RecorderClient(nc_vc.VoiceClient):
             return None
 
         if self.__raw_handler:
+            if not self.filters.is_empty():
+                ssrc = unpack_from(">xxHII", data[:12])[2]
+                user_id = self._wait_for_user_id(ssrc)
+                if not self.filters.is_allowed(user_id):
+                    return  # ignore their packet
+
             self.__raw_handler(data)
             # terminate early after calling custom decoded handler method if not set to record too
             if not self.__record_alongside_handler:
