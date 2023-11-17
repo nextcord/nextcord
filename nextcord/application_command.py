@@ -995,6 +995,8 @@ class CallbackMixin:
         if self.has_error_handler():
             if TYPE_CHECKING:
                 error_callback = cast(Callable, self.error_callback)
+            else:
+                error_callback = self.error_callback
 
             await error_callback(interaction, error)
 
