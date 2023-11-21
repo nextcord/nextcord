@@ -850,6 +850,7 @@ class RecorderClient(nc_vc.VoiceClient):
         if not self.filters.is_allowed(user_id):
             return  # ignore their packet
 
+        opus_frame.user_id = user_id
         if self.__decoded_handler:
             self.__decoded_handler(opus_frame)
             # terminate early after calling custom decoded handler method if not set to record too
@@ -946,6 +947,7 @@ class RecorderClient(nc_vc.VoiceClient):
                 user_id = self._wait_for_user_id(ssrc)
                 if not self.filters.is_allowed(user_id):
                     return  # ignore their packet
+                opus_frame.user_id = user_id
 
             self.__decrypted_handler(opus_frame)
             # terminate early after calling custom decrypt handler method if not set to record too
