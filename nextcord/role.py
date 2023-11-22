@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from .asset import Asset
 from .colour import Colour
 from .errors import InvalidArgument
+from .flags import RoleFlags
 from .mixins import Hashable
 from .permissions import Permissions
 from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
@@ -193,6 +194,7 @@ class Role(Hashable):
         "tags",
         "_icon",
         "_state",
+        "_flags",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload) -> None:
@@ -261,6 +263,8 @@ class Role(Hashable):
         except KeyError:
             self.tags = None
 
+        self._flags: int = data.get("flags", 0)
+
     def is_default(self) -> bool:
         """:class:`bool`: Checks if the role is the default role."""
         return self.guild.id == self.id
@@ -298,6 +302,13 @@ class Role(Hashable):
             and (me.top_role > self or me.id == self.guild.owner_id)
         )
 
+    def is_in_prompt(self) -> bool:
+        """:class:`bool`: Whether the role can be selected in an onboarding prompt.
+
+        .. versionadded:: 2.6
+        """
+        return self.flags.in_prompt
+
     @property
     def permissions(self) -> Permissions:
         """:class:`Permissions`: Returns the role's permissions."""
@@ -323,8 +334,7 @@ class Role(Hashable):
         """:class:`str`: Returns a string that allows you to mention a role."""
         if self.id != self.guild.id:
             return f"<@&{self.id}>"
-        else:
-            return "@everyone"
+        return "@everyone"
 
     @property
     def members(self) -> List[Member]:
@@ -495,3 +505,11 @@ class Role(Hashable):
         """
 
         await self._state.http.delete_role(self.guild.id, self.id, reason=reason)
+
+    @property
+    def flags(self) -> RoleFlags:
+        """:class:`RoleFlags`: The avaliable flags the role has.
+
+        .. versionadded:: 2.6
+        """
+        return RoleFlags._from_value(self._flags)

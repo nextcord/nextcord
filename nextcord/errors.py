@@ -40,8 +40,6 @@ class DiscordException(Exception):
     Ideally speaking, this could be caught to handle any exceptions raised from this library.
     """
 
-    pass
-
 
 class ClientException(DiscordException):
     """Exception that's raised when an operation in the :class:`Client` fails.
@@ -49,13 +47,9 @@ class ClientException(DiscordException):
     These are usually for exceptions that happened due to user input.
     """
 
-    pass
-
 
 class NoMoreItems(DiscordException):
     """Exception that is raised when an async iteration operation has no more items."""
-
-    pass
 
 
 class GatewayNotFound(DiscordException):
@@ -136,16 +130,12 @@ class Forbidden(HTTPException):
     Subclass of :exc:`HTTPException`
     """
 
-    pass
-
 
 class NotFound(HTTPException):
     """Exception that's raised for when status code 404 occurs.
 
     Subclass of :exc:`HTTPException`
     """
-
-    pass
 
 
 class DiscordServerError(HTTPException):
@@ -156,15 +146,11 @@ class DiscordServerError(HTTPException):
     .. versionadded:: 1.5
     """
 
-    pass
-
 
 class InvalidData(ClientException):
     """Exception that's raised when the library encounters unknown
     or invalid data from Discord.
     """
-
-    pass
 
 
 class InvalidArgument(ClientException):
@@ -176,16 +162,12 @@ class InvalidArgument(ClientException):
     :exc:`DiscordException`.
     """
 
-    pass
-
 
 class LoginFailure(ClientException):
     """Exception that's raised when the :meth:`Client.login` function
     fails to log you in from improper credentials or some other misc.
     failure.
     """
-
-    pass
 
 
 class ConnectionClosed(ClientException):
@@ -307,10 +289,6 @@ class ApplicationCheckFailure(ApplicationError):
     This inherits from :exc:`ApplicationError`
     """
 
-    pass
-
 
 class ApplicationCommandOptionMissing(ApplicationError):
     """Raised when an option that's supposed to be part of an application command is missing on our end."""
-
-    pass
