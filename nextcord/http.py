@@ -579,7 +579,9 @@ class HTTPClient:
     ) -> None:
         self._url_rate_limits[(method, route.bucket, auth)] = rate_limit
 
-    def _get_url_rate_limit(self, method: str, route: Route, auth: Optional[str]) -> Optional[RateLimit]:
+    def _get_url_rate_limit(
+        self, method: str, route: Route, auth: Optional[str]
+    ) -> Optional[RateLimit]:
         return self._url_rate_limits.get((method, route.bucket, auth), None)
 
     def set_default_auth(self, auth: Optional[str]) -> None:
@@ -947,7 +949,11 @@ class HTTPClient:
                         "internal Nextcord error and should be reported.\n"
                         "Migrating RateLimit.migrate_to: %s\n"
                         "Migrating RateLimit.bucket: %s\n"
-                        "Route: %s", old_rate_limit.migrating, old_rate_limit.bucket, route, exc_info=e
+                        "Route: %s",
+                        old_rate_limit.migrating,
+                        old_rate_limit.bucket,
+                        route,
+                        exc_info=e,
                     )
                     raise ValueError(
                         "RateLimit said to migrate, but the RateLimit to migrate was not found? This is an "
