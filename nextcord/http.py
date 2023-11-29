@@ -263,9 +263,6 @@ class RateLimit:
         x_reset_after = response.headers.get("X-RateLimit-Reset-After")
         if x_reset_after is not None:
             x_reset_after = float(x_reset_after) + self._time_offset
-            # TODO: Due to Discord constantly adjusting reset_after and requests not always being responded to in
-            #  order, self.reset_after can be incorrect and not representative of the rate limit state. Is it worth
-            #  doing more comparisons and work to make it more correct when possible, or is this good enough?
             self.reset_after = x_reset_after
             # Once we figure out what the true reset delay is, for example 5 seconds, we want to keep it at that.
             if not self._use_reset_timestamp and self._tracked_reset_time < x_reset_after:
@@ -528,9 +525,6 @@ class HTTPClient:
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         dispatch: Callable,
     ) -> None:
-        # TODO: Think about adding ratelimit_multiplier? Would reduce the internal RateLimit.limit by that
-        #  float (such as 0.7) and could allow people to run multiple NC bots/processes on the same token while avoiding
-        #  ratelimit issues. Could also help with replit-style scenarios.
         self.__session: aiohttp.ClientSession = MISSING  # filled in static_login
         self._connector = connector
         self._max_global_requests = max_global_requests
@@ -942,10 +936,18 @@ class HTTPClient:
                         "RateLimitMigrating raised, but RateLimit.migrating is None. This is an internal Nextcord "
                         "error and should be reported!"
                     ) from e
-
+                
+                old_rate_limit = url_rate_limit
                 url_rate_limit = self._buckets.get(url_rate_limit.migrating)
                 if url_rate_limit is None:
                     # This means we have an internal issue that we need to fix.
+                    _log.error(
+                        "RateLimit said to migrate, but the RateLimit to migrate to was not found. This is an "
+                        "internal Nextcord error and should be reported.\n"
+                        "Migrating RateLimit.migrate_to: %s\n"
+                        "Migrating RateLimit.bucket: %s\n"
+                        "Route: %s", old_rate_limit.migrating, old_rate_limit.bucket, route, exc_info=e
+                    )
                     raise ValueError(
                         "RateLimit said to migrate, but the RateLimit to migrate was not found? This is an "
                         "internal Nextcord error and should be reported!"
