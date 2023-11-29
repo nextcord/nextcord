@@ -197,6 +197,7 @@ class RateLimit:
 
     @property
     def resetting(self) -> bool:
+        """Returns True when there is a reset task and it's active. False if there isn't a task or if it's done."""
         return self._reset_remaining_task is not None and not self._reset_remaining_task.done()
 
     async def update(self, response: aiohttp.ClientResponse) -> None:
