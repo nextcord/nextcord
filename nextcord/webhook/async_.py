@@ -33,7 +33,7 @@ from ..channel import PartialMessageable
 from ..enums import WebhookType, try_enum
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
 from ..flags import MessageFlags
-from ..http import Route
+from ..http import _USER_AGENT, Route
 from ..message import Attachment, Message
 from ..mixins import Hashable
 from ..user import BaseUser, User
@@ -108,7 +108,8 @@ class AsyncWebhookAdapter:
         auth_token: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        headers: Dict[str, str] = {}
+        # always ensure our user agent is being used
+        headers: Dict[str, str] = {"User-Agent": _USER_AGENT}
         files = files or []
         to_send: Optional[Union[str, aiohttp.FormData]] = None
         bucket = (route.webhook_id, route.webhook_token)

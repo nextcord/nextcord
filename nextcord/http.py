@@ -99,8 +99,10 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
 
 
 _DEFAULT_API_VERSION: Literal[10] = 10
-
 _API_VERSION: Literal[10] = _DEFAULT_API_VERSION
+_USER_AGENT = "DiscordBot (https://github.com/nextcord/nextcord/ {0}) Python/{1[0]}.{1[1]} aiohttp/{2}".format(
+    __version__, sys.version_info, aiohttp.__version__
+)
 
 
 def _get_logging_auth(auth: Optional[str]) -> str:
@@ -537,10 +539,8 @@ class HTTPClient:
         self._proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
         self._dispatch = dispatch
 
-        user_agent = "DiscordBot (https://github.com/nextcord/nextcord/ {0}) Python/{1[0]}.{1[1]} aiohttp/{2}"
-        self._user_agent: str = user_agent.format(
-            __version__, sys.version_info, aiohttp.__version__
-        )
+        # to mitigate breaking changes
+        self._user_agent: str = _USER_AGENT
 
         self._buckets: dict[str, RateLimit] = {}
         """{"Discord bucket name": RateLimit}"""
@@ -626,7 +626,8 @@ class HTTPClient:
     def recreate(self) -> None:
         if self.__session.closed:
             self.__session = aiohttp.ClientSession(
-                connector=self._connector, ws_response_class=DiscordClientWebSocketResponse
+                connector=self._connector,
+                ws_response_class=DiscordClientWebSocketResponse,
             )
 
     async def ws_connect(self, url: str, *, compress: int = 0) -> Any:
@@ -637,7 +638,7 @@ class HTTPClient:
             "timeout": 30.0,
             "autoclose": False,
             "headers": {
-                "User-Agent": self._user_agent,
+                "User-Agent": _USER_AGENT,
             },
             "compress": compress,
         }
@@ -936,7 +937,7 @@ class HTTPClient:
                         "RateLimitMigrating raised, but RateLimit.migrating is None. This is an internal Nextcord "
                         "error and should be reported!"
                     ) from e
-                
+
                 old_rate_limit = url_rate_limit
                 url_rate_limit = self._buckets.get(url_rate_limit.migrating)
                 if url_rate_limit is None:
